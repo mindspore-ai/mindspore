@@ -40,7 +40,7 @@ class Softmax(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
 
     Args:
-        axis (Union[int, tuple[int]]): The axis to apply Softmax operation. Default: -1, means the last dimension.
+        axis (Union[int, tuple[int]]): The axis to apply Softmax operation, -1 means the last dimension. Default: -1.
 
     Inputs:
         - **x** (Tensor) - The input of Softmax.
@@ -70,7 +70,7 @@ class LogSoftmax(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
 
     Args:
-        axis (int): The axis to apply LogSoftmax operation. Default: -1, means the last dimension.
+        axis (int): The axis to apply LogSoftmax operation, -1 means the last dimension. Default: -1.
 
     Inputs:
         - **x** (Tensor) - The input of LogSoftmax.

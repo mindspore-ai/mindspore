@@ -150,7 +150,6 @@ class Merge(PrimitiveWithInfer):
         raise NotImplementedError
 
     def infer_shape(self, inputs):
-        """merge select one input as its output"""
         return (inputs[0], [1])
 
     def infer_dtype(self, inputs):

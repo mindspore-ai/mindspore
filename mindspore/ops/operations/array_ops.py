@@ -881,7 +881,7 @@ class ScalarToTensor(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
         - **dtype** (mindspore.dtype) - The target data type. Default: mindspore.float32. Only
-                    constant value is allowed.
+          constant value is allowed.
 
     Outputs:
         Tensor. 0-D Tensor and the content is the input.
@@ -1458,7 +1458,10 @@ class Select(PrimitiveWithInfer):
 
     Examples:
         >>> select = Select()
-        >>> select([True, False],[2,3],[1,2])
+        >>> input_x = Tensor([True, False])
+        >>> input_y = Tensor([2,3], mindspore.float32)
+        >>> input_z = Tensor([1,2], mindspore.float32)
+        >>> select(input_x, input_y, input_z)
     """
 
     @prim_attr_register

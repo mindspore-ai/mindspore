@@ -91,13 +91,12 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
         loss_fn (Union[None, Cell]): Definition of the loss_fn. If None, the `network` should have the loss inside.
             Default: None.
         optimizer (Optimizer): Optimizer to update the Parameter.
-        level (str): Supports [O0, O2].
+        level (str): Supports [O0, O2]. Default: "O0".
 
             - O0: Do not change.
             - O2: Cast network to float16, keep batchnorm and `loss_fn` (if set) run in float32,
               using dynamic loss scale.
 
-            Default: "O0"
         cast_model_type (:class:`mindspore.dtype`): Supports `mstype.float16` or `mstype.float32`.
             If set to `mstype.float16`, use `float16` mode to train. If set, overwrite the level setting.
         keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32`. If set, overwrite the level setting.

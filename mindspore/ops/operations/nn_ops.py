@@ -1310,6 +1310,9 @@ class SGD(PrimitiveWithInfer):
     Nesterov momentum is based on the formula from On the importance of
     initialization and momentum in deep learning.
 
+    Note:
+        For details, please refer to `nn.SGD` source code.
+
     Args:
         dampening (float): The dampening for momentum. Default: 0.0.
         weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
@@ -1321,16 +1324,10 @@ class SGD(PrimitiveWithInfer):
         - **learning_rate** (Tensor) - Learning rate. e.g. Tensor(0.1, mindspore.float32).
         - **accum** (Tensor) - Accum(velocity) to be update.
         - **momentum** (Tensor) - Momentum. e.g. Tensor(0.1, mindspore.float32).
-        - **stat** (Tensor) - States to be updated with the same shape as gradient. Default: 1.0.
+        - **stat** (Tensor) - States to be updated with the same shape as gradient.
 
     Outputs:
         Tensor, parameters to be update.
-
-    Examples:
-        >>> net = ResNet50()
-        >>> loss = SoftmaxCrossEntropyWithLogits()
-        >>> opt = SGD(params=net.trainable_params(), learning_rate=lr, momentum=0.9)
-        >>> model = Model(net, loss, opt)
     """
 
     @prim_attr_register
@@ -1768,7 +1765,7 @@ class LSTM(PrimitiveWithInfer):
     """
     Performs the long short term memory(LSTM) on the input.
 
-    Detailed information, please refer to `nn.layer.LSTM`.
+    Detailed information, please refer to `nn.LSTM`.
     """
 
     @prim_attr_register
