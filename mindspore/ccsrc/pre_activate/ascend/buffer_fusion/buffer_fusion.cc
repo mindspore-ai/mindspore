@@ -237,11 +237,11 @@ CNodePtr CreateFusionOp(const std::vector<AnfNodePtr> &inputs_list, const std::v
 
   std::vector<std::string> input_names;
   for (uint8_t i = 0; i < inputs_list.size(); i++) {
-    input_names.emplace_back("input" + to_string(i));
+    input_names.emplace_back("input" + std::to_string(i));
   }
   std::vector<std::string> output_names;
   for (uint8_t i = 0; i < outputs_list.size(); i++) {
-    output_names.emplace_back("output" + to_string(i));
+    output_names.emplace_back("output" + std::to_string(i));
   }
 
   ValuePtr input_names_v = MakeValue(input_names);

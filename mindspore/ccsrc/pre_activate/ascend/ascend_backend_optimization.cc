@@ -21,7 +21,7 @@
 #include "pre_activate/ascend/ir_fission/bn_grad_split.h"
 #include "pre_activate/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "pre_activate/ascend/ir_fission/layer_norm_grad_split.h"
-#include "pre_activate/ascend/ir_fusion/allreduce_fusion.h"
+#include "pre_activate/common/ir_fusion/allreduce_fusion.h"
 #include "pre_activate/ascend/ir_fusion/square_sum_fusion.h"
 #include "pre_activate/ascend/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "pre_activate/ascend/ir_fusion/lamb_update_with_lr_rule_fusion.h"

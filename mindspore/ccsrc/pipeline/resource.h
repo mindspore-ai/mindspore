@@ -44,6 +44,10 @@ const char kOutput[] = "output";
 
 class InferenceResource;
 
+using MethodMap = std::unordered_map<int, std::unordered_map<std::string, Any>>;
+
+MethodMap& GetMethodMap();
+
 class ResourceBase {
  public:
   ResourceBase() { manager_ = MakeManager(); }
@@ -109,9 +113,6 @@ class Resource : public ResourceBase {
 };
 
 using ResourcePtr = std::shared_ptr<pipeline::Resource>;
-
-void ClearResAtexit();
-void ReleaseGeTsd();
 
 }  // namespace pipeline
 }  // namespace mindspore

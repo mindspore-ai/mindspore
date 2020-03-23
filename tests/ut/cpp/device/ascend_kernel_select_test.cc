@@ -231,7 +231,7 @@ void test_select(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info_ptr, kernel_node.get());
 }
 
-void SetParentAbstract(std::vector<AnfNodePtr> parent_list, std::vector<vector<size_t>> shapes,
+void SetParentAbstract(std::vector<AnfNodePtr> parent_list, std::vector<std::vector<size_t>> shapes,
                        std::vector<TypeId> types) {
   for (const auto &node : parent_list) {
     AnfAlgo::SetOutputInferTypeAndShape(types, shapes, node.get());

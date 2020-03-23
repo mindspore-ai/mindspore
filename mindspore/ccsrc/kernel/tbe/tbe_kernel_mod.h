@@ -21,12 +21,12 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include "kernel/kernel.h"
+#include "kernel/ascend_kernel_mod.h"
 #include "kernel/tbe/tbe_utils.h"
 
 namespace mindspore {
 namespace kernel {
-class TbeKernelMod : public KernelMod {
+class TbeKernelMod : public AscendKernelMod {
  public:
   explicit TbeKernelMod(KernelPackPtr kernel_pack) : kernel_pack_(std::move(kernel_pack)) {}
   ~TbeKernelMod() override = default;

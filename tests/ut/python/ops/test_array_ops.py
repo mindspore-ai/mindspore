@@ -97,20 +97,6 @@ def test_select():
     assert np.all(output.asnumpy() == expect)
 
 
-def test_scalar_cast_grad():
-    """ test_scalar_cast_grad """
-    input_x = 255.5
-    input_t = get_py_obj_dtype(ms.int8)
-
-    def fx_cast(x):
-        output = F.scalar_cast(x, input_t)
-        return output
-
-    gfn = C.grad(fx_cast)(input_x)
-    expect_dx = 1
-    assert gfn == expect_dx
-
-
 class CustomOP(PrimitiveWithInfer):
     __mindspore_signature__ = (sig_dtype.T, sig_dtype.T, sig_dtype.T1,
                                sig_dtype.T1, sig_dtype.T2, sig_dtype.T2,

@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_UTILS_CONVERT_UTILS_H_
 
 #include <limits>
+#include <memory>
 #include "pybind11/pybind11.h"
 
 #include "utils/any.h"
@@ -119,6 +120,9 @@ inline uint8_t *AddressOffset(void *address, size_t offset) {
 }
 
 AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj);
+
+bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
+                                       const std::shared_ptr<py::object> &ret_val);
 
 }  // namespace mindspore
 

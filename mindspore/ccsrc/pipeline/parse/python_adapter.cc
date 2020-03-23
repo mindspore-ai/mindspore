@@ -27,6 +27,7 @@ static std::shared_ptr<py::scoped_interpreter> scoped_ = nullptr;
 //  true: start process from python, false: start process from c++
 static bool python_env_ = false;
 static bool use_signature_in_resolve_ = true;
+void ResetPythonScope() { scoped_ = nullptr; }
 void set_use_signature_in_resolve(bool use_signature) noexcept { use_signature_in_resolve_ = use_signature; }
 bool UseSignatureInResolve() { return use_signature_in_resolve_; }
 void set_python_env_flag(bool python_env) noexcept { python_env_ = python_env; }

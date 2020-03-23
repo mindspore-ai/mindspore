@@ -23,14 +23,14 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
-#include "kernel/kernel.h"
+#include "kernel/ascend_kernel_mod.h"
 #include "kernel/hccl/hcom_util.h"
 #include "hccl/hcom.h"
 #include "common/utils.h"
 
 namespace mindspore {
 namespace kernel {
-class HcclKernel : public KernelMod {
+class HcclKernel : public AscendKernelMod {
  public:
   HcclKernel();
   ~HcclKernel() override;

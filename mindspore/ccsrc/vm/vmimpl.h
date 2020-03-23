@@ -64,12 +64,6 @@ class VMImpl {
   virtual ~VMImpl() = default;
 };
 
-class GeVM : public VMImpl {
- public:
-  VectorRef RunGraph(const FuncGraphPtr& fg, const VectorRef& args) override;
-  ~GeVM() override = default;
-};
-
 // An execution frame.
 // This holds the state for an application of a graph. The nodes list
 // must contain free variables of graphs encountered before the

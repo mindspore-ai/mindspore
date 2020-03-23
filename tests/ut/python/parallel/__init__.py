@@ -13,11 +13,14 @@
 # limitations under the License.
 
 import mindspore.context as context
+from mindspore.parallel._utils import _reset_op_id
 
 
 def setup_module(module):
-    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
+    _reset_op_id()
 
 
 def teardown_module():
     context.reset_auto_parallel_context()
+    _reset_op_id()

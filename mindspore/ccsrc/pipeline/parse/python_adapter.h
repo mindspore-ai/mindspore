@@ -55,6 +55,7 @@ void set_use_signature_in_resolve(bool use_signature) noexcept;
 bool UseSignatureInResolve();
 
 std::shared_ptr<py::scoped_interpreter> set_python_scoped();
+void ResetPythonScope();
 bool IsPythonEnv();
 void SetPythonPath(const std::string& path);
 void set_python_env_flag(bool python_env) noexcept;

@@ -16,10 +16,10 @@
 #include <iostream>
 #include <memory>
 
+#include "./prof_reporter.h"
 #include "common/common_test.h"
 #include "device/ascend/profiling/profiling_manager.h"
 #include "./common.h"
-#include "./prof_reporter.h"
 #define private public
 #include "device/ascend/profiling/plugin_impl.h"
 #undef private

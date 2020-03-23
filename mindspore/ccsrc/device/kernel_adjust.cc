@@ -32,6 +32,7 @@
 #include "device/ascend/profiling/profiling_manager.h"
 #include "device/ascend/kernel_select_ascend.h"
 #include "device/kernel_info.h"
+#include "runtime/base.h"
 
 constexpr auto kLoopCountParamName = "loop_count";
 constexpr auto kIterLoopParamName = "iter_loop";

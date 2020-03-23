@@ -19,8 +19,10 @@ from mindspore.common.api import ms_function
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops.composite import grad_all_with_sens
+from mindspore.common.dtype import get_py_obj_dtype
 import mindspore.nn as nn
 import mindspore.ops.operations as P
+from mindspore.ops import functional as F
 from ...ut_filter import non_graph_engine
 
 
@@ -76,6 +78,20 @@ def test_cast_grad():
     gout = gfn(*args)
     expect = np.ones((2, 3), dtype=np.float32)
     assert np.all(gout[0].asnumpy() == expect)
+
+
+def test_scalar_cast_grad():
+    """ test_scalar_cast_grad """
+    input_x = 255.5
+    input_t = get_py_obj_dtype(ms.int8)
+
+    def fx_cast(x):
+        output = F.scalar_cast(x, input_t)
+        return output
+
+    gfn = C.grad(fx_cast)(input_x)
+    expect_dx = 1
+    assert gfn == expect_dx
 
 
 @non_graph_engine

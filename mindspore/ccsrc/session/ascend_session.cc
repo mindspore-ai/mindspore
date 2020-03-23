@@ -35,6 +35,7 @@
 #include "pre_activate/common/helper.h"
 #include "device/kernel_runtime_manager.h"
 #include "kernel/tbe/tbe_python_funcs.h"
+#include "utils/config_manager.h"
 
 namespace mindspore {
 namespace session {
