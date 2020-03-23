@@ -20,16 +20,16 @@
 #include <memory>
 #include <vector>
 #include "pybind11/pybind11.h"
+#ifdef ENABLE_GE
 #include "transform/df_graph_manager.h"
 #include "transform/util.h"
+#endif
 #include "pipeline/parse/data_converter.h"
 #include "pipeline/parse/python_adapter.h"
 #include "utils/visible.h"
 
 namespace mindspore {
 namespace callbacks {
-using mindspore::transform::Status;
-using mindspore::transform::TransformUtil;
 
 const char PYTHON_MOD_CALLBACK_MODULE[] = "mindspore.train.callback";
 const char PYTHON_FUN_PROCESS_CHECKPOINT[] = "_checkpoint_cb_for_save_op";
@@ -37,6 +37,10 @@ const char PYTHON_FUN_PROCESS_SUMMARY[] = "_summary_cb_for_save_op";
 const char kSummary[] = "Summary";
 const char kCheckPoint[] = "Save";
 const int ONE_SHAPE = 1;
+
+#ifdef ENABLE_GE
+using mindspore::transform::Status;
+using mindspore::transform::TransformUtil;
 
 bool GetParameterShape(const FuncGraphPtr& graph, const std::string& param_name,
                        const std::shared_ptr<std::vector<int>>& shape) {
@@ -181,6 +185,7 @@ uint32_t MS_EXPORT SummarySaveCallback(uint32_t graph_id, const std::map<std::st
   MS_LOG(DEBUG) << "End the summary save callback function.";
   return Status::SUCCESS;
 }
+#endif
 
 // Cache the summary callback data from ME session
 // Remove the GE module on new architecture
@@ -208,10 +213,10 @@ uint32_t MS_EXPORT SummarySaveCallback(uint32_t graph_id, const std::map<std::st
   auto bool_ret = py::cast<bool>(ret);
   if (!bool_ret) {
     MS_LOG(ERROR) << "Python checkpoint return false during callback";
-    return Status::FAILED;
+    return kCallbackFalied;
   }
   MS_LOG(DEBUG) << "End the summary save callback function.";
-  return Status::SUCCESS;
+  return kCallbackOk;
 }
 }  // namespace callbacks
 }  // namespace mindspore

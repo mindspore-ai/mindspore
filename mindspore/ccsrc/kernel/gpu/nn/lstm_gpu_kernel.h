@@ -226,12 +226,12 @@ class LstmGpuKernel : public GpuKernel {
   size_t reserved_size_;
 
   // input desc
-  unique_ptr<cudnnTensorDescriptor_t[]> x_desc_;
+  std::unique_ptr<cudnnTensorDescriptor_t[]> x_desc_;
   cudnnTensorDescriptor_t hx_desc_;
   cudnnTensorDescriptor_t cx_desc_;
   cudnnFilterDescriptor_t w_desc_;
   cudnnDropoutDescriptor_t dropout_desc_;
-  unique_ptr<cudnnTensorDescriptor_t[]> y_desc_;
+  std::unique_ptr<cudnnTensorDescriptor_t[]> y_desc_;
   cudnnTensorDescriptor_t hy_desc_;
   cudnnTensorDescriptor_t cy_desc_;
   cudnnRNNDescriptor_t rnn_desc_;

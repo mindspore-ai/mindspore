@@ -89,6 +89,16 @@ class Tensor(Tensor_):
         out = self.__mul__(other)
         return out
 
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            other_tensor = Tensor(other, self.dtype())
+        elif isinstance(other, Tensor):
+            other_tensor = other
+        else:
+            raise TypeError("unsupported type for div operation")
+        out = tensor_operator_registry.get('__div__')(self, other_tensor)
+        return out
+
     def __sub__(self, other):
         if not isinstance(other, Tensor):
             raise TypeError("input_data must be a tensor")

@@ -384,6 +384,8 @@ static S GetValue(const ValuePtr &value) {
   return v;
 }
 
+std::string GetCNodeFuncName(CNodePtr cnode);
+
 // used to check whether an AnfNode is a cnode with a kind of Primitive as first input
 bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value);
 

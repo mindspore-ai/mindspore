@@ -84,7 +84,7 @@ def loss_scale_manager_common(strategy1):
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     scale_manager = DynamicLossScaleManager(32, 2, 2000)
     model = Model(net, loss, opt, loss_scale_manager=scale_manager)
-    # if no GE exists, outputs = self._train_network(*next_element) outputs is None, TypeError is caught.
+    # if no GE exists, outputs = self._train_network(*next_element) outputs inputs tensor.
     try:
         model.train(epoch_size, dataset, dataset_sink_mode=False)
     except TypeError:

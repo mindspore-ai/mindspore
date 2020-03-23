@@ -24,6 +24,7 @@
 import logging
 import numpy as np
 import mindspore.nn as nn
+from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.common.api import ms_function
 from mindspore.common.tensor import Tensor
@@ -50,6 +51,7 @@ class Net(nn.Cell):
 def test_create_cell_object_on_construct():
     """ test_create_cell_object_on_construct """
     log.debug("begin test_create_object_on_construct")
+    context.set_context(mode=context.GRAPH_MODE)
     np1 = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(np1)
 
@@ -118,6 +120,7 @@ class NetC(nn.Cell):
 def test_create_cell_object_on_construct_use_many_parameter():
     """ test_create_cell_object_on_construct_use_many_parameter """
     log.debug("begin test_create_object_on_construct")
+    context.set_context(mode=context.GRAPH_MODE)
     np1 = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(np1)
 

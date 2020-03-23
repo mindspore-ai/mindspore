@@ -161,6 +161,9 @@ class Model:
 
     def _update_metrics(self, outputs):
         """Update metrics local values."""
+        if not isinstance(outputs, tuple):
+            raise ValueError("The `outputs` is not tuple.")
+
         if self._eval_indexes is not None and len(outputs) < 3:
             raise ValueError("The length of `outputs` must be greater than or equal to 3, \
                              but got {}".format(len(outputs)))

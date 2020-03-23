@@ -91,7 +91,7 @@ std::string SupportedTypeList(const CNodePtr& kernel_node) {
   return supported_type_lists;
 }
 
-bool SelectAkgKernel(const CNodePtr& kernel_node, const shared_ptr<KernelBuildInfo>& selected_kernel_info) {
+bool SelectAkgKernel(const CNodePtr& kernel_node, const std::shared_ptr<KernelBuildInfo>& selected_kernel_info) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;

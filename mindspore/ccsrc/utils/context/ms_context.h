@@ -23,7 +23,6 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include "transform/graph_runner.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

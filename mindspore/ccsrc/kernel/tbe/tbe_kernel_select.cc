@@ -168,7 +168,7 @@ bool ParseDynamicFormatJson(const std::string &jsonStr, std::vector<std::shared_
   return true;
 }
 
-std::string OpSelectFormat(const shared_ptr<AnfNode> &anf_node) {
+std::string OpSelectFormat(const std::shared_ptr<AnfNode> &anf_node) {
   nlohmann::json kernel_json;
   std::string res_json_str;
   TbeKernelJsonCreator creator(OP_SELECT_FORMAT);
@@ -182,7 +182,7 @@ std::string OpSelectFormat(const shared_ptr<AnfNode> &anf_node) {
   return res_json_str;
 }
 
-void SetTidyInputsInfo(const shared_ptr<AnfNode> &anf_node,
+void SetTidyInputsInfo(const std::shared_ptr<AnfNode> &anf_node,
                        const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBuilder> &builder,
                        const std::vector<std::shared_ptr<OpIOInfo>> &inputs) {
   std::vector<TypeId> inputs_type;
@@ -231,7 +231,7 @@ void SetTidyInputsInfo(const shared_ptr<AnfNode> &anf_node,
   builder->SetInputsFormat(inputs_format);
 }
 
-void SetTidyOutputsInfo(const shared_ptr<AnfNode> &anf_node,
+void SetTidyOutputsInfo(const std::shared_ptr<AnfNode> &anf_node,
                         const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBuilder> &builder,
                         const std::vector<std::shared_ptr<OpIOInfo>> &outputs) {
   std::vector<TypeId> outputs_type;
@@ -268,7 +268,8 @@ void SetTidyOutputsInfo(const shared_ptr<AnfNode> &anf_node,
   builder->SetOutputsFormat(outputs_format);
 }
 
-void GenTidyKernelBuildInfo(const shared_ptr<AnfNode> &anf_node, const std::vector<std::shared_ptr<OpIOInfo>> &inputs,
+void GenTidyKernelBuildInfo(const std::shared_ptr<AnfNode> &anf_node,
+                            const std::vector<std::shared_ptr<OpIOInfo>> &inputs,
                             const std::vector<std::shared_ptr<OpIOInfo>> &outputs) {
   auto builder_tmp = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
   builder_tmp->SetKernelType(TBE_KERNEL);

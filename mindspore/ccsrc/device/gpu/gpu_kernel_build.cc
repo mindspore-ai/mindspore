@@ -21,7 +21,6 @@
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "operator/ops.h"
 #include "pybind11/stl.h"
-#include "transform/convert.h"
 #include "session/anf_runtime_algorithm.h"
 namespace mindspore {
 namespace device {

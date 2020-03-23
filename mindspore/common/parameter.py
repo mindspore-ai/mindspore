@@ -155,6 +155,18 @@ class Parameter:
     def data(self):
         return self.default_input
 
+    def __add__(self, other):
+        return self.default_input + other
+
+    def __sub__(self, other):
+        return self.default_input - other
+
+    def __mul__(self, other):
+        return self.default_input * other
+
+    def __truediv__(self, other):
+        return self.default_input / other
+
     def set_parameter_data(self, data):
         if isinstance(data, (Tensor, list, int, float,
                              np.float16, np.float32, np.int32, np.int16, np.ndarray)) and not isinstance(data, bool):

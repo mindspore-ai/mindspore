@@ -125,5 +125,5 @@ shape_mul = Primitive("shape_mul")
 stop_gradient = Primitive("stop_gradient")
 
 tensor_operator_registry.register('__add__', tensor_add)
-
 tensor_operator_registry.register('__mul__', tensor_mul)
+tensor_operator_registry.register('__div__', tensor_div)

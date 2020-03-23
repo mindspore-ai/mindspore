@@ -27,6 +27,7 @@
 #include "utils/log_adapter.h"
 #include "utils/context/ms_context.h"
 #include "common/utils.h"
+#include "utils/convert_utils.h"
 
 using std::vector;
 using Json = nlohmann::json;

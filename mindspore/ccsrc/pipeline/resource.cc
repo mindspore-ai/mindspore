@@ -25,18 +25,12 @@
 #include "pipeline/parse/data_converter.h"
 #include "operator/ops.h"
 #include "utils/graph_utils.h"
-#include "transform/convert.h"
 #include "optimizer/ad/dfunctor.h"
 #include "vm/segment_runner.h"
-#include "utils/context/ms_context.h"
-#include "transform/df_graph_manager.h"
-#include "device/kernel_runtime_manager.h"
 
 namespace mindspore {
 // namespace to support opmap definition
 namespace pipeline {
-
-using MethodMap = std::unordered_map<int, std::unordered_map<std::string, Any>>;
 
 MethodMap& GetMethodMap() {
   static MethodMap method_map = {{kObjectTypeString,
@@ -254,29 +248,6 @@ void Resource::Clean() {
   parse::CleanDataClassToClassMap();
   trace::ClearTraceStack();
   is_cleaned_ = true;
-}
-
-void ReleaseGeTsd() {
-  auto context_ptr = MsContext::GetInstance();
-  if (context_ptr != nullptr) {
-    (void)context_ptr->FinalizeGe(true);
-    (void)context_ptr->CloseTsd(true);
-  }
-}
-
-void ClearResAtexit() {
-  MS_LOG(DEBUG) << "pipeline clear all resource";
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-  transform::DfGraphManager::GetInstance().ClearGraph();
-  ad::g_k_prims.clear();
-
-  abstract::ClearPrimEvaluatorMap();
-  compile::ClearConvertCache();
-  transform::DfGraphConvertor::get_adpt_map().clear();
-  pipeline::GetMethodMap().clear();
-  pipeline::ExecutorPy::ClearRes();
-
-  ReleaseGeTsd();
 }
 }  // namespace pipeline
 }  // namespace mindspore

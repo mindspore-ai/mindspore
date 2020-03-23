@@ -26,8 +26,6 @@
 #include <memory>
 #include <set>
 
-#include "transform/graph_runner.h"
-#include "transform/convert.h"
 #include "ir/meta_tensor.h"
 #include "operator/ops.h"
 #include "ir/manager.h"
@@ -39,39 +37,6 @@ namespace mindspore {
 namespace compile {
 
 using PrimitivePyPtr = std::shared_ptr<PrimitivePy>;
-
-static const char SEGMENT_GRAPH_NAME[] = "runnable_segment";
-
-VectorRef GeVM::RunGraph(const FuncGraphPtr& anf_graph, const VectorRef& args) {
-  // Convert graph
-  transform::DfGraphConvertor convertor(anf_graph);
-
-  (void)convertor.ConvertAllNode().BuildGraph();
-  if (convertor.ErrCode() == 0) {
-    (void)transform::DfGraphManager::GetInstance().AddGraph(SEGMENT_GRAPH_NAME, convertor.GetComputeGraph());
-  } else {
-    MS_LOG(EXCEPTION) << "convert df graph failed";
-  }
-
-  // Run graph
-  transform::GraphRunnerOptions options;
-  transform::GraphRunner graph_runner(options);
-  transform::RunOptions run_options;
-  run_options.name = SEGMENT_GRAPH_NAME;
-
-  std::vector<tensor::TensorPtr> inputs;
-  (void)std::transform(std::begin(args), std::end(args), std::back_inserter(inputs),
-                       [](const BaseRef& arg) -> tensor::TensorPtr {
-                         auto value_ref = utils::cast<PyObjectRef>(arg);
-                         auto value = value_ref.object_;
-                         return py::cast<tensor::TensorPtr>(value);
-                       });
-  std::vector<tensor::TensorPtr> outputs;
-  (void)graph_runner.RunGraph(run_options, inputs, &outputs);
-  std::vector<BaseRef> ret;
-  (void)std::copy(outputs.begin(), outputs.end(), std::back_inserter(ret));
-  return VectorRef(ret);
-}
 
 // Indicate a call to a new frame.
 struct CallWrap : public Base {

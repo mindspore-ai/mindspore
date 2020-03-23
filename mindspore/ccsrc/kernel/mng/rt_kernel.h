@@ -22,12 +22,12 @@
 #include <memory>
 #include <map>
 #include <string>
-#include "kernel/kernel.h"
+#include "kernel/ascend_kernel_mod.h"
 #include "kernel/task_stream.h"
 
 namespace mindspore {
 namespace kernel {
-class RtKernel : public KernelMod {
+class RtKernel : public AscendKernelMod {
  public:
   RtKernel();
   ~RtKernel() override;

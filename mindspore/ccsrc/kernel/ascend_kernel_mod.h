@@ -14,29 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
-#define MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_ASCEND_KERNEL_MOD_H_
+#define MINDSPORE_CCSRC_KERNEL_ASCEND_KERNEL_MOD_H_
 
 #include <vector>
-#include <utility>
-#include <string>
 #include <memory>
-#include <unordered_map>
+#include "framework/ge_runtime/task_info.h"
+#include "kernel/kernel.h"
 
-#include "pybind11/pybind11.h"
-
-#include "pynative/base.h"
-#include "utils/context/ms_context.h"
-
+using TaskInfoPtr = std::shared_ptr<ge::model_runner::TaskInfo>;
 namespace mindspore {
-namespace pynative {
-
-namespace py = pybind11;
-
-py::object RunOpInVM(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* status);
-
-py::tuple RunOp(const py::args& args);
-}  // namespace pynative
+namespace kernel {
+class AscendKernelMod : public KernelMod {
+ public:
+  virtual std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                           const std::vector<AddressPtr> &, uint32_t) = 0;
+};
+}  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
+#endif  // MINDSPORE_CCSRC_KERNEL_ASCEND_KERNEL_MOD_H_

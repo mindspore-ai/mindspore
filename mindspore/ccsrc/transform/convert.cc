@@ -373,24 +373,6 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
 }
 
 // ---------------implement of DfGraphConvertor-------------
-std::string GetCNodeFuncName(const CNodePtr cnode) {
-  if (cnode->inputs().empty()) {
-    return "";
-  }
-
-  AnfNodePtr valuenode = cnode->input(0);
-  if (valuenode->isa<ValueNode>()) {
-    auto value = GetValueNode(valuenode);
-    // check whether the valuenode is primitive
-    if (value->isa<Primitive>()) {
-      return value->cast<PrimitivePtr>()->name();
-    } else {
-      return value->ToString();
-    }
-  }
-  return "";
-}
-
 PrimType GetCNodeFuncType(const CNodePtr cnode) {
   if (cnode->inputs().empty()) {
     return kPrimTypeUnknown;

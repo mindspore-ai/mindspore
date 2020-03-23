@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
-#define MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
+#ifndef MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_GE_H_
+#define MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_GE_H_
 
 #include <vector>
 #include <utility>
@@ -23,20 +23,24 @@
 #include <memory>
 #include <unordered_map>
 
-#include "pybind11/pybind11.h"
-
 #include "pynative/base.h"
+#include "transform/convert.h"
+#include "transform/graph_runner.h"
+#include "transform/types.h"
 #include "utils/context/ms_context.h"
+
+using GeTensor = ge::Tensor;
+using GeTensorPtr = std::shared_ptr<GeTensor>;
+using GeGraph = ge::Graph;
+using GeGraphPtr = std::shared_ptr<GeGraph>;
 
 namespace mindspore {
 namespace pynative {
+bool BuildSingleOpGraph(const OpExecInfoPtr& op_exec_info, const std::vector<GeTensorPtr>& inputs,
+                        const std::unordered_map<std::string, ValuePtr>& attrs, const GeGraphPtr& graph);
 
-namespace py = pybind11;
-
-py::object RunOpInVM(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* status);
-
-py::tuple RunOp(const py::args& args);
+py::object RunOpInGE(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* status);
 }  // namespace pynative
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_H_
+#endif  // MINDSPORE_CCSRC_PYNATIVE_PYNATIVE_EXECUTE_GE_H_
