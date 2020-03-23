@@ -1219,14 +1219,14 @@ class ApplyMomentum(PrimitiveWithInfer):
         gradient_scale (float): The scale of the gradient. Default: 1.0.
 
     Inputs:
-        - **variable** (Tensor) - Weights to be update.
+        - **variable** (Tensor) - Weights to be updated.
         - **accumulation** (Tensor) - Accumulated gradient value by moment weight.
         - **learning_rate** (float) - Learning rate.
         - **gradient** (Tensor) - Gradients.
         - **momentum** (float) - Momentum.
 
     Outputs:
-        Tensor, parameters to be update.
+        Tensor, parameters to be updated.
 
     Examples:
         >>> net = ResNet50()
@@ -1318,15 +1318,15 @@ class SGD(PrimitiveWithInfer):
         nesterov (bool): Enable Nesterov momentum. Default: False.
 
     Inputs:
-        - **parameters** (Tensor) - Parameters to be update.
+        - **parameters** (Tensor) - Parameters to be updated.
         - **gradient** (Tensor) - Gradients.
         - **learning_rate** (Tensor) - Learning rate. e.g. Tensor(0.1, mindspore.float32).
-        - **accum** (Tensor) - Accum(velocity) to be update.
+        - **accum** (Tensor) - Accum(velocity) to be updated.
         - **momentum** (Tensor) - Momentum. e.g. Tensor(0.1, mindspore.float32).
         - **stat** (Tensor) - States to be updated with the same shape as gradient.
 
     Outputs:
-        Tensor, parameters to be update.
+        Tensor, parameters to be updated.
     """
 
     @prim_attr_register
@@ -2141,7 +2141,7 @@ class Adam(PrimitiveWithInfer):
             If False, updates the gradients without using NAG. Default: False.
 
     Inputs:
-        - **var** (Tensor) - Weights to be update.
+        - **var** (Tensor) - Weights to be updated.
         - **m** (Tensor) - The 1st moment vector in the updating formula.
         - **v** (Tensor) - the 2nd moment vector in the updating formula.
         - **beta1_power** (float) - :math:`beta_1^t` in the updating formula.
@@ -2251,8 +2251,8 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         use_locking (bool): If True, updating of the var and accum tensors will be protected. Default: False.
 
     Inputs:
-        - **var** (Tensor) - Variable to be update. The type must be float32.
-        - **accum** (Tensor) - Accum to be update. The shape must be the same as `var`'s shape,
+        - **var** (Tensor) - Variable to be updated. The type must be float32.
+        - **accum** (Tensor) - Accum to be updated. The shape must be the same as `var`'s shape,
           the type must be float32.
         - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape
           except first dimension, the type must be float32.
@@ -2372,7 +2372,7 @@ class LARSUpdate(PrimitiveWithInfer):
         use_clip (bool): Whether to use clip operation for calculating the local learning rate. Default: False.
 
     Inputs:
-        - **weight** (Tensor) - The weight to be update.
+        - **weight** (Tensor) - The weight to be updated.
         - **gradient** (Tensor) - The gradient of weight, which has the same shape and dtype with weight.
         - **norm_weight** (Tensor) - A scalar tensor, representing the square sum of weight.
         - **norm_gradient** (Tensor) - A scalar tensor, representing the square sum of gradient.
