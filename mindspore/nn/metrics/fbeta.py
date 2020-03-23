@@ -26,8 +26,8 @@ class Fbeta(Metric):
     Fbeta score is a weighted mean of precison and recall.
 
     .. math::
-        F_\beta=\frac{(1+\beta^2) \cdot true positive}
-                {(1+\beta^2) \cdot true positive +\beta^2 \cdot false negative + false positive}
+        F_\beta=\frac{(1+\beta^2) \cdot true\_positive}
+                {(1+\beta^2) \cdot true\_positive +\beta^2 \cdot false\_negative + false\_positive}
 
     Args:
         beta (float): The weight of precision.
@@ -123,7 +123,7 @@ class F1(Fbeta):
     Refer to class `Fbeta` for more details.
 
     .. math::
-        F_\beta=\frac{2\cdot true positive}{2\cdot true positive + false negative + false positive}
+        F_\beta=\frac{2\cdot true\_positive}{2\cdot true\_positive + false\_negative + false\_positive}
 
     Examples:
         >>> x = mindspore.Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))

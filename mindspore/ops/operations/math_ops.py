@@ -1319,7 +1319,6 @@ class EqualCount(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_shape(self, x_shape, w_shape):
-        """Infer shape."""
         output_shape = (1,)
         return output_shape
 
