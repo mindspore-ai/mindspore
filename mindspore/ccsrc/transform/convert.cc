@@ -96,6 +96,7 @@ const char kNameConfusionMatrix[] = "ConfusionMatrix";
 const char kNameResizeNearestNeighborD[] = "ResizeNearestNeighbor";
 const char kNameResizeNearestNeighborGrad[] = "ResizeNearestNeighborGrad";
 const char kNameApplyAdam[] = "Adam";
+const char kNameExtractImagePatches[] = "ExtractImagePatches";
 const char kNameReLU6[] = "ReLU6";
 const char kNameReLU6Grad[] = "ReLU6Grad";
 const char kNameElu[] = "Elu";
@@ -214,6 +215,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameMaxPoolGrad), ADPT_DESC(MaxPoolGrad)},
     {string(kNameAvgPoolGrad), ADPT_DESC(AvgPoolGrad)},
     {string(kNameMaxPoolGradWithArgmax), ADPT_DESC(MaxPoolGradWithArgmax)},
+    {string(kNameExtractImagePatches), ADPT_DESC(ExtractImagePatches)},
     {prim::kPrimAssign->name(), ADPT_DESC(Assign)},
     {prim::kPrimStateSetItem->name(), ADPT_DESC(Assign)},
     {prim::kPrimReluGrad->name(), ADPT_DESC(ReluGrad)},

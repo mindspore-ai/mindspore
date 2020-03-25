@@ -2546,6 +2546,7 @@ class ApplyFtrl(PrimitiveWithInfer):
     Outputs:
         Tensor, representing the updated var.
     """
+
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'lr', 'l1', 'l2', 'lr_power'],
@@ -2566,8 +2567,99 @@ class ApplyFtrl(PrimitiveWithInfer):
         args = {'var_type': var_type, 'accum_type': accum_type, 'linear_type': linear_type, 'grad_type': grad_type}
         validator.check_type_same(args, (mstype.float32, mstype.float16))
 
-        validator.check_typename("lr", lr_type,[mstype.float16, mstype.float32])
-        validator.check_typename("l1", l1_type,[mstype.float16, mstype.float32])
-        validator.check_typename("l2", l2_type,[mstype.float16, mstype.float32])
-        validator.check_typename("lr_power", lr_power_type,[mstype.float16, mstype.float32])
+        validator.check_typename("lr", lr_type, [mstype.float16, mstype.float32])
+        validator.check_typename("l1", l1_type, [mstype.float16, mstype.float32])
+        validator.check_typename("l2", l2_type, [mstype.float16, mstype.float32])
+        validator.check_typename("lr_power", lr_power_type, [mstype.float16, mstype.float32])
         return var_type
+
+
+class ExtractImagePatches(PrimitiveWithInfer):
+    """
+    Extract patches from images.
+    The input tensor must be a 4-D tensor and the data format is NHWC.
+
+    Args:
+        ksizes (Union[tuple[int], list[int]]): The size of sliding window, should be a tuple or list of int,
+            and the format is [1, ksize_row, ksize_col, 1].
+        strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
+            should be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
+        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dim
+            pixel positions, should be a tuple or list of int, and the format is [1, rate_row, rate_col, 1].
+        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
+            not case sensitive. Default: "valid".
+
+            - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
+
+            - valid: Means that the patch area taken must be completely contained in the original image.
+
+    Inputs:
+        - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_row, in_col, in_depth] and
+          data type is int8, float16, uint8.
+
+    Outputs:
+        Tensor, a 4-D tensor whose data type is same as 'input_x',
+        and the shape is [out_batch, out_row, out_col, out_depth], the out_batch is same as the in_batch.
+    """
+
+    @prim_attr_register
+    def __init__(self, ksizes, strides, rates, padding="valid"):
+        """init"""
+        validator.check_type("ksizes", ksizes, [tuple, list])
+        validator.check_type("strides", strides, [tuple, list])
+        validator.check_type("rates", rates, [tuple, list])
+        self.padding = validator.check_string('padding', padding.upper(), ['VALID', 'SAME'])
+        self.add_prim_attr("padding", self.padding)
+
+        if len(ksizes) != 4 or ksizes[0] != 1 or ksizes[3] != 1:
+            raise ValueError("The format of ksizes should be [1, ksize_row, ksize_col, 1], "
+                             f"but got {ksizes}.")
+        if not isinstance(ksizes[1], int) or not isinstance(ksizes[2], int) or \
+                ksizes[1] < 1 or ksizes[2] < 1:
+            raise ValueError("The ksize_row and ksize_col in ksizes should be an positive integer number, "
+                             f"but got ksize_row is {ksizes[1]}, ksize_col is {ksizes[2]}")
+
+        if len(strides) != 4 or strides[0] != 1 or strides[3] != 1:
+            raise ValueError("The format of strides should be [1, stride_row, stride_col, 1], "
+                             f"but got {strides}.")
+        if not isinstance(strides[1], int) or not isinstance(strides[2], int) or \
+                strides[1] < 1 or strides[2] < 1:
+            raise ValueError("The stride_row and stride_col in strides should be an positive integer number, "
+                             f"but got stride_row is {strides[1]}, stride_col is {strides[2]}")
+
+        if len(rates) != 4 or rates[0] != 1 or rates[3] != 1:
+            raise ValueError("The format of rates should be [1, rate_row, rate_col, 1], "
+                             f"but got {rates}.")
+        if not isinstance(rates[1], int) or not isinstance(rates[2], int) or \
+                rates[1] < 1 or rates[2] < 1:
+            raise ValueError("The rate_row and rate_col in rates should be an positive integer number, "
+                             f"but got rate_row is {rates[1]}, rate_col is {rates[2]}")
+
+    def infer_shape(self, input_x):
+        in_batch, in_row, in_col, in_depth = input_x
+        _, ksize_row, ksize_col, _ = self.ksizes
+        _, stride_row, stride_col, _ = self.strides
+        _, rate_row, rate_col, _ = self.rates
+        if len(input_x) != 4:
+            raise ValueError("The `input_x` should be a 4-D tensor, "
+                             f"but got a {len(input_x)}-D tensor whose shape is {input_x}")
+
+        out_batch = in_batch
+        out_depth = ksize_row * ksize_col * in_depth
+
+        if self.padding == "VALID":
+            out_row = \
+                (in_row - (ksize_row + (ksize_row - 1) * (rate_row - 1))) // stride_row + 1
+            out_col = \
+                (in_col - (ksize_col + (ksize_col - 1) * (rate_col - 1))) // stride_col + 1
+        else:
+            out_row = (in_row - 1) // stride_row + 1
+            out_col = (in_col - 1) // stride_col + 1
+
+        out_shape = [out_batch, out_row, out_col, out_depth]
+        return out_shape
+
+    def infer_dtype(self, input_x):
+        validator.check_subclass("input_x", input_x, mstype.tensor)
+        validator.check_typename("input_x_dtype", input_x, (mstype.int8, mstype.float16, mstype.float32))
+        return input_x

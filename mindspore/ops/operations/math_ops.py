@@ -1475,7 +1475,7 @@ class LogicalNot(PrimitiveWithInfer):
     Computes the "logical NOT" of a tensor element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor whose dtype is bool
+        - **input_x** (Tensor) - The input tensor whose dtype is bool.
 
     Outputs:
         Tensor, the shape is same as the `input_x`, and the dtype is bool.

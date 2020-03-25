@@ -439,3 +439,51 @@ class Pad(Cell):
         else:
             x = self.pad(x, self.paddings)
         return x
+
+
+class Unfold(Cell):
+    """
+    Extract patches from images.
+    The input tensor must be a 4-D tensor and the data format is NCHW.
+
+    Args:
+        ksizes (Union[tuple[int], list[int]]): The size of sliding window, should be a tuple or list of int,
+            and the format is [1, ksize_row, ksize_col, 1].
+        strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
+            should be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
+        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dim
+            pixel positions, should be a tuple or list of int, and the format is [1, rate_row, rate_col, 1].
+        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
+            not case sensitive. Default: "valid".
+
+            - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
+
+            - valid: Means that the patch area taken must be completely contained in the original image.
+
+    Inputs:
+        - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_depth, in_row, in_col] and
+          data type is int8, float16, uint8.
+
+    Outputs:
+        Tensor, a 4-D tensor whose data type is same as 'input_x',
+        and the shape is [out_batch, out_depth, out_row, out_col], the out_batch is same as the in_batch.
+
+    Examples:
+        >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 1, 1, 1], rates=[1, 1, 1, 1])
+        >>> image = Tensor(np.ones([1, 1, 3, 3]), dtype=mstype.float16)
+        >>> net(image)
+        Tensor ([[[[1, 1] [1, 1]] [[1, 1], [1, 1]] [[1, 1] [1, 1]], [[1, 1], [1, 1]]]],
+                shape=(1, 4, 2, 2), dtype=mstype.float16)
+    """
+    def __init__(self, ksizes, strides, rates, padding="valid"):
+        super(Unfold, self).__init__()
+        self.extract_image_patches = P.ExtractImagePatches(ksizes, strides, rates, padding)
+        self.transpose = P.Transpose()
+        self.format_NHWC = (0, 2, 3, 1)
+        self.format_NCHW = (0, 3, 1, 2)
+
+    def construct(self, input_x):
+        x_transpose = self.transpose(input_x, self.format_NHWC)
+        ret = self.extract_image_patches(x_transpose)
+        ret_transpose = self.transpose(ret, self.format_NCHW)
+        return ret_transpose

@@ -322,18 +322,12 @@ class OpAdapter : public BaseOpAdapter {
 
   Status UpdateSingleOutputDesc(const OperatorPtr& op, const abstract::BaseShapePtr& shp, const TypePtr& type) {
     MS_EXCEPTION_IF_NULL(type);
-    TypeId me_type = type->type_id();
-    if (kObjectTypeTensorType == me_type) {
-      me_type = dyn_cast<TensorType>(type)->element()->type_id();
+    std::string format = "NCHW";
+    if (op->GetOpType() == kExtractImagePatchesOpName) {
+      format = "NHWC";
     }
 
-    std::vector<int> shape;
-    auto normal_shape_ptr = dyn_cast<abstract::Shape>(shp);
-    if (nullptr != normal_shape_ptr) {
-      shape = normal_shape_ptr->shape();
-    }
-
-    auto desc = TransformUtil::GetGeTensorDesc(shape, me_type, "NCHW");
+    auto desc = CreateOutputDesc(dyn_cast<abstract::Shape>(shp), type, format);
     if (desc == nullptr) {
       MS_LOG(ERROR) << "Update output descriptor failed!";
       return FAILED;
@@ -410,14 +404,15 @@ class OpAdapter : public BaseOpAdapter {
       MS_LOG(ERROR) << "output_map is not equal tuple_shape size";
       return FAILED;
     }
+    std::string format = "NCHW";
+    if (op->GetOpType() == kTopKOpName) {
+      format = "NHWC";
+    }
     for (size_t i = 0; i < tuple_shp->shape().size(); ++i) {
       auto tuple_type = dyn_cast<Tuple>(type);
       MS_EXCEPTION_IF_NULL(tuple_type);
       TypePtr type_elem = tuple_type->elements()[i];
-      std::string format = "NCHW";
-      if (op->GetOpType() == kTopKOpName) {
-        format = "NHWC";
-      }
+
       auto desc = CreateOutputDesc(dyn_cast<abstract::Shape>(tuple_shp->shape()[i]), type_elem, format);
       if (desc == nullptr) {
         MS_LOG(ERROR) << "Create output descriptor failed!";
@@ -475,6 +470,9 @@ class OpAdapter : public BaseOpAdapter {
         auto desc = CreateNodeDesc(inputs[i]);
         if (desc == nullptr) {
           continue;
+        }
+        if (op->GetOpType() == kExtractImagePatchesOpName) {
+          desc->SetFormat(ge::Format::FORMAT_NHWC);
         }
         it->second.update_input_desc(op, *desc);
       }
