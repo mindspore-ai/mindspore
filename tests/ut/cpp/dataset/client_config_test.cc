@@ -1,0 +1,120 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include <chrono>
+#include <cstdlib>
+#include <cstring>
+#include <functional>
+#include <iostream>
+#include <memory>
+#include <string>
+#include "dataset/core/client.h"
+#include "gtest/gtest.h"
+#include "dataset/core/global_context.h"
+#include "dataset/util/status.h"
+#include "dataset/core/client.h"
+#include "common/common.h"
+#include "gtest/gtest.h"
+#include "utils/log_adapter.h"
+#include <memory>
+#include <vector>
+#include <iostream>
+
+using namespace mindspore::dataset;
+using mindspore::MsLogLevel::INFO;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::LogStream;
+
+ class MindDataTestClientConfig : public UT::DatasetOpTesting {
+ protected:
+};
+
+TEST_F(MindDataTestClientConfig, TestClientConfig1) {
+  std::shared_ptr<ConfigManager> my_conf = GlobalContext::config_manager();
+
+  ASSERT_EQ(my_conf->num_parallel_workers(), kCfgParallelWorkers);
+  ASSERT_EQ(my_conf->rows_per_buffer(), kCfgRowsPerBuffer);
+  ASSERT_EQ(my_conf->worker_connector_size(), kCfgWorkerConnectorSize);
+  ASSERT_EQ(my_conf->op_connector_size(), kCfgOpConnectorSize);
+  ASSERT_EQ(my_conf->seed(), kCfgDefaultSeed);
+
+  my_conf->set_num_parallel_workers(2);
+  my_conf->set_rows_per_buffer(1);
+  my_conf->set_worker_connector_size(3);
+  my_conf->set_op_connector_size(4);
+  my_conf->set_seed(5);
+
+
+  ASSERT_EQ(my_conf->num_parallel_workers(), 2);
+  ASSERT_EQ(my_conf->rows_per_buffer(), 1);
+  ASSERT_EQ(my_conf->worker_connector_size(), 3);
+  ASSERT_EQ(my_conf->op_connector_size(), 4);
+  ASSERT_EQ(my_conf->seed(), 5);
+
+  std::string file = datasets_root_path_ + "/declient.cfg";
+  ASSERT_TRUE(my_conf->LoadFile(file));
+
+  ASSERT_EQ(my_conf->num_parallel_workers(), kCfgParallelWorkers);
+  ASSERT_EQ(my_conf->rows_per_buffer(), kCfgRowsPerBuffer);
+  ASSERT_EQ(my_conf->worker_connector_size(), kCfgWorkerConnectorSize);
+  ASSERT_EQ(my_conf->op_connector_size(), kCfgOpConnectorSize);
+  ASSERT_EQ(my_conf->seed(), kCfgDefaultSeed);
+
+}
+
+TEST_F(MindDataTestClientConfig, TestClientConfig2) {
+  std::shared_ptr<ConfigManager> my_conf = GlobalContext::config_manager();
+
+  my_conf->set_num_parallel_workers(16);
+
+  Status rc;
+
+  // Start with an empty execution tree
+  auto my_tree = std::make_shared<ExecutionTree>();
+
+  // Test info:
+  // Dataset from testDataset1 has 10 rows, 2 columns.
+  // RowsPerBuffer buffer setting of 2 divides evenly into total rows.
+  std::string dataset_path;
+  dataset_path = datasets_root_path_ + "/testDataset1";
+  std::shared_ptr<StorageOp> my_storage_op;
+  StorageOp::Builder builder;
+  builder.SetDatasetFilesDir(dataset_path);
+  rc = builder.Build(&my_storage_op);
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(my_storage_op->num_workers(),16);
+  my_tree->AssociateNode(my_storage_op);
+
+  // Set children/root layout.
+  my_tree->AssignRoot(my_storage_op);
+
+  my_tree->Prepare();
+  my_tree->Launch();
+
+  // Start the loop of reading tensors from our pipeline
+  DatasetIterator di(my_tree);
+  TensorRow tensor_list;
+  rc = di.FetchNextTensorRow(&tensor_list);
+  ASSERT_TRUE(rc.IsOk());
+
+  int row_count = 0;
+  while (!tensor_list.empty()) {
+    rc = di.FetchNextTensorRow(&tensor_list);
+    ASSERT_TRUE(rc.IsOk());
+    row_count++;
+  }
+  ASSERT_EQ(row_count, 10); // Should be 10 rows fetched
+  ASSERT_EQ(my_storage_op->num_workers(),16);
+}

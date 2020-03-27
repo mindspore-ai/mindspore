@@ -1,0 +1,14 @@
+# git ignore file for predict
+
+#flatbuf generated file
+schema/*_generated.h
+schema/inner/*_generated.h
+module/tvm_module/lite/include/*_generated.h
+
+#tvm fbs files
+module/tvm_module/lite/tune/convert/*.fbs
+
+#doTest dir
+test/doTest/
+
+

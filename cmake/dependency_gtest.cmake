@@ -1,0 +1,36 @@
+# googletest library
+#
+#
+# GTest_LIBRARY
+#
+
+if (NOT TARGET gtest)
+  set(BUILD_TESTING OFF CACHE BOOL "Disable glog test")
+
+  set(_ms_tmp_CMAKE_POSITION_INDEPENDENT_CODE ${CMAKE_POSITION_INDEPENDENT_CODE})
+  set(_ms_tmp_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  set(_ms_tmp_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+  set(_ms_tmp_CMAKE_MACOSX_RPATH ${CMAKE_MACOSX_RPATH})
+
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+  set(BUILD_SHARED_LIBS ON)
+  set(CMAKE_MACOSX_RPATH TRUE)
+  set(CMAKE_CXX_FLAGS "${SECURE_CXX_FLAGS}")
+
+  if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0" AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64" AND SYSTEM_TYPE MATCHES "euleros")
+    # -D_GLIBCXX_USE_CXX11_ABI=0 added for the ABI incompatible for libtsdclient.so
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+  endif()
+
+  add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../third_party/googletest ${CMAKE_BINARY_DIR}/googletest)
+
+  set(CMAKE_POSITION_INDEPENDENT_CODE ${_ms_tmp_CMAKE_POSITION_INDEPENDENT_CODE})
+  set(CMAKE_CXX_FLAGS ${_ms_tmp_CMAKE_CXX_FLAGS})
+  set(BUILD_SHARED_LIBS ${_ms_tmp_BUILD_SHARED_LIBS})
+  set(CMAKE_MACOSX_RPATH ${_ms_tmp_CMAKE_MACOSX_RPATH})
+endif()
+
+include_directories(${CMAKE_CURRENT_LIST_DIR}/../third_party/googletest/googletest/include)
+
+set(GTEST_LIBRARY gtest)
+

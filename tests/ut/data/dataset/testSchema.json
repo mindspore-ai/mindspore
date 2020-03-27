@@ -1,0 +1,14 @@
+{
+  "datasetType": "TF",
+  "columns": {
+    "image": {
+      "type": "uint8",
+      "rank": 3,
+      "shape": [3, 4, 2]
+    },
+    "label" : {
+      "type": "int32",
+      "rank": 1
+    }
+  }
+}

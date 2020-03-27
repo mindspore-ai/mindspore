@@ -1,0 +1,17 @@
+{
+  "datasetType": "TF",
+  "numRows": 10,
+  "columns": {
+    "image": {
+      "type": "uint8",
+      "rank": 3,
+      "shape": [3, 4, 2],
+      "t_impl": "cvmat"
+    },
+    "label" : {
+      "type": "int64",
+      "rank": 1,
+      "t_impl": "flex"        
+    }
+  }
+}

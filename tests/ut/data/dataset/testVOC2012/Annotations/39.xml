@@ -1,0 +1,27 @@
+<annotation>
+	<folder>VOC2012</folder>
+	<filename>39.jpg</filename>
+	<source>
+		<database>simulate VOC2007 Database</database>
+		<annotation>simulate VOC2007</annotation>
+		<image>flickr</image>
+	</source>
+	<size>
+		<width>500</width>
+		<height>375</height>
+		<depth>3</depth>
+	</size>
+	<segmented>1</segmented>
+	<object>
+		<name>dog</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>11</xmin>
+			<ymin>72</ymin>
+			<xmax>243</xmax>
+			<ymax>268</ymax>
+		</bndbox>
+	</object>
+</annotation>

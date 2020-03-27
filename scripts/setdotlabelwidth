@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+# Copyright 2020 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+import sys
+import math
+
+MIN_CHARS_PER_ROW = 20      # minimal number of chars on one line
+COLS_TO_ROWS_RATIO = 4      # ratio of # columns to # rows (unit is char)
+MAX_LABEL_LENGTH = 1000     # maximal number of chars of a label
+
+
+# for specified number of chars, calculate a suitable number for how many chars per row
+# Num Total Chars   : n
+# Num Chars Per Row : m
+# Num Rows          : k
+# (k - 1) * m < n <= k * m
+# suppose: m / k = u
+# ==> sqrt(u * n) <= m < u / 2 + sqrt(u * n + u * u / 4)
+#     m = max(20, m)
+# parameters:
+# @total_chars  number of total chars
+# @ratio        ratio of # columns to # rows (unit is char)
+def calc_num_chars_per_row(total_chars, ratio):
+    chars_per_row = math.ceil(math.sqrt(total_chars * ratio))
+    return max(MIN_CHARS_PER_ROW, chars_per_row)
+
+
+def process_label_text(text):
+    label_len = min(len(text), MAX_LABEL_LENGTH)
+    chars_per_row = calc_num_chars_per_row(label_len, COLS_TO_ROWS_RATIO)
+    if label_len <= MIN_CHARS_PER_ROW:
+        return text
+    beg_idx = 0
+    texts = []
+    while beg_idx < label_len:
+        end_idx = beg_idx + chars_per_row
+        if end_idx >= label_len:
+            texts.append(text[beg_idx:label_len])
+        else:
+            texts.append(text[beg_idx:end_idx])
+        beg_idx = end_idx
+    return "\\n".join(texts)
+
+
+# insert '\n' to labels which are too long
+def process_file(f):
+    line_text = f.readline()
+    beg_idx = -1    # label begin index, index of 'label="'
+    end_idx = -1    # label end index, index of '"'
+    label_text = ""
+    label_prefix = ""
+    label_postfix = ""
+    while line_text:
+        line_text = line_text.rstrip()
+
+        if beg_idx < 0:
+            beg_idx = line_text.find('label="')
+            if beg_idx >= 0:
+                end_idx = line_text.find('"', beg_idx + len('label="'))
+                if end_idx >= 0:    # the full label text is on one line
+                    label = line_text[beg_idx + len('label="'):end_idx]
+                    print('%slabel="%s"%s' % (line_text[0:beg_idx], process_label_text(label), line_text[end_idx + 1:]))
+                    beg_idx = -1    # reset to initial conditions
+                else:               # the label text is distributed on multiple lines
+                    label_prefix = line_text[0:beg_idx]
+                    label_text = line_text[beg_idx + len('label="'):]
+            else:
+                print(line_text)
+        else:
+            end_idx = line_text.find('"')
+            if end_idx >= 0:
+                label_text = label_text + line_text[0:end_idx]
+                label_postfix = line_text[end_idx + 1:]
+                print('%slabel="%s"%s' % (label_prefix, process_label_text(label_text), label_postfix))
+                beg_idx = -1  # reset to initial conditions
+            else:
+                label_text += line_text
+
+        # print(f'{len(line_text)} - {line_text}')
+        line_text = f.readline()
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--help":
+        print("Usage: %s < dotfile | dot -Tpng -o filename.png" % sys.argv[0])
+        sys.exit()
+
+    # read text from stdin
+    process_file(sys.stdin)

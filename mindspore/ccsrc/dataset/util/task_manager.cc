@@ -1,0 +1,327 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include <algorithm>
+#include <functional>
+#include <set>
+#include "./securec.h"
+#include "dataset/util/task_manager.h"
+
+namespace mindspore {
+namespace dataset {
+// This takes the same parameter as Task constructor.
+Status TaskManager::CreateAsyncTask(const std::string &my_name, const std::function<Status()> &f, TaskGroup *vg,
+                                    Task **task) {
+  // We need to block destructor coming otherwise we will deadlock. We will grab the
+  // stateLock in shared allowing CreateAsyncTask to run concurrently.
+  SharedLock stateLck(&state_lock_);
+  // Now double check the state
+  if (ServiceState() == STATE::kStopInProg || ServiceState() == STATE::kStopped) {
+    return Status(StatusCode::kInterrupted, __LINE__, __FILE__, "TaskManager is shutting down");
+  }
+  RETURN_IF_NOT_OK(GetFreeTask(my_name, f, task));
+  if (vg == nullptr) {
+    RETURN_STATUS_UNEXPECTED("TaskGroup is null");
+  }
+  // Previously there is a timing hole where the thread is spawn but hit error immediately before we can set
+  // the TaskGroup pointer. We will do the set here before we call run(). The run() will do the registration.
+  (*task)->set_task_group(vg);
+  // Link to the master lru list.
+  {
+    UniqueLock lck(&lru_lock_);
+    lru_.Append(*task);
+  }
+  // Link to the group list as well before we spawn.
+  {
+    UniqueLock lck(&vg->rw_lock_);
+    vg->grp_list_.Append(*task);
+  }
+  // Track all the TaskGroup. Used for control-c
+  {
+    LockGuard lck(&tg_lock_);
+    this->grp_list_.insert(vg);
+  }
+  (*task)->wp_.Register(vg);
+  RETURN_IF_NOT_OK((*task)->Run());
+  // Wait for the thread to initialize successfully.
+  RETURN_IF_NOT_OK((*task)->Wait());
+  return Status::OK();
+}
+
+Status TaskManager::join_all() {
+  Status rc;
+  Status rc2;
+  SharedLock lck(&lru_lock_);
+  for (Task &tk : lru_) {
+    rc = tk.Join();
+    if (rc.IsError()) {
+      rc2 = rc;
+    }
+  }
+  return rc2;
+}
+
+void TaskManager::interrupt_all() noexcept {
+  global_interrupt_ = 1;
+  LockGuard lck(&tg_lock_);
+  for (TaskGroup *vg : grp_list_) {
+    auto svc = vg->GetIntrpService();
+    if (svc) {
+      // Stop the interrupt service. No new request is accepted.
+      svc->ServiceStop();
+      svc->InterruptAll();
+    }
+  }
+  (void)master_->Interrupt();
+}
+
+Task *TaskManager::FindMe() { return gMyTask; }
+
+TaskManager::TaskManager() try : global_interrupt_(0),
+                                 lru_(&Task::node),
+                                 free_lst_(&Task::free),
+                                 watchdog_grp_(nullptr),
+                                 watchdog_(nullptr) {
+  std::shared_ptr<MemoryPool> mp = Services::GetInstance().GetServiceMemPool();
+  Allocator<Task> alloc(mp);
+  // Create a dummy Task for the master thread (this thread)
+  master_ = std::allocate_shared<Task>(alloc, "master", []() -> Status { return Status::OK(); });
+  master_->id_ = this_thread::get_id();
+  master_->running_ = true;
+  master_->is_master_ = true;
+  gMyTask = master_.get();
+  // Initialize the semaphore for the watchdog
+  errno_t rc = sem_init(&sem_, 0, 0);
+  if (rc == -1) {
+    MS_LOG(INFO) << "Unable to initialize a semaphore. Errno = " << rc << ".";
+    std::terminate();
+  }
+} catch (const std::exception &e) {
+  MS_LOG(ERROR) << "MindData initialization failed: " << e.what() << ".";
+  std::terminate();
+}
+
+TaskManager::~TaskManager() {
+  if (watchdog_) {
+    WakeUpWatchDog();
+    watchdog_->thrd_.join();
+    // watchdog_grp_ and watchdog_ pointers come from Services::GetInstance().GetServiceMemPool() which we will free it
+    // on shutdown. So no need to free these pointers one by one.
+    watchdog_grp_ = nullptr;
+    watchdog_ = nullptr;
+  }
+  (void)sem_destroy(&sem_);
+}
+
+Status TaskManager::DoServiceStart() {
+  MS_LOG(INFO) << "Starting Task Manager.";
+  // Create a watchdog for control-c
+  std::shared_ptr<MemoryPool> mp = Services::GetInstance().GetServiceMemPool();
+  // A dummy group just for the watchdog. We aren't really using it. But most code assumes a thread must
+  // belong to a group.
+  auto f = std::bind(&TaskManager::WatchDog, this);
+  Status rc;
+  watchdog_grp_ = new (&rc, mp) TaskGroup();
+  RETURN_IF_NOT_OK(rc);
+  rc = watchdog_grp_->CreateAsyncTask("Watchdog", f, &watchdog_);
+  if (rc.IsError()) {
+    ::operator delete(watchdog_grp_, mp);
+    watchdog_grp_ = nullptr;
+    return rc;
+  }
+  grp_list_.erase(watchdog_grp_);
+  lru_.Remove(watchdog_);
+  return Status::OK();
+}
+
+Status TaskManager::DoServiceStop() {
+  WakeUpWatchDog();
+  interrupt_all();
+  return Status::OK();
+}
+
+Status TaskManager::WatchDog() {
+  TaskManager::FindMe()->Post();
+  errno_t err = sem_wait(&sem_);
+  if (err == -1) {
+    RETURN_STATUS_UNEXPECTED("Errno = " + std::to_string(errno));
+  }
+  // We are woken up by control-c and we are going to stop all threads that are running.
+  // In addition, we also want to prevent new thread from creating. This can be done
+  // easily by calling the parent function.
+  RETURN_IF_NOT_OK(ServiceStop());
+  return Status::OK();
+}
+
+// Follow the group link and interrupt other
+// Task in the same group. It is used by
+// Watchdog only.
+void TaskManager::InterruptGroup(Task &curTk) {
+  TaskGroup *vg = curTk.MyTaskGroup();
+  vg->interrupt_all();
+}
+
+void TaskManager::InterruptMaster(const Status &rc) {
+  TaskManager &tm = TaskManager::GetInstance();
+  std::shared_ptr<Task> master = tm.master_;
+  std::lock_guard<std::mutex> lck(master->mux_);
+  (void)master->Interrupt();
+  if (rc.IsError() && master->rc_.IsOk()) {
+    master->rc_ = rc;
+    master->caught_severe_exception_ = true;
+  }
+}
+
+Status TaskManager::GetMasterThreadRc() {
+  TaskManager &tm = TaskManager::GetInstance();
+  std::shared_ptr<Task> master = tm.master_;
+  Status rc = tm.master_->GetTaskErrorIfAny();
+  if (rc.IsError()) {
+    // Reset the state once we retrieve the value.
+    std::lock_guard<std::mutex> lck(master->mux_);
+    master->rc_ = Status::OK();
+    master->caught_severe_exception_ = false;
+    master->ResetIntrpState();
+  }
+  return rc;
+}
+
+void TaskManager::ReturnFreeTask(Task *p) noexcept {
+  // Take it out from lru_ if any
+  {
+    UniqueLock lck(&lru_lock_);
+    auto it = std::find(lru_.begin(), lru_.end(), *p);
+    if (it != lru_.end()) {
+      lru_.Remove(p);
+    }
+  }
+  // We need to deallocate the string resources associated with the Task class
+  // before we cache its memory for future use.
+  p->~Task();
+  // Put it back into free list
+  {
+    LockGuard lck(&free_lock_);
+    free_lst_.Append(p);
+  }
+}
+
+Status TaskManager::GetFreeTask(const std::string &my_name, const std::function<Status()> &f, Task **p) {
+  if (p == nullptr) {
+    RETURN_STATUS_UNEXPECTED("p is null");
+  }
+  Task *q = nullptr;
+  // First try the free list
+  {
+    LockGuard lck(&free_lock_);
+    if (free_lst_.count > 0) {
+      q = free_lst_.head;
+      free_lst_.Remove(q);
+    }
+  }
+  if (q) {
+    new (q) Task(my_name, f);
+  } else {
+    std::shared_ptr<MemoryPool> mp = Services::GetInstance().GetServiceMemPool();
+    Status rc;
+    q = new (&rc, mp) Task(my_name, f);
+    RETURN_IF_NOT_OK(rc);
+  }
+  *p = q;
+  return Status::OK();
+}
+
+Status TaskGroup::CreateAsyncTask(const std::string &my_name, const std::function<Status()> &f, Task **ppTask) {
+  auto pMytask = TaskManager::FindMe();
+  // We need to block ~TaskGroup coming otherwise we will deadlock. We will grab the
+  // stateLock in shared allowing CreateAsyncTask to run concurrently.
+  SharedLock state_lck(&state_lock_);
+  // Now double check the state
+  if (ServiceState() != STATE::kRunning) {
+    return Status(StatusCode::kInterrupted, __LINE__, __FILE__, "Taskgroup is shutting down");
+  }
+  TaskManager &dm = TaskManager::GetInstance();
+  Task *pTask = nullptr;
+  // If the group is already in error, early exit too.
+  // We can't hold the rc_mux_ throughout because the thread spawned by CreateAsyncTask may hit error which
+  // will try to shutdown the group and grab the rc_mux_ and we will deadlock.
+  {
+    std::unique_lock<std::mutex> rcLock(rc_mux_);
+    if (rc_.IsError()) {
+      return pMytask->IsMasterThread() ? rc_ : Status(StatusCode::kInterrupted);
+    }
+  }
+  RETURN_IF_NOT_OK(dm.CreateAsyncTask(my_name, f, this, &pTask));
+  if (ppTask) {
+    *ppTask = pTask;
+  }
+  return Status::OK();
+}
+
+void TaskGroup::interrupt_all() noexcept { (void)intrp_svc_->InterruptAll(); }
+
+Status TaskGroup::join_all() {
+  Status rc;
+  Status rc2;
+  SharedLock lck(&rw_lock_);
+  for (Task &tk : grp_list_) {
+    rc = tk.Join();
+    if (rc.IsError()) {
+      rc2 = rc;
+    }
+  }
+  return rc2;
+}
+
+Status TaskGroup::DoServiceStop() {
+  intrp_svc_->ServiceStop();
+  interrupt_all();
+  return (join_all());
+}
+
+TaskGroup::TaskGroup() : grp_list_(&Task::group), intrp_svc_(nullptr) {
+  std::shared_ptr<MemoryPool> mp = Services::GetInstance().GetServiceMemPool();
+  Allocator<IntrpService> alloc(mp);
+  intrp_svc_ = std::allocate_shared<IntrpService>(alloc);
+  (void)Service::ServiceStart();
+}
+
+TaskGroup::~TaskGroup() {
+  (void)Service::ServiceStop();
+  // The TaskGroup is going out of scope, and we can return the Task list to the free list.
+  Task *cur = grp_list_.head;
+  TaskManager &tm = TaskManager::GetInstance();
+  while (cur) {
+    Task *next = cur->group.next;
+    grp_list_.Remove(cur);
+    tm.ReturnFreeTask(cur);
+    cur = next;
+  }
+  {
+    LockGuard lck(&tm.tg_lock_);
+    (void)tm.grp_list_.erase(this);
+  }
+}
+
+Status TaskGroup::GetTaskErrorIfAny() {
+  SharedLock lck(&rw_lock_);
+  for (Task &tk : grp_list_) {
+    RETURN_IF_NOT_OK(tk.GetTaskErrorIfAny());
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<IntrpService> TaskGroup::GetIntrpService() { return intrp_svc_; }
+}  // namespace dataset
+}  // namespace mindspore

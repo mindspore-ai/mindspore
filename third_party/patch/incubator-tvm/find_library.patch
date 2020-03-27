@@ -1,0 +1,71 @@
+--- tvm/python/tvm/_ffi/base.py	2020-03-12 16:17:39.089828527 +0800
++++ tvm_new/python/tvm/_ffi/base.py	2020-03-12 16:17:16.829829558 +0800
+@@ -16,6 +16,9 @@
+ # under the License.
+ # coding: utf-8
+ # pylint: disable=invalid-name
++
++# 2019.12.30 - Modify _load_lib function.
++
+ """Base library for TVM FFI."""
+ from __future__ import absolute_import
+
+@@ -47,8 +50,18 @@ else:
+
+ 
+ def _load_lib():
+-    """Load libary by searching possible path."""
+-    lib_path = libinfo.find_lib_path()
++    """Load library by searching possible path."""
++    pwd = os.path.dirname(os.path.realpath(__file__))
++    path = os.path.realpath(pwd+"/../../../mindspore")
++    lib_path = []
++    files = os.listdir(path)
++    for f in files:
++        if f.startswith("_c_expression.") and f.endswith(".so"):
++            lib_path.append(path+"/"+f)
++            break
++    if not lib_path:
++        raise RuntimeError("mindspore library cannot find.")
++
+     lib = ctypes.CDLL(lib_path[0], ctypes.RTLD_GLOBAL)
+     # DMatrix functions
+     lib.TVMGetLastError.restype = ctypes.c_char_p
+diff -Npur tvm/topi/python/topi/cpp/impl.py tvm_new/topi/python/topi/cpp/impl.py
+--- tvm/topi/python/topi/cpp/impl.py	2020-03-12 16:17:39.129828525 +0800
++++ tvm_new/topi/python/topi/cpp/impl.py	2020-03-12 16:17:16.873829556 +0800
+@@ -14,6 +14,9 @@
+ # KIND, either express or implied.  See the License for the
+ # specific language governing permissions and limitations
+ # under the License.
++
++# 2019.12.30 - Modify _load_lib function.
++
+ """Load Lib for C++ TOPI ops and schedules"""
+ import sys
+ import os
+@@ -30,12 +33,18 @@ def _get_lib_names():
+     return ['libtvm_topi.so', 'tvm_topi.so']
+ 
+ def _load_lib():
+-    """Load libary by searching possible path."""
+-    curr_path = os.path.dirname(os.path.realpath(os.path.expanduser(__file__)))
+-    lib_search = curr_path
+-    lib_path = libinfo.find_lib_path(_get_lib_names(), lib_search, optional=True)
+-    if lib_path is None:
+-        return None, None
++    """Load library by searching possible path."""
++    pwd = os.path.dirname(os.path.realpath(__file__)) 	
++    path = os.path.realpath(pwd+"/../../../mindspore")
++    lib_path = []
++    files = os.listdir(path)
++    for f in files:
++        if f.startswith("_c_expression.") and f.endswith(".so"):
++            lib_path.append(path+"/"+f)
++            break
++    if not lib_path:
++        raise RuntimeError("mindspore library cannot find.")
++  
+     lib = ctypes.CDLL(lib_path[0], ctypes.RTLD_GLOBAL)
+     return lib, os.path.basename(lib_path[0])
+ 

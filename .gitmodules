@@ -1,0 +1,15 @@
+[submodule "third_party/flatbuffers"]
+	path = third_party/flatbuffers
+	url = https://github.com/google/flatbuffers.git
+[submodule "third_party/googletest"]
+	path = third_party/googletest
+	url = https://github.com/google/googletest.git
+[submodule "third_party/incubator-tvm"]
+	path = third_party/incubator-tvm
+	url = https://github.com/apache/incubator-tvm.git
+[submodule "third_party/protobuf"]
+	path = third_party/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "graphengine"]
+	path = graphengine
+	url = https://gitee.com/mindspore/graphengine.git

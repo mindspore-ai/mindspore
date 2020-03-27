@@ -1,0 +1,91 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "pre_activate/common/pass_manager.h"
+
+#include <unordered_set>
+#include <deque>
+#include <string>
+#include <algorithm>
+
+#include "ir/anf.h"
+#include "ir/func_graph.h"
+#include "ir/manager.h"
+#include "utils/utils.h"
+#include "utils/context/ms_context.h"
+#include "debug/anf_ir_dump.h"
+
+namespace mindspore {
+namespace opt {
+const std::vector<PassPtr> &PassManager::Passes() const { return passes_; }
+
+void PassManager::AddPass(const PassPtr &pass) {
+  if (pass != nullptr) {
+    passes_.push_back(pass);
+  }
+}
+
+bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr> &passes) const {
+  if (func_graph == nullptr) {
+    return false;
+  }
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->save_graphs_flag();
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  bool changed = false;
+  size_t num = 0;
+  for (const auto &pass : passes) {
+    if (pass != nullptr) {
+      struct timeval start_time {};
+      struct timeval end_time {};
+      (void)gettimeofday(&start_time, nullptr);
+      if (pass->Run(func_graph)) {
+        changed = true;
+      }
+      (void)gettimeofday(&end_time, nullptr);
+      const uint64_t kUSecondInSecond = 1000000;
+      uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+      cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+      MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost << " us";
+      if (save_graphs) {
+        auto dump_file_path =
+          save_graphs_path + "/" + "hwopt_" + name() + "_" + std::to_string(num) + "_" + pass->name() + ".ir";
+        DumpIR(dump_file_path, func_graph);
+      }
+      num++;
+    }
+  }
+  return changed;
+}
+
+bool PassManager::Run(const FuncGraphPtr &func_graph) const {
+  bool changed = false;
+  // run all passes
+  bool change = true;
+  while (change) {
+    change = Run(func_graph, passes_);
+    changed = change || changed;
+    if (run_only_once_) {
+      break;
+    }
+  }
+  return changed;
+}
+}  // namespace opt
+}  // namespace mindspore

@@ -1,0 +1,27 @@
+# Created by .ignore support plugin
+#
+
+# filter python
+*.pyc
+
+# filter build
+*.so
+*.o
+
+# filter coverage
+coverage/
+
+# filter report
+*.xml
+
+# filter tvm
+3rdparty/
+
+# filter build
+build/
+cmake-build-debug/
+.idea/
+TFLite_Detection_PostProcess_CI
+app_run
+output
+tvm

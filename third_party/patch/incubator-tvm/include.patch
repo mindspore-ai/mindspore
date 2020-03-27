@@ -1,0 +1,55 @@
+diff -Npur tvm/include/tvm/expr_operator.h tvm_new/include/tvm/expr_operator.h
+--- tvm/include/tvm/expr_operator.h	2019-12-28 10:11:27.369814744 +0800
++++ tvm_new/include/tvm/expr_operator.h	2019-12-28 10:11:27.209812391 +0800
+@@ -25,6 +25,11 @@
+  *   when the type is int32 or int64 for simplifying the index expressions.
+  */
+ // Acknowledgement: Most operator APIs originate from Halide.
++
++/*
++ * 2019.12.30 - Add new operator for expr.
++ */
++
+ #ifndef TVM_EXPR_OPERATOR_H_
+ #define TVM_EXPR_OPERATOR_H_
+ 
+@@ -217,6 +222,16 @@ TVM_DLL Expr operator*(Expr a, Expr b);
+  */
+ TVM_DLL Expr operator/(Expr a, Expr b);
+ /*!
++ * \brief mod operator
++ *
++ * \param a left operand
++ * \param b right operand
++ * \return The result expression.
++ * \note this function does eager constant folding for
++ *       index types(int32, int64) when possible.
++ */
++TVM_DLL Expr operator%(Expr a, Expr b);
++/*!
+  * \brief left shift operator
+  *
+  * \param a left operand
+diff -Npur tvm/include/tvm/lowered_func.h tvm_new/include/tvm/lowered_func.h
+--- tvm/include/tvm/lowered_func.h	2019-12-28 10:11:27.369814744 +0800
++++ tvm_new/include/tvm/lowered_func.h	2019-12-28 10:11:27.209812391 +0800
+@@ -22,6 +22,11 @@
+  * \brief Information about a lowered TVM function.
+  *  This data structure is final step toward codegen.
+  */
++
++/*
++ * 2019.12.30 - Add new var array for args_real.
++ */
++
+ #ifndef TVM_LOWERED_FUNC_H_
+ #define TVM_LOWERED_FUNC_H_
+ 
+@@ -74,6 +79,7 @@ class LoweredFuncNode : public ir::Funct
+    *  This function can only take pod type(int, float) and void* as arguments.
+    */
+   Array<Var> args;
++  Array<Var> args_real;
+   /*!
+    * \brief The IterVar axis of threads
+    *  Each axis need host function to specify a size.

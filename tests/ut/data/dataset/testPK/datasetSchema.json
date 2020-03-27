@@ -1,0 +1,14 @@
+{
+  "datasetType": "IMAGENET",
+  "numRows": 2,
+  "columns": {
+    "image": {
+      "type": "uint8",
+      "rank": 1
+    },
+    "label" : {
+      "type": "uint32",
+      "rank": 1
+    }
+  }
+}

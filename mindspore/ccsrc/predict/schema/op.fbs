@@ -1,0 +1,347 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+namespace mindspore.predict;
+
+enum ResizeMethod: byte {
+    UNKNOW = -1,
+    BILINEAR = 0,
+    NEAREST_NEIGHBOR = 1
+}
+
+enum DataFormatType : byte {  // todo combine with mslite.h::Format
+    UNKNOW = -1,
+    NCHW = 0,
+    NHWC = 1,
+    HWC = 2,   // for input image or resize
+    CHW = 3,   // for input image or resize
+}
+
+enum ActivationType : byte {
+    NO_ACTIVATION = 0,
+    RELU = 1,
+    SIGMOID = 2,
+    RELU6 = 3,
+    ELU = 4,
+    LEAKY_RELU = 5,
+    ABS = 6,
+    RELU1 = 7,
+    SOFTSIGN = 8,
+    SOFTPLUS = 9,
+    TANH = 10,
+    UNKNOW = 11
+}
+
+enum PoolMode : byte {
+    MAX_POOLING = 0,
+    MEAN_POOLING = 1,
+    GLOBAL_POOING = 2
+}
+
+enum EltwiseMode : byte {
+    PROD = 0,
+    SUM = 1,
+    MAXIMUM = 2
+}
+
+enum PadMode : byte {
+    NOTSET=0,
+    SAME=1,
+    VALID=2,
+    CAFFE_CEIL_NEW=4
+}
+
+enum PaddingMode : byte {
+    CONSTANT = 0,
+    REFLECT = 1,
+    SYMMETRIC = 2,
+    MODE_RESERVED = 3
+}
+
+table Pad {
+    paddingmode: PaddingMode;
+    paddings: [int];
+}
+
+table Maximum {
+    format: DataFormatType = 0;
+}
+
+table Concat {
+    axis: int;
+    n: int;
+}
+
+table SoftMax {
+    axis: [int];
+}
+
+table Activation {
+    type: ActivationType = 0;
+}
+
+table Conv2D {
+    format: DataFormatType = 0;
+    group: int;
+    channelIn: int;
+    channelOut: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool = false;
+    activationType: ActivationType = 0;
+}
+
+table FusedBatchNorm {
+    epsilon: float;   // eg. epsilon=0.001
+}
+
+table CaffeBatchNorm {
+    epsilon: float;   // eg. epsilon=0.001
+}
+
+table Squeeze {
+    axis: [int];
+}
+
+table BiasAdd {
+    axis: [int];
+}
+
+table Pooling {
+    format: DataFormatType = 0;
+    poolingMode: PoolMode;
+    windowW: int;
+    windowH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    // todo replace with padValueMode in convolution pooling and so on
+    caffeMode: bool = false;
+}
+
+table DepthwiseConv2D {
+    format: DataFormatType = 0;
+    channelIn: int;
+    channelMultiplier: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool  = false;
+    activationType: ActivationType = 0;
+}
+
+table DeDepthwiseConv2D {
+    format: DataFormatType = 0;
+    channelIn: int;
+    channelMultiplier: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool  = false;
+    activationType: ActivationType = 0;
+}
+
+
+table Resize {
+    format: DataFormatType = 0;
+    method: ResizeMethod;
+    newHeight: long;
+    newWidth: long;
+    alignCorners: bool = false;
+    preserveAspectRatio: bool = false;
+}
+
+table DetectionPostProcess {
+    format: DataFormatType = 0;
+    inputSize: int;
+    hScale: float;
+    wScale: float;
+    xScale: float;
+    yScale: float;
+    NmsIouThreshold: float;
+    NmsScoreThreshold: float;
+    MaxDetections: long;
+    DetectionsPreClass: long;
+    MaxClassesPreDetection: long;
+    NumClasses: long;
+    UseRegularNms: bool;
+}
+
+table FullConnection {
+    format: DataFormatType = 0;
+    hasBias: bool;
+}
+
+// Mean(input_tensor, axis, keep_dims)
+table Mean {
+    axis: [int];
+    keepDims: bool = false;
+}
+
+table DeConv2D {
+    format: DataFormatType = 0;
+    group: int;
+    channelIn: int;
+    channelOut: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool = false;
+    activationType: ActivationType = 0;
+}
+
+table Scale {
+    format: DataFormatType = 0;
+}
+
+table Eltwise {
+    format: DataFormatType = 0;
+    mode: EltwiseMode;
+    // todo repeat coeff (default 1)
+}
+
+table Add {
+    format: DataFormatType = 0;
+}
+
+table Slice {
+    format: DataFormatType = 0;
+    begin: [int];
+    end: [int];
+    stride: [int];
+}
+
+table Mul {
+}
+
+table Exp {
+}
+
+table Reshape {
+    format: DataFormatType = 0;
+}
+
+table Power {
+    power: float;
+    scale: float;
+    shift: float;
+}
+
+table ArgMax {
+    axis: int;
+    outMaxValue: bool;
+    topK: int;
+    keepDims: bool;
+    axisType: int;
+}
+
+table NetOutput {
+    format: DataFormatType = 0;
+}
+
+table MatMul {
+    transposeA : bool = false;
+    transposeB : bool = false;
+}
+
+table CaffePReLU {
+    channelShared : bool = false;
+}
+
+table StridedSlice {
+    beginMask: int;
+    endMask: int;
+    ellipsisMask: int;
+    newAxisMask: int;
+    shrinkAxisMask: int;
+    begin: [int];
+    end: [int];
+    stride: [int];
+    isScale: [int];
+}
+
+table Stack {
+    axis: int;
+    n: int;
+    isScale: [int];
+}
+
+table Range {
+    start: int;
+    limit: int;
+    delta: int;
+}
+
+table ExpandDims {
+    dim: int;
+}
+
+table Tile {
+    multiples: [int];
+}
+
+table Cast {
+    srcT: int;
+    dstT: int;
+}
+
+//table Split {
+//    numberSplit: int;
+//    sizeSplits: [int];
+//    splitDim: int;
+//}
+
+table CaffeCrop {
+    axis : long;
+    offsets : [long];
+}

@@ -1,0 +1,155 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package ge.model_runner;
+option cc_enable_arenas = true;
+
+message TaskDef {
+    enum TaskType {
+        CCE = 0;
+        TBE = 1;
+        AICPU = 2;
+        LABEL_SET = 3;
+        LABEL_SWITCH = 4;
+        LABEL_GOTO = 5;
+        EVENT_RECORD = 6;
+        EVENT_WAIT = 7;
+        FUSION_START = 8;
+        FUSION_END = 9;
+        HCCL = 10;
+        PROFILER_TRACE = 11;
+        MEMCPY_ASYNC = 12;
+        STREAM_SWITCH = 13;
+        STREAM_ACTIVE = 14;
+        // insert new task type here
+        REVSERVED = 23;
+    };
+
+    TaskType task_type = 1;
+    uint64 stream_id = 2;
+    oneof subclass {
+        CceTaskDef cce_task_def = 3;
+        TbeTaskDef tbe_task_def = 4;
+        AicpuTaskDef aicpu_task_def = 5;
+        LabelTaskDef label_task_def = 6;
+        EventTaskDef event_task_def = 7;
+        HcclTaskDef hccl_task_def = 8;
+        ProfilerTaskDef profiler_task_def = 9;
+        MemcpyAsyncTaskDef memcpy_async_task_def = 10;
+        StreamSwitchTaskDef stream_switch_task_def = 11;
+        StreamActiveTaskDef stream_active_task_def = 12;
+    }
+}
+
+message CceTaskDef {
+    KernelContext kernel_context = 1;
+    string stub_func = 2;
+    uint32 block_dim = 3;
+    bytes args = 4;
+    uint32 args_size = 5;
+    bytes sm_desc = 6;
+    bytes flow_table = 7;
+}
+
+message TbeTaskDef {
+    string stub_func = 1;
+    uint32 block_dim = 2;
+    bytes args = 3;
+    uint32 args_size = 4;
+    bytes sm_desc = 5;
+    bytes meta_data = 8;
+    repeated uint64 input_addrs = 9;
+    repeated uint64 output_addrs = 10;
+    repeated uint64 workspace_addrs = 11;
+}
+
+message AicpuTaskDef {
+    string op_type = 1;
+    uint32 flag = 2;
+    repeated uint32 input_types = 3;
+    repeated Shape input_shapes = 4;
+    repeated uint64 input_addrs = 5;
+    repeated uint32 output_types = 6;
+    repeated Shape output_shapes = 7;
+    repeated uint64 output_addrs = 8;
+    bytes node_def = 9;
+    bytes func_def = 10;
+}
+
+message Shape {
+    repeated uint32 shape = 1;
+}
+
+message LabelTaskDef {
+    uint32 label_id = 1;
+}
+
+message EventTaskDef {
+    uint32 event_id = 1;
+}
+
+message HcclTaskDef {
+    string hccl_type = 1;
+    uint64 input_addr = 2;
+    uint64 output_addr = 3;
+    bytes workspace = 4;
+    int64 workspace_num = 5;
+    bytes private_def = 6;
+    uint64 ops_kernel_store = 7;
+    int32 count = 8;
+    int64 root_id = 9;
+    int64 op_type = 10;
+    int64 data_type = 11;
+}
+
+message ProfilerTaskDef {
+    uint64 log_id = 1;
+    bool notify = 2;
+    uint32 flat = 3;
+}
+
+message MemcpyAsyncTaskDef {
+    uint64 dst = 1;
+    uint64 dst_max = 2;
+    uint64 src = 3;
+    uint64 count = 4;
+    uint32 kind = 5;
+}
+
+message StreamSwitchTaskDef {
+    uint32 true_stream_id = 1;
+    uint64 input_addr = 2;
+    uint64 value_addr = 3;
+    int64 cond = 4;
+    int64 data_type = 5;
+}
+
+message StreamActiveTaskDef {
+    uint32 active_stream_id = 1;
+}
+
+message KernelContext {
+    uint32 kernel_type = 1;
+    uint32 op_id = 2;
+    uint32 kernel_func_id = 3;
+    uint32 op_index = 4;
+    bool is_flowtable = 5;
+    bytes args_offset = 6;
+    uint32 args_count = 7;
+    repeated uint32 origin_op_index = 8;
+}

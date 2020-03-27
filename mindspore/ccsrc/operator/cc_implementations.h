@@ -1,0 +1,58 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_CCSRC_OPERATOR_CC_IMPLEMENTATIONS_H_
+#define MINDSPORE_CCSRC_OPERATOR_CC_IMPLEMENTATIONS_H_
+
+#include <vector>
+#include <memory>
+#include "ir/anf.h"
+#include "ir/value.h"
+#include "utils/any.h"
+
+namespace mindspore {
+// namespace to support primitive operators definition
+namespace prim {
+using Any = mindspore::Any;
+using AnyPtrList = std::vector<std::shared_ptr<Any>>;
+using ValuePtrList = std::vector<ValuePtr>;
+using OpsFunction = std::function<Any(const AnyPtrList&)>;
+using AnfNodeOpsFunction = std::function<AnfNodePtr(const std::vector<AnfNodePtr>&)>;
+
+ValuePtr ScalarAdd(const ValuePtrList& list);
+ValuePtr ScalarSub(const ValuePtrList& list);
+ValuePtr ScalarMul(const ValuePtrList& list);
+ValuePtr ScalarDiv(const ValuePtrList& list);
+ValuePtr ScalarMod(const ValuePtrList& list);
+ValuePtr ScalarUAdd(const ValuePtrList& list);
+ValuePtr ScalarUSub(const ValuePtrList& list);
+ValuePtr ScalarUSub(const ValuePtrList& list);
+ValuePtr ScalarLog(const ValuePtrList& list);
+ValuePtr ScalarEq(const ValuePtrList& list);
+ValuePtr ScalarLt(const ValuePtrList& list);
+ValuePtr ScalarGt(const ValuePtrList& list);
+ValuePtr ScalarNe(const ValuePtrList& list);
+ValuePtr ScalarLe(const ValuePtrList& list);
+ValuePtr ScalarGe(const ValuePtrList& list);
+ValuePtr BoolNot(const ValuePtrList& list);
+ValuePtr BoolAnd(const ValuePtrList& list);
+ValuePtr BoolOr(const ValuePtrList& list);
+ValuePtr BoolEq(const ValuePtrList& list);
+std::vector<int> BroadcastShape_(std::vector<int> s1, std::vector<int> s2);
+}  // namespace prim
+}  // namespace mindspore
+
+#endif  // MINDSPORE_CCSRC_OPERATOR_CC_IMPLEMENTATIONS_H_

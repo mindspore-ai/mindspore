@@ -1,0 +1,39 @@
+<annotation>
+	<folder>VOC2012</folder>
+	<filename>61.jpg</filename>
+	<source>
+		<database>simulate VOC2007 Database</database>
+		<annotation>simulate VOC2007</annotation>
+		<image>flickr</image>
+	</source>
+	<size>
+		<width>500</width>
+		<height>333</height>
+		<depth>3</depth>
+	</size>
+	<segmented>1</segmented>
+	<object>
+		<name>train</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>252</xmin>
+			<ymin>42</ymin>
+			<xmax>445</xmax>
+			<ymax>282</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>person</name>
+		<pose>Frontal</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>204</xmin>
+			<ymin>198</ymin>
+			<xmax>271</xmax>
+			<ymax>293</ymax>
+		</bndbox>
+	</object>
+</annotation>

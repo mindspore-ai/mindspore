@@ -1,0 +1,167 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <string>
+
+#include "common/common.h"
+#include "dataset/core/client.h"
+#include "dataset/core/global_context.h"
+#include "dataset/engine/datasetops/source/celeba_op.h"
+#include "dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
+#include "dataset/util/de_error.h"
+#include "dataset/util/status.h"
+#include "gtest/gtest.h"
+#include "utils/log_adapter.h"
+#include "securec.h"
+
+using namespace mindspore::dataset;
+using mindspore::MsLogLevel::ERROR;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::LogStream;
+
+std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
+
+std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
+
+std::shared_ptr<CelebAOp> Celeba(int32_t num_workers, int32_t rows_per_buffer, int32_t queue_size,
+                                 const std::string &dir, int64_t num_samples = 0,
+                                 std::unique_ptr<Sampler> sampler = nullptr, bool decode = false,
+                                 const std::string &dataset_type="all") {
+  std::shared_ptr<CelebAOp> so;
+  CelebAOp::Builder builder;
+  Status rc = builder.SetNumWorkers(num_workers).SetCelebADir(dir).SetRowsPerBuffer(rows_per_buffer)
+                     .SetOpConnectorSize(queue_size).SetSampler(std::move(sampler)).SetDecode(decode)
+                     .SetNumSamples(num_samples).SetDatasetType(dataset_type).Build(&so);
+  return so;
+}
+
+class MindDataTestCelebaDataset : public UT::DatasetOpTesting {
+protected:
+};
+
+TEST_F(MindDataTestCelebaDataset, TestSequentialCeleba) {
+  std::string dir = datasets_root_path_ + "/testCelebAData/";
+  uint32_t expect_labels[2][40] = {{0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,1,0,0,1,0,0,1,0,0,0,1,1,0,1,0,1,0,0,1},
+                                   {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1}};
+  uint32_t count = 0;
+  auto tree = Build({Celeba(16, 2, 32, dir)});
+  tree->Prepare();
+  Status rc = tree->Launch();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Return code error detected during tree launch: " << rc.ToString() << ".";
+    EXPECT_TRUE(false);
+  } else {
+    DatasetIterator di(tree);
+    TensorMap tersor_map;
+    di.GetNextAsMap(&tersor_map);
+    EXPECT_TRUE(rc.IsOk());
+    while (tersor_map.size() != 0) {
+      uint32_t label;
+      for (int index = 0; index < 40; index++) {
+        tersor_map["attr"]->GetItemAt<uint32_t>(&label, {index});
+        EXPECT_TRUE(expect_labels[count][index] == label);
+      }
+      count++;
+      di.GetNextAsMap(&tersor_map);
+    }
+    EXPECT_TRUE(count == 2);
+  }
+}
+
+TEST_F(MindDataTestCelebaDataset, TestCelebaRepeat) {
+  std::string dir = datasets_root_path_ + "/testCelebAData/";
+  uint32_t expect_labels[4][40] = {{0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,1,0,0,1,0,0,1,0,0,0,1,1,0,1,0,1,0,0,1},
+                                   {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1},
+                                   {0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,1,0,0,1,0,0,1,0,0,0,1,1,0,1,0,1,0,0,1},
+                                   {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1}};
+  uint32_t count = 0;
+  auto tree = Build({Celeba(16, 2, 32, dir), Repeat(2)});
+  tree->Prepare();
+  Status rc = tree->Launch();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Return code error detected during tree launch: " << rc.ToString() << ".";
+    EXPECT_TRUE(false);
+  } else {
+    DatasetIterator di(tree);
+    TensorMap tersor_map;
+    di.GetNextAsMap(&tersor_map);
+    EXPECT_TRUE(rc.IsOk());
+    while (tersor_map.size() != 0) {
+      uint32_t label;
+      for (int index = 0; index < 40; index++) {
+        tersor_map["attr"]->GetItemAt<uint32_t>(&label, {index});
+        EXPECT_TRUE(expect_labels[count][index] == label);
+      }
+      count++;
+      di.GetNextAsMap(&tersor_map);
+    }
+    EXPECT_TRUE(count == 4);
+  }
+}
+
+TEST_F(MindDataTestCelebaDataset, TestSubsetRandomSamplerCeleba) {
+  std::vector<int64_t> indices({1});
+  std::unique_ptr<Sampler> sampler = mindspore::make_unique<SubsetRandomSampler>(indices);
+  uint32_t expect_labels[1][40] = {{0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1}};
+  std::string dir = datasets_root_path_ + "/testCelebAData/";
+  uint32_t count = 0;
+  auto tree = Build({Celeba(16, 2, 32, dir, 0, std::move(sampler))});
+  tree->Prepare();
+  Status rc = tree->Launch();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Return code error detected during tree launch: " << rc.ToString() << ".";
+    EXPECT_TRUE(false);
+  } else {
+    DatasetIterator di(tree);
+    TensorMap tersor_map;
+    di.GetNextAsMap(&tersor_map);
+    EXPECT_TRUE(rc.IsOk());
+    while (tersor_map.size() != 0) {
+      uint32_t label;
+      for (int index = 0; index < 40; index++) {
+        tersor_map["attr"]->GetItemAt<uint32_t>(&label, {index});
+        EXPECT_TRUE(expect_labels[count][index] == label);
+      }
+      count++;
+      di.GetNextAsMap(&tersor_map);
+    }
+    EXPECT_TRUE(count == 1);
+  }
+}
+
+TEST_F(MindDataTestCelebaDataset, TestCelebaNumSamples) {
+  std::string dir = datasets_root_path_ + "/testCelebAData/";
+  uint32_t count = 0;
+  auto tree = Build({Celeba(16, 2, 32, dir, 1)});
+  tree->Prepare();
+  Status rc = tree->Launch();
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << "Return code error detected during tree launch: " << rc.ToString() << ".";
+    EXPECT_TRUE(false);
+  } else {
+    DatasetIterator di(tree);
+    TensorMap tersor_map;
+    di.GetNextAsMap(&tersor_map);
+    EXPECT_TRUE(rc.IsOk());
+    while (tersor_map.size() != 0) {
+      count++;
+      di.GetNextAsMap(&tersor_map);
+    }
+    EXPECT_TRUE(count == 1);
+  }
+}

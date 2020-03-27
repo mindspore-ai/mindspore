@@ -1,0 +1,4 @@
+[submodule "3rdparty/incubator-tvm"]
+	path = 3rdparty/incubator-tvm
+	url = https://github.com/dmlc/tvm.git
+	branch = v0.5
