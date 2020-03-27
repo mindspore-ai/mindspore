@@ -69,14 +69,15 @@ class SessionBasic {
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
 
-  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
+  CNodePtr CreateNewCNode(const CNodePtr &cnode, bool valid_input, KernelGraph *graph, bool *from_other_graph,
+                          std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
 
   // set parameters of final graph
   virtual GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &) { return kInvalidGraphId; }
   // set output of final graph
   virtual void SetFinalGraphOutput(const BaseRef &) {}
   // insert switch and set the relative active ops
-  virtual void SwitchCompile(GraphId, GraphId, GraphId) {}
+  virtual void SwitchCompile(GraphId, GraphId, GraphId, const AnfNodePtr &) {}
   // set args of child graph.the arg maybe come from a output of other child graphs,or from final graph's parameter
   virtual void SetChildGraphInput(GraphId, const VectorRef &) {}
   // get graph id in child graphs by ME front anf node pointer

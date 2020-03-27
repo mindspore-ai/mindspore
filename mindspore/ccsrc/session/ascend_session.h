@@ -49,9 +49,8 @@ class AscendSession : public SessionBasic {
   // set output of final graph
   void SetFinalGraphOutput(const BaseRef &output) override;
   // insert switch and set the relative active ops
-  void SwitchCompile(GraphId cond_g, GraphId true_g, GraphId false_g) override;
-  // set args of child graph. the arg maybe come from a output of other child graphs,
-  // or from final graph's parameter
+  void SwitchCompile(GraphId cond_g, GraphId true_g, GraphId false_g, const AnfNodePtr &condition_output) override;
+  // set args of child graph.the arg maybe come from a output of other child graphs,or from final graph's parameter
   void SetChildGraphInput(GraphId g, const VectorRef &args) override;
   // get graph id in child graphs by ME front anf node pointer
   GraphId GetGraphIdByNode(const AnfNodePtr &front_anf) const override;
@@ -116,6 +115,7 @@ class AscendSession : public SessionBasic {
   std::unordered_map<GraphId, GraphId> while_condition_graphs_;
   // record all conditions
   std::unordered_map<GraphId, std::pair<GraphId, GraphId>> switches_;
+  std::unordered_map<GraphId, AnfNodePtr> condition_output_;
   // final_graph_id is used in every root graph has it's own session situation
   GraphId final_graph_id_;
 };
