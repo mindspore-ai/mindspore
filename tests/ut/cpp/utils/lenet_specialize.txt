@@ -1,0 +1,50 @@
+# [No.1] 1_g_293.146
+graph g_146(
+        %para1 : Array(F32)[1, 1, 32, 32]    # %para1@3
+        , %para2 : Array(F32)[6, 1, 5, 5]    # %para2@4
+        , %para3 : Array(F32)[16, 6, 5, 5]    # %para3@5
+        , %para4 : Array(F32)[120, 400]   # %para4@6
+        , %para5 : Array(F32)[120]  # %para5@7
+        , %para6 : Array(F32)[84, 120]  # %para6@8
+        , %para7 : Array(F32)[84]  # %para7@9
+        , %para8 : Array(F32)[10, 84]   # %para8@10
+        , %para9 : Array(F32)[10]  # %para9@11
+        , %para10 : Array(F32)[6, 1, 5, 5]   # %para10@12
+        , %para11 : TypeType   # %para11@13
+        , %para12 : AnythingType   # %para12@14
+        , %para13 : ExternalType   # %para13@15
+        , %para14 : ProblemType    # %para14@16
+        , %para15 : NoneType   # %para15@17
+        , %para16 : EnvType   # %para16@18
+        , %para17 : Array(F32)[10]    # %para17@19
+        , %para18 : F32    # %para18@20
+        , %para19 : JT[I32]   # %para19@21
+        , %para20 : I32    # %para20@22
+    ) {
+    %1 : Tuple[Array(F32)*8] = Primitive::make_tuple(%para2, %para3, %para4, %para5, %para6, %para7, %para8, %para9)    #(Array(F32)[6, 1, 5, 5], Array(F32)[16, 6, 5, 5], Array(F32)[120, 400], Array(F32)[120], Array(F32)[84, 120], Array(F32)[84], Array(F32)[10, 84], Array(F32)[10])
+    %2 : Func = Graph::g_196(Graph::g_197, %1, (SymInst(%para2), SymInst(%para3), SymInst(%para4), SymInst(%para5), SymInst(%para6), SymInst(%para7), SymInst(%para8), SymInst(%para9)))    #(Func, Tuple[Array(F32)*8], Tuple[SymType*8])    # g_196=12_g_343.196, g_197=23_g_344.197
+    %3 : Tuple[Array(F32)*8] = %2(%para1, I32(10), "NCHW")    #(Array(F32)[1, 1, 32, 32], Array(F32)[1, 10])
+    %4 : Tuple[Bool*8] = Graph::g_207(%3)    #(Tuple[Array(F32)*8])    # g_207=2_g_354.207
+    Primitive::return(%4)    #(Tuple[Bool*8])
+}
+
+
+# [No.2] 23_g_344.197
+graph g_197[g_146](
+        %para21 : Array(F32)[1, 1, 32, 32]    # %para21@34
+    ) {
+    %1 : Array(F32)[1, 6, 28, 28] = Graph::g_149(%para21)    #(Array(F32)[1, 1, 32, 32])    # g_149=60_g_296.149
+    %2 : Array(F32)[1, 6, 28, 28] = Graph::g_150(%1)    #(Array(F32)[1, 6, 28, 28])    # g_150=59_g_297.150
+    %3 : Array(F32)[1, 6, 14, 14] = Graph::g_154(%2)    #(Array(F32)[1, 6, 28, 28])    # g_154=55_g_301.154
+    %4 : Array(F32)[1, 16, 10, 10] = Graph::g_157(%3)    #(Array(F32)[1, 6, 14, 14])    # g_157=52_g_304.157
+    %5 : Array(F32)[1, 16, 10, 10] = Graph::g_158(%4)    #(Array(F32)[1, 16, 10, 10])    # g_158=51_g_305.158
+    %6 : Array(F32)[1, 16, 5, 5] = Graph::g_162(%5)    #(Array(F32)[1, 16, 10, 10])    # g_162=47_g_309.162
+    %7 : SymType = Graph::g_169(%6)    #(Array(F32)[1, 16, 5, 5])
+    #%8 : Array(F32)[1, 120] = Graph::g_169(%7)    #(Array(F32)[1, 400])    # g_169=40_g_316.169
+    #%9 : Array(F32)[1, 120] = Graph::g_170(%8)    #(Array(F32)[1, 120])    # g_170=39_g_317.170
+    #%10 : Array(F32)[1, 84] = Graph::g_177(%9)    #(Array(F32)[1, 120])    # g_177=32_g_324.177
+    #%11 : Array(F32)[1, 84] = Graph::g_178(%10)    #(Array(F32)[1, 84])    # g_178=31_g_325.178
+    #%12 : Array(F32)[1, 10] = Graph::g_185(%11)    #(Array(F32)[1, 84])    # g_185=24_g_332.185
+    Primitive::return(%7)    #(Array(F32)[1, 10])
+}
+

@@ -1,0 +1,42 @@
+{
+  "datasetType": "TF",
+  "numRows": 1000,
+  "columns": {
+    "input_ids": {
+      "type": "DE_INT64",
+      "rank": 1,
+      "shape": [128]
+    },
+    "input_mask": {
+      "type": "DE_INT64",
+      "rank": 1,
+      "shape": [128]
+    },
+    "segment_ids" : {
+      "type": "DE_INT64",
+      "rank": 1,
+      "shape": [128]
+    },
+    "next_sentence_labels": {
+      "type": "DE_INT64",
+      "rank": 1,
+      "shape": [1]
+    },
+    "masked_lm_positions": {
+      "type": "DE_INT64",
+      "rank": 1,
+      "shape": [20]
+    },
+    "masked_lm_ids": {
+      "type": "DE_INT64",
+      "rank": 1,
+      "shape": [20]
+    },
+    "masked_lm_weights": {
+      "type": "DE_FLOAT32",
+      "rank": 1,
+      "shape": [20]
+    }
+  }
+}
+

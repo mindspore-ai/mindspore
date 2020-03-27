@@ -1,0 +1,21 @@
+{
+  "datasetType": "CIFAR100",
+  "numRows": 100,
+  "columns": {
+    "image": {
+      "type": "uint8",
+      "rank": 1,
+	  "t_impl": "cvmat"
+    },
+    "coarse_label" : {
+      "type": "uint32",
+      "rank": 1,
+      "t_impl": "flex"
+    },
+    "fine_label" : {
+      "type": "uint32",
+      "rank": 1,
+      "t_impl": "flex"
+    }
+  }
+}

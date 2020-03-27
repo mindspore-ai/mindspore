@@ -1,0 +1,35 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+package mindspore;
+
+message TensorShape {
+  // One dimension of the tensor.
+  message Dim {
+    // size must >=0
+    int64 size = 1;
+  };
+
+  // group dim info
+  repeated Dim dim = 2;
+
+  // If true, the number of dimensions in the shape is unknown.
+  // If true, "dim.size()" must be 0.
+  bool unknown_rank = 3;
+
+  // data format "NHWC" "NCHW" "NC1HWC0" OR "NONE"
+  string data_format = 4;
+};

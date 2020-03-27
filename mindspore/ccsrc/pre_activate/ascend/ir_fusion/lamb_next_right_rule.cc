@@ -1,0 +1,111 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "pre_activate/ascend/ir_fusion/lamb_next_right_rule.h"
+#include <vector>
+#include "pre_activate/common/helper.h"
+#include "utils/utils.h"
+
+namespace mindspore {
+namespace opt {
+namespace {
+AnfNodePtr GetAdd1Node(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto add2_cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(add2_cnode);
+  if (add2_cnode->inputs().size() != kAddInputNum) {
+    MS_LOG(ERROR) << "The input size of Add2 is not equal to " << kAddInputNum;
+  }
+  AnfNodePtr sqrt0 = add2_cnode->input(1);
+  MS_EXCEPTION_IF_NULL(sqrt0);
+  auto sqrt0_cnode = sqrt0->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(sqrt0_cnode);
+  if (sqrt0_cnode->inputs().size() != kSqrtInputNum) {
+    MS_LOG(ERROR) << "The input size of Sqrt0 is not equal to " << kSqrtInputNum;
+  }
+  AnfNodePtr real_div1 = sqrt0_cnode->input(1);
+  MS_EXCEPTION_IF_NULL(real_div1);
+  auto real_div1_cnode = real_div1->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(real_div1_cnode);
+  if (real_div1_cnode->inputs().size() != kMulInputNum) {
+    MS_LOG(ERROR) << "The input size of RealDiv1 is not equal to " << kMulInputNum;
+  }
+  return real_div1_cnode->input(1);
+}
+}  // namespace
+
+AnfNodePtr LambNextRightRule::CreateLambNextRightNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(equiv);
+  std::vector<AnfNodePtr> new_node_inputs;
+  auto prim = std::make_shared<Primitive>(kLambNextRightOpName);
+  MS_EXCEPTION_IF_NULL(prim);
+  new_node_inputs.push_back(NewValueNode(prim));
+  auto input0 = utils::cast<AnfNodePtr>((*equiv)[input0_]);
+  MS_EXCEPTION_IF_NULL(input0);
+  new_node_inputs.push_back(input0);
+  auto input1 = utils::cast<AnfNodePtr>((*equiv)[input1_]);
+  MS_EXCEPTION_IF_NULL(input1);
+  new_node_inputs.push_back(input1);
+  auto mul2_x = utils::cast<AnfNodePtr>((*equiv)[mul2_x_]);
+  MS_EXCEPTION_IF_NULL(mul2_x);
+  new_node_inputs.push_back(mul2_x);
+  auto mul3_x = utils::cast<AnfNodePtr>((*equiv)[mul3_x_]);
+  MS_EXCEPTION_IF_NULL(mul3_x);
+  new_node_inputs.push_back(mul3_x);
+  auto true_div1_recip = utils::cast<AnfNodePtr>((*equiv)[true_div1_recip_]);
+  MS_EXCEPTION_IF_NULL(true_div1_recip);
+  new_node_inputs.push_back(true_div1_recip);
+  auto add2_y = utils::cast<AnfNodePtr>((*equiv)[add2_y_]);
+  MS_EXCEPTION_IF_NULL(add2_y);
+  new_node_inputs.push_back(add2_y);
+  auto new_node = func_graph->NewCNode(new_node_inputs);
+  return new_node;
+}
+
+const BaseRef LambNextRightRule::DefinePattern() const {
+  const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
+  MS_EXCEPTION_IF_NULL(prim_sqrt);
+  VectorRef mul3 = VectorRef({prim::kPrimMul, mul3_x_, VectorRef({prim::kPrimSquare, input0_})});
+  VectorRef add1 = VectorRef({prim::kPrimTensorAdd, VectorRef({prim::kPrimMul, mul2_x_, input1_}), mul3});
+  return VectorRef(
+    {prim::kPrimTensorAdd, VectorRef({prim_sqrt, VectorRef({prim::kPrimMul, add1, true_div1_recip_})}), add2_y_});
+}
+
+const AnfNodePtr LambNextRightRule::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                            const EquivPtr &equiv) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(node);
+  auto new_node = CreateLambNextRightNode(func_graph, equiv);
+  MS_EXCEPTION_IF_NULL(new_node);
+  // Set abstract of new node
+  AnfNodePtr add1 = GetAdd1Node(node);
+  MS_EXCEPTION_IF_NULL(add1);
+  AbstractBasePtrList new_node_abstract_list;
+  new_node_abstract_list.push_back(add1->abstract());
+  new_node_abstract_list.push_back(node->abstract());
+  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(new_node_abstract_list);
+  MS_EXCEPTION_IF_NULL(abstract_tuple);
+  new_node->set_abstract(abstract_tuple);
+  // Create tuple_getitem node for outputs
+  std::vector<AnfNodePtr> new_node_outputs;
+  CreateMultipleOutputsOfAnfNode(func_graph, new_node, kLambNextRightOutputNum, &new_node_outputs);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  (void)manager->Replace(add1, new_node_outputs[0]);
+  return new_node_outputs[1];
+}
+}  // namespace opt
+}  // namespace mindspore

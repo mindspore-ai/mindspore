@@ -1,0 +1,12 @@
+{"entity_instances":[1, 2, 3], "size": 89817, "resolution": {"width": 194, "heigth": 190}, "type": "bmp", "dataset_id": 10, "name": "picture name", "creation_time": "2019-05-11T15:46:26"}
+{"entity_instances":[1, 2, 3], "size": 45407, "resolution": {"width": 390, "heigth": 412}, "type": "tif", "dataset_id": 5, "name": "picture name", "creation_time": "2018-08-23T19:20:04"}
+{"entity_instances":[1, 2, 3], "size": 47167, "resolution": {"width": 148, "heigth": 116}, "type": "png", "dataset_id": 10, "name": "picture name", "creation_time": "2018-09-16T18:46:03"}
+{"entity_instances":[1, 2, 3], "resolution": {"width": 331, "heigth": 472}, "type": "tif", "dataset_id": 9, "name": "picture name", "creation_time": "2019-02-03T10:11:21"}
+{"entity_instances":[1, 2, 3], "size": 22945, "resolution": {"width": 58, "heigth": 383}, "type": "png", "dataset_id": 10, "name": "picture name", "creation_time": "2018-11-26T00:11:15"}
+{"entity_instances":[1, 2, 3], "size": 13411, "resolution": {"width": 75, "heigth": 395}, "type": "bmp", "name": "picture name", "creation_time": "2018-10-09T07:35:11"}
+{"entity_instances":[1, 2, 3], "size": 62252, "resolution": {"width": 274, "heigth": 89}, "type": "tif", "dataset_id": 2, "name": "picture name", "creation_time": "2018-11-18T19:51:38"}
+{"entity_instances":[1, 2, 3], "size": 35123, "resolution": {"width": 81, "heigth": 243}, "type": 200, "dataset_id": 8, "name": "picture name", "creation_time": "2018-10-02T03:20:00"}
+{"entity_instances":[1, 2, 3], "size": "30936", "resolution": {"width": 342, "heigth": 480}, "type": "gif", "dataset_id": 2, "name": "picture name", "creation_time": "2019-04-20T22:39:52"}
+{"entity_instances":[1, 2, 3], "size": 54537, "resolution": {"width": 315, "heigth": 78}, "type": "bmp", "dataset_id": 3, "name": "picture name", "creation_time": "2018-07-11T08:07:23"}
+{"entity_instances":500, "size": 54537, "resolution": {"width": 315, "heigth": 78}, "type": "bmp", "dataset_id": 3, "name": "picture name", "creation_time": "2018-07-11T08:07:23"}
+{"entity_instances":"500", "size": 54537, "resolution": {"width": 315, "heigth": 78}, "type": "bmp", "dataset_id": 3, "name": "picture name", "creation_time": "2018-07-11T08:07:23"}

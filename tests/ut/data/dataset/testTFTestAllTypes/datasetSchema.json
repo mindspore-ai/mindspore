@@ -1,0 +1,46 @@
+{
+  "datasetType": "TF",
+  "numRows": 12,
+  "columns": {
+    "col_sint16": {
+      "type": "int16",
+      "rank": 1,
+      "shape": [1]
+    },
+    "col_sint32": {
+      "type": "int32",
+      "rank": 1,
+      "shape": [1]
+    },
+    "col_sint64": {
+      "type": "int64",
+      "rank": 1,
+      "shape": [1]
+    },
+    "col_float": {
+      "type": "float32",
+      "rank": 1,
+      "shape": [1]
+    },
+    "col_1d": {
+      "type": "int64",
+      "rank": 1,
+      "shape": [2]
+    },
+    "col_2d": {
+      "type": "int64",
+      "rank": 2,
+      "shape": [2, 2]
+    },
+    "col_3d": {
+      "type": "int64",
+      "rank": 3,
+      "shape": [2, 2, 2]
+    },
+    "col_binary": {
+      "type": "uint8",
+      "rank": 1,
+      "shape": [1]
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+    "board_id": "0x0000",
+    "chip_info": "910",
+    "deploy_mode": "lab",
+    "group_count": "1",
+    "group_list": [{
+        "device_num": "8",
+        "server_num": "1",
+        "group_name": "",
+        "instance_count": "8",
+        "instance_list": [{
+                "devices": [{
+                    "device_id": "0",
+                    "device_ip": "[device_ip_0]"
+                }],
+                "rank_id": "0",
+                "server_id": "[server_id]"
+            },
+            {
+                "devices": [{
+                    "device_id": "1",
+                    "device_ip": "[device_ip_1]"
+                }],
+                "rank_id": "1",
+                "server_id": "[server_id]"
+            },
+            {
+                "devices": [{
+                    "device_id": "2",
+                    "device_ip": "[device_ip_2]"
+                }],
+                "rank_id": "2",
+                "server_id": "[server_id]"
+            },
+            {
+                "devices": [{
+                    "device_id": "3",
+                    "device_ip": "[device_ip_3]"
+                }],
+                "rank_id": "3",
+                "server_id": "[server_id]"
+            },
+            {
+                "devices": [{
+                    "device_id": "4",
+                    "device_ip": "[device_ip_4]"
+                }],
+                "rank_id": "4",
+                "server_id": "[server_id]"
+            },
+            {
+                "devices": [{
+                    "device_id": "5",
+                    "device_ip": "[device_ip_5]"
+                }],
+                "rank_id": "5",
+                "server_id": "[server_id]"
+            },
+            {
+                "devices": [{
+                    "device_id": "6",
+                    "device_ip": "[device_ip_6]"
+                }],
+                "rank_id": "6",
+                "server_id": "[server_id]"
+            },
+            {
+                "devices": [{
+                    "device_id": "7",
+                    "device_ip": "[device_ip_7]"
+                }],
+                "rank_id": "7",
+                "server_id": "[server_id]"
+            }
+        ]
+    }],
+    "para_plane_nic_location": "device",
+    "para_plane_nic_name": [
+        "eth0",
+        "eth1",
+        "eth2",
+        "eth3",
+        "eth4",
+        "eth5",
+        "eth6",
+        "eth7"
+    ],
+    "para_plane_nic_num": "8",
+    "status": "completed",
+
+    "hccl_config_json_spec": {
+        "board_id": "board id, current support x0000 or 0x3000",
+        "chip_info": "chip info, current is 910",
+        "deploy_mode": "current use lab",
+        "group_count": "number of groups used",
+        "group_list": "detailed group information",
+        "device_num": "number of devices used, the value is the nth power of 2",
+        "server_num": "single machine is 1",
+        "group_name": "default is hccl_world_group or specified",
+        "instance_count": "number of instance used, generally equal to device_num",
+        "instance_list": "detailed instance information",
+        "device_id": "designated davinic device id to use, values start from 0, but no more than single machine total device num",
+        "device_ip": "ip corresponding to device_id",
+        "rank_id": "the first device must be 0 and then increase in order",
+        "server_id": "can be specified as the machine's ip address",
+        "para_plane_nic_location": "current use device",
+        "para_plane_nic_name": "network card corresponding to device ip",
+        "para_plane_nic_num": "number of network cards used",
+        "status": "current use completed"
+    }
+}

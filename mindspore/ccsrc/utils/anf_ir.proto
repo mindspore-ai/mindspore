@@ -1,0 +1,332 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto2";
+
+package mindspore.irpb;
+
+
+// Versioning
+enum Version {
+  // unknown  version
+  UNKNOWWN_VERSION = 0;
+  
+  // Initial version (IR VERSION 1), published on Sep 23, 2019
+  IR_VERSION = 0x0000000000000001;
+}
+
+// Data type definition
+enum DataType {
+  DT_UNDEFINED = 0;
+  // Basic types.
+  DT_BOOL = 1;          // bool
+  
+  DT_INT8 = 2;          // int8_t
+  DT_INT16 = 3;         // int16_t
+  DT_INT32 = 4;         // int32_t
+  DT_INT64 = 5;         // int64_t
+  
+  DT_UINT8 = 6;         // uint8_t
+  DT_UINT16 = 7;        // uint16_t
+  DT_UINT32 = 8;        // uint32_t
+  DT_UINT64 = 9;        // uint64_t
+  
+  DT_FLOAT16 = 10;      // float 16
+  DT_FLOAT32 = 11;      // float 32
+  DT_FLOAT64 = 12;      // float 64
+  
+  DT_STRING = 13;       // string
+  DT_TENSOR = 14;       // tensor
+  DT_GRAPH = 15;        // graph
+  
+  // list type
+  DT_BOOLS = 16;        // list of bool
+  
+  DT_INTS8 = 17;        // list of int8_t
+  DT_INTS16 = 18;       // list of int16_t
+  DT_INTS32 = 19;       // list of int32_t
+  DT_INTS64 = 20;       // list of int64_t
+  
+  DT_UINTS8 = 21;       // list of uint8_t
+  DT_UINTS16 = 22;      // list of uint16_t
+  DT_UINTS32 = 23;      // list of uint32_t
+  DT_UINTS64 = 24;      // list of uint64_t
+  
+  DT_FLOATS16 = 25;       // list of float16
+  DT_FLOATS32 = 26;       // list of float32
+  DT_FLOATS64 = 27;       // list of float64
+  
+  DT_STRINGS = 28;      // list of string
+  DT_TENSORS = 29;      // list of tensor
+  DT_GRAPHS = 30;       // list of graph
+  
+  DT_TUPLE = 31;        // tuple
+  DT_LIST = 32;         // list
+  DT_DICT = 33;         // dictionary
+  
+  // other types
+  DT_NONE = 34;         // None
+  DT_SYM_INST = 35;     // Symbolic Key Instance
+  
+  // type related type
+  DT_BASE_INT = 36;     // type generic int
+  DT_BASE_UINT = 37;    // type generate unsigned int
+  DT_BASE_FLOAT = 38;   // type generate float
+  DT_TYPE = 39;         // type type
+  DT_ANYTHING = 40;     // type anything
+  DT_REFKEY = 41;     // type refkey
+  DT_REF = 42;     // type ref
+}
+
+// Value definition for attribute value or parameter default value
+message ValueProto {
+  // data type of value
+  optional DataType dtype = 1;   // discriminator that indicates which field below is in use
+
+  // Exactly ONE of the following fields must be present for this version of the IR
+  optional bool bool_val = 2;               // bool
+  optional int64 int_val = 3;               // int
+  optional uint64 uint_val = 4;             // uint
+  optional float float_val = 5;             // float
+  optional double double_val = 6;           // double
+  optional string str_val = 7;              // string
+  optional TensorProto tensor_val = 8;      // tensor value
+  optional GraphProto graph = 9;            // graph
+  
+  repeated bool bool_vals = 10;             // list of bool
+  repeated int64 int_vals = 11;             // list of int
+  repeated uint64 uint_vals = 12;           // list of uint
+  repeated float float_vals = 13;           // list of float
+  repeated double double_vals = 14;         // list of double
+  repeated string str_vals = 15;            // list of string
+  repeated TensorProto tensor_vals = 16;    // list of tensor value
+  repeated GraphProto graphs = 17;          // list of graph
+  
+  // tuple or list
+  repeated ValueProto values = 18;          // tuple, list of value
+  
+  // dictionary
+  repeated NamedValueProto dict_val = 19;   // dictionary info
+  
+  // filed for type type
+  optional TypeProto type_val = 20;         // type type info
+}
+
+message AttributeProto {
+  optional string name = 1;                 // attribute name
+  optional ValueProto value = 2;            // attribute value
+}
+
+message NamedValueProto {
+  optional string key = 1;                  // attribute name
+  optional ValueProto value = 2;            // attribute value
+}
+
+// Defines a tensor shape.
+message TensorShapeProto {
+  // One dimension of the tensor.
+  message Dimension {
+    // Size of the tensor in that dimension.
+    // This value must be >= -1, but values of -1 are reserved for "unknown"
+    // shapes (values of -1 mean "unknown" dimension).
+    optional int64 size = 1;
+
+    // Optional name of the tensor dimension.
+    optional string name = 2;
+  };
+  
+  repeated Dimension dim = 1;
+}
+
+// Types for graph input(parameter) and output
+message TypeProto {
+
+  message Tensor {
+    // This field MUST have a valid DataType value except DT_TENSOR
+    optional DataType elem_type = 1;
+    optional TensorShapeProto shape = 2;    // for scalar, this field is not set
+  }
+
+  // tuple type
+  message Sequence {
+    // The type and optional shape of elements of the tuple.
+    repeated TypeProto elem_types = 1;
+  };
+
+  // data type
+  optional DataType data_type = 1;
+  
+  oneof value {
+    // The type of a tensor.
+    Tensor tensor_type = 2;
+    
+    // The type of a tuple.
+    Sequence sequence_type = 3;
+  }
+}
+
+// Defines information on graph parameters, including the name, the type, and
+// the default value of parameter if exists.
+message ParameterProto {
+  optional string name = 1;               // parameter name
+  optional TypeProto type = 2;            // parameter type
+  optional ValueProto default_val = 3;    // default value of parameter if exists
+}
+
+// Defines graph output information
+message OutputProto {
+  optional string name = 1;               // output node name
+  optional TypeProto type = 2;            // output node type
+}
+
+// Define node input information
+message InputProto {
+  enum EdgeType {
+    DATA_EDGE = 0;      // data edge
+    CONTROL_EDGE = 1;   // control edge
+  }
+
+  optional string name = 1;
+  optional EdgeType type = 2;
+}
+
+// Nodes
+//
+// Computation graphs are made up of a DAG of nodes, which represent what is
+// commonly called a "layer" or "pipeline stage" in machine learning frameworks.
+//
+// For example, it can be a node of type "Conv" that takes in an image, a filter 
+// tensor and a bias tensor, and produces the convolved output.
+message NodeProto {
+  repeated InputProto input = 1;    // namespace Value
+  optional string name = 2;         // namespace Value
+
+  // The symbolic identifier of the Operator to execute.
+  optional string op_type = 3;      // namespace Operator
+  // The domain of the OperatorSet that specifies the operator named by op_type.
+  optional string scope = 4;        // namespace Domain
+
+  // Additional named attributes.
+  repeated AttributeProto attribute = 5;
+  
+  // Optional type info of this node
+  optional TypeProto output_type = 6;
+  
+  // other fields for debug
+  optional uint64 output_i = 7;
+}
+
+// Models
+//
+// ModelProto is a top-level file/container format for bundling a ML model and
+// associating its computation graph with metadata.
+//
+// The semantics of the model are described by the associated GraphProto.
+message ModelProto {
+  // ir version
+  optional int64 ir_version = 1;
+
+  // Domain name of the model.
+  // We use reverse domain names as name space indicators. For example:
+  // `com.facebook.fair` or `com.microsoft.cognitiveservices`
+  //
+  // Together with `model_version` and GraphProto.name, this forms the unique identity of
+  // the graph.
+  optional string domain = 2;
+
+  // The version of the graph encoded. See Version enum below.
+  optional int64 model_version = 3;
+
+  // The parameterized graph that is evaluated to execute the model.
+  optional GraphProto graph = 4;
+
+  // metadata info of opeartors
+  optional OperatorSetProto metadata_operators = 5;
+};
+
+message OperatorProto {
+  optional string name = 1;     // used as key, must be distinct
+  optional bytes config = 2;    // operator config info
+  optional bytes obj_info = 3;  // operator related object info, e.g. content of operator binary or name
+};
+
+message OperatorSetProto {
+  repeated OperatorProto operators = 1;
+  optional string summary = 2;  // summary info of operators, e.g. file position of operators file
+}
+
+// Graphs
+//
+// A graph defines the computational logic of a model and is comprised of a parameterized 
+// list of nodes that form a directed acyclic graph based on their inputs and outputs.
+// This is the equivalent of the "network" or "graph" in many deep learning
+// frameworks.
+message GraphProto {
+  // The nodes in the graph, sorted topologically.
+  repeated NodeProto node = 1;
+
+  // The name of the graph.
+  optional string name = 2;   // namespace Graph
+
+  // The parameters(inputs) and outputs of the graph.
+  repeated ParameterProto parameters = 3;
+  repeated OutputProto outputs = 4;
+  
+  // Constants used in this graph
+  repeated NamedValueProto const_vals = 5;
+}
+
+// Tensors
+//
+// A serialized tensor value.
+message TensorProto {
+  // The shape of the tensor.
+  repeated int64 dims = 1;
+
+  // The data type of the tensor.
+  // This field MUST have a valid DataType value except DT_TENSOR
+  optional DataType data_type = 2;
+
+  // Tensor content must be organized in row-major order.
+  //
+  // Depending on the data_type field, exactly one of the fields below with
+  // name ending in _data is used to store the elements of the tensor.
+
+  // For float values
+  repeated float float_data = 3 [packed = true];
+
+  // For int32, uint8, int8, uint16, int16, and bool values
+  // When this field is present, the data_type field MUST be
+  // INT32, INT16, INT8, UINT16, UINT8, or BOOL
+  repeated int32 int32_data = 4 [packed = true];
+
+  // For int64.
+  // When this field is present, the data_type field MUST be INT64
+  repeated int64 int64_data = 5 [packed = true];
+
+  // For double
+  // When this field is present, the data_type field MUST be DOUBLE
+  repeated double double_data = 6 [packed = true];
+
+  // For uint64 and uint32 values
+  // When this field is present, the data_type field MUST be
+  // UINT32 or UINT64
+  repeated uint64 uint64_data = 7 [packed = true];
+  
+  // Store raw tensor content. When this raw_data field is used to store tensor value,
+  // elements MUST be stored in as fixed-width, little-endian order.
+  optional bytes raw_data = 8;
+}

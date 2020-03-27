@@ -1,0 +1,78 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto2";
+
+package mindspore.irpb;
+option cc_enable_arenas = true;
+
+// The ANF IR define, include the tensor and graph define
+import "anf_ir.proto";
+
+// Event Protocol buffer, Top define
+message Event {
+  // Timestamp
+  required double wall_time = 1;
+
+  // The step of train.
+  optional int64 step = 2;
+
+  oneof what {
+    // An event file was started, with the specified version.
+    // Now version is "Mindspore.Event:1"
+    string version = 3;
+
+    // GraphDef.
+    GraphProto graph_def = 4;
+
+    // Summary data
+    Summary summary = 5;
+  }
+}
+
+// A Summary is a set of named values that be produced regularly during training
+message Summary {
+    message Image {
+        // Dimensions of the image.
+        required int32 height = 1;
+        required int32 width = 2;
+        // Valid colorspace values are:
+        //   1 - grayscale type
+        //   2 - grayscale + alpha type
+        //   3 - RGB type
+        //   4 - RGBA type
+        //   5 - DIGITAL_YUV type
+        //   6 - BGRA type
+        required int32 colorspace = 3;
+        // Image data in encoded format. Now only support the RGB.
+        required bytes encoded_image = 4;
+    }
+
+    message Value {
+        // Tag name for the data.
+        required string tag = 1;
+
+        // Value associated with the tag.
+        oneof value {
+            float scalar_value = 3;
+            Image image = 4;
+            TensorProto tensor = 8;
+        }
+    }
+
+    // Set of values for the summary.
+    repeated Value value = 1;
+}

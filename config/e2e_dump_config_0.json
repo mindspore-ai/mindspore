@@ -1,0 +1,22 @@
+{
+  "DumpSettings": {
+    "enable": false,
+    "trans_flag": false,
+    "path": "/tmp/hccllog/0",
+    "net_name": "ResNet50",
+    "mode": 0,
+    "iteration": 0,
+    "kernels": ["AllReduce","BiasAddGrad","Conv2DBackpropFilter","SparseSoftmaxCrossEntropyWithLogits"]
+  },
+
+  "DumpSettingsSpec": {
+    "enable": "true: dump enable false: dump disable",
+    "trans_flag": "true: trans to host format,false: not trans format",
+    "path": "the dump file folder",
+    "net_name": "net name eg:ResNet50",
+    "mode": "0: dump all kernels 1: dump kernels in kernels list",
+    "iteration": "0: all iteration  others: specified iteration ",
+    "kernels": "kernel name list need to be dump"
+  },
+  "other": {}
+}

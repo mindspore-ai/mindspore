@@ -1,0 +1,21 @@
+{
+  "datasetType": "TF",
+  "numRows": 12,
+  "columns": {
+    "col0": {
+      "type": "int64",
+      "rank": 2,
+      "shape": [2, 2]
+    },
+    "col1": {
+      "type": "int64",
+      "rank": 2,
+      "shape": [2, 2]
+    },
+    "col2": {
+      "type": "int64",
+      "rank": 2,
+      "shape": [2, 2]
+    }
+  }
+}

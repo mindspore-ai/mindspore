@@ -1,0 +1,201 @@
+diff -Npur tvm/cmake/modules/ANTLR.cmake tvm_new/cmake/modules/ANTLR.cmake
+--- tvm/cmake/modules/ANTLR.cmake	2019-12-14 15:11:37.562418441 +0800
++++ tvm_new/cmake/modules/ANTLR.cmake	2019-12-14 11:28:49.161977599 +0800
+@@ -14,12 +14,15 @@
+ # KIND, either express or implied.  See the License for the
+ # specific language governing permissions and limitations
+ # under the License.
++
++# 2019.12.30 - Modify current directory of tvm.
++
+ if(USE_ANTLR)
+   find_antlr(${USE_ANTLR})
+   if(ANTLR4)
+ 
+     set(RELAY_PARSER_DIR
+-      ${CMAKE_CURRENT_SOURCE_DIR}/python/tvm/relay/grammar)
++      ${TVM_DIR}/python/tvm/relay/grammar)
+ 
+     set(RELAY_PARSER
+       ${RELAY_PARSER_DIR}/py3/RelayVisitor.py
+diff -Npur tvm/cmake/modules/CUDA.cmake tvm_new/cmake/modules/CUDA.cmake
+--- tvm/cmake/modules/CUDA.cmake	2019-12-14 15:11:37.562418441 +0800
++++ tvm_new/cmake/modules/CUDA.cmake	2019-12-14 11:28:49.161977599 +0800
+@@ -15,6 +15,8 @@
+ # specific language governing permissions and limitations
+ # under the License.
+ 
++# 2019.12.30 - Modify current directory of tvm.
++
+ # CUDA Module
+ find_cuda(${USE_CUDA})
+ 
+@@ -29,9 +31,9 @@ if(USE_CUDA)
+     message(FATAL_ERROR "Cannot find CUDA, USE_CUDA=" ${USE_CUDA})
+   endif()
+   message(STATUS "Build with CUDA support")
+-  file(GLOB RUNTIME_CUDA_SRCS src/runtime/cuda/*.cc)
++  file(GLOB RUNTIME_CUDA_SRCS ${TVM_DIR}/src/runtime/cuda/*.cc)
+   list(APPEND RUNTIME_SRCS ${RUNTIME_CUDA_SRCS})
+-  list(APPEND COMPILER_SRCS src/codegen/opt/build_cuda_on.cc)
++  list(APPEND COMPILER_SRCS ${TVM_DIR}/src/codegen/opt/build_cuda_on.cc)
+ 
+   list(APPEND TVM_LINKER_LIBS ${CUDA_NVRTC_LIBRARY})
+   list(APPEND TVM_RUNTIME_LINKER_LIBS ${CUDA_CUDART_LIBRARY})
+@@ -40,18 +42,18 @@ if(USE_CUDA)
+ 
+   if(USE_CUDNN)
+     message(STATUS "Build with cuDNN support")
+-    file(GLOB CONTRIB_CUDNN_SRCS src/runtime/contrib/cudnn/*.cc)
++    file(GLOB CONTRIB_CUDNN_SRCS ${TVM_DIR}/src/runtime/contrib/cudnn/*.cc)
+     list(APPEND RUNTIME_SRCS ${CONTRIB_CUDNN_SRCS})
+     list(APPEND TVM_RUNTIME_LINKER_LIBS ${CUDA_CUDNN_LIBRARY})
+   endif(USE_CUDNN)
+ 
+   if(USE_CUBLAS)
+     message(STATUS "Build with cuBLAS support")
+-    file(GLOB CONTRIB_CUBLAS_SRCS src/runtime/contrib/cublas/*.cc)
++    file(GLOB CONTRIB_CUBLAS_SRCS ${TVM_DIR}/src/runtime/contrib/cublas/*.cc)
+     list(APPEND RUNTIME_SRCS ${CONTRIB_CUBLAS_SRCS})
+     list(APPEND TVM_RUNTIME_LINKER_LIBS ${CUDA_CUBLAS_LIBRARY})
+   endif(USE_CUBLAS)
+ 
+ else(USE_CUDA)
+-  list(APPEND COMPILER_SRCS src/codegen/opt/build_cuda_off.cc)
++  list(APPEND COMPILER_SRCS ${TVM_DIR}/src/codegen/opt/build_cuda_off.cc)
+ endif(USE_CUDA)
+diff -Npur tvm/cmake/modules/LLVM.cmake tvm_new/cmake/modules/LLVM.cmake
+--- tvm/cmake/modules/LLVM.cmake	2019-12-14 15:11:37.562418441 +0800
++++ tvm_new/cmake/modules/LLVM.cmake	2019-12-14 11:28:49.161977599 +0800
+@@ -15,6 +15,8 @@
+ # specific language governing permissions and limitations
+ # under the License.
+ 
++# 2019.12.30 - Modify current directory of tvm.
++
+ # LLVM rules
+ add_definitions(-DDMLC_USE_FOPEN64=0)
+ 
+@@ -26,7 +28,7 @@ if(NOT USE_LLVM STREQUAL "OFF")
+   message(STATUS "Set TVM_LLVM_VERSION=" ${TVM_LLVM_VERSION})
+   # Set flags that are only needed for LLVM target
+   add_definitions(-DTVM_LLVM_VERSION=${TVM_LLVM_VERSION})
+-  file(GLOB COMPILER_LLVM_SRCS src/codegen/llvm/*.cc)
++  file(GLOB COMPILER_LLVM_SRCS ${TVM_DIR}/src/codegen/llvm/*.cc)
+   list(APPEND TVM_LINKER_LIBS ${LLVM_LIBS})
+   list(APPEND COMPILER_SRCS ${COMPILER_LLVM_SRCS})
+   if(NOT MSVC)
+diff -Npur tvm/cmake/modules/Micro.cmake tvm_new/cmake/modules/Micro.cmake
+--- tvm/cmake/modules/Micro.cmake	2019-12-14 15:11:37.562418441 +0800
++++ tvm_new/cmake/modules/Micro.cmake	2019-12-14 11:28:49.161977599 +0800
+@@ -15,8 +15,10 @@
+ # specific language governing permissions and limitations
+ # under the License.
+ 
++# 2019.12.30 - Modify current directory of tvm.
++
+ if(USE_MICRO)
+   message(STATUS "Build with Micro support")
+-  file(GLOB RUNTIME_MICRO_SRCS src/runtime/micro/*.cc)
++  file(GLOB RUNTIME_MICRO_SRCS ${TVM_DIR}/src/runtime/micro/*.cc)
+   list(APPEND RUNTIME_SRCS ${RUNTIME_MICRO_SRCS})
+ endif(USE_MICRO)
+diff -Npur tvm/cmake/modules/VTA.cmake tvm_new/cmake/modules/VTA.cmake
+--- tvm/cmake/modules/VTA.cmake	2019-12-14 15:11:37.562418441 +0800
++++ tvm_new/cmake/modules/VTA.cmake	2019-12-14 14:42:32.358381133 +0800
+@@ -15,17 +15,19 @@
+ # specific language governing permissions and limitations
+ # under the License.
+ 
++# 2019.12.30 - Modify current directory of tvm.
++
+ # CMake Build rules for VTA
+ find_program(PYTHON NAMES python python3 python3.6)
+ 
+ if(MSVC)
+   message(STATUS "VTA build is skipped in Windows..")
+ elseif(PYTHON)
+-  set(VTA_CONFIG ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/vta/config/vta_config.py)
++  set(VTA_CONFIG ${PYTHON} ${TVM_DIR}/vta/config/vta_config.py)
+ 
+   if(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/vta_config.json)
+     message(STATUS "Use VTA config " ${CMAKE_CURRENT_BINARY_DIR}/vta_config.json)
+-    set(VTA_CONFIG ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/vta/config/vta_config.py
++    set(VTA_CONFIG ${PYTHON} ${TVM_DIR}/vta/config/vta_config.py
+       --use-cfg=${CMAKE_CURRENT_BINARY_DIR}/vta_config.json)
+   endif()
+ 
+@@ -40,18 +42,18 @@ elseif(PYTHON)
+   # Fast simulator driver build
+   if(USE_VTA_FSIM)
+     # Add fsim driver sources
+-    file(GLOB FSIM_RUNTIME_SRCS vta/src/*.cc)
+-    list(APPEND FSIM_RUNTIME_SRCS vta/src/sim/sim_driver.cc)
+-    list(APPEND FSIM_RUNTIME_SRCS vta/src/vmem/virtual_memory.cc vta/src/vmem/virtual_memory.h)
+-    list(APPEND FSIM_RUNTIME_SRCS vta/src/sim/sim_tlpp.cc)
++    file(GLOB FSIM_RUNTIME_SRCS ${TVM_DIR}/vta/src/*.cc)
++    list(APPEND FSIM_RUNTIME_SRCS ${TVM_DIR}/vta/src/sim/sim_driver.cc)
++    list(APPEND FSIM_RUNTIME_SRCS ${TVM_DIR}/vta/src/vmem/virtual_memory.cc ${TVM_DIR}/vta/src/vmem/virtual_memory.h)
++    list(APPEND FSIM_RUNTIME_SRCS ${TVM_DIR}/vta/src/sim/sim_tlpp.cc)
+     # Target lib: vta_fsim
+     add_library(vta_fsim SHARED ${FSIM_RUNTIME_SRCS})
+-    target_include_directories(vta_fsim PUBLIC vta/include)
++    target_include_directories(vta_fsim PUBLIC ${TVM_DIR}/vta/include)
+     foreach(__def ${VTA_DEFINITIONS})
+       string(SUBSTRING ${__def} 3 -1 __strip_def)
+       target_compile_definitions(vta_fsim PUBLIC ${__strip_def})
+     endforeach()
+-    include_directories("vta/include")
++    include_directories("${TVM_DIR}/vta/include")
+     if(APPLE)
+       set_target_properties(vta_fsim PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+     endif(APPLE)
+@@ -61,18 +63,18 @@ elseif(PYTHON)
+   # Cycle accurate simulator driver build
+   if(USE_VTA_TSIM)
+     # Add tsim driver sources
+-    file(GLOB TSIM_RUNTIME_SRCS vta/src/*.cc)
+-    list(APPEND TSIM_RUNTIME_SRCS vta/src/tsim/tsim_driver.cc)
+-    list(APPEND TSIM_RUNTIME_SRCS vta/src/dpi/module.cc)
+-    list(APPEND TSIM_RUNTIME_SRCS vta/src/vmem/virtual_memory.cc vta/src/vmem/virtual_memory.h)
++    file(GLOB TSIM_RUNTIME_SRCS ${TVM_DIR}/vta/src/*.cc)
++    list(APPEND TSIM_RUNTIME_SRCS ${TVM_DIR}/vta/src/tsim/tsim_driver.cc)
++    list(APPEND TSIM_RUNTIME_SRCS ${TVM_DIR}/vta/src/dpi/module.cc)
++    list(APPEND TSIM_RUNTIME_SRCS ${TVM_DIR}/vta/src/vmem/virtual_memory.cc ${TVM_DIR}/vta/src/vmem/virtual_memory.h)
+     # Target lib: vta_tsim
+     add_library(vta_tsim SHARED ${TSIM_RUNTIME_SRCS})
+-    target_include_directories(vta_tsim PUBLIC vta/include)
++    target_include_directories(vta_tsim PUBLIC ${TVM_DIR}/vta/include)
+     foreach(__def ${VTA_DEFINITIONS})
+       string(SUBSTRING ${__def} 3 -1 __strip_def)
+       target_compile_definitions(vta_tsim PUBLIC ${__strip_def})
+     endforeach()
+-    include_directories("vta/include")
++    include_directories("${TVM_DIR}/vta/include")
+     if(APPLE)
+       set_target_properties(vta_tsim PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+     endif(APPLE)
+@@ -80,19 +82,19 @@ elseif(PYTHON)
+ 
+   # VTA FPGA driver sources
+   if(USE_VTA_FPGA)
+-    file(GLOB FPGA_RUNTIME_SRCS vta/src/*.cc)
++    file(GLOB FPGA_RUNTIME_SRCS ${TVM_DIR}/vta/src/*.cc)
+     # Rules for Zynq-class FPGAs with pynq OS support (see pynq.io)
+     if(${VTA_TARGET} STREQUAL "pynq" OR
+        ${VTA_TARGET} STREQUAL "ultra96")
+-      list(APPEND FPGA_RUNTIME_SRCS vta/src/pynq/pynq_driver.cc)
++      list(APPEND FPGA_RUNTIME_SRCS ${TVM_DIR}/vta/src/pynq/pynq_driver.cc)
+       # Rules for Pynq v2.4
+       find_library(__cma_lib NAMES cma PATH /usr/lib)
+     elseif(${VTA_TARGET} STREQUAL "de10nano")  # DE10-Nano rules
+-      file(GLOB FPGA_RUNTIME_SRCS vta/src/de10nano/*.cc vta/src/*.cc)
++      file(GLOB FPGA_RUNTIME_SRCS ${TVM_DIR}/vta/src/de10nano/*.cc ${TVM_DIR}/vta/src/*.cc)
+     endif()
+     # Target lib: vta
+     add_library(vta SHARED ${FPGA_RUNTIME_SRCS})
+-    target_include_directories(vta PUBLIC vta/include)
++    target_include_directories(vta PUBLIC ${TVM_DIR}/vta/include)
+     foreach(__def ${VTA_DEFINITIONS})
+       string(SUBSTRING ${__def} 3 -1 __strip_def)
+       target_compile_definitions(vta PUBLIC ${__strip_def})

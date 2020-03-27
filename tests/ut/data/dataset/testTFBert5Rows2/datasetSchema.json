@@ -1,0 +1,16 @@
+{
+  "datasetType": "TF",
+  "numRows": 5,
+  "columns": {
+    "input_ids": {
+      "type": "int64",
+      "rank": 1,
+      "shape": [128]
+    },
+    "segment_ids" : {
+      "type": "int64",
+      "rank": 1,
+      "shape": [128]
+    }
+  }
+}

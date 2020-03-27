@@ -1,0 +1,10 @@
+{
+  "datasetType": "TF",
+  "numRows": 50,
+  "columns": {
+    "scalars": {
+      "type": "int64",
+      "rank": 1
+    }
+  }
+}

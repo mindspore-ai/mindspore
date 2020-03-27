@@ -1,0 +1,65 @@
+/**
+ * Copyright 2019 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_CCSRC_DEVICE_GPU_CUDA_DRIVER_H_
+#define MINDSPORE_CCSRC_DEVICE_GPU_CUDA_DRIVER_H_
+
+#include <cuda_runtime_api.h>
+
+namespace mindspore {
+namespace device {
+namespace gpu {
+typedef void *DeviceStream;
+typedef void *DeviceEvent;
+typedef void *HostMemPtr;
+typedef void *DeviceMemPtr;
+
+class CudaDriver {
+ public:
+  // Encapsulate the cuda APIs associated with memory operations
+  // such as malloc/free and memory copy from host to device and reverse.
+  static size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr);
+  static bool FreeDeviceMem(const DeviceMemPtr &addr);
+  static bool CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size);
+  static bool CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size);
+  static size_t total_mem_size();
+  static size_t free_mem_size();
+
+  // Encapsulate the cuda APIs associated with device resource
+  // such as Stream and Event.
+  static bool CreateStream(DeviceStream *stream);
+  static bool DestroyStream(const DeviceStream &stream);
+  static bool SyncStream(const DeviceStream &stream);
+
+  // Encapsulate the cuda APIs associated with device management.
+  static int device_count();
+  static bool set_current_device(int index);
+
+ private:
+  CudaDriver() = delete;
+  ~CudaDriver() = delete;
+  CudaDriver(const CudaDriver &) = delete;
+  CudaDriver &operator=(const CudaDriver &) = delete;
+
+  static constexpr float mem_malloc_retry_rate_{0.99};
+  static constexpr size_t mem_malloc_retry_conut_max_{10};
+  static constexpr size_t mem_malloc_align_size_{4};
+};
+}  // namespace gpu
+}  // namespace device
+}  // namespace mindspore
+
+#endif  // MINDSPORE_CCSRC_DEVICE_GPU_CUDA_DRIVER_H_

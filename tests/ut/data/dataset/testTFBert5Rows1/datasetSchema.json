@@ -1,0 +1,31 @@
+{
+  "datasetType": "TF",
+  "numRows": 5,
+  "columns": {
+    "next_sentence_labels": {
+      "type": "int64",
+      "rank": 1,
+      "shape": [1]
+    },
+    "masked_lm_positions": {
+      "type": "int64",
+      "rank": 1,
+      "shape": [20]
+    },
+    "masked_lm_ids": {
+      "type": "int64",
+      "rank": 1,
+      "shape": [20]
+    },
+    "masked_lm_weights": {
+      "type": "float32",
+      "rank": 1,
+      "shape": [20]
+    },
+    "input_mask": {
+      "type": "int64",
+      "rank": 1,
+      "shape": [128]
+    }
+  }
+}
