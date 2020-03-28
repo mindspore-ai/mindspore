@@ -160,6 +160,13 @@ OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib& irpass) {
   return map;
 }
 
+OptPassGroupMap GetInferenceOptPreparePhases() {
+  opt::irpass::InferenceOptPrepareLib irpass;
+  auto grad_var_prepare = opt::OptPassConfig({irpass.grad_var_prepare_});
+  opt::OptPassGroupMap prepare_map({{"inference_opt_prep", grad_var_prepare}});
+  return prepare_map;
+}
+
 OptPassGroupMap GetPreparePhases(const opt::irpass::OptimizeIRPassLib& irpass) {
   opt::OptPassConfig prepare_group = opt::OptPassConfig({irpass.print_tuple_wrapper_});
   OptPassGroupMap map({{"prepare_group", prepare_group}});
@@ -236,6 +243,16 @@ bool ValidatePass(const ResourcePtr& res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
   FuncGraphPtr func_graph = res->func_graph();
   Validate(func_graph);
+  return true;
+}
+
+bool InferenceOptPreparePass(const ResourcePtr& res) {
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  abstract::AbstractBasePtrList args_spec = res->args_spec();
+  auto prepare_map = GetInferenceOptPreparePhases();
+  auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("inference_prepare", res, prepare_map);
+  (void)infer_opt_prepare->step(func_graph, args_spec, false);
   return true;
 }
 

@@ -175,10 +175,10 @@ bool CombineLikeGraphs(const ResourcePtr&) {
 
 bool SymbolResolveAction(const ResourcePtr& res) {
   if (res->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "Resolve error.";
+    MS_LOG(EXCEPTION) << "SymbolResolve error, manager is null";
   }
   if (res->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "Resolve error";
+    MS_LOG(EXCEPTION) << "SymbolResolve error, graph is null";
   }
   FuncGraphPtr func_graph = res->func_graph();
   auto succ = parse::ResolveFuncGraph(func_graph, res);
@@ -192,6 +192,16 @@ bool SymbolResolveAction(const ResourcePtr& res) {
     fg->ReleaseFullOrderToEffectOrder();
   }
   return succ;
+}
+
+bool InferenceOptPrepareAction(const ResourcePtr& res) {
+  if (res->manager() == nullptr) {
+    MS_LOG(EXCEPTION) << "InferenceOptPrepare error, manager is null.";
+  }
+  if (res->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "InferenceOptPrepare error, graph is null.";
+  }
+  return InferenceOptPreparePass(res);
 }
 
 bool AbstractSpecializeAction(const ResourcePtr& res) {
@@ -303,7 +313,7 @@ static std::vector<ActionItem> CommonPipeline() {
   // Resolve the python func
   actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
   actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
-
+  actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
   // Evaluate type and shape, and specialize
   actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
 

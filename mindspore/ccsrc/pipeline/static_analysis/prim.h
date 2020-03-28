@@ -87,6 +87,21 @@ class DoSignatureEvaluator : public Evaluator {
   PrimitivePtr prim_;
 };
 
+class UnpackGraphEvaluator : public Evaluator {
+ public:
+  explicit UnpackGraphEvaluator(const PrimitivePtr primitive) : Evaluator("UnpackGraphEvaluator"), prim_(primitive) {}
+  ~UnpackGraphEvaluator() override = default;
+  AbstractBasePtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
+                      AnfNodeConfigPtr out_config = nullptr) override;
+
+  AbstractBasePtr Infer(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+    MS_LOG(EXCEPTION) << "Infer() should not be called, Run() method should be called";
+  }
+
+ private:
+  PrimitivePtr prim_;
+};
+
 bool IsInWhiteList(PrimitivePtr primitive);
 StandardPrimitiveEvalImpl GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 

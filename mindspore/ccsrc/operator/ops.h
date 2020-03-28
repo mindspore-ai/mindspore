@@ -246,6 +246,21 @@ class DoSignaturePrimitive : public Primitive {
   ValuePtr function_;
 };
 using DoSignaturePrimitivePtr = std::shared_ptr<DoSignaturePrimitive>;
+
+class UnpackGraphPrimitive : public Primitive {
+ public:
+  explicit UnpackGraphPrimitive(const std::string& name, const bool& with_sens, const bool& need_unpack_args)
+      : Primitive("UnpackGraph"), with_sens_in_args_(with_sens), need_unpack_args_(need_unpack_args) {}
+  ~UnpackGraphPrimitive() override = default;
+  MS_DECLARE_PARENT(UnpackGraphPrimitive, Primitive)
+  bool with_sens_in_args() const { return with_sens_in_args_; }
+  bool need_unpack_args() const { return need_unpack_args_; }
+
+ private:
+  bool with_sens_in_args_;
+  bool need_unpack_args_;
+};
+using UnpackGraphPrimitivePtr = std::shared_ptr<UnpackGraphPrimitive>;
 }  // namespace prim
 }  // namespace mindspore
 
