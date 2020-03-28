@@ -37,7 +37,7 @@ from .debug_ops import (ImageSummary, InsertGradientOf, ScalarSummary,
                         TensorSummary, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
-from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, BatchMatMul,
+from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
                        Cos, Div, Equal, EqualCount, Exp, Floor, FloorDiv,
                        Greater, GreaterEqual, Less, LessEqual, Log, LogicalAnd,
@@ -227,7 +227,8 @@ __all__ = [
     "Round",
     "ApplyFtrl",
     "SpaceToBatch",
-    "BatchToSpace"
+    "BatchToSpace",
+    "Atan2",
 ]
 
 __all__.sort()

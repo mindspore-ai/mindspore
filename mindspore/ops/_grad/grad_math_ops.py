@@ -738,3 +738,16 @@ def get_bprop_round(self):
     def bprop(x, out, dout):
         return (zeros_like(x),)
     return bprop
+
+
+@bprop_getters.register(P.Atan2)
+def get_bprop_atan2(self):
+    """Generate bprop for Atan2"""
+
+    square = P.Square()
+    def bprop(x, y, out, dout):
+        tmp = dout / (square(x) + square(y))
+        dx = tmp * y
+        dy = tmp * (-x)
+        return (dx, dy)
+    return bprop

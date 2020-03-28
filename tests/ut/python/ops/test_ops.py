@@ -481,7 +481,12 @@ test_case_math_ops = [
     ('Round', {
         'block': P.Round(),
         'desc_inputs': [[3]],
-        'desc_bprop': [[3]]})
+        'desc_bprop': [[3]]}),
+    ('Atan2', {
+        'block': P.Atan2(),
+        'desc_inputs': [Tensor(np.array([0, 1]).astype(np.float32)),
+                        Tensor(np.array([1, 1]).astype(np.float32))],
+        'desc_bprop': [[2]]})
 ]
 
 test_case_nn_ops = [

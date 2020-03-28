@@ -1858,3 +1858,26 @@ class Round(PrimitiveWithInfer):
         validator.check_subclass("x_dtype", x_type, mstype.tensor)
         validator.check_typename('x_dtype', x_type, mstype.number_type)
         return x_type
+
+
+class Atan2(_MathBinaryOp):
+    r"""
+    Returns arctangent of input_x/input_y element-wise.
+
+    It returns :math:`\theta\ \in\ (-\frac{\pi}{2}, \frac{\pi}{2})`
+    such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+        - **input_y** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+
+    Examples:
+         >>> input_x = Tensor(np.array([[0, 1]]), mstype.float32)
+         >>> input_y = Tensor(np.array([[1, 1]]), mstype.float32)
+         >>> atan2 = Atan2()
+         >>> atan2(input_x, input_y)
+         [[0. 0.7853982]]
+    """
