@@ -64,17 +64,18 @@ struct ParamPtrHasher {
 
 class AnfExporter {
  public:
-  explicit AnfExporter(const std::string& id, bool export_used = true)
-      : param_index(-1), id_(id), export_used_(export_used) {
+  explicit AnfExporter(const std::string& id, bool export_used = true, bool check_integrity = false)
+      : param_index(-1), id_(id), export_used_(export_used), check_integrity_(check_integrity) {
     func_graph_set.clear();
     exported.clear();
   }
-  ~AnfExporter() {}
+  virtual ~AnfExporter() {}
 
   void ExportFuncGraph(const std::string& filename, const FuncGraphPtr& func_graph);
   void ExportFuncGraph(const std::string& filename, const std::vector<TaggedGraph>& graphs);
 
- private:
+ protected:
+  virtual std::string GetNodeType(const AnfNodePtr& nd);
   int GetParamIndex(const FuncGraphPtr& func_graph, const AnfNodePtr& param, bool throw_excp = true);
   int GetParamIndexFromExported(const AnfNodePtr& param);
   std::string DumpObject(const py::object& obj, const std::string& category) const;
@@ -101,8 +102,10 @@ class AnfExporter {
   OrderedSet<FuncGraphPtr> func_graph_set{};
   OrderedMap<FuncGraphPtr, OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual>> exported;
   std::string id_;
-  bool export_used_ = true;  // whether export function graphs used in current exporting function graph
+  bool export_used_ = true;       // whether export function graphs used in current exporting function graph
+  bool check_integrity_ = false;  // whether check integrity or not, when dumping ir for loading, must set it to true
   TaggedNodeMap tagged_cnodes_;
+  abstract::AnfNodeConfigPtr node_cfg_ = nullptr;
 };
 
 void ExportIR(const std::string& filename, const std::string& id, const FuncGraphPtr& func_graph);
@@ -115,7 +118,6 @@ std::string GetFuncGraphProtoString(const FuncGraphPtr& func_graph);
 void DumpIRProto(const FuncGraphPtr& func_graph, const std::string& suffix);
 
 std::string GetOnnxProtoString(const FuncGraphPtr& func_graph);
-std::string GetNodeType(const AnfNodePtr& nd);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_DEBUG_ANF_IR_UTILS_H_
