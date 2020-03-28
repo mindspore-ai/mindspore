@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """
-network config setting, will be used in main.py
+network config setting, will be used in train.py
 """
+
 from easydict import EasyDict as edict
 
 mnist_cfg = edict({
@@ -23,7 +24,6 @@ mnist_cfg = edict({
     'momentum': 0.9,
     'epoch_size': 1,
     'batch_size': 32,
-    'repeat_size': 1,
     'buffer_size': 1000,
     'image_height': 32,
     'image_width': 32,
