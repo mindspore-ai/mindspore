@@ -1196,6 +1196,12 @@ ATTR_MAP(BatchToSpaceD) = {
   {"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())},
   {"crops", ATTR_DESC(crops, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
 OUTPUT_MAP(BatchToSpaceD) = {{0, OUTPUT_DESC(y)}};
+
+// Atan2
+INPUT_MAP(Atan2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Atan2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Atan2) = {{0, OUTPUT_DESC(y)}};
+
 #ifdef ENABLE_GE
 // Print
 INPUT_MAP(Print) = EMPTY_INPUT_MAP;
