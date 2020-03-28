@@ -133,6 +133,7 @@ class FuncGraphAbstractClosure : public AbstractFuncAtom {
   FuncGraphPtr func_graph_;
   AnalysisContextPtr context_;
 };
+using FuncGraphAbstractClosurePtr = std::shared_ptr<FuncGraphAbstractClosure>;
 
 class MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
  public:

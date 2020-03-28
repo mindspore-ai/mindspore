@@ -39,6 +39,7 @@
 #include "optimizer/irpass/specialize_transform.h"
 #include "optimizer/irpass/incorporate_getitem.h"
 #include "optimizer/irpass/incorporate_call.h"
+#include "optimizer/irpass/grad_var_prepare.h"
 
 namespace mindspore {
 namespace opt {
@@ -123,6 +124,11 @@ ResolveIRPassLib::ResolveIRPassLib() {
   resolver_resolve_ = MakeSubstitution(ResolverResolve(), "resolver_resolve", prim::kPrimResolve);
   resolver_getattr_ = MakeSubstitution(ResolverGetattr(), "resolver_getattr", prim::kPrimGetAttr);
 }
+
+InferenceOptPrepareLib::InferenceOptPrepareLib() {
+  grad_var_prepare_ = MakeSubstitution(GradVarPrepare(), "grad_var_prepare", IsCNode);
+}
+
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

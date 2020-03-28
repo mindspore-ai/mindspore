@@ -180,6 +180,85 @@ AbstractBasePtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const Config
   return engine->ForwardConfig(out_conf, fn_conf);
 }
 
+static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_spec_list, bool need_unpack) {
+  // arg[0] is the func graph to unpack, ignore it
+  AbstractBasePtrList sepcialize_args_before_unpack(args_spec_list.begin() + 1, args_spec_list.end());
+  AbstractBasePtrList graph_sepcialize_args;
+  if (need_unpack) {
+    for (size_t index = 0; index < sepcialize_args_before_unpack.size(); index++) {
+      MS_EXCEPTION_IF_NULL(sepcialize_args_before_unpack[index]);
+      if (sepcialize_args_before_unpack[index]->isa<AbstractTuple>()) {
+        AbstractTuplePtr arg_tuple = sepcialize_args_before_unpack[index]->cast<AbstractTuplePtr>();
+        std::transform(arg_tuple->elements().begin(), arg_tuple->elements().end(),
+                       std::back_inserter(graph_sepcialize_args), [](AbstractBasePtr abs) { return abs; });
+      } else if (sepcialize_args_before_unpack[index]->isa<AbstractDictionary>()) {
+        AbstractDictionaryPtr arg_dict = sepcialize_args_before_unpack[index]->cast<AbstractDictionaryPtr>();
+        auto dict_elems = arg_dict->elements();
+        (void)std::transform(
+          dict_elems.begin(), dict_elems.end(), std::back_inserter(graph_sepcialize_args),
+          [](const AbstractAttribute &item) { return std::make_shared<AbstractKeywordArg>(item.first, item.second); });
+      } else {
+        MS_LOG(EXCEPTION) << "UnpackGraph require args should be tuple or dict, but got "
+                          << sepcialize_args_before_unpack[index]->ToString();
+      }
+    }
+  } else {
+    graph_sepcialize_args = sepcialize_args_before_unpack;
+  }
+  return graph_sepcialize_args;
+}
+
+AbstractBasePtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                          AnfNodeConfigPtr out_conf) {
+  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
+  }
+  if (!prim_->isa<prim::UnpackGraphPrimitive>()) {
+    MS_LOG(EXCEPTION) << "Primitive should be UnpackGraphPrimitive, but got " << prim_->ToString();
+  }
+
+  auto unpack_graph = prim_->cast<prim::UnpackGraphPrimitivePtr>();
+  auto out_node = out_conf->node()->cast<CNodePtr>();
+  const auto &out_node_inputs = out_node->inputs();
+  if (out_node->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+    MS_LOG(EXCEPTION) << "UnpackGraphPrimitive"
+                      << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
+                      << ", inputs size " << out_node_inputs.size();
+  }
+  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
+  AbstractBasePtrList args_spec_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue(); });
+  // get the forward graph
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  AbstractFunctionPtr fn = args_spec_list[0]->cast<AbstractFunctionPtr>();
+  if (fn == nullptr) {
+    MS_LOG(EXCEPTION) << "UnpackGraphPrimitive arg0 must be AbstractFunction, but " << args_spec_list[0]->ToString();
+  }
+  auto real_fn = fn->cast<FuncGraphAbstractClosurePtr>();
+  MS_EXCEPTION_IF_NULL(real_fn);
+  FuncGraphPtr forward_graph = real_fn->func_graph();
+  MS_EXCEPTION_IF_NULL(forward_graph);
+  AbstractBasePtrList graph_sepcialize_args =
+    GetUnpackGraphSpecArgsList(args_spec_list, unpack_graph->need_unpack_args());
+
+  AbstractBasePtrList graph_sepcialize_args_without_sens;
+  (void)std::transform(graph_sepcialize_args.begin(),
+                       graph_sepcialize_args.end() - (unpack_graph->with_sens_in_args() ? 1 : 0),
+                       std::back_inserter(graph_sepcialize_args_without_sens), [](AbstractBasePtr abs) { return abs; });
+  auto new_graph = forward_graph->GenerateGraph(graph_sepcialize_args_without_sens);
+  engine->func_graph_manager()->AddFuncGraph(new_graph);
+  ScopePtr scope = kDefaultScope;
+  if (out_conf != nullptr) {
+    scope = out_conf->node()->scope();
+  }
+  ScopeGuard scope_guard(scope);
+  AnfNodePtr new_vnode = NewValueNode(new_graph);
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_vnode, out_conf->context());
+
+  return engine->ForwardConfig(out_conf, fn_conf);
+}
+
 namespace {
 py::object BuildValue(const ValuePtr &value_ptr) {
   if (value_ptr == nullptr) {
