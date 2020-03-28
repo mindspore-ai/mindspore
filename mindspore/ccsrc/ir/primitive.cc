@@ -106,6 +106,27 @@ void Primitive::set_signatures(
   }
 }
 
+std::string Primitive::GetAttrsText() const {
+  if (attrs_.empty()) {
+    return "";
+  }
+
+  std::ostringstream oss;
+  oss << "[";
+  bool is_first = true;
+  for (auto& attr : attrs_) {
+    if (is_first) {
+      is_first = false;
+    } else {
+      oss << ", ";
+    }
+    oss << attr.first << "=" << attr.second->DumpText();
+  }
+  oss << "]";
+
+  return oss.str();
+}
+
 py::function PrimitivePy::GetBpropFunction() {
   static const char* const get_bprop_func_name = "get_bprop";
   if (py::hasattr(python_obj_, get_bprop_func_name)) {
