@@ -46,7 +46,7 @@ class Net(nn.Cell):
         return x
 
 
-def test_lars():
+def test_lars_multi_step_lr():
     inputs = Tensor(np.ones([1, 64]).astype(np.float32))
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
     net = Net()
@@ -57,6 +57,23 @@ def test_lars():
     SGD = Momentum(net.trainable_params(), lr, 0.9)
     optimizer = LARS(SGD, epsilon=1e-08, hyperpara=0.02, decay_filter=lambda x: 'bn' not in x.name,
                        lars_filter=lambda x: 'bn' not in x.name)
+
+    net_with_loss = WithLossCell(net, loss)
+    train_network = TrainOneStepCell(net_with_loss, optimizer)
+    _executor.compile(train_network, inputs, label)
+
+
+def test_lars_float_lr():
+    inputs = Tensor(np.ones([1, 64]).astype(np.float32))
+    label = Tensor(np.zeros([1, 10]).astype(np.float32))
+    net = Net()
+    net.set_train()
+    loss = nn.SoftmaxCrossEntropyWithLogits()
+
+    lr = 0.1
+    SGD = Momentum(net.trainable_params(), lr, 0.9)
+    optimizer = LARS(SGD, epsilon=1e-08, hyperpara=0.02, decay_filter=lambda x: 'bn' not in x.name,
+                     lars_filter=lambda x: 'bn' not in x.name)
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
