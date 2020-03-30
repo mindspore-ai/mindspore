@@ -35,6 +35,8 @@ namespace kernel {
 constexpr auto kName = "name";
 constexpr auto kDtype = "dtype";
 constexpr auto kFormat = "format";
+constexpr auto kPrefixInput = "input";
+constexpr auto kPrefixOutput = "output";
 const std::map<std::string, std::string> DYNAMIC_FORMAT_MAP = {{"NCHW", "DefaultFormat"},
                                                                {"NHWC", "DefaultFormat"},
                                                                {"ND", "DefaultFormat"},
@@ -146,13 +148,13 @@ bool ParseDynamicFormatJson(const std::string &jsonStr, std::vector<std::shared_
     if (!CheckJsonItemValidity(json_obj, key_name, keys)) {
       return false;
     }
-    if (key_name.find("input", 0) != std::string::npos) {
+    if (key_name.compare(0, strlen(kPrefixInput), kPrefixInput) == 0) {
       std::shared_ptr<OpIOInfo> input = std::make_shared<OpIOInfo>();
       MS_EXCEPTION_IF_NULL(input);
       input->set_name(json_obj[key_name].at(kName));
       ConvertFormatDtype(json_obj[key_name].at(kFormat), json_obj[key_name].at(kDtype), input);
       inputs->emplace_back(input);
-    } else if (key_name.find("output", 0) != std::string::npos) {
+    } else if (key_name.compare(0, strlen(kPrefixOutput), kPrefixOutput) == 0) {
       std::shared_ptr<OpIOInfo> output = std::make_shared<OpIOInfo>();
       MS_EXCEPTION_IF_NULL(output);
       output->set_name(json_obj[key_name].at(kName));
