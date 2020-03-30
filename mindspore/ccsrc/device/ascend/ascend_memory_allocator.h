@@ -24,7 +24,7 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 // The fraction of total ascend memory used to compute the graph.
-static const float GRAPH_INIT_DAVINCI_MEM_RATIO = 0.8;
+static const float GRAPH_INIT_ASCEND_MEM_RATIO = 0.8;
 
 class AscendMemoryAllocator : public DynamicMemPoolBestFit {
  public:
