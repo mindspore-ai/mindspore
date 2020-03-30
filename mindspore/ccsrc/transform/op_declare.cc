@@ -473,7 +473,7 @@ ATTR_MAP(Relu6) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu6) = {{0, OUTPUT_DESC(activations)}};
 
 // Relu6Grad
-INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(gradients)}};
+INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(Relu6Grad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu6Grad) = {{0, OUTPUT_DESC(backprops)}};
 
