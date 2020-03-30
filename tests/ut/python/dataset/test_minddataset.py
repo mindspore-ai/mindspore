@@ -24,7 +24,6 @@ import string
 import mindspore.dataset.transforms.vision.c_transforms as vision
 import numpy as np
 import pytest
-from mindspore._c_dataengine import InterpolationMode
 from mindspore.dataset.transforms.vision import Inter
 from mindspore import log as logger
 

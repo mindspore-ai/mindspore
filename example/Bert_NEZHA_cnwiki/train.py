@@ -36,7 +36,7 @@ import os
 import numpy as np
 from config import bert_train_cfg, bert_net_cfg
 import mindspore.dataset.engine.datasets as de
-import mindspore._c_dataengine as deMap
+import mindspore.dataset.transforms.c_transforms as C
 from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.train.model import Model
@@ -52,7 +52,7 @@ def create_train_dataset(batch_size):
     ds = de.StorageDataset([bert_train_cfg.DATA_DIR], bert_train_cfg.SCHEMA_DIR,
                            columns_list=["input_ids", "input_mask", "segment_ids", "next_sentence_labels",
                                          "masked_lm_positions", "masked_lm_ids", "masked_lm_weights"])
-    type_cast_op = deMap.TypeCastOp("int32")
+    type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
     ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)
     ds = ds.map(input_columns="next_sentence_labels", operations=type_cast_op)
