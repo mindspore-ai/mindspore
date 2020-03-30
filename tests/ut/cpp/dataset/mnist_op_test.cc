@@ -91,7 +91,8 @@ TEST_F(MindDataTestMnistSampler, TestSequentialMnistWithRepeat) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
       EXPECT_TRUE(res[i % 10] == label);
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 20);
@@ -120,7 +121,8 @@ TEST_F(MindDataTestMnistSampler, TestSequentialImageFolderWithRepeatBatch) {
       std::shared_ptr<Tensor> label;
       Create1DTensor(&label, 5, reinterpret_cast<unsigned char *>(res[i % 4]));
       EXPECT_TRUE((*label) == (*tensor_map["label"]));
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << *tensor_map["label"] << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << *tensor_map["label"] << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 4);

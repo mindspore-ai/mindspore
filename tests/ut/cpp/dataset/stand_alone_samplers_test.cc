@@ -78,7 +78,7 @@ TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
     sampler->Init(&mock);
     sampler->GetNextBuffer(&db);
     db->GetTensor(&tensor, 0, 0);
-    std::cout << (*tensor);
+    MS_LOG(DEBUG) << (*tensor);
     if(i < 3) {  // This is added due to std::shuffle()
       EXPECT_TRUE((*tensor) == (*row[i]));
     }

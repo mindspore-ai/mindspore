@@ -45,5 +45,5 @@ TEST_F(MindDataTestArena, TestALLFunction) {
   for (int i = 0; i < 1000; i++) {
     mp->Deallocate(v.at(i));
   }
-  std::cout << *mp;
+  MS_LOG(DEBUG) << *mp;
 }
