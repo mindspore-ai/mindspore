@@ -35,7 +35,7 @@ class MindDataTestMemoryPool : public UT::Common {
 };
 
 TEST_F(MindDataTestMemoryPool, DumpPoolInfo) {
-  std::cout << *(std::dynamic_pointer_cast<CircularPool>(mp_)) << std::endl;
+  MS_LOG(DEBUG) << *(std::dynamic_pointer_cast<CircularPool>(mp_)) << std::endl;
 }
 
 TEST_F(MindDataTestMemoryPool, TestOperator1) {
@@ -72,5 +72,5 @@ TEST_F(MindDataTestMemoryPool, TestAllocator) {
   std::shared_ptr<A> obj_a = std::allocate_shared<A>(alloc, 3);
   int v = obj_a->val_a();
   ASSERT_EQ(v, 3);
-  std::cout << *(std::dynamic_pointer_cast<CircularPool>(mp_)) << std::endl;
+  MS_LOG(DEBUG) << *(std::dynamic_pointer_cast<CircularPool>(mp_)) << std::endl;
 }

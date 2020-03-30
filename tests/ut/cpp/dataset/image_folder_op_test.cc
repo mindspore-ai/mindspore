@@ -102,7 +102,8 @@ TEST_F(MindDataTestImageFolderSampler, TestSequentialImageFolderWithRepeat) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_TRUE(res[(i % 44) / 11] == label);
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 88);
@@ -126,7 +127,8 @@ TEST_F(MindDataTestImageFolderSampler, TestRandomImageFolder) {
     int32_t label = 0;
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 44);
@@ -155,7 +157,8 @@ TEST_F(MindDataTestImageFolderSampler, TestRandomSamplerImageFolder) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_TRUE(res[i] == label);
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 12);
@@ -185,8 +188,9 @@ TEST_F(MindDataTestImageFolderSampler, TestSequentialImageFolderWithRepeatBatch)
       std::shared_ptr<Tensor> label;
       Create1DTensor(&label, 11, reinterpret_cast<unsigned char *>(res[i % 4]), DataType::DE_INT32);
       EXPECT_TRUE((*label) == (*tensor_map["label"]));
-      std::cout << "row: " << i++ << " " << tensor_map["image"]->shape() << " (*label):" << (*label)
+      MS_LOG(DEBUG) << "row: " << i << " " << tensor_map["image"]->shape() << " (*label):" << (*label)
                 << " *tensor_map[label]: " << *tensor_map["label"] << std::endl;
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 8);
@@ -282,7 +286,8 @@ TEST_F(MindDataTestImageFolderSampler, TestImageFolderClassIndex) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_TRUE(label == res[i / 11]);
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 22);
@@ -308,7 +313,8 @@ TEST_F(MindDataTestImageFolderSampler, TestDistributedSampler) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_EQ(i % 4, label);
-      std::cout << "row:" << i++ << "\tlabel:" << label << "\n";
+      MS_LOG(DEBUG) << "row:" << i << "\tlabel:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 16);
@@ -335,7 +341,8 @@ TEST_F(MindDataTestImageFolderSampler, TestPKSamplerImageFolder) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_TRUE(res[i] == label);
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 12);
@@ -360,7 +367,8 @@ TEST_F(MindDataTestImageFolderSampler, TestImageFolderNumSamples) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_TRUE(0 == label);
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 22);
@@ -392,7 +400,8 @@ TEST_F(MindDataTestImageFolderSampler, TestImageFolderDecode) {
       EXPECT_TRUE(label == res[i / 11]);
       EXPECT_TRUE(
         tensor_map["image"]->shape() == TensorShape({2268, 4032, 3}));  // verify shapes are correct after decode
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 20);
@@ -442,7 +451,8 @@ TEST_F(MindDataTestImageFolderSampler, TestImageFolderSharding1) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_EQ(labels[i], label);
-      std::cout << "row:" << i++ << "\tlabel:" << label << "\n";
+      MS_LOG(DEBUG) << "row:" << i << "\tlabel:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 5);
@@ -470,7 +480,8 @@ TEST_F(MindDataTestImageFolderSampler, TestImageFolderSharding2) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<int32_t>(&label, {});
       EXPECT_EQ(labels[i], label);
-      std::cout << "row:" << i++ << "\tlabel:" << label << "\n";
+      MS_LOG(DEBUG) << "row:" << i << "\tlabel:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 11);

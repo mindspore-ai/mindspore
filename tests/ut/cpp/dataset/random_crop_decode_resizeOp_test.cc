@@ -78,7 +78,7 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
     } else {
       mse = mse_sum;
     }
-    std::cout << "mse: " << mse << std::endl;
+    MS_LOG(DEBUG) << "mse: " << mse << std::endl;
   }
   MS_LOG(INFO) << "MindDataTestRandomCropDecodeResizeOp end!";
 }
@@ -150,7 +150,7 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
     }
 
     mse = (count == 0) ? mse_sum : static_cast<float>(mse_sum) / count;
-    std::cout << "mse: " << mse << std::endl;
+    MS_LOG(DEBUG) << "mse: " << mse << std::endl;
   }
   MS_LOG(INFO) << "MindDataTestRandomCropDecodeResizeOp end!";
 }
