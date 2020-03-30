@@ -24,8 +24,7 @@ import numpy as np
 import mindspore.ops.functional as F
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore.dataengine as de
-import mindspore._c_dataengine as deMap
+import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore.communication.management import init
