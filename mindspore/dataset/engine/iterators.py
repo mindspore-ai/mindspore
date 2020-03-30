@@ -66,11 +66,10 @@ def _alter_node(node):
 
 class Iterator:
     """
-        General Iterator over a dataset.
+    General Iterator over a dataset.
 
-        Attributes:
-            dataset: Dataset to be iterated over
-
+    Attributes:
+        dataset: Dataset to be iterated over
     """
 
     def __init__(self, dataset):
@@ -86,6 +85,7 @@ class Iterator:
         root = self.__convert_node_postorder(self.dataset)
         self.depipeline.AssignRootNode(root)
         self.depipeline.LaunchTreeExec()
+        self._index = 0
 
     def __is_tree_node(self, node):
         """Check if a node is tree node."""
@@ -185,10 +185,7 @@ class Iterator:
             Iterator.__print_local(input_op, level + 1)
 
     def print(self):
-        """
-            Print the dataset tree
-
-        """
+        """Print the dataset tree"""
         self.__print_local(self.dataset, 0)
 
     def release(self):
@@ -202,7 +199,10 @@ class Iterator:
     def __next__(self):
         data = self.get_next()
         if not data:
+            if self._index == 0:
+                logger.warning("No records available.")
             raise StopIteration
+        self._index += 1
         return data
 
     def get_output_shapes(self):
@@ -234,7 +234,7 @@ class DictIterator(Iterator):
 
     def get_next(self):
         """
-            Returns the next record in the dataset as dictionary
+        Returns the next record in the dataset as dictionary
 
         Returns:
             Dict, the next record in the dataset.
@@ -260,7 +260,7 @@ class TupleIterator(Iterator):
 
     def get_next(self):
         """
-            Returns the next record in the dataset as a list
+        Returns the next record in the dataset as a list
 
         Returns:
             List, the next record in the dataset.

@@ -328,13 +328,20 @@ class FileWriter:
             self._generator.build()
             self._generator.write_to_db()
 
+        mindrecord_files = []
+        index_files = []
         # change the file mode to 600
         for item in self._paths:
             if os.path.exists(item):
                 os.chmod(item, stat.S_IRUSR | stat.S_IWUSR)
+                mindrecord_files.append(item)
             index_file = item + ".db"
             if os.path.exists(index_file):
                 os.chmod(index_file, stat.S_IRUSR | stat.S_IWUSR)
+                index_files.append(index_file)
+
+        logger.info("The list of mindrecord files created are: {}, and the list of index files are: {}".format(
+            mindrecord_files, index_files))
 
         return ret
 
