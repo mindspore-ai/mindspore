@@ -16,9 +16,6 @@
 import os
 import pytest
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
 def test_expand_loss():
     ret = os.system("sh run_onehot_model_parallel.sh")
     assert(ret==0)
