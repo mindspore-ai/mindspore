@@ -31,8 +31,9 @@ DistributedSampler::DistributedSampler(int64_t num_dev, int64_t dev_id, bool shu
       num_devices_(num_dev),
       shuffle_(shuffle) {}
 
-Status DistributedSampler::Init(const RandomAccessOp *op) {
-  RETURN_IF_NOT_OK(Sampler::Init(op));
+Status DistributedSampler::InitSampler() {
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0, "num_samples <= 0\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "num_rows <= 0\n");
   CHECK_FAIL_RETURN_UNEXPECTED(device_id_ < num_devices_ && device_id_ >= 0 && num_rows_ > 0 && num_samples_ > 0,
                                "fail to init DistributedSampler");
   rnd_.seed(seed_++);

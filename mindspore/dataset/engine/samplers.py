@@ -20,7 +20,6 @@ SequentialSampler, SubsetRandomSampler, WeightedRandomSampler.
 
 import mindspore._c_dataengine as cde
 
-
 class DistributedSampler():
     """
     Sampler that access a shard of the dataset.

@@ -258,7 +258,7 @@ Status ImageFolderOp::Reset() {
 
 // hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
 Status ImageFolderOp::InitSampler() {
-  RETURN_IF_NOT_OK(sampler_->Init(this));
+  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
   return Status::OK();
 }
 

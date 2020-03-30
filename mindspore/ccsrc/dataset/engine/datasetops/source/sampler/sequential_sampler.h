@@ -32,10 +32,8 @@ class SequentialSampler : public Sampler {
   // Destructor.
   ~SequentialSampler() = default;
 
-  // Initialize the sampler.
-  // @param op
-  // @return Status
-  Status Init(const RandomAccessOp *op) override;
+  // init sampler, called by python
+  Status InitSampler() override;
 
   // for next epoch of sampleIds
   // @return - The error code return

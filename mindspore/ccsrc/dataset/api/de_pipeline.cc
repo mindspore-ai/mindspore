@@ -517,7 +517,7 @@ Status DEPipeline::ParseGeneratorOp(const py::dict &args, std::shared_ptr<Datase
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "generator_function") {
+      if (key == "source") {
         py::object obj = py::cast(&value);
         if (!py::isinstance<py::function>(obj)) {
           std::string err_msg = "Error: generator is invalid or not set.";

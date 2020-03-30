@@ -384,7 +384,16 @@ void bindTensorOps4(py::module *m) {
 }
 
 void bindSamplerOps(py::module *m) {
-  (void)py::class_<Sampler, std::shared_ptr<Sampler>>(*m, "Sampler");
+  (void)py::class_<Sampler, std::shared_ptr<Sampler>>(*m, "Sampler")
+    .def("set_num_rows", [](Sampler &self, int64_t rows) { THROW_IF_ERROR(self.SetNumRowsInDataset(rows)); })
+    .def("set_num_samples", [](Sampler &self, int64_t samples) { THROW_IF_ERROR(self.SetNumSamples(samples)); })
+    .def("initialize", [](Sampler &self) { THROW_IF_ERROR(self.InitSampler()); })
+    .def("get_indices", [](Sampler &self) {
+      py::array ret;
+      THROW_IF_ERROR(self.GetAllIdsThenReset(&ret));
+      return ret;
+    });
+
   (void)py::class_<mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardOperator>>(*m, "ShardOperator");
 
   (void)py::class_<DistributedSampler, Sampler, std::shared_ptr<DistributedSampler>>(*m, "DistributedSampler")

@@ -491,6 +491,8 @@ Status Tensor::GetItemAt(T *o, const std::vector<dsize_t> &index) const {
 
 // return data as numpy, should return status
 Status Tensor::GetDataAsNumpy(py::array *data) {
+  RETURN_UNEXPECTED_IF_NULL(data_);
+  RETURN_UNEXPECTED_IF_NULL(data);
   if (type_ == DataType::DE_BOOL) {
     *data = py::array_t<bool>(shape_.AsVector(), reinterpret_cast<bool *>(data_));
   } else if (type_ == DataType::DE_INT8) {

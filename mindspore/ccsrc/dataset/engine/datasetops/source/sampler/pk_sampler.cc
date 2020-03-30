@@ -28,9 +28,7 @@ PKSampler::PKSampler(int64_t val, bool shuffle, int64_t samples_per_buffer)
       num_pk_samples_(0),
       samples_per_class_(val) {}
 
-Status PKSampler::Init(const RandomAccessOp *op) {
-  RETURN_UNEXPECTED_IF_NULL(op);
-  RETURN_IF_NOT_OK(op->GetClassIds(&label_to_ids_));
+Status PKSampler::InitSampler() {
   labels_.reserve(label_to_ids_.size());
   for (const auto &pair : label_to_ids_) {
     if (pair.second.empty() == false) {
@@ -79,5 +77,13 @@ Status PKSampler::Reset() {
   rnd_.seed(seed_++);
   return Status::OK();
 }
+
+Status PKSampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
+  RETURN_UNEXPECTED_IF_NULL(op);
+  RETURN_IF_NOT_OK(op->GetClassIds(&label_to_ids_));
+  RETURN_IF_NOT_OK(InitSampler());
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -439,6 +439,74 @@ def test_case_error_4():
     assert "Unexpected error. Result of a tensorOp doesn't match output column names" in str(info.value)
 
 
+def test_sequential_sampler():
+    source = [(np.array([x]),) for x in range(64)]
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler())
+    i = 0
+    for data in ds1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([i])
+        assert np.array_equal(data["data"], golden)
+        i = i + 1
+
+
+def test_random_sampler():
+    source = [(np.array([x]),) for x in range(64)]
+    ds1 = ds.GeneratorDataset(source, ["data"], shuffle = True)
+    for data in ds1.create_dict_iterator():  # each data is a dictionary
+        pass
+
+
+def test_distributed_sampler():
+    source = [(np.array([x]),) for x in range(64)]
+    for sid in range(8):
+        ds1 = ds.GeneratorDataset(source, ["data"], shuffle = False, num_shards=8, shard_id=sid)
+        i = sid
+        for data in ds1.create_dict_iterator():  # each data is a dictionary
+            golden = np.array([i])
+            assert np.array_equal(data["data"], golden)
+            i = i + 8
+
+
+def test_num_samples():
+    source = [(np.array([x]),) for x in range(64)]
+    num_samples = 32
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(), num_samples = num_samples)
+    ds2 = ds.GeneratorDataset(source, ["data"], sampler=[i for i in range(32)], num_samples = num_samples)
+    ds3 = ds.GeneratorDataset(generator_1d, ["data"], num_samples = num_samples)
+
+    count = 0
+    for _ in ds1.create_dict_iterator():
+        count = count + 1
+    assert count == num_samples
+
+    count = 0
+    for _ in ds2.create_dict_iterator():
+        count = count + 1
+    assert count == num_samples
+
+    count = 0
+    for _ in ds3.create_dict_iterator():
+        count = count + 1
+    assert count == num_samples
+
+
+def test_num_samples_underflow():
+    source = [(np.array([x]),) for x in range(64)]
+    num_samples = 256
+    ds2 = ds.GeneratorDataset(source, ["data"], sampler=[i for i in range(64)], num_samples = num_samples)
+    ds3 = ds.GeneratorDataset(generator_1d, ["data"], num_samples = num_samples)
+
+    count = 0
+    for _ in ds2.create_dict_iterator():
+        count = count + 1
+    assert count == 64
+
+    count = 0
+    for _ in ds3.create_dict_iterator():
+        count = count + 1
+    assert count == 64
+
+
 if __name__ == "__main__":
     test_case_0()
     test_case_1()
@@ -458,3 +526,6 @@ if __name__ == "__main__":
     test_case_error_2()
     test_case_error_3()
     test_case_error_4()
+    test_sequential_sampler()
+    test_distributed_sampler()
+    test_random_sampler()
