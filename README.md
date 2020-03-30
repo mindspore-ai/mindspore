@@ -7,6 +7,7 @@
 - [Installation](#installation)
     - [Binaries](#binaries)
     - [From Source](#from-source)
+    - [Docker Image](#docker-image)
 - [Quickstart](#quickstart)
 - [Docs](#docs)
 - [Community](#community)
@@ -86,6 +87,26 @@ For installation using pip, take `Ubuntu-x86` and `CPU` build version as an exam
 ### From Source
 
 [Install MindSpore](https://www.mindspore.cn/install/en).
+
+### Docker Image
+
+MindSpore docker image is hosted on [Docker Hub](https://hub.docker.com/r/mindspore),
+currently the containerized build options are supported as follows:
+
+| Hardware Platform | Docker Image URL |
+| :---------------- | :--------------- |
+| CPU | `mindspore/mindspore-cpu:0.1.0-alpha` |
+| GPU CUDA 9.2 | `mindspore/mindspore-cuda9.2:0.1.0-alpha` |
+| GPU CUDA 10.1 | `mindspore/mindspore-cuda10.1:0.1.0-alpha` |
+| Ascend | <center>—</center> |
+
+Take `CPU` for example, you can directly pull the image using the below command:
+```
+docker pull mindspore/mindspore-cpu:0.1.0-alpha
+```
+
+If anyone wants to learn more about the build process of MindSpore docker images,
+please check out `docker` folder for the details.
 
 ## Quickstart
 
