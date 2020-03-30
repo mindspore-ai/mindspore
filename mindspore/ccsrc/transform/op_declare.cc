@@ -506,9 +506,9 @@ ATTR_MAP(Relu6) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu6) = {{0, OUTPUT_DESC(activations)}};
 
 // Relu6Grad
-INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(y)}};
+INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(Relu6Grad) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(Relu6Grad) = {{0, OUTPUT_DESC(z)}};
+OUTPUT_MAP(Relu6Grad) = {{0, OUTPUT_DESC(backprops)}};
 
 // ResizeBilinearGrad
 INPUT_MAP(ResizeBilinearGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
