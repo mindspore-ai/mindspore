@@ -150,8 +150,10 @@ class CompilerPool:
 
     def __init__(self):
         processes = multiprocessing.cpu_count()
-        if processes > 32:
-            processes = 32
+        # max_processes_num: Set the maximum number of concurrent processes for compiler
+        max_processes_num = 16
+        if processes > max_processes_num:
+            processes = max_processes_num
         self.__pool = multiprocessing.Pool(processes=processes)
         self.__next_task_id = 1
         self.__running_tasks = []
