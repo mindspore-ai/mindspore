@@ -26,7 +26,7 @@ const uint64_t MEM_SIZE_BYTE = (MEM_SIZE << 30);
 
 AscendMemoryAllocator::AscendMemoryAllocator() {
   hasMalloc_ = false;
-  free_mem_size_ = FloatToSize(MEM_SIZE_BYTE * (1 - GRAPH_INIT_DAVINCI_MEM_RATIO));
+  free_mem_size_ = FloatToSize(MEM_SIZE_BYTE * (1 - GRAPH_INIT_ASCEND_MEM_RATIO));
   total_mem_size_ = free_mem_size_;
 }
 
