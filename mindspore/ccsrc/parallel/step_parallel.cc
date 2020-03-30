@@ -653,6 +653,13 @@ LossNodeInfo GetLossNodeInfo(const AnfNodePtr& loss_node) {
   MS_EXCEPTION_IF_NULL(pre_node);
 
   LossNodeInfo node_info;
+  // return -> cast
+  auto pre_cnode = pre_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(pre_cnode);
+  auto pre_prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
+  if (pre_prim->name() == CAST && pre_cnode->operator_info() == nullptr) {
+    pre_node = pre_cnode->input(1);
+  }
 
   // return -> cast
   auto pre_cnode = pre_node->cast<CNodePtr>();
@@ -1970,7 +1977,10 @@ CNodePtr FindLossCNode(const FuncGraphPtr& func_graph) {
   MS_EXCEPTION_IF_NULL(current_value);
   PrimitivePtr current_prim = current_value->value()->cast<PrimitivePtr>();
   MS_EXCEPTION_IF_NULL(current_prim);
+<<<<<<< HEAD
 
+=======
+>>>>>>> fix_cast_bug
   // return -> cast
   if (current_prim->name() == CAST && pre_cnode->operator_info() == nullptr) {
     pre_cnode = pre_cnode->input(1)->cast<CNodePtr>();
