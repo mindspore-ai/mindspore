@@ -43,6 +43,7 @@
 #include "pre_activate/ascend/ir_fusion/momentum_lossscale_fusion.h"
 #include "pre_activate/ascend/ir_fusion/mul_add_fusion.h"
 #include "pre_activate/ascend/ir_fusion/mul_addn_fusion.h"
+#include "pre_activate/ascend/ir_fusion/matmul_biasadd_fusion.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/pass/getitem_tuple.h"
 #include "pre_activate/pass/optimize_dependence.h"
@@ -173,6 +174,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<MomentumLossscaleFusion>());
     ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
     ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
+    ir_fusion_pm->AddPass(std::make_shared<MatmulBiasaddFusion>());
     ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
     ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
   }
