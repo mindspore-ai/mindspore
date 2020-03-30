@@ -110,6 +110,7 @@ constexpr auto kResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
 constexpr auto kFusedMulAddOpName = "FusedMulAdd";
 constexpr auto kFusedMulAddNOpName = "FusedMulAddN";
 constexpr auto kFusedMulApplyMomentumOpName = "FusedMulApplyMomentum";
+constexpr auto kBiasAddOpName = "BiasAdd";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -140,6 +141,7 @@ constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrOutputUsedNum = "output_used_num";
+constexpr auto kAttrHasBias = "has_bias";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
