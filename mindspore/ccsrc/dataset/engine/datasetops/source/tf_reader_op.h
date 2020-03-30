@@ -369,6 +369,7 @@ class TFReaderOp : public ParallelOp {
   std::unique_ptr<DataSchema> data_schema_;
   std::unique_ptr<StringIndex> filename_index_;
   bool load_io_block_queue_;
+  bool load_jagged_connector_;
 
   std::unique_ptr<JaggedConnector> jagged_buffer_connector_;
   QueueList<std::unique_ptr<FilenameBlock>> io_block_queues_;
