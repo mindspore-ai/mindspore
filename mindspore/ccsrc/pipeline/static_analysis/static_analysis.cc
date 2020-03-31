@@ -292,38 +292,35 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
     if (prim_py != nullptr) {
-      evaluator = std::make_shared<PythonPrimEvaluator>(prim_py);
-    } else {
-      MS_LOG(EXCEPTION) << "The primitive with python evaluator should be a python primitive.";
+      return std::make_shared<PythonPrimEvaluator>(prim_py);
     }
-  } else if (prim->isa<PrimitivePy>() || prim->HasAttr()) {
+    MS_LOG(EXCEPTION) << "The primitive with python evaluator should be a python primitive.";
+  }
+
+  if (prim->isa<PrimitivePy>() || prim->HasAttr()) {
+    if (engine == nullptr) {
+      (void)GetPrimEvaluatorConstructors();
+    }
     // If a primitive may have attr, try to create a new evaluator.
     StandardPrimitiveEvalImpl eval_impl = GetPrimitiveInferImpl(prim);
     if (eval_impl != nullptr) {
-      std::shared_ptr<StandardPrimEvaluator> standard_evaluator =
-        std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
-      evaluator = standard_evaluator;
+      return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
     }
   }
-  if (evaluator == nullptr) {
-    if (engine == nullptr) {
-      // If engine is nullptr, get constructor from default.
-      const PrimEvaluatorMap &prim_evaluator_map = GetPrimEvaluatorConstructors();
-      auto iter = prim_evaluator_map.find(prim);
-      if (iter == prim_evaluator_map.end()) {
-        evaluator = nullptr;
-      } else {
-        evaluator = iter->second;
-      }
-    } else {
-      // If engine is given, get constructor from engine resource.
-      const PrimEvaluatorMap &prim_evaluator_map = engine->PrimConstructors();
-      auto iter = prim_evaluator_map.find(prim);
-      if (iter == prim_evaluator_map.end()) {
-        evaluator = nullptr;
-      } else {
-        evaluator = iter->second;
-      }
+
+  if (engine == nullptr) {
+    // If engine is nullptr, get constructor from default.
+    const PrimEvaluatorMap &prim_evaluator_map = GetPrimEvaluatorConstructors();
+    auto iter = prim_evaluator_map.find(prim);
+    if (iter != prim_evaluator_map.end()) {
+      evaluator = iter->second;
+    }
+  } else {
+    // If engine is given, get constructor from engine resource.
+    const PrimEvaluatorMap &prim_evaluator_map = engine->PrimConstructors();
+    auto iter = prim_evaluator_map.find(prim);
+    if (iter != prim_evaluator_map.end()) {
+      evaluator = iter->second;
     }
   }
   if (evaluator == nullptr) {
