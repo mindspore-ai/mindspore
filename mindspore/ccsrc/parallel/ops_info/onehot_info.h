@@ -18,10 +18,10 @@
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ONEHOT_INFO_H_
 
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
 #include <memory>
+
 #include "ir/value.h"
 #include "parallel/ops_info/operator_info.h"
 #include "parallel/auto_parallel/operator_costmodel.h"

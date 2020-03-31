@@ -397,7 +397,7 @@ Status MatMulBase::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   CheckGlobalDeviceManager();
-  std::list<int32_t> dev_list = g_device_manager->GetDeviceListByStageId(stage_id);
+  std::vector<int32_t> dev_list = g_device_manager->GetDeviceListByStageId(stage_id);
   size_t dev_num = dev_list.size();
   Shape input0_shape = inputs_shape_[0], input1_shape = inputs_shape_[1];
   if (transpose_a_) {

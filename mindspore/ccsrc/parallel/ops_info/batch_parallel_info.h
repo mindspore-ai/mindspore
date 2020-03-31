@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_BATCH_PARALLEL_INFO_H_
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_BATCH_PARALLEL_INFO_H_
 
-#include <list>
 #include <string>
 #include <unordered_map>
 #include <vector>

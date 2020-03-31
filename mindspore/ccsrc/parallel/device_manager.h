@@ -19,7 +19,7 @@
 
 #include <cstdint>
 #include <cstring>
-#include <list>
+#include <vector>
 #include <map>
 #include <memory>
 #include <string>
@@ -50,19 +50,19 @@ class Stage {
   // This class is used in pipeline-parallelization. Available devices are partitioned into multiple stages.
   // Currently, the function of pipeline-parallelization and this class are NOT implemented.
  public:
-  explicit Stage(std::list<Device> devices) : devices_(std::move(devices)), number_(0), rank_(0) {
+  explicit Stage(std::vector<Device> devices) : devices_(std::move(devices)), number_(0), rank_(0) {
     gm_ = GroupManager();
   }
-  Stage(const std::list<mindspore::parallel::Device>& devices, int num, int rank);
+  Stage(const std::vector<mindspore::parallel::Device>& devices, int num, int rank);
   ~Stage() = default;
 
   int GetStageNum() const { return number_; }
   size_t GetDevicesNum() const { return devices_.size(); }
-  std::list<Device> GetDevicesList() { return devices_; }
+  std::vector<Device> GetDevicesList() { return devices_; }
   int global_rank(Group* g) const;
 
  private:
-  std::list<Device> devices_;
+  std::vector<Device> devices_;
   int number_;
   int32_t rank_;
   GroupManager gm_;
@@ -89,10 +89,10 @@ class DeviceManager {
   RankList global_device_list(int32_t stage_id, int32_t rank, int32_t split_num) const;
 
   Device CreateNewDeviceByRank(int32_t rank) const;
-  std::list<Device> CreateDeviceListByRankList(RankList ranks);
+  std::vector<Device> CreateDeviceListByRankList(RankList ranks);
 
   std::string GenerateGroupNameByRanks(RankList dev_ranks);
-  Group CreateGroup(const std::string& group_name, const std::list<Device>& devices);
+  Group CreateGroup(const std::string& group_name, const std::vector<Device>& devices);
   Group CreateGroup(const RankList& dev_ranks);
   std::shared_ptr<Stage> GetStageById(int32_t stage_id);
 
@@ -108,11 +108,11 @@ class DeviceManager {
   std::string FindRankListNameByHashName(const std::string& hash_name);
 
  private:
-  std::list<std::shared_ptr<Device>> devices_;
+  std::vector<std::shared_ptr<Device>> devices_;
   // each stage has a list of devices
-  std::list<std::list<int32_t>> stage_devices_;
+  std::vector<std::vector<int32_t>> stage_devices_;
   std::shared_ptr<Device> device_;
-  std::list<std::shared_ptr<Stage>> stages_;
+  std::vector<std::shared_ptr<Stage>> stages_;
   GroupManager gm_;
   std::string backend_;
 

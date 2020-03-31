@@ -35,9 +35,9 @@ TEST_F(TestDeviceMatrix, Test2Dgroup_list) {
   Shape shape = {2, 3};
 
   DeviceMatrix arr(0, dev_list, shape);
-  std::list<RankList> group_list;
+  std::vector<RankList> group_list;
   if (arr.CreateGroupList() == Status::SUCCESS) group_list = arr.group_list();
-  std::list<RankList> group_list_expect = {{0, 3}, {0, 1, 2}};
+  std::vector<RankList> group_list_expect = {{0, 3}, {0, 1, 2}};
   ASSERT_EQ(group_list, group_list_expect);
 }
 
@@ -46,9 +46,9 @@ TEST_F(TestDeviceMatrix, Test3Dgroup_list) {
   Shape shape = {2, 2, 3};
 
   DeviceMatrix arr(5, dev_list, shape);
-  std::list<RankList> group_list;
+  std::vector<RankList> group_list;
   if (arr.CreateGroupList() == Status::SUCCESS) group_list = arr.group_list();
-  std::list<RankList> group_list_expect = {{5, 11}, {2, 5}, {3, 4, 5}};
+  std::vector<RankList> group_list_expect = {{5, 11}, {2, 5}, {3, 4, 5}};
   ASSERT_EQ(group_list, group_list_expect);
 }
 
@@ -57,9 +57,9 @@ TEST_F(TestDeviceMatrix, Test4DGetAlongDim) {
   Shape shape = {2, 1, 4, 2};
 
   DeviceMatrix arr(5, dev_list, shape);
-  std::list<RankList> group_list;
+  std::vector<RankList> group_list;
   if (arr.CreateGroupList() == Status::SUCCESS) group_list = arr.group_list();
-  std::list<RankList> group_list_expect = {{5, 13}, {5}, {1, 3, 5, 7}, {4, 5}};
+  std::vector<RankList> group_list_expect = {{5, 13}, {5}, {1, 3, 5, 7}, {4, 5}};
   ASSERT_EQ(group_list, group_list_expect);
 }
 
@@ -69,9 +69,9 @@ TEST_F(TestDeviceMatrix, Test5DGetAlongDim) {
   Shape shape = {3, 4, 2, 3, 2};
 
   DeviceMatrix arr(5, dev_list, shape);
-  std::list<RankList> group_list;
+  std::vector<RankList> group_list;
   if (arr.CreateGroupList() == Status::SUCCESS) group_list = arr.group_list();
-  std::list<RankList> group_list_expect = {{5, 53, 101}, {5, 17, 29, 41}, {5, 11}, {1, 3, 5}, {4, 5}};
+  std::vector<RankList> group_list_expect = {{5, 53, 101}, {5, 17, 29, 41}, {5, 11}, {1, 3, 5}, {4, 5}};
   ASSERT_EQ(group_list, group_list_expect);
 }
 

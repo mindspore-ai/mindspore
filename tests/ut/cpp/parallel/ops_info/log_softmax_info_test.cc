@@ -38,13 +38,13 @@ class TestLogSoftmaxInfo : public UT::Common {
 };
 
 void TestLogSoftmaxInfo::SetUp() {
-  std::list<int32_t> dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 130; i++) {
     dev_list.push_back(i);
   }
 
-  std::list<int32_t> stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(128);
   stage_map.push_back(2);
 

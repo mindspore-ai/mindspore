@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PARALLEL_STEP_PARALLEL_H_
 
 #include <vector>
-#include <list>
+
 #include <memory>
 #include <unordered_map>
 #include <map>

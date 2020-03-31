@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+
 #include "parallel/ops_info/operator_info.h"
 #include "parallel/auto_parallel/operator_costmodel.h"
 #include "parallel/strategy.h"

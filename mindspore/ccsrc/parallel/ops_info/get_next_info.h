@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_GETNEXT_INFO_H_
 
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
 #include <memory>

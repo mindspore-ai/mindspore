@@ -22,7 +22,6 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include <list>
 
 #include "parallel/tensor_layout/redistribution_layout_transfer.h"
 #include "parallel/tensor_layout/construct_operator.h"

@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PARALLEL_GROUP_MANAGER_H_
 
 #include <cstdint>
-#include <list>
+#include <vector>
 #include <map>
 #include <string>
 
@@ -37,8 +37,8 @@ class Group {
  public:
   Group();
   ~Group() = default;
-  Status Init(const std::string& name, const std::list<Device>& devices);
-  std::list<Device> GetDevicesList() const;
+  Status Init(const std::string& name, const std::vector<Device>& devices);
+  std::vector<Device> GetDevicesList() const;
   std::string name() const { return name_; }
   bool IsInThisGroup(int32_t device_rank);
   Status GetIndex(size_t* index);
@@ -46,7 +46,7 @@ class Group {
 
  private:
   std::string name_;
-  std::list<Device> devices_;
+  std::vector<Device> devices_;
 };
 
 class GroupManager {
@@ -54,7 +54,7 @@ class GroupManager {
   GroupManager();
   ~GroupManager() = default;
 
-  Status CreateGroup(const std::string& name, const std::list<Device>& devices, Group* group);
+  Status CreateGroup(const std::string& name, const std::vector<Device>& devices, Group* group);
   Status DestroyGroup(Group* group);
   Status DestroyAllGroups();
   Status GetRankID(const std::string& name, unsigned int* rank_id);
