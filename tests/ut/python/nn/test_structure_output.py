@@ -236,7 +236,7 @@ def test_soft():
         def __init__(self):
             super(SoftmaxCrossEntropyWithLogitsNet, self).__init__()
             self.soft = P.SoftmaxCrossEntropyWithLogits()
-            self.value = (Tensor(np.zeros((2,)).astype(np.float32)), Tensor(np.ones((2,)).astype(np.float32)))
+            self.value = (Tensor(np.zeros((2, 2)).astype(np.float32)), Tensor(np.ones((2, 2)).astype(np.float32)))
 
         def construct(self, x, y, z):
             xx = x + y
@@ -246,8 +246,30 @@ def test_soft():
             ret = (ret, self.value)
             return ret
 
-    input1 = Tensor(np.zeros((2,)).astype(np.float32))
-    input2 = Tensor(np.ones((2,)).astype(np.float32))
-    input3 = Tensor((np.ones((2,)) + np.ones((2,))).astype(np.float32))
+    input1 = Tensor(np.zeros((2, 2)).astype(np.float32))
+    input2 = Tensor(np.ones((2, 2)).astype(np.float32))
+    input3 = Tensor((np.ones((2, 2)) + np.ones((2, 2))).astype(np.float32))
     net = SoftmaxCrossEntropyWithLogitsNet()
-    print(net(input1, input2, input3))
+    net(input1, input2, input3)
+
+
+def test_const_depend():
+    class ConstDepend(Cell):
+        def __init__(self):
+            super(ConstDepend, self).__init__()
+            self.value = (Tensor(np.zeros((2, 3)).astype(np.float32)), Tensor(np.ones((2, 3)).astype(np.float32)))
+            self.soft = P.SoftmaxCrossEntropyWithLogits()
+            self.depend = depend
+
+        def construct(self, x, y, z):
+            ret = x + y
+            ret = ret * z
+            ret = self.depend(self.value, ret)
+            ret = (ret, self.soft(x, y))
+            return ret
+
+    input1 = Tensor(np.zeros((2, 2)).astype(np.float32))
+    input2 = Tensor(np.ones((2, 2)).astype(np.float32))
+    input3 = Tensor((np.ones((2, 2)) + np.ones((2, 2))).astype(np.float32))
+    net = ConstDepend()
+    net(input1, input2, input3)
