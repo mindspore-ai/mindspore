@@ -243,6 +243,8 @@ def check_param_type(param_list, param_dict, param_type):
         if param_dict.get(param_name) is not None:
             if param_name == 'num_parallel_workers':
                 check_num_parallel_workers(param_dict.get(param_name))
+            if param_name == 'num_samples':
+                check_num_samples(param_dict.get(param_name))
             else:
                 check_type(param_dict.get(param_name), param_name, param_type)
 
@@ -260,6 +262,12 @@ def check_num_parallel_workers(value):
     check_type(value, 'num_parallel_workers', int)
     if value <= 0 or value > cpu_count():
         raise ValueError("num_parallel_workers exceeds the boundary between 0 and {}!".format(cpu_count()))
+
+
+def check_num_samples(value):
+    check_type(value, 'num_samples', int)
+    if value <= 0:
+        raise ValueError("num_samples must be greater than 0!")
 
 
 def check_dataset_dir(dataset_dir):
