@@ -1170,6 +1170,19 @@ INPUT_MAP(DiagPart) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(DiagPart) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(DiagPart) = {{0, OUTPUT_DESC(y)}};
 
+// SpaceToBatchD
+INPUT_MAP(SpaceToBatchD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(SpaceToBatchD) = {
+  {"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())},
+  {"paddings", ATTR_DESC(paddings, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(SpaceToBatchD) = {{0, OUTPUT_DESC(y)}};
+
+// BatchToSpaceD
+INPUT_MAP(BatchToSpaceD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(BatchToSpaceD) = {
+  {"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())},
+  {"crops", ATTR_DESC(crops, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(BatchToSpaceD) = {{0, OUTPUT_DESC(y)}};
 #ifdef ENABLE_GE
 // Print
 INPUT_MAP(Print) = EMPTY_INPUT_MAP;

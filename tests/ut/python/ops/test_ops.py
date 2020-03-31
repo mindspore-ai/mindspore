@@ -957,6 +957,26 @@ test_case_array_ops = [
         'desc_inputs': [[4, 4]],
         'desc_bprop': [[4]],
     }),
+    ('SpaceToBatch_1', {
+        'block': P.SpaceToBatch(2, [[0, 0], [0, 0]]),
+        'desc_inputs': [[1, 3, 2, 2]],
+        'desc_bprop': [[4, 3, 1, 1]],
+    }),
+    ('SpaceToBatch_2', {
+        'block': P.SpaceToBatch(2, [[1, 1], [0, 4]]),
+        'desc_inputs': [[1, 3, 2, 2]],
+        'desc_bprop': [[4, 3, 2, 4]],
+    }),
+    ('BatchToSpace_1', {
+        'block': P.BatchToSpace(2, [[0, 0], [0, 0]]),
+        'desc_inputs': [[4, 3, 1, 1]],
+        'desc_bprop': [[1, 3, 2, 2]],
+    }),
+    ('BatchToSpace_2', {
+        'block': P.BatchToSpace(2, [[0, 0], [0, 1]]),
+        'desc_inputs': [[4, 3, 1, 1]],
+        'desc_bprop': [[1, 3, 2, 1]],
+    }),
 ]
 
 test_case_other_ops = [

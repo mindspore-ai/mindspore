@@ -181,6 +181,8 @@ const char kNamePrint[] = "Print";
 const char kNameApplyFtrl[] = "ApplyFtrl";
 const char kNameDiag[] = "Diag";
 const char kNameDiagPart[] = "DiagPart";
+const char kNameSpaceToBatch[] = "SpaceToBatch";
+const char kNameBatchToSpace[] = "BatchToSpace";
 
 // -----------------OpAdapter initialization--------------
 std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_map() {
@@ -363,7 +365,9 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameRound), ADPT_DESC(Round)},
     {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrl)},
     {string(kNameDiag), ADPT_DESC(Diag)},
-    {string(kNameDiagPart), ADPT_DESC(DiagPart)}};
+    {string(kNameDiagPart), ADPT_DESC(DiagPart)},
+    {string(kNameSpaceToBatch), ADPT_DESC(SpaceToBatchD)},
+    {string(kNameBatchToSpace), ADPT_DESC(BatchToSpaceD)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);
 #endif

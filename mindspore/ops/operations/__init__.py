@@ -29,7 +29,7 @@ from .array_ops import (Argmax, Argmin, Cast, ConcatOffset, Concat,
                         Shape, Size, Slice, Split,
                         Squeeze, StridedSlice, Tile,
                         Transpose, TruncatedNormal, TupleToArray,
-                        UnsortedSegmentSum, SpaceToDepth, DepthToSpace)
+                        UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice)
@@ -226,6 +226,8 @@ __all__ = [
     "LARSUpdate",
     "Round",
     "ApplyFtrl",
+    "SpaceToBatch",
+    "BatchToSpace"
 ]
 
 __all__.sort()

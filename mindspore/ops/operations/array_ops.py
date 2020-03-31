@@ -20,6 +20,7 @@
 
 import copy
 import functools
+import itertools
 import numbers
 import numpy as np
 
@@ -2020,3 +2021,143 @@ class DepthToSpace(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_subclass("x_dtype", x_dtype, mstype.tensor)
         return x_dtype
+
+
+class SpaceToBatch(PrimitiveWithInfer):
+    r"""
+    Divide spatial dimensions into blocks and combine the block size with the original batch.
+
+    This operation will divide spatial dimensions (H, W) into blocks with block_size, the output tensor's H and W
+    dimension is the corresponding number of blocks after division. The output tensor's batch dimension is the
+    product of the original batch and the square of block_size. Prior to division into blocks, the spatial dimensions
+    of the input are zero padded according to paddings if necessary.
+
+    Args:
+        block_size (int): The block size of dividing block with value >= 1.
+        paddings (list): The padding value for H and W dimension, containing 2 sub list, each containing 2 int value.
+            All values must be >= 0. paddings[i] specifies the paddings for spatial dimension i, which corresponds to
+            input dimension i+2. It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1] is divisible
+            by block_size.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, the output tensor with the same type as input. Assume input shape is :math:`(n, c, h, w)` with
+        :math:`block\_size` and :math:`padddings`. The output tensor shape will be :math:`(n', c', h', w')`, where
+
+            :math:`n' = n*(block\_size*block\_size)`
+
+            :math:`c' = c`
+
+            :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_size`
+
+            :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_size`
+
+    Examples:
+        >>> block_size = 2
+        >>> paddings = [[0, 0], [0, 0]]
+        >>> space_to_batch = P.SpaceToBatch(block_size, paddings)
+        >>> x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mstype.float32)
+        >>> space_to_batch(x)
+        [[[[1.]]], [[[2.]]], [[[3.]]], [[[4.]]]]
+
+    """
+    @prim_attr_register
+    def __init__(self, block_size, paddings):
+        """Init SpaceToBatch"""
+        validator.check_type('block_size', block_size, [int])
+        validator.check('block_size', block_size, '', 1, Rel.GT)
+        self.block_size = block_size
+        validator.check('paddings shape', np.array(paddings).shape, '', (2, 2))
+        for elem in itertools.chain(*paddings):
+            validator.check_type('paddings element', elem, [int])
+        self.paddings = paddings
+
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("input_x", x_dtype, mstype.tensor)
+        validator.check_typename('input_x', x_dtype, mstype.number_type)
+        return x_dtype
+
+    def infer_shape(self, x_shape):
+        validator.check('rank of input_x', len(x_shape), '', 4)
+        out_shape = copy.deepcopy(x_shape)
+        for i in range(2):
+            padded = out_shape[i+2] + self.paddings[i][0] + \
+                     self.paddings[i][1]
+            if padded % self.block_size != 0:
+                raise ValueError(f'padded[{i}] {padded} should be divisible by '
+                                 f'block_size {self.block_size}')
+            out_shape[i+2] = padded // self.block_size
+        out_shape[0] *= self.block_size * self.block_size
+        return out_shape
+
+
+class BatchToSpace(PrimitiveWithInfer):
+    r"""
+    Divide batch dimension with blocks and interleaves these blocks back into spatial dimensions.
+
+    This operation will divide batch dimension N into blocks with block_size, the output tensor's N dimension
+    is the corresponding number of blocks after division. The output tensor's H, W dimension is product of original H, W
+    dimension and block_size with given amount to crop from dimension, respectively.
+
+    Args:
+        block_size (int): The block size of dividing block with value >= 1.
+        crops (list): The crop value for H and W dimension, containing 2 sub list, each containing 2 int value.
+            All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
+            input dimension i+2. It is required that input_shape[i+2]*block_size >= crops[i][0]+crops[i][1].
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, the output tensor with the same type as input. Assume input shape is (n, c, h, w) with block_size
+        and crops. The output shape will be (n', c', h', w'), where
+
+                :math:`n' = n//(block\_size*block\_size)`
+
+                :math:`c' = c`
+
+                :math:`h' = h*block\_size-crops[0][0]-crops[0][1]`
+
+                :math:`w' = w*block\_size-crops[1][0]-crops[1][1]`
+
+    Examples:
+        >>> block_size = 2
+        >>> crops = [[0, 0], [0, 0]]
+        >>> op = P.BatchToSpace(block_size, crops)
+        >>> x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mstype.float32)
+        >>> output = op(x)
+        [[[[1., 2.], [3., 4.]]]]
+
+    """
+    @prim_attr_register
+    def __init__(self, block_size, crops):
+        """Init BatchToSpace"""
+        validator.check_type('block_size', block_size, [int])
+        validator.check('block_size', block_size, '', 1, Rel.GT)
+        self.block_size = block_size
+        validator.check('crops shape', np.array(crops).shape, '', (2, 2))
+        for elem in itertools.chain(*crops):
+            validator.check_type('crops element', elem, [int])
+        self.crops = crops
+
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("input_x", x_dtype, mstype.tensor)
+        validator.check_typename('input_x', x_dtype, mstype.number_type)
+        return x_dtype
+
+    def infer_shape(self, x_shape):
+        validator.check('rank of input_x', len(x_shape), '', 4)
+        out_shape = copy.deepcopy(x_shape)
+        for i in range(2):
+            x_block_prod = out_shape[i+2] * self.block_size
+            crops_sum = self.crops[i][0] + self.crops[i][1]
+            validator.check("x block shape prod", x_block_prod, 'crops sum', crops_sum, Rel.GT)
+            out_shape[i+2] = x_block_prod - crops_sum
+        block_size_prod = self.block_size * self.block_size
+        if out_shape[0] % block_size_prod != 0:
+            raise ValueError(f'input_x dimension 0 {out_shape[0]}  should be divisible by '
+                             f'block_size_prod {block_size_prod}')
+        out_shape[0] = out_shape[0] // block_size_prod
+        return out_shape

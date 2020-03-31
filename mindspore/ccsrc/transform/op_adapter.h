@@ -744,6 +744,28 @@ class OpAdapter : public BaseOpAdapter {
     return list;
   }
 
+  static std::vector<int64_t> ConvertAny(const ValuePtr& value, const AnyTraits<std::vector<std::vector<int64_t>>>,
+                                         const AnyTraits<std::vector<int64_t>>) {
+    MS_EXCEPTION_IF_NULL(value);
+    MS_LOG(DEBUG) << "Value: " << value->type_name();
+    if (!value->isa<ValueList>()) {
+      MS_LOG(EXCEPTION) << "Value should be ValueList, but got " << value->type_name();
+    }
+    auto vec = value->cast<ValueListPtr>();
+    std::vector<int64_t> list;
+    for (auto& it : vec->value()) {
+      MS_EXCEPTION_IF_NULL(it);
+      if (!it->isa<ValueList>()) {
+        MS_LOG(EXCEPTION) << "It should be ValueList, but got " << it->type_name();
+      }
+      auto sub_vector = it->cast<ValueListPtr>();
+      for (auto& item : sub_vector->value()) {
+        list.push_back(static_cast<int64_t>(GetValue<int>(item)));
+      }
+    }
+    return list;
+  }
+
   static std::vector<int64_t> ConvertAny(const ValuePtr& value, const AnyTraits<std::vector<int64_t>>,
                                          const AnyTraits<std::vector<int64_t>>) {
     MS_EXCEPTION_IF_NULL(value);

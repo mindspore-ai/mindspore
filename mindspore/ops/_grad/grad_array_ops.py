@@ -430,3 +430,23 @@ def get_bprop_diag_part(self):
         return (op(dout),)
 
     return bprop
+
+
+@bprop_getters.register(P.SpaceToBatch)
+def get_bprop_space_to_batch(self):
+    """Generate bprop for SpaceToBatch"""
+    space_to_batch_grad = P.BatchToSpace(self.block_size, self.paddings)
+    def bprop(x, out, dout):
+        dx = space_to_batch_grad(dout)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.BatchToSpace)
+def get_bprop_batch_to_space(self):
+    """Generate bprop for BatchToSpace"""
+    batch_to_space_grad = P.SpaceToBatch(self.block_size, self.crops)
+    def bprop(x, out, dout):
+        dx = batch_to_space_grad(dout)
+        return (dx,)
+    return bprop
