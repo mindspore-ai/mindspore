@@ -185,7 +185,6 @@ if(ENABLE_D)
             "device/ascend/*.cc"
             "device/ascend/profiling/*.cc"
             "device/ascend/tasksink/*.cc"
-            "kernel/akg/cce/*.cc"
             "device/kernel_adjust.cc"
             "kernel/kernel_fusion.cc"
             "kernel/tbe/*.cc"
@@ -361,7 +360,6 @@ if(ENABLE_GPU)
         ${TVM_DIR}/src/node/*.cc
         ${TVM_DIR}/src/schedule/*.cc
         ${TVM_DIR}/src/runtime/*.cc
-        ${TVM_DIR}/src/runtime/cce/*.cc
         ${TVM_DIR}/src/runtime/vm/*.cc
         ${TVM_DIR}/src/runtime/vm/profiler/*.cc
         ${TVM_DIR}/src/codegen/stackvm/*.cc)
@@ -379,7 +377,6 @@ if(ENABLE_GPU)
 
     file(GLOB RUNTIME_SRCS
         ${TVM_DIR}/src/runtime/*.cc
-        ${TVM_DIR}/src/runtime/cce/*.cc
         ${TVM_DIR}/src/runtime/vm/*.cc
         ${TVM_DIR}/src/runtime/stub/*.cc
         ${TVM_DIR}/src/runtime/stackvm/*.cc)
