@@ -22,9 +22,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "cce/aicpu_engine_struct.h"
-#include "cce/taskdown_api.h"
-#include "cce/fwk_adpt_struct.h"
 #include "device/kernel_runtime.h"
 #include "ir/anf.h"
 #include "kernel/kernel.h"
