@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PARALLEL_STATUS_H_
 
 #include <cstdint>
-#include <list>
 
 namespace mindspore {
 namespace parallel {

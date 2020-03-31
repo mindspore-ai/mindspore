@@ -21,7 +21,6 @@
 #include <utility>
 #include <numeric>
 #include <functional>
-#include <list>
 #include <memory>
 
 #include "parallel/device_manager.h"

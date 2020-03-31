@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GENERATE_GRAPH_H_
 
 #include <vector>
-#include <list>
 #include <memory>
 #include <unordered_map>
 #include <map>

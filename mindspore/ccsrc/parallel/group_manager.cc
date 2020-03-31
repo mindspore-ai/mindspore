@@ -30,13 +30,13 @@ Group::Group() {
   devices_.clear();
 }
 
-Status Group::Init(const std::string &name, const std::list<Device> &devices) {
+Status Group::Init(const std::string &name, const std::vector<Device> &devices) {
   this->name_ = name;
   this->devices_ = devices;
   return Status::SUCCESS;
 }
 
-std::list<Device> Group::GetDevicesList() const { return devices_; }
+std::vector<Device> Group::GetDevicesList() const { return devices_; }
 
 bool Group::IsInThisGroup(int32_t device_rank) {
   for (auto &device : devices_) {
@@ -66,7 +66,7 @@ Status Group::GetIndex(size_t *index) {
 
 GroupManager::GroupManager() { groups_.clear(); }
 
-Status GroupManager::CreateGroup(const std::string &group_name, const std::list<Device> &devices,
+Status GroupManager::CreateGroup(const std::string &group_name, const std::vector<Device> &devices,
                                  mindspore::parallel::Group *const group) {
   // it is simple to use size to determine whether it is a world group
   uint32_t world_size = 0;
