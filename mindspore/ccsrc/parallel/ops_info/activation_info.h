@@ -167,6 +167,13 @@ class SqrtInfo : public ActivationOther {
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~SqrtInfo() override = default;
 };
+
+class NegInfo : public ActivationOther {
+ public:
+  NegInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~NegInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_OPTIMIZER_OPS_INFO_PARALLEL_ACTIVATION_INFO_H_
