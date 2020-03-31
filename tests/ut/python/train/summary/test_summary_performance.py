@@ -43,9 +43,9 @@ def get_test_data(step):
     tag1 = "xt1[:Tensor]"
     tag2 = "xt2[:Tensor]"
     tag3 = "xt3[:Tensor]"
-    np1 = np.random.random((50, 40, 30, 50))
-    np2 = np.random.random((50, 50, 30, 50))
-    np3 = np.random.random((40, 55, 30, 50))
+    np1 = np.random.random((5, 4, 3, 5))
+    np2 = np.random.random((5, 5, 3, 5))
+    np3 = np.random.random((4, 5, 3, 5))
 
     dict1 = {}
     dict1["name"] = tag1

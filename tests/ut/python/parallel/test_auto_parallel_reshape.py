@@ -49,16 +49,16 @@ def test_reshape_matmul():
             super().__init__()
             self.reshape = P.Reshape()
             self.matmul = P.MatMul()
-            self.matmul_weight = Parameter(Tensor(np.ones([25088, 256]), dtype=ms.float32), name="weight")
+            self.matmul_weight = Parameter(Tensor(np.ones([28, 64]), dtype=ms.float32), name="weight")
 
         def construct(self, x):
-            out = self.reshape(x, (256, 25088))
+            out = self.reshape(x, (64, 28))
             out = self.matmul(out, self.matmul_weight)
             return out
 
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    x = Tensor(np.ones([32*size, 512, 7, 7]), dtype=ms.float32)
+    x = Tensor(np.ones([8*size, 28, 1, 1]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
