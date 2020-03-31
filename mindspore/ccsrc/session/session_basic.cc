@@ -497,7 +497,7 @@ void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_grap
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
       bool need_sync = false;
       if (ms_context->enable_pynative_infer()) {
-        if (tensor->device_address().get() == nullptr) {
+        if (tensor->device_address().get() == nullptr || tensor->device_address() != device_address) {
           need_sync = true;
         }
       } else {
