@@ -361,12 +361,11 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr& ge_tensor, const 
     MS_LOG(ERROR) << "GE tensor data size is zero!";
     return nullptr;
   }
-  errno_t ret = memcpy_s(me_data_ptr, me_data_size, ge_tensor->GetData(), ge_tensor->GetSize());
-  if (ret != EOK) {
-    MS_LOG(INFO) << "GE tensor data size is " << ge_tensor->GetSize() << " bytes";
-    MS_LOG(ERROR) << "Copy GE tensor data to me tensor failed";
-    return nullptr;
-  }
+
+  // Use memcpy here, not memcpy_s, just because the size of ge_tensor may be bigger than 2GB
+  // which is the size limit of memcpy_s
+  memcpy(me_data_ptr, ge_tensor->GetData(), ge_tensor->GetSize());
+
   return make_shared<MeTensor>(me_tensor);
 }
 
