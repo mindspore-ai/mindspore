@@ -1359,6 +1359,158 @@ class SGD(PrimitiveWithInfer):
         validator.check_typename("stat_dtype", stat_dtype, [mstype.float16, mstype.float32])
         return parameters_dtype
 
+class ApplyRMSProp(PrimitiveWithInfer):
+    """
+    Optimizer that implements the Root Mean Square prop(RMSProp) algorithm.
+
+    Note:
+        Update `var` according to the RMSProp algorithm.
+
+        ..  math::
+            s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2
+
+        ..  math::
+            m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} + \\epsilon}} \\nabla Q_{i}(w)
+
+        ..  math::
+            w = w - m_{t}
+
+        where, :math:`w` represents `var`, which will be updated.
+        :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
+        :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
+        :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
+        :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
+        :math:`\\eta` represents `learning_rate`. :math:`\\nabla Q_{i}(w)` represents `grad`.
+
+    Args:
+        use_locking (bool): Enable a lock to protect the update of variable tensors. Default: False.
+
+    Inputs:
+        - **var** (Tensor) - Weights to be update.
+        - **mean_square** (Tensor) - Mean square gradients, must have the same type as `var`.
+        - **moment** (Tensor) - Delta of `var`, must have the same type as `var`.
+        - **grad** (Tensor) - Gradients, must have the same type as `var`.
+        - **learning_rate** (Union[Number, Tensor]) - Learning rate.
+        - **decay** (float) - Decay rate.
+        - **momentum** (float) - Momentum.
+        - **epsilon** (float) - Ridge term.
+
+    Outputs:
+        Tensor, parameters to be update.
+
+    Examples:
+        >>> net = Net()
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> opt = RMSProp(params=net.trainable_params(), learning_rate=learning_rate)
+        >>> model = Model(net, loss, opt)
+    """
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        self.use_locking = validator.check_type("use_locking", use_locking, [bool])
+
+    def infer_shape(self, var_shape, mean_square_shape, moment_shape, grad_shape, learning_rate_shape, decay_shape,
+                    momentum_shape, epsilon_shape):
+        validator.check_param_equal("var_shape", var_shape, "mean_square_shape", mean_square_shape)
+        validator.check_param_equal("var_shape", var_shape, "moment_shape", moment_shape)
+        validator.check_param_equal("var_shape", var_shape, "grad_shape", grad_shape)
+        return var_shape
+
+    def infer_dtype(self, var_dtype, mean_square_dtype, moment_dtype, grad_dtype, learning_rate_dtype, decay_dtype,
+                    momentum_dtype, epsilon_dtype):
+        validator.check_subclass("var_dtype", var_dtype, mstype.tensor)
+        validator.check_subclass("mean_square_dtype", mean_square_dtype, mstype.tensor)
+        validator.check_subclass("moment_dtype", moment_dtype, mstype.tensor)
+        validator.check_subclass("grad_dtype", moment_dtype, mstype.tensor)
+        args = {"var_dtype": var_dtype, "mean_square_dtype": mean_square_dtype, "moment_dtype": moment_dtype,
+                "grad_dtype": grad_dtype}
+        validator.check_type_same(args, mstype.number_type)
+
+        args = {"learning_rate_dtype": learning_rate_dtype, "decay_dtype": decay_dtype,
+                'momentum_dtype': momentum_dtype, "epsilon_dtype": epsilon_dtype}
+        validator.check_type_same(args, [mstype.float16, mstype.float32])
+        return var_dtype
+
+
+class ApplyCenteredRMSProp(PrimitiveWithInfer):
+    """
+    Optimizer that implements the centered RMSProp algorithm.
+
+    Note:
+        Update `var` according to the centered RMSProp algorithm.
+
+        ..  math::
+            g_{t} = \\rho g_{t-1} + (1 - \\rho)\\nabla Q_{i}(w)
+
+        ..  math::
+            s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2
+
+        ..  math::
+            m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} - g_{t}^2 + \\epsilon}} \\nabla Q_{i}(w)
+
+        ..  math::
+            w = w - m_{t}
+
+        where, :math:`w` represents `var`, which will be updated.
+        :math:`g_{t}` represents `mean_gradient`, :math:`g_{t-1}` is the last momentent of :math:`g_{t}`.
+        :math:`s_{t}` represents `mean_square`, :math:`s_{t-1}` is the last momentent of :math:`s_{t}`,
+        :math:`m_{t}` represents `moment`, :math:`m_{t-1}` is the last momentent of :math:`m_{t}`.
+        :math:`\\rho` represents `decay`. :math:`\\beta` is the momentum term, represents `momentum`.
+        :math:`\\epsilon` is a smoothing term to avoid division by zero, represents `epsilon`.
+        :math:`\\eta` represents `learning_rate`. :math:`\\nabla Q_{i}(w)` represents `grad`.
+
+    Args:
+        use_locking (bool): Enable a lock to protect the update of variable tensors. Default: False.
+
+    Inputs:
+        - **var** (Tensor) - Weights to be update.
+        - **mean_gradient** (Tensor) - Mean gradients, must have the same type as `var`.
+        - **mean_square** (Tensor) - Mean square gradients, must have the same type as `var`.
+        - **moment** (Tensor) - Delta of `var`, must have the same type as `var`.
+        - **grad** (Tensor) - Gradients, must have the same type as `var`.
+        - **learning_rate** (Union[Number, Tensor]) - Learning rate.
+        - **decay** (float) - Decay rate.
+        - **momentum** (float) - Momentum.
+        - **epsilon** (float) - Ridge term.
+
+    Outputs:
+        Tensor, parameters to be update.
+
+    Examples:
+        >>> net = Net()
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> opt = RMSProp(params=net.trainable_params(), learning_rate=learning_rate, centered=True)
+        >>> model = Model(net, loss, opt)
+    """
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        self.use_locking = validator.check_type("use_locking", use_locking, [bool])
+
+    def infer_shape(self, var_shape, mean_gradient_shape, mean_square_shape, moment_shape, grad_shape,
+                    learning_rate_shape, decay_shape, momentum_shape, epsilon_shape):
+        validator.check_param_equal("var_shape", var_shape, "mean_gradient_shape", mean_gradient_shape)
+        validator.check_param_equal("var_shape", var_shape, "mean_square_shape", mean_square_shape)
+        validator.check_param_equal("var_shape", var_shape, "moment_shape", moment_shape)
+        validator.check_param_equal("var_shape", var_shape, "grad_shape", grad_shape)
+        return var_shape
+
+    def infer_dtype(self, var_dtype, mean_gradient_dtype, mean_square_dtype, moment_dtype, grad_dtype,
+                    learning_rate_dtype, rho_dtype, momentum_dtype, epsilon_dtype):
+        validator.check_subclass("var_dtype", var_dtype, mstype.tensor)
+        validator.check_subclass("mean_gradient_dtype", mean_gradient_dtype, mstype.tensor)
+        validator.check_subclass("mean_square_dtype", mean_square_dtype, mstype.tensor)
+        validator.check_subclass("moment_dtype", moment_dtype, mstype.tensor)
+        validator.check_subclass("grad_dtype", moment_dtype, mstype.tensor)
+        args = {"var_dtype": var_dtype, "mean_gradient_dtype": mean_gradient_dtype,
+                "mean_square_dtype": mean_square_dtype, "moment_dtype": moment_dtype, "grad_dtype": grad_dtype}
+        validator.check_type_same(args, mstype.number_type)
+
+        args = {"learning_rate_dtype": learning_rate_dtype, "rho_dtype": rho_dtype, 'momentum_dtype': momentum_dtype,
+                "epsilon_dtype": epsilon_dtype}
+        validator.check_type_same(args, [mstype.float16, mstype.float32])
+        return var_dtype
+
 
 class LayerNorm(Primitive):
     r"""

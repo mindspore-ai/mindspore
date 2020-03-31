@@ -810,6 +810,18 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
+    ('ApplyRMSProp', {
+        'block': P.ApplyRMSProp(),
+        'desc_const': [0.9, 0.0, 1e-10, 0.001],
+        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
+        'desc_bprop': [3, 3],
+        'skip': ['backward']}),
+    ('ApplyCenteredRMSProp', {
+        'block': P.ApplyCenteredRMSProp(),
+        'desc_const': [0.9, 0.0, 1e-10, 0.001],
+        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3], [3, 3]],
+        'desc_bprop': [3, 3],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [

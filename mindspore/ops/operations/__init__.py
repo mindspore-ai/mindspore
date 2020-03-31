@@ -65,7 +65,8 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      SmoothL1Loss, Softmax,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
-                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrlD)
+                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrlD,
+                     ApplyRMSProp, ApplyCenteredRMSProp)
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey
 
 
@@ -229,6 +230,8 @@ __all__ = [
     "SpaceToBatch",
     "BatchToSpace",
     "Atan2",
+    "ApplyRMSProp",
+    "ApplyCenteredRMSProp"
 ]
 
 __all__.sort()
