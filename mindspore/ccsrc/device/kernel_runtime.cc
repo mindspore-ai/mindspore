@@ -50,12 +50,19 @@ bool KernelRuntime::Run(session::KernelGraph *graph) {
   bool ret = false;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+  struct timeval start_time, end_time;
+  (void)gettimeofday(&start_time, nullptr);
   bool is_task_sink = context_ptr->enable_task_sink();
   if (is_task_sink) {
     ret = RunTask(graph);
   } else {
     ret = LaunchKernel(graph);
   }
+  (void)gettimeofday(&end_time, nullptr);
+  const uint64_t kUSecondInSecond = 1000000;
+  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  MS_LOG(INFO) << "Call MS Run Success in " << cost << " us";
   return ret;
 }
 
