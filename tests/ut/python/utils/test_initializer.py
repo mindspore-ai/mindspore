@@ -37,8 +37,8 @@ def _check_value(tensor, value_min, value_max):
     for ele in nd.flatten():
         if value_min <= ele <= value_max:
             continue
-        raise TypeError('value_min = %d, ele = %d, value_max = %d'
-                        % (value_min, ele, value_max))
+        raise ValueError('value_min = %d, ele = %d, value_max = %d'
+                         % (value_min, ele, value_max))
 
 
 def _check_uniform(tensor, boundary_a, boundary_b):
@@ -89,6 +89,11 @@ def test_init_one():
 
 def test_init_one_alias():
     tensor = init.initializer('ones', [1, 2], ms.float32)
+    _check_value(tensor, 1, 1)
+
+
+def test_init_constant():
+    tensor = init.initializer(init.Constant(1), [2, 2], ms.float32)
     _check_value(tensor, 1, 1)
 
 
