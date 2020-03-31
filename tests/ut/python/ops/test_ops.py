@@ -947,6 +947,16 @@ test_case_array_ops = [
                          Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)))],
         'desc_bprop': [[3,]]}),
+    ('Diag', {
+        'block': P.Diag(),
+        'desc_inputs': [[4]],
+        'desc_bprop': [[4, 4]],
+    }),
+    ('DiagPart', {
+        'block': P.DiagPart(),
+        'desc_inputs': [[4, 4]],
+        'desc_bprop': [[4]],
+    }),
 ]
 
 test_case_other_ops = [

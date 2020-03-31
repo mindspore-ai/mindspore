@@ -20,7 +20,7 @@ A collection of operators to build nerual networks or computing functions.
 """
 
 from .array_ops import (Argmax, Argmin, Cast, ConcatOffset, Concat,
-                        Diag, DType, ExpandDims, Eye,
+                        Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, GatherNd, GatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
                         Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue,
@@ -208,6 +208,7 @@ __all__ = [
     "Cos",
     "ACos",
     "Diag",
+    "DiagPart",
     'Eye',
     'Assign',
     'AssignAdd',
