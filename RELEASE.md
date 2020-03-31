@@ -3,7 +3,7 @@
 ## Main Features
 
 ### Ascend 910 Training and Inference Framework
-* Recommended OS: Ubuntu 16.04 (or later) or EulerOS 2.0
+* Recommended OS: Ubuntu 16.04 (or later) or EulerOS 2.5 or EulerOS 2.8
 * Python version: 3.7.5
 * Preset models
     * ResNet-50: residual structure-based convolutional neural network (CNN) for image classification, which is widely used.
