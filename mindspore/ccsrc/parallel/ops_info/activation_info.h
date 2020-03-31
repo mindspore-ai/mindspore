@@ -19,7 +19,6 @@
 
 #include <ir/value.h>
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
 #include <memory>

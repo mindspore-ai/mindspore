@@ -20,7 +20,6 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <list>
 #include <memory>
 
 #include "parallel/status.h"

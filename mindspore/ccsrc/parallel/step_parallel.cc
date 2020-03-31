@@ -19,7 +19,7 @@
 #include <inttypes.h>
 #include <sys/time.h>
 #include <algorithm>
-#include <list>
+
 #include <map>
 #include <memory>
 #include <string>

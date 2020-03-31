@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPERATOR_INFO_H_
 
 #include <cstdint>
-#include <list>
 #include <map>
 #include <memory>
 #include <string>

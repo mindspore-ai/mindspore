@@ -38,13 +38,13 @@ class TestSoftmaxLoss : public UT::Common {
 };
 
 void TestSoftmaxLoss::SetUp() {
-  std::list<int32_t> dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 65; i++) {
     dev_list.push_back(i);
   }
 
-  std::list<int32_t> stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(64);
   stage_map.push_back(1);
 
