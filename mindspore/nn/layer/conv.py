@@ -159,7 +159,7 @@ class Conv2d(_Conv):
         >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
         >>> input = mindspore.Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
         >>> net(input).shape()
-        (1, 240, 1024, 637)
+        (1, 240, 1024, 640)
     """
     @cell_attr_register
     def __init__(self,
