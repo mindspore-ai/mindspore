@@ -16,16 +16,34 @@ function(mindspore_add_submodule_obj des_submodule_objs sub_dir submodule_name_o
 
 endfunction()
 
-get_filename_component(_MS_LIB_CACHE ~/.mslib REALPATH)
+if (DEFINED ENV{MSLIBS_CACHE_PATH})
+    set(_MS_LIB_CACHE  $ENV{MSLIBS_CACHE_PATH})
+else()
+    set(_MS_LIB_CACHE ${CMAKE_BINARY_DIR}/.mslib)
+endif ()
+message("MS LIBS CACHE PATH:  ${_MS_LIB_CACHE}")
+
 if (NOT EXISTS ${_MS_LIB_CACHE})
     file(MAKE_DIRECTORY ${_MS_LIB_CACHE})
 endif ()
-# set(FETCHCONTENT_BASE_DIR ${_MS_LIB_CACHE})
-# set(CMAKE_PREFIX_PATH  ${_MS_LIB_CACHE})
+
 if (DEFINED ENV{MSLIBS_SERVER})
     set(LOCAL_LIBS_SERVER  $ENV{MSLIBS_SERVER})
     message("LOCAL_LIBS_SERVER:  ${LOCAL_LIBS_SERVER}")
 endif ()
+
+include(ProcessorCount)
+ProcessorCount(N)
+if (JOBS)
+    set(THNUM ${JOBS})
+else()
+    set(JOBS 8)
+    if (${JOBS} GREATER ${N})
+        set(THNUM ${N})
+    endif()
+endif ()
+message("set make thread num: ${THNUM}")
+
 if(LOCAL_LIBS_SERVER)
     if (NOT ENV{no_proxy})
         set(ENV{no_proxy} "${LOCAL_LIBS_SERVER}")
@@ -287,7 +305,7 @@ function(mindspore_add_pkg pkg_name )
                     -DCMAKE_INSTALL_PREFIX=${${pkg_name}_BASE_DIR} ..
                     WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
 
-            __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install -- -j8
+            __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install -- -j${THNUM}
                     WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
 
         else()
@@ -318,7 +336,7 @@ function(mindspore_add_pkg pkg_name )
                         ${${pkg_name}_MAKE_CFLAGS} ${${pkg_name}_MAKE_CXXFLAGS} ${${pkg_name}_MAKE_LDFLAGS})
             endif ()
             # build
-            __exec_cmd(COMMAND ${CMAKE_MAKE_PROGRAM} ${${pkg_name}_BUILD_OPTION} -j8
+            __exec_cmd(COMMAND ${CMAKE_MAKE_PROGRAM} ${${pkg_name}_BUILD_OPTION} -j${THNUM}
                     WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR})
 
             if (PKG_INSTALL_INCS OR PKG_INSTALL_LIBS)
