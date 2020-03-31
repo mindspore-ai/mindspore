@@ -374,7 +374,6 @@ bool IsParallelCareNode(const CNodePtr& cnode) {
   if (prim == nullptr) {
     return false;
   }
-  auto attrs = prim->attrs();
   if (IsInBlackList(prim)) {
     MS_LOG(INFO) << "Parallel don't care node: " << prim->name();
     return false;
@@ -1971,11 +1970,7 @@ CNodePtr FindLossCNode(const FuncGraphPtr& func_graph) {
   MS_EXCEPTION_IF_NULL(current_value);
   PrimitivePtr current_prim = current_value->value()->cast<PrimitivePtr>();
   MS_EXCEPTION_IF_NULL(current_prim);
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-=======
->>>>>>> fix_cast_bug
   // return -> cast
   if (current_prim->name() == CAST && pre_cnode->operator_info() == nullptr) {
     pre_cnode = pre_cnode->input(1)->cast<CNodePtr>();
@@ -1983,8 +1978,7 @@ CNodePtr FindLossCNode(const FuncGraphPtr& func_graph) {
     current_prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
   }
 
-=======
->>>>>>> 回退 'Pull Request !17 : [AutoParallel]Fix bug in the case of two cast'
+
   // notice: the GetNext op has not input
   if (INVALID_LOSS_OPS.find(current_prim->name()) != INVALID_LOSS_OPS.end()) {
     MS_LOG(INFO) << "The loss is: " << current_prim->name();
