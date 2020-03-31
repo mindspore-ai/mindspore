@@ -123,6 +123,8 @@ REGISTER(ReLUInfo);
 REGISTER(GatherV2Info);
 REGISTER(SqrtInfo);
 REGISTER(GetNextInfo);
+REGISTER(NegInfo);
+REGISTER(BatchMatMulInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

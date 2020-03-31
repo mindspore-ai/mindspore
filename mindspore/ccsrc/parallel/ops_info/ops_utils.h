@@ -188,6 +188,8 @@ constexpr char SQRT[] = "Sqrt";
 constexpr char ASSIGN[] = "Assign";
 constexpr char GET_NEXT[] = "GetNext";
 constexpr char SQUEEZE[] = "Squeeze";
+constexpr char Neg[] = "Neg";
+constexpr char BATCH_MATMUL[] = "BatchMatMul";
 
 // Parallel don't care
 constexpr char TUPLE_GETITEM[] = "tuple_getitem";
