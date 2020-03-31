@@ -41,7 +41,7 @@ def check_crop_size(size):
     else:
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
     for value in size:
-        check_value(value, (1, INT32_MAX))
+        check_pos_int32(value)
     return size
 
 
@@ -239,6 +239,7 @@ def check_random_resize_crop(method):
             kwargs["scale"] = scale
         if ratio is not None:
             check_range(ratio, [0, FLOAT_MAX_INTEGER])
+            check_positive(ratio[0])
             kwargs["ratio"] = ratio
         if interpolation is not None:
             check_inter_mode(interpolation)
