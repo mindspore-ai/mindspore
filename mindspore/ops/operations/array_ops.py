@@ -1615,37 +1615,96 @@ class StridedSlice(PrimitiveWithInfer):
 class Diag(PrimitiveWithInfer):
     r"""
 
-    Extract or construct a diagonal array.
+    Construct a diagonal tensor with a given diagonal values.
 
-    If input is a 2-D tensor, returns the diagonal of the input with the given offset. If
-    input is a 1-D tensor, returns the array of diagonals. If you use this function
-    to extract the diagonal and want to write to the result array, see the more
-    detailed documentation for "numpy.diagonal", whether you return a copy or a
-    view depends on the version of numpy you are using.
+    Assume `input_x` has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
+    rank 2k with dimensions :math:`[D_1,..., D_k, D_1,..., D_k]` where:
+    :math:`output[i_1,..., i_k, i_1,..., i_k] = input_x[i_1,..., i_k]` and 0 everywhere else.
 
     Inputs:
-        - **input_x** (Tensor) - 1-D tensor or 2-D tensor.
+        - **input_x** (Tensor) - The input tensor.
 
     Outputs:
         Tensor.
 
     Examples:
+        >>> input_x = Tensor([1, 2, 3, 4])
         >>> diag = P.Diag()
         >>> diag(x)
+        [[1, 0, 0, 0],
+         [0, 2, 0, 0],
+         [0, 0, 3, 0],
+         [0, 0, 0, 4]]
     """
 
     @prim_attr_register
     def __init__(self):
         """init Diag"""
 
-    def infer_type(self, x):
-        args = {"x_dtype": x}
-        validator.check_subclass('input_x', x, mstype.tensor)
-        validator.check_type_same(args, mstype.number_type)
-        return x
+    def infer_dtype(self, x_type):
+        validator.check_subclass('input_x', x_type, mstype.tensor)
+        return x_type
+
+    def infer_shape(self, x_shape):
+        validator.check("x rank", len(x_shape), "", 1, Rel.GE)
+        ret_shape = copy.deepcopy(x_shape)
+        ret_shape = ret_shape + ret_shape
+        return ret_shape
 
     def infer_value(self, x):
-        validator.check("shape_length", len(x.shape()), "length", [1, 2], Rel.IN)
+        if x is None:
+            return None
+        validator.check("input x rank", len(x.shape()), "", 1)
+        ret = np.diag(x.asnumpy())
+        return Tensor(ret)
+
+
+class DiagPart(PrimitiveWithInfer):
+    r"""
+
+    Extract the diagonal part from given tensor.
+
+    Assume input has dimensions :math:`[D_1,..., D_k, D_1,..., D_k]`, the output is a tensor
+    of rank k with dimensions :math:`[D_1,..., D_k]` where:
+    :math:`output[i_1,..., i_k] = input[i_1,..., i_k, i_1,..., i_k]`.
+
+    Inputs:
+        - **input_x** (Tensor) - The input Tensor.
+
+    Outputs:
+        Tensor.
+
+    Examples
+        >>> input_x = Tensor([[1, 0, 0, 0],
+        >>>                   [0, 2, 0, 0],
+        >>>                   [0, 0, 3, 0],
+        >>>                   [0, 0, 0, 4]])
+        >>> diag_part = P.DiagPart()
+        >>> diag_part(x)
+        [1, 2, 3, 4]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init DiagPart"""
+
+    def infer_dtype(self, x_type):
+        validator.check_subclass('input_x', x_type, mstype.tensor)
+        return x_type
+
+    def infer_shape(self, x_shape):
+        if len(x_shape)%2 != 0 or \
+                not x_shape:
+            raise ValueError(f"DiagPart input rank must be non-zero and even, but got rank {len(x_shape)}, "
+                             f"with shapes {x_shape}")
+        length = len(x_shape) // 2
+        ret_shape = x_shape[0:length]
+        return ret_shape
+
+    def infer_value(self, x):
+        if x is None:
+            return None
+        validator.check("x rank", len(x.shape()), "", 2)
         ret = np.diag(x.asnumpy())
         return Tensor(ret)
 

@@ -1173,6 +1173,16 @@ INPUT_MAP(ApplyFtrl) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INP
 ATTR_MAP(ApplyFtrl) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyFtrl) = {{0, OUTPUT_DESC(var)}};
 
+// Diag
+INPUT_MAP(Diag) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Diag) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Diag) = {{0, OUTPUT_DESC(y)}};
+
+// DiagPart
+INPUT_MAP(DiagPart) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(DiagPart) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DiagPart) = {{0, OUTPUT_DESC(y)}};
+
 #ifdef ENABLE_GE
 // Print
 INPUT_MAP(Print) = EMPTY_INPUT_MAP;
