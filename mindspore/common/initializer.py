@@ -180,18 +180,18 @@ class HeUniform(Initializer):
         _assignment(arr, data)
 
 
-class _Constant(Initializer):
+class Constant(Initializer):
     """
     Initialize a constant.
 
     Args:
-        value (int or numpy.ndarray): The value to initialize.
+        value (Union[int, numpy.ndarray]): The value to initialize.
 
     Returns:
         Array, initialize array.
     """
     def __init__(self, value):
-        super(_Constant, self).__init__(value=value)
+        super(Constant, self).__init__(value=value)
         self.value = value
 
     def _initialize(self, arr):
@@ -266,8 +266,16 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
     Args:
         init (Union[Tensor, str, Initializer, numbers.Number]): Initialize value.
+
+            - `str`: The `init` should be the alias of the class inheriting from `Initializer` and the corresponding
+              class will be called.
+
+            - `Initializer`: The `init` should be the class inheriting from `Initializer` to initialize tensor.
+
+            - `numbers.Number`: The `Constant` will be called to initialize tensor.
+
         shape (Union[tuple, list, int]): A list of integers, a tuple of integers or an integer as the shape of
-                                         output. Default: None.
+            output. Default: None.
         dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mstype.float32.
 
     Returns:
@@ -295,7 +303,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
         raise ValueError(msg)
 
     if isinstance(init, numbers.Number):
-        init_obj = _Constant(init)
+        init_obj = Constant(init)
     elif isinstance(init, str):
         init_obj = _INITIALIZER_ALIAS[init.lower()]()
     else:
@@ -314,4 +322,5 @@ __all__ = [
     'HeUniform',
     'XavierUniform',
     'One',
-    'Zero']
+    'Zero',
+    'Constant']
