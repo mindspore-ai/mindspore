@@ -27,7 +27,7 @@ process_pid=()
 for((i=0; i<$DEVICE_NUM; i++)); do
     rm -rf ${BASE_PATH}/onehot_model_parallel${i}
     mkdir ${BASE_PATH}/onehot_model_parallel${i}
-    cp -r onehot_model_parallel.py  ${BASE_PATH}/onehot_model_parallel${i}/
+    cp -r ${BASE_PATH}/onehot_model_parallel.py  ${BASE_PATH}/onehot_model_parallel${i}/
     cd ${BASE_PATH}/onehot_model_parallel${i}
     export RANK_ID=${i}
     export DEVICE_ID=${i}

@@ -118,6 +118,9 @@ class Dataset():
     def get_dataset_size(self):
         return self.length
 
+    def get_repeat_count(self):
+        return self.length
+
 class ModelCallback(Callback):
     def __init__(self):
         super(ModelCallback, self).__init__()
@@ -177,7 +180,6 @@ class LossFactory():
         dataGen = DataGenerator()
         self.input_full, self.input_part = dataGen.input_data((batch_size, embed))
         self.label_full, self.label_part = dataGen.label_data((batch_size,),embed)
-        self.expect_out = np.array([0.9205861 , 0.9205861 , 0.9205861 , 0.9201946 , 0.91951686, 0.919343])
 
     def single_matmul_trains(self):
         single_callback = ModelCallback()
@@ -187,7 +189,8 @@ class LossFactory():
         epoch_size = 6
         dataset = Dataset(self.input_full, self.label_full)
         model.train(epoch_size, dataset, callbacks=single_callback, dataset_sink_mode=False)
-        print("---loss---",single_callback.loss_list)
+        loss_value = np.array(single_callback.loss_list)
+        return loss_value
 
     def data_parallel_matmul_trains(self):
         parallel_callback = ModelCallback()
@@ -199,7 +202,7 @@ class LossFactory():
         dataset = Dataset(self.input_part, self.label_part)
         model.train(epoch_size, dataset, callbacks=parallel_callback, dataset_sink_mode=False)
         loss_value = np.array(parallel_callback.loss_list)
-        assert allclose(loss_value, self.expect_out, 0.00001, 0.00001)
+        return loss_value
     
     def model_parallel_matmul_trains(self):
         parallel_callback = ModelCallback()
@@ -224,7 +227,7 @@ class LossFactory():
         dataset = Dataset(self.input_part, self.label_part)
         model.train(epoch_size, dataset, callbacks=parallel_callback, dataset_sink_mode=False)
         loss_value = np.array(parallel_callback.loss_list)
-        assert allclose(loss_value, self.expect_out, 0.00001, 0.00001)
+        return loss_value
 
     def mix_parallel_matmul_trains(self):
         parallel_callback = ModelCallback()
@@ -249,28 +252,13 @@ class LossFactory():
         dataset = Dataset(self.input_part, self.label_part)
         model.train(epoch_size, dataset, callbacks=parallel_callback, dataset_sink_mode=False)
         loss_value = np.array(parallel_callback.loss_list)
-        assert allclose(loss_value, self.expect_out, 0.00001, 0.00001)
+        return loss_value
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
-def test_matmul_loss_data_parallel_trains():
+def test_all_trains():
     loss_factory = LossFactory()
     context.reset_auto_parallel_context()
-    loss_factory.data_parallel_matmul_trains()
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
-def test_matmul_loss_model_parallel_trains():
-    loss_factory = LossFactory()
-    context.reset_auto_parallel_context()
-    loss_factory.model_parallel_matmul_trains()
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single 
-def test_matmul_loss_mix_parallel_trains():
-    loss_factory = LossFactory()
-    context.reset_auto_parallel_context()
-    loss_factory.mix_parallel_matmul_trains()
+    single_loss = loss_factory.single_matmul_trains()
+    model_parallel_loss = loss_factory.model_parallel_matmul_trains()
+    mix_parallel_loss = loss_factory.mix_parallel_matmul_trains()
+    assert allclose(single_loss, model_parallel_loss)
+    assert allclose(single_loss, mix_parallel_loss)
