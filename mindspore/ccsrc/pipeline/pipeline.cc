@@ -1110,10 +1110,11 @@ bool ExecutorPy::AddDFGraph(const py::dict& init_params, const std::string& phas
     (void)DfGraphManager::GetInstance().AddGraph(phase, convertor.GetComputeGraph());
   }
   (void)DfGraphManager::GetInstance().AddGraph(init_graph, convertor.GetInitGraph());
-  (void)DfGraphManager::GetInstance().AddGraph(checkpoint_name, convertor.GetSaveCheckpointGraph());
   (void)DfGraphManager::GetInstance().AddGraph(BROADCAST_GRAPH_NAME, convertor.GetBroadcastGraph());
-
-  DfGraphManager::GetInstance().SetAnfGraph(checkpoint_name, anf_graph);
+  Status ret = DfGraphManager::GetInstance().AddGraph(checkpoint_name, convertor.GetSaveCheckpointGraph());
+  if (ret == Status::SUCCESS) {
+    DfGraphManager::GetInstance().SetAnfGraph(checkpoint_name, anf_graph);
+  }
 
   return true;
 }

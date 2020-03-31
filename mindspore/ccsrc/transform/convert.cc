@@ -1106,12 +1106,12 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
   auto normal_shape_ptr = dyn_cast<abstract::Shape>(node->Shape());
   vector<int> shape;
   if (normal_shape_ptr == nullptr) {
-    MS_LOG(ERROR) << "Update data op descriptor failed! Invalid shape.";
+    MS_LOG(INFO) << "Invalid shape to update data op descriptor.";
     return;
   }
   shape = normal_shape_ptr->shape();
   if (node->Type() == nullptr) {
-    MS_LOG(ERROR) << "Update data op descriptor failed! Invalid type.";
+    MS_LOG(INFO) << "Invalid type to update data op descriptor.";
     return;
   }
   TypeId me_type = node->Type()->type_id();
