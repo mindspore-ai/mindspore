@@ -375,6 +375,10 @@ bool IsParallelCareNode(const CNodePtr& cnode) {
     MS_LOG(INFO) << "Parallel don't care node: " << prim->name();
     return false;
   }
+  // get_next is not in the forward graph, we need mark the get_next as the forward node
+  if (prim->name() == GET_NEXT) {
+    return true;
+  }
   if ((prim->name() == CAST)) {
     if ((!attrs.count(STRATEGY)) && (cnode->operator_info() == nullptr)) {
       return false;
