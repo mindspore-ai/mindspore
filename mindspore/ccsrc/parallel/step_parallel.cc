@@ -112,6 +112,7 @@ void InsertNode(const Operator& op, const CNodePtr& node, size_t index, const An
   MS_EXCEPTION_IF_NULL(new_node_value);
   PrimitivePtr new_node_prim = new_node_value->value()->cast<PrimitivePtr>();
   new_node_prim->set_instance_name(instance_name);
+  new_node_prim->set_attr("keep_value_node_input", MakeValue(true));
   new_node->set_scope(scope);
   node_input[0]->set_scope(scope);
   manager->SetEdge(node, SizeToInt(index), new_node);
