@@ -34,6 +34,7 @@
 #include "utils/utils.h"
 #include "debug/trace.h"
 #include "utils/context/ms_context.h"
+#include "operator/ops.h"
 
 namespace mindspore {
 // max number of elements in sequence
@@ -69,7 +70,7 @@ py::object load_obj(const std::string& path) {
 
 // ============================================= MindSpore IR Exporter =============================================
 
-std::string GetNodeType(const AnfNodePtr& nd) {
+std::string AnfExporter::GetNodeType(const AnfNodePtr& nd) {
   abstract::ShapePtr shape = nd->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(nd->Shape());
   TypePtr type = dyn_cast<Type>(nd->Type());
   std::ostringstream oss;
@@ -102,7 +103,7 @@ int AnfExporter::GetParamIndex(const FuncGraphPtr& func_graph, const AnfNodePtr&
   FuncGraphPtr fg = func_graph;
   while (fg != nullptr) {
     if (exported.find(fg) == exported.end()) {
-      if (!export_used_) {
+      if (!check_integrity_) {
         break;
       }
       MS_LOG(EXCEPTION) << "Can not find func graph '" << fg->DumpText() << "." << fg->debug_info()->get_id() << "'";
@@ -255,15 +256,15 @@ std::string AnfExporter::GetPrimitiveText(const PrimitivePtr& prim) {
   }
 
   // output primitive attributes
-  auto attrs = prim->attrs();
-  if (attrs.size() > 0) {
-    oss << "[";
-    int i = 0;
-    for (auto& attr : attrs) {
-      oss << (i > 0 ? ", " : "") << attr.first << "=" << attr.second->DumpText();
-      i++;
+  oss << prim->GetAttrsText();
+
+  if (prim->isa<prim::DoSignaturePrimitive>()) {
+    auto do_signature = dyn_cast<prim::DoSignaturePrimitive>(prim);
+    auto& func = do_signature->function();
+    if (func->isa<Primitive>()) {
+      auto sig_prim = dyn_cast<Primitive>(func);
+      oss << sig_prim->GetAttrsText();
     }
-    oss << "]";
   }
 
   return oss.str();
@@ -351,7 +352,7 @@ std::string AnfExporter::GetDictText(const FuncGraphPtr& func_graph, const Value
 std::string AnfExporter::GetOtherValueText(const FuncGraphPtr&, const ValuePtr& value) {
   std::ostringstream oss;
 
-  if (export_used_) {
+  if (check_integrity_) {
     MS_LOG(EXCEPTION) << "Need to process type: " << value->type_name() << ", dump text: " << value->DumpText();
   }
   oss << value->type_name() << "[" << value->DumpText() << "]";
@@ -420,7 +421,7 @@ std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr& func_graph, const An
     }
     oss << "%" << iter->second;
   } else if (node->isa<Parameter>()) {
-    oss << "%para" << GetParamIndex(func_graph, node, export_used_);
+    oss << "%para" << GetParamIndex(func_graph, node, check_integrity_);
   } else if (IsValueNode<FuncGraph>(node)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
     oss << fg->type_name() << "::fg_" << fg->debug_info()->get_id();
