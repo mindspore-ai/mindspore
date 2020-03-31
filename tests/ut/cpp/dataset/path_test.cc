@@ -38,7 +38,7 @@ TEST_F(MindDataTestPath, Test1) {
   int i = 0;
   while (dir_it->hasNext()) {
     Path v = dir_it->next();
-    std::cout << v.toString() << "\n";
+    MS_LOG(DEBUG) << v.toString() << "\n";
     i++;
     if (i == 10) {
       break;
@@ -46,7 +46,7 @@ TEST_F(MindDataTestPath, Test1) {
   }
   // Test extension.
   Path g("file.jpeg");
-  std::cout << g.Extension() << "\n";
+  MS_LOG(DEBUG) << g.Extension() << "\n";
   ASSERT_EQ(g.Extension(), ".jpeg");
 }
 

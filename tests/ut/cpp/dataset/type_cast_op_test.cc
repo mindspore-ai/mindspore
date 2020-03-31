@@ -54,7 +54,7 @@ void testCast(std::vector<FROM> values, const DataType &from, const DataType &to
   EXPECT_TRUE(op->Compute(t, &output));
   ASSERT_TRUE(t->shape() == output->shape());
   ASSERT_TRUE(DataType(to)==output->type());
-  std::cout << *output << std::endl;
+  MS_LOG(DEBUG) << *output << std::endl;
   auto out = output->begin<TO>();
   auto v = values.begin();
   for (; out != output->end<TO>(); out++, v++) {

@@ -51,7 +51,7 @@ TEST_F(MindDataTestNormalizeOP, TestOp) {
   cv::Mat cv_output_image;
   cv_output_image = p->mat();
 
-  std::cout << "Storing output file to : " << output_filename << std::endl;
+  MS_LOG(DEBUG) << "Storing output file to : " << output_filename << std::endl;
   cv::FileStorage file(output_filename, cv::FileStorage::WRITE);
   file << "imageData" << cv_output_image;
 }

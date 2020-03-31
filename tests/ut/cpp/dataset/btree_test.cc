@@ -196,6 +196,6 @@ TEST_F(MindDataTestBPlusTree, Test3) {
   EXPECT_EQ(it.value(), "b");
   MS_LOG(INFO) << "Dump all the values using [] operator.";
   for (uint64_t i = min; i <= max; i++) {
-    std::cout << ai[i] << std::endl;
+    MS_LOG(DEBUG) << ai[i] << std::endl;
   }
 }

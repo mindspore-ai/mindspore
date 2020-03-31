@@ -697,7 +697,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
   std::string result;
   while (tensor_map.size() != 0) {
     tensor_map["label"]->GetItemAt<int32_t>(&label, {});
-    std::cout << "row:" << i << "\tlabel:" << label << "\n";
+    MS_LOG(DEBUG) << "row:" << i << "\tlabel:" << label << "\n";
     EXPECT_TRUE(img_class[(i % 44) / 11] == label);
     // Dump all the image into string, to be used as a comparison later.
     result.append((char *) tensor_map["image"]->StartAddr(), (int64_t) tensor_map["image"]->Size());
@@ -743,7 +743,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
   std::string result2;
   while (tensor_map.size() != 0) {
     tensor_map["label"]->GetItemAt<int32_t>(&label, {});
-    std::cout << "row:" << i << "\tlabel:" << label << "\n";
+    MS_LOG(DEBUG) << "row:" << i << "\tlabel:" << label << "\n";
     EXPECT_TRUE(img_class[(i % 44) / 11] == label);
     result2.append((char *) tensor_map["image"]->StartAddr(), (int64_t) tensor_map["image"]->Size());
     di2.GetNextAsMap(&tensor_map);

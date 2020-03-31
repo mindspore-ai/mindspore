@@ -28,6 +28,7 @@ cd ${BUILD_PATH}/mindspore/tests/ut/cpp
 
 export LD_LIBRARY_PATH=${BUILD_PATH}/mindspore/googletest/googlemock/gtest:${PROJECT_PATH}/mindspore:${PROJECT_PATH}/mindspore/lib:$LD_LIBRARY_PATH
 export PYTHONPATH=${PROJECT_PATH}/tests/ut/cpp/python_input:$PYTHONPATH:${PROJECT_PATH}
+export GLOG_v=2
 
 ## prepare data for dataset & mindrecord
 cp -fr $PROJECT_PATH/tests/ut/data ${PROJECT_PATH}/build/mindspore/tests/ut/cpp/

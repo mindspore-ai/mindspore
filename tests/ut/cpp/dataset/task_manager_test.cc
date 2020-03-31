@@ -36,7 +36,7 @@ Status f(TaskGroup &vg){
     RETURN_IF_NOT_OK(vg.CreateAsyncTask("Infinity", [&]() -> Status {
         TaskManager::FindMe()->Post();
         int a = v.fetch_add(1);
-        std::cout << a << std::endl;
+        MS_LOG(DEBUG) << a << std::endl;
         return f(vg);
     }));
   }

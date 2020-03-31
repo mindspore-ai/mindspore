@@ -311,7 +311,7 @@ TEST_F(MindDataTestTensorDE, CVTensorAs) {
   m = 2 * m;
   ASSERT_EQ(ctv->StartAddr(), addr);
   ASSERT_TRUE(*t2 == *ctv);
-  std::cout << *t2 << std::endl << *ctv;
+  MS_LOG(DEBUG) << *t2 << std::endl << *ctv;
 }
 
 TEST_F(MindDataTestTensorDE, CVTensorMatSlice) {
