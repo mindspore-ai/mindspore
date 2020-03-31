@@ -88,7 +88,7 @@ class _DatasetIter:
         # times the batch dimension of tensors for run
         if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             device_num = _get_device_num()
-            dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
+            self.dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
 
     def __iter__(self):
         self.ind = 0
