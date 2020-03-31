@@ -84,6 +84,7 @@ constexpr size_t kLayerNormGradInputNum = 6;
 constexpr size_t kAdamApplyOneOutputNum = 3;
 constexpr size_t kBackendTransDataInputNum = 2;
 constexpr size_t kApplyMomentumInputNum = 6;
+constexpr size_t kBiasAddInputNum = 3;
 
 enum FusedBatchNormInput {
   kX = 1,
