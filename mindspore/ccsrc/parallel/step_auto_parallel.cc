@@ -346,8 +346,6 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
 }
 
 OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(prim);
-  MS_EXCEPTION_IF_NULL(cnode);
   auto attrs = prim->attrs();
   std::vector<Shapes> shape_list = ExtractShape(cnode);
   if (shape_list.empty()) {
@@ -383,8 +381,8 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   operator_info->set_outputs_dtype(cnode->Type());
   operator_info->set_cnode(cnode);
   // If no strategy has been configured for this operator, then candidate strategies are generated for
-  // auto-strategy searching, if this primitive is Cast, we ignore the user-specified strategy
-  if (!StrategyFound(attrs) || prim->name() == CAST) {
+  // auto-strategy searching
+  if (!StrategyFound(attrs)) {
     // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
     // BatchParallelInfo operator
     operator_info->ComputeBatchSplitFlagList();
