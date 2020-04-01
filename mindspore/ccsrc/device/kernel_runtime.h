@@ -128,9 +128,6 @@ class KernelRuntime {
   size_t total_static_size_ = 0;
   size_t total_dynamic_size_ = 0;
   MemReuseUtilPtr mem_reuse_util_ptr_{nullptr};
-
- private:
-  uint8_t *reuse_mem_base_{nullptr};
 };
 using KernelRuntimePtr = std::shared_ptr<KernelRuntime>;
 }  // namespace device

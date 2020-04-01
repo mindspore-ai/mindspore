@@ -316,5 +316,35 @@ void MemReuseUtil::SetAllInfo(KernelGraph *graph) {
   MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, graph);
 #endif
 }
+
+uint8_t *MemReuseUtil::GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const {
+  auto key = node.get();
+  auto iter = kernel_output_refs_.find(key);
+  uint8_t *ptr = nullptr;
+  if (iter != kernel_output_refs_.end()) {
+    if (index >= iter->second.size()) {
+      MS_LOG(EXCEPTION) << "index:[" << index << "] is larger than it's workspace size:[" << iter->second.size() << "]";
+    }
+    auto output_ref = iter->second[index];
+    ptr = mem_base_ + output_ref->offset_;
+  } else {
+    MS_LOG(EXCEPTION) << "node [" << AnfAlgo::GetCNodeName(node) << "] don't exist in kernel_output_refs";
+  }
+  return ptr;
+}
+
+uint8_t *MemReuseUtil::GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const {
+  auto key = node.get();
+  auto iter = kernel_workspace_refs_.find(key);
+  uint8_t *ptr = nullptr;
+  if (iter != kernel_workspace_refs_.end()) {
+    if (index >= iter->second.size()) {
+      MS_LOG(EXCEPTION) << "index:[" << index << "] is larger than it's workspace size:[" << iter->second.size() << "]";
+    }
+    auto wk_ref = iter->second[index];
+    ptr = mem_base_ + wk_ref->offset_;
+  }
+  return ptr;
+}
 }  // namespace memreuse
 }  // namespace mindspore
