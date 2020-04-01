@@ -18,6 +18,8 @@ from mindspore.ops import Primitive
 depend = Primitive('depend')
 TransData = Primitive('TransData')
 add = P.TensorAdd()
+make_tuple = Primitive('make_tuple')
+
 
 class FnDict:
     def __init__(self):
@@ -42,6 +44,26 @@ def test_optimize_dependence(tag):
 
     @fns
     def after(x, y, z):
+        depend_intput = depend(y, z)
+        sum = add(x, depend_intput)
+        return sum
+
+    return fns[tag]
+
+
+def test_optimize_dependence_with_make_tuple(tag):
+    fns = FnDict()
+
+    @fns
+    def before(x, y, a, b):
+        z = make_tuple(TransData(a), TransData(b))
+        depend_intput = depend(y, z)
+        sum = add(x, depend_intput)
+        return sum
+
+    @fns
+    def after(x, y, a, b):
+        z = make_tuple(a, b)
         depend_intput = depend(y, z)
         sum = add(x, depend_intput)
         return sum
