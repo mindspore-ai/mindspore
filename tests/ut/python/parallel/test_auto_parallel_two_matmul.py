@@ -86,7 +86,7 @@ def test_two_matmul():
     costmodel_alpha = cost_model_context.get_cost_model_context("costmodel_alpha")
     assert costmodel_alpha == 1.0
     costmodel_beta = cost_model_context.get_cost_model_context("costmodel_beta")
-    assert costmodel_beta == 260.0
+    assert costmodel_beta == 400.0
     costmodel_gamma = cost_model_context.get_cost_model_context("costmodel_gamma")
     assert costmodel_gamma == 0.001
     costmodel_communi_threshold = cost_model_context.get_cost_model_context("costmodel_communi_threshold")
