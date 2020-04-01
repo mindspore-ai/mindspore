@@ -1790,7 +1790,7 @@ class ScatterNd(PrimitiveWithInfer):
 
 
 class ResizeNearestNeighbor(PrimitiveWithInfer):
-    """
+    r"""
     Resize the input tensor by using nearest neighbor algorithm.
 
     Resize input tensor to given size by using nearest neighbor algorithm. The nearest
@@ -1806,7 +1806,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
          - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
 
     Outputs:
-        Tensor, the shape of the output tensor is :math:`(N, NEW_C, NEW_H, W)`.
+        Tensor, the shape of the output tensor is :math:`(N, NEW\_C, NEW\_H, W)`.
 
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
