@@ -76,6 +76,9 @@ class MemReuseUtil {
   void set_kernel_def_ptr_list(const KernelDefPtrMaps &kernel_def_ptr_list) {
     kernel_def_ptr_list_ = kernel_def_ptr_list;
   }
+  void set_mem_base(uint8_t *mem_base) { mem_base_ = mem_base; }
+  uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
+  uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
 
  private:
   int util_index_;
@@ -88,6 +91,7 @@ class MemReuseUtil {
   size_t total_dy_size_ = 0;
   size_t total_workspace_size_ = 0;
   size_t total_reuseworkspace_size_ = 0;
+  uint8_t *mem_base_{nullptr};
 };
 using MemReuseUtilPtr = std::shared_ptr<MemReuseUtil>;
 }  // namespace memreuse
