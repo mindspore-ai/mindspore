@@ -359,7 +359,7 @@ Status AllreduceFusion::SetFusionByBackwardCompAndAllreduceTime() {
     return FAILED;
   }
   double para_size = (tail_time_ - allreduce_inherent_time_) / allreduce_bandwidth_;
-  double to_cost = allreduce_graph_.max() + FUSION_COST_EPS;
+  double to_cost = allreduce_graph_.max();
   int32_t fusion = 1;
   while (to_cost != 0) {
     MS_LOG(INFO) << "to_cost: " << to_cost << " para_size: " << para_size;
