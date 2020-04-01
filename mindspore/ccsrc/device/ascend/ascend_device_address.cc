@@ -106,13 +106,13 @@ bool AscendDeviceAddress::SyncDeviceToHost(const std::vector<int> &shape, size_t
     } else {
       auto shape_size = trans::ShapeSize(host_shape);
       auto host = std::vector<uint8_t>(size_);
-      const trans::TypeIdArgs type_args{ptr_, shape_size, type_id_, type};
-      sync_ok = trans::TransDataType(type_args, host.data());
+      SyncMemory(host.data(), ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
+      const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type};
+      sync_ok = trans::TransDataType(type_args, host_ptr);
       if (!sync_ok) {
         MS_LOG(ERROR) << "trans data type failed.";
         return false;
       }
-      SyncMemory(host_ptr, host.data(), size, RT_MEMCPY_DEVICE_TO_HOST);
     }
   } else if (format_ == kOpFormat_NC1HWC0 || format_ == kOpFormat_FRAC_Z || format_ == kOpFormat_FRAC_NZ) {
     sync_ok = SyncDeviceToHostAndConvertFormat(shape, size, type, host_ptr);
