@@ -249,7 +249,7 @@ class LayerNorm(Cell):
             'he_uniform', etc. Default: 'zeros'.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of 'input_x' is input_shape = `(x_1, x_2, ..., x_R)`,
+        - **input_x** (Tensor) - The shape of 'input_x' is input_shape = :math:`(x_1, x_2, ..., x_R)`,
           and `input_shape[begin_norm_axis:]` is equal to `normalized_shape`.
 
     Outputs:
