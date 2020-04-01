@@ -112,7 +112,7 @@ DfGraphWrapperPtr DfGraphManager::GetGraphByName(const std::string& name) {
 
   auto it = graphs_.find(name);
   if (it == graphs_.end()) {
-    MS_LOG(ERROR) << "Can't found graph name: " << name;
+    MS_LOG(INFO) << "Can't found graph name: " << name;
     return nullptr;
   }
   MS_LOG(INFO) << "Return graph: " << name;
