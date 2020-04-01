@@ -513,7 +513,7 @@ class OpAdapter : public BaseOpAdapter {
         return;
       }
     } else {
-      MS_LOG(ERROR) << "Update output desc failed, unknow output shape type";
+      MS_LOG(WARNING) << "Update output desc failed, unknow output shape type";
       return;
     }
     MS_EXCEPTION_IF_NULL(node);
