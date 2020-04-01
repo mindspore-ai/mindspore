@@ -14,6 +14,7 @@
 # ============================================================================
 
 """debug_ops"""
+from ..._checkparam import ParamValidator as validator
 from ...common import dtype as mstype
 from ..primitive import Primitive, prim_attr_register, PrimitiveWithInfer
 
@@ -157,19 +158,20 @@ class InsertGradientOf(PrimitiveWithInfer):
 
 class Print(PrimitiveWithInfer):
     """
-    Output tensor to stdout.
+    Output tensor or string to stdout.
 
     Inputs:
-        - **input_x** (Tensor) - The graph node to attach to.
+        - **input_x** (Union[Tensor, str]) - The graph node to attach to. The input supports
+          multiple strings and tensors which are separated by ','.
 
     Examples:
         >>> class PrintDemo(nn.Cell):
-        >>>     def __init__(self,):
+        >>>     def __init__(self):
         >>>         super(PrintDemo, self).__init__()
         >>>         self.print = P.Print()
         >>>
-        >>>     def construct(self, x):
-        >>>         self.print(x)
+        >>>     def construct(self, x, y):
+        >>>         self.print('Print Tensor x and Tensor y:', x, y)
         >>>         return x
     """
 
@@ -181,4 +183,6 @@ class Print(PrimitiveWithInfer):
         return [1]
 
     def infer_dtype(self, *inputs):
+        for dtype in inputs:
+            validator.check_subclass("input", dtype, (mstype.tensor, mstype.string))
         return mstype.int32
