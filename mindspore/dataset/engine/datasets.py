@@ -1906,11 +1906,21 @@ class TFRecordDataset(SourceDataset):
         Return:
             Number, number of batches.
         """
-        num_rows = TFReaderOp.get_num_rows(self.dataset_files, 8, estimate)
-        num_rows = get_num_rows(num_rows, self.num_shards)
-        if self.num_samples is None:
-            return num_rows
-        return min(self.num_samples, num_rows)
+        if self._dataset_size is None:
+            num_rows = TFReaderOp.get_num_rows(self.dataset_files, 8, estimate)
+            num_rows = get_num_rows(num_rows, self.num_shards)
+            if self.num_samples is None:
+                return num_rows
+            return min(self.num_samples, num_rows)
+        return self._dataset_size
+
+    # manually set dataset_size as a tempoary solution.
+    def set_dataset_size(self, value):
+        logger.warning("WARN_DEPRECATED: This method is deprecated. Please use get_dataset_size directly.")
+        if value >= 0:
+            self._dataset_size = value
+        else:
+            raise ValueError('set dataset_size with negative value {}'.format(value))
 
 
 class ManifestDataset(SourceDataset):
