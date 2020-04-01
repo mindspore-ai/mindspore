@@ -73,5 +73,6 @@ keyword.const_first = "const_first"
 keyword.add_fake_input = "add_fake_input"
 keyword.fake_input_type = "fake_input_type"
 keyword.exception = "exception"
+keyword.error_keywords = "error_keywords"
 
 sys.modules[__name__] = keyword
