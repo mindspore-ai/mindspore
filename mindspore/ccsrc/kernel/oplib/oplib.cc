@@ -26,18 +26,22 @@ namespace mindspore {
 namespace kernel {
 constexpr auto kImplyType = "imply_type";
 constexpr auto kOpName = "op_name";
-constexpr auto kTbe = "TBE";
-constexpr auto kAkg = "akg";
-constexpr auto kAutodiff = "AutoDiff";
 constexpr auto kFusionType = "fusion_type";
 constexpr auto kAsyncFlag = "async_flag";
 constexpr auto kBinfileName = "binfile_name";
 constexpr auto kComputeCost = "compute_cost";
 constexpr auto kKernelName = "kernel_name";
 constexpr auto kPartialFlag = "partial_flag";
+constexpr auto kReshapeType = "reshape_type";
+constexpr auto kOpPattern = "op_pattern";
+constexpr auto kDynamicFormat = "dynamic_format";
+constexpr auto kDtypeFormat = "dtype_format";
 constexpr auto kAttr = "attr";
 constexpr auto kIputs = "inputs";
 constexpr auto kOutputs = "outputs";
+constexpr auto kTbe = "TBE";
+constexpr auto kAkg = "akg";
+constexpr auto kAutodiff = "AutoDiff";
 constexpr auto kName = "name";
 constexpr auto kParamType = "param_type";
 constexpr auto kDtype = "dtype";
@@ -89,8 +93,8 @@ bool OpLib::DecodeOpInfo(const nlohmann::json& obj, const mindspore::kernel::OpI
   std::shared_ptr<OpInfo> op_info = std::make_shared<OpInfo>();
   MS_EXCEPTION_IF_NULL(op_info);
   op_info->set_op_name(obj.at(kOpName));
-  op_info->set_imply_type(imply_type);
   op_info->set_impl_path(impl_path);
+  op_info->set_imply_type(imply_type);
   op_info->set_fusion_type(obj.at(kFusionType));
   if (imply_type == kTBE) {
     op_info->set_async_flag(obj.at(kAsyncFlag));
@@ -98,6 +102,12 @@ bool OpLib::DecodeOpInfo(const nlohmann::json& obj, const mindspore::kernel::OpI
     op_info->set_compute_cost(obj.at(kComputeCost));
     op_info->set_kernel_name(obj.at(kKernelName));
     op_info->set_partial_flag(obj.at(kPartialFlag));
+    if (obj.find(kOpPattern) != obj.end()) {
+      op_info->set_op_pattern(obj.at(kOpPattern));
+    }
+    if (obj.find(kDynamicFormat) != obj.end()) {
+      op_info->set_dynamic_format(obj.at(kDynamicFormat));
+    }
   }
   auto attrs = obj.at(kAttr);
   for (const auto& attr : attrs) {
@@ -106,16 +116,20 @@ bool OpLib::DecodeOpInfo(const nlohmann::json& obj, const mindspore::kernel::OpI
       return false;
     }
   }
+  nlohmann::json dtype_format;
+  if (obj.find(kDtypeFormat) != obj.end()) {
+    dtype_format = obj.at(kDtypeFormat);
+  }
   auto inputs = obj.at(kIputs);
   for (const auto& input : inputs) {
-    if (!DecodeInputOutput(input, imply_type, kInput, op_info)) {
+    if (!DecodeInputOutput(input, imply_type, kInput, op_info, dtype_format)) {
       MS_LOG(DEBUG) << "DecodeInputOutput Failed";
       return false;
     }
   }
   auto outputs = obj.at(kOutputs);
   for (const auto& output : outputs) {
-    if (!DecodeInputOutput(output, imply_type, kOutput, op_info)) {
+    if (!DecodeInputOutput(output, imply_type, kOutput, op_info, dtype_format)) {
       MS_LOG(DEBUG) << "DecodeInputOutput Failed";
       return false;
     }
@@ -156,16 +170,42 @@ bool OpLib::DecodeAttr(const nlohmann::json& obj, const OpImplyType imply_type,
   return ret;
 }
 
+bool OpLib::DecodeDtypeFormat(const nlohmann::json& dtype_format, const std::shared_ptr<OpIOInfo>& op_io,
+                              size_t index) {
+  bool ret = true;
+  try {
+    std::vector<std::string> dtype;
+    std::vector<std::string> format;
+    for (const auto& it : dtype_format) {
+      dtype.emplace_back(it[index][0]);
+      format.emplace_back(it[index][1]);
+    }
+    op_io->set_dtypes(dtype);
+    op_io->set_formats(format);
+  } catch (const std::exception& e) {
+    MS_LOG(ERROR) << "DecodeDtypeFormat falied" << e.what();
+    ret = false;
+  }
+  return ret;
+}
+
 bool OpLib::DecodeInputOutput(const nlohmann::json& obj, const OpImplyType imply_type, const OpIOType io_type,
-                              const std::shared_ptr<OpInfo>& op_info) {
+                              const std::shared_ptr<OpInfo>& op_info, const nlohmann::json& dtype_format) {
   bool ret = true;
   try {
     std::shared_ptr<OpIOInfo> op_io = std::make_shared<OpIOInfo>();
     MS_EXCEPTION_IF_NULL(op_io);
     op_io->set_index(obj.at(kIndex));
     op_io->set_name(obj.at(kName));
-    op_io->set_dtypes(obj.at(kDtype));
-    op_io->set_formats(obj.at(kFormat));
+    if (!dtype_format.empty()) {
+      if (!DecodeDtypeFormat(dtype_format, op_io, op_info->inputs_ptr().size() + op_info->outputs_ptr().size())) {
+        MS_LOG(ERROR) << "Decode dtype format failed";
+        return false;
+      }
+    } else {
+      op_io->set_dtypes(obj.at(kDtype));
+      op_io->set_formats(obj.at(kFormat));
+    }
     if (op_io->dtypes().size() != op_io->formats().size()) {
       MS_LOG(DEBUG) << "op" << op_io->name() << "dtype size:" << op_io->dtypes()
                     << "is not equal to format size:" << op_io->formats();
@@ -180,6 +220,9 @@ bool OpLib::DecodeInputOutput(const nlohmann::json& obj, const OpImplyType imply
       }
       if (obj.find(kShape) != obj.end()) {
         op_io->set_shape(obj.at(kShape));
+      }
+      if (obj.find(kReshapeType) != obj.end()) {
+        op_io->set_reshape_type(obj.at(kReshapeType));
       }
     }
 
