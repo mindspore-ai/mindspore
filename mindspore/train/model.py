@@ -372,7 +372,7 @@ class Model:
             >>> model.train(2, dataset)
         """
         repeat_count = train_dataset.get_repeat_count()
-        if epoch != repeat_count:
+        if epoch != repeat_count and dataset_sink_mode is True:
             logger.warning(f"The epoch_size {epoch} is not the same with dataset repeat_count {repeat_count}")
         check_bool(dataset_sink_mode)
         _device_number_check(self._parallel_mode, self._device_number)
