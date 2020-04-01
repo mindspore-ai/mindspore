@@ -203,9 +203,9 @@ def test_nlp_page_reader_tutorial():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
-def test_cv_file_writer_shard_num_1000():
-    """test file writer when shard num equals 1000."""
-    writer = FileWriter(CV_FILE_NAME, 1000)
+def test_cv_file_writer_shard_num_10():
+    """test file writer when shard num equals 10."""
+    writer = FileWriter(CV_FILE_NAME, 10)
     data = get_data("../data/mindrecord/testImageNetData/")
     cv_schema_json = {"file_name": {"type": "string"},
                       "label": {"type": "int64"}, "data": {"type": "bytes"}}
@@ -214,8 +214,8 @@ def test_cv_file_writer_shard_num_1000():
     writer.write_raw_data(data)
     writer.commit()
 
-    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(3, '0'))
-             for x in range(1000)]
+    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
+            for x in range(10)]
     for x in paths:
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
