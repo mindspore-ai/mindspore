@@ -156,10 +156,10 @@ class Dense(Cell):
         ValueError: If weight_init or bias_init shape is incorrect.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, in_channels)`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
 
     Outputs:
-        Tensor of shape :math:`(N, out_channels)`.
+        Tensor of shape :math:`(N, out\_channels)`.
 
     Examples:
         >>> net = nn.Dense(3, 4)
