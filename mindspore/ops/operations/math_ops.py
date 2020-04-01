@@ -1183,6 +1183,62 @@ class Floor(PrimitiveWithInfer):
         return x_dtype
 
 
+class FloorMod(_MathBinaryOp):
+    """
+    Compute element-wise remainder of division.
+
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors, the shapes of them could be broadcast,
+    and the data types of them should be same.
+    When the inputs are one tensor and one scalar, the scalar cannot be a parameter, only can be a constant,
+    and the type of the scalar is the same as the data type of the tensor.
+
+    Inputs:
+        - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
+        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
+          a number.
+
+    Outputs:
+        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+
+    Examples:
+        >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
+        >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
+        >>> floor_mod = FloorMod()
+        >>> floor_mod(input_x, input_y)
+        [2, 1, 2]
+    """
+
+
+class Acosh(PrimitiveWithInfer):
+    """
+    Compute inverse hyperbolic cosine of x element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Outputs:
+        Tensor, has the same shape as `input_x`.
+
+    Examples:
+        >>> acosh = Acosh()
+        >>> X = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), ms.float32)
+        >>> output = acosh(X)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Acosh"""
+
+    def infer_shape(self, x):
+        return x
+
+    def infer_dtype(self, x):
+        validator.check_subclass("x_dtype", x, mstype.tensor)
+        validator.check_typename('x_dtype', x, mstype.number_type)
+        return x
+
+
 class _LogicBinaryOp(_BinaryOp):
     """
     Define logic binary operators.

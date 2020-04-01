@@ -39,7 +39,7 @@ from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
 from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
-                       Cos, Div, Equal, EqualCount, Exp, Floor, FloorDiv,
+                       Cos, Div, Equal, EqualCount, Exp, Floor, FloorDiv, FloorMod, Acosh,
                        Greater, GreaterEqual, Less, LessEqual, Log, LogicalAnd,
                        LogicalNot, LogicalOr, MatMul, Maximum,
                        Minimum, Mul, Neg, NMSWithMask, NotEqual,
@@ -205,6 +205,8 @@ __all__ = [
     'Log',
     'SigmoidCrossEntropyWithLogits',
     'FloorDiv',
+    'FloorMod',
+    'Acosh',
     "PReLU",
     "Cos",
     "ACos",
