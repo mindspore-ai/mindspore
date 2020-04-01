@@ -219,6 +219,10 @@ test_case_math_ops = [
         'block': P.ACos(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Acosh', {
+        'block': P.Acosh(),
+        'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16))],
+        'skip': ['backward']}),
     ('Sin', {
         'block': P.Sin(),
         'desc_inputs': [[2, 3]],
@@ -298,6 +302,11 @@ test_case_math_ops = [
         'desc_bprop': [[512, 1024]]}),
     ('FloorDiv', {
         'block': P.FloorDiv(),
+        'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16)),
+                        Tensor(np.random.rand(4).astype(np.float16))],
+        'skip': ['backward']}),
+    ('FloorMod', {
+        'block': P.FloorMod(),
         'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16)),
                         Tensor(np.random.rand(4).astype(np.float16))],
         'skip': ['backward']}),

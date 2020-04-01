@@ -251,6 +251,20 @@ def get_bprop_floordiv(self):
     return bprop
 
 
+@bprop_getters.register(P.FloorMod)
+def get_bprop_floormod(self):
+    """Grad definition for `FloorMod` operation."""
+    div_op = P.FloorMod()
+    neg = P.Neg()
+    mul_op = P.Mul()
+
+    def bprop(x, y, out, dout):
+        bc_x = div_op(dout, y)
+        bc_y = neg(mul_op(bc_x, out))
+        return binop_grad_common(x, y, bc_x, bc_y)
+    return bprop
+
+
 @bprop_getters.register(P.Square)
 def get_bprop_square(self):
     """Grad definition for `Square` operation."""
@@ -683,6 +697,17 @@ def get_bprop_cos(self):
 def get_bprop_acos(self):
     """Grad definition for `ACos` operation."""
     input_grad = G.ACosGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(x, dout)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.Acosh)
+def get_bprop_acosh(self):
+    """Grad definition for `Acosh` operation."""
+    input_grad = G.AcoshGrad()
 
     def bprop(x, out, dout):
         dx = input_grad(x, dout)
