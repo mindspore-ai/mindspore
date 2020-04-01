@@ -87,6 +87,14 @@ class MatMulInfo : public MatMul {
       : MatMul(name, inputs_shape, outputs_shape, attrs) {}
   ~MatMulInfo() override = default;
 };
+
+class BatchMatMulInfo : public MatMul {
+ public:
+  BatchMatMulInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
+                  const PrimitiveAttrs& attrs)
+      : MatMul(name, inputs_shape, outputs_shape, attrs) {}
+  ~BatchMatMulInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_MATMUL_INFO_H_
