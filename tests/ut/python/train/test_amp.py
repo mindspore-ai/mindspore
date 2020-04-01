@@ -66,6 +66,7 @@ def test_amp_o2():
     train_network = amp.build_train_network(net, optimizer, level="O2")
     output = train_network(inputs, label)
 
+
 def test_amp_o2_loss():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
@@ -75,14 +76,6 @@ def test_amp_o2_loss():
     train_network = amp.build_train_network(net, optimizer, loss, level="O2")
     output = train_network(inputs, label)
 
-def test_amp_resnet50_loss():
-    inputs = Tensor(np.ones([2, 3, 224, 224]).astype(np.float32))
-    label = Tensor(np.zeros([2, 10]).astype(np.float32))
-    net = resnet50()
-    loss = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
-    optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
-    train_network = amp.build_train_network(net, optimizer, loss, level="O2")
-    train_network(inputs, label)
 
 def test_amp_o0_loss():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
