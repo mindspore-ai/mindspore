@@ -1210,19 +1210,16 @@ void CostGraph::CreateStarEliminationCostList(std::vector<std::shared_ptr<Edge>>
         MS_EXCEPTION_IF_NULL(succ_node_cost);
         for (auto& succ_edge_cost : succ_edge_clist) {
           MS_EXCEPTION_IF_NULL(succ_edge_cost);
-          if ((succ_node_cost->memory_cost_ < DEVICE_MEMORY_CAPACITY) &&
-              (succ_edge_cost->memory_cost_ < DEVICE_MEMORY_CAPACITY)) {
-            succ_nodes_stras[k] = succ_node_stra;
-            succ_edges_costs[k] = succ_edge_cost;
-            succ_nodes_costs[k] = succ_node_cost;
-            recursive(k + 1);
-          }
+          succ_nodes_stras[k] = succ_node_stra;
+          succ_edges_costs[k] = succ_edge_cost;
+          succ_nodes_costs[k] = succ_node_cost;
+          recursive(k + 1);
         }
       }
     }
   };
 
-  recursive(0);
+  recursive(1);
 }
 
 std::vector<std::shared_ptr<Edge>> CostGraph::EliminationStar(const OperatorInfoPtr& merged_op) {
