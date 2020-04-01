@@ -150,6 +150,7 @@ def test_ascend_pynative_lenet():
         end_time = time.time()
         cost_time = end_time - start_time
         total_time = total_time + cost_time
+        print("======epoch: ", epoch, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
+
     assert(total_time < 20.0)
     assert(loss_output.asnumpy() < 0.01)
-    
