@@ -150,9 +150,9 @@ void DumpOutput(mindspore::session::KernelGraph *graph, const string &dump_path,
     auto output_size = AnfAlgo::GetOutputTensorNum(node);
     for (size_t j = 0; j < output_size; ++j) {
       auto addr = AnfAlgo::GetOutputAddr(node, j);
-      auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
-      auto type = AnfAlgo::GetOutputDeviceDataType(node, j);
-      auto format = AnfAlgo::GetOutputFormat(node, j);
+      auto shape = AnfAlgo::GetOutputInferShape(node, j);
+      auto type = AnfAlgo::GetOutputInferDataType(node, j);
+      auto format = kOpFormat_DEFAULT;
       string filepath = dump_path + '/' + kernel_name + '_' + "output_" + std::to_string(j);
       auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
       std::vector<int> int_shapes;
@@ -181,9 +181,9 @@ void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_p
       continue;
     }
     auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
-    auto shape = AnfAlgo::GetOutputDeviceShape(item, PRAMATER_OUTPUT_INDEX);
-    auto type = AnfAlgo::GetOutputDeviceDataType(item, PRAMATER_OUTPUT_INDEX);
-    auto format = AnfAlgo::GetOutputFormat(item, PRAMATER_OUTPUT_INDEX);
+    auto shape = AnfAlgo::GetOutputInferShape(item, PRAMATER_OUTPUT_INDEX);
+    auto type = AnfAlgo::GetOutputInferDataType(item, PRAMATER_OUTPUT_INDEX);
+    auto format = kOpFormat_DEFAULT;
     string filepath = dump_path + '/' + parameter_name + '_' + "output_0";
     auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
     std::vector<int> int_shapes;
