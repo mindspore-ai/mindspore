@@ -12,62 +12,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""LeNet."""
+"""Alexnet."""
 import mindspore.nn as nn
 from mindspore.common.initializer import TruncatedNormal
 
-
-def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
-    """weight initial for conv layer"""
+def conv(in_channels, out_channels, kernel_size, stride=1, padding=0, pad_mode="valid"):
     weight = weight_variable()
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=kernel_size, stride=stride, padding=padding,
-                     weight_init=weight, has_bias=False, pad_mode="valid")
-
+                     weight_init=weight, has_bias=False, pad_mode=pad_mode)
 
 def fc_with_initialize(input_channels, out_channels):
-    """weight initial for fc layer"""
     weight = weight_variable()
     bias = weight_variable()
     return nn.Dense(input_channels, out_channels, weight, bias)
 
-
 def weight_variable():
-    """weight initial"""
-    return TruncatedNormal(0.02)
+    return TruncatedNormal(0.02)  # 0.02
 
 
-class LeNet5(nn.Cell):
+class AlexNet(nn.Cell):
     """
-    Lenet network
-
-    Args:
-        num_class (int): Num classes. Default: 10.
-
-    Returns:
-        Tensor, output tensor
-    Examples:
-        >>> LeNet(num_class=10)
-
+    Alexnet
     """
-    def __init__(self, num_class=10):
-        super(LeNet5, self).__init__()
-        self.num_class = num_class
+    def __init__(self, num_classes=10):
+        super(AlexNet, self).__init__()
         self.batch_size = 32
-        self.conv1 = conv(1, 6, 5)
-        self.conv2 = conv(6, 16, 5)
-        self.fc1 = fc_with_initialize(16 * 5 * 5, 120)
-        self.fc2 = fc_with_initialize(120, 84)
-        self.fc3 = fc_with_initialize(84, self.num_class)
+        self.conv1 = conv(3, 96, 11, stride=4)
+        self.conv2 = conv(96, 256, 5, pad_mode="same")
+        self.conv3 = conv(256, 384, 3, pad_mode="same")
+        self.conv4 = conv(384, 384, 3, pad_mode="same")
+        self.conv5 = conv(384, 256, 3, pad_mode="same")
         self.relu = nn.ReLU()
-        self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.max_pool2d = nn.MaxPool2d(kernel_size=3, stride=2)
         self.flatten = nn.Flatten()
+        self.fc1 = fc_with_initialize(6*6*256, 4096)
+        self.fc2 = fc_with_initialize(4096, 4096)
+        self.fc3 = fc_with_initialize(4096, num_classes)
 
     def construct(self, x):
         x = self.conv1(x)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.conv2(x)
+        x = self.relu(x)
+        x = self.max_pool2d(x)
+        x = self.conv3(x)
+        x = self.relu(x)
+        x = self.conv4(x)
+        x = self.relu(x)
+        x = self.conv5(x)
         x = self.relu(x)
         x = self.max_pool2d(x)
         x = self.flatten(x)
