@@ -61,6 +61,7 @@ class OpIOInfo {
   std::string name() const { return name_; }
   bool need_compile() const { return need_compile_; }
   std::string param_type() const { return param_type_; }
+  std::string reshape_type() const { return reshape_type_; }
   std::string shape() const { return shape_; }
   std::vector<std::string> dtypes() const { return dtypes_; }
   std::vector<std::string> formats() const { return formats_; }
@@ -69,6 +70,7 @@ class OpIOInfo {
   void set_name(const std::string& name) { name_ = name; }
   void set_need_compile(const bool need_compile) { need_compile_ = need_compile; }
   void set_param_type(const std::string& param_type) { param_type_ = param_type; }
+  void set_reshape_type(const std::string& reshape_type) { reshape_type_ = reshape_type; }
   void set_shape(const std::string& shape) { shape_ = shape; }
   void set_dtypes(const std::vector<std::string>& dtype) { dtypes_ = dtype; }
   void set_formats(const std::vector<std::string>& formats) { formats_ = formats; }
@@ -78,6 +80,7 @@ class OpIOInfo {
   std::string name_;
   bool need_compile_ = false;
   std::string param_type_;
+  std::string reshape_type_;
   std::string shape_;
   std::vector<std::string> dtypes_;
   std::vector<std::string> formats_;
@@ -96,6 +99,8 @@ class OpInfo {
   int compute_cost() const { return compute_cost_; }
   std::string kernel_name() const { return kernel_name_; }
   bool partial_flag() const { return partial_flag_; }
+  bool dynamic_format() const { return dynamic_format_; }
+  std::string op_pattern() const { return op_pattern_; }
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr() const { return attrs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr() const { return inputs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr() const { return outputs_ptr_; }
@@ -110,6 +115,8 @@ class OpInfo {
   void set_compute_cost(const int compute_cost) { compute_cost_ = compute_cost; }
   void set_kernel_name(const std::string& kernel_name) { kernel_name_ = kernel_name; }
   void set_partial_flag(const bool partial_flag) { partial_flag_ = partial_flag; }
+  void set_dynamic_format(const bool dynamic_format) { dynamic_format_ = dynamic_format; }
+  void set_op_pattern(const std::string op_pattern) { op_pattern_ = op_pattern; }
   void add_attrs_ptr(const std::shared_ptr<OpAttr>& attr) { attrs_ptr_.push_back(attr); }
   void add_inputs_ptr(const std::shared_ptr<OpIOInfo>& input) { inputs_ptr_.push_back(input); }
   void add_outputs_ptr(const std::shared_ptr<OpIOInfo>& output) { outputs_ptr_.push_back(output); }
@@ -129,6 +136,8 @@ class OpInfo {
   int compute_cost_ = 0;
   std::string kernel_name_;
   bool partial_flag_ = false;
+  bool dynamic_format_ = false;
+  std::string op_pattern_;
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr_;
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr_;
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr_;
