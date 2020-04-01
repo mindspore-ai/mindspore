@@ -26,6 +26,7 @@ class ConfigYOLOV3ResNet18:
     img_shape = [352, 640]
     feature_shape = [32, 3, 352, 640]
     num_classes = 80
+    nms_max_num = 50
 
     backbone_input_shape = [64, 64, 128, 256]
     backbone_shape = [64, 128, 256, 512]
@@ -33,6 +34,8 @@ class ConfigYOLOV3ResNet18:
     backbone_stride = [1, 2, 2, 2]
 
     ignore_threshold = 0.5
+    obj_threshold = 0.3
+    nms_threshold = 0.4
 
     anchor_scales = [(10, 13),
                      (16, 30),

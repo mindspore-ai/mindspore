@@ -16,16 +16,14 @@
 """YOLOv3 dataset"""
 from __future__ import division
 
-import abc
-import io
 import os
-import math
-import json
 import numpy as np
 from PIL import Image
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 import mindspore.dataset as de
+from mindspore.mindrecord import FileWriter
 import mindspore.dataset.transforms.vision.py_transforms as P
+import mindspore.dataset.transforms.vision.c_transforms as C
 from config import ConfigYOLOV3ResNet18
 
 iter_cnt = 0
@@ -114,6 +112,29 @@ def preprocess_fn(image, box, is_training):
 
         return y_true[0], y_true[1], y_true[2], pad_gt_box0, pad_gt_box1, pad_gt_box2
 
+    def _infer_data(img_data, input_shape, box):
+        w, h = img_data.size
+        input_h, input_w = input_shape
+        scale = min(float(input_w) / float(w), float(input_h) / float(h))
+        nw = int(w * scale)
+        nh = int(h * scale)
+        img_data = img_data.resize((nw, nh), Image.BICUBIC)
+
+        new_image = np.zeros((input_h, input_w, 3), np.float32)
+        new_image.fill(128)
+        img_data = np.array(img_data)
+        if len(img_data.shape) == 2:
+            img_data = np.expand_dims(img_data, axis=-1)
+            img_data = np.concatenate([img_data, img_data, img_data], axis=-1)
+
+        dh = int((input_h - nh) / 2)
+        dw = int((input_w - nw) / 2)
+        new_image[dh:(nh + dh), dw:(nw + dw), :] = img_data
+        new_image /= 255.
+        new_image = np.transpose(new_image, (2, 0, 1))
+        new_image = np.expand_dims(new_image, 0)
+        return new_image, np.array([h, w], np.float32), box
+
     def _data_aug(image, box, is_training, jitter=0.3, hue=0.1, sat=1.5, val=1.5, image_size=(352, 640)):
         """Data augmentation function."""
         if not isinstance(image, Image.Image):
@@ -124,32 +145,7 @@ def preprocess_fn(image, box, is_training):
         h, w = image_size
 
         if not is_training:
-            image = image.resize((w, h), Image.BICUBIC)
-            image_data = np.array(image) / 255.
-            if len(image_data.shape) == 2:
-                image_data = np.expand_dims(image_data, axis=-1)
-                image_data = np.concatenate([image_data, image_data, image_data], axis=-1)
-            image_data = image_data.astype(np.float32)
-
-            # correct boxes
-            box_data = np.zeros((max_boxes, 5))
-            if len(box) >= 1:
-                np.random.shuffle(box)
-                if len(box) > max_boxes:
-                    box = box[:max_boxes]
-                # xmin ymin xmax ymax
-                box[:, [0, 2]] = box[:, [0, 2]] * float(w) / float(iw)
-                box[:, [1, 3]] = box[:, [1, 3]] * float(h) / float(ih)
-                box_data[:len(box)] = box
-            else:
-                image_data, box_data = None, None
-
-            # preprocess bounding boxes
-            bbox_true_1, bbox_true_2, bbox_true_3, gt_box1, gt_box2, gt_box3 = \
-                _preprocess_true_boxes(box_data, anchors, image_size)
-
-            return image_data, bbox_true_1, bbox_true_2, bbox_true_3, \
-                   ori_image_shape, gt_box1, gt_box2, gt_box3
+            return _infer_data(image, image_size, box)
 
         flip = _rand() < .5
         # correct boxes
@@ -235,12 +231,16 @@ def preprocess_fn(image, box, is_training):
         return image_data, bbox_true_1, bbox_true_2, bbox_true_3, \
                ori_image_shape, gt_box1, gt_box2, gt_box3
 
-    images, bbox_1, bbox_2, bbox_3, _, gt_box1, gt_box2, gt_box3 = _data_aug(image, box, is_training)
-    return images, bbox_1, bbox_2, bbox_3, gt_box1, gt_box2, gt_box3
+    if is_training:
+        images, bbox_1, bbox_2, bbox_3, _, gt_box1, gt_box2, gt_box3 = _data_aug(image, box, is_training)
+        return images, bbox_1, bbox_2, bbox_3, gt_box1, gt_box2, gt_box3
+
+    images, shape, anno = _data_aug(image, box, is_training)
+    return images, shape, anno
 
 
 def anno_parser(annos_str):
-    """Annotation parser."""
+    """Parse annotation from string to list."""
     annos = []
     for anno_str in annos_str:
         anno = list(map(int, anno_str.strip().split(',')))
@@ -248,142 +248,71 @@ def anno_parser(annos_str):
     return annos
 
 
-def expand_path(path):
-    """Get file list from path."""
-    files = []
-    if os.path.isdir(path):
-        for file in os.listdir(path):
-            if os.path.isfile(os.path.join(path, file)):
-                files.append(file)
-    else:
+def filter_valid_data(image_dir, anno_path):
+    """Filter valid image file, which both in image_dir and anno_path."""
+    image_files = []
+    image_anno_dict = {}
+    if not os.path.isdir(image_dir):
         raise RuntimeError("Path given is not valid.")
-    return files
+    if not os.path.isfile(anno_path):
+        raise RuntimeError("Annotation file is not valid.")
+
+    with open(anno_path, "rb") as f:
+        lines = f.readlines()
+    for line in lines:
+        line_str = line.decode("utf-8").strip()
+        line_split = str(line_str).split(' ')
+        file_name = line_split[0]
+        if os.path.isfile(os.path.join(image_dir, file_name)):
+            image_anno_dict[file_name] = anno_parser(line_split[1:])
+            image_files.append(file_name)
+    return image_files, image_anno_dict
 
 
-def read_image(img_path):
-    """Read image with PIL."""
-    with open(img_path, "rb") as f:
-        img = f.read()
-    data = io.BytesIO(img)
-    img = Image.open(data)
-    return np.array(img)
+def data_to_mindrecord_byte_image(image_dir, anno_path, mindrecord_dir, prefix="yolo.mindrecord", file_num=8):
+    """Create MindRecord file by image_dir and anno_path."""
+    mindrecord_path = os.path.join(mindrecord_dir, prefix)
+    writer = FileWriter(mindrecord_path, file_num)
+    image_files, image_anno_dict = filter_valid_data(image_dir, anno_path)
+
+    yolo_json = {
+        "image": {"type": "bytes"},
+        "annotation": {"type": "int64", "shape": [-1, 5]},
+    }
+    writer.add_schema(yolo_json, "yolo_json")
+
+    for image_name in image_files:
+        image_path = os.path.join(image_dir, image_name)
+        with open(image_path, 'rb') as f:
+            img = f.read()
+        annos = np.array(image_anno_dict[image_name])
+        row = {"image": img, "annotation": annos}
+        writer.write_raw_data([row])
+    writer.commit()
 
 
-class BaseDataset():
-    """BaseDataset for GeneratorDataset iterator."""
-    def __init__(self, image_dir, anno_path):
-        self.image_dir = image_dir
-        self.anno_path = anno_path
-        self.cur_index = 0
-        self.samples = []
-        self.image_anno_dict = {}
-        self._load_samples()
-
-    def __getitem__(self, item):
-        sample = self.samples[item]
-        return self._next_data(sample, self.image_dir, self.image_anno_dict)
-
-    def __len__(self):
-        return len(self.samples)
-
-    @staticmethod
-    def _next_data(sample, image_dir, image_anno_dict):
-        """Get next data."""
-        image = read_image(os.path.join(image_dir, sample))
-        annos = image_anno_dict[sample]
-        return [np.array(image), np.array(annos)]
-
-    @abc.abstractmethod
-    def _load_samples(self):
-        """Base load samples."""
-
-
-class YoloDataset(BaseDataset):
-    """YoloDataset for GeneratorDataset iterator."""
-    def _load_samples(self):
-        """Load samples."""
-        image_files_raw = expand_path(self.image_dir)
-        self.samples = self._filter_valid_data(self.anno_path, image_files_raw)
-        self.dataset_size = len(self.samples)
-        if self.dataset_size == 0:
-            raise RuntimeError("Valid dataset is none!")
-
-    def _filter_valid_data(self, anno_path, image_files_raw):
-        """Filter valid data."""
-        image_files = []
-        anno_dict = {}
-        print("Start filter valid data.")
-        with open(anno_path, "rb") as f:
-            lines = f.readlines()
-            for line in lines:
-                line_str = line.decode("utf-8")
-                line_split = str(line_str).split(' ')
-                anno_dict[line_split[0].split("/")[-1]] = line_split[1:]
-        anno_set = set(anno_dict.keys())
-        image_set = set(image_files_raw)
-        for image_file in (anno_set & image_set):
-            image_files.append(image_file)
-            self.image_anno_dict[image_file] = anno_parser(anno_dict[image_file])
-        image_files.sort()
-        print("Filter valid data done!")
-        return image_files
-
-
-class DistributedSampler():
-    """DistributedSampler for YOLOv3"""
-    def __init__(self, dataset_size, batch_size, num_replicas=None, rank=None, shuffle=True):
-        if num_replicas is None:
-            num_replicas = 1
-        if rank is None:
-            rank = 0
-        self.dataset_size = dataset_size
-        self.num_replicas = num_replicas
-        self.rank = rank % num_replicas
-        self.epoch = 0
-        self.num_samples = max(batch_size, int(math.ceil(dataset_size * 1.0 / self.num_replicas)))
-        self.total_size = self.num_samples * self.num_replicas
-        self.shuffle = shuffle
-
-    def __iter__(self):
-        # deterministically shuffle based on epoch
-        if self.shuffle:
-            indices = np.random.RandomState(seed=self.epoch).permutation(self.dataset_size)
-            indices = indices.tolist()
-        else:
-            indices = list(range(self.dataset_size))
-
-        # add extra samples to make it evenly divisible
-        indices += indices[:(self.total_size - len(indices))]
-        assert len(indices) == self.total_size
-
-        # subsample
-        indices = indices[self.rank:self.total_size:self.num_replicas]
-        assert len(indices) == self.num_samples
-
-        return iter(indices)
-
-    def __len__(self):
-        return self.num_samples
-
-    def set_epoch(self, epoch):
-        self.epoch = epoch
-
-
-def create_yolo_dataset(image_dir, anno_path, batch_size=32, repeat_num=10, device_num=1, rank=0,
+def create_yolo_dataset(mindrecord_dir, batch_size=32, repeat_num=10, device_num=1, rank=0,
                         is_training=True, num_parallel_workers=8):
-    """Creatr YOLOv3 dataset with GeneratorDataset."""
-    yolo_dataset = YoloDataset(image_dir=image_dir, anno_path=anno_path)
-    distributed_sampler = DistributedSampler(yolo_dataset.dataset_size, batch_size, device_num, rank)
-    ds = de.GeneratorDataset(yolo_dataset, column_names=["image", "annotation"], sampler=distributed_sampler)
-    ds.set_dataset_size(len(distributed_sampler))
+    """Creatr YOLOv3 dataset with MindDataset."""
+    ds = de.MindDataset(mindrecord_dir, columns_list=["image", "annotation"], num_shards=device_num, shard_id=rank,
+                        num_parallel_workers=num_parallel_workers, shuffle=is_training)
+    decode = C.Decode()
+    ds = ds.map(input_columns=["image"], operations=decode)
     compose_map_func = (lambda image, annotation: preprocess_fn(image, annotation, is_training))
-    hwc_to_chw = P.HWC2CHW()
-    ds = ds.map(input_columns=["image", "annotation"],
-                output_columns=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
-                columns_order=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
-                operations=compose_map_func, num_parallel_workers=num_parallel_workers)
-    ds = ds.map(input_columns=["image"], operations=hwc_to_chw, num_parallel_workers=num_parallel_workers)
-    ds = ds.shuffle(buffer_size=256)
-    ds = ds.batch(batch_size, drop_remainder=True)
-    ds = ds.repeat(repeat_num)
+
+    if is_training:
+        hwc_to_chw = P.HWC2CHW()
+        ds = ds.map(input_columns=["image", "annotation"],
+                    output_columns=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
+                    columns_order=["image", "bbox_1", "bbox_2", "bbox_3", "gt_box1", "gt_box2", "gt_box3"],
+                    operations=compose_map_func, num_parallel_workers=num_parallel_workers)
+        ds = ds.map(input_columns=["image"], operations=hwc_to_chw, num_parallel_workers=num_parallel_workers)
+        ds = ds.shuffle(buffer_size=256)
+        ds = ds.batch(batch_size, drop_remainder=True)
+        ds = ds.repeat(repeat_num)
+    else:
+        ds = ds.map(input_columns=["image", "annotation"],
+                    output_columns=["image", "image_shape", "annotation"],
+                    columns_order=["image", "image_shape", "annotation"],
+                    operations=compose_map_func, num_parallel_workers=num_parallel_workers)
     return ds
