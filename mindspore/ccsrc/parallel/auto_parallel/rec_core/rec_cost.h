@@ -18,13 +18,13 @@
 #define PARALLEL_AUTO_PARALLEL_REC_COST_H_
 
 #include <iostream>
-#include <vector>
+#include <memory>
 #include <string>
 #include <utility>
-#include <memory>
+#include <vector>
 
-#include "parallel/auto_parallel/rec_core/rec_strategy.h"
 #include "parallel/auto_parallel/rec_core/rec_graph.h"
+#include "parallel/auto_parallel/rec_core/rec_strategy.h"
 
 namespace mindspore {
 namespace parallel {

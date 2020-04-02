@@ -15,9 +15,9 @@
  */
 
 #include "parallel/auto_parallel/costmodel.h"
-#include <utility>
-#include <numeric>
 #include <cmath>
+#include <numeric>
+#include <utility>
 #include "parallel/auto_parallel/graph_costmodel.h"
 
 namespace mindspore {

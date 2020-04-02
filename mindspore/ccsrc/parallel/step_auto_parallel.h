@@ -17,14 +17,14 @@
 #ifndef PARALLEL_STEP_AUTO_PARALLEL_H_
 #define PARALLEL_STEP_AUTO_PARALLEL_H_
 
-#include <vector>
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
+#include <vector>
 #include "ir/anf.h"
 #include "optimizer/opt.h"
-#include "pipeline/pipeline.h"
 #include "parallel/status.h"
+#include "pipeline/pipeline.h"
 
 namespace mindspore {
 namespace parallel {

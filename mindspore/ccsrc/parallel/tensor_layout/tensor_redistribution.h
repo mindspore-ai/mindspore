@@ -18,18 +18,18 @@
 #define MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_TENSOR_REDISTRIBUTION_H_
 
 #include <cstdint>
-#include <string>
-#include <vector>
 #include <map>
 #include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "ir/value.h"
-#include "parallel/status.h"
-#include "parallel/tensor_layout/tensor_layout.h"
 #include "parallel/ops_info/operator_info.h"
+#include "parallel/status.h"
 #include "parallel/tensor_layout/construct_operator.h"
 #include "parallel/tensor_layout/redistribution_operator_infer.h"
+#include "parallel/tensor_layout/tensor_layout.h"
 
 namespace mindspore {
 namespace parallel {

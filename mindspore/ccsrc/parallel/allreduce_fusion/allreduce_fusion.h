@@ -20,8 +20,8 @@
 #include <unordered_map>
 #include <vector>
 #include "ir/anf.h"
-#include "parallel/status.h"
 #include "parallel/allreduce_fusion/allreduce_graph.h"
+#include "parallel/status.h"
 
 namespace mindspore {
 namespace parallel {

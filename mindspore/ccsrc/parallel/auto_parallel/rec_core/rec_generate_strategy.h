@@ -17,10 +17,10 @@
 #ifndef PARALLEL_AUTO_PARALLEL_REC_GENERATE_STRATEGY_H_
 #define PARALLEL_AUTO_PARALLEL_REC_GENERATE_STRATEGY_H_
 
-#include <vector>
+#include <memory>
 #include <string>
 #include <utility>
-#include <memory>
+#include <vector>
 
 #include "parallel/auto_parallel/rec_core/rec_graph.h"
 #include "parallel/ops_info/operator_info.h"

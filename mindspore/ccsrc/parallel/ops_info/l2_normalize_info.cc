@@ -17,9 +17,9 @@
 #include "parallel/ops_info/l2_normalize_info.h"
 
 #include <algorithm>
-#include <vector>
-#include <utility>
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "parallel/device_matrix.h"
 #include "parallel/strategy.h"

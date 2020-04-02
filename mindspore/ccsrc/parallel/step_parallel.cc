@@ -22,26 +22,26 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <set>
 
-#include "parallel/graph_util/graph_info.h"
 #include "ir/meta_tensor.h"
-#include "optimizer/optimizer.h"
-#include "parallel/dynamic_creator.h"
-#include "parallel/ops_info/matmul_info.h"
-#include "utils/symbolic.h"
 #include "operator/ops.h"
+#include "optimizer/optimizer.h"
 #include "parallel/auto_parallel/graph_costmodel.h"
-#include "parallel/device_manager.h"
-#include "parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
-#include "parallel/graph_util/generate_graph.h"
 #include "parallel/context.h"
-#include "parallel/node_check.h"
-#include "utils/comm_manager.h"
+#include "parallel/device_manager.h"
+#include "parallel/dynamic_creator.h"
+#include "parallel/graph_util/generate_graph.h"
+#include "parallel/graph_util/graph_info.h"
 #include "parallel/graph_util/node_info.h"
+#include "parallel/node_check.h"
+#include "parallel/ops_info/matmul_info.h"
+#include "parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
+#include "utils/comm_manager.h"
+#include "utils/symbolic.h"
 
 using mindspore::tensor::Tensor;
 

@@ -17,10 +17,10 @@
 #ifndef PARALLEL_OPS_INFO_DATASET_INFO_H_
 #define PARALLEL_OPS_INFO_DATASET_INFO_H_
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 #include "ir/value.h"
 #include "parallel/ops_info/operator_info.h"

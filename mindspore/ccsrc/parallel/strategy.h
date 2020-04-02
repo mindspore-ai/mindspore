@@ -18,10 +18,10 @@
 #define MINDSPORE_CCSRC_PARALLEL_STRATEGY_H_
 
 #include <cstdint>
-#include <string>
-#include <vector>
 #include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "parallel/status.h"
 

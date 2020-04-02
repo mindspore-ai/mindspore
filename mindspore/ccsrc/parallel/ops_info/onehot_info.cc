@@ -16,15 +16,15 @@
 
 #include "parallel/ops_info/onehot_info.h"
 
-#include <vector>
-#include <utility>
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "ir/value.h"
-#include "parallel/device_matrix.h"
-#include "parallel/strategy.h"
 #include "parallel/auto_parallel/costmodel.h"
+#include "parallel/device_matrix.h"
 #include "parallel/graph_util/generate_graph.h"
+#include "parallel/strategy.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

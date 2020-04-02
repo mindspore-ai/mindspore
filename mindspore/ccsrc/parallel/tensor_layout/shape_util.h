@@ -18,10 +18,10 @@
 #define MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_SHAPE_UTIL_H_
 
 #include <cstdint>
-#include <string>
-#include <vector>
 #include <map>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "parallel/status.h"
 

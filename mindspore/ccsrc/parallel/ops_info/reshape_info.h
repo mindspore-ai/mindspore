@@ -19,10 +19,10 @@
 
 #include <ir/value.h>
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 #include "parallel/ops_info/operator_info.h"
 #include "parallel/strategy.h"

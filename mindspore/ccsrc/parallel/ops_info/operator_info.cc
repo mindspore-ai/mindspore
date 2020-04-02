@@ -17,21 +17,21 @@
 #include "parallel/ops_info/operator_info.h"
 
 #include <algorithm>
-#include <functional>
-#include <vector>
-#include <utility>
-#include <memory>
 #include <cmath>
+#include <functional>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
-#include "ir/value.h"
 #include "ir/dtype.h"
 #include "ir/meta_tensor.h"
-#include "utils/context/ms_context.h"
-#include "utils/log_adapter.h"
-#include "parallel/context.h"
+#include "ir/value.h"
 #include "parallel/auto_parallel/edge_costmodel.h"
 #include "parallel/auto_parallel/graph_costmodel.h"
+#include "parallel/context.h"
+#include "utils/context/ms_context.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {

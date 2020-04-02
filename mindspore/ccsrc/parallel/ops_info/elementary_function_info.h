@@ -22,8 +22,8 @@
 #include <vector>
 #include "ir/value.h"
 #include "parallel/auto_parallel/operator_costmodel.h"
-#include "parallel/strategy.h"
 #include "parallel/ops_info/activation_info.h"
+#include "parallel/strategy.h"
 
 namespace mindspore {
 namespace parallel {

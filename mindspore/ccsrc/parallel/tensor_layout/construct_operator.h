@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 
+#include "ir/value.h"
 #include "parallel/ops_info/operator_info.h"
 #include "parallel/status.h"
-#include "ir/value.h"
 
 namespace mindspore {
 namespace parallel {

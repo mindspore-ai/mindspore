@@ -16,14 +16,14 @@
 
 #include "parallel/auto_parallel/rec_core/rec_generate_strategy.h"
 
-#include <vector>
 #include <algorithm>
 #include <memory>
+#include <vector>
 
-#include "parallel/ops_info/operator_info.h"
-#include "parallel/auto_parallel/rec_core/rec_partition.h"
-#include "parallel/strategy.h"
 #include "ir/value.h"
+#include "parallel/auto_parallel/rec_core/rec_partition.h"
+#include "parallel/ops_info/operator_info.h"
+#include "parallel/strategy.h"
 
 namespace mindspore {
 namespace parallel {

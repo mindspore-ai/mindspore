@@ -19,12 +19,12 @@
 
 #include <cstdint>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
+#include "parallel/device_matrix.h"
 #include "parallel/status.h"
 #include "parallel/tensor_layout/tensor_layout.h"
-#include "parallel/device_matrix.h"
 
 namespace mindspore {
 namespace parallel {

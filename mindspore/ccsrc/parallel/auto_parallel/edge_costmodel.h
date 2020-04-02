@@ -17,16 +17,16 @@
 #ifndef PARALLEL_AUTO_PARALLEL_EDGE_COSTMODEL_H_
 #define PARALLEL_AUTO_PARALLEL_EDGE_COSTMODEL_H_
 
-#include <memory>
-#include <vector>
-#include <utility>
 #include <map>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 #include "common/utils.h"
-#include "parallel/tensor_layout/tensor_layout.h"
-#include "parallel/tensor_layout/tensor_info.h"
-#include "parallel/ops_info/operator_info.h"
 #include "parallel/auto_parallel/costmodel.h"
+#include "parallel/ops_info/operator_info.h"
+#include "parallel/tensor_layout/tensor_info.h"
+#include "parallel/tensor_layout/tensor_layout.h"
 
 namespace mindspore {
 namespace parallel {

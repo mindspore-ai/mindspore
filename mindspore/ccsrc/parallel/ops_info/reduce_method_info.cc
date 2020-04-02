@@ -17,14 +17,14 @@
 #include "parallel/ops_info/reduce_method_info.h"
 
 #include <algorithm>
-#include <vector>
-#include <utility>
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "ir/value.h"
+#include "parallel/device_manager.h"
 #include "parallel/device_matrix.h"
 #include "parallel/tensor_layout/tensor_redistribution.h"
-#include "parallel/device_manager.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

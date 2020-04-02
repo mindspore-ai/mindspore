@@ -16,13 +16,13 @@
 
 #include "parallel/auto_parallel/rec_core/rec_partition.h"
 
+#include <algorithm>
+#include <cmath>
 #include <iostream>
-#include <vector>
+#include <memory>
 #include <string>
 #include <utility>
-#include <memory>
-#include <cmath>
-#include <algorithm>
+#include <vector>
 
 #include "ir/anf.h"
 #include "parallel/status.h"

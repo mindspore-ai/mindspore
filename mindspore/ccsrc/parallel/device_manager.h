@@ -19,19 +19,19 @@
 
 #include <cstdint>
 #include <cstring>
-#include <vector>
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
-#include "utils/convert_utils.h"
 #include "common/utils.h"
 #include "parallel/device.h"
-#include "parallel/status.h"
-#include "parallel/group_manager.h"
-#include "parallel/strategy.h"
 #include "parallel/device_matrix.h"
+#include "parallel/group_manager.h"
+#include "parallel/status.h"
+#include "parallel/strategy.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore {
 namespace parallel {

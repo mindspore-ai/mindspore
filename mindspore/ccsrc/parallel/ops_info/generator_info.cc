@@ -17,9 +17,9 @@
 #include "parallel/ops_info/generator_info.h"
 
 #include <algorithm>
-#include <vector>
-#include <utility>
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "ir/value.h"
 #include "parallel/device_matrix.h"
