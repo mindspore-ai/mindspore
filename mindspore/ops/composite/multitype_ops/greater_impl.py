@@ -6,7 +6,7 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
+# Ungreater required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -17,37 +17,37 @@
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 
-# less is a metafuncgraph object which will determine if two objects are less according to input type
+# greater is a metafuncgraph object which will determine if two objects are greater according to input type
 # using ".register" decorator
-less = base.MultitypeFuncGraph("less")
+greater = base.MultitypeFuncGraph("greater")
 
 
-@less.register("Number", "Number")
-def _less_scala(x, y):
+@greater.register("Number", "Number")
+def _greater_scala(x, y):
     """
-    Determine whether two numbers are less.
+    Determine whether two numbers are greater.
 
     Args:
        x(Number): Number.
        y(Number): Number.
 
     Returns:
-       bool, if x < y return true, x >= y return false.
+       bool, if x > y return true, x <= y return false.
    """
-    return F.scalar_lt(x, y)
+    return F.scalar_gt(x, y)
 
-@less.register("Tensor", "Number")
-@less.register("Number", "Tensor")
-@less.register("Tensor", "Tensor")
-def _less_tensor(x, y):
+@greater.register("Tensor", "Number")
+@greater.register("Number", "Tensor")
+@greater.register("Tensor", "Tensor")
+def _greater_tensor(x, y):
     """
-    Determine whether two tensor are less by element.
+    Determine whether two tensor are greater by element.
 
     Args:
        x(Tensor): Tensor.
        y(Tensor): Tensor.
 
     Returns:
-       Tensor, return value of  x and y by operation P.Less()
+       tensor, return operation of x and y by P.Greater
    """
-    return F.tensor_lt(x, y)
+    return F.tensor_gt(x, y)

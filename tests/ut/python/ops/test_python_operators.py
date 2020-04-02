@@ -31,8 +31,20 @@ class ComparisonOpsNet(nn.Cell):
     def __init__(self):
         super(ComparisonOpsNet, self).__init__()
     def construct(self, x, y):
-        ret = x <= y
-        return ret
+        a = x <= y
+        b = x <= 1.0
+        c = y >= 1.0
+        d = y >= x
+        e = x < y
+        f = x < 1.0
+        g = 1.0 > y
+        h = y > x
+        i = y == 3.0
+        j = x != 4
+        k = + x
+        l = + 1.0
+        m = k != l
+        return a or b or c or d or e or f or g or h or i or j or m
 
 class LogicalNumberOpsNet(nn.Cell):
     def __init__(self):
@@ -41,7 +53,7 @@ class LogicalNumberOpsNet(nn.Cell):
         self.one = 0
         self.zero = 0.0
     def construct(self, x, y):
-        if self.cond and self.one or self.zero:
+        if self.cond and self.one or self.zero and not self.one:
             return x + y
         return x - y
 
@@ -51,7 +63,7 @@ class LogicalTensorOpsNet(nn.Cell):
         super(LogicalTensorOpsNet, self).__init__()
         self.const_true = Tensor(True, dtype=mstype.bool_)
     def construct(self, x, y):
-        ret = x and y and (y or self.const_true)
+        ret = x and y and (y or self.const_true) and (not self.const_true)
         return ret
 
 
