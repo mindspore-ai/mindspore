@@ -682,186 +682,83 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         return x_dtype
 
 
-class MaxPoolWithArgmax(PrimitiveWithInfer):
-    r"""
-    Performs max pooling on the input Tensor and return both max values and indices.
-
-    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool outputs
-    regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows.
-
-    .. math::
-        \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
-        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
-
-    Args:
-        pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
-        window (Union[int, tuple[int]]): The size of window, which is the kernel size, two `int` for width
-            and height. Default: 1.
-        pad (Union[int, tuple[int]]): If `pad_mode` is `pad`, the pad value to fill, two `int` for width
-            and height. Default: 0.
-        stride (Union[int, tuple[int]]): The stride of the window, that should be a tuple of two `int` for
-           width and height. Default: 1.
-
-    Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
-
-    Outputs:
-        Tuple of 2 Tensor, the maxpool result and where max values from.
-
-        - **output** (Tensor) -  Maxpooling result, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
-        - **mask** (Tensor) -  Max values' index represented by the mask.
-    """
-
-    @prim_attr_register
-    def __init__(self,
-                 pad_mode="valid",
-                 window=1,
-                 pad=0,
-                 stride=1,
-                 data_mode=1,
-                 ceil_mode=0,
-                 alpha=1.0,
-                 beta=0.0):
-        self.init_prim_io_names(inputs=['x'], outputs=['output', 'argmax'])
-        self.window = validator.check_type('window', window, [int, tuple])
-        if isinstance(window, int) and window <= 0:
-            raise ValueError('Attr \'window\' of \'MaxPoolWithArgmax\' Op passed '
-                             + str(self.window)+', should be a int or tuple and greater than 0.')
-        if isinstance(window, tuple) and (len(window) != 2 or
-                                          (not isinstance(window[0], int)) or
-                                          (not isinstance(window[1], int)) or
-                                          window[0] <= 0 or window[1] <= 0):
-            raise ValueError('Attr \'window\' of \'MaxPoolWithArgmax\' Op passed '
-                             + str(self.window)+', should be a int or tuple and greater than 0.')
-        self.pool_h = self.pool_w = window
-        self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'])
-        if self.pad_mode == "valid":
-            self.pad = 0
-        elif self.pad_mode == "same":
-            self.pad = math.floor((self.window - 1) / 2)
-        elif self.pad_mode == "pad":
-            self.pad = validator.check_integer('pad', pad, 0, Rel.GE)
-
-        self.data_mode = validator.check_integer('data_mode', data_mode, 1, Rel.EQ)
-        self.ceil_mode = validator.check_integer('ceil_mode', ceil_mode, 0, Rel.EQ)
-        self.stride = validator.check_integer('stride', stride, 1, Rel.GE)
-        self.alpha = validator.check_type('alpha', alpha, [int, float])
-        self.beta = validator.check_type('beta', beta, [int, float])
-        self.is_tbe = not context.get_context("enable_ge") and context.get_context("device_target") == "Ascend"
-
-    def infer_shape(self, x_shape):
-        validator.check_integer("x_shape", len(x_shape), 4, Rel.EQ)
-        pad = self.pad
-        h_input = x_shape[2]
-        w_input = x_shape[3]
-        h_out = (h_input + 2 * pad - (self.window - 1) - 1) / self.stride + 1
-        h_out = math.floor(h_out)
-        w_out = (w_input + 2 * pad - (self.window - 1) - 1) / self.stride + 1
-        w_out = math.floor(w_out)
-        out_shape = [x_shape[0], x_shape[1], h_out, w_out]
-        for shape_value in out_shape:
-            if shape_value <= 0:
-                raise ValueError("The kernel size is not valid please check it if is larger than data's shape size.")
-        k_size_vec = [1, self.window, self.window, 1]
-        argmax_shape = []
-        if self.is_tbe:
-            for i in range(4):
-                if i == 2:
-                    dim = k_size_vec[i - 1] * k_size_vec[i]
-                    argmax_shape.append(dim)
-                elif i == 3:
-                    dim = math.ceil(out_shape[i - 1] * out_shape[i] / 16) + 1
-                    argmax_shape.append(dim)
-                else:
-                    argmax_shape.append(x_shape[i])
-        else:
-            argmax_shape = out_shape
-        return out_shape, argmax_shape
-
-    def infer_dtype(self, x_dtype):
-        out_dtype = x_dtype
-        validator.check_typename("x_type", x_dtype, (mstype.float16, mstype.float32))
-        argmax_dtype = mstype.int32
-        return out_dtype, argmax_dtype
-
-
 class _Pool(PrimitiveWithInfer):
     r"""
     Performs max/avg pooling operation.
 
     Args:
-        ksize (Union[int, tuple[int]]): The size of the window to take a max over, that should be a tuple
-           of two `int` for width and height. Default: 1.
-        stride (Union[int, tuple[int]]): The stride of the window, that should be a tuple of two `int` for
-           width and height. Default: 1.
-        padding (str): The optional values for pad mode "SAME", "VALID". Default: "VALID".
+        ksize (Union[int, tuple[int]]): The size of the kernel, that should be a tuple
+           of two `int` for height and width. Default: 1.
+        strides (Union[int, tuple[int]]): The stride of the window, that should be
+            a tuple of two `int` for height and width. Default: 1.
+        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
+    def __init__(self, ksize=1, strides=1, padding="valid"):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-        validator.check_type('padding', padding, [str])
-        self.ksize = ksize
-        self.strides = strides
-        self.padding = padding.upper()
-        self.ksize = validator.check_type('ksize', self.ksize, [int, tuple])
-        self.strides = validator.check_type('strides', self.strides, [int, tuple])
-        self.padding = validator.check_string('padding', self.padding, ['VALID', 'SAME'])
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        validator.check_type('ksize', ksize, [int, tuple])
+        validator.check_type('strides', strides, [int, tuple])
+        self.padding = validator.check_string('padding', padding.upper(), ['VALID', 'SAME'])
         self.add_prim_attr("padding", self.padding)
-        self.add_prim_attr('data_format', "NCHW")
+        self.is_maxpoolwithargmax = (self.name == "MaxPoolWithArgmax")
+        if not self.is_maxpoolwithargmax:
+            self.add_prim_attr('data_format', "NCHW")
 
-        if isinstance(self.ksize, int):
-            self.pool_h = validator.check_integer("ksize", self.ksize, 1, Rel.GE)
-            self.pool_w = self.pool_h
-            self.add_prim_attr("ksize", (1, 1, self.ksize, self.ksize))
-        elif isinstance(self.ksize, tuple):
-            if (len(self.ksize) != 2 or (not isinstance(self.ksize[0], int)) or (not isinstance(self.ksize[1], int))
-                    or self.ksize[0] <= 0 or self.ksize[1] <= 0):
-                raise ValueError('Each value of attr \'ksize\' of \'MaxPool\' Op passed ' +
-                                 str(self.ksize) + ', should be a int or a tuple of length 2 and greater than 0.')
-            self.pool_h = self.ksize[0]
-            self.pool_w = self.ksize[1]
-            self.add_prim_attr("ksize", (1, 1, self.ksize[0], self.ksize[1]))
-
-        if isinstance(self.strides, int):
-            self.stride_h = validator.check_integer("strides", self.strides, 1, Rel.GE)
-            self.stride_w = self.stride_h
-            self.add_prim_attr("strides", (1, 1, self.strides, self.strides))
-        elif isinstance(self.strides, tuple):
-            if (len(self.strides) != 2 or (not isinstance(self.strides[0], int)) or
-                    (not isinstance(self.strides[1], int)) or self.strides[0] <= 0 or self.strides[1] <= 0):
-                raise ValueError('Each value of attr \'strides\' of \'MaxPool\' Op passed ' +
-                                 str(self.strides) + ', should be a int or a tuple of length 2 and greater than 0.')
-            self.stride_h = self.strides[0]
-            self.stride_w = self.strides[1]
-            self.add_prim_attr("strides", (1, 1, self.strides[0], self.strides[1]))
-
-        if self.padding == "VALID":
-            self.pad = 0
-        elif self.padding == "SAME":
-            self.pad = math.floor((self.pool_h - 1) / 2)
+        if isinstance(ksize, int):
+            validator.check_integer("ksize", ksize, 1, Rel.GE)
+            self.ksize = (1, 1, ksize, ksize)
         else:
-            raise ValueError('The padding should be str and must be SAME or VALID,'
-                             ' but got {}.'.format(self.padding))
-        self.add_prim_attr('pad', self.pad)
+            if (len(ksize) != 2 or
+                    (not isinstance(ksize[0], int)) or
+                    (not isinstance(ksize[1], int)) or
+                    ksize[0] <= 0 or
+                    ksize[1] <= 0):
+                raise ValueError(f"The 'ksize' passed to operator {self.name} should be an positive int number or"
+                                 f"a tuple of two positive int numbers, but got {ksize}")
+            self.ksize = (1, 1, ksize[0], ksize[1])
+        if self.is_maxpoolwithargmax:
+            self.ksize = (1, self.ksize[-2], self.ksize[-1], 1)
+        self.add_prim_attr("ksize", self.ksize)
+
+        if isinstance(strides, int):
+            validator.check_integer("strides", strides, 1, Rel.GE)
+            self.strides = (1, 1, strides, strides)
+        else:
+            if (len(strides) != 2 or
+                    (not isinstance(strides[0], int)) or
+                    (not isinstance(strides[1], int)) or
+                    strides[0] <= 0 or
+                    strides[1] <= 0):
+                raise ValueError(f"The 'strides' passed to operator {self.name} should be an positive int number or"
+                                 f"a tuple of two positive int numbers, but got {strides}")
+            self.strides = (1, 1, strides[0], strides[1])
+        if self.is_maxpoolwithargmax:
+            self.strides = (1, self.strides[-2], self.strides[-1], 1)
+        self.add_prim_attr("strides", self.strides)
 
     def infer_shape(self, x_shape):
         validator.check_integer("x_shape", len(x_shape), 4, Rel.EQ)
-        h_input = x_shape[2]
-        w_input = x_shape[3]
-        if self.padding == "VALID":
-            h_out = math.ceil((h_input - (self.pool_h - 1)) / self.stride_h)
-            w_out = math.ceil((w_input - (self.pool_w - 1)) / self.stride_w)
-        elif self.padding == "SAME":
-            h_out = math.ceil(h_input / self.stride_h)
-            w_out = math.ceil(w_input / self.stride_w)
+        batch, channel, input_h, input_w = x_shape
+        if self.is_maxpoolwithargmax:
+            _, kernel_h, kernel_w, _ = self.ksize
+            _, stride_h, stride_w, _ = self.strides
         else:
-            raise ValueError('The padding should be str and must be SAME or VALID,'
-                             ' but got {}.'.format(self.padding))
+            _, _, kernel_h, kernel_w = self.ksize
+            _, _, stride_h, stride_w = self.strides
 
-        out_shape = [x_shape[0], x_shape[1], h_out, w_out]
+        if self.padding == "VALID":
+            out_h = math.ceil((input_h - (kernel_h - 1)) / stride_h)
+            out_w = math.ceil((input_w - (kernel_w - 1)) / stride_w)
+        elif self.padding == "SAME":
+            out_h = math.ceil(input_h / stride_h)
+            out_w = math.ceil(input_w / stride_w)
+        else:
+            raise ValueError(f"The padding of operator {self.name} should be a str and must be 'SAME' or 'VALID', "
+                             f"but got {self.padding}.")
+        out_shape = [batch, channel, out_h, out_w]
+
         for shape_value in out_shape:
             if shape_value <= 0:
                 raise ValueError("The kernel size is not valid please check it if is larger than data's shape size.")
@@ -887,11 +784,22 @@ class MaxPool(_Pool):
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     Args:
-        ksize (Union[int, tuple[int]]): The size of the window to take a max over, that should be a tuple
-           of two `int` for width and height. Default: 1.
-        stride (Union[int, tuple[int]]): The stride of the window, that should be a tuple of two `int` for
-           width and height. Default: 1.
-        padding (str): The optional values for pad mode "SAME", "VALID". Default: "VALID".
+        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width are both ksize, or a tuple
+            of two int numbers that represent height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
+
+            - same: Adopts the way of completion. Output height and width will be the same as
+              the input. Total number of padding will be calculated for horizontal and vertical
+              direction and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possibly largest height and width of output
+              will be return without padding. Extra pixels will be discarded.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -901,8 +809,81 @@ class MaxPool(_Pool):
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
+    def __init__(self, ksize=1, strides=1, padding="valid"):
         super(MaxPool, self).__init__(ksize, strides, padding)
+
+
+class MaxPoolWithArgmax(_Pool):
+    r"""
+    Performs max pooling on the input Tensor and return both max values and indices.
+
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPool outputs
+    regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
+    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
+
+    Args:
+        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg value,
+            is an int number that represents height and width are both ksize, or a tuple of
+            two int numbers that represent height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
+
+            - same: Adopts the way of completion. Output height and width will be the same as
+              the input. Total number of padding will be calculated for horizontal and vertical
+              direction and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possibly largest height and width of output
+              will be return without padding. Extra pixels will be discarded.
+
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tuple of 2 Tensor, the maxpool result and where max values from.
+
+        - **output** (Tensor) -  Maxpooling result, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+        - **mask** (Tensor) -  Max values' index represented by the mask.
+    """
+
+    def __init__(self, ksize=1, strides=1, padding="valid"):
+        super(MaxPoolWithArgmax, self).__init__(ksize, strides, padding)
+        self.is_tbe = context.get_context("device_target") == "Ascend"
+
+    def infer_shape(self, x_shape):
+        out_shape = _Pool.infer_shape(self, x_shape)
+        _, _, out_h, out_w = out_shape
+        _, kernel_h, kernel_w, _ = self.ksize
+
+        argmax_shape = []
+        if self.is_tbe:
+            for i in range(4):
+                if i == 2:
+                    dim = kernel_h * kernel_w
+                    argmax_shape.append(dim)
+                elif i == 3:
+                    dim = math.ceil(out_h * out_w / 16) + 1
+                    argmax_shape.append(dim)
+                else:
+                    argmax_shape.append(x_shape[i])
+        else:
+            argmax_shape = out_shape
+
+        return out_shape, argmax_shape
+
+    def infer_dtype(self, x_dtype):
+        out_dtype = x_dtype
+        validator.check_typename("x_type", x_dtype, (mstype.float16, mstype.float32))
+        argmax_dtype = mstype.uint16
+        return out_dtype, argmax_dtype
 
 
 class AvgPool(_Pool):
@@ -919,11 +900,22 @@ class AvgPool(_Pool):
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     Args:
-        ksize (Union[int, tuple[int]]): The size of the window to take a average over, that should be a tuple
-           of two `int` for width and height. Default: 1.
-        stride (Union[int, tuple[int]]): The stride of the window, that should be a tuple of two `int` for
-           width and height. Default: 1.
-        padding (str): The optional values for pad mode "SAME", "VALID". Default: "VALID".
+        ksize (Union[int, tuple[int]]): The size of kernel used to take the average value,
+            is an int number that represents height and width are both ksize, or a tuple
+            of two int numbers that represent height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        padding (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
+
+            - same: Adopts the way of completion. Output height and width will be the same as
+              the input. Total number of padding will be calculated for horizontal and vertical
+              direction and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possibly largest height and width of output
+              will be return without padding. Extra pixels will be discarded.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -933,7 +925,7 @@ class AvgPool(_Pool):
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
+    def __init__(self, ksize=1, strides=1, padding="valid"):
         if context.get_context("device_target") == "GPU":
             self.target = "GPU"
         else:

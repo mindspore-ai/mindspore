@@ -87,7 +87,7 @@ class ConvNet(nn.Cell):
         self.conv1 = nn.Conv2d(3, ConvNet.output_ch, kernel_size=7, stride=2, pad_mode="pad", padding=3)
         self.bn1 = nn.BatchNorm2d(ConvNet.output_ch)
         self.relu = nn.ReLU()
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="pad", padding=1)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
         self.flatten = nn.Flatten()
         self.fc = nn.Dense(
             int(ConvNet.image_h*ConvNet.image_w*ConvNet.output_ch/(4*4)),

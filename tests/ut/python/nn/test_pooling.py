@@ -46,8 +46,7 @@ class MaxNet(nn.Cell):
                  padding=0):
         super(MaxNet, self).__init__()
         self.maxpool = nn.MaxPool2d(kernel_size,
-                                    stride,
-                                    padding=padding)
+                                    stride)
 
     def construct(self, x):
         return self.maxpool(x)

@@ -734,14 +734,22 @@ ATTR_MAP(AvgPoolGrad) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<
 OUTPUT_MAP(AvgPoolGrad) = {{0, OUTPUT_DESC(out_grad)}};
 
 // MaxPoolWithArgmax
+INPUT_MAP(MaxPoolWithArgmax) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MaxPoolWithArgmax) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                               {"strides", ATTR_DESC(strides, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                               {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPoolWithArgmax) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
+
+// MaxPoolGradWithArgmax
 INPUT_MAP(MaxPoolGradWithArgmax) = {
   {1, INPUT_DESC(x)},
-  {2, INPUT_DESC(argmax)},
-  {3, INPUT_DESC(grad)},
+  {2, INPUT_DESC(grad)},
+  {3, INPUT_DESC(argmax)},
 };
-ATTR_MAP(MaxPoolGradWithArgmax) = {{"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
-                                   {"window", ATTR_DESC(ksize, "window", AnyTraits<std::vector<int64_t>>())},
-                                   {"stride", ATTR_DESC(strides, "stride", AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(MaxPoolGradWithArgmax) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                   {"strides", ATTR_DESC(strides, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                   {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPoolGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2D
 INPUT_MAP(Conv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};

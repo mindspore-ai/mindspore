@@ -38,7 +38,7 @@ class AlexNet(nn.Cell):
         self.conv4 = nn.Conv2d(384, 384, 3, stride=1, pad_mode="same")
         self.conv5 = nn.Conv2d(384, 256, 3, stride=1, pad_mode="same")
         self.relu = nn.ReLU()
-        self.max_pool2d = nn.MaxPool2d(kernel_size=3, stride=2,pad_mode="valid",padding=0)
+        self.max_pool2d = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="valid")
         self.flatten = nn.Flatten()
         self.fc1 = nn.Dense(6*6*256, 4096)
         self.fc2 = nn.Dense(4096, 4096)

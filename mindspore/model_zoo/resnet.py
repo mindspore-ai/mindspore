@@ -168,7 +168,7 @@ class ResNet(nn.Cell):
         self.conv1 = _conv7x7(3, 64, stride=2)
         self.bn1 = _bn(64)
         self.relu = P.ReLU()
-        self.maxpool = P.MaxPoolWithArgmax(pad_mode='same', window=3, stride=2)
+        self.maxpool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
 
         self.layer1 = self._make_layer(block,
                                        layer_nums[0],
