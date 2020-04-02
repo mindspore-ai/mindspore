@@ -125,6 +125,8 @@ class Iterator:
             op_type = OpName.MINDRECORD
         elif isinstance(dataset, de.BatchDataset):
             op_type = OpName.BATCH
+        elif isinstance(dataset, de.SyncWaitDataset):
+            op_type = OpName.BARRIER
         elif isinstance(dataset, de.ZipDataset):
             op_type = OpName.ZIP
         elif isinstance(dataset, de.MapDataset):

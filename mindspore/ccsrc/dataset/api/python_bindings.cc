@@ -476,6 +476,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("STORAGE", OpName::kStorage)
     .value("SHUFFLE", OpName::kShuffle)
     .value("BATCH", OpName::kBatch)
+    .value("BARRIER", OpName::kBarrier)
     .value("MINDRECORD", OpName::kMindrecord)
     .value("CACHE", OpName::kCache)
     .value("REPEAT", OpName::kRepeat)

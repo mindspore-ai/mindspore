@@ -40,6 +40,7 @@ enum OpName {
   kShuffle,
   kMindrecord,
   kBatch,
+  kBarrier,
   kCache,
   kRepeat,
   kSkip,
@@ -114,6 +115,8 @@ class DEPipeline {
   Status ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status ParseBarrierOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseGeneratorOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 

@@ -25,6 +25,7 @@
 #include "dataset/core/tensor_shape.h"
 #include "dataset/engine/data_schema.h"
 #include "dataset/engine/dataset_iterator.h"
+#include "dataset/engine/datasetops/barrier_op.h"
 #include "dataset/engine/datasetops/batch_op.h"
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/datasetops/device_queue_op.h"

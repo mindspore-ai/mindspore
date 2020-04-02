@@ -48,6 +48,7 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kMap, &DEPipeline::ParseMapOp},
                                                                    {kFilter, &DEPipeline::ParseFilterOp},
                                                                    {kBatch, &DEPipeline::ParseBatchOp},
+                                                                   {kBarrier, &DEPipeline::ParseBarrierOp},
                                                                    {kRepeat, &DEPipeline::ParseRepeatOp},
                                                                    {kSkip, &DEPipeline::ParseSkipOp},
                                                                    {kZip, &DEPipeline::ParseZipOp},
@@ -622,6 +623,30 @@ Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp>
   }
 
   std::shared_ptr<BatchOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseBarrierOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<BarrierOp::Builder> builder = std::make_shared<BarrierOp::Builder>();
+  // Right now barrier should only take num_rows_per_buffer = 1
+  // The reason for this is because having it otherwise can lead to blocking issues
+  // See barrier_op.h for more details
+  (void)builder->SetRowsPerBuffer(1);
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "condition_name") {
+        (void)builder->SetConditionName(ToString(value));
+      } else if (key == "condition_func") {
+        (void)builder->SetConditionFunc(value.cast<py::function>());
+      }
+    }
+  }
+
+  std::shared_ptr<BarrierOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
   return Status::OK();
