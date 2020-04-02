@@ -713,7 +713,7 @@ class Fill(PrimitiveWithInfer):
 
     Examples:
         >>> fill = P.Fill()
-        >>> fill(P.DType()(x), (2, 2), 1)
+        >>> fill(mindspore.float32, (2, 2), 1)
     """
 
     @prim_attr_register
