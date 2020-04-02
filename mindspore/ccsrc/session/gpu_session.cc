@@ -83,7 +83,7 @@ void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const
 }
 
 GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
-  // Construct graph, if construct successs, graph_sum_ + 1
+  // Construct graph, if successfully, graph_sum_ + 1
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
   // Select kernel build info
@@ -100,7 +100,7 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   auto execution_order = graph->execution_order();
   Reorder(&execution_order);
   graph->set_execution_order(execution_order);
-  // Alloc memeory, include static memory and dynamic memory
+  // Alloc memory, including static memory and dynamic memory
   AllocateMemory(graph.get());
   // Reset memory resource
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);

@@ -62,8 +62,8 @@ class KernelGraph : public FuncGraph {
   void FrontBackendlMapUpdate(const AnfNodePtr &old_backend_anf, const AnfNodePtr &new_backend_anf);
   // get backend anf by front anf
   AnfNodePtr GetBackendAnfByFrontAnf(const AnfNodePtr &front_anf);
-  // check backend node wheteher exist in map
-  bool BakcendNodeExistInFrontBackendMap(const AnfNodePtr &backend_anf);
+  // check backend node whether exist in map
+  bool BackendNodeExistInFrontBackendMap(const AnfNodePtr &backend_anf);
   // get value node by tensor
   ValueNodePtr GetValueNodeByTensor(const tensor::TensorPtr &tensor);
   // add value node tensor relation map
