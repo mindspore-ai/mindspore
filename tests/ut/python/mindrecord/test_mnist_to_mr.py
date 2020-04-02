@@ -37,7 +37,7 @@ def read(train_name, test_name):
         count = count + 1
         if count == 1:
             logger.info("data: {}".format(x))
-    assert count == 60000
+    assert count == 20
     reader.close()
 
     count = 0
@@ -47,7 +47,7 @@ def read(train_name, test_name):
         count = count + 1
         if count == 1:
             logger.info("data: {}".format(x))
-    assert count == 10000
+    assert count == 10
     reader.close()
 
 
@@ -102,10 +102,10 @@ def test_mnist_to_mindrecord_compare_data():
                                        't10k-images-idx3-ubyte.gz')
     test_labels_filename_ = os.path.join(MNIST_DIR,
                                          't10k-labels-idx1-ubyte.gz')
-    train_data = _extract_images(train_data_filename_, 60000)
-    train_labels = _extract_labels(train_labels_filename_, 60000)
-    test_data = _extract_images(test_data_filename_, 10000)
-    test_labels = _extract_labels(test_labels_filename_, 10000)
+    train_data = _extract_images(train_data_filename_, 20)
+    train_labels = _extract_labels(train_labels_filename_, 20)
+    test_data = _extract_images(test_data_filename_, 10)
+    test_labels = _extract_labels(test_labels_filename_, 10)
 
     reader = FileReader(train_name)
     for x, data, label in zip(reader.get_next(), train_data, train_labels):
