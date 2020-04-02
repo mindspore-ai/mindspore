@@ -98,7 +98,6 @@ currently the containerized build options are supported as follows:
 | CPU | `mindspore/mindspore-cpu:0.1.0-alpha` |
 | GPU CUDA 9.2 | `mindspore/mindspore-cuda9.2:0.1.0-alpha` |
 | GPU CUDA 10.1 | `mindspore/mindspore-cuda10.1:0.1.0-alpha` |
-| Ascend | <center>—</center> |
 
 Take `CPU` for example, you can directly pull the image using the below command:
 ```
