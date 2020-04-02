@@ -274,7 +274,7 @@ void MsContext::SetHcclOptions(std::map<std::string, std::string>* ge_options) c
 void MsContext::GetGeOptions(std::map<std::string, std::string>* ge_options) const {
 #ifdef ENABLE_GE
   (*ge_options)["device_id"] = "0";
-  (*ge_options)["ge.exec.enableDump"] = enable_dump_;
+  (*ge_options)["ge.exec.enableDump"] = std::to_string(enable_dump_);
   (*ge_options)["ge.exec.dumpPath"] = save_dump_path_;
   // only not supported in ge
   auto tbe_plugin_path = common::GetEnv("ME_TBE_PLUGIN_PATH");
