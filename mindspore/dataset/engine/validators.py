@@ -19,10 +19,15 @@ import inspect as ins
 import os
 from functools import wraps
 from multiprocessing import cpu_count
+from mindspore._c_expression import typing
 from . import samplers
 from . import datasets
 
 INT32_MAX = 2147483647
+valid_detype = [
+    "bool", "int8", "int16", "int32", "int64", "uint8", "uint16",
+    "uint32", "uint64", "float16", "float32", "float64"
+]
 
 
 def check(method):
@@ -186,6 +191,12 @@ def check(method):
         return method(*args, **kwargs)
 
     return wrapper
+
+
+def check_valid_detype(type_):
+    if type_ not in valid_detype:
+        raise ValueError("Unknown column type")
+    return True
 
 
 def check_filename(path):
@@ -739,6 +750,45 @@ def check_project(method):
         if columns is None:
             raise ValueError("columns is not provided.")
         check_columns(columns, 'columns')
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_shape(shape, name):
+    if isinstance(shape, list):
+        for element in shape:
+            if not isinstance(element, int):
+                raise TypeError(
+                    "Each element in {0} should be of type int. Got {1}.".format(name, type(element)))
+    else:
+        raise TypeError("Expected int list.")
+
+
+def check_add_column(method):
+    """check the input arguments of add_column."""
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check name; required argument
+        name = param_dict.get("name")
+        if not isinstance(name, str) or not name:
+            raise TypeError("Expected non-empty string.")
+
+        # check type; required argument
+        de_type = param_dict.get("de_type")
+        if de_type is not None:
+            if not isinstance(de_type, typing.Type) and not check_valid_detype(de_type):
+                raise ValueError("Unknown column type.")
+        else:
+            raise TypeError("Expected non-empty string.")
+
+        # check shape
+        shape = param_dict.get("shape")
+        if shape is not None:
+            check_shape(shape, "shape")
 
         return method(*args, **kwargs)
 
