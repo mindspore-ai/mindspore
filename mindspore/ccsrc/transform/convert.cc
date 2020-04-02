@@ -171,6 +171,7 @@ const char kNameAbsGrad[] = "AbsGrad";
 const char kNameBinaryCrossEntropy[] = "BinaryCrossEntropy";
 const char kNameBinaryCrossEntropyGrad[] = "BinaryCrossEntropyGrad";
 const char kNameSparseApplyAdagrad[] = "SparseApplyAdagrad";
+const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
 const char kNameSpaceToDepth[] = "SpaceToDepth";
 const char kNameDepthToSpace[] = "DepthToSpace";
 const char kNameSign[] = "Sign";
@@ -189,7 +190,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentum)},
     {string(kNameMaxPool), ADPT_DESC(MaxPool)},
     {string(kNameAvgPool), ADPT_DESC(AvgPool)},
-    {string(kNameTopK), ADPT_DESC(TopKV2)},
+    {string(kNameTopK), ADPT_DESC(TopK)},
     {string(kNamePack), ADPT_DESC(Pack)},
     {string(kNameSplitD), ADPT_DESC(SplitD)},
     {string(kNameAllReduce), ADPT_DESC(HcomAllReduce)},
@@ -310,7 +311,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimMinimum->name(), ADPT_DESC(Minimum)},
     {prim::kPrimSelect->name(), ADPT_DESC(Select)},
     {string(kNameLessEqual), ADPT_DESC(LessEqual)},
-    {prim::kPrimLogSoftmax->name(), ADPT_DESC(LogSoftmax)},
+    {prim::kPrimLogSoftmax->name(), ADPT_DESC(LogSoftmaxV2)},
     {string(kNameTruncatedNormal), ADPT_DESC(TruncatedNormal)},
     {string(kNameStridedSliceGrad), ADPT_DESC(StridedSliceGrad)},
     {prim::kPrimGelu->name(), ADPT_DESC(Gelu)},
@@ -343,7 +344,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimMatMul->name(), ADPT_DESC(MatMul)},
 
     {string(kNameConst), ADPT_DESC(Constant, Const)},
-    {string(kNameSoftmax), ADPT_DESC(Softmax)},
+    {string(kNameSoftmax), ADPT_DESC(SoftmaxV2)},
     {string(kNameSoftmaxGrad), ADPT_DESC(SoftmaxGrad)},
     {string(kNameParam), ADPT_DESC(Data)},
     {string(kNameROIAlign), ADPT_DESC(ROIAlign)},
@@ -353,6 +354,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBinaryCrossEntropy), ADPT_DESC(BinaryCrossEntropy)},
     {string(kNameBinaryCrossEntropyGrad), ADPT_DESC(BinaryCrossEntropyGrad)},
     {string(kNameSparseApplyAdagrad), ADPT_DESC(SparseApplyAdagradD)},
+    {string(kNameSparseApplyFtrlD), ADPT_DESC(SparseApplyFtrlD)},
     {string(kNameSpaceToDepth), ADPT_DESC(SpaceToDepth)},
     {string(kNameDepthToSpace), ADPT_DESC(DepthToSpace)},
     {string(kNameSign), ADPT_DESC(Sign)},
@@ -1017,8 +1019,8 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
     }
   }
 
-  // set up dependices
-  MS_LOG(DEBUG) << "set up dependices";
+  // set up dependencies
+  MS_LOG(DEBUG) << "set up dependencies";
   std::vector<AnfNodePtr> nodes = ::mindspore::TopoSort(anf_graph_->get_return());
   for (auto &it : nodes) {
     SetNodeInput(it);
@@ -1115,8 +1117,8 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
   if (desc == nullptr) {
     MS_LOG(ERROR) << "Update data op descriptor failed! TensorDesc is null.";
   } else {
-    (void)std::static_pointer_cast<Data>(op)->update_input_desc_data(*desc);
-    (void)std::static_pointer_cast<Data>(op)->update_output_desc_out(*desc);
+    (void)std::static_pointer_cast<Data>(op)->update_input_desc_x(*desc);
+    (void)std::static_pointer_cast<Data>(op)->update_output_desc_y(*desc);
   }
 }
 
