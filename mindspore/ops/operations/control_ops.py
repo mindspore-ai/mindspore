@@ -107,8 +107,8 @@ class GeSwitch(PrimitiveWithInfer):
         >>>         ret = self.merge((add_ret, sq_ret))
         >>>         return ret[0]
         >>>
-        >>> x = Tensor(x_init, dtype=mindspore.float32)
-        >>> y = Tensor(y_init, dtype=mindspore.float32)
+        >>> x = Tensor(10.0, dtype=mindspore.float32)
+        >>> y = Tensor(5.0, dtype=mindspore.float32)
         >>> net = Net()
         >>> output = net(x, y)
     """
