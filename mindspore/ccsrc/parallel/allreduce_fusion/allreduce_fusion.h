@@ -38,7 +38,6 @@ constexpr double DEFAULT_COST_MODEL_ALLREDUCE_FUSION_COMPUTATION_TIME_PARAMETER 
 constexpr char FUSION[] = "fusion";
 constexpr char PARAMETER[] = "parameter";
 const uint32_t MAX_RECURSIVE_CALL_TIMES = 100;
-const double FUSION_COST_EPS = 1e-7;
 class AllreduceFusion {
  public:
   AllreduceFusion()
