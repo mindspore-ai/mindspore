@@ -34,7 +34,7 @@ void PushNoVisitedNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
   if (visited_nodes->find(node) == visited_nodes->end()) {
     que->push(node);
     (void)visited_nodes->insert(node);
-    MS_LOG(DEBUG) << "push que:" << node->DebugString();
+    MS_LOG(DEBUG) << "Push que:" << node->DebugString();
   }
 }
 }  // namespace
@@ -58,7 +58,7 @@ void KernelGraph::SetExecOrderByDefault() {
   auto clear_output = [&zero_output_nodes, &allreduce_nodes, &visited_nodes, this](const AnfNodePtr &input) -> void {
     if (node_output_num_[input] == 0 && visited_nodes.find(input) == visited_nodes.end()) {
       MS_EXCEPTION_IF_NULL(input);
-      MS_LOG(DEBUG) << "clear output num:" << input->DebugString();
+      MS_LOG(DEBUG) << "Clear output num:" << input->DebugString();
       (void)visited_nodes.insert(input);
       if (input->isa<CNode>() && AnfAlgo::GetCNodeName(input) == kAllReduceOpName) {
         allreduce_nodes.push(input);
@@ -85,21 +85,21 @@ void KernelGraph::SetExecOrderByDefault() {
     if (it == node_input_edges_.end()) {
       // value node and parameter has no input,no need to print log
       if (node->isa<CNode>()) {
-        MS_LOG(DEBUG) << "can not find node [" << node->DebugString() << "]";
+        MS_LOG(DEBUG) << "Can not find node [" << node->DebugString() << "]";
       }
       continue;
     }
     for (const auto &input_edge : it->second) {
       if (node_output_num_.find(input_edge.first) == node_output_num_.end()) {
         MS_EXCEPTION_IF_NULL(input_edge.first);
-        MS_LOG(EXCEPTION) << "can't find node[" << input_edge.first->DebugString() << "]";
+        MS_LOG(EXCEPTION) << "Can't find node[" << input_edge.first->DebugString() << "]";
       }
       MS_EXCEPTION_IF_NULL(input_edge.first);
-      MS_LOG(DEBUG) << "decrese input:" << input_edge.first->DebugString() << ",node:" << node->DebugString()
+      MS_LOG(DEBUG) << "Decrease input:" << input_edge.first->DebugString() << ",node:" << node->DebugString()
                     << ",num: " << node_output_num_[input_edge.first] << ",decrease num:" << input_edge.second;
       if (node_output_num_[input_edge.first] < input_edge.second) {
-        MS_LOG(EXCEPTION) << "input node:" << input_edge.first->DebugString() << ",node_output_num"
-                          << node_output_num_[input_edge.first] << "depend edege:" << input_edge.second;
+        MS_LOG(EXCEPTION) << "Input node:" << input_edge.first->DebugString() << ",node_output_num"
+                          << node_output_num_[input_edge.first] << "depend edge:" << input_edge.second;
       }
       node_output_num_[input_edge.first] = node_output_num_[input_edge.first] - input_edge.second;
       clear_output(input_edge.first);
@@ -120,20 +120,20 @@ void KernelGraph::CheckLoop() {
     string str;
     auto node_output_it = node_output_edges_.find(it.first);
     if (node_output_it == node_output_edges_.end()) {
-      MS_LOG(EXCEPTION) << "can't find node [" << it.first->DebugString() << "]";
+      MS_LOG(EXCEPTION) << "Can't find node [" << it.first->DebugString() << "]";
     }
     for (const auto &output_edge : node_output_edges_[it.first]) {
       MS_EXCEPTION_IF_NULL(output_edge.first);
       str = str.append(output_edge.first->DebugString()).append("|");
     }
     if (it.second != 0) {
-      MS_LOG(WARNING) << "node:" << it.first->DebugString() << ",outputs:" << str << ",output num:" << it.second;
+      MS_LOG(WARNING) << "Node:" << it.first->DebugString() << ",outputs:" << str << ",output num:" << it.second;
       none_zero_output[it.first] = it.second;
     }
   }
   // if don't consider control depend and loop exit,a exception will be throw
   if (!none_zero_output.empty()) {
-    MS_LOG(EXCEPTION) << "nodes have loop,left node num:" << none_zero_output.size();
+    MS_LOG(EXCEPTION) << "Nodes have loop, left node num:" << none_zero_output.size();
   }
 }
 
@@ -152,7 +152,7 @@ CNodePtr KernelGraph::NewCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto new_cnode = std::make_shared<CNode>(*cnode);
   // if a cnode is created not from front,this cnode won't be in map,so when replace it,we shouldn't update map
-  if (BakcendNodeExistInFrontBackendMap(cnode)) {
+  if (BackendNodeExistInFrontBackendMap(cnode)) {
     FrontBackendlMapUpdate(cnode, new_cnode);
   }
   AnfAlgo::SetGraphId(graph_id_, cnode.get());
@@ -299,7 +299,7 @@ AnfNodePtr KernelGraph::GetBackendAnfByFrontAnf(const AnfNodePtr &front_anf) {
   return front_backend_anf_map_[front_anf];
 }
 
-bool KernelGraph::BakcendNodeExistInFrontBackendMap(const AnfNodePtr &backend_anf) {
+bool KernelGraph::BackendNodeExistInFrontBackendMap(const AnfNodePtr &backend_anf) {
   return backend_front_anf_map_.find(backend_anf) != backend_front_anf_map_.end();
 }
 
@@ -317,9 +317,9 @@ void KernelGraph::TensorValueNodeMapAdd(const tensor::TensorPtr &tensor, const V
 }
 
 void KernelGraph::AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num) {
-  MS_LOG(DEBUG) << "input:" << input->DebugString() << ",  node:" << node->DebugString() << ",num:" << depend_edge_num;
+  MS_LOG(DEBUG) << "Input:" << input->DebugString() << ",  node:" << node->DebugString() << ",num:" << depend_edge_num;
   auto output_depend_edge = std::pair<AnfNodePtr, size_t>(node, depend_edge_num);
-  // add output depend eddge of input
+  // add output depend edge of input
   auto output_it = node_output_edges_.find(input);
   if (output_it == node_output_edges_.end()) {
     node_output_edges_[input] = std::vector<std::pair<AnfNodePtr, size_t>>{output_depend_edge};
@@ -346,7 +346,7 @@ std::vector<AnfNodePtr> KernelGraph::GetOutputNodes(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto it = node_output_edges_.find(node);
   if (it == node_output_edges_.end()) {
-    MS_LOG(EXCEPTION) << "can'f find node[" << node->DebugString() << "]";
+    MS_LOG(EXCEPTION) << "Can't find node[" << node->DebugString() << "]";
   }
   std::vector<AnfNodePtr> output_nodes;
   auto trans = [](const std::pair<AnfNodePtr, size_t> &pair) -> AnfNodePtr { return pair.first; };
@@ -372,7 +372,7 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
     MS_EXCEPTION_IF_NULL(depend_node);
     std::vector<AnfNodePtr> prior_nodes = {prior_node};
     std::vector<AnfNodePtr> depend_nodes = {depend_node};
-    MS_LOG(INFO) << "prior node[" << prior_node->DebugString() << "],depend node[" << depend_node->DebugString()
+    MS_LOG(INFO) << "Prior node[" << prior_node->DebugString() << "],depend node[" << depend_node->DebugString()
                  << "],depend_mode=[" << AnfAlgo::GetNodeAttr<int>(cnode, "depend_mode") << "]";
     if (prior_node->isa<Parameter>()) {
       prior_nodes = GetOutputNodes(prior_node);
@@ -384,7 +384,7 @@ void KernelGraph::UpdateControlDependRelations(const std::vector<AnfNodePtr> &de
       for (auto &second_node : depend_nodes) {
         MS_EXCEPTION_IF_NULL(first_node);
         MS_EXCEPTION_IF_NULL(second_node);
-        MS_LOG(INFO) << "add first node:" << first_node->DebugString() << ",second node:" << second_node->DebugString();
+        MS_LOG(INFO) << "Add first node:" << first_node->DebugString() << ",second node:" << second_node->DebugString();
         AddDependEdge(second_node, first_node, 1);
       }
     }
@@ -437,18 +437,18 @@ void KernelGraph::BfsToUpdateNodeOutput() {
     MS_EXCEPTION_IF_NULL(cnode);
     // handle data links
     for (const auto &input : cnode->inputs()) {
-      size_t dpend_edge_num = 1;
+      size_t depend_edge_num = 1;
       // handle control depend,all inputs of control depend has no depend edge
       if (HandleControlDependNode(input, &que, &visited_nodes)) {
         control_depends.push_back(input);
-        dpend_edge_num = 0;
+        depend_edge_num = 0;
       }
       // the 2rd input of depend is no depend edge
       if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) && input == cnode->input(kDependAttachNodeIndex)) {
-        dpend_edge_num = 0;
+        depend_edge_num = 0;
       }
       PushNoVisitedNode(input, &que, &visited_nodes);
-      AddDependEdge(node, input, dpend_edge_num);
+      AddDependEdge(node, input, depend_edge_num);
     }
   }
   UpdateControlDependRelations(control_depends);

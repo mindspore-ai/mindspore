@@ -49,7 +49,7 @@ void KernelAdjust::Reorder(const std::shared_ptr<session::KernelGraph> &kernel_g
   std::vector<CNodePtr> momentum_list;
   std::vector<CNodePtr> other_list;
   for (const auto &cnode : origin_cnode_list) {
-    if (kOptOpeatorSet.find(AnfAlgo::GetCNodeName(cnode)) != kOptOpeatorSet.end()) {
+    if (kOptOperatorSet.find(AnfAlgo::GetCNodeName(cnode)) != kOptOperatorSet.end()) {
       momentum_list.emplace_back(cnode);
     } else {
       other_list.emplace_back(cnode);
@@ -118,7 +118,7 @@ void KernelAdjust::CreateSwitchOpParameters(const std::shared_ptr<session::Kerne
   MS_EXCEPTION_IF_NULL(tensor_ptr);
   mindspore::abstract::AbstractBasePtr paremeter_abstract_ptr = tensor_ptr->ToAbstract();
   if (paremeter_abstract_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "create abstract brfore insert switch op failed!";
+    MS_LOG(EXCEPTION) << "create abstract before insert switch op failed!";
   }
 
   ParameterPtr loop_count = std::make_shared<Parameter>(kernel_graph_ptr);
@@ -371,7 +371,7 @@ bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::Context> &c
     auto tensor = inputs[i];
     size_t deal_index = input_nodes.size() - input_ctrl_size + i;
     if (deal_index >= input_nodes.size()) {
-      MS_LOG(EXCEPTION) << "deak_index[" << deal_index << "] outof range";
+      MS_LOG(EXCEPTION) << "deal_index[" << deal_index << "] out of range";
     }
     auto input_node = input_nodes[deal_index];
     bool need_sync = false;
@@ -439,7 +439,7 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
 
 void KernelAdjust::Profiling(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   if (!ascend::ProfilingManager::GetInstance().IsProfiling()) {
-    MS_LOG(INFO) << "no need to profiling";
+    MS_LOG(INFO) << "No need to profiling";
     return;
   }
   ProfilingTraceInfo profiling_trace_info;
@@ -452,10 +452,10 @@ void KernelAdjust::Profiling(const std::shared_ptr<session::KernelGraph> &kernel
 
 void KernelAdjust::InsertProfilingKernel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                          const ProfilingTraceInfo &profiling_trace_info) {
-  MS_LOG(INFO) << "[profiling] insert profiling kernel start";
+  MS_LOG(INFO) << "[profiling] Insert profiling kernel start";
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   if (!profiling_trace_info.IsValid()) {
-    MS_LOG(WARNING) << "profiling trace point not found";
+    MS_LOG(WARNING) << "Profiling trace point not found";
     return;
   }
   std::vector<CNodePtr> new_cnode_list;

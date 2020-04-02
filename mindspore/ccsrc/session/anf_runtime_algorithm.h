@@ -61,7 +61,7 @@ class AnfRuntimeAlgorithm {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       std::string node_debug_log = node->DebugString();
-      MS_LOG(EXCEPTION) << "only cnode has attr,but this anf is " << node_debug_log.c_str();
+      MS_LOG(EXCEPTION) << "Only cnode has attr, but this anf is " << node_debug_log.c_str();
     }
     auto primitive = GetCNodePrimitive(node);
     MS_EXCEPTION_IF_NULL(primitive);
@@ -105,7 +105,7 @@ class AnfRuntimeAlgorithm {
   static TypeId GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx);
   // get output original data type from prev node,input_index is the input index of current node related to prev node
   static TypeId GetPrevNodeOutputInferDataType(const AnfNodePtr &node, size_t input_idx);
-  // get output select data typpe of anf node
+  // get output select data type of anf node
   static TypeId GetOutputDeviceDataType(const AnfNodePtr &node, size_t output_idx);
   // get input select data type of anf node
   static TypeId GetInputDeviceDataType(const AnfNodePtr &node, size_t input_idx);

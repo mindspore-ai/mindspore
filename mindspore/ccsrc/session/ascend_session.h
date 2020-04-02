@@ -48,13 +48,14 @@ class AscendSession : public SessionBasic {
   GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &args) override;
   // set output of final graph
   void SetFinalGraphOutput(const BaseRef &output) override;
-  // insert switch and set the relative acitve ops
+  // insert switch and set the relative active ops
   void SwitchCompile(GraphId cond_g, GraphId true_g, GraphId false_g) override;
-  // set args of child graph.the arg maybe come from a output of other child graphs,or from final graph's parameter
+  // set args of child graph. the arg maybe come from a output of other child graphs,
+  // or from final graph's parameter
   void SetChildGraphInput(GraphId g, const VectorRef &args) override;
   // get graph id in child graphs by ME front anf node pointer
   GraphId GetGraphIdByNode(const AnfNodePtr &front_anf) const override;
-  // get grpah id of final graph
+  // get graph id of final graph
   GraphId GetFinalRunGraph() const override { return final_graph_id_; }
   // insert active to graph
   void SetActive(GraphId, GraphId) override;
@@ -112,9 +113,9 @@ class AscendSession : public SessionBasic {
   // key is final_graph_id,value is the graph types of child graphs
   std::unordered_map<GraphId, std::vector<GraphType>> graph_order_types_;
   // record condition graph of while
-  std::unordered_map<GraphId, GraphId> while_condtion_graphs_;
-  // record all conditons
-  std::unordered_map<GraphId, std::pair<GraphId, GraphId>> switchs_;
+  std::unordered_map<GraphId, GraphId> while_condition_graphs_;
+  // record all conditions
+  std::unordered_map<GraphId, std::pair<GraphId, GraphId>> switches_;
   // final_graph_id is used in every root graph has it's own session situation
   GraphId final_graph_id_;
 };

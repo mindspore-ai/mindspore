@@ -186,7 +186,7 @@ const std::vector<std::set<std::string>> kShapeSupportFormatMap = {k1DSupportFor
                                                                    k4DSupportFormat};
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
 
-const std::set<std::string> kOptOpeatorSet = {
+const std::set<std::string> kOptOperatorSet = {
   kMomentumOpName,       kApplyMomentumOpName,        kApplyAdadeltaOpName,
   kApplyAdagradOpName,   kApplyAdagradDAName,         kApplyAdamOpName,
   kApplyAdaMaxOpName,    kApplyAddSignOpName,         kApplyCenteredRMSPOpName,

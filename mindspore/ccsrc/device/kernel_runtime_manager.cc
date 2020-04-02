@@ -67,7 +67,7 @@ KernelRuntime *KernelRuntimeManager::GetKernelRuntime(const std::string &device_
     MS_EXCEPTION_IF_NULL(kernel_runtime);
     runtime_map_[runtime_key] = kernel_runtime;
   } else {
-    MS_LOG(EXCEPTION) << "no kernel runtime creator for " << device_name << " with device id " << device_id;
+    MS_LOG(EXCEPTION) << "No kernel runtime creator for " << device_name << " with device id " << device_id;
   }
 
   return kernel_runtime.get();
