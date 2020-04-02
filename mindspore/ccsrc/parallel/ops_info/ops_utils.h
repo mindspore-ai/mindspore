@@ -24,6 +24,8 @@ constexpr size_t PRELU_OUTPUTS_SIZE = 1;
 constexpr size_t PRELU_SECOND_INPUT_SIZE = 1;
 constexpr int32_t PRELU_CHANNEL_INDEX = 1;
 constexpr int32_t PRELU_CHANNEL_STRATEGY = 1;
+constexpr int32_t NO_SPLIT_MAP = -1;
+constexpr int32_t NO_SPLIT_STRATEGY = 1;
 constexpr size_t MATMUL_ATTRS_SIZE = 2;
 constexpr size_t MATMUL_INPUTS_SIZE = 2;
 constexpr size_t MATMUL_OUTPUTS_SIZE = 1;
@@ -31,6 +33,7 @@ constexpr size_t ACTIVATION_ATTR_SIZE = 1;
 constexpr size_t SOFTMAX_ATTR_SIZE = 1;
 constexpr size_t ACTIVATION_INPUTS_SIZE = 1;
 constexpr size_t ACTIVATION_OUTPUTS_SIZE = 1;
+constexpr size_t EXPANDDIMS_INPUT_SIZE = 2;
 constexpr size_t SoftmaxCrossEntropyWithLogitsAttrSize = 1;
 constexpr size_t SoftmaxCrossEntropyWithLogitsInputsSize = 2;
 constexpr size_t SoftmaxCrossEntropyWithLogitsOutputsSize = 2;
@@ -191,6 +194,7 @@ constexpr char GET_NEXT[] = "GetNext";
 constexpr char SQUEEZE[] = "Squeeze";
 constexpr char Neg[] = "Neg";
 constexpr char BATCH_MATMUL[] = "BatchMatMul";
+constexpr char EXPAND_DIMS[] = "ExpandDims";
 
 // Parallel don't care
 constexpr char TUPLE_GETITEM[] = "tuple_getitem";

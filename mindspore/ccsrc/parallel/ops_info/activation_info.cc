@@ -381,5 +381,168 @@ Status CastInfo::InferMirrorOps() {
 
   return SUCCESS;
 }
+
+Status ExpandDimsInfo::GetAttrs() {
+  if (input_value_.size() != EXPANDDIMS_INPUT_SIZE) {
+    MS_LOG(ERROR) << name_ << ": Invalid inputs size " << input_value_.size();
+    return FAILED;
+  }
+
+  if (!input_value_.back()->isa<Int32Imm>()) {
+    MS_LOG(ERROR) << name_ << ": The type of axis is not int";
+    return FAILED;
+  }
+
+  int32_t axis = GetValue<int32_t>(input_value_.back());
+
+  if (inputs_shape_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
+    return FAILED;
+  }
+
+  int32_t dim = SizeToInt(inputs_shape_[0].size());
+  if ((axis > dim) || (axis < -dim - 1)) {
+    MS_LOG(ERROR) << name_ << ": The axis(" << axis << ") is out of range[" << -dim - 1 << ", " << dim << "]";
+    return FAILED;
+  }
+
+  if (axis < 0) {
+    positive_axis_ = dim + axis + 1;
+  } else {
+    positive_axis_ = axis;
+  }
+  MS_LOG(INFO) << name_ << ": The axis is " << axis << ", and the positive axis is " << positive_axis_;
+  return SUCCESS;
+}
+
+Status ExpandDimsInfo::InferTensorMap() {
+  if (inputs_shape_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The inputs shape is empty";
+    return FAILED;
+  }
+
+  // for example: if the dimension of input is 3, and the axis is 2,
+  // then the input_tensor_map is [2, 1, 0], the output_tensor_map is [2, 1, -1, 0]
+  std::vector<int32_t> input_tensor_map, output_tensor_map;
+  size_t size = inputs_shape_[0].size();
+  for (size_t i = 0; i < size; ++i) {
+    input_tensor_map.push_back(SizeToInt(size - i - 1));
+  }
+
+  inputs_tensor_map_.push_back(input_tensor_map);
+
+  output_tensor_map = input_tensor_map;
+  if ((positive_axis_ < 0) || (positive_axis_ > SizeToInt(size))) {
+    MS_LOG(ERROR) << name_ << ": Invalid positive axis " << positive_axis_;
+    return FAILED;
+  }
+  (void)output_tensor_map.insert(output_tensor_map.begin() + positive_axis_, NO_SPLIT_MAP);
+  outputs_tensor_map_.push_back(output_tensor_map);
+
+  MS_LOG(INFO) << name_ << ": The tensor map of input is " << ShapeToString(input_tensor_map)
+               << ", and the tensor map of output is " << ShapeToString(output_tensor_map);
+  return SUCCESS;
+}
+
+Status ExpandDimsInfo::InferTensorStrategy() {
+  if (strategy_ == nullptr) {
+    MS_LOG(ERROR) << name_ << ": The strategy is null";
+    return FAILED;
+  }
+
+  inputs_strategy_ = strategy_->GetInputDim();
+  if (inputs_strategy_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The strategy is empty";
+    return FAILED;
+  }
+
+  Shape output_strategy = inputs_strategy_[0];
+  if ((positive_axis_ < 0) || (positive_axis_ > SizeToInt(output_strategy.size()))) {
+    MS_LOG(ERROR) << name_ << ": Invalid positive axis " << positive_axis_;
+    return FAILED;
+  }
+  (void)output_strategy.insert(output_strategy.begin() + positive_axis_, NO_SPLIT_STRATEGY);
+  outputs_strategy_ = {output_strategy};
+  return SUCCESS;
+}
+
+Status ExpandDimsInfo::InferTensorInfo() {
+  if (inputs_shape_.empty() || outputs_shape_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The shape of inputs or outputs is empty";
+    return FAILED;
+  }
+
+  if (inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The tensor map of inputs or outputs is empty";
+    return FAILED;
+  }
+
+  Shape input_shape = inputs_shape_[0];
+  Shape output_shape = outputs_shape_[0];
+
+  // infer slice shape
+  if (InferTensorStrategy() != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Infer tensor strategy failed";
+    return FAILED;
+  }
+  Shapes inputs_slice_shape, outputs_slice_shape;
+  if (InferSliceShape(inputs_strategy_, outputs_strategy_, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Infer slice shape failed";
+    return FAILED;
+  }
+
+  if (inputs_slice_shape.empty() || outputs_slice_shape.empty()) {
+    MS_LOG(ERROR) << name_ << ": The slice shape of inputs or outputs is empty";
+    return FAILED;
+  }
+
+  Shape input_slice_shape = inputs_slice_shape[0];
+  Shape output_slice_shape = outputs_slice_shape[0];
+
+  TensorLayout input_tensor_layout, output_tensor_layout;
+  if (input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], input_shape) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Init tensor layout for input failed";
+    return FAILED;
+  }
+
+  if (output_tensor_layout.InitFromVector(dev_matrix_shape_, outputs_tensor_map_[0], output_shape) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Init tensor layout for output failed";
+    return FAILED;
+  }
+
+  TensorInfo input_tensor_info(input_tensor_layout, input_shape, input_slice_shape);
+  TensorInfo output_tensor_info(output_tensor_layout, output_shape, output_slice_shape);
+
+  inputs_tensor_info_.push_back(input_tensor_info);
+  outputs_tensor_info_.push_back(output_tensor_info);
+  return SUCCESS;
+}
+
+Status ExpandDimsInfo::InferMirrorOps() {
+  mirror_ops_.clear();
+
+  if (inputs_tensor_map_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The tensor map of inputs is empty";
+    return FAILED;
+  }
+
+  std::vector<Group> group;
+  if (CreateGroupByTensorMap(inputs_tensor_map_[0], &group) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": Create group failed";
+    return FAILED;
+  }
+
+  if (group.empty()) {
+    MS_LOG(INFO) << name_ << ": No need to create mirror ops";
+    return SUCCESS;
+  }
+
+  OperatorVector mirror_op, placeholder_op;
+  mirror_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
+  mirror_ops_.push_back(mirror_op);
+  mirror_ops_.push_back(placeholder_op);
+  MS_LOG(INFO) << name_ << ": Create mirror ops success, the group name is " << group[0].name();
+  return SUCCESS;
+}
 }  // namespace parallel
 }  // namespace mindspore

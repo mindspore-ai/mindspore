@@ -174,6 +174,26 @@ class NegInfo : public ActivationOther {
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~NegInfo() override = default;
 };
+
+class ExpandDimsInfo : public ActivationOther {
+ public:
+  ExpandDimsInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
+                 const PrimitiveAttrs& attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~ExpandDimsInfo() override = default;
+
+ protected:
+  Status GetAttrs() override;
+  Status InferTensorMap() override;
+  Status InferTensorInfo() override;
+  Status InferMirrorOps() override;
+  Status InferTensorStrategy();
+
+ private:
+  int32_t positive_axis_ = -1;
+  Strategys inputs_strategy_;
+  Strategys outputs_strategy_;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_OPTIMIZER_OPS_INFO_PARALLEL_ACTIVATION_INFO_H_
