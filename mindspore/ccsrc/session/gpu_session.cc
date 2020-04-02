@@ -19,7 +19,7 @@
 #include "device/gpu/gpu_kernel_runtime.h"
 #include "pre_activate/common/optimizer.h"
 #include "pre_activate/common/pass_manager.h"
-#include "pre_activate/ascend/ir_fusion/allreduce_fusion.h"
+#include "pre_activate/common/ir_fusion/allreduce_fusion.h"
 #include "device/kernel_runtime_manager.h"
 #include "predict/predict.h"
 #include "common/utils.h"

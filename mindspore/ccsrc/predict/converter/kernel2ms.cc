@@ -16,7 +16,7 @@
 
 #include "predict/converter/kernel2ms.h"
 #include <algorithm>
-#include "transform/convert.h"
+#include "ir/anf.h"
 #include "predict/converter/lite_model/op_attr_packer.h"
 #include "mindspore/ccsrc/operator/ops.h"
 
@@ -135,7 +135,7 @@ void Kernel2Ms::GetRealInpoutsPtr(const AnfNodePtr &node, std::vector<AnfNodePtr
   if (node->isa<CNode>()) {
     auto c_node = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(c_node);
-    std::string c_node_name = transform::GetCNodeFuncName(c_node);
+    std::string c_node_name = GetCNodeFuncName(c_node);
     if (c_node_name == prim::kPrimTupleGetItem->name()) {
       auto v_node = c_node->inputs()[kTupleGetItemIndex]->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(v_node);
@@ -321,7 +321,7 @@ bool Kernel2Ms::SetGraphInputTensors(const KernelGraphPtr &kernel_graph_ptr, con
   }
   for (const auto &input_node : kernel_graph_ptr->inputs()) {
     if (input_node->isa<Parameter>()) {
-      ParameterPtr pk_node = dynamic_pointer_cast<Parameter>(input_node);
+      ParameterPtr pk_node = std::dynamic_pointer_cast<Parameter>(input_node);
       TensorPtr device_tensor;
       if (convert_mode_ == kConvertCpuMode) {
         device_tensor = predict::utils::GetParaCpuTensor(input_node);

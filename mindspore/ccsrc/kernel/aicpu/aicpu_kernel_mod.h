@@ -18,11 +18,11 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "kernel/kernel.h"
+#include "kernel/ascend_kernel_mod.h"
 #include "kernel/aicpu/aicpu_util.h"
 namespace mindspore {
 namespace kernel {
-class AicpuOpKernelMod : public KernelMod {
+class AicpuOpKernelMod : public AscendKernelMod {
  public:
   AicpuOpKernelMod();
   ~AicpuOpKernelMod() override;

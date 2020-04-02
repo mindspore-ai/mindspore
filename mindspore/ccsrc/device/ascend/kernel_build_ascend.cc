@@ -94,7 +94,7 @@ static bool KernelBuildParallelCompile(const mindspore::session::KernelGraph *ke
   return ret;
 }
 
-static vector<int> CalCleanZerosSize(const CNodePtr &pre_node) {
+static std::vector<int> CalCleanZerosSize(const CNodePtr &pre_node) {
   MS_EXCEPTION_IF_NULL(pre_node);
   std::vector<int> clean_size_list;
   // clean output

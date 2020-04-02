@@ -75,9 +75,9 @@ def test_double_star_graph():
 
     _executor.compile(net, x, y, z, w, phase='train')
     strategies = _executor._get_strategy(net)
-    expected_strategies = {'Default/network-Net/MatMul-op0': [[1, 8], [8, 1]],
-                           'Default/network-Net/Cast-op7': [[8, 1]],
-                           'Default/network-Net/MatMul-op8': [[8, 1], [1, 1]],
-                           'Default/network-Net/Cast-op9': [[1, 8]],
-                           'Default/network-Net/MatMul-op10': [[1, 1], [1, 8]]}
+    expected_strategies = {'Default/network-Net/Cast-op1': [[8, 1]],
+                           'Default/network-Net/Cast-op3': [[1, 8]],
+                           'Default/network-Net/MatMul-op2': [[8, 1], [1, 1]],
+                           'Default/network-Net/MatMul-op4': [[1, 1], [1, 8]],
+                           'Default/network-Net/MatMul-op0': [[1, 8], [8, 1]]}
     assert strategies == expected_strategies

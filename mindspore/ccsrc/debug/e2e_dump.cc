@@ -49,7 +49,7 @@ bool Dump::IsKernelNeedDump(const std::string& kernel_name) {
   return false;
 }
 
-bool Dump::ParseDumpConfig(const string& dump_config_file) {
+bool Dump::ParseDumpConfig(const std::string& dump_config_file) {
   std::ifstream jsonFile(dump_config_file);
   if (!jsonFile.is_open()) {
     MS_LOG(ERROR) << dump_config_file << " open failed.";

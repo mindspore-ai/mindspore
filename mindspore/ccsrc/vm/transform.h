@@ -55,7 +55,6 @@ class CompileGraph {
 
   InstSet Run(const FuncGraphPtr& func_graph);
   InstSet GenMultiGraphsSinkInst(const FuncGraphPtr& graph);
-  bool IsGraphCut() const { return is_graph_cut; }
   bool IsCut(const AnfNodePtr& node);
   void Push(const AnfNodePtr& node);
   void Tie(const AnfNodePtr& n1, const AnfNodePtr& n2) { slots_[n2] = slots_[n1]; }
@@ -101,7 +100,6 @@ class CompileGraph {
   BackendPtr backend_;
   LinkFuncType lin_convert_;
   bool is_gevm_convert_;
-  bool is_graph_cut;
   int height_{0};
   int max_height_{0};
   std::vector<PrimitivePtr> cut_list_;

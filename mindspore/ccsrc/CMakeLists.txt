@@ -34,6 +34,8 @@ if(ENABLE_GPU)
             "device/gpu/*.cu"
             "kernel/gpu/*.cu"
             "kernel/akg/gpu/*.cc"
+            "kernel/akg/akgkernelbuild.cc"
+            "kernel/akg/akg_kernel_attrs_process.cc"
             )
     file(GLOB_RECURSE GPU_KERNEL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             "kernel/gpu/*.cc"
@@ -100,14 +102,14 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "debug/*.cc"
         "onnx/onnx_exporter.cc"
         "operator/*.cc"
-        "transform/*.cc"
         "session/kernel_graph.cc"
         "utils/node_utils.cc"
         "session/session_basic.cc"
         "session/session_factory.cc"
         "session/anf_runtime_algorithm.cc"
         "vm/*.cc"
-        "pynative/*.cc"
+        "pynative/base.cc"
+        "pynative/pynative_execute.cc"
         "pybind_api/*.cc"
         "device/common/*.cc"
         "kernel/kernel_query.cc"
@@ -117,7 +119,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "device/kernel_runtime.cc"
         "device/kernel_runtime_manager.cc"
         "device/convert_tensor_utils.cc"
-        "pre_activate/ascend/*.cc"
         "pre_activate/common/*.cc"
         "pre_activate/pass/*.cc"
         "pre_activate/gpu/*.cc"
@@ -168,6 +169,15 @@ if(ENABLE_DUMP_PROTO)
     add_compile_definitions(ENABLE_DUMP_PROTO)
 endif()
 
+if(ENABLE_GE)
+    file(GLOB_RECURSE GE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            "transform/*.cc"
+            "pynative/pynative_execute_ge.cc"
+            "pipeline/pipeline_ge.cc"
+            )
+    list(APPEND MINDSPORE_SRC_LIST ${GE_SRC_LIST})
+endif()
+
 if(ENABLE_D)
     include_directories("${CMAKE_BINARY_DIR}/kernel/aicpu")
     file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -188,6 +198,9 @@ if(ENABLE_D)
             "device/kernel_adjust.cc"
             "kernel/kernel_fusion.cc"
             "kernel/tbe/*.cc"
+            "pre_activate/ascend/*.cc"
+            "transform/*.cc"
+            "pipeline/pipeline_ge.cc"
             )
     list(APPEND MINDSPORE_SRC_LIST ${D_SRC_LIST})
     list(APPEND MINDSPORE_PROTO_AICPU_LIST ${PROTOSRCS})
@@ -246,9 +259,11 @@ if (ENABLE_GE)
         target_link_libraries(mindspore graph ge_client)
     endif()
     target_link_libraries(mindspore tsdclient)
-else()
+elseif(ENABLE_D)
     add_compile_definitions(NO_GE_CLIENT)
     target_link_libraries(mindspore graph)
+else()
+    add_compile_definitions(NO_GE_CLIENT)
 endif()
 
 if(ENABLE_D)
@@ -288,8 +303,6 @@ endif()
 set(PYTHON_MODULE_SOURCE
         pipeline/init.cc
         kernel/oplib/oplib.cc
-        kernel/akg/akgkernelbuild.cc
-        kernel/akg/akg_kernel_attrs_process.cc
     ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
     ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
 
@@ -350,6 +363,7 @@ if(ENABLE_GPU)
     assign_source_group("Include" ${GROUP_INCLUDE})
 
     file(GLOB COMPILER_SRCS
+        "pre_activate/gpu/*.cc"
         ${TVM_DIR}/src/api/*.cc
         ${TVM_DIR}/src/arithmetic/*.cc
         ${TVM_DIR}/src/autotvm/*.cc

@@ -19,7 +19,7 @@
 #include <unordered_map>
 #include <memory>
 #include "utils/log_adapter.h"
-#include "kernel/oplib/opinfo.h"
+#include "utils/overload.h"
 #include "utils/context/ms_context.h"
 
 namespace mindspore {
@@ -50,7 +50,7 @@ constexpr auto kNeedCompile = "need_compile";
 constexpr auto kShape = "shape";
 std::vector<std::shared_ptr<OpInfo>> OpLib::op_info_;
 
-string ImplTypeToStr(OpImplyType impl_type) {
+std::string ImplTypeToStr(OpImplyType impl_type) {
   switch (impl_type) {
     case kTBE:
       return kTbe;

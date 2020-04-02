@@ -24,7 +24,7 @@
 #include <vector>
 #include "device/kernel_runtime.h"
 #include "ir/anf.h"
-#include "kernel/kernel.h"
+#include "kernel/ascend_kernel_mod.h"
 #include "framework/ge_runtime/task_info.h"
 
 namespace mindspore {

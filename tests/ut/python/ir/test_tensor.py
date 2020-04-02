@@ -24,6 +24,8 @@ import pytest
 import mindspore as ms
 import mindspore.common.api as me
 import mindspore.nn as nn
+from mindspore.common.parameter import Parameter
+from mindspore.common.initializer import initializer
 from ..ut_filter import non_graph_engine
 
 
@@ -198,6 +200,21 @@ def test_sub():
     y = ms.Tensor(ndarr)
     z = x - y
     assert isinstance(z, ms.Tensor)
+
+@non_graph_engine
+def test_div():
+    x = ms.Tensor(np.array([[2,6,10],[12, 4, 8]]).astype(np.float32))
+    y = ms.Tensor(np.array([[2,2,5],[6, 1, 2]]).astype(np.float32))
+    z = x / y
+    z2 = x / 2
+    assert isinstance(z, ms.Tensor)
+    assert isinstance(z2, ms.Tensor)
+
+@non_graph_engine
+def test_parameter():
+    x = Parameter(initializer(1, [1], ms.float32), name="beta1_power")
+    z = x / 2
+    print(z)
 
 
 class Net(nn.Cell):
@@ -378,3 +395,4 @@ def test_tensor_dtype_fp32_to_bool():
         input = np.random.randn(2, 3, 4, 5).astype(np.float32)
         input = ms.Tensor(input)
         input_me = ms.Tensor(input, dtype=ms.bool_)
+

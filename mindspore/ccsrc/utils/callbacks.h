@@ -20,8 +20,11 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "ir/meta_tensor.h"
+#ifdef ENABLE_GE
 #include "transform/types.h"
 #include "transform/util.h"
+#endif
 
 namespace mindspore {
 namespace callbacks {
@@ -36,10 +39,16 @@ extern const char kSummary[];
 extern const char kCheckPoint[];
 extern const std::string kPythonCheckpointModuleName;
 extern const std::string kPythonCheckpointFuncName;
+
+const int kCallbackOk = 0;
+const int kCallbackFalied = 1;
+
 bool GetParameterShape(const FuncGraphPtr& anf_graph, const std::string& param_name,
                        const std::shared_ptr<std::vector<int>>& shape);
+#ifdef ENABLE_GE
 uint32_t CheckpointSaveCallback(uint32_t, const std::map<std::string, ge::Tensor>&);
 uint32_t SummarySaveCallback(uint32_t, const std::map<std::string, ge::Tensor>&);
+#endif
 uint32_t SummarySaveCallback(uint32_t, const std::map<std::string, TensorPtr>&);
 
 }  // namespace callbacks

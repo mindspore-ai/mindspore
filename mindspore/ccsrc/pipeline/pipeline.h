@@ -30,6 +30,7 @@
 #include "pipeline/action.h"
 #include "vm/segment_runner.h"
 #include "vm/transform.h"
+#include "pipeline/base.h"
 
 namespace mindspore {
 extern const char kMsConvert[];
@@ -55,14 +56,6 @@ class Pipeline {
   std::vector<ActionItem> actions_;
 };
 
-struct ExecutorInfo {
-  FuncGraphPtr func_graph;
-  ResourcePtr resource;
-  std::size_t arg_list_size;
-};
-
-using ExecutorInfoPtr = std::shared_ptr<ExecutorInfo>;
-
 // A function pipeline.
 class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
  public:
@@ -80,11 +73,7 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   bool CompileInner(const py::object& obj, const py::tuple& args, const py::object& phase, bool use_vm);
   bool Compile(const py::object& obj, const py::tuple& args, const py::object& phase, bool use_vm);
 
-  // for graph mode
-  py::object ExecDFGraph(const py::tuple& args, const std::string& phase = "train");
-
   void ProcessVmArg(const py::tuple& args, const std::string& phase, VectorRef* arg_list);
-  void ProcessGeArg(const py::tuple& args, const std::string& phase, std::vector<tensor::TensorPtr>* inputs);
 
   // for pynative mode when use_vm is on
   py::object Run(const py::tuple& args, const py::object& phase);
@@ -95,9 +84,8 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   compile::VmEvalFuncPtr GetVmEvalFunc(const std::string& phase);
   bool HasCompiled(const std::string& phase) const;
 
-  bool AddDFGraph(const py::dict& init_params, const std::string& phase, const py::object& broadcast_params);
-  FuncGraphPtr BuildDFGraph(const py::dict& init_params, const std::string& phase,
-                            const py::object& broadcast_params = {});
+  FuncGraphPtr BuildGraph(const py::dict& init_params, const std::string& phase,
+                          const py::object& broadcast_params = {});
   void RunInitGraph(const py::dict& init_params, const std::string& phase);
   py::dict GetParameterLayout(const std::string& phase);
   py::dict GetCNodeStrategy(const std::string& phase);
@@ -122,31 +110,28 @@ using ExecutorPyPtr = std::shared_ptr<ExecutorPy>;
 py::tuple GenerateKey(const std::string& name, const std::unordered_map<std::string, py::object>& defaults);
 py::bool_ VerifyInputSignature(const py::list input_signature, const py::tuple inputs);
 
-void SetGeOption(const std::map<std::string, std::string>& options);
 bool InitDistribute(const std::map<std::string, std::string>& options);
 
 void ResetOpId();
-void InitGe();
-void FinalizeGe();
 void InitHccl();
 void FinalizeHccl();
+void InitGe();
+void FinalizeGe();
+
+void ClearResAtexit();
+void ReleaseGeTsd();
+
+void ExportGraph(const std::string& file_name, const std::string&, const std::string& phase);
 
 // init and exec dataset sub graph
 bool InitExecDataset(const std::string& queue_name, int64_t iter_num, int64_t batch_size,
                      const std::vector<TypePtr>& types, const std::vector<std::vector<int64_t>>& shapes,
                      const std::vector<int64_t>& input_indexes, const std::string& phase);
 
-// init and exec dataset sub graph for GE backend
-bool InitExecDatasetGe(const std::string& queue_name, int64_t size, int64_t batch_size,
-                       const std::vector<TypePtr>& types, const std::vector<std::vector<int64_t>>& shapes,
-                       const std::vector<int64_t>& input_indexes, const std::string& phase);
-
 // Build and run dataset subgraph for ms backend
 bool InitExecDatasetVm(const std::string& queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr>& types, const std::vector<std::vector<int64_t>>& shapes,
                        const std::vector<int64_t>& input_indexes);
-
-void ExportDFGraph(const std::string& file_name, const std::string&, const std::string& phase);
 
 }  // namespace pipeline
 }  // namespace mindspore

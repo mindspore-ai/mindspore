@@ -35,7 +35,6 @@
 #include "utils/convert_utils.h"
 #include "utils/any.h"
 #include "utils/utils.h"
-#include "transform/convert.h"
 #include "session/anf_runtime_algorithm.h"
 #include "kernel/akg/akg_kernel_attrs_process.h"
 
@@ -240,8 +239,8 @@ bool AkgKernelBuild::CreateOutputDescJson(const AnfNodePtr &anf_node, nlohmann::
   return true;
 }
 
-void GetJson(const AnfNodePtr &anf_node, const vector<int> &dyn_input_sizes, const shared_ptr<OpAttr> &op_attr,
-             nlohmann::json *const attr_json, const ValuePtr &attr_value) {
+void GetJson(const AnfNodePtr &anf_node, const std::vector<int> &dyn_input_sizes,
+             const std::shared_ptr<OpAttr> &op_attr, nlohmann::json *const attr_json, const ValuePtr &attr_value) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_attr);
   MS_EXCEPTION_IF_NULL(attr_json);

@@ -26,6 +26,7 @@
 #include <iostream>
 #include <fstream>
 
+#include "runtime/kernel.h"
 #include "kernel/oplib/oplib.h"
 #include "utils/utils.h"
 #include "session/anf_runtime_algorithm.h"

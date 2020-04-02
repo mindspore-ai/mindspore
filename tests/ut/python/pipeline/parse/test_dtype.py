@@ -28,5 +28,4 @@ def try_type():
 
 
 def test_dtype_convert():
-    with pytest.raises(RuntimeError):
-        try_type()
+    try_type()
