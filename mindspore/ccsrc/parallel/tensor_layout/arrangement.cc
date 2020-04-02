@@ -15,14 +15,14 @@
  */
 
 #include "parallel/tensor_layout/arrangement.h"
-#include <utility>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <utility>
+#include "common/utils.h"
 #include "parallel/status.h"
-#include "utils/log_adapter.h"
 #include "parallel/tensor_layout/shape_util.h"
 #include "utils/convert_utils.h"
-#include "common/utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {

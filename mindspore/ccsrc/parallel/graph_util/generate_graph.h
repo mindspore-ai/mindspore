@@ -17,12 +17,12 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GENERATE_GRAPH_H_
 #define MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GENERATE_GRAPH_H_
 
-#include <vector>
-#include <memory>
-#include <unordered_map>
 #include <map>
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "./common.h"
 #include "optimizer/opt.h"

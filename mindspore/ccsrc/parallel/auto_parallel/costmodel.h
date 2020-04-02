@@ -17,11 +17,11 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
 #define MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_COSTMODEL_H_
 
-#include <memory>
 #include <algorithm>
-#include <vector>
+#include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 #include "parallel/strategy.h"
 #include "parallel/tensor_layout/tensor_info.h"
 

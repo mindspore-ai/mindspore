@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_COSTMODEL_CONTEXT_H_
 #define MINDSPORE_CCSRC_PARALLEL_COSTMODEL_CONTEXT_H_
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "utils/log_adapter.h"
 

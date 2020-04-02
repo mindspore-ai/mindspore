@@ -16,8 +16,8 @@
 
 #include "parallel/tensor_layout/array.h"
 #include <utility>
-#include "utils/log_adapter.h"
 #include "parallel/status.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {

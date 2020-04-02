@@ -17,10 +17,10 @@
 #ifndef PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_
 #define PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_
 
-#include <vector>
 #include <memory>
-#include "parallel/tensor_layout/tensor_info.h"
+#include <vector>
 #include "parallel/device_manager.h"
+#include "parallel/tensor_layout/tensor_info.h"
 
 namespace mindspore {
 namespace parallel {

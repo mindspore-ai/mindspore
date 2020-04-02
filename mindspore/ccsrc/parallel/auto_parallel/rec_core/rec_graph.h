@@ -18,11 +18,11 @@
 #define PARALLEL_AUTO_PARALLEL_REC_GRAPH_H_
 
 #include <iostream>
-#include <vector>
 #include <string>
+#include <vector>
 
-#include "parallel/auto_parallel/rec_core/rec_tensor.h"
 #include "parallel/auto_parallel/rec_core/rec_strategy.h"
+#include "parallel/auto_parallel/rec_core/rec_tensor.h"
 
 namespace mindspore {
 namespace parallel {

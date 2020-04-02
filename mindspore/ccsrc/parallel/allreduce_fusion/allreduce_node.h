@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_NODE_H_
 #define MINDSPORE_CCSRC_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_NODE_H_
 
-#include <unordered_set>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include "ir/anf.h"
 #include "parallel/status.h"

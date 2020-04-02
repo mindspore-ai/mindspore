@@ -15,12 +15,12 @@
  */
 
 #include "parallel/graph_util/graph_info.h"
-#include "ir/func_graph.h"
-#include "utils/graph_utils.h"
-#include "utils/context/ms_context.h"
-#include "debug/draw.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
+#include "debug/draw.h"
+#include "ir/func_graph.h"
+#include "utils/context/ms_context.h"
+#include "utils/graph_utils.h"
 
 namespace mindspore {
 namespace parallel {

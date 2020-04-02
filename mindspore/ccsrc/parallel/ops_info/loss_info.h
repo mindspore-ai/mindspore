@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_LOSS_INFO_H_
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_LOSS_INFO_H_
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 #include "ir/value.h"
-#include "parallel/ops_info/operator_info.h"
 #include "parallel/ops_info/activation_info.h"
+#include "parallel/ops_info/operator_info.h"
 #include "parallel/strategy.h"
 
 namespace mindspore {

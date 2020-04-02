@@ -20,10 +20,10 @@
 #include <memory>
 #include <vector>
 
+#include "common/utils.h"
+#include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/node_strategy.pb.h"
-#include "utils/convert_utils.h"
-#include "common/utils.h"
 
 namespace mindspore {
 namespace parallel {

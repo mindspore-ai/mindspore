@@ -18,12 +18,12 @@
 #define MINDSPORE_CCSRC_PARALLEL_CONTEXT_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-#include "parallel/status.h"
 #include "parallel/ops_info/ops_utils.h"
+#include "parallel/status.h"
 #include "utils/convert_utils.h"
 
 namespace mindspore {

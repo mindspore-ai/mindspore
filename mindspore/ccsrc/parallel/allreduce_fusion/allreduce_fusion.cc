@@ -15,16 +15,16 @@
  */
 
 #include "parallel/allreduce_fusion/allreduce_fusion.h"
-#include <queue>
-#include <unordered_set>
-#include <string>
 #include <memory>
-#include "utils/log_adapter.h"
-#include "parallel/status.h"
+#include <queue>
+#include <string>
+#include <unordered_set>
 #include "ir/func_graph.h"
-#include "parallel/step_parallel.h"
-#include "parallel/graph_util/node_info.h"
 #include "parallel/costmodel_context.h"
+#include "parallel/graph_util/node_info.h"
+#include "parallel/status.h"
+#include "parallel/step_parallel.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {

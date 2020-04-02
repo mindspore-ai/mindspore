@@ -18,11 +18,11 @@
 
 #include <algorithm>
 #include <functional>
-#include <utility>
 #include <iterator>
+#include <utility>
 #include "parallel/auto_parallel/costmodel.h"
-#include "parallel/tensor_layout/tensor_redistribution.h"
 #include "parallel/auto_parallel/graph_costmodel.h"
+#include "parallel/tensor_layout/tensor_redistribution.h"
 
 namespace mindspore {
 namespace parallel {

@@ -16,8 +16,8 @@
 
 #include "parallel/group_manager.h"
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 #include "parallel/device_manager.h"
 #include "parallel/ops_info/ops_utils.h"

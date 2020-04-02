@@ -16,15 +16,15 @@
 
 #include "parallel/device_matrix.h"
 
-#include <cstdint>
 #include <algorithm>
-#include <utility>
-#include <numeric>
+#include <cstdint>
 #include <functional>
+#include <numeric>
+#include <utility>
 #include <vector>
 
-#include "parallel/status.h"
 #include "parallel/ops_info/operator_info.h"
+#include "parallel/status.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

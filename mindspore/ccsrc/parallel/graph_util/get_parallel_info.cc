@@ -16,16 +16,16 @@
 
 #include "parallel/graph_util/get_parallel_info.h"
 
-#include <string>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
-#include "parallel/tensor_layout/tensor_layout.h"
-#include "parallel/strategy.h"
-#include "ir/func_graph.h"
 #include "common/utils.h"
+#include "ir/func_graph.h"
 #include "parallel/graph_util/graph_info.h"
+#include "parallel/strategy.h"
+#include "parallel/tensor_layout/tensor_layout.h"
 
 namespace mindspore {
 namespace parallel {

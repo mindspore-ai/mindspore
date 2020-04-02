@@ -16,15 +16,15 @@
 
 #include "parallel/context.h"
 
-#include <cstdint>
 #include <algorithm>
-#include <utility>
-#include <numeric>
+#include <cstdint>
 #include <functional>
 #include <memory>
+#include <numeric>
+#include <utility>
 
-#include "parallel/device_manager.h"
 #include "common/utils.h"
+#include "parallel/device_manager.h"
 
 namespace mindspore {
 namespace parallel {

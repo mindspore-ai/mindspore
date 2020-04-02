@@ -17,13 +17,13 @@
 #include "parallel/ops_info/activation_info.h"
 
 #include <algorithm>
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include "ir/value.h"
+#include "parallel/auto_parallel/costmodel.h"
 #include "parallel/device_matrix.h"
 #include "parallel/strategy.h"
-#include "parallel/auto_parallel/costmodel.h"
 
 namespace mindspore {
 namespace parallel {

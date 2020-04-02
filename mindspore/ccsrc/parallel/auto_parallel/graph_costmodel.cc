@@ -17,11 +17,11 @@
 #include "parallel/auto_parallel/graph_costmodel.h"
 
 #include <algorithm>
+#include <cstdlib>
+#include <iterator>
 #include <numeric>
 #include <string>
 #include <utility>
-#include <iterator>
-#include <cstdlib>
 #include <vector>
 
 namespace mindspore {

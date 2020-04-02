@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_PARALLEL_GROUP_MANAGER_H_
 
 #include <cstdint>
-#include <vector>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "parallel/device.h"
 #include "parallel/status.h"
