@@ -1199,51 +1199,6 @@ FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList& args_spec
   return ret_graph;
 }
 
-FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
-  // slice a tensor
-  // args: tensor, slice or slice tuple
-  const std::string op_name = std::string("UnpackCall");
-  size_t arg_length = args_spec_list.size();
-  if (arg_length < 2) {
-    MS_LOG(EXCEPTION) << "" << op_name << " requires at least two args, but got " << arg_length << ".";
-  }
-
-  (void)abstract::CheckArg<AbstractFunction>(op_name, args_spec_list, 0);
-  FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
-  ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
-
-  AnfNodePtr fnNode = ret_graph->add_parameter();
-  std::vector<AnfNodePtr> elems;
-  elems.push_back(fnNode);
-  for (size_t index = 1; index < arg_length; index++) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[index]);
-    if (args_spec_list[index]->isa<AbstractTuple>()) {
-      AbstractTuplePtr arg_tuple = dyn_cast<AbstractTuple>(args_spec_list[index]);
-      AnfNodePtr para_tuple = ret_graph->add_parameter();
-      for (size_t i = 0; i < arg_tuple->size(); ++i) {
-        elems.push_back(
-          ret_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), para_tuple, NewValueNode(SizeToInt(i))}));
-      }
-    } else if (args_spec_list[index]->isa<AbstractDictionary>()) {
-      AbstractDictionaryPtr arg_dict = dyn_cast<AbstractDictionary>(args_spec_list[index]);
-      AnfNodePtr para_dict = ret_graph->add_parameter();
-      auto dict_elems = arg_dict->elements();
-      (void)std::transform(
-        dict_elems.begin(), dict_elems.end(), std::back_inserter(elems),
-        [ret_graph, para_dict](const AbstractAttribute& item) {
-          return ret_graph->NewCNode(
-            {NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(item.first),
-             ret_graph->NewCNode({NewValueNode(prim::kPrimDictGetItem), para_dict, NewValueNode(item.first)})});
-        });
-    } else {
-      MS_LOG(EXCEPTION) << "" << op_name << " require args should be tuple or dict, but got "
-                        << args_spec_list[index]->ToString();
-    }
-  }
-  ret_graph->set_output(ret_graph->NewCNode(elems));
-  return ret_graph;
-}
-
 REGISTER_PYBIND_DEFINE(
   TupleAdd_, ([](const py::module* m) {
     (void)py::class_<TupleAdd, MetaFuncGraph, std::shared_ptr<TupleAdd>>(*m, "TupleAdd_").def(py::init<std::string&>());
@@ -1256,11 +1211,6 @@ REGISTER_PYBIND_DEFINE(TupleSlice_, ([](const py::module* m) {
 
 REGISTER_PYBIND_DEFINE(TensorSlice_, ([](const py::module* m) {
                          (void)py::class_<TensorSlice, MetaFuncGraph, std::shared_ptr<TensorSlice>>(*m, "TensorSlice_")
-                           .def(py::init<std::string&>());
-                       }));
-
-REGISTER_PYBIND_DEFINE(UnpackCall_, ([](const py::module* m) {
-                         (void)py::class_<UnpackCall, MetaFuncGraph, std::shared_ptr<UnpackCall>>(*m, "UnpackCall_")
                            .def(py::init<std::string&>());
                        }));
 }  // namespace prim

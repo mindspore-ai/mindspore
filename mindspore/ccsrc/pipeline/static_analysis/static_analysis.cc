@@ -289,6 +289,10 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     evaluator = std::make_shared<DoSignatureEvaluator>(prim);
     return evaluator;
   }
+  if (prim->isa<prim::UnpackGraphPrimitive>()) {
+    evaluator = std::make_shared<UnpackGraphEvaluator>(prim);
+    return evaluator;
+  }
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
     if (prim_py != nullptr) {
