@@ -180,6 +180,7 @@ constexpr char SIGMOID[] = "Sigmoid";
 constexpr char POW[] = "Pow";
 constexpr char MAXIMUM[] = "Maximum";
 constexpr char EQUAL[] = "Equal";
+constexpr char NOT_EQUAL[] = "NotEqual";
 constexpr char LOGICALNOT[] = "LogicalNot";
 constexpr char GATHERV2[] = "GatherV2";
 constexpr char STRIDEDSLICE[] = "StridedSlice";
