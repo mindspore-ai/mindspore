@@ -280,6 +280,31 @@ class OpAdapter : public BaseOpAdapter {
 
   OutHandler getOutput(const OperatorPtr& op, int index) override {
     MS_EXCEPTION_IF_NULL(op);
+    if (IsCustomOp(op)) {
+      return getCustomOutput(op, index);
+    }
+    return getNormalOutput(op, index);
+  }
+
+  OutHandler getCustomOutput(const OperatorPtr& op, int index) {
+    MS_EXCEPTION_IF_NULL(op);
+    auto it = cus_output_map_.find(op->GetOpType());
+    if (it == cus_output_map_.end()) {
+      MS_LOG(ERROR) << "OpAdpator(" << op->GetName() << ") has both OUTPUT is not supported!";
+      return OutHandler();
+    }
+
+    std::unordered_map<int, std::string>& output_map = it->second;
+
+    if ((output_map.find(index) != output_map.end())) {
+      return OutHandler(op, output_map[index]);
+    }
+    MS_LOG(ERROR) << "OpAdpator(" << op->GetName() << ") has no OUTPUT index(" << index << ")!";
+    return OutHandler();
+  }
+
+  OutHandler getNormalOutput(const OperatorPtr& op, int index) {
+    MS_EXCEPTION_IF_NULL(op);
     if (!dyn_output_map_.empty() && !output_map_.empty()) {
       MS_LOG(ERROR) << "OpAdpator(" << op->GetName() << ") has both OUTPUT and DYN_OUTPUT is not supported!";
       return OutHandler();
