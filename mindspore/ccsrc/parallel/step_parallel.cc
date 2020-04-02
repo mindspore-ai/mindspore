@@ -1226,7 +1226,7 @@ void CoverSliceShape(const FuncGraphPtr& root) {
       MS_LOG(INFO) << "Parameter " << parameter->ToString() << " don't need to set parallel shape";
     } else {
       SetParallelShape(parameter, res);
-      MS_LOG(DEBUG) << "Parameter " << parameter->ToString() << "  shape " << parameter->Shape()->ToString();
+      MS_LOG(DEBUG) << "Parameter " << parameter->ToString() << " shape " << parameter->Shape()->ToString();
     }
   }
   g_RefMap.clear();
