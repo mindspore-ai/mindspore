@@ -17,11 +17,11 @@
 #ifndef PARALLEL_AUTO_PARALLEL_REC_PARSE_GRAPH_H_
 #define PARALLEL_AUTO_PARALLEL_REC_PARSE_GRAPH_H_
 
-#include <vector>
+#include <map>
+#include <memory>
 #include <string>
 #include <utility>
-#include <memory>
-#include <map>
+#include <vector>
 
 #include "parallel/auto_parallel/rec_core/rec_graph.h"
 #include "parallel/ops_info/operator_info.h"

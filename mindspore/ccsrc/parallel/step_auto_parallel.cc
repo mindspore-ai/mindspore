@@ -18,30 +18,30 @@
 
 #include <inttypes.h>
 #include <sys/time.h>
-#include <vector>
+#include <algorithm>
+#include <map>
 #include <memory>
 #include <set>
-#include <map>
-#include <utility>
 #include <string>
-#include <algorithm>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "ir/anf.h"
+#include "ir/meta_tensor.h"
 #include "optimizer/opt.h"
 #include "optimizer/optimizer.h"
-#include "pipeline/pipeline.h"
-#include "pipeline/parse/python_adapter.h"
+#include "parallel/auto_parallel/dp_algo_costmodel.h"
 #include "parallel/auto_parallel/edge_costmodel.h"
 #include "parallel/auto_parallel/graph_costmodel.h"
-#include "parallel/step_parallel.h"
-#include "parallel/auto_parallel/dp_algo_costmodel.h"
-#include "parallel/ops_info/tmp_identity_info.h"
-#include "parallel/context.h"
-#include "parallel/auto_parallel/rec_core/rec_partition.h"
-#include "parallel/auto_parallel/rec_core/rec_parse_graph.h"
 #include "parallel/auto_parallel/rec_core/rec_generate_strategy.h"
-#include "ir/meta_tensor.h"
+#include "parallel/auto_parallel/rec_core/rec_parse_graph.h"
+#include "parallel/auto_parallel/rec_core/rec_partition.h"
+#include "parallel/context.h"
+#include "parallel/ops_info/tmp_identity_info.h"
+#include "parallel/step_parallel.h"
+#include "pipeline/parse/python_adapter.h"
+#include "pipeline/pipeline.h"
 
 namespace mindspore {
 namespace parallel {

@@ -23,8 +23,8 @@
 #include <string>
 #include <vector>
 #include "parallel/status.h"
-#include "parallel/tensor_layout/array.h"
 #include "parallel/tensor_layout/arrangement.h"
+#include "parallel/tensor_layout/array.h"
 
 namespace mindspore {
 namespace parallel {

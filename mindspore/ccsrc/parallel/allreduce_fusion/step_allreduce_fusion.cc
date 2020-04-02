@@ -17,12 +17,12 @@
 #include "parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include <ctime>
 #include <string>
-#include "utils/log_adapter.h"
-#include "parallel/status.h"
-#include "parallel/context.h"
 #include "optimizer/optimizer.h"
 #include "parallel/allreduce_fusion/allreduce_fusion.h"
+#include "parallel/context.h"
 #include "parallel/graph_util/graph_info.h"
+#include "parallel/status.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {

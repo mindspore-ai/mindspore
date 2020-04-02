@@ -17,8 +17,8 @@
 #include "parallel/auto_parallel/dp_algo_costmodel.h"
 
 #include <memory>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace mindspore {
 namespace parallel {

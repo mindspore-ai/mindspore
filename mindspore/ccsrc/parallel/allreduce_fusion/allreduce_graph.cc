@@ -17,9 +17,9 @@
 #include "parallel/allreduce_fusion/allreduce_graph.h"
 #include <algorithm>
 #include <functional>
-#include "utils/log_adapter.h"
 #include "ir/anf.h"
 #include "parallel/allreduce_fusion/allreduce_node.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {

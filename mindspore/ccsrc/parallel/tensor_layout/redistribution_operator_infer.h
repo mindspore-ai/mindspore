@@ -18,13 +18,13 @@
 #define MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_REDISTRIBUTION_OPERATOR_INFER_H_
 
 #include <algorithm>
-#include <unordered_map>
 #include <string>
-#include <vector>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
-#include "parallel/tensor_layout/redistribution_layout_transfer.h"
 #include "parallel/tensor_layout/construct_operator.h"
+#include "parallel/tensor_layout/redistribution_layout_transfer.h"
 #include "utils/convert_utils.h"
 namespace mindspore {
 namespace parallel {

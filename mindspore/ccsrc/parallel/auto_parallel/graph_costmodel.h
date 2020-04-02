@@ -17,17 +17,17 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_GRAPH_COSTMODEL_H_
 #define MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_GRAPH_COSTMODEL_H_
 
-#include <memory>
-#include <vector>
 #include <map>
-#include <utility>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 #include "../../common.h"
 #include "common/utils.h"
-#include "parallel/ops_info/operator_info.h"
 #include "parallel/auto_parallel/edge_costmodel.h"
-#include "parallel/ops_info/tmp_identity_info.h"
 #include "parallel/costmodel_context.h"
+#include "parallel/ops_info/operator_info.h"
+#include "parallel/ops_info/tmp_identity_info.h"
 
 namespace mindspore {
 namespace parallel {

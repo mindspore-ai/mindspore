@@ -18,16 +18,16 @@
 
 #include <algorithm>
 #include <functional>
-#include <vector>
-#include <utility>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "ir/value.h"
+#include "parallel/auto_parallel/graph_costmodel.h"
+#include "parallel/device_manager.h"
 #include "parallel/device_matrix.h"
 #include "parallel/tensor_layout/tensor_redistribution.h"
-#include "parallel/device_manager.h"
-#include "parallel/auto_parallel/graph_costmodel.h"
 
 namespace mindspore {
 namespace parallel {

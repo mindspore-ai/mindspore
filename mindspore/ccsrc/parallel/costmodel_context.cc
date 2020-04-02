@@ -18,8 +18,8 @@
 
 #include <memory>
 
-#include "parallel/auto_parallel/graph_costmodel.h"
 #include "parallel/allreduce_fusion/allreduce_fusion.h"
+#include "parallel/auto_parallel/graph_costmodel.h"
 
 namespace mindspore {
 namespace parallel {
