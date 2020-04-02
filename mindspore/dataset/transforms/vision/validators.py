@@ -325,7 +325,7 @@ def check_random_crop(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        args = (list(args) + 4 * [None])[:5]
+        args = (list(args) + 5 * [None])[:5]
         size, padding, pad_if_needed, fill_value, padding_mode = args
 
         if "size" in kwargs:
