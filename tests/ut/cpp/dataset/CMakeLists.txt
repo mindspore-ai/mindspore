@@ -32,7 +32,7 @@ SET(DE_UT_SRCS
     project_op_test.cc
     queue_test.cc
     random_crop_op_test.cc
-    random_crop_decode_resizeOp_test.cc
+    random_crop_decode_resize_op_test.cc
     random_crop_and_resize_op_test.cc
     random_color_adjust_op_test.cc
     random_horizontal_flip_op_test.cc

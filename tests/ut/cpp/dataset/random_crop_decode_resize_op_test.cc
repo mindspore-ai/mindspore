@@ -23,9 +23,10 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
+constexpr double kMseThreshold = 2.0;
 
 class MindDataTestRandomCropDecodeResizeOp : public UT::CVOP::CVOpCommon {
  public:
@@ -33,39 +34,38 @@ class MindDataTestRandomCropDecodeResizeOp : public UT::CVOP::CVOpCommon {
 };
 
 TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
-  MS_LOG(INFO) << "Doing testRandomCropDecodeResizeOp Test";
+  MS_LOG(INFO) << "starting RandomCropDecodeResizeOp test 1";
 
-  std::shared_ptr<Tensor> output_tensor1;
-  std::shared_ptr<Tensor> output_tensor2;
+  std::shared_ptr<Tensor> decode_and_crop_output;
+  std::shared_ptr<Tensor> crop_and_decode_output;
 
-  int target_height = 884;
-  int target_width = 718;
-  float scale_lb = 0.08;
-  float scale_ub = 1.0;
-  float aspect_lb = 0.75;
-  float aspect_ub = 1.333333;
-  InterpolationMode interpolation = InterpolationMode::kLinear;
-  uint32_t max_iter = 10;
-  std::unique_ptr<RandomCropAndResizeOp> op1(new RandomCropAndResizeOp(
-    target_height, target_width, scale_lb, scale_ub, aspect_lb, aspect_ub, interpolation, max_iter));
-  EXPECT_TRUE(op1->OneToOne());
-  std::unique_ptr<RandomCropDecodeResizeOp> op2(new RandomCropDecodeResizeOp(
-    target_height, target_width, scale_lb, scale_ub, aspect_lb, aspect_ub, interpolation, max_iter));
-  EXPECT_TRUE(op2->OneToOne());
-  Status s1, s2;
+  constexpr int target_height = 884;
+  constexpr int target_width = 718;
+  constexpr float scale_lb = 0.08;
+  constexpr float scale_ub = 1.0;
+  constexpr float aspect_lb = 0.75;
+  constexpr float aspect_ub = 1.333333;
+  const InterpolationMode interpolation = InterpolationMode::kLinear;
+  constexpr uint32_t max_iter = 10;
 
+  auto crop_and_decode = RandomCropDecodeResizeOp(target_height, target_width, scale_lb, scale_ub, aspect_lb, aspect_ub,
+                                                  interpolation, max_iter);
+  auto crop_and_decode_copy = crop_and_decode;
+  auto decode_and_crop = static_cast<RandomCropAndResizeOp>(crop_and_decode_copy);
+  EXPECT_TRUE(crop_and_decode.OneToOne());
+  GlobalContext::config_manager()->set_seed(42);
   for (int i = 0; i < 100; i++) {
-    s1 = op1->Compute(input_tensor_, &output_tensor1);
-    s2 = op2->Compute(raw_input_tensor_, &output_tensor2);
-    cv::Mat output1(target_height, target_width, CV_8UC3, output_tensor1->StartAddr());
-    cv::Mat output2(target_height, target_width, CV_8UC3, output_tensor2->StartAddr());
+    (void)crop_and_decode.Compute(raw_input_tensor_, &crop_and_decode_output);
+    (void)decode_and_crop.Compute(input_tensor_, &decode_and_crop_output);
+    cv::Mat output1(target_height, target_width, CV_8UC3, crop_and_decode_output->StartAddr());
+    cv::Mat output2(target_height, target_width, CV_8UC3, decode_and_crop_output->StartAddr());
     long int mse_sum = 0;
     long int count = 0;
     int a, b;
-    for (int i = 0; i < target_height; i++) {
-      for (int j = 0; j < target_width; j++) {
-        a = (int)output1.at<cv::Vec3b>(i, j)[1];
-        b = (int)output2.at<cv::Vec3b>(i, j)[1];
+    for (int j = 0; j < target_height; j++) {
+      for (int k = 0; k < target_width; k++) {
+        a = static_cast<int>(output1.at<cv::Vec3b>(i, j)[1]);
+        b = static_cast<int>(output2.at<cv::Vec3b>(i, j)[1]);
         mse_sum += sqrt((a - b) * (a - b));
         if (a != b) {
           count++;
@@ -73,24 +73,22 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp2) {
       }
     }
     double mse;
-    if (count > 0) {
-      mse = (double) mse_sum / count;
-    } else {
-      mse = mse_sum;
-    }
-    MS_LOG(DEBUG) << "mse: " << mse << std::endl;
+    mse = count > 0 ? static_cast<double>(mse_sum) / count : mse_sum;
+    MS_LOG(INFO) << "mse: " << mse << std::endl;
+    EXPECT_LT(mse, kMseThreshold);
   }
-  MS_LOG(INFO) << "MindDataTestRandomCropDecodeResizeOp end!";
+
+  MS_LOG(INFO) << "RandomCropDecodeResizeOp test 1 finished";
 }
 
 TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
-  MS_LOG(INFO) << "Doing MindDataTestRandomCropDecodeResizeOp";
-  const unsigned int h = 884;
-  const unsigned int w = 718;
-  const float scale_lb = 0.1;
-  const float scale_ub = 1;
-  const float aspect_lb = 0.1;
-  const float aspect_ub = 10;
+  MS_LOG(INFO) << "starting RandomCropDecodeResizeOp test 2";
+  constexpr int h = 884;
+  constexpr int w = 718;
+  constexpr float scale_lb = 0.1;
+  constexpr float scale_ub = 1;
+  constexpr float aspect_lb = 0.1;
+  constexpr float aspect_ub = 10;
 
   std::shared_ptr<Tensor> decoded, decoded_and_cropped, cropped_and_decoded;
   std::mt19937 rd;
@@ -98,14 +96,14 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
   std::uniform_real_distribution<float> rd_aspect(aspect_lb, aspect_ub);
   DecodeOp op(true);
   op.Compute(raw_input_tensor_, &decoded);
-  Status s1, s2;
+  Status crop_and_decode_status, decode_and_crop_status;
   float scale, aspect;
   int crop_width, crop_height;
   bool crop_success = false;
-  unsigned int mse_sum, m1, m2, count;
-  float mse;
+  int mse_sum, m1, m2, count;
+  double mse;
 
-  for (unsigned int k = 0; k < 100; ++k) {
+  for (int k = 0; k < 100; ++k) {
     mse_sum = 0;
     count = 0;
     for (auto i = 0; i < 100; i++) {
@@ -132,13 +130,13 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
     int y = rd_y(rd);
 
     op.Compute(raw_input_tensor_, &decoded);
-    s1 = Crop(decoded, &decoded_and_cropped, x, y, crop_width, crop_height);
-    s2 = JpegCropAndDecode(raw_input_tensor_, &cropped_and_decoded, x, y, crop_width, crop_height);
+    crop_and_decode_status = Crop(decoded, &decoded_and_cropped, x, y, crop_width, crop_height);
+    decode_and_crop_status = JpegCropAndDecode(raw_input_tensor_, &cropped_and_decoded, x, y, crop_width, crop_height);
     {
       cv::Mat M1(crop_height, crop_width, CV_8UC3, decoded_and_cropped->StartAddr());
       cv::Mat M2(crop_height, crop_width, CV_8UC3, cropped_and_decoded->StartAddr());
-      for (unsigned int i = 0; i < crop_height; ++i) {
-        for (unsigned int j = 0; j < crop_width; ++j) {
+      for (int i = 0; i < crop_height; ++i) {
+        for (int j = 0; j < crop_width; ++j) {
           m1 = M1.at<cv::Vec3b>(i, j)[1];
           m2 = M2.at<cv::Vec3b>(i, j)[1];
           mse_sum += sqrt((m1 - m2) * (m1 - m2));
@@ -149,8 +147,9 @@ TEST_F(MindDataTestRandomCropDecodeResizeOp, TestOp1) {
       }
     }
 
-    mse = (count == 0) ? mse_sum : static_cast<float>(mse_sum) / count;
-    MS_LOG(DEBUG) << "mse: " << mse << std::endl;
+    mse = count > 0 ? static_cast<double>(mse_sum) / count : mse_sum;
+    MS_LOG(INFO) << "mse: " << mse << std::endl;
+    EXPECT_LT(mse, kMseThreshold);
   }
-  MS_LOG(INFO) << "MindDataTestRandomCropDecodeResizeOp end!";
+  MS_LOG(INFO) << "RandomCropDecodeResizeOp test 2 finished";
 }
