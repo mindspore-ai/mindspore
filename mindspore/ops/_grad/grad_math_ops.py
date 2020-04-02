@@ -394,8 +394,8 @@ def _split_shape_index(input_shape, axis):
         axis = tuple([axis])
     reduction_indices = tuple([(i + rank) % rank for i in axis])
     other_indices = tuple(set(range(rank)) - set(reduction_indices))
-    reduced_num = reduce(lambda x, y: x * y, [input_shape[i] for i in reduction_indices])
-    other_num = reduce(lambda x, y: x * y, [input_shape[i] for i in other_indices])
+    reduced_num = reduce(lambda x, y: x * y, [1] + [input_shape[i] for i in reduction_indices])
+    other_num = reduce(lambda x, y: x * y, [1] + [input_shape[i] for i in other_indices])
     perm = reduction_indices + other_indices
     return tuple([reduced_num, other_num]), perm
 
