@@ -163,14 +163,9 @@ class CostGraph {
   void CreateTriangleEliminationCostList(const OperatorInfoPtr&, const CostPtrList&, const CostPtrList&,
                                          const StrategyPtr&, const StrategyPtr&, const StrategyPtr&, const CostPtrList&,
                                          const CostPtrList&, const CostPtrList&, CostPtrList*);
-  // Given the relevant costlist, create the TriangleElimination cost for eliminating TmpIdentityInfo
-  void CreateTriangleEliminationSubCostListForIdentity(StrategyPtr, StrategyPtr, StrategyPtr, const CostPtr&,
-                                                       const CostPtrList&, const CostPtrList&, const CostPtr&,
-                                                       const CostPtrList&, CostPtrList*);
-  // Given the relevant costlist, create the TriangleElimination cost for eliminating other operators
-  void CreateTriangleEliminationSubCostListForOthers(StrategyPtr, StrategyPtr, StrategyPtr, const CostPtr&,
-                                                     const CostPtrList&, const CostPtrList&, const CostPtr&,
-                                                     const CostPtrList&, CostPtrList*);
+  // Given the relevant costlist, create the TriangleElimination cost
+  void CreateTriangleEliminationSubCostList(StrategyPtr, StrategyPtr, StrategyPtr, const CostPtr&, const CostPtrList&,
+                                            const CostPtrList&, const CostPtr&, const CostPtrList&, CostPtrList*);
 
   // Applying the Star Elimination in DP algorithm. Return the successive edges of this merged_op
   // NOTE: this elimination MUST be performed only when the above 5 operation cannot be applied.
