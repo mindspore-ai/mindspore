@@ -87,11 +87,12 @@ using OptPassGroupMap = std::vector<std::pair<std::string, OptPassConfig>>;
 class Optimizer : public std::enable_shared_from_this<Optimizer> {
  public:
   Optimizer(const std::string &name, const pipeline::ResourceBasePtr &resource_ptr)
-      : name_(name), resource_(resource_ptr), run_only_once_(false) {}
+      : name_(name), resource_(resource_ptr), run_only_once_(false), is_watch_renormalize_(false) {}
   virtual ~Optimizer() = default;
 
   void Init(const OptPassGroupMap &passes, bool run_only_once) {
     run_only_once_ = run_only_once;
+    is_watch_renormalize_ = false;
 
     for (auto &iter : passes) {
       const std::string &name = iter.first;
@@ -118,9 +119,13 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   }
 
   static std::shared_ptr<Optimizer> MakeOptimizer(const std::string &name, const pipeline::ResourceBasePtr resource_ptr,
-                                                  const OptPassGroupMap &passes, bool run_only_once = false) {
+                                                  const OptPassGroupMap &passes, bool run_only_once = false,
+                                                  bool watch_renormalize = false) {
     OptimizerPtr optimizer = std::make_shared<Optimizer>(name, resource_ptr);
     optimizer->Init(passes, run_only_once);
+    if (watch_renormalize) {
+      optimizer->enable_watch_renormalize();
+    }
     return optimizer;
   }
 
@@ -138,7 +143,16 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
             if (opt.is_renormalize()) {
               auto resource_ptr = std::dynamic_pointer_cast<pipeline::Resource>(resource_);
               if (resource_ptr != nullptr) {
-                func_graph = pipeline::Renormalize(resource_ptr, func_graph, args_spec);
+                if (is_watch_renormalize_) {
+                  if (untyped_nodes_.size() > 0) {
+                    func_graph = pipeline::Renormalize(resource_ptr, func_graph, args_spec);
+                    clear_untyped_nodes();
+                  } else {
+                    MS_LOG(INFO) << "Optimizer::step: Skipping Renormalize because untyped_nodes_ is empty.";
+                  }
+                } else {
+                  func_graph = pipeline::Renormalize(resource_ptr, func_graph, args_spec);
+                }
               }
             } else if (opt(func_graph, shared_from_this())) {
               changes = true;
@@ -180,12 +194,26 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
 
   const std::string name() const { return name_; }
 
+  void add_node_to_renormalize(AnfNodePtr anode) {
+    if (std::find(untyped_nodes_.begin(), untyped_nodes_.end(), anode) == untyped_nodes_.end()) {
+      untyped_nodes_.push_back(anode);
+    }
+  }
+
+  void clear_untyped_nodes() { untyped_nodes_.clear(); }
+
+  void enable_watch_renormalize() { is_watch_renormalize_ = true; }
+  void disable_watch_renormalize() { is_watch_renormalize_ = false; }
+  bool is_watch_renormalize() { return is_watch_renormalize_; }
+
  private:
   const std::string name_;
   pipeline::ResourceBasePtr resource_;
   std::vector<OptPass> passes_;
   std::vector<std::string> pass_names_;
   bool run_only_once_;
+  std::vector<AnfNodePtr> untyped_nodes_;
+  bool is_watch_renormalize_;
 };
 }  // namespace opt
 }  // namespace mindspore
