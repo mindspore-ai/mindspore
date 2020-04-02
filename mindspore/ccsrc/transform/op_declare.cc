@@ -357,6 +357,11 @@ INPUT_MAP(AcosGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
 ATTR_MAP(AcosGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(AcosGrad) = {{0, OUTPUT_DESC(z)}};
 
+// Acosh
+INPUT_MAP(Acosh) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Acosh) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Acosh) = {{0, OUTPUT_DESC(y)}};
+
 // Floor
 INPUT_MAP(Floor) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Floor) = EMPTY_ATTR_MAP;
@@ -366,6 +371,11 @@ OUTPUT_MAP(Floor) = {{0, OUTPUT_DESC(y)}};
 INPUT_MAP(FloorDiv) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(FloorDiv) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(FloorDiv) = {{0, OUTPUT_DESC(y)}};
+
+// FloorMod
+INPUT_MAP(FloorMod) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(FloorMod) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(FloorMod) = {{0, OUTPUT_DESC(y)}};
 
 // Sin
 INPUT_MAP(Sin) = {{1, INPUT_DESC(x)}};
