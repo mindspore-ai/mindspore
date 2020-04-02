@@ -104,6 +104,7 @@ std::vector<std::string> splittable_op_ = {MATMUL,
                                            CAST,
                                            Neg,
                                            BATCH_MATMUL,
+                                           EXPAND_DIMS,
                                            SQUEEZE};
 
 std::vector<std::string> elementwise_op_ = {ACTIVATION, GELU, TANH, SOFTMAX, LOG_SOFTMAX, RELU, SQRT,
