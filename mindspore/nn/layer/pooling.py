@@ -58,7 +58,7 @@ class _PoolNd(Cell):
         pass
 
     def extend_repr(self):
-        return 'kernel_size={kernel_size}, stride={stride}, pad_mode={pad_mode}'.format(**self.__dict__)
+        return 'kernel_size={kernel_size}, strides={strides}, pad_mode={pad_mode}'.format(**self.__dict__)
 
 
 class MaxPool2d(_PoolNd):
