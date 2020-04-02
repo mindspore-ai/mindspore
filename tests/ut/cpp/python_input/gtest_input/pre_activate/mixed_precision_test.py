@@ -21,7 +21,7 @@ addn = P.AddN()
 add = P.TensorAdd()
 sub = P.Sub()
 mul = P.Mul()
-max_pool = P.MaxPoolWithArgmax(pad_mode="same", window=3, stride=2)
+max_pool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
 make_tuple = Primitive('make_tuple')
 cast = Primitive('Cast')
 

@@ -108,6 +108,7 @@ class ResidualBlock(nn.Cell):
 
 class VirtualLossGrad(PrimitiveWithInfer):
     """ VirtualLossGrad definition """
+
     @prim_attr_register
     def __init__(self):
         """init VirtualLossGrad"""
@@ -124,6 +125,7 @@ class VirtualLossGrad(PrimitiveWithInfer):
 
 class VirtualLoss(PrimitiveWithInfer):
     """ VirtualLoss definition """
+
     @prim_attr_register
     def __init__(self):
         """init VirtualLoss"""
@@ -138,6 +140,7 @@ class VirtualLoss(PrimitiveWithInfer):
             # pylint: disable=unused-argument
             dx = loss_grad(x, out, dout)
             return (dx,)
+
         return bprop
 
     def infer_shape(self, x_shape):
@@ -149,6 +152,7 @@ class VirtualLoss(PrimitiveWithInfer):
 
 class VirtualNetWithLoss(nn.Cell):
     """ VirtualNetWithLoss definition """
+
     def __init__(self, network):
         super(VirtualNetWithLoss, self).__init__()
         self.loss = VirtualLoss()
@@ -161,6 +165,7 @@ class VirtualNetWithLoss(nn.Cell):
 
 class SoftMaxGrad(nn.Cell):
     """ SoftMaxGrad definition """
+
     def __init__(self, network):
         super(SoftMaxGrad, self).__init__()
         self.network = network
@@ -171,6 +176,7 @@ class SoftMaxGrad(nn.Cell):
 
 class DropoutGrad(nn.Cell):
     """ DropoutGrad definition """
+
     def __init__(self, network):
         super(DropoutGrad, self).__init__()
         self.network = network
@@ -181,6 +187,7 @@ class DropoutGrad(nn.Cell):
 
 class ScalarSummaryNet(nn.Cell):
     """ ScalarSummaryNet definition """
+
     def __init__(self):
         super(ScalarSummaryNet, self).__init__()
         self.summary = P.ScalarSummary()
@@ -193,6 +200,7 @@ class ScalarSummaryNet(nn.Cell):
 
 class FusedBatchNormGrad(nn.Cell):
     """ FusedBatchNormGrad definition """
+
     def __init__(self, network):
         super(FusedBatchNormGrad, self).__init__()
         self.grad = C.GradOperation(name="get_all", get_all=True, sens_param=True)
@@ -204,6 +212,7 @@ class FusedBatchNormGrad(nn.Cell):
 
 class NetWithLoss(nn.Cell):
     """ NetWithLoss definition """
+
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
         self.loss = P.SmoothL1Loss()
@@ -216,6 +225,7 @@ class NetWithLoss(nn.Cell):
 
 class Grad(nn.Cell):
     """ GradWrap definition """
+
     def __init__(self, network):
         super(Grad, self).__init__()
         self.network = network
@@ -227,6 +237,7 @@ class Grad(nn.Cell):
 
 class BatchnormNet(nn.Cell):
     """ BatchnormNet definition """
+
     def __init__(self):
         super(BatchnormNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 4, kernel_size=8, stride=2, pad_mode="pad", padding=3)
@@ -247,6 +258,7 @@ class BatchnormNet(nn.Cell):
 
 class NetWithLossClass(nn.Cell):
     """ NetWithLossClass definition """
+
     def __init__(self, network):
         super(NetWithLossClass, self).__init__(auto_prefix=False)
         self.loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -259,12 +271,13 @@ class NetWithLossClass(nn.Cell):
 
 class BlockNet(nn.Cell):
     """ BlockNet definition """
+
     def __init__(self):
         super(BlockNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, pad_mode="pad", padding=3)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU()
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=0)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2)
         self.block_down_sample = ResidualBlock(
             64, 256, stride=1, down_sample=True
         )
@@ -281,6 +294,7 @@ class BlockNet(nn.Cell):
 
 class Conv2dWithBiasNet(nn.Cell):
     """ Conv2dWithBiasNet definition """
+
     def __init__(self):
         super(Conv2dWithBiasNet, self).__init__()
         self.conv = nn.Conv2d(3, 10, 1, bias_init='zeros')
@@ -292,6 +306,7 @@ class Conv2dWithBiasNet(nn.Cell):
 
 class Conv2dNativeNet(nn.Cell):
     """ Conv2dNativeNet definition """
+
     def __init__(self):
         super(Conv2dNativeNet, self).__init__()
         self.conv = P.DepthwiseConv2dNative(channel_multiplier=3, kernel_size=(3, 3))
@@ -309,9 +324,10 @@ class Conv2dNativeNet(nn.Cell):
 
 class MakeRefKeyNet(nn.Cell):
     """ MakeRefKeyNet definition """
+
     def __init__(self):
         super(MakeRefKeyNet, self).__init__()
-        self.y= Parameter(Tensor([1.0], mindspore.float32), name="y")
+        self.y = Parameter(Tensor([1.0], mindspore.float32), name="y")
 
     def construct(self, x):
         key = P.MakeRefKey("y")()
@@ -321,6 +337,7 @@ class MakeRefKeyNet(nn.Cell):
 
 class StateNet(nn.Cell):
     """ StateTestTensor definition """
+
     def __init__(self):
         super(StateNet, self).__init__()
         weight = Tensor(np.ones([2, 1, 2, 2], np.float32))
@@ -345,6 +362,24 @@ class ComparisonNet(nn.Cell):
     def construct(self, x, y):
         ret = x <= y
         return ret
+
+
+def test_max_pool_with_arg_max():
+    class NetMaxPoolWithArgMax(nn.Cell):
+        def __init__(self):
+            """ ComparisonNet definition """
+            super(NetMaxPoolWithArgMax, self).__init__()
+            self.max_pool_with_arg_max = P.MaxPoolWithArgmax(padding="valid", ksize=2, strides=1)
+
+        def construct(self, x):
+            ret = self.max_pool_with_arg_max(x)
+            return ret
+
+    x = Tensor(np.ones([1, 1, 3, 3], np.float32))
+    net = NetMaxPoolWithArgMax()
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    ret = net(x)
+    print(ret)
 
 
 test_cases = [
@@ -382,7 +417,7 @@ test_cases = [
         'desc_inputs': [Tensor(np.ones([1, 3, 8, 8], np.float32)), Tensor(np.zeros([1, 64, 4, 4], np.float32))],
     }),
     ('Conv2dWithBiasGrad', {
-        'block':  Grad(NetWithLossClass(Conv2dWithBiasNet())),
+        'block': Grad(NetWithLossClass(Conv2dWithBiasNet())),
         'desc_inputs': [Tensor(np.ones([1, 3, 16, 16], np.float32)), Tensor(np.zeros([1, 2560], np.float32))],
     }),
     ('Conv2dNativeGrad', {
@@ -407,114 +442,93 @@ test_cases = [
     }),
 ]
 
-
 test_cases_for_verify_exception = [
     ('Conv2d_ValueError_1', {
-        'block': (lambda _ : P.Conv2D(3, 4, mode=-2.0), {'exception': ValueError}),
+        'block': (lambda _: P.Conv2D(3, 4, mode=-2.0), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('Conv2d_ValueError_2', {
-        'block': (lambda _ : P.Conv2D(3, 4, mode=-2), {'exception': ValueError}),
+        'block': (lambda _: P.Conv2D(3, 4, mode=-2), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('MaxPoolWithArgmax_ValueError_1', {
-        'block': (lambda _ : P.MaxPoolWithArgmax(pad_mode='sane'), {'exception': ValueError}),
+        'block': (lambda _: P.MaxPoolWithArgmax(padding='sane'), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('MaxPoolWithArgmax_ValueError_2', {
-        'block': (lambda _ : P.MaxPoolWithArgmax(data_mode=2), {'exception': ValueError}),
+        'block': (lambda _: P.MaxPoolWithArgmax(ksize='1'), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('MaxPoolWithArgmax_ValueError_3', {
-        'block': (lambda _ : P.MaxPoolWithArgmax(ceil_mode=2), {'exception': ValueError}),
+        'block': (lambda _: P.MaxPoolWithArgmax(ksize=-2), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('MaxPoolWithArgmax_ValueError_4', {
-        'block': (lambda _ : P.MaxPoolWithArgmax(pad_mode="pad", pad=-1), {'exception': ValueError}),
-        'desc_inputs': [0],
-    }),
-    ('MaxPoolWithArgmax_ValueError_5', {
-        'block': (lambda _ : P.MaxPoolWithArgmax(pad_mode="pad", pad='1'), {'exception': ValueError}),
-        'desc_inputs': [0],
-    }),
-    ('MaxPoolWithArgmax_ValueError_6', {
-        'block': (lambda _ : P.MaxPoolWithArgmax(window='1'), {'exception': ValueError}),
-        'desc_inputs': [0],
-    }),
-    ('MaxPoolWithArgmax_ValueError_7', {
-        'block': (lambda _ : P.MaxPoolWithArgmax(window=-2), {'exception': ValueError}),
-        'desc_inputs': [0],
-    }),
-    ('MaxPoolWithArgmax_ValueError_8', {
-        'block': (lambda _ : P.MaxPoolWithArgmax(stride=-1), {'exception': ValueError}),
-        'desc_inputs': [0],
-    }),
-    ('MaxPoolWithArgmax_ValueError_9', {
-        'block': (lambda _ : P.MaxPoolWithArgmax(alpha='1'), {'exception': ValueError}),
+        'block': (lambda _: P.MaxPoolWithArgmax(strides=-1), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('FusedBatchNorm_ValueError_1', {
-        'block': (lambda _ : P.FusedBatchNorm(mode="1", epsilon=1e-5, momentum=0.1), {'exception': ValueError}),
+        'block': (lambda _: P.FusedBatchNorm(mode="1", epsilon=1e-5, momentum=0.1), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('FusedBatchNorm_ValueError_2', {
-        'block': (lambda _ : P.FusedBatchNorm(mode=2, epsilon=1e-5, momentum=0.1), {'exception': ValueError}),
+        'block': (lambda _: P.FusedBatchNorm(mode=2, epsilon=1e-5, momentum=0.1), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('FusedBatchNorm_ValueError_3', {
-        'block': (lambda _ : P.FusedBatchNorm(mode=0, epsilon=-1e-5, momentum=0.1), {'exception': ValueError}),
+        'block': (lambda _: P.FusedBatchNorm(mode=0, epsilon=-1e-5, momentum=0.1), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('FusedBatchNorm_ValueError_4', {
-        'block': (lambda _ : P.FusedBatchNorm(mode=0, epsilon=1e-5, momentum=-0.1), {'exception': ValueError}),
+        'block': (lambda _: P.FusedBatchNorm(mode=0, epsilon=1e-5, momentum=-0.1), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('FusedBatchNorm_ValueError_5', {
-        'block': (lambda _ : P.FusedBatchNorm(mode=1, epsilon=-0.001, momentum=0.0), {'exception': ValueError}),
+        'block': (lambda _: P.FusedBatchNorm(mode=1, epsilon=-0.001, momentum=0.0), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('Softmax_ValueError_1', {
-        'block': (lambda _ : P.Softmax("1"), {'exception': ValueError}),
+        'block': (lambda _: P.Softmax("1"), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('Softmax_ValueError_2', {
-        'block': (lambda _ : P.Softmax(1.1), {'exception': ValueError}),
+        'block': (lambda _: P.Softmax(1.1), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('Softmax_ValueError_3', {
-        'block': (lambda _ : P.Softmax(axis="1"), {'exception': ValueError}),
+        'block': (lambda _: P.Softmax(axis="1"), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('DropoutGenMask_ValueError_1', {
-        'block': (lambda _ : P.DropoutGenMask(Seed0="seed0"), {'exception': ValueError}),
+        'block': (lambda _: P.DropoutGenMask(Seed0="seed0"), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('DropoutGenMask_ValueError_2', {
-        'block': (lambda _ : P.DropoutGenMask(Seed0=1.0), {'exception': ValueError}),
+        'block': (lambda _: P.DropoutGenMask(Seed0=1.0), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('DropoutGenMask_ValueError_3', {
-        'block': (lambda _ : P.DropoutGenMask(Seed1="seed1"), {'exception': ValueError}),
+        'block': (lambda _: P.DropoutGenMask(Seed1="seed1"), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('DropoutGenMask_ValueError_4', {
-        'block': (lambda _ : P.DropoutGenMask(Seed1=2.0), {'exception': ValueError}),
+        'block': (lambda _: P.DropoutGenMask(Seed1=2.0), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('MaxPool2d_ValueError_1', {
-        'block': (nn.MaxPool2d(kernel_size=120, stride=1, pad_mode="valid", padding=0), {'exception': ValueError}),
+        'block': (nn.MaxPool2d(kernel_size=120, stride=1, pad_mode="valid"), {'exception': ValueError}),
         'desc_inputs': [Tensor(np.random.randn(32, 3, 112, 112).astype(np.float32).transpose(0, 3, 1, 2))],
     }),
     ('MaxPool2d_ValueError_2', {
         'block': (
-            lambda _ : nn.MaxPool2d(kernel_size=120, stride=True, pad_mode="valid", padding=0),
+            lambda _: nn.MaxPool2d(kernel_size=120, stride=True, pad_mode="valid"),
             {'exception': ValueError},
         ),
         'desc_inputs': [Tensor(np.random.randn(32, 3, 112, 112).astype(np.float32).transpose(0, 3, 1, 2))],
     }),
     ('MaxPool2d_ValueError_3', {
         'block': (
-            lambda _ : nn.MaxPool2d(kernel_size=3, stride=True, pad_mode="valid", padding=0),
+            lambda _: nn.MaxPool2d(kernel_size=3, stride=True, pad_mode="valid"),
             {'exception': ValueError},
         ),
         'desc_inputs': [Tensor(np.random.randn(32, 3, 112, 112).astype(np.float32).transpose(0, 3, 1, 2))],
@@ -532,4 +546,3 @@ def test_compile():
 @mindspore_test(pipeline_for_verify_exception_for_case_by_case_config)
 def test_check_exception():
     return test_cases_for_verify_exception
-

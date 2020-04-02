@@ -192,8 +192,7 @@ ATTR_MAP(PRelu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(PRelu) = {{0, OUTPUT_DESC(y)}};
 
 // PReluGrad
-INPUT_MAP(PReluGrad) = {
-  {1, INPUT_DESC(grads)}, {2, INPUT_DESC(features)}, {3, INPUT_DESC(weights)}};
+INPUT_MAP(PReluGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(features)}, {3, INPUT_DESC(weights)}};
 ATTR_MAP(PReluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(PReluGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(da)}};
 
@@ -702,24 +701,30 @@ ATTR_MAP(AvgPoolGrad) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<
 OUTPUT_MAP(AvgPoolGrad) = {{0, OUTPUT_DESC(out_grad)}};
 
 // MaxPoolWithArgmax
+INPUT_MAP(MaxPoolWithArgmax) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MaxPoolWithArgmax) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                               {"strides", ATTR_DESC(strides, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                               {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPoolWithArgmax) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
+
+// MaxPoolGradWithArgmax
 INPUT_MAP(MaxPoolGradWithArgmax) = {
   {1, INPUT_DESC(x)},
-  {2, INPUT_DESC(argmax)},
-  {3, INPUT_DESC(grad)},
+  {2, INPUT_DESC(grad)},
+  {3, INPUT_DESC(argmax)},
 };
-ATTR_MAP(MaxPoolGradWithArgmax) = {{"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
-                                   {"window", ATTR_DESC(ksize, "window", AnyTraits<std::vector<int64_t>>())},
-                                   {"stride", ATTR_DESC(strides, "stride", AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(MaxPoolGradWithArgmax) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                   {"strides", ATTR_DESC(strides, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                   {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPoolGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2D
 INPUT_MAP(Conv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
-ATTR_MAP(Conv2D) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
-  {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
-  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())}
-};
+ATTR_MAP(Conv2D) = {{"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+                    {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+                    {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+                    {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+                    {"group", ATTR_DESC(groups, AnyTraits<int>())}};
 OUTPUT_MAP(Conv2D) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2DBackpropInputD
@@ -731,8 +736,7 @@ ATTR_MAP(Conv2DBackpropInputD) = {
   {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
   {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())}
-};
+  {"group", ATTR_DESC(groups, AnyTraits<int>())}};
 OUTPUT_MAP(Conv2DBackpropInputD) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2DBackpropFilterD
@@ -744,8 +748,7 @@ ATTR_MAP(Conv2DBackpropFilterD) = {
   {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
   {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())}
-};
+  {"group", ATTR_DESC(groups, AnyTraits<int>())}};
 OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
 
 // DepthwiseConv2D
