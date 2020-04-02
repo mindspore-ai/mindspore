@@ -65,7 +65,7 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      SmoothL1Loss, Softmax,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
-                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl)
+                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrlD)
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey
 
 
@@ -217,6 +217,7 @@ __all__ = [
     "Abs",
     "BinaryCrossEntropy",
     "SparseApplyAdagrad",
+    "SparseApplyFtrlD",
     "SpaceToDepth",
     "DepthToSpace",
     "Conv2DBackpropInput",
