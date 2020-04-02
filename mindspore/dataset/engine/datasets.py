@@ -395,7 +395,7 @@ class Dataset:
         Note:
             The order of using repeat and batch reflects the number of batches. Recommend that
             repeat operation should be used after batch operation.
-            If dataset_sink_mode is False (feed mode), here repeat operation is invalid.
+            If dataset_sink_mode is False, here repeat operation is invalid.
 
         Args:
             count (int): Number of times the dataset should be repeated (default=None).
