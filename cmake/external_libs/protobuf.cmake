@@ -1,22 +1,23 @@
-mindspore_add_pkg(protobuf
-        VER 3.8.0
-        HEAD_ONLY ./
-        URL https://github.com/protocolbuffers/protobuf/archive/v3.8.0.tar.gz
-        MD5 3d9e32700639618a4d2d342c99d4507a)
-
-set(protobuf_BUILD_TESTS OFF CACHE BOOL "Disable protobuf test")
-set(protobuf_BUILD_SHARED_LIBS OFF CACHE BOOL "Gen shared library")
+set(protobuf_USE_STATIC_LIBS ON)
+set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
+set(protobuf_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 set(_ms_tmp_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-
+set(CMAKE_CXX_FLAGS ${_ms_tmp_CMAKE_CXX_FLAGS})
 string(REPLACE " -Wall" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 string(REPLACE " -Werror" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-add_subdirectory(${protobuf_DIRPATH}/cmake ${protobuf_DIRPATH}/build)
 
-set(CMAKE_CXX_FLAGS ${_ms_tmp_CMAKE_CXX_FLAGS})
+mindspore_add_pkg(protobuf
+        VER 3.8.0
+        LIBS protobuf
+        EXE protoc
+        URL https://github.com/protocolbuffers/protobuf/archive/v3.8.0.tar.gz
+        MD5 3d9e32700639618a4d2d342c99d4507a
+        CMAKE_PATH cmake/
+        CMAKE_OPTION -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF)
 
-set(PROTOBUF_LIBRARY protobuf::libprotobuf)
-include_directories(${protobuf_DIRPATH}/src)
-add_library(mindspore::protobuf ALIAS libprotobuf)
+include_directories(${protobuf_INC})
+add_library(mindspore::protobuf ALIAS protobuf::protobuf)
+set(CMAKE_CXX_FLAGS  ${_ms_tmp_CMAKE_CXX_FLAGS})
 
 function(ms_protobuf_generate c_var h_var)
     if(NOT ARGN)

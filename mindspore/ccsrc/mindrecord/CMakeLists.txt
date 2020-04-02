@@ -26,7 +26,7 @@ set_target_properties(_c_mindrecord PROPERTIES
     )
 
 # add link library
-target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY} mindspore mindspore_gvar protobuf::libprotobuf)
+target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY} mindspore mindspore_gvar mindspore::protobuf)
 
 if (USE_GLOG)
     target_link_libraries(_c_mindrecord PRIVATE mindspore::glog)

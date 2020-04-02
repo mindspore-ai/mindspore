@@ -76,7 +76,7 @@ set_target_properties(_c_dataengine PROPERTIES
 
 ################# Link with external libraries ########################
 target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
-target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl protobuf::libprotobuf ${SECUREC_LIBRARY})
+target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl mindspore::protobuf ${SECUREC_LIBRARY})
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::opencv_core mindspore::opencv_imgcodecs
         mindspore::opencv_imgproc)
 if (ENABLE_GPUQUE)

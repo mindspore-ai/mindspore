@@ -157,10 +157,9 @@ file(GLOB_RECURSE MEM_REUSE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 if(NOT ENABLE_DUMP_E2E)
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "debug/e2e_dump.cc")
 endif()
-
 file(COPY "${ms_onnx_INC}/onnx/onnx.proto" DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE ONNX_PROTO RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/onnx.proto")
-message(“onnx proto path is : ${ONNX_PROTO}”)
+message("onnx proto path is : ${ONNX_PROTO}")
 ms_protobuf_generate(ONNX_PROTO_SRCS ONNX_PROTO_HDRS ${ONNX_PROTO})
 list(APPEND MINDSPORE_PROTO_LIST ${ONNX_PROTO_SRCS})
 
@@ -319,7 +318,7 @@ target_link_libraries(mindspore dl)
 target_link_libraries(mindspore mindspore::flatbuffers)
 # link protobuf
 if (ENABLE_D)
-    target_link_libraries(mindspore protobuf::libprotobuf)
+    target_link_libraries(mindspore mindspore::protobuf)
 endif()
 
 # set c_expression building
@@ -464,7 +463,7 @@ if(ENABLE_GPU)
 endif()
 
 if(ENABLE_DUMP_PROTO)
-    target_link_libraries(_c_expression PRIVATE protobuf::libprotobuf)
+    target_link_libraries(_c_expression PRIVATE mindspore::protobuf)
 endif()
 
 if(ENABLE_GPU)

@@ -4,4 +4,4 @@ add_library(engine-tdt OBJECT
     ${FEATURE_SRCS}
     )
 
-add_dependencies(engine-tdt protobuf::libprotobuf)
+add_dependencies(engine-tdt mindspore::protobuf)
