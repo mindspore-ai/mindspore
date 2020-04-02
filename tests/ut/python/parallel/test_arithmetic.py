@@ -13,14 +13,13 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
+import mindspore as ms
+from mindspore import Parameter, Tensor, context
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
-import mindspore as ms
-from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.common.api import _executor
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class NetWithLoss(nn.Cell):
@@ -470,3 +469,30 @@ def test_matmul_floordiv_broadcast2():
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
     b = Tensor(np.ones([1, 64]), dtype=ms.float32)
     _executor.compile(net, x, y, b)
+
+
+def test_assign_sub():
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.assign_sub = P.AssignSub()
+            self.mul = P.Mul()
+            self.mul_weight = Parameter(Tensor(np.full([128, 32],
+                                        0.5, dtype=np.float32)),
+                                        name="mul_weight")
+            self.assignsub_weight = Parameter(Tensor(np.full([128, 32],
+                                              1.1, dtype=np.float32)),
+                                              name="assignsub_weight")
+
+        def construct(self, x, y, z):
+            out = self.mul(x, self.mul_weight)
+            out = self.assign_sub(self.assignsub_weight, out)
+            return out
+
+    context.set_auto_parallel_context(device_num=64, global_rank=15)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net = GradWrap(NetWithLoss(Net()))
+    x = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    y = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    z = Tensor(np.ones([128, 32]), dtype=ms.float32)
+    _executor.compile(net, x, y, z)
