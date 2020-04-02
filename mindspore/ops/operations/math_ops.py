@@ -140,6 +140,7 @@ class AssignAdd(PrimitiveWithInfer):
     Examples:
         >>> class Net(Cell):
         >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
         >>>         self.AssignAdd = P.AssignAdd()
         >>>         self.inputdata = Parameter(initializer(1, [1], mindspore.int64), name="global_step")
         >>>
@@ -272,7 +273,7 @@ class ReduceMean(_Reduce):
 
     Examples:
         >>> data = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> op = ReduceMean(keep_dims=True)
+        >>> op = P.ReduceMean(keep_dims=True)
         >>> output = op(data, 1)
     """
 
@@ -304,7 +305,7 @@ class ReduceSum(_Reduce):
 
     Examples:
         >>> data = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> op = ReduceSum(keep_dims=True)
+        >>> op = P.ReduceSum(keep_dims=True)
         >>> output = op(data, 1)
     """
 
@@ -337,7 +338,7 @@ class ReduceAll(_Reduce):
 
     Examples:
         >>> data = Tensor(np.array([[True, False], [True, True]]))
-        >>> op = ReduceAll(keep_dims=True)
+        >>> op = P.ReduceAll(keep_dims=True)
         >>> output = op(data, 1)
     """
 
@@ -373,7 +374,7 @@ class ReduceMax(_Reduce):
 
     Examples:
         >>> data = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> op = ReduceMax(keep_dims=True)
+        >>> op = P.ReduceMax(keep_dims=True)
         >>> output = op(data, 1)
     """
 
@@ -406,7 +407,7 @@ class ReduceMin(_Reduce):
 
     Examples:
         >>> data = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> op = ReduceMin(keep_dims=True)
+        >>> op = P.ReduceMin(keep_dims=True)
         >>> output = op(data, 1)
     """
 
@@ -438,7 +439,7 @@ class ReduceProd(_Reduce):
 
     Examples:
         >>> data = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> op = ReduceProd(keep_dims=True)
+        >>> op = P.ReduceProd(keep_dims=True)
         >>> output = op(data, 1)
     """
 
@@ -460,13 +461,13 @@ class CumProd(PrimitiveWithInfer):
 
     Examples:
         >>> data = Tensor(np.array([a, b, c]).astype(np.float32))
-        >>> op0 = CumProd()
+        >>> op0 = P.CumProd()
         >>> output = op0(data, 0) # output=[a, a * b, a * b * c]
-        >>> op1 = CumProd(exclusive=True)
+        >>> op1 = P.CumProd(exclusive=True)
         >>> output = op1(data, 0) # output=[1, a, a * b]
-        >>> op2 = CumProd(reverse=True)
+        >>> op2 = P.CumProd(reverse=True)
         >>> output = op2(data, 0) # output=[a * b * c, b * c, c]
-        >>> op3 = CumProd(exclusive=True, reverse=True)
+        >>> op3 = P.CumProd(exclusive=True, reverse=True)
         >>> output = op3(data, 0) # output=[b * c, c, 1]
     """
     @prim_attr_register
@@ -506,7 +507,7 @@ class MatMul(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.ones(shape=[1, 3]), mindspore.float32)
         >>> input_y = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
-        >>> matmul = MatMul()
+        >>> matmul = P.MatMul()
         >>> output = matmul(input_x, input_y)
     """
 
@@ -582,12 +583,12 @@ class BatchMatMul(MatMul):
     Examples:
         >>> input_x = Tensor(np.ones(shape=[2, 4, 1, 3]), mindspore.float32)
         >>> input_y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
-        >>> batmatmul = BatchMatMul()
+        >>> batmatmul = P.BatchMatMul()
         >>> output = batmatmul(input_x, input_y)
         >>>
         >>> input_x = Tensor(np.ones(shape=[2, 4, 3, 1]), mindspore.float32)
         >>> input_y = Tensor(np.ones(shape=[2, 4, 3, 4]), mindspore.float32)
-        >>> batmatmul = BatchMatMul(transpose_a=True)
+        >>> batmatmul = P.BatchMatMul(transpose_a=True)
         >>> output = batmatmul(input_x, input_y)
     """
 
@@ -621,7 +622,7 @@ class CumSum(PrimitiveWithInfer):
 
     Examples:
         >>> input = Tensor(np.array([[3, 4, 6, 10],[1, 6, 7, 9],[4, 3, 8, 7],[1, 3, 7, 9]]).astype(np.float32))
-        >>> cumsum = CumSum()
+        >>> cumsum = P.CumSum()
         >>> output = cumsum(input, 1)
         [[ 3.  7. 13. 23.]
          [ 1.  7. 14. 23.]
@@ -666,7 +667,7 @@ class AddN(PrimitiveWithInfer):
         >>> class NetAddN(nn.Cell):
         >>>     def __init__(self):
         >>>         super(NetAddN, self).__init__()
-        >>>         self.addN = AddN()
+        >>>         self.addN = P.AddN()
         >>>
         >>>     def construct(self, *z):
         >>>         return self.addN(z)
@@ -748,7 +749,7 @@ class Sub(_MathBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.int32)
-        >>> sub = Sub()
+        >>> sub = P.Sub()
         >>> sub(input_x, input_y)
         [-3, -3, -3]
     """
@@ -775,7 +776,7 @@ class Mul(_MathBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.int32)
-        >>> mul = Mul()
+        >>> mul = P.Mul()
         >>> mul(input_x, input_y)
         [4, 10, 18]
     """
@@ -793,7 +794,7 @@ class Square(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-        >>> square = Square()
+        >>> square = P.Square()
         >>> square(input_x)
         [1.0, 4.0, 9.0]
     """
@@ -823,7 +824,7 @@ class Rsqrt(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor([[4, 4], [9, 9]], mindspore.float32)
-        >>> rsqrt = Rsqrt()
+        >>> rsqrt = P.Rsqrt()
         >>> rsqrt(input_tensor)
         [[0.5, 0.5], [0.333333, 0.333333]]
     """
@@ -853,7 +854,7 @@ class Sqrt(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
-        >>> sqrt = Sqrt()
+        >>> sqrt = P.Sqrt()
         >>> sqrt(input_x)
         [1.0, 2.0, 3.0]
     """
@@ -883,7 +884,7 @@ class Reciprocal(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-        >>> reciprocal = Reciprocal()
+        >>> reciprocal = P.Reciprocal()
         >>> reciprocal(input_x)
         [1.0, 0.5, 0.25]
     """
@@ -916,13 +917,13 @@ class Pow(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> input_y = 3.0
-        >>> pow = Pow()
+        >>> pow = P.Pow()
         >>> pow(input_x, input_y)
         [1.0, 8.0, 64.0]
         >>>
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
-        >>> pow = Pow()
+        >>> pow = P.Pow()
         >>> pow(input_x, input_y)
         [1.0, 16.0, 64.0]
     """
@@ -952,7 +953,7 @@ class Exp(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-        >>> exp = Exp()
+        >>> exp = P.Exp()
         >>> exp(input_x)
         [ 2.71828183,  7.3890561 , 54.59815003]
     """
@@ -982,7 +983,7 @@ class Log(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
-        >>> log = Log()
+        >>> log = P.Log()
         >>> log(input_x)
         [0.0, 0.69314718, 1.38629436]
     """
@@ -1020,7 +1021,7 @@ class Minimum(_MathBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-        >>> minimum = Minimum()
+        >>> minimum = P.Minimum()
         >>> minimum(input_x, input_y)
         [1.0, 2.0, 3.0]
     """
@@ -1047,7 +1048,7 @@ class Maximum(_MathBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([4.0, 2.0, 6.0]), mindspore.float32)
-        >>> maximum = Maximum()
+        >>> maximum = P.Maximum()
         >>> maximum(input_x, input_y)
         [4.0, 5.0, 6.0]
     """
@@ -1074,7 +1075,7 @@ class RealDiv(_MathBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
-        >>> realdiv = RealDiv()
+        >>> realdiv = P.RealDiv()
         >>> realdiv(input_x, input_y)
         [0.25, 0.4, 0.5]
     """
@@ -1113,9 +1114,8 @@ class Div(_MathBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([-4.0, 5.0, 6.0]), mindspore.float32)
         >>> input_y = Tensor(np.array([3.0, 2.0, 3.0]), mindspore.float32)
-        >>> div = Div()
+        >>> div = P.Div()
         >>> div(input_x, input_y)
-        [-2.0, 2.0, 2.0]
     """
 
     def infer_value(self, x, y):
@@ -1147,7 +1147,7 @@ class FloorDiv(_MathBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
-        >>> floor_div = FloorDiv()
+        >>> floor_div = P.FloorDiv()
         >>> floor_div(input_x, input_y)
         [0, 1, -1]
     """
@@ -1165,7 +1165,7 @@ class Floor(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
-        >>> floor = Floor()
+        >>> floor = P.Floor()
         >>> floor(input_x)
         [1.0, 2.0, -2.0]
     """
@@ -1277,13 +1277,13 @@ class Equal(_LogicBinaryOp):
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
-        >>> equal = Equal()
+        >>> equal = P.Equal()
         >>> equal(input_x, 2.0)
         [False, True, False]
         >>>
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 2, 4]), mindspore.int32)
-        >>> equal = Equal()
+        >>> equal = P.Equal()
         >>> equal(input_x, input_y)
         [True, True, False]
     """
@@ -1308,7 +1308,7 @@ class EqualCount(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 2, 4]), mindspore.int32)
-        >>> equal_count = EqualCount()
+        >>> equal_count = P.EqualCount()
         >>> equal_count(input_x, input_y)
         [2]
     """
@@ -1347,13 +1347,13 @@ class NotEqual(_LogicBinaryOp):
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
-        >>> not_equal = NotEqual()
+        >>> not_equal = P.NotEqual()
         >>> not_equal(input_x, 2.0)
         [True, False, True]
         >>>
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 2, 4]), mindspore.int32)
-        >>> not_equal = NotEqual()
+        >>> not_equal = P.NotEqual()
         >>> not_equal(input_x, input_y)
         [False, False, True]
     """
@@ -1383,7 +1383,7 @@ class Greater(_LogicBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> greater = Greater()
+        >>> greater = P.Greater()
         >>> greater(input_x, input_y)
         [False, True, False]
     """
@@ -1410,7 +1410,7 @@ class GreaterEqual(_LogicBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> greater_equal = GreaterEqual()
+        >>> greater_equal = P.GreaterEqual()
         >>> greater_equal(input_x, input_y)
         [True, True, False]
     """
@@ -1437,7 +1437,7 @@ class Less(_LogicBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> less = Less()
+        >>> less = P.Less()
         >>> less(input_x, input_y)
         [False, False, True]
     """
@@ -1464,7 +1464,7 @@ class LessEqual(_LogicBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 1, 4]), mindspore.int32)
-        >>> less_equal = LessEqual()
+        >>> less_equal = P.LessEqual()
         >>> less_equal(input_x, input_y)
         [True, False, True]
     """
@@ -1482,7 +1482,7 @@ class LogicalNot(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
-        >>> logical_not = LogicalNot()
+        >>> logical_not = P.LogicalNot()
         >>> logical_not(input_x)
         [False, True, False]
     """
@@ -1520,7 +1520,7 @@ class LogicalAnd(_LogicBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
         >>> input_y = Tensor(np.array([True, True, False]), mindspore.bool_)
-        >>> logical_and = LogicalAnd()
+        >>> logical_and = P.LogicalAnd()
         >>> logical_and(input_x, input_y)
         [True, False, False]
     """
@@ -1549,7 +1549,7 @@ class LogicalOr(_LogicBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([True, False, True]), mindspore.bool_)
         >>> input_y = Tensor(np.array([True, True, False]), mindspore.bool_)
-        >>> logical_or = LogicalOr()
+        >>> logical_or = P.LogicalOr()
         >>> logical_or(input_x, input_y)
         [True, True, True]
     """
@@ -1571,7 +1571,7 @@ class NPUAllocFloatStatus(PrimitiveWithInfer):
         Tensor, has the shape of `(8,)`.
 
     Examples:
-        >>> alloc_status = NPUAllocFloatStatus()
+        >>> alloc_status = P.NPUAllocFloatStatus()
         >>> init = alloc_status()
         Tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], shape=(8,), dtype=mindspore.float32)
     """
@@ -1603,8 +1603,8 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`. All the elements in the tensor will be zero.
 
     Examples:
-        >>> alloc_status = NPUAllocFloatStatus()
-        >>> get_status = NPUGetFloatStatus()
+        >>> alloc_status = P.NPUAllocFloatStatus()
+        >>> get_status = P.NPUGetFloatStatus()
         >>> init = alloc_status()
         >>> flag = get_status(init)
         Tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], shape=(8,), dtype=mindspore.float32)
@@ -1643,9 +1643,9 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`. All the elements in the tensor will be zero.
 
     Examples:
-        >>> alloc_status = NPUAllocFloatStatus()
-        >>> get_status = NPUGetFloatStatus()
-        >>> clear_status = NPUClearFloatStatus()
+        >>> alloc_status = P.NPUAllocFloatStatus()
+        >>> get_status = P.NPUGetFloatStatus()
+        >>> clear_status = P.NPUClearFloatStatus()
         >>> init = alloc_status()
         >>> flag = get_status(init)
         >>> clear = clear_status(init)
@@ -1679,7 +1679,7 @@ class Cos(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`.
 
     Examples:
-        >>> cos = Cos()
+        >>> cos = P.Cos()
         >>> X = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), ms.float32)
         >>> output = cos(X)
     """
@@ -1708,8 +1708,8 @@ class ACos(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`.
 
     Examples:
-        >>> acos = ACos()
-        >>> X = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), ms.float32)
+        >>> acos = P.ACos()
+        >>> X = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
         >>> output = acos(X)
     """
 
@@ -1737,9 +1737,9 @@ class Sin(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`.
 
     Examples:
-        >>> sin = Sin()
-        >>> X = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), ms.float32)
-        >>> output = sin(X)
+        >>> sin = P.Sin()
+        >>> input_x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), ms.float32)
+        >>> output = sin(input_x)
     """
 
     @prim_attr_register
@@ -1789,7 +1789,7 @@ class NMSWithMask(PrimitiveWithInfer):
         >>> bbox[:, 2] += bbox[:, 0]
         >>> bbox[:, 3] += bbox[:, 1]
         >>> inputs = Tensor(bbox)
-        >>> nms = NMSWithMask(0.5)
+        >>> nms = P.NMSWithMask(0.5)
         >>> output_boxes, indices, mask = nms(inputs)
     """
 
@@ -1824,7 +1824,7 @@ class Abs(PrimitiveWithInfer):
 
     Examples:
          >>> input_x = Tensor(np.array([-1.0, 1.0, 0.0]), mindspore.float32)
-         >>> abs = Abs()
+         >>> abs = P.Abs()
          >>> abs(input_x)
          [1.0, 1.0, 0.0]
     """
@@ -1867,7 +1867,7 @@ class Sign(PrimitiveWithInfer):
 
     Examples:
          >>> input_x = Tensor(np.array([[2.0, 0.0, -1.0]]), mindspore.float32)
-         >>> sign = Sign()
+         >>> sign = P.Sign()
          >>> output = sign(input_x)
          [[1.0, 0.0, -1.0]]
     """
@@ -1897,7 +1897,7 @@ class Round(PrimitiveWithInfer):
 
     Examples:
          >>> input_x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
-         >>> round = Round()
+         >>> round = P.Round()
          >>> round(input_x)
          [1.0, 2.0, 2.0, 2.0, -4.0]
     """
@@ -1932,7 +1932,7 @@ class Atan2(_MathBinaryOp):
     Examples:
          >>> input_x = Tensor(np.array([[0, 1]]), mstype.float32)
          >>> input_y = Tensor(np.array([[1, 1]]), mstype.float32)
-         >>> atan2 = Atan2()
+         >>> atan2 = P.Atan2()
          >>> atan2(input_x, input_y)
          [[0. 0.7853982]]
     """
