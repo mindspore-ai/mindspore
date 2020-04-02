@@ -12,21 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" vm_test """
-from mindspore.ops import Primitive
 
-scala_add = Primitive('scalar_add')
-scala_mul = Primitive('scalar_mul')
-scalar_gt = Primitive('scalar_gt')
-def scalar_add(x, y):
-    """Implement `scalar_add`."""
-    return scala_add(x, y)
+"""uadd_impl"""
+from mindspore.ops.composite import base
 
-def scalar_mul(x, y):
-    """Implement `scalar_mul`."""
-    return scala_mul(x, y)
+# uadd is a metagraph object which will return operation result regarding input
+# using ".register" decorator
+uadd = base.MultitypeFuncGraph("uadd")
 
-def test_if(x, y):
-    if scalar_gt(x, y):
-        return x
-    return y
+@uadd.register("Tensor")
+@uadd.register("Number")
+def _uadd_scala(x):
+    return x

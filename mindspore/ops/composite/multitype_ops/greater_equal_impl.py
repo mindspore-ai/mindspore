@@ -13,41 +13,41 @@
 # limitations under the License.
 # ============================================================================
 
-"""equal_impl"""
+"""greater_equal_impl"""
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 
-# less is a metafuncgraph object which will determine if two objects are less according to input type
+# greater_equal is a metagraph object which will determine if two objects are greater_equal according to input type
 # using ".register" decorator
-less = base.MultitypeFuncGraph("less")
+greater_equal = base.MultitypeFuncGraph("greater_equal")
 
 
-@less.register("Number", "Number")
-def _less_scala(x, y):
+@greater_equal.register("Number", "Number")
+def _greater_equal_scala(x, y):
     """
-    Determine whether two numbers are less.
+    Determine whether x is greater equal than y
 
     Args:
        x(Number): Number.
        y(Number): Number.
 
     Returns:
-       bool, if x < y return true, x >= y return false.
+       bool, if x >= y return true, x < y return false.
    """
-    return F.scalar_lt(x, y)
+    return F.scalar_ge(x, y)
 
-@less.register("Tensor", "Number")
-@less.register("Number", "Tensor")
-@less.register("Tensor", "Tensor")
-def _less_tensor(x, y):
+@greater_equal.register("Tensor", "Number")
+@greater_equal.register("Number", "Tensor")
+@greater_equal.register("Tensor", "Tensor")
+def _greater_equal_tensor(x, y):
     """
-    Determine whether two tensor are less by element.
+    Determine  whether tensor x is greater equal than tensor y elementwise
 
     Args:
        x(Tensor): Tensor.
        y(Tensor): Tensor.
 
     Returns:
-       Tensor, return value of  x and y by operation P.Less()
+       Tensor, return value by operator P.GreaterEqual.
    """
-    return F.tensor_lt(x, y)
+    return  F.tensor_ge(x, y)
