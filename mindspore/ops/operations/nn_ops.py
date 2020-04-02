@@ -190,7 +190,6 @@ class ReLU6(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], np.float32))
         >>> relu6 = ReLU6()
         >>> result = relu6(input_x)
-        >>> assert result.asnumpy() == Tensor(np.array([[0, 4.0, 0.0], [2.0, 0.0, 6.0]], np.float32)).asnumpy()
     """
 
     @prim_attr_register
