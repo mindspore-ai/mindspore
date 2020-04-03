@@ -616,7 +616,6 @@ py::object ExecutorPy::Run(const py::tuple& args, const py::object& phase) {
     return ExecDFGraph(info_, args, phase_s);
   }
 #else
-  MS_LOG(WARNING) << "In ut test " << size << phase_s;
   if (backend == "ge") {
     std::shared_ptr<py::object> ret_val = std::make_shared<py::object>();
     if (info_.count(phase_s) != 0 && info_[phase_s]->func_graph != nullptr) {

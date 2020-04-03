@@ -24,6 +24,9 @@
 #include "utils/callbacks.h"
 #include "utils/utils.h"
 #include "./common.h"
+#ifdef ENABLE_GE
+#include "utils/callbacks_ge.h"
+#endif
 
 #ifdef NO_GE_CLIENT
 namespace ge {

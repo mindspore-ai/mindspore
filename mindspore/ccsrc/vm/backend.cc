@@ -24,6 +24,9 @@
 #include "utils/graph_utils.h"
 #include "session/session_factory.h"
 #include "common/utils.h"
+#ifdef ENABLE_GE
+#include "utils/callbacks_ge.h"
+#endif
 
 namespace mindspore {
 namespace compile {
