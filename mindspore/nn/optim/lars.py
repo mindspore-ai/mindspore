@@ -90,8 +90,8 @@ class LARS(Cell):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> opt = Momentum(net.trainable_params(), 0.1, 0.9)
-        >>> opt_lars = LARS(opt, epsilon=1e-08, hyperpara=0.02)
+        >>> opt = nn.Momentum(net.trainable_params(), 0.1, 0.9)
+        >>> opt_lars = nn.LARS(opt, epsilon=1e-08, hyperpara=0.02)
         >>> model = Model(net, loss_fn=loss, optimizer=opt_lars, metrics=None)
     """
 

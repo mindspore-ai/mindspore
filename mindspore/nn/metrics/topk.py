@@ -33,14 +33,13 @@ class TopKCategoricalAccuracy(Metric):
         ValueError: If `k` is less than 1.
 
     Examples:
-        >>> x = mindspore.Tensor(np.array([[0.2, 0.5, 0.3, 0.6, 0.2], [0.1, 0.35, 0.5, 0.2, 0.],
+        >>> x = Tensor(np.array([[0.2, 0.5, 0.3, 0.6, 0.2], [0.1, 0.35, 0.5, 0.2, 0.],
         >>>         [0.9, 0.6, 0.2, 0.01, 0.3]]), mindspore.float32)
-        >>> y = mindspore.Tensor(np.array([2, 0, 1]), mindspore.float32)
+        >>> y = Tensor(np.array([2, 0, 1]), mindspore.float32)
         >>> topk = nn.TopKCategoricalAccuracy(3)
         >>> topk.clear()
         >>> topk.update(x, y)
         >>> result = topk.eval()
-        0.6666666666666666
     """
     def __init__(self, k):
         super(TopKCategoricalAccuracy, self).__init__()
@@ -65,7 +64,7 @@ class TopKCategoricalAccuracy(Metric):
                 y_pred is in most cases (not strictly) a list of floating numbers in range :math:`[0, 1]`
                 and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
                 is the number of categories. y contains values of integers. The shape is :math:`(N, C)`
-                if one-hot encoding is used. Shape can also be :math:`(N, 1)` if category index is used.
+                if one-hot encoding is used. Shape can also be :math:`(N,)` if category index is used.
         """
         if len(inputs) != 2:
             raise ValueError('Topk need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
@@ -98,9 +97,9 @@ class Top1CategoricalAccuracy(TopKCategoricalAccuracy):
     Refer to class 'TopKCategoricalAccuracy' for more details.
 
     Examples:
-        >>> x = mindspore.Tensor(np.array([[0.2, 0.5, 0.3, 0.6, 0.2], [0.1, 0.35, 0.5, 0.2, 0.],
+        >>> x = Tensor(np.array([[0.2, 0.5, 0.3, 0.6, 0.2], [0.1, 0.35, 0.5, 0.2, 0.],
         >>>         [0.9, 0.6, 0.2, 0.01, 0.3]]), mindspore.float32)
-        >>> y = mindspore.Tensor(np.array([2, 0, 1]), mindspore.float32)
+        >>> y = Tensor(np.array([2, 0, 1]), mindspore.float32)
         >>> topk = nn.Top1CategoricalAccuracy()
         >>> topk.clear()
         >>> topk.update(x, y)
@@ -116,9 +115,9 @@ class Top5CategoricalAccuracy(TopKCategoricalAccuracy):
     Refer to class 'TopKCategoricalAccuracy' for more details.
 
     Examples:
-        >>> x = mindspore.Tensor(np.array([[0.2, 0.5, 0.3, 0.6, 0.2], [0.1, 0.35, 0.5, 0.2, 0.],
+        >>> x = Tensor(np.array([[0.2, 0.5, 0.3, 0.6, 0.2], [0.1, 0.35, 0.5, 0.2, 0.],
         >>>            [0.9, 0.6, 0.2, 0.01, 0.3]]), mindspore.float32)
-        >>> y = mindspore.Tensor(np.array([2, 0, 1]), mindspore.float32)
+        >>> y = Tensor(np.array([2, 0, 1]), mindspore.float32)
         >>> topk = nn.Top5CategoricalAccuracy()
         >>> topk.clear()
         >>> topk.update(x, y)

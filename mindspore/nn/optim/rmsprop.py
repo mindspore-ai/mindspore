@@ -132,7 +132,7 @@ class RMSProp(Optimizer):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> opt = RMSProp(params=net.trainable_params(), learning_rate=lr)
+        >>> opt = nn.RMSProp(params=net.trainable_params(), learning_rate=lr)
         >>> model = Model(net, loss, opt)
     """
     def __init__(self, params, learning_rate=0.1, decay=0.9, momentum=0.0, epsilon=1e-10,

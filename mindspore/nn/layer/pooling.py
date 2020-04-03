@@ -63,8 +63,8 @@ class MaxPool2d(_PoolNd):
         pad_mode for training only supports "same" and "valid".
 
     Args:
-        kernel_size (int): Size of the window to take a max over.
-        stride (int): Stride size of the window. Default: None.
+        kernel_size (int): Size of the window to take a max over. Default 1.
+        stride (int): Stride size of the window. Default: 1.
         pad_mode (str): Select the mode of the pad. The optional values are
             "same" and "valid". Default: "valid".
 
@@ -75,7 +75,7 @@ class MaxPool2d(_PoolNd):
 
             - valid: Adopts the way of discarding. The possibly largest height and width of output will be return
               without padding. Extra pixels will be discarded.
-        padding (int): Now is not supported, mplicit zero padding to be added on both sides. Default: 0.
+        padding (int): Implicit zero padding to be added on both sides. Default: 0.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -85,7 +85,7 @@ class MaxPool2d(_PoolNd):
 
     Examples:
         >>> pool = MaxPool2d(kernel_size=3, stride=1)
-        >>> x = mindspore.Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
+        >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
         [[[[1. 5. 5. 1.]
            [0. 3. 4. 8.]
            [4. 2. 7. 6.]
@@ -149,8 +149,8 @@ class AvgPool2d(_PoolNd):
         pad_mode for training only supports "same" and "valid".
 
     Args:
-        kernel_size (int): Size of the window to take a max over.
-        stride (int): Stride size of the window. Default: None.
+        kernel_size (int): Size of the window to take a max over. Default: 1.
+        stride (int): Stride size of the window. Default: 1.
         pad_mode (str): Select the mode of the pad. The optional values are
             "same", "valid". Default: "valid".
 
@@ -161,7 +161,7 @@ class AvgPool2d(_PoolNd):
 
             - valid: Adopts the way of discarding. The possibly largest height and width of output will be return
               without padding. Extra pixels will be discarded.
-        padding (int): Now is not supported, implicit zero padding to be added on both sides. Default: 0.
+        padding (int): Implicit zero padding to be added on both sides. Default: 0.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -171,7 +171,7 @@ class AvgPool2d(_PoolNd):
 
     Examples:
         >>> pool = AvgPool2d(kernel_size=3, stride=1)
-        >>> x = mindspore.Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
+        >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
         [[[[5. 5. 9. 9.]
             [8. 4. 3. 0.]
             [2. 7. 1. 2.]
