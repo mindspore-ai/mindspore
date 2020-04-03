@@ -116,7 +116,7 @@ bool InitExecDatasetGe(const std::string& queue_name, int64_t size, int64_t batc
     return transform::TransformUtil::ConvertDataType(i->type_id());
   });
 
-  ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_GRAPH_MODE);
+  ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
   ConfigManager::GetInstance().set_iter_num(size);
   ConfigManager::GetInstance().set_dataset_phase(phase);
 
@@ -391,12 +391,7 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr& graph, const std::ve
                                         const std::string& phase) {
   std::vector<GeTensorPtr> ge_tensors = TransformUtil::ConvertInputTensors(inputs, kOpFormat_NCHW);
   if (ge_tensors.size() != inputs.size()) {
-<<<<<<< HEAD
     MS_LOG(EXCEPTION) << "Convert me args to ge tensor error.";
-=======
-    MS_LOG(ERROR) << "args convert to ge tensor error";
-    return nullptr;
->>>>>>> remove ge depend in cpu
   }
 
   std::vector<GeTensorPtr> ge_outputs;
@@ -407,12 +402,7 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr& graph, const std::ve
   auto graph_runner = DfGraphManager::GetInstance().GetGraphRunner();
 
   if (graph_runner == nullptr) {
-<<<<<<< HEAD
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
-=======
-    MS_LOG(ERROR) << "Can not found GraphRunner";
-    return nullptr;
->>>>>>> remove ge depend in cpu
   }
 
   {
@@ -429,11 +419,7 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr& graph, const std::ve
 
   std::vector<MeTensorPtr> me_outputs = TransformUtil::ConvertGeTensors(ge_outputs);
   if (me_outputs.size() != ge_outputs.size()) {
-<<<<<<< HEAD
     MS_LOG(WARNING) << "Convert output Ge tensor to Me tensor failed";
-=======
-    MS_LOG(ERROR) << "Convert output Ge tensor to Me tensor failed";
->>>>>>> remove ge depend in cpu
   }
 
   py::tuple outputs(me_outputs.size());
@@ -443,28 +429,11 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr& graph, const std::ve
 
   std::shared_ptr<py::object> ret = nullptr;
 
-<<<<<<< HEAD
   AnfNodePtr output_node = graph->get_return()->input(1);
   MS_EXCEPTION_IF_NULL(output_node);
   size_t count = 0;
   py::object oj = StructureOutput(output_node, outputs, &count);
   ret = std::make_shared<py::object>(oj);
-=======
-#ifdef ENABLE_GE
-  AnfNodePtr root = graph->get_return();
-  MS_EXCEPTION_IF_NULL(root);
-  AbstractBasePtr output = root->abstract();
-  size_t count = 0;
-  py::object oj = StructureOutput(output, outputs, &count);
-  ret = std::make_shared<py::object>(oj);
-#else
-  if (outputs.size() == 1) {
-    ret = std::make_shared<py::object>(outputs[0]);
-  } else {
-    ret = std::make_shared<py::object>(outputs);
-  }
-#endif
->>>>>>> remove ge depend in cpu
 
   return ret;
 }
@@ -475,11 +444,7 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr>& info, const py::
   std::size_t size = args.size();
 
   if (info.count(phase) == 0) {
-<<<<<<< HEAD
     MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
-=======
-    MS_LOG(EXCEPTION) << "no phase in executor:" << GetPhasePrefix(phase);
->>>>>>> remove ge depend in cpu
   }
 
   auto arg_size = info.at(phase)->arg_list_size;
@@ -488,26 +453,18 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr>& info, const py::
   }
 
   // process the first args of tensor
-  // only in Dataset Feed Mode, fp_bp graph need input tensors
-  if (ConfigManager::GetInstance().dataset_mode() == DS_FEED_MODE) {
+  // only in dataset normal(non-sink) mode, fp_bp graph need input tensors
+  if (ConfigManager::GetInstance().dataset_mode() == DS_NORMAL_MODE) {
     for (std::size_t i = 0; i < size; i++) {
       ValuePtr converted = nullptr;
       bool succ = parse::ConvertData(args[i], &converted);
       if (!succ) {
-<<<<<<< HEAD
         MS_LOG(EXCEPTION) << "Args convert error";
-=======
-        MS_LOG(EXCEPTION) << "args convert error";
->>>>>>> remove ge depend in cpu
       }
       if (converted->isa<tensor::Tensor>()) {
         (*inputs).push_back(converted->cast<tensor::TensorPtr>());
       } else {
-<<<<<<< HEAD
         MS_LOG(EXCEPTION) << "Args " << converted->ToString() << " is not tensor";
-=======
-        MS_LOG(EXCEPTION) << "args, " << converted->ToString() << " is not tensor";
->>>>>>> remove ge depend in cpu
       }
     }
   }
@@ -524,20 +481,12 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const
   }
 
   if (info.count(phase) == 0) {
-<<<<<<< HEAD
     MS_LOG(EXCEPTION) << "There is no phase:" << phase;
-=======
-    MS_LOG(EXCEPTION) << "has no phase:" << phase;
->>>>>>> remove ge depend in cpu
   }
 
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
 
-<<<<<<< HEAD
 #ifdef ENABLE_INFER
-=======
-#if (!defined ENABLE_GE) || (defined ENABLE_INFER)
->>>>>>> remove ge depend in cpu
   // Now don't use the graph because the exec ge function don't take effect
   MS_EXCEPTION_IF_NULL(info.at(phase)->func_graph);
   if (ENABLE_TRAIN != info.at(phase)->func_graph->flags()["training"]) {
@@ -562,11 +511,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const
   if (ret != nullptr) {
     return *ret;
   } else {
-<<<<<<< HEAD
     MS_LOG(EXCEPTION) << "Exec graph failed";
-=======
-    MS_LOG(EXCEPTION) << "exec graph failed";
->>>>>>> remove ge depend in cpu
   }
 }
 void ExportDFGraph(const std::string& file_name, const std::string& phase) {
