@@ -12,20 +12,22 @@ RUN apt update \
     && DEBIAN_FRONTEND=noninteractive apt install -y \
     vim \
     wget \
+    curl \
     xz-utils \
     net-tools \
     openssh-client \
     git \
-    subversion \
     ntpdate \
     tzdata \
     tcl \
-    sudo
+    sudo \
+    bash-completion
 
 # Install compile tools
 RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     gcc \
     g++ \
+    zlibc \
     make \
     libgmp-dev \
     patch \
@@ -39,7 +41,8 @@ RUN echo "dash dash/sh boolean false" | debconf-set-selections
 RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
 
 # Install python (v3.7.5)
-RUN apt install -y --no-install-recommends libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev libgdbm-dev liblzma-dev libreadline-dev \
+RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
+    libgdbm-dev libgdbm-compat-dev liblzma-dev libreadline-dev libsqlite3-dev \
     && cd /tmp \
     && wget https://github.com/python/cpython/archive/v3.7.5.tar.gz \
     && tar -xvf v3.7.5.tar.gz \
@@ -62,12 +65,12 @@ RUN mkdir -pv /root/.pip \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf
 
 # Install pip package
-RUN pip install numpy \
-    && pip install wheel \
-    && pip install nose \
-    && pip install pytest \
-    && pip install pytest-xdist \
-    && pip list
+RUN pip install --no-cache-dir \
+    numpy \
+    wheel \
+    nose \
+    pytest \
+    pytest-xdist
 
 # Install cmake (v3.14.1)
 RUN cd /tmp \
@@ -77,4 +80,4 @@ RUN cd /tmp \
     && rm -f /tmp/cmake-3.14.1-Linux-x86_64.sh
 
 # Install MindSpore cuda-10.1 whl package
-RUN pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.1.0-alpha/MindSpore/gpu/cuda-10.1/mindspore-0.1.0-cp37-cp37m-linux_x86_64.whl
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.1.0-alpha/MindSpore/gpu/cuda-10.1/mindspore-0.1.0-cp37-cp37m-linux_x86_64.whl
