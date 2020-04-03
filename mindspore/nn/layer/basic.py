@@ -370,3 +370,48 @@ class OneHot(Cell):
 
     def construct(self, indices):
         return self.onehot(indices, self.depth, self.on_value, self.off_value)
+
+
+class ImageGradients(Cell):
+    r"""
+    Returns two tensors, the first is along the height dimension and the second is along the width dimension.
+
+    Assume an image shape is :math:`h*w`. The gradients along the height and the width are :math:`dy` and :math:`dx`,
+    respectively.
+
+    .. math::
+        dy[i] = \begin{cases} image[i+1, :]-image[i, :], &if\ 0<=i<h-1 \cr
+        0, &if\ i==h-1\end{cases}
+
+        dx[i] = \begin{cases} image[:, i+1]-image[:, i], &if\ 0<=i<w-1 \cr
+        0, &if\ i==w-1\end{cases}
+
+    Inputs:
+        - **images** (Tensor) - The input image data, with format 'NCHW'.
+
+    Outputs:
+        - **dy** (Tensor) - vertical image gradients, the same type and shape as input.
+        - **dx** (Tensor) - horizontal image gradients, the same type and shape as input.
+
+    Examples:
+        >>> net = nn.ImageGradients()
+        >>> image = Tensor(np.array([[[[1,2],[3,4]]]]), dtype=mstype.int32)
+        >>> net(image)
+        [[[[2,2]
+           [0,0]]]]
+        [[[[1,0]
+           [1,0]]]]
+    """
+    def __init__(self):
+        super(ImageGradients, self).__init__()
+
+    def construct(self, images):
+        batch_size, depth, height, width = P.Shape()(images)
+        dy = images[:, :, 1:, :] - images[:, :, :height - 1, :]
+        dy_last = P.Fill()(P.DType()(images), (batch_size, depth, 1, width), 0)
+        dy = P.Concat(2)((dy, dy_last))
+
+        dx = images[:, :, :, 1:] - images[:, :, :, :width - 1]
+        dx_last = P.Fill()(P.DType()(images), (batch_size, depth, height, 1), 0)
+        dx = P.Concat(3)((dx, dx_last))
+        return dy, dx
