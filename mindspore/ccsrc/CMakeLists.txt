@@ -495,7 +495,7 @@ if (NOT ENABLE_GE)
         add_dependencies(add_ge_lib add_ms_lib)
         add_dependencies(add_ge_lib graph)
         add_dependencies(add_ge_lib ge_runtime)
-    else()
+    elseif(ENABLE_TESTCASES)
         add_custom_target(add_ge_lib ALL
                 COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/common/graph/libgraph.so  ${MS_LIB_PATH}
                 COMMAND cp ${CMAKE_SOURCE_DIR}/graphengine/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR}/libslog.so ${MS_LIB_PATH}

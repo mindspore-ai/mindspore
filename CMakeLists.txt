@@ -38,7 +38,7 @@ set(MS_CCSRC_BUILD_PATH ${BUILD_PATH}/mindspore/mindspore/ccsrc)
 
 if (ENABLE_GE)
     link_directories(${CMAKE_SOURCE_DIR}/third_party/ge/lib)
-else()
+elseif(ENABLE_D OR ENABLE_TESTCASES)
     include(${CMAKE_SOURCE_DIR}/cmake/dependency_graphengine.cmake)
 endif()
 

@@ -429,20 +429,11 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr& graph, const std::ve
 
   std::shared_ptr<py::object> ret = nullptr;
 
-#ifdef ENABLE_GE
-  AnfNodePtr root = graph->get_return();
-  MS_EXCEPTION_IF_NULL(root);
-  AbstractBasePtr output = root->abstract();
+  AnfNodePtr output_node = graph->get_return()->input(1);
+  MS_EXCEPTION_IF_NULL(output_node);
   size_t count = 0;
-  py::object oj = StructureOutput(output, outputs, &count);
+  py::object oj = StructureOutput(output_node, outputs, &count);
   ret = std::make_shared<py::object>(oj);
-#else
-  if (outputs.size() == 1) {
-    ret = std::make_shared<py::object>(outputs[0]);
-  } else {
-    ret = std::make_shared<py::object>(outputs);
-  }
-#endif
 
   return ret;
 }
@@ -495,7 +486,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const
 
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
 
-#if (!defined ENABLE_GE) || (defined ENABLE_INFER)
+#ifdef ENABLE_INFER
   // Now don't use the graph because the exec ge function don't take effect
   MS_EXCEPTION_IF_NULL(info.at(phase)->func_graph);
   if (ENABLE_TRAIN != info.at(phase)->func_graph->flags()["training"]) {
