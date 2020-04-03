@@ -749,6 +749,11 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 3], [3, 3], [3, 3], Tensor(np.ones((3,), np.int32))],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
+    ('SparseApplyFtrlD', {
+        'block': P.SparseApplyFtrlD(0.1, 0.1, 0.1, -0.1),
+        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3], Tensor(2*np.ones((3,), np.int32))],
+        'desc_bprop': [3, 3],
+        'skip': ['backward']}),
     ('Flatten_1', {
         'block': NetForFlatten(),
         'desc_inputs': [Tensor(np.ones([2, 3, 4]).astype(np.int32)), Tensor(np.ones([2, 12]).astype(np.int32))],

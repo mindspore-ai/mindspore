@@ -1120,6 +1120,19 @@ ATTR_MAP(SparseApplyAdagradD) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())},
                                  {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(SparseApplyAdagradD) = {{0, OUTPUT_DESC(var)}};
 
+// SparseApplyFtrlD
+INPUT_MAP(SparseApplyFtrlD) = {{1, INPUT_DESC(var)},
+                               {2, INPUT_DESC(accum)},
+                               {3, INPUT_DESC(linear)},
+                               {4, INPUT_DESC(grad)},
+                               {5, INPUT_DESC(indices)}};
+ATTR_MAP(SparseApplyFtrlD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
+                              {"lr", ATTR_DESC(lr, AnyTraits<float>())},
+                              {"l1", ATTR_DESC(l1, AnyTraits<float>())},
+                              {"l2", ATTR_DESC(l2, AnyTraits<float>())},
+                              {"lr_power", ATTR_DESC(lr_power, AnyTraits<float>())}};
+OUTPUT_MAP(SparseApplyFtrlD) = {{0, OUTPUT_DESC(var)}};
+
 // SpaceToDepth
 INPUT_MAP(SpaceToDepth) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(SpaceToDepth) = {{"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())}};
