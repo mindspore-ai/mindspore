@@ -85,7 +85,9 @@ from .logical_and import _logical_and_tbe
 from .logical_not import _logical_not_tbe
 from .logical_or import _logical_or_tbe
 from .reduce_max import _reduce_max_tbe
+from .reduce_min import _reduce_min_tbe
 from .reduce_sum import _reduce_sum_tbe
+from .round import _round_tbe
 from .tanh import _tanh_tbe
 from .tanh_grad import _tanh_grad_tbe
 from .softmax import _softmax_tbe
