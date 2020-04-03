@@ -241,7 +241,7 @@ class Conv2dTranspose(_Conv):
         in_channels (int): The number of channels in the input space.
         out_channels (int): The number of channels in the output space.
         kernel_size (Union[int, tuple]): int or tuple with 2 integers, which specifies the  height
-            and width of the 2D convolution window.Single int means the value if for both height and width of
+            and width of the 2D convolution window. Single int means the value is for both height and width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
         stride (int): Specifies the same value for all spatial dimensions. Default: 1.
