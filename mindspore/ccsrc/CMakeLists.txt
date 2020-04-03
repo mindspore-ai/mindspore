@@ -279,15 +279,17 @@ if(ENABLE_D)
         endif()
     else()
         MESSAGE("use system default lib")
-        set(D_LIB_PATH "/usr/local/HiAI/runtime/lib64/")
+        set(ASCEND_PATH /usr/local/Ascend)
+        set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
+        set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
     endif()
 
-    MESSAGE("USE DAV LIB PATH: ${D_LIB_PATH}")
-    find_library(HCCL hccl ${D_LIB_PATH})
-    find_library(CCE_LIB cce ${D_LIB_PATH})
-    find_library(RUNTIME_LIB runtime ${D_LIB_PATH})
-    find_library(TSDCLIENT tsdclient ${D_LIB_PATH})
-    find_library(PROFILING msprof ${D_LIB_PATH})
+    MESSAGE("USE DAV LIB PATH: ${ASCEND_PATH}")
+    find_library(HCCL hccl ${ASCEND_RUNTIME_PATH})
+    find_library(CCE_LIB cce ${ASCEND_RUNTIME_PATH})
+    find_library(RUNTIME_LIB runtime ${ASCEND_RUNTIME_PATH})
+    find_library(TSDCLIENT tsdclient ${ASCEND_RUNTIME_PATH})
+    find_library(PROFILING msprof ${ASCEND_DRIVER_PATH})
     target_link_libraries(mindspore ge_runtime ${CCE_LIB} ${RUNTIME_LIB} ${TSDCLIENT} ${PROFILING} ${HCCL} ${TSDCLIENT})
 endif()
 
@@ -481,12 +483,14 @@ add_dependencies(add_ms_lib _c_expression)
 
 if (NOT ENABLE_GE)
     if (ENABLE_D)
+        set(ASCEND_PATH /usr/local/Ascend)
+        set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
         add_custom_target(add_ge_lib ALL
                 COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/common/graph/libgraph.so ${MS_LIB_PATH}
                 COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/ge/common/libge_common.so ${MS_LIB_PATH}
                 COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/ge/ge_runtime/libge_runtime.so ${MS_LIB_PATH}
-                COMMAND cp /usr/local/HiAI/driver/lib64/libslog.so ${MS_LIB_PATH}
-                COMMAND cp /usr/local/HiAI/driver/lib64/libc_sec.so ${MS_LIB_PATH}
+                COMMAND cp ${ASCEND_DRIVER_PATH}/libslog.so ${MS_LIB_PATH}
+                COMMAND cp ${ASCEND_DRIVER_PATH}/libc_sec.so ${MS_LIB_PATH}
         )
         add_dependencies(add_ge_lib add_ms_lib)
         add_dependencies(add_ge_lib graph)
