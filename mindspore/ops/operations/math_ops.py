@@ -1541,6 +1541,89 @@ class LogicalOr(_LogicBinaryOp):
     def infer_dtype(self, x_dtype, y_dtype):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, (mstype.bool_,), self.prim_name())
 
+class IsNan(PrimitiveWithInfer):
+    """
+    Judging which elements are nan for each position
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape of input.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init IsNan"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        return mstype.bool_
+
+class IsInf(PrimitiveWithInfer):
+    """
+    Judging which elements are inf or -inf for each position
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape of input.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init IsInf"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        return mstype.bool_
+
+class IsFinite(PrimitiveWithInfer):
+    """
+    Judging which elements are finite for each position
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape of input.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init IsFinite"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        return mstype.bool_
+
+class FloatStatus(PrimitiveWithInfer):
+    """
+    Determine if the elements contains nan, inf or -inf
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the shape of `(1,)`.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init FloatStatus"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return [1]
+
+    def infer_dtype(self, x_dtype):
+        return x_dtype
 
 class NPUAllocFloatStatus(PrimitiveWithInfer):
     """
