@@ -22,7 +22,7 @@ from .normalization import BatchNorm1d, BatchNorm2d, LayerNorm
 from .container import SequentialCell, CellList
 from .conv import Conv2d, Conv2dTranspose
 from .lstm import LSTM
-from .basic import Dropout, Flatten, Dense, ClipByNorm, Norm, OneHot
+from .basic import Dropout, Flatten, Dense, ClipByNorm, Norm, OneHot, ImageGradients
 from .embedding import Embedding
 from .pooling import AvgPool2d, MaxPool2d
 
@@ -31,7 +31,7 @@ __all__ = ['Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid', 
            'SequentialCell', 'CellList',
            'Conv2d', 'Conv2dTranspose',
            'LSTM',
-           'Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot',
+           'Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'ImageGradients',
            'Embedding',
            'AvgPool2d', 'MaxPool2d',
            ]
