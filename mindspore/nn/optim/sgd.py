@@ -77,7 +77,7 @@ class SGD(Optimizer):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> optim = SGD(params=net.trainable_params())
+        >>> optim = nn.SGD(params=net.trainable_params())
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     def __init__(self, params, learning_rate=0.1, momentum=0.0, dampening=0.0, weight_decay=0.0, nesterov=False,

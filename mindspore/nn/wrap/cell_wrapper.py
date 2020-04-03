@@ -50,8 +50,8 @@ class WithLossCell(Cell):
         >>> net_with_criterion = nn.WithLossCell(net, loss_fn)
         >>>
         >>> batch_size = 2
-        >>> data = mindspore.Tensor(np.ones([batch_size, 3, 64, 64]).astype(np.float32) * 0.01)
-        >>> label = mindspore.Tensor(np.ones([batch_size, 1, 1, 1]).astype(np.int32))
+        >>> data = Tensor(np.ones([batch_size, 3, 64, 64]).astype(np.float32) * 0.01)
+        >>> label = Tensor(np.ones([batch_size, 1, 1, 1]).astype(np.int32))
         >>>
         >>> net_with_criterion(data, label)
     """
@@ -62,16 +62,6 @@ class WithLossCell(Cell):
         self._loss_fn = loss_fn
 
     def construct(self, data, label):
-        """
-        Computes loss based on the wrapped loss cell.
-
-        Args:
-            data (Tensor): Tensor data to train.
-            label (Tensor): Tensor label data.
-
-        Returns:
-            Tensor, compute result.
-        """
         out = self._backbone(data)
         return self._loss_fn(out, label)
 
@@ -137,19 +127,6 @@ class WithGradCell(Cell):
         self.network_with_loss.set_train()
 
     def construct(self, data, label):
-        """
-        Computes gradients based on the wrapped gradients cell.
-
-        Note:
-            Run in PyNative mode.
-
-        Args:
-            data (Tensor): Tensor data to train.
-            label (Tensor): Tensor label data.
-
-        Returns:
-            Tensor, return compute gradients.
-        """
         weights = self.weights
         if self.sens is None:
             grads = self.grad(self.network_with_loss, weights)(data, label)
@@ -355,7 +332,7 @@ class ParameterUpdate(Cell):
         >>> param = network.parameters_dict()['learning_rate']
         >>> update = nn.ParameterUpdate(param)
         >>> update.phase = "update_param"
-        >>> lr = mindspore.Tensor(0.001, mindspore.float32)
+        >>> lr = Tensor(0.001, mindspore.float32)
         >>> update(lr)
     """
 

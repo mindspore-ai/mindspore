@@ -161,7 +161,7 @@ class Adam(Optimizer):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> optim = Adam(params=net.trainable_params())
+        >>> optim = nn.Adam(params=net.trainable_params())
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
 
@@ -252,7 +252,7 @@ class AdamWeightDecay(Optimizer):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> optim = AdamWeightDecay(params=net.trainable_params())
+        >>> optim = nn.AdamWeightDecay(params=net.trainable_params())
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
    """
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
@@ -306,7 +306,7 @@ class AdamWeightDecayDynamicLR(Optimizer):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> optim = AdamWeightDecayDynamicLR(params=net.trainable_params(), decay_steps=10)
+        >>> optim = nn.AdamWeightDecayDynamicLR(params=net.trainable_params(), decay_steps=10)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     def __init__(self,

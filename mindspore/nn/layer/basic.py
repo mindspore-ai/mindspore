@@ -65,7 +65,7 @@ class Dropout(Cell):
         Tensor, output tensor with the same shape as the input.
 
     Examples:
-        >>> x = mindspore.Tensor(np.ones([20, 16, 50]), mindspore.float32)
+        >>> x = Tensor(np.ones([20, 16, 50]), mindspore.float32)
         >>> net = nn.Dropout(keep_prob=0.8)
         >>> net(x)
     """
@@ -111,7 +111,7 @@ class Flatten(Cell):
 
     Examples:
         >>> net = nn.Flatten()
-        >>> input = mindspore.Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
+        >>> input = Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
         >>> input.shape()
         (2, 2, 2)
         >>> net(input)
@@ -149,9 +149,6 @@ class Dense(Cell):
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
 
-    Returns:
-        Tensor, output tensor.
-
     Raises:
         ValueError: If weight_init or bias_init shape is incorrect.
 
@@ -163,7 +160,7 @@ class Dense(Cell):
 
     Examples:
         >>> net = nn.Dense(3, 4)
-        >>> input = mindspore.Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
+        >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> net(input)
         [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]
          [ 1.0739875   4.0155234   0.94188046 -5.459526  ]]
@@ -243,8 +240,8 @@ class ClipByNorm(Cell):
 
     Examples:
         >>> net = nn.ClipByNorm()
-        >>> input = mindspore.Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
-        >>> clip_norm = mindspore.Tensor(np.array([100]).astype(np.float32))
+        >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
+        >>> clip_norm = Tensor(np.array([100]).astype(np.float32))
         >>> net(input, clip_norm)
 
     """
@@ -290,9 +287,6 @@ class Norm(Cell):
         keep_dims (bool): If True, the axis indicated in `axis` are kept with size 1. Otherwise,
                    the dimensions in `axis` are removed from the output shape. Default: False.
 
-    Returns:
-        Tensor, a Tensor of the same type as input, containing the vector or matrix norms.
-
     Inputs:
         - **input** (Tensor) - Tensor which is not empty.
 
@@ -302,7 +296,7 @@ class Norm(Cell):
 
     Examples:
         >>> net = nn.Norm(axis=0)
-        >>> input = mindspore.Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
+        >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
         >>> net(input)
     """
     def __init__(self, axis=(), keep_dims=False):
@@ -344,7 +338,8 @@ class OneHot(Cell):
                           when indices[j] = i. Default: 1.0.
         off_value (float): A scalar defining the value to fill in output[i][j]
                            when indices[j] != i. Default: 0.0.
-        dtype (:class:`mindspore.dtype`): Default: mindspore.float32.
+        dtype (:class:`mindspore.dtype`): Data type of 'on_value' and 'off_value', not the
+                                          data type of indices. Default: mindspore.float32.
 
     Inputs:
         - **indices** (Tensor) - A tensor of indices of data type mindspore.int32 and arbitrary shape.
@@ -355,7 +350,7 @@ class OneHot(Cell):
 
     Examples:
         >>> net = nn.OneHot(depth=4, axis=1)
-        >>> indices = mindspore.Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
+        >>> indices = Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
         >>> net(indices)
         [[[0. 0.]
           [1. 0.]

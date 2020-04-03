@@ -87,7 +87,7 @@ class FTRL(Optimizer):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> opt = FTRL(net.trainable_params())
+        >>> opt = nn.FTRL(net.trainable_params())
         >>> model = Model(net, loss_fn=loss, optimizer=opt, metrics=None)
     """
     def __init__(self, params, initial_accum=0.1, learning_rate=0.001, lr_power=-0.5, l1=0.0, l2=0.0,
