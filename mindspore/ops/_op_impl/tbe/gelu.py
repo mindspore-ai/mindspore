@@ -32,10 +32,10 @@ from mindspore.ops.op_info_register import op_info_register
         {
             "index": 0,
             "dtype": [
-                "float16","float","float16","float16","float16","float16","float","float","float","float"
+               "float16","float","float16","float","float16","float16","float16","float16","float","float","float","float"
             ],
             "format": [
-                "FracZ","FracZ","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat"
+                "FRACTAL_NZ","FRACTAL_NZ","FracZ","FracZ","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat"
             ],
             "name": "x",
             "need_compile": false,
@@ -47,10 +47,10 @@ from mindspore.ops.op_info_register import op_info_register
         {
             "index": 0,
             "dtype": [
-                "float16","float","float16","float16","float16","float16","float","float","float","float"
+               "float16","float","float16","float","float16","float16","float16","float16","float","float","float","float"
             ],
             "format": [
-                "FracZ","FracZ","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat"
+                "FRACTAL_NZ","FRACTAL_NZ","FracZ","FracZ","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat"
             ],
             "name": "y",
             "need_compile": true,

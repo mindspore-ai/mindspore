@@ -153,8 +153,7 @@ def test_bert_tdt():
     batch_size = int(os.getenv('BATCH_SIZE', '16'))
     config = get_config(version=version, batch_size=batch_size)
     netwithloss = BertNetworkWithLoss(config, True)
-    optimizer = Lamb(netwithloss.trainable_params(), decay_steps=10000, start_learning_rate=1e-4,
-                     end_learning_rate=0.0, power=10.0, warmup_steps=0, decay_filter=lambda x: False)
+    optimizer = Momentum(netwithloss.trainable_params(), learning_rate=2e-5, momentum=0.9)
     netwithgrads = BertTrainOneStepCell(netwithloss, optimizer=optimizer)
     netwithgrads.set_train(True)
     model = Model(netwithgrads)
@@ -178,10 +177,10 @@ def test_bert_tdt():
                 param.default_input = weight_variable(value.asnumpy().shape)
     model.train(ds.get_repeat_count(), ds, callbacks=parallel_callback, dataset_sink_mode=False)
     loss_value = np.array(parallel_callback.loss_list)
-    expect_out = [12.191790, 11.739655, 11.523477, 11.320723, 11.113152, 11.203759, 10.841681, 10.826849,
-                  10.616718, 10.486609]
+    expect_out = [12.19179, 11.965041, 11.969687, 11.97815, 11.969171, 12.603289, 12.165594,
+                  12.824818, 12.38842, 12.604046]
     logger.info("expected loss value output: {}".format(expect_out))
-    assert allclose(loss_value, expect_out, 0.001, 0.001)
+    assert allclose(loss_value, expect_out, 0.00001, 0.00001)
 
 if __name__ == '__main__':
     test_bert_tdt()
