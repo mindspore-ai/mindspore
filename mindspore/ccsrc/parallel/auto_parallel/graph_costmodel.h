@@ -175,16 +175,12 @@ class CostGraph {
   void CreateStarEliminationSubCostList(const StrategyPtr&, const CostPtrList&, const CostPtrList&, const StrategyPtr&,
                                         const CostPtrList&, std::vector<StrategyPtr>, CostPtrList&, CostPtrList&,
                                         CostPtrList*);
-
-  // When a output of a operator is being used by multiple operators, the memory cost of this part should be calculated
-  // only once. This method is for correcting the 'strategy_cost_' for operators
-  Status CorrectOpsStrategyCostForMultiOutputUse();
   // When the input of a operator is neither a WEIGHT, nor a output of a subsequent operator involving WEIGHT, then
   // the memory cost can be resused.
-  Status CorrectOpsStrategyCostForMemoryReuse();
+  Status CalculateOpsMemoryCost();
   // When the input of the edge is neither a WEIGHT, nor a output of a subsequent operator involving WEIGHT, then
   // the memory cost can be resused.
-  Status CorrectEdgesStrategyCostForMemoryReuse();
+  Status CalculateEdgesMemoryCost();
   Status ComputeOpsAndEdgesParameterInvolved();
 
   std::vector<OperatorInfoPtr> GetOperators() const { return ops_; }

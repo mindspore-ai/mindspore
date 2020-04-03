@@ -87,13 +87,9 @@ class OperatorInfo {
   // is checked
   Status SetCostUnderStrategyBase(const StrategyPtr& strategy);
   std::vector<std::shared_ptr<StrategyWithCost>> GetStrategyCost() { return strategy_cost_; }
-  // In the case of a Parameter (or a output) being used by multiple operators, the memory cost induced by
-  // the parameter (or a output) should be calculated only once. This method is used to
-  // remove this part from the 'strategy_cost_'.
-  Status CorrectStrategyCostForMultiOutputUse(size_t input_index);
   // When the input of a operator contains WEIGHT or a output from other operators involving WEIGHT, then these input
   // should stay in memory until it is used in the backward phase, which is kept in memory at the end of forward phase.
-  Status CorrectStrategyCostForMemoryReuse() const { return SUCCESS; }
+  Status CalculateMemoryCost() const { return SUCCESS; }
   int ComputeOpAndPrevEdgeParameterInvolved();
 
   ForwardOp forward_op() const { return forward_op_; }

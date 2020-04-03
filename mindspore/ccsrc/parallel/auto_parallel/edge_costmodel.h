@@ -133,7 +133,7 @@ class Edge {
   void set_parameter_involve(int para_invol) { is_output_parameter_involve_ = para_invol; }
   // When the input of a operator contains WEIGHT or a output from other operators involving WEIGHT, then these input
   // should stay in memory until it is used in the backward phase, which is kept in memory at the end of forward phase.
-  Status CorrectStrategyCostForMemoryReuse() const { return SUCCESS; }
+  Status CalculateMemoryCost() const { return SUCCESS; }
 
  private:
   std::string edge_name_;

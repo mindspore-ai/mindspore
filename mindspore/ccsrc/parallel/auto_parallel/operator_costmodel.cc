@@ -74,8 +74,8 @@ double MatMulCost::GetBackwardCommCost(const std::vector<TensorInfo>& inputs, co
 
 // Return the per device memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double MatMulCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                        const int32_t&) const {
+double MatMulCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs,
+                                             const std::vector<TensorInfo>& outputs, const int32_t&) const {
   // In forward phase, the memory cost = slice(A) + slice(B) + (0 or 1) allreduce(slice(C))
   double result = 0.0;
   TensorInfo output0 = outputs[0];
@@ -93,8 +93,8 @@ double MatMulCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, c
 
 // Return the per device memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double MatMulCost::GetBackwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                         const int32_t& stage_id) const {
+double MatMulCost::GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
+                                              const int32_t& stage_id) const {
   // In backward phase, the memory cost = (0 or 1) allreduce(slice(B))
   double result = 0.0;
   if (is_parameter_[1]) {
@@ -147,8 +147,8 @@ double ActivationCost::GetBackwardCommCost(const std::vector<TensorInfo>& inputs
 
 // Return the per memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double ActivationCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                            const int32_t&) const {
+double ActivationCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
+                                                 const int32_t&) const {
   TensorInfo input0_info = inputs[0];
   Shape input0_slice_shape = input0_info.slice_shape();
   return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
@@ -156,8 +156,8 @@ double ActivationCost::GetForwardMemoryCost(const std::vector<TensorInfo>& input
 
 // Return the per memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double ActivationCost::GetBackwardMemoryCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                                             const int32_t&) const {
+double ActivationCost::GetBackwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                                  const int32_t&) const {
   return 0.0;
 }
 
@@ -191,8 +191,8 @@ double SoftmaxCost::GetBackwardCommCost(const std::vector<TensorInfo>& inputs, c
 
 // Return the per memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double SoftmaxCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                         const int32_t&) const {
+double SoftmaxCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
+                                              const int32_t&) const {
   // In the forward phase, the memory cost = slice(A)
   TensorInfo input0 = inputs[0];
   Shape input0_slice_shape = input0.slice_shape();
@@ -201,8 +201,9 @@ double SoftmaxCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, 
 
 // Return the per memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double SoftmaxCost::GetBackwardMemoryCost(const std::vector<mindspore::parallel::TensorInfo>&,
-                                          const std::vector<mindspore::parallel::TensorInfo>&, const int32_t&) const {
+double SoftmaxCost::GetBackwardComputationCost(const std::vector<mindspore::parallel::TensorInfo>&,
+                                               const std::vector<mindspore::parallel::TensorInfo>&,
+                                               const int32_t&) const {
   return 0.0;
 }
 
@@ -222,9 +223,9 @@ double TmpIdentityCost::GetBackwardCommCost(const std::vector<mindspore::paralle
 
 // Return the per memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double TmpIdentityCost::GetForwardMemoryCost(const std::vector<mindspore::parallel::TensorInfo>& inputs,
-                                             const std::vector<mindspore::parallel::TensorInfo>&,
-                                             const int32_t&) const {
+double TmpIdentityCost::GetForwardComputationCost(const std::vector<mindspore::parallel::TensorInfo>& inputs,
+                                                  const std::vector<mindspore::parallel::TensorInfo>&,
+                                                  const int32_t&) const {
   TensorInfo input0_info = inputs[0];
   Shape input0_slice_shape = input0_info.slice_shape();
   return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
@@ -232,15 +233,15 @@ double TmpIdentityCost::GetForwardMemoryCost(const std::vector<mindspore::parall
 
 // Return the per memory cost in the backward phase. The cost is calculated according to the bytes
 // this operator uses
-double TmpIdentityCost::GetBackwardMemoryCost(const std::vector<mindspore::parallel::TensorInfo>&,
-                                              const std::vector<mindspore::parallel::TensorInfo>&,
-                                              const int32_t&) const {
+double TmpIdentityCost::GetBackwardComputationCost(const std::vector<mindspore::parallel::TensorInfo>&,
+                                                   const std::vector<mindspore::parallel::TensorInfo>&,
+                                                   const int32_t&) const {
   return 0.0;
 }
 
-double BatchParallelCost::GetForwardMemoryCost(const std::vector<mindspore::parallel::TensorInfo>& inputs,
-                                               const std::vector<mindspore::parallel::TensorInfo>&,
-                                               const int32_t&) const {
+double BatchParallelCost::GetForwardComputationCost(const std::vector<mindspore::parallel::TensorInfo>& inputs,
+                                                    const std::vector<mindspore::parallel::TensorInfo>&,
+                                                    const int32_t&) const {
   double cost = 0.0;
   for (size_t i = 0; i < inputs.size(); ++i) {
     cost += ListProduct(inputs[i].slice_shape()) * static_cast<double>(inputs_type_lengths_[i]);
@@ -248,9 +249,9 @@ double BatchParallelCost::GetForwardMemoryCost(const std::vector<mindspore::para
   return cost;
 }
 
-double BatchParallelCost::GetBackwardMemoryCost(const std::vector<mindspore::parallel::TensorInfo>&,
-                                                const std::vector<mindspore::parallel::TensorInfo>&,
-                                                const int32_t&) const {
+double BatchParallelCost::GetBackwardComputationCost(const std::vector<mindspore::parallel::TensorInfo>&,
+                                                     const std::vector<mindspore::parallel::TensorInfo>&,
+                                                     const int32_t&) const {
   return 0.0;
 }
 
@@ -285,8 +286,8 @@ double PReLUCost::GetBackwardCommCost(const std::vector<TensorInfo>& inputs, con
 
 // Return the per memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double PReLUCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                       const int32_t&) const {
+double PReLUCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
+                                            const int32_t&) const {
   // In forward phase, the memory cost = slice(A) + slice(B)
   Shape input0_slice_shape = inputs[0].slice_shape();
   Shape input1_slice_shape = inputs[1].slice_shape();
@@ -297,9 +298,9 @@ double PReLUCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, co
 
 // Return the per memory cost in the backward phase. The cost is calculated according to the bytes
 // this operator uses
-double PReLUCost::GetBackwardMemoryCost(const std::vector<mindspore::parallel::TensorInfo>& inputs,
-                                        const std::vector<mindspore::parallel::TensorInfo>&,
-                                        const int32_t& stage_id) const {
+double PReLUCost::GetBackwardComputationCost(const std::vector<mindspore::parallel::TensorInfo>& inputs,
+                                             const std::vector<mindspore::parallel::TensorInfo>&,
+                                             const int32_t& stage_id) const {
   // In backward phase, the memory cost = (0 or 1) allreduce(slice(B))
   double result = 0.0;
   if (is_parameter_[1]) {
@@ -338,8 +339,8 @@ double OneHotCost::GetBackwardCommCost(const std::vector<TensorInfo>&, const std
 
 // Return the per memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double OneHotCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                        const int32_t&) const {
+double OneHotCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
+                                             const int32_t&) const {
   // In onehot's forward phase, the memory cost = slice(A)
   Shape input0_slice_shape = inputs[0].slice_shape();
   return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
@@ -347,8 +348,8 @@ double OneHotCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, c
 
 // Return the per memory cost in the backward phase. The cost is calculated according to the bytes
 // this operator uses
-double OneHotCost::GetBackwardMemoryCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                                         const int32_t&) const {
+double OneHotCost::GetBackwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                              const int32_t&) const {
   return 0.0;
 }
 
@@ -368,8 +369,9 @@ double SoftmaxCrossEntropyWithLogitsCost::GetBackwardCommCost(const std::vector<
 
 // Return the per memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double SoftmaxCrossEntropyWithLogitsCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs,
-                                                               const std::vector<TensorInfo>&, const int32_t&) const {
+double SoftmaxCrossEntropyWithLogitsCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs,
+                                                                    const std::vector<TensorInfo>&,
+                                                                    const int32_t&) const {
   // In forward phase, the memory cost = slice(A) + slice(B)
   Shape input0_slice_shape = inputs[0].slice_shape();
   Shape input1_slice_shape = inputs[1].slice_shape();
@@ -380,8 +382,9 @@ double SoftmaxCrossEntropyWithLogitsCost::GetForwardMemoryCost(const std::vector
 
 // Return the per memory cost in the backward phase. The cost is calculated according to the bytes
 // this operator uses
-double SoftmaxCrossEntropyWithLogitsCost::GetBackwardMemoryCost(const std::vector<TensorInfo>&,
-                                                                const std::vector<TensorInfo>&, const int32_t&) const {
+double SoftmaxCrossEntropyWithLogitsCost::GetBackwardComputationCost(const std::vector<TensorInfo>&,
+                                                                     const std::vector<TensorInfo>&,
+                                                                     const int32_t&) const {
   return 0.0;
 }
 
@@ -409,8 +412,8 @@ double ReshapeCost::GetBackwardCommCost(const std::vector<TensorInfo>&, const st
 
 // Return the per memory cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double ReshapeCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                         const int32_t& stage_id) const {
+double ReshapeCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs,
+                                              const std::vector<TensorInfo>& outputs, const int32_t& stage_id) const {
   CheckGlobalDeviceManager();
   MS_EXCEPTION_IF_NULL(g_device_manager);
   RankList dev_list = g_device_manager->GetDeviceListByStageId(stage_id);
@@ -421,26 +424,27 @@ double ReshapeCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, 
   if (tensor_redistribution.ComputeCost() == FAILED) {
     MS_LOG(EXCEPTION) << "Failure: tensor_redistribution ComputeCost failed.";
   }
-  return (inputs_type_lengths_[0] * tensor_redistribution.mem_cost());
+  return (inputs_type_lengths_[0] * tensor_redistribution.computation_cost());
 }
 
 // Return the per memory cost in the backward phase. The cost is calculated according to the bytes
 // this operator uses
-double ReshapeCost::GetBackwardMemoryCost(const std::vector<mindspore::parallel::TensorInfo>&,
-                                          const std::vector<mindspore::parallel::TensorInfo>&, const int32_t&) const {
+double ReshapeCost::GetBackwardComputationCost(const std::vector<mindspore::parallel::TensorInfo>&,
+                                               const std::vector<mindspore::parallel::TensorInfo>&,
+                                               const int32_t&) const {
   return 0.0;
 }
 
-double ArithmeticCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                            const int32_t&) const {
+double ArithmeticCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
+                                                 const int32_t&) const {
   double result;
   result = ListProduct(inputs[0].slice_shape()) * static_cast<double>(inputs_type_lengths_[0]) +
            ListProduct(inputs[1].slice_shape()) * static_cast<double>(inputs_type_lengths_[1]);
   return result;
 }
 
-double ArithmeticCost::GetBackwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                             const int32_t& stage_id) const {
+double ArithmeticCost::GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
+                                                  const int32_t& stage_id) const {
   double result = 0.0;
   CheckGlobalDeviceManager();
   MS_EXCEPTION_IF_NULL(g_device_manager);
@@ -533,15 +537,15 @@ double L2NormalizeCost::GetBackwardCommCost(const std::vector<TensorInfo>& input
   return result;
 }
 
-double L2NormalizeCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                             const int32_t&) const {
+double L2NormalizeCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
+                                                  const int32_t&) const {
   TensorInfo input0_info = inputs[0];
   Shape input0_slice_shape = input0_info.slice_shape();
   return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
 }
 
-double L2NormalizeCost::GetBackwardMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                              const int32_t& stage_id) const {
+double L2NormalizeCost::GetBackwardComputationCost(const std::vector<TensorInfo>& inputs,
+                                                   const std::vector<TensorInfo>&, const int32_t& stage_id) const {
   double result = 0.0;
 
   if (is_parameter_[0]) {
@@ -618,8 +622,9 @@ double ReduceMethodCost::GetBackwardCommCost(const std::vector<TensorInfo>& inpu
   return result;
 }
 
-double ReduceMethodCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs,
-                                              const std::vector<TensorInfo>& outputs, const int32_t& stage_id) const {
+double ReduceMethodCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs,
+                                                   const std::vector<TensorInfo>& outputs,
+                                                   const int32_t& stage_id) const {
   double result = 0.0;
   TensorInfo input0 = inputs[0];
   TensorInfo output0 = outputs[0];
@@ -640,8 +645,9 @@ double ReduceMethodCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inp
   return result;
 }
 
-double ReduceMeanCost::GetForwardMemoryCost(const std::vector<TensorInfo>& inputs,
-                                            const std::vector<TensorInfo>& outputs, const int32_t& stage_id) const {
+double ReduceMeanCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs,
+                                                 const std::vector<TensorInfo>& outputs,
+                                                 const int32_t& stage_id) const {
   double result = 0.0;
   TensorInfo input0 = inputs[0];
   TensorInfo output0 = outputs[0];

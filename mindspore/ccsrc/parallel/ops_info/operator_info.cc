@@ -1034,9 +1034,10 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr& strategy) {
     return FAILED;
   }
   int32_t stage_id = strategy->GetInputStage();
-  double memory_cost = GetOperatorCost()->GetForwardMemoryCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+  double computation_cost =
+    GetOperatorCost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   double communication_cost = GetOperatorCost()->GetCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
-  std::shared_ptr<Cost> result = std::make_shared<Cost>(memory_cost, communication_cost);
+  std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
   result->communication_without_parameter_ =
     GetOperatorCost()->GetForwardCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   result->communication_with_partial_para_ =
@@ -1053,22 +1054,6 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr& strategy) {
   swc->cost_list.push_back(result);
   strategy_cost_.emplace_back(swc);
 
-  return SUCCESS;
-}
-
-Status OperatorInfo::CorrectStrategyCostForMultiOutputUse(size_t input_index) {
-  for (auto& swc : strategy_cost_) {
-    double parameter_memory_cost = ListProduct(swc->inputs_ptr[input_index].slice_shape()) *
-                                   static_cast<double>(GetOperatorCost()->inputs_type_lengths()[input_index]);
-    // remove the parameter memory cost
-    swc->cost_list[0]->memory_cost_ -= parameter_memory_cost;
-    if (swc->cost_list[0]->memory_cost_ < -1) {
-      MS_LOG(ERROR) << "The memory cost after correction is " << swc->cost_list[0]->memory_cost_
-                    << ", the parameter_memory_cost is " << parameter_memory_cost;
-      return FAILED;
-    }
-  }
-  corrected_input_indices_.push_back(input_index);
   return SUCCESS;
 }
 
@@ -1217,7 +1202,7 @@ void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr& stra
     CheckGlobalDeviceManager();
     auto total_device_num = g_device_manager->GetDeviceListByStageId(stra->GetInputStage()).size();
     if (IntToSize(stra->GetInputDim()[0][0]) == total_device_num) {
-      cost->memory_cost_ -= 1.0;
+      cost->computation_cost_ -= 1.0;
       cost->communication_cost_ -= 1.0;
       cost->communication_with_partial_para_ -= 1.0;
       cost->communication_without_parameter_ -= 1.0;
@@ -1226,7 +1211,7 @@ void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr& stra
 }
 
 double OperatorInfo::GetForwardMemoryCostFromCNode() {
-  return GetOperatorCost()->GetForwardMemoryCost(inputs_tensor_info_, outputs_tensor_info_, 0);
+  return GetOperatorCost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, 0);
 }
 
 }  // namespace parallel

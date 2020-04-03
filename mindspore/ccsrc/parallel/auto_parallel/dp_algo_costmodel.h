@@ -35,7 +35,7 @@ namespace parallel {
 //       interpretation of 6 operations in costmodel.h.
 // Phase 2: Search the cost_list in the final graph, and determine the optimal one
 //       Create the cost_list for the final graph, and choose the optimal one: one the minimum quantity
-//       COST_MODEL_ALPHA * memory_cost + COST_MODEL_BETA * communication_cost
+//       COST_MODEL_ALPHA * computation_cost + COST_MODEL_BETA * communication_cost
 // Phase 3: Recover the original CostGraph, the determine strategy for each operator
 //       After determining the optimal cost for the final graph, the algorithm recovers the original graph by applying
 //       the 4 operations in the reverse order in the Phase 1. Because each operation decision contains the strategy,

@@ -322,8 +322,8 @@ TEST_F(TestCostGraph, test_SelectCostListWithMinTrainingTimeMultiple) {
 
   auto ret_list = entire_cost_graph.SelectCostListWithMinTrainingTimeMultiple(all_list, memory);
   ASSERT_EQ(ret_list.size(), 2);
-  ASSERT_DOUBLE_EQ(ret_list[0]->memory_cost_, 10);
-  ASSERT_DOUBLE_EQ(ret_list[1]->memory_cost_, 1010);
+  ASSERT_DOUBLE_EQ(ret_list[0]->computation_cost_, 10);
+  ASSERT_DOUBLE_EQ(ret_list[1]->computation_cost_, 1010);
 }
 
 TEST_F(TestCostGraph, test_CheckOpElimination) {
