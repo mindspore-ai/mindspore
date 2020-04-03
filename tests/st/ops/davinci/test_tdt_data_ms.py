@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore._c_dataengine as deMap
 import mindspore.dataset as ds
+import mindspore.dataset.transforms.vision.c_transforms as vision
+from mindspore.dataset.transforms.vision import Inter
 import numpy as np
 import sys
-from mindspore._c_dataengine import InterpolationMode
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -32,7 +32,7 @@ SCHEMA_DIR = "{0}/resnet_all_datasetSchema.json".format(data_path)
 def test_me_de_train_dataset():
     data_list = ["{0}/train-00001-of-01024.data".format(data_path)]
     data_set = ds.StorageDataset(data_list, schema=SCHEMA_DIR,
-                           columns_list=["image/encoded", "image/class/label"])
+                                 columns_list=["image/encoded", "image/class/label"])
 
     resize_height = 224
     resize_width = 224
@@ -41,19 +41,17 @@ def test_me_de_train_dataset():
 
     # define map operations
 
-    decode_op = deMap.DecodeOp()
-    resize_op = deMap.ResizeOp(resize_height, resize_width,
-                               InterpolationMode.DE_INTER_LINEAR)  # Bilinear as default
-    rescale_op = deMap.RescaleOp(rescale, shift)
-    changemode_op = deMap.ChangeModeOp()
+    decode_op = vision.Decode()
+    resize_op = vision.Resize(resize_height, resize_width,
+                              Inter.LINEAR)  # Bilinear as default
+    rescale_op = vision.Rescale(rescale, shift)
 
     # apply map operations on images
-    data_set = data_set.map(input_column_names="image/encoded", operation=decode_op)
-    data_set = data_set.map(input_column_names="image/encoded", operation=resize_op)
-    data_set = data_set.map(input_column_names="image/encoded", operation=rescale_op)
-    data_set = data_set.map(input_column_names="image/encoded", operation=changemode_op)
-    changeswap_op = deMap.ChannelSwapOp()
-    data_set = data_set.map(input_column_names="image/encoded", operation=changeswap_op)
+    data_set = data_set.map(input_columns="image/encoded", operations=decode_op)
+    data_set = data_set.map(input_columns="image/encoded", operations=resize_op)
+    data_set = data_set.map(input_columns="image/encoded", operations=rescale_op)
+    hwc2chw_op = vision.HWC2CHW()
+    data_set = data_set.map(input_columns="image/encoded", operations=hwc2chw_op)
     data_set = data_set.repeat(1)
     # apply batch operations
     batch_size = 32

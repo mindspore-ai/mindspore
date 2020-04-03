@@ -21,7 +21,7 @@ import numpy as np
 from numpy import allclose
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine.datasets as de
-import mindspore._c_dataengine as deMap
+import mindspore.dataset.transforms.c_transforms as C
 from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.train.model import Model
@@ -106,7 +106,7 @@ def me_de_train_dataset():
     ds = de.StorageDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
                                                                "next_sentence_labels", "masked_lm_positions",
                                                                "masked_lm_ids", "masked_lm_weights"])
-    type_cast_op = deMap.TypeCastOp("int32")
+    type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
     ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)
     ds = ds.map(input_columns="next_sentence_labels", operations=type_cast_op)
