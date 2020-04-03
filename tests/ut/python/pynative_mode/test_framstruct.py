@@ -15,6 +15,7 @@
 """ test_framstruct """
 import pytest
 import numpy as np
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.ops import composite as C
@@ -706,3 +707,24 @@ def grad_refactor_14(a, b):
     return inner1(b) + inner2(a) + inner3(a)
 def test_grad_refactor_14():
     assert C.grad_all(grad_refactor_14)(2, 3) == (3, 9)
+
+
+class IfDeferInline(nn.Cell):
+    def __init__(self, mul_size):
+        super().__init__()
+        self.mul_weight = Tensor(np.full(mul_size, 0.6, dtype=np.float32))
+        self.mul = P.Mul()
+
+    def construct(self, inputs):
+        x = self.mul(inputs, self.mul_weight)
+        if True:
+            x = x
+        return x
+
+def test_grad_if_defer_inline():
+    """ test_grad_if_defer_inline """
+    network = IfDeferInline([128, 96])
+    network.add_flags(defer_inline=False)
+    inp = Tensor(np.ones([128, 96]).astype(np.float32))
+    grads = C.grad_all(network)(inp)
+    assert grads == (Tensor(np.full([128, 96], 0.6, dtype=np.float32)),)
