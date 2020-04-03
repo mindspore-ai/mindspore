@@ -241,7 +241,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
     auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
-      // if graph output is a weight and doesn't link to any cnode,it's data type will be unkonwn
+      // if graph output is a weight and doesn't link to any cnode, it's data type will be unknown
       if (output_type_id == kTypeUnknown) {
         MS_LOG(WARNING) << "It is not suggested to use a lonely weight parameter as the output of graph";
         output_type_id = AnfAlgo::GetOutputInferDataType(item, index);
@@ -372,7 +372,7 @@ void KernelRuntime::AssignNodeOutputMem(int flag, const AnfNodePtr &node, int in
       continue;
     }
     if (AnfAlgo::OutputAddrExist(node, i)) {
-      MS_LOG(INFO) << "already malloc index:" << i;
+      MS_LOG(INFO) << "Already malloc index:" << i;
       continue;
     }
     auto ptr = CalDeviceMem(node, output_sizes[i], flag, i);
@@ -392,7 +392,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   MS_EXCEPTION_IF_NULL(node_value);
   auto tensor = node_value->cast<TensorPtr>();
   if (tensor == nullptr) {
-    MS_LOG(WARNING) << "tensor is null";
+    MS_LOG(WARNING) << "Tensor is null";
     return;
   }
   size_t tensor_size = tensor->data().nbytes();
@@ -595,7 +595,7 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
 
 void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList *kernel_inputs) {
   if (cnode->inputs().size() != 2) {
-    MS_LOG(EXCEPTION) << "atomic Addr clean Node Input nodes not equal 2.";
+    MS_LOG(EXCEPTION) << "Atomic Addr clean Node Input nodes not equal 2.";
   }
   auto pre_node = cnode->inputs()[1];
   // set clean output address
@@ -721,11 +721,11 @@ uint8_t *KernelRuntime::MallocDynamicMem(size_t size, bool communication_mem) {
 bool KernelRuntime::LaunchKernel(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   if (!LaunchKernelMod(*graph)) {
-    MS_LOG(ERROR) << "LaunchKernelMod failed.";
+    MS_LOG(ERROR) << "LaunchKernelMod failed!";
     return false;
   }
   if (!SyncStream()) {
-    MS_LOG(ERROR) << "SyncStream failed.";
+    MS_LOG(ERROR) << "SyncStream failed!";
     return false;
   }
   return true;

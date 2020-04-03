@@ -31,12 +31,12 @@ GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
   MS_EXCEPTION_IF_NULL(graph);
-  MS_LOG(INFO) << "set kernel info";
+  MS_LOG(INFO) << "Set kernel info";
   SetKernelInfo(graph.get());
   predictmodel::StepConvertGraph(graph);
-  MS_LOG(INFO) << "build kernel";
+  MS_LOG(INFO) << "Build kernel";
   BuildKernel(graph.get());
-  MS_LOG(INFO) << "assign kernel address";
+  MS_LOG(INFO) << "Assign kernel address";
   runtime_.AssignKernelAddress(graph.get());
   return graph_id;
 }
@@ -44,18 +44,18 @@ GraphId CPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
 void CPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   auto &kernel_graph = graphs_[graph_id];
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  MS_LOG(INFO) << "bind input output address";
+  MS_LOG(INFO) << "Bind input output address";
   runtime_.BindInputOutput(kernel_graph.get(), inputs, outputs);
-  MS_LOG(INFO) << "run graph start";
+  MS_LOG(INFO) << "Run graph start";
   predictmodel::StepConvertWeight(inputs);
   auto execution_order = kernel_graph->execution_order();
   Reorder(&execution_order);
   kernel_graph->set_execution_order(execution_order);
   bool ret = runtime_.Run(kernel_graph.get());
   if (!ret) {
-    MS_LOG(EXCEPTION) << "run graph failed";
+    MS_LOG(EXCEPTION) << "Run graph failed";
   }
-  MS_LOG(INFO) << "run graph end";
+  MS_LOG(INFO) << "Run graph end";
 }
 
 void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) {
