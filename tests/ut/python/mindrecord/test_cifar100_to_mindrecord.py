@@ -18,6 +18,7 @@ import pytest
 from mindspore.mindrecord import Cifar100ToMR
 from mindspore.mindrecord import FileReader
 from mindspore.mindrecord import MRMOpenError
+from mindspore.mindrecord import SUCCESS
 from mindspore import log as logger
 
 CIFAR100_DIR = "../data/mindrecord/testCifar100Data"
@@ -26,7 +27,8 @@ MINDRECORD_FILE = "./cifar100.mindrecord"
 def test_cifar100_to_mindrecord_without_index_fields():
     """test transform cifar100 dataset to mindrecord without index fields."""
     cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, MINDRECORD_FILE)
-    cifar100_transformer.transform()
+    ret = cifar100_transformer.transform()
+    assert ret == SUCCESS, "Failed to tranform from cifar100 to mindrecord"
     assert os.path.exists(MINDRECORD_FILE)
     assert os.path.exists(MINDRECORD_FILE + "_test")
     read()
