@@ -23,23 +23,33 @@ from .getitem_impl import getitem
 from .zeros_like_impl import zeros_like
 from .ones_like_impl import ones_like
 from .equal_impl import equal
+from .not_equal_impl import not_equal
 from .less_impl import less
 from .less_equal_impl import less_equal
+from .greater_impl import greater
+from .greater_equal_impl import greater_equal
 from .negative_impl import negative
 from .logical_and_impl import logical_and
 from .logical_or_impl import logical_or
+from .logic_not_impl import logical_not
+from .uadd_impl import uadd
 __all__ = [
     'add',
     'sub',
     'mul',
     'div',
+    'uadd',
     'zeros_like',
     'ones_like',
     'equal',
+    'not_equal',
     'less',
     'less_equal',
+    'greater',
+    'greater_equal',
     'negative',
     'getitem',
     'logical_and',
-    'logical_or'
+    'logical_or',
+    'logical_not'
 ]

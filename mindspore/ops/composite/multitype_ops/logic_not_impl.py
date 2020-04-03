@@ -13,41 +13,36 @@
 # limitations under the License.
 # ============================================================================
 
-"""equal_impl"""
+"""logical_not_impl"""
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 
-# less is a metafuncgraph object which will determine if two objects are less according to input type
+# logical_not is a metagraph object which will generate function according to input type
 # using ".register" decorator
-less = base.MultitypeFuncGraph("less")
+logical_not = base.MultitypeFuncGraph("logical_not")
 
 
-@less.register("Number", "Number")
-def _less_scala(x, y):
+@logical_not.register("Number")
+def _logical_not_scala(x):
     """
-    Determine whether two numbers are less.
+    Return logical not operation result of x
 
     Args:
        x(Number): Number.
-       y(Number): Number.
 
     Returns:
-       bool, if x < y return true, x >= y return false.
+       bool, Return logical not operation result of x
    """
-    return F.scalar_lt(x, y)
+    return F.bool_not(x.__bool__())
 
-@less.register("Tensor", "Number")
-@less.register("Number", "Tensor")
-@less.register("Tensor", "Tensor")
-def _less_tensor(x, y):
+
+@logical_not.register("Tensor")
+def _logical_not_tensor(x):
     """
-    Determine whether two tensor are less by element.
-
+    Return logical not operation result of x
     Args:
        x(Tensor): Tensor.
-       y(Tensor): Tensor.
-
     Returns:
-       Tensor, return value of  x and y by operation P.Less()
+       Tensor, Return logical not operation result of x
    """
-    return F.tensor_lt(x, y)
+    return  F.logical_not(x)
