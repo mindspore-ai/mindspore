@@ -785,6 +785,8 @@ vector<std::string> ShardReader::GetAllColumns() {
 
 MSRStatus ShardReader::CreateTasksByBlock(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                                           const std::vector<std::shared_ptr<ShardOperator>> &operators) {
+  vector<std::string> columns = GetAllColumns();
+  CheckIfColumnInIndex(columns);
   for (const auto &rg : row_group_summary) {
     auto shard_id = std::get<0>(rg);
     auto group_id = std::get<1>(rg);

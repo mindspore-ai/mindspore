@@ -143,6 +143,7 @@ class FileWriter:
             ParamTypeError: If index field is invalid.
             MRMDefineIndexError: If index field is not primitive type.
             MRMAddIndexError: If failed to add index field.
+            MRMGetMetaError: If the schema is not set or get meta failed.
         """
         if not index_fields or not isinstance(index_fields, list):
             raise ParamTypeError('index_fields', 'list')
