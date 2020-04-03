@@ -27,7 +27,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.train.model import Model
 from mindspore.train.callback import Callback
 from mindspore.model_zoo.Bert_NEZHA import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell
-from mindspore.nn.optim import Lamb
+from mindspore.nn.optim import Momentum
 from mindspore import log as logger
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
