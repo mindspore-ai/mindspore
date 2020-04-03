@@ -111,7 +111,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
     irpass.replace_applicator_,
   });
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
-  opt::OptPassConfig grad = opt::OptPassConfig({irpass.inline_, irpass.expand_jprim_}, true);
+  opt::OptPassConfig grad = opt::OptPassConfig({irpass.expand_jprim_}, true);
 
   OptPassGroupMap map_a({{"a_1", a_1},
                          {"a_2", a_2},

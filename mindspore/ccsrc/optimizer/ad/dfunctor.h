@@ -61,6 +61,7 @@ class DFunctor {
  private:
   // Map one morphism.
   AdjointPtr MapMorphism(const AnfNodePtr &morph);
+  bool IsFreeMorphism(const AnfNodePtr &node);
   // Map morphism that's not attached to output.
   void MapFreeMorphism();
   void BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din);
