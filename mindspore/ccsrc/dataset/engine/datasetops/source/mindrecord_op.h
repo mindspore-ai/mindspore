@@ -15,7 +15,6 @@
  */
 #ifndef DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_
 #define DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_
-#ifdef ENABLE_MINDRECORD
 #pragma once
 
 #include <cstdint>
@@ -276,5 +275,4 @@ class MindRecordOp : public ParallelOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif
 #endif  // DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_

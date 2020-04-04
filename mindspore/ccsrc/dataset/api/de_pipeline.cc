@@ -29,11 +29,9 @@
 #include "dataset/engine/datasetops/source/manifest_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/celeba_op.h"
-#ifdef ENABLE_MINDRECORD
-#include "./shard_category.h"
-#include "./shard_sample.h"
-#include "./shard_shuffle.h"
-#endif
+#include "mindrecord/include/shard_category.h"
+#include "mindrecord/include/shard_sample.h"
+#include "mindrecord/include/shard_shuffle.h"
 
 #include "dataset/util/random.h"
 #include "dataset/util/status.h"
@@ -46,9 +44,7 @@ using pFunction = Status (DEPipeline::*)(const py::dict &, std::shared_ptr<Datas
 
 static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &DEPipeline::ParseStorageOp},
                                                                    {kShuffle, &DEPipeline::ParseShuffleOp},
-#ifdef ENABLE_MINDRECORD
                                                                    {kMindrecord, &DEPipeline::ParseMindRecordOp},
-#endif
                                                                    {kMap, &DEPipeline::ParseMapOp},
                                                                    {kBatch, &DEPipeline::ParseBatchOp},
                                                                    {kRepeat, &DEPipeline::ParseRepeatOp},
@@ -364,7 +360,6 @@ Status DEPipeline::ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetO
   return Status::OK();
 }
 
-#ifdef ENABLE_MINDRECORD
 Status DEPipeline::CheckMindRecordPartitionInfo(const py::dict &args, std::vector<int> *in_partitions) {
   if (args["partitions"].is_none()) {
     std::string err_msg = "Error: partitions is not set (None)";
@@ -450,7 +445,6 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
   *ptr = op;
   return Status::OK();
 }
-#endif
 
 Status DEPipeline::ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   std::shared_ptr<MapOp::Builder> builder = std::make_shared<MapOp::Builder>();
