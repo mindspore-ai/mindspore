@@ -26,7 +26,6 @@ MESSAGE("check  ut_test ${CMAKE_BINARY_DIR}")
 link_directories(${MS_CCSRC_BUILD_PATH})
 
 if(ENABLE_MINDDATA)
-    add_definitions(-D ENABLE_MINDRECORD)
     add_definitions(-D ENABLE_MINDDATA)
     link_directories(${MS_CCSRC_BUILD_PATH}/dataset)
     link_directories(${MS_CCSRC_BUILD_PATH}/mindrecord)
