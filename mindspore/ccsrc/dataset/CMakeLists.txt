@@ -17,8 +17,6 @@ if (ENABLE_TDTQUE)
     message(STATUS "TDT queue is enabled")
 endif ()
 
-add_definitions(-D ENABLE_MINDRECORD)
-
 # conde coverage
 # option(ENABLE_COVERAGE "Enable code coverage report" OFF)
 # if (ENABLE_COVERAGE)

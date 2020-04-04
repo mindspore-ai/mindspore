@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_MINDRECORD
-
 #include "dataset/engine/datasetops/source/mindrecord_op.h"
 
 #include <algorithm>
@@ -665,4 +663,3 @@ Status MindRecordOp::CountTotalRows(const std::string dataset_path, int64_t *cou
 }
 }  // namespace dataset
 }  // namespace mindspore
-#endif

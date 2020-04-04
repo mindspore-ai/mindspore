@@ -44,9 +44,7 @@
 #include "dataset/engine/datasetops/source/io_block.h"
 #include "dataset/engine/datasetops/source/mnist_op.h"
 #include "dataset/engine/datasetops/source/manifest_op.h"
-#ifdef ENABLE_MINDRECORD
 #include "dataset/engine/datasetops/source/mindrecord_op.h"
-#endif
 #include "dataset/engine/datasetops/source/sampler/distributed_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/pk_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/random_sampler.h"
@@ -146,14 +144,12 @@ void bindDatasetOps(py::module *m) {
       return py::make_tuple(count, num_classes);
     });
 
-#ifdef ENABLE_MINDRECORD
   (void)py::class_<MindRecordOp, DatasetOp, std::shared_ptr<MindRecordOp>>(*m, "MindRecordOp")
     .def_static("get_num_rows", [](const std::string &path) {
       int64_t count = 0;
       THROW_IF_ERROR(MindRecordOp::CountTotalRows(path, &count));
       return count;
     });
-#endif
 
   (void)py::class_<ManifestOp, DatasetOp, std::shared_ptr<ManifestOp>>(*m, "ManifestOp")
     .def_static("get_num_rows_and_classes",
@@ -424,9 +420,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("STORAGE", OpName::kStorage)
     .value("SHUFFLE", OpName::kShuffle)
     .value("BATCH", OpName::kBatch)
-#ifdef ENABLE_MINDRECORD
     .value("MINDRECORD", OpName::kMindrecord)
-#endif
     .value("CACHE", OpName::kCache)
     .value("REPEAT", OpName::kRepeat)
     .value("TAKE", OpName::kTake)

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_MINDRECORD
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -480,4 +479,3 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBlockReaderRepeat) {
     row_count++;
   }
 }
-#endif
