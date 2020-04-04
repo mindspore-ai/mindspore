@@ -39,7 +39,7 @@ using TensorPtr = mindspore::tensor::TensorPtr;
 
 namespace {
 bool ConvertTuple(const py::object& obj, ValuePtr* const data, bool use_signature) {
-  MS_LOG(DEBUG) << "converting python tuple";
+  MS_LOG(DEBUG) << "Converting python tuple";
   py::tuple tuple = obj.cast<py::tuple>();
   std::vector<ValuePtr> value_list;
   for (size_t it = 0; it < tuple.size(); ++it) {
@@ -56,7 +56,7 @@ bool ConvertTuple(const py::object& obj, ValuePtr* const data, bool use_signatur
 }
 
 bool ConvertList(const py::object& obj, ValuePtr* const data, bool use_signature) {
-  MS_LOG(DEBUG) << "converting python list";
+  MS_LOG(DEBUG) << "Converting python list";
 
   py::list list = obj.cast<py::list>();
   std::vector<ValuePtr> value_list;
@@ -73,7 +73,7 @@ bool ConvertList(const py::object& obj, ValuePtr* const data, bool use_signature
 }
 
 bool ConvertCellList(const py::object& obj, ValuePtr* const data, bool use_signature) {
-  MS_LOG(DEBUG) << "converting cell list";
+  MS_LOG(DEBUG) << "Converting cell list";
   py::sequence list = obj;
   std::vector<ValuePtr> value_list;
   for (size_t it = 0; it < list.size(); ++it) {
@@ -89,7 +89,7 @@ bool ConvertCellList(const py::object& obj, ValuePtr* const data, bool use_signa
 }
 
 bool ConvertDict(const py::object& obj, ValuePtr* data, bool use_signature) {
-  MS_LOG(DEBUG) << "converting python dict";
+  MS_LOG(DEBUG) << "Converting python dict";
 
   py::dict dict_values = obj.cast<py::dict>();
   std::vector<std::pair<std::string, ValuePtr>> key_values;
@@ -110,14 +110,14 @@ bool ConvertDict(const py::object& obj, ValuePtr* data, bool use_signature) {
 }
 
 void ConvertNameSpace(const py::object& obj, ValuePtr* const data) {
-  MS_LOG(DEBUG) << "converting python module";
+  MS_LOG(DEBUG) << "Converting python module";
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object module_namespace = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MODULE_NAMESPACE, obj);
   *data = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_MODULE, py::cast<py::module>(module_namespace));
 }
 
 void ConvertDataClass(py::object obj, ValuePtr* const data) {
-  MS_LOG(DEBUG) << "converting dataclass";
+  MS_LOG(DEBUG) << "Converting dataclass";
   // Maybe the obj is dataclass define
   auto desc = py::cast<std::string>(python_adapter::CallPyObjMethod(obj, PYTHON_GET_OBJ_DESC, obj));
   // desc has format "<class xxxx>", strip the '<' and '>' by offset 1;
@@ -247,7 +247,7 @@ bool ConvertOtherObj(py::object obj, ValuePtr* const data) {
 bool ConvertData(const py::object& obj, ValuePtr* const data, bool use_signature) {
   // check parameter valid
   if (data == nullptr) {
-    MS_LOG(ERROR) << " data is null pointer";
+    MS_LOG(ERROR) << "Data is null pointer";
     return false;
   }
 
@@ -386,9 +386,9 @@ py::object CreatePythonObject(const py::object& type, const py::tuple& params) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object obj;
   if (params.size() == 0) {
-    obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_CRETAE_OBJ_INSTANCE, type);
+    obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_OBJ_INSTANCE, type);
   } else {
-    obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_CRETAE_OBJ_INSTANCE, type, params);
+    obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_CREATE_OBJ_INSTANCE, type, params);
   }
   return obj;
 }
@@ -421,6 +421,7 @@ ValuePtr PyDataToValue(const py::object& obj) {
   (void)ConvertData(to_convert, &value);
   return value;
 }
+
 void ClearObjectCache() {
   object_map_.clear();
   object_graphs_map_.clear();
@@ -445,7 +446,7 @@ ClassPtr ParseDataClass(const py::object& cls_obj) {
   for (auto& item : names) {
     TypePtr type_value = item.second.cast<TypePtr>();
     MS_EXCEPTION_IF_NULL(type_value);
-    MS_LOG(DEBUG) << "(name: " << py::cast<std::string>(item.first) << ", type: " << type_value->ToString() << ")";
+    MS_LOG(DEBUG) << "(Name: " << py::cast<std::string>(item.first) << ", type: " << type_value->ToString() << ")";
     attributes.push_back(std::make_pair(py::cast<std::string>(item.first), type_value));
   }
 

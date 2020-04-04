@@ -40,7 +40,7 @@ using ExecutorInfoPtr = std::shared_ptr<ExecutorInfo>;
 inline std::string GetPhasePrefix(const std::string& phase) {
   auto pos = phase.find('.');
   if (pos == std::string::npos) {
-    MS_LOG(EXCEPTION) << "phase has no . for prefix" << phase;
+    MS_LOG(EXCEPTION) << "Phase has no . for prefix" << phase;
   }
   return phase.substr(0, pos);
 }

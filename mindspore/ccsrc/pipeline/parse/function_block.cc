@@ -254,7 +254,7 @@ void FunctionBlock::Mature() {
   matured_ = true;
 }
 
-// Force the conditon node to bool using bool operation
+// Force the conditIon node to bool using bool operation
 CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr& cond) {
   TraceManager::DebugTrace(std::make_shared<TraceForceBool>(cond->debug_info()));
   CNodePtr op_apply_node = func_graph()->NewCNode({MakeResolveOperation(NAMED_PRIMITIVE_BOOL), cond});
@@ -347,7 +347,7 @@ void FunctionBlock::InsertDependItemsBeforeReturn() {
   auto return_node = func_graph()->get_return();
   if (return_node) {
     if (return_node->inputs().size() < 1) {
-      MS_LOG(EXCEPTION) << "length of inputs of output node is less than 2";
+      MS_LOG(EXCEPTION) << "Length of inputs of output node is less than 2";
     }
     old_ret = return_node->input(1);
   } else {

@@ -98,7 +98,7 @@ py::tuple GenerateKey(const std::string& name, const std::unordered_map<std::str
   }
   if (g_args_cache.count(args_spec) == 0) {
     static int key = 0;
-    MS_LOG(INFO) << "start new args and compile key:" << key;
+    MS_LOG(INFO) << "Start new args and compile key:" << key;
     g_args_cache[args_spec] = key++;
   }
   py::tuple argSpec = py::tuple(2);
@@ -110,7 +110,7 @@ py::tuple GenerateKey(const std::string& name, const std::unordered_map<std::str
 py::bool_ VerifyInputSignature(const py::list input_signature, const py::tuple inputs) {
   MS_LOG(DEBUG) << "Verify args size:" << inputs.size();
   if (inputs.size() != input_signature.size()) {
-    MS_LOG(ERROR) << "signature size not equal to args size";
+    MS_LOG(ERROR) << "Signature size not equal to args size";
     return false;
   }
 
@@ -148,7 +148,7 @@ py::bool_ VerifyInputSignature(const py::list input_signature, const py::tuple i
 ExecutorPy::ExecutorPy() {}
 
 ResourcePtr ExecutorPy::GetResource(const std::string& phase) {
-  MS_LOG(DEBUG) << "phase size:" << info_.size();
+  MS_LOG(DEBUG) << "Phase size:" << info_.size();
   if (info_.count(phase) == 0) {
     return nullptr;
   }
@@ -157,14 +157,14 @@ ResourcePtr ExecutorPy::GetResource(const std::string& phase) {
 
 FuncGraphPtr ExecutorPy::GetFuncGraph(const std::string& phase) {
   if (info_.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "no phase in executor:" << GetPhasePrefix(phase);
+    MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
   }
   return info_[phase]->func_graph;
 }
 
 std::size_t ExecutorPy::ArgListSize(const std::string& phase) {
   if (info_.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "no phase in executor:" << GetPhasePrefix(phase);
+    MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
   }
   return info_[phase]->arg_list_size;
 }
@@ -243,7 +243,7 @@ void ExecutorPy::DelNetRes(const std::string& id) {
     auto tmp_info = info_;
     for (auto& item : tmp_info) {
       if (item.first.find(id) != string::npos) {
-        MS_LOG(INFO) << "delete network res:" << item.first;
+        MS_LOG(INFO) << "Delete network res:" << item.first;
         (void)info_.erase(item.first);
         flag = true;
       }
@@ -262,7 +262,7 @@ void ExecutorPy::DelNetRes(const std::string& id) {
 }
 
 void ExecutorPy::ClearRes() {
-  MS_LOG(INFO) << "clean executor Resrouce!";
+  MS_LOG(INFO) << "Clean executor resource!";
   executor_ = nullptr;
 }
 
@@ -278,27 +278,27 @@ void ExecutorPy::SaveCompiledGraph(const std::string& phase_s) {
   MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
 
-  MS_LOG(INFO) << "save compiled func graph(" << func_graph->ToString() << ") phase(" << phase_s << ")!";
+  MS_LOG(INFO) << "Save compiled func graph(" << func_graph->ToString() << ") phase(" << phase_s << ")!";
   info_[phase_s]->func_graph = func_graph;
   if ((func_graph != nullptr) &&
       ((parallel_mode == parallel::AUTO_PARALLEL) || (parallel_mode == parallel::SEMI_AUTO_PARALLEL))) {
-    MS_LOG(DEBUG) << "save model parallel parameter layout graph!";
+    MS_LOG(DEBUG) << "Save model parallel parameter layout graph!";
     func_graph = info_[phase_s]->resource->results()[kStepParallelGraph].cast<FuncGraphPtr>();
-    ExecutorInfoPtr excutor_info = std::make_shared<ExecutorInfo>();
+    ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
     std::string layout_graph = phase_s + kStepParallelGraph;
-    excutor_info->func_graph = func_graph;
-    info_[layout_graph] = excutor_info;
+    executor_info->func_graph = func_graph;
+    info_[layout_graph] = executor_info;
   } else {
-    MS_LOG(DEBUG) << "save model parallel parameter layout graph null!";
+    MS_LOG(DEBUG) << "Save model parallel parameter layout graph null!";
   }
-  MS_LOG(INFO) << "end save compiled func graph!";
+  MS_LOG(INFO) << "End save compiled func graph!";
 }
 
 bool ExecutorPy::ChangeExportGeirUseVmFlag(bool use_vm, const std::string& phase_s) const {
   std::string phase_prefix = GetPhasePrefix(phase_s);
 
   if (use_vm && phase_prefix == "export") {
-    MS_LOG(INFO) << "use ge backend to export geir";
+    MS_LOG(INFO) << "Use ge backend to export geir";
     use_vm = false;
   }
   return use_vm;
@@ -316,7 +316,7 @@ void ExecutorPy::GetGeBackendPolicy() const {
 bool ExecutorPy::CompileInner(const py::object& obj, const py::tuple& args, const py::object& phase, bool use_vm) {
   MS_LOG(DEBUG) << "Start ExecutorPy compile!";
   if ((!py::isinstance<py::str>(phase))) {
-    MS_LOG(ERROR) << "arg phase must be string.";
+    MS_LOG(ERROR) << "Arg phase must be string.";
     return false;
   }
   // check the arg valid?
@@ -327,7 +327,7 @@ bool ExecutorPy::CompileInner(const py::object& obj, const py::tuple& args, cons
 #ifdef ENABLE_GE
   GetGeBackendPolicy();
 #endif
-  ExecutorInfoPtr excutor_info = std::make_shared<ExecutorInfo>();
+  ExecutorInfoPtr executor_info = std::make_shared<ExecutorInfo>();
   std::string phase_s = py::cast<std::string>(phase);
   MS_LOG(INFO) << "ExecutorPy compile phase:" << phase_s << "!";
   ResourcePtr resource = std::make_shared<Resource>(obj);
@@ -353,16 +353,16 @@ bool ExecutorPy::CompileInner(const py::object& obj, const py::tuple& args, cons
     ValuePtr converted = nullptr;
     bool succ = parse::ConvertData(args[i], &converted);
     if (!succ) {
-      MS_LOG(EXCEPTION) << "args convert error";
+      MS_LOG(EXCEPTION) << "Args convert error";
     }
     bool broaden = true;
     args_spec.push_back(abstract::FromValue(converted, broaden));
   }
 
   resource->set_args_spec(args_spec);
-  excutor_info->arg_list_size = size;
-  excutor_info->resource = resource;
-  info_[phase_s] = excutor_info;
+  executor_info->arg_list_size = size;
+  executor_info->resource = resource;
+  info_[phase_s] = executor_info;
   pip->Run();
 
   // save the run graph func to MsPipeLine
@@ -439,7 +439,7 @@ std::string GetMsIrFile(void) {
 
   char real_path[PATH_MAX] = {0};
   if (realpath(path, real_path) == nullptr) {
-    MS_LOG(ERROR) << "MS IR Path error, " << path;
+    MS_LOG(ERROR) << "MS IR path error, " << path;
     return file;
   }
   file = real_path;
@@ -485,7 +485,7 @@ void RunPipelineAction(const ActionItem& action, pipeline::ResourcePtr resource,
 #endif
 
 void Pipeline::Run() {
-  MS_LOG(INFO) << "pipeline run";
+  MS_LOG(INFO) << "Pipeline run";
   MS_EXCEPTION_IF_NULL(resource_);
   FuncGraphPtr user_graph = nullptr;
 
@@ -507,7 +507,7 @@ void Pipeline::Run() {
         MS_LOG(DEBUG) << "Action " << action.first << " end.";
       };
       if (!result) {
-        MS_LOG(EXCEPTION) << "pipeline running to end, failed in step:" << action.first;
+        MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
       }
       if (MsContext::GetInstance()->save_graphs_flag() && resource_->func_graph() != nullptr) {
         auto graph = resource_->func_graph();
@@ -555,7 +555,7 @@ void Pipeline::Run() {
 
   if (MsContext::GetInstance()->save_graphs_flag() && (user_graph != nullptr)) {
     std::string user_graph_file = GetFilePathName("ModelDigraph.dot");
-    MS_LOG(DEBUG) << "save user graph to: " << user_graph_file;
+    MS_LOG(DEBUG) << "Save user graph to: " << user_graph_file;
     draw::DrawUserFuncGraph(user_graph_file, user_graph);
 
 #ifdef ENABLE_DUMP_IR
@@ -572,7 +572,7 @@ void Pipeline::Run() {
     ChangeFileMode(filename, S_IRUSR);
 #endif
   }
-  MS_LOG(INFO) << "end";
+  MS_LOG(INFO) << "End";
 }
 
 void ExecutorPy::ProcessVmArg(const py::tuple& args, const std::string& phase, VectorRef* arg_list) {
@@ -582,7 +582,7 @@ void ExecutorPy::ProcessVmArg(const py::tuple& args, const std::string& phase, V
     py::object arg = args[i];
     auto ms_context = MsContext::GetInstance();
     if (ms_context->backend_policy() == kMsConvert && py::isinstance<py::array>(arg)) {
-      MS_LOG(EXCEPTION) << "args[" << i << "] is numpy array, not tensor";
+      MS_LOG(EXCEPTION) << "Args[" << i << "] is numpy array, not tensor";
     }
     (*arg_list).push_back(arg);
   }
@@ -642,9 +642,9 @@ py::object ExecutorPy::Run(const py::tuple& args, const py::object& phase) {
     MS_LOG(EXCEPTION) << "Can't find run graph func for " << phase_s;
   }
 
-  MS_LOG(DEBUG) << "eval run" << backend;
+  MS_LOG(DEBUG) << "Eval run" << backend;
   BaseRef value = (*run)(arg_list);
-  MS_LOG(DEBUG) << "run end";
+  MS_LOG(DEBUG) << "Run end";
   return BaseRefToPyData(value);
 }
 
@@ -704,9 +704,9 @@ bool InitExecDatasetVm(const std::string& queue_name, int64_t size, int64_t batc
   p_init->set_attr("shapes", MakeValue(int_shapes));
   p_init->set_attr("input_indexes", MakeValue(int_input_indexes));
 
-  const std::vector<std::string> emply_str_list;
-  p_init->set_attr("input_names", MakeValue(emply_str_list));
-  p_init->set_attr("output_names", MakeValue(emply_str_list));
+  const std::vector<std::string> empty_str_list;
+  p_init->set_attr("input_names", MakeValue(empty_str_list));
+  p_init->set_attr("output_names", MakeValue(empty_str_list));
 
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   auto app_init = std::make_shared<CNode>(AnfNodePtrList{NewValueNode(p_init)}, func_graph);
@@ -730,7 +730,7 @@ bool InitExecDatasetVm(const std::string& queue_name, int64_t size, int64_t batc
 
   if (!(*runner.run)) {
     // empty function
-    MS_LOG(EXCEPTION) << "Backend " << backend->name() << " unsupports tdt dataset.";
+    MS_LOG(EXCEPTION) << "Backend " << backend->name() << " unsupported tdt dataset.";
   }
 
   // launch init dataset runner without inputs and outputs
@@ -758,7 +758,7 @@ void InitHccl() {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(device_name, device_id);
     MS_EXCEPTION_IF_NULL(runtime_instance);
     if (!runtime_instance->Init()) {
-      MS_LOG(ERROR) << "kernel runtime init error.";
+      MS_LOG(ERROR) << "Kernel runtime init error.";
       return;
     }
   }
@@ -795,7 +795,7 @@ void InitGe() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (!ms_context->OpenTsd()) {
-    MS_LOG(EXCEPTION) << "open tsd failed";
+    MS_LOG(EXCEPTION) << "Open tsd failed";
   }
   (void)ms_context->InitGe();
 }
