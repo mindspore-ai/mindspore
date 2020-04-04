@@ -1089,9 +1089,10 @@ class TopK(PrimitiveWithInfer):
         - **indices** (Tensor) - The indices of values within the last dimension of input.
 
     Examples:
-        >>> topk = TopK(sorted=True)
-        >>> x = Tensor(np.array([1, 2, 3, 4, 5]).astype(np.float16))
-        >>> values, indices = topk(x)
+        >>> topk = P.TopK(sorted=True)
+        >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16))
+        >>> k = 3
+        >>> values, indices = topk(input_x, k)
         >>> assert values == Tensor(np.array([5, 4, 3]))
         >>> assert indices == Tensor(np.array([4, 3, 2]))
     """

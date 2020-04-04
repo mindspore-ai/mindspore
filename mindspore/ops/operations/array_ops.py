@@ -443,7 +443,6 @@ class Transpose(PrimitiveWithInfer):
     Examples:
         >>> input_tensor = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
         >>> perm = (0, 2, 1)
-        >>> expect = np.array([[[1, 4], [2, 5], [3, 6]], [[7, 10], [8, 11], [9, 12]]])
         >>> transpose = Transpose()
         >>> output = transpose(input_tensor, perm)
     """
@@ -1634,7 +1633,7 @@ class Diag(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor([1, 2, 3, 4])
         >>> diag = P.Diag()
-        >>> diag(x)
+        >>> diag(input_x)
         [[1, 0, 0, 0],
          [0, 2, 0, 0],
          [0, 0, 3, 0],
