@@ -116,7 +116,7 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
     return broaded_list;
   }
 
-  if (func_graph_->has_flag(kFuncGraphFlagUndetermin)) {
+  if (func_graph_->has_flag(kFuncGraphFlagUndetermined)) {
     if (parent_context_) {
       MS_LOG(DEBUG) << "Undeterminate FuncGraphEvaluator " << ToString()
                     << ", context: " << parent_context_->ToString();

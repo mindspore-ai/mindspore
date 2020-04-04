@@ -77,7 +77,7 @@ class AbstractBase : public Base {
   }
 
  protected:
-  // default implementation, it can be overrided by subclass;
+  // default implementation, it can be overwritten by subclass;
   virtual ValuePtr RealBuildValue() const { return kAnyValue; }
 
  private:
@@ -495,7 +495,7 @@ class AbstractNone : public AbstractBase {
 };
 using AbstractNonePtr = std::shared_ptr<AbstractNone>;
 
-// the un assgined state value for variable, which means the variable is not assigned
+// the un assigned state value for variable, which means the variable is not assigned
 class AbstractNull : public AbstractBase {
  public:
   AbstractNull() : AbstractBase(kNullObj) { set_type(std::make_shared<TypeNull>()); }
