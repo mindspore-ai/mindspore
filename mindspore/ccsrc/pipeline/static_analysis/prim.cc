@@ -554,24 +554,6 @@ AbstractBasePtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &dat
   return eng->ForwardConfig(old_conf, fn_conf);
 }
 
-AbstractBasePtr GenerateResolveAbstract(const AnfNodeConfigPtr &out_conf, const py::object &obj,
-                                        const ValuePtr &converted_ret) {
-  if (py::hasattr(obj, PYTHON_DATACLASS_FIELDS)) {
-    TypePtr cls_ptr = parse::ParseDataClass(converted_ret->cast<std::shared_ptr<parse::PyObjectWrapper>>()->obj());
-
-    std::vector<AnfNodePtr> input = {NewValueNode(prim::kPrimPartial), NewValueNode(prim::kPrimMakeRecord),
-                                     NewValueNode(cls_ptr)};
-    MS_EXCEPTION_IF_NULL(out_conf);
-    FuncGraphPtr func_graph = out_conf->node()->func_graph();
-    CNodePtr new_cnode = func_graph->NewCNode(input);
-    AnalysisEnginePtr eng = out_conf->engine();
-    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, out_conf->context());
-    return eng->ForwardConfig(out_conf, fn_conf);
-  } else {
-    return ToAbstract(converted_ret, AnalysisContext::DummyContext(), out_conf);
-  }
-}
-
 AbstractBasePtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engine,
                                                     const AbstractBasePtrList &args_spec_list,
                                                     const AnfNodeConfigPtr &out_conf) {
@@ -602,23 +584,16 @@ AbstractBasePtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &eng
   // item_name to func addr from obj_map
   parse::SymbolPtr symbol = item_v->cast<parse::SymbolPtr>();
   parse::NameSpacePtr name_space = data_v->cast<parse::NameSpacePtr>();
+  FuncGraphPtr func_graph = out_conf->node()->func_graph();
 
-  parse::SymbolResolverPtr symbol_resolver =
-    std::make_shared<parse::SymbolResolver>(name_space, symbol, out_conf->node());
-  if (!symbol_resolver->Resolve()) {
+  auto new_node = parse::ResolveSymbol(func_graph->manager(), name_space, symbol, out_conf->node());
+  if (new_node == nullptr) {
     MS_LOG(EXCEPTION) << "Resolve node failed";
   }
 
-  py::object obj = symbol_resolver->result();
-  ValuePtr converted_ret = nullptr;
-  bool converted = parse::ConvertData(obj, &converted_ret, true);
-  if (!converted) {
-    MS_LOG(EXCEPTION) << "Convert data failed";
-  }
-  if (converted_ret->isa<FuncGraph>()) {
-    AddToManager(engine, converted_ret->cast<FuncGraphPtr>());
-  }
-  return GenerateResolveAbstract(out_conf, obj, converted_ret);
+  AnalysisEnginePtr eng = out_conf->engine();
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context());
+  return eng->ForwardConfig(out_conf, fn_conf);
 }
 
 AbstractBasePtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &engine,

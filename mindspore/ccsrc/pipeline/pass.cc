@@ -112,6 +112,13 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
   });
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::OptPassConfig grad = opt::OptPassConfig({irpass.expand_jprim_}, true);
+  opt::irpass::ResolveIRPassLib resolve_irpass;
+
+  opt::OptPassConfig resolve_pass = opt::OptPassConfig({
+    resolve_irpass.resolver_resolve_,
+    resolve_irpass.resolver_getattr_,
+    irpass.get_make_ref_eliminate_,
+  });
 
   OptPassGroupMap map_a({{"a_1", a_1},
                          {"a_2", a_2},
@@ -120,6 +127,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
                          {"grad", grad},
+                         {"resolve", resolve_pass},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
                          {"cse", opt::OptPassConfig(opt::CSE(false))},
                          {"a_3", a_3}});

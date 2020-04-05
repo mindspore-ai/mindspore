@@ -103,6 +103,14 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr& func_graph, const py::object&
   if (para_node == nullptr) {
     ParameterPtr node = top_graph->AddWeightParameter(param_name);
     node->set_default_param(obj);
+
+    // set_abstract for parameter
+    auto to_convert = py::cast<py::object>(python_adapter::GetPyObjAttr(obj, "default_input"));
+    ValuePtr converted = nullptr;
+    (void)ConvertData(to_convert, &converted);
+    bool broaden = true;
+    node->set_abstract(abstract::FromValue(converted, broaden));
+
     para_node = node;
   }
   auto iter = func_graph->make_ref_params().find(para_node);
