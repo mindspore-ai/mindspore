@@ -195,13 +195,13 @@ void ReclaimOptimizer() {
 
 bool OptPassGroup(const ResourcePtr& res, const std::string& name) {
   if (res->func_graph() == nullptr) {
-    MS_LOG(ERROR) << "opt passes int error";
+    MS_LOG(ERROR) << "Opt passes int error";
     return false;
   }
 
   abstract::AbstractBasePtrList args = res->args_spec();
   FuncGraphPtr func_graph = res->func_graph();
-  MS_LOG(DEBUG) << "start " << name << " func graph:" << func_graph->ToString() << ", "
+  MS_LOG(DEBUG) << "Start " << name << " func graph:" << func_graph->ToString() << ", "
                 << func_graph->get_return()->DebugString(true);
   InitOpt(res);
   if (g_pass_opts.find(name) != g_pass_opts.end()) {

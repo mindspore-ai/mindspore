@@ -210,7 +210,7 @@ bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const py::di
   (void)convertor.GenerateCheckpointGraph();
   if (convertor.ErrCode() != 0) {
     DfGraphManager::GetInstance().ClearGraph();
-    MS_LOG(ERROR) << "convert df graph failed, err:" << convertor.ErrCode();
+    MS_LOG(ERROR) << "Convert df graph failed, err:" << convertor.ErrCode();
     return false;
   }
 
@@ -238,7 +238,7 @@ bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const py::di
 FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const py::dict& init_params,
                           const std::string& phase, const py::object& broadcast_params) {
   if (info.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "no phase in executor:" << GetPhasePrefix(phase);
+    MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
   }
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
 
@@ -389,7 +389,7 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr& graph, const std::ve
                                         const std::string& phase) {
   std::vector<GeTensorPtr> ge_tensors = TransformUtil::ConvertInputTensors(inputs, kOpFormat_NCHW);
   if (ge_tensors.size() != inputs.size()) {
-    MS_LOG(ERROR) << "args convert to ge tensor error";
+    MS_LOG(ERROR) << "Args convert to ge tensor error";
     return nullptr;
   }
 
@@ -444,7 +444,7 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr>& info, const py::
   std::size_t size = args.size();
 
   if (info.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "no phase in executor:" << GetPhasePrefix(phase);
+    MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
   }
 
   auto arg_size = info.at(phase)->arg_list_size;
@@ -459,12 +459,12 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr>& info, const py::
       ValuePtr converted = nullptr;
       bool succ = parse::ConvertData(args[i], &converted);
       if (!succ) {
-        MS_LOG(EXCEPTION) << "args convert error";
+        MS_LOG(EXCEPTION) << "Args convert error";
       }
       if (converted->isa<tensor::Tensor>()) {
         (*inputs).push_back(converted->cast<tensor::TensorPtr>());
       } else {
-        MS_LOG(EXCEPTION) << "args, " << converted->ToString() << " is not tensor";
+        MS_LOG(EXCEPTION) << "Args " << converted->ToString() << " is not tensor";
       }
     }
   }
@@ -481,7 +481,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const
   }
 
   if (info.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "has no phase:" << phase;
+    MS_LOG(EXCEPTION) << "There is no phase:" << phase;
   }
 
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
@@ -511,7 +511,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const
   if (ret != nullptr) {
     return *ret;
   } else {
-    MS_LOG(EXCEPTION) << "exec graph failed";
+    MS_LOG(EXCEPTION) << "Exec graph failed";
   }
 }
 void ExportDFGraph(const std::string& file_name, const std::string& phase) {

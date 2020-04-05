@@ -64,14 +64,14 @@ AbstractFunctionPtr FuncGraph::abstract() {
   for (auto& p : parameters_) {
     MS_EXCEPTION_IF_NULL(p);
     if (p->abstract() == nullptr) {
-      MS_LOG(ERROR) << "error!!";
+      MS_LOG(ERROR) << "Error!!";
       return nullptr;
     }
     args_spec_list.push_back(p->abstract());
   }
 
   if (nullptr == output()) {
-    MS_LOG(ERROR) << "error func graph no output";
+    MS_LOG(ERROR) << "Error func graph no output";
     return nullptr;
   }
 
@@ -543,6 +543,7 @@ void FuncGraph::GenerateKwargReplNode(const FuncGraphPtr& specialized_graph,
     TraceManager::EndTrace();
   }
 }
+
 bool FuncGraph::NeedGenerate(const std::vector<abstract::AbstractKeywordArgPtr>& kwarg_list) {
   // if the function does not have any vararg/kwarg/kwonly/default value/kw args input
   // return the original graph
@@ -556,6 +557,7 @@ bool FuncGraph::NeedGenerate(const std::vector<abstract::AbstractKeywordArgPtr>&
   }
   return true;
 }
+
 void FuncGraph::GenerateDefaultValue(const FuncGraphPtr& specialized_graph,
                                      const std::vector<AnfNodePtr>& specialized_parameter_list,
                                      std::unordered_map<AnfNodePtr, AnfNodePtr>* repl_nodes) {
@@ -664,7 +666,7 @@ void FuncGraph::EraseUnusedNodeInOrder() {
     auto mng = manager_.lock();
     if (mng) {
       auto nodes = mng->nodes()[shared_from_base<FuncGraph>()];
-      // Erase unusued cnode.
+      // Erase unused cnode.
       for (auto it = order_.begin(); it != order_.end();) {
         if (nodes.count(*it)) {
           (void)it++;
@@ -695,7 +697,7 @@ void FuncGraph::CheckOrder() {
           if (found == it) {
             DumpCNodeList();
             MS_LOG(EXCEPTION) << "The cnode " << (*it)->DebugString() << " order in " << ToString()
-                              << " doesn't obey the input denpency, "
+                              << " doesn't obey the input dependency, "
                               << "as input " << input_node->DebugString() << " is not ahead of itself.";
           }
         }
@@ -842,5 +844,5 @@ void FuncGraph::SetEffectDepends(const std::vector<AnfNodePtr>& depend_inputs) {
 }
 
 const PrimitivePtr FuncGraphTransform::func_graph_prim_ = std::make_shared<Primitive>("FuncGraph");
-const char kFuncGraphFlagUndetermin[] = "Undeterminate";
+const char kFuncGraphFlagUndetermined[] = "Undeterminate";
 }  // namespace mindspore

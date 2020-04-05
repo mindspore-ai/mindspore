@@ -189,7 +189,7 @@ Resource::~Resource() {
   // If exit normally, these global variables will be cleaned
   // in Resource::Clean call by MsPipeline::Compile, but if exit with MS_LOGEXCEPTION,
   // these global variables may not being cleaned, it may
-  // cause segmentfault when free python object inside these global varaibles
+  // cause segmentfault when free python object inside these global variables
   // after python interpreter got freed, so these global variables
   // are cleaned here.
   // So if exit normally, these global variable will be cleaned twice,

@@ -443,7 +443,7 @@ bool AbstractTensor::operator==(const AbstractTensor &other) const {
   auto v1 = GetValueTrack();
   auto v2 = other.GetValueTrack();
   if (v1 == nullptr || v2 == nullptr) {
-    MS_LOG(EXCEPTION) << "the value of AbstractTensor is nullptr";
+    MS_LOG(EXCEPTION) << "The value of AbstractTensor is nullptr";
   }
 
   bool is_value_equal = (v1 == v2);

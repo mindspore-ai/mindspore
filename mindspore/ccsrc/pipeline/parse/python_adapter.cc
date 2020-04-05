@@ -50,6 +50,7 @@ void SetPythonPath(const std::string& path) {
     (void)sys_path.attr("append")(path.c_str());
   }
 }
+
 std::shared_ptr<py::scoped_interpreter> set_python_scoped() {
   // if start process from python, no need set the python scope.
   if (!python_env_) {
@@ -79,6 +80,7 @@ py::object GetPyObjAttr(const py::object& obj, const std::string& attr) {
   }
   return py::none();
 }
+
 py::object GetPyFn(const std::string& module, const std::string& name) {
   (void)python_adapter::set_python_scoped();
   if (!module.empty() && !name.empty()) {

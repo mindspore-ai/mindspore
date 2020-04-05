@@ -183,7 +183,7 @@ bool SymbolResolveAction(const ResourcePtr& res) {
   FuncGraphPtr func_graph = res->func_graph();
   auto succ = parse::ResolveFuncGraph(func_graph, res);
 
-  // Remove usued nodes in cnode order list.
+  // Remove unused nodes in cnode order list.
   func_graph->EraseUnusedNodeInOrder();
   func_graph->ReleaseFullOrderToEffectOrder();
   for (auto fg : func_graph->func_graphs_used_total()) {
