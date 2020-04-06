@@ -266,6 +266,30 @@ def get_bprop_gather_v2(self):
     return bprop
 
 
+@bprop_getters.register(P.Stack)
+def get_bprop_stack(self):
+    """Generate bprop for Stack"""
+    axis = self.axis
+
+    def bprop(x, out, dout):
+        stack_grad = P.Unstack(axis)
+        out = stack_grad(dout)
+        return (out,)
+    return bprop
+
+
+@bprop_getters.register(P.Unstack)
+def get_bprop_unstack(self):
+    """Generate bprop for Unstack"""
+    axis = self.axis
+
+    def bprop(x, out, dout):
+        unstack_grad = P.Stack(axis)
+        out = unstack_grad(dout)
+        return (out,)
+    return bprop
+
+
 @bprop_getters.register(P.StridedSlice)
 def get_bprop_strided_slice(self):
     """Generate bprop for StridedSlice"""
