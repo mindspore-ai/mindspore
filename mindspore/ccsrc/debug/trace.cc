@@ -89,7 +89,7 @@ std::string GetDebugInfo(const DebugInfoPtr& info, SourceLineTip tip) {
   return "";
 }
 
-// a trace info identifys a node transform, so we can trace the node transform through
+// a trace info identifies a node transform, so we can trace the node transform through
 // a link of trace info and debug info
 std::string GetInfoWithAction(const std::vector<DebugInfoPtr>& info_vec, SourceLineTip tip) {
   if (info_vec.size() < 1) {
@@ -173,7 +173,7 @@ void DumpInferStack(std::ostringstream& oss) {
     }
     auto graph_context = graph_infer->graph_context();
     if (graph_context == nullptr) {
-      MS_LOG(INFO) << "null context continue";
+      MS_LOG(INFO) << "Null context continue";
       continue;
     }
     auto graph = graph_context->func_graph();
@@ -264,7 +264,7 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string& filename,
   param_index = 1;
   auto tagged_func_graphs = CalcTaggedFuncGraphs();
 
-  // first output grapn on the analysis stack
+  // first output graph on the analysis stack
   for (const auto& node_cfg : node_cfgs) {
     auto fg = node_cfg->context()->func_graph();
     // the graph is already output, skip it
@@ -291,7 +291,7 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string& filename,
     ofs << "\n\n";
     (void)func_graph_set.erase(fg);
   }
-  ofs << "# num of total funcgraphs: " << exported.size();
+  ofs << "# num of total function graphs: " << exported.size();
 
   ofs.close();
 }
@@ -332,7 +332,7 @@ void GetInferStackInfo(std::ostringstream& oss) {
   MS_LOG(INFO) << "Get graph analysis information *end*";
 }
 
-// trace the graph evaluator statck
+// trace the graph evaluator stack
 static std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> graph_infer_stack;
 // trace the cnode infer debug info
 static std::vector<abstract::AnfNodeConfigPtr> cnode_debug_stack{};

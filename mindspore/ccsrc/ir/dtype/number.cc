@@ -34,19 +34,19 @@ bool Number::operator==(const Type& other) const {
 
 Int::Int(const int nbits) : Number(IntBitsToTypeId(nbits), nbits, false) {
   if (nbits != 8 && nbits != 16 && nbits != 32 && nbits != 64) {
-    MS_LOG(EXCEPTION) << "wrong number of bits.";
+    MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
 
 UInt::UInt(const int nbits) : Number(UIntBitsToTypeId(nbits), nbits, false) {
   if (nbits != 8 && nbits != 16 && nbits != 32 && nbits != 64) {
-    MS_LOG(EXCEPTION) << "wrong number of bits.";
+    MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
 
 Float::Float(const int nbits) : Number(FloatBitsToTypeId(nbits), nbits, false) {
   if (nbits != 16 && nbits != 32 && nbits != 64) {
-    MS_LOG(EXCEPTION) << "wrong number of bits.";
+    MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
 

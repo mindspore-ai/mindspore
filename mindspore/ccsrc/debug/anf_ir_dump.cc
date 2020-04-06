@@ -141,7 +141,7 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
 
 void DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, OrderedMap<AnfNodePtr, int32_t> *para_map) {
   if (graph == nullptr) {
-    MS_LOG(INFO) << "param graph is nullptr.";
+    MS_LOG(INFO) << "Param graph is nullptr.";
     return;
   }
   std::vector<AnfNodePtr> parameters = graph->parameters();
@@ -175,17 +175,17 @@ void DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer, OrderedMa
     if (para_map != nullptr) {
       (*para_map)[p] = para++;
     }
-    MS_LOG(DEBUG) << "record param: " << p->ToString() << " graph belong : " << p->func_graph()->ToString();
+    MS_LOG(DEBUG) << "Record param: " << p->ToString() << " graph belong : " << p->func_graph()->ToString();
   }
 }
 
 void DumpOperator(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &gsub) {
   if (op == nullptr) {
-    MS_LOG(INFO) << "param op is nullptr";
+    MS_LOG(INFO) << "Param op is nullptr";
     return;
   }
   if (gsub == nullptr) {
-    MS_LOG(INFO) << "param gsub is nullptr";
+    MS_LOG(INFO) << "Param gsub is nullptr";
     return;
   }
 
@@ -338,7 +338,7 @@ void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<Anf
   }
 
   if (nd->inputs().empty()) {
-    MS_LOG(EXCEPTION) << "input of apply node is empty";
+    MS_LOG(EXCEPTION) << "Input of apply node is empty";
   }
 
   // print operator
@@ -376,7 +376,7 @@ void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePt
     MS_EXCEPTION_IF_NULL(nd);
     FuncGraphPtr sub_graph = nd->func_graph();
     if (sub_graph == nullptr) {
-      MS_LOG(DEBUG) << "node[" << nd->ToString() << "] belongs to no graph!";
+      MS_LOG(DEBUG) << "Node[" << nd->ToString() << "] belongs to no graph!";
       continue;
     }
     std::shared_ptr<SubGraphIRInfo> gsub = (*sub_graphs)[sub_graph];
@@ -430,12 +430,12 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
     return;
   }
   if (filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "file path " << filename << " is too long.";
+    MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
   }
   char real_path[PATH_MAX] = {0};
   if (nullptr == realpath(filename.c_str(), real_path)) {
-    MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
+    MS_LOG(DEBUG) << "Dir " << filename << " does not exit.";
   }
 
   OrderedMap<AnfNodePtr, int32_t> para_map;

@@ -193,7 +193,7 @@ void TraceManager::DebugTrace(const TraceInfoPtr& trace_info) {
   }
   TraceContextPtr context = std::make_shared<TraceContext>(trace_info);
   if (trace_info->debug_info() == nullptr) {
-    MS_LOG(EXCEPTION) << "trace debug info is null";
+    MS_LOG(EXCEPTION) << "Trace debug info is null";
   }
   TraceManager::trace_context_stack_.push(context);
 }
@@ -205,7 +205,7 @@ void TraceManager::DebugTrace(const DebugInfoPtr& debug_info, const TraceInfoPtr
   auto cloned_info = trace_info->clone();
   cloned_info->set_debug_info(debug_info);
   if (cloned_info->debug_info() == nullptr) {
-    MS_LOG(EXCEPTION) << "trace debug info is null with cloned trace";
+    MS_LOG(EXCEPTION) << "Trace debug info is null with cloned trace";
   }
   TraceContextPtr context = std::make_shared<TraceContext>(cloned_info);
   TraceManager::trace_context_stack_.push(context);

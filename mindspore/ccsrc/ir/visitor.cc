@@ -43,14 +43,13 @@ VisitFuncType AnfVisitor::Match(const PrimitivePtr &prim, const std::vector<opt:
     }
 
     auto &inputs = node->cast<CNodePtr>()->inputs();
-    // infact, funcs_size == inps_size - 1
     auto funcs_size = funcs.size();
-    auto inps_size = inputs.size();
+    auto inputs_size = inputs.size();
 
     // check the inputs are matched with the predicate functions
     if (funcs_size > 0) {
       // use the predicate function list to check the number of inputs
-      if (funcs_size != (inps_size - 1)) {
+      if (funcs_size != (inputs_size - 1)) {
         return;
       }
 
@@ -63,7 +62,7 @@ VisitFuncType AnfVisitor::Match(const PrimitivePtr &prim, const std::vector<opt:
     }
 
     // visit the inputs
-    for (size_t i = 1; i < inps_size; i++) {
+    for (size_t i = 1; i < inputs_size; i++) {
       this->Visit(inputs[i]);
     }
   };
