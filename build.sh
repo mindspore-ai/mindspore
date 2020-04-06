@@ -452,8 +452,10 @@ if [[ "X$INC_BUILD" = "Xoff" ]]; then
         bash "${PROJECT_PATH}/package.sh" ge
     elif [[ "X$ENABLE_GPU" = "Xon" ]]; then
         bash "${PROJECT_PATH}/package.sh" ms gpu
-    elif [[ "X$ENABLE_D" = "Xon" ]] || [[ "X$ENABLE_CPU" = "Xon" ]]; then
-        bash "${PROJECT_PATH}/package.sh" ms
+    elif [[ "X$ENABLE_D" = "Xon" ]]; then
+        bash "${PROJECT_PATH}/package.sh" ms ascend
+    elif [[ "X$ENABLE_CPU" = "Xon" ]]; then
+        bash "${PROJECT_PATH}/package.sh" ms cpu
     else
         bash "${PROJECT_PATH}/package.sh" debug
     fi
