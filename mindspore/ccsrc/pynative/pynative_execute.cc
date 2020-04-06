@@ -36,7 +36,7 @@
 #endif
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
-// primitive unable to infer value for constant input in pynative mode
+// primitive unable to infer value for constant input in PyNative mode
 const std::unordered_set<std::string> vm_operators = {"partial", "depend"};
 
 namespace mindspore {
@@ -45,7 +45,7 @@ inline ValuePtr PyAttrValue(const py::object& obj) {
   ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(obj, &converted_ret);
   if (!converted) {
-    MS_LOG(EXCEPTION) << "attribute convert error with type:" << std::string(py::str(obj));
+    MS_LOG(EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(obj));
   }
   return converted_ret;
 }
@@ -67,7 +67,7 @@ void PynativeInfer(const PrimitivePyPtr& prim, const py::tuple& py_args, OpExecI
 
 OpExecInfoPtr GenerateOpExecInfo(const py::args& args) {
   if (args.size() != PY_ARGS_NUM) {
-    MS_LOG(ERROR) << "four args are needed by RunOp";
+    MS_LOG(ERROR) << "Four args are needed by RunOp";
     return nullptr;
   }
   auto op_exec_info = std::make_shared<OpExecInfo>();
@@ -145,13 +145,13 @@ py::object RunOpInVM(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* stat
 
 py::object RunOpInMs(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* status) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
-  MS_LOG(INFO) << "start run op[" << op_exec_info->op_name << "] with backend policy ms";
+  MS_LOG(INFO) << "Start run op[" << op_exec_info->op_name << "] with backend policy ms";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_enable_pynative_infer(true);
   std::string device_target = ms_context->device_target();
   if (device_target != kAscendDevice && device_target != kGPUDevice) {
-    MS_EXCEPTION(ArgumentError) << "device target [" << device_target << "] is not supported in Pynative mode";
+    MS_EXCEPTION(ArgumentError) << "Device target [" << device_target << "] is not supported in Pynative mode";
   }
   std::shared_ptr<session::SessionBasic> session = session::SessionFactory::Get().Create(device_target);
   MS_EXCEPTION_IF_NULL(session);
@@ -197,7 +197,7 @@ py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecIn
       break;
     }
     default:
-      MS_LOG(ERROR) << "No backend configed for run op";
+      MS_LOG(ERROR) << "No backend configured for run op";
   }
   return result;
 }
@@ -240,7 +240,7 @@ py::tuple RunOp(const py::args& args) {
   }
   result = RunOpWithBackendPolicy(backend_policy, op_exec_info, &status);
   if (status != PYNATIVE_SUCCESS) {
-    MS_LOG(ERROR) << "Fail to run " << op_exec_info->op_name;
+    MS_LOG(ERROR) << "Failed to run " << op_exec_info->op_name;
     return err_ret;
   }
 

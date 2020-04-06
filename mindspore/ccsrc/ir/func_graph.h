@@ -174,7 +174,7 @@ class FuncGraph : public FuncGraphBase {
   GraphDebugInfoPtr debug_info();
   void set_debug_info(const GraphDebugInfoPtr &info) {
     if (info == nullptr) {
-      MS_LOG(EXCEPTION) << "graph set null debug info";
+      MS_LOG(EXCEPTION) << "Graph set null debug info";
     }
     this->debug_info_ = info;
   }

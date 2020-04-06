@@ -83,7 +83,7 @@ class AnfVisitor;
 // Methods:
 // func_graph: return FuncGraph that this AnfNode belongs to.
 // scope: return the scope namespace of this AnfNode. Set it using set_scope.
-// abstract: return the cached inferred abstract value. It cantains type, shape
+// abstract: return the cached inferred abstract value. It contains type, shape
 // value. Set New cache using set_abstract.
 // intermediate_abstract: return the cached inferring abstract value.
 // Type/Shape: return the related info of this AnfNode. When this AnfNode is an
@@ -284,7 +284,7 @@ class Parameter : public ANode {
 };
 using ParameterPtr = std::shared_ptr<Parameter>;
 
-// Value is used to represent the atomic expression metioned in BNF.
+// Value is used to represent the atomic expression mentioned in BNF.
 // It mainly be stored in ValueNode. Value and ValueNode is related definition.
 class Value : public Base {
  public:
@@ -313,7 +313,7 @@ using ValuePtr = std::shared_ptr<Value>;
 using ValuePtrList = std::vector<ValuePtr>;
 
 // ValueNode is used to hold value. Unlike CNode and Parameter, ValueNode
-// do not belong to any particular function graph.
+// does not belong to any particular function graph.
 class ValueNode : public ANode {
  public:
   explicit ValueNode(const ValuePtr &value) : value_(value) {}
