@@ -146,9 +146,6 @@ class Conv2d(_Conv):
             Initializer and string are the same as 'weight_init'. Refer to the values of
             Initializer for more details. Default: 'zeros'.
 
-    Returns:
-        Tensor, output tensor.
-
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
 
@@ -157,7 +154,7 @@ class Conv2d(_Conv):
 
     Examples:
         >>> net = nn.Conv2d(120, 240, 4, has_bias=False, weight_init='normal')
-        >>> input = mindspore.Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
+        >>> input = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
         >>> net(input).shape()
         (1, 240, 1024, 640)
     """
@@ -277,7 +274,7 @@ class Conv2dTranspose(_Conv):
 
     Examples:
         >>> net = nn.Conv2dTranspose(3, 64, 4, has_bias=False, weight_init='normal')
-        >>> input = Tensor(np.ones([1, 3, 16, 50]), mstype.float32)
+        >>> input = Tensor(np.ones([1, 3, 16, 50]), mindspore.float32)
         >>> net(input)
         """
     def __init__(self,

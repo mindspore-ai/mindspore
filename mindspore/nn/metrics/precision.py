@@ -41,13 +41,12 @@ class Precision(EvaluationBase):
                          multilabel. Default: 'classification'.
 
     Examples:
-        >>> x = mindspore.Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
-        >>> y = mindspore.Tensor(np.array([1, 0, 1]))
+        >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
+        >>> y = Tensor(np.array([1, 0, 1]))
         >>> metric = nn.Precision('classification')
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> precision = metric.eval()
-        [0.5 1. ]
     """
     def __init__(self, eval_type='classification'):
         super(Precision, self).__init__(eval_type)
@@ -72,13 +71,14 @@ class Precision(EvaluationBase):
 
         Args:
             inputs: Input `y_pred` and `y`. `y_pred` and `y` are Tensor, list or numpy.ndarray.
-                `y_pred` is in most cases (not strictly) a list of floating numbers in range :math:`[0, 1]`
+                For 'classification' evaluation type, `y_pred` is in most cases (not strictly) a list
+                of floating numbers in range :math:`[0, 1]`
                 and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
-                is the number of categories. For 'multilabel' evaluation type, `y_pred` can only be one-hot
-                encoding with values 0 or 1. Indices with 1 indicate positive category. `y` contains values
-                of integers. The shape is :math:`(N, C)` if one-hot encoding is used. One-hot encoding
-                should be used when 'eval_type' is 'multilabel'. Shape can also be :math:`(N, 1)` if category
-                index is used in 'classification' evaluation type.
+                is the number of categories. Shape of `y` can be :math:`(N, C)` with values 0 and 1 if one-hot
+                encoding is used or the shape is :math:`(N,)` with integer values if index of category is used.
+                For 'multilabel' evaluation type, `y_pred` and `y` can only be one-hot encoding with
+                values 0 or 1. Indices with 1 indicate positive category. The shape of `y_pred` and `y`
+                are both :math:`(N, C)`.
 
         Raises:
             ValueError: If the number of input is not 2.

@@ -83,7 +83,7 @@ class Momentum(Optimizer):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     def __init__(self, params, learning_rate, momentum, weight_decay=0.0, loss_scale=1.0,
