@@ -148,7 +148,8 @@ const char kNameSlice[] = "Slice";
 const char kNameAddN[] = "AddN";
 const char kNameLess[] = "Less";
 const char kNameGreater[] = "Greater";
-const char kNamePack[] = "Stack";
+const char kNameStack[] = "Stack";
+const char kNameUnstack[] = "Unstack";
 const char kNameMerge[] = "Merge";
 const char kNameGeSwitch[] = "GeSwitch";
 

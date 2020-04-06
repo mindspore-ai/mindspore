@@ -135,6 +135,7 @@ extern const PrimitivePtr kPrimGatherV2;
 extern const PrimitivePtr kPrimSize;
 extern const PrimitivePtr kPrimArgMax;
 extern const PrimitivePtr kPrimPack;
+extern const PrimitivePtr kPrimUnpack;
 extern const PrimitivePtr kPrimUnsortedSegmentSum;
 extern const PrimitivePtr kPrimConcatOffset;
 extern const PrimitivePtr kPrimReshape;
