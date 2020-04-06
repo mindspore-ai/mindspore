@@ -304,5 +304,4 @@ class MulAddWithWrongOutputNum(nn.Cell):
 
 def test_grad_mul_add_with_wrong_output_num():
     mul_add = MulAddWithWrongOutputNum()
-    with pytest.raises(RuntimeError):
-        C.grad_all(mul_add)(1, 2)
+    C.grad_all(mul_add)(1, 2)
