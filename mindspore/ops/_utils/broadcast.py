@@ -16,13 +16,14 @@
 """broadcast"""
 
 
-def _get_broadcast_shape(x_shape, y_shape):
+def _get_broadcast_shape(x_shape, y_shape, prim_name):
     """
     Doing broadcast between tensor x and tensor y.
 
     Args:
         x_shape (list): The shape of tensor x.
         y_shape (list): The shape of tensor y.
+        prim_name (str): Primitive name.
 
     Returns:
         List, the shape that broadcast between tensor x and tensor y.
@@ -50,7 +51,8 @@ def _get_broadcast_shape(x_shape, y_shape):
         elif x_shape[i] == y_shape[i]:
             broadcast_shape_back.append(x_shape[i])
         else:
-            raise ValueError("The x_shape {} and y_shape {} can not broadcast.".format(x_shape, y_shape))
+            raise ValueError("For '{}' the x_shape {} and y_shape {} can not broadcast.".format(
+                prim_name, x_shape, y_shape))
 
     broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
     broadcast_shape = broadcast_shape_front + broadcast_shape_back

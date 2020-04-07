@@ -19,7 +19,7 @@ import numpy as np
 from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import signature_kind as sig_kind
 from ..._c_expression import signature_dtype as sig_dtype
-from ..._checkparam import ParamValidator as validator
+from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
@@ -27,16 +27,16 @@ from .._utils import _get_broadcast_shape
 from ..primitive import PrimitiveWithInfer, prim_attr_register
 
 
-def _infer_shape_reduce(x, axis, keep_dims):
+def _infer_shape_reduce(x, axis, keep_dims, prim_name):
     """Common infer for reduce operator"""
 
     def reduce_one_axis(one_axis):
-        validator.check_int_range('axis', one_axis, -dim, dim, Rel.INC_LEFT)
+        validator.check_int_range('axis', one_axis, -dim, dim, Rel.INC_LEFT, prim_name)
         if one_axis < 0:
             one_axis += dim
         axis_reduce.add(one_axis)
 
-    validator.check_type('axis', axis, [int, tuple, list])
+    validator.check_value_type('axis', axis, [int, tuple, list], prim_name)
     dim = len(x)
     axis_reduce = set()
 
@@ -48,7 +48,7 @@ def _infer_shape_reduce(x, axis, keep_dims):
                 return [1] * dim
             return []
         for index, one_axis in enumerate(axis):
-            validator.check_type('axis[%d]' % index, one_axis, [int])
+            validator.check_value_type('axis[%d]' % index, one_axis, [int], prim_name)
             reduce_one_axis(one_axis)
 
     out_shape = []
@@ -59,14 +59,6 @@ def _infer_shape_reduce(x, axis, keep_dims):
         else:
             out_shape.append(x[i])
     return out_shape
-
-
-def _check_infer_attr_reduce(axis, keep_dims):
-    validator.check_type('keep_dims', keep_dims, [bool])
-    validator.check_type('axis', axis, [int, tuple])
-    if isinstance(axis, tuple):
-        for index, value in enumerate(axis):
-            validator.check_type('axis[%d]' % index, value, [int])
 
 
 class _BinaryOp(PrimitiveWithInfer):
@@ -82,7 +74,7 @@ class _BinaryOp(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_shape(self, x_shape, y_shape):
-        return _get_broadcast_shape(x_shape, y_shape)
+        return _get_broadcast_shape(x_shape, y_shape, self.prim_name())
 
 
 class _MathBinaryOp(_BinaryOp):
@@ -91,15 +83,13 @@ class _MathBinaryOp(_BinaryOp):
     """
 
     @staticmethod
-    def do_infer_dtype(x_dtype, y_dtype, valid_dtype=mstype.number_type):
+    def do_infer_dtype(x_dtype, y_dtype, valid_dtype=mstype.number_type, prim_name=None):
         args_type = {"x": x_dtype, "y": y_dtype}
-        validator.check_args_tensor(args_type)
-        args_dtype = {"x_dtype": x_dtype, "y_dtype": y_dtype}
-        validator.check_type_same(args_dtype, valid_dtype)
+        validator.check_tensor_type_same(args_type, valid_dtype, prim_name)
         return x_dtype
 
     def infer_dtype(self, x_dtype, y_dtype):
-        return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype)
+        return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type, self.prim_name())
 
 
 class TensorAdd(_MathBinaryOp):
@@ -167,7 +157,7 @@ class AssignAdd(PrimitiveWithInfer):
 
     def infer_dtype(self, variable, value):
         args = {"value": value}
-        validator.check_type_same(args, mstype.number_type)
+        validator.check_scalar_or_tensor_type_same(args, mstype.number_type, self.prim_name())
         return value
 
 
@@ -208,7 +198,7 @@ class AssignSub(PrimitiveWithInfer):
 
     def infer_dtype(self, variable, value):
         args = {"value": value}
-        validator.check_type_same(args, mstype.number_type)
+        validator.check_scalar_or_tensor_type_same(args, mstype.number_type, self.prim_name())
         return value
 
 
@@ -229,15 +219,16 @@ class _Reduce(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, keep_dims=False):
         """init Reduce"""
-        validator.check_type('keep_dims', keep_dims, [bool])
+        validator.check_value_type('keep_dims', keep_dims, [bool], self.prim_name())
         self.init_prim_io_names(inputs=['input_x', 'axis'], outputs=['y'])
 
     def do_infer(self, input_x, axis, valid_dtype=mstype.number_type):
         axis_v = axis['value']
         input_shp = input_x['shape']
-        validator.check_subclass('input_x', input_x['dtype'], mstype.tensor)
-        validator.check_typename('input_x', input_x['dtype'], valid_dtype)
-        input_shp = _infer_shape_reduce(input_shp, axis_v, self.keep_dims)
+        args = {'input_x': input_x['dtype']}
+        validator.check_tensor_type_same(args, valid_dtype, self.prim_name())
+
+        input_shp = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.prim_name())
         return {'shape': input_shp,
                 'dtype': input_x['dtype'],
                 'value': None}
@@ -472,16 +463,17 @@ class CumProd(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self, exclusive=False, reverse=False):
-        self.exclusive = validator.check_type("exclusive", exclusive, [bool])
-        self.reverse = validator.check_type("reverse", reverse, [bool])
+        cls_name = self.prim_name()
+        self.exclusive = validator.check_value_type("exclusive", exclusive, [bool], cls_name)
+        self.reverse = validator.check_value_type("reverse", reverse, [bool], cls_name)
 
     def infer_shape(self, x_shape, axis_shape):
         return x_shape
 
     def infer_dtype(self, x_type, axis_type):
-        validator.check_subclass('x_type', x_type, mstype.tensor)
-        validator.check_typename('x_type', x_type, mstype.number_type)
-        validator.check_subclass("axis_type", axis_type, mstype.int_)
+        cls_name = self.prim_name()
+        validator.check_tensor_type_same({'x': x_type}, mstype.number_type, cls_name)
+        validator.check_subclass("axis", axis_type, mstype.int_, cls_name)
         return x_type
 
 
@@ -515,8 +507,9 @@ class MatMul(PrimitiveWithInfer):
     def __init__(self, transpose_a=False, transpose_b=False):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
         self.__setattr_flag__ = True
-        validator.check_type("transpose_a", transpose_a, [bool])
-        validator.check_type("transpose_b", transpose_b, [bool])
+        cls_name = self.prim_name()
+        validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
+        validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
 
     def check_shape_size(self, x, y):
         if len(x) != 2 or len(y) != 2:
@@ -525,11 +518,11 @@ class MatMul(PrimitiveWithInfer):
 
     def infer_shape(self, x, y):
         self.check_shape_size(x, y)
-        cls_name = self.__class__.__name__
+        cls_name = self.prim_name()
         # expected dimension of x, y, x:[...,a,b] y:[..., c,d], the dim size should be the same except the last two
         for i in range(len(x) - 2):
             if x[i] != y[i]:
-                raise ValueError(f'{cls_name} shape in dim[{i}] not the same, while x is {x[i]}, y is {y[i]}')
+                raise ValueError(f'For \'{cls_name}\' shape in dim[{i}] not the same, while x is {x[i]}, y is {y[i]}')
 
         # validate whether last two dims satifing matrix multiply
         x_last = x[-2:]
@@ -538,8 +531,8 @@ class MatMul(PrimitiveWithInfer):
         x_col = x_last[not self.transpose_a]  # x_col = x_last[1] if (not transpose_a) else x_last[0]
         y_row = y_last[self.transpose_b]  # y_row = y_last[0] if (not transpose_b) else y_last[1]
         if x_col != y_row:
-            raise ValueError(f'{cls_name} evaluator shapes of inputs can not do this operator, got {x_col} and {y_row}'
-                             + f' for {cls_name}, with x shape {x}(transpose_a={self.transpose_a})'
+            raise ValueError(f'For \'{cls_name}\' evaluator shapes of inputs can not do this operator,'
+                             + f' got {x_col} and {y_row}, with x shape {x}(transpose_a={self.transpose_a})'
                              + f', y shape {y}(transpose_b={self.transpose_b}).')
         # set attribute
         self.add_prim_attr('transpose_x1', self.transpose_a)
@@ -549,10 +542,8 @@ class MatMul(PrimitiveWithInfer):
         return ret_dims
 
     def infer_dtype(self, x, y):
-        validator.check_subclass("x", x, mstype.tensor)
-        validator.check_subclass("y", y, mstype.tensor)
-        args = {"x dtype": x, "y dtype": y}
-        validator.check_type_same(args, mstype.float_type + mstype.int_type)
+        args = {"x": x, "y": y}
+        validator.check_tensor_type_same(args, mstype.float_type + mstype.int_type, self.prim_name())
         return x
 
 
@@ -596,12 +587,13 @@ class BatchMatMul(MatMul):
     def __init__(self, transpose_a=False, transpose_b=False):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
         self.__setattr_flag__ = True
-        validator.check_type("transpose_a", transpose_a, [bool])
-        validator.check_type("transpose_b", transpose_b, [bool])
+        cls_name = self.prim_name()
+        validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
+        validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
 
     def check_shape_size(self, x, y):
         if len(x) != len(y) or len(x) < 3:
-            raise ValueError('BatchMatMul input x, y should be the same dimension size and should be '
+            raise ValueError('For \'BatchMatMul\' input x, y should be the same dimension size and should be '
                              'greater or equal to 3,' + f' while x size = {len(x)}, y size= {len(y)}')
 
 
@@ -633,18 +625,17 @@ class CumSum(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, exclusive=False, reverse=False):
         """init cumsum"""
-        self.exclusive = validator.check_type('exclusive', exclusive, [bool])
-        self.add_prim_attr("exclusive", self.exclusive)
-        self.reverse = validator.check_type('reverse', reverse, [bool])
-        self.add_prim_attr("reverse", self.reverse)
+        cls_name = self.prim_name()
+        validator.check_value_type('exclusive', exclusive, [bool], cls_name)
+        validator.check_value_type('reverse', reverse, [bool], cls_name)
         self.init_prim_io_names(inputs=['x', 'axis'], outputs=['y'])
 
     def __infer__(self, x, axis):
+        cls_name = self.prim_name()
         x_shp = x['shape']
-        validator.check_type('axis', axis['value'], [int])
-        validator.check_subclass('x', x['dtype'], mstype.tensor)
-        validator.check_typename('x', x['dtype'], [mstype.uint8, mstype.int8,
-                                                   mstype.int32, mstype.float16, mstype.float32])
+        validator.check_value_type('axis', axis['value'], [int], cls_name)
+        valid_types = [mstype.uint8, mstype.int8, mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensor_type_same({'x': x['dtype']}, valid_types, cls_name)
         return {'shape': x_shp,
                 'dtype': x['dtype'],
                 'value': None}
@@ -685,21 +676,22 @@ class AddN(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
 
     def infer_shape(self, inputs):
-        validator.check_integer("inputs", len(inputs), 1, Rel.GE)
+        cls_name = self.prim_name()
+        validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
         self.add_prim_attr('n', len(inputs))
         shp0 = inputs[0]
         for i, shp in enumerate(inputs):
-            validator.check(f"shape of inputs[{i}]", shp, 'shape of inputs[0]', shp0)
+            validator.check(f"shape of inputs[{i}]", shp, 'shape of inputs[0]', shp0, Rel.EQ, cls_name)
         return shp0
 
     def infer_dtype(self, inputs):
-        validator.check_type("inputs", inputs, [tuple, list])
-        validator.check_integer("inputs", len(inputs), 1, Rel.GE)
+        cls_name = self.prim_name()
+        validator.check_value_type("inputs", inputs, [tuple, list], cls_name)
+        validator.check_integer("inputs", len(inputs), 1, Rel.GE, cls_name)
         args = {}
         for i, dtype in enumerate(inputs):
-            validator.check_subclass(f"inputs[{i}]", dtype, mstype.tensor)
             args[f"inputs[{i}]"] = dtype
-        validator.check_type_same(args, mstype.number_type + (mstype.bool_,))
+        validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), cls_name)
         return inputs[0]
 
 
@@ -723,8 +715,7 @@ class Neg(PrimitiveWithInfer):
         return input_x
 
     def infer_dtype(self, input_x):
-        validator.check_subclass("input_x", input_x, mstype.tensor)
-        validator.check_typename("input_x", input_x, mstype.number_type)
+        validator.check_tensor_type_same({"input_x": input_x}, mstype.number_type, self.prim_name())
         return input_x
 
 
@@ -807,8 +798,7 @@ class Square(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type):
-        validator.check_subclass("x", x_type, mstype.tensor)
-        validator.check_typename("x_dtype", x_type, mstype.number_type)
+        validator.check_tensor_type_same({"x": x_type}, mstype.number_type, self.prim_name())
         return x_type
 
 
@@ -837,8 +827,7 @@ class Rsqrt(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type):
-        validator.check_subclass("x", x_type, mstype.tensor)
-        validator.check_typename("x_dtype", x_type, mstype.number_type)
+        validator.check_tensor_type_same({"x": x_type}, mstype.number_type, self.prim_name())
         return x_type
 
 
@@ -867,8 +856,7 @@ class Sqrt(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type):
-        validator.check_subclass("x", x_type, mstype.tensor)
-        validator.check_typename("x_dtype", x_type, mstype.number_type)
+        validator.check_tensor_type_same({"x": x_type}, mstype.number_type, self.prim_name())
         return x_type
 
 
@@ -898,7 +886,7 @@ class Reciprocal(PrimitiveWithInfer):
         return x
 
     def infer_dtype(self, x):
-        validator.check_subclass("x", x, mstype.tensor)
+        validator.check_subclass("x", x, mstype.tensor, self.prim_name())
         return x
 
 
@@ -936,8 +924,7 @@ class Pow(PrimitiveWithInfer):
         return x
 
     def infer_dtype(self, x, power):
-        validator.check_subclass("x", x, mstype.tensor)
-        validator.check_typename("power", power, mstype.number_type)
+        validator.check_tensor_type_same({"x": x}, mstype.number_type, self.prim_name())
         return x
 
 
@@ -967,7 +954,7 @@ class Exp(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type):
-        validator.check_subclass("x", x_type, mstype.tensor)
+        validator.check_subclass("x", x_type, mstype.tensor, self.prim_name())
         return x_type
 
 
@@ -996,7 +983,7 @@ class Log(PrimitiveWithInfer):
         return x
 
     def infer_dtype(self, x):
-        validator.check_subclass("x", x, mstype.tensor)
+        validator.check_subclass("x", x, mstype.tensor, self.prim_name())
         return x
 
 
@@ -1178,8 +1165,7 @@ class Floor(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_subclass("x", x_dtype, mstype.tensor)
-        validator.check_typename("x_dtype", x_dtype, mstype.float_type)
+        validator.check_tensor_type_same({"x": x_dtype}, mstype.float_type, self.prim_name())
         return x_dtype
 
 
@@ -1234,8 +1220,7 @@ class Acosh(PrimitiveWithInfer):
         return x
 
     def infer_dtype(self, x):
-        validator.check_subclass("x_dtype", x, mstype.tensor)
-        validator.check_typename('x_dtype', x, mstype.number_type)
+        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.prim_name())
         return x
 
 
@@ -1245,15 +1230,13 @@ class _LogicBinaryOp(_BinaryOp):
     """
 
     @staticmethod
-    def do_infer_dtype(x_dtype, y_dtype, valid_type=mstype.number_type):
-        args_type = {"x": x_dtype, "y": y_dtype}
-        validator.check_args_tensor(args_type)
-        args_dtype = {"x_dtype": x_dtype, "y_dtype": y_dtype}
-        validator.check_type_same(args_dtype, valid_type)
+    def do_infer_dtype(x_dtype, y_dtype, valid_type=mstype.number_type, prim_name=None):
+        args_dtype = {"x": x_dtype, "y": y_dtype}
+        validator.check_tensor_type_same(args_dtype, valid_type, prim_name)
         return mstype.tensor_type(mstype.bool_)
 
     def infer_dtype(self, x_dtype, y_dtype):
-        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype)
+        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, prim_name=self.prim_name())
 
 
 class Equal(_LogicBinaryOp):
@@ -1289,7 +1272,7 @@ class Equal(_LogicBinaryOp):
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
-        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type + (mstype.bool_,))
+        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type + (mstype.bool_,), self.prim_name())
 
 
 class EqualCount(PrimitiveWithInfer):
@@ -1318,11 +1301,13 @@ class EqualCount(PrimitiveWithInfer):
         """init EqualCount"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
-    def infer_shape(self, x_shape, w_shape):
+    def infer_shape(self, x_shape, y_shape):
         output_shape = (1,)
         return output_shape
 
-    def infer_dtype(self, x_dtype, w_dtype):
+    def infer_dtype(self, x_dtype, y_dtype):
+        args = {'x': x_dtype, 'y': y_dtype}
+        validator.check_tensor_type_same(args, mstype.number_type + (mstype.bool_,), self.prim_name())
         return x_dtype
 
 
@@ -1359,7 +1344,7 @@ class NotEqual(_LogicBinaryOp):
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
-        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type + (mstype.bool_,))
+        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type + (mstype.bool_,), self.prim_name())
 
 
 class Greater(_LogicBinaryOp):
@@ -1495,8 +1480,7 @@ class LogicalNot(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_subclass("x", x_dtype, mstype.tensor)
-        validator.check_typename("x_dtype", x_dtype, [mstype.bool_])
+        validator.check_tensor_type_same({"x": x_dtype}, [mstype.bool_], self.prim_name())
         return mstype.tensor_type(mstype.bool_)
 
 
@@ -1526,7 +1510,7 @@ class LogicalAnd(_LogicBinaryOp):
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
-        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, (mstype.bool_,))
+        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, (mstype.bool_,), self.prim_name())
 
 
 class LogicalOr(_LogicBinaryOp):
@@ -1555,7 +1539,7 @@ class LogicalOr(_LogicBinaryOp):
     """
 
     def infer_dtype(self, x_dtype, y_dtype):
-        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, (mstype.bool_,))
+        return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, (mstype.bool_,), self.prim_name())
 
 
 class NPUAllocFloatStatus(PrimitiveWithInfer):
@@ -1616,13 +1600,13 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
         self.add_prim_attr("_side_effect_flag", True)
 
     def infer_shape(self, x_shape):
-        validator.check_integer("len(x_shape)", len(x_shape), 1, Rel.EQ)
-        validator.check_integer("x_shape[0]", x_shape[0], 8, Rel.EQ)
+        cls_name = self.prim_name()
+        validator.check_integer("len(x_shape)", len(x_shape), 1, Rel.EQ, cls_name)
+        validator.check_integer("x_shape[0]", x_shape[0], 8, Rel.EQ, cls_name)
         return [8]
 
     def infer_dtype(self, x_dtype):
-        args = {"x_dtype": x_dtype}
-        validator.check_type_same(args, [mstype.float32])
+        validator.check_tensor_type_same({'x': x_dtype}, [mstype.float32], self.prim_name())
         return mstype.float32
 
 
@@ -1658,13 +1642,13 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         self.add_prim_attr("_side_effect_flag", True)
 
     def infer_shape(self, x_shape):
-        validator.check_integer("len(x_shape)", len(x_shape), 1, Rel.EQ)
-        validator.check_integer("x_shape[0]", x_shape[0], 8, Rel.EQ)
+        cls_name = self.prim_name()
+        validator.check_integer("len(x_shape)", len(x_shape), 1, Rel.EQ, cls_name)
+        validator.check_integer("x_shape[0]", x_shape[0], 8, Rel.EQ, cls_name)
         return [8]
 
     def infer_dtype(self, x_dtype):
-        args = {"x_dtype": x_dtype}
-        validator.check_type_same(args, [mstype.float32])
+        validator.check_tensor_type_same({'x': x_dtype}, [mstype.float32], self.prim_name())
         return mstype.float32
 
 
@@ -1692,8 +1676,7 @@ class Cos(PrimitiveWithInfer):
         return x
 
     def infer_dtype(self, x):
-        validator.check_subclass("x_dtype", x, mstype.tensor)
-        validator.check_typename('x_dtype', x, mstype.number_type)
+        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.prim_name())
         return x
 
 
@@ -1721,8 +1704,7 @@ class ACos(PrimitiveWithInfer):
         return x
 
     def infer_dtype(self, x):
-        validator.check_subclass("x_dtype", x, mstype.tensor)
-        validator.check_typename('x_dtype', x, mstype.number_type)
+        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.prim_name())
         return x
 
 
@@ -1750,8 +1732,7 @@ class Sin(PrimitiveWithInfer):
         return x
 
     def infer_dtype(self, x):
-        validator.check_subclass("x_dtype", x, mstype.tensor)
-        validator.check_typename('x_dtype', x, mstype.number_type)
+        validator.check_tensor_type_same({'x': x}, mstype.number_type, self.prim_name())
         return x
 
 
@@ -1796,19 +1777,19 @@ class NMSWithMask(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, iou_threshold=0.5):
         """Init NMSWithMask"""
-        validator.check_type("iou_threshold", iou_threshold, [float])
+        validator.check_value_type("iou_threshold", iou_threshold, [float], self.prim_name())
         self.init_prim_io_names(inputs=['bboxes'], outputs=['selected_boxes', 'selected_idx', 'selected_mask'])
 
     def infer_shape(self, bboxes_shape):
-        validator.check_integer("bboxes rank", len(bboxes_shape), 2, Rel.EQ)
-        validator.check_integer("bboxes.shape()[0]", bboxes_shape[0], 0, Rel.GT)
-        validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ)
+        cls_name = self.prim_name()
+        validator.check_integer("bboxes rank", len(bboxes_shape), 2, Rel.EQ, cls_name)
+        validator.check_integer("bboxes.shape()[0]", bboxes_shape[0], 0, Rel.GT, cls_name)
+        validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
         num = bboxes_shape[0]
         return (bboxes_shape, (num,), (num,))
 
     def infer_dtype(self, bboxes_dtype):
-        validator.check_subclass("bboxes_dtype", bboxes_dtype, mstype.tensor)
-        validator.check_typename("bboxes_dtype", bboxes_dtype, [mstype.float16, mstype.float32])
+        validator.check_tensor_type_same({"bboxes": bboxes_dtype}, [mstype.float16, mstype.float32], self.prim_name())
         return (bboxes_dtype, mstype.int32, mstype.bool_)
 
 
@@ -1837,8 +1818,7 @@ class Abs(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type):
-        validator.check_subclass("x_dtype", x_type, mstype.tensor)
-        validator.check_typename('x_dtype', x_type, mstype.number_type)
+        validator.check_tensor_type_same({'x': x_type}, mstype.number_type, self.prim_name())
         return x_type
 
     def infer_value(self, x):
@@ -1880,8 +1860,7 @@ class Sign(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_subclass('x', x_dtype, mstype.tensor)
-        validator.check_typename('x_dtype', x_dtype, mstype.number_type)
+        validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type, self.prim_name())
         return x_dtype
 
 
@@ -1910,8 +1889,7 @@ class Round(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type):
-        validator.check_subclass("x_dtype", x_type, mstype.tensor)
-        validator.check_typename('x_dtype', x_type, mstype.number_type)
+        validator.check_tensor_type_same({'x': x_type}, mstype.number_type, self.prim_name())
         return x_type
 
 

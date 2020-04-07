@@ -28,8 +28,15 @@ from ..._checkparam import ParamValidator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
-from ..operations.math_ops import _check_infer_attr_reduce, _infer_shape_reduce
+from ..operations.math_ops import _infer_shape_reduce
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+
+def _check_infer_attr_reduce(axis, keep_dims):
+    validator.check_type('keep_dims', keep_dims, [bool])
+    validator.check_type('axis', axis, [int, tuple])
+    if isinstance(axis, tuple):
+        for index, value in enumerate(axis):
+            validator.check_type('axis[%d]' % index, value, [int])
 
 
 class ExpandDims(PrimitiveWithInfer):
@@ -1090,7 +1097,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         axis = self.axis
         x_rank = len(x_shape)
         validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT)
-        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims)
+        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.prim_name())
         return ouput_shape, ouput_shape
 
     def infer_dtype(self, x_dtype):
@@ -1136,7 +1143,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         axis = self.axis
         x_rank = len(x_shape)
         validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT)
-        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims)
+        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.prim_name())
         return ouput_shape, ouput_shape
 
     def infer_dtype(self, x_dtype):

@@ -23,20 +23,25 @@ from ...utils import keyword
 
 class CheckExceptionsEC(IExectorComponent):
     """
-    Check if the function raises the expected Exception.
+    Check if the function raises the expected Exception and the error message contains specified keywords if not None.
 
     Examples:
         {
             'block': f,
-            'exception': Exception
+            'exception': Exception,
+            'error_keywords': ['TensorAdd', 'shape']
         }
     """
     def run_function(self, function, inputs, verification_set):
         f = function[keyword.block]
         args = inputs[keyword.desc_inputs]
         e = function.get(keyword.exception, Exception)
+        error_kws = function.get(keyword.error_keywords, None)
         try:
-            with pytest.raises(e):
+            with pytest.raises(e) as exec_info:
                 f(*args)
         except:
             raise Exception(f"Expect {e}, but got {sys.exc_info()[0]}")
+        if error_kws and any(keyword not in str(exec_info.value) for keyword in error_kws):
+            raise ValueError('Error message `{}` does not contain all keywords `{}`'.format(
+                             str(exec_info.value), error_kws))
