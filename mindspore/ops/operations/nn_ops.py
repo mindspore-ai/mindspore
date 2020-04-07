@@ -41,7 +41,7 @@ class Flatten(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
-        >>> flatten = Flatten()
+        >>> flatten = P.Flatten()
         >>> output = flatten(input_tensor)
         >>> assert output.shape() == (1, 24)
     """
@@ -155,7 +155,7 @@ class ReLU(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], np.float32))
-        >>> relu = ReLU()
+        >>> relu = P.ReLU()
         >>> result = relu(input_x)
         [[0, 4.0, 0.0], [2.0, 0.0, 9.0]]
     """
@@ -188,7 +188,7 @@ class ReLU6(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], np.float32))
-        >>> relu6 = ReLU6()
+        >>> relu6 = P.ReLU6()
         >>> result = relu6(input_x)
     """
 
@@ -222,10 +222,10 @@ class Elu(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], np.float32))
-        >>> elu = Elu()
+        >>> elu = P.Elu()
         >>> result = elu(input_x)
         Tensor([[-0.632  4.0   -0.999]
-                [2.0    -0.993  9.0  ]], shape=(2, 3), dtype=ms.float32)
+                [2.0    -0.993  9.0  ]], shape=(2, 3), dtype=mindspore.float32)
     """
 
     @prim_attr_register
@@ -1082,7 +1082,7 @@ class TopK(PrimitiveWithInfer):
 
     Examples:
         >>> topk = P.TopK(sorted=True)
-        >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16))
+        >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16)
         >>> k = 3
         >>> values, indices = topk(input_x, k)
         >>> assert values == Tensor(np.array([5, 4, 3]))
@@ -1223,8 +1223,8 @@ class ApplyMomentum(PrimitiveWithInfer):
 
     Examples:
         >>> net = ResNet50()
-        >>> loss = SoftmaxCrossEntropyWithLogits()
-        >>> opt = ApplyMomentum(Tensor(np.array([0.001])), Tensor(np.array([0.9])),
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> opt = P.ApplyMomentum(Tensor(np.array([0.001])), Tensor(np.array([0.9])),
                                 filter(lambda x: x.requires_grad, net.get_parameters()))
         >>> model = Model(net, loss, opt)
     """
@@ -1351,6 +1351,7 @@ class SGD(PrimitiveWithInfer):
 class ApplyRMSProp(PrimitiveWithInfer):
     """
     Optimizer that implements the Root Mean Square prop(RMSProp) algorithm.
+    Please refer to the usage in source code of `nn.RMSProp`.
 
     Note:
         Update `var` according to the RMSProp algorithm.
@@ -1386,12 +1387,6 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be update.
-
-    Examples:
-        >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> opt = RMSProp(params=net.trainable_params(), learning_rate=learning_rate)
-        >>> model = Model(net, loss, opt)
     """
 
     @prim_attr_register
@@ -1424,6 +1419,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
 class ApplyCenteredRMSProp(PrimitiveWithInfer):
     """
     Optimizer that implements the centered RMSProp algorithm.
+    Please refer to the usage in source code of `nn.RMSProp`.
 
     Note:
         Update `var` according to the centered RMSProp algorithm.
@@ -1464,12 +1460,6 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be update.
-
-    Examples:
-        >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> opt = RMSProp(params=net.trainable_params(), learning_rate=learning_rate, centered=True)
-        >>> model = Model(net, loss, opt)
     """
 
     @prim_attr_register
@@ -1596,7 +1586,7 @@ class DropoutGenMask(Primitive):
         Tensor, the value of generated mask for input shape.
 
     Examples:
-        >>> dropout_gen_mask = DropoutGenMask()
+        >>> dropout_gen_mask = P.DropoutGenMask()
         >>> shape = (20, 16, 50)
         >>> keep_prob = Tensor(0.5, mindspore.float32)
         >>> mask = dropout_gen_mask(shape, keep_prob)
@@ -1631,8 +1621,8 @@ class DropoutDoMask(PrimitiveWithInfer):
         >>> x = Tensor(np.ones([20, 16, 50]), mindspore.float32)
         >>> shape = (20, 16, 50)
         >>> keep_prob = Tensor(0.5, mindspore.float32)
-        >>> dropout_gen_mask = DropoutGenMask()
-        >>> dropout_do_mask = DropoutDoMask()
+        >>> dropout_gen_mask = P.DropoutGenMask()
+        >>> dropout_do_mask = P.DropoutDoMask()
         >>> mask = dropout_gen_mask(shape, keep_prob)
         >>> output = dropout_do_mask(x, mask, keep_prob)
         >>> assert output.shape() == (20, 16, 50)
@@ -1737,7 +1727,7 @@ class OneHot(PrimitiveWithInfer):
     Examples:
         >>> indices = Tensor(np.array([0, 1, 2]), mindspore.int32)
         >>> depth, on_value, off_value = 3, Tensor(1.0, mindspore.float32), Tensor(0.0, mindspore.float32)
-        >>> onehot = OneHot()
+        >>> onehot = P.OneHot()
         >>> result = onehot(indices, depth, on_value, off_value)
         [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     """
@@ -1793,7 +1783,7 @@ class Gelu(PrimitiveWithInfer):
 
     Examples:
         >>> tensor = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-        >>> gelu = Gelu()
+        >>> gelu = P.Gelu()
         >>> result = gelu(tensor)
     """
 
@@ -1834,7 +1824,7 @@ class GetNext(PrimitiveWithInfer):
         and the type is described is `types`.
 
     Examples:
-        >>> get_next = GetNext([mindspore.float32, mindspore.int32], [[32, 1, 28, 28], [10]], 'shared_name')
+        >>> get_next = P.GetNext([mindspore.float32, mindspore.int32], [[32, 1, 28, 28], [10]], 'shared_name')
         >>> feature, label = get_next()
     """
 
@@ -2015,7 +2005,7 @@ class Pad(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> pad_op = Pad(((1, 2), (2, 1)))
+        >>> pad_op = P.Pad(((1, 2), (2, 1)))
         >>> output_tensor = pad_op(input_tensor)
         >>> assert output_tensor == Tensor(np.array([[ 0. ,  0. ,  0. ,  0. ,  0. ,  0. ],
         >>>                                          [ 0. ,  0. , -0.1,  0.3,  3.6,  0. ],
