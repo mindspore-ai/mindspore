@@ -282,7 +282,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
         Tensor, initialized tensor.
 
     Examples:
-        >>> tensor = initializer('ones', [1, 2, 3], mstype.float32)
+        >>> tensor = initializer('ones', [1, 2, 3], mindspore.float32)
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
         raise TypeError('Unsupported init type.')

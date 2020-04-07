@@ -1814,7 +1814,7 @@ class TFRecordDataset(SourceDataset):
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files)
         >>> # 2) get all rows from dataset_files with user-defined schema:
         >>> schema = ds.Schema()
-        >>> schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
+        >>> schema.add_column('col_1d', de_type=mindspore.int64, shape=[2])
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema=schema)
         >>> # 3) get all rows from dataset_files with schema file "./schema.json":
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema="./schema.json")
@@ -2325,7 +2325,7 @@ class Schema:
         >>> import mindspore.common.dtype as mstype
         >>> # create schema, specify column name, mindspore.dtype and shape of the column
         >>> schema = ds.Schema()
-        >>> schema.add_column('col1', de_type=mstype.int64, shape=[2])
+        >>> schema.add_column('col1', de_type=mindspore.int64, shape=[2])
     """
 
     def __init__(self, schema_file=None):

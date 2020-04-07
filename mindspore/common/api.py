@@ -230,8 +230,8 @@ def ms_function(fn=None, obj=None, input_signature=None):
         >>>     z = F.tensor_add(x, y)
         >>>     return z
         >>>
-        >>> @ms_function(input_signature=(MetaTensor(mstype.float32, (1, 1, 3, 3)),
-        >>>                               MetaTensor(mstype.float32, (1, 1, 3, 3))))
+        >>> @ms_function(input_signature=(MetaTensor(mindspore.float32, (1, 1, 3, 3)),
+        >>>                               MetaTensor(mindspore.float32, (1, 1, 3, 3))))
         >>> def tensor_add_with_sig(x, y):
         >>>     z = F.tensor_add(x, y)
         >>>     return z

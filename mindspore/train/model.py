@@ -528,7 +528,7 @@ class Model:
             Tensor, array(s) of predictions.
 
         Examples:
-            >>> input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mstype.float32)
+            >>> input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
             >>> model = Model(Net())
             >>> model.predict(input_data)
         """
