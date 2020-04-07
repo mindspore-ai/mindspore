@@ -702,7 +702,7 @@ void AscendStreamAssign::PrintGraphExeOrders(const shared_ptr<mindspore::session
                    << AnfAlgo::GetStreamId(cur_cnode_ptr) << "], event_id["
                    << GetValue<uint32_t>(primitive->GetAttr(kAttrEventId)) << "]";
     } else {
-      MS_LOG(INFO) << "node name[" << AnfAlgo::GetCNodeName(cur_cnode_ptr) << "], logic id["
+      MS_LOG(INFO) << "node name[" << cur_cnode_ptr->fullname_with_scope() << "], logic id["
                    << AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) << "], stream id["
                    << AnfAlgo::GetStreamId(cur_cnode_ptr) << "]";
     }
