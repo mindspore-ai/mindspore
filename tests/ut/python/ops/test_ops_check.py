@@ -62,7 +62,7 @@ def test_net_without_construct():
     try:
         _executor.compile(net, inp)
     except RuntimeError as err:
-        if str(err).find("unsupported syntax 'Raise' at ") >= 0:
+        if str(err).find("Unsupported syntax 'Raise' at ") >= 0:
             print(str(err))
         else:
             raise err
@@ -86,7 +86,7 @@ def test_net_with_raise():
     try:
         _executor.compile(net, inp)
     except RuntimeError as err:
-        if str(err).find("unsupported syntax 'Raise' at ") >= 0:
+        if str(err).find("Unsupported syntax 'Raise' at ") >= 0:
             print(str(err))
         else:
             raise err
