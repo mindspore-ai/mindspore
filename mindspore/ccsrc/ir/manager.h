@@ -398,11 +398,8 @@ class ParentComputer final : public DepComputer {
 // graph's children graph except self
 class ChildrenComputer final : public DepComputer {
  public:
-  explicit ChildrenComputer(const FuncGraphManager* m) : DepComputer(m), all_users_(nullptr), child_direct_(nullptr) {}
-  ~ChildrenComputer() override {
-    all_users_ = nullptr;
-    child_direct_ = nullptr;
-  }
+  explicit ChildrenComputer(const FuncGraphManager* m) : DepComputer(m) {}
+  ~ChildrenComputer() override = default;
 
   FuncGraphToFuncGraphSetMap& children_analysis() { return children_analysis_; }
 
@@ -414,13 +411,6 @@ class ChildrenComputer final : public DepComputer {
   void ExtraReset() override { children_analysis_.clear(); }
 
   void RealRecompute(FuncGraphPtr fg) override;
-
- private:
-  FuncGraphSetPtr SeekChildren(const FuncGraphPtr& fg, const FuncGraphSetPtr& path = std::make_shared<FuncGraphSet>());
-  // when SeekChildren calls itself recursively, it can access these variables by class member
-  // other than pass by formal parameters, it can save 2 parameters for SeekChildren().
-  FuncGraphToFuncGraphCounterMap* all_users_;
-  FuncGraphToFuncGraphCounterMap* child_direct_;
 };
 
 // graph's children graph include self
