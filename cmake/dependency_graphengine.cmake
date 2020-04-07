@@ -42,7 +42,6 @@ else()
     set(ASCEND_PATH /usr/local/Ascend)
     set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
     set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
-
     find_library(c_sec libc_sec.so ${ASCEND_DRIVER_PATH})
     find_library(slog libslog.so ${ASCEND_DRIVER_PATH})
     find_library(mmpa libmmpa.so ${ASCEND_DRIVER_PATH})
