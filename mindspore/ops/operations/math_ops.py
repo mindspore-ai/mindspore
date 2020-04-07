@@ -1908,8 +1908,8 @@ class Atan2(_MathBinaryOp):
         Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
 
     Examples:
-         >>> input_x = Tensor(np.array([[0, 1]]), mstype.float32)
-         >>> input_y = Tensor(np.array([[1, 1]]), mstype.float32)
+         >>> input_x = Tensor(np.array([[0, 1]]), mindspore.float32)
+         >>> input_y = Tensor(np.array([[1, 1]]), mindspore.float32)
          >>> atan2 = P.Atan2()
          >>> atan2(input_x, input_y)
          [[0. 0.7853982]]
