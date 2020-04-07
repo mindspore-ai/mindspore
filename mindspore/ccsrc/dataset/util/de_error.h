@@ -16,6 +16,13 @@
 #ifndef DATASET_UTIL_DE_ERROR_H_
 #define DATASET_UTIL_DE_ERROR_H_
 
+#ifdef DEBUG
+#include <cassert>
+#define DS_ASSERT(f) assert(f)
+#else
+#define DS_ASSERT(f) ((void)0)
+#endif
+
 #include <map>
 #include "utils/error_code.h"
 

@@ -80,9 +80,9 @@ void DatasetOp::CreateConnector(int32_t num_producers, int32_t num_consumers) {
   MS_LOG(INFO) << "Creating connector in tree operator: " << operator_id_ << ". Producer: " << num_producers
                << ". Consumer: " << num_consumers << ".";
   if (oc_queue_size_ > 0) {
-    out_connector_ = mindspore::make_unique<DbConnector>(num_producers,  // The number of producers
-                                                         num_consumers,  // Only one consumer (the training App)
-                                                         oc_queue_size_);
+    out_connector_ = std::make_unique<DbConnector>(num_producers,  // The number of producers
+                                                   num_consumers,  // Only one consumer (the training App)
+                                                   oc_queue_size_);
   } else {
     // Some op's may choose not to have an output connector
     MS_LOG(INFO) << "Bypassed connector creation for tree operator: " << operator_id_ << ".";
@@ -149,7 +149,7 @@ Status DatasetOp::GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
 // The base class implementation simply flows the eoe message to output. Derived classes
 // may override if they need to perform special eoe handling.
 Status DatasetOp::EoeReceived(int32_t worker_id) {
-  std::unique_ptr<DataBuffer> eoe_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+  std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   return (out_connector_->Add(static_cast<int>(worker_id), std::move(eoe_buffer)));
 }
 
@@ -157,7 +157,7 @@ Status DatasetOp::EoeReceived(int32_t worker_id) {
 // The base class implementation simply flows the eof message to output. Derived classes
 // may override if they need to perform special eof handling.
 Status DatasetOp::EofReceived(int32_t worker_id) {
-  std::unique_ptr<DataBuffer> eof_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
+  std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
   return (out_connector_->Add(static_cast<int>(worker_id), std::move(eof_buffer)));
 }
 

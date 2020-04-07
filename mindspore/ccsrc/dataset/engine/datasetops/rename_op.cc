@@ -84,13 +84,13 @@ Status RenameOp::operator()() {
 
     // we got eoe, now try again until we get eof
     MS_LOG(INFO) << "Rename operator EOE Received.";
-    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
+    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
     MS_LOG(DEBUG) << "Rename operator fetching buffer after EOE.";
     RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
   }  // end of while eof loop
 
   MS_LOG(INFO) << "Rename opeerator EOF Received.";
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
+  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
   return Status::OK();
 }
 

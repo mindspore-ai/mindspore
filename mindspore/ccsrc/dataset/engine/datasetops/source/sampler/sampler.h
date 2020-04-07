@@ -27,7 +27,6 @@
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/data_schema.h"
 #include "dataset/engine/datasetops/dataset_op.h"
-#include "dataset/util/make_unique.h"
 
 namespace mindspore {
 namespace dataset {

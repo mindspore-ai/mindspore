@@ -212,7 +212,7 @@ class QueueList {
   void Init(int num_queues, int capacity) {
     queue_list_.reserve(num_queues);
     for (int i = 0; i < num_queues; i++) {
-      queue_list_.emplace_back(mindspore::make_unique<Queue<T>>(capacity));
+      queue_list_.emplace_back(std::make_unique<Queue<T>>(capacity));
     }
   }
 

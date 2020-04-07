@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "dataset/util/lock.h"
+#include "dataset/util/de_error.h"
 
 namespace mindspore {
 namespace dataset {

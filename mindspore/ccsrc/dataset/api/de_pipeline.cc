@@ -23,7 +23,6 @@
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/mnist_op.h"
 #include "dataset/engine/datasetops/source/voc_op.h"
-#include "dataset/util/make_unique.h"
 #include "dataset/core/tensor.h"
 #include "dataset/engine/dataset_iterator.h"
 #include "dataset/engine/datasetops/source/manifest_op.h"
@@ -123,7 +122,7 @@ Status DEPipeline::AssignRootNode(const DsOpPtr &dataset_op) { return (tree_->As
 Status DEPipeline::LaunchTreeExec() {
   RETURN_IF_NOT_OK(tree_->Prepare());
   RETURN_IF_NOT_OK(tree_->Launch());
-  iterator_ = make_unique<DatasetIterator>(tree_);
+  iterator_ = std::make_unique<DatasetIterator>(tree_);
   if (iterator_ == nullptr) RETURN_STATUS_UNEXPECTED("Cannot create an Iterator.");
   return Status::OK();
 }
@@ -311,7 +310,7 @@ Status DEPipeline::ParseStorageOp(const py::dict &args, std::shared_ptr<DatasetO
     if (!args["schema"].is_none()) {
       (void)builder->SetSchemaFile(ToString(args["schema"]));
     } else if (!args["schema_json_string"].is_none()) {
-      std::unique_ptr<DataSchema> schema = make_unique<DataSchema>();
+      std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
       std::string s = ToString(args["schema_json_string"]);
       RETURN_IF_NOT_OK(schema->LoadSchemaString(s, std::vector<std::string>()));
       (void)builder->SetNumRows(schema->num_rows());
@@ -689,7 +688,7 @@ Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<Dataset
     }
   }
   if (schema_exists) {
-    std::unique_ptr<DataSchema> schema = make_unique<DataSchema>();
+    std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
     if (args.contains("schema_file_path")) {
       RETURN_IF_NOT_OK(schema->LoadSchemaFile(ToString(args["schema_file_path"]), columns_to_load));
     } else {

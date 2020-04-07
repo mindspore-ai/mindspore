@@ -65,7 +65,7 @@ class DbConnector : public Connector<std::unique_ptr<DataBuffer>> {
       RETURN_IF_NOT_OK(cv_.Wait(&lk, [this, worker_id]() { return expect_consumer_ == worker_id; }));
       // Once an EOF message is encountered this flag will be set and we can return early.
       if (end_of_file_) {
-        *result = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
+        *result = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
       } else {
         RETURN_IF_NOT_OK(queues_[pop_from_]->PopFront(result));
         if (*result == nullptr) {
