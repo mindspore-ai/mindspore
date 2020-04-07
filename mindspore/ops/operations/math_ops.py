@@ -112,9 +112,9 @@ class TensorAdd(_MathBinaryOp):
 
     Examples:
         >>> add = P.TensorAdd()
-        >>> x = Tensor(np.array([1,2,3]).astype(np.float32))
-        >>> y = Tensor(np.array([4,5,6]).astype(np.float32))
-        >>> add(x, y)
+        >>> input_x = Tensor(np.array([1,2,3]).astype(np.float32))
+        >>> input_y = Tensor(np.array([4,5,6]).astype(np.float32))
+        >>> add(input_x, input_y)
         [5,7,9]
     """
 
@@ -124,23 +124,24 @@ class AssignAdd(PrimitiveWithInfer):
     Updates a `Parameter` by adding a value to it.
 
     Inputs:
-        - **input_x** (Parameter) - The `Parameter`.
-        - **input_y** (Union[scalar, Tensor]) - Has the same shape as `input_x`.
+        - **variable** (Parameter) - The `Parameter`.
+        - **value** (Union[numbers.Number, Tensor]) - The value to be added to the `variable`.
+          It should have the same shape as `variable` if it is a Tensor.
 
     Examples:
         >>> class Net(Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
         >>>         self.AssignAdd = P.AssignAdd()
-        >>>         self.inputdata = Parameter(initializer(1, [1], mindspore.int64), name="global_step")
+        >>>         self.variable = Parameter(initializer(1, [1], mindspore.int64), name="global_step")
         >>>
         >>>     def construct(self, x):
-        >>>         self.AssignAdd(self.inputdata, x)
-        >>>         return self.inputdata
+        >>>         self.AssignAdd(self.variable, x)
+        >>>         return self.variable
         >>>
         >>> net = Net()
-        >>> x = Tensor(np.ones([1]).astype(np.int64)*100)
-        >>> net(x)
+        >>> value = Tensor(np.ones([1]).astype(np.int64)*100)
+        >>> net(value)
     """
     __mindspore_signature__ = (
         ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD),
@@ -166,22 +167,24 @@ class AssignSub(PrimitiveWithInfer):
     Updates a `Parameter` by subtracting a value from it.
 
     Inputs:
-        - **input_x** (Parameter) - The `Parameter`.
-        - **input_y** (Union[scalar, Tensor]) - Has the same shape as `input_x`.
+        - **variable** (Parameter) - The `Parameter`.
+        - **value** (Union[numbers.Number, Tensor]) - The value to be subtracted from the `variable`.
+          It should have the same shape as `variable` if it is a Tensor.
 
     Examples:
         >>> class Net(Cell):
         >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
         >>>         self.AssignSub = P.AssignSub()
-        >>>         self.inputdata = Parameter(initializer(1, [1], mindspore.int64), name="global_step")
+        >>>         self.variable = Parameter(initializer(1, [1], mindspore.int64), name="global_step")
         >>>
         >>>     def construct(self, x):
-        >>>         self.AssignSub(self.inputdata, x)
-        >>>         return self.inputdata
+        >>>         self.AssignSub(self.variable, x)
+        >>>         return self.variable
         >>>
         >>> net = Net()
-        >>> x = Tensor(np.ones([1]).astype(np.int64)*100)
-        >>> net(x)
+        >>> value = Tensor(np.ones([1]).astype(np.int64)*100)
+        >>> net(value)
     """
 
     __mindspore_signature__ = (
@@ -263,9 +266,9 @@ class ReduceMean(_Reduce):
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
-        >>> data = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMean(keep_dims=True)
-        >>> output = op(data, 1)
+        >>> output = op(input_x, 1)
     """
 
 
@@ -295,9 +298,9 @@ class ReduceSum(_Reduce):
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
-        >>> data = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceSum(keep_dims=True)
-        >>> output = op(data, 1)
+        >>> output = op(input_x, 1)
     """
 
 
@@ -328,9 +331,9 @@ class ReduceAll(_Reduce):
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
-        >>> data = Tensor(np.array([[True, False], [True, True]]))
+        >>> input_x = Tensor(np.array([[True, False], [True, True]]))
         >>> op = P.ReduceAll(keep_dims=True)
-        >>> output = op(data, 1)
+        >>> output = op(input_x, 1)
     """
 
     def __infer__(self, input_x, axis):
@@ -364,9 +367,9 @@ class ReduceMax(_Reduce):
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
-        >>> data = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMax(keep_dims=True)
-        >>> output = op(data, 1)
+        >>> output = op(input_x, 1)
     """
 
 
@@ -397,9 +400,9 @@ class ReduceMin(_Reduce):
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
-        >>> data = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceMin(keep_dims=True)
-        >>> output = op(data, 1)
+        >>> output = op(input_x, 1)
     """
 
 
@@ -429,9 +432,9 @@ class ReduceProd(_Reduce):
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Examples:
-        >>> data = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> input_x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
         >>> op = P.ReduceProd(keep_dims=True)
-        >>> output = op(data, 1)
+        >>> output = op(input_x, 1)
     """
 
 
@@ -451,15 +454,15 @@ class CumProd(PrimitiveWithInfer):
         Tensor, has the same shape and dtype as the 'input_x'.
 
     Examples:
-        >>> data = Tensor(np.array([a, b, c]).astype(np.float32))
+        >>> input_x = Tensor(np.array([a, b, c]).astype(np.float32))
         >>> op0 = P.CumProd()
-        >>> output = op0(data, 0) # output=[a, a * b, a * b * c]
+        >>> output = op0(input_x, 0) # output=[a, a * b, a * b * c]
         >>> op1 = P.CumProd(exclusive=True)
-        >>> output = op1(data, 0) # output=[1, a, a * b]
+        >>> output = op1(input_x, 0) # output=[1, a, a * b]
         >>> op2 = P.CumProd(reverse=True)
-        >>> output = op2(data, 0) # output=[a * b * c, b * c, c]
+        >>> output = op2(input_x, 0) # output=[a * b * c, b * c, c]
         >>> op3 = P.CumProd(exclusive=True, reverse=True)
-        >>> output = op3(data, 0) # output=[b * c, c, 1]
+        >>> output = op3(input_x, 0) # output=[b * c, c, 1]
     """
     @prim_attr_register
     def __init__(self, exclusive=False, reverse=False):
@@ -1190,7 +1193,7 @@ class FloorMod(_MathBinaryOp):
     Examples:
         >>> input_x = Tensor(np.array([2, 4, -1]), mindspore.int32)
         >>> input_y = Tensor(np.array([3, 3, 3]), mindspore.int32)
-        >>> floor_mod = FloorMod()
+        >>> floor_mod = P.FloorMod()
         >>> floor_mod(input_x, input_y)
         [2, 1, 2]
     """
@@ -1207,9 +1210,9 @@ class Acosh(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`.
 
     Examples:
-        >>> acosh = Acosh()
-        >>> X = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), mindspore.float32)
-        >>> output = acosh(X)
+        >>> acosh = P.Acosh()
+        >>> input_x = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), mindspore.float32)
+        >>> output = acosh(input_x)
     """
 
     @prim_attr_register
@@ -1286,7 +1289,7 @@ class EqualCount(PrimitiveWithInfer):
         - **input_y** (Tensor) - The second input tensor.
 
     Outputs:
-        Tensor, has the same shape as the `input_x`.
+        Tensor, with the type as `mindspore.int32` and size as (1,).
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1324,7 +1327,7 @@ class NotEqual(_LogicBinaryOp):
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a tensor whose data type is number or bool, or
           a number or a bool object.
-        - **input_y** (Union[Tensor, Number, bool]) - The second input tensor whose data type is same as 'input_x' or
+        - **input_y** (Union[Tensor, Number, bool]) - The second input tensor whose data type is same as `input_x` or
           a number or a bool object.
 
     Outputs:
@@ -1359,11 +1362,11 @@ class Greater(_LogicBinaryOp):
 
     Inputs:
         - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
+        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
           a number.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1386,11 +1389,11 @@ class GreaterEqual(_LogicBinaryOp):
 
     Inputs:
         - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
+        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
           a number.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is bool'.
+        Tensor, the shape is same as the shape after broadcasting, and the data type is bool.
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -1413,7 +1416,7 @@ class Less(_LogicBinaryOp):
 
     Inputs:
         - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
+        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
           a number.
 
     Outputs:
@@ -1440,7 +1443,7 @@ class LessEqual(_LogicBinaryOp):
 
     Inputs:
         - **input_x** (Union[Tensor, Number]) - The first input is a tensor whose data type is number or a number.
-        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as 'input_x' or
+        - **input_y** (Union[Tensor, Number]) - The second input is a tensor whose data type is same as `input_x` or
           a number.
 
     Outputs:
@@ -1752,8 +1755,8 @@ class Cos(PrimitiveWithInfer):
 
     Examples:
         >>> cos = P.Cos()
-        >>> X = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
-        >>> output = cos(X)
+        >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = cos(input_x)
     """
 
     @prim_attr_register
@@ -1780,8 +1783,8 @@ class ACos(PrimitiveWithInfer):
 
     Examples:
         >>> acos = P.ACos()
-        >>> X = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
-        >>> output = acos(X)
+        >>> input_x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
+        >>> output = acos(input_x)
     """
 
     @prim_attr_register
@@ -1993,7 +1996,7 @@ class Atan2(_MathBinaryOp):
         - **input_y** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
+        Tensor, the shape is same as the shape after broadcasting, and the data type is same as `input_x`.
 
     Examples:
          >>> input_x = Tensor(np.array([[0, 1]]), mindspore.float32)

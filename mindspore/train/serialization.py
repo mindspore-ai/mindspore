@@ -406,7 +406,7 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'LITE' format for exported model.
 
             - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
-            Ascend model.
+              Ascend model.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
             - LITE: Huawei model format for mobile.
     """
