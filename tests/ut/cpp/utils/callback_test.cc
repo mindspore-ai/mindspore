@@ -22,6 +22,9 @@
 #include "pipeline/parse/python_adapter.h"
 #include "transform/df_graph_manager.h"
 #include "debug/draw.h"
+#ifdef ENABLE_GE
+#include "utils/callbacks_ge.h"
+#endif
 
 namespace mindspore {
 namespace python_adapter = mindspore::parse::python_adapter;

@@ -87,7 +87,22 @@ ms_build_flatbuffers("${FLATBUFFER_IN}" "${FLATBUFFER_IN}" GENERATED_OUTPUT_DIR 
 file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "ir/*.cc"
         "ir/dtype/*.cc"
-        "utils/*.cc"
+        "utils/context/ms_context.cc"
+        "utils/symbolic.cc"
+        "utils/tensorprint_utils.cc"
+        "utils/convert_utils.cc"
+        "utils/graph_utils.cc"
+        "utils/misc.cc"
+        "utils/callbacks.cc"
+        "utils/profile.cc"
+        "utils/base_ref.cc"
+        "utils/summary/event_writer.cc"
+        "utils/log_adapter.cc"
+        "utils/comm_manager.cc"
+        "utils/any.cc"
+        "utils/config_manager.cc"
+        "utils/system/file_system.cc"
+        "utils/system/crc32c.cc"
         "common/*.cc"
         "parallel/*.cc"
         "pipeline/pipeline.cc"
@@ -173,6 +188,7 @@ if(ENABLE_GE)
     file(GLOB_RECURSE GE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             "transform/*.cc"
             "pynative/pynative_execute_ge.cc"
+            "utils/callbacks_ge.cc"
             "pipeline/pipeline_ge.cc"
             )
     list(APPEND MINDSPORE_SRC_LIST ${GE_SRC_LIST})
