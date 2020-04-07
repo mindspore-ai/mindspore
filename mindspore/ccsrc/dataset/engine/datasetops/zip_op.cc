@@ -65,13 +65,13 @@ Status ZipOp::operator()() {
   // initialize the iterators
   for (int32_t i = 0; i < children_num_; ++i) {
     // magic number 0 since Zip is not a parallel Op
-    child_iterators_.push_back(mindspore::make_unique<ChildIterator>(this, 0, i));
+    child_iterators_.push_back(std::make_unique<ChildIterator>(this, 0, i));
   }
 
   // Loop until eof is true
   while (!eof_) {
     // Create tensor table and prepare it by fetching and packing the first zipped row into it.
-    std::unique_ptr<TensorQTable> curr_table = mindspore::make_unique<TensorQTable>();
+    std::unique_ptr<TensorQTable> curr_table = std::make_unique<TensorQTable>();
     RETURN_IF_NOT_OK(prepare(curr_table.get()));
 
     // If an eof got picked up during the above prepare, then we're done
@@ -81,7 +81,7 @@ Status ZipOp::operator()() {
     while (!draining_) {
       // 1. If a previous loop iteration sent the current table out, then create a new one.
       if (curr_table == nullptr) {
-        curr_table = mindspore::make_unique<TensorQTable>();
+        curr_table = std::make_unique<TensorQTable>();
       }
 
       // 2 fill the table.  Note: draining mode might get turned on if any of the child inputs were done
@@ -89,8 +89,7 @@ Status ZipOp::operator()() {
 
       // 3 create and update buffer and send it to the out connector
       if (!curr_table->empty()) {
-        std::unique_ptr<DataBuffer> curr_buffer =
-          mindspore::make_unique<DataBuffer>(buffer_id_, DataBuffer::kDeBFlagNone);
+        std::unique_ptr<DataBuffer> curr_buffer = std::make_unique<DataBuffer>(buffer_id_, DataBuffer::kDeBFlagNone);
         curr_buffer->set_tensor_table(std::move(curr_table));
         curr_buffer->set_column_name_map(col_name_id_map_);
         MS_LOG(DEBUG) << "Zip operator finished one buffer, pushing, rows " << curr_buffer->NumRows() << ", cols "
@@ -105,15 +104,14 @@ Status ZipOp::operator()() {
       MS_LOG(DEBUG) << "Zip operator is now draining child inputs.";
       RETURN_IF_NOT_OK(drainPipeline());
       // Now that we have drained child inputs, send the eoe up.
-      RETURN_IF_NOT_OK(
-        out_connector_->Add(0, std::move(mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
+      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
     }
   }
 
   // 5 handle eof
   // propagate eof here.
   MS_LOG(INFO) << "Zip operator got EOF, propagating.";
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
+  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
   return Status::OK();
 }
 

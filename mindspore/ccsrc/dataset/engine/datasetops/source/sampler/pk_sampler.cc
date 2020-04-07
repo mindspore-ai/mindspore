@@ -53,9 +53,9 @@ Status PKSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
   if (next_id_ > num_pk_samples_ || num_pk_samples_ == 0) {
     RETURN_STATUS_UNEXPECTED("Index out of bound in PKSampler");
   } else if (next_id_ == num_pk_samples_) {
-    (*out_buffer) = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
-    (*out_buffer) = mindspore::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
+    (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sample_ids;
     int64_t last_id =
       (samples_per_buffer_ + next_id_ > num_pk_samples_) ? num_pk_samples_ : samples_per_buffer_ + next_id_;
@@ -68,7 +68,7 @@ Status PKSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
       *(id_ptr++) = samples[rnd_ind];
     }
     TensorRow row(1, sample_ids);
-    (*out_buffer)->set_tensor_table(make_unique<TensorQTable>(1, row));
+    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
   }
   return Status::OK();
 }

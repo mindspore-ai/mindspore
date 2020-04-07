@@ -74,7 +74,7 @@ TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
   std::unique_ptr<DataBuffer> db;
   std::shared_ptr<Tensor> tensor;
   for (int i = 0; i < 6; i++) {
-    std::unique_ptr<Sampler> sampler = mindspore::make_unique<DistributedSampler>(3, i % 3, (i < 3 ? false : true));
+    std::unique_ptr<Sampler> sampler = std::make_unique<DistributedSampler>(3, i % 3, (i < 3 ? false : true));
     sampler->Init(&mock);
     sampler->GetNextBuffer(&db);
     db->GetTensor(&tensor, 0, 0);

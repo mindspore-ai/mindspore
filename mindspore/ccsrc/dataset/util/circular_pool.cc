@@ -18,10 +18,8 @@
 #include <algorithm>
 #include <limits>
 #include <utility>
-
 #include "./securec.h"
-
-#include "dataset/util/make_unique.h"
+#include "dataset/util/de_error.h"
 #include "dataset/util/system_pool.h"
 
 namespace mindspore {

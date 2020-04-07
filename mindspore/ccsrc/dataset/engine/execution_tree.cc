@@ -24,7 +24,7 @@ namespace mindspore {
 namespace dataset {
 // Constructor
 ExecutionTree::ExecutionTree() : id_count_(0) {
-  tg_ = mindspore::make_unique<TaskGroup>();
+  tg_ = std::make_unique<TaskGroup>();
   tree_state_ = kDeTStateInit;
   prepare_flags_ = kDePrepNone;
 }

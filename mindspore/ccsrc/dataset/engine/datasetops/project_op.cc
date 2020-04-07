@@ -79,7 +79,7 @@ Status ProjectOp::Project(std::unique_ptr<DataBuffer> *data_buffer) {
     new_column_name_mapping[current_column] = i;
     projected_column_indices.push_back(column_name_mapping[current_column]);
   }
-  std::unique_ptr<TensorQTable> new_tensor_table = mindspore::make_unique<TensorQTable>();
+  std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
   while ((*data_buffer)->NumRows() > 0) {
     TensorRow current_row;
     RETURN_IF_NOT_OK((*data_buffer)->PopRow(&current_row));

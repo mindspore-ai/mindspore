@@ -45,7 +45,7 @@ TEST_F(MindDataTestProjectOp, TestProjectProject) {
     .SetRowsPerBuffer(16)
     .SetWorkerConnectorSize(16)
     .SetNumWorkers(16);
-  std::unique_ptr<DataSchema> schema = mindspore::make_unique<DataSchema>();
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   builder.SetDataSchema(std::move(schema));
   Status rc = builder.Build(&my_tfreader_op);  ASSERT_TRUE(rc.IsOk());

@@ -24,7 +24,6 @@
 #include "dataset/core/cv_tensor.h"
 #include "dataset/core/tensor.h"
 #include "dataset/core/tensor_shape.h"
-#include "dataset/util/make_unique.h"
 #include "dataset/util/random.h"
 
 #define MAX_INT_PRECISION 16777216  // float int precision is 16777216
@@ -376,7 +375,7 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
     int width = input_cv->shape()[1];
     int num_channels = input_cv->shape()[2];
 
-    auto output_cv = mindspore::make_unique<CVTensor>(TensorShape{num_channels, height, width}, input_cv->type());
+    auto output_cv = std::make_unique<CVTensor>(TensorShape{num_channels, height, width}, input_cv->type());
     for (int i = 0; i < num_channels; ++i) {
       cv::Mat mat;
       RETURN_IF_NOT_OK(output_cv->Mat({i}, &mat));

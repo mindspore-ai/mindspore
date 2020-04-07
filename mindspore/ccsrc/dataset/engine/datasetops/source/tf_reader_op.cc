@@ -36,7 +36,6 @@
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
 #include "dataset/engine/jagged_connector.h"
-#include "dataset/util/make_unique.h"
 #include "dataset/util/path.h"
 #include "dataset/util/queue.h"
 #include "dataset/util/random.h"
@@ -54,7 +53,7 @@ TFReaderOp::Builder::Builder()
   builder_op_connector_size_ = config_manager->op_connector_size();
   builder_rows_per_buffer_ = config_manager->rows_per_buffer();
   builder_shuffle_files_ = false;
-  builder_data_schema_ = make_unique<DataSchema>();
+  builder_data_schema_ = std::make_unique<DataSchema>();
 }
 
 Status TFReaderOp::Builder::ValidateInputs() const {
@@ -103,7 +102,7 @@ TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64
       finished_reading_dataset_(false),
       shuffle_files_(shuffle_files),
       data_schema_(std::move(data_schema)),
-      filename_index_(make_unique<StringIndex>()),
+      filename_index_(std::make_unique<StringIndex>()),
       load_io_block_queue_(true),
       load_jagged_connector_(true),
       num_rows_(0),
@@ -129,7 +128,7 @@ Status TFReaderOp::Init() {
   // parallel op base.
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
 
-  jagged_buffer_connector_ = mindspore::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
+  jagged_buffer_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
 
   // temporary: make size large enough to hold all files + EOE to avoid hangs
   int32_t safe_queue_size = static_cast<int32_t>(std::ceil(dataset_files_list_.size() / num_workers_)) + 1;
@@ -229,7 +228,7 @@ Status TFReaderOp::operator()() {
     }
 
     // all workers finished reading for this epoch, and we have read all the data from all workers
-    std::unique_ptr<DataBuffer> eoe_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
     RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
 
     if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
@@ -241,7 +240,7 @@ Status TFReaderOp::operator()() {
     }
   }
 
-  std::unique_ptr<DataBuffer> eof_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
+  std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
   RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
 
   RETURN_IF_NOT_OK(PostEndOfData());
@@ -274,7 +273,7 @@ Status TFReaderOp::WorkerEntry(int32_t worker_id) {
         MS_LOG(INFO) << "TFReader operator worker " << worker_id << " loaded file " << filename << ".";
       }
     } else {
-      std::unique_ptr<DataBuffer> eoe_buffer = mindspore::make_unique<DataBuffer>(1, DataBuffer::kDeBFlagEOE);
+      std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(1, DataBuffer::kDeBFlagEOE);
       RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(eoe_buffer)));
     }
 
@@ -288,7 +287,7 @@ Status TFReaderOp::WorkerEntry(int32_t worker_id) {
 // When the worker pops this control indicator, it will shut itself down gracefully.
 Status TFReaderOp::PostEndOfData() {
   for (int i = 0; i < num_workers_; ++i) {
-    std::unique_ptr<FilenameBlock> eof = mindspore::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEof);
+    std::unique_ptr<FilenameBlock> eof = std::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEof);
     RETURN_IF_NOT_OK(PushIoBlockQueue(i, std::move(eof)));
   }
 
@@ -299,7 +298,7 @@ Status TFReaderOp::PostEndOfData() {
 // pops this control indicator, it will wait until the next epoch starts and then resume execution.
 Status TFReaderOp::PostEndOfEpoch(int32_t queue_index) {
   for (int i = 0; i < num_workers_; ++i) {
-    std::unique_ptr<FilenameBlock> eoe = mindspore::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEoe);
+    std::unique_ptr<FilenameBlock> eoe = std::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEoe);
     RETURN_IF_NOT_OK(PushIoBlockQueue((queue_index + i) % num_workers_, std::move(eoe)));
   }
 
@@ -358,7 +357,7 @@ Status TFReaderOp::FillIOBlockShuffle(const std::vector<int64_t> &i_keys) {
       }
       if (!equal_rows_per_shard_) {
         if (key_index++ % num_devices_ == device_id_) {
-          auto ioBlock = make_unique<FilenameBlock>(*it, kInvalidOffset, kInvalidOffset, IOBlock::kDeIoBlockNone);
+          auto ioBlock = std::make_unique<FilenameBlock>(*it, kInvalidOffset, kInvalidOffset, IOBlock::kDeIoBlockNone);
           RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
           queue_index = (queue_index + 1) % num_workers_;
         }
@@ -367,7 +366,7 @@ Status TFReaderOp::FillIOBlockShuffle(const std::vector<int64_t> &i_keys) {
         auto file_it = filename_index_->Search(*it);
         std::string file_name = file_it.value();
         if (NeedPushFileToblockQueue(file_name, &start_offset, &end_offset, pre_count)) {
-          auto ioBlock = make_unique<FilenameBlock>(*it, start_offset, end_offset, IOBlock::kDeIoBlockNone);
+          auto ioBlock = std::make_unique<FilenameBlock>(*it, start_offset, end_offset, IOBlock::kDeIoBlockNone);
           RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
           MS_LOG(DEBUG) << "File name " << *it << " start offset " << start_offset << " end_offset " << end_offset;
           queue_index = (queue_index + 1) % num_workers_;
@@ -404,14 +403,15 @@ Status TFReaderOp::FillIOBlockNoShuffle() {
       }
       if (!equal_rows_per_shard_) {
         if (key_index++ % num_devices_ == device_id_) {
-          auto ioBlock = make_unique<FilenameBlock>(it.key(), kInvalidOffset, kInvalidOffset, IOBlock::kDeIoBlockNone);
+          auto ioBlock =
+            std::make_unique<FilenameBlock>(it.key(), kInvalidOffset, kInvalidOffset, IOBlock::kDeIoBlockNone);
           RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
           queue_index = (queue_index + 1) % num_workers_;
         }
       } else {
         std::string file_name = it.value();
         if (NeedPushFileToblockQueue(file_name, &start_offset, &end_offset, pre_count)) {
-          auto ioBlock = make_unique<FilenameBlock>(it.key(), start_offset, end_offset, IOBlock::kDeIoBlockNone);
+          auto ioBlock = std::make_unique<FilenameBlock>(it.key(), start_offset, end_offset, IOBlock::kDeIoBlockNone);
           RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
           queue_index = (queue_index + 1) % num_workers_;
         }
@@ -490,14 +490,13 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
 
   int64_t rows_read = 0;
   int64_t rows_total = 0;
-  std::unique_ptr<DataBuffer> current_buffer =
-    mindspore::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
+  std::unique_ptr<DataBuffer> current_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
   std::unordered_map<std::string, int32_t> column_name_map;
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
     column_name_map[data_schema_->column(i).name()] = i;
   }
   current_buffer->set_column_name_map(column_name_map);
-  std::unique_ptr<TensorQTable> new_tensor_table = make_unique<TensorQTable>();
+  std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
 
   while (reader.peek() != EOF) {
     if (!load_jagged_connector_) {
@@ -532,9 +531,9 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
       current_buffer->set_tensor_table(std::move(new_tensor_table));
       RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(current_buffer)));
 
-      current_buffer = make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
+      current_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
       current_buffer->set_column_name_map(column_name_map);
-      new_tensor_table = make_unique<TensorQTable>();
+      new_tensor_table = std::make_unique<TensorQTable>();
       rows_read = 0;
     }
   }
@@ -742,7 +741,7 @@ Status TFReaderOp::LoadFloatList(const ColDescriptor &current_col, const dataeng
   // Identify how many values we have and then create a local array of these
   // to deserialize into
   *num_elements = float_list.value_size();
-  *float_array = mindspore::make_unique<float[]>(*num_elements);
+  *float_array = std::make_unique<float[]>(*num_elements);
   for (int i = 0; i < float_list.value_size(); ++i) {
     (*float_array)[i] = float_list.value(i);
   }

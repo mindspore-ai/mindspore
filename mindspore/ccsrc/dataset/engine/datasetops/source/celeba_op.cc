@@ -40,7 +40,7 @@ Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
     builder_sampler_ = std::make_shared<SequentialSampler>();
   }
 
-  builder_schema_ = make_unique<DataSchema>();
+  builder_schema_ = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(
     builder_schema_->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
   // label is like this:0 1 0 0 1......
@@ -83,7 +83,7 @@ CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::stri
     col_name_map_[data_schema_->column(index).name()] = index;
   }
 
-  attr_info_queue_ = make_unique<Queue<std::vector<std::string>>>(queue_size);
+  attr_info_queue_ = std::make_unique<Queue<std::vector<std::string>>>(queue_size);
   io_block_queues_.Init(num_workers_, queue_size);
 }
 
@@ -311,7 +311,7 @@ Status CelebAOp::AddIOBlock(std::unique_ptr<DataBuffer> *data_buffer) {
         row_count++;
         if (row_count % rows_per_buffer_ == 0) {
           RETURN_IF_NOT_OK(io_block_queues_[buff_count++ % num_workers_]->Add(
-            make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
+            std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
           keys.clear();
         }
       }
@@ -320,21 +320,21 @@ Status CelebAOp::AddIOBlock(std::unique_ptr<DataBuffer> *data_buffer) {
 
     if (!keys.empty()) {
       RETURN_IF_NOT_OK(io_block_queues_[(buff_count++) % num_workers_]->Add(
-        make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
+        std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
     }
     if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
       RETURN_IF_NOT_OK(
-        io_block_queues_[(buff_count++) % num_workers_]->Add(make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
+        io_block_queues_[(buff_count++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(
-        io_block_queues_[(buff_count++) % num_workers_]->Add(make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
+        io_block_queues_[(buff_count++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
       for (int32_t i = 0; i < num_workers_; i++) {
         RETURN_IF_NOT_OK(
-          io_block_queues_[i]->Add(std::move(make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone))));
+          io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
       }
       return Status::OK();
     } else {  // not the last repeat. Acquire lock, sleeps master thread, wait for the wake-up from reset
       RETURN_IF_NOT_OK(
-        io_block_queues_[(buff_count++) % num_workers_]->Add(make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
+        io_block_queues_[(buff_count++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(wp_.Wait());  // Master thread goes to sleep after it has made all the IOBlocks
       wp_.Clear();
       RETURN_IF_NOT_OK(sampler_->GetNextBuffer(data_buffer));
@@ -349,17 +349,17 @@ Status CelebAOp::WorkerEntry(int32_t worker_id) {
   RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
   while (io_block != nullptr) {
     if (io_block->eoe() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
+      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
       buffer_id = worker_id;
     } else if (io_block->eof() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
+      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
     } else {
       std::vector<int64_t> keys;
       RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
       if (keys.empty()) {
         return Status::OK();  // empty key is a quit signal for workers
       }
-      std::unique_ptr<DataBuffer> db = make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
+      std::unique_ptr<DataBuffer> db = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
       RETURN_IF_NOT_OK(LoadBuffer(keys, &db));
       RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db)));
       buffer_id += num_workers_;
@@ -370,7 +370,7 @@ Status CelebAOp::WorkerEntry(int32_t worker_id) {
 }
 
 Status CelebAOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db) {
-  std::unique_ptr<TensorQTable> deq = make_unique<TensorQTable>();
+  std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   for (const auto &key : keys) {
     TensorRow row;
     RETURN_IF_NOT_OK(LoadTensorRow(image_labels_vec_[key], &row));

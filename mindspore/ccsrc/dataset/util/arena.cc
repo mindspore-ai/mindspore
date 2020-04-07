@@ -16,7 +16,6 @@
 #include "dataset/util/arena.h"
 #include <unistd.h>
 #include <utility>
-#include "dataset/util/make_unique.h"
 #include "dataset/util/system_pool.h"
 #include "dataset/util/de_error.h"
 #include "./securec.h"

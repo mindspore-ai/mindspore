@@ -27,7 +27,6 @@
 #include "dataset/core/data_type.h"
 #include "dataset/engine/datasetops/source/storage_client.h"
 #include "dataset/engine/data_schema.h"
-#include "dataset/util/make_unique.h"
 
 namespace mindspore {
 namespace dataset {
@@ -72,7 +71,7 @@ Status TFBuffer::Load() {
   }
 
   // Construct the Tensor table for this buffer.
-  tensor_table_ = mindspore::make_unique<TensorQTable>();
+  tensor_table_ = std::make_unique<TensorQTable>();
 
   // At each position in the tensor table, instantiate the shared pointer to it's Tensor.
   uint32_t row = 0;
@@ -272,7 +271,7 @@ Status TFBuffer::LoadFloatList(const ColDescriptor &current_col, const dataengin
   // Identify how many values we have and then create a local array of these
   // to deserialize into
   *num_elements = float_list.value_size();
-  *float_array = mindspore::make_unique<float[]>(*num_elements);
+  *float_array = std::make_unique<float[]>(*num_elements);
   for (int i = 0; i < float_list.value_size(); i++) {
     (*float_array)[i] = float_list.value(i);
   }
@@ -294,7 +293,7 @@ Status TFBuffer::LoadIntList(const ColDescriptor &current_col, const dataengine:
   // Identify how many values we have and then create a local array of these
   // to deserialize into
   *num_elements = int64_list.value_size();
-  *int_array = mindspore::make_unique<int64_t[]>(*num_elements);
+  *int_array = std::make_unique<int64_t[]>(*num_elements);
   for (int i = 0; i < int64_list.value_size(); i++) {
     (*int_array)[i] = int64_list.value(i);
   }

@@ -19,7 +19,6 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include "dataset/util/make_unique.h"
 
 namespace mindspore {
 namespace dataset {

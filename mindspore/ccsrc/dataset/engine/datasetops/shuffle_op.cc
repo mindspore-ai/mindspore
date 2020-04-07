@@ -70,7 +70,7 @@ ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_con
       rng_(shuffle_seed),
       buffer_counter_(0),
       rows_per_buffer_(rows_per_buffer),
-      shuffle_buffer_(mindspore::make_unique<TensorTable>()),
+      shuffle_buffer_(std::make_unique<TensorTable>()),
       shuffle_last_row_idx_(0),
       shuffle_buffer_state_(kShuffleStateInit) {}
 
@@ -90,7 +90,7 @@ Status ShuffleOp::SelfReset() {
     shuffle_seed_ = distribution(random_device);
     rng_ = std::mt19937_64(shuffle_seed_);
   }
-  shuffle_buffer_ = mindspore::make_unique<TensorTable>();
+  shuffle_buffer_ = std::make_unique<TensorTable>();
   buffer_counter_ = 0;
   shuffle_last_row_idx_ = 0;
   shuffle_buffer_state_ = kShuffleStateInit;
@@ -142,7 +142,7 @@ Status ShuffleOp::operator()() {
   // Create the child iterator to fetch our data from.
   int32_t worker_id = 0;
   int32_t child_idx = 0;
-  child_iterator_ = mindspore::make_unique<ChildIterator>(this, worker_id, child_idx);
+  child_iterator_ = std::make_unique<ChildIterator>(this, worker_id, child_idx);
 
   // Main operator loop
   while (true) {
@@ -161,7 +161,7 @@ Status ShuffleOp::operator()() {
       // Step 1)
       // Create an output tensor table if one is not created yet.
       if (!new_buffer_table) {
-        new_buffer_table = mindspore::make_unique<TensorQTable>();
+        new_buffer_table = std::make_unique<TensorQTable>();
       }
 
       // Step 2)
@@ -176,7 +176,7 @@ Status ShuffleOp::operator()() {
       // and send this buffer on it's way up the pipeline. Special case is if this is the
       // last row then we also send it.
       if (new_buffer_table->size() == rows_per_buffer_ || shuffle_last_row_idx_ == 0) {
-        auto new_buffer = mindspore::make_unique<DataBuffer>(buffer_counter_, DataBuffer::kDeBFlagNone);
+        auto new_buffer = std::make_unique<DataBuffer>(buffer_counter_, DataBuffer::kDeBFlagNone);
         new_buffer->set_tensor_table(std::move(new_buffer_table));
         new_buffer->set_column_name_map(column_name_map_);
         buffer_counter_++;
@@ -218,7 +218,7 @@ Status ShuffleOp::operator()() {
     // Since we overloaded eoeReceived function, we are responsible to flow the EOE up the
     // pipepline manually now that we are done draining the shuffle buffer
     MS_LOG(INFO) << "Shuffle operator sending EOE.";
-    auto eoe_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
     RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
 
     // Do not wait for any reset to be flown down from operators above us.

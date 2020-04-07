@@ -92,7 +92,7 @@ TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar10) {
 TEST_F(MindDataTestCifarOp, TestRandomSamplerCifar10) {
   uint32_t original_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(0);
-  std::unique_ptr<Sampler> sampler = mindspore::make_unique<RandomSampler>(true, 12);
+  std::unique_ptr<Sampler> sampler = std::make_unique<RandomSampler>(true, 12);
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   auto tree = Build({Cifarop(16, 2, 32, folder_path, std::move(sampler), 100)});
   tree->Prepare();
