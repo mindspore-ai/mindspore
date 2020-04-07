@@ -650,7 +650,7 @@ class FuncGraphTransaction {
   explicit FuncGraphTransaction(FuncGraphManager* manager) : manager_(manager), changes_() {
     MS_EXCEPTION_IF_NULL(manager_);
     if (!manager_->IsManaged()) {
-      MS_LOG(DEBUG) << "the manager is not managed yet";
+      MS_LOG(DEBUG) << "The manager is not managed yet";
     }
   }
 

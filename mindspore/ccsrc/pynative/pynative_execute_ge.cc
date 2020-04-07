@@ -47,7 +47,7 @@ inline ValuePtr PyAttrValue(const py::object& obj) {
   ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(obj, &converted_ret);
   if (!converted) {
-    MS_LOG(EXCEPTION) << "attribute convert error with type:" << std::string(py::str(obj));
+    MS_LOG(EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(obj));
   }
   return converted_ret;
 }
@@ -67,7 +67,7 @@ MeTensorPtr ConvertPyObjToTensor(const py::object& obj) {
   } else if (py::isinstance<py::array>(obj)) {
     me_tensor_ptr = std::make_shared<MeTensor>(py::cast<py::array>(obj), nullptr);
   } else {
-    MS_LOG(EXCEPTION) << "run op inputs type is invalid!";
+    MS_LOG(EXCEPTION) << "Run op inputs type is invalid!";
   }
   return me_tensor_ptr;
 }
@@ -97,7 +97,7 @@ bool SetInputsForSingleOpGraph(const OpExecInfoPtr& op_exec_info, const std::vec
     auto const_op_desc =
       transform::TransformUtil::GetGeTensorDesc(me_tensor_ptr->shape_c(), me_tensor_ptr->data_type(), kOpFormat_NCHW);
     if (const_op_desc == nullptr) {
-      MS_LOG(ERROR) << "Create variable " << op_name << " ouptut descriptor failed!";
+      MS_LOG(ERROR) << "Create variable " << op_name << " output descriptor failed!";
       return false;
     }
     auto pointer_cast_const_op = std::static_pointer_cast<transform::Constant>(const_op);
@@ -108,7 +108,7 @@ bool SetInputsForSingleOpGraph(const OpExecInfoPtr& op_exec_info, const std::vec
       continue;
     }
     if (adapter->setInput(op, op_input_idx++, const_op)) {
-      MS_LOG(ERROR) << "fail to set params, index is " << op_input_idx;
+      MS_LOG(ERROR) << "Failed to set params, index is " << op_input_idx;
       return false;
     }
     graph_input_nodes->push_back(*const_op);
@@ -178,7 +178,7 @@ void ToTensorPtr(const OpExecInfoPtr op_exec_info, std::vector<GeTensorPtr>* con
     MeTensorPtr me_tensor_ptr = ConvertPyObjToTensor(op_inputs[i]);
     auto ge_tensor_ptr = transform::TransformUtil::ConvertTensor(me_tensor_ptr, kOpFormat_NCHW);
     if (ge_tensor_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "convert inputs to GE tensor failed in op " << op_exec_info->op_name << ".";
+      MS_LOG(EXCEPTION) << "Convert inputs to GE tensor failed in op " << op_exec_info->op_name << ".";
     }
     // set inputs for operator to build single node graph
     inputs->push_back(ge_tensor_ptr);
@@ -192,7 +192,7 @@ PynativeStatusCode ConvertAttributes(const OpExecInfoPtr& op_exec_info, const st
 
   for (auto& item : op_attrs) {
     if (!py::isinstance<py::str>(item.first)) {
-      MS_LOG(ERROR) << "type error in py dict convert";
+      MS_LOG(ERROR) << "Type error in py dict convert";
       return PYNATIVE_OP_ATTRS_ERR;
     }
     std::string name = py::cast<std::string>(item.first);
@@ -203,7 +203,7 @@ PynativeStatusCode ConvertAttributes(const OpExecInfoPtr& op_exec_info, const st
   // build graph
   GeGraphPtr graph = std::make_shared<GeGraph>(op_exec_info->op_name);
   if (BuildSingleOpGraph(op_exec_info, inputs, attrs, graph) == false) {
-    MS_LOG(ERROR) << "Fail to BuildSingleOpGraph";
+    MS_LOG(ERROR) << "Failed to BuildSingleOpGraph";
     return PYNATIVE_GRAPH_GE_BUILD_ERR;
   }
 
@@ -211,7 +211,7 @@ PynativeStatusCode ConvertAttributes(const OpExecInfoPtr& op_exec_info, const st
   transform::Status ret =
     transform::DfGraphManager::GetInstance().AddGraph(SINGLE_OP_GRAPH, std::shared_ptr<transform::DfGraph>(graph));
   if (ret != transform::SUCCESS) {
-    MS_LOG(ERROR) << "Fail to AddGraph into graph manager";
+    MS_LOG(ERROR) << "Failed to AddGraph into graph manager";
     return PYNATIVE_GRAPH_MANAGER_ERR;
   }
 
@@ -289,7 +289,7 @@ py::object RunOpInGE(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* stat
     run_ret = graph_runner->RunGraph(run_options, ge_inputs, &ge_outputs);
   }
   if (run_ret != transform::Status::SUCCESS) {
-    MS_LOG(ERROR) << "GraphRunner Fails to Run Graph";
+    MS_LOG(ERROR) << "GraphRunner fails to run graph";
     *status = PYNATIVE_GRAPH_GE_RUN_ERR;
     return std::move(err_ret);
   }
