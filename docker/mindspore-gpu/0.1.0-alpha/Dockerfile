@@ -1,11 +1,12 @@
-FROM nvidia/cuda:9.2-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
 
 MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
 ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
-ENV PATH ${PYTHON_ROOT_PATH}/bin:${CMAKE_ROOT_PATH}/bin:/usr/local/bin:$PATH
+ENV OMPI_ROOT_PATH /usr/local/openmpi-3.1.5
+ENV PATH ${PYTHON_ROOT_PATH}/bin:${CMAKE_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:/usr/local/bin:$PATH
 
 # Install base tools
 RUN apt update \
@@ -34,7 +35,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     autoconf \
     libtool \
     automake \
-    flex
+    flex \
+    libnccl2=2.4.8-1+cuda10.1 \
+    libnccl-dev=2.4.8-1+cuda10.1
 
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
@@ -79,5 +82,17 @@ RUN cd /tmp \
     && bash ./cmake-3.14.1-Linux-x86_64.sh --prefix=${CMAKE_ROOT_PATH} --exclude-subdir --skip-license \
     && rm -f /tmp/cmake-3.14.1-Linux-x86_64.sh
 
-# Install MindSpore cuda-9.2 whl package
-RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.1.0-alpha/MindSpore/gpu/cuda-9.2/mindspore-0.1.0-cp37-cp37m-linux_x86_64.whl
+# Install openmpi (v3.1.5)
+RUN cd /tmp \
+    && wget https://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.5.tar.gz \
+    && tar -xvf openmpi-3.1.5.tar.gz \
+    && cd /tmp/openmpi-3.1.5 \
+    && mkdir -p ${OMPI_ROOT_PATH} \
+    && ./configure --prefix=${OMPI_ROOT_PATH} \
+    && make -j4 \
+    && make install -j4 \
+    && rm -rf /tmp/openmpi-3.1.5 \
+    && rm -f /tmp/openmpi-3.1.5.tar.gz
+
+# Install MindSpore cuda-10.1 whl package
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.1.0-alpha/MindSpore/gpu/cuda-10.1/mindspore-0.1.0-cp37-cp37m-linux_x86_64.whl
