@@ -33,7 +33,7 @@ enum ParallelStrategy {
   DISTRIBUTION,
 };
 
-enum DatasetMode { DS_FEED_MODE = 0, DS_GRAPH_MODE };
+enum DatasetMode { DS_NORMAL_MODE = 0, DS_SINK_MODE };
 
 class DatasetGraphParam {
  public:
@@ -106,7 +106,7 @@ class ConfigManager {
   ~ConfigManager() = default;
 
   ParallelStrategy parallel_strategy_{ONE_DEVICE};
-  DatasetMode dataset_mode_{DS_FEED_MODE};
+  DatasetMode dataset_mode_{DS_NORMAL_MODE};
   DatasetGraphParam dataset_param_{"", 0, 0, {}, {}, {}};
   int64_t iter_num_{1};
   std::string dataset_phase_{""};

@@ -381,9 +381,9 @@ class _Executor:
         if enable_ge:
             # decide whether to sink based on whether the inputs is virtual or not
             if args_list and isinstance(args_list[0], Tensor) and args_list[0].virtual_flag:
-                _set_dataset_mode_config('graph')
+                _set_dataset_mode_config('sink')
             else:
-                _set_dataset_mode_config('feed')
+                _set_dataset_mode_config('normal')
 
             self._build_data_graph(obj, params, phase)
 
