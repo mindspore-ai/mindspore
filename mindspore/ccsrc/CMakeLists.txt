@@ -508,7 +508,7 @@ endif()
 
 if (ENABLE_CPU)
     add_custom_target(add_cpu_lib ALL
-            COMMAND cp ${mkl_dnn_LIBPATH}/libdnnl.so.1.1 ${MS_LIB_PATH}/libdnnl.so.1
+            COMMAND cp ${onednn_LIBPATH}/libdnnl.so.1.1 ${MS_LIB_PATH}/libdnnl.so.1
             )
     add_dependencies(add_cpu_lib add_ms_lib)
 endif()
