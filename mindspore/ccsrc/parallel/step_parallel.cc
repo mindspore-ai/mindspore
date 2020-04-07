@@ -464,6 +464,14 @@ void SplitTensor(const AnfNodePtr& node, const CNodePtr& next_node, int index) {
   MS_EXCEPTION_IF_NULL(func_graph);
   Operator op = CreateGetTensorSliceOp(tensor_layout);
   InsertGetTensorSliceOp(op, next_node, func_graph, index, SPLIT_TENSOR);
+  if (!op_info->sub_ops().empty()) {
+    auto sub_ops = op_info->sub_ops();
+    for (size_t i = 0; i < sub_ops.size(); i++) {
+      if (!sub_ops.at(i).empty()) {
+        InsertGetTensorSliceOp(sub_ops.at(i).at(0), next_node, func_graph, index, SUB);
+      }
+    }
+  }
 }
 
 void StepSplitTensor(const AnfNodePtr& node, const FuncGraphManagerPtr& manager) {
