@@ -171,9 +171,9 @@ const char kNameAbsGrad[] = "AbsGrad";
 const char kNameBinaryCrossEntropy[] = "BinaryCrossEntropy";
 const char kNameBinaryCrossEntropyGrad[] = "BinaryCrossEntropyGrad";
 const char kNameSparseApplyAdagrad[] = "SparseApplyAdagrad";
-const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
 const char kNameAcosh[] = "Acosh";
 const char kNameFloorMod[] = "FloorMod";
+const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
 const char kNameSpaceToDepth[] = "SpaceToDepth";
 const char kNameDepthToSpace[] = "DepthToSpace";
 const char kNameSign[] = "Sign";
@@ -363,12 +363,9 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBinaryCrossEntropy), ADPT_DESC(BinaryCrossEntropy)},
     {string(kNameBinaryCrossEntropyGrad), ADPT_DESC(BinaryCrossEntropyGrad)},
     {string(kNameSparseApplyAdagrad), ADPT_DESC(SparseApplyAdagradD)},
-<<<<<<< HEAD
     {string(kNameSparseApplyFtrlD), ADPT_DESC(SparseApplyFtrlD)},
-=======
     {string(kNameAcosh), ADPT_DESC(Acosh)},
     {string(kNameFloorMod), ADPT_DESC(FloorMod)},
->>>>>>> Add FloorMod, Acosh in ME
     {string(kNameSpaceToDepth), ADPT_DESC(SpaceToDepth)},
     {string(kNameDepthToSpace), ADPT_DESC(DepthToSpace)},
     {string(kNameSign), ADPT_DESC(Sign)},
