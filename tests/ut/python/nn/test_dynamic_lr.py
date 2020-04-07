@@ -41,7 +41,7 @@ class TestInputs:
             dr.piecewise_constant_lr(milestone1, learning_rates)
 
         milestone2 = [1.0, 2.0, True]
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.piecewise_constant_lr(milestone2, learning_rates)
 
     def test_learning_rates1(self):
@@ -92,13 +92,13 @@ class TestInputs:
 
     def test_total_step1(self):
         total_step1 = 2.0
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.exponential_decay_lr(learning_rate, decay_rate, total_step1, step_per_epoch, decay_epoch)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.cosine_decay_lr(min_lr, max_lr, total_step1, step_per_epoch, decay_epoch)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.polynomial_decay_lr(learning_rate, end_learning_rate, total_step1, step_per_epoch, decay_epoch, power)
 
     def test_total_step2(self):
@@ -114,13 +114,13 @@ class TestInputs:
 
     def test_step_per_epoch1(self):
         step_per_epoch1 = True
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch1, decay_epoch)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch1, decay_epoch)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch1, decay_epoch, power)
 
     def test_step_per_epoch2(self):
@@ -136,13 +136,13 @@ class TestInputs:
 
     def test_decay_epoch1(self):
         decay_epoch1 = 'm'
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch1)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch1)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch1, power)
 
     def test_decay_epoch2(self):

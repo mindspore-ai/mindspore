@@ -34,7 +34,7 @@ GRAPH_MODE = 0
 PYNATIVE_MODE = 1
 
 
-def _make_directory(path: str):
+def _make_directory(path):
     """Make directory."""
     real_path = None
     if path is None or not isinstance(path, str) or path.strip() == "":
