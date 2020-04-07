@@ -12,10 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Operators info register."""
 
-from .akg.gpu import *
-from .tbe import *
-from .aicpu import *
+"""InitDataSetQueue op"""
+from mindspore.ops.op_info_register import op_info_register, AiCPURegOp
 
-__all__ = []
+init_data_set_queue_op_info = AiCPURegOp("InitData") \
+    .fusion_type("OPAQUE") \
+    .attr("queue_name", "str") \
+    .get_op_info()
+
+@op_info_register(init_data_set_queue_op_info)
+def _init_data_set_queue_aicpu():
+    """InitDataSetQueue AiCPU register"""
+    return

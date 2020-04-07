@@ -78,14 +78,15 @@ class RegOp():
         self.inputs = []
         self.outputs = []
         self.attr_ = []
+        self.fusion_type_ = ''
         self.dtype_format_ = []
 
-    def is_string(self, value):
+    def _is_string(self, value):
         """
         Check if the value is a str type.
 
         Args:
-            value: Parameter to to check.
+            value: Parameter to be checked.
 
         Raises:
             TypeError: If the type of value is not a str.
@@ -93,12 +94,12 @@ class RegOp():
         if not isinstance(value, str):
             raise TypeError("%s value must be str" % str(value))
 
-    def is_int(self, value):
+    def _is_int(self, value):
         """
         Check if the value is a int.
 
         Args:
-            value: Parameter to to check.
+            value: Parameter to be checked.
 
         Raises:
             TypeError: If the type of value is not a int.
@@ -106,18 +107,63 @@ class RegOp():
         if not isinstance(value, int):
             raise TypeError("%s value must be int" % str(value))
 
-    def is_bool(self, value):
+    def _is_bool(self, value):
         """
         Check if the value is a bool.
 
         Args:
-            value: Parameter to to check.
+            value: Parameter to be checked.
 
         Raises:
             TypeError: If the type of value is not a bool.
         """
         if not isinstance(value, bool):
             raise TypeError("%s value must be bool" % str(value))
+
+    def _check_param(self, param_list, key_list, fn_list, kwargs):
+        """
+        Check if the parameter type is correct.
+
+        Args:
+            param_list (list): Parameter list to be checked.
+            key_list (list): The keys of output dict.
+            fn_list (list): Function used for parameter checking. If the function list has only one element,
+                            all parameters will use the same function.
+            kwargs (dict): Other parameter information.
+
+        Raises:
+            TypeError: If the type of value is not list.
+            ValueError: If the size of param list is not equal to the size of key list, or
+                        the size of param list is not equal to the size of funtion list.
+        """
+        for i in [param_list, key_list, fn_list]:
+            if not isinstance(i, list):
+                raise TypeError("%s value must be list type" % str(i))
+        if len(param_list) != len(key_list) or (len(fn_list) != 1 and len(param_list) != len(fn_list)):
+            raise ValueError("param_list size {}, key_list size {}, must be equal.And fn_list size {}.".
+                             format(len(param_list), len(key_list), len(fn_list)))
+        out_dict = {}
+        for idx, element in enumerate(param_list):
+            if element is not None:
+                if len(fn_list) == 1:
+                    fn_list[0](element)
+                else:
+                    fn_list[idx](element)
+                out_dict[key_list[idx]] = element
+        if kwargs:
+            out_dict = dict(out_dict, kwargs)
+        return out_dict
+
+    def fusion_type(self, fusion_type):
+        """
+        Register fusion type.
+
+        Args:
+            fusion_type (str): Value of fusion type.
+        """
+        self._is_string(fusion_type)
+        self.fusion_type_ = fusion_type
+        return self
 
     def dtype_format(self, *args):
         """
@@ -136,8 +182,8 @@ class RegOp():
         for arg in args:
             if not isinstance(arg, tuple) or len(arg) != 2:
                 raise ValueError("dtype and format value must be tuple of two elements")
-            self.is_string(arg[0])
-            self.is_string(arg[1])
+            self._is_string(arg[0])
+            self._is_string(arg[1])
             dtype_format.append(arg)
         self.dtype_format_.append(tuple(dtype_format))
         return self
@@ -159,13 +205,71 @@ class RegOp():
         return op_info
 
 
+class AiCPURegOp(RegOp):
+    """Class for AiCPU op info register"""
+
+    def __init__(self, op_name):
+        super(AiCPURegOp, self).__init__(op_name)
+        self.imply_type = "AiCPU"
+
+    def input(self, index=None, name=None, param_type=None, **kwargs):
+        """
+        Register AiCPU op input information.
+
+        Args:
+            index (int): Order of the input. Default: None.
+            name (str): Name of the input. Default: None.
+            param_type (str): Param type of the input. Default: None.
+            kwargs (dict): Other information for the input.
+        """
+        param_list = [index, name, param_type]
+        key_list = ["index", "name", "param_type"]
+        fn_list = [self._is_int, self._is_string, self._is_string]
+        input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
+        self.inputs.append(input_dict)
+        return self
+
+    def output(self, index=None, name=None, param_type=None, **kwargs):
+        """
+        Register AiCPU op output information.
+
+        Args:
+            index (int): Order of the output. Default: None.
+            name (str): Name of the output. Default: None.
+            param_type (str): Param type of the output. Default: None.
+            kwargs (dict): Other information for the output.
+        """
+        param_list = [index, name, param_type]
+        key_list = ["index", "name", "param_type"]
+        fn_list = [self._is_int, self._is_string, self._is_string]
+        output_dict = self._check_param(param_list, key_list, fn_list, kwargs)
+        self.outputs.append(output_dict)
+        return self
+
+    def attr(self, name=None, value_type=None, value=None, **kwargs):
+        """
+        Register AiCPU op attribute information.
+
+        Args:
+            name (str): Name of the attribute. Default: None.
+            value_type (str): Value type of the attribute. Default: None.
+            value (str): Value type of the attribute. Default: None.
+            kwargs (dict): Other information for the attribute.
+        """
+        param_list = [name, value_type, value]
+        key_list = ["name", "type", "value"]
+        fn_list = [self._is_string]
+        attr_dict = self._check_param(param_list, key_list, fn_list, kwargs)
+        self.attr_.append(attr_dict)
+        return self
+
+
 class TBERegOp(RegOp):
     """Class for TBE op info register."""
 
     def __init__(self, op_name=""):
         super(TBERegOp, self).__init__(op_name)
         self.imply_type = "TBE"
-        self.fusion_type_ = ''
         self.async_flag_ = False
         self.binfile_name_ = ''
         self.compute_cost_ = 10
@@ -175,17 +279,6 @@ class TBERegOp(RegOp):
         self.dynamic_format_ = False
         self.op_pattern_ = ""
 
-    def fusion_type(self, fusion_type):
-        """
-        Register fusion type.
-
-        Args:
-            fusion_type (str): Value of fusion type.
-        """
-        self.is_string(fusion_type)
-        self.fusion_type_ = fusion_type
-        return self
-
     def async_flag(self, async_flag):
         """
         Register async flag.
@@ -193,7 +286,7 @@ class TBERegOp(RegOp):
         Args:
             async_flag (bool): Value of async flag.
         """
-        self.is_bool(async_flag)
+        self._is_bool(async_flag)
         self.async_flag_ = async_flag
         return self
 
@@ -204,7 +297,7 @@ class TBERegOp(RegOp):
         Args:
             binfile_name (str): Name of op binfile.
         """
-        self.is_string(binfile_name)
+        self._is_string(binfile_name)
         self.binfile_name_ = binfile_name
         return self
 
@@ -215,7 +308,7 @@ class TBERegOp(RegOp):
         Args:
             compute_cost (int): Value of compute cost.
         """
-        self.is_int(compute_cost)
+        self._is_int(compute_cost)
         self.compute_cost_ = compute_cost
         return self
 
@@ -226,7 +319,7 @@ class TBERegOp(RegOp):
         Args:
             kernel_name (str): Name of op kernel.
         """
-        self.is_string(kernel_name)
+        self._is_string(kernel_name)
         self.kernel_name_ = kernel_name
         return self
 
@@ -237,7 +330,7 @@ class TBERegOp(RegOp):
         Args:
             partial_flag (bool): Value of partial flag.
         """
-        self.is_bool(partial_flag)
+        self._is_bool(partial_flag)
         self.partial_flag_ = partial_flag
         return self
 
@@ -248,7 +341,7 @@ class TBERegOp(RegOp):
         Args:
             reshape_type (str): Value of reshape type.
         """
-        self.is_string(reshape_type)
+        self._is_string(reshape_type)
         self.reshape_type_ = reshape_type
         return self
 
@@ -259,56 +352,43 @@ class TBERegOp(RegOp):
         Args:
             reshape_type (bool): Value of dynamic format.
         """
-        self.is_bool(dynamic_format)
+        self._is_bool(dynamic_format)
         self.dynamic_format_ = dynamic_format
         return self
 
     def op_pattern(self, pattern=None):
         """
-        Register op pattern information.
+        Register TBE op pattern information.
 
         Args:
             pattern (str): Value of op pattern.
         """
-        if pattern is not None and self.istring(pattern):
+        if pattern is not None and self._is_string(pattern):
             self.op_pattern_ = pattern
         return self
 
     def attr(self, name=None, param_type=None, value_type=None, value=None, default_value=None, **kwargs):
         """
-        Register op attribute information.
+        Register TBE op attribute information.
 
         Args:
             name (str): Name of the attribute. Default: None.
             param_type (str): Param type of the attribute. Default: None.
-            type (str): Type of the attribute. Default: None.
+            value_type (str): Type of the attribute. Default: None.
             value (str): Value of the attribute. Default: None.
             default_value (str): Default value of attribute. Default: None.
             kwargs (dict): Other information for the attribute.
         """
         param_list = [name, param_type, value_type, value, default_value]
-        attr_dict = {}
-        for index, element in enumerate(param_list):
-            if element is not None:
-                self.is_string(element)
-                if index == 0:
-                    attr_dict["name"] = element
-                elif index == 1:
-                    attr_dict["param_type"] = element
-                elif index == 2:
-                    attr_dict["type"] = element
-                elif index == 3:
-                    attr_dict["value"] = element
-                elif index == 4:
-                    attr_dict["default_value"] = element
-        if kwargs:
-            attr_dict = dict(attr_dict, **kwargs)
+        key_list = ["name", "param_type", "type", "value", "default_value"]
+        fn_list = [self._is_string]
+        attr_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.attr_.append(attr_dict)
         return self
 
     def input(self, index=None, name=None, need_compile=None, param_type=None, shape=None, **kwargs):
         """
-        Register op input information.
+        Register TBE op input information.
 
         Args:
             index (int): Order of the input. Default: None.
@@ -319,32 +399,15 @@ class TBERegOp(RegOp):
             kwargs (dict): Other information for the input.
         """
         param_list = [index, name, need_compile, param_type, shape]
-        input_dict = {}
-        for idx, element in enumerate(param_list):
-            if element is not None:
-                if idx == 0:
-                    self.is_int(element)
-                    input_dict["index"] = element
-                elif idx == 1:
-                    self.is_string(element)
-                    input_dict["name"] = element
-                elif idx == 2:
-                    self.is_bool(element)
-                    input_dict["need_compile"] = element
-                elif idx == 3:
-                    self.is_string(element)
-                    input_dict["param_type"] = element
-                elif idx == 4:
-                    self.is_string(element)
-                    input_dict["shape"] = element
-        if kwargs:
-            input_dict = dict(input_dict, **kwargs)
+        key_list = ["index", "name", "need_compile", "param_type", "shape"]
+        fn_list = [self._is_int, self._is_string, self._is_bool, self._is_string, self._is_string]
+        input_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.inputs.append(input_dict)
         return self
 
     def output(self, index=None, name=None, need_compile=None, param_type=None, shape=None, **kwargs):
         """
-        Register op output information.
+        Register TBE op output information.
 
         Args:
             index (int): Order of the output. Default: None.
@@ -355,28 +418,12 @@ class TBERegOp(RegOp):
             kwargs (dict): Other information for the output.
         """
         param_list = [index, name, need_compile, param_type, shape]
-        output_dict = {}
-        for idx, element in enumerate(param_list):
-            if element is not None:
-                if idx == 0:
-                    self.is_int(element)
-                    output_dict["index"] = element
-                elif idx == 1:
-                    self.is_string(element)
-                    output_dict["name"] = element
-                elif idx == 2:
-                    self.is_bool(element)
-                    output_dict["need_compile"] = element
-                elif idx == 3:
-                    self.is_string(element)
-                    output_dict["param_type"] = element
-                elif idx == 4:
-                    self.is_string(element)
-                    output_dict["shape"] = element
-        if kwargs:
-            output_dict = dict(output_dict, **kwargs)
+        key_list = ["index", "name", "need_compile", "param_type", "shape"]
+        fn_list = [self._is_int, self._is_string, self._is_bool, self._is_string, self._is_string]
+        output_dict = self._check_param(param_list, key_list, fn_list, kwargs)
         self.outputs.append(output_dict)
         return self
+
 
 class DataType():
     """

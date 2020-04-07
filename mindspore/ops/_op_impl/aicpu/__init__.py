@@ -11,11 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ============================================================================
-"""Operators info register."""
 
-from .akg.gpu import *
-from .tbe import *
-from .aicpu import *
-
-__all__ = []
+"""aicpu ops"""
+from .init_data_set_queue import _init_data_set_queue_aicpu
+from .dropout_genmask import _dropout_genmask_aicpu
+from .get_next import _get_next_aicpu
+from .print_tensor import _print_aicpu

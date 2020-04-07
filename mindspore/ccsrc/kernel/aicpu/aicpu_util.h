@@ -24,7 +24,8 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kInitDataSetQueue = "InitData";
+constexpr auto kInitDataSetQueue = "InitDataSetQueue";
+constexpr auto kInitData = "InitData";
 constexpr auto kGetNext = "GetNext";
 constexpr auto kDropoutGenMask = "DropoutGenMask";
 constexpr auto kPrint = "Print";

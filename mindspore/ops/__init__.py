@@ -30,7 +30,7 @@ Note:
 
 from .primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from .vm_impl_registry import get_vm_impl_fn, vm_impl_registry
-from .op_info_register import op_info_register, TBERegOp, DataType
+from .op_info_register import op_info_register, AiCPURegOp, TBERegOp, DataType
 from .primitive import constexpr
 from .._c_expression import signature_rw, signature_kind
 
@@ -40,6 +40,6 @@ __primitive__ = [
 ]
 
 __all__ = ["get_vm_impl_fn", "vm_impl_registry",
-           "op_info_register", "TBERegOp", "DataType",
+           "op_info_register", "AiCPURegOp", "TBERegOp", "DataType",
            "constexpr"]
 __all__.extend(__primitive__)
