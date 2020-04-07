@@ -438,23 +438,22 @@ void KernelAdjust::LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs) {
   MS_LOG(INFO) << "---------------- LoadSwitchInputs End--";
 }
 
-void KernelAdjust::Profiling(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+void KernelAdjust::Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr) {
   if (!ascend::ProfilingManager::GetInstance().IsProfiling()) {
     MS_LOG(INFO) << "No need to profiling";
     return;
   }
-  ProfilingTraceInfo profiling_trace_info;
-  if (ProfilingUtils::GetProfilingTraceInfo(kernel_graph_ptr, &profiling_trace_info)) {
-    InsertProfilingKernel(kernel_graph_ptr, profiling_trace_info);
-  } else {
-    MS_LOG(WARNING) << "[profiling] GetProfilingTraceInfo failed";
+  ProfilingTraceInfo profiling_trace_info = ProfilingUtils::GetProfilingTraceFromEnv(kernel_graph_ptr);
+  if (!profiling_trace_info.IsValid()) {
+    MS_LOG(WARNING) << "[profiling] no profiling node found!";
+    return;
   }
+  InsertProfilingKernel(profiling_trace_info, kernel_graph_ptr);
 }
 
-void KernelAdjust::InsertProfilingKernel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                         const ProfilingTraceInfo &profiling_trace_info) {
+void KernelAdjust::InsertProfilingKernel(const ProfilingTraceInfo &profiling_trace_info,
+                                         NotNull<session::KernelGraph *> kernel_graph_ptr) {
   MS_LOG(INFO) << "[profiling] Insert profiling kernel start";
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   if (!profiling_trace_info.IsValid()) {
     MS_LOG(WARNING) << "Profiling trace point not found";
     return;
@@ -462,18 +461,12 @@ void KernelAdjust::InsertProfilingKernel(const std::shared_ptr<session::KernelGr
   std::vector<CNodePtr> new_cnode_list;
   std::vector<CNodePtr> cnode_ptr_list = kernel_graph_ptr->execution_order();
   for (const auto &cnode_ptr : cnode_ptr_list) {
-    ProfilingUtils::ProfilingTraceFpStart(kernel_graph_ptr, cnode_ptr, profiling_trace_info, &new_cnode_list);
-    ProfilingUtils::ProfilingAllReduce(kernel_graph_ptr, cnode_ptr, ascend::kProfilingAllReduce1Start,
-                                       profiling_trace_info.profiling_allreduce1_start, &new_cnode_list);
-    ProfilingUtils::ProfilingAllReduce(kernel_graph_ptr, cnode_ptr, ascend::kProfilingAllReduce2Start,
-                                       profiling_trace_info.profiling_allreduce2_start, &new_cnode_list);
+    ProfilingUtils::ProfilingTraceFpStart(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
     new_cnode_list.emplace_back(cnode_ptr);
 
-    ProfilingUtils::ProfilingAllReduce(kernel_graph_ptr, cnode_ptr, ascend::kProfilingAllReduce1End,
-                                       profiling_trace_info.profiling_allreduce1_end, &new_cnode_list);
-    ProfilingUtils::ProfilingAllReduce(kernel_graph_ptr, cnode_ptr, ascend::kProfilingAllReduce2End,
-                                       profiling_trace_info.profiling_allreduce2_end, &new_cnode_list);
-    ProfilingUtils::ProfilingTraceEnd(kernel_graph_ptr, cnode_ptr, profiling_trace_info, &new_cnode_list);
+    ProfilingUtils::ProfilingCustomOp(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
+    ProfilingUtils::ProfilingTraceBpEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
+    ProfilingUtils::ProfilingTraceEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
   }
   kernel_graph_ptr->set_execution_order(new_cnode_list);
 }

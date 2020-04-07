@@ -136,7 +136,7 @@ void AscendSession::BuildGraph(GraphId graph_id) {
   // Assign streams for control sink and hccl and so on
   AssignStream(graph);
 
-  device::KernelAdjust::GetInstance().Profiling(graph);
+  device::KernelAdjust::GetInstance().Profiling(NOT_NULL(graph.get()));
   // build kernel if node is cnode
   BuildKernel(graph);
   auto ms_context = MsContext::GetInstance();
