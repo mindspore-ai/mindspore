@@ -1535,7 +1535,8 @@ class StridedSlice(PrimitiveWithInfer):
             - Finally, the output is [3, 3, 3].
 
     Examples
-        >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6]]])
+        >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
+        >>>                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
         >>> slice = StridedSlice()
         >>> output = slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
         >>> output.shape()
@@ -2067,7 +2068,7 @@ class SpaceToBatch(PrimitiveWithInfer):
         >>> block_size = 2
         >>> paddings = [[0, 0], [0, 0]]
         >>> space_to_batch = P.SpaceToBatch(block_size, paddings)
-        >>> x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mstype.float32)
+        >>> x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
         >>> space_to_batch(x)
         [[[[1.]]], [[[2.]]], [[[3.]]], [[[4.]]]]
 
@@ -2135,7 +2136,7 @@ class BatchToSpace(PrimitiveWithInfer):
         >>> block_size = 2
         >>> crops = [[0, 0], [0, 0]]
         >>> op = P.BatchToSpace(block_size, crops)
-        >>> x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mstype.float32)
+        >>> x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
         >>> output = op(x)
         [[[[1., 2.], [3., 4.]]]]
 
