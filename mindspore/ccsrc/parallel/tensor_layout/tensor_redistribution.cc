@@ -144,7 +144,7 @@ Status TensorRedistribution::ComputeCost() {
     MS_LOG(ERROR) << "Failure: InferTensorRedistribution failed";
     return Status::FAILED;
   }
-  // Compute redistribution communication cost and memory cost
+  // Compute redistribution communication cost and computation cost
   for (auto& op_cost : operator_list_) {
     OperatorR op = op_cost.first;
     Shape slice_shape = op_cost.second;
@@ -154,14 +154,14 @@ Status TensorRedistribution::ComputeCost() {
     if (str == PERMUTE_BY_AXIS) {
       // The shape does not change after PermuteByAxis operation.
       // communication cost = all_to_all + all_to_all = 2 * slice_shape
-      // memory cost = slice_shape
+      // computation cost = slice_shape
       forward_comm_cost_ += prod;
       backward_comm_cost_ += prod;
       comm_cost_ += 2.0 * prod;
-      mem_cost_ += prod;
+      computation_cost_ += prod;
     } else if (str == CONCAT_BY_AXIS) {
       // communication cost = all_gather + reduce_scatter = before_slice_shape + after_slice_shape
-      // memory cost = before_slice_shape
+      // computation cost = before_slice_shape
       if (op.second.size() < 3) {
         MS_LOG(ERROR) << "op.second size should not be less than 3!";
         return Status::FAILED;
@@ -173,22 +173,22 @@ Status TensorRedistribution::ComputeCost() {
       comm_cost_ += prod * (dev_num + 1.0);
       int32_t concat_dim = op.second[0];
       if (concat_dim == 0) {
-        // memory cost = all_gather
-        mem_cost_ += prod;
+        // computation cost = all_gather
+        computation_cost_ += prod;
       } else {
-        // memory cost = all_gather + split + concat
-        mem_cost_ += (prod + prod * dev_num + prod * dev_num);
+        // computation cost = all_gather + split + concat
+        computation_cost_ += (prod + prod * dev_num + prod * dev_num);
       }
     } else {
-      // There is only memory cost in SplitByAxis.
-      // memory cost = before_slice_shape
-      mem_cost_ += prod;
+      // There is only computation cost in SplitByAxis.
+      // computation cost = before_slice_shape
+      computation_cost_ += prod;
     }
   }
   if (reshape_flag()) {
     Shape prev_slice_shape = from_.slice_shape().array();
     double prev_prod = std::accumulate(prev_slice_shape.begin(), prev_slice_shape.end(), 1, std::multiplies<int>());
-    mem_cost_ += 2.0 * prev_prod;
+    computation_cost_ += 2.0 * prev_prod;
   }
   return Status::SUCCESS;
 }

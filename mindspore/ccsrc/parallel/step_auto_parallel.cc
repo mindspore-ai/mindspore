@@ -387,7 +387,7 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   operator_info->set_outputs_dtype(cnode->Type());
   operator_info->set_cnode(cnode);
   // If no strategy has been configured for this operator, then candidate strategies are generated for
-  // auto-strategy searchingm if this primitive is Cast, we ignore the user-specified strategy
+  // auto-strategy searching; if this primitive is CAST, we ignore the user-specified strategy
   if (!StrategyFound(attrs) || prim->name() == CAST) {
     // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
     // BatchParallelInfo operator
@@ -600,13 +600,7 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
     }
     MS_LOG(INFO) << "Successfully created " << edge_count << " edges for: " << cnode->operator_info()->name();
   }
-  // For the case of a output being used by multiple subsequent operators, the output induced memory cost should be
-  // calculated only once. This method is for correct the operators' memory cost calculation.
-  if (entire_costgraph->CorrectOpsStrategyCostForMultiOutputUse() != SUCCESS) {
-    MS_LOG(EXCEPTION) << "Correcting strategy_cost_ for operators failed.";
-  } else {
-    MS_LOG(INFO) << "Correcting strategy_cost_ for operators succeeded.";
-  }
+
   MS_LOG(INFO) << "Constructing edges for cost graph ends.";
 }
 
@@ -803,14 +797,6 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       std::shared_ptr<Edge> edge_ptr = std::make_shared<Edge>(
         edge_name, tmp_identity_ptr, target_cnode->operator_info(), 0, input_index - 1, false, true);
 
-      // Correct the memory calculation for a parameter being used by multiple operators. The parameter is calculated
-      // only once
-      if (target_cnode->operator_info()->CorrectStrategyCostForMultiOutputUse(IntToSize(input_index - 1)) != SUCCESS) {
-        MS_LOG(EXCEPTION) << "Correcting strategy_cost_ failed : " << prim->name();
-      } else {
-        MS_LOG(INFO) << "Correcting strategy_cost_ succeeded. " << prim->name();
-      }
-
       if (edge_ptr->InitEdgeCost() != SUCCESS) {
         MS_LOG(EXCEPTION) << "Edge cost initialization failed";
       }
@@ -840,7 +826,7 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   //      taking care for the case of a single Parameter being used by multiple operators. Create a TmpIdentity
   //      operator for this Parameter, and add an edge for the use of this Parameter by each
   //      subsequent operator;
-  // Step 3.1: Correct the memory calculation for memory reuse
+  // Step 3.1: Calculate memory usage
   // Step 4: Run the Dynamic Programming algorithm:
   //      in this process, cost is calculated based on not only the operators, but also the edges. Here, the edge
   //      cost is caused by the redistribution of a operator's output tensor layout to the next operator's input
@@ -867,14 +853,14 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   MS_LOG(INFO) << "After the augmenting procedure, there are " << entire_costgraph->GetOperators().size()
                << " operators, and " << entire_costgraph->GetNumPairs() << " edges.";
 
-  // Step 3.1: Correcting calculation for memory reuse
+  // Step 3.1: Calculate the memory usage
   if (entire_costgraph->ComputeOpsAndEdgesParameterInvolved() == SUCCESS) {
-    // Correcting operators' memory usage
-    if (entire_costgraph->CorrectOpsStrategyCostForMemoryReuse() != SUCCESS) {
+    // Calculate operators' memory usage
+    if (entire_costgraph->CalculateOpsMemoryCost() != SUCCESS) {
       MS_LOG(EXCEPTION) << "Correcting operators' cost for memory reuse failed.";
     }
-    // Correcting edges' memory usage
-    if (entire_costgraph->CorrectEdgesStrategyCostForMemoryReuse() != SUCCESS) {
+    // Calculate edges' memory usage
+    if (entire_costgraph->CalculateEdgesMemoryCost() != SUCCESS) {
       MS_LOG(EXCEPTION) << "Correcting edges' cost for memory reuse failed.";
     }
   } else {

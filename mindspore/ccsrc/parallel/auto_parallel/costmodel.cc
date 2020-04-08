@@ -23,8 +23,8 @@
 namespace mindspore {
 namespace parallel {
 void Simplify(CostPtrList* clist_ptrs) {
-  // Sort the cost_list with the memory_cost increasing, and communication_cost decreasing order. This method
-  // excludes the cost with greater memory_cost and greater communication_cost.
+  // Sort the cost_list with the computation_cost_ increasing, and communication_cost decreasing order. This method
+  // excludes the cost with greater computation_cost_ and greater communication_cost.
   // E.g. clist_ptrs = {<100, 20>, <200, 10>, <300, 50>}. After this method, clist_ptrs = {<200, 10>, <100, 20>}
   if (!COST_MODEL_SIMPLIFY_CALCULATION) {
     return;
@@ -33,7 +33,7 @@ void Simplify(CostPtrList* clist_ptrs) {
   std::vector<size_t> id(clist_ptrs->size());
   std::iota(id.begin(), id.end(), size_t(0));
   std::sort(id.begin(), id.end(), [&clist_ptrs](size_t x, size_t y) {
-    return clist_ptrs->at(x)->memory_cost_ < clist_ptrs->at(y)->memory_cost_;
+    return clist_ptrs->at(x)->computation_cost_ < clist_ptrs->at(y)->computation_cost_;
   });
   CostPtrList ret;
   for (size_t i = 0; i < clist_ptrs->size(); ++i) {
@@ -45,8 +45,8 @@ void Simplify(CostPtrList* clist_ptrs) {
 }
 
 void SimplifyForDreasingCommunicationWithPartialPara(CostPtrList* clist_ptrs) {
-  // Sort the cost_list with the memory_cost increasing, and communication_with_partial_para_cost decreasing order.
-  // This method excludes the cost with greater memory_cost and greater communication_without_para_cost.
+  // Sort the cost_list with the computation_cost_ increasing, and communication_with_partial_para_cost decreasing
+  // order. This method excludes the cost with greater computation_cost_ and greater communication_without_para_cost.
   if (!COST_MODEL_SIMPLIFY_CALCULATION) {
     return;
   }
@@ -54,7 +54,7 @@ void SimplifyForDreasingCommunicationWithPartialPara(CostPtrList* clist_ptrs) {
   std::vector<size_t> id(clist_ptrs->size());
   std::iota(id.begin(), id.end(), size_t(0));
   std::sort(id.begin(), id.end(), [&clist_ptrs](size_t x, size_t y) {
-    return clist_ptrs->at(x)->memory_cost_ < clist_ptrs->at(y)->memory_cost_;
+    return clist_ptrs->at(x)->computation_cost_ < clist_ptrs->at(y)->computation_cost_;
   });
   CostPtrList ret;
   for (size_t i = 0; i < clist_ptrs->size(); ++i) {
