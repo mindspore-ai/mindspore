@@ -142,7 +142,7 @@ Status GraphRunner::RunGraph(const RunOptions& options, const std::vector<GeTens
   // Therefore a graph needs to be rebuilt in above situation
   if (sess_->IsGraphNeedRebuild(wrap_ptr->id_)) {
     sess_->RemoveGraph(wrap_ptr->id_);
-    sess_->AddGraph(wrap_ptr->id_, *(it->graph_ptr_), it->options_);
+    sess_->AddGraph(wrap_ptr->id_, *(wrap_ptr->graph_ptr_), wrap_ptr->options_);
   }
 
   ge::Status ret = sess_->RunGraph(wrap_ptr->id_, ge_inputs, ge_outputs);
