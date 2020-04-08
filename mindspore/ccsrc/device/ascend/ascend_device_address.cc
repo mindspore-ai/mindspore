@@ -141,7 +141,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const std::vector<int
   if (format_ == kOpFormat_FRAC_NZ) {
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
-    host_shape = trans::TransShapeTo4d(host_shape);
+    host_shape = trans::PaddingShapeTo4d(host_shape);
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   }
   if (type_id_ != type) {
@@ -224,7 +224,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const std::vector<int
   if (format_ == kOpFormat_FRAC_NZ) {
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
-    host_shape = trans::TransShapeTo4d(host_shape);
+    host_shape = trans::PaddingShapeTo4d(host_shape);
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   }
   if (type_id_ != type) {

@@ -143,6 +143,12 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   cnode->set_abstract(std::make_shared<abstract::AbstractNone>());
   // create kernel_info from new parameter
   auto kernel_info = std::make_shared<device::KernelInfo>();
+  // if the node only has the primitive(such as getNext) or the node's input has a feature map input
+  // then the node's output is a feature map output
+  if (inputs.size() == 1 || std::any_of(inputs.begin() + 1, inputs.end(),
+                                        [&](const AnfNodePtr &node) { return AnfAlgo::IsFeatureMapOutput(node); })) {
+    kernel_info->SetFeatureMapFlag(true);
+  }
   cnode->set_kernel_info(kernel_info);
   AnfAlgo::SetGraphId(graph_id_, cnode.get());
   return cnode;
@@ -162,22 +168,26 @@ CNodePtr KernelGraph::NewCNode(const CNodePtr &cnode) {
 ParameterPtr KernelGraph::NewParameter(const ParameterPtr &parameter) {
   ParameterPtr new_parameter = add_parameter();
   MS_EXCEPTION_IF_NULL(new_parameter);
+  // create kernel_info form new parameter
+  auto kernel_info = std::make_shared<device::KernelInfo>();
   size_t output_tensor_num = 1;
   // if use default parameter = nullptr,it remarks create a new parameter from no parameter
   if (parameter == nullptr) {
     new_parameter->set_abstract(std::make_shared<abstract::AbstractNone>());
+    kernel_info->SetFeatureMapFlag(true);
   } else {
     // if don't use default parameter = nullptr,it remarks create a new parameter from a old parameter
     new_parameter->set_abstract(parameter->abstract());
     new_parameter->set_name(parameter->name());
-    if (parameter->has_default()) {
+    if (AnfAlgo::IsParameterWeight(parameter)) {
       new_parameter->set_default_param(parameter->default_param());
+      kernel_info->SetFeatureMapFlag(false);
+    } else {
+      kernel_info->SetFeatureMapFlag(true);
     }
     // if output is a tuple tensor,now can use for loop to handle tuple tensor
     output_tensor_num = AnfAlgo::GetOutputTensorNum(parameter);
   }
-  // create kernel_info form new parameter
-  auto kernel_info = std::make_shared<device::KernelInfo>();
   new_parameter->set_kernel_info(kernel_info);
   // create kernel_build_info for new parameter
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
@@ -217,6 +227,7 @@ std::vector<AnfNodePtr> KernelGraph::SplitTupleValueNodeToNodeList(const ValueNo
     AddValueNodeToGraph(new_value_node);
     auto kernel_info = std::make_shared<device::KernelInfo>();
     new_value_node->set_kernel_info(kernel_info);
+    kernel_info->SetFeatureMapFlag(false);
     // create kernel_build_info for new value node
     auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     // set the format of value_node to DEFAULT_FORMAT
@@ -240,6 +251,7 @@ ValueNodePtr KernelGraph::NewValueNode(const ValueNodePtr &value_node) {
   new_value_node->set_abstract(value_node->abstract());
   // create kernel_info fo new value node
   auto kernel_info = std::make_shared<device::KernelInfo>();
+  kernel_info->SetFeatureMapFlag(false);
   new_value_node->set_kernel_info(kernel_info);
   // create kernel_build_info for new value node
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();

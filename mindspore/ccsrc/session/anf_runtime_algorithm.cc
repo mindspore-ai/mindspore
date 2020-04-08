@@ -289,6 +289,11 @@ size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
 
 std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
+  if (output_idx > GetOutputTensorNum(node)) {
+    MS_LOG(EXCEPTION) << "Output index:" << output_idx
+                      << " is out of the node output range :" << GetOutputTensorNum(node) << " #node ["
+                      << node->DebugString() << "]";
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -298,6 +303,11 @@ std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t 
 
 std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t input_idx) {
   MS_EXCEPTION_IF_NULL(node);
+  if (input_idx > GetInputTensorNum(node)) {
+    MS_LOG(EXCEPTION) << "Input index :" << input_idx
+                      << " is out of the number node Input range :" << GetInputTensorNum(node) << "#node ["
+                      << node->DebugString() << "]";
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -362,62 +372,60 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetPrevNodeOutputInferShape(const AnfNo
 std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx) {
   auto format = GetOutputFormat(node, output_idx);
   auto infer_shape = GetOutputInferShape(node, output_idx);
-  // if format is default_format or NC1KHKWHWC0,device shape = original shape
-  if (format == kOpFormat_DEFAULT || format == kOpFormat_NC1KHKWHWC0) {
-    return infer_shape;
-  }
-  // scalar shape
   if (infer_shape.empty()) {
     return infer_shape;
   }
-  if (format == kOpFormat_FRAC_NZ) {
-    return trans::TransShapeToDevice(infer_shape, format);
+  // if format is default_format or NC1KHKWHWC0,device shape = original shape
+  if (trans::IsNeedPadding(format, infer_shape.size())) {
+    infer_shape = trans::PaddingShapeTo4d(infer_shape, GetOutputReshapeType(node, output_idx));
   }
-  // else trans infer shape to 4d and then calculate device shape
-  return trans::TransShapeToDevice(trans::TransShapeTo4d(infer_shape), format);
+  return trans::TransShapeToDevice(infer_shape, format);
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx) {
   auto format = GetInputFormat(node, input_idx);
   auto infer_shape = GetPrevNodeOutputInferShape(node, input_idx);
-  // if format is default_format or NC1KHKWHWC0,device shape = original shape
-  if (format == kOpFormat_DEFAULT || format == kOpFormat_NC1KHKWHWC0) {
-    return infer_shape;
-  }
   if (infer_shape.empty()) {
     return infer_shape;
   }
-  if (format == kOpFormat_FRAC_NZ) {
-    return trans::TransShapeToDevice(infer_shape, format);
+  // if format is default_format or NC1KHKWHWC0,device shape = original shape
+  if (trans::IsNeedPadding(format, infer_shape.size())) {
+    infer_shape = trans::PaddingShapeTo4d(infer_shape, GetInputReshapeType(node, input_idx));
   }
-  // else trans infer shape to 4d and then calculate device shape
-  return trans::TransShapeToDevice(trans::TransShapeTo4d(infer_shape), format);
+  return trans::TransShapeToDevice(infer_shape, format);
 }
 
 std::vector<kernel::Axis> AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, size_t input_idx) {
   MS_EXCEPTION_IF_NULL(node);
+  if (input_idx > GetInputTensorNum(node)) {
+    MS_LOG(EXCEPTION) << "The index:" << input_idx
+                      << " is out of range of the node's input size : " << GetInputTensorNum(node) << "#node["
+                      << node->DebugString() << "]";
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  std::vector<kernel::Axis> result;
-  if (!build_info->GetInputReshapeType(input_idx, &result)) {
-    MS_LOG(EXCEPTION) << "Failed to get the node's[ " << node->DebugString() << "] reshape type !";
+  if (build_info->IsInputDefaultPadding()) {
+    return {};
   }
-  return result;
+  return build_info->GetInputReshapeType(input_idx);
 }
 
 std::vector<kernel::Axis> AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
+  if (output_idx > GetOutputTensorNum(node)) {
+    MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
+                      << GetOutputTensorNum(node) << "#node[ " << node->DebugString() << "]";
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  std::vector<kernel::Axis> result;
-  if (!build_info->GetOutputReshapeType(output_idx, &result)) {
-    MS_LOG(EXCEPTION) << "Failed to get the node's[ " << node->DebugString() << "] reshape type !";
+  if (build_info->IsOutputDefaultPadding()) {
+    return {};
   }
-  return result;
+  return build_info->GetOutputReshapeType(output_idx);
 }
 
 TypeId AnfRuntimeAlgorithm::GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx) {
@@ -463,6 +471,10 @@ TypeId AnfRuntimeAlgorithm::GetPrevNodeOutputInferDataType(const AnfNodePtr &nod
 
 TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
+  if (output_idx > GetOutputTensorNum(node)) {
+    MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
+                      << GetOutputTensorNum(node) << "#node [ " << node->DebugString() << "]";
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -472,6 +484,10 @@ TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size
 
 TypeId AnfRuntimeAlgorithm::GetInputDeviceDataType(const AnfNodePtr &node, size_t input_idx) {
   MS_EXCEPTION_IF_NULL(node);
+  if (input_idx > GetInputTensorNum(node)) {
+    MS_LOG(EXCEPTION) << "The index [" << input_idx << "] is out of range of the node's input size [ "
+                      << GetInputTensorNum(node) << "#node [ " << node->DebugString() << "]";
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -496,11 +512,15 @@ const DeviceAddress *AnfRuntimeAlgorithm::GetOutputAddr(const AnfNodePtr &node, 
       MS_LOG(EXCEPTION) << node->DebugString() << "Invalid nop node";
     }
   }
+  if (output_idx > GetOutputTensorNum(node)) {
+    MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
+                      << GetOutputTensorNum(node) << "#node:[ " << node->DebugString() << "]";
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto addr = kernel_info->GetOutputAddr(output_idx);
   if (addr == nullptr) {
-    MS_LOG(EXCEPTION) << "output_idx " << output_idx << " of node " << node->DebugString()
+    MS_LOG(EXCEPTION) << "Output_idx " << output_idx << " of node " << node->DebugString()
                       << " output addr is not exist";
   }
   return addr;
@@ -517,11 +537,15 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
       MS_LOG(EXCEPTION) << node->DebugString() << "Invalid nop node.";
     }
   }
+  if (output_idx > GetOutputTensorNum(node)) {
+    MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
+                      << GetOutputTensorNum(node) << "#node:[ " << node->DebugString() << "]";
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto addr = kernel_info->GetMutableOutputAddr(output_idx);
   if (addr == nullptr) {
-    MS_LOG(EXCEPTION) << "output_idx" << output_idx << " of node " << node->DebugString()
+    MS_LOG(EXCEPTION) << "Output_idx" << output_idx << " of node " << node->DebugString()
                       << " output addr is not exist";
   }
   return addr;
@@ -530,6 +554,10 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
 // get output device addr of anf_node
 bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
+  if (output_idx > GetOutputTensorNum(node)) {
+    MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
+                      << GetOutputTensorNum(node) << "#node:[ " << node->DebugString() << "]";
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   return kernel_info->OutputAddrExist(output_idx);
@@ -769,22 +797,24 @@ AnfNodePtr AnfRuntimeAlgorithm::GetInputNode(const CNodePtr &node, size_t index)
   return node->input(get_input_index);
 }
 
+bool AnfRuntimeAlgorithm::IsFeatureMapOutput(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<ValueNode>()) {
+    return false;
+  }
+  auto kernel_info = node->kernel_info();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  return kernel_info->is_feature_map();
+}
+
 bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input_index) {
   if (!node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Cannot input a parameter or a valuenode to charge it's input if is a feature";
+    MS_LOG(EXCEPTION) << "Cannot input a parameter or a valuenode to charge it's input if is a feature map";
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_node = cnode->input(input_index + 1);
-  auto node_with_index = VisitKernel(input_node, 0);
-  MS_EXCEPTION_IF_NULL(node_with_index.first);
-  if (node_with_index.first->isa<ValueNode>()) {
-    return false;
-  }
-  if (node_with_index.first->isa<Parameter>()) {
-    return !AnfAlgo::IsParameterWeight(node_with_index.first->cast<ParameterPtr>());
-  }
-  return true;
+  return IsFeatureMapOutput(input_node);
 }
 
 size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_node, const size_t cur_index) {

@@ -18,6 +18,7 @@
 #include "operator/ops.h"
 #include "ir/meta_tensor.h"
 #include "ir/anf.h"
+#include "common/trans.h"
 #include "device/kernel_runtime.h"
 #include "device/ascend/kernel_select_ascend.h"
 #include "device/ascend/kernel_build_ascend.h"
@@ -730,8 +731,8 @@ void AscendSession::SetChildGraphParameter(const tensor::TensorPtr &front_tensor
   size_t tensor_size = front_tensor->data().nbytes();
   auto addr = AnfAlgo::GetOutputAddr(backend_parameter, 0);
   MS_EXCEPTION_IF_NULL(addr);
-  if (!addr->SyncHostToDevice(front_tensor->shape(), tensor_size, front_tensor->data_type(),
-                              front_tensor->data_c(false))) {
+  if (!addr->SyncHostToDevice(trans::GetRuntimePaddingShape(backend_parameter, 0), tensor_size,
+                              front_tensor->data_type(), front_tensor->data_c(false))) {
     MS_LOG(EXCEPTION) << "Tensor SyncHostToDevice fail!";
   }
   MS_LOG(INFO) << "Finish!";

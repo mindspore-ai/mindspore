@@ -54,9 +54,13 @@ class KernelBuildInfo {
 
   TypeId GetOutputDeviceType(size_t output_index) const;
 
-  bool GetInputReshapeType(size_t input_index, std::vector<Axis> *reshape_type) const;
+  std::vector<Axis> GetInputReshapeType(size_t input_index) const;
 
-  bool GetOutputReshapeType(size_t input_index, std::vector<Axis> *reshape_type) const;
+  bool IsInputDefaultPadding() const;
+
+  bool IsOutputDefaultPadding() const;
+
+  std::vector<Axis> GetOutputReshapeType(size_t input_index) const;
 
   std::vector<std::string> GetAllInputFormats() const;
 

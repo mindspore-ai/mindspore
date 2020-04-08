@@ -140,11 +140,11 @@ TEST_F(KernelGraphTest, SetExecOrderByDefault) {
   std::vector<int> shape = {2, 32, 224, 224};
   auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape);
 
-  auto x_parameter = kernel_graph->add_parameter();
+  auto x_parameter = kernel_graph->NewParameter();
   MS_EXCEPTION_IF_NULL(x_parameter);
   x_parameter->set_name("x_parameter");
   x_parameter->set_abstract(abstract);
-  auto y_parameter = kernel_graph->add_parameter();
+  auto y_parameter = kernel_graph->NewParameter();
   MS_EXCEPTION_IF_NULL(y_parameter);
   y_parameter->set_name("y_parameter");
   y_parameter->set_abstract(abstract);
@@ -153,7 +153,7 @@ TEST_F(KernelGraphTest, SetExecOrderByDefault) {
   MS_EXCEPTION_IF_NULL(add);
   add->set_abstract(abstract);
 
-  auto z_parameter = kernel_graph->add_parameter();
+  auto z_parameter = kernel_graph->NewParameter();
   MS_EXCEPTION_IF_NULL(z_parameter);
   z_parameter->set_name("z_parameter");
   z_parameter->set_abstract(abstract);

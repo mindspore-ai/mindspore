@@ -211,8 +211,8 @@ TEST_F(AnfRuntimeAlgorithmTest, EraseNodeAttr) {
 TEST_F(AnfRuntimeAlgorithmTest, GetInputTensorNum) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test cnode node
-  auto parameter_one = kernel_graph->add_parameter();
-  auto parameter_two = kernel_graph->add_parameter();
+  auto parameter_one = kernel_graph->NewParameter();
+  auto parameter_two = kernel_graph->NewParameter();
   std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimTensorAdd), parameter_one, parameter_two};
   auto add = kernel_graph->NewCNode(add_inputs);
   EXPECT_EQ(AnfAlgo::GetInputTensorNum(add), 2);
@@ -247,9 +247,11 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputTensorNum) {
 
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputFormat) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimTensorAdd), kernel_graph->NewParameter(),
+                                    kernel_graph->NewParameter()};
   auto add = kernel_graph->NewCNode(inputs);
+  std::vector<size_t> shape = {1, 2, 3, 4};
+  AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32, kNumberTypeFloat32}, {shape, shape}, add.get());
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
   auto d_kernel_info = add->kernel_info();
@@ -266,8 +268,8 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputFormat) {
 
 TEST_F(AnfRuntimeAlgorithmTest, GetInputFormat) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimTensorAdd), kernel_graph->NewParameter(),
+                                    kernel_graph->NewParameter()};
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -345,7 +347,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferShape) {
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   // test parameter node as input
-  auto parameter_node = kernel_graph->add_parameter();
+  auto parameter_node = kernel_graph->NewParameter();
   MS_EXCEPTION_IF_NULL(parameter_node);
   parameter_node->set_abstract(x_abstract);
   EXPECT_THROW(AnfAlgo::GetPrevNodeOutputInferShape(parameter_node, 0), std::runtime_error);
@@ -387,13 +389,13 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceShape) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
-  auto parameter_one = kernel_graph->add_parameter();
+  auto parameter_one = kernel_graph->NewParameter();
   MS_EXCEPTION_IF_NULL(parameter_one);
   parameter_one->set_abstract(x_abstract);
-  auto parameter_two = kernel_graph->add_parameter();
+  auto parameter_two = kernel_graph->NewParameter();
   MS_EXCEPTION_IF_NULL(parameter_two);
   parameter_two->set_abstract(x_abstract);
-  auto parameter_third = kernel_graph->add_parameter();
+  auto parameter_third = kernel_graph->NewParameter();
   MS_EXCEPTION_IF_NULL(parameter_third);
   parameter_third->set_abstract(x_abstract);
   // test cnode as input
@@ -466,8 +468,8 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceDataTypeTest) {
 
 TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceDataTypeTest) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimTensorAdd), kernel_graph->NewParameter(),
+                                    kernel_graph->NewParameter()};
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());

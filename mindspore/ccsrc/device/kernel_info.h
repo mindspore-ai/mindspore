@@ -31,6 +31,7 @@ class KernelInfo {
  public:
   KernelInfo() {
     kernel_mod_ = nullptr;
+    is_feature_map_ = false;
     select_kernel_build_info_ = nullptr;
     output_address_list_ = {};
     workspace_address_list_ = {};
@@ -45,6 +46,7 @@ class KernelInfo {
   void set_select_kernel_build_info(const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
     select_kernel_build_info_ = select_kernel_build_info;
   }
+  void SetFeatureMapFlag(bool flag) { is_feature_map_ = flag; }
   const DeviceAddress *GetOutputAddr(size_t index) const;
   DeviceAddressPtr GetMutableOutputAddr(size_t index) const;
   bool OutputAddrExist(size_t index) const;
@@ -63,8 +65,10 @@ class KernelInfo {
   void set_graph_id(uint32_t graph_id) { graph_id_ = graph_id; }
   uint32_t graph_id() const { return graph_id_; }
   bool operator==(const KernelInfo &other) const;
+  bool is_feature_map() const { return is_feature_map_; }
 
  private:
+  bool is_feature_map_;
   kernel::KernelBuildInfoPtr select_kernel_build_info_;
   std::vector<std::shared_ptr<DeviceAddress>> output_address_list_;
   std::vector<std::shared_ptr<DeviceAddress>> workspace_address_list_;
