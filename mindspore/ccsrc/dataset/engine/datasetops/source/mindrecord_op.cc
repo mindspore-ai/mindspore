@@ -103,7 +103,8 @@ Status MindRecordOp::Init() {
   shard_reader_ = mindspore::make_unique<ShardReader>();
   auto rc = shard_reader_->Open(dataset_file_, num_mind_record_workers_, columns_to_load_, operators_, block_reader_);
 
-  CHECK_FAIL_RETURN_UNEXPECTED(rc != MSRStatus::FAILED, "MindRecordOp init failed.");
+  CHECK_FAIL_RETURN_UNEXPECTED(rc != MSRStatus::FAILED,
+                               "MindRecordOp init failed. Error message: " + ErrnoToMessage(rc));
 
   data_schema_ = mindspore::make_unique<DataSchema>();
 
