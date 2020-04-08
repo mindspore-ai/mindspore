@@ -308,10 +308,10 @@ def test_RunContext():
 def test_Checkpoint_Config():
     """Test CheckpointConfig all None or 0."""
     with pytest.raises(ValueError):
-        CheckpointConfig(0, 0, 0, 0)
+        CheckpointConfig(0, 0, 0, 0, True)
 
     with pytest.raises(ValueError):
-        CheckpointConfig(0, None, 0, 0)
+        CheckpointConfig(0, None, 0, 0, True)
 
 
 def test_step_end_save_graph():

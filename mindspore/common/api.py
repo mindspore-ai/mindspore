@@ -374,9 +374,6 @@ class _Executor:
                 obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
                 obj.load_parameter_slice(params)
 
-            if _get_parallel_mode() in ["hybrid_parallel"]:
-                obj.parameter_layout_dict = self._build_parameter_layout(obj)
-
         # the following GE init process is not needed when use vm or ms backend
         if enable_ge:
             # decide whether to sink based on whether the inputs is virtual or not
@@ -448,38 +445,6 @@ class _Executor:
         if self.has_compiled(phase_real):
             return self._exec_pip(obj, *args, phase=phase_real)
         raise KeyError('{} graph is not exist.'.format(phase_real))
-
-    def _build_parameter_layout(self, obj):
-        """
-        Build parameter layout, for layerwise_parallel parameter.
-
-        Args:
-            obj (Function or Cell): The function or cell instance need to be compiled.
-
-        Returns:
-            Dictionary, parameter layout info.
-        """
-        parameter_layout_dict = {}
-        layerwise_parallel_parameters = []
-        for key in obj.parameters_dict():
-            if obj.parameters_dict()[key].layerwise_parallel is True:
-                layerwise_parallel_parameters.append(key)
-
-        if not layerwise_parallel_parameters:
-            return parameter_layout_dict
-
-        from ..communication.management import get_group_size
-        group_size = [get_group_size()]
-        for key in layerwise_parallel_parameters:
-            tensor_map = [0]
-            shape = obj.parameters_dict()[key].data.shape()
-            for x in range(len(shape)):  # dim 0 set 0, others set -1
-                if x:
-                    tensor_map.append(-1)
-            layout = [group_size, tensor_map]
-            parameter_layout_dict[key] = layout
-
-        return parameter_layout_dict
 
     def del_net_res(self, net_id):
         self._executor.del_net_res(net_id)
