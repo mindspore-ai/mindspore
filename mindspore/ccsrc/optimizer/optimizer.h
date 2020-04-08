@@ -17,7 +17,9 @@
 #ifndef MINDSPORE_CCSRC_OPTIMIZER_OPTIMIZER_H_
 #define MINDSPORE_CCSRC_OPTIMIZER_OPTIMIZER_H_
 
+#include <algorithm>
 #include <functional>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <vector>
@@ -129,29 +131,38 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     return optimizer;
   }
 
-  FuncGraphPtr step(FuncGraphPtr func_graph, const abstract::AbstractBasePtrList &args_spec, bool use_profile = true) {
+  FuncGraphPtr step(FuncGraphPtr func_graph, bool use_profile = true) {
     // Optimizer step counter;
     int counter = 1;
     bool changes = true;
 
     while (changes) {
       changes = false;
-      auto run_runc = [&counter, &func_graph, &args_spec, &changes, use_profile, this]() {
+      auto run_runc = [&counter, &func_graph, &changes, use_profile, this]() {
         for (size_t i = 0; i < passes_.size(); ++i) {
           const OptPass &opt = passes_[i];
-          auto opt_func = [&func_graph, &args_spec, &changes, &opt, this]() {
+          auto opt_func = [&func_graph, &changes, &opt, this]() {
             if (opt.is_renormalize()) {
               auto resource_ptr = std::dynamic_pointer_cast<pipeline::Resource>(resource_);
               if (resource_ptr != nullptr) {
+                // StepParallel may replace the AbstractValue of the parameters of func_graph,
+                // So generate the args_spec from parameters.
+                abstract::AbstractBasePtrList maybe_new_args_spec;
                 if (is_watch_renormalize_) {
                   if (untyped_nodes_.size() > 0) {
-                    func_graph = pipeline::Renormalize(resource_ptr, func_graph, args_spec);
+                    std::transform(func_graph->parameters().begin(), func_graph->parameters().end(),
+                                   std::back_inserter(maybe_new_args_spec),
+                                   [](AnfNodePtr param) -> AbstractBasePtr { return param->abstract(); });
+                    func_graph = pipeline::Renormalize(resource_ptr, func_graph, maybe_new_args_spec);
                     clear_untyped_nodes();
                   } else {
                     MS_LOG(INFO) << "Optimizer::step: Skipping Renormalize because untyped_nodes_ is empty.";
                   }
                 } else {
-                  func_graph = pipeline::Renormalize(resource_ptr, func_graph, args_spec);
+                  std::transform(func_graph->parameters().begin(), func_graph->parameters().end(),
+                                 std::back_inserter(maybe_new_args_spec),
+                                 [](AnfNodePtr param) -> AbstractBasePtr { return param->abstract(); });
+                  func_graph = pipeline::Renormalize(resource_ptr, func_graph, maybe_new_args_spec);
                 }
               }
             } else if (opt(func_graph, shared_from_this())) {

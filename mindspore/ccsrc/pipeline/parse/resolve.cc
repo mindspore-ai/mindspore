@@ -276,9 +276,8 @@ bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBa
 
   (void)parse::python_adapter::set_python_scoped();
 
-  abstract::AbstractBasePtrList args_spec;
   MS_EXCEPTION_IF_NULL(opt_resolve);
-  (void)opt_resolve->step(func_graph, args_spec, use_profile);
+  (void)opt_resolve->step(func_graph, use_profile);
   return true;
 }
 

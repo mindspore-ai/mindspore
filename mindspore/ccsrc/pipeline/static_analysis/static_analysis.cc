@@ -271,6 +271,18 @@ void AnalysisEngine::ClearEvaluatorCache() {
     MS_EXCEPTION_IF_NULL(evaluator->cache());
     evaluator->cache()->clear();
   }
+  for (auto &element : prim_constructors_) {
+    EvaluatorPtr evaluator = element.second;
+    MS_EXCEPTION_IF_NULL(evaluator);
+    MS_EXCEPTION_IF_NULL(evaluator->cache());
+    evaluator->cache()->clear();
+  }
+  for (auto &element : prim_py_evaluators_) {
+    EvaluatorPtr evaluator = element.second;
+    MS_EXCEPTION_IF_NULL(evaluator);
+    MS_EXCEPTION_IF_NULL(evaluator->cache());
+    evaluator->cache()->clear();
+  }
 }
 
 void AnalysisEngine::Clear() {
@@ -296,7 +308,17 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
     if (prim_py != nullptr) {
-      return std::make_shared<PythonPrimEvaluator>(prim_py);
+      if (engine == nullptr) {
+        return std::make_shared<PythonPrimEvaluator>(prim_py);
+      }
+
+      const auto &iter = engine->prim_py_evaluators_.find(prim_py);
+      if (iter != engine->prim_py_evaluators_.end()) {
+        return iter->second;
+      }
+      evaluator = std::make_shared<PythonPrimEvaluator>(prim_py);
+      engine->prim_py_evaluators_[prim_py] = evaluator;
+      return evaluator;
     }
     MS_LOG(EXCEPTION) << "The primitive with python evaluator should be a python primitive.";
   }

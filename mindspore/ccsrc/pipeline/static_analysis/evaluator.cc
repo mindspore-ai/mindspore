@@ -260,7 +260,6 @@ AbstractBasePtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const Config
                          return conf->GetEvaluatedValue();
                        });
   AbstractBasePtr ret = EvalPrim(engine, args_spec_list);
-  (*cache_)[args_spec_list] = ret;
   return ret;
 }
 
