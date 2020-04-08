@@ -148,7 +148,8 @@ const char kNameSlice[] = "Slice";
 const char kNameAddN[] = "AddN";
 const char kNameLess[] = "Less";
 const char kNameGreater[] = "Greater";
-const char kNamePack[] = "Stack";
+const char kNameStack[] = "Stack";
+const char kNameUnstack[] = "Unstack";
 const char kNameMerge[] = "Merge";
 const char kNameGeSwitch[] = "GeSwitch";
 
@@ -199,7 +200,8 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameMaxPool), ADPT_DESC(MaxPool)},
     {string(kNameAvgPool), ADPT_DESC(AvgPool)},
     {string(kNameTopK), ADPT_DESC(TopKV2)},
-    {string(kNamePack), ADPT_DESC(Pack)},
+    {string(kNameStack), ADPT_DESC(Pack)},
+    {string(kNameUnstack), ADPT_DESC(Unpack)},
     {string(kNameSplitD), ADPT_DESC(SplitD)},
     {string(kNameAllReduce), ADPT_DESC(HcomAllReduce)},
     {string(kNameBroadcast), ADPT_DESC(HcomBroadcast)},

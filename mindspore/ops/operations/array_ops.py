@@ -1350,6 +1350,150 @@ class Concat(PrimitiveWithInfer):
         return out
 
 
+def _get_stack_shape(x_shape, x_type, axis):
+    """for satck output shape"""
+    validator.check_type("shape", x_shape, [tuple])
+    validator.check_integer("len of input_x shape", len(x_shape), 0, Rel.GT)
+    validator.check_subclass("shape0", x_type[0], mstype.tensor)
+    validator.check_integer("len of input_x0 shape", len(x_shape[0]), 0, Rel.GT)
+    rank_base = len(x_shape[0])
+    N = len(x_shape)
+    out_shape = x_shape[0]
+    validator.check_int_range('axis', axis, -rank_base - 1, rank_base, Rel.INC_BOTH)
+    if axis < 0:
+        axis = axis + rank_base + 1
+    for i in range(1, N):
+        v = x_shape[i]
+        validator.check('len of x_shape[%d]' % i, len(v), 'len of rank_base', rank_base)
+        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0])
+        for j in range(rank_base):
+            if v[j] != x_shape[0][j]:
+                raise ValueError("Stack evaluator element %d shape in input can not stack with first element" % i)
+    out_shape.insert(axis, N)
+    return out_shape
+
+class Stack(PrimitiveWithInfer):
+    r"""
+    Stacks a list of rank-`R` tensors into one rank-`(R+1)` tensor.
+
+    Packs the list of tensors in `input_x` into a tensor with rank one higher than
+    each tensor in `input_x`, by packing them along the `axis` dimension.
+    Given a list of length `N` of tensors of shape `(A, B, C)`;
+
+    If `axis == 0` then the `output` tensor will have the shape `(N, A, B, C)`.
+
+    If `axis == 1` then the `output` tensor will have the shape `(A, N, B, C)`. Etc.
+
+    Args:
+        axis (int): The axis to stack along. Negative values wrap around,
+                    so the valid range is [-(R+1), R+1). Default: 0.
+
+    Inputs:
+        - **input_x** (Union[tuple, list]) - A Tuple or list of Tensor objects with the same shape and type.
+
+    Outputs:
+        Tensor. A stacked Tensor with the same type as values.
+
+    Examples:
+        >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
+        >>> data2 = Tensor(np.array([2, 3]).astype(np.float32))
+        >>> op = P.Stack()
+        >>> output = op([data1, data2])
+        [[0, 1], [2, 3]]
+    """
+
+    @prim_attr_register
+    def __init__(self, axis=0):
+        """init Stack"""
+        self.__setattr_flag__ = True
+        validator.check_type("axis", axis, [int])
+        self.axis = axis
+
+    def __infer__(self, value):
+        x_shape = value['shape']
+        x_type = value['dtype']
+        self.add_prim_attr('num', len(x_shape))
+        all_shape = _get_stack_shape(x_shape, x_type, self.axis)
+        out = {'shape': all_shape,
+               'dtype': x_type[0],
+               'value': None}
+        return out
+
+
+class Unstack(PrimitiveWithInfer):
+    r"""
+    Unpacks the given dimension of a rank-`R` tensor into rank-`(R-1)` tensors.
+
+    Unpacks num tensors from value by chipping it along the axis dimension.
+    If num is not specified (the default), it is inferred from value's shape.
+    If value.shape[axis] is not known, ValueError is raised.
+
+    For example, given a tensor of shape (A, B, C, D);
+
+    If axis == 0 then the i'th tensor in output is the slice value[i, :, :, :] and
+    each tensor in output will have shape (B, C, D). (Note that the dimension unpacked along is gone, unlike split).
+
+    If axis == 1 then the i'th tensor in output is the slice value[:, i, :, :] and
+    each tensor in output will have shape (A, C, D). Etc.
+
+    This is the opposite of stack.
+
+    Args:
+        axis (int): The axis to unstack along. Defaults to the first dimension.
+                    Negative values wrap around, so the valid range is [-R, R).
+
+    Inputs:
+        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+          A rank R > 0 Tensor to be unstacked.
+
+    Outputs:
+        A tuple of Tensors, the shape of each objects is same.
+
+    Raises:
+        ValueError: If axis is out of the range [-len(input_x.shape()), len(input_x.shape())),
+                    or if len(input_x.shape[axis]) not equal to num.
+
+    Examples:
+        >>> unstack = P.Unstack()
+        >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
+        >>> output = unstack(x)
+        ([1, 1, 1, 1], [2, 2, 2, 2])
+    """
+
+    @prim_attr_register
+    def __init__(self, axis=0):
+        """init Unstack"""
+        self.__setattr_flag__ = True
+        validator.check_type("axis", axis, [int])
+        self.axis = axis
+
+    def __infer__(self, x):
+        validator.check_subclass("x", x['dtype'], mstype.tensor)
+        x_shape = list(x['shape'])
+        dim = len(x_shape)
+        validator.check_int_range('axis value', self.axis, -dim, dim, Rel.INC_LEFT)
+        if self.axis < 0:
+            self.axis = self.axis + dim
+        output_num = x_shape[self.axis]
+        validator.check_type("num", output_num, [int])
+        validator.check_integer("output_num", output_num, 0, Rel.GT)
+        self.add_prim_attr('num', output_num)
+        output_valid_check = x_shape[self.axis] - output_num
+        validator.check_integer("the dimension which to unstack divides output_num", output_valid_check, 0, Rel.EQ)
+        out_shapes = []
+        out_dtypes = []
+        out_shape = x_shape[:self.axis] + x_shape[self.axis + 1:]
+        for _ in range(output_num):
+            out_shapes.append(tuple(out_shape))
+            out_dtypes.append(x['dtype'])
+        out_shapes = tuple(out_shapes)
+        out_dtypes = tuple(out_dtypes)
+        out = {'shape': out_shapes,
+               'dtype': out_dtypes,
+               'value': None}
+        return out
+
+
 class Slice(PrimitiveWithInfer):
     """
     Slice a tensor in specified shape.
