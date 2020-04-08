@@ -105,13 +105,13 @@ def check(method):
                     "The %s function %s exceeds the boundary!" % (
                         func_name, param_name))
             if isinstance(arg, int) and param_name == "num_parallel_workers" and (
-                    arg <= 0 or arg > cpu_count()):
+                    arg < 1 or arg > cpu_count()):
                 raise ValueError(
                     "The %s function %s exceeds the boundary(%s)!" % (
                         func_name, param_name, cpu_count()))
             if isinstance(arg, int) and param_name != "seed" \
                     and param_name != "count" and param_name != "prefetch_size" \
-                    and param_name != "num_parallel_workers" and (arg <= 0 or arg > 2147483647):
+                    and param_name != "num_parallel_workers" and (arg < 1 or arg > 2147483647):
                 raise ValueError(
                     "The %s function %s exceeds the boundary!" % (
                         func_name, param_name))
@@ -271,8 +271,8 @@ def check_interval_closed(param, param_name, valid_range):
 
 def check_num_parallel_workers(value):
     check_type(value, 'num_parallel_workers', int)
-    if value <= 0 or value > cpu_count():
-        raise ValueError("num_parallel_workers exceeds the boundary between 0 and {}!".format(cpu_count()))
+    if value < 1 or value > cpu_count():
+        raise ValueError("num_parallel_workers exceeds the boundary between 1 and {}!".format(cpu_count()))
 
 
 def check_num_samples(value):
