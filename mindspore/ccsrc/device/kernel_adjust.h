@@ -48,7 +48,7 @@ class KernelAdjust {
   void SetStreamSwitchOps(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   bool StepLoadCtrlInputs(const std::shared_ptr<session::Context> &context,
                           const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  void Profiling(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr);
   static bool NeedInsertSwitch();
   CNodePtr CreateSteamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
 
@@ -66,8 +66,8 @@ class KernelAdjust {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder CreateMngKernelBuilder(const std::vector<std::string> &formats,
                                                                          const std::vector<TypeId> &type_ids);
   void LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs);
-  void InsertProfilingKernel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                             const ProfilingTraceInfo &profiling_trace_info);
+  void InsertProfilingKernel(const ProfilingTraceInfo &profiling_trace_info,
+                             NotNull<session::KernelGraph *> kernel_graph_ptr);
 };
 }  // namespace device
 }  // namespace mindspore
