@@ -613,5 +613,15 @@ double ReduceMeanCost::GetForwardComputationCost(const std::vector<TensorInfo>& 
 
   return result;
 }
+
+double DropOutCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
+                                              const int32_t&) const {
+  if (inputs.empty()) {
+    return 0.0;
+  }
+  TensorInfo input0 = inputs[0];
+  Shape input0_slice_shape = input0.slice_shape();
+  return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) * DROPOUT_COST_RATE;
+}
 }  // namespace parallel
 }  // namespace mindspore

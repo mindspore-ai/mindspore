@@ -484,8 +484,6 @@ void StepSplitTensor(const AnfNodePtr& node, const FuncGraphManagerPtr& manager)
     }
     if (IsParallelCareNode(use_cnode)) {
       SplitTensor(node, use_cnode, node_pair.second);
-    } else {
-      StepSplitTensor(use_cnode, manager);
     }
   }
 }
@@ -523,6 +521,26 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator& replace_op, const std::st
   }
 
   return replace_input;
+}
+
+void ReplaceOneOp(const Operator& replace_op, const CNodePtr& node) {
+  FuncGraphPtr func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  FuncGraphManagerPtr manager = func_graph->manager();
+  if (manager == nullptr) {
+    MS_LOG(EXCEPTION) << "Failure:AddNode error since manager is nullptr";
+  }
+  std::string instance_name = CreateInstanceName(node, 0);
+  std::vector<AnfNodePtr> replace_input;
+  replace_input = ReplaceOpInput(replace_op, instance_name, node);
+  CNodePtr replace_node = func_graph->NewCNode(replace_input);
+  MS_EXCEPTION_IF_NULL(replace_node);
+  ScopePtr scope = node->scope();
+  MS_EXCEPTION_IF_NULL(scope);
+  replace_node->set_scope(scope);
+  replace_node->set_in_forward_flag(true);
+  replace_input[0]->set_scope(scope);
+  (void)manager->Replace(node, replace_node);
 }
 
 void StepReplaceOp(OperatorVector replace_op, const CNodePtr& node) {
@@ -1757,6 +1775,28 @@ void StepReplace(const OperatorInfoPtr& distribute_operator, const CNodePtr& cno
   }
 }
 
+void HandleDropoutNode(const OperatorInfoPtr& distribute_operator, const CNodePtr& cnode) {
+  MS_EXCEPTION_IF_NULL(distribute_operator);
+  MS_EXCEPTION_IF_NULL(cnode);
+
+  std::string op_name = distribute_operator->name();
+  if (op_name.find(DROPOUT_DO_MASK) == std::string::npos) {
+    return;
+  }
+
+  DropoutDoMaskInfoPtr dropout_do_mask = std::dynamic_pointer_cast<DropoutDoMaskInfo>(distribute_operator);
+  MS_EXCEPTION_IF_NULL(dropout_do_mask);
+  Operator replace_op = dropout_do_mask->GetDropoutGenMaskReplaceOp(cnode);
+  if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+    MS_LOG(EXCEPTION) << "The size of drop out do mask cnode's input is not " << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
+  }
+  ReplaceOneOp(replace_op, cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
+}
+
+void HandleSpecialNode(const OperatorInfoPtr& distribute_operator, const CNodePtr& cnode) {
+  HandleDropoutNode(distribute_operator, cnode);
+}
+
 void ParallelCommunication(const FuncGraphPtr& root, const std::vector<AnfNodePtr>& all_nodes,
                            const FuncGraphManagerPtr& manager) {
   MS_EXCEPTION_IF_NULL(root);
@@ -1804,6 +1844,8 @@ void ParallelCommunication(const FuncGraphPtr& root, const std::vector<AnfNodePt
 
       // StepReplace
       StepReplace(distribute_operator, cnode);
+
+      HandleSpecialNode(distribute_operator, cnode);
     } else if (IsValueNode<Tensor>(node)) {
       StepSplitTensor(node, manager);
     }

@@ -26,6 +26,7 @@ namespace mindspore {
 namespace parallel {
 #define MAXIMUM_INPUT_NUMBER 100
 #define DEFAULT_DATA_TYPE_LENGTH 4
+#define DROPOUT_COST_RATE 1.125  // the DropoutGenMask need 12.5% memory
 
 class OperatorCost;
 using OperatorCostPtr = std::shared_ptr<OperatorCost>;
@@ -493,6 +494,37 @@ class GetNextCost : public OperatorCost {
   }
 };
 using GetNextCostPtr = std::shared_ptr<GetNextCost>;
+
+class DropOutCost : public OperatorCost {
+ public:
+  DropOutCost() = default;
+  ~DropOutCost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                     const int32_t& stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                            const int32_t&) const override {
+    return 0.0;
+  }
+  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                             const int32_t&) const override {
+    return 0.0;
+  }
+  double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                            const int32_t& stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                   const int32_t&) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                    const int32_t&) const override {
+    return 0.0;
+  }
+};
+
+using DropOutCostPtr = std::shared_ptr<DropOutCost>;
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_
