@@ -1097,7 +1097,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         axis = self.axis
         x_rank = len(x_shape)
         validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT)
-        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.prim_name())
+        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.name)
         return ouput_shape, ouput_shape
 
     def infer_dtype(self, x_dtype):
@@ -1143,7 +1143,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         axis = self.axis
         x_rank = len(x_shape)
         validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT)
-        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.prim_name())
+        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.name)
         return ouput_shape, ouput_shape
 
     def infer_dtype(self, x_dtype):

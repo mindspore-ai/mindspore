@@ -224,10 +224,14 @@ test_case_math_ops = [
         'block': P.Minimum(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]]}),
-    ('Pow', {
+    ('Pow_0', {
         'block': P.Pow(),
         'desc_const': [2.0],
         'desc_inputs': [[2, 3, 3, 5]],
+        'desc_bprop': [[2, 3, 3, 5]]}),
+    ('Pow_1', {
+        'block': P.Pow(),
+        'desc_inputs': [[3, 5], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]]}),
     ('Exp', {
         'block': P.Exp(),

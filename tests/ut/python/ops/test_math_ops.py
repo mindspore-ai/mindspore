@@ -82,9 +82,10 @@ def test_sqrt():
 def test_pow():
     """ test_pow """
     input_tensor = Tensor(np.array([[2, 2], [3, 3]]))
+    power = Tensor(np.array(3.0, np.int64))
     testpow = P.Pow()
     expect = np.array([[8, 8], [27, 27]])
-    result = testpow(input_tensor, 3.0)
+    result = testpow(input_tensor, power)
     assert np.all(result.asnumpy() == expect)
 
 

@@ -117,6 +117,7 @@ def vm_impl_pow(self):
     """Generate vm_impl function for Pow."""
     def vm_impl(x, y):
         x = x.asnumpy()
+        y = y.asnumpy()
         res = vm.power(x, y)
         return Tensor(res)
     return vm_impl

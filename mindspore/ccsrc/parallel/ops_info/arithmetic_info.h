@@ -98,6 +98,13 @@ class FloorDivInfo : public ArithmeticBase {
   ~FloorDivInfo() override = default;
 };
 
+class PowInfo : public ArithmeticBase {
+ public:
+  PowInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs) {}
+  ~PowInfo() override = default;
+};
+
 class GreaterInfo : public ArithmeticBase {
  public:
   GreaterInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
