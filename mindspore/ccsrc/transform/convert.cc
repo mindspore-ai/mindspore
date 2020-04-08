@@ -162,6 +162,7 @@ const char kNameTopK[] = "TopK";
 const char kNameSoftmaxGrad[] = "SoftmaxGrad";
 const char kNameMaxPool[] = "MaxPool";
 const char kNameAvgPool[] = "AvgPool";
+const char kNameMaxPoolWithArgmax[] = "MaxPoolWithArgmax";
 const char kNameBatchNorm[] = "BatchNorm";
 const char kNameBatchNormGrad[] = "BatchNormGrad";
 const char kNameROIAlign[] = "ROIAlign";
@@ -199,6 +200,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentum)},
     {string(kNameMaxPool), ADPT_DESC(MaxPool)},
     {string(kNameAvgPool), ADPT_DESC(AvgPool)},
+    {string(kNameMaxPoolWithArgmax), ADPT_DESC(MaxPoolWithArgmax)},
     {string(kNameTopK), ADPT_DESC(TopKV2)},
     {string(kNameStack), ADPT_DESC(Pack)},
     {string(kNameUnstack), ADPT_DESC(Unpack)},

@@ -76,14 +76,9 @@ def get_bprop_depthwise_conv2d_native(self):
 def get_bprop_max_pool_with_argmax(self):
     """Grad definition for `MaxPoolWithArgmax` operation."""
     maxpool_grad = G.MaxPoolGradWithArgmax(
-        pad_mode=self.pad_mode,
-        window=self.window,
-        pad=self.pad,
-        stride=self.stride,
-        data_mode=self.data_mode,
-        ceil_mode=self.ceil_mode,
-        alpha=self.alpha,
-        beta=self.beta)
+        ksize=self.ksize,
+        strides=self.strides,
+        padding=self.padding,)
 
     def bprop(x, out, dout):
         dx = maxpool_grad(x, dout[0], out[1])

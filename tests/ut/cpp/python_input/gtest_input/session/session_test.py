@@ -22,7 +22,7 @@ add = P.TensorAdd()
 reshape = P.Reshape()
 cast = P.Cast()
 tuple_getitem = Primitive('tuple_getitem')
-max_pool = P.MaxPoolWithArgmax(pad_mode="same", window=3, stride=2)
+max_pool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
 
 def test_addn_cast(x, y, z):
     sum = addn((x, y))

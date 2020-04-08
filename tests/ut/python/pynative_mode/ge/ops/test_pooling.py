@@ -42,12 +42,10 @@ def test_maxpool2d():
     """ test_maxpool2d """
     kernel_size = 3
     stride = 3
-    padding = 0
 
-    max_pool = nn.MaxPool2d(kernel_size, stride, padding=padding)
+    max_pool = nn.MaxPool2d(kernel_size, stride)
     assert max_pool.kernel_size == 3
     assert max_pool.stride == 3
-    assert max_pool.padding == 0
     input_data = Tensor(np.random.randint(0, 255, [1, 3, 6, 6]).astype(np.float32))
     output = max_pool(input_data)
     output_np = output.asnumpy()

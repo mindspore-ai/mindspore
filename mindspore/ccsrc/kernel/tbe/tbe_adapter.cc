@@ -148,8 +148,6 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
 }
 
 std::map<std::string, FAttrsPass> TbeAdapter::build_json_attr_pass_map_ = {
-  {"MaxPoolWithArgmax", TbeAdapter::MaxPoolWithArgmaxAttrJsonPass},
-  {"MaxPoolGradWithArgmax", TbeAdapter::MaxPoolGradWithArgmaxAttrJsonPass},
   {"Conv2D", TbeAdapter::Conv2DAttrJsonPass},
   {"Conv2DBackpropFilter", TbeAdapter::Conv2DBackpropFilterAttrJsonPass},
   {"Conv2DBackpropInput", TbeAdapter::Conv2DBackpropInputAttrJsonPass},
@@ -168,48 +166,6 @@ bool TbeAdapter::RunAttrPass(const mindspore::AnfNodePtr &anf_node,
     return true;
   }
   return false;
-}
-
-void TbeAdapter::MaxPoolWithArgmaxAttrJsonPass(
-  const mindspore::AnfNodePtr &anf_node, const std::vector<std::shared_ptr<mindspore::kernel::OpAttr>> &op_info_attrs,
-  nlohmann::json *attrs_json) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(attrs_json);
-  auto attr_num = op_info_attrs.size();
-  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (size_t i = 0; i < attr_num; i++) {
-    nlohmann::json attr_obj;
-    MS_EXCEPTION_IF_NULL(op_info_attrs[i]);
-    std::string attr_name = op_info_attrs[i]->name();
-    if (primitive->GetAttr(attr_name) != nullptr) {
-      auto value = primitive->GetAttr(attr_name);
-      if (attr_name == "pad_mode") {
-        std::string attr_value = GetValue<std::string>(value);
-        (void)transform(attr_value.begin(), attr_value.end(), attr_value.begin(), ::toupper);
-        attr_obj["value"] = attr_value;
-      } else {
-        std::vector<int> attr_value;
-        int data = GetValue<int>(value);
-        attr_value.push_back(1);
-        attr_value.push_back(data);
-        attr_value.push_back(data);
-        attr_value.push_back(1);
-        attr_obj["value"] = attr_value;
-      }
-      attr_obj["valid"] = true;
-    } else {
-      attr_obj["valid"] = false;
-    }
-    attr_obj["name"] = attr_name;
-    attrs_json->push_back(attr_obj);
-  }
-}
-
-void TbeAdapter::MaxPoolGradWithArgmaxAttrJsonPass(
-  const mindspore::AnfNodePtr &anf_node, const std::vector<std::shared_ptr<mindspore::kernel::OpAttr>> &op_info_attrs,
-  nlohmann::json *attrs_json) {
-  MaxPoolWithArgmaxAttrJsonPass(anf_node, op_info_attrs, attrs_json);
 }
 
 void TbeAdapter::Conv2DAttrJsonPass(const mindspore::AnfNodePtr &anf_node,

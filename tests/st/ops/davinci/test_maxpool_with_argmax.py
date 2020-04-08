@@ -20,26 +20,29 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(device_target="Ascend")
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
 
-        self.maxpool = P.MaxPoolWithArgmax(pad_mode="same",
-                             window=3,
-                             stride=2)
+        self.maxpool = P.MaxPoolWithArgmax(padding="same",
+                                           ksize=3,
+                                           strides=2)
         self.x = Parameter(initializer(
-                           'normal', [1, 64, 112, 112]), name='w')
+            'normal', [1, 64, 112, 112]), name='w')
         self.add = P.TensorAdd()
-
 
     @ms_function
     def construct(self):
         output = self.maxpool(self.x)
         return output[0]
 
+
 def test_net():
-    x = np.random.randn(1,64,112,112).astype(np.float32)
+    x = np.random.randn(1, 64, 112, 112).astype(np.float32)
     maxpool = Net()
     output = maxpool()
     print("***********output output*********")

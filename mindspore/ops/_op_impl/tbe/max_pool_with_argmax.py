@@ -28,19 +28,19 @@ from mindspore.ops.op_info_register import op_info_register
     "partial_flag": true,
     "attr": [
         {
-            "name": "window",
+            "name": "ksize",
             "param_type": "required",
             "type": "listInt",
             "value": "all"
         },
         {
-            "name": "stride",
+            "name": "strides",
             "param_type": "required",
             "type": "listInt",
             "value": "all"
         },
         {
-            "name": "pad_mode",
+            "name": "padding",
             "param_type": "required",
             "type": "str",
             "value": "all"

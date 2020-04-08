@@ -15,7 +15,6 @@
 
 """Operators for gradients."""
 
-import math
 from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import signature_kind as sig_kind
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
@@ -340,59 +339,60 @@ class _PoolGrad(PrimitiveWithInfer):
     """Gradients of the max/avg pool operation."""
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
+    def __init__(self, ksize, strides, padding="VALID"):
         self.init_prim_io_names(inputs=['x_origin', 'out_origin', 'grad'], outputs=['output'])
-        self.ksize = ksize
-        self.strides = strides
-        self.padding = padding
 
-        self.ksize = validator.check_type('ksize', self.ksize, [int, tuple])
-        self.strides = validator.check_type('strides', self.strides, [int, tuple])
-
-        validator.check_type('padding', self.padding, [str])
-        self.padding = validator.check_string('padding', self.padding, ['VALID', 'SAME'])
+        validator.check_type('ksize', ksize, [int, tuple])
+        validator.check_type('strides', strides, [int, tuple])
+        self.padding = validator.check_string('padding', padding.upper(), ['VALID', 'SAME'])
         self.add_prim_attr("padding", self.padding)
-        self.add_prim_attr('data_format', "NCHW")
+        self.is_maxpoolgradwithargmax = (self.name == "MaxPoolGradWithArgmax")
+        if not self.is_maxpoolgradwithargmax:
+            self.add_prim_attr('data_format', "NCHW")
 
-        if isinstance(self.ksize, int):
-            self.pool_h = validator.check_integer("ksize", self.ksize, 1, Rel.GE)
-            self.pool_w = self.pool_h
-            self.add_prim_attr("ksize", (1, 1, self.ksize, self.ksize))
-        elif isinstance(self.ksize, tuple):
-            if (len(self.ksize) != 2 and len(self.ksize) != 4):
-                raise ValueError('Attr \'ksize\' of \'Pool\' Op passed ' +
-                                 str(self.ksize)+', should be a int or a tuple of length 2 or 4.')
-            for ksize_val in self.ksize:
-                if (not isinstance(ksize_val, int)) or (ksize_val <= 0):
-                    raise ValueError('Each value of attr \'ksize\' of \'MaxPool\' Op passed ' +
-                                     str(self.ksize)+', should be int and greater than 0.')
-            self.pool_h = self.ksize[-2]
-            self.pool_w = self.ksize[-1]
-            self.add_prim_attr("ksize", (1, 1, self.ksize[-2], self.ksize[-1]))
-
-        if isinstance(self.strides, int):
-            self.stride_h = validator.check_integer("strides", self.strides, 1, Rel.GE)
-            self.stride_w = self.stride_h
-            self.add_prim_attr("strides", (1, 1, self.strides, self.strides))
-        elif isinstance(self.strides, tuple):
-            if (len(self.strides) != 2 and len(self.strides) != 4):
-                raise ValueError('Attr \'strides\' of \'MaxPool\' Op passed ' +
-                                 str(self.strides)+', should be a int or a tuple of length 2 or 4.')
-            for stride_val in self.strides:
-                if (not isinstance(stride_val, int)) or (stride_val <= 0):
-                    raise ValueError('Each value of attr \'strides\' of \'MaxPool\' Op passed ' +
-                                     str(self.strides)+', should be int and greater than 0.')
-            self.stride_h = self.strides[-2]
-            self.stride_w = self.strides[-1]
-            self.add_prim_attr("strides", (1, 1, self.strides[-2], self.strides[-1]))
-
-        if self.padding == "VALID":
-            self.pad = 0
-        elif self.padding == "SAME":
-            self.pad = math.floor((self.pool_h - 1) / 2)
+        if isinstance(ksize, int):
+            validator.check_integer("ksize", ksize, 1, Rel.GE)
+            if self.is_maxpoolgradwithargmax:
+                self.ksize = (1, ksize, ksize, 1)
+            else:
+                self.ksize = (1, 1, ksize, ksize)
         else:
-            raise ValueError('The padding should be str and must be SAME or VALID,'
-                             ' but got {}.'.format(self.padding))
+            ksize_error = ValueError(f"The 'ksize' passed to operator {self.name} should be an positive int number"
+                                     f"or a tuple of two or four positive int numbers, but got {ksize}")
+            if len(ksize) != 2 and len(ksize) != 4:
+                raise ksize_error
+            for ksize_val in ksize:
+                if not isinstance(ksize_val, int) or (ksize_val <= 0):
+                    raise ksize_error
+            if len(ksize) == 2 and self.is_maxpoolgradwithargmax:
+                self.ksize = (1, ksize[0], ksize[1], 1)
+            elif len(ksize) == 2 and not self.is_maxpoolgradwithargmax:
+                self.ksize = (1, 1, ksize[0], ksize[1])
+            else:
+                self.ksize = ksize
+        self.add_prim_attr("ksize", self.ksize)
+
+        if isinstance(strides, int):
+            validator.check_integer("strides", strides, 1, Rel.GE)
+            if self.is_maxpoolgradwithargmax:
+                self.strides = (1, strides, strides, 1)
+            else:
+                self.strides = (1, 1, strides, strides)
+        else:
+            strides_error = ValueError(f"The 'strides' passed to operator {self.name} should be an positive int number"
+                                       f"or a tuple of two or four positive int numbers, but got {strides}")
+            if len(strides) != 2 and len(strides) != 4:
+                raise strides_error
+            for strides_val in strides:
+                if not isinstance(strides_val, int) or (strides_val <= 0):
+                    raise strides_error
+            if len(strides) == 2 and self.is_maxpoolgradwithargmax:
+                self.strides = (1, strides[0], strides[1], 1)
+            elif len(strides) == 2 and not self.is_maxpoolgradwithargmax:
+                self.strides = (1, 1, strides[0], strides[1])
+            else:
+                self.strides = strides
+        self.add_prim_attr("strides", self.strides)
 
 
 class AvgPoolGrad(_PoolGrad):
@@ -451,28 +451,13 @@ class MaximumGrad(Primitive):
         raise NotImplementedError
 
 
-class MaxPoolGradWithArgmax(PrimitiveWithInfer):
+class MaxPoolGradWithArgmax(_PoolGrad):
     """Computes the gradients of MaxPoolWithArgmax."""
 
     @prim_attr_register
-    def __init__(self,
-                 pad_mode="valid",
-                 window=0,
-                 pad=0,
-                 stride=1,
-                 data_mode=1,
-                 ceil_mode=0,
-                 alpha=1.0,
-                 beta=0.0):
+    def __init__(self, ksize=1, strides=1, padding="VALID",):
         self.init_prim_io_names(inputs=['x', 'grad', 'argmax'], outputs=['output'])
-
-        self.window = window
-        self.pool_h = self.pool_w = window
-        self.pad = pad
-        self.pad_mode = pad_mode
-        self.stride = stride
-        self.data_mode = data_mode
-        self.ceil_mode = ceil_mode
+        super(MaxPoolGradWithArgmax, self).__init__(ksize, strides, padding)
 
     def infer_shape(self, x_shape, grad_shape, argmax_shape):
         if not grad_shape:

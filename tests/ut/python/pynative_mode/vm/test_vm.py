@@ -23,7 +23,7 @@ def test_avg_pooling():
                              [-9., -1., 3., 4.],
                              [1., -1., -3., -6.],
                              [-2., -1., -2., -15.]]]]).astype(np.float32)
-    out = vm.avg_pooling(input_data, pool_h=2, pool_w=2, stride=1, pad=0)
+    out = vm.avg_pooling(input_data, pool_h=2, pool_w=2, stride=1)
     expect_out = [[[[-4.25, 0.0, 4.25],
                     [-2.5, -0.5, -0.5],
                     [-0.75, -1.75, -6.5]]]]
@@ -37,9 +37,9 @@ def test_avg_pool_grad():
                              [5, 6, 7, 8],
                              [9, 10, 11, 12],
                              [13, 14, 15, 16]]]]).astype(np.float32)
-    dout = vm.avg_pooling(input_data, pool_h=2, pool_w=2, stride=1, pad=0)
+    dout = vm.avg_pooling(input_data, pool_h=2, pool_w=2, stride=1)
     print("vm.avg_pooling dout: ", dout)
-    out = vm.avg_pool_grad(dout, input_data.shape, 2, 2, 1, 0)
+    out = vm.avg_pool_grad(dout, input_data.shape, 2, 2, 1)
     print("vm.avg_pool_grad: ", out)
     assert True
 
@@ -202,7 +202,7 @@ def test_max_pooling():
         [-9., -1., 3., 4.],
         [1., -1., -3., -6.],
         [-2., -1., -2., -15.]]]]).astype(np.float32)
-    out = vm.max_pooling(input_data, pool_h=2, pool_w=2, stride=1, pad=0)
+    out = vm.max_pooling(input_data, pool_h=2, pool_w=2, stride=1)
     expect_out = [[[[-1., 3., 9.],
                     [1., 3., 4.],
                     [1., -1., -2.]]]]

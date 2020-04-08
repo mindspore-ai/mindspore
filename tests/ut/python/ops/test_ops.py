@@ -594,7 +594,7 @@ test_case_nn_ops = [
         'desc_bprop': [[3, 4, 6, 6]],
         'skip': ['backward']}),
     ('MaxPoolWithArgmax', {
-        'block': P.MaxPoolWithArgmax(window=2, stride=2),
+        'block': P.MaxPoolWithArgmax(ksize=2, strides=2),
         'desc_inputs': [[128, 32, 32, 64]],
         'desc_bprop': [[128, 32, 8, 16], [128, 32, 8, 16]]}),
     ('SoftmaxCrossEntropyWithLogits', {
