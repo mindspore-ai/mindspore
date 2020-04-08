@@ -33,7 +33,6 @@ class GPUKernelRuntime : public KernelRuntime {
   ~GPUKernelRuntime() override = default;
   bool Init() override;
   void ReleaseDeviceRes() override;
-  void FreeHostMemory() override;
   void AssignMemory(session::KernelGraph *graph) override;
   bool Run(session::KernelGraph *graph) override;
 
@@ -41,18 +40,11 @@ class GPUKernelRuntime : public KernelRuntime {
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) override;
   bool SyncStream() override;
-  // Alloc memory use the dynamic memory pool.
-  void *AllocTensorMemDynamic(size_t size) override;
-  // Free memory use the dynamic memory pool.
-  void FreeTensorMemDynamic(void *device_ptr) override;
-  void MallocOpMemory(const DeviceAddressPtr address, size_t size, int flag) override;
-  uint8_t *MallocStaticMem(size_t size, bool communication_mem) override;
 
  private:
   GPUKernelRuntime(const GPUKernelRuntime &);
   GPUKernelRuntime &operator=(const GPUKernelRuntime &);
   bool InitDevice();
-  void MallocDeviceMemory();
   bool device_init_{false};
 
   // The related functions and members for using dynamic memory pool.
@@ -69,6 +61,7 @@ class GPUKernelRuntime : public KernelRuntime {
   void FreeCommunicationOpDynamicRes(const mindspore::AnfNodePtr &kernel, size_t input_idx, bool *is_communication_op);
   size_t communication_op_input_ref_count_{0};
   size_t communication_op_output_ref_count_{0};
+  MemReuseUtilPtr mem_reuse_util_ptr_{nullptr};
 };
 MS_REG_KERNEL_RUNTIME(kGPUDevice, GPUKernelRuntime);
 }  // namespace gpu

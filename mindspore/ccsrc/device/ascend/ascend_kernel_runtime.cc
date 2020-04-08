@@ -37,6 +37,7 @@
 #include "kernel/tbe/tbe_utils.h"
 #include "kernel/tbe/tbe_python_funcs.h"
 #include "pre_activate/mem_reuse/mem_reuse_checker.h"
+#include "device/ascend/ascend_memory_manager.h"
 
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingUtils;
@@ -47,8 +48,6 @@ using std::vector;
 namespace mindspore {
 namespace device {
 namespace ascend {
-static const uint64_t ASCEND_MEM_SIZE = 20;
-static const uint64_t ASCEND_MEM_SIZE_BYTE = (ASCEND_MEM_SIZE << 30);
 static const size_t PRAMATER_OUTPUT_INDEX = 0;
 
 AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
@@ -86,7 +85,8 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     MS_EXCEPTION(DeviceProcessError) << "rtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }
 
-  FreeDeviceMemory();
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->FreeDeviceMemory();
   (void)DestroyHccl();
   (void)ResetDevice();
   (void)ProfilingManager::GetInstance().StopProfiling();
@@ -109,11 +109,9 @@ bool AscendKernelRuntime::Init() {
   if (!ret) {
     return ret;
   }
-
-  ret = MallocDeviceMemory();
-  if (!ret) {
-    return ret;
-  }
+  mem_manager_ = std::make_shared<AscendMemoryManager>();
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->MallocDeviceMemory();
 
   ret = ProfilingManager::GetInstance().StartupProfiling(device_id_);
   if (!ret) {
@@ -237,13 +235,6 @@ bool AscendKernelRuntime::DumpData(mindspore::session::KernelGraph *graph) {
 DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                           TypeId type_id) {
   return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id);
-}
-
-void AscendKernelRuntime::MallocOpMemory(const DeviceAddressPtr address, size_t size, int) {
-  auto device_ptr = AscendMemoryAllocator::GetInstance().AllocTensorMem(size);
-  MS_EXCEPTION_IF_NULL(device_ptr);
-  address->ptr_ = device_ptr;
-  address->mem_dynamic_alloc_ = true;
 }
 
 bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
@@ -474,42 +465,6 @@ bool AscendKernelRuntime::DestroyHccl() {
   context_ptr->set_enable_hccl(false);
   return true;
 }
-
-bool AscendKernelRuntime::MallocDeviceMemory() {
-  device_mem_size_ = ASCEND_MEM_SIZE_BYTE;
-  static_mem_offset_ = FloatToSize(device_mem_size_ * GRAPH_INIT_ASCEND_MEM_RATIO);
-  auto ret = rtMalloc(reinterpret_cast<void **>(&device_mem_base_), static_mem_offset_, RT_MEMORY_HBM);
-  if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << static_mem_offset_ << "] fail, ret[" << ret << "]";
-  }
-  device_mem_pool_size_ = FloatToSize(device_mem_size_ * (1 - GRAPH_INIT_ASCEND_MEM_RATIO));
-  ret = rtMalloc(reinterpret_cast<void **>(&device_mem_pool_base_), device_mem_pool_size_, RT_MEMORY_HBM);
-  if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_pool_size_ << "] fail, ret[" << ret << "]";
-  }
-  AscendMemoryAllocator::GetInstance().set_device_mem_pool_base(device_mem_pool_base_);
-  AscendMemoryAllocator::GetInstance().set_device_mem_pool_size(device_mem_pool_size_);
-  return true;
-}
-
-void AscendKernelRuntime::FreeDeviceMemory() {
-  if (device_mem_base_ != nullptr) {
-    auto ret = rtFree(device_mem_base_);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "rtFree mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
-    }
-    device_mem_base_ = nullptr;
-  }
-  if (device_mem_pool_base_ != nullptr) {
-    auto ret = rtFree(device_mem_pool_base_);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "rtFree mem size[" << device_mem_pool_size_ << "] fail, ret[" << ret << "]";
-    }
-    device_mem_pool_base_ = nullptr;
-  }
-}
-
-void AscendKernelRuntime::FreeHostMemory() { dynamic_mem_offset_ = 0; }
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

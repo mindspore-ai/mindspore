@@ -132,6 +132,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "kernel/kash/*.cc"
         "device/kernel_info.cc"
         "device/kernel_runtime.cc"
+        "device/memory_manager.cc"
         "device/kernel_runtime_manager.cc"
         "device/convert_tensor_utils.cc"
         "pre_activate/common/*.cc"
