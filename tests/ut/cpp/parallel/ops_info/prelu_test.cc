@@ -146,11 +146,10 @@ TEST_F(TestPReLUInfo, CheckStrategy1) {
 }
 
 TEST_F(TestPReLUInfo, CheckStrategy2) {
-  // Success: {{2,1,8,16},{1}}
   std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu->Init(strategy);
-  ASSERT_EQ(ret, FAILED);
+  ASSERT_EQ(ret, SUCCESS);
 }
 
 TEST_F(TestPReLUInfo, AutoStrategy1) {
@@ -252,11 +251,10 @@ TEST_F(TestPReLUInfo, CheckStrategy_2d1) {
 }
 
 TEST_F(TestPReLUInfo, CheckStrategy_2d2) {
-  // Success: {{2,1,8,16},{1}}
   std::vector<Dimensions> inputs = {{128, 4}, {4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu_2d->Init(strategy);
-  ASSERT_EQ(ret, FAILED);
+  ASSERT_EQ(ret, SUCCESS);
 }
 
 TEST_F(TestPReLUInfo, AutoStrategy_2d1) {

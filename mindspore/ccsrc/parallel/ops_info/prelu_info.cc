@@ -52,7 +52,7 @@ Status PReLUInfo::CheckStrategy(const StrategyPtr& strategy) {
     }
     return FAILED;
   }
-  if ((stra[0][PRELU_CHANNEL_INDEX] != PRELU_CHANNEL_STRATEGY) || (stra[1][0] != PRELU_CHANNEL_STRATEGY)) {
+  if (stra[0][PRELU_CHANNEL_INDEX] != stra[1][0]) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Invalid channel strategy.";
     } else {
