@@ -281,7 +281,7 @@ std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, KernelG
       }
       continue;
     }
-    // creata single parameter if is a abstract real kernel
+    // create single parameter if is a abstract real kernel
     create_parameter(out_node->abstract());
   }
   return parameters;
@@ -413,7 +413,7 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
       cnode_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(anf));
       continue;
     } else if (anf->isa<ValueNode>() && !IsValueNode<FuncGraph>(anf)) {
-      // if input is a value ndoe,
+      // if input is a value node,
       auto new_value_node = CreateNewValueNode(anf, graph);
       if (new_value_node != nullptr) {
         cnode_inputs.emplace_back(new_value_node);
@@ -497,7 +497,7 @@ void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_grap
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
       bool need_sync = false;
       if (ms_context->enable_pynative_infer()) {
-        if (tensor->device_address().get() == nullptr) {
+        if (tensor->device_address().get() == nullptr || tensor->device_address() != device_address) {
           need_sync = true;
         }
       } else {
@@ -549,7 +549,7 @@ void SessionBasic::Reorder(std::vector<CNodePtr> *node_list) {
 
   for (const auto &node : *node_list) {
     MS_EXCEPTION_IF_NULL(node);
-    if (kOptOpeatorSet.find(AnfAlgo::GetCNodeName(node)) != kOptOpeatorSet.end()) {
+    if (kOptOperatorSet.find(AnfAlgo::GetCNodeName(node)) != kOptOperatorSet.end()) {
       all_opt_list.emplace_back(node);
     } else {
       non_opt_list.emplace_back(node);
@@ -599,7 +599,7 @@ void SessionBasic::ToTensorPtr(const OpRunInfo &op_run_info, std::vector<tensor:
   MS_EXCEPTION_IF_NULL(inputs);
   MS_EXCEPTION_IF_NULL(tensor_mask);
   if (op_run_info.op_inputs.size() != op_run_info.inputs_mask.size()) {
-    MS_LOG(EXCEPTION) << "op input size " << op_run_info.op_inputs.size() << " should be equal to op input mask size "
+    MS_LOG(EXCEPTION) << "Op input size " << op_run_info.op_inputs.size() << " should be equal to op input mask size "
                       << op_run_info.inputs_mask.size();
   }
   size_t input_num = op_run_info.op_inputs.size();
@@ -636,7 +636,7 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
     if (backend_anf != nullptr) {
       return backend_anf;
     }
-    MS_LOG(EXCEPTION) << "did not find the node in the equiv map!";
+    MS_LOG(EXCEPTION) << "Can not find the node in the equiv map!";
   };
   output_args.push_back(NewValueNode(prim::kPrimMakeTuple));
   (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(output_args),
@@ -645,7 +645,7 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
 }
 
 void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) {
-  MS_LOG(INFO) << "start";
+  MS_LOG(INFO) << "Start!";
   std::vector<AnfNodePtr> make_tuple_inputs;
   make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   if (AnfRuntimeAlgorithm::GetOutputTensorNum(cnode) > 1) {
@@ -667,14 +667,14 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
   // create output
   auto g_output = graph->NewCNode(make_tuple_inputs);
   graph->set_output(g_output);
-  // set graph manager,which now is only used to get valuendoes and hardware optimizing
+  // set graph manager,which now is only used to get valuenodes and hardware optimizing
   MS_EXCEPTION_IF_NULL(context_);
   FuncGraphManagerPtr manager = context_->manager();
   if (manager != nullptr) {
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
   }
-  MS_LOG(INFO) << "end";
+  MS_LOG(INFO) << "Finish!";
 }
 
 std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInfo &op_run_info) {
@@ -694,9 +694,9 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   std::vector<tensor::TensorPtr> input_tensors;
   std::vector<bool> tensors_mask;
   ToTensorPtr(op_run_info, &input_tensors, &tensors_mask);
-  MS_LOG(INFO) << "input tensor size" << input_tensors.size();
+  MS_LOG(INFO) << "Input tensor size" << input_tensors.size();
   if (input_tensors.size() != tensors_mask.size()) {
-    MS_LOG(EXCEPTION) << "input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
                       << tensors_mask.size();
   }
   for (size_t i = 0; i < input_tensors.size(); ++i) {
@@ -711,7 +711,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   cnode->set_abstract(op_run_info.abstract);
   // set const input to attr if value is not a tensor,such as scalar or tuple
   RunOpConvertConstInputToAttr(op_run_info, cnode);
-  // set exectuion order
+  // set execution order
   std::vector<CNodePtr> exe_order = {cnode};
   graph->set_execution_order(exe_order);
   // set output
@@ -734,14 +734,14 @@ BaseRef SessionBasic::TransformBaseRefListToTuple(const BaseRef &base_ref) {
         py::tuple tensor_tuple = py::cast<py::tuple>(obj);
         output_tensors[i] = tensor_tuple;
       } else {
-        MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor !";
+        MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor!";
       }
     }
     return output_tensors;  // turn tuple to py::object and store in PyObjectRef
   } else if (utils::isa<tensor::TensorPtr>(base_ref)) {
     return base_ref;
   } else {
-    MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor !";
+    MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor!";
   }
 }
 }  // namespace session

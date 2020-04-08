@@ -251,6 +251,20 @@ def get_bprop_floordiv(self):
     return bprop
 
 
+@bprop_getters.register(P.FloorMod)
+def get_bprop_floormod(self):
+    """Grad definition for `FloorMod` operation."""
+    div_op = P.FloorMod()
+    neg = P.Neg()
+    mul_op = P.Mul()
+
+    def bprop(x, y, out, dout):
+        bc_x = div_op(dout, y)
+        bc_y = neg(mul_op(bc_x, out))
+        return binop_grad_common(x, y, bc_x, bc_y)
+    return bprop
+
+
 @bprop_getters.register(P.Square)
 def get_bprop_square(self):
     """Grad definition for `Square` operation."""
@@ -394,8 +408,8 @@ def _split_shape_index(input_shape, axis):
         axis = tuple([axis])
     reduction_indices = tuple([(i + rank) % rank for i in axis])
     other_indices = tuple(set(range(rank)) - set(reduction_indices))
-    reduced_num = reduce(lambda x, y: x * y, [input_shape[i] for i in reduction_indices])
-    other_num = reduce(lambda x, y: x * y, [input_shape[i] for i in other_indices])
+    reduced_num = reduce(lambda x, y: x * y, [1] + [input_shape[i] for i in reduction_indices])
+    other_num = reduce(lambda x, y: x * y, [1] + [input_shape[i] for i in other_indices])
     perm = reduction_indices + other_indices
     return tuple([reduced_num, other_num]), perm
 
@@ -690,6 +704,17 @@ def get_bprop_acos(self):
     return bprop
 
 
+@bprop_getters.register(P.Acosh)
+def get_bprop_acosh(self):
+    """Grad definition for `Acosh` operation."""
+    input_grad = G.AcoshGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(x, dout)
+        return (dx,)
+    return bprop
+
+
 @bprop_getters.register(P.Abs)
 def get_bprop_abs(self):
     """Grad definition for `Abs` operation."""
@@ -737,4 +762,17 @@ def get_bprop_round(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
+    return bprop
+
+
+@bprop_getters.register(P.Atan2)
+def get_bprop_atan2(self):
+    """Generate bprop for Atan2"""
+
+    square = P.Square()
+    def bprop(x, y, out, dout):
+        tmp = dout / (square(x) + square(y))
+        dx = tmp * y
+        dy = tmp * (-x)
+        return (dx, dy)
     return bprop

@@ -25,12 +25,11 @@ class Loss(Metric):
         loss = \frac{\sum_{k=1}^{n}loss_k}{n}
 
     Examples:
-        >>> x = mindspore.Tensor(np.array(0.2), mindspore.float32)
+        >>> x = Tensor(np.array(0.2), mindspore.float32)
         >>> loss = nn.Loss()
         >>> loss.clear()
         >>> loss.update(x)
         >>> result = loss.eval()
-        0.20000000298023224
     """
     def __init__(self):
         super(Loss, self).__init__()

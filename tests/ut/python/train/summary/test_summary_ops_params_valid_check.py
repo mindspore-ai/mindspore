@@ -163,12 +163,7 @@ def test_scalar_summary_use_invalid_tag_None():
 def test_scalar_summary_use_invalid_tag_Bool():
     log.debug("begin test_scalar_summary_use_invalid_tag_Bool")
     net = SummaryDemoTag(True, True, True)
-    try:
-        run_case(net)
-    except:
-        assert True
-    else:
-        assert False
+    run_case(net)
     log.debug("finished test_scalar_summary_use_invalid_tag_Bool")
 
 
@@ -176,12 +171,7 @@ def test_scalar_summary_use_invalid_tag_Bool():
 def test_scalar_summary_use_invalid_tag_null():
     log.debug("begin test_scalar_summary_use_invalid_tag_null")
     net = SummaryDemoTag("", "", "")
-    try:
-        run_case(net)
-    except:
-        assert True
-    else:
-        assert False
+    run_case(net)
     log.debug("finished test_scalar_summary_use_invalid_tag_null")
 
 
@@ -189,12 +179,7 @@ def test_scalar_summary_use_invalid_tag_null():
 def test_scalar_summary_use_invalid_tag_Int():
     log.debug("begin test_scalar_summary_use_invalid_tag_Int")
     net = SummaryDemoTag(1, 2, 3)
-    try:
-        run_case(net)
-    except:
-        assert True
-    else:
-        assert False
+    run_case(net)
     log.debug("finished test_scalar_summary_use_invalid_tag_Int")
 
 

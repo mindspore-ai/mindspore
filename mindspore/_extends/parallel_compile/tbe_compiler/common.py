@@ -50,7 +50,7 @@ def get_build_in_impl_path():
     tbe_impl_path = os.environ.get("TBE_IMPL_PATH")
     if tbe_impl_path is None:
         default_install_path = '/usr/local/HiAI/runtime/ops/op_impl/built-in/ai_core/tbe/'
-        backup_install_path = '/usr/local/Ascend/Ascend/opp/op_impl/built-in/ai_core/tbe/'
+        backup_install_path = '/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/'
         if os.path.exists(default_install_path):
             tbe_impl_path = default_install_path
         elif os.path.exists(backup_install_path):

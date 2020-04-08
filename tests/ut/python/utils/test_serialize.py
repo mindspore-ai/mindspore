@@ -30,7 +30,7 @@ from mindspore.nn import WithLossCell, TrainOneStepCell
 from mindspore.train.callback import _CheckpointManager
 from mindspore.train.serialization import save_checkpoint, load_checkpoint,load_param_into_net, \
                                           _exec_save_checkpoint, export, _save_graph
-from ..ut_filter import run_on_onnxruntime
+from ..ut_filter import run_on_onnxruntime, non_graph_engine
 from mindspore import context
 
 
@@ -306,6 +306,7 @@ class MYNET(nn.Cell):
         return out
 
 
+@non_graph_engine
 def test_export():
     net = MYNET()
     input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]).astype(np.float32))

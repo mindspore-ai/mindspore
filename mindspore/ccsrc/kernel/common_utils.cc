@@ -19,7 +19,6 @@
 #include <map>
 #include <iostream>
 #include <fstream>
-#include "runtime/rt.h"
 #include "nlohmann/json.hpp"
 #include "session/anf_runtime_algorithm.h"
 #include "common/utils.h"
@@ -490,7 +489,7 @@ void SaveJsonInfo(const std::string &json_name, const std::string &info) {
   if (!filewrite.is_open()) {
     return;
   }
-  filewrite << info << endl;
+  filewrite << info << std::endl;
   filewrite.close();
   if (nullptr == realpath(path.c_str(), real_path)) {
     MS_LOG(DEBUG) << "dir " << path << " does not exit.";

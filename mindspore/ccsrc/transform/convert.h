@@ -253,7 +253,6 @@ class DfGraphConvertor {
   bool distribute_ = false;
 };
 
-extern std::string GetCNodeFuncName(CNodePtr cnode);
 }  // namespace transform
 }  // namespace mindspore
 

@@ -102,6 +102,13 @@ class ResolveIRPassLib {
   SubstitutionPtr resolver_getattr_;
 };
 
+class InferenceOptPrepareLib {
+ public:
+  InferenceOptPrepareLib();
+  ~InferenceOptPrepareLib() = default;
+  SubstitutionPtr grad_var_prepare_;
+};
+
 // predicate functions
 inline bool IsNode(const AnfNodePtr &) { return true; }
 
@@ -151,6 +158,7 @@ inline bool IsCNodeDup(const AnfNodePtr &node) {
   }
   return false;
 }
+
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

@@ -18,16 +18,16 @@
 
 #include <algorithm>
 #include <functional>
-#include <vector>
-#include <utility>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "ir/value.h"
+#include "parallel/auto_parallel/graph_costmodel.h"
+#include "parallel/device_manager.h"
 #include "parallel/device_matrix.h"
 #include "parallel/tensor_layout/tensor_redistribution.h"
-#include "parallel/device_manager.h"
-#include "parallel/auto_parallel/graph_costmodel.h"
 
 namespace mindspore {
 namespace parallel {
@@ -397,7 +397,7 @@ Status MatMulBase::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   CheckGlobalDeviceManager();
-  std::list<int32_t> dev_list = g_device_manager->GetDeviceListByStageId(stage_id);
+  std::vector<int32_t> dev_list = g_device_manager->GetDeviceListByStageId(stage_id);
   size_t dev_num = dev_list.size();
   Shape input0_shape = inputs_shape_[0], input1_shape = inputs_shape_[1];
   if (transpose_a_) {

@@ -22,11 +22,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "parallel/device_manager.h"
 #include "parallel/status.h"
 #include "parallel/tensor_layout/arrangement.h"
 #include "parallel/tensor_layout/map.h"
 #include "utils/convert_utils.h"
-#include "parallel/device_manager.h"
 
 namespace mindspore {
 namespace parallel {

@@ -86,9 +86,9 @@ def test_two_matmul():
     costmodel_alpha = cost_model_context.get_cost_model_context("costmodel_alpha")
     assert costmodel_alpha == 1.0
     costmodel_beta = cost_model_context.get_cost_model_context("costmodel_beta")
-    assert costmodel_beta == 65.0
+    assert costmodel_beta == 260.0
     costmodel_gamma = cost_model_context.get_cost_model_context("costmodel_gamma")
-    assert costmodel_gamma == 0.02
+    assert costmodel_gamma == 0.001
     costmodel_communi_threshold = cost_model_context.get_cost_model_context("costmodel_communi_threshold")
     assert costmodel_communi_threshold == 2048.0
     costmodel_communi_const = cost_model_context.get_cost_model_context("costmodel_communi_const")
@@ -135,6 +135,6 @@ def test_two_matmul():
     
     _executor.compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
-    expected_strategies = {'Default/network-Net/MatMul-op2': [[16, 1], [1, 1]],
-                     'Default/network-Net/MatMul-op3': [[16, 1], [1, 1]]}
+    expected_strategies = {'Default/network-Net/MatMul-op0': [[16, 1], [1, 1]],
+                     'Default/network-Net/MatMul-op1': [[16, 1], [1, 1]]}
     assert strategies == expected_strategies

@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_OPERATOR_INFO_H_
 
 #include <cstdint>
-#include <list>
 #include <map>
 #include <memory>
 #include <string>
@@ -26,17 +25,17 @@
 #include <utility>
 #include <vector>
 
-#include "utils/log_adapter.h"
-#include "ir/base.h"
 #include "common/utils.h"
+#include "ir/base.h"
+#include "parallel/auto_parallel/costmodel.h"
+#include "parallel/auto_parallel/operator_costmodel.h"
 #include "parallel/device_manager.h"
 #include "parallel/device_matrix.h"
 #include "parallel/group_manager.h"
+#include "parallel/ops_info/ops_utils.h"
 #include "parallel/strategy.h"
 #include "parallel/tensor_layout/tensor_info.h"
-#include "parallel/auto_parallel/costmodel.h"
-#include "parallel/auto_parallel/operator_costmodel.h"
-#include "parallel/ops_info/ops_utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {

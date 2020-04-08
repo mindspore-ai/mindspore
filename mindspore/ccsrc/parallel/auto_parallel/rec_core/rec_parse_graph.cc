@@ -17,14 +17,14 @@
 #include "parallel/auto_parallel/rec_core/rec_parse_graph.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-#include "parallel/ops_info/operator_info.h"
-#include "parallel/auto_parallel/rec_core/rec_tensor.h"
-#include "parallel/auto_parallel/rec_core/rec_graph.h"
 #include "ir/value.h"
+#include "parallel/auto_parallel/rec_core/rec_graph.h"
+#include "parallel/auto_parallel/rec_core/rec_tensor.h"
+#include "parallel/ops_info/operator_info.h"
 
 namespace mindspore {
 namespace parallel {

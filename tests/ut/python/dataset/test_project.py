@@ -13,7 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 import mindspore.dataset.transforms.vision.c_transforms as vision
-import mindspore._c_dataengine as de_map
+import mindspore.dataset.transforms.c_transforms as C
+from mindspore.common import dtype as mstype
 from util import ordered_save_and_check
 
 import mindspore.dataset as ds
@@ -63,9 +64,8 @@ def test_case_project_map():
     data1 = ds.TFRecordDataset(DATA_DIR_TF, SCHEMA_DIR_TF, shuffle=False)
     data1 = data1.project(columns=columns)
 
-    no_op = de_map.NoOp()
-
-    data1 = data1.map(input_columns=["col_3d"], operations=no_op)
+    type_cast_op = C.TypeCast(mstype.int64)
+    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
 
     filename = "project_map_after_result.npz"
     ordered_save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
@@ -77,8 +77,8 @@ def test_case_map_project():
 
     data1 = ds.TFRecordDataset(DATA_DIR_TF, SCHEMA_DIR_TF, shuffle=False)
 
-    no_op = de_map.NoOp()
-    data1 = data1.map(input_columns=["col_sint64"], operations=no_op)
+    type_cast_op = C.TypeCast(mstype.int64)
+    data1 = data1.map(input_columns=["col_sint64"], operations=type_cast_op)
 
     data1 = data1.project(columns=columns)
 
@@ -92,19 +92,19 @@ def test_case_project_between_maps():
 
     data1 = ds.TFRecordDataset(DATA_DIR_TF, SCHEMA_DIR_TF, shuffle=False)
 
-    no_op = de_map.NoOp()
-    data1 = data1.map(input_columns=["col_3d"], operations=no_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=no_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=no_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=no_op)
+    type_cast_op = C.TypeCast(mstype.int64)
+    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
+    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
+    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
+    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
 
     data1 = data1.project(columns=columns)
 
-    data1 = data1.map(input_columns=["col_3d"], operations=no_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=no_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=no_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=no_op)
-    data1 = data1.map(input_columns=["col_3d"], operations=no_op)
+    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
+    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
+    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
+    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
+    data1 = data1.map(input_columns=["col_3d"], operations=type_cast_op)
 
     filename = "project_between_maps_result.npz"
     ordered_save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
@@ -145,12 +145,12 @@ def test_case_map_project_map_project():
 
     data1 = ds.TFRecordDataset(DATA_DIR_TF, SCHEMA_DIR_TF, shuffle=False)
 
-    no_op = de_map.NoOp()
-    data1 = data1.map(input_columns=["col_sint64"], operations=no_op)
+    type_cast_op = C.TypeCast(mstype.int64)
+    data1 = data1.map(input_columns=["col_sint64"], operations=type_cast_op)
 
     data1 = data1.project(columns=columns)
 
-    data1 = data1.map(input_columns=["col_2d"], operations=no_op)
+    data1 = data1.map(input_columns=["col_2d"], operations=type_cast_op)
 
     data1 = data1.project(columns=columns)
 

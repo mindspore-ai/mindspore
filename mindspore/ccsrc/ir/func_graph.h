@@ -96,7 +96,7 @@ class FuncGraphBase : public Value {
   MS_DECLARE_PARENT(FuncGraphBase, Value);
 };
 
-extern const char kFuncGraphFlagUndetermin[];
+extern const char kFuncGraphFlagUndetermined[];
 
 class FuncGraph : public FuncGraphBase {
  public:
@@ -174,7 +174,7 @@ class FuncGraph : public FuncGraphBase {
   GraphDebugInfoPtr debug_info();
   void set_debug_info(const GraphDebugInfoPtr &info) {
     if (info == nullptr) {
-      MS_LOG(EXCEPTION) << "graph set null debug info";
+      MS_LOG(EXCEPTION) << "Graph set null debug info";
     }
     this->debug_info_ = info;
   }
@@ -200,7 +200,7 @@ class FuncGraph : public FuncGraphBase {
   // get all func graphs directly used by this func graph
   const FuncGraphCounterMap &func_graphs_used();
 
-  // get all func graphs nestedly used by this func graph
+  // get all func graphs nested used by this func graph
   const FuncGraphSet &func_graphs_used_total();
 
   // get all users of this func graph

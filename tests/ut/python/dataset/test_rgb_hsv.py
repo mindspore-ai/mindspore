@@ -133,6 +133,7 @@ def test_rgb_hsv_pipeline():
     # First dataset
     transforms1 = [
         vision.Decode(),
+        vision.Resize([64, 64]),
         vision.ToTensor()
     ]
     transforms1 = vision.ComposeOp(transforms1)
@@ -142,6 +143,7 @@ def test_rgb_hsv_pipeline():
     # Second dataset
     transforms2 = [
         vision.Decode(),
+        vision.Resize([64, 64]),
         vision.ToTensor(),
         vision.RgbToHsv(),
         vision.HsvToRgb()

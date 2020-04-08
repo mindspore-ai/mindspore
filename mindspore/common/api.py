@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_parallel_mode
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor
-from .._c_expression import verify_inputs_signature, init_exec_dataset, export_graph, _set_dataset_mode_config, init_ge
+from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_ge
 from .tensor import Tensor as MsTensor
 
 # store ms_function class compiled pipeline cache
@@ -501,6 +501,7 @@ class _Executor:
             file_name (str): File name of model to export
             file_format (str): MindSpore currently support 'GEIR' and 'ONNX' format for exported model
         """
+        from .._c_expression import export_graph
         phase = 'export' + '.' + str(net.create_time)
         export_graph(file_name, file_format, phase)
 

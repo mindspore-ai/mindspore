@@ -18,14 +18,14 @@
 #define MINDSPORE_CCSRC_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_GRAPH_H_
 
 #include <memory>
-#include <vector>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include <set>
 #include <utility>
+#include <vector>
 #include "ir/anf.h"
-#include "parallel/status.h"
 #include "parallel/allreduce_fusion/allreduce_node.h"
+#include "parallel/status.h"
 
 namespace mindspore {
 namespace parallel {

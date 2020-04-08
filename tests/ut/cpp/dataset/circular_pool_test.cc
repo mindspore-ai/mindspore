@@ -52,7 +52,7 @@ Status TestMem(MindDataTestCircularPool *tp, int32_t num_iterations) {
     uint64_t new_sz = dist(gen);
     std::string str = "Allocate " + std::to_string(old_sz) +
                       " bytes of memory and then resize to " + std::to_string(new_sz);
-    std::cout << str << std::endl;
+    MS_LOG(DEBUG) << str << std::endl;
     std::string id = Services::GetUniqueID();
     void *p;
     RETURN_IF_NOT_OK(tp->mp_->Allocate(old_sz, &p));
@@ -76,9 +76,9 @@ TEST_F(MindDataTestCircularPool, TestALLFunction) {
     vg_.CreateAsyncTask("TestMem", f);
   }
   vg_.join_all();
-  std::cout << vg_.GetTaskErrorIfAny() << std::endl;
+  MS_LOG(DEBUG) << vg_.GetTaskErrorIfAny() << std::endl;
   ASSERT_TRUE(vg_.GetTaskErrorIfAny().IsOk());
   CircularPool *cp = dynamic_cast<CircularPool *>(mp_.get());
-  std::cout << *cp << std::endl;
+  MS_LOG(DEBUG) << *cp << std::endl;
 }
 

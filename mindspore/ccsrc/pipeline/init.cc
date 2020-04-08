@@ -73,7 +73,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get CNode Strategy Dictionary.")
     .def("get_allreduce_fusion", &ExecutorPy::GetAllreduceFusion, py::arg("phase") = py::str("train"),
          "Get Allreduce Fusion Dictionary.")
-    .def("build_data_graph", &ExecutorPy::BuildDFGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
+    .def("build_data_graph", &ExecutorPy::BuildGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
     .def("has_compiled", &ExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "get if cell compiled.")
     .def("run_init_graph", &ExecutorPy::RunInitGraph, "Run init Graph.");
@@ -86,19 +86,17 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)m.def("generate_key", &mindspore::pipeline::GenerateKey, "Generate the function graph key.");
   (void)m.def("real_run_op", &mindspore::pynative::RunOp, "Run op pynatively.");
-  (void)m.def("initialize_distribute", &mindspore::pipeline::InitDistribute, "Initialize for Distribute.")
-    .def("init_ge", &mindspore::pipeline::InitGe, "Init GE");
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");
   (void)m.def("init_hccl", &mindspore::pipeline::InitHccl, "Init Hccl");
-  (void)m.def("finalize_ge", &mindspore::pipeline::FinalizeGe, "Finalize Ge");
   (void)m.def("finalize_hccl", &mindspore::pipeline::FinalizeHccl, "Finalize Hccl");
-  (void)m.def("set_ge_option", &mindspore::pipeline::SetGeOption, "API for set ge option.");
   (void)m.def("verify_inputs_signature", &mindspore::pipeline::VerifyInputSignature, "Verify input signature.");
   (void)m.def("init_exec_dataset", &mindspore::pipeline::InitExecDataset, py::arg("queue_name"), py::arg("size"),
               py::arg("batch_size"), py::arg("types"), py::arg("shapes"), py::arg("input_indexs"),
               py::arg("phase") = py::str("dataset"), "Init and exec dataset.");
   (void)m.def("_set_dataset_mode_config", &mindspore::ConfigManager::SetDatasetModeConfig, "API for set dataset mode.");
-  (void)m.def("export_graph", &mindspore::pipeline::ExportDFGraph, "Export Graph.");
+  (void)m.def("init_ge", &mindspore::pipeline::InitGe, "Init GE");
+
+  (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, "Export Graph.");
 
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")

@@ -219,6 +219,10 @@ test_case_math_ops = [
         'block': P.ACos(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Acosh', {
+        'block': P.Acosh(),
+        'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16))],
+        'skip': ['backward']}),
     ('Sin', {
         'block': P.Sin(),
         'desc_inputs': [[2, 3]],
@@ -298,6 +302,11 @@ test_case_math_ops = [
         'desc_bprop': [[512, 1024]]}),
     ('FloorDiv', {
         'block': P.FloorDiv(),
+        'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16)),
+                        Tensor(np.random.rand(4).astype(np.float16))],
+        'skip': ['backward']}),
+    ('FloorMod', {
+        'block': P.FloorMod(),
         'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16)),
                         Tensor(np.random.rand(4).astype(np.float16))],
         'skip': ['backward']}),
@@ -481,7 +490,12 @@ test_case_math_ops = [
     ('Round', {
         'block': P.Round(),
         'desc_inputs': [[3]],
-        'desc_bprop': [[3]]})
+        'desc_bprop': [[3]]}),
+    ('Atan2', {
+        'block': P.Atan2(),
+        'desc_inputs': [Tensor(np.array([0, 1]).astype(np.float32)),
+                        Tensor(np.array([1, 1]).astype(np.float32))],
+        'desc_bprop': [[2]]})
 ]
 
 test_case_nn_ops = [
@@ -805,6 +819,18 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
+    ('ApplyRMSProp', {
+        'block': P.ApplyRMSProp(),
+        'desc_const': [0.9, 0.0, 1e-10, 0.001],
+        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
+        'desc_bprop': [3, 3],
+        'skip': ['backward']}),
+    ('ApplyCenteredRMSProp', {
+        'block': P.ApplyCenteredRMSProp(),
+        'desc_const': [0.9, 0.0, 1e-10, 0.001],
+        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3], [3, 3]],
+        'desc_bprop': [3, 3],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [
@@ -947,6 +973,36 @@ test_case_array_ops = [
                          Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)))],
         'desc_bprop': [[3,]]}),
+    ('Diag', {
+        'block': P.Diag(),
+        'desc_inputs': [[4]],
+        'desc_bprop': [[4, 4]],
+    }),
+    ('DiagPart', {
+        'block': P.DiagPart(),
+        'desc_inputs': [[4, 4]],
+        'desc_bprop': [[4]],
+    }),
+    ('SpaceToBatch_1', {
+        'block': P.SpaceToBatch(2, [[0, 0], [0, 0]]),
+        'desc_inputs': [[1, 3, 2, 2]],
+        'desc_bprop': [[4, 3, 1, 1]],
+    }),
+    ('SpaceToBatch_2', {
+        'block': P.SpaceToBatch(2, [[1, 1], [0, 4]]),
+        'desc_inputs': [[1, 3, 2, 2]],
+        'desc_bprop': [[4, 3, 2, 4]],
+    }),
+    ('BatchToSpace_1', {
+        'block': P.BatchToSpace(2, [[0, 0], [0, 0]]),
+        'desc_inputs': [[4, 3, 1, 1]],
+        'desc_bprop': [[1, 3, 2, 2]],
+    }),
+    ('BatchToSpace_2', {
+        'block': P.BatchToSpace(2, [[0, 0], [0, 1]]),
+        'desc_inputs': [[4, 3, 1, 1]],
+        'desc_bprop': [[1, 3, 2, 1]],
+    }),
 ]
 
 test_case_other_ops = [

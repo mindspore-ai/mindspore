@@ -190,7 +190,8 @@ def _none_equal_tuple(x, y):
    """
     return False
 
-
+@equal.register("Tensor", "Number")
+@equal.register("Number", "Tensor")
 @equal.register("Tensor", "Tensor")
 def _tensor_equal_tensor(x, y):
     """

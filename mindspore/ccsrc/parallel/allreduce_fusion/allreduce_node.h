@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_NODE_H_
 #define MINDSPORE_CCSRC_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_NODE_H_
 
-#include <unordered_set>
-#include <unordered_map>
 #include <memory>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include "ir/anf.h"
 #include "parallel/status.h"
@@ -39,9 +39,14 @@ class AllreduceNode {
   const std::unordered_set<AnfNodePtr>& paras() const { return paras_; }
   double curr_para_size() const { return curr_para_size_; }
   virtual ~AllreduceNode() = default;
-  Status AddPrev(const AllreduceNodePtr& prev_node, double dist);
+  // Add previous node
+  // prev_node is the previous to be added
+  // max is the current max depend_feat_size of the AllreduceGraph
+  Status AddPrev(const AllreduceNodePtr& prev_node, double dist, double* max);
   Status AddNext(const AllreduceNodePtr& next_node);
   double depend_feat_size() const { return depend_feat_size_; }
+  void AddDependFeatSize(double add_dist) { depend_feat_size_ += add_dist; }
+  const std::vector<AllreduceNodePtr>& next() const { return next_; }
   void ToString() const;
   bool operator<(const AllreduceNode& node) const { return depend_feat_size_ < node.depend_feat_size(); }
   bool operator>(const AllreduceNode& node) const { return depend_feat_size_ > node.depend_feat_size(); }

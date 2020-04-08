@@ -102,6 +102,7 @@ class Primitive : public Named {
 
   PrimType prim_type() const { return prim_type_; }
   std::string instance_name() const { return instance_name_; }
+  std::string GetAttrsText() const;
   bool operator==(const Value& other) const override;
   bool operator==(const Primitive& other) const;
   ~Primitive() override = default;

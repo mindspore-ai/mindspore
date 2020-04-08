@@ -15,15 +15,15 @@
  */
 
 #include "parallel/tensor_layout/tensor_layout.h"
-#include <utility>
 #include <iostream>
-#include "parallel/status.h"
-#include "utils/log_adapter.h"
-#include "parallel/tensor_layout/shape_util.h"
-#include "parallel/tensor_layout/array.h"
+#include <utility>
+#include "common/utils.h"
 #include "ir/value.h"
 #include "parallel/device_matrix.h"
-#include "common/utils.h"
+#include "parallel/status.h"
+#include "parallel/tensor_layout/array.h"
+#include "parallel/tensor_layout/shape_util.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {

@@ -48,5 +48,25 @@ TEST_F(TestHWOptimizeDependence, test_optimize_dependence) {
   FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_optimize_dependence", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
+
+TEST_F(TestHWOptimizeDependence, test_optimize_dependence_with_make_tuple) {
+  /*
+   * def before(x, y, a, b):
+   *    z = make_tuple(TransData(a), TransData(b))
+   *    depend_intput = depend(y, z)
+   *    sum = add(x, depend_intput)
+   *    return sum
+   */
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_optimize_dependence_with_make_tuple", "before");
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::OptimizeDependence>());
+  optimizer->AddPassManager(pm);
+  FuncGraphPtr new_graph = optimizer->Optimize(g);
+
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_optimize_dependence_with_make_tuple", "after");
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+}
 }  // namespace opt
 }  // namespace mindspore

@@ -16,8 +16,8 @@
 
 #include "parallel/tensor_layout/redistribution_layout_transfer.h"
 #include "parallel/status.h"
-#include "parallel/tensor_layout/shape_util.h"
 #include "parallel/tensor_layout/reshape_layout_transfer.h"
+#include "parallel/tensor_layout/shape_util.h"
 
 namespace mindspore {
 namespace parallel {

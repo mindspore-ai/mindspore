@@ -34,13 +34,13 @@ class TestGenerateStrategy : public UT::Common {
 };
 
 void TestGenerateStrategy::SetUp() {
-  std::list<int32_t> dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 10; i++) {
     dev_list.push_back(i);
   }
 
-  std::list<int32_t> stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(8);
   stage_map.push_back(2);
 

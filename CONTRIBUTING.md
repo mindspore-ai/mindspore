@@ -78,7 +78,7 @@ Please follow this style to make MindSpore easy to review, maintain and develop.
 
 * Pull a request to MindSpore repository
 
-    In the last step, your need to pull a compare request between your new branch and MindSpore `master` branch. After finishing the pull request, the Jekins CI will be automatically set up for building test.
+    In the last step, your need to pull a compare request between your new branch and MindSpore `master` branch. After finishing the pull request, the Jenkins CI will be automatically set up for building test.
 
 ### Report issues
 

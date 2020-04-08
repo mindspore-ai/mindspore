@@ -16,15 +16,15 @@
 
 #include "parallel/device_matrix.h"
 
-#include <cstdint>
 #include <algorithm>
-#include <utility>
-#include <numeric>
+#include <cstdint>
 #include <functional>
-#include <list>
+#include <numeric>
+#include <utility>
+#include <vector>
 
-#include "parallel/status.h"
 #include "parallel/ops_info/operator_info.h"
+#include "parallel/status.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -64,7 +64,7 @@ Status DeviceMatrix::GetDevicesAlongDim(const uint32_t& dim, RankList* devices) 
   }
 
   RankList group;
-  std::list<RankList> local_group_list;
+  std::vector<RankList> local_group_list;
 
   // lower than dim
   int32_t step = 1;
@@ -160,7 +160,7 @@ std::string ShapeToString(const Shape& shape) {
   return str + "]";
 }
 
-std::string ListToString(const std::list<int32_t>& list) {
+std::string ListToString(const std::vector<int32_t>& list) {
   std::string str = "[";
   for (auto& element : list) {
     str += std::to_string(element) + ", ";

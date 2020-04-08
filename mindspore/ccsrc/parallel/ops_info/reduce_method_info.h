@@ -17,17 +17,16 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_REDUCE_SUM_INFO_H_
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_REDUCE_SUM_INFO_H_
 
+#include <memory>
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
+#include "ir/meta_tensor.h"
 #include "ir/value.h"
+#include "parallel/auto_parallel/operator_costmodel.h"
 #include "parallel/ops_info/activation_info.h"
 #include "parallel/strategy.h"
-#include "parallel/auto_parallel/operator_costmodel.h"
-#include "ir/meta_tensor.h"
 
 namespace mindspore {
 namespace parallel {

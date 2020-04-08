@@ -50,7 +50,7 @@ class Embedding(Cell):
 
     Examples:
         >>> net = nn.Embedding(20000, 768,  True)
-        >>> input_data = mindspore.Tensor(np.ones([8, 128]), mindspore.int32)
+        >>> input_data = Tensor(np.ones([8, 128]), mindspore.int32)
         >>>
         >>> # Maps the input word IDs to word embedding.
         >>> output = net(input_data)

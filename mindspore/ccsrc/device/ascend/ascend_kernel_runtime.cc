@@ -150,9 +150,9 @@ void DumpOutput(mindspore::session::KernelGraph *graph, const string &dump_path,
     auto output_size = AnfAlgo::GetOutputTensorNum(node);
     for (size_t j = 0; j < output_size; ++j) {
       auto addr = AnfAlgo::GetOutputAddr(node, j);
-      auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
-      auto type = AnfAlgo::GetOutputDeviceDataType(node, j);
-      auto format = AnfAlgo::GetOutputFormat(node, j);
+      auto shape = AnfAlgo::GetOutputInferShape(node, j);
+      auto type = AnfAlgo::GetOutputInferDataType(node, j);
+      auto format = kOpFormat_DEFAULT;
       string filepath = dump_path + '/' + kernel_name + '_' + "output_" + std::to_string(j);
       auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
       std::vector<int> int_shapes;
@@ -181,9 +181,9 @@ void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_p
       continue;
     }
     auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
-    auto shape = AnfAlgo::GetOutputDeviceShape(item, PRAMATER_OUTPUT_INDEX);
-    auto type = AnfAlgo::GetOutputDeviceDataType(item, PRAMATER_OUTPUT_INDEX);
-    auto format = AnfAlgo::GetOutputFormat(item, PRAMATER_OUTPUT_INDEX);
+    auto shape = AnfAlgo::GetOutputInferShape(item, PRAMATER_OUTPUT_INDEX);
+    auto type = AnfAlgo::GetOutputInferDataType(item, PRAMATER_OUTPUT_INDEX);
+    auto format = kOpFormat_DEFAULT;
     string filepath = dump_path + '/' + parameter_name + '_' + "output_0";
     auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
     std::vector<int> int_shapes;
@@ -239,22 +239,11 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
   return std::make_shared<AscendDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
-void AscendKernelRuntime::MallocOpMemory(const DeviceAddressPtr address, size_t size, int flag) {
-  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  if (MsContext::GetInstance()->enable_dynamic_mem_pool()) {
-    auto device_ptr = AscendMemoryAllocator::GetInstance().AllocTensorMem(size);
-    MS_EXCEPTION_IF_NULL(device_ptr);
-    address->ptr_ = device_ptr;
-    address->mem_dynamic_alloc_ = true;
-    return;
-  }
-  if (flag == kStaticMem) {
-    address->ptr_ = MallocStaticMem(size, false);
-  } else if (flag == kDynamicMem) {
-    address->ptr_ = MallocDynamicMem(size, false);
-  } else {
-    MS_LOG(EXCEPTION) << "Unknown memory type!";
-  }
+void AscendKernelRuntime::MallocOpMemory(const DeviceAddressPtr address, size_t size, int) {
+  auto device_ptr = AscendMemoryAllocator::GetInstance().AllocTensorMem(size);
+  MS_EXCEPTION_IF_NULL(device_ptr);
+  address->ptr_ = device_ptr;
+  address->mem_dynamic_alloc_ = true;
 }
 
 bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
@@ -488,23 +477,18 @@ bool AscendKernelRuntime::DestroyHccl() {
 
 bool AscendKernelRuntime::MallocDeviceMemory() {
   device_mem_size_ = ASCEND_MEM_SIZE_BYTE;
-  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
-  if (MsContext::GetInstance()->enable_dynamic_mem_pool()) {
-    static_mem_offset_ = FloatToSize(device_mem_size_ * GRAPH_INIT_DAVINCI_MEM_RATIO);
-    device_mem_pool_size_ = FloatToSize(device_mem_size_ * (1 - GRAPH_INIT_DAVINCI_MEM_RATIO));
-    auto ret = rtMalloc(reinterpret_cast<void **>(&device_mem_pool_base_), device_mem_pool_size_, RT_MEMORY_HBM);
-    if (ret != RT_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_pool_size_ << "] fail, ret[" << ret << "]";
-    }
-    AscendMemoryAllocator::GetInstance().set_device_mem_pool_base(device_mem_pool_base_);
-    AscendMemoryAllocator::GetInstance().set_device_mem_pool_size(device_mem_pool_size_);
-  } else {
-    static_mem_offset_ = device_mem_size_;
-  }
-  auto ret = rtMalloc(reinterpret_cast<void **>(&device_mem_base_), device_mem_size_, RT_MEMORY_HBM);
+  static_mem_offset_ = FloatToSize(device_mem_size_ * GRAPH_INIT_ASCEND_MEM_RATIO);
+  auto ret = rtMalloc(reinterpret_cast<void **>(&device_mem_base_), static_mem_offset_, RT_MEMORY_HBM);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_size_ << "] fail, ret[" << ret << "]";
+    MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << static_mem_offset_ << "] fail, ret[" << ret << "]";
   }
+  device_mem_pool_size_ = FloatToSize(device_mem_size_ * (1 - GRAPH_INIT_ASCEND_MEM_RATIO));
+  ret = rtMalloc(reinterpret_cast<void **>(&device_mem_pool_base_), device_mem_pool_size_, RT_MEMORY_HBM);
+  if (ret != RT_ERROR_NONE) {
+    MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_pool_size_ << "] fail, ret[" << ret << "]";
+  }
+  AscendMemoryAllocator::GetInstance().set_device_mem_pool_base(device_mem_pool_base_);
+  AscendMemoryAllocator::GetInstance().set_device_mem_pool_size(device_mem_pool_size_);
   return true;
 }
 

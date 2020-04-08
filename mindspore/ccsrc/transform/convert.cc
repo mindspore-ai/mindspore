@@ -171,6 +171,8 @@ const char kNameAbsGrad[] = "AbsGrad";
 const char kNameBinaryCrossEntropy[] = "BinaryCrossEntropy";
 const char kNameBinaryCrossEntropyGrad[] = "BinaryCrossEntropyGrad";
 const char kNameSparseApplyAdagrad[] = "SparseApplyAdagrad";
+const char kNameAcosh[] = "Acosh";
+const char kNameFloorMod[] = "FloorMod";
 const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
 const char kNameSpaceToDepth[] = "SpaceToDepth";
 const char kNameDepthToSpace[] = "DepthToSpace";
@@ -179,6 +181,13 @@ const char kNameLARSUpdate[] = "LARSUpdate";
 const char kNameRound[] = "Round";
 const char kNamePrint[] = "Print";
 const char kNameApplyFtrl[] = "ApplyFtrl";
+const char kNameDiag[] = "Diag";
+const char kNameDiagPart[] = "DiagPart";
+const char kNameSpaceToBatch[] = "SpaceToBatch";
+const char kNameBatchToSpace[] = "BatchToSpace";
+const char kNameAtan2[] = "Atan2";
+const char kNameApplyRMSProp[] = "ApplyRMSProp";
+const char kNameApplyCenteredRMSProp[] = "ApplyCenteredRMSProp";
 
 // -----------------OpAdapter initialization--------------
 std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_map() {
@@ -355,11 +364,20 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBinaryCrossEntropyGrad), ADPT_DESC(BinaryCrossEntropyGrad)},
     {string(kNameSparseApplyAdagrad), ADPT_DESC(SparseApplyAdagradD)},
     {string(kNameSparseApplyFtrlD), ADPT_DESC(SparseApplyFtrlD)},
+    {string(kNameAcosh), ADPT_DESC(Acosh)},
+    {string(kNameFloorMod), ADPT_DESC(FloorMod)},
     {string(kNameSpaceToDepth), ADPT_DESC(SpaceToDepth)},
     {string(kNameDepthToSpace), ADPT_DESC(DepthToSpace)},
     {string(kNameSign), ADPT_DESC(Sign)},
     {string(kNameRound), ADPT_DESC(Round)},
-    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrl)}};
+    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrl)},
+    {string(kNameDiag), ADPT_DESC(Diag)},
+    {string(kNameDiagPart), ADPT_DESC(DiagPart)},
+    {string(kNameSpaceToBatch), ADPT_DESC(SpaceToBatchD)},
+    {string(kNameBatchToSpace), ADPT_DESC(BatchToSpaceD)},
+    {string(kNameAtan2), ADPT_DESC(Atan2)},
+    {string(kNameApplyRMSProp), ADPT_DESC(ApplyRMSPropD)},
+    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);
 #endif
@@ -367,24 +385,6 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
 }
 
 // ---------------implement of DfGraphConvertor-------------
-std::string GetCNodeFuncName(const CNodePtr cnode) {
-  if (cnode->inputs().empty()) {
-    return "";
-  }
-
-  AnfNodePtr valuenode = cnode->input(0);
-  if (valuenode->isa<ValueNode>()) {
-    auto value = GetValueNode(valuenode);
-    // check whether the valuenode is primitive
-    if (value->isa<Primitive>()) {
-      return value->cast<PrimitivePtr>()->name();
-    } else {
-      return value->ToString();
-    }
-  }
-  return "";
-}
-
 PrimType GetCNodeFuncType(const CNodePtr cnode) {
   if (cnode->inputs().empty()) {
     return kPrimTypeUnknown;
@@ -1098,12 +1098,12 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
   auto normal_shape_ptr = dyn_cast<abstract::Shape>(node->Shape());
   vector<int> shape;
   if (normal_shape_ptr == nullptr) {
-    MS_LOG(ERROR) << "Update data op descriptor failed! Invalid shape.";
+    MS_LOG(INFO) << "Invalid shape to update data op descriptor.";
     return;
   }
   shape = normal_shape_ptr->shape();
   if (node->Type() == nullptr) {
-    MS_LOG(ERROR) << "Update data op descriptor failed! Invalid type.";
+    MS_LOG(INFO) << "Invalid type to update data op descriptor.";
     return;
   }
   TypeId me_type = node->Type()->type_id();

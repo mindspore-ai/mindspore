@@ -18,14 +18,13 @@
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_
 
 #include <ir/value.h>
+#include <memory>
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
-#include "parallel/ops_info/operator_info.h"
 #include "parallel/auto_parallel/operator_costmodel.h"
+#include "parallel/ops_info/operator_info.h"
 #include "parallel/strategy.h"
 
 namespace mindspore {
@@ -167,6 +166,33 @@ class SqrtInfo : public ActivationOther {
            const PrimitiveAttrs& attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~SqrtInfo() override = default;
+};
+
+class NegInfo : public ActivationOther {
+ public:
+  NegInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~NegInfo() override = default;
+};
+
+class ExpandDimsInfo : public ActivationOther {
+ public:
+  ExpandDimsInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
+                 const PrimitiveAttrs& attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~ExpandDimsInfo() override = default;
+
+ protected:
+  Status GetAttrs() override;
+  Status InferTensorMap() override;
+  Status InferTensorInfo() override;
+  Status InferMirrorOps() override;
+  Status InferTensorStrategy();
+
+ private:
+  int32_t positive_axis_ = -1;
+  Strategys inputs_strategy_;
+  Strategys outputs_strategy_;
 };
 }  // namespace parallel
 }  // namespace mindspore

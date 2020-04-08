@@ -194,6 +194,9 @@ class PrimitiveWithInfer(Primitive):
         Primitive.__init__(self, name)
         self.set_prim_type(prim_type.py_infer_shape)
 
+    def prim_name(self):
+        return self.__class__.__name__
+
     def _clone(self):
         """
         Deeply clones the primitive object.

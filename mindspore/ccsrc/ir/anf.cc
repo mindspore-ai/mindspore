@@ -197,6 +197,23 @@ PrimitivePtr GetCNodePrimitive(const AnfNodePtr& node) {
   return nullptr;
 }
 
+std::string GetCNodeFuncName(const CNodePtr cnode) {
+  if (cnode->inputs().empty()) {
+    return "";
+  }
+
+  AnfNodePtr valuenode = cnode->input(0);
+  if (valuenode->isa<ValueNode>()) {
+    auto value = GetValueNode(valuenode);
+    // check whether the valuenode is primitive
+    if (value->isa<Primitive>()) {
+      return value->cast<PrimitivePtr>()->name();
+    }
+    return value->ToString();
+  }
+  return "";
+}
+
 bool IsPrimitive(const AnfNodePtr& node, const PrimitivePtr& value) {
   if (IsValueNode<Primitive>(node)) {
     PrimitivePtr fn_value = GetValueNode<PrimitivePtr>(node);

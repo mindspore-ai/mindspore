@@ -97,13 +97,10 @@ def test_all_to_all():
     strategys = all_to_all_common(strategy1)
     print(strategys)
     expect_dict = {'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits'
-                   '/SoftmaxCrossEntropyWithLogits-op43': [[8, 1], [8, 1]],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits'
-                   '/OneHot-op44': [[8, 1], [], []],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/Transpose-op1':
-                       [[8, 1]],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/MatMul-op0':
-                       [[1, 1], [1, 8]]}
+                   '/SoftmaxCrossEntropyWithLogits-op3': [[8, 1], [8, 1]],
+                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits/OneHot-op4': [[8, 1], [], []],
+                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/Transpose-op1': [[8, 1]],
+                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/MatMul-op0': [[1, 1], [1, 8]]}
     assert (strategys == expect_dict)
     context.set_context(save_graphs=False)
 

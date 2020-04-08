@@ -25,6 +25,7 @@ from .lamb import Lamb
 from .sgd import SGD
 from .lars import LARS
 from .ftrl import FTRL
+from .rmsprop import RMSProp
 
 __all__ = ['Optimizer', 'Momentum', 'LARS', 'Adam', 'AdamWeightDecay',
-           'AdamWeightDecayDynamicLR', 'Lamb', 'SGD', 'FTRL']
+           'AdamWeightDecayDynamicLR', 'Lamb', 'SGD', 'FTRL', 'RMSProp']

@@ -148,7 +148,7 @@ class MetaTensor : public Value {
   //
   // The constructed MetaTensor object has the same type and shape with meta_tensor.
   //
-  // param meta_tensor An exisiting MetaTensor object.
+  // param meta_tensor An existing MetaTensor object.
   virtual MetaTensor& operator=(const MetaTensor& meta_tensor);
 
   // brief Compares two MetaTensor objects.
@@ -166,7 +166,7 @@ class MetaTensor : public Value {
   TypeId data_type() const { return data_type_; }
   std::string ToString() const override;
   std::string DumpText() const override;
-  // bried Sets the data type of a tensor in its MetaTensor.
+  // brief Sets the data type of a tensor in its MetaTensor.
   //
   // param data_type The data type of the tensor to be set.
   virtual TypeId set_data_type(const TypeId data_type) {
@@ -314,7 +314,7 @@ class Tensor : public MetaTensor {
   //
   // The constructed Tensor object has the same type and shape with tensor.
   //
-  // param tensor An exisiting Tensor object.
+  // param tensor An existing Tensor object.
   Tensor& operator=(const Tensor& tensor);
 
   // brief Compares two Tensor objects.
@@ -383,7 +383,7 @@ class Tensor : public MetaTensor {
   // return The [TypeId] of the tensor data.
   TypeId GetDataType(const py::buffer_info& buf) const;
 
-  // bried Sets the data type of a tensor.
+  // brief Sets the data type of a tensor.
   //
   // param data_type The data type of the tensor to be set.
   //

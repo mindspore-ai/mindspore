@@ -17,17 +17,17 @@
 #ifndef PARALLEL_AUTO_PARALLEL_REC_PARTITION_H_
 #define PARALLEL_AUTO_PARALLEL_REC_PARTITION_H_
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <map>
-#include <utility>
 #include <cmath>
+#include <iostream>
+#include <map>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include "parallel/auto_parallel/rec_core/rec_cost.h"
 #include "parallel/auto_parallel/rec_core/rec_graph.h"
 #include "parallel/auto_parallel/rec_core/rec_strategy.h"
-#include "parallel/auto_parallel/rec_core/rec_cost.h"
 #include "parallel/status.h"
 
 namespace mindspore {

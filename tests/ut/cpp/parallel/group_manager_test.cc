@@ -42,7 +42,7 @@ void TestGroup::TearDown() {
 
 Status TestGroup::Init() {
   std::string gname = "1-2";
-  std::list<Device> dev_list;
+  std::vector<Device> dev_list;
   Device one = Device(int32_t(1));
   dev_list.push_back(one);
   Device two = Device(int32_t(2));
@@ -55,8 +55,8 @@ TEST_F(TestGroup, test_Init) { ASSERT_EQ(Init(), Status::SUCCESS); }
 
 TEST_F(TestGroup, test_GetDevicesList) {
   Init();
-  std::list<Device> res_dev_list = gp.GetDevicesList();
-  std::list<Device>::iterator it = res_dev_list.begin();
+  std::vector<Device> res_dev_list = gp.GetDevicesList();
+  std::vector<Device>::iterator it = res_dev_list.begin();
   ASSERT_EQ(it->rank(), int32_t(1));
   it++;
   ASSERT_EQ(it->rank(), int32_t(2));
@@ -88,7 +88,7 @@ void TestGroupManager::TearDown() {
 
 Status TestGroupManager::Init(Group** gp_ptr) {
   std::string gname = "1-2";
-  std::list<Device> dev_list;
+  std::vector<Device> dev_list;
   Device one = Device(int32_t(1));
   dev_list.push_back(one);
   Device two = Device(int32_t(2));
@@ -102,15 +102,15 @@ TEST_F(TestGroupManager, test_CreateGroup) {
   Group* gp_ptr = new Group();
   ASSERT_EQ(Init(&gp_ptr), Status::SUCCESS);
 
-  std::list<Device> res_dev_list = gp_ptr->GetDevicesList();
-  std::list<Device>::iterator it = res_dev_list.begin();
+  std::vector<Device> res_dev_list = gp_ptr->GetDevicesList();
+  std::vector<Device>::iterator it = res_dev_list.begin();
   ASSERT_EQ(it->rank(), int32_t(1));
   it++;
   ASSERT_EQ(it->rank(), int32_t(2));
   delete gp_ptr;
 
   // testing for creating a group with an existing group name
-  std::list<Device> dev_list2;
+  std::vector<Device> dev_list2;
   Device three = Device(int32_t(3));
   dev_list2.push_back(three);
   Device four = Device(int32_t(4));
@@ -119,8 +119,8 @@ TEST_F(TestGroupManager, test_CreateGroup) {
   ASSERT_EQ(gm.CreateGroup("1-2", dev_list2, gp_ptr), Status::SUCCESS);
 
   ASSERT_STREQ(gp_ptr->name().data(), "1-2");
-  std::list<Device> res_dev_list2 = gp_ptr->GetDevicesList();
-  std::list<Device>::iterator it2 = res_dev_list2.begin();
+  std::vector<Device> res_dev_list2 = gp_ptr->GetDevicesList();
+  std::vector<Device>::iterator it2 = res_dev_list2.begin();
   ASSERT_EQ(it2->rank(), int32_t(1));
   it2++;
   ASSERT_EQ(it2->rank(), int32_t(2));
@@ -136,8 +136,8 @@ TEST_F(TestGroupManager, test_FindGroup) {
 
   ASSERT_EQ(gm.FindGroup(gname, &gp_ptr2), Status::SUCCESS);
 
-  std::list<Device> res_dev_list = gp_ptr2->GetDevicesList();
-  std::list<Device>::iterator it = res_dev_list.begin();
+  std::vector<Device> res_dev_list = gp_ptr2->GetDevicesList();
+  std::vector<Device>::iterator it = res_dev_list.begin();
   ASSERT_EQ(it->rank(), int32_t(1));
   it++;
   ASSERT_EQ(it->rank(), int32_t(2));

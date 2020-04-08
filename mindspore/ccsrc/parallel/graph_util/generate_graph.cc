@@ -17,7 +17,6 @@
 #include "parallel/graph_util/generate_graph.h"
 
 #include <algorithm>
-#include <list>
 #include <memory>
 #include <string>
 #include <utility>

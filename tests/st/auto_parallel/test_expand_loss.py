@@ -18,7 +18,9 @@ import pytest
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single
 def test_expand_loss():
-    ret = os.system("sh run_auto_parallel_loss_expand.sh")
+    sh_path = os.path.split(os.path.realpath(__file__))[0]
+    ret = os.system(f"sh {sh_path}/run_auto_parallel_loss_expand.sh")
     assert(ret==0)

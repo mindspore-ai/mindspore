@@ -178,14 +178,12 @@ LinConvertResult Convert(const AnfNodePtrList& lst) {
 }
 
 LinkFuncType MsVmConvert = Convert<VM>;
-LinkFuncType GeVmConvert = Convert<GeVM>;
 
-std::unordered_map<std::string, LinkFuncType> backends = {{kMsVm, MsVmConvert}, {kGeVm, GeVmConvert}};
+std::unordered_map<std::string, LinkFuncType> backends = {{kMsVm, MsVmConvert}};
 
 std::set<std::string> backend_list = {
   kMsConvert,
   kMsVm,
-  kGeVm,
 };
 
 }  // namespace compile

@@ -15,6 +15,7 @@
  */
 
 #include "parallel/allreduce_fusion/allreduce_node.h"
+#include <queue>
 #include "parallel/tensor_layout/tensor_layout.h"
 #include "utils/log_adapter.h"
 
@@ -29,7 +30,7 @@ Status AllreduceNode::AddNext(const AllreduceNodePtr& next_node) {
   return SUCCESS;
 }
 
-Status AllreduceNode::AddPrev(const AllreduceNodePtr& prev_node, double dist) {
+Status AllreduceNode::AddPrev(const AllreduceNodePtr& prev_node, double dist, double* max) {
   if (prev_node == nullptr) {
     MS_LOG(ERROR) << "next_node is nullptr!";
     return FAILED;
@@ -39,7 +40,26 @@ Status AllreduceNode::AddPrev(const AllreduceNodePtr& prev_node, double dist) {
     return FAILED;
   }
   prev_.emplace_back(prev_node);
-  depend_feat_size_ += prev_node->depend_feat_size() + dist;
+  double add_dist = prev_node->depend_feat_size() + dist;
+  depend_feat_size_ += add_dist;
+  if (depend_feat_size_ > *max) {
+    *max = depend_feat_size_;
+  }
+  std::queue<AllreduceNodePtr> next_queue;
+  for (auto& next : next_) {
+    next_queue.push(next);
+  }
+  while (!next_queue.empty()) {
+    auto ele = next_queue.front();
+    ele->AddDependFeatSize(add_dist);
+    if (ele->depend_feat_size() > *max) {
+      *max = ele->depend_feat_size();
+    }
+    for (auto& next : ele->next()) {
+      next_queue.push(next);
+    }
+    next_queue.pop();
+  }
   return SUCCESS;
 }
 

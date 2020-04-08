@@ -163,7 +163,7 @@ class Lamb(Optimizer):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> optim = Lamb(params=net.trainable_params(), decay_steps=10)
+        >>> optim = nn.Lamb(params=net.trainable_params(), decay_steps=10)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
 

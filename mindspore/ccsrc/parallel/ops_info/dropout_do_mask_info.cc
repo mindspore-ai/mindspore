@@ -17,15 +17,15 @@
 #include "parallel/ops_info/dropout_do_mask_info.h"
 
 #include <algorithm>
-#include <vector>
-#include <utility>
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "ir/value.h"
+#include "parallel/auto_parallel/costmodel.h"
 #include "parallel/device_matrix.h"
 #include "parallel/strategy.h"
 #include "parallel/tensor_layout/tensor_redistribution.h"
-#include "parallel/auto_parallel/costmodel.h"
 
 namespace mindspore {
 namespace parallel {

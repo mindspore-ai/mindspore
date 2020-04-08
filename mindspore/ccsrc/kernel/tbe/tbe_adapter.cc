@@ -34,6 +34,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"tensor_add", "add"},
   {"reduce_mean", "reduce_mean_d"},
   {"reduce_max", "reduce_max_d"},
+  {"reduce_min", "reduce_min_d"},
   {"conv2d_backprop_filter", "conv2d_backprop_filter_d"},
   {"conv2d_backprop_input", "conv2d_backprop_input_d"},
   {"top_kv2", "top_k"},
@@ -98,7 +99,7 @@ void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   *func_name = name_tmp;
   auto iter = tbe_func_adapter_map.find(*func_name);
   if (iter != tbe_func_adapter_map.end()) {
-    MS_LOG(INFO) << "map actual op fron me " << func_name << "to tbe op" << iter->second;
+    MS_LOG(INFO) << "map actual op from me " << func_name << "to tbe op" << iter->second;
     *func_name = iter->second;
   }
 }

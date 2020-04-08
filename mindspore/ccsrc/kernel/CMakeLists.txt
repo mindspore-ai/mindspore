@@ -25,7 +25,6 @@ endif()
 
 if(ENABLE_D)
     file(GLOB_RECURSE _D_SRC_LIST  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-						"akg/cce/*.cc"
 						"tbe/*.cc"
 						"aicpu/*.cc"
 						"mng/*.cc"

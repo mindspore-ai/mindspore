@@ -47,8 +47,8 @@ TEST_F(MindDataTestOneHotOp, TestOp) {
   EXPECT_TRUE(s.IsOk());
   ASSERT_TRUE(output->shape() == expected->shape());
   ASSERT_TRUE(output->type() == expected->type());
-  std::cout << *output << std::endl;
-  std::cout << *expected << std::endl;
+  MS_LOG(DEBUG) << *output << std::endl;
+  MS_LOG(DEBUG) << *expected << std::endl;
 
   ASSERT_TRUE(*output == *expected);
   MS_LOG(INFO) << "MindDataTestOneHotOp end.";

@@ -69,7 +69,7 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBasic) {
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
-  std::cout << (*my_mindrecord_op);
+  MS_LOG(DEBUG) << (*my_mindrecord_op);
 
   my_tree->AssociateNode(my_mindrecord_op);
 
@@ -140,7 +140,7 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordSample) {
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
-  std::cout << (*my_mindrecord_op);
+  MS_LOG(DEBUG) << (*my_mindrecord_op);
 
   my_tree->AssociateNode(my_mindrecord_op);
 
@@ -211,7 +211,7 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordShuffle) {
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
-  std::cout << (*my_mindrecord_op);
+  MS_LOG(DEBUG) << (*my_mindrecord_op);
 
   my_tree->AssociateNode(my_mindrecord_op);
 
@@ -285,7 +285,7 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordCategory) {
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
-  std::cout << (*my_mindrecord_op);
+  MS_LOG(DEBUG) << (*my_mindrecord_op);
 
   my_tree->AssociateNode(my_mindrecord_op);
 
@@ -352,7 +352,7 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordRepeat) {
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
-  std::cout << (*my_mindrecord_op);
+  MS_LOG(DEBUG) << (*my_mindrecord_op);
 
   rc = my_tree->AssociateNode(my_mindrecord_op);
   EXPECT_TRUE(rc.IsOk());
@@ -434,7 +434,7 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBlockReaderRepeat) {
   rc = builder.Build(&my_mindrecord_op);
   ASSERT_TRUE(rc.IsOk());
 
-  std::cout << (*my_mindrecord_op);
+  MS_LOG(DEBUG) << (*my_mindrecord_op);
 
   rc = my_tree->AssociateNode(my_mindrecord_op);
   EXPECT_TRUE(rc.IsOk());

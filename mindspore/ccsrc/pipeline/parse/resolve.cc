@@ -53,6 +53,7 @@ abstract::AbstractBasePtr ClassType::ToAbstract() {
   ret_val->set_value_desc(ToString());
   return ret_val;
 }
+
 // call python PYTHON_MOD_RESOLVE_FUNCTION interface to resolve the symbol in corresponding namespace
 bool SymbolResolver::Resolve() {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
@@ -102,6 +103,14 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr& func_graph, const py::object&
   if (para_node == nullptr) {
     ParameterPtr node = top_graph->AddWeightParameter(param_name);
     node->set_default_param(obj);
+
+    // set_abstract for parameter
+    auto to_convert = py::cast<py::object>(python_adapter::GetPyObjAttr(obj, "default_input"));
+    ValuePtr converted = nullptr;
+    (void)ConvertData(to_convert, &converted);
+    bool broaden = true;
+    node->set_abstract(abstract::FromValue(converted, broaden));
+
     para_node = node;
   }
   auto iter = func_graph->make_ref_params().find(para_node);
@@ -127,7 +136,7 @@ bool ResolveObjectToNode(const FuncGraphPtr& func_graph, const py::object& obj, 
       MS_LOG(ERROR) << "Resolve parameter object failed, got nullptr";
       return false;
     }
-    MS_LOG(DEBUG) << "add param graph:" << func_graph->ToString() << ", " << param->DebugString();
+    MS_LOG(DEBUG) << "Add param graph:" << func_graph->ToString() << ", " << param->DebugString();
 
     output = param;
   } else if (py::hasattr(obj, "__parameter_tuple__")) {
@@ -160,6 +169,7 @@ bool ResolveObjectToNode(const FuncGraphPtr& func_graph, const py::object& obj, 
   *node = output;
   return true;
 }
+
 // transform the ValueTuple or ValueList of graph node to make tuple of const graph node
 bool TransformVectorGraphValueNode(const FuncGraphManagerPtr& manager, const AnfNodePtr& node,
                                    const ValueNodePtr& value_node, AnfNodePtr* const transformed) {
@@ -175,7 +185,7 @@ bool TransformVectorGraphValueNode(const FuncGraphManagerPtr& manager, const Anf
       continue;
     }
     if (has_graph_in_list) {
-      MS_LOG(EXCEPTION) << "list has graph in it , but not all is graph";
+      MS_LOG(EXCEPTION) << "List has graph in it, but not all is graph";
     }
   }
   // The celllist or ordered_cell will be parsed as valuetuple of const graph in it,

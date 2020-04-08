@@ -32,7 +32,7 @@ reciprocal = P.Reciprocal()
 
 @_grad_scale.register("Tensor", "Tensor")
 def tensor_grad_scale(scale, grad):
-    return grad * reciprocal(scale)
+    return grad * F.cast(reciprocal(scale), F.dtype(grad))
 
 
 class DynamicLossScaleUpdateCell(Cell):
@@ -65,9 +65,10 @@ class DynamicLossScaleUpdateCell(Cell):
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=manager)
         >>> train_network.set_train()
         >>>
-        >>> inputs = mindspore.Tensor(np.ones([16, 16]).astype(np.float32))
-        >>> label = mindspore.Tensor(np.zeros([16, 16]).astype(np.float32))
-        >>> output = train_network(inputs, label)
+        >>> inputs = Tensor(np.ones([16, 16]).astype(np.float32))
+        >>> label = Tensor(np.zeros([16, 16]).astype(np.float32))
+        >>> scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mindspore.float32)
+        >>> output = train_network(inputs, label, scaling_sens)
     """
 
     def __init__(self,
@@ -126,13 +127,14 @@ class FixedLossScaleUpdateCell(Cell):
     Examples:
         >>> net_with_loss = Net()
         >>> optimizer = nn.Momentum(net_with_loss.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> manager = nn.FixedLossScaleUpdateCell(loss_scale_value=2**12, scale_factor=2, scale_window=1000)
+        >>> manager = nn.FixedLossScaleUpdateCell(loss_scale_value=2**12)
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=manager)
         >>> train_network.set_train()
         >>>
-        >>> inputs = mindspore.Tensor(np.ones([16, 16]).astype(np.float32))
-        >>> label = mindspore.Tensor(np.zeros([16, 16]).astype(np.float32))
-        >>> output = train_network(inputs, label)
+        >>> inputs = Tensor(np.ones([16, 16]).astype(np.float32))
+        >>> label = Tensor(np.zeros([16, 16]).astype(np.float32))
+        >>> scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mindspore.float32)
+        >>> output = train_network(inputs, label, scaling_sens)
     """
 
     def __init__(self, loss_scale_value):
@@ -181,9 +183,9 @@ class TrainOneStepWithLossScaleCell(Cell):
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=manager)
         >>> train_network.set_train()
         >>>
-        >>> inputs = mindspore.Tensor(np.ones([16, 16]).astype(np.float32))
-        >>> label = mindspore.Tensor(np.zeros([16, 16]).astype(np.float32))
-        >>> scaling_sens = mindspore.Tensor(np.full((1), np.finfo(np.float32).max), dtype=mindspore.float32)
+        >>> inputs = Tensor(np.ones([16, 16]).astype(np.float32))
+        >>> label = Tensor(np.zeros([16, 16]).astype(np.float32))
+        >>> scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mindspore.float32)
         >>> output = train_network(inputs, label, scaling_sens)
     """
 

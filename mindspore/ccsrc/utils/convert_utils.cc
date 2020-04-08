@@ -373,4 +373,45 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
     MS_LOG(EXCEPTION) << "Python evaluator return invalid shape or type. " << (std::string)py::str(type_obj);
   }
 }
+bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
+                                       const std::shared_ptr<py::object> &ret_val) {
+  if (output->isa<ValueNode>()) {
+    MS_LOG(INFO) << "Graph's output is a constant. No need to execute.";
+    ValuePtr value = GetValueNode(output);
+    *ret_val = ValuePtrToPyData(value);
+    return true;
+  }
+
+  // Adapter will transform values in __init__() and construct() to parameters, this could cause
+  // inputs (a.k.a args in current function) size less than parameters'.
+  if (output->isa<Parameter>()) {
+    MS_LOG(INFO) << "Graph's output is a parameter. If all params are inputs, no need to execute.";
+    if (args.empty()) {
+      MS_LOG(EXCEPTION) << "Inputs size is 0, let graph to be executed.";
+    }
+    // Find the right parameter as ret_val.
+    auto func_graph = output->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto params = func_graph->parameters();
+    if (params.empty()) {
+      MS_EXCEPTION(UnknownError) << "Graph's parameters size is 0";
+    }
+    if (args.size() != params.size()) {
+      MS_LOG(EXCEPTION) << "Input size " << args.size() << " not equal to params size " << params.size()
+                        << ", let graph to be executed.";
+    }
+
+    auto it = std::find(params.begin(), params.end(), output);
+    if (it == params.end()) {
+      MS_EXCEPTION(UnknownError) << "When graph output is Parameter,  it should be found in graph parameters";
+    }
+    size_t index = it - params.cbegin();
+    if (index >= args.size()) {
+      MS_EXCEPTION(UnknownError) << "Index " << index << " equal or larger than args size " << args.size() << ".";
+    }
+    *ret_val = args[index];
+    return true;
+  }
+  return false;
+}
 }  // namespace mindspore

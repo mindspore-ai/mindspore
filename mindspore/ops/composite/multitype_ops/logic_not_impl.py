@@ -1,0 +1,48 @@
+# Copyright 2020 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+
+"""logical_not_impl"""
+from mindspore.ops.composite import base
+from mindspore.ops import functional as F
+
+# logical_not is a metagraph object which will generate function according to input type
+# using ".register" decorator
+logical_not = base.MultitypeFuncGraph("logical_not")
+
+
+@logical_not.register("Number")
+def _logical_not_scala(x):
+    """
+    Return logical not operation result of x
+
+    Args:
+       x(Number): Number.
+
+    Returns:
+       bool, Return logical not operation result of x
+   """
+    return F.bool_not(x.__bool__())
+
+
+@logical_not.register("Tensor")
+def _logical_not_tensor(x):
+    """
+    Return logical not operation result of x
+    Args:
+       x(Tensor): Tensor.
+    Returns:
+       Tensor, Return logical not operation result of x
+   """
+    return  F.logical_not(x)

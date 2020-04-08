@@ -17,6 +17,7 @@ from mindspore.ops import Primitive
 
 scala_add = Primitive('scalar_add')
 scala_mul = Primitive('scalar_mul')
+scalar_gt = Primitive('scalar_gt')
 def scalar_add(x, y):
     """Implement `scalar_add`."""
     return scala_add(x, y)
@@ -26,6 +27,6 @@ def scalar_mul(x, y):
     return scala_mul(x, y)
 
 def test_if(x, y):
-    if x > y:
+    if scalar_gt(x, y):
         return x
     return y

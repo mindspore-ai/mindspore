@@ -19,8 +19,8 @@
 
 #include <string>
 #include <unordered_map>
-#include "parallel/strategy.h"
 #include "parallel/ops_info/ops_utils.h"
+#include "parallel/strategy.h"
 
 namespace mindspore {
 namespace parallel {

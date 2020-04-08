@@ -12,21 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-network config setting, will be used in main.py
-"""
-from easydict import EasyDict as edict
 
-mnist_cfg = edict({
-    'num_classes': 10,
-    'lr': 0.01,
-    'momentum': 0.9,
-    'epoch_size': 1,
-    'batch_size': 32,
-    'repeat_size': 1,
-    'buffer_size': 1000,
-    'image_height': 32,
-    'image_width': 32,
-    'save_checkpoint_steps': 1875,
-    'keep_checkpoint_max': 10,
-})
+"""uadd_impl"""
+from mindspore.ops.composite import base
+
+# uadd is a metagraph object which will return operation result regarding input
+# using ".register" decorator
+uadd = base.MultitypeFuncGraph("uadd")
+
+@uadd.register("Tensor")
+@uadd.register("Number")
+def _uadd_scala(x):
+    return x

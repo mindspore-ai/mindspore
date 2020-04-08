@@ -37,7 +37,7 @@ TypeId IntBitsToTypeId(const int nbits) {
     case 64:
       return kNumberTypeInt64;
     default:
-      MS_LOG(EXCEPTION) << "wrong number of bits.";
+      MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
 
@@ -52,7 +52,7 @@ TypeId UIntBitsToTypeId(const int nbits) {
     case 64:
       return kNumberTypeUInt64;
     default:
-      MS_LOG(EXCEPTION) << "wrong number of bits.";
+      MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
 
@@ -65,7 +65,7 @@ TypeId FloatBitsToTypeId(const int nbits) {
     case 64:
       return kNumberTypeFloat64;
     default:
-      MS_LOG(EXCEPTION) << "wrong number of bits.";
+      MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
 

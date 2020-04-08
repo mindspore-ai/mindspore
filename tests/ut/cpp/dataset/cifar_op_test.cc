@@ -81,7 +81,8 @@ TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar10) {
     uint32_t label = 0;
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 100);
@@ -108,7 +109,8 @@ TEST_F(MindDataTestCifarOp, TestRandomSamplerCifar10) {
     uint32_t label = 0;
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 12);
@@ -133,7 +135,8 @@ TEST_F(MindDataTestCifarOp, TestCifar10NumSample) {
     uint32_t label = 0;
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 100);
@@ -159,8 +162,9 @@ TEST_F(MindDataTestCifarOp, TestSequentialSamplerCifar100) {
     while (tensor_map.size() != 0) {
       tensor_map["coarse_label"]->GetItemAt<uint32_t>(&coarse, {});
       tensor_map["fine_label"]->GetItemAt<uint32_t>(&fine, {});
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << " coarse:"
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << " coarse:"
                 << coarse << " fine:" << fine << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 100);

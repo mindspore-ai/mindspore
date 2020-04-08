@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_DP_ALGO_COSTMODEL_H_
 
 #include <memory>
-#include <vector>
 #include <utility>
+#include <vector>
 #include "ir/value.h"
 #include "parallel/auto_parallel/edge_costmodel.h"
 #include "parallel/auto_parallel/graph_costmodel.h"

@@ -43,19 +43,19 @@ TEST_F(MindDataTestStatus, Test1) {
   Status rc;
   ASSERT_TRUE(rc.IsOk());
   Status err1(StatusCode::kOutOfMemory, __LINE__, __FILE__);
-  std::cout << err1;
+  MS_LOG(DEBUG) << err1;
   ASSERT_TRUE(err1.IsOutofMemory());
   ASSERT_TRUE(err1.IsError());
   Status err2(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Oops");
-  std::cout << err2;
+  MS_LOG(DEBUG) << err2;
 }
 
 TEST_F(MindDataTestStatus, Test2) {
   Status rc = f1();
-  std::cout << rc;
+  MS_LOG(DEBUG) << rc;
 }
 
 TEST_F(MindDataTestStatus, Test3) {
   Status rc = f3();
-  std::cout << rc;
+  MS_LOG(DEBUG) << rc;
 }

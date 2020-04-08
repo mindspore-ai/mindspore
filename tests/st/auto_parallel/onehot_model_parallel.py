@@ -130,9 +130,7 @@ class OneHotFactory:
         context.reset_auto_parallel_context()
         assert np.allclose(out_mindspore_single, out_mindspore_parallel, 0.0001, 0.0001)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+
 def test_reid_onehot_forward_int32_128_depth1024_model_parallel():
     fact = OneHotFactory(batch_size=128,
                          classes=1024,
@@ -142,9 +140,7 @@ def test_reid_onehot_forward_int32_128_depth1024_model_parallel():
                          strategy=((1,device_num),(),()))
     fact.forward_cmp()
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+
 def test_reid_onehot_forward_int32_1024_depth128_model_parallel():
     fact = OneHotFactory(batch_size=1024,
                          classes=128,
@@ -153,4 +149,3 @@ def test_reid_onehot_forward_int32_1024_depth128_model_parallel():
                          axis=-1,
                          strategy=((1,device_num),(),()))
     fact.forward_cmp()
-

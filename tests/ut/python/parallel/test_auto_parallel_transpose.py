@@ -71,8 +71,8 @@ def test_two_matmul_transpose():
 
     _executor.compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
-    expected_strategies = {'Default/network-Net/Transpose-op4': [[1, 16]],
-                           'Default/network-Net/Transpose-op5': [[16, 1]],
-                           'Default/network-Net/MatMul-op6': [[16, 1], [1, 1]],
-                           'Default/network-Net/MatMul-op7': [[16, 1], [1, 1]]}
+    expected_strategies = {'Default/network-Net/Transpose-op0': [[1, 16]],
+                           'Default/network-Net/Transpose-op1': [[16, 1]],
+                           'Default/network-Net/MatMul-op2': [[16, 1], [1, 1]],
+                           'Default/network-Net/MatMul-op3': [[16, 1], [1, 1]]}
     assert strategies == expected_strategies

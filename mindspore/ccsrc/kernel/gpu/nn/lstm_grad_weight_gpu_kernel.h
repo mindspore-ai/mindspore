@@ -214,9 +214,9 @@ class LstmGradWeightGpuKernel : public GpuKernel {
   cudnnDropoutDescriptor_t dropout_desc_;
 
   // input desc
-  unique_ptr<cudnnTensorDescriptor_t[]> x_desc_;
+  std::unique_ptr<cudnnTensorDescriptor_t[]> x_desc_;
   cudnnTensorDescriptor_t hx_desc_;
-  unique_ptr<cudnnTensorDescriptor_t[]> y_desc_;
+  std::unique_ptr<cudnnTensorDescriptor_t[]> y_desc_;
 
   // output desc
   cudnnFilterDescriptor_t dw_desc_;

@@ -35,6 +35,7 @@ enum MatchCountPriority : int {
   MATCH_COUNT_PRIORITY_BEGIN = 0,
   MATCH_DTYPE_COUNT = MATCH_COUNT_PRIORITY_BEGIN,
   MATCH_FORMAT_COUNT,
+  MATCH_SPECIAL_FORMAT_COUNT,
   MATCH_5D_FORMAT_COUNT,
   MATCH_OUTPUT_DTYPE_COUNT,
   MATCH_COUNT_PRIORITY_END
@@ -174,12 +175,11 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
         continue;
       }
     }
-    if (input_anf_node->isa<ValueNode>()) {
-      if (AnfAlgo::GetOutputDeviceDataType(input_anf_node, 0) == kTypeUnknown) {
-        continue;
-      }
-    }
     if (kernel_build_info.GetInputFormat(input_index) == AnfAlgo::GetPrevNodeOutputFormat(kernel_node, input_index)) {
+      if (AnfAlgo::IsFeatureMapInput(kernel_node, input_index) &&
+          kSpecialFormatSet.find(kernel_build_info.GetInputFormat(input_index)) != kSpecialFormatSet.end()) {
+        (*cur_kernelinfo_match_counts)[MATCH_SPECIAL_FORMAT_COUNT]++;
+      }
       (*cur_kernelinfo_match_counts)[MATCH_FORMAT_COUNT]++;
     }
     if (kernel_build_info.GetInputDeviceType(input_index) ==
@@ -203,7 +203,7 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
       (*cur_kernelinfo_match_counts)[MATCH_OUTPUT_DTYPE_COUNT]++;
     }
   }
-}
+}  // namespace
 
 void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);

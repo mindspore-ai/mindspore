@@ -56,7 +56,7 @@ class SessionBasic {
   virtual ~SessionBasic() { summary_callback_ = nullptr; }
 
   virtual GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) = 0;
-  // build graph ,used to handle mupltiple child graphs
+  // build graph, used to handle multiple child graphs
   virtual void BuildGraph(GraphId) {}
 
   virtual void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) = 0;
@@ -75,7 +75,7 @@ class SessionBasic {
   virtual GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &) { return kInvalidGraphId; }
   // set output of final graph
   virtual void SetFinalGraphOutput(const BaseRef &) {}
-  // insert switch and set the relative acitve ops
+  // insert switch and set the relative active ops
   virtual void SwitchCompile(GraphId, GraphId, GraphId) {}
   // set args of child graph.the arg maybe come from a output of other child graphs,or from final graph's parameter
   virtual void SetChildGraphInput(GraphId, const VectorRef &) {}

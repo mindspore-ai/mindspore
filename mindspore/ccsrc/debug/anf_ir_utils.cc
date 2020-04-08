@@ -34,6 +34,7 @@
 #include "utils/utils.h"
 #include "debug/trace.h"
 #include "utils/context/ms_context.h"
+#include "operator/ops.h"
 
 namespace mindspore {
 // max number of elements in sequence
@@ -48,7 +49,7 @@ std::string GetMsIrPath(void) {
     path = path_ptr;
     char real_path[PATH_MAX] = {0};
     if (path.size() > PATH_MAX || nullptr == realpath(path.c_str(), real_path)) {
-      MS_LOG(EXCEPTION) << "MS IR Path error, " << path_ptr;
+      MS_LOG(EXCEPTION) << "MS IR path error, " << path_ptr;
     }
     path = real_path;
   }
@@ -69,7 +70,7 @@ py::object load_obj(const std::string& path) {
 
 // ============================================= MindSpore IR Exporter =============================================
 
-std::string GetNodeType(const AnfNodePtr& nd) {
+std::string AnfExporter::GetNodeType(const AnfNodePtr& nd) {
   abstract::ShapePtr shape = nd->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(nd->Shape());
   TypePtr type = dyn_cast<Type>(nd->Type());
   std::ostringstream oss;
@@ -102,7 +103,7 @@ int AnfExporter::GetParamIndex(const FuncGraphPtr& func_graph, const AnfNodePtr&
   FuncGraphPtr fg = func_graph;
   while (fg != nullptr) {
     if (exported.find(fg) == exported.end()) {
-      if (!export_used_) {
+      if (!check_integrity_) {
         break;
       }
       MS_LOG(EXCEPTION) << "Can not find func graph '" << fg->DumpText() << "." << fg->debug_info()->get_id() << "'";
@@ -143,8 +144,8 @@ std::string AnfExporter::GetValueNodeText(const FuncGraphPtr& fg, const ValueNod
 }
 
 std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr& mt_func_graph) {
-  auto py_funs = mt_func_graph->GetPyFunctions();
-  if (py_funs.empty()) {
+  auto py_funcs = mt_func_graph->GetPyFunctions();
+  if (py_funcs.empty()) {
     return "";
   }
 
@@ -152,7 +153,7 @@ std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGrap
 
   oss << "{";
   bool is_first = true;
-  for (const auto& py_func : py_funs) {
+  for (const auto& py_func : py_funcs) {
     if (is_first) {
       is_first = false;
     } else {
@@ -255,15 +256,15 @@ std::string AnfExporter::GetPrimitiveText(const PrimitivePtr& prim) {
   }
 
   // output primitive attributes
-  auto attrs = prim->attrs();
-  if (attrs.size() > 0) {
-    oss << "[";
-    int i = 0;
-    for (auto& attr : attrs) {
-      oss << (i > 0 ? ", " : "") << attr.first << "=" << attr.second->DumpText();
-      i++;
+  oss << prim->GetAttrsText();
+
+  if (prim->isa<prim::DoSignaturePrimitive>()) {
+    auto do_signature = dyn_cast<prim::DoSignaturePrimitive>(prim);
+    auto& func = do_signature->function();
+    if (func->isa<Primitive>()) {
+      auto sig_prim = dyn_cast<Primitive>(func);
+      oss << sig_prim->GetAttrsText();
     }
-    oss << "]";
   }
 
   return oss.str();
@@ -351,7 +352,7 @@ std::string AnfExporter::GetDictText(const FuncGraphPtr& func_graph, const Value
 std::string AnfExporter::GetOtherValueText(const FuncGraphPtr&, const ValuePtr& value) {
   std::ostringstream oss;
 
-  if (export_used_) {
+  if (check_integrity_) {
     MS_LOG(EXCEPTION) << "Need to process type: " << value->type_name() << ", dump text: " << value->DumpText();
   }
   oss << value->type_name() << "[" << value->DumpText() << "]";
@@ -420,7 +421,7 @@ std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr& func_graph, const An
     }
     oss << "%" << iter->second;
   } else if (node->isa<Parameter>()) {
-    oss << "%para" << GetParamIndex(func_graph, node, export_used_);
+    oss << "%para" << GetParamIndex(func_graph, node, check_integrity_);
   } else if (IsValueNode<FuncGraph>(node)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
     oss << fg->type_name() << "::fg_" << fg->debug_info()->get_id();
@@ -625,7 +626,7 @@ void AnfExporter::ExportFuncGraph(const std::string& filename, const FuncGraphPt
     ofs << "\n\n";
     (void)func_graph_set.erase(fg);
   }
-  ofs << "# num of total funcgraphs: " << exported.size();
+  ofs << "# num of total function graphs: " << exported.size();
 
   ofs.close();
 }
@@ -650,7 +651,7 @@ void AnfExporter::ExportFuncGraph(const std::string& filename, const std::vector
     ofs << "\n\n";
   }
 
-  ofs << "# num of total funcgraphs: " << graphs.size();
+  ofs << "# num of total function graphs: " << graphs.size();
 
   ofs.close();
 }
@@ -762,7 +763,7 @@ class Lexer {
         fin.close();
       }
     } catch (const std::exception& e) {
-      MS_LOG(ERROR) << "exception when closing file";
+      MS_LOG(ERROR) << "Exception when closing file";
     } catch (...) {
       std::string exName(abi::__cxa_current_exception_type()->name());
       MS_LOG(ERROR) << "Error occurred when closing file. Exception name: " << exName;
@@ -801,7 +802,7 @@ class Lexer {
     Token token = GetNextTokenInner();
     const char* str = token_text[token];
     std::string text = (str == nullptr ? GetTokenText() : str);
-    MS_LOG(DEBUG) << "------parse token] " << text;
+    MS_LOG(DEBUG) << "------Parse token] " << text;
     return token;
   }
 
@@ -1641,7 +1642,7 @@ class IrParser {
           MS_LOG(EXCEPTION) << "Expect @file at line " << lexer_.GetLineNo();
         }
 
-        // load prameter default value from serialized file
+        // load parameter default value from serialized file
         py::object default_obj = LoadObject(lexer_.GetTokenText());
         param->set_default_param(default_obj);
 
@@ -1949,7 +1950,7 @@ class IrParser {
       return TOK_ERROR;
     }
 
-    // restore python funciton of PrimitivePy from serialized file
+    // restore python function of PrimitivePy from serialized file
     py::object py_obj = LoadObject(lexer_.GetTokenText());
     PrimitivePyPtr ptr = nullptr;
     if (py::hasattr(py_obj, "__setattr_flag__") && py::hasattr(py_obj, "_clone")) {
@@ -1957,7 +1958,7 @@ class IrParser {
       py::object new_obj = clone_fn();
       ptr = new_obj.cast<PrimitivePyPtr>();
       if (ptr == nullptr) {
-        MS_LOG(EXCEPTION) << "cast to type 'PrimitivePyPtr' error";
+        MS_LOG(EXCEPTION) << "Cast to type 'PrimitivePyPtr' error";
       }
     } else {
       ptr = std::make_shared<PrimitivePy>(id.substr(strlen("PrimitivePy::")), py_obj);
@@ -2220,15 +2221,15 @@ class IrParser {
 };
 
 std::vector<FuncGraphPtr> ImportIR(const std::string& filename) {
-  IrParser paser(filename.c_str());
-  paser.ParseFile();
-  return paser.GetFuncGraphs();
+  IrParser parser(filename.c_str());
+  parser.ParseFile();
+  return parser.GetFuncGraphs();
 }
 
 #ifdef ENABLE_DUMP_IR
 void DumpIRProto(const FuncGraphPtr& func_graph, const std::string& suffix) {
   if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "func graph is nullptr";
+    MS_LOG(ERROR) << "Func graph is nullptr";
     return;
   }
   auto ms_context = MsContext::GetInstance();
@@ -2242,16 +2243,16 @@ void DumpIRProto(const FuncGraphPtr& func_graph, const std::string& suffix) {
   }
   std::string file_path = save_graphs_path + "/" + "ms_output_" + suffix + ".pb";
   if (file_path.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "file path " << file_path << " is too long.";
+    MS_LOG(ERROR) << "File path " << file_path << " is too long.";
     return;
   }
   char real_path[PATH_MAX] = {0};
   if (nullptr == realpath(file_path.c_str(), real_path)) {
-    MS_LOG(DEBUG) << "dir " << file_path << " does not exit.";
+    MS_LOG(DEBUG) << "Dir " << file_path << " does not exit.";
   } else {
     std::string path_string = real_path;
     if (chmod(common::SafeCStr(path_string), S_IRUSR | S_IWUSR) == -1) {
-      MS_LOG(ERROR) << "modify file:" << real_path << " to rw fail.";
+      MS_LOG(ERROR) << "Modify file:" << real_path << " to rw fail.";
       return;
     }
   }

@@ -15,8 +15,8 @@
  */
 
 #include "parallel/tensor_layout/layout_transfer.h"
-#include "parallel/status.h"
 #include "common/utils.h"
+#include "parallel/status.h"
 
 namespace mindspore {
 namespace parallel {

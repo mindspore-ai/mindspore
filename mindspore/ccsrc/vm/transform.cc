@@ -24,7 +24,9 @@
 #include <vector>
 
 #include "pipeline/static_analysis/abstract_value.h"
+#ifdef ENABLE_GE
 #include "transform/convert.h"
+#endif
 #include "utils/graph_utils.h"
 #include "utils/context/ms_context.h"
 #include "debug/trace.h"
@@ -55,7 +57,6 @@ CompileGraph::CompileGraph(const BackendPtr& backend, const std::vector<Primitiv
     MS_LOG(INFO) << "Attribute 'is_gevm_convert' is true";
     is_gevm_convert_ = true;
   }
-  is_graph_cut = false;
 }
 
 bool CompileGraph::IsCut(const AnfNodePtr& node) {
@@ -80,14 +81,15 @@ bool CompileGraph::IsCut(const AnfNodePtr& node) {
       }
     }
 
+#ifdef ENABLE_GE
     if (is_gevm_convert_) {
-      auto name = transform::GetCNodeFuncName(cnode);
+      auto name = GetCNodeFuncName(cnode);
       auto adpt = transform::DfGraphConvertor::FindAdapter(name);
       if (adpt == nullptr) {
-        is_graph_cut = true;
+        return true;
       }
-      return true;
     }
+#endif
   }
 
   return false;
@@ -604,12 +606,6 @@ FinalVMPtr CompileGraphs::CompileAndLink(const FuncGraphPtr& graph) {
 
   (void)WrapPrimitives(graph);
   Compile(graph);
-
-#ifdef ENABLE_GE
-  if (!transform_->IsGraphCut()) {
-    return nullptr;
-  }
-#endif
 
   FinalVMPtr rt = Link(graph);
   Reset();

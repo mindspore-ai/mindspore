@@ -356,6 +356,11 @@ INPUT_MAP(AcosGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
 ATTR_MAP(AcosGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(AcosGrad) = {{0, OUTPUT_DESC(z)}};
 
+// Acosh
+INPUT_MAP(Acosh) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Acosh) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Acosh) = {{0, OUTPUT_DESC(y)}};
+
 // Floor
 INPUT_MAP(Floor) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Floor) = EMPTY_ATTR_MAP;
@@ -365,6 +370,11 @@ OUTPUT_MAP(Floor) = {{0, OUTPUT_DESC(y)}};
 INPUT_MAP(FloorDiv) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(FloorDiv) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(FloorDiv) = {{0, OUTPUT_DESC(y)}};
+
+// FloorMod
+INPUT_MAP(FloorMod) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(FloorMod) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(FloorMod) = {{0, OUTPUT_DESC(y)}};
 
 // Sin
 INPUT_MAP(Sin) = {{1, INPUT_DESC(x)}};
@@ -473,7 +483,7 @@ ATTR_MAP(Relu6) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu6) = {{0, OUTPUT_DESC(activations)}};
 
 // Relu6Grad
-INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(gradients)}};
+INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(Relu6Grad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu6Grad) = {{0, OUTPUT_DESC(backprops)}};
 
@@ -1159,6 +1169,51 @@ INPUT_MAP(ApplyFtrl) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INP
                         {7, INPUT_DESC(l2)},   {8, INPUT_DESC(lr_power)}};
 ATTR_MAP(ApplyFtrl) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyFtrl) = {{0, OUTPUT_DESC(var)}};
+
+// Diag
+INPUT_MAP(Diag) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Diag) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Diag) = {{0, OUTPUT_DESC(y)}};
+
+// DiagPart
+INPUT_MAP(DiagPart) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(DiagPart) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DiagPart) = {{0, OUTPUT_DESC(y)}};
+
+// SpaceToBatchD
+INPUT_MAP(SpaceToBatchD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(SpaceToBatchD) = {
+  {"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())},
+  {"paddings", ATTR_DESC(paddings, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(SpaceToBatchD) = {{0, OUTPUT_DESC(y)}};
+
+// BatchToSpaceD
+INPUT_MAP(BatchToSpaceD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(BatchToSpaceD) = {
+  {"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())},
+  {"crops", ATTR_DESC(crops, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(BatchToSpaceD) = {{0, OUTPUT_DESC(y)}};
+
+// Atan2
+INPUT_MAP(Atan2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Atan2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Atan2) = {{0, OUTPUT_DESC(y)}};
+
+// ApplyRMSPropD
+INPUT_MAP(ApplyRMSPropD) = {
+  {1, INPUT_DESC(var)}, {2, INPUT_DESC(ms)}, {3, INPUT_DESC(mom)}, {4, INPUT_DESC(grad)}, {5, INPUT_DESC(lr)}};
+INPUT_ATTR_MAP(ApplyRMSPropD) = {{6, ATTR_DESC(rho, AnyTraits<float>())},
+                                 {7, ATTR_DESC(momentum, AnyTraits<float>())},
+                                 {8, ATTR_DESC(epsilon, AnyTraits<float>())}};
+ATTR_MAP(ApplyRMSPropD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyRMSPropD) = {{0, OUTPUT_DESC(var)}};
+
+// ApplyCenteredRMSProp
+INPUT_MAP(ApplyCenteredRMSProp) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(mg)},       {3, INPUT_DESC(ms)},
+                                   {4, INPUT_DESC(mom)}, {5, INPUT_DESC(grad)},     {6, INPUT_DESC(lr)},
+                                   {7, INPUT_DESC(rho)}, {8, INPUT_DESC(momentum)}, {9, INPUT_DESC(epsilon)}};
+ATTR_MAP(ApplyCenteredRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyCenteredRMSProp) = {{0, OUTPUT_DESC(var)}};
 
 #ifdef ENABLE_GE
 // Print

@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PARALLEL_DEVICE_H_
 
 #include <cstdint>
-#include <list>
 #include <string>
 #include <utility>
 

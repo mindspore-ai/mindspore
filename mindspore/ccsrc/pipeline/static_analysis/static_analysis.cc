@@ -89,7 +89,7 @@ std::size_t AnfNodeConfigHasher::operator()(const AnfNodeConfigPtr conf) const {
   MS_EXCEPTION_IF_NULL(conf->node());
   std::size_t hash_value = hash_combine(conf->node()->hash(), conf->context()->hash());
   if (conf->context() != nullptr && conf->context()->func_graph() != nullptr) {
-    MS_LOG(DEBUG) << "NodeConfgHasher Node: " << conf->node()->DebugString()
+    MS_LOG(DEBUG) << "NodeConfigHasher Node: " << conf->node()->DebugString()
                   << ", Graph: " << conf->context()->func_graph()->ToString() << " ### , hash value: " << hash_value;
   } else {
     MS_LOG(DEBUG) << "NodeConfigHasher Node: " << conf->node()->DebugString() << " ### , hash value: " << hash_value;
@@ -289,6 +289,10 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     evaluator = std::make_shared<DoSignatureEvaluator>(prim);
     return evaluator;
   }
+  if (prim->isa<prim::UnpackGraphPrimitive>()) {
+    evaluator = std::make_shared<UnpackGraphEvaluator>(prim);
+    return evaluator;
+  }
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
     if (prim_py != nullptr) {
@@ -452,13 +456,13 @@ AbstractBasePtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Eval
   for (auto eval : evaluators) {
     auto fg_eval = eval->cast<FuncGraphEvaluatorPtr>();
     if (fg_eval) {
-      auto undetermin_fgs = fg_eval->func_graph()->recursive_graphs();
-      if (undetermin_fgs) {
-        for (auto undetermin_fg : *undetermin_fgs) {
-          MS_LOG(DEBUG) << "Set graph undetermin: " << undetermin_fg->ToString();
+      auto undetermined_fgs = fg_eval->func_graph()->recursive_graphs();
+      if (undetermined_fgs) {
+        for (auto undetermined_fg : *undetermined_fgs) {
+          MS_LOG(DEBUG) << "Set graph undetermined: " << undetermined_fg->ToString();
           // As the current evaluator has multiple possibles, all the func_graphs which
           // are recursive with the current func_graph are undetermined in control flow.
-          undetermin_fg->set_flags(kFuncGraphFlagUndetermin, true);
+          undetermined_fg->set_flags(kFuncGraphFlagUndetermined, true);
         }
       }
     }

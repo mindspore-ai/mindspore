@@ -159,7 +159,7 @@ class BatchNorm1d(_BatchNorm):
 
     Examples:
         >>> net = nn.BatchNorm1d(num_features=16)
-        >>> input = mindspore.Tensor(np.random.randint(0, 255, [3, 16]), mindspore.float32)
+        >>> input = Tensor(np.random.randint(0, 255, [3, 16]), mindspore.float32)
         >>> net(input)
     """
     def _check_data_dim(self, x):
@@ -249,7 +249,7 @@ class LayerNorm(Cell):
             'he_uniform', etc. Default: 'zeros'.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of 'input_x' is input_shape = `(x_1, x_2, ..., x_R)`,
+        - **input_x** (Tensor) - The shape of 'input_x' is :math:`(x_1, x_2, ..., x_R)`,
           and `input_shape[begin_norm_axis:]` is equal to `normalized_shape`.
 
     Outputs:
@@ -258,7 +258,7 @@ class LayerNorm(Cell):
     Examples:
         >>> x = Tensor(np.ones([20, 5, 10, 10], np.float32))
         >>> shape1 = x.shape()[1:]
-        >>> m = LayerNorm(shape1,  begin_norm_axis=1, begin_params_axis=1)
+        >>> m = nn.LayerNorm(shape1,  begin_norm_axis=1, begin_params_axis=1)
         >>> m(x)
     """
     def __init__(self,

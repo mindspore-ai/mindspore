@@ -26,13 +26,15 @@
 #include "tdt/tdt_host_interface.h"
 #include "tdt/data_common.h"
 #endif
+#ifdef ENABLE_GE
 #include "transform/df_graph_manager.h"
+#endif
 #include "ir/meta_tensor.h"
 
 namespace mindspore {
+#ifdef ENABLE_GE
 using mindspore::transform::DfGraphManager;
-using transform::GraphRunner;
-using transform::GraphRunnerOptions;
+#endif
 
 std::atomic<bool> thread_1_must_end(false);
 
@@ -81,6 +83,7 @@ MsContext::MsContext(const std::string& policy, const std::string& target) {
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
   if (inst_context_ == nullptr) {
+    MS_LOG(DEBUG) << "Create new mindspore context";
 #ifdef ENABLE_GE
     inst_context_.reset(new (std::nothrow) MsContext("ge", kAscendDevice));
 #elif defined(ENABLE_D)
@@ -274,7 +277,7 @@ void MsContext::SetHcclOptions(std::map<std::string, std::string>* ge_options) c
 void MsContext::GetGeOptions(std::map<std::string, std::string>* ge_options) const {
 #ifdef ENABLE_GE
   (*ge_options)["device_id"] = "0";
-  (*ge_options)["ge.exec.enableDump"] = enable_dump_;
+  (*ge_options)["ge.exec.enableDump"] = std::to_string(enable_dump_);
   (*ge_options)["ge.exec.dumpPath"] = save_dump_path_;
   // only not supported in ge
   auto tbe_plugin_path = common::GetEnv("ME_TBE_PLUGIN_PATH");

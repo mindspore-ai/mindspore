@@ -223,6 +223,10 @@ class InputOpNet(nn.Cell):
         x = self.op(x1, x2, x3, x4, x5, self.c1)
         return x
 
+    def construct5_c4(self, x1, x2, x3, x4, x5):
+        x = self.op(x1, x2, x3, x4, x5, self.c1, self.c2, self.c3, self.c4)
+        return x
+
 def gen_net(op, input_num, training=True, desc_const=(), const_first=False, add_fake_input=False):
     if isinstance(op, nn.Cell):
         return op

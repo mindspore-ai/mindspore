@@ -49,7 +49,7 @@ bool Dump::IsKernelNeedDump(const std::string& kernel_name) {
   return false;
 }
 
-bool Dump::ParseDumpConfig(const string& dump_config_file) {
+bool Dump::ParseDumpConfig(const std::string& dump_config_file) {
   std::ifstream jsonFile(dump_config_file);
   if (!jsonFile.is_open()) {
     MS_LOG(ERROR) << dump_config_file << " open failed.";
@@ -101,7 +101,7 @@ bool Dump::IsConfigValid(const nlohmann::json& dumpSettings) {
   auto kernels = dumpSettings.at("kernels");
   if (!(enable.is_boolean() && trans_flag.is_boolean() && mode.is_number() && path.is_string() &&
         net_name.is_string() && iteration.is_number() && kernels.is_array())) {
-    MS_LOG(ERROR) << "element's type in Dump config json is invalid.";
+    MS_LOG(ERROR) << "Element's type in Dump config json is invalid.";
     dump_enable_ = false;
     return false;
   }
@@ -121,7 +121,7 @@ bool Dump::IsConfigValid(const nlohmann::json& dumpSettings) {
 bool Dump::SetDumpConfFromJsonFile() {
   const char* config_path_str = std::getenv("MINDSPORE_CONFIG_PATH");
   if (config_path_str != nullptr) {
-    MS_LOG(INFO) << "getenv MINDSPORE_CONFIG_PATH :" << config_path_str;
+    MS_LOG(INFO) << "Getenv MINDSPORE_CONFIG_PATH :" << config_path_str;
   } else {
     MS_LOG(INFO) << "No need E2E Dump. please export MINDSPORE_CONFIG_PATH eg: MINDSPORE_CONFIG_PATH=/etc";
     dump_enable_ = false;
@@ -132,7 +132,7 @@ bool Dump::SetDumpConfFromJsonFile() {
   auto id = context_ptr->device_id();
   char real_path[PATH_MAX] = {0};
   if (nullptr == realpath(config_path_str, real_path)) {
-    MS_LOG(ERROR) << "env e2e dump path error, " << config_path_str;
+    MS_LOG(ERROR) << "Env e2e dump path error, " << config_path_str;
     dump_enable_ = false;
     return false;
   }
@@ -150,20 +150,20 @@ bool Dump::SetDumpConfFromJsonFile() {
 
 bool Dump::DumpToFile(const std::string& filename, const void* data, size_t len) {
   if (filename.empty() || data == nullptr || len == 0) {
-    MS_LOG(ERROR) << "incorrect parameter.";
+    MS_LOG(ERROR) << "Incorrect parameter.";
     return false;
   }
 
   std::string realpath;
   bool ret = GetRealPath(filename, &realpath);
   if (!ret) {
-    MS_LOG(ERROR) << "get real path failed.";
+    MS_LOG(ERROR) << "Get real path failed.";
     return false;
   }
   std::ofstream fd;
   fd.open(realpath, std::ios::binary | std::ios::out);
   if (!fd.is_open()) {
-    MS_LOG(ERROR) << "open file " << realpath << " fail.";
+    MS_LOG(ERROR) << "Open file " << realpath << " fail.";
     return false;
   }
   (void)fd.write(reinterpret_cast<const char*>(data), SizeToLong(len));
@@ -182,7 +182,7 @@ bool Dump::GetRealPath(const std::string& inpath, std::string* outpath) {
   if (path_split_pos != std::string::npos) {
     std::string prefix_path = inpath.substr(0, path_split_pos);
     if (prefix_path.length() >= PATH_MAX) {
-      MS_LOG(ERROR) << "prefix path is too longer!";
+      MS_LOG(ERROR) << "Prefix path is too longer!";
       return false;
     }
     std::string last_path = inpath.substr(path_split_pos, inpath.length() - path_split_pos);
@@ -201,11 +201,11 @@ bool Dump::GetRealPath(const std::string& inpath, std::string* outpath) {
 
   if (path_split_pos == std::string::npos) {
     if (inpath.length() >= PATH_MAX) {
-      MS_LOG(ERROR) << "prefix path is too longer!";
+      MS_LOG(ERROR) << "Prefix path is too longer!";
       return false;
     }
     if (nullptr == realpath(inpath.c_str(), real_path)) {
-      MS_LOG(ERROR) << "file " << inpath << " does not exit, it will be created.";
+      MS_LOG(ERROR) << "File " << inpath << " does not exit, it will be created.";
     }
     *outpath = std::string(real_path);
   }
@@ -218,7 +218,7 @@ bool Dump::CreateNotExistDirs(const std::string& path) {
   MS_EXCEPTION_IF_NULL(fs);
   char temp_path[PATH_MAX] = {0};
   if (path.length() > PATH_MAX) {
-    MS_LOG(ERROR) << "path lens is max than " << PATH_MAX;
+    MS_LOG(ERROR) << "Path lens is max than " << PATH_MAX;
     return false;
   }
   for (uint32_t i = 0; i < path.length(); i++) {
@@ -229,7 +229,7 @@ bool Dump::CreateNotExistDirs(const std::string& path) {
         temp_path[i] = '\0';
         std::string path_handle(temp_path);
         if (!fs->FileExist(temp_path)) {
-          MS_LOG(INFO) << "dir " << path_handle << " does not exit, creating...";
+          MS_LOG(INFO) << "Dir " << path_handle << " does not exit, creating...";
           if (!fs->CreateDir(temp_path)) {
             MS_LOG(ERROR) << "Create " << path_handle << " dir error";
             return false;
@@ -241,7 +241,7 @@ bool Dump::CreateNotExistDirs(const std::string& path) {
   }
 
   if (!fs->FileExist(path)) {
-    MS_LOG(INFO) << "dir " << path << " does not exit, creating...";
+    MS_LOG(INFO) << "Dir " << path << " does not exit, creating...";
     if (!fs->CreateDir(path)) {
       MS_LOG(ERROR) << "Create " << path << " dir error";
       return false;

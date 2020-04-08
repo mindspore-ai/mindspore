@@ -20,6 +20,7 @@
 
 import copy
 import functools
+import itertools
 import numbers
 import numpy as np
 
@@ -27,8 +28,15 @@ from ..._checkparam import ParamValidator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
-from ..operations.math_ops import _check_infer_attr_reduce, _infer_shape_reduce
+from ..operations.math_ops import _infer_shape_reduce
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+
+def _check_infer_attr_reduce(axis, keep_dims):
+    validator.check_type('keep_dims', keep_dims, [bool])
+    validator.check_type('axis', axis, [int, tuple])
+    if isinstance(axis, tuple):
+        for index, value in enumerate(axis):
+            validator.check_type('axis[%d]' % index, value, [int])
 
 
 class ExpandDims(PrimitiveWithInfer):
@@ -442,7 +450,6 @@ class Transpose(PrimitiveWithInfer):
     Examples:
         >>> input_tensor = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
         >>> perm = (0, 2, 1)
-        >>> expect = np.array([[[1, 4], [2, 5], [3, 6]], [[7, 10], [8, 11], [9, 12]]])
         >>> transpose = Transpose()
         >>> output = transpose(input_tensor, perm)
     """
@@ -712,7 +719,7 @@ class Fill(PrimitiveWithInfer):
 
     Examples:
         >>> fill = P.Fill()
-        >>> fill(P.DType()(x), (2, 2), 1)
+        >>> fill(mindspore.float32, (2, 2), 1)
     """
 
     @prim_attr_register
@@ -880,7 +887,7 @@ class ScalarToTensor(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Union[int, float]) - The input is a scalar. Only constant value is allowed.
         - **dtype** (mindspore.dtype) - The target data type. Default: mindspore.float32. Only
-                    constant value is allowed.
+          constant value is allowed.
 
     Outputs:
         Tensor. 0-D Tensor and the content is the input.
@@ -1090,7 +1097,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         axis = self.axis
         x_rank = len(x_shape)
         validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT)
-        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims)
+        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.prim_name())
         return ouput_shape, ouput_shape
 
     def infer_dtype(self, x_dtype):
@@ -1136,7 +1143,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         axis = self.axis
         x_rank = len(x_shape)
         validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT)
-        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims)
+        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.prim_name())
         return ouput_shape, ouput_shape
 
     def infer_dtype(self, x_dtype):
@@ -1457,7 +1464,10 @@ class Select(PrimitiveWithInfer):
 
     Examples:
         >>> select = Select()
-        >>> select([True, False],[2,3],[1,2])
+        >>> input_x = Tensor([True, False])
+        >>> input_y = Tensor([2,3], mindspore.float32)
+        >>> input_z = Tensor([1,2], mindspore.float32)
+        >>> select(input_x, input_y, input_z)
     """
 
     @prim_attr_register
@@ -1615,37 +1625,96 @@ class StridedSlice(PrimitiveWithInfer):
 class Diag(PrimitiveWithInfer):
     r"""
 
-    Extract or construct a diagonal array.
+    Construct a diagonal tensor with a given diagonal values.
 
-    If input is a 2-D tensor, returns the diagonal of the input with the given offset. If
-    input is a 1-D tensor, returns the array of diagonals. If you use this function
-    to extract the diagonal and want to write to the result array, see the more
-    detailed documentation for "numpy.diagonal", whether you return a copy or a
-    view depends on the version of numpy you are using.
+    Assume `input_x` has dimensions :math:`[D_1,... D_k]`, the output is a tensor of
+    rank 2k with dimensions :math:`[D_1,..., D_k, D_1,..., D_k]` where:
+    :math:`output[i_1,..., i_k, i_1,..., i_k] = input_x[i_1,..., i_k]` and 0 everywhere else.
 
     Inputs:
-        - **input_x** (Tensor) - 1-D tensor or 2-D tensor.
+        - **input_x** (Tensor) - The input tensor.
 
     Outputs:
         Tensor.
 
     Examples:
+        >>> input_x = Tensor([1, 2, 3, 4])
         >>> diag = P.Diag()
-        >>> diag(x)
+        >>> diag(input_x)
+        [[1, 0, 0, 0],
+         [0, 2, 0, 0],
+         [0, 0, 3, 0],
+         [0, 0, 0, 4]]
     """
 
     @prim_attr_register
     def __init__(self):
         """init Diag"""
 
-    def infer_type(self, x):
-        args = {"x_dtype": x}
-        validator.check_subclass('input_x', x, mstype.tensor)
-        validator.check_type_same(args, mstype.number_type)
-        return x
+    def infer_dtype(self, x_type):
+        validator.check_subclass('input_x', x_type, mstype.tensor)
+        return x_type
+
+    def infer_shape(self, x_shape):
+        validator.check("x rank", len(x_shape), "", 1, Rel.GE)
+        ret_shape = copy.deepcopy(x_shape)
+        ret_shape = ret_shape + ret_shape
+        return ret_shape
 
     def infer_value(self, x):
-        validator.check("shape_length", len(x.shape()), "length", [1, 2], Rel.IN)
+        if x is None:
+            return None
+        validator.check("input x rank", len(x.shape()), "", 1)
+        ret = np.diag(x.asnumpy())
+        return Tensor(ret)
+
+
+class DiagPart(PrimitiveWithInfer):
+    r"""
+
+    Extract the diagonal part from given tensor.
+
+    Assume input has dimensions :math:`[D_1,..., D_k, D_1,..., D_k]`, the output is a tensor
+    of rank k with dimensions :math:`[D_1,..., D_k]` where:
+    :math:`output[i_1,..., i_k] = input[i_1,..., i_k, i_1,..., i_k]`.
+
+    Inputs:
+        - **input_x** (Tensor) - The input Tensor.
+
+    Outputs:
+        Tensor.
+
+    Examples
+        >>> input_x = Tensor([[1, 0, 0, 0],
+        >>>                   [0, 2, 0, 0],
+        >>>                   [0, 0, 3, 0],
+        >>>                   [0, 0, 0, 4]])
+        >>> diag_part = P.DiagPart()
+        >>> diag_part(x)
+        [1, 2, 3, 4]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init DiagPart"""
+
+    def infer_dtype(self, x_type):
+        validator.check_subclass('input_x', x_type, mstype.tensor)
+        return x_type
+
+    def infer_shape(self, x_shape):
+        if len(x_shape)%2 != 0 or \
+                not x_shape:
+            raise ValueError(f"DiagPart input rank must be non-zero and even, but got rank {len(x_shape)}, "
+                             f"with shapes {x_shape}")
+        length = len(x_shape) // 2
+        ret_shape = x_shape[0:length]
+        return ret_shape
+
+    def infer_value(self, x):
+        if x is None:
+            return None
+        validator.check("x rank", len(x.shape()), "", 2)
         ret = np.diag(x.asnumpy())
         return Tensor(ret)
 
@@ -1730,7 +1799,7 @@ class ScatterNd(PrimitiveWithInfer):
 
 
 class ResizeNearestNeighbor(PrimitiveWithInfer):
-    """
+    r"""
     Resize the input tensor by using nearest neighbor algorithm.
 
     Resize input tensor to given size by using nearest neighbor algorithm. The nearest
@@ -1746,7 +1815,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
          - **input_x** (Tensor) - The input tensor. The shape of the tensor is :math:`(N, C, H, W)`.
 
     Outputs:
-        Tensor, the shape of the output tensor is :math:`(N, NEW_C, NEW_H, W)`.
+        Tensor, the shape of the output tensor is :math:`(N, NEW\_C, NEW\_H, W)`.
 
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
@@ -1961,3 +2030,143 @@ class DepthToSpace(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_subclass("x_dtype", x_dtype, mstype.tensor)
         return x_dtype
+
+
+class SpaceToBatch(PrimitiveWithInfer):
+    r"""
+    Divide spatial dimensions into blocks and combine the block size with the original batch.
+
+    This operation will divide spatial dimensions (H, W) into blocks with block_size, the output tensor's H and W
+    dimension is the corresponding number of blocks after division. The output tensor's batch dimension is the
+    product of the original batch and the square of block_size. Prior to division into blocks, the spatial dimensions
+    of the input are zero padded according to paddings if necessary.
+
+    Args:
+        block_size (int): The block size of dividing block with value >= 1.
+        paddings (list): The padding value for H and W dimension, containing 2 sub list, each containing 2 int value.
+            All values must be >= 0. paddings[i] specifies the paddings for spatial dimension i, which corresponds to
+            input dimension i+2. It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1] is divisible
+            by block_size.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, the output tensor with the same type as input. Assume input shape is :math:`(n, c, h, w)` with
+        :math:`block\_size` and :math:`padddings`. The output tensor shape will be :math:`(n', c', h', w')`, where
+
+            :math:`n' = n*(block\_size*block\_size)`
+
+            :math:`c' = c`
+
+            :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_size`
+
+            :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_size`
+
+    Examples:
+        >>> block_size = 2
+        >>> paddings = [[0, 0], [0, 0]]
+        >>> space_to_batch = P.SpaceToBatch(block_size, paddings)
+        >>> x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mstype.float32)
+        >>> space_to_batch(x)
+        [[[[1.]]], [[[2.]]], [[[3.]]], [[[4.]]]]
+
+    """
+    @prim_attr_register
+    def __init__(self, block_size, paddings):
+        """Init SpaceToBatch"""
+        validator.check_type('block_size', block_size, [int])
+        validator.check('block_size', block_size, '', 1, Rel.GT)
+        self.block_size = block_size
+        validator.check('paddings shape', np.array(paddings).shape, '', (2, 2))
+        for elem in itertools.chain(*paddings):
+            validator.check_type('paddings element', elem, [int])
+        self.paddings = paddings
+
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("input_x", x_dtype, mstype.tensor)
+        validator.check_typename('input_x', x_dtype, mstype.number_type)
+        return x_dtype
+
+    def infer_shape(self, x_shape):
+        validator.check('rank of input_x', len(x_shape), '', 4)
+        out_shape = copy.deepcopy(x_shape)
+        for i in range(2):
+            padded = out_shape[i+2] + self.paddings[i][0] + \
+                     self.paddings[i][1]
+            if padded % self.block_size != 0:
+                raise ValueError(f'padded[{i}] {padded} should be divisible by '
+                                 f'block_size {self.block_size}')
+            out_shape[i+2] = padded // self.block_size
+        out_shape[0] *= self.block_size * self.block_size
+        return out_shape
+
+
+class BatchToSpace(PrimitiveWithInfer):
+    r"""
+    Divide batch dimension with blocks and interleaves these blocks back into spatial dimensions.
+
+    This operation will divide batch dimension N into blocks with block_size, the output tensor's N dimension
+    is the corresponding number of blocks after division. The output tensor's H, W dimension is product of original H, W
+    dimension and block_size with given amount to crop from dimension, respectively.
+
+    Args:
+        block_size (int): The block size of dividing block with value >= 1.
+        crops (list): The crop value for H and W dimension, containing 2 sub list, each containing 2 int value.
+            All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
+            input dimension i+2. It is required that input_shape[i+2]*block_size >= crops[i][0]+crops[i][1].
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, the output tensor with the same type as input. Assume input shape is (n, c, h, w) with block_size
+        and crops. The output shape will be (n', c', h', w'), where
+
+                :math:`n' = n//(block\_size*block\_size)`
+
+                :math:`c' = c`
+
+                :math:`h' = h*block\_size-crops[0][0]-crops[0][1]`
+
+                :math:`w' = w*block\_size-crops[1][0]-crops[1][1]`
+
+    Examples:
+        >>> block_size = 2
+        >>> crops = [[0, 0], [0, 0]]
+        >>> op = P.BatchToSpace(block_size, crops)
+        >>> x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mstype.float32)
+        >>> output = op(x)
+        [[[[1., 2.], [3., 4.]]]]
+
+    """
+    @prim_attr_register
+    def __init__(self, block_size, crops):
+        """Init BatchToSpace"""
+        validator.check_type('block_size', block_size, [int])
+        validator.check('block_size', block_size, '', 1, Rel.GT)
+        self.block_size = block_size
+        validator.check('crops shape', np.array(crops).shape, '', (2, 2))
+        for elem in itertools.chain(*crops):
+            validator.check_type('crops element', elem, [int])
+        self.crops = crops
+
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("input_x", x_dtype, mstype.tensor)
+        validator.check_typename('input_x', x_dtype, mstype.number_type)
+        return x_dtype
+
+    def infer_shape(self, x_shape):
+        validator.check('rank of input_x', len(x_shape), '', 4)
+        out_shape = copy.deepcopy(x_shape)
+        for i in range(2):
+            x_block_prod = out_shape[i+2] * self.block_size
+            crops_sum = self.crops[i][0] + self.crops[i][1]
+            validator.check("x block shape prod", x_block_prod, 'crops sum', crops_sum, Rel.GT)
+            out_shape[i+2] = x_block_prod - crops_sum
+        block_size_prod = self.block_size * self.block_size
+        if out_shape[0] % block_size_prod != 0:
+            raise ValueError(f'input_x dimension 0 {out_shape[0]}  should be divisible by '
+                             f'block_size_prod {block_size_prod}')
+        out_shape[0] = out_shape[0] // block_size_prod
+        return out_shape

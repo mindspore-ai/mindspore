@@ -18,6 +18,7 @@ import pytest
 import mindspore.dataset as ds
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
 def skip_test_exception():
@@ -28,6 +29,24 @@ def skip_test_exception():
         data.create_tuple_iterator().get_next()
     assert "The shape size 1 of input tensor is invalid" in str(info.value)
 
+
+def test_sample_exception():
+    num_samples = 0
+    with pytest.raises(ValueError) as info:
+        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)
+    assert "num_samples must be greater than 0" in str(info.value)
+    num_samples = -1
+    with pytest.raises(ValueError) as info:
+        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)
+    assert "num_samples must be greater than 0" in str(info.value)
+    num_samples = 1
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)
+    data = data.map(input_columns=["image"], operations=vision.Decode())
+    data = data.map(input_columns=["image"], operations=vision.Resize((100, 100)))
+    num_iters = 0
+    for item in data.create_dict_iterator():
+        num_iters += 1
+    assert num_iters == 1
 
 if __name__ == '__main__':
     test_exception()

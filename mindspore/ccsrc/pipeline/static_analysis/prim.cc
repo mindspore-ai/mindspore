@@ -180,6 +180,85 @@ AbstractBasePtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const Config
   return engine->ForwardConfig(out_conf, fn_conf);
 }
 
+static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_spec_list, bool need_unpack) {
+  // arg[0] is the func graph to unpack, ignore it
+  AbstractBasePtrList specialize_args_before_unpack(args_spec_list.begin() + 1, args_spec_list.end());
+  AbstractBasePtrList graph_specialize_args;
+  if (need_unpack) {
+    for (size_t index = 0; index < specialize_args_before_unpack.size(); index++) {
+      MS_EXCEPTION_IF_NULL(specialize_args_before_unpack[index]);
+      if (specialize_args_before_unpack[index]->isa<AbstractTuple>()) {
+        AbstractTuplePtr arg_tuple = specialize_args_before_unpack[index]->cast<AbstractTuplePtr>();
+        std::transform(arg_tuple->elements().begin(), arg_tuple->elements().end(),
+                       std::back_inserter(graph_specialize_args), [](AbstractBasePtr abs) { return abs; });
+      } else if (specialize_args_before_unpack[index]->isa<AbstractDictionary>()) {
+        AbstractDictionaryPtr arg_dict = specialize_args_before_unpack[index]->cast<AbstractDictionaryPtr>();
+        auto dict_elems = arg_dict->elements();
+        (void)std::transform(
+          dict_elems.begin(), dict_elems.end(), std::back_inserter(graph_specialize_args),
+          [](const AbstractAttribute &item) { return std::make_shared<AbstractKeywordArg>(item.first, item.second); });
+      } else {
+        MS_LOG(EXCEPTION) << "UnpackGraph require args should be tuple or dict, but got "
+                          << specialize_args_before_unpack[index]->ToString();
+      }
+    }
+  } else {
+    graph_specialize_args = specialize_args_before_unpack;
+  }
+  return graph_specialize_args;
+}
+
+AbstractBasePtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                          AnfNodeConfigPtr out_conf) {
+  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
+  }
+  if (!prim_->isa<prim::UnpackGraphPrimitive>()) {
+    MS_LOG(EXCEPTION) << "Primitive should be UnpackGraphPrimitive, but got " << prim_->ToString();
+  }
+
+  auto unpack_graph = prim_->cast<prim::UnpackGraphPrimitivePtr>();
+  auto out_node = out_conf->node()->cast<CNodePtr>();
+  const auto &out_node_inputs = out_node->inputs();
+  if (out_node->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+    MS_LOG(EXCEPTION) << "UnpackGraphPrimitive"
+                      << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
+                      << ", inputs size " << out_node_inputs.size();
+  }
+  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
+  AbstractBasePtrList args_spec_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue(); });
+  // get the forward graph
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  AbstractFunctionPtr fn = args_spec_list[0]->cast<AbstractFunctionPtr>();
+  if (fn == nullptr) {
+    MS_LOG(EXCEPTION) << "UnpackGraphPrimitive arg0 must be AbstractFunction, but " << args_spec_list[0]->ToString();
+  }
+  auto real_fn = fn->cast<FuncGraphAbstractClosurePtr>();
+  MS_EXCEPTION_IF_NULL(real_fn);
+  FuncGraphPtr forward_graph = real_fn->func_graph();
+  MS_EXCEPTION_IF_NULL(forward_graph);
+  AbstractBasePtrList graph_specialize_args =
+    GetUnpackGraphSpecArgsList(args_spec_list, unpack_graph->need_unpack_args());
+
+  AbstractBasePtrList graph_specialize_args_without_sens;
+  (void)std::transform(graph_specialize_args.begin(),
+                       graph_specialize_args.end() - (unpack_graph->with_sens_in_args() ? 1 : 0),
+                       std::back_inserter(graph_specialize_args_without_sens), [](AbstractBasePtr abs) { return abs; });
+  auto new_graph = forward_graph->GenerateGraph(graph_specialize_args_without_sens);
+  engine->func_graph_manager()->AddFuncGraph(new_graph);
+  ScopePtr scope = kDefaultScope;
+  if (out_conf != nullptr) {
+    scope = out_conf->node()->scope();
+  }
+  ScopeGuard scope_guard(scope);
+  AnfNodePtr new_vnode = NewValueNode(new_graph);
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_vnode, out_conf->context());
+
+  return engine->ForwardConfig(out_conf, fn_conf);
+}
+
 namespace {
 py::object BuildValue(const ValuePtr &value_ptr) {
   if (value_ptr == nullptr) {
@@ -475,24 +554,6 @@ AbstractBasePtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &dat
   return eng->ForwardConfig(old_conf, fn_conf);
 }
 
-AbstractBasePtr GenerateResolveAbstract(const AnfNodeConfigPtr &out_conf, const py::object &obj,
-                                        const ValuePtr &converted_ret) {
-  if (py::hasattr(obj, PYTHON_DATACLASS_FIELDS)) {
-    TypePtr cls_ptr = parse::ParseDataClass(converted_ret->cast<std::shared_ptr<parse::PyObjectWrapper>>()->obj());
-
-    std::vector<AnfNodePtr> input = {NewValueNode(prim::kPrimPartial), NewValueNode(prim::kPrimMakeRecord),
-                                     NewValueNode(cls_ptr)};
-    MS_EXCEPTION_IF_NULL(out_conf);
-    FuncGraphPtr func_graph = out_conf->node()->func_graph();
-    CNodePtr new_cnode = func_graph->NewCNode(input);
-    AnalysisEnginePtr eng = out_conf->engine();
-    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, out_conf->context());
-    return eng->ForwardConfig(out_conf, fn_conf);
-  } else {
-    return ToAbstract(converted_ret, AnalysisContext::DummyContext(), out_conf);
-  }
-}
-
 AbstractBasePtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engine,
                                                     const AbstractBasePtrList &args_spec_list,
                                                     const AnfNodeConfigPtr &out_conf) {
@@ -523,23 +584,16 @@ AbstractBasePtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &eng
   // item_name to func addr from obj_map
   parse::SymbolPtr symbol = item_v->cast<parse::SymbolPtr>();
   parse::NameSpacePtr name_space = data_v->cast<parse::NameSpacePtr>();
+  FuncGraphPtr func_graph = out_conf->node()->func_graph();
 
-  parse::SymbolResolverPtr symbol_resolver =
-    std::make_shared<parse::SymbolResolver>(name_space, symbol, out_conf->node());
-  if (!symbol_resolver->Resolve()) {
+  auto new_node = parse::ResolveSymbol(func_graph->manager(), name_space, symbol, out_conf->node());
+  if (new_node == nullptr) {
     MS_LOG(EXCEPTION) << "Resolve node failed";
   }
 
-  py::object obj = symbol_resolver->result();
-  ValuePtr converted_ret = nullptr;
-  bool converted = parse::ConvertData(obj, &converted_ret, true);
-  if (!converted) {
-    MS_LOG(EXCEPTION) << "Convert data failed";
-  }
-  if (converted_ret->isa<FuncGraph>()) {
-    AddToManager(engine, converted_ret->cast<FuncGraphPtr>());
-  }
-  return GenerateResolveAbstract(out_conf, obj, converted_ret);
+  AnalysisEnginePtr eng = out_conf->engine();
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context());
+  return eng->ForwardConfig(out_conf, fn_conf);
 }
 
 AbstractBasePtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &engine,
@@ -556,8 +610,8 @@ AbstractBasePtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &e
     MS_LOG(EXCEPTION) << "Attribute type error";
   }
   std::string item_name = item_v->cast<StringImmPtr>()->value();
-  MS_LOG(DEBUG) << "Resovle name: " << cls->tag().name();
-  MS_LOG(DEBUG) << "Resovle item: " << item_name;
+  MS_LOG(DEBUG) << "Resolve name: " << cls->tag().name();
+  MS_LOG(DEBUG) << "Resolve item: " << item_name;
 
   AbstractBasePtr attr = cls->GetAttribute(item_name);
   if (attr != nullptr) {
@@ -641,7 +695,7 @@ class EmbedEvaluator : public SymbolicPrimEvaluator {
   ~EmbedEvaluator() override = default;
   MS_DECLARE_PARENT(EmbedEvaluator, SymbolicPrimEvaluator);
   AbstractBasePtr EvalPrim(const ConfigPtrList &args_conf_list) override {
-    // arg: free variable to be embeded
+    // arg: free variable to be embedded
     if (args_conf_list.size() != 1) {
       MS_LOG(EXCEPTION) << "EmbedEvaluator requires 1 parameter, but got " << args_conf_list.size();
     }
@@ -860,7 +914,7 @@ class PartialEvaluator : public Evaluator {
   AbstractBasePtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                       AnfNodeConfigPtr out_conf = nullptr) override {
     if (args_conf_list.size() == 0) {
-      MS_LOG(EXCEPTION) << "args size should be greater than 0";
+      MS_LOG(EXCEPTION) << "Args size should be greater than 0";
     }
     auto arg0_value = args_conf_list[0]->GetEvaluatedValue();
     AbstractBasePtrList args_spec_list{arg0_value};

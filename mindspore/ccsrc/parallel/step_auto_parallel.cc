@@ -18,30 +18,30 @@
 
 #include <inttypes.h>
 #include <sys/time.h>
-#include <vector>
+#include <algorithm>
+#include <map>
 #include <memory>
 #include <set>
-#include <map>
-#include <utility>
 #include <string>
-#include <algorithm>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "ir/anf.h"
+#include "ir/meta_tensor.h"
 #include "optimizer/opt.h"
 #include "optimizer/optimizer.h"
-#include "pipeline/pipeline.h"
-#include "pipeline/parse/python_adapter.h"
+#include "parallel/auto_parallel/dp_algo_costmodel.h"
 #include "parallel/auto_parallel/edge_costmodel.h"
 #include "parallel/auto_parallel/graph_costmodel.h"
-#include "parallel/step_parallel.h"
-#include "parallel/auto_parallel/dp_algo_costmodel.h"
-#include "parallel/ops_info/tmp_identity_info.h"
-#include "parallel/context.h"
-#include "parallel/auto_parallel/rec_core/rec_partition.h"
-#include "parallel/auto_parallel/rec_core/rec_parse_graph.h"
 #include "parallel/auto_parallel/rec_core/rec_generate_strategy.h"
-#include "ir/meta_tensor.h"
+#include "parallel/auto_parallel/rec_core/rec_parse_graph.h"
+#include "parallel/auto_parallel/rec_core/rec_partition.h"
+#include "parallel/context.h"
+#include "parallel/ops_info/tmp_identity_info.h"
+#include "parallel/step_parallel.h"
+#include "pipeline/parse/python_adapter.h"
+#include "pipeline/pipeline.h"
 
 namespace mindspore {
 namespace parallel {
@@ -95,12 +95,16 @@ std::vector<std::string> splittable_op_ = {MATMUL,
                                            POW,
                                            MAXIMUM,
                                            EQUAL,
+                                           NOT_EQUAL,
                                            LOGICALNOT,
                                            GATHERV2,
                                            STRIDEDSLICE,
                                            SQRT,
                                            GET_NEXT,
                                            CAST,
+                                           Neg,
+                                           BATCH_MATMUL,
+                                           EXPAND_DIMS,
                                            SQUEEZE};
 
 std::vector<std::string> elementwise_op_ = {ACTIVATION, GELU, TANH, SOFTMAX, LOG_SOFTMAX, RELU, SQRT,
@@ -346,6 +350,8 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
 }
 
 OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(prim);
+  MS_EXCEPTION_IF_NULL(cnode);
   auto attrs = prim->attrs();
   std::vector<Shapes> shape_list = ExtractShape(cnode);
   if (shape_list.empty()) {
@@ -381,8 +387,8 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   operator_info->set_outputs_dtype(cnode->Type());
   operator_info->set_cnode(cnode);
   // If no strategy has been configured for this operator, then candidate strategies are generated for
-  // auto-strategy searching
-  if (!StrategyFound(attrs)) {
+  // auto-strategy searchingm if this primitive is Cast, we ignore the user-specified strategy
+  if (!StrategyFound(attrs) || prim->name() == CAST) {
     // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
     // BatchParallelInfo operator
     operator_info->ComputeBatchSplitFlagList();

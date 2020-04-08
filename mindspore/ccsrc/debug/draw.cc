@@ -362,7 +362,7 @@ Digraph::~Digraph() {
       fout_.close();
     }
   } catch (const std::exception& e) {
-    MS_LOG(ERROR) << "exception when closing file " << filename_;
+    MS_LOG(ERROR) << "Exception when closing file " << filename_;
   }
 }
 

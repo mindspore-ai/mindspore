@@ -33,8 +33,8 @@ class MAE(Metric):
         The method `update` must be called with the form `update(y_pred, y)`.
 
     Examples:
-        >>> x = mindspore.Tensor(np.array([0.1, 0.2, 0.6, 0.9]), mindspore.float32)
-        >>> y = mindspore.Tensor(np.array([0.1, 0.25, 0.7, 0.9]), mindspore.float32)
+        >>> x = Tensor(np.array([0.1, 0.2, 0.6, 0.9]), mindspore.float32)
+        >>> y = Tensor(np.array([0.1, 0.25, 0.7, 0.9]), mindspore.float32)
         >>> error = nn.MAE()
         >>> error.clear()
         >>> error.update(x, y)
@@ -95,8 +95,8 @@ class MSE(Metric):
     where :math:`n` is batch size.
 
     Examples:
-        >>> x = mindspore.Tensor(np.array([0.1, 0.2, 0.6, 0.9]), mindspore.float32)
-        >>> y = mindspore.Tensor(np.array([0.1, 0.25, 0.5, 0.9]), mindspore.float32)
+        >>> x = Tensor(np.array([0.1, 0.2, 0.6, 0.9]), mindspore.float32)
+        >>> y = Tensor(np.array([0.1, 0.25, 0.5, 0.9]), mindspore.float32)
         >>> error = MSE()
         >>> error.clear()
         >>> error.update(x, y)

@@ -20,7 +20,7 @@ A collection of operators to build nerual networks or computing functions.
 """
 
 from .array_ops import (Argmax, Argmin, Cast, ConcatOffset, Concat,
-                        Diag, DType, ExpandDims, Eye,
+                        Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, GatherNd, GatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
                         Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue,
@@ -29,7 +29,7 @@ from .array_ops import (Argmax, Argmin, Cast, ConcatOffset, Concat,
                         Shape, Size, Slice, Split,
                         Squeeze, StridedSlice, Tile,
                         Transpose, TruncatedNormal, TupleToArray,
-                        UnsortedSegmentSum, SpaceToDepth, DepthToSpace)
+                        UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice)
@@ -37,9 +37,9 @@ from .debug_ops import (ImageSummary, InsertGradientOf, ScalarSummary,
                         TensorSummary, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
-from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, BatchMatMul,
+from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
-                       Cos, Div, Equal, EqualCount, Exp, Floor, FloorDiv,
+                       Cos, Div, Equal, EqualCount, Exp, Floor, FloorDiv, FloorMod, Acosh,
                        Greater, GreaterEqual, Less, LessEqual, Log, LogicalAnd,
                        LogicalNot, LogicalOr, MatMul, Maximum,
                        Minimum, Mul, Neg, NMSWithMask, NotEqual,
@@ -65,7 +65,8 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      SmoothL1Loss, Softmax,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
-                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrlD)
+                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrlD,
+                     ApplyRMSProp, ApplyCenteredRMSProp)
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey
 
 
@@ -204,10 +205,13 @@ __all__ = [
     'Log',
     'SigmoidCrossEntropyWithLogits',
     'FloorDiv',
+    'FloorMod',
+    'Acosh',
     "PReLU",
     "Cos",
     "ACos",
     "Diag",
+    "DiagPart",
     'Eye',
     'Assign',
     'AssignAdd',
@@ -225,6 +229,11 @@ __all__ = [
     "LARSUpdate",
     "Round",
     "ApplyFtrl",
+    "SpaceToBatch",
+    "BatchToSpace",
+    "Atan2",
+    "ApplyRMSProp",
+    "ApplyCenteredRMSProp"
 ]
 
 __all__.sort()

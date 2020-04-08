@@ -77,20 +77,20 @@ class MnistToMR:
 
         self.mnist_schema_json = {"label": {"type": "int64"}, "data": {"type": "bytes"}}
 
-    def _extract_images(self, filename, num_images):
+    def _extract_images(self, filename):
         """Extract the images into a 4D tensor [image index, y, x, channels]."""
         with gzip.open(filename) as bytestream:
             bytestream.read(16)
-            buf = bytestream.read(self.image_size * self.image_size * num_images * self.num_channels)
+            buf = bytestream.read()
             data = np.frombuffer(buf, dtype=np.uint8)
-            data = data.reshape(num_images, self.image_size, self.image_size, self.num_channels)
+            data = data.reshape(-1, self.image_size, self.image_size, self.num_channels)
             return data
 
-    def _extract_labels(self, filename, num_images):
+    def _extract_labels(self, filename):
         """Extract the labels into a vector of int64 label IDs."""
         with gzip.open(filename) as bytestream:
             bytestream.read(8)
-            buf = bytestream.read(1 * num_images)
+            buf = bytestream.read()
             labels = np.frombuffer(buf, dtype=np.uint8).astype(np.int64)
             return labels
 
@@ -101,8 +101,8 @@ class MnistToMR:
         Yields:
             data (dict of list): mnist data list which contains dict.
         """
-        train_data = self._extract_images(self.train_data_filename_, 60000)
-        train_labels = self._extract_labels(self.train_labels_filename_, 60000)
+        train_data = self._extract_images(self.train_data_filename_)
+        train_labels = self._extract_labels(self.train_labels_filename_)
         for data, label in zip(train_data, train_labels):
             _, img = cv2.imencode(".jpeg", data)
             yield {"label": int(label), "data": img.tobytes()}
@@ -114,8 +114,8 @@ class MnistToMR:
         Yields:
             data (dict of list): mnist data list which contains dict.
         """
-        test_data = self._extract_images(self.test_data_filename_, 10000)
-        test_labels = self._extract_labels(self.test_labels_filename_, 10000)
+        test_data = self._extract_images(self.test_data_filename_)
+        test_labels = self._extract_labels(self.test_labels_filename_)
         for data, label in zip(test_data, test_labels):
             _, img = cv2.imencode(".jpeg", data)
             yield {"label": int(label), "data": img.tobytes()}

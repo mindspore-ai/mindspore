@@ -110,6 +110,7 @@ constexpr auto kResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
 constexpr auto kFusedMulAddOpName = "FusedMulAdd";
 constexpr auto kFusedMulAddNOpName = "FusedMulAddN";
 constexpr auto kFusedMulApplyMomentumOpName = "FusedMulApplyMomentum";
+constexpr auto kBiasAddOpName = "BiasAdd";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -140,6 +141,7 @@ constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrOutputUsedNum = "output_used_num";
+constexpr auto kAttrHasBias = "has_bias";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
@@ -184,7 +186,7 @@ const std::vector<std::set<std::string>> kShapeSupportFormatMap = {k1DSupportFor
                                                                    k4DSupportFormat};
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
 
-const std::set<std::string> kOptOpeatorSet = {
+const std::set<std::string> kOptOperatorSet = {
   kMomentumOpName,       kApplyMomentumOpName,        kApplyAdadeltaOpName,
   kApplyAdagradOpName,   kApplyAdagradDAName,         kApplyAdamOpName,
   kApplyAdaMaxOpName,    kApplyAddSignOpName,         kApplyCenteredRMSPOpName,
@@ -192,6 +194,9 @@ const std::set<std::string> kOptOpeatorSet = {
   kApplyPowerSignOpName, kApplyProximalAdagradOpName, kApplyProximalGradientDescentOpName,
   kApplyRMSPropOpName,
 };
+
+const std::set<std::string> kSpecialFormatSet = {kOpFormat_FRAC_Z, kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
+                                                 kOpFormat_FRAC_NZ, kOpFormat_C1HWNCoC0};
 
 static inline void ChangeFileMode(const std::string& file_name, mode_t mode) {
   if (access(file_name.c_str(), F_OK) != 0) {

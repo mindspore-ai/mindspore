@@ -18,9 +18,9 @@
 #include <cfloat>
 #include <functional>
 #include <numeric>
+#include "common/utils.h"
 #include "parallel/status.h"
 #include "parallel/tensor_layout/shape_util.h"
-#include "common/utils.h"
 
 namespace mindspore {
 namespace parallel {

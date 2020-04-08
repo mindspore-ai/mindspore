@@ -21,8 +21,8 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 #include "parallel/status.h"
 #include "parallel/tensor_layout/array.h"
 

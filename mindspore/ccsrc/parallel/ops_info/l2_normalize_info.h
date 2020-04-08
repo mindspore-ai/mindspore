@@ -17,16 +17,15 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_L2_NORMALIZE_INFO_H_
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_L2_NORMALIZE_INFO_H_
 
+#include <memory>
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 #include "ir/value.h"
+#include "parallel/auto_parallel/operator_costmodel.h"
 #include "parallel/ops_info/activation_info.h"
 #include "parallel/strategy.h"
-#include "parallel/auto_parallel/operator_costmodel.h"
 
 namespace mindspore {
 namespace parallel {

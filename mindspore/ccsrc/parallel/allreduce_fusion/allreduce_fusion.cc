@@ -15,16 +15,16 @@
  */
 
 #include "parallel/allreduce_fusion/allreduce_fusion.h"
-#include <queue>
-#include <unordered_set>
-#include <string>
 #include <memory>
-#include "utils/log_adapter.h"
-#include "parallel/status.h"
+#include <queue>
+#include <string>
+#include <unordered_set>
 #include "ir/func_graph.h"
-#include "parallel/step_parallel.h"
-#include "parallel/graph_util/node_info.h"
 #include "parallel/costmodel_context.h"
+#include "parallel/graph_util/node_info.h"
+#include "parallel/status.h"
+#include "parallel/step_parallel.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {
@@ -359,7 +359,7 @@ Status AllreduceFusion::SetFusionByBackwardCompAndAllreduceTime() {
     return FAILED;
   }
   double para_size = (tail_time_ - allreduce_inherent_time_) / allreduce_bandwidth_;
-  double to_cost = allreduce_graph_.max() + FUSION_COST_EPS;
+  double to_cost = allreduce_graph_.max();
   int32_t fusion = 1;
   while (to_cost != 0) {
     MS_LOG(INFO) << "to_cost: " << to_cost << " para_size: " << para_size;

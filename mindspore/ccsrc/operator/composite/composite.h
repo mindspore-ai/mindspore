@@ -29,6 +29,7 @@
 #include "operator/composite/zip_operation.h"
 #include "operator/composite/list_append_operation.h"
 #include "operator/composite/do_signature.h"
+#include "operator/composite/unpack_call.h"
 #include "pipeline/static_analysis/static_analysis.h"
 #include "utils/misc.h"
 #include "utils/any.h"
@@ -154,7 +155,7 @@ class GradOperation : public MetaFuncGraph {
   FuncGraphPtr GetGrad(AnfNodePtr ptrNode, const AnfNodePtr& weights, const std::vector<AnfNodePtr>& ptrParams,
                        bool applyJ = false);
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) override;
-
+  bool sens_param() const { return sens_param_; }
   bool get_all_;
   bool get_by_list_;
   bool sens_param_;
@@ -208,17 +209,6 @@ class TensorSlice : public MetaFuncGraph {
 };
 using TensorSlicePtr = std::shared_ptr<TensorSlice>;
 
-// Expand the tuple and dict parameters generated when parsing the function call,
-// and generate positional parameters and key-value pairs for function.
-class UnpackCall : public MetaFuncGraph {
- public:
-  explicit UnpackCall(const std::string& name) : MetaFuncGraph(name) {}
-  ~UnpackCall() override = default;
-  MS_DECLARE_PARENT(UnpackCall, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) override;
-  friend bool operator==(const UnpackCall& lhs, const UnpackCall& rhs) { return lhs.name_ == rhs.name_; }
-};
-using UnpackCallPtr = std::shared_ptr<UnpackCall>;
 }  // namespace prim
 }  // namespace mindspore
 

@@ -34,6 +34,8 @@ if(ENABLE_GPU)
             "device/gpu/*.cu"
             "kernel/gpu/*.cu"
             "kernel/akg/gpu/*.cc"
+            "kernel/akg/akgkernelbuild.cc"
+            "kernel/akg/akg_kernel_attrs_process.cc"
             )
     file(GLOB_RECURSE GPU_KERNEL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             "kernel/gpu/*.cc"
@@ -85,7 +87,22 @@ ms_build_flatbuffers("${FLATBUFFER_IN}" "${FLATBUFFER_IN}" GENERATED_OUTPUT_DIR 
 file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "ir/*.cc"
         "ir/dtype/*.cc"
-        "utils/*.cc"
+        "utils/context/ms_context.cc"
+        "utils/symbolic.cc"
+        "utils/tensorprint_utils.cc"
+        "utils/convert_utils.cc"
+        "utils/graph_utils.cc"
+        "utils/misc.cc"
+        "utils/callbacks.cc"
+        "utils/profile.cc"
+        "utils/base_ref.cc"
+        "utils/summary/event_writer.cc"
+        "utils/log_adapter.cc"
+        "utils/comm_manager.cc"
+        "utils/any.cc"
+        "utils/config_manager.cc"
+        "utils/system/file_system.cc"
+        "utils/system/crc32c.cc"
         "common/*.cc"
         "parallel/*.cc"
         "pipeline/pipeline.cc"
@@ -100,14 +117,14 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "debug/*.cc"
         "onnx/onnx_exporter.cc"
         "operator/*.cc"
-        "transform/*.cc"
         "session/kernel_graph.cc"
         "utils/node_utils.cc"
         "session/session_basic.cc"
         "session/session_factory.cc"
         "session/anf_runtime_algorithm.cc"
         "vm/*.cc"
-        "pynative/*.cc"
+        "pynative/base.cc"
+        "pynative/pynative_execute.cc"
         "pybind_api/*.cc"
         "device/common/*.cc"
         "kernel/kernel_query.cc"
@@ -117,7 +134,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "device/kernel_runtime.cc"
         "device/kernel_runtime_manager.cc"
         "device/convert_tensor_utils.cc"
-        "pre_activate/ascend/*.cc"
         "pre_activate/common/*.cc"
         "pre_activate/pass/*.cc"
         "pre_activate/gpu/*.cc"
@@ -168,6 +184,16 @@ if(ENABLE_DUMP_PROTO)
     add_compile_definitions(ENABLE_DUMP_PROTO)
 endif()
 
+if(ENABLE_GE)
+    file(GLOB_RECURSE GE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+            "transform/*.cc"
+            "pynative/pynative_execute_ge.cc"
+            "utils/callbacks_ge.cc"
+            "pipeline/pipeline_ge.cc"
+            )
+    list(APPEND MINDSPORE_SRC_LIST ${GE_SRC_LIST})
+endif()
+
 if(ENABLE_D)
     include_directories("${CMAKE_BINARY_DIR}/kernel/aicpu")
     file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -185,10 +211,12 @@ if(ENABLE_D)
             "device/ascend/*.cc"
             "device/ascend/profiling/*.cc"
             "device/ascend/tasksink/*.cc"
-            "kernel/akg/cce/*.cc"
             "device/kernel_adjust.cc"
             "kernel/kernel_fusion.cc"
             "kernel/tbe/*.cc"
+            "pre_activate/ascend/*.cc"
+            "transform/*.cc"
+            "pipeline/pipeline_ge.cc"
             )
     list(APPEND MINDSPORE_SRC_LIST ${D_SRC_LIST})
     list(APPEND MINDSPORE_PROTO_AICPU_LIST ${PROTOSRCS})
@@ -247,9 +275,11 @@ if (ENABLE_GE)
         target_link_libraries(mindspore graph ge_client)
     endif()
     target_link_libraries(mindspore tsdclient)
-else()
+elseif(ENABLE_D)
     add_compile_definitions(NO_GE_CLIENT)
     target_link_libraries(mindspore graph)
+else()
+    add_compile_definitions(NO_GE_CLIENT)
 endif()
 
 if(ENABLE_D)
@@ -265,15 +295,17 @@ if(ENABLE_D)
         endif()
     else()
         MESSAGE("use system default lib")
-        set(D_LIB_PATH "/usr/local/HiAI/runtime/lib64/")
+        set(ASCEND_PATH /usr/local/Ascend)
+        set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
+        set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
     endif()
 
-    MESSAGE("USE DAV LIB PATH: ${D_LIB_PATH}")
-    find_library(HCCL hccl ${D_LIB_PATH})
-    find_library(CCE_LIB cce ${D_LIB_PATH})
-    find_library(RUNTIME_LIB runtime ${D_LIB_PATH})
-    find_library(TSDCLIENT tsdclient ${D_LIB_PATH})
-    find_library(PROFILING msprof ${D_LIB_PATH})
+    MESSAGE("USE DAV LIB PATH: ${ASCEND_PATH}")
+    find_library(HCCL hccl ${ASCEND_RUNTIME_PATH})
+    find_library(CCE_LIB cce ${ASCEND_RUNTIME_PATH})
+    find_library(RUNTIME_LIB runtime ${ASCEND_RUNTIME_PATH})
+    find_library(TSDCLIENT tsdclient ${ASCEND_RUNTIME_PATH})
+    find_library(PROFILING msprof ${ASCEND_DRIVER_PATH})
     target_link_libraries(mindspore ge_runtime ${CCE_LIB} ${RUNTIME_LIB} ${TSDCLIENT} ${PROFILING} ${HCCL} ${TSDCLIENT})
 endif()
 
@@ -289,8 +321,6 @@ endif()
 set(PYTHON_MODULE_SOURCE
         pipeline/init.cc
         kernel/oplib/oplib.cc
-        kernel/akg/akgkernelbuild.cc
-        kernel/akg/akg_kernel_attrs_process.cc
     ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
     ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
 
@@ -351,6 +381,7 @@ if(ENABLE_GPU)
     assign_source_group("Include" ${GROUP_INCLUDE})
 
     file(GLOB COMPILER_SRCS
+        "pre_activate/gpu/*.cc"
         ${TVM_DIR}/src/api/*.cc
         ${TVM_DIR}/src/arithmetic/*.cc
         ${TVM_DIR}/src/autotvm/*.cc
@@ -361,7 +392,6 @@ if(ENABLE_GPU)
         ${TVM_DIR}/src/node/*.cc
         ${TVM_DIR}/src/schedule/*.cc
         ${TVM_DIR}/src/runtime/*.cc
-        ${TVM_DIR}/src/runtime/cce/*.cc
         ${TVM_DIR}/src/runtime/vm/*.cc
         ${TVM_DIR}/src/runtime/vm/profiler/*.cc
         ${TVM_DIR}/src/codegen/stackvm/*.cc)
@@ -379,7 +409,6 @@ if(ENABLE_GPU)
 
     file(GLOB RUNTIME_SRCS
         ${TVM_DIR}/src/runtime/*.cc
-        ${TVM_DIR}/src/runtime/cce/*.cc
         ${TVM_DIR}/src/runtime/vm/*.cc
         ${TVM_DIR}/src/runtime/stub/*.cc
         ${TVM_DIR}/src/runtime/stackvm/*.cc)
@@ -470,17 +499,19 @@ add_dependencies(add_ms_lib _c_expression)
 
 if (NOT ENABLE_GE)
     if (ENABLE_D)
+        set(ASCEND_PATH /usr/local/Ascend)
+        set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
         add_custom_target(add_ge_lib ALL
                 COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/common/graph/libgraph.so ${MS_LIB_PATH}
                 COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/ge/common/libge_common.so ${MS_LIB_PATH}
                 COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/ge/ge_runtime/libge_runtime.so ${MS_LIB_PATH}
-                COMMAND cp /usr/local/HiAI/driver/lib64/libslog.so ${MS_LIB_PATH}
-                COMMAND cp /usr/local/HiAI/driver/lib64/libc_sec.so ${MS_LIB_PATH}
+                COMMAND cp ${ASCEND_DRIVER_PATH}/libslog.so ${MS_LIB_PATH}
+                COMMAND cp ${ASCEND_DRIVER_PATH}/libc_sec.so ${MS_LIB_PATH}
         )
         add_dependencies(add_ge_lib add_ms_lib)
         add_dependencies(add_ge_lib graph)
         add_dependencies(add_ge_lib ge_runtime)
-    else()
+    elseif(ENABLE_TESTCASES)
         add_custom_target(add_ge_lib ALL
                 COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/common/graph/libgraph.so  ${MS_LIB_PATH}
                 COMMAND cp ${CMAKE_SOURCE_DIR}/graphengine/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR}/libslog.so ${MS_LIB_PATH}

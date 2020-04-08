@@ -817,7 +817,7 @@ void FuncGraphChildDirect::OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) {
 void FuncGraphParentsDirectCollector::OnModEdge(AnfNodePtr node, int, AnfNodePtr inp, EdgeProcessDirection direction) {
   MS_EXCEPTION_IF_NULL(node);
   FuncGraphPtr fg1 = node->func_graph();
-  // possible chirld parent
+  // possible child parent
   if (IsValueNode<FuncGraph>(inp)) {
     FuncGraphPtr fg2 = GetValueNode<FuncGraphPtr>(inp);
     if (Mod(fg1, ParentProxy(fg2), direction)) {
@@ -1181,7 +1181,7 @@ bool FuncGraphJTotalComputer::SeekJ(const FuncGraphPtr& fg, const FuncGraphSetPt
   }
   path->add(fg);
 
-  // checkg if func graphs used contains J(func_graph);
+  // check if func graphs used contains J(func_graph);
   auto& used = this->manager_->func_graphs_used();
   for (auto& item : used[fg]) {
     auto used_g = item.first;
