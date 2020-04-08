@@ -676,7 +676,7 @@ MSRStatus ShardReader::Open(const std::string &file_path, int n_consumer,
 
   if (CheckColumnList(selected_columns_) == FAILED) {
     MS_LOG(ERROR) << "Illegal column list";
-    return FAILED;
+    return ILLEGAL_COLUMN_LIST;
   }
 
   // Initialize argument

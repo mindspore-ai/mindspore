@@ -32,6 +32,7 @@
 #include "dataset/engine/datasetops/source/io_block.h"
 #include "dataset/util/queue.h"
 #include "dataset/util/status.h"
+#include "mindrecord/include/shard_error.h"
 #include "mindrecord/include/shard_reader.h"
 #include "mindrecord/include/common/shard_utils.h"
 #include "dataset/util/wait_post.h"
