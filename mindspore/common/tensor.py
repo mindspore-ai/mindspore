@@ -42,14 +42,14 @@ class Tensor(Tensor_):
 
     Examples:
         >>> # init a tensor with input data
-        >>> t1 = mindspore.Tensor(np.zeros([1, 2, 3]), mindspore.float32)
-        >>> assert isinstance(t1, mindspore.Tensor)
+        >>> t1 = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
+        >>> assert isinstance(t1, Tensor)
         >>> assert t1.shape() == (1, 2, 3)
         >>> assert t1.dtype() == mindspore.float32
         >>>
         >>> # init a tensor with a float scalar
-        >>> t2 = mindspore.Tensor(0.1)
-        >>> assert isinstance(t2, mindspore.Tensor)
+        >>> t2 = Tensor(0.1)
+        >>> assert isinstance(t2, Tensor)
         >>> assert t2.dtype() == mindspore.float64
     """
 

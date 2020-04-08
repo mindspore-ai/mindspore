@@ -1208,7 +1208,7 @@ class Acosh(PrimitiveWithInfer):
 
     Examples:
         >>> acosh = Acosh()
-        >>> X = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), ms.float32)
+        >>> X = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), mindspore.float32)
         >>> output = acosh(X)
     """
 
@@ -1752,7 +1752,7 @@ class Cos(PrimitiveWithInfer):
 
     Examples:
         >>> cos = P.Cos()
-        >>> X = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), ms.float32)
+        >>> X = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
         >>> output = cos(X)
     """
 
@@ -1808,7 +1808,7 @@ class Sin(PrimitiveWithInfer):
 
     Examples:
         >>> sin = P.Sin()
-        >>> input_x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), ms.float32)
+        >>> input_x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
         >>> output = sin(input_x)
     """
 
