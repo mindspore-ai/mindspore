@@ -17,7 +17,6 @@
 #include "device/gpu/blocking_queue.h"
 #include <chrono>
 #include "device/gpu/gpu_common.h"
-#include "dataset/util/make_unique.h"
 #include "common/utils.h"
 
 namespace mindspore {
@@ -32,7 +31,7 @@ GpuQueue::GpuQueue(void *addr, size_t feature_size, size_t label_size, size_t ca
       stream_(0),
       node_info_(nullptr) {
   CHECK_CUDA_RET_WITH_ERROR(cudaStreamCreate(&stream_), "Cuda Create Stream Failed");
-  node_info_ = mindspore::make_unique<NodeInfo[]>(capacity);
+  node_info_ = std::make_unique<NodeInfo[]>(capacity);
 }
 
 GpuQueue::~GpuQueue() { buffer_ = nullptr; }

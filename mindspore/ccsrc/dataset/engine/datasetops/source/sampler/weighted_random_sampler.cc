@@ -46,10 +46,10 @@ Status WeightedRandomSampler::Init(const RandomAccessOp *op) {
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && samples_per_buffer_ > 0, "Fail to init WeightedRandomSampler");
 
   if (!replacement_) {
-    exp_dist_ = mindspore::make_unique<std::exponential_distribution<>>(1);
+    exp_dist_ = std::make_unique<std::exponential_distribution<>>(1);
     InitOnePassSampling();
   } else {
-    discrete_dist_ = mindspore::make_unique<std::discrete_distribution<int64_t>>(weights_.begin(), weights_.end());
+    discrete_dist_ = std::make_unique<std::discrete_distribution<int64_t>>(weights_.begin(), weights_.end());
   }
 
   return Status::OK();
@@ -96,9 +96,9 @@ Status WeightedRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buf
   }
 
   if (sample_id_ == num_samples_) {
-    (*out_buffer) = make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
+    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
   } else {
-    (*out_buffer) = make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
+    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> outputIds;
 
     int64_t last_id = sample_id_ + samples_per_buffer_;
@@ -132,7 +132,7 @@ Status WeightedRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buf
     }
 
     // Create a TensorTable from that single tensor and push into DataBuffer
-    (*out_buffer)->set_tensor_table(make_unique<TensorQTable>(1, TensorRow(1, outputIds)));
+    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, TensorRow(1, outputIds)));
   }
 
   return Status::OK();

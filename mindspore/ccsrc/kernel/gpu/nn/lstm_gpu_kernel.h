@@ -22,7 +22,6 @@
 #include <memory>
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
-#include "dataset/util/make_unique.h"
 #include "kernel/gpu/kernel_constants.h"
 
 namespace mindspore {
@@ -144,8 +143,8 @@ class LstmGpuKernel : public GpuKernel {
     int x_dims[3]{batch_size_, input_size_, 1};
     int y_dims[3]{batch_size_, hidden_size_ * (bidirectional_ ? 2 : 1), 1};
 
-    x_desc_ = mindspore::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
-    y_desc_ = mindspore::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
+    x_desc_ = std::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
+    y_desc_ = std::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
 
     for (size_t i = 0; i < IntToSize(seq_len_); ++i) {
       CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&x_desc_[i]), "create x_desc failed");

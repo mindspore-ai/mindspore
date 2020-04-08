@@ -24,7 +24,6 @@
 #include "dataset/engine/datasetops/source/storage_client.h"
 #include "dataset/engine/datasetops/source/storage_op.h"
 #include "dataset/engine/datasetops/source/tf_client.h"
-#include "dataset/util/make_unique.h"
 #include "dataset/util/status.h"
 
 namespace mindspore {
@@ -57,7 +56,7 @@ static Status CreateStorageClientSwitch(
     case DatasetType::kTf: {
       // Construct the derived class TFClient, stored as base class StorageClient
       store_op->set_rows_per_buffer(32);
-      *out_client = mindspore::make_unique<TFClient>(std::move(schema), store_op);
+      *out_client = std::make_unique<TFClient>(std::move(schema), store_op);
       break;
     }
     case DatasetType::kUnknown:
@@ -83,7 +82,7 @@ Status StorageClient::CreateStorageClient(
   std::shared_ptr<StorageClient> *out_client) {  // Out: the created storage client
   // Make a new schema first.  This only assigns the dataset type.  It does not
   // create the columns yet.
-  auto new_schema = mindspore::make_unique<DataSchema>();
+  auto new_schema = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(new_schema->LoadDatasetType(dataset_schema_path));
   RETURN_IF_NOT_OK(CreateStorageClientSwitch(std::move(new_schema), store_op, out_client));
   return Status::OK();
@@ -99,7 +98,7 @@ Status StorageClient::CreateStorageClient(
   std::shared_ptr<StorageClient> *out_client) {  // Out: the created storage client
   // The dataset type is passed in by the user.  Create an empty schema with only
   // only the dataset type filled in and then create the client with it.
-  auto new_schema = mindspore::make_unique<DataSchema>();
+  auto new_schema = std::make_unique<DataSchema>();
   new_schema->set_dataset_type(in_type);
   RETURN_IF_NOT_OK(CreateStorageClientSwitch(std::move(new_schema), store_op, out_client));
   return Status::OK();
@@ -147,7 +146,7 @@ Status StorageClient::AssignDatasetLayout(uint32_t num_rows,           // In: Th
   // The current schema was just an empty one with only the dataset field populated.
   // Let's copy construct a new one that will be a copy of the input schema (releasing the old
   // one) and then set the number of rows that the user requested.
-  data_schema_ = mindspore::make_unique<DataSchema>(schema);
+  data_schema_ = std::make_unique<DataSchema>(schema);
   CHECK_FAIL_RETURN_UNEXPECTED(num_rows <= MAX_INTEGER_INT32, "numRows exceeds the boundary numRows>2147483647");
   num_rows_in_dataset_ = num_rows;
 

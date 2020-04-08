@@ -138,7 +138,7 @@ TEST_F(MindDataTestImageFolderSampler, TestRandomImageFolder) {
 TEST_F(MindDataTestImageFolderSampler, TestRandomSamplerImageFolder) {
   int32_t original_seed = GlobalContext::config_manager()->seed();
   GlobalContext::config_manager()->set_seed(0);
-  std::unique_ptr<Sampler> sampler = mindspore::make_unique<RandomSampler>(true, 12);
+  std::unique_ptr<Sampler> sampler = std::make_unique<RandomSampler>(true, 12);
   int32_t res[] = {2, 2, 2, 3, 2, 3, 2, 3, 1, 2, 2, 1};  // ground truth label
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   auto tree = Build({ImageFolder(16, 2, 32, folder_path, false, std::move(sampler))});
@@ -200,7 +200,7 @@ TEST_F(MindDataTestImageFolderSampler, TestSequentialImageFolderWithRepeatBatch)
 TEST_F(MindDataTestImageFolderSampler, TestSubsetRandomSamplerImageFolder) {
   // id range 0 - 10 is label 0, and id range 11 - 21 is label 1
   std::vector<int64_t> indices({0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 11});
-  std::unique_ptr<Sampler> sampler = mindspore::make_unique<SubsetRandomSampler>(indices);
+  std::unique_ptr<Sampler> sampler = std::make_unique<SubsetRandomSampler>(indices);
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   // Expect 6 samples for label 0 and 1
   int res[2] = {6, 6};
@@ -238,7 +238,7 @@ TEST_F(MindDataTestImageFolderSampler, TestWeightedRandomSamplerImageFolder) {
 
   // create sampler with replacement = replacement
   std::unique_ptr<Sampler> sampler =
-    mindspore::make_unique<WeightedRandomSampler>(weights, num_samples, true, samples_per_buffer);
+    std::make_unique<WeightedRandomSampler>(weights, num_samples, true, samples_per_buffer);
 
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   auto tree = Build({ImageFolder(16, 2, 32, folder_path, false, std::move(sampler))});
@@ -295,7 +295,7 @@ TEST_F(MindDataTestImageFolderSampler, TestImageFolderClassIndex) {
 }
 
 TEST_F(MindDataTestImageFolderSampler, TestDistributedSampler) {
-  std::unique_ptr<Sampler> sampler = mindspore::make_unique<DistributedSampler>(11, 10, false);
+  std::unique_ptr<Sampler> sampler = std::make_unique<DistributedSampler>(11, 10, false);
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   auto tree = Build({ImageFolder(16, 2, 32, folder_path, false, std::move(sampler)), Repeat(4)});
   tree->Prepare();
@@ -322,7 +322,7 @@ TEST_F(MindDataTestImageFolderSampler, TestDistributedSampler) {
 }
 
 TEST_F(MindDataTestImageFolderSampler, TestPKSamplerImageFolder) {
-  std::unique_ptr<Sampler> sampler = mindspore::make_unique<PKSampler>(3, false, 4);
+  std::unique_ptr<Sampler> sampler = std::make_unique<PKSampler>(3, false, 4);
   int32_t res[] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};  // ground truth label
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   auto tree = Build({ImageFolder(16, 2, 32, folder_path, false, std::move(sampler))});
@@ -431,7 +431,7 @@ TEST_F(MindDataTestImageFolderSampler, TestImageFolderDatasetSize) {
 }
 
 TEST_F(MindDataTestImageFolderSampler, TestImageFolderSharding1) {
-  std::unique_ptr<Sampler> sampler = mindspore::make_unique<DistributedSampler>(4, 0, false);
+  std::unique_ptr<Sampler> sampler = std::make_unique<DistributedSampler>(4, 0, false);
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   // numWrks, rows, conns, path, shuffle, sampler, map, numSamples, decode
   auto tree = Build({ImageFolder(16, 2, 32, folder_path, false, std::move(sampler), {}, 5)});
@@ -460,7 +460,7 @@ TEST_F(MindDataTestImageFolderSampler, TestImageFolderSharding1) {
 }
 
 TEST_F(MindDataTestImageFolderSampler, TestImageFolderSharding2) {
-  std::unique_ptr<Sampler> sampler = mindspore::make_unique<DistributedSampler>(4, 3, false);
+  std::unique_ptr<Sampler> sampler = std::make_unique<DistributedSampler>(4, 3, false);
   std::string folder_path = datasets_root_path_ + "/testPK/data";
   // numWrks, rows, conns, path, shuffle, sampler, map, numSamples, decode
   auto tree = Build({ImageFolder(16, 16, 32, folder_path, false, std::move(sampler), {}, 12)});

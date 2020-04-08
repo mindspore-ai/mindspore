@@ -116,7 +116,7 @@ TEST_F(MindDataTestCelebaDataset, TestCelebaRepeat) {
 
 TEST_F(MindDataTestCelebaDataset, TestSubsetRandomSamplerCeleba) {
   std::vector<int64_t> indices({1});
-  std::unique_ptr<Sampler> sampler = mindspore::make_unique<SubsetRandomSampler>(indices);
+  std::unique_ptr<Sampler> sampler = std::make_unique<SubsetRandomSampler>(indices);
   uint32_t expect_labels[1][40] = {{0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1}};
   std::string dir = datasets_root_path_ + "/testCelebAData/";
   uint32_t count = 0;

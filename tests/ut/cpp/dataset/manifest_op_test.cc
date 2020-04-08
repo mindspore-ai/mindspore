@@ -86,7 +86,7 @@ TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
 
 TEST_F(MindDataTestManifest, TestSubsetRandomSamplerManifest) {
   std::vector<int64_t> indices({1});
-  std::unique_ptr<Sampler> sampler = mindspore::make_unique<SubsetRandomSampler>(indices);
+  std::unique_ptr<Sampler> sampler = std::make_unique<SubsetRandomSampler>(indices);
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   // Expect 6 samples for label 0 and 1
   auto tree = Build({Manifest(16, 2, 32, file, "train", std::move(sampler))});

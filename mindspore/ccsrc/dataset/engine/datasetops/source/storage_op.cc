@@ -303,7 +303,7 @@ Status StorageOp::init() {
     // For simplicity, we'll make both of them 3 so they are the same size.
     int32_t action_queue_size = (buffers_needed / num_workers_) + 1;
     for (int32_t i = 0; i < num_workers_; ++i) {
-      auto new_queue = mindspore::make_unique<Queue<int32_t>>(action_queue_size);
+      auto new_queue = std::make_unique<Queue<int32_t>>(action_queue_size);
       action_queue_.push_back(std::move(new_queue));
     }
   }
@@ -483,10 +483,10 @@ Status StorageOp::operator()() {
         // Post the control message to tell the workers to stop waiting on action queue
         // because we are done!
         RETURN_IF_NOT_OK(this->PostEndOfData());
-        std::unique_ptr<DataBuffer> eoeBuffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+        std::unique_ptr<DataBuffer> eoeBuffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoeBuffer)));
         MS_LOG(INFO) << "StorageOp master: Flow end-of-data eof message.";
-        std::unique_ptr<DataBuffer> eofBuffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
+        std::unique_ptr<DataBuffer> eofBuffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eofBuffer)));
         MS_LOG(INFO) << "StorageOp master: Main execution loop complete.";
         done = true;  // while loop exit
@@ -496,7 +496,7 @@ Status StorageOp::operator()() {
         // RepeatOp above us somewhere in the tree will re-init us with the data to fetch again
         // once it gets the end-of-epoch message.
         MS_LOG(INFO) << "StorageOp master: Flow end-of-epoch eoe message.";
-        std::unique_ptr<DataBuffer> eoe_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+        std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
 
         // reset our buffer count and go to loop again.

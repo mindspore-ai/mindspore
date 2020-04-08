@@ -179,7 +179,7 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
     RETURN_IF_NOT_OK(WorkerEntryInit(in_buffer.get(), &keep_input_columns, &to_process_indices, &final_col_name_id_map,
                                      &input_columns, &output_columns));
 
-    std::unique_ptr<TensorQTable> new_tensor_table(mindspore::make_unique<TensorQTable>());
+    std::unique_ptr<TensorQTable> new_tensor_table(std::make_unique<TensorQTable>());
     // Perform the compute function of TensorOp(s) and store the result in new_tensor_table.
     RETURN_IF_NOT_OK(WorkerCompute(in_buffer.get(), to_process_indices, new_tensor_table.get(), keep_input_columns,
                                    &input_columns, &output_columns));

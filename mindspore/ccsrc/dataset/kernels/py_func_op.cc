@@ -20,7 +20,6 @@
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
-#include "dataset/util/make_unique.h"
 #include "dataset/util/status.h"
 
 namespace mindspore {

@@ -64,9 +64,9 @@ Status SubsetRandomSampler::Reset() {
 Status SubsetRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
   // All samples have been drawn
   if (sample_id_ == indices_.size()) {
-    (*out_buffer) = make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
+    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
   } else {
-    (*out_buffer) = make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
+    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> outputIds;
 
     int64_t last_id = sample_id_ + samples_per_buffer_;
@@ -92,7 +92,7 @@ Status SubsetRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffe
     }
 
     // Create a TensorTable from that single tensor and push into DataBuffer
-    (*out_buffer)->set_tensor_table(make_unique<TensorQTable>(1, TensorRow(1, outputIds)));
+    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, TensorRow(1, outputIds)));
   }
 
   return Status::OK();

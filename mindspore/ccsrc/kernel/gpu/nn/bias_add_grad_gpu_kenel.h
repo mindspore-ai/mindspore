@@ -26,7 +26,6 @@
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "kernel/gpu/kernel_constants.h"
-#include "dataset/util/make_unique.h"
 
 namespace mindspore {
 namespace kernel {
@@ -84,8 +83,8 @@ class BiasAddGradGpuKernel : public GpuKernel {
 
     // Expand to 4 dims for cudnnSetTensorNdDescriptorEx.
     auto cudnn_dims = std::max(num_dims, 4UL);
-    std::unique_ptr<int[]> dy_dims = mindspore::make_unique<int[]>(cudnn_dims);
-    std::unique_ptr<int[]> db_dims = mindspore::make_unique<int[]>(cudnn_dims);
+    std::unique_ptr<int[]> dy_dims = std::make_unique<int[]>(cudnn_dims);
+    std::unique_ptr<int[]> db_dims = std::make_unique<int[]>(cudnn_dims);
     for (size_t i = 0; i < cudnn_dims; i++) {
       dy_dims[i] = (i < num_dims) ? SizeToInt(dy_shape[i]) : 1;
       db_dims[i] = (i == pos) ? SizeToInt(dy_shape[i]) : 1;

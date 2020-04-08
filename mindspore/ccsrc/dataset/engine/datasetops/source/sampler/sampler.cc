@@ -35,7 +35,7 @@ Status Sampler::CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t
   }
   if (col_desc_ == nullptr) {
     // a ColDescriptor for Tensor that holds SampleIds
-    col_desc_ = make_unique<ColDescriptor>("sampleIds", DataType(DataType::DE_INT64), TensorImpl::kFlexible, 1);
+    col_desc_ = std::make_unique<ColDescriptor>("sampleIds", DataType(DataType::DE_INT64), TensorImpl::kFlexible, 1);
   }
   TensorShape shape(std::vector<dsize_t>(1, num_elements));
   RETURN_IF_NOT_OK(Tensor::CreateTensor(sample_ids, col_desc_->tensorImpl(), shape, col_desc_->type()));

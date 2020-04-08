@@ -55,9 +55,9 @@ Status GlobalContext::Init() {
   // For testing we can use Dummy pool instead
 
   // Create some tensor allocators for the different types and hook them into the pool.
-  tensor_allocator_ = mindspore::make_unique<Allocator<Tensor>>(mem_pool_);
-  cv_tensor_allocator_ = mindspore::make_unique<Allocator<CVTensor>>(mem_pool_);
-  int_allocator_ = mindspore::make_unique<IntAlloc>(mem_pool_);
+  tensor_allocator_ = std::make_unique<Allocator<Tensor>>(mem_pool_);
+  cv_tensor_allocator_ = std::make_unique<Allocator<CVTensor>>(mem_pool_);
+  int_allocator_ = std::make_unique<IntAlloc>(mem_pool_);
   return Status::OK();
 }
 

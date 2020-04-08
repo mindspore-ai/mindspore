@@ -173,9 +173,9 @@ Status GeneratorOp::operator()() {
   bool eof = false;
   while (!eof) {
     // Create new buffer each iteration
-    fetched_buffer = mindspore::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
+    fetched_buffer = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
     fetched_buffer->set_column_name_map(column_names_map_);
-    std::unique_ptr<TensorQTable> fetched_table = mindspore::make_unique<TensorQTable>();
+    std::unique_ptr<TensorQTable> fetched_table = std::make_unique<TensorQTable>();
     bool eoe = false;
     {
       py::gil_scoped_acquire gil_acquire;
@@ -201,12 +201,12 @@ Status GeneratorOp::operator()() {
     if (eoe) {
       // Push out EOE upon StopIteration exception from generator
       MS_LOG(INFO) << "Generator operator sends out EOE.";
-      std::unique_ptr<DataBuffer> eoe_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+      std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
       if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
         // If last repeat or not repeated, push out EOF and exit master loop
         MS_LOG(INFO) << "Generator operator sends out EOF.";
-        std::unique_ptr<DataBuffer> eof_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
+        std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
         MS_LOG(INFO) << "Generator operator main execution loop complete.";
         eof = true;
