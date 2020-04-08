@@ -84,18 +84,8 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
 // Returns Decoded image
 // Supported images:
-// -   Windows bitmaps - \*.bmp, \*.dib (always supported)
-// -   JPEG files - \*.jpeg, \*.jpg, \*.jpe (see the *Note* section)
-// -   JPEG 2000 files - \*.jp2 (see the *Note* section)
-// -   Portable Network Graphics - \*.png (see the *Note* section)
-// -   WebP - \*.webp (see the *Note* section)
-// -   Portable image format - \*.pbm, \*.pgm, \*.ppm \*.pxm, \*.pnm (always supported)
-// -   PFM files - \*.pfm (see the *Note* section)
-// -   Sun rasters - \*.sr, \*.ras (always supported)
-// -   TIFF files - \*.tiff, \*.tif (see the *Note* section)
-// -   OpenEXR Image files - \*.exr (see the *Note* section)
-// -   Radiance HDR - \*.hdr, \*.pic (always supported)
-// -   Raster and Vector geospatial data supported by GDAL (see the *Note* section)
+//  BMP JPEG JPG PNG TIFF
+// supported by opencv, if user need more image analysis capabilities, please compile opencv particularlly.
 // @param input: CVTensor containing the not decoded image 1D bytes
 // @param output: Decoded image Tensor of shape <H,W,C> and type DE_UINT8. Pixel order is RGB
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
