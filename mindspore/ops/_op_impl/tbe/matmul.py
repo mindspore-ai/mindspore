@@ -14,89 +14,29 @@
 # ============================================================================
 
 """MatMul op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+matmul_op_info = TBERegOp("MatMul") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("matmul.so") \
+    .compute_cost(10) \
+    .kernel_name("matmul") \
+    .partial_flag(True) \
+    .attr("transpose_a", "required", "bool", "all") \
+    .attr("transpose_b", "required", "bool", "all") \
+    .input(0, "x1", False, "required", "all") \
+    .input(1, "x2", False, "required", "all") \
+    .input(2, "x3", False, "optional", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_Default, DataType.F16_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F32_Default, DataType.F32_FracNZ) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "MatMul",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "matmul.so",
-    "compute_cost": 10,
-    "kernel_name": "matmul",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "transpose_a",
-            "param_type": "required",
-            "type": "bool",
-            "value": "all"
-        },
-        {
-            "name": "transpose_b",
-            "param_type": "required",
-            "type": "bool",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float","int32"
-            ],
-            "format": [
-                "FRACTAL_NZ","FRACTAL_NZ","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float16","float","int32"
-            ],
-            "format": [
-                "FRACTAL_NZ","FRACTAL_NZ","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x2",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-               "float16","float","float","int32"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x3",
-            "need_compile": false,
-            "param_type": "optional",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float","float","int32"
-            ],
-            "format": [
-                "FRACTAL_NZ","FRACTAL_NZ","DefaultFormat","DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(matmul_op_info)
 def _matmul_tbe():
     """Mul TBE register"""
     return

@@ -14,124 +14,35 @@
 # ============================================================================
 
 """LayerNormGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+layer_norm_grad_op_info = TBERegOp("LayerNormGrad") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("layer_norm_grad.so") \
+    .compute_cost(10) \
+    .kernel_name("layer_norm_grad") \
+    .partial_flag(True) \
+    .input(0, "dy", False, "required", "all") \
+    .input(1, "x", False, "required", "all") \
+    .input(2, "variance", False, "required", "all") \
+    .input(3, "mean", False, "required", "all") \
+    .input(4, "gamma", False, "required", "all") \
+    .output(0, "pd_x", False, "required", "all") \
+    .output(1, "pd_gamma", False, "required", "all") \
+    .output(2, "pd_beta", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD,
+                  DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "LayerNormGrad",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "layer_norm_grad.so",
-    "compute_cost": 10,
-    "kernel_name": "layer_norm_grad",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "dy",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "variance",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 3,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "mean",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 4,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "gamma",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-         {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "pd_x",
-            "param_type": "required"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "pd_gamma",
-            "param_type": "required"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "pd_beta",
-            "param_type": "required"
-        }
-    ]
-}""")
+@op_info_register(layer_norm_grad_op_info)
 def _layer_norm_grad_tbe():
     """LayerNormGrad TBE register"""
     return

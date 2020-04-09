@@ -14,60 +14,24 @@
 # ============================================================================
 
 """BatchNorm op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+bn_training_reduce_op_info = TBERegOp("BNTrainingReduce") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("bn_training_reduce.so") \
+    .compute_cost(10) \
+    .kernel_name("bn_training_reduce") \
+    .partial_flag(True) \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "sum", False, "required", "all") \
+    .output(1, "square_sum", False, "required", "all") \
+    .dtype_format(DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "BNTrainingReduce",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "bn_training_reduce.so",
-    "compute_cost": 10,
-    "kernel_name": "bn_training_reduce",
-    "partial_flag": true,
-    "attr": [
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float"
-            ],
-            "format": [
-                "NC1HWC0", "NC1HWC0"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float","float"
-            ],
-            "format": [
-                "NC1HWC0", "NC1HWC0"
-            ],
-            "name": "sum",
-            "param_type": "required"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float","float"
-            ],
-            "format": [
-                "NC1HWC0", "NC1HWC0"
-            ],
-            "name": "square_sum",
-            "param_type": "required"
-        }
-    ]
-}""")
+@op_info_register(bn_training_reduce_op_info)
 def _bn_training_reduce_tbe():
     """BNTrainingReduce TBE register"""
     return

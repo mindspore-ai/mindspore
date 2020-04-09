@@ -14,107 +14,40 @@
 # ============================================================================
 
 """StridedSliceGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+strided_slice_grad_d_op_info = TBERegOp("StridedSliceGrad") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("strided_slice_grad_d.so") \
+    .compute_cost(10) \
+    .kernel_name("strided_slice_grad_d") \
+    .partial_flag(True) \
+    .attr("shapex", "optional", "listInt", "all") \
+    .attr("begin", "optional", "listInt", "all") \
+    .attr("end", "optional", "listInt", "all") \
+    .attr("strides", "optional", "listInt", "all") \
+    .attr("begin_mask", "optional", "int", "all") \
+    .attr("end_mask", "optional", "int", "all") \
+    .attr("ellipsis_mask", "optional", "int", "all") \
+    .attr("new_axis_mask", "optional", "int", "all") \
+    .attr("shrink_axis_mask", "optional", "int", "all") \
+    .input(0, "dy", False, "required", "all") \
+    .output(0, "output", False, "required", "all") \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.I8_5HD, DataType.I8_5HD) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.U8_5HD, DataType.U8_5HD) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_5HD) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "StridedSliceGrad",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "strided_slice_grad_d.so",
-    "compute_cost": 10,
-    "kernel_name": "strided_slice_grad_d",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "shapex",
-            "param_type": "optional",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "begin",
-            "param_type": "optional",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "end",
-            "param_type": "optional",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "strides",
-            "param_type": "optional",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "begin_mask",
-            "param_type": "optional",
-            "type": "int",
-            "value": "all"
-        },
-        {
-            "name": "end_mask",
-            "param_type": "optional",
-            "type": "int",
-            "value": "all"
-        },
-        {
-            "name": "ellipsis_mask",
-            "param_type": "optional",
-            "type": "int",
-            "value": "all"
-        },
-        {
-            "name": "new_axis_mask",
-            "param_type": "optional",
-            "type": "int",
-            "value": "all"
-        },
-        {
-            "name": "shrink_axis_mask",
-            "param_type": "optional",
-            "type": "int",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float","float","int32","int32","uint8","uint8","int8","int8"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0",
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "dy",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float","float","int32","int32","uint8","uint8","int8","int8"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0",
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "output",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(strided_slice_grad_d_op_info)
 def _strided_slice_grad_d_tbe():
     """StridedSliceGrad TBE register"""
     return

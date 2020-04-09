@@ -14,65 +14,28 @@
 # ============================================================================
 
 """ConfusionSoftmaxGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+confusion_softmax_grad_op_info = TBERegOp("ConfusionSoftmaxGrad") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("confusion_softmax_grad.so") \
+    .compute_cost(10) \
+    .kernel_name("confusion_softmax_grad") \
+    .partial_flag(True) \
+    .input(0, "grad", False, "required", "all") \
+    .input(1, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "ConfusionSoftmaxGrad",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "confusion_softmax_grad.so",
-    "compute_cost": 10,
-    "kernel_name": "confusion_softmax_grad",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float16", "float", "float", "float"
-            ],
-            "format": [
-               "FRACTAL_NZ", "DefaultFormat", "NC1HWC0", "FRACTAL_NZ", "DefaultFormat", "NC1HWC0"
-            ],
-            "name": "grad",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16", "float16", "float16", "float", "float", "float"
-            ],
-            "format": [
-                "FRACTAL_NZ", "DefaultFormat", "NC1HWC0", "FRACTAL_NZ", "DefaultFormat", "NC1HWC0"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float16", "float", "float", "float"
-            ],
-            "format": [
-                "FRACTAL_NZ", "DefaultFormat", "NC1HWC0", "FRACTAL_NZ", "DefaultFormat", "NC1HWC0"
-            ],
-            "name": "y",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(confusion_softmax_grad_op_info)
 def _confusion_softmax_grad_tbe():
     """ConfusionSoftmaxGrad TBE register"""
     return

@@ -14,141 +14,44 @@
 # ============================================================================
 
 """Concat op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+concat_op_info = TBERegOp("Concat") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("concat_d.so") \
+    .compute_cost(10) \
+    .kernel_name("concat_d") \
+    .partial_flag(True) \
+    .attr("axis", "required", "int", "all") \
+    .input(0, "input_values", False, "dynamic", "all") \
+    .output(0, "output_data", False, "required", "all") \
+    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.BOOL_5HD, DataType.BOOL_5HD) \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.I8_5HD, DataType.I8_5HD) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.U8_5HD, DataType.U8_5HD) \
+    .dtype_format(DataType.I16_Default, DataType.I16_Default) \
+    .dtype_format(DataType.I16_5HD, DataType.I16_5HD) \
+    .dtype_format(DataType.U16_Default, DataType.U16_Default) \
+    .dtype_format(DataType.U16_5HD, DataType.U16_5HD) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_5HD) \
+    .dtype_format(DataType.U32_Default, DataType.U32_Default) \
+    .dtype_format(DataType.U32_5HD, DataType.U32_5HD) \
+    .dtype_format(DataType.I64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.I64_5HD, DataType.I64_5HD) \
+    .dtype_format(DataType.U64_Default, DataType.U64_Default) \
+    .dtype_format(DataType.U64_5HD, DataType.U64_5HD) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Concat",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "concat_d.so",
-    "compute_cost": 10,
-    "kernel_name": "concat_d",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "axis",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16",
-                "float16",
-                "float",
-                "float",
-                "int32",
-                "int32",
-                "int8",
-                "int8",
-                "int16",
-                "int16",
-                "int64",
-                "int64",
-                "uint8",
-                "uint8",
-                "uint16",
-                "uint16",
-                "uint32",
-                "uint32",
-                "uint64",
-                "uint64",
-                "bool",
-                "bool"
-            ],
-            "format": [
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0"
-            ],
-            "name": "input_values",
-            "need_compile": false,
-            "param_type": "dynamic",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16",
-                "float16",
-                "float",
-                "float",
-                "int32",
-                "int32",
-                "int8",
-                "int8",
-                "int16",
-                "int16",
-                "int64",
-                "int64",
-                "uint8",
-                "uint8",
-                "uint16",
-                "uint16",
-                "uint32",
-                "uint32",
-                "uint64",
-                "uint64",
-                "bool",
-                "bool"
-            ],
-            "format": [
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0",
-                "DefaultFormat",
-                "NC1HWC0"
-            ],
-            "name": "output_data",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(concat_op_info)
 def _concat_tbe():
     """Concat TBE register"""
     return

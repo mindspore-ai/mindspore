@@ -14,69 +14,42 @@
 # ============================================================================
 
 """Cast op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+cast_op_info = TBERegOp("Cast") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("cast.so") \
+    .compute_cost(10) \
+    .kernel_name("cast") \
+    .partial_flag(True) \
+    .attr("dst_type", "required", "int", "all") \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.BOOL_Default, DataType.F16_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.U8_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.F32_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I8_Default, DataType.F16_Default) \
+    .dtype_format(DataType.I8_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I8_Default, DataType.I32_Default) \
+    .dtype_format(DataType.U8_Default, DataType.F16_Default) \
+    .dtype_format(DataType.U8_Default, DataType.F32_Default) \
+    .dtype_format(DataType.U8_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F16_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.U8_Default) \
+    .dtype_format(DataType.F16_Default, DataType.U8_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Cast",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "cast.so",
-    "compute_cost": 10,
-    "kernel_name": "cast",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "dst_type",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float", "float", 
-                "int32", "int32", "int32", "int32", "int32", 
-                "int8", "int8", "int8", "uint8", "uint8", "uint8", 
-                "bool", "bool", "bool", "bool", "float16"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float", "int32", "float16", "int32",
-                 "float16", "float", "int8", "uint8", "bool", 
-                 "float16", "float", "int32", "float16", "float", "int32", 
-                 "float16", "float", "int32", "uint8", "uint8"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(cast_op_info)
 def _cast_tbe():
     """Cast TBE register"""
     return

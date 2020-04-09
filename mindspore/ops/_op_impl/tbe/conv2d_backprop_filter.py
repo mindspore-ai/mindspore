@@ -14,89 +14,27 @@
 # ============================================================================
 
 """Conv2DBackpropFilter op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+conv2d_backprop_filter_op_info = TBERegOp("Conv2DBackpropFilter") \
+    .fusion_type("CONVLUTION") \
+    .async_flag(False) \
+    .binfile_name("conv2d_backprop_filter_d.so") \
+    .compute_cost(10) \
+    .kernel_name("conv2d_backprop_filter_d") \
+    .partial_flag(True) \
+    .attr("filter_sizes", "required", "listInt", "all") \
+    .attr("stride", "required", "listInt", "all") \
+    .attr("pad_mode", "required", "str", "all") \
+    .attr("dilation", "required", "listInt", "all") \
+    .input(0, "out_backprop", False, "required", "all") \
+    .input(1, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F32_FracZ) \
+    .get_op_info()
 
 
-# map to tbe kernel name conv2d_backprop_filter_d
-@op_info_register("""{
-    "op_name": "Conv2DBackpropFilter",
-    "imply_type": "TBE",
-    "fusion_type": "CONVLUTION",
-    "async_flag": false,
-    "binfile_name": "conv2d_backprop_filter_d.so",
-    "compute_cost": 10,
-    "kernel_name": "conv2d_backprop_filter_d",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "filter_sizes",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "stride",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "pad_mode",
-            "param_type": "required",
-            "type": "str",
-            "value": "all"
-        },
-        {
-            "name": "dilation",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "out_backprop",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float32"
-            ],
-            "format": [
-                "FracZ"
-            ],
-            "name": "y",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(conv2d_backprop_filter_op_info)
 def _conv2d_backprop_filter_tbe():
     """Conv2DBackpropFilter TBE register"""
     return

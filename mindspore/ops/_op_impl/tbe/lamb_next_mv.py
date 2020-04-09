@@ -14,279 +14,46 @@
 # ============================================================================
 
 """LambNextMV op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+lamb_next_mv_op_info = TBERegOp("LambNextMV") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("lamb_next_m_v.so") \
+    .compute_cost(10) \
+    .kernel_name("lamb_next_m_v") \
+    .partial_flag(True) \
+    .input(0, "input1", False, "required", "all") \
+    .input(1, "input2", False, "required", "all") \
+    .input(2, "input3", False, "required", "all") \
+    .input(3, "input4", False, "required", "all") \
+    .input(4, "input5", False, "required", "all") \
+    .input(5, "input6", False, "required", "all") \
+    .input(6, "input7", False, "required", "all") \
+    .input(7, "input8", False, "required", "all") \
+    .input(8, "input9", False, "required", "all") \
+    .input(9, "inputx0", False, "required", "all") \
+    .input(10, "inputx1", False, "required", "all") \
+    .input(11, "inputx2", False, "required", "all") \
+    .input(12, "inputx3", False, "required", "all") \
+    .output(0, "output1", False, "required", "all") \
+    .output(1, "output2", False, "required", "all") \
+    .output(2, "output3", False, "required", "all") \
+    .output(3, "output4", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name":"LambNextMV",
-    "imply_type":"TBE",
-    "fusion_type":"ELEMWISE",
-    "async_flag":false,
-    "binfile_name":"lamb_next_m_v.so",
-    "compute_cost":10,
-    "kernel_name":"lamb_next_m_v",
-    "partial_flag":true,
-    "attr":[],
-    "inputs":[
-        {
-            "index":0,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"input1",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":1,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"input2",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":2,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"input3",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":3,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"input4",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":4,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"input5",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":5,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"input6",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":6,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"input7",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":7,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"input8",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":8,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"input9",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":9,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"inputx0",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":10,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"inputx1",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":11,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"inputx2",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":12,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"inputx3",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        }
-    ],
-    "outputs":[
-        {
-            "index":0,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"output1",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":1,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"output2",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":2,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"output3",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":3,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"output4",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        }
-    ]
-}""")
+@op_info_register(lamb_next_mv_op_info)
 def _lamb_next_mv_tbe():
     """LambNextMV TBE register"""
     return

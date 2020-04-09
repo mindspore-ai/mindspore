@@ -14,78 +14,25 @@
 # ============================================================================
 
 """SoftmaxCrossEntropyWithLogits op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+softmax_cross_entropy_with_logits_op_info = TBERegOp("SoftmaxCrossEntropyWithLogits") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("softmax_cross_entropy_with_logits.so") \
+    .compute_cost(10) \
+    .kernel_name("softmax_cross_entropy_with_logits") \
+    .partial_flag(True) \
+    .input(0, "input_features", False, "required", "all") \
+    .input(1, "input_labels", False, "required", "all") \
+    .output(0, "output_loss", True, "required", "all") \
+    .output(1, "output_backprop", True, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "SoftmaxCrossEntropyWithLogits",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "softmax_cross_entropy_with_logits.so",
-    "compute_cost": 10,
-    "kernel_name": "softmax_cross_entropy_with_logits",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "input_features",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16", "float"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "input_labels",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "output_loss",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16", "float"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "output_backprop",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(softmax_cross_entropy_with_logits_op_info)
 def _softmax_cross_entropy_with_logits_tbe():
     """SoftmaxCrossEntropyWithLogits TBE register"""
     return

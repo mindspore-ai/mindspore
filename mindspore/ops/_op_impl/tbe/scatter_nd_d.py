@@ -14,70 +14,28 @@
 # ============================================================================
 
 """ScatterNdD op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+scatter_nd_d_op_info = TBERegOp("ScatterNdD") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("scatter_nd_d.so") \
+    .compute_cost(10) \
+    .kernel_name("scatter_nd_d") \
+    .partial_flag(True) \
+    .attr("shape", "optional", "listInt", "all") \
+    .input(0, "indices", False, "required", "all") \
+    .input(1, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I32_Default, DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "ScatterNdD",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "scatter_nd_d.so",
-    "compute_cost": 10,
-    "kernel_name": "scatter_nd_d",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "shape",
-            "param_type": "optional",
-            "type": "listInt",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "int32", "int32", "int32", "int32", "int32"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "indices",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float","int32","int8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float","int32","int8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(scatter_nd_d_op_info)
 def _scatter_nd_d_tbe():
     """ScatterNdD TBE register"""
     return

@@ -14,57 +14,25 @@
 # ============================================================================
 
 """Reshape op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+reshape_op_info = TBERegOp("Reshape") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("reshape.so") \
+    .compute_cost(10) \
+    .kernel_name("reshape") \
+    .partial_flag(True) \
+    .attr("shape", "required", "listInt", "all") \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Reshape",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "reshape.so",
-    "compute_cost": 10,
-    "kernel_name": "reshape",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "shape",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float32", "int32"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float32", "int32"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(reshape_op_info)
 def _reshape_tbe():
     """Reshape TBE register"""
     return

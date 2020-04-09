@@ -14,31 +14,20 @@
 # ============================================================================
 
 """AtomicAddrClean op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp
+
+atomic_addr_clean_op_info = TBERegOp("AtomicAddrClean") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("atomic_addr_clean.so") \
+    .compute_cost(10) \
+    .kernel_name("atomic_addr_clean") \
+    .partial_flag(True) \
+    .attr("automic_add_mem_size", "required", "listInt", "all") \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "AtomicAddrClean",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "atomic_addr_clean.so",
-    "compute_cost": 10,
-    "kernel_name": "atomic_addr_clean",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "automic_add_mem_size",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-    ],
-    "outputs": [
-    ]
-}""")
+@op_info_register(atomic_addr_clean_op_info)
 def _atomic_addr_clean_tbe():
     """AtomicAddrClean TBE register"""
     return

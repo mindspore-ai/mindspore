@@ -14,65 +14,26 @@
 # ============================================================================
 
 """LogicalAnd op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+logical_and_op_info = TBERegOp("LogicalAnd") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("logical_and.so") \
+    .compute_cost(10) \
+    .kernel_name("logical_and") \
+    .partial_flag(True) \
+    .input(0, "x1", False, "required", "all") \
+    .input(1, "x2", False, "required", "all") \
+    .output(0, "y", True, "required", "all") \
+    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.BOOL_FracZ, DataType.BOOL_FracZ, DataType.BOOL_FracZ) \
+    .dtype_format(DataType.BOOL_C1HWNCoC0, DataType.BOOL_C1HWNCoC0, DataType.BOOL_C1HWNCoC0) \
+    .dtype_format(DataType.BOOL_5HD, DataType.BOOL_5HD, DataType.BOOL_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "LogicalAnd",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "logical_and.so",
-    "compute_cost": 10,
-    "kernel_name": "logical_and",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "bool", "bool", "bool", "bool"
-            ],
-            "format": [
-                "DefaultFormat", "FracZ", "C1HWNCoC0", "NC1HWC0"
-            ],
-            "name": "x1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "bool", "bool", "bool", "bool"
-            ],
-            "format": [
-                "DefaultFormat", "FracZ", "C1HWNCoC0", "NC1HWC0"
-            ],
-            "name": "x2",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "bool", "bool", "bool", "bool"
-            ],
-            "format": [
-                "DefaultFormat", "FracZ", "C1HWNCoC0", "NC1HWC0"
-            ],
-            "name": "y",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(logical_and_op_info)
 def _logical_and_tbe():
     """LogicalAnd TBE register"""
     return
