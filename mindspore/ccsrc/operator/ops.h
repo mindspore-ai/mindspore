@@ -34,6 +34,7 @@ extern const PrimitivePtr kPrimScalarAdd;
 extern const PrimitivePtr kPrimScalarSub;
 extern const PrimitivePtr kPrimScalarMul;
 extern const PrimitivePtr kPrimScalarDiv;
+extern const PrimitivePtr kPrimScalarFloordiv;
 extern const PrimitivePtr kPrimScalarMod;
 extern const PrimitivePtr kPrimScalarPow;
 extern const PrimitivePtr kPrimScalarTrunc;
@@ -84,6 +85,7 @@ extern const PrimitivePtr kPrimCreateInstance;
 
 // Structure
 extern const PrimitivePtr kPrimStringEqual;
+extern const PrimitivePtr kPrimStringConcat;
 extern const PrimitivePtr kPrimMakeTuple;
 extern const PrimitivePtr kPrimMakeList;
 extern const PrimitivePtr kPrimMakeDict;
@@ -227,8 +229,8 @@ extern const PrimitivePtr kPrimBroadcastGradientArgs;
 extern const PrimitivePtr kPrimControlDepend;
 extern const PrimitivePtr kPrimIs_;
 extern const PrimitivePtr kPrimIsNot;
-extern const PrimitivePtr kPrimMinimumGrad;
-extern const PrimitivePtr kPrimMaximumGrad;
+extern const PrimitivePtr kPrimInDict;
+extern const PrimitivePtr kPrimNotInDict;
 
 // Comm ops
 extern const PrimitivePtr kPrimMirror;

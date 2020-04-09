@@ -24,36 +24,35 @@ namespace mindspore {
 namespace prim {
 
 PrimToFunction::PrimToFunction()
-    : prim_func_type_map_({
-        // ONE_ARG prim
-        {"bool_not", kPrimTypeOneArg},
-        {"scalar_cos", kPrimTypeOneArg},
-        {"scalar_exp", kPrimTypeOneArg},
-        {"scalar_floor", kPrimTypeOneArg},
-        {"scalar_log", kPrimTypeOneArg},
-        {"scalar_sin", kPrimTypeOneArg},
-        {"scalar_tan", kPrimTypeOneArg},
-        {"scalar_trunc", kPrimTypeOneArg},
-        {"typeof", kPrimTypeOneArg},
-        {"scalar_uadd", kPrimTypeOneArg},
-        {"scalar_usub", kPrimTypeOneArg},
-        // TWO_ARGS prim
-        {"scalar_add", kPrimTypeTwoArgs},
-        {"bool_and", kPrimTypeTwoArgs},
-        {"bool_eq", kPrimTypeTwoArgs},
-        {"bool_or", kPrimTypeTwoArgs},
-        {"scalar_div", kPrimTypeTwoArgs},
-        {"scalar_eq", kPrimTypeTwoArgs},
-        {"scalar_ge", kPrimTypeTwoArgs},
-        {"scalar_gt", kPrimTypeTwoArgs},
-        {"scalar_le", kPrimTypeTwoArgs},
-        {"scalar_lt", kPrimTypeTwoArgs},
-        {"scalar_ne", kPrimTypeTwoArgs},
-        {"scalar_mod", kPrimTypeTwoArgs},
-        {"scalar_mul", kPrimTypeTwoArgs},
-        {"scalar_pow", kPrimTypeTwoArgs},
-        {"scalar_sub", kPrimTypeTwoArgs},
-      }) {}
+    : prim_func_type_map_({// ONE_ARG prim
+                           {"bool_not", kPrimTypeOneArg},
+                           {"scalar_cos", kPrimTypeOneArg},
+                           {"scalar_exp", kPrimTypeOneArg},
+                           {"scalar_floor", kPrimTypeOneArg},
+                           {"scalar_log", kPrimTypeOneArg},
+                           {"scalar_sin", kPrimTypeOneArg},
+                           {"scalar_tan", kPrimTypeOneArg},
+                           {"scalar_trunc", kPrimTypeOneArg},
+                           {"typeof", kPrimTypeOneArg},
+                           {"scalar_uadd", kPrimTypeOneArg},
+                           {"scalar_usub", kPrimTypeOneArg},
+                           // TWO_ARGS prim
+                           {"scalar_add", kPrimTypeTwoArgs},
+                           {"bool_and", kPrimTypeTwoArgs},
+                           {"bool_eq", kPrimTypeTwoArgs},
+                           {"bool_or", kPrimTypeTwoArgs},
+                           {"scalar_div", kPrimTypeTwoArgs},
+                           {"scalar_eq", kPrimTypeTwoArgs},
+                           {"scalar_ge", kPrimTypeTwoArgs},
+                           {"scalar_gt", kPrimTypeTwoArgs},
+                           {"scalar_le", kPrimTypeTwoArgs},
+                           {"scalar_lt", kPrimTypeTwoArgs},
+                           {"scalar_ne", kPrimTypeTwoArgs},
+                           {"scalar_mod", kPrimTypeTwoArgs},
+                           {"scalar_mul", kPrimTypeTwoArgs},
+                           {"scalar_pow", kPrimTypeTwoArgs},
+                           {"scalar_sub", kPrimTypeTwoArgs},
+                           {"scalar_floordiv", kPrimTypeTwoArgs}}) {}
 
 bool PrimToFunction::GetFunction(const PrimitivePtr& prim, FunctionPtr* const func) const {
   bool result = false;

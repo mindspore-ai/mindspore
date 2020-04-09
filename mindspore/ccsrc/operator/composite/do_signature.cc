@@ -88,14 +88,17 @@ std::map<SignatureEnumDType, size_t> GetMaxDtypeIndex(const std::vector<Signatur
     if (indexs.size() < 2) {
       continue;
     }
-    size_t m_index = indexs[0];
-    for (size_t i = 1; i < indexs.size(); ++i) {
-      if (args_spec_list[indexs[i]]->isa<abstract::AbstractTensor>()) {
-        m_index = indexs[i];
+
+    for (const auto& index : indexs) {
+      AbstractBasePtr arg_value = args_spec_list[index];
+      if (arg_value->isa<abstract::AbstractRef>()) {
+        arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref();
       }
-    }
-    if (args_spec_list[m_index]->isa<abstract::AbstractTensor>()) {
-      (void)dst_type.insert(std::make_pair(type, m_index));
+
+      if (arg_value->isa<abstract::AbstractTensor>()) {
+        (void)dst_type.insert(std::make_pair(type, index));
+        break;
+      }
     }
   }
   return dst_type;
@@ -119,15 +122,19 @@ void DoAutoCast(const std::vector<Signature>& signature, const abstract::Abstrac
   (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
                        [](const Signature& sig) { return sig.dtype; });
   int empty_dtype_count = std::count(dtypes.begin(), dtypes.end(), SignatureEnumDType::kDTypeEmptyDefaultValue);
-  if (dtypes.size() == 0 || static_cast<int>(dtypes.size()) == empty_dtype_count) {
+  if (dtypes.empty() || static_cast<int>(dtypes.size()) == empty_dtype_count) {
     return;
   }
   // Stat the index of the arguments with the largest type in the same SignatureEnumDType.
   std::map<SignatureEnumDType, size_t> dst_type = GetMaxDtypeIndex(dtypes, args_spec_list);
   // Identify which arg requires auto cast
   for (size_t i = 0; i < args_spec_list.size(); ++i) {
+    AbstractBasePtr arg_value = args_spec_list[i];
+    if (arg_value->isa<abstract::AbstractRef>()) {
+      arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref();
+    }
     auto it = dst_type.find(dtypes[i]);
-    if (it == dst_type.end() || it->second == i || !args_spec_list[i]->isa<abstract::AbstractScalar>()) {
+    if (it == dst_type.end() || it->second == i || !arg_value->isa<abstract::AbstractScalar>()) {
       continue;
     }
     // get source node for cast

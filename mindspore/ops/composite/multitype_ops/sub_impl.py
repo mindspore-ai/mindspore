@@ -41,12 +41,10 @@ def _sub_tensor(x, y):
 @sub.register("Number", "Tensor")
 def _scalar_sub_tensor(x, y):
     """Returns x - y where x is a scalar and y is a tensor. x and y should have same dtype."""
-    z = F.scalar_to_tensor(x, F.dtype(y))
-    return F.tensor_sub(z, y)
+    return F.tensor_sub(x, y)
 
 
 @sub.register("Tensor", "Number")
 def _tensor_sub_scalar(x, y):
     """Returns x - y where x is a tensor and y is a scalar. x and y should have same dtype."""
-    z = F.scalar_to_tensor(y, F.dtype(x))
-    return F.tensor_sub(x, z)
+    return F.tensor_sub(x, y)

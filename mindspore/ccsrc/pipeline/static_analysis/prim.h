@@ -178,6 +178,10 @@ AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &,
                              const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &,
                                const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplInDict(const AnalysisEnginePtr &, const PrimitivePtr &,
+                                const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplNotInDict(const AnalysisEnginePtr &, const PrimitivePtr &,
+                                   const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplPoolingGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -287,6 +291,8 @@ AbstractBasePtr InferImplStopGradient(const AnalysisEnginePtr &, const Primitive
                                       const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplStringEqual(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplStringConcat(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplDictLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list);
 
