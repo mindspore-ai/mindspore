@@ -67,7 +67,7 @@ if __name__ == '__main__':
     parser.add_argument("--distribute", type=bool, default=False, help="Run distribute, default is false.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
-    parser.add_argument("--mode", type=str, default="sink", help="Run sink mode or non-sink mode, default is sink")
+    parser.add_argument("--mode", type=str, default="sink", help="Run sink mode or not, default is sink")
     parser.add_argument("--epoch_size", type=int, default=10, help="Epoch size, default is 10")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size, default is 32.")
     parser.add_argument("--checkpoint_path", type=str, default="", help="Checkpoint file path")

@@ -51,7 +51,7 @@ class DynamicLossScaleUpdateCell(Cell):
     In every training step, the loss scaling value  will be updated by loss scaling value/`scale_factor`
     when there is overflow. And it will be increased by loss scaling value * `scale_factor` if there is no
     overflow for a continuous `scale_window` steps. This cell is used for Graph mode training in which all
-    logic will be executed on device side(Another training mode is non-sink mode in which some logic will be
+    logic will be executed on device side(Another training mode is normal(non-sink) mode in which some logic will be
     executed on host).
 
     Args:
