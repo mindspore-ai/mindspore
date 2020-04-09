@@ -33,6 +33,7 @@
 #include <map>
 #include <random>
 #include <set>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -116,6 +117,12 @@ const char kPoint = '.';
 
 // field type used by check schema validation
 const std::set<std::string> kFieldTypeSet = {"bytes", "string", "int32", "int64", "float32", "float64"};
+
+// can be searched field list
+const std::set<std::string> kScalarFieldTypeSet = {"string", "int32", "int64", "float32", "float64"};
+
+// number field list
+const std::set<std::string> kNumberFieldTypeSet = {"int32", "int64", "float32", "float64"};
 
 /// \brief split a string using a character
 /// \param[in] field target string
