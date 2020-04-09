@@ -95,7 +95,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/device/ascend/ascend_kernel_runtime.cc"
         "../../../mindspore/ccsrc/device/ascend/ascend_memory_manager.cc"
         "../../../mindspore/ccsrc/device/ascend/ascend_device_address.cc"
-        "../../../mindspore/ccsrc/device/ascend/ascend_memory_allocator.cc"
+        "../../../mindspore/ccsrc/device/ascend/ascend_memory_pool.cc"
         "../../../mindspore/ccsrc/predict/generator/utils/ir_model_util.cc"
         "../../../mindspore/ccsrc/predict/predict.cc"
         "../../../mindspore/ccsrc/predict/converter/*.cc"

@@ -262,8 +262,8 @@ AscendDeviceAddress::~AscendDeviceAddress() {
   if (ptr_ == nullptr) {
     return;
   }
-  if (mem_dynamic_alloc_) {
-    AscendMemoryAllocator::GetInstance().FreeTensorMem(ptr_);
+  if (from_mem_pool_) {
+    AscendMemoryPool::GetInstance().FreeTensorMem(ptr_);
     ptr_ = nullptr;
   }
 }

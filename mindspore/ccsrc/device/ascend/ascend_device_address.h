@@ -21,7 +21,7 @@
 #include <vector>
 #include <memory>
 #include "device/device_address.h"
-#include "device/ascend/ascend_memory_allocator.h"
+#include "device/ascend/ascend_memory_pool.h"
 #include "ir/dtype.h"
 
 namespace mindspore {

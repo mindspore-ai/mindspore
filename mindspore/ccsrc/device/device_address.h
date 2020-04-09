@@ -70,7 +70,7 @@ class DeviceAddress {
   size_t ref_count_{0};
   string format_{"DefaultFormat"};
   TypeId type_id_{kNumberTypeFloat16};
-  bool mem_dynamic_alloc_{false};
+  bool from_mem_pool_{false};
   friend class KernelRuntime;
   friend class MemoryManager;
   friend class mindspore::device::ascend::tasksink::TaskGenerator;

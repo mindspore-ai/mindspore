@@ -169,7 +169,7 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
       auto device_address =
         CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
       MS_EXCEPTION_IF_NULL(device_address);
-      mem_manager_->MallocOpMemory(device_address, tensor_size);
+      mem_manager_->MallocMemFromMemPool(device_address, tensor_size);
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }
   }
@@ -198,7 +198,7 @@ void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel) {
     auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
     auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type);
     MS_EXCEPTION_IF_NULL(device_address);
-    mem_manager_->MallocOpMemory(device_address, output_sizes[i]);
+    mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
     AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
   }
 }
@@ -213,7 +213,7 @@ void KernelRuntime::RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel) {
     for (size_t i = 0; i < workspace_lists.size(); ++i) {
       auto device_address = CreateDeviceAddress(nullptr, workspace_lists[i], "", kTypeUnknown);
       MS_EXCEPTION_IF_NULL(device_address);
-      mem_manager_->MallocOpMemory(device_address, workspace_lists[i]);
+      mem_manager_->MallocMemFromMemPool(device_address, workspace_lists[i]);
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());
     }
   }
@@ -457,7 +457,7 @@ void KernelRuntime::AssignDynamicMemory(session::KernelGraph *graph) {
   bool is_enable_mem_reuse = context_ptr->enable_mem_reuse();
   auto mem_flag = kDynamicMem;
   if (is_enable_mem_reuse) {
-    mem_manager_->InitReuseDynamicMemory(graph);
+    mem_manager_->MallocReusedDynamicMem(graph);
     mem_flag = kReuseDynamicMem;
   }
   auto &kernels = graph->execution_order();

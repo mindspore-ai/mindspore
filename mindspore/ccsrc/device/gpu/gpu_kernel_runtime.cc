@@ -227,7 +227,7 @@ void GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod 
     MS_EXCEPTION_IF_NULL(device_address);
     auto device_ptr = device_address->ptr_;
     if (device_ptr == nullptr) {
-      device_ptr = mem_manager_->AllocTensorMemDynamic(output_sizes[i]);
+      device_ptr = mem_manager_->MallocMemFromMemPool(output_sizes[i]);
       MS_EXCEPTION_IF_NULL(device_ptr);
       device_address->ptr_ = device_ptr;
     }
@@ -244,7 +244,7 @@ void GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod 
       kernel_workspaces->emplace_back(nullptr);
       continue;
     }
-    auto device_ptr = mem_manager_->AllocTensorMemDynamic(workspace_sizes[i]);
+    auto device_ptr = mem_manager_->MallocMemFromMemPool(workspace_sizes[i]);
     MS_EXCEPTION_IF_NULL(device_ptr);
     kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(workspace);
@@ -292,7 +292,7 @@ void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfN
     addr_size.emplace_back(device_address.get(), output_size);
   }
 
-  auto device_mem_ptr = mem_manager_->AllocTensorMemDynamic(total);
+  auto device_mem_ptr = mem_manager_->MallocMemFromMemPool(total);
   MS_EXCEPTION_IF_NULL(device_mem_ptr);
   for (const auto &iter : addr_size) {
     MS_EXCEPTION_IF_NULL(iter.first);
@@ -328,7 +328,7 @@ void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::Anf
     addr_size.emplace_back(device_address.get(), output_sizes[i]);
   }
 
-  auto device_mem_ptr = mem_manager_->AllocTensorMemDynamic(total);
+  auto device_mem_ptr = mem_manager_->MallocMemFromMemPool(total);
   MS_EXCEPTION_IF_NULL(device_mem_ptr);
   for (const auto &iter : addr_size) {
     MS_EXCEPTION_IF_NULL(iter.first);
@@ -361,7 +361,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
         auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
         MS_EXCEPTION_IF_NULL(device_address);
         MS_EXCEPTION_IF_NULL(device_address->ptr_);
-        mem_manager_->FreeTensorMemDynamic(device_address->ptr_);
+        mem_manager_->FreeMemFromMemPool(device_address->ptr_);
         device_address->ptr_ = nullptr;
       }
     }
@@ -372,7 +372,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
     auto workspace = kernel_workspaces[i];
     if (workspace != nullptr) {
       MS_EXCEPTION_IF_NULL(workspace->addr);
-      mem_manager_->FreeTensorMemDynamic(workspace->addr);
+      mem_manager_->FreeMemFromMemPool(workspace->addr);
       workspace->addr = nullptr;
     }
   }
@@ -389,7 +389,7 @@ void GPUKernelRuntime::FreeCommunicationOpDynamicRes(const mindspore::AnfNodePtr
       auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, 0);
       MS_EXCEPTION_IF_NULL(device_address);
       MS_EXCEPTION_IF_NULL(device_address->ptr_);
-      mem_manager_->FreeTensorMemDynamic(device_address->ptr_);
+      mem_manager_->FreeMemFromMemPool(device_address->ptr_);
       device_address->ptr_ = nullptr;
     }
     *is_communication_op = true;
@@ -411,7 +411,7 @@ void GPUKernelRuntime::FreeCommunicationOpDynamicRes(const mindspore::AnfNodePtr
       auto device_address = AnfAlgo::GetMutableOutputAddr(kernel_input.first, 0);
       MS_EXCEPTION_IF_NULL(device_address);
       MS_EXCEPTION_IF_NULL(device_address->ptr_);
-      mem_manager_->FreeTensorMemDynamic(device_address->ptr_);
+      mem_manager_->FreeMemFromMemPool(device_address->ptr_);
       device_address->ptr_ = nullptr;
     }
     *is_communication_op = true;
