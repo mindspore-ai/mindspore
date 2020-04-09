@@ -17,15 +17,13 @@ The context of mindspore, used to configure the current execution environment,
 including execution mode, execution backend and other feature switchs.
 """
 import threading
-import logging
 from collections import namedtuple
 from types import FunctionType
+from mindspore import log as logger
 from mindspore._c_expression import MSContext
 from mindspore._extends.pynative_helper import args_type_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
-
-logger = logging.getLogger('Context')
 
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
