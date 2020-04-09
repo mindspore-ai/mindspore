@@ -127,7 +127,6 @@ class RandomSampler():
 
     Raises:
         ValueError: If replacement is not boolean.
-        ValueError: If num_samples is not None and replacement is false.
         ValueError: If num_samples is not positive.
      """
 
