@@ -417,6 +417,8 @@ void SetKernelBuildInfo(const std::shared_ptr<KernelBuildInfo::KernelBuildInfoBu
 
   if (imply_type == kAKG) {
     builder->SetKernelType(AUTO_DIFF_KERNEL);
+  } else if (imply_type == kAICPU) {
+    builder->SetKernelType(AICPU_KERNEL);
   } else {
     builder->SetKernelType(TBE_KERNEL);
   }
@@ -471,6 +473,13 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
         return false;
       }
 
+      kernel_info_list->push_back(builder->Build());
+    }
+  } else {
+    if (processor == AICPU) {
+      auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
+      MS_EXCEPTION_IF_NULL(builder);
+      SetKernelBuildInfo(builder, processor, op_info_ptr);
       kernel_info_list->push_back(builder->Build());
     }
   }

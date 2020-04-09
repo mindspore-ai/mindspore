@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-enum OpImplyType { kAKG = 0, kTBE };
+enum OpImplyType { kAKG = 0, kTBE = 1, kAICPU };
 enum OpIOType { kInput = 0, kOutput };
 
 class OpAttr {
