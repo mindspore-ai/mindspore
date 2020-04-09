@@ -57,7 +57,7 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, int32_t op_queue_size, int32_t n
 Status BatchOp::operator()() {
   RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
   TaskManager::FindMe()->Post();
-  int32_t epoch_num = 0, batch_num = 0, cnt = 0;
+  int64_t epoch_num = 0, batch_num = 0, cnt = 0;
   TensorRow new_row;
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);

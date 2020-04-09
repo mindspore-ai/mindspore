@@ -406,7 +406,7 @@ void bindSamplerOps(py::module *m) {
 
 void bindInfoObjects(py::module *m) {
   (void)py::class_<BatchOp::CBatchInfo>(*m, "CBatchInfo")
-    .def(py::init<int32_t, int32_t, int32_t>())
+    .def(py::init<int64_t, int64_t, int64_t>())
     .def("get_epoch_num", &BatchOp::CBatchInfo::get_epoch_num)
     .def("get_batch_num", &BatchOp::CBatchInfo::get_batch_num);
 }
