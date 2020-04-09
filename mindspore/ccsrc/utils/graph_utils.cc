@@ -400,6 +400,8 @@ static bool SameNodeShallow(const AnfNodePtr& node1, const AnfNodePtr& node2, Fu
     auto a2 = GetValueNode(node2);
     if (a1->isa<Primitive>() && a2->isa<Primitive>()) {
       return a1->cast<PrimitivePtr>()->name() == a2->cast<PrimitivePtr>()->name();
+    } else if (a1->isa<tensor::Tensor>() && a2->isa<tensor::Tensor>()) {
+      return a1->cast<tensor::TensorPtr>()->ValueEqual(*(a2->cast<tensor::TensorPtr>()));
     } else {
       return *a1 == *a2;
     }
