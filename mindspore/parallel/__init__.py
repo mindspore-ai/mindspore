@@ -15,9 +15,7 @@
 """
 This interface is ONLY used in Auto-parallel procedure.
 """
-from .dp_allreduce_fusion import set_fusion_strategy_by_idx, set_fusion_strategy_by_size
 from .algo_parameter_config import get_algo_parameters, reset_algo_parameters, \
     set_algo_parameters
 
-__all__ = ["set_fusion_strategy_by_idx", "set_fusion_strategy_by_size", "get_algo_parameters",
-           "reset_algo_parameters", "set_algo_parameters"]
+__all__ = ["get_algo_parameters", "reset_algo_parameters", "set_algo_parameters"]
