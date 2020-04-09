@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 #include "dataset/engine/datasetops/batch_op.h"
+
 #include <utility>
 #include <iomanip>
+
 #include "common/utils.h"
+#include "dataset/core/pybind_support.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
 
+using float16 = Eigen::half;
+
 namespace mindspore {
 namespace dataset {
-BatchOp::Builder::Builder(int32_t batch_size) : builder_drop_(false) {
+BatchOp::Builder::Builder(int32_t batch_size) : builder_drop_(false), builder_pad_(false), builder_pad_map_({}) {
   builder_batch_size_ = batch_size;
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
@@ -31,8 +36,9 @@ BatchOp::Builder::Builder(int32_t batch_size) : builder_drop_(false) {
 
 Status BatchOp::Builder::Build(std::shared_ptr<BatchOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_op_connector_size_, builder_num_workers_,
-                                   builder_cols_to_map_, builder_batch_size_func_, builder_batch_map_func_);
+  *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_pad_, builder_op_connector_size_,
+                                   builder_num_workers_, builder_cols_to_map_, builder_batch_size_func_,
+                                   builder_batch_map_func_, builder_pad_map_);
   return Status::OK();
 }
 
@@ -44,14 +50,17 @@ Status BatchOp::Builder::SanityCheck() {
   return err.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, common::SafeCStr(err));
 }
 
-BatchOp::BatchOp(int32_t batch_size, bool drop, int32_t op_queue_size, int32_t num_workers,
-                 const std::vector<std::string> &cols_to_map, py::function batch_size_func, py::function batch_map_func)
+BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size, int32_t num_workers,
+                 const std::vector<std::string> &cols_to_map, py::function batch_size_func, py::function batch_map_func,
+                 std::map<std::string, std::pair<TensorShape, float>> pad_map)
     : ParallelOp(num_workers, op_queue_size),
       start_batch_size_(batch_size),
       drop_(drop),
-      input_column_names_(cols_to_map),
+      pad_(pad),
+      pyfunc_column_names_(cols_to_map),
       batch_size_func_(batch_size_func),
-      batch_map_func_(batch_map_func) {
+      batch_map_func_(batch_map_func),
+      pad_info_(pad_map) {
   worker_queues_.Init(num_workers, op_queue_size);
 }
 
@@ -181,7 +190,8 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
 Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair,
                                   std::unique_ptr<DataBuffer> *db) {
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
-  if (!input_column_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));  // pass it through pyfunc
+  if (!pyfunc_column_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));  // pass it through pyfunc
+  if (pad_) RETURN_IF_NOT_OK(PadColumns(&table_pair));                           // do padding if needed
   (*db) = std::make_unique<DataBuffer>(table_pair.second.batch_num_, DataBuffer::kDeBFlagNone);
   std::unique_ptr<TensorQTable> dest_table = std::make_unique<TensorQTable>();
   RETURN_IF_NOT_OK(BatchRows(&table_pair.first, &dest_table, table_pair.first->size()));
@@ -206,8 +216,8 @@ Status BatchOp::EoeReceived(int32_t) {
 
 Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair) {
   TensorBatchTable input_table;
-  input_table.reserve(input_column_names_.size());
-  for (std::string col_name : input_column_names_) {
+  input_table.reserve(pyfunc_column_names_.size());
+  for (std::string col_name : pyfunc_column_names_) {
     if (column_name_map_.find(col_name) == column_name_map_.end()) {
       RETURN_STATUS_UNEXPECTED("column : '" + col_name + "' does not exist\n");
     }
@@ -225,8 +235,8 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
   RETURN_IF_NOT_OK(InvokeBatchMapFunc(&input_table, &output_table, table_pair->second));
 
   // Write back to TensorQTable
-  for (size_t input_idx = 0; input_idx < input_column_names_.size(); input_idx++) {
-    size_t col_idx = static_cast<size_t>(column_name_map_[input_column_names_[input_idx]]);
+  for (size_t input_idx = 0; input_idx < pyfunc_column_names_.size(); input_idx++) {
+    size_t col_idx = static_cast<size_t>(column_name_map_[pyfunc_column_names_[input_idx]]);
     size_t row_id = 0;
     for (TensorRow &row : *(table_pair->first)) {
       row[col_idx] = std::move(output_table[input_idx][row_id++]);
@@ -290,8 +300,8 @@ Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *ou
       py::object ret_py_obj = batch_map_func_(*input_args);
       // Parse batch map return value
       py::tuple ret_tuple = py::cast<py::tuple>(ret_py_obj);
-      if (ret_tuple.size() != input_column_names_.size() || !py::isinstance<py::tuple>(ret_tuple)) {
-        return Status(StatusCode::kPyFuncException, "Batch map function should return an tuple if size(input_columns)");
+      if (ret_tuple.size() != pyfunc_column_names_.size() || !py::isinstance<py::tuple>(ret_tuple)) {
+        return Status(StatusCode::kPyFuncException, "Batch map function should return a tuple");
       }
       for (size_t i = 0; i < ret_tuple.size(); i++) {
         TensorBatch output_batch;
@@ -311,5 +321,142 @@ Status BatchOp::InvokeBatchMapFunc(TensorBatchTable *input, TensorBatchTable *ou
   }
   return Status(StatusCode::kOK);
 }
+
+Status BatchOp::PadTensor(std::shared_ptr<Tensor> src, std::shared_ptr<Tensor> *dst,
+                          const std::vector<dsize_t> &pad_shape, float pad_val) {
+  CHECK_FAIL_RETURN_UNEXPECTED(src != nullptr && dst != nullptr, "tensor can't be nullptr");
+  if (src->Rank() == 0 || src->shape().AsVector() == pad_shape) {
+    (*dst) = src;  // if no padding, copy the pointer
+  } else {
+    CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(), "Pad to diff rank not allowed");
+    RETURN_IF_NOT_OK(Tensor::CreateTensor(dst, TensorImpl::kFlexible, TensorShape(pad_shape), src->type()));
+    auto tensor_type = src->type().value();
+    if (pad_val == 0) {  // if pad with zero, don't care what type it is
+      RETURN_IF_NOT_OK((*dst)->Zero());
+    } else if (tensor_type == DataType::DE_INT8) {
+      RETURN_IF_NOT_OK((*dst)->Fill<int8_t>(pad_val));
+    } else if (tensor_type == DataType::DE_BOOL) {
+      RETURN_IF_NOT_OK((*dst)->Fill<bool>(pad_val));
+    } else if (tensor_type == DataType::DE_UINT8) {
+      RETURN_IF_NOT_OK((*dst)->Fill<uint8_t>(pad_val));
+    } else if (tensor_type == DataType::DE_INT16) {
+      RETURN_IF_NOT_OK((*dst)->Fill<int16_t>(pad_val));
+    } else if (tensor_type == DataType::DE_FLOAT16) {
+      RETURN_IF_NOT_OK((*dst)->Fill<float16>(static_cast<float16>(pad_val)));
+    } else if (tensor_type == DataType::DE_UINT16) {
+      RETURN_IF_NOT_OK((*dst)->Fill<uint16_t>(pad_val));
+    } else if (tensor_type == DataType::DE_INT32) {
+      RETURN_IF_NOT_OK((*dst)->Fill<int32_t>(pad_val));
+    } else if (tensor_type == DataType::DE_UINT32) {
+      RETURN_IF_NOT_OK((*dst)->Fill<uint32_t>(pad_val));
+    } else if (tensor_type == DataType::DE_INT64) {
+      RETURN_IF_NOT_OK((*dst)->Fill<int64_t>(pad_val));
+    } else if (tensor_type == DataType::DE_UINT64) {
+      RETURN_IF_NOT_OK((*dst)->Fill<uint64_t>(pad_val));
+    } else if (tensor_type == DataType::DE_FLOAT32) {
+      RETURN_IF_NOT_OK((*dst)->Fill<float>(pad_val));
+    } else if (tensor_type == DataType::DE_FLOAT64) {
+      RETURN_IF_NOT_OK((*dst)->Fill<double>(pad_val));
+    } else {
+      RETURN_STATUS_UNEXPECTED("Incorrect/Unknown tensor type");
+    }
+    std::vector<dsize_t> cur_ind(src->Rank(), 0), src_s(src->Rank(), 1), dst_s(src->Rank(), 1);
+    for (dsize_t i = src->Rank() - 2; i >= 0; i--) {
+      src_s[i] = src->shape()[i + 1] * src_s[i + 1];
+      dst_s[i] = pad_shape[i + 1] * dst_s[i + 1];
+    }
+    RETURN_IF_NOT_OK(PadHelper(src, *dst, cur_ind, src_s, dst_s, 0));
+  }
+  return Status::OK();
+}  // namespace dataset
+
+Status BatchOp::PadColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair) {
+  RETURN_UNEXPECTED_IF_NULL(table_pair);  // placeholder for now, might need this in the future
+  CHECK_FAIL_RETURN_UNEXPECTED(table_pair->first->front().size() == column_name_map_.size(), "col_name_map mismatch");
+  std::vector<float> pad_vals(column_name_map_.size(), 0);  // value to pad each column's tensor with, default 0
+  std::set<int32_t> pad_cols;
+  // padded_shape provided by user, maximum shapes of current batch of tensors
+  std::vector<std::vector<dsize_t>> pad_shapes(column_name_map_.size()), max_shapes(column_name_map_.size());
+  RETURN_IF_NOT_OK(UnpackPadInfo(&pad_cols, &pad_vals, &pad_shapes));
+
+  // init each shape in max_shape to {-1,-1...} init each unspecified shape in pad_shape to -1 as well
+  for (size_t col_id : pad_cols) {
+    max_shapes[col_id] = std::vector<dsize_t>(table_pair->first->front()[col_id]->Rank(), -1);
+    if (pad_shapes[col_id].empty()) pad_shapes[col_id] = max_shapes[col_id];  // fill pad shape with -1
+    CHECK_FAIL_RETURN_UNEXPECTED(pad_shapes[col_id].size() == max_shapes[col_id].size(), "wrong rank in pad_shape");
+  }
+
+  // calculate maximum shape for each column that needs to be padded
+  for (const TensorRow &row : *(table_pair->first)) {  // iterator each row in a batch
+    for (size_t col_id : pad_cols) {                   // iterator each tensor in a row
+      CHECK_FAIL_RETURN_UNEXPECTED(row[col_id]->Rank() == max_shapes[col_id].size(),
+                                   "Tensor to be padded together need to have the same rank");
+      for (size_t dim = 0; dim < row[col_id]->Rank(); dim++) {  // pick the largest number in each dimension
+        max_shapes[col_id][dim] = std::max(max_shapes[col_id][dim], row[col_id]->shape()[dim]);
+      }
+    }
+  }
+
+  // if user sets a dimension to -1 (None in python), use the max value for current dimension
+  for (size_t col_id : pad_cols) {
+    for (size_t dim = 0; dim < pad_shapes[col_id].size(); dim++) {
+      if (pad_shapes[col_id][dim] < 0) pad_shapes[col_id][dim] = max_shapes[col_id][dim];
+    }
+  }
+
+  // call pad on each tensor that needs to be padded
+  for (TensorRow &row : *(table_pair->first)) {
+    for (size_t col_id : pad_cols) {
+      std::shared_ptr<Tensor> pad_tensor;
+      RETURN_IF_NOT_OK(PadTensor(row[col_id], &pad_tensor, pad_shapes[col_id], pad_vals[col_id]));
+      row[col_id] = pad_tensor;
+    }
+  }
+  return Status::OK();
+}
+
+Status BatchOp::UnpackPadInfo(std::set<int32_t> *pad_cols, std::vector<float> *pad_vals,
+                              std::vector<std::vector<dsize_t>> *pad_shapes) {
+  if (pad_info_.empty()) {  // if pad_info empty, pad every columns automatically
+    for (dsize_t col_id = 0; col_id < column_name_map_.size(); col_id++) {
+      pad_cols->insert(col_id);
+    }
+  } else {
+    for (auto p : pad_info_) {
+      CHECK_FAIL_RETURN_UNEXPECTED(column_name_map_.find(p.first) != column_name_map_.end(),
+                                   "no column exists with name:" + p.first);
+      dsize_t col_id = static_cast<dsize_t>(column_name_map_[p.first]);
+      CHECK_FAIL_RETURN_UNEXPECTED(col_id < pad_vals->size() && col_id < pad_shapes->size(), "col_id out of bound");
+      pad_cols->insert(col_id);
+      (*pad_vals)[col_id] = p.second.second;              // set pad values
+      (*pad_shapes)[col_id] = p.second.first.AsVector();  // empty vector if shape is unknown
+    }
+  }
+  return Status::OK();
+}
+
+Status BatchOp::PadHelper(std::shared_ptr<Tensor> src, std::shared_ptr<Tensor> dst, std::vector<dsize_t> cur_ind,
+                          const std::vector<dsize_t> &src_s, const std::vector<dsize_t> &dst_s, size_t cur_dim) {
+  if (cur_dim == src->Rank() - 1) {  // if this is the last dimension, copy the data
+    uint8_t type_size = src->type().SizeInBytes();
+    size_t len = std::min(src->shape()[cur_dim], dst->shape()[cur_dim]) * type_size;
+    dsize_t src_flat_ind = 0, dst_flat_ind = 0;
+    for (size_t i = 0; i < src->Rank(); i++) {
+      src_flat_ind += src_s[i] * cur_ind[i];
+      dst_flat_ind += dst_s[i] * cur_ind[i];
+    }
+    unsigned char *src_addr = src->StartAddr() + src_flat_ind * type_size;
+    unsigned char *dst_addr = dst->StartAddr() + dst_flat_ind * type_size;
+    CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(dst_addr, len, src_addr, len) == 0, "memcpy error");
+  } else {  // not the last dimension, keep doing recursion
+    dsize_t min_ind = std::min(dst->shape()[cur_dim], src->shape()[cur_dim]);
+    for (dsize_t i = 0; i < min_ind; i++) {
+      cur_ind[cur_dim] = i;
+      RETURN_IF_NOT_OK(PadHelper(src, dst, cur_ind, src_s, dst_s, cur_dim + 1));
+    }
+  }
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

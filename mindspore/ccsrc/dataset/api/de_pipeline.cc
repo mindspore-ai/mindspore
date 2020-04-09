@@ -207,6 +207,8 @@ int DEPipeline::GetBatchSize() const { return batch_size_; }
 
 int DEPipeline::GetRepeatCount() const { return repeat_num_; }
 
+float ToFloat(const py::handle &handle) { return py::reinterpret_borrow<py::float_>(handle); }
+
 int ToInt(const py::handle &handle) { return py::reinterpret_borrow<py::int_>(handle); }
 
 bool ToBool(const py::handle &handle) { return py::reinterpret_borrow<py::bool_>(handle); }
@@ -620,6 +622,21 @@ Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp>
       }
       if (key == "input_columns") {
         (void)builder->SetColumnsToMap(ToStringVector(value));
+      }
+      if (key == "pad_info") {
+        std::map<std::string, std::pair<TensorShape, float>> pad_info;
+        for (auto p : py::reinterpret_borrow<py::dict>(value)) {
+          if (!p.second.is_none()) {
+            py::tuple tp = py::reinterpret_borrow<py::tuple>(p.second);
+            CHECK_FAIL_RETURN_UNEXPECTED(tp.size() == 2, "tuple in pad_info must be (list,int) or (list,float)");
+            TensorShape shape = tp[0].is_none() ? TensorShape::CreateUnknownRankShape() : TensorShape(tp[0]);
+            float pad_val = tp[1].is_none() ? 0 : ToFloat(tp[1]);
+            (void)pad_info.insert({ToString(p.first), {shape, pad_val}});
+          } else {  // tuple is None
+            (void)pad_info.insert({ToString(p.first), {TensorShape({}), 0}});
+          }
+        }
+        (void)builder->SetPaddingMap(pad_info, true);
       }
     }
   }

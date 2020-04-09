@@ -40,7 +40,8 @@ from mindspore._c_expression import typing
 from mindspore import log as logger
 from . import samplers
 from .iterators import DictIterator, TupleIterator
-from .validators import check, check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, check_rename, \
+from .validators import check, check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
+    check_rename, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
     check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset
@@ -163,7 +164,7 @@ class Dataset:
 
     @check_batch
     def batch(self, batch_size, drop_remainder=False, num_parallel_workers=None, per_batch_map=None,
-              input_columns=None):
+              input_columns=None, pad_info=None):
         """
         Combines batch_size number of consecutive rows into batches.
 
@@ -181,7 +182,7 @@ class Dataset:
             drop_remainder (bool, optional): Determines whether or not to drop the last
                 possibly incomplete batch (default=False). If True, and if there are less
                 than batch_size rows available to make the last batch, then those rows will
-                be dropped and not propogated to the child node.
+                be dropped and not propagated to the child node.
             num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel (default=None).
             per_batch_map (callable, optional): Per batch map callable. A callable which takes
                 (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represent a batch of
@@ -189,6 +190,8 @@ class Dataset:
                 last parameter of the callable should always be a BatchInfo object.
             input_columns (list of string, optional): List of names of the input columns. The size of the list should
                 match with signature of per_batch_map callable.
+            pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
+                would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
 
         Returns:
             BatchDataset, dataset batched.
@@ -200,7 +203,8 @@ class Dataset:
             >>> # and drops the last incomplete batch if there is one.
             >>> data = data.batch(100, True)
         """
-        return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns)
+        return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns,
+                            pad_info)
 
     @check_sync_wait
     def sync_wait(self, condition_name, num_batch=1, callback=None):
@@ -1026,13 +1030,26 @@ class BatchDataset(DatasetOp):
 
     Args:
         input_dataset (Dataset): Input Dataset to be batched.
-        batch_size (int): The size of the batch.
-        drop_remainder (bool, optional): Whether drop the remainder batch of data (drop_remainder=False).
-            If True, the last incomplete batch will be dropped.
+        batch_size (int or function): The number of rows each batch is created with. An
+            int or callable which takes exactly 1 parameter, BatchInfo.
+        drop_remainder (bool, optional): Determines whether or not to drop the last
+            possibly incomplete batch (default=False). If True, and if there are less
+            than batch_size rows available to make the last batch, then those rows will
+            be dropped and not propagated to the child node.
+        num_parallel_workers (int, optional): Number of workers to process the Dataset in parallel (default=None).
+        per_batch_map (callable, optional): Per batch map callable. A callable which takes
+            (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represent a batch of
+            Tensors on a given column. The number of lists should match with number of entries in input_columns. The
+            last parameter of the callable should always be a BatchInfo object.
+        input_columns (list of string, optional): List of names of the input columns. The size of the list should
+            match with signature of per_batch_map callable.
+        pad_info (dict, optional): Whether to perform padding on selected columns. pad_info={"col1":([224,224],0)}
+            would pad column with name "col1" to a tensor of size [224,224] and fill the missing with 0.
+
     """
 
     def __init__(self, input_dataset, batch_size, drop_remainder=False, num_parallel_workers=None,
-                 per_batch_map=None, input_columns=None):
+                 per_batch_map=None, input_columns=None, pad_info=None):
         super().__init__(num_parallel_workers)
 
         if BatchDataset._is_ancestor_of_repeat(input_dataset):
@@ -1044,6 +1061,7 @@ class BatchDataset(DatasetOp):
         self.drop_remainder = drop_remainder
         self.per_batch_map = per_batch_map
         self.input_columns = input_columns
+        self.pad_info = pad_info
         self.input.append(input_dataset)
         input_dataset.output.append(self)
         self._input_indexs = input_dataset.input_indexs
@@ -1054,6 +1072,7 @@ class BatchDataset(DatasetOp):
         args["drop_remainder"] = self.drop_remainder
         args["per_batch_map"] = self.per_batch_map
         args["input_columns"] = self.input_columns
+        args["pad_info"] = self.pad_info
         return args
 
     def get_dataset_size(self):
@@ -2702,6 +2721,7 @@ class TFRecordDataset(SourceDataset):
         >>> # 3) get all rows from dataset_files with schema file "./schema.json":
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema="./schema.json")
     """
+
     @check_tfrecorddataset
     def __init__(self, dataset_files, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None,
                  shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False):
@@ -3550,6 +3570,7 @@ class CelebADataset(SourceDataset):
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         return args
+
 
 class TextFileDataset(SourceDataset):
     """
