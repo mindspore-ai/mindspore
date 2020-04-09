@@ -80,9 +80,9 @@ class NetForConcat1(nn.Cell):
         return self.concat((x1, x2))
 
 
-class NetForStackInput(nn.Cell):
+class NetForPackInput(nn.Cell):
     def __init__(self, op):
-        super(NetForStackInput, self).__init__()
+        super(NetForPackInput, self).__init__()
         self.op = op
         self.mul = P.Mul()
 
@@ -93,9 +93,9 @@ class NetForStackInput(nn.Cell):
         return self.op(t)
 
 
-class NetForUnstackInput(nn.Cell):
+class NetForUnpackInput(nn.Cell):
     def __init__(self, op):
-        super(NetForUnstackInput, self).__init__()
+        super(NetForUnpackInput, self).__init__()
         self.op = op
         self.mul = P.Mul()
 
@@ -991,33 +991,33 @@ test_case_array_ops = [
                          Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)))],
         'desc_bprop': [[3,]]}),
-    ('StackV2_0', {
-        'block': NetForStackInput(P.Stack()),
+    ('Pack_0', {
+        'block': NetForPackInput(P.Pack()),
         'desc_inputs':[[2, 2], [2, 2], [2, 2]],
         'desc_bprop':[[3, 2, 2]],
     }),
-    ('StackV2_1', {
-        'block': NetForStackInput(P.Stack(axis=-2)),
+    ('Pack_1', {
+        'block': NetForPackInput(P.Pack(axis=-2)),
         'desc_inputs':[[3, 2, 3], [3, 2, 3], [3, 2, 3]],
         'desc_bprop':[[3, 2, 3, 3]],
     }),
-    ('StackV2_2', {
-        'block': NetForStackInput(P.Stack()),
+    ('Pack_2', {
+        'block': NetForPackInput(P.Pack()),
         'desc_inputs':[[2, 2]],
         'desc_bprop':[[2, 2, 2]],
     }),
-    ('StackV2_3', {
-        'block': NetForStackInput(P.Stack()),
+    ('Pack_3', {
+        'block': NetForPackInput(P.Pack()),
         'desc_inputs':[[128, 128], [128, 128]],
         'desc_bprop':[[2, 128, 128]],
     }),
-    ('UnstackV2_0', {
-        'block': NetForUnstackInput(P.Unstack(axis=0)),
+    ('Unpack_0', {
+        'block': NetForUnpackInput(P.Unpack(axis=0)),
         'desc_inputs':[[2, 4]],
         'desc_bprop':[[4], [4]],
     }),
-    ('UnstackV2_1', {
-        'block': NetForUnstackInput(P.Unstack(axis=-1)),
+    ('Unpack_1', {
+        'block': NetForUnpackInput(P.Unpack(axis=-1)),
         'desc_inputs':[Tensor(np.array([[1, 1, 1]], np.float32))],
         'desc_bprop':[[1], [1], [1]],
     }),

@@ -266,26 +266,26 @@ def get_bprop_gather_v2(self):
     return bprop
 
 
-@bprop_getters.register(P.Stack)
-def get_bprop_stack(self):
-    """Generate bprop for Stack"""
+@bprop_getters.register(P.Pack)
+def get_bprop_pack(self):
+    """Generate bprop for Pack"""
     axis = self.axis
 
     def bprop(x, out, dout):
-        stack_grad = P.Unstack(axis)
-        out = stack_grad(dout)
+        pack_grad = P.Unpack(axis)
+        out = pack_grad(dout)
         return (out,)
     return bprop
 
 
-@bprop_getters.register(P.Unstack)
-def get_bprop_unstack(self):
-    """Generate bprop for Unstack"""
+@bprop_getters.register(P.Unpack)
+def get_bprop_unpack(self):
+    """Generate bprop for Unpack"""
     axis = self.axis
 
     def bprop(x, out, dout):
-        unstack_grad = P.Stack(axis)
-        out = unstack_grad(dout)
+        unpack_grad = P.Pack(axis)
+        out = unpack_grad(dout)
         return (out,)
     return bprop
 
