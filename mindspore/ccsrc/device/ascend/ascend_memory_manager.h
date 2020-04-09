@@ -27,7 +27,11 @@ class AscendMemoryManager : public MemoryManager {
 
   void MallocDeviceMemory() override;
   void FreeDeviceMemory() override;
-  void *AllocTensorMemDynamic(size_t size) override;
+  void *MallocMemFromMemPool(size_t size) override;
+
+ private:
+  uint8_t *device_mem_pool_base_{nullptr};
+  uint64_t device_mem_pool_size_{0};
 };
 }  // namespace ascend
 }  // namespace device

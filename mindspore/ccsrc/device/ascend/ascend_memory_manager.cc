@@ -15,29 +15,31 @@
  */
 
 #include "device/ascend/ascend_memory_manager.h"
-#include "device/ascend/ascend_memory_allocator.h"
+#include "device/ascend/ascend_memory_pool.h"
 #include "utils/context/ms_context.h"
 #include "runtime/mem.h"
 namespace mindspore {
 namespace device {
 namespace ascend {
-static const uint64_t ASCEND_MEM_SIZE = 20;
-static const uint64_t ASCEND_MEM_SIZE_BYTE = (ASCEND_MEM_SIZE << 30);
+const uint64_t kAscendDeviceMemGB = 20;
+const uint64_t kAscendMemPoolGB = 5;
+const uint64_t kAscendDeviceMemSize = (kAscendDeviceMemGB << 30);
+const uint64_t kAscendMemPoolSize = (kAscendMemPoolGB << 30);
 
 void AscendMemoryManager::MallocDeviceMemory() {
-  device_mem_size_ = ASCEND_MEM_SIZE_BYTE;
-  static_mem_offset_ = FloatToSize(device_mem_size_ * GRAPH_INIT_ASCEND_MEM_RATIO);
+  device_mem_size_ = kAscendDeviceMemSize;
+  static_mem_offset_ = device_mem_size_;
   auto ret = rtMalloc(reinterpret_cast<void **>(&device_mem_base_), static_mem_offset_, RT_MEMORY_HBM);
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << static_mem_offset_ << "] fail, ret[" << ret << "]";
   }
-  device_mem_pool_size_ = FloatToSize(device_mem_size_ * (1 - GRAPH_INIT_ASCEND_MEM_RATIO));
+  device_mem_pool_size_ = kAscendMemPoolSize;
   ret = rtMalloc(reinterpret_cast<void **>(&device_mem_pool_base_), device_mem_pool_size_, RT_MEMORY_HBM);
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "rtMalloc mem size[" << device_mem_pool_size_ << "] fail, ret[" << ret << "]";
   }
-  AscendMemoryAllocator::GetInstance().set_device_mem_pool_base(device_mem_pool_base_);
-  AscendMemoryAllocator::GetInstance().set_device_mem_pool_size(device_mem_pool_size_);
+  AscendMemoryPool::GetInstance().set_device_mem_pool_base(device_mem_pool_base_);
+  AscendMemoryPool::GetInstance().set_device_mem_pool_size(device_mem_pool_size_);
 }
 
 void AscendMemoryManager::FreeDeviceMemory() {
@@ -57,8 +59,8 @@ void AscendMemoryManager::FreeDeviceMemory() {
   }
 }
 
-void *AscendMemoryManager::AllocTensorMemDynamic(size_t size) {
-  return AscendMemoryAllocator::GetInstance().AllocTensorMem(size);
+void *AscendMemoryManager::MallocMemFromMemPool(size_t size) {
+  return AscendMemoryPool::GetInstance().AllocTensorMem(size);
 }
 }  // namespace ascend
 }  // namespace device
