@@ -24,8 +24,7 @@ from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _callback_wrapper
 from ..nn.metrics import Loss
-from ..nn.wrap import WithLossCell, WithEvalCell, \
-    DataWrapper
+from ..nn.wrap import WithLossCell, DataWrapper, WithEvalCell
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from .parallel_utils import ParallelMode
 from ..common import dtype as mstype
@@ -151,7 +150,10 @@ class Model:
         else:
             if self._loss_fn is None:
                 raise ValueError("loss_fn can not be None.")
-            self._eval_network = WithEvalCell(self._network, self._loss_fn)
+            if self._optimizer:
+                self._eval_network = self._train_network.network
+            else:
+                self._eval_network = WithEvalCell(self._network, self._loss_fn)
             self._eval_indexes = [0, 1, 2]
 
     def _clear_metrics(self):

@@ -82,6 +82,29 @@ def _check_kwargs(key_words):
         if loss_scale_manager:
             validator.check_isinstance('loss_scale_manager', loss_scale_manager, LossScaleManager)
 
+
+def _add_loss_network(network, loss_fn, cast_model_type):
+    class WithLossCell(nn.Cell):
+        "Wrap loss for amp. Cast network output back to float32"
+
+        def __init__(self, backbone, loss_fn):
+            super(WithLossCell, self).__init__(auto_prefix=False)
+            self._backbone = backbone
+            self._loss_fn = loss_fn
+
+        def construct(self, data, label):
+            out = self._backbone(data)
+            label = _mp_cast_helper(mstype.float32, label)
+            return self._loss_fn(F.cast(out, mstype.float32), label)
+
+    validator.check_isinstance('loss_fn', loss_fn, nn.Cell)
+    if cast_model_type == mstype.float16:
+        network = WithLossCell(network, loss_fn)
+    else:
+        network = nn.WithLossCell(network, loss_fn)
+    return network
+
+
 def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
     """
     Build the mixed precision training cell automatically.
@@ -117,24 +140,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
             _do_keep_batchnorm_fp32(network)
 
     if loss_fn:
-        class WithLossCell(nn.Cell):
-            "Wrap loss for amp. Cast network output back to float32"
-
-            def __init__(self, backbone, loss_fn):
-                super(WithLossCell, self).__init__(auto_prefix=False)
-                self._backbone = backbone
-                self._loss_fn = loss_fn
-
-            def construct(self, data, label):
-                out = self._backbone(data)
-                label = _mp_cast_helper(mstype.float32, label)
-                return self._loss_fn(F.cast(out, mstype.float32), label)
-
-        validator.check_isinstance('loss_fn', loss_fn, nn.Cell)
-        if config.cast_model_type == mstype.float16:
-            network = WithLossCell(network, loss_fn)
-        else:
-            network = nn.WithLossCell(network, loss_fn)
+        network = _add_loss_network(network, loss_fn, config.cast_model_type)
 
     if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
         network = _VirtualDatasetCell(network)
