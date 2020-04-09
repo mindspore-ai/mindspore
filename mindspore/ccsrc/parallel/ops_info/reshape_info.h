@@ -36,12 +36,10 @@ class ReshapeInfo : public OperatorInfo {
  public:
   ReshapeInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
               const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs),
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReshapeCost>()),
         dev_num_(0),
         input_layout_set_flag_(false),
-        output_layout_set_flag_(false) {
-    reshape_cost_ptr_ = std::make_shared<ReshapeCost>();
-  }
+        output_layout_set_flag_(false) {}
   ~ReshapeInfo() override = default;
   Status Init(const StrategyPtr& strategy) override;
   void SetInputLayout(const TensorLayout& input_layout) {
@@ -55,7 +53,6 @@ class ReshapeInfo : public OperatorInfo {
   Status InitForCostModel(const StrategyPtr& strategy) override;
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return reshape_cost_ptr_; }
 
  protected:
   Status CheckStrategy(const StrategyPtr& strategy) override;
@@ -67,7 +64,6 @@ class ReshapeInfo : public OperatorInfo {
   Status InferTensorLayout(TensorLayouts* inputs_layout, TensorLayouts* outputs_layout);
   Status GetAttrs() override;
   Strategys GetOutputsStrategy();
-  ReshapeCostPtr reshape_cost_ptr_;
 
  private:
   Status GetParameterInput();
