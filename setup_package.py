@@ -21,7 +21,6 @@ from setuptools import setup, find_packages
 from setuptools.command.egg_info import egg_info
 from setuptools.command.build_py import build_py
 
-package_name = 'mindspore'
 version = '0.1.0'
 author = 'The MindSpore Authors'
 author_email = 'contact@mindspore.cn'
@@ -29,6 +28,7 @@ home_page = 'https://www.mindspore.cn'
 
 backend_policy = os.getenv('BACKEND_POLICY')
 commit_id = os.getenv('COMMIT_ID').replace("\n", "")
+package_name = os.getenv('MS_PACKAGE_NAME').replace("\n", "")
 
 pwd = os.path.dirname(os.path.realpath(__file__))
 pkg_dir = os.path.join(pwd, 'build/package')
