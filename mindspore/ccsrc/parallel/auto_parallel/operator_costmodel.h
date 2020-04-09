@@ -132,6 +132,8 @@ class ActivationCost : public OperatorCost {
 };
 
 using ActivationCostPtr = std::shared_ptr<ActivationCost>;
+using TransposeCost = ActivationCost;
+using TransposeCostPtr = std::shared_ptr<TransposeCost>;
 
 class SoftmaxCost : public OperatorCost {
  public:
@@ -415,32 +417,8 @@ class ArithmeticCost : public OperatorCost {
                                     const int32_t& stage_id) const override;
 };
 using ArithmeticCostPtr = std::shared_ptr<ArithmeticCost>;
-
-class L2NormalizeCost : public OperatorCost {
- public:
-  L2NormalizeCost() = default;
-  ~L2NormalizeCost() override = default;
-
-  double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
-    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
-  }
-  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                            const int32_t&) const override {
-    return 0.0;
-  }
-  double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const override;
-  double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
-    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
-  }
-  double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
-  double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const override;
-};
-using L2NormalizeCostPtr = std::shared_ptr<L2NormalizeCost>;
+using BiasAddCost = ArithmeticCost;
+using BiasAddCostPtr = std::shared_ptr<BiasAddCost>;
 
 class ReduceMethodCost : public OperatorCost {
  public:

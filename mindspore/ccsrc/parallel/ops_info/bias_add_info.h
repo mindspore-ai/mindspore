@@ -34,16 +34,13 @@ class BiasAddInfo : public OperatorInfo {
  public:
   BiasAddInfo(const std::string& operator_name, const Shapes& inputs_shape, const Shapes& outputs_shape,
               const PrimitiveAttrs& attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs) {
-    biasaddcost_ptr_ = std::make_shared<ArithmeticCost>();
-  }
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BiasAddCost>()) {}
   ~BiasAddInfo() override = default;
 
   Status Init(const StrategyPtr& strategy) override;
   Status InitForCostModel(const StrategyPtr& strategy) override;
   Status GenerateStrategies(int32_t) override;
   Status SetCostUnderStrategy(const StrategyPtr&) override;
-  OperatorCostPtr GetOperatorCost() const override { return biasaddcost_ptr_; }
   void ReComputeBatchSplitFlagList() override;
 
  protected:
@@ -55,7 +52,6 @@ class BiasAddInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status InferTensorLayout(TensorLayouts* inputs_layout, TensorLayouts* outputs_layout, const Shape& dev_matrix_array);
-  ArithmeticCostPtr biasaddcost_ptr_;
 };
 }  // namespace parallel
 }  // namespace mindspore
