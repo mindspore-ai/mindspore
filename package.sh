@@ -110,7 +110,7 @@ else
     export MS_PACKAGE_NAME="mindspore"
 fi
 
-${PYTHON} "${BASEPATH}/setup_package.py" bdist_wheel
+${PYTHON} "${BASEPATH}/setup.py" bdist_wheel
 
 chmod -R 700 ${PACKAGE_PATH}/mindspore/
 chmod -R 700 ${PACKAGE_PATH}/${MS_PACKAGE_NAME//-/_}.egg-info/
