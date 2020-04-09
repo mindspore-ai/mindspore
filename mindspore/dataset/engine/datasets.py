@@ -82,8 +82,6 @@ def zip(datasets):
     if len(datasets) <= 1:
         raise ValueError(
             "Can't zip empty or just one dataset!")
-    if not isinstance(datasets, tuple):
-        raise TypeError("The zip function %s type error!" % (datasets))
     return ZipDataset(datasets)
 
 
