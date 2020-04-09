@@ -46,7 +46,7 @@ GPUDeviceAddress::~GPUDeviceAddress() {
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (mem_dynamic_alloc_) {
+  if (from_mem_pool_) {
     GPUMemoryAllocator::GetInstance().FreeTensorMem(ptr_);
     ptr_ = nullptr;
   }

@@ -29,7 +29,7 @@
 #include "hccl/hcom.h"
 #include "runtime/context.h"
 #include "device/ascend/ascend_stream_assign.h"
-#include "device/ascend/ascend_memory_allocator.h"
+#include "device/ascend/ascend_memory_pool.h"
 #include "framework/ge_runtime/model_runner.h"
 #include "device/ascend/tasksink/task_generator.h"
 #include "session/anf_runtime_algorithm.h"

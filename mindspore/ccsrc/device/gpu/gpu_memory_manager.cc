@@ -21,11 +21,11 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-void *GPUMemoryManager::AllocTensorMemDynamic(size_t size) {
+void *GPUMemoryManager::MallocMemFromMemPool(size_t size) {
   return GPUMemoryAllocator::GetInstance().AllocTensorMem(size);
 }
 
-void GPUMemoryManager::FreeTensorMemDynamic(void *device_ptr) {
+void GPUMemoryManager::FreeMemFromMemPool(void *device_ptr) {
   GPUMemoryAllocator::GetInstance().FreeTensorMem(device_ptr);
 }
 
@@ -34,7 +34,7 @@ void GPUMemoryManager::MallocDeviceMemory() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   // If use the dynamic memory pool, then alloc the first memory block to init.
   if (context_ptr->enable_dynamic_mem_pool()) {
-    auto device_addr = AllocTensorMemDynamic(1);
+    auto device_addr = MallocMemFromMemPool(1);
     if (!device_addr) {
       MS_LOG(ERROR) << "Dynamic memory pool init error.";
     }
@@ -62,7 +62,7 @@ uint8_t *GPUMemoryManager::MallocStaticMem(size_t size, bool) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->enable_dynamic_mem_pool()) {
-    auto device_ptr = AllocTensorMemDynamic(size);
+    auto device_ptr = MallocMemFromMemPool(size);
     MS_EXCEPTION_IF_NULL(device_ptr);
     return AddressOffset(device_ptr, 0);
   }

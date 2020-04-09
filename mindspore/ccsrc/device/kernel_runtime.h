@@ -33,7 +33,6 @@
 #include "utils/context/ms_context.h"
 #include "device/memory_manager.h"
 
-// using mindspore::session::KernelGraph;
 using mindspore::tensor::Tensor;
 using TensorPtr = std::shared_ptr<Tensor>;
 using mindspore::kernel::AddressPtr;

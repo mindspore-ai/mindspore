@@ -28,11 +28,11 @@ class GPUMemoryManager : public MemoryManager {
   void MallocDeviceMemory() override;
   void FreeDeviceMemory() override;
 
-  void *AllocTensorMemDynamic(size_t size) override;
-  void FreeTensorMemDynamic(void *device_ptr) override;
+  void *MallocMemFromMemPool(size_t size) override;
+  void FreeMemFromMemPool(void *device_ptr) override;
 
  protected:
-  uint8_t *MallocStaticMem(size_t size, bool communication_mem);
+  uint8_t *MallocStaticMem(size_t size, bool communication_mem) override;
 };
 }  // namespace gpu
 }  // namespace device

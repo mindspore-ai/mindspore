@@ -31,7 +31,7 @@ using MemReuseUtilPtr = mindspore::memreuse::MemReuseUtilPtr;
 class MemoryManager {
  public:
   MemoryManager() = default;
-  virtual ~MemoryManager();
+  virtual ~MemoryManager() = default;
 
   virtual void MallocDeviceMemory() = 0;
   virtual void FreeDeviceMemory() = 0;
@@ -40,16 +40,15 @@ class MemoryManager {
     dynamic_mem_offset_ = 0;
   }
 
-  void InitReuseDynamicMemory(session::KernelGraph *graph);
+  void MallocReusedDynamicMem(session::KernelGraph *graph);
   uint8_t *MallocOutputMem(const AnfNodePtr &node, size_t index, int flag, size_t size);
   uint8_t *MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, int flag, size_t size);
   virtual uint8_t *MallocMem(int flag, size_t size);
 
-  // Alloc memory use the dynamic memory pool.
-  virtual void *AllocTensorMemDynamic(size_t size);
-  // Free memory use the dynamic memory pool.
-  virtual void FreeTensorMemDynamic(void *device_ptr);
-  virtual void MallocOpMemory(const DeviceAddressPtr address, size_t size);
+  virtual void MallocMemFromMemPool(const DeviceAddressPtr address, size_t size);
+  virtual void *MallocMemFromMemPool(size_t size);
+  virtual void FreeMemFromMemPool(void *device_ptr);
+
   size_t GetCommonAlignSize(size_t input_size) const;
   size_t GetCommunicationAlignSize(size_t input_size) const;
 
@@ -57,9 +56,7 @@ class MemoryManager {
   virtual uint8_t *MallocStaticMem(size_t size, bool communication_mem);
   virtual uint8_t *MallocDynamicMem(size_t size, bool communication_mem);
   uint8_t *device_mem_base_{nullptr};
-  uint8_t *device_mem_pool_base_{nullptr};
   uint64_t device_mem_size_{0};
-  uint64_t device_mem_pool_size_{0};
   uint64_t dynamic_mem_offset_{0};
   uint64_t static_mem_offset_{0};
   size_t total_static_size_ = 0;

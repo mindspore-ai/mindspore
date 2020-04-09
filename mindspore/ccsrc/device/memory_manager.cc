@@ -21,12 +21,6 @@ using mindspore::memreuse::BestFitMemReuse;
 using mindspore::memreuse::MemReuseUtilPtr;
 namespace mindspore {
 namespace device {
-MemoryManager::~MemoryManager() {
-  device_mem_base_ = nullptr;
-  device_mem_pool_base_ = nullptr;
-  mem_reuse_util_ptr_ = nullptr;
-}
-
 size_t MemoryManager::GetCommonAlignSize(size_t input_size) const {
   return (input_size + kMemAlignSize + 31) / kMemAlignSize * kMemAlignSize;
 }
@@ -35,7 +29,7 @@ size_t MemoryManager::GetCommunicationAlignSize(size_t input_size) const {
   return (input_size + kMemAlignSize - 1) / kMemAlignSize * kMemAlignSize + 2 * kMemAlignSize;
 }
 
-void MemoryManager::InitReuseDynamicMemory(session::KernelGraph *graph) {
+void MemoryManager::MallocReusedDynamicMem(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MemReuseUtilPtr mem_reuse_util_ptr = std::make_shared<memreuse::MemReuseUtil>();
   MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
@@ -147,23 +141,23 @@ uint8_t *MemoryManager::MallocDynamicMem(size_t size, bool communication_mem) {
   }
 }
 
-void MemoryManager::MallocOpMemory(const DeviceAddressPtr address, size_t size) {
-  auto device_ptr = AllocTensorMemDynamic(size);
+void MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr address, size_t size) {
+  auto device_ptr = MallocMemFromMemPool(size);
   MS_EXCEPTION_IF_NULL(device_ptr);
   address->ptr_ = device_ptr;
-  address->mem_dynamic_alloc_ = true;
+  address->from_mem_pool_ = true;
 }
 
-void *MemoryManager::AllocTensorMemDynamic(size_t size) {
+void *MemoryManager::MallocMemFromMemPool(size_t size) {
   if (size == 0) {
-    MS_LOG(ERROR) << "AllocTensorMemDynamic size is 0.";
+    MS_LOG(ERROR) << "MallocMemFromMemPool size is 0.";
   }
   return nullptr;
 }
 
-void MemoryManager::FreeTensorMemDynamic(void *device_ptr) {
+void MemoryManager::FreeMemFromMemPool(void *device_ptr) {
   if (device_ptr == nullptr) {
-    MS_LOG(ERROR) << "FreeTensorMemDynamic device_ptr is null.";
+    MS_LOG(ERROR) << "FreeMemFromMemPool device_ptr is null.";
   }
 }
 }  // namespace device

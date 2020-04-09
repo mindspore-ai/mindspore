@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_MEMORY_ALLOCATOR_H_
-#define MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_MEMORY_ALLOCATOR_H_
+#ifndef MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_MEMORY_POOL_H_
+#define MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_MEMORY_POOL_H_
 
 #include <memory>
 #include "pre_activate/mem_reuse/mem_dynamic_allocator.h"
@@ -23,22 +23,23 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-// The fraction of total ascend memory used to compute the graph.
-static const float GRAPH_INIT_ASCEND_MEM_RATIO = 0.8;
-
-class AscendMemoryAllocator : public DynamicMemPoolBestFit {
+class AscendMemoryPool : public DynamicMemPoolBestFit {
  public:
-  ~AscendMemoryAllocator() override = default;
+  ~AscendMemoryPool() override = default;
 
   size_t AllocDeviceMem(size_t size, DeviceMemPtr* addr) override;
   bool FreeDeviceMem(const DeviceMemPtr& addr) override;
   void set_device_mem_pool_base(uint8_t* device_mem_pool_base);
-  void set_device_mem_pool_size(uint64_t device_mem_pool_size) { device_mem_pool_size_ = device_mem_pool_size; }
+  void set_device_mem_pool_size(uint64_t device_mem_pool_size) {
+    device_mem_pool_size_ = device_mem_pool_size;
+    free_mem_size_ = device_mem_pool_size_;
+    total_mem_size_ = free_mem_size_;
+  }
   size_t free_mem_size() override;
   size_t total_mem_size() override;
 
-  static AscendMemoryAllocator& GetInstance() {
-    static AscendMemoryAllocator instance;
+  static AscendMemoryPool& GetInstance() {
+    static AscendMemoryPool instance;
     return instance;
   }
 
@@ -49,10 +50,10 @@ class AscendMemoryAllocator : public DynamicMemPoolBestFit {
   size_t mem_alloc_unit_size() const override;
 
  private:
-  AscendMemoryAllocator();
-  AscendMemoryAllocator(const AscendMemoryAllocator&) = delete;
-  AscendMemoryAllocator& operator=(const AscendMemoryAllocator&) = delete;
-  bool hasMalloc_;
+  AscendMemoryPool() = default;
+  AscendMemoryPool(const AscendMemoryPool&) = delete;
+  AscendMemoryPool& operator=(const AscendMemoryPool&) = delete;
+  bool has_malloc_{false};
   uint8_t* device_mem_pool_base_{nullptr};
   uint64_t device_mem_pool_size_{0};
   size_t free_mem_size_;
@@ -62,4 +63,4 @@ class AscendMemoryAllocator : public DynamicMemPoolBestFit {
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_MEMORY_ALLOCATOR_H_
+#endif  // MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_MEMORY_POOL_H_
