@@ -30,6 +30,8 @@ namespace mindspore {
 namespace kernel {
 namespace tbe {
 static std::map<string, string> tbe_func_adapter_map = {
+  {"re_lu6", "relu6"},
+  {"re_lu6_grad", "relu6_grad"},
   {"re_lu", "relu"},
   {"tensor_add", "add"},
   {"reduce_mean", "reduce_mean_d"},

@@ -42,6 +42,8 @@ from .mul import _mul_tbe
 from .real_div import _real_div_tbe
 from .relu import _relu_tbe
 from .relu_grad import _relu_grad_tbe
+from .relu6 import _relu6_tbe
+from .relu6_grad import _relu6_grad_tbe
 from .softmax_cross_entropy_with_logits import _softmax_cross_entropy_with_logits_tbe
 from .sigmoid_cross_entropy_with_logits import _sigmoid_cross_entropy_with_logits_tbe
 from .sigmoid_cross_entropy_with_logits_grad import _sigmoid_cross_entropy_with_logits_grad_tbe
