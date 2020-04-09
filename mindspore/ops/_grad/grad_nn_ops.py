@@ -470,6 +470,17 @@ def get_bprop_pad(self):
     return bprop
 
 
+@bprop_getters.register(P.MirrorPad)
+def get_bprop_mirror_pad(self):
+    """Grad definition for `MirrorPad` operation."""
+    mirror_pad_grad = G.MirrorPadGrad(self.mode)
+
+    def bprop(x, paddings, out, dout):
+        dx = mirror_pad_grad(dout, paddings, x)
+        return (dx, zeros_like(paddings))
+    return bprop
+
+
 @bprop_getters.register(P.ROIAlign)
 def get_bprop_roi_align(self):
     """Grad definition for `ROIAlign` operation."""

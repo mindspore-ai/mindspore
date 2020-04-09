@@ -415,3 +415,72 @@ class ImageGradients(Cell):
         dx_last = P.Fill()(P.DType()(images), (batch_size, depth, height, 1), 0)
         dx = P.Concat(3)((dx, dx_last))
         return dy, dx
+
+
+class Pad(Cell):
+    """
+    Pads the input tensor according to the paddings and mode.
+
+    Args:
+        paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
+            paddings are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
+            extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates how many sizes to
+            be extended behind of the `D` th dimension of the input tensor.
+        mode (string): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
+            Default: "CONSTANT".
+
+    Inputs:
+        - ** input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, the tensor after padding.
+
+        - If `mode` is "CONSTANT", it fill the edge with 0, regardless of the values of the `input_x`.
+          If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
+          Outputs is [[0,0,0,0,0,0,0],[0,0,1,2,3,0,0],[0,0,4,5,6,0,0],[0,0,7,8,9,0,0],[0,0,0,0,0,0,0]].
+        - If 'mode` is "REFLECT", it uses a way of symmetrical copying throught the axis of symmetry to fill in,
+          symmetry. If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
+          Outputs is [[6,5,4,5,6,5,4],[3,2,1,2,3,2,1],[6,5,4,5,6,5,4],[9,8,7,8,9,8,7],[6,5,4,5,6,5,4]].
+        - If 'mode' is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
+          according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
+          is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the Outputs is
+          [[2,1,1,2,3,3,2],[2,1,1,2,3,3,2],[5,4,4,5,6,6,5],[8,7,7,8,9,9,8],[8,7,7,8,9,9,8]].
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.pad = nn.Pad(paddings=((1,1),(2,2)), mode="CONSTANT")
+        >>>     def construct(self, x):
+        >>>         return self.pad(x)
+        >>> x = np.random.random(size=(2, 3)).astype(np.float32)
+        >>> pad = Net()
+        >>> ms_output = pad(Tensor(x))
+    """
+
+    def __init__(self, paddings, mode="CONSTANT"):
+        super(Pad, self).__init__()
+        self.mode = mode
+        self.paddings = paddings
+        validator.check_string('mode', self.mode, ["CONSTANT", "REFLECT", "SYMMETRIC"])
+        if not isinstance(paddings, tuple):
+            raise TypeError('Paddings must be tuple type.')
+        for item in paddings:
+            if len(item) != 2:
+                raise ValueError('The shape of paddings must be (n, 2).')
+        if mode == "CONSTANT":
+            self.pad = P.Pad(self.paddings)
+        else:
+            self.paddings = Tensor(np.array(self.paddings))
+            self.pad = P.MirrorPad(mode=mode)
+
+    def construct(self, x):
+        if self.mode == "CONSTANT":
+            x = self.pad(x)
+        else:
+            x = self.pad(x, self.paddings)
+        return x

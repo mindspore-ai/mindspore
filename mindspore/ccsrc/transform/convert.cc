@@ -110,6 +110,8 @@ const char kNameSigmoidCrossEntropyWithLogits[] = "SigmoidCrossEntropyWithLogits
 const char kNameSigmoidCrossEntropyWithLogitsGrad[] = "SigmoidCrossEntropyWithLogitsGrad";
 const char kNameScatterNdD[] = "ScatterNd";
 const char kNamePadD[] = "Pad";
+const char kNameMirrorPad[] = "MirrorPad";
+const char kNameMirrorPadGrad[] = "MirrorPadGrad";
 const char kNameGatherNd[] = "GatherNd";
 const char kNameArgmax[] = "Argmax";
 const char kNameArgmin[] = "Argmin";
@@ -256,6 +258,8 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameSigmoidCrossEntropyWithLogitsGrad), ADPT_DESC(SigmoidCrossEntropyWithLogitsGrad)},
     {string(kNameScatterNdD), ADPT_DESC(ScatterNdD)},
     {string(kNamePadD), ADPT_DESC(PadD)},
+    {string(kNameMirrorPad), ADPT_DESC(MirrorPad)},
+    {string(kNameMirrorPadGrad), ADPT_DESC(MirrorPadGrad)},
     {string(kNameGatherNd), ADPT_DESC(GatherNd)},
     {string(kNameArgmax), ADPT_DESC(ArgMaxD)},
     {string(kNameArgmin), ADPT_DESC(ArgMinD)},

@@ -596,6 +596,16 @@ INPUT_MAP(PadD) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(PadD) = {{"paddings", ATTR_DESC(paddings, AnyTraits<std::vector<std::vector<int64_t>>>())}};
 OUTPUT_MAP(PadD) = {{0, OUTPUT_DESC(y)}};
 
+// MirrorPad
+INPUT_MAP(MirrorPad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}};
+ATTR_MAP(MirrorPad) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
+OUTPUT_MAP(MirrorPad) = {{0, OUTPUT_DESC(y)}};
+
+// MirrorPadGrad
+INPUT_MAP(MirrorPadGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}};
+ATTR_MAP(MirrorPadGrad) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
+OUTPUT_MAP(MirrorPadGrad) = {{0, OUTPUT_DESC(y)}};
+
 // GatherNd
 INPUT_MAP(GatherNd) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(GatherNd) = EMPTY_ATTR_MAP;
