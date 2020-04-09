@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pre_activate/common/ir_fusion/allreduce_fusion.h"
+#include "pre_activate/pass/allreduce_fusion.h"
 
 #include <vector>
 #include <string>

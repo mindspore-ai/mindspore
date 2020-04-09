@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_IR_FUSION_ALLREDUCE_FUSION_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_IR_FUSION_ALLREDUCE_FUSION_H_
+#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_ALLREDUCE_FUSION_H_
+#define MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_ALLREDUCE_FUSION_H_
 #include <vector>
 
 #include "pre_activate/common/pass.h"
@@ -46,4 +46,4 @@ class AllReduceFusion : public Pass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_IR_FUSION_ALLREDUCE_FUSION_H_
+#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_PASS_ALLREDUCE_FUSION_H_
