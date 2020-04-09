@@ -556,6 +556,11 @@ def check_generatordataset(method):
         if column_names is None:
             raise ValueError("column_names is not provided.")
 
+        # check prefetch_size range
+        prefetch_size = param_dict.get('prefetch_size')
+        if prefetch_size is not None and (prefetch_size <= 0 or prefetch_size > 1024):
+            raise ValueError("prefetch_size exceeds the boundary.")
+
         check_param_type(nreq_param_int, param_dict, int)
 
         check_param_type(nreq_param_list, param_dict, list)
