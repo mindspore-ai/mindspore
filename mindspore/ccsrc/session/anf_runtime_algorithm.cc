@@ -857,5 +857,15 @@ void AnfRuntimeAlgorithm::SetNodeInput(const CNodePtr &node, const AnfNodePtr &i
   MS_EXCEPTION_IF_NULL(input_node);
   node->set_input(index + 1, input_node);
 }
+
+bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto kernel_name = AnfAlgo::GetCNodeName(node);
+  auto kernel_type = AnfAlgo::GetKernelType(node);
+  if (kernel_name == kAllReduceOpName || kernel_type == HCCL_KERNEL) {
+    return true;
+  }
+  return false;
+}
 }  // namespace session
 }  // namespace mindspore

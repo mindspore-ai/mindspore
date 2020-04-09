@@ -33,12 +33,14 @@ class CPUKernelRuntime;
 }  // namespace cpu
 namespace ascend {
 class AscendKernelRuntime;
+class AscendMemoryManager;
 namespace tasksink {
 class TaskGenerator;
 }  // namespace tasksink
 }  // namespace ascend
 namespace gpu {
 class GPUKernelRuntime;
+class GPUMemoryManager;
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
@@ -70,12 +72,15 @@ class DeviceAddress {
   TypeId type_id_{kNumberTypeFloat16};
   bool mem_dynamic_alloc_{false};
   friend class KernelRuntime;
+  friend class MemoryManager;
   friend class mindspore::device::ascend::tasksink::TaskGenerator;
   friend class mindspore::device::cpu::CPUSimpleMemPlan;
   friend class mindspore::device::cpu::CPUResourceManager;
   friend class mindspore::device::cpu::CPUKernelRuntime;
   friend class mindspore::device::gpu::GPUKernelRuntime;
+  friend class mindspore::device::gpu::GPUMemoryManager;
   friend class mindspore::device::ascend::AscendKernelRuntime;
+  friend class mindspore::device::ascend::AscendMemoryManager;
 };
 
 using DeviceAddressPtr = std::shared_ptr<DeviceAddress>;

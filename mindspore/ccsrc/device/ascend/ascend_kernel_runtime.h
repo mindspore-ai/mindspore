@@ -39,13 +39,11 @@ class AscendKernelRuntime : public KernelRuntime {
   bool GenTask(const session::KernelGraph *graph) override;
   bool RunTask(const session::KernelGraph *graph) override;
   bool LoadTask(const session::KernelGraph *graph) override;
-  void FreeHostMemory() override;
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) override;
   bool SyncStream() override;
-  void MallocOpMemory(const DeviceAddressPtr address, size_t size, int flag) override;
 
  private:
   bool InitDevice();
@@ -53,8 +51,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool HcclInit();
   bool NeedDestroyHccl();
   bool DestroyHccl();
-  bool MallocDeviceMemory();
-  void FreeDeviceMemory();
+
   void ClearGraphModelMap();
   void ReleaseDeviceRes() override;
   uint32_t GetGraphModelId(const session::KernelGraph *kernel_graph);
