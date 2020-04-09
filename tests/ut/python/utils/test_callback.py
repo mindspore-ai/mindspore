@@ -112,8 +112,8 @@ def test_save_checkpoint():
         os.remove('./test_files/test_ckpt-model.pkl')
 
 
-def test_loss_monitor_sink_model():
-    """Test loss monitor sink model."""
+def test_loss_monitor_sink_mode():
+    """Test loss monitor sink mode."""
     cb_params = _InternalCallbackParam()
     cb_params.cur_epoch_num = 4
     cb_params.cur_step_num = 2
@@ -131,8 +131,8 @@ def test_loss_monitor_sink_model():
     callbacklist.end(run_context)
 
 
-def test_loss_monitor_feed_model():
-    """Test loss monitor non-sink mode."""
+def test_loss_monitor_normal_mode():
+    """Test loss monitor normal(non-sink) mode."""
     cb_params = _InternalCallbackParam()
     run_context = RunContext(cb_params)
     loss_cb = LossMonitor(1)

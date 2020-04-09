@@ -453,7 +453,7 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr>& info, const py::
   }
 
   // process the first args of tensor
-  // only in Dataset non-sink Mode, fp_bp graph need input tensors
+  // only in dataset normal(non-sink) mode, fp_bp graph need input tensors
   if (ConfigManager::GetInstance().dataset_mode() == DS_NORMAL_MODE) {
     for (std::size_t i = 0; i < size; i++) {
       ValuePtr converted = nullptr;

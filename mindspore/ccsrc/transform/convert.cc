@@ -447,7 +447,7 @@ void DfGraphConvertor::InitLoopVar(std::vector<ge::Operator> *init_input) {
     if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
       value = ConfigManager::GetInstance().iter_num();
     } else {
-      MS_LOG(INFO) << "Run with non-sink mode, the iterator number will always be 1";
+      MS_LOG(INFO) << "Run with normal(non-sink) mode, the iterator number will always be 1";
       value = 1;
       ConfigManager::GetInstance().set_iter_num(value);
     }
