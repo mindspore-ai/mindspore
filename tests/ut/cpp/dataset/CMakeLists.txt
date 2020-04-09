@@ -41,6 +41,7 @@ SET(DE_UT_SRCS
     random_vertical_flip_op_test.cc
     rename_op_test.cc
     repeat_op_test.cc
+    skip_op_test.cc
     rescale_op_test.cc
     resize_bilinear_op_test.cc
     resize_op_test.cc

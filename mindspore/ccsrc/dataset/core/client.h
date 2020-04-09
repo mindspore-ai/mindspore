@@ -32,6 +32,7 @@
 #include "dataset/engine/datasetops/project_op.h"
 #include "dataset/engine/datasetops/rename_op.h"
 #include "dataset/engine/datasetops/repeat_op.h"
+#include "dataset/engine/datasetops/skip_op.h"
 #include "dataset/engine/datasetops/shuffle_op.h"
 #include "dataset/engine/datasetops/source/generator_op.h"
 #include "dataset/engine/datasetops/source/mindrecord_op.h"

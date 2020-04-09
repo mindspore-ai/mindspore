@@ -709,6 +709,20 @@ def check_repeat(method):
 
     return new_method
 
+def check_skip(method):
+    """check the input arguments of skip."""
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        count = param_dict.get('count')
+        check_type(count, 'count', int)
+        if count < 0:
+            raise ValueError("Skip count must be positive integer or 0.")
+
+        return method(*args, **kwargs)
+
+    return new_method
 
 def check_zip(method):
     """check the input arguments of zip."""

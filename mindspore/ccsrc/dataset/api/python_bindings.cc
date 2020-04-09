@@ -446,6 +446,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("MINDRECORD", OpName::kMindrecord)
     .value("CACHE", OpName::kCache)
     .value("REPEAT", OpName::kRepeat)
+    .value("SKIP", OpName::kSkip)
     .value("TAKE", OpName::kTake)
     .value("ZIP", OpName::kZip)
     .value("MAP", OpName::kMap)

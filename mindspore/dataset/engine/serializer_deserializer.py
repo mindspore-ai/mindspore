@@ -297,6 +297,9 @@ def create_node(node):
     elif dataset_op == 'RepeatDataset':
         pyobj = de.Dataset().repeat(node.get('count'))
 
+    elif dataset_op == 'SkipDataset':
+        pyobj = de.Dataset().skip(node.get('count'))
+
     elif dataset_op == 'MapDataset':
         tensor_ops = construct_tensor_ops(node.get('operations'))
         pyobj = de.Dataset().map(node.get('input_columns'), tensor_ops, node.get('output_columns'),
