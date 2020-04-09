@@ -44,7 +44,7 @@ class Net(nn.Cell):
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, weight_init="zeros")
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU()
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=0)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2)
         self.flatten = nn.Flatten()
         self.fc = nn.Dense(int(224*224*64/16), num_classes)
 

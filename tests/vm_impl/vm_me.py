@@ -19,7 +19,7 @@ from mindspore._checkparam import Rel
 from mindspore._checkparam import ParamValidator as validator
 
 
-def avg_pooling(x, pool_h, pool_w, stride, pad):
+def avg_pooling(x, pool_h, pool_w, stride):
     """
     Applies average pooling over an input array.
 
@@ -28,26 +28,25 @@ def avg_pooling(x, pool_h, pool_w, stride, pad):
         pool_h (int): Height of the pooling window.
         pool_w (int): Width of the pooling window.
         stride (int): The stride of the sliding window.
-        pad (int): Padding to be added on height and width.
 
     Returns:
         numpy.ndarray, an output array after applying average pooling on input array.
     """
     validator.check_integer("stride", stride, 0, Rel.GT)
     num, channel, height, width = x.shape
-    out_h = (height + 2*pad - pool_h)//stride + 1
-    out_w = (width + 2*pad - pool_w)//stride + 1
+    out_h = (height - pool_h)//stride + 1
+    out_w = (width - pool_w)//stride + 1
 
-    col = im2col(x, pool_h, pool_w, stride, pad)
+    col = im2col(x, pool_h, pool_w, stride)
     col = col.reshape(-1, pool_h*pool_w)
 
     out = np.mean(col, axis=1)
-    out = out.reshape(num, out_h, out_w, channel).transpose(0, 3, 1, 2)
+    out = out.reshape((num, out_h, out_w, channel)).transpose(0, 3, 1, 2)
 
     return out
 
 
-def avg_pool_grad(dout, origin_shape, pool_h, pool_w, stride, pad):
+def avg_pool_grad(dout, origin_shape, pool_h, pool_w, stride):
     """
     Gets grad of average pooling.
 
@@ -57,7 +56,6 @@ def avg_pool_grad(dout, origin_shape, pool_h, pool_w, stride, pad):
         pool_h (int): Height of the pooling window.
         pool_w (int): Width of the pooling window.
         stride (int): The stride of the sliding window.
-        pad (int): Padding to be added on height and width.
 
     Returns:
         numpy.ndarray, grad of avgerage pooling.
@@ -324,38 +322,38 @@ def matmul(x, w, b=None):
     return y
 
 
-def max_pooling(x, pool_h, pool_w, stride, pad):
+def max_pooling(x, pool_h, pool_w, stride):
     """Max pooling."""
     validator.check_integer("stride", stride, 0, Rel.GT)
     num, channel, height, width = x.shape
-    out_h = (height + 2*pad - pool_h)//stride + 1
-    out_w = (width + 2*pad - pool_w)//stride + 1
+    out_h = (height - pool_h)//stride + 1
+    out_w = (width - pool_w)//stride + 1
 
-    col = im2col(x, pool_h, pool_w, stride, pad)
+    col = im2col(x, pool_h, pool_w, stride)
     col = col.reshape(-1, pool_h*pool_w)
 
     out = np.max(col, axis=1)
-    out = out.reshape(num, out_h, out_w, channel).transpose(0, 3, 1, 2)
+    out = out.reshape((num, out_h, out_w, channel)).transpose(0, 3, 1, 2)
 
     return out
 
 
-def max_pool_grad(x, dout, pool_h, pool_w, stride, pad):
+def max_pool_grad(x, dout, pool_h, pool_w, stride):
     """Grad of max pooling."""
     dout = dout.transpose(0, 2, 3, 1)
     pool_size = pool_h * pool_w
     dmax = np.zeros((dout.size, pool_size))
-    col = im2col(x, pool_h, pool_w, stride, pad)
+    col = im2col(x, pool_h, pool_w, stride)
     col = col.reshape(-1, pool_h*pool_w)
     arg_max = np.argmax(col, axis=1)
     dmax[np.arange(arg_max.size), arg_max.flatten()] = dout.flatten()
     dmax = dmax.reshape(dout.shape + (pool_size,))
     dcol = dmax.reshape(dmax.shape[0]*dmax.shape[1]*dmax.shape[2], -1)
-    dx = col2im(dcol, x.shape, pool_h, pool_w, stride, pad)
+    dx = col2im(dcol, x.shape, pool_h, pool_w, stride)
     return dx
 
 
-def max_pool_grad_with_argmax(x, arg_max, dout, pool_h, pool_w, stride, pad):
+def max_pool_grad_with_argmax(x, dout, arg_max, pool_h, pool_w, stride):
     """Grad of max pooling with argmax."""
     dout = dout.transpose(0, 2, 3, 1)
     pool_size = pool_h * pool_w
@@ -363,22 +361,22 @@ def max_pool_grad_with_argmax(x, arg_max, dout, pool_h, pool_w, stride, pad):
     dmax[np.arange(arg_max.size), arg_max.flatten()] = dout.flatten()
     dmax = dmax.reshape(dout.shape + (pool_size,))
     dcol = dmax.reshape(dmax.shape[0]*dmax.shape[1]*dmax.shape[2], -1)
-    dx = col2im(dcol, x.shape, pool_h, pool_w, stride, pad)
+    dx = col2im(dcol, x.shape, pool_h, pool_w, stride)
     return dx
 
 
-def max_pool_with_argmax(x, pool_h, pool_w, stride, pad):
+def max_pool_with_argmax(x, pool_h, pool_w, stride):
     """Max pooling with argmax."""
     validator.check_integer("stride", stride, 0, Rel.GT)
     num, channel, height, width = x.shape
-    out_h = (height + 2*pad - pool_h)//stride + 1
-    out_w = (width + 2*pad - pool_w)//stride + 1
-    col = im2col(x, pool_h, pool_w, stride, pad)
+    out_h = (height - pool_h)//stride + 1
+    out_w = (width - pool_w)//stride + 1
+    col = im2col(x, pool_h, pool_w, stride)
     col = col.reshape(-1, pool_h*pool_w)
     out = np.max(col, axis=1)
     out_argmax = np.argmax(col, axis=1)
-    out = out.reshape(num, out_h, out_w, channel).transpose(0, 3, 1, 2)
-    out_argmax = out_argmax.reshape(num, out_h, out_w, channel).transpose(0, 3, 1, 2)
+    out = out.reshape((num, out_h, out_w, channel)).transpose(0, 3, 1, 2)
+    out_argmax = out_argmax.reshape((num, out_h, out_w, channel)).transpose(0, 3, 1, 2)
     return out, out_argmax
 
 

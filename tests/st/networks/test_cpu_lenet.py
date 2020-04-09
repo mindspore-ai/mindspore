@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore import Tensor
 
+
 class LeNet(nn.Cell):
     def __init__(self):
         super(LeNet, self).__init__()
@@ -50,7 +51,9 @@ class LeNet(nn.Cell):
         output = self.fc3(output)
         return output
 
+
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
 
 def train(net, data, label):
     learning_rate = 0.01
@@ -67,11 +70,12 @@ def train(net, data, label):
     print("+++++++++++++++++++++++++++")
     assert res
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_lenet():
-    data = Tensor(np.ones([32, 1 ,32, 32]).astype(np.float32) * 0.01)
+    data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))
     net = LeNet()
     train(net, data, label)

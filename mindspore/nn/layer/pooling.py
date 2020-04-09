@@ -13,33 +13,49 @@
 # limitations under the License.
 # ============================================================================
 """pooling"""
-
 from mindspore.ops import operations as P
 from mindspore._checkparam import ParamValidator as validator
 from mindspore._checkparam import Rel
+from ... import context
 from ..cell import Cell
 
 
 class _PoolNd(Cell):
     """N-D  AvgPool"""
 
-    def __init__(self,
-                 kernel_size,
-                 stride,
-                 pad_mode,
-                 padding=0,
-                 pool=None):
+    def __init__(self, kernel_size, stride, pad_mode):
+        name = self.__class__.__name__
         super(_PoolNd, self).__init__()
-        self.kernel_size = kernel_size
-        self.stride = stride
-        self.pad_mode = pad_mode
-        self.padding = validator.check_integer('padding', padding, 0, Rel.GE)
-        self.pool = pool
-        if self.pool is None:
-            raise NotImplementedError
+        validator.check_type('kernel_size', kernel_size, [int, tuple])
+        validator.check_type('stride', stride, [int, tuple])
+        self.pad_mode = validator.check_string('pad_mode', pad_mode.upper(), ['VALID', 'SAME'])
 
-    def construct(self, x):
-        return self.pool(x)
+        if isinstance(kernel_size, int):
+            validator.check_integer("kernel_size", kernel_size, 1, Rel.GE)
+        else:
+            if (len(kernel_size) != 2 or
+                    (not isinstance(kernel_size[0], int)) or
+                    (not isinstance(kernel_size[1], int)) or
+                    kernel_size[0] <= 0 or
+                    kernel_size[1] <= 0):
+                raise ValueError(f'The kernel_size passed to cell {name} should be an positive int number or'
+                                 f'a tuple of two positive int numbers, but got {kernel_size}')
+        self.kernel_size = kernel_size
+
+        if isinstance(stride, int):
+            validator.check_integer("stride", stride, 1, Rel.GE)
+        else:
+            if (len(stride) != 2 or
+                    (not isinstance(stride[0], int)) or
+                    (not isinstance(stride[1], int)) or
+                    stride[0] <= 0 or
+                    stride[1] <= 0):
+                raise ValueError(f'The stride passed to cell {name} should be an positive int number or'
+                                 f'a tuple of two positive int numbers, but got {stride}')
+        self.stride = stride
+
+    def construct(self, *inputs):
+        pass
 
     def extend_repr(self):
         return 'kernel_size={kernel_size}, stride={stride}, pad_mode={pad_mode}'.format(**self.__dict__)
@@ -63,19 +79,23 @@ class MaxPool2d(_PoolNd):
         pad_mode for training only supports "same" and "valid".
 
     Args:
-        kernel_size (int): Size of the window to take a max over. Default 1.
-        stride (int): Stride size of the window. Default: 1.
-        pad_mode (str): Select the mode of the pad. The optional values are
-            "same" and "valid". Default: "valid".
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the max value,
+            is an int number that represents height and width are both kernel_size,
+            or a tuple of two int numbers that represent height and width respectively.
+            Default: 1.
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        pad_mode (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
 
             - same: Adopts the way of completion. Output height and width will be the same as
               the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible. Otherwise, the
-              last extra padding will be done from the bottom and the right side.
+              direction and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output will be return
-              without padding. Extra pixels will be discarded.
-        padding (int): Implicit zero padding to be added on both sides. Default: 0.
+            - valid: Adopts the way of discarding. The possibly largest height and width of output
+              will be return without padding. Extra pixels will be discarded.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -103,31 +123,22 @@ class MaxPool2d(_PoolNd):
           [[7. 8.]
            [8. 8.]]]]
     """
-    def __init__(self,
-                 kernel_size=1,
-                 stride=1,
-                 pad_mode="VALID",
-                 padding=0):
-        max_pool = P.MaxPool(ksize=kernel_size,
-                             strides=stride,
-                             padding=pad_mode)
-        self.is_autodiff_backend = False
-        if self.is_autodiff_backend:
 
-            # At present, pad mode of max pool is not unified, so it is a temporarily avoided
-            pad_mode = validator.check_string('pad_mode', pad_mode.lower(), ['valid', 'same'])
-
-            max_pool = P.MaxPoolWithArgmax(window=kernel_size,
-                                           stride=stride,
-                                           pad_mode=pad_mode,
-                                           pad=padding)
-        super(MaxPool2d, self).__init__(kernel_size, stride, pad_mode, padding, max_pool)
+    def __init__(self, kernel_size=1, stride=1, pad_mode="valid"):
+        super(MaxPool2d, self).__init__(kernel_size, stride, pad_mode)
+        self.max_pool = P.MaxPool(ksize=self.kernel_size,
+                                  strides=self.stride,
+                                  padding=self.pad_mode)
+        self.max_pool_with_arg_max = P.MaxPoolWithArgmax(ksize=self.kernel_size,
+                                                         strides=self.stride,
+                                                         padding=self.pad_mode)
+        self.is_tbe = context.get_context("device_target") == "Ascend"
 
     def construct(self, x):
-        if self.is_autodiff_backend:
-            out = self.pool(x)[0]
+        if self.is_tbe and self.training:
+            out = self.max_pool_with_arg_max(x)[0]
         else:
-            out = self.pool(x)
+            out = self.max_pool(x)
         return out
 
 
@@ -149,19 +160,24 @@ class AvgPool2d(_PoolNd):
         pad_mode for training only supports "same" and "valid".
 
     Args:
-        kernel_size (int): Size of the window to take a max over. Default: 1.
-        stride (int): Stride size of the window. Default: 1.
-        pad_mode (str): Select the mode of the pad. The optional values are
-            "same", "valid". Default: "valid".
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
+            is an int number that represents height and width are both kernel_size,
+            or a tuple of two int numbers that represent height and width respectively.
+            Default: 1.
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        pad_mode (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
 
             - same: Adopts the way of completion. Output height and width will be the same as
               the input. Total number of padding will be calculated for horizontal and vertical
-              direction and evenly distributed to top and bottom, left and right if possible. Otherwise, the
-              last extra padding will be done from the bottom and the right side.
+              direction and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
 
-            - valid: Adopts the way of discarding. The possibly largest height and width of output will be return
-              without padding. Extra pixels will be discarded.
-        padding (int): Implicit zero padding to be added on both sides. Default: 0.
+            - valid: Adopts the way of discarding. The possibly largest height and width of output
+              will be return without padding. Extra pixels will be discarded.
+
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
@@ -170,7 +186,7 @@ class AvgPool2d(_PoolNd):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> pool = AvgPool2d(kernel_size=3, stride=1)
+        >>> pool = AvgPool2d(kernel_size=3, strides=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
         [[[[5. 5. 9. 9.]
             [8. 4. 3. 0.]
@@ -189,12 +205,15 @@ class AvgPool2d(_PoolNd):
           [[4.2222223 4.5555553]
            [3.2222223 4.5555553]]]]
     """
+
     def __init__(self,
                  kernel_size=1,
                  stride=1,
-                 pad_mode="VALID",
-                 padding=0):
-        avg_pool = P.AvgPool(ksize=kernel_size,
-                             strides=stride,
-                             padding=pad_mode)
-        super(AvgPool2d, self).__init__(kernel_size, stride, pad_mode, padding, avg_pool)
+                 pad_mode="valid"):
+        super(AvgPool2d, self).__init__(kernel_size, stride, pad_mode)
+        self.avg_pool = P.AvgPool(ksize=self.kernel_size,
+                                  strides=self.stride,
+                                  padding=self.pad_mode)
+
+    def construct(self, x):
+        return self.avg_pool(x)

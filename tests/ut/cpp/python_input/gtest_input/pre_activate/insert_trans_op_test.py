@@ -17,7 +17,7 @@ from mindspore.ops import Primitive
 
 tuple_getitem = Primitive('tuple_getitem')
 add = P.TensorAdd()
-max_pool = P.MaxPoolWithArgmax(pad_mode="same", window=3, stride=2)
+max_pool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
 make_tuple = Primitive('make_tuple')
 transdata = Primitive("TransData")
 
