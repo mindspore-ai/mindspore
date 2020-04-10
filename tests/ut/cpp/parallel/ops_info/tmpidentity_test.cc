@@ -145,9 +145,9 @@ TEST_F(TestTmpIdentityInfo, test_generate_strategies) {
     identity_ptr->Init(sp);
     std::vector<TensorInfo> inputs_info = identity_ptr->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = identity_ptr->outputs_tensor_info();
-    ASSERT_DOUBLE_EQ(identity_ptr->cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(identity_ptr->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
                      cost.computation_cost_);
-    ASSERT_DOUBLE_EQ(identity_ptr->cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(identity_ptr->operator_cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
                      cost.communication_cost_);
   }
 }

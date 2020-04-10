@@ -119,6 +119,7 @@ Status Edge::GetRedistributionCost(const TensorLayout& prev_op_output_layout, co
   double forward_comm_cost = tensor_redistribution.forward_comm_cost();
   double backward_comm_cost = tensor_redistribution.backward_comm_cost();
   double computation_cost = tensor_redistribution.computation_cost();
+  double mem_cost = tensor_redistribution.memory_cost();
 
   // Now AllGather, ReduceScatter, AlltoAll don't support bool type
   MS_EXCEPTION_IF_NULL(type);
@@ -134,6 +135,7 @@ Status Edge::GetRedistributionCost(const TensorLayout& prev_op_output_layout, co
     COST_MODEL_GAMMA * ((*cost)->communication_cost_ - (*cost)->communication_without_parameter_);
   (*cost)->communication_redis_forward_ = type_length * forward_comm_cost;
   (*cost)->communication_redis_backward_ = type_length * backward_comm_cost;
+  (*cost)->memory_with_reuse_ = mem_cost;
   return Status::SUCCESS;
 }
 
@@ -158,8 +160,8 @@ CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr& output_st_ptr
   (void)std::transform(edges.begin(), edges.end(), all_cost_list.begin(), LocalGetCostList);
 
   CostPtrList selected_cost_list(all_cost_list.size(), nullptr);
-  std::function<void(size_t, double, double, double)> recursive =
-    [&](size_t k, double computation, double communication, double communication_without_para) {
+  std::function<void(size_t, double, double, double, double)> recursive =
+    [&](size_t k, double computation, double memory, double communication, double communication_without_para) {
       if (k == edges.size()) {
         auto decision = std::make_shared<EdgeEliminationDecision>(selected_cost_list);
         CostPtr new_cost = std::make_shared<Cost>(computation, communication);
@@ -167,6 +169,7 @@ CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr& output_st_ptr
         new_cost->communication_without_parameter_ = communication_without_para;
         new_cost->communication_with_partial_para_ =
           communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
+        new_cost->memory_with_reuse_ = memory;
         new_cost->decision_ptr_ = decision;
         result.push_back(new_cost);
         return;
@@ -174,11 +177,12 @@ CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr& output_st_ptr
       for (auto& c : all_cost_list[k]) {
         MS_EXCEPTION_IF_NULL(c);
         selected_cost_list[k] = c;
-        recursive(k + 1, computation + c->computation_cost_, communication + c->communication_cost_,
+        recursive(k + 1, computation + c->computation_cost_, memory + c->memory_with_reuse_,
+                  communication + c->communication_cost_,
                   communication_without_para + c->communication_without_parameter_);
       }
     };
-  recursive(0, 0, 0, 0);
+  recursive(0, 0.0, 0.0, 0.0, 0.0);
   SimplifyForDreasingCommunicationWithPartialPara(&result);
   return result;
 }
@@ -218,6 +222,8 @@ void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtr
         double communication_without_para = left_cost->communication_without_parameter_ +
                                             middle_cost->communication_without_parameter_ +
                                             right_cost->communication_without_parameter_;
+        double memory_cost =
+          left_cost->memory_with_reuse_ + middle_cost->memory_with_reuse_ + right_cost->memory_with_reuse_;
 
         auto decision = std::make_shared<OpEliminationDecision>(op_strategy, left_cost, middle_cost, right_cost);
         auto cost = std::make_shared<Cost>(computation, communication, decision);
@@ -225,6 +231,7 @@ void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtr
         cost->communication_without_parameter_ = communication_without_para;
         cost->communication_with_partial_para_ =
           communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
+        cost->memory_with_reuse_ = memory_cost;
         ret_cost_list->emplace_back(std::move(cost));
       }
     }
@@ -266,6 +273,25 @@ void Edge::OpEliminationSetNewCost(const EdgePtr& e1, const OperatorInfoPtr& op,
   if (!valid) {
     MS_LOG(EXCEPTION) << "Creating edge: " << edge_name_ << " failed.";
   }
+}
+
+Status Edge::CalculateMemoryCost() {
+  if (is_output_parameter_involve_ == -1) {
+    MS_LOG(ERROR) << "is_output_parameter_involve_ is unset.";
+    return FAILED;
+  }
+  if (is_output_parameter_involve_ == 0) {
+    // In this case, it is sure that the tensor redistribution along this edge is NOT parameter-involved, thus it is
+    // unnecessary to keep them in memory.
+    for (auto& cost_kv : cost_map_) {
+      auto& cost_v = cost_kv.second;
+      if (!cost_v.empty()) {
+        cost_v[0]->memory_with_reuse_ = 0;
+      }
+    }
+  }
+
+  return SUCCESS;
 }
 }  // namespace parallel
 }  // namespace mindspore

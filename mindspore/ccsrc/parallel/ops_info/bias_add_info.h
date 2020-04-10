@@ -34,7 +34,7 @@ class BiasAddInfo : public OperatorInfo {
  public:
   BiasAddInfo(const std::string& operator_name, const Shapes& inputs_shape, const Shapes& outputs_shape,
               const PrimitiveAttrs& attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BiasAddCost>()) {}
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BiasAddCost>(false)) {}
   ~BiasAddInfo() override = default;
 
   Status Init(const StrategyPtr& strategy) override;

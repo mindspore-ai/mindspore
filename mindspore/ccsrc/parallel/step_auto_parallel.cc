@@ -874,11 +874,15 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   if (entire_costgraph->ComputeOpsAndEdgesParameterInvolved() == SUCCESS) {
     // Calculate operators' memory usage
     if (entire_costgraph->CalculateOpsMemoryCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Correcting operators' cost for memory reuse failed.";
+      MS_LOG(EXCEPTION) << "Calculating operators' cost for memory cost failed.";
     }
     // Calculate edges' memory usage
     if (entire_costgraph->CalculateEdgesMemoryCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Correcting edges' cost for memory reuse failed.";
+      MS_LOG(EXCEPTION) << "Calculating edges' cost for memory cost failed.";
+    }
+    // Correct memory usage caused by TmpIdentity
+    if (entire_costgraph->CorrectOpsMemoryCost() != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Correcting operators' cost for memory cost failed.";
     }
   } else {
     MS_LOG(EXCEPTION) << "Computing operators' parameter_involved failed.";

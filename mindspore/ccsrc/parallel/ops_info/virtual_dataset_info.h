@@ -32,7 +32,7 @@ class VirtualDatasetInfo : public OperatorInfo {
  public:
   VirtualDatasetInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
                      const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<VirtualDatasetCost>()) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<VirtualDatasetCost>(false)) {}
   ~VirtualDatasetInfo() override = default;
   Status Init(const StrategyPtr& strategy) override;
   Status InitForCostModel(const StrategyPtr& strategy) override;

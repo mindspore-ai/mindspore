@@ -33,7 +33,7 @@ class DropoutDoMaskInfo : public OperatorInfo {
  public:
   DropoutDoMaskInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
                     const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<DropOutCost>()) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<DropOutCost>(true)) {}
   ~DropoutDoMaskInfo() override = default;
 
   Status Init(const StrategyPtr& strategy) override;

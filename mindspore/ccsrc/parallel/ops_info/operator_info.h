@@ -60,7 +60,7 @@ class OperatorInfo {
         outputs_shape_(std::move(outputs_shape)),
         attrs_(std::move(attrs)),
         is_alive_(true),
-        cost_(cost),
+        operator_cost_(cost),
         outputs_type_() {
     std::vector<bool> not_parameteter(inputs_shape_.size(), false);
     is_parameter_ = not_parameteter;
@@ -83,8 +83,8 @@ class OperatorInfo {
   // Given the stage_id (which indicates the number of devices),
   // generate all strategies for this operator
   virtual Status GenerateStrategies(int32_t stage_id) = 0;
-  const OperatorCostPtr& cost() const { return cost_; }
-  void set_cost(const OperatorCostPtr& cost) { cost_ = cost; }
+  const OperatorCostPtr& operator_cost() const { return operator_cost_; }
+  void set_cost(const OperatorCostPtr& cost) { operator_cost_ = cost; }
   virtual Status SetCostUnderStrategy(const StrategyPtr& strategy) = 0;
 
   virtual std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies();
@@ -98,7 +98,7 @@ class OperatorInfo {
   std::vector<std::shared_ptr<StrategyWithCost>> GetStrategyCost() { return strategy_cost_; }
   // When the input of a operator contains WEIGHT or a output from other operators involving WEIGHT, then these input
   // should stay in memory until it is used in the backward phase, which is kept in memory at the end of forward phase.
-  Status CalculateMemoryCost() const { return SUCCESS; }
+  Status CalculateMemoryCost();
   int ComputeOpAndPrevEdgeParameterInvolved();
 
   ForwardOp forward_op() const { return forward_op_; }
@@ -125,7 +125,7 @@ class OperatorInfo {
   void ReplaceSuccEdge(const std::shared_ptr<OperatorInfo>& op, const std::shared_ptr<Edge>& new_edge);
   void ReplacePreEdges(const std::shared_ptr<OperatorInfo>& op, const std::shared_ptr<Edge>& new_edge);
   void ReplaceSuccEdges(const std::shared_ptr<OperatorInfo>& op, const std::shared_ptr<Edge>& new_edge);
-  std::vector<size_t> GetOutputTypeLengths() const { return cost()->outputs_type_lengths(); }
+  std::vector<size_t> GetOutputTypeLengths() const { return operator_cost()->outputs_type_lengths(); }
   void SetSelectedStrategyAndCost(const StrategyPtr& s_strategy, const CostPtr& cost) {
     selected_strategy_ = s_strategy;
     selected_cost_ = cost;
@@ -142,6 +142,10 @@ class OperatorInfo {
   void set_strategy(const StrategyPtr& strategy) { strategy_ = strategy; }
   void set_refkey_parameter_name(std::string p_name) { refkey_parameter_name_ = std::move(p_name); }
   const std::string& refkey_parameter_name() const { return refkey_parameter_name_; }
+  // When the output of a Parameter (require_grad) being used by multiple operators, the Parameter's cost is calculated
+  // multiple times. This method is to correct this, and makes the cost is calulated only once.
+  Status CorrectMemoryCost(size_t input_index);
+  int is_output_parameter_involve() const { return is_output_parameter_involve_; }
   int used_devices() const { return used_devices_; }
   // needed by rec_parser
   void set_type(const std::string& type) { type_ = type; }
@@ -234,7 +238,7 @@ class OperatorInfo {
   int32_t used_devices_ = -1;
 
  private:
-  OperatorCostPtr cost_;
+  OperatorCostPtr operator_cost_;
   std::vector<TypePtr> outputs_type_;
 };
 

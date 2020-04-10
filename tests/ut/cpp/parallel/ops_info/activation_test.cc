@@ -84,9 +84,9 @@ TEST_F(TestActivation, test_activation_strategies) {
     act_ptr_->InitForCostModel(sp);
     std::vector<TensorInfo> inputs_info = act_ptr_->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = act_ptr_->outputs_tensor_info();
-    ASSERT_DOUBLE_EQ(act_ptr_->cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(act_ptr_->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
                      cost.computation_cost_);
-    ASSERT_DOUBLE_EQ(act_ptr_->cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(act_ptr_->operator_cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
                      cost.communication_cost_);
   }
 }
@@ -109,9 +109,9 @@ TEST_F(TestActivation, test_softmax_strategies) {
     soft_ptr_->InitForCostModel(sp);
     std::vector<TensorInfo> inputs_info = soft_ptr_->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = soft_ptr_->outputs_tensor_info();
-    ASSERT_DOUBLE_EQ(soft_ptr_->cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(soft_ptr_->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
                      cost.computation_cost_);
-    ASSERT_DOUBLE_EQ(soft_ptr_->cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(soft_ptr_->operator_cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
                      cost.communication_cost_);
   }
 }

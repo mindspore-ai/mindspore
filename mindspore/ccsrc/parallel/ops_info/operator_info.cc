@@ -1035,11 +1035,12 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr& strategy) {
     return FAILED;
   }
   int32_t stage_id = strategy->GetInputStage();
-  double computation_cost = cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
-  double communication_cost = cost()->GetCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+  double computation_cost =
+    operator_cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+  double communication_cost = operator_cost()->GetCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
   result->communication_without_parameter_ =
-    cost()->GetForwardCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+    operator_cost()->GetForwardCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   result->communication_with_partial_para_ =
     result->communication_without_parameter_ +
     COST_MODEL_GAMMA * (communication_cost - result->communication_without_parameter_);
@@ -1096,7 +1097,38 @@ Status OperatorInfo::set_is_parameter(const std::vector<bool>& is_parameter) {
     return FAILED;
   }
   is_parameter_ = is_parameter;
-  cost()->set_is_parameter(is_parameter);
+  operator_cost()->set_is_parameter(is_parameter);
+  return SUCCESS;
+}
+
+Status OperatorInfo::CalculateMemoryCost() {
+  // First, set the 'is_parameter_involve_' and 'is_output_parameter_involve_' into OperatorCost, which are necessary to
+  // calculate memory cost.
+  if (is_parameter_involve_.size() != is_parameter_.size()) {
+    MS_LOG(ERROR) << "'is_parameter_' does not have the same number of input size of 'is_parameter_involve_'.";
+    return FAILED;
+  }
+  operator_cost()->set_is_parameter_involve(is_parameter_involve_);
+  operator_cost()->set_output_parameter_involve(is_output_parameter_involve_);
+  // Set the memory cost in the 'strategy_cost_'
+  for (auto& swc : strategy_cost_) {
+    auto mem_cost = operator_cost()->GetMemoryCost(swc->inputs_ptr, swc->outputs_ptr);
+    swc->cost_list[0]->memory_with_reuse_ = mem_cost;
+  }
+  return SUCCESS;
+}
+
+Status OperatorInfo::CorrectMemoryCost(size_t input_index) {
+  for (auto& swc : strategy_cost_) {
+    double parameter_mem_cost = ListProduct(swc->inputs_ptr[input_index].slice_shape()) *
+                                static_cast<double>(operator_cost()->inputs_type_lengths()[input_index]);
+    swc->cost_list[0]->memory_with_reuse_ -= parameter_mem_cost;
+    if (swc->cost_list[0]->memory_with_reuse_ < 0) {
+      MS_LOG(ERROR) << "The memory cost after correction is: " << swc->cost_list[0]->memory_with_reuse_
+                    << ", the parameter memory cost is: " << parameter_mem_cost;
+      return FAILED;
+    }
+  }
   return SUCCESS;
 }
 
@@ -1193,7 +1225,7 @@ Status OperatorInfo::SetInputAndOutputTypeLength(const std::vector<size_t>& inpu
   }
   inputs_type_lengths_ = input_lengths;
   outputs_type_lengths_ = output_lengths;
-  cost()->SetInputAndOutputTypeLength(input_lengths, output_lengths);
+  operator_cost()->SetInputAndOutputTypeLength(input_lengths, output_lengths);
   return SUCCESS;
 }
 
@@ -1221,7 +1253,7 @@ void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr& stra
 }
 
 double OperatorInfo::GetForwardMemoryCostFromCNode() {
-  return cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, 0);
+  return operator_cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, 0);
 }
 
 }  // namespace parallel

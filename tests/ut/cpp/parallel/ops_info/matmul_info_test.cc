@@ -569,7 +569,7 @@ TEST_F(TestMatmulInfo, test_GenerateStrategies1) {
     matmul1->InitForCostModel(sp);
     std::vector<TensorInfo> inputs_info = matmul1->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = matmul1->outputs_tensor_info();
-    ASSERT_DOUBLE_EQ(matmul1->cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(matmul1->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
                      cost.computation_cost_);
     break;
   }
@@ -599,7 +599,7 @@ TEST_F(TestMatmulInfo, test_GenerateStrategies2) {
     TensorInfo replica_input1_info(tly, input1_shape, input1_slice_shape);
     replica_inputs_info.push_back(replica_input1_info);
 
-    ASSERT_DOUBLE_EQ(matmul3->cost()->GetComputationCost(replica_inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(matmul3->operator_cost()->GetComputationCost(replica_inputs_info, outputs_info, sp->GetInputStage()),
                      cost.computation_cost_);
     break;
   }
