@@ -1034,12 +1034,11 @@ Status OperatorInfo::SetCostUnderStrategyBase(const StrategyPtr& strategy) {
     return FAILED;
   }
   int32_t stage_id = strategy->GetInputStage();
-  double computation_cost =
-    GetOperatorCost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
-  double communication_cost = GetOperatorCost()->GetCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+  double computation_cost = cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+  double communication_cost = cost()->GetCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
   result->communication_without_parameter_ =
-    GetOperatorCost()->GetForwardCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+    cost()->GetForwardCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
   result->communication_with_partial_para_ =
     result->communication_without_parameter_ +
     COST_MODEL_GAMMA * (communication_cost - result->communication_without_parameter_);
@@ -1096,7 +1095,7 @@ Status OperatorInfo::set_is_parameter(const std::vector<bool>& is_parameter) {
     return FAILED;
   }
   is_parameter_ = is_parameter;
-  GetOperatorCost()->set_is_parameter(is_parameter);
+  cost()->set_is_parameter(is_parameter);
   return SUCCESS;
 }
 
@@ -1193,7 +1192,7 @@ Status OperatorInfo::SetInputAndOutputTypeLength(const std::vector<size_t>& inpu
   }
   inputs_type_lengths_ = input_lengths;
   outputs_type_lengths_ = output_lengths;
-  GetOperatorCost()->SetInputAndOutputTypeLength(input_lengths, output_lengths);
+  cost()->SetInputAndOutputTypeLength(input_lengths, output_lengths);
   return SUCCESS;
 }
 
@@ -1211,7 +1210,7 @@ void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr& stra
 }
 
 double OperatorInfo::GetForwardMemoryCostFromCNode() {
-  return GetOperatorCost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, 0);
+  return cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, 0);
 }
 
 }  // namespace parallel

@@ -33,16 +33,13 @@ class OneHotInfo : public OperatorInfo {
  public:
   OneHotInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
              const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs) {
-    onehot_cost_ptr_ = std::make_shared<OneHotCost>();
-  }
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<OneHotCost>()) {}
   ~OneHotInfo() override = default;
   Status Init(const StrategyPtr& strategy) override;
   Status InitForCostModel(const StrategyPtr& strategy) override;
 
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return onehot_cost_ptr_; }
   ReplaceGraphPtr replace_graph(const CNodePtr& cnode) override;
   std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
 
@@ -60,7 +57,6 @@ class OneHotInfo : public OperatorInfo {
   Status ComputeReplaceGraph(const CNodePtr& cnode);
 
   int axis_ = -1;
-  OneHotCostPtr onehot_cost_ptr_;
   int32_t rank_ = 0;
   int32_t total_class_number_ = 1;
   int32_t classes_each_device_ = 1;

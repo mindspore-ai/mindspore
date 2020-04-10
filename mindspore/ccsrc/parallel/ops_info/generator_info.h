@@ -32,15 +32,12 @@ class GeneratorBase : public OperatorInfo {
  public:
   GeneratorBase(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                 const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs) {
-    generatorbasecost_ptr_ = std::make_shared<GeneratorBaseCost>();
-  }
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<GeneratorBaseCost>()) {}
 
   ~GeneratorBase() override = default;
 
   Status Init(const StrategyPtr &strategy) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return generatorbasecost_ptr_; }
   Status InitForCostModel(const StrategyPtr &strategy) override;
 
  protected:
@@ -52,7 +49,6 @@ class GeneratorBase : public OperatorInfo {
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
   virtual Status InferReplaceOps(const StrategyPtr &strategy) = 0;
-  GeneratorBaseCostPtr generatorbasecost_ptr_;
 };
 
 class DropoutGenMaskInfo : public GeneratorBase {

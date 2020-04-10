@@ -514,60 +514,6 @@ double ArithmeticCost::GetBackwardCommCost(const std::vector<TensorInfo>& inputs
   return result;
 }
 
-double L2NormalizeCost::GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                            const int32_t& stage_id) const {
-  double result = 0.0;
-  if (is_parameter_[0]) {
-    TensorInfo input_tensor_info = inputs[0];
-    CheckGlobalDeviceManager();
-    MS_EXCEPTION_IF_NULL(g_device_manager);
-    auto total_device_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
-
-    Shape input_shape = input_tensor_info.shape();
-    Shape input_slice_shape = input_tensor_info.slice_shape();
-    int32_t used_device_num = 1;
-    for (size_t i = 0; i < input_shape.size(); ++i) {
-      used_device_num *= input_shape[i] / input_slice_shape[i];
-    }
-
-    if (total_device_num != IntToSize(used_device_num))
-      result += ListProduct(input_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
-  }
-
-  return result;
-}
-
-double L2NormalizeCost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
-                                                  const int32_t&) const {
-  TensorInfo input0_info = inputs[0];
-  Shape input0_slice_shape = input0_info.slice_shape();
-  return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
-}
-
-double L2NormalizeCost::GetBackwardComputationCost(const std::vector<TensorInfo>& inputs,
-                                                   const std::vector<TensorInfo>&, const int32_t& stage_id) const {
-  double result = 0.0;
-
-  if (is_parameter_[0]) {
-    TensorInfo input_tensor_info = inputs[0];
-    CheckGlobalDeviceManager();
-    MS_EXCEPTION_IF_NULL(g_device_manager);
-    auto total_device_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
-
-    Shape input_shape = input_tensor_info.shape();
-    Shape input_slice_shape = input_tensor_info.slice_shape();
-    int32_t used_device_num = 1;
-    for (size_t i = 0; i < input_shape.size(); ++i) {
-      used_device_num *= input_shape[i] / input_slice_shape[i];
-    }
-
-    if (total_device_num != IntToSize(used_device_num))
-      result += ListProduct(input_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
-  }
-
-  return result;
-}
-
 bool IsDataParallel(const Shape& shape, const Shape& slice_shape, const int32_t& stage_id) {
   CheckGlobalDeviceManager();
   MS_EXCEPTION_IF_NULL(g_device_manager);

@@ -593,11 +593,11 @@ Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr& 
   // Here, we use the origin outputs_, because we only use the slice size of the output tensor.
   // It does not matter whether the output tensor is transposed or not.
   double computation_cost =
-    matmulcost_ptr->GetForwardComputationCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
-  double communication_cost = matmulcost_ptr->GetCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
+    cost()->GetForwardComputationCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
+  double communication_cost = cost()->GetCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
   std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
   result->communication_without_parameter_ =
-    matmulcost_ptr->GetForwardCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
+    cost()->GetForwardCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
   result->communication_with_partial_para_ =
     result->communication_without_parameter_ +
     COST_MODEL_GAMMA * (communication_cost - result->communication_without_parameter_);

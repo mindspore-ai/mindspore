@@ -109,8 +109,12 @@ Status ReduceMethod::GetAttrs() {
     }
     cross_batch_ = cross_batch_iter->second->cast<BoolImmPtr>()->value();
   }
-  reducemethodcost_ptr_->set_cross_batch(cross_batch_);
-
+  auto reducemethodcost = std::dynamic_pointer_cast<ReduceMethodCost>(cost());
+  if (reducemethodcost == nullptr) {
+    MS_LOG(ERROR) << "Cost cast to ReduceMethodCostPtr failed!";
+    return FAILED;
+  }
+  reducemethodcost->set_cross_batch(cross_batch_);
   return SUCCESS;
 }
 

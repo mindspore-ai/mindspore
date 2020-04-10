@@ -34,9 +34,7 @@ class MatMulBase : public OperatorInfo {
  public:
   MatMulBase(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
              const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs) {
-    matmulcost_ptr = std::make_shared<MatMulCost>();
-  }
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<MatMulCost>()) {}
   ~MatMulBase() override = default;
 
   Status Init(const StrategyPtr& strategy) override;
@@ -48,7 +46,6 @@ class MatMulBase : public OperatorInfo {
   Status PrepareStrategy(int32_t stage_id, size_t dev_num, Dimensions combined_partitions, size_t input0_shape_size,
                          size_t input1_shape_size, StrategyPtr* sp);
 
-  OperatorCostPtr GetOperatorCost() const override { return matmulcost_ptr; }
   Status SwapLastTwoElements(Shape* shape);
 
  protected:
@@ -66,8 +63,6 @@ class MatMulBase : public OperatorInfo {
   bool transpose_b_ = false;
   size_t mat_a_dimension_ = 0;
   size_t mat_b_dimension_ = 0;
-
-  MatMulCostPtr matmulcost_ptr;
 };
 
 class MatMul : public MatMulBase {

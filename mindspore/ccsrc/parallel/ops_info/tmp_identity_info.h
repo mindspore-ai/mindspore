@@ -34,9 +34,7 @@ class TmpIdentityInfo : public OperatorInfo {
  public:
   TmpIdentityInfo(const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs,
                   const std::string& name = IDENTITY_INFO)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs) {
-    id_cost_ptr_ = std::make_shared<TmpIdentityCost>();
-  }
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<TmpIdentityCost>()) {}
   ~TmpIdentityInfo() override = default;
 
   Status Init(const StrategyPtr& strategy) override;
@@ -44,7 +42,6 @@ class TmpIdentityInfo : public OperatorInfo {
 
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return id_cost_ptr_; }
 
  protected:
   Status CheckStrategy(const StrategyPtr& strategy) override;
@@ -54,9 +51,6 @@ class TmpIdentityInfo : public OperatorInfo {
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-
- private:
-  TmpIdentityCostPtr id_cost_ptr_;
 };
 }  // namespace parallel
 }  // namespace mindspore
