@@ -14,7 +14,7 @@
 
 """validation check functions"""
 from functools import wraps, reduce
-from akg.utils.format_transform import get_shape
+from _akg.utils.format_transform import get_shape
 
 MAX_DATA_SIZE = 2 ** 31
 

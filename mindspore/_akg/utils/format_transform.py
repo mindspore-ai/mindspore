@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """format transform function"""
-import akg
+import _akg
 
 def refine_reduce_axis(input, axis):
     """make reduce axis legal."""
@@ -43,11 +43,11 @@ def refine_reduce_axis(input, axis):
 
 
 def get_shape_from_tensor(data):
-    """translate akg.tvm.shape to list type in python."""
+    """translate _akg.tvm.shape to list type in python."""
     tvm_shape = data.shape
     py_shape = []
     for i in tvm_shape:
-        if isinstance(i, akg.tvm.expr.Var):
+        if isinstance(i, _akg.tvm.expr.Var):
             py_shape.append(i)
         else:
             py_shape.append(i.value)
@@ -55,10 +55,10 @@ def get_shape_from_tensor(data):
 
 
 def tvm_shape_to_list(tvm_shape):
-    """translate akg.tvm.shape to list type in python."""
+    """translate _akg.tvm.shape to list type in python."""
     py_shape = []
     for i in tvm_shape:
-        if isinstance(i, akg.tvm.expr.Var):
+        if isinstance(i, _akg.tvm.expr.Var):
             py_shape.append(i)
         else:
             py_shape.append(i.value)
@@ -67,9 +67,9 @@ def tvm_shape_to_list(tvm_shape):
 
 def get_shape(data):
     """get shape and save it as list."""
-    if isinstance(data, akg.tvm.tensor.Tensor):
+    if isinstance(data, _akg.tvm.tensor.Tensor):
         shape = get_shape_from_tensor(data)
-    elif isinstance(data, akg.tvm.container.Array):
+    elif isinstance(data, _akg.tvm.container.Array):
         shape = tvm_shape_to_list(data)
     elif isinstance(data, int):
         shape = [data]

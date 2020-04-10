@@ -13,14 +13,14 @@
 # limitations under the License.
 
 """operator dsl function: mean"""
-import akg.topi
-import akg.tvm
-from akg.utils import format_transform as ft_util
-from akg.utils import validation_check as vc_util
-from akg.ops.math import sum
+import _akg.topi
+import _akg.tvm
+from _akg.utils import format_transform as ft_util
+from _akg.utils import validation_check as vc_util
+from _akg.ops.math import sum
 
 
-@vc_util.check_input_type(akg.tvm.tensor.Tensor, (list, tuple, int, type(None)), (bool, type(None)))
+@vc_util.check_input_type(_akg.tvm.tensor.Tensor, (list, tuple, int, type(None)), (bool, type(None)))
 def mean(data, axis=None, keepdims=False):
     """
     Computes the mean of the values of a Tensor over the whole dataset.
@@ -42,6 +42,6 @@ def mean(data, axis=None, keepdims=False):
     for i in axis:
         count *= shape[i]
     output, _ = sum.sum_value(data, axis, keepdims)
-    res = akg.topi.divide(output, count)
+    res = _akg.topi.divide(output, count)
 
     return res

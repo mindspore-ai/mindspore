@@ -13,11 +13,11 @@
 # limitations under the License.
 
 """operator dsl function: mul"""
-import akg.topi
-from akg.utils import validation_check as vc_util
+import _akg.topi
+from _akg.utils import validation_check as vc_util
 
 
-@vc_util.check_input_type(akg.tvm.tensor.Tensor, akg.tvm.tensor.Tensor)
+@vc_util.check_input_type(_akg.tvm.tensor.Tensor, _akg.tvm.tensor.Tensor)
 def mul(l_input, r_input):
     """
     Calculate x * y element-wise.
@@ -38,6 +38,6 @@ def mul(l_input, r_input):
     vc_util.check_shape(shape2)
     vc_util.auto_broadcast_check(shape1, shape2)
     vc_util.elemwise_dtype_check(l_input.dtype, r_input.dtype)
-    output = akg.topi.multiply(l_input, r_input)
+    output = _akg.topi.multiply(l_input, r_input)
 
     return output

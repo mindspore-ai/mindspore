@@ -12,25 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""operator dsl function: cast"""
-import akg.tvm
-import akg.topi
-from akg.utils import validation_check as vc_util
+"""mul"""
+import _akg.topi as topi
+import _akg.tvm as tvm
+from _akg.ops.math import mul
+
+def Mul(x, y):
+    """mul."""
+    return mul.mul(x, y)
 
 
-@vc_util.check_input_type(akg.tvm.tensor.Tensor, str)
-def cast(data, dst_type):
+def gpu_schedule_Mul(outs):
     """
-    cast data to target type.
+    gpu schedule for mul.
 
     Args:
-        data (tvm.tensor.Tensor): Tensor to be casted.
-        dst_type (str): target cast type.
+        outs (tvm.tensor.Tensor): outputs of compute.
 
     Returns:
-        tvm.tensor.Tensor, type is dst_type.
+        sch (schedule.Schedule): The created schedule.
     """
-    vc_util.check_shape(data.shape)
-    out = akg.topi.cast(data, dst_type)
-
-    return out
+    device = 'cuda'
+    ctx = tvm.context(device, 0)
+    if not ctx.exist:
+        raise SystemError("Skip because %s is not enabled" % device)
+    with tvm.target.create(device):
+        sch = topi.cuda.schedule_broadcast(outs)
+    return sch
