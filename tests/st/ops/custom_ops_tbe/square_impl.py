@@ -18,10 +18,11 @@ from topi import generic
 import te.lang.cce
 from topi.cce import util
 from te.platform.fusion_manager import fusion_manager
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 # shape size limit for aicore is 2**31
 SHAPE_SIZE_LIMIT = 200000000
+
 
 @fusion_manager.register("square")
 def square_compute(input_x, output_y, kernel_name="square"):
@@ -46,49 +47,21 @@ def square_compute(input_x, output_y, kernel_name="square"):
     res = te.lang.cce.vmul(input_x, input_x)
     return res
 
-@op_info_register("""{
-    "op_name": "CusSquare",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "square.so",
-    "compute_cost": 10,
-    "kernel_name": "CusSquare",
-    "partial_flag": true,
-    "attr": [
-        
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float32"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float32"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+
+cus_conv2D_op_info = TBERegOp("CusSquare") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("square.so") \
+    .compute_cost(10) \
+    .kernel_name("CusSquare") \
+    .partial_flag(True) \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
+
+
+@op_info_register(cus_conv2D_op_info)
 def CusSquare(input_x, output_y, kernel_name="square"):
     """
     algorithm: square
