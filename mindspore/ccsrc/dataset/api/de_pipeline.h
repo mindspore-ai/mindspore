@@ -145,6 +145,9 @@ class DEPipeline {
 
   Status ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
+  Status GetMindrecordSampler(const std::string &sampler_name, const py::dict &args,
+                              std::shared_ptr<mindrecord::ShardOperator> *ptr);
+
  private:
   // Execution tree that links the dataset operators.
   std::shared_ptr<ExecutionTree> tree_;

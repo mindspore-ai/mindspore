@@ -391,6 +391,30 @@ Status DEPipeline::CheckMindRecordPartitionInfo(const py::dict &args, std::vecto
   return Status::OK();
 }
 
+Status DEPipeline::GetMindrecordSampler(const std::string &sampler_name, const py::dict &args,
+                                        std::shared_ptr<mindrecord::ShardOperator> *ptr) {
+  std::vector<int> indices;
+  for (auto &arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "indices") {
+        indices = ToIntVector(value);
+      } else {
+        std::string err_msg = "ERROR: parameter " + key + " is invalid.";
+        RETURN_STATUS_UNEXPECTED(err_msg);
+      }
+    }
+  }
+  if (sampler_name == "SubsetRandomSampler") {
+    *ptr = std::make_shared<mindrecord::ShardSample>(indices);
+  } else {
+    std::string err_msg = "ERROR: parameter sampler_name is invalid.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  return Status::OK();
+}
+
 Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   if (args["dataset_file"].is_none()) {
     std::string err_msg = "Error: at least one of dataset_files is missing";
@@ -422,6 +446,13 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
       } else if (key == "global_shuffle" && ToBool(value) == true) {
         uint32_t seed = args["partitions"].is_none() ? GetSeed() : 0;
         operators.push_back(std::make_shared<mindrecord::ShardShuffle>(seed));
+      } else if (key == "sampler_name") {
+        std::shared_ptr<mindrecord::ShardOperator> sample_op;
+        auto ret = GetMindrecordSampler(ToString(value), args["sampler_params"], &sample_op);
+        if (Status::OK() != ret) {
+          return ret;
+        }
+        operators.push_back(sample_op);
       }
     }
   }
