@@ -59,7 +59,7 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      LogSoftmax,
                      MaxPool,
                      AvgPool, Conv2DBackpropInput,
-                     MaxPoolWithArgmax, OneHot, Pad, PReLU, ReLU, ReLU6,
+                     MaxPoolWithArgmax, OneHot, Pad, PReLU, ReLU, ReLU6, HSwish, HSigmoid,
                      ResizeBilinear, Sigmoid,
                      SigmoidCrossEntropyWithLogits,
                      SmoothL1Loss, Softmax,
@@ -68,7 +68,8 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl,
                      ApplyRMSProp, ApplyCenteredRMSProp)
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey
-
+from . import _quant_ops
+from ._quant_ops import *
 
 __all__ = [
     'TensorAdd',
@@ -138,6 +139,8 @@ __all__ = [
     'ReLU6',
     'Elu',
     'Sigmoid',
+    'HSwish',
+    'HSigmoid',
     'Tanh',
     'RandomChoiceWithMask',
     'ResizeBilinear',
@@ -241,4 +244,5 @@ __all__ = [
     "ApplyCenteredRMSProp"
 ]
 
+__all__.extend(_quant_ops.__all__)
 __all__.sort()

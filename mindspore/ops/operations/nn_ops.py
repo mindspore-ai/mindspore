@@ -207,7 +207,7 @@ class ReLU6(PrimitiveWithInfer):
 
 
 class Elu(PrimitiveWithInfer):
-    """
+    r"""
     Computes exponential linear: `alpha * (exp(x) - 1)` if x < 0, `x` otherwise.
     The data type of input tensor should be float.
 
@@ -242,6 +242,40 @@ class Elu(PrimitiveWithInfer):
         return input_x
 
 
+class HSwish(PrimitiveWithInfer):
+    r"""
+    Hard swish activation function.
+
+    Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
+
+    Hard swish is defined as:
+
+    .. math::
+        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
+
+    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+
+    Inputs:
+        - **input_data** (Tensor) - The input of Hswish.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_data`.
+
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, xshape):
+        return xshape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("x_dtype", x_dtype, mstype.tensor)
+        validator.check_typename("x_dtype", x_dtype, (mstype.float16, mstype.float32))
+        return x_dtype
+
+
+
 class Sigmoid(PrimitiveWithInfer):
     r"""
     Sigmoid activation function.
@@ -258,6 +292,7 @@ class Sigmoid(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
+
     """
 
     @prim_attr_register
@@ -271,6 +306,40 @@ class Sigmoid(PrimitiveWithInfer):
         validator.check_subclass("input_x", input_x, mstype.tensor)
         validator.check_typename("input_x", input_x, (mstype.float16, mstype.float32))
         return input_x
+
+
+class HSigmoid(PrimitiveWithInfer):
+    r"""
+    Hard sigmoid activation function.
+
+    Applies hard sigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    Hard sigmoid is defined as:
+
+    .. math::
+        \text{hsigmoid}(x_{i}) = max(0, min(1, \ftac{2 * x_{i} + 5}{10})),
+
+    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+
+    Inputs:
+        - **input_data** (Tensor) - The input of HSigmoid.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_data`.
+
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("x_dtype", x_dtype, mstype.tensor)
+        validator.check_typename("x_dtype", x_dtype, (mstype.float16, mstype.float32))
+        return x_dtype
 
 
 class Tanh(PrimitiveWithInfer):
