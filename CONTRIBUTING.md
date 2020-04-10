@@ -105,11 +105,11 @@ When reporting issues, refer to this format:
 * If it is a new feature that needs lots of design details, a design proposal should also be submitted.
 * After reaching consensus in the issue discussions and design proposal reviews, complete the development on the forked repo and submit a PR.
 * None of PRs is not permitted until it receives **2+ LGTM** from approvers. Please NOTICE that approver is NOT allowed to add *LGTM* on his own PR.
-* After PR is sufficiently discussed, it will get merged, abondoned or rejected depending on the outcome of the discussion.
+* After PR is sufficiently discussed, it will get merged, abandoned or rejected depending on the outcome of the discussion.
 
 **PRs advisory:**
 
 - Any irrelevant changes should be avoided.
 - Make sure your commit history being ordered.
 - Always keep your branch up with the master branch.
-- For bug-fix PRs, make sure all related issues being linked. 
+- For bug-fix PRs, make sure all related issues being linked.
