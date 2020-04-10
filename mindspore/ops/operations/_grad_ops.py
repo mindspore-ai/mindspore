@@ -119,8 +119,8 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
         pad (int): The pad value to fill. Default: 0.
         mode (int): 0 Math convolutiuon, 1 cross-correlation convolution ,
                     2 deconvolution, 3 depthwise convolution. Default: 1.
-        stride (int): The stride to apply conv filter. Default: 1.
-        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        stride (tuple): The stride to apply conv filter. Default: (1, 1).
+        dilation (tuple): Specifies the dilation rate to use for dilated convolution. Default: (1, 1, 1, 1).
         group (int): Splits input into groups. Default: 1.
 
     Returns:
@@ -135,8 +135,8 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
                  pad=0,
                  pad_list=(0, 0, 0, 0),
                  mode=1,
-                 stride=1,
-                 dilation=1,
+                 stride=(1, 1),
+                 dilation=(1, 1, 1, 1),
                  group=1):
         """init Convolution"""
         self.init_prim_io_names(inputs=['out_backprop', 'input', 'filter_sizes'], outputs=['output'])
@@ -146,7 +146,9 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
         pad_mode = pad_mode.upper()
         self.add_prim_attr('pad_mode', pad_mode)
         self.pad = pad
-        self.stride = stride
+        if isinstance(stride, tuple) and len(stride) == 4:
+            self.stride = (stride[2], stride[3])
+            self.add_prim_attr('stride', self.stride)
         self.dilation = dilation
         self.group = group
         self.add_prim_attr('data_format', "NCHW")

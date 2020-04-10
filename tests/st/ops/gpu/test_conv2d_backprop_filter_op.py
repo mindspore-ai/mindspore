@@ -35,8 +35,8 @@ class Conv2dFilter(nn.Cell):
                                                   pad_mode="valid",
                                                   pad=0,
                                                   mode=1,
-                                                  stride=1,
-                                                  dilation=1,
+                                                  stride=(1, 1),
+                                                  dilation=(1, 1, 1, 1),
                                                   group=1)
 
         self.get_shape = P.Shape()

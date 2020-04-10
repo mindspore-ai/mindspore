@@ -35,8 +35,8 @@ class Net4(nn.Cell):
                                            pad_mode="valid",
                                            pad=0,
                                            mode=1,
-                                           stride=1,
-                                           dilation=1,
+                                           stride=(1, 1),
+                                           dilation=(1, 1, 1, 1),
                                            group=1)
         self.w = Parameter(initializer(Tensor(np.array([[[[1, 0, -1], [1, 0, -1], [1, 0, -1]]]]).astype(np.float32)), [1, 1, 3, 3]), name='w')
         self.x = Parameter(initializer(Tensor(np.array([[[

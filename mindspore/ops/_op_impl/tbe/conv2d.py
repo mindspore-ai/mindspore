@@ -34,7 +34,7 @@ from mindspore.ops.op_info_register import op_info_register
             "value": "all"
         },
         {
-            "name": "pad",
+            "name": "pad_list",
             "param_type": "required",
             "type": "listInt",
             "value": "all"

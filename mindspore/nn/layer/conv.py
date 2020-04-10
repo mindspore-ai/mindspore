@@ -17,7 +17,7 @@ from mindspore import log as logger
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
-from mindspore._checkparam import check_bool, twice, check_int_positive, check_int_non_negative, check_int
+from mindspore._checkparam import check_bool, twice, check_int_positive, check_int_non_negative
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
@@ -42,17 +42,23 @@ class _Conv(Cell):
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
         self.kernel_size = kernel_size
-        self.stride = check_int_positive(stride)
+        self.stride = stride
         self.pad_mode = pad_mode
         self.padding = check_int_non_negative(padding)
-        self.dilation = check_int(dilation)
+        self.dilation = dilation
         self.group = check_int_positive(group)
         self.has_bias = has_bias
-        if (not isinstance(kernel_size, tuple)) or len(kernel_size) != 2 or \
-            (not isinstance(kernel_size[0], int)) or (not isinstance(kernel_size[1], int)) or \
-                kernel_size[0] < 1 or kernel_size[1] < 1:
+        if (not isinstance(kernel_size[0], int)) or (not isinstance(kernel_size[1], int)) or \
+            kernel_size[0] < 1 or kernel_size[1] < 1:
             raise ValueError("Attr 'kernel_size' of 'Conv2D' Op passed "
                              + str(self.kernel_size) + ", should be a int or tuple and equal to or greater than 1.")
+        if (not isinstance(stride[0], int)) or (not isinstance(stride[1], int)) or stride[0] < 1 or stride[1] < 1:
+            raise ValueError("Attr 'stride' of 'Conv2D' Op passed "
+                             + str(self.stride) + ", should be a int or tuple and equal to or greater than 1.")
+        if (not isinstance(dilation[0], int)) or (not isinstance(dilation[1], int)) or \
+            dilation[0] < 1 or dilation[1] < 1:
+            raise ValueError("Attr 'dilation' of 'Conv2D' Op passed "
+                             + str(self.dilation) + ", should equal to or greater than 1.")
         if in_channels % group != 0:
             raise ValueError("Attr 'in_channels' of 'Conv2D' Op must be divisible by "
                              "attr 'group' of 'Conv2D' Op.")
@@ -107,12 +113,13 @@ class Conv2d(_Conv):
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
         out_channels (int): The number of output channel :math:`C_{out}`.
-        kernel_size (Union[int, tuple]): The data type is int or tuple with 2 integers. Specifies the height
+        kernel_size (Union[int, tuple[int]]): The data type is int or tuple with 2 integers. Specifies the height
             and width of the 2D convolution window. Single int means the value if for both height and width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
-        stride (int): Specifies stride for all spatial dimensions with the same value. Value of stride should be
-            greater or equal to 1 but bounded by the height and width of the input. Default: 1.
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are
             "same", "valid", "pad". Default: "same".
 
@@ -130,9 +137,11 @@ class Conv2d(_Conv):
               Tensor borders. `padding` should be greater than or equal to 0.
 
         padding (int): Implicit paddings on both sides of the input. Default: 0.
-        dilation (int): Specifying the dilation rate to use for dilated convolution. If set to be :math:`k > 1`,
-            there will be :math:`k - 1` pixels skipped for each sampling location. Its value should be greater
-            or equal to 1 and bounded by the height and width of the input. Default: 1.
+        dilation (Union[int, tuple[int]]): The data type is int or tuple with 2 integers. Specifies the dilation rate
+                                      to use for dilated convolution. If set to be :math:`k > 1`, there will
+                                      be :math:`k - 1` pixels skipped for each sampling location. Its value should
+                                      be greater or equal to 1 and bounded by the height and width of the
+                                      input. Default: 1.
         group (int): Split filter into groups, `in_ channels` and `out_channels` should be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -172,6 +181,8 @@ class Conv2d(_Conv):
                  weight_init='normal',
                  bias_init='zeros'):
         kernel_size = twice(kernel_size)
+        stride = twice(stride)
+        dilation = twice(dilation)
         super(Conv2d, self).__init__(
             in_channels,
             out_channels,
@@ -241,7 +252,9 @@ class Conv2dTranspose(_Conv):
             and width of the 2D convolution window. Single int means the value is for both height and width of
             the kernel. A tuple of 2 ints means the first value is for the height and the other is for the
             width of the kernel.
-        stride (int): Specifies the same value for all spatial dimensions. Default: 1.
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
         pad_mode (str): Select the mode of the pad. The optional values are
             "pad", "same", "valid". Default: "same".
 
@@ -251,8 +264,11 @@ class Conv2dTranspose(_Conv):
 
             - valid: Adopted the way of discarding.
         padding (int): Implicit paddings on both sides of the input. Default: 0.
-        dilation (int): Specifies the dilation rate to use for dilated
-            convolution. Default: 1.
+        dilation (Union[int, tuple[int]]): The data type is int or tuple with 2 integers. Specifies the dilation rate
+                                      to use for dilated convolution. If set to be :math:`k > 1`, there will
+                                      be :math:`k - 1` pixels skipped for each sampling location. Its value should
+                                      be greater or equal to 1 and bounded by the height and width of the
+                                      input. Default: 1.
         group (int): Split filter into groups, `in_channels` and `out_channels` should be
             divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
@@ -290,6 +306,8 @@ class Conv2dTranspose(_Conv):
                  weight_init='normal',
                  bias_init='zeros'):
         kernel_size = twice(kernel_size)
+        stride = twice(stride)
+        dilation = twice(dilation)
         # out_channels and in_channels swap.
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel,
         # then Conv2dTranspose's out_channel refers to Conv2DBackpropInput's in_channel.
@@ -333,26 +351,26 @@ class Conv2dTranspose(_Conv):
         self.conv2d_transpose.set_strategy(strategy)
         return self
 
-    def _deconv_output_length(self, input_length, filter_size):
+    def _deconv_output_length(self, input_length, filter_size, stride_size, dilation_size):
         """Calculate the width and height of output."""
         length = 0
         if self.is_valid:
-            if filter_size - self.stride > 0:
-                length = input_length * self.stride + filter_size - self.stride
+            if filter_size - stride_size > 0:
+                length = input_length * stride_size + filter_size - stride_size
             else:
-                length = input_length * self.stride
+                length = input_length * stride_size
         elif self.is_same:
-            length = input_length * self.stride
+            length = input_length * stride_size
         elif self.is_pad:
-            length = input_length * self.stride - 2 * self.padding + filter_size + \
-                     (filter_size - 1) * (self.dilation - 1) - self.stride
+            length = input_length * stride_size - 2 * self.padding + filter_size + \
+                     (filter_size - 1) * (dilation_size - 1) - stride_size
 
         return length
 
     def construct(self, x):
         n, _, h, w = self.shape(x)
-        h_out = self._deconv_output_length(h, self.kernel_size[0])
-        w_out = self._deconv_output_length(w, self.kernel_size[1])
+        h_out = self._deconv_output_length(h, self.kernel_size[0], self.stride[0], self.dilation[0])
+        w_out = self._deconv_output_length(w, self.kernel_size[1], self.stride[1], self.dilation[1])
         if self.has_bias:
             return self.bias_add(self.conv2d_transpose(x, self.weight, (n, self.out_channels, h_out, w_out)),
                                  self.bias)

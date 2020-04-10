@@ -35,8 +35,22 @@ void Conv2dCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
 
   int kernel_size = SizeToInt(weight_shape[3]);
-  int stride = AnfAlgo::GetNodeAttr<int>(kernel_node, STRIDE);
-  int dilation = AnfAlgo::GetNodeAttr<int>(kernel_node, DILATION);
+  auto stride_ori = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, STRIDE);
+  auto dilation_ori = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, DILATION);
+  if (stride_ori.size() != 4 || stride_ori[2] != stride_ori[3]) {
+    MS_LOG(EXCEPTION) << "conv2d only support equal stride, and stride must be 4d!";
+  }
+  if (stride_ori[0] != 1 || stride_ori[1] != 1) {
+    MS_LOG(EXCEPTION) << "conv2d stride only support 1 in N axis and C axis!";
+  }
+  if (dilation_ori.size() != 4 || dilation_ori[2] != 1 || dilation_ori[3] != 1) {
+    MS_LOG(EXCEPTION) << "conv2d dilation only support 1, and dilation must be 4d!";
+  }
+  if (dilation_ori[0] != 1 || dilation_ori[1] != 1) {
+    MS_LOG(EXCEPTION) << "conv2d dilation only support 1 in N axis and C axis!";
+  }
+  int stride = stride_ori[2];
+  int dilation = dilation_ori[2];
 
   dnnl::memory::dims strides{stride, stride};
   dnnl::memory::dims dilates{dilation - 1, dilation - 1};

@@ -21,17 +21,17 @@ from mindspore.common.tensor import Tensor
 def im2col(img, filter_h, filter_w, stride=1, pad=0, dilation=1):
     """Rearranges an image to row vector"""
     batch_num, channel, height, width = img.shape
-    out_h = (height + 2*pad - filter_h - (filter_h - 1) * (dilation - 1))//stride + 1
-    out_w = (width + 2*pad - filter_w - (filter_w - 1) * (dilation - 1))//stride + 1
+    out_h = (height + 2*pad - filter_h - (filter_h - 1) * (dilation[2] - 1))//stride[2] + 1
+    out_w = (width + 2*pad - filter_w - (filter_w - 1) * (dilation[3] - 1))//stride[3] + 1
 
     img = np.pad(img, [(0, 0), (0, 0), (pad, pad), (pad, pad)], 'constant')
     col = np.zeros((batch_num, channel, filter_h, filter_w, out_h, out_w)).astype(img.dtype)
 
     for y in range(filter_h):
-        y_max = y + stride*out_h
+        y_max = y + stride[2]*out_h
         for x in range(filter_w):
-            x_max = x + stride*out_w
-            col[:, :, y, x, :, :] = img[:, :, y:y_max:stride, x:x_max:stride]
+            x_max = x + stride[2]*out_w
+            col[:, :, y, x, :, :] = img[:, :, y:y_max:stride[2], x:x_max:stride[2]]
 
     col = col.transpose(0, 4, 5, 1, 2, 3).reshape(batch_num*out_h*out_w, -1)
     return col
@@ -42,8 +42,8 @@ def conv2d(x, weight, bias=None, stride=1, pad=0,
     """Convolution 2D"""
     batch_num, _, x_h, x_w = x.shape
     filter_num, _, filter_h, filter_w = weight.shape
-    out_h = 1 + int((x_h + 2 * pad - filter_h - (filter_h - 1) * (dilation - 1)) / stride)
-    out_w = 1 + int((x_w + 2 * pad - filter_w - (filter_w - 1) * (dilation - 1)) / stride)
+    out_h = 1 + int((x_h + 2 * pad - filter_h - (filter_h - 1) * (dilation[2] - 1)) / stride[2])
+    out_w = 1 + int((x_w + 2 * pad - filter_w - (filter_w - 1) * (dilation[3] - 1)) / stride[3])
     col = im2col(x, filter_h, filter_w, stride, pad, dilation)
     col_w = np.reshape(weight, (filter_num, -1)).T
     out = np.dot(col, col_w)
