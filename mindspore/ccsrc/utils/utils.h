@@ -111,6 +111,7 @@ constexpr auto kFusedMulAddOpName = "FusedMulAdd";
 constexpr auto kFusedMulAddNOpName = "FusedMulAddN";
 constexpr auto kFusedMulApplyMomentumOpName = "FusedMulApplyMomentum";
 constexpr auto kBiasAddOpName = "BiasAdd";
+constexpr auto kConfusionMulGradOpName = "ConfusionMulGrad";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
