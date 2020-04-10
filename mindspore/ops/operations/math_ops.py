@@ -774,6 +774,14 @@ class Mul(_MathBinaryOp):
         >>> mul(input_x, input_y)
         [4, 10, 18]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = x * y
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Square(PrimitiveWithInfer):
