@@ -92,9 +92,11 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
     return nullptr;
   }
 
+  bool is_faked_bprop = false;
   auto bprop_fg = GetBprop(prim);
   if (bprop_fg == nullptr) {
     bprop_fg = FakeBprop(value_node, resources);
+    is_faked_bprop = true;
   }
 
   auto expanded_fg = BpropToK(prim, bprop_fg);
@@ -104,8 +106,11 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
                       << trace::GetDebugInfo(bprop_fg->debug_info());
   }
 
-  // Set bprop_g graph cache
-  bprop_registry_[prim] = expanded_fg;
+  // To support primitives with variable params, do not cache faked bprop
+  if (!is_faked_bprop) {
+    // Set bprop_g graph cache
+    bprop_registry_[prim] = expanded_fg;
+  }
   return expanded_fg;
 }
 
