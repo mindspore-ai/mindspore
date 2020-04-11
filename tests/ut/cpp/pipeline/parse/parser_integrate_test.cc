@@ -86,10 +86,12 @@ TEST_F(TestParserIntegrate, TestParseGraphResolveGetAttr) {
   ASSERT_TRUE(func_graph != nullptr);
 }
 
+/* skip ut test case temporarily
 TEST_F(TestParserIntegrate, TestParseGraphResolveUnknown) {
   EXPECT_THROW({ python_adapter::CallPyFn("gtest_input.pipeline.parse.parser_integrate", "test_undefined_symbol"); },
                std::runtime_error);
 }
+*/
 
 /* #not supported yet
 TEST_F(TestParserIntegrate, TestParseGraphTestModelInside) {
