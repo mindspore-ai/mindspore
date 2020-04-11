@@ -45,18 +45,16 @@ PYTHON_VERSION=$("${PYTHON}" -V 2>&1 | awk '{print $2}' | cut -d. -f-2)
 if [[ $(uname) == "Linux" ]]; then
     if [[ "${PYTHON_VERSION}" == "3.7" ]]; then
         PY_TAGS="cp37-cp37m"
-    elif [[ "${PYTHON_VERSION}" == "3.6" ]]; then
-        PY_TAGS="cp36-cp36m"
     else
-        echo "Could not find 'Python 3.6' or 'Python 3.7'"
+        echo "Could not find 'Python 3.7'"
         exit 1
     fi
     PLATFORM_TAG=$(to_lower "$(uname)_$(uname -m)")
 elif [[ $(uname) == "Darwin" ]]; then
-    if [[ "${PYTHON_VERSION}" == "3.7"  ||  "${PYTHON_VERSION}" == "3.6" ]]; then
+    if [[ "${PYTHON_VERSION}" == "3.7" ]]; then
         PY_TAGS="py3-none"
     else
-        echo "Could not find 'Python 3.6' or 'Python 3.7'"
+        echo "Could not find 'Python 3.7'"
         exit 1
     fi
     PLATFORM_TAG="any"
