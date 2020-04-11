@@ -65,6 +65,7 @@ void TestEdgeCostModel::SetUp() {
   Shapes inputs_shape_1 = {{8, 16}, {16, 32}};
   Shapes outputs_shape_1 = {{8, 32}};
   matmul1 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_1, outputs_shape_1, attr_1);
+  matmul1->set_outputs_type({kFloat32});
 
   // matmul2
   ValuePtr transpose_a_2 = MakeValue(false);
@@ -73,6 +74,7 @@ void TestEdgeCostModel::SetUp() {
   Shapes inputs_shape_2 = {{8, 32}, {32, 16}};
   Shapes outputs_shape_2 = {{8, 16}};
   matmul2 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_2, outputs_shape_2, attr_2);
+  matmul2->set_outputs_type({kFloat32});
 
   // matmul3
   ValuePtr transpose_a_3 = MakeValue(false);
@@ -81,6 +83,7 @@ void TestEdgeCostModel::SetUp() {
   Shapes inputs_shape_3 = {{16, 8}, {8, 32}};
   Shapes outputs_shape_3 = {{16, 32}};
   matmul3 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_3);
+  matmul3->set_outputs_type({kFloat32});
 
   // matmul4
   ValuePtr transpose_a_4 = MakeValue(false);
@@ -89,6 +92,7 @@ void TestEdgeCostModel::SetUp() {
   Shapes inputs_shape_4 = {{8, 16}, {16, 32}};
   Shapes outputs_shape_4 = {{8, 32}};
   matmul4 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_4, outputs_shape_4, attr_4);
+  matmul4->set_outputs_type({kFloat32});
 
   // matmul5
   ValuePtr transpose_a_5 = MakeValue(false);
@@ -97,6 +101,7 @@ void TestEdgeCostModel::SetUp() {
   Shapes inputs_shape_5 = {{8, 32}, {8, 32}};
   Shapes outputs_shape_5 = {{8, 8}};
   matmul5 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_5, outputs_shape_5, attr_5);
+  matmul5->set_outputs_type({kFloat32});
 }
 
 TEST_F(TestEdgeCostModel, test_InitEdgeCost) {

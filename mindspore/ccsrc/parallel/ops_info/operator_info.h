@@ -60,7 +60,8 @@ class OperatorInfo {
         outputs_shape_(std::move(outputs_shape)),
         attrs_(std::move(attrs)),
         is_alive_(true),
-        cost_(cost) {
+        cost_(cost),
+        outputs_type_() {
     std::vector<bool> not_parameteter(inputs_shape_.size(), false);
     is_parameter_ = not_parameteter;
     refkey_parameter_name_ = "";
@@ -71,6 +72,11 @@ class OperatorInfo {
   Status set_is_parameter(const std::vector<bool>& is_parameter);
   Status SetInputAndOutputTypeLength(const std::vector<size_t>& input_lengths,
                                      const std::vector<size_t>& output_lengths);
+  // Set outputs dtype.
+  // If only one output, outputs_type.size() is 1.
+  // If output is tuple, outputs_type.size() is greater than 1.
+  Status set_outputs_type(const std::vector<TypePtr>& outputs_type);
+  const std::vector<TypePtr>& outputs_type() const { return outputs_type_; }
   virtual Status Init(const StrategyPtr& strategy) = 0;
   virtual Status InitForCostModel(const StrategyPtr& strategy) = 0;  // only init the necessary parts
 
@@ -229,6 +235,7 @@ class OperatorInfo {
 
  private:
   OperatorCostPtr cost_;
+  std::vector<TypePtr> outputs_type_;
 };
 
 Shape GetSliceShape(const Shape& tensor_shape, const Dimensions& strategy);

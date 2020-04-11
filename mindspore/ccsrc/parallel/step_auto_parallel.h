@@ -39,7 +39,9 @@ size_t GetLengthOfDataType(const TypePtr &type);
 
 std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node);
 
-std::vector<std::vector<size_t>> ExtractInputAndOutputTypeLengthByNode(const CNodePtr &node);
+std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node);
+
+std::vector<TypePtr> ExtractOutputTypeByNode(const CNodePtr &node);
 
 Status ConstructCostGraphNodes(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
 
