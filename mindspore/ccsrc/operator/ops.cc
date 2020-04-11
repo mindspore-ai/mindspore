@@ -154,6 +154,9 @@ const PrimitivePtr kPrimMul = std::make_shared<Primitive>("Mul");
 const PrimitivePtr kPrimMinimum = std::make_shared<Primitive>("Minimum");
 const PrimitivePtr kPrimMaximum = std::make_shared<Primitive>("Maximum");
 const PrimitivePtr kPrimSquare = std::make_shared<Primitive>("Square");
+const PrimitivePtr kPrimEqual = std::make_shared<Primitive>("Equal");
+const PrimitivePtr kPrimLess = std::make_shared<Primitive>("Less");
+const PrimitivePtr kPrimLessEqual = std::make_shared<Primitive>("LessEqual");
 
 // NN
 const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");

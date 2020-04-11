@@ -506,11 +506,13 @@ void AscendSession::InsertSwitchToGraph(GraphId condition_graph_id, GraphId true
   kernel_build_info_builder->SetFusionType(kernel::FusionType::OPAQUE);
   kernel_build_info_builder->SetProcessor(kernel::Processor::AICORE);
   kernel_build_info_builder->SetKernelType(KernelType::RT_KERNEL);
-  // condition graph's output must be single output
-  if (condition_graph->outputs().size() != 1) {
-    MS_LOG(EXCEPTION) << "Condition_graph output num " << condition_graph_id << " should be 1";
+  auto cond_output_it = condition_output_.find(condition_graph_id);
+  if (cond_output_it == condition_output_.end()) {
+    MS_LOG(EXCEPTION) << "Can't find condition graph" << condition_graph_id;
   }
-  AnfNodePtr cond_output_kernel = condition_graph->outputs()[0];
+  auto cond_output_kernel =
+    AnfAlgo::VisitKernel(condition_graph->GetBackendAnfByFrontAnf(cond_output_it->second), 0).first;
+  MS_EXCEPTION_IF_NULL(cond_output_kernel);
   std::vector<AnfNodePtr> inputs = {NewValueNode(switch_primitive), cond_output_kernel, counter_const};
   CNodePtr switch_node = condition_graph->NewCNode(inputs);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), switch_node.get());
@@ -569,12 +571,14 @@ void AscendSession::CopyOutputOfIf(GraphId false_graph_id) {
   }
 }
 
-void AscendSession::SwitchCompile(GraphId cond_graph_id, GraphId true_graph_id, GraphId false_graph_id) {
+void AscendSession::SwitchCompile(GraphId cond_graph_id, GraphId true_graph_id, GraphId false_graph_id,
+                                  const AnfNodePtr &output) {
   if (switches_.find(cond_graph_id) != switches_.end()) {
     MS_LOG(WARNING) << "Condition graph" << cond_graph_id << " has been set before ";
     return;
   }
   switches_[cond_graph_id] = std::pair<GraphId, GraphId>(true_graph_id, false_graph_id);
+  condition_output_[cond_graph_id] = output;
   MS_LOG(INFO) << "New switch compile " << cond_graph_id << " " << true_graph_id << " " << false_graph_id;
   // set the type of condition graph
   auto cond_graph_index = ExecOrderOfChildGraph(final_graph_id_, cond_graph_id);
@@ -682,12 +686,14 @@ void AscendSession::SetChildGraphParameter(const AnfNodePtr &front_anf, const An
   auto from_graph_id = GetGraphIdByNode(front_anf);
   auto from_graph = GetGraph(from_graph_id);
   MS_EXCEPTION_IF_NULL(from_graph);
-
+  auto to_graph_id = AnfAlgo::GetGraphId(backend_parameter.get());
+  auto to_graph = GetGraph(to_graph_id);
+  auto backend_arg = from_graph->GetBackendAnfByFrontAnf(front_anf);
+  MS_EXCEPTION_IF_NULL(to_graph);
   MS_LOG(INFO) << "Set node[" << front_anf->DebugString() << "] of graph[" << from_graph_id << "]to node["
                << backend_parameter->DebugString() << "] of graph[" << AnfAlgo::GetGraphId(backend_parameter.get())
                << "]";
   // a node should not assign to itself
-  auto backend_arg = from_graph->GetBackendAnfByFrontAnf(front_anf);
   if (backend_arg.get() == backend_parameter.get()) {
     return;
   }
@@ -703,15 +709,16 @@ void AscendSession::SetChildGraphParameter(const AnfNodePtr &front_anf, const An
       return;
     }
   }
-  InsertMultipleAssignToGraph(from_graph_id, backend_arg, backend_parameter);
-  // if front anf is a parameter, we can assign the value back, because backend_parameter
-  // won't be changed in it's graph unless it's a weight. If backend_parameter is a weight,
-  // we do should assign the value back.
-  auto to_graph_id = AnfAlgo::GetGraphId(backend_parameter.get());
-  auto to_graph = GetGraph(to_graph_id);
-  MS_EXCEPTION_IF_NULL(to_graph);
+  // if a parameter is a weight and not linked to any executable node,device type will be kTypeUnknown,set it's device
+  // type same to arg
+  if (AnfAlgo::GetOutputDeviceDataType(backend_parameter, 0) == kTypeUnknown) {
+    AnfAlgo::SetSelectKernelBuildInfo(AnfAlgo::GetSelectKernelBuildInfo(backend_arg), backend_parameter.get());
+  }
+  InsertAssignToGraph(from_graph_id, backend_arg, backend_parameter);
+  // if front anf is a parameter,we can assign the value back,because backend_parameter won't be change in it's graph
+  // unless it's a weigth.If backend_parameter is a weight,we do should assign the value back
   if (backend_arg->isa<Parameter>() && !to_graph->execution_order().empty()) {
-    InsertMultipleAssignToGraph(to_graph_id, backend_parameter, backend_arg);
+    InsertAssignToGraph(to_graph_id, backend_parameter, backend_arg);
   }
   MS_LOG(INFO) << "Finish!";
 }
@@ -755,7 +762,25 @@ void AscendSession::SetChildGraphInput(GraphId g, const VectorRef &args) {
   DumpGraphInputArgs(args);
   UpdateGraphOrder(g);
   std::vector<AnfNodePtr> graph_inputs = to_graph->inputs();
+  auto valid_inputs = to_graph->ValidInputs();
+  size_t real_args_size = 0;
+  for (size_t i = 0; i < args.size(); i++) {
+    real_args_size += AnfAlgo::GetAllOutput(utils::cast<AnfNodePtr>(args[i]), {prim::kPrimTupleGetItem}).size();
+  }
+  if (real_args_size != graph_inputs.size()) {
+    for (size_t j = 0; j < valid_inputs.size(); j++) {
+      if (valid_inputs[j]) {
+        MS_LOG(INFO) << "index: " << j << ", nodes: " << graph_inputs[j]->DebugString();
+      }
+    }
+    MS_LOG(WARNING) << "real_args_size: " << real_args_size << ", graph_inputs.size(): " << graph_inputs.size()
+                    << " not equal";
+  }
   size_t input_index = 0;
+  if (graph_inputs.size() != valid_inputs.size()) {
+    MS_LOG(EXCEPTION) << "graph_inputs.size(): " << graph_inputs.size()
+                      << ", valid_inputs.size(): " << valid_inputs.size() << " not equal";
+  }
   for (size_t i = 0; i < args.size(); i++) {
     if (input_index >= graph_inputs.size()) {
       MS_LOG(EXCEPTION) << "input_index " << input_index << " out of range size " << graph_inputs.size();
@@ -763,6 +788,10 @@ void AscendSession::SetChildGraphInput(GraphId g, const VectorRef &args) {
     if (utils::isa<AnfNodePtr>(args[i])) {
       // arg is a anf node
       for (const auto &real_arg : AnfAlgo::GetAllOutput(utils::cast<AnfNodePtr>(args[i]), {prim::kPrimTupleGetItem})) {
+        if (!valid_inputs[input_index]) {
+          MS_LOG(DEBUG) << "Invalid input arg" << real_arg->DebugString();
+          continue;
+        }
         SetChildGraphParameter(real_arg, graph_inputs[input_index]);
         input_index++;
       }

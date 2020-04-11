@@ -160,6 +160,9 @@ extern const PrimitivePtr kPrimMul;
 extern const PrimitivePtr kPrimMinimum;
 extern const PrimitivePtr kPrimMaximum;
 extern const PrimitivePtr kPrimSquare;
+extern const PrimitivePtr kPrimEqual;
+extern const PrimitivePtr kPrimLess;
+extern const PrimitivePtr kPrimLessEqual;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;

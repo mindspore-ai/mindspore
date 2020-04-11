@@ -86,6 +86,9 @@ class KernelGraph : public FuncGraph {
   bool executable() const { return executable_; }
   // set executable of graph
   void set_executable(bool executable) { executable_ = executable; }
+  // set invalid inputs for control sink
+  std::vector<bool> *MutableValidInputs() { return &valid_inputs_; }
+  std::vector<bool> ValidInputs() { return valid_inputs_; }
 
  private:
   // remove value node form graph
@@ -118,6 +121,8 @@ class KernelGraph : public FuncGraph {
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
   // graph needn't execute
   bool executable_;
+  // valid inputs
+  std::vector<bool> valid_inputs_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
