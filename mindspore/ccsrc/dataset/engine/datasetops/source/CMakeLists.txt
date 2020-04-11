@@ -20,4 +20,4 @@ add_library(engine-datasetops-source OBJECT
     celeba_op.cc
     )
 
-add_dependencies(engine-datasetops-source protobuf::libprotobuf)
+add_dependencies(engine-datasetops-source mindspore::protobuf)

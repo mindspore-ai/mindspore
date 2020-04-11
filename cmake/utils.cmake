@@ -192,10 +192,12 @@ set(MS_FIND_NO_DEFAULT_PATH ${MS_FIND_NO_DEFAULT_PATH} PARENT_SCOPE)
 function(mindspore_add_pkg pkg_name )
 
     set(options )
-    set(oneValueArgs URL MD5 GIT_REPOSITORY GIT_TAG VER EXE DIR HEAD_ONLY)
+    set(oneValueArgs URL MD5 GIT_REPOSITORY GIT_TAG VER EXE DIR HEAD_ONLY CMAKE_PATH)
     set(multiValueArgs CMAKE_OPTION LIBS PRE_CONFIGURE_COMMAND CONFIGURE_COMMAND BUILD_OPTION INSTALL_INCS INSTALL_LIBS PATCHES)
     cmake_parse_arguments(PKG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
-
+    if (NOT PKG_CMAKE_PATH)
+        set(PKG_CMAKE_PATH .)
+    endif ()
     set(__FIND_PKG_NAME ${pkg_name})
     string(TOLOWER ${pkg_name} pkg_name)
     message("pkg name:${__FIND_PKG_NAME},${pkg_name}")
@@ -304,7 +306,7 @@ function(mindspore_add_pkg pkg_name )
 
             __exec_cmd(COMMAND ${CMAKE_COMMAND} ${PKG_CMAKE_OPTION} -G ${CMAKE_GENERATOR}
                     ${${pkg_name}_CMAKE_CFLAGS} ${${pkg_name}_CMAKE_CXXFLAGS} ${${pkg_name}_CMAKE_LDFLAGS}
-                    -DCMAKE_INSTALL_PREFIX=${${pkg_name}_BASE_DIR} ..
+                    -DCMAKE_INSTALL_PREFIX=${${pkg_name}_BASE_DIR} ${${pkg_name}_SOURCE_DIR}/${PKG_CMAKE_PATH}
                     WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
 
             __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install -- -j${THNUM}
