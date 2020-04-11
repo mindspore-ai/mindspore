@@ -13,8 +13,8 @@
 # limitations under the License.
 
 """mean op compute and schedule"""
-import akg.tvm as tvm
-from akg.ops.math.mean import mean
+import _akg.tvm as tvm
+from _akg.ops.math.mean import mean
 from .default_schedule import DEFAULT_GPU_THREAD
 
 def Mean(x, axis=None, keepdims=True):

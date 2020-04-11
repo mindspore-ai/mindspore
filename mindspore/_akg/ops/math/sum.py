@@ -14,13 +14,13 @@
 
 """operator dsl function: sum"""
 
-import akg.topi
-import akg.tvm
-from akg.utils import format_transform as ft_util
-from akg.utils import validation_check as vc_util
+import _akg.topi
+import _akg.tvm
+from _akg.utils import format_transform as ft_util
+from _akg.utils import validation_check as vc_util
 
 
-@vc_util.check_input_type(akg.tvm.tensor.Tensor, (list, tuple, int, type(None)), (bool, type(None)))
+@vc_util.check_input_type(_akg.tvm.tensor.Tensor, (list, tuple, int, type(None)), (bool, type(None)))
 def sum_value(inputs, axis=None, keepdims=False):
     """
     Compute the sum of elements across dimensions of a tensor.
@@ -38,8 +38,8 @@ def sum_value(inputs, axis=None, keepdims=False):
     vc_util.check_shape(inputs.shape)
 
     if not axis:
-        output = akg.topi.identity(inputs)
+        output = _akg.topi.identity(inputs)
     else:
-        output = akg.topi.sum(inputs, axis=axis, keepdims=keepdims)
+        output = _akg.topi.sum(inputs, axis=axis, keepdims=keepdims)
 
     return output

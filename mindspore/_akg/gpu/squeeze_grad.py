@@ -11,18 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""tile"""
-import akg.tvm
-from akg.ops.array import tile
-from akg.topi.generic import schedule_elemwise
 
-def Tile(x, multiples):
-    """tile."""
-    return tile.tile(x, multiples)
+"""squeeze grad"""
+import _akg.topi as topi
 
-def gpu_schedule_Tile(outs):
+def SqueezeGrad(y_grad, x_shape, axis=None):
     """
-    gpu schedule for tile.
+    Computes gradients for squeeze op.
+
+    Args:
+        y_grad (tvm.tensor.Tensor): the gradient needed to be propagation.
+        x_shape (Union[list, tuple]): output Tensor shape.
+        axis (Union[list, tuple, int, None], optional): eliminated axis by squeeze.
+
+    Returns:
+        tvm.tensor.Tensor: output gradient.
+    """
+    return topi.reshape(y_grad, x_shape)
+
+
+def gpu_schedule_SqueezeGrad(outs):
+    """
+    gpu schedule SqueezeGrad.
 
     Args:
         outs (tvm.tensor.Tensor): outputs of compute.
@@ -30,10 +40,5 @@ def gpu_schedule_Tile(outs):
     Returns:
         sch (schedule.Schedule): The created schedule.
     """
-    device = 'cuda'
-    ctx = akg.tvm.context(device, 0)
-    if not ctx.exist:
-        raise SystemError("Skip because %s is not enabled" % device)
-    with akg.tvm.target.create(device):
-        s = schedule_elemwise(outs)
-    return s
+    from .default_schedule import default_schedule
+    return default_schedule(outs)

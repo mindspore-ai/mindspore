@@ -15,9 +15,9 @@
 """save gpu param"""
 import os
 import hashlib
-import akg.tvm
-from akg.tvm import schedule
-from akg.utils import validation_check as vc_util
+import _akg.tvm
+from _akg.tvm import schedule
+from _akg.utils import validation_check as vc_util
 
 
 def get_dim(dim, axis=True):
@@ -66,7 +66,7 @@ def save_gpu_params(s, args, kernel_info):
     ptx_code = kernel_info[0]
     file_name = kernel_info[1]
     kernel_name = kernel_info[2]
-    ir = str(akg.tvm.lower(s, args, simple_mode=True))
+    ir = str(_akg.tvm.lower(s, args, simple_mode=True))
     file_path = os.path.realpath(file_name)
     if os.path.exists(file_path):
         os.remove(file_path)

@@ -13,12 +13,12 @@
 # limitations under the License.
 
 """operator dsl function: sub"""
-import akg.topi
-import akg.tvm
-from akg.utils import validation_check as vc_util
+import _akg.topi
+import _akg.tvm
+from _akg.utils import validation_check as vc_util
 
 
-@vc_util.check_input_type(akg.tvm.tensor.Tensor, akg.tvm.tensor.Tensor)
+@vc_util.check_input_type(_akg.tvm.tensor.Tensor, _akg.tvm.tensor.Tensor)
 def sub(data1, data2):
     """
     Computes data1 - data2 elementwise, broadcast is supported.
@@ -35,6 +35,6 @@ def sub(data1, data2):
     vc_util.check_shape(data2.shape)
     vc_util.auto_broadcast_check(data1.shape, data2.shape)
 
-    res = akg.topi.subtract(data1, data2)
+    res = _akg.topi.subtract(data1, data2)
 
     return res

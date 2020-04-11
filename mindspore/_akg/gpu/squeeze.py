@@ -12,27 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""squeeze grad"""
-import akg.topi as topi
+"""squeeze"""
+import _akg.topi as topi
+import _akg.tvm as tvm
 
-def SqueezeGrad(y_grad, x_shape, axis=None):
+def Squeeze(x, axis=None):
     """
-    Computes gradients for squeeze op.
+    Remove the dimensions which have shape size 1.
 
     Args:
-        y_grad (tvm.tensor.Tensor): the gradient needed to be propagation.
-        x_shape (Union[list, tuple]): output Tensor shape.
-        axis (Union[list, tuple, int, None], optional): eliminated axis by squeeze.
+        x (tvm.tensor.Tensor): Tensor, input whose shape is to be squeeze.
+        axis (Union[list, tuple, int, None]): specify which size 1 dimension to be removed.
 
     Returns:
-        tvm.tensor.Tensor: output gradient.
+        tvm.tensor.Tensor, has the same type and element as x, but some size 1 dimensions are removed.
     """
-    return topi.reshape(y_grad, x_shape)
+    return topi.squeeze(x, axis)
 
 
-def gpu_schedule_SqueezeGrad(outs):
+def gpu_schedule_Squeeze(outs):
     """
-    gpu schedule SqueezeGrad.
+    gpu schedule Squeeze.
 
     Args:
         outs (tvm.tensor.Tensor): outputs of compute.
@@ -40,5 +40,11 @@ def gpu_schedule_SqueezeGrad(outs):
     Returns:
         sch (schedule.Schedule): The created schedule.
     """
-    from .default_schedule import default_schedule
-    return default_schedule(outs)
+    device = 'cuda'
+    ctx = tvm.context(device, 0)
+    if not ctx.exist:
+        raise SystemError("Skip because %s is not enabled" % device)
+
+    with tvm.target.create(device):
+        sch = topi.cuda.schedule_injective(outs)
+    return sch

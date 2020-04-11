@@ -15,7 +15,7 @@
 """default schedule function for GPU"""
 from queue import Queue
 
-import akg.tvm as tvm
+import _akg.tvm as tvm
 
 DEFAULT_GPU_THREAD = 1024
 
@@ -31,7 +31,7 @@ def default_schedule(outs):
         sch (schedule.Schedule): The created schedule.
     """
     if not isinstance(outs, tvm.tensor.Tensor) and not isinstance(outs, list):
-        raise ValueError("outs should be list of akg.tvm.tensor.Tensor or akg.tvm.tensor.Tensor")
+        raise ValueError("outs should be list of _akg.tvm.tensor.Tensor or _akg.tvm.tensor.Tensor")
     device = 'cuda'
     ctx = tvm.context(device, 0)
     if not ctx.exist:

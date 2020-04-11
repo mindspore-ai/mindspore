@@ -12,36 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""relu6 grad"""
-import akg.topi as topi
-import akg.tvm as tvm
+"""relu6"""
+import _akg.topi as topi
+import _akg.tvm as tvm
+from _akg.topi import tag
 
-def ReLU6Grad(y_grad, x):
+@tvm.tag_scope(tag=tag.ELEMWISE)
+def topi_nn_relu6(x):
+    """topi nn relu6."""
+    return tvm.compute(x.shape, lambda *i: tvm.min(tvm.max(x(*i), tvm.const(0, x.dtype)), tvm.const(6, x.dtype)))
+
+def ReLU6(x):
     """
-    Computes Gradients of Rectified Linear 6.
+    Compute elementwise with function: min(max(x, 0), 6).
 
     Args:
-        y_grad (tvm.tensor.Tensor): Tensor of type float16, float32, gradients backpropagated to the ReLU6 op.
-        x (tvm.tensor.Tensor): Tensor of type float16/float32, inputs that where passed to the ReLU6 op, or its outputs.
+        x (tvm.tensor.Tensor): Tensor of type float16, float32.
 
     Returns:
-        tvm.tensor.Tensor, has same type and shape as x.
+        tvm.tensor.Tensor, has same type and shape as input.
     """
-    shape = x.shape
-    dtype = x.dtype
-
-    zero = tvm.const(0, dtype)
-    six = tvm.const(6, dtype)
-
-    res0 = tvm.compute(shape, lambda *i: tvm.if_then_else(x(*i) >= zero, x(*i), zero))
-    res6 = tvm.compute(shape, lambda *i: tvm.if_then_else(x(*i) >= six, zero, res0(*i)))
-    res = tvm.compute(shape, lambda *i: tvm.if_then_else(res6(*i) == zero, zero, y_grad(*i)))
-    return res
+    return topi_nn_relu6(x)
 
 
-def gpu_schedule_ReLU6Grad(outs):
+def gpu_schedule_ReLU6(outs):
     """
-    gpu schedule ReLU6Grad.
+    gpu schedule ReLU6.
 
     Args:
         outs (tvm.tensor.Tensor): outputs of compute.
@@ -53,7 +49,6 @@ def gpu_schedule_ReLU6Grad(outs):
     ctx = tvm.context(device, 0)
     if not ctx.exist:
         raise SystemError("Skip because %s is not enabled" % device)
-
     with tvm.target.create(device):
         sch = topi.cuda.schedule_elemwise(outs)
     return sch

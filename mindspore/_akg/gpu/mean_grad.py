@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """mean_grad"""
-import akg.tvm as tvm
-import akg
-from akg.ops.math import mean
+import _akg.tvm as tvm
+import _akg
+from _akg.ops.math import mean
 from .default_schedule import DEFAULT_GPU_THREAD
 
 
@@ -30,7 +30,7 @@ def mean_ad(head, input_shape, axis, keepdims):
     if tensor_b.op.name == "mean_output":
         tensor_b = tensor_b.op.input_tensors[0]
 
-    jacs = list(akg.differentiate(tensor_b, [tensor_a], head))
+    jacs = list(_akg.differentiate(tensor_b, [tensor_a], head))
     return jacs[0]
 
 

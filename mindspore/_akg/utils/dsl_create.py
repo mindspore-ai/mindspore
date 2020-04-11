@@ -13,8 +13,8 @@
 # limitations under the License.
 
 """dsl create helping function"""
-import akg
-from akg.utils import format_transform as ft_util
+import _akg
+from _akg.utils import format_transform as ft_util
 
 class TensorUtils:
     """Class for creating tensor."""
@@ -33,11 +33,11 @@ class TensorUtils:
         """update tensor attrs."""
         tensor_attrs = cls.get_tensor_attrs(tensor)
         tensor_attrs.update(attrs)
-        tensor = akg.tvm.compute(tensor.shape,
-                                 lambda *indice: tensor[indice],
-                                 name=tensor.op.name,
-                                 tag=tensor.op.tag,
-                                 attrs=tensor_attrs)
+        tensor = _akg.tvm.compute(tensor.shape,
+                                  lambda *indice: tensor[indice],
+                                  name=tensor.op.name,
+                                  tag=tensor.op.tag,
+                                  attrs=tensor_attrs)
         return tensor
 
     @classmethod
@@ -61,7 +61,7 @@ class TensorUtils:
             raise RuntimeError("Shape of the input_tensor and the output_tensor should be equal, "
                                "but got %s and %s"%(input_tensor_shape, output_tensor_shape))
         output_tensor = cls.update_tensor_attrs(output_tensor, {cls.CREATE_SCH_ONLY: 1})
-        data_buf = akg.tvm.decl_buffer(input_tensor.shape, input_tensor.dtype, name=buffer_name)
+        data_buf = _akg.tvm.decl_buffer(input_tensor.shape, input_tensor.dtype, name=buffer_name)
         binds_info = {input_tensor: data_buf, output_tensor: data_buf}
         return output_tensor, binds_info
 

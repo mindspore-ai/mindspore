@@ -77,11 +77,11 @@ cp -rf "${BUILD_PATH}/../mindspore/ops" "${PACKAGE_PATH}/mindspore"
 cp -rf "${BUILD_PATH}/../mindspore/communication" "${PACKAGE_PATH}/mindspore"
 
 if [[ "X$2" = "Xgpu" ]]; then
-    echo "package akg when gpu enable."
-    cp -rf "${BASEPATH}/mindspore/akg" "${PACKAGE_PATH}"
+    echo "package _akg when gpu enable."
+    cp -rf "${BASEPATH}/mindspore/_akg" "${PACKAGE_PATH}"
     if [[ -d "${BUILD_PATH}/mindspore/incubator-tvm" ]]; then
-        cp -rf "${BUILD_PATH}/mindspore/incubator-tvm/topi/python/topi" "${PACKAGE_PATH}/akg"
-        cp -rf "${BUILD_PATH}/mindspore/incubator-tvm/python/tvm" "${PACKAGE_PATH}/akg"
+        cp -rf "${BUILD_PATH}/mindspore/incubator-tvm/topi/python/topi" "${PACKAGE_PATH}/_akg"
+        cp -rf "${BUILD_PATH}/mindspore/incubator-tvm/python/tvm" "${PACKAGE_PATH}/_akg"
     fi
 fi
 

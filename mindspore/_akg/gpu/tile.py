@@ -11,19 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""equal"""
-import akg.tvm
-from akg.ops.math import equal
-from akg.topi.generic import schedule_elemwise
+"""tile"""
+import _akg.tvm
+from _akg.ops.array import tile
+from _akg.topi.generic import schedule_elemwise
 
-def Equal(x, y):
-    """equal."""
-    return equal.equal(x, y)
+def Tile(x, multiples):
+    """tile."""
+    return tile.tile(x, multiples)
 
-
-def gpu_schedule_Equal(outs):
+def gpu_schedule_Tile(outs):
     """
-    gpu schedule for Equal.
+    gpu schedule for tile.
 
     Args:
         outs (tvm.tensor.Tensor): outputs of compute.
@@ -32,9 +31,9 @@ def gpu_schedule_Equal(outs):
         sch (schedule.Schedule): The created schedule.
     """
     device = 'cuda'
-    ctx = akg.tvm.context(device, 0)
+    ctx = _akg.tvm.context(device, 0)
     if not ctx.exist:
         raise SystemError("Skip because %s is not enabled" % device)
-    with akg.tvm.target.create(device):
-        sch = schedule_elemwise(outs)
-    return sch
+    with _akg.tvm.target.create(device):
+        s = schedule_elemwise(outs)
+    return s

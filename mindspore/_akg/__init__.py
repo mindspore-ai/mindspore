@@ -18,7 +18,7 @@ import sys
 import os
 
 def AKGAddPath():
-    """akg add path."""
+    """_akg add path."""
     pwd = os.path.dirname(os.path.realpath(__file__))
     tvm_path = os.path.realpath(pwd)
     if tvm_path not in sys.path:
@@ -32,12 +32,12 @@ class AKGMetaPathFinder:
     """class AKGMetaPath finder."""
 
     def find_module(self, fullname, path=None):
-        """method akg find module."""
-        if fullname.startswith("akg.tvm"):
-            rname = fullname[4:]
+        """method _akg find module."""
+        if fullname.startswith("_akg.tvm"):
+            rname = fullname[5:]
             return AKGMetaPathLoader(rname)
-        if fullname.startswith("akg.topi"):
-            rname = fullname[4:]
+        if fullname.startswith("_akg.topi"):
+            rname = fullname[5:]
             return AKGMetaPathLoader(rname)
         return None
 

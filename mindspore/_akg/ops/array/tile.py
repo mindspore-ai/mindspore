@@ -12,32 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""cast"""
-import logging
-import akg.tvm
-from akg.ops.math import cast
-from akg.topi.generic import schedule_elemwise
-
-def Cast(x, dst_type):
-    """cast."""
-    return cast.cast(x, dst_type)
+"""operator dsl function: tile"""
+import _akg.tvm
+import _akg.topi
+from _akg.utils import validation_check as vc_util
 
 
-def gpu_schedule_Cast(outs):
+@vc_util.check_input_type(_akg.tvm.tensor.Tensor, (list, tuple))
+def tile(data, multiples):
     """
-    gpu schedule for cast.
+    Repeats the data in the specified dimensions according to the multiples.
 
     Args:
-        outs (tvm.tensor.Tensor): outputs of compute.
+        data (tvm.tensor.Tensor): Tensor.
+        multiples (Union[list, tuple]): Elements must be int. The number of repetitions.
 
     Returns:
-        sch (schedule.Schedule): The created schedule.
+        tvm.tensor.Tensor, has the same dtype as data.
     """
-    device = 'cuda'
-    ctx = akg.tvm.context(device, 0)
-    if not ctx.exist:
-        logging.info("Skip because %s is not enabled", device)
-        return None
-    with akg.tvm.target.create(device):
-        sch = schedule_elemwise(outs)
-    return sch
+    vc_util.check_shape(data.shape)
+    vc_util.check_int_list(multiples, "multiples")
+    output = _akg.topi.tile(data, multiples)
+    return output

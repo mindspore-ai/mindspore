@@ -20,9 +20,9 @@ import logging
 import traceback
 import os.path
 from pathlib import Path
-import akg.tvm
-from akg.utils import validation_check as vc_util
-from akg.utils.dsl_create import TensorUtils
+import _akg.tvm
+from _akg.utils import validation_check as vc_util
+from _akg.utils.dsl_create import TensorUtils
 from . import gpu
 from . import op_build
 
@@ -67,7 +67,7 @@ def compilewithjson(json_str):
             tensor_shape = input_desc[0]['shape']
             tensor_shape = (1,) if not tensor_shape else tensor_shape
             vc_util.shape_dtype_max_size_check(tensor_shape)
-            args[input_desc[0]['name']] = akg.tvm.placeholder(
+            args[input_desc[0]['name']] = _akg.tvm.placeholder(
                 shape=tensor_shape, name=input_desc[0]['tensor_name'], dtype=input_desc[0]['data_type'])
             tsr.append(args[input_desc[0]['name']])
         else:
@@ -76,7 +76,7 @@ def compilewithjson(json_str):
                 tensor_shape = tmp_desc['shape']
                 tensor_shape = (1,) if not tensor_shape else tensor_shape
                 vc_util.shape_dtype_max_size_check(tensor_shape)
-                tmp_input.append(akg.tvm.placeholder(
+                tmp_input.append(_akg.tvm.placeholder(
                     shape=tensor_shape, name=tmp_desc['tensor_name'], dtype=tmp_desc['data_type']))
             args[input_desc[0]['name']] = tmp_input
             tsr = tsr + tmp_input
