@@ -116,7 +116,7 @@ class DEPipeline {
 
   Status ParseRenameOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
-  DsOpPtr ParseTakeOp(const py::dict &args) const;
+  Status ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 

@@ -602,7 +602,7 @@ def check_batch_size(batch_size):
 def check_count(count):
     check_type(count, 'count', int)
     if (count <= 0 and count != -1) or count > INT32_MAX:
-        raise ValueError("repeat count should be either -1 or positive integer.")
+        raise ValueError("count should be either -1 or positive integer.")
 
 
 def check_columns(columns, name):
@@ -709,6 +709,7 @@ def check_repeat(method):
 
     return new_method
 
+
 def check_skip(method):
     """check the input arguments of skip."""
     @wraps(method)
@@ -723,6 +724,21 @@ def check_skip(method):
         return method(*args, **kwargs)
 
     return new_method
+
+
+def check_take(method):
+    """check the input arguments of take."""
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        count = param_dict.get('count')
+        check_count(count)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
 
 def check_zip(method):
     """check the input arguments of zip."""
@@ -758,6 +774,7 @@ def check_zip_dataset(method):
         return method(*args, **kwargs)
 
     return new_method
+
 
 def check_rename(method):
     """check the input arguments of rename."""
