@@ -42,11 +42,11 @@ class ShardIndexGenerator {
 
   ~ShardIndexGenerator() {}
 
-  /// \brief fetch value in json by field path
-  /// \param[in] field_path
-  /// \param[in] schema
-  /// \return the vector of value
-  static std::vector<std::string> GetField(const std::string &field_path, json schema);
+  /// \brief fetch value in json by field name
+  /// \param[in] field
+  /// \param[in] input
+  /// \return pair<MSRStatus, value>
+  std::pair<MSRStatus, std::string> GetValueByField(const string &field, json input);
 
   /// \brief fetch field type in schema n by field path
   /// \param[in] field_path

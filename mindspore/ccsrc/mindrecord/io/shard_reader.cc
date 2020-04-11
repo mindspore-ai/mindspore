@@ -25,6 +25,15 @@ using mindspore::MsLogLevel::INFO;
 
 namespace mindspore {
 namespace mindrecord {
+template <class Type>
+// convert the string to exactly number type (int32_t/int64_t/float/double)
+Type StringToNum(const std::string &str) {
+  std::istringstream iss(str);
+  Type num;
+  iss >> num;
+  return num;
+}
+
 ShardReader::ShardReader() {
   task_id_ = 0;
   deliver_id_ = 0;
@@ -259,16 +268,25 @@ MSRStatus ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::str
       }
       column_values[shard_id].emplace_back(tmp);
     } else {
-      string json_str = "{";
+      json construct_json;
       for (unsigned int j = 0; j < columns.size(); ++j) {
-        // construct the string json "f1": value
-        json_str = json_str + "\"" + columns[j] + "\":" + labels[i][j + 3];
-        if (j < columns.size() - 1) {
-          json_str += ",";
+        // construct json "f1": value
+        auto schema = shard_header_->get_schemas()[0]->GetSchema()["schema"];
+
+        // convert the string to base type by schema
+        if (schema[columns[j]]["type"] == "int32") {
+          construct_json[columns[j]] = StringToNum<int32_t>(labels[i][j + 3]);
+        } else if (schema[columns[j]]["type"] == "int64") {
+          construct_json[columns[j]] = StringToNum<int64_t>(labels[i][j + 3]);
+        } else if (schema[columns[j]]["type"] == "float32") {
+          construct_json[columns[j]] = StringToNum<float>(labels[i][j + 3]);
+        } else if (schema[columns[j]]["type"] == "float64") {
+          construct_json[columns[j]] = StringToNum<double>(labels[i][j + 3]);
+        } else {
+          construct_json[columns[j]] = std::string(labels[i][j + 3]);
         }
       }
-      json_str += "}";
-      column_values[shard_id].emplace_back(json::parse(json_str));
+      column_values[shard_id].emplace_back(construct_json);
     }
   }
 
@@ -402,7 +420,16 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
 
   // whether use index search
   if (!criteria.first.empty()) {
-    sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = " + criteria.second;
+    auto schema = shard_header_->get_schemas()[0]->GetSchema();
+
+    // not number field should add '' in sql
+    if (kNumberFieldTypeSet.find(schema["schema"][criteria.first]["type"]) != kNumberFieldTypeSet.end()) {
+      sql +=
+        " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = " + criteria.second;
+    } else {
+      sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = '" +
+             criteria.second + "'";
+    }
   }
   sql += ";";
   std::vector<std::vector<std::string>> image_offsets;
@@ -603,16 +630,25 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabels(int page_id, int 
     std::vector<json> ret;
     for (unsigned int i = 0; i < labels.size(); ++i) ret.emplace_back(json{});
     for (unsigned int i = 0; i < labels.size(); ++i) {
-      string json_str = "{";
+      json construct_json;
       for (unsigned int j = 0; j < columns.size(); ++j) {
-        // construct string json "f1": value
-        json_str = json_str + "\"" + columns[j] + "\":" + labels[i][j];
-        if (j < columns.size() - 1) {
-          json_str += ",";
+        // construct json "f1": value
+        auto schema = shard_header_->get_schemas()[0]->GetSchema()["schema"];
+
+        // convert the string to base type by schema
+        if (schema[columns[j]]["type"] == "int32") {
+          construct_json[columns[j]] = StringToNum<int32_t>(labels[i][j]);
+        } else if (schema[columns[j]]["type"] == "int64") {
+          construct_json[columns[j]] = StringToNum<int64_t>(labels[i][j]);
+        } else if (schema[columns[j]]["type"] == "float32") {
+          construct_json[columns[j]] = StringToNum<float>(labels[i][j]);
+        } else if (schema[columns[j]]["type"] == "float64") {
+          construct_json[columns[j]] = StringToNum<double>(labels[i][j]);
+        } else {
+          construct_json[columns[j]] = std::string(labels[i][j]);
         }
       }
-      json_str += "}";
-      ret[i] = json::parse(json_str);
+      ret[i] = construct_json;
     }
     return {SUCCESS, ret};
   }
