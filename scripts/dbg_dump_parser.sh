@@ -81,6 +81,8 @@ function checkopts()
 # check options
 checkopts "$@"
 
+CUR_PATH=$(pwd)
+cd "`dirname $0`/.."
 
 cd build/mindspore/
 make -j8
@@ -118,3 +120,5 @@ if [[ "${mode}" == "${MODE_DBG}" || "${mode}" == "${MODE_ALL}" ]]; then
   echo "MS_IR_FILE=$(pwd)/anf_ir_file.dbg MS_IR_PATH=$(pwd)/pkl_objs.dbg/ pytest -s ${UT_NAME}"
   MS_IR_FILE=$(pwd)/anf_ir_file.dbg MS_IR_PATH=$(pwd)/pkl_objs.dbg/ pytest -s "${UT_NAME}"
 fi
+
+cd $CUR_PATH
