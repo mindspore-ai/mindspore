@@ -27,16 +27,6 @@
 
 namespace mindspore {
 namespace parallel {
-class PowInfo : public ActivationOther {
- public:
-  PowInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
-      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
-  ~PowInfo() override = default;
-
- protected:
-  Status InferMirrorOps() override;
-};
-
 class ExpInfo : public ActivationOther {
  public:
   ExpInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)

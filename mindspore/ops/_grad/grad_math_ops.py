@@ -336,14 +336,13 @@ def get_bprop_log(self):
 @bprop_getters.register(P.Pow)
 def get_bprop_pow(self):
     """Grad definition for `Pow` operation."""
-    pow_ = P.Pow()
-    cast = P.Cast()
-    dtype = P.DType()
+    pow_op = P.Pow()
+    ln = P.Log()
 
     def bprop(x, power, out, dout):
-        g = cast(F.tuple_to_array((power,)), dtype(x)) * pow_(x, power-1.0)
-        dx = g * dout
-        return dx, 0
+        dx = power * pow_op(x, power - 1.0) * dout
+        dpower = pow_op(x, power) * ln(x) * dout
+        return dx, dpower
     return bprop
 
 
