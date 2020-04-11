@@ -111,7 +111,6 @@ REGISTER(ReduceMinInfo);
 REGISTER(TransposeInfo);
 REGISTER(PReLUInfo);
 REGISTER(DropoutDoMaskInfo);
-REGISTER(DropoutGenMaskInfo)
 REGISTER(ReshapeInfo);
 REGISTER(FloorDivInfo);
 REGISTER(MaximumInfo);
