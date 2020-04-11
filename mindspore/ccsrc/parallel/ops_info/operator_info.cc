@@ -236,7 +236,7 @@ OperatorVector CreateMirrorOps(const std::string& group_name, size_t dev_num) {
 
   OperatorName operator_name = MIRROR_OPERATOR;
   ValuePtr attr0_value = MakeValue(group_name);
-  ValuePtr attr1_value = MakeValue(dev_num);
+  ValuePtr attr1_value = MakeValue(SizeToInt(dev_num));
   ValuePtr attr2_value = MakeValue(mean_flag);
 
   Attr attr0 = std::make_pair(GROUP, attr0_value);
