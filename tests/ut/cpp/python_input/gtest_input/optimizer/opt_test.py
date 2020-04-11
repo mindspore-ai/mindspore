@@ -16,6 +16,8 @@
 from mindspore.ops import Primitive, PrimitiveWithInfer
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
+from mindspore import Tensor
+import numpy as np
 
 # pylint: disable=unused-variable
 
@@ -901,5 +903,36 @@ def test_print_tuple_wrapper(tag):
     @fns
     def before3(x, y, z):
         return print_(make_tuple(x, y, z))
+
+    return fns[tag]
+
+def test_constant_duplicate_mul(tag):
+    fns = FnDict()
+    Mul = Primitive('Mul');
+    Sqrt = Primitive('Sqrt');
+
+    x = Tensor(np.array([[2, 2], [2, 3]]).astype('float32'))
+    tensor1 = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]).astype('float32'))
+    tensor2 = Tensor(np.array([[2.2, 3.1], [3.2, 4.2]]).astype('float32'))
+
+    @fns
+    def beforell():
+        return Mul(tensor1, Mul(tensor2, Sqrt(x)))
+
+    @fns
+    def beforelr():
+        return Mul(tensor1, Mul(Sqrt(x), tensor2))
+
+    @fns
+    def beforerl():
+        return Mul(Mul(Sqrt(x), tensor2), tensor1)
+
+    @fns
+    def beforerr():
+        return Mul(Mul(Sqrt(x), tensor2), tensor1)
+
+    @fns
+    def after():
+        return Mul(Sqrt(x), Mul(tensor1, tensor2))
 
     return fns[tag]
