@@ -417,6 +417,8 @@ class Dataset:
             >>> repeat_and_shuffle = data.repeat(50)
             >>> repeat_and_shuffle = repeat_and_shuffle.shuffle(10)
         """
+        if count == 1:
+            return self
         return RepeatDataset(self, count)
 
     @check_zip_dataset

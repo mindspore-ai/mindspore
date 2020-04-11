@@ -150,11 +150,17 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
     return Status::OK();
   }
 
-  // During tree prepare phase, operators may have specific operations to perform depending on
+  // During tree prepare phase, operators may have specific pre-operations to perform depending on
   // their role.
   // @notes Derived versions of this function should always call it's superclass version first
   // before providing their own implementations.
-  virtual Status PrepareNodeAction();
+  virtual Status PrepareNodePreAction();
+
+  // During tree prepare phase, operators may have specific post-operations to perform depending on
+  // their role.
+  // @notes Derived versions of this function should always call it's superclass version first
+  // before providing their own implementations.
+  virtual Status PrepareNodePostAction();
 
   // Getter function
   // @return The operator id
