@@ -14,7 +14,6 @@
 # ============================================================================
 """optimizer"""
 from typing import Iterable
-import logging
 
 import numpy as np
 
@@ -24,8 +23,8 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore._checkparam import ParamValidator as validator
 from mindspore._checkparam import Rel
 from mindspore.common.tensor import Tensor
+from mindspore import log as logger
 
-logger = logging.getLogger('Optimizer')
 
 __all__ = ['Optimizer']
 
