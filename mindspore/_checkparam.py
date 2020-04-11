@@ -301,6 +301,13 @@ class ParamValidator:
             ParamValidator.check_subclass(arg, value, mstype.tensor)
 
     @staticmethod
+    def check_bool(arg_name, arg_value):
+        """Check arg isintance of bool"""
+        if not isinstance(arg_value, bool):
+            raise ValueError(f'The `{arg_name}` should be isintance of bool, but got {arg_value}.')
+        return arg_value
+
+    @staticmethod
     def check_type(arg_name, arg_value, valid_types):
         """Type checking."""
         def raise_error_msg():

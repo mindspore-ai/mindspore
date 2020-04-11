@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020、 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_GATHER_GPU_CU_H
-#define MINDSPORE_GATHER_GPU_CU_H
-template <typename T, typename S>
-void Gather(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
-            size_t input_dim1, cudaStream_t stream);
+#include "kernel/gpu/quant/correction_mul_gpu_kernel.h"
 
-#endif
+namespace mindspore {
+namespace kernel {
+MS_REG_GPU_KERNEL_ONE(CorrectionMul,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      CorrectionMulGpuKernel, float)
+}  // namespace kernel
+}  // namespace mindspore

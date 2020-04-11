@@ -41,3 +41,4 @@ template void CalConcatV2(const size_t size, const int w1, const int w2, const i
                           int* output, cudaStream_t cuda_stream);
 template void CalConcatV2(const size_t size, const int w1, const int w2, const half* input_1, const half* input_2,
                           half* output, cudaStream_t cuda_stream);
+
