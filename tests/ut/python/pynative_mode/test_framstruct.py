@@ -39,16 +39,6 @@ def setup_module(module):
 
 
 @ms_function
-def refactor_fac(n):
-    """ grad_refactor_fac """
-    if n == 0:
-        return 1
-    return n * refactor_fac(n-1)
-def test_refactor():
-    res = refactor_fac(3)
-    assert res == 6
-
-@ms_function
 def while_upper_bound(upper):
     rval = 2
     while rval < upper:
@@ -386,16 +376,19 @@ def test_grad_while():
     assert grad_while(5) == (60,)
 
 @ms_function
-def fac(n):
-    """ fac """
+def factorial(n):
+    """ factorial """
     if n == 0:
         return 1
-    return n * fac(n-1)
+    return n * factorial(n-1)
 
-def test_fac():
-    """ test_fac """
-    res = fac(4)
-    assert res == 24
+def test_factorial():
+    res = factorial(3)
+    assert res == 6
+
+def test_grad_factorial():
+    res = C.grad(factorial)(3)
+    assert res == 11
 
 def _for(x):
     """ _for """
