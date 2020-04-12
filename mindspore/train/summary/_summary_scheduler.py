@@ -23,6 +23,7 @@ from ._summary_adapter import SummaryType, package_summary_event, save_summary_d
 FORMAT_SCALAR_STR = "Scalar"
 FORMAT_TENSOR_STR = "Tensor"
 FORMAT_IMAGE_STR = "Image"
+FORMAT_HISTOGRAM_STR = "Histogram"
 FORMAT_BEGIN_SLICE = "[:"
 FORMAT_END_SLICE = "]"
 
@@ -95,6 +96,8 @@ def _parse_tag_format(tag: str):
         summary_type = SummaryType.TENSOR
     elif type_str == FORMAT_IMAGE_STR:
         summary_type = SummaryType.IMAGE
+    elif type_str == FORMAT_HISTOGRAM_STR:
+        summary_type = SummaryType.HISTOGRAM
     else:
         logger.error("The tag(%s) type is invalid.", tag)
         summary_type = SummaryType.INVALID
