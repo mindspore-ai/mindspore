@@ -284,7 +284,8 @@ def prim_attr_register(fn):
 
 def constexpr(fn=None, get_instance=True, name=None):
     """
-    Makes a PrimitiveWithInfer operator, which infer the value while compiling.
+    Makes a PrimitiveWithInfer operator, which infer the value while compiling. We can define a function
+    to compute between constant variable and used in constructß.
 
     Args:
         fn (function): A `fn` use as the infer_value of the output operator.

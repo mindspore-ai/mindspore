@@ -1765,7 +1765,7 @@ class LayerNorm(Primitive):
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`_.
 
     .. math::
-        y = \frac{x - mean]}{\sqrt{variance + \epsilon}} * \gamma + \beta
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
     where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon.
 
