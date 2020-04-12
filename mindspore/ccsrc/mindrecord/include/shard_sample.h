@@ -17,7 +17,9 @@
 #ifndef MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
 #define MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
 
+#include <string>
 #include <utility>
+#include <vector>
 #include "mindrecord/include/shard_operator.h"
 
 namespace mindspore {
@@ -30,6 +32,8 @@ class ShardSample : public ShardOperator {
 
   ShardSample(int num, int den, int par);
 
+  explicit ShardSample(const std::vector<int> &indices);
+
   ~ShardSample() override{};
 
   const std::pair<int, int> get_partitions() const;
@@ -41,6 +45,8 @@ class ShardSample : public ShardOperator {
   int denominator_;
   int no_of_samples_;
   int partition_id_;
+  std::vector<int> indices_;
+  SamplerType sampler_type_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore

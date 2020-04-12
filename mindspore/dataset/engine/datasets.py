@@ -1363,7 +1363,6 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
     return samplers.SequentialSampler()
 
 
-
 class ImageFolderDatasetV2(SourceDataset):
     """
     A source dataset that reads images from a tree of directories.
@@ -1621,6 +1620,9 @@ class MindDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument should be specified only when num_shards is also specified.
         block_reader (bool, optional): Whether read data by block mode (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, sampler is exclusive
+            with shuffle and block_reader). Support list: SubsetRandomSampler.
 
     Raises:
         ValueError: If num_shards is specified but shard_id is None.
@@ -1630,14 +1632,16 @@ class MindDataset(SourceDataset):
 
     @check_minddataset
     def __init__(self, dataset_file, columns_list=None, num_parallel_workers=None,
-                 shuffle=None, num_shards=None, shard_id=None, block_reader=False):
+                 shuffle=None, num_shards=None, shard_id=None,
+                 block_reader=False, sampler=None):
         super().__init__(num_parallel_workers)
         self.dataset_file = dataset_file
         self.columns_list = columns_list
-        self.global_shuffle = not bool(shuffle is False)
+        self.global_shuffle = shuffle
         self.distribution = ""
+        self.sampler = sampler
 
-        if num_shards is None:
+        if num_shards is None or shard_id is None:
             self.partitions = None
         else:
             self.partitions = [num_shards, shard_id]
@@ -1645,8 +1649,24 @@ class MindDataset(SourceDataset):
         if block_reader is True and self.partitions is not None:
             raise ValueError("block reader not allowed true when use partitions")
 
+        if block_reader is True and shuffle is True:
+            raise ValueError("block reader not allowed true when use shuffle")
+
         if block_reader is True:
             logger.warning("WARN: global shuffle is not used.")
+
+        if sampler is not None and isinstance(sampler, samplers.SubsetRandomSampler) is False:
+            raise ValueError("the sampler is not supported yet.")
+
+        # sampler exclusive
+        if block_reader is True and sampler is not None:
+            raise ValueError("block reader not allowed true when use sampler")
+
+        if shuffle is True and sampler is not None:
+            raise ValueError("shuffle not allowed true when use sampler")
+
+        if block_reader is False and sampler is None:
+            self.global_shuffle = not bool(shuffle is False)
 
         self.num_shards = num_shards
         self.shard_id = shard_id
@@ -1661,6 +1681,9 @@ class MindDataset(SourceDataset):
         args["block_reader"] = self.block_reader
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        if self.sampler:
+            args["sampler_name"] = self.sampler.__class__.__name__
+            args["sampler_params"] = self.sampler.__dict__
         return args
 
     def get_dataset_size(self):
