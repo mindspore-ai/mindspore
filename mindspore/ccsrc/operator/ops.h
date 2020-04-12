@@ -228,6 +228,7 @@ extern const PrimitivePtr kPrimMinimumGrad;
 extern const PrimitivePtr kPrimMaximumGrad;
 
 // Comm ops
+extern const PrimitivePtr kPrimAllReduce;
 extern const PrimitivePtr kPrimMirror;
 extern const PrimitivePtr kPrimVirtualDiv;
 extern const PrimitivePtr kPrimVirtualDataset;
