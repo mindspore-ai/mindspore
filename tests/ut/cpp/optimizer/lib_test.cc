@@ -556,5 +556,24 @@ TEST_F(TestOptLib, test_constant_duplicate_mul) {
   ASSERT_TRUE(CheckOpt(beforerl, after, patterns));
   ASSERT_TRUE(CheckOpt(beforerr, after, patterns));
 }
+
+TEST_F(TestOptLib, test_adjust_allreduce_mul_add) {
+  FuncGraphPtr beforell = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "beforell");
+  FuncGraphPtr beforelr = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "beforelr");
+  FuncGraphPtr beforerl = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "beforerl");
+  FuncGraphPtr beforerr = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "beforerr");
+  FuncGraphPtr after1 = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "after1");
+  FuncGraphPtr before2r = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "before2r");
+  FuncGraphPtr before2l = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "before2l");
+  FuncGraphPtr after2 = getPyFun.CallAndParseRet("test_adjust_allreduce_mul_add", "after2");
+  auto patterns = std::vector<SubstitutionPtr>({irpass.arithmetic_simplify_});
+  ASSERT_TRUE(CheckOpt(beforell, after1, patterns));
+  ASSERT_TRUE(CheckOpt(beforelr, after1, patterns));
+  ASSERT_TRUE(CheckOpt(beforerl, after1, patterns));
+  ASSERT_TRUE(CheckOpt(beforerr, after1, patterns));
+  ASSERT_TRUE(CheckOpt(before2l, after2, patterns));
+  ASSERT_TRUE(CheckOpt(before2r, after2, patterns));
+}
+
 }  // namespace opt
 }  // namespace mindspore
