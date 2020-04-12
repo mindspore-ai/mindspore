@@ -45,6 +45,7 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     bool change = (new_node != nullptr);
     if (new_node != nullptr && new_node != node) {
       (void)manager->Replace(node, new_node);
+      (void)seen_node.erase(node);
     } else if (new_node == nullptr) {
       new_node = node;
     }

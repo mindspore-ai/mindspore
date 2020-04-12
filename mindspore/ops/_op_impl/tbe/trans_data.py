@@ -46,10 +46,12 @@ from mindspore.ops.op_info_register import op_info_register
             "dtype": [
                 "bool",
                 "float","float","float","float","float","float","float","float","float","float",
-                "float16","float16","float16","float16","float16","float16","float16","float16","float16","float16"
+                "float16","float16","float16","float16","float16","float16","float16","float16","float16","float16",
+                "uint16","uint16","uint16","uint16","uint16","uint16","uint16","uint16","uint16","uint16"
             ],
             "format": [
                 "DefaultFormat",
+                "DefaultFormat","DefaultFormat","DefaultFormat","FracZ","FRACTAL_NZ","NC1HWC0","HWCN","HWCN","C1HWNCoC0","FracZ",
                 "DefaultFormat","DefaultFormat","DefaultFormat","FracZ","FRACTAL_NZ","NC1HWC0","HWCN","HWCN","C1HWNCoC0","FracZ",
                 "DefaultFormat","DefaultFormat","DefaultFormat","FracZ","FRACTAL_NZ","NC1HWC0","HWCN","HWCN","C1HWNCoC0","FracZ"
             ],
@@ -65,10 +67,12 @@ from mindspore.ops.op_info_register import op_info_register
             "dtype": [
                 "bool",
                 "float","float","float","float","float","float","float","float","float","float",
-                "float16","float16","float16","float16","float16","float16","float16","float16","float16","float16"
+                "float16","float16","float16","float16","float16","float16","float16","float16","float16","float16",
+                "uint16","uint16","uint16","uint16","uint16","uint16","uint16","uint16","uint16","uint16"
             ],
             "format": [
                 "NC1HWC0",
+                "NC1HWC0","FRACTAL_NZ","FracZ","DefaultFormat","DefaultFormat","DefaultFormat","FracZ","C1HWNCoC0","HWCN","HWCN",
                 "NC1HWC0","FRACTAL_NZ","FracZ","DefaultFormat","DefaultFormat","DefaultFormat","FracZ","C1HWNCoC0","HWCN","HWCN",
                 "NC1HWC0","FRACTAL_NZ","FracZ","DefaultFormat","DefaultFormat","DefaultFormat","FracZ","C1HWNCoC0","HWCN","HWCN"
             ],
