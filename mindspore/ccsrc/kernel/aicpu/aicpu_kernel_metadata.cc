@@ -38,12 +38,14 @@ void AicpuMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<
     return;
   }
   // For compatibility with the current framework
-  if (op_name == kPrint) {
-    std::vector<std::string> inputs_format;
-    std::vector<TypeId> inputs_type;
-    for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
-      inputs_format.emplace_back(kOpFormat_DEFAULT);
-      inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
+  if (op_name == kPrint || op_name == kGetNext) {
+    std::vector<std::string> inputs_format{};
+    std::vector<TypeId> inputs_type{};
+    if (op_name == kPrint) {
+      for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
+        inputs_format.emplace_back(kOpFormat_DEFAULT);
+        inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
+      }
     }
     std::vector<std::string> outputs_format;
     std::vector<TypeId> outputs_type;
