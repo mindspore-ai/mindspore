@@ -805,6 +805,38 @@ class SigmoidGrad(PrimitiveWithInfer):
         return out
 
 
+class HSigmoidGrad(PrimitiveWithInfer):
+    """Gets the gradient of HSigmoid operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
+
+    def infer_shape(self, y_grad_shape, x_shape):
+        return x_shape
+
+    def infer_dtype(self, y_grad_dtype, x_dtype):
+        validator.check_typename("y_grad dtype", y_grad_dtype, (mstype.float16, mstype.float32))
+        validator.check_typename("x dtype", x_dtype, (mstype.float16, mstype.float32))
+        return x_dtype
+
+
+class HSwishGrad(PrimitiveWithInfer):
+    """Gets the gradient of HSwish operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
+
+    def infer_shape(self, y_grad_shape, x_shape):
+        return x_shape
+
+    def infer_dtype(self, y_grad_dtype, x_dtype):
+        validator.check_typename("y_grad dtype", y_grad_dtype, (mstype.float16, mstype.float32))
+        validator.check_typename("x_ dtype", x_dtype, (mstype.float16, mstype.float32))
+        return x_dtype
+
+
 class SigmoidCrossEntropyWithLogitsGrad(PrimitiveWithInfer):
     """Computes the gradients of `SigmoidCrossEntropyWithLogits`."""
 

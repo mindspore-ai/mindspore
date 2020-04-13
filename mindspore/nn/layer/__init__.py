@@ -17,7 +17,7 @@ Layer.
 
 The high-level components(Cells) used to construct the neural network.
 """
-from .activation import Softmax, LogSoftmax, ReLU, ReLU6, Tanh, GELU, ELU, Sigmoid, PReLU, get_activation, LeakyReLU
+from .activation import Softmax, LogSoftmax, ReLU, ReLU6, Tanh, GELU, ELU, Sigmoid, PReLU, get_activation, LeakyReLU, HSigmoid, HSwish
 from .normalization import BatchNorm1d, BatchNorm2d, LayerNorm
 from .container import SequentialCell, CellList
 from .conv import Conv2d, Conv2dTranspose
@@ -26,8 +26,9 @@ from .basic import Dropout, Flatten, Dense, ClipByNorm, Norm, OneHot, ImageGradi
 from .embedding import Embedding
 from .pooling import AvgPool2d, MaxPool2d
 
-__all__ = ['Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid', 'PReLU', 'get_activation', 'LeakyReLU',
-           'BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'ELU',
+__all__ = ['Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid',
+           'PReLU', 'get_activation', 'LeakyReLU', 'HSigmoid', 'HSwish', 'ELU',
+           'BatchNorm1d', 'BatchNorm2d', 'LayerNorm',
            'SequentialCell', 'CellList',
            'Conv2d', 'Conv2dTranspose',
            'LSTM',

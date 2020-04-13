@@ -172,6 +172,28 @@ def get_bprop_relu6(self):
     return bprop
 
 
+@bprop_getters.register(P.HSwish)
+def get_bprop_hswish(self):
+    """Grad definition for `HSwish` operation."""
+    input_grad = G.HSwishGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, x)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.HSigmoid)
+def get_bprop_hsigmoid(self):
+    """Grad definition for `HSigmoid` operation."""
+    input_grad = G.HSigmoidGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, x)
+        return (dx,)
+    return bprop
+
+
 @bprop_getters.register(P.Elu)
 def get_bprop_elu(self):
     """Grad definition for `Elu` operation."""
