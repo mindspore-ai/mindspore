@@ -88,7 +88,8 @@ from mindspore.ops.op_info_register import op_info_register
                 "float16","float16","float16","float16","float","float","float", "float"
             ],
             "format": [
-                "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ", "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ"
+                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat",
+                "DefaultFormat", "DefaultFormat"
             ],
             "name": "beta1_power",
             "need_compile": false,
@@ -101,7 +102,8 @@ from mindspore.ops.op_info_register import op_info_register
                 "float16","float16","float16","float16","float","float","float","float"
             ],
             "format": [
-                "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ", "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ"
+                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat",
+                "DefaultFormat", "DefaultFormat"
             ],
             "name": "beta2_power",
             "need_compile": false,
@@ -114,7 +116,8 @@ from mindspore.ops.op_info_register import op_info_register
                 "float16","float16","float16","float16","float","float","float", "float"
             ],
             "format": [
-                "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ", "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ"
+                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat",
+                "DefaultFormat", "DefaultFormat"
             ],
             "name": "lr",
             "need_compile": false,
@@ -127,7 +130,8 @@ from mindspore.ops.op_info_register import op_info_register
                 "float16","float16","float16","float16","float","float","float", "float"
             ],
             "format": [
-                "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ", "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ"
+                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat",
+                "DefaultFormat", "DefaultFormat"
             ],
             "name": "beta1",
             "need_compile": false,
@@ -140,7 +144,8 @@ from mindspore.ops.op_info_register import op_info_register
                 "float16","float16","float16","float16","float","float","float", "float"
             ],
             "format": [
-                "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ", "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ"
+                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat",
+                "DefaultFormat", "DefaultFormat"
             ],
             "name": "beta2",
             "need_compile": false,
@@ -153,7 +158,8 @@ from mindspore.ops.op_info_register import op_info_register
                 "float16","float16","float16","float16","float","float","float", "float"
             ],
             "format": [
-                "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ", "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ"
+                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat",
+                "DefaultFormat", "DefaultFormat"
             ],
             "name": "epsilon",
             "need_compile": false,
@@ -161,7 +167,7 @@ from mindspore.ops.op_info_register import op_info_register
             "shape": "all"
         },
         {
-            "index": 8,
+            "index": 9,
             "dtype": [
                 "float16","float16","float16","float16","float","float","float", "float"
             ],
@@ -184,6 +190,32 @@ from mindspore.ops.op_info_register import op_info_register
                 "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ", "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ"
             ],
             "name": "var",
+            "need_compile": false,
+            "param_type": "required",
+            "shape": "all"
+        },
+        {
+            "index": 1,
+            "dtype": [
+                "float16","float16","float16","float16","float","float","float","float"
+            ],
+            "format": [
+                "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ", "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ"
+            ],
+            "name": "m",
+            "need_compile": false,
+            "param_type": "required",
+            "shape": "all"
+        },
+        {
+            "index": 2,
+            "dtype": [
+                "float16","float16","float16","float16","float","float","float","float"
+            ],
+            "format": [
+                "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ", "NC1HWC0", "C1HWNCoC0", "DefaultFormat", "FracZ"
+            ],
+            "name": "v",
             "need_compile": false,
             "param_type": "required",
             "shape": "all"
