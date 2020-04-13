@@ -93,11 +93,13 @@ For installation using `pip`, take `Ubuntu-x86` and `CPU` build version as an ex
 MindSpore docker image is hosted on [Docker Hub](https://hub.docker.com/r/mindspore),
 currently the containerized build options are supported as follows:
 
-| Hardware Platform | Docker Image URL |
-| :---------------- | :--------------- |
-| CPU | `mindspore/mindspore-cpu:0.1.0-alpha` |
-| GPU | `mindspore/mindspore-gpu:0.1.0-alpha` |
-| Ascend | <center>—</center> |
+| Hardware Platform | Docker Image Repository | Tag | Description |
+| :---------------- | :---------------------- | :-- | :---------- |
+| CPU | `mindspore/mindspore-cpu` | `0.1.0-alpha` | Production environment with pre-installed MindSpore `0.1.0-alpha` CPU release. |
+|  |  | `devel` | Development environment provided to build MindSpore (with `CPU` backend) from the source, refer to https://www.mindspore.cn/install/en for installation details. |
+| GPU | `mindspore/mindspore-gpu` | `0.1.0-alpha` | Production environment with pre-installed MindSpore `0.1.0-alpha` GPU release. |
+|  |  | `devel` | Development environment provided to build MindSpore (with `GPU CUDA10.1` backend) from the source, refer to https://www.mindspore.cn/install/en for installation details. |
+| Ascend | <center>—</center> | <center>—</center> | Coming soon. |
 
 * CPU
 
