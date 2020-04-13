@@ -65,31 +65,31 @@ TEST_F(TestShardOperator, TestShardSampleBasic) {
   ASSERT_TRUE(i <= kSampleCount);
 }
 
-TEST_F(TestShardOperator, TestShardSampleWrongNumber) {
-  MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test read imageNet"));
-
-  std::string file_name = "./imagenet.shard01";
-  auto column_list = std::vector<std::string>{"file_name"};
-
-  const int kNum = 5;
-  const int kDen = 0;
-  std::vector<std::shared_ptr<ShardOperator>> ops;
-  ops.push_back(std::make_shared<ShardSample>(kNum, kDen));
-
-  ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
-  dataset.Launch();
-
-  int i = 0;
-  while (true) {
-    auto x = dataset.GetNext();
-    if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
-    i++;
-  }
-  dataset.Finish();
-  ASSERT_TRUE(i <= 5);
-}
+// TEST_F(TestShardOperator, TestShardSampleWrongNumber) {
+//   MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test read imageNet"));
+// 
+//   std::string file_name = "./imagenet.shard01";
+//   auto column_list = std::vector<std::string>{"file_name"};
+// 
+//   const int kNum = 5;
+//   const int kDen = 0;
+//   std::vector<std::shared_ptr<ShardOperator>> ops;
+//   ops.push_back(std::make_shared<ShardSample>(kNum, kDen));
+// 
+//   ShardReader dataset;
+//   dataset.Open(file_name, 4, column_list, ops);
+//   dataset.Launch();
+// 
+//   int i = 0;
+//   while (true) {
+//     auto x = dataset.GetNext();
+//     if (x.empty()) break;
+//     MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
+//     i++;
+//   }
+//   dataset.Finish();
+//   ASSERT_TRUE(i <= 5);
+// }
 
 TEST_F(TestShardOperator, TestShardSampleRatio) {
   MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test read imageNet"));
