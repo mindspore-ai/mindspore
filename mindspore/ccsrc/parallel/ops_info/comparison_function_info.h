@@ -50,6 +50,14 @@ class MaximumInfo : public ArithmeticBase {
       : ArithmeticBase(name, inputs_shape, outputs_shape, attrs) {}
   ~MaximumInfo() override = default;
 };
+
+class MinimumInfo : public ArithmeticBase {
+ public:
+  MinimumInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
+              const PrimitiveAttrs& attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs) {}
+  ~MinimumInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -186,6 +186,7 @@ constexpr char LOG[] = "Log";
 constexpr char SIGMOID[] = "Sigmoid";
 constexpr char POW[] = "Pow";
 constexpr char MAXIMUM[] = "Maximum";
+constexpr char MINIMUM[] = "Minimum";
 constexpr char EQUAL[] = "Equal";
 constexpr char NOT_EQUAL[] = "NotEqual";
 constexpr char LOGICALNOT[] = "LogicalNot";
