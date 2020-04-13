@@ -477,9 +477,9 @@ OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}};
 #endif
 
 // Relu6
-INPUT_MAP(Relu6) = {{1, INPUT_DESC(features)}};
+INPUT_MAP(Relu6) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Relu6) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(Relu6) = {{0, OUTPUT_DESC(activations)}};
+OUTPUT_MAP(Relu6) = {{0, OUTPUT_DESC(y)}};
 
 // Relu6Grad
 INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
@@ -569,7 +569,7 @@ OUTPUT_MAP(GatherNd) = {{0, OUTPUT_DESC(y)}};
 
 // ROIAlign
 INPUT_MAP(ROIAlign) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(rois)}};
-OUTPUT_MAP(ROIAlign) = {{0, OUTPUT_DESC(output)}};
+OUTPUT_MAP(ROIAlign) = {{0, OUTPUT_DESC(y)}};
 ATTR_MAP(ROIAlign) = {{"pooled_height", ATTR_DESC(pooled_height, AnyTraits<int>())},
                       {"pooled_width", ATTR_DESC(pooled_width, AnyTraits<int>())},
                       {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())},
