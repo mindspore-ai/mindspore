@@ -114,11 +114,9 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
   opt::OptPassConfig grad = opt::OptPassConfig({irpass.expand_jprim_}, true);
   opt::irpass::ResolveIRPassLib resolve_irpass;
 
-  opt::OptPassConfig resolve_pass = opt::OptPassConfig({
-    resolve_irpass.resolver_resolve_,
-    resolve_irpass.resolver_getattr_,
-    irpass.get_make_ref_eliminate_,
-  });
+  opt::OptPassConfig resolve_pass =
+    opt::OptPassConfig({resolve_irpass.resolver_resolve_, resolve_irpass.resolver_getattr_,
+                        irpass.get_make_ref_eliminate_, irpass.replace_old_param_});
 
   OptPassGroupMap map_a({{"a_1", a_1},
                          {"a_2", a_2},

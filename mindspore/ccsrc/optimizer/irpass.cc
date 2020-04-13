@@ -40,6 +40,7 @@
 #include "optimizer/irpass/incorporate_getitem.h"
 #include "optimizer/irpass/incorporate_call.h"
 #include "optimizer/irpass/grad_var_prepare.h"
+#include "optimizer/irpass/param_replace.h"
 
 namespace mindspore {
 namespace opt {
@@ -81,6 +82,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   get_make_ref_eliminate_ =
     MakeSubstitution(GetMakeRefEliminater(), "get_make_ref_eliminate", {prim::kPrimGetRefKey, prim::kPrimGetRefValue});
   replace_refkey_by_param_ = MakeSubstitution(ReplaceRefkeyByParam(), "replace_refkey_by_param", IsValueNode<RefKey>);
+  replace_old_param_ = MakeSubstitution(ReplaceOldParam(), "replace_old_param", IsParam);
 
   // Gradient transforms
   expand_jprim_ = MakeSubstitution(ExpandJPrim(), "expand_jprim", prim::kPrimJ);

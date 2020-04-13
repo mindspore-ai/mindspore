@@ -88,6 +88,7 @@ FuncGraphPtr Renormalize(const ResourcePtr& res, const FuncGraphPtr& func_graph,
   double t2 = GetTime();
 #endif
   auto ret = ProgramSpecialize(res, func_graph, result.context);
+  res->set_func_graph(ret);
 #ifdef ENABLE_PROFILE
   double t3 = GetTime();
   MsProfile::StatTime("renormalize.infer", t2 - t1);
