@@ -87,37 +87,5 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
   ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
   return cnode;
 }
-
-void ConvertConstInputToAttr::Init() {
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimCast->name(), {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimConv2DBackpropInput->name(), {2});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimConv2DBackpropFilter->name(), {2});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimReshape->name(), {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimReduceMax->name(), {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimReduceMin->name(), {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimReduceSum->name(), {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimReduceMean->name(), {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimGatherV2->name(), {2});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimTranspose->name(), {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimUnsortedSegmentSum->name(), {2});
-  ConstInputToAttrInfoRegistry::Instance().Register(prim::kPrimOneHot->name(), {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(kUnsortedSegmentProdOpName, {2});
-  ConstInputToAttrInfoRegistry::Instance().Register(kUnsortedSegmentMinOpName, {2});
-  ConstInputToAttrInfoRegistry::Instance().Register(kSimpleMeanGradOpName, {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(kMeanGradOpName, {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(kSliceOpName, {1, 2});
-  ConstInputToAttrInfoRegistry::Instance().Register(kSliceGradOpName, {2, 3});
-  ConstInputToAttrInfoRegistry::Instance().Register(kTileOpName, {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(kScatterNdOpName, {2});
-  ConstInputToAttrInfoRegistry::Instance().Register(kStridedSliceAssignOpName, {1, 2, 3});
-  ConstInputToAttrInfoRegistry::Instance().Register(kStridedSliceOpName, {1, 2, 3});
-  ConstInputToAttrInfoRegistry::Instance().Register(kStridedSliceGradOpName, {1, 2, 3, 4});
-  ConstInputToAttrInfoRegistry::Instance().Register(kFlattenGradOpName, {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(kExpandDimsOpName, {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(kSplitOpName, {0});
-  ConstInputToAttrInfoRegistry::Instance().Register(kTopKOpName, {1});
-  ConstInputToAttrInfoRegistry::Instance().Register(kSparseApplyAdagradOpName, {2});
-  ConstInputToAttrInfoRegistry::Instance().Register(kResizeNearestNeighborGrad, {1});
-}
 }  // namespace opt
 }  // namespace mindspore

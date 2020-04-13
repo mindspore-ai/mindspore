@@ -135,6 +135,11 @@ void CreateOutputsOfFusedBn3(const FuncGraphPtr &graph, const AnfNodePtr &data_i
 void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &anf_node_ptr, size_t output_num,
                                     std::vector<AnfNodePtr> *outputs);
 
+tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_ptr, const TypePtr &type_ptr,
+                                             size_t data_length);
+
+tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple);
+
 bool IsNopNode(const AnfNodePtr &node);
 
 void HideNopNode(session::KernelGraph *const graph);

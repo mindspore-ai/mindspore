@@ -132,9 +132,11 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   }
 }
 
-void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) {
+void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                         std::vector<tensor::TensorPtr> *input_tensors) {
   // Prepare the graph
-  auto kernel_graph = ConstructSingleOpGraph(op_run_info);
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  auto kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   SelectKernel(kernel_graph);
   StartKernelRT();
@@ -142,12 +144,10 @@ void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_in
   run_op_graphs_[graph_info] = kernel_graph;
 }
 
-py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) {
+py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                            const std::vector<tensor::TensorPtr> &input_tensors) {
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  std::vector<tensor::TensorPtr> input_tensors = {};
-  std::vector<bool> tensors_mask = {};
-  ToTensorPtr(op_run_info, &input_tensors, &tensors_mask);
   RunOpAllocateMemory(input_tensors, kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, input_tensors);
