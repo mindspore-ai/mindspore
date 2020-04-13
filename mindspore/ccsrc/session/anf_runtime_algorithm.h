@@ -89,6 +89,8 @@ class AnfRuntimeAlgorithm {
   static std::string GetOutputFormat(const AnfNodePtr &node, size_t output_idx);
   // get input format select of anf node
   static std::string GetInputFormat(const AnfNodePtr &node, size_t input_idx);
+  // get prev node output width output index
+  static KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx);
   // get output format from prev node,input_index is the input index of current node related to prev node
   static std::string GetPrevNodeOutputFormat(const AnfNodePtr &node, size_t input_idx);
   // get output shapes inferred by ME from input nodes.
