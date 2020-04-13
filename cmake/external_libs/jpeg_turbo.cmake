@@ -1,6 +1,10 @@
-
 set(jpeg_turbo_USE_STATIC_LIBS ON)
-set(jpeg_turbo_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -D_FORTIFY_SOURCE=2 -O2")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(jpeg_turbo_CFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC -D_FORTIFY_SOURCE=2 -O2")
+else()
+    set(jpeg_turbo_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -D_FORTIFY_SOURCE=2 -O2")
+endif()
+
 set(jpeg_turbo_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 mindspore_add_pkg(jpeg_turbo
         VER 2.0.4

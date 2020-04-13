@@ -1,7 +1,12 @@
-
-set(opencv_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
-set(opencv_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
-set(opencv_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(opencv_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
+    set(opencv_CFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
+    set(opencv_LDFLAGS "-Wl")
+else()
+    set(opencv_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
+    set(opencv_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
+    set(opencv_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
+endif()
 
 mindspore_add_pkg(opencv
         VER 4.2.0

@@ -330,10 +330,10 @@ set(PYTHON_MODULE_SOURCE
 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 pybind11_add_module(_c_expression ${PYTHON_MODULE_SOURCE})
-target_link_options(_c_expression PRIVATE -Wl,-init,mindspore_log_init)
 
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_options(_c_expression PRIVATE -Wl,-init,mindspore_log_init)
     set(ORIGIN_PATH $ORIGIN)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set_target_properties(_c_expression PROPERTIES MACOSX_RPATH ON)
@@ -497,7 +497,7 @@ set(MS_LIB_PATH ${CMAKE_SOURCE_DIR}/build/package/mindspore/lib/)
 add_custom_target(add_ms_lib ALL
     COMMAND mkdir -pv ${MS_LIB_PATH}
     COMMAND cp ${MS_CCSRC_BUILD_PATH}/_c_expression* ${MS_PACK_PATH}
-    COMMAND cp ${MS_CCSRC_BUILD_PATH}/libmindspore_gvar.so ${MS_LIB_PATH}
+    COMMAND cp ${MS_CCSRC_BUILD_PATH}/libmindspore_gvar${CMAKE_SHARED_LIBRARY_SUFFIX} ${MS_LIB_PATH}
 )
 add_dependencies(add_ms_lib _c_expression)
 
@@ -549,9 +549,11 @@ if (ENABLE_GPU)
 endif()
 
 if (ENABLE_CPU)
-    add_custom_target(add_cpu_lib ALL
-            COMMAND cp ${onednn_LIBPATH}/libdnnl.so.1.1 ${MS_LIB_PATH}/libdnnl.so.1
-            )
+    if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        add_custom_target(add_cpu_lib ALL COMMAND cp ${onednn_LIBPATH}/libdnnl.1.1.dylib ${MS_LIB_PATH}/libdnnl.1.1.dylib)
+    else ()
+        add_custom_target(add_cpu_lib ALL COMMAND cp ${onednn_LIBPATH}/libdnnl.so.1.1 ${MS_LIB_PATH}/libdnnl.so.1)
+    endif ()
     add_dependencies(add_cpu_lib add_ms_lib)
 endif()
 
@@ -573,8 +575,9 @@ endif()
 
 if (USE_GLOG)
     target_link_libraries(_c_expression PRIVATE mindspore::glog)
-    add_custom_target(add_glog_lib ALL
-        COMMAND cp ${glog_LIBPATH}/libglog*.so.0 ${MS_LIB_PATH}
-            )
-    add_dependencies(add_glog_lib add_ms_lib)
+    if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        add_custom_target(add_glog_lib ALL COMMAND cp ${glog_LIBPATH}/libglog*.dylib ${MS_LIB_PATH})
+    else ()
+        add_custom_target(add_glog_lib ALL COMMAND cp ${glog_LIBPATH}/libglog*.so.0 ${MS_LIB_PATH})
+    endif ()
 endif()

@@ -1,8 +1,15 @@
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(tiff_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -Wno-unused-result \
+    -Wno-unused-but-set-variable -fPIC -D_FORTIFY_SOURCE=2 -O2")
+    set(tiff_CFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -Wno-unused-result \
+    -Wno-unused-but-set-variable -fPIC -D_FORTIFY_SOURCE=2 -O2")
+else()
+    set(tiff_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -Wno-unused-result \
+        -Wno-unused-but-set-variable -fPIC -D_FORTIFY_SOURCE=2 -O2")
+    set(tiff_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -Wno-unused-result \
+        -Wno-unused-but-set-variable -fPIC -D_FORTIFY_SOURCE=2 -O2")
+endif()
 
-set(tiff_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -Wno-unused-result \
-    -Wno-unused-but-set-variable -fPIC -D_FORTIFY_SOURCE=2 -O2")
-set(tiff_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -Wno-unused-result \
-    -Wno-unused-but-set-variable -fPIC -D_FORTIFY_SOURCE=2 -O2")
 set(tiff_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 
 mindspore_add_pkg(tiff
