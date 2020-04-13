@@ -142,6 +142,7 @@ constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrOutputUsedNum = "output_used_num";
 constexpr auto kAttrHasBias = "has_bias";
+constexpr auto kAttrN = "N";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

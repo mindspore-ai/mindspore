@@ -58,6 +58,7 @@
 #include "pre_activate/ascend/ir_fission/add_memcpy_async.h"
 #include "pre_activate/ascend/format_type/insert_cast_for_runop.h"
 #include "pre_activate/ascend/format_type/insert_transdata_for_runop.h"
+#include "pre_activate/ascend/ir_fission/addn_fission.h"
 #include "utils/context/ms_context.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
@@ -177,6 +178,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
     ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
     ir_fusion_pm->AddPass(std::make_shared<MatmulBiasaddFusion>());
+    ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
     ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
     ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
   }
