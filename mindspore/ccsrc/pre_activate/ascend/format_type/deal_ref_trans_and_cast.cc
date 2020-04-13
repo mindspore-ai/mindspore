@@ -22,6 +22,7 @@
 #include "kernel/oplib/oplib.h"
 #include "session/anf_runtime_algorithm.h"
 #include "session/kernel_graph.h"
+#include "pre_activate/common/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -168,11 +169,18 @@ AnfNodePtr DealRefSigleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cn
 }
 }  // namespace
 
+const BaseRef DealRefTransAndCast::DefinePattern() const {
+  VarPtr V = std::make_shared<CondVar>(UnVisited);
+  VarPtr Xs = std::make_shared<SeqVar>();
+  return VectorRef({V, Xs});
+}
+
 const AnfNodePtr DealRefTransAndCast::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                               const EquivPtr &) const {
   if (node == nullptr || !node->isa<CNode>()) {
     return nullptr;
   }
+  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (!AnfAlgo::IsRealCNodeKernel(cnode)) {

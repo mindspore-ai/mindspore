@@ -90,6 +90,7 @@ void RunOpAscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel
   mixed_precision_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   mixed_precision_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   mixed_precision_pm->AddPass(std::make_shared<OptimizeDependence>());
+  mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
   mixed_precision_pm->AddPass(std::make_shared<DealRefTransAndCast>());
   mixed_precision_pm->AddPass(std::make_shared<GetitemTuple>());
   mixed_precision_pm->AddPass(std::make_shared<MergeCastToOp>());
@@ -126,6 +127,7 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   mixed_precision_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   mixed_precision_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   mixed_precision_pm->AddPass(std::make_shared<OptimizeDependence>());
+  mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
   mixed_precision_pm->AddPass(std::make_shared<DealRefTransAndCast>());
   mixed_precision_pm->AddPass(std::make_shared<GetitemTuple>());
   mixed_precision_pm->AddPass(std::make_shared<MergeCastToOp>());
