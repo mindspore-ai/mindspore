@@ -121,6 +121,7 @@ PACKAGE_BASE_NAME=${PACKAGE_BASE_NAME//_*-/-}
 PACKAGE_NEW_NAME="${PACKAGE_BASE_NAME}-${PY_TAGS}-${PLATFORM_TAG}.whl"
 cp -rf "${PACKAGE_PATH}/dist"/*.whl "${PACKAGE_PATH}/${PACKAGE_NEW_NAME}"
 cp -f "${PACKAGE_PATH}/${PACKAGE_NEW_NAME}" "${OUTPUT_PATH}"
+find ${OUTPUT_PATH} -name "*.whl" -print0 | xargs -0 -I {} sh -c "sha256sum {} | awk '{printf \$1}' > {}.sha256"
 
 cd "${BASEPATH}"
 
