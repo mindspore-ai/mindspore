@@ -112,6 +112,7 @@ void OperatorInfo::ResetQueueMember() {
   dev_matrix_shape_.clear();
   forward_op_.clear();
   mirror_ops_.clear();
+  sub_ops_.clear();
   replace_op_.clear();
   replace_op_info_.clear();
   virtual_div_op_.clear();

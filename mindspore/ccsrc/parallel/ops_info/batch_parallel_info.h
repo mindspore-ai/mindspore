@@ -62,15 +62,6 @@ class SparseSoftmaxCrossEntropyWithLogitsInfo : public BatchParallelInfo {
   ~SparseSoftmaxCrossEntropyWithLogitsInfo() override = default;
   void ReComputeBatchSplitFlagList() override;
 };
-
-class GatherV2Info : public BatchParallelInfo {
- public:
-  GatherV2Info(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-               const PrimitiveAttrs& attrs)
-      : BatchParallelInfo(name, inputs_shape, outputs_shape, attrs) {}
-  ~GatherV2Info() override = default;
-  void ReComputeBatchSplitFlagList() override;
-};
 }  // namespace parallel
 }  // namespace mindspore
 

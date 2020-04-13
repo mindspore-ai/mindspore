@@ -81,6 +81,8 @@ class OperatorCost {
   std::vector<size_t> outputs_type_lengths_;
 };
 
+using OperatorCostPtr = std::shared_ptr<OperatorCost>;
+
 class MatMulCost : public OperatorCost {
  public:
   MatMulCost() = default;
@@ -525,6 +527,31 @@ class DropOutCost : public OperatorCost {
 };
 
 using DropOutCostPtr = std::shared_ptr<DropOutCost>;
+
+class GatherV2Cost : public OperatorCost {
+ public:
+  GatherV2Cost() = default;
+  ~GatherV2Cost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                     const int32_t& stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                            const int32_t& stage_id) const override;
+  double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                             const int32_t& stage_id) const override;
+  double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                            const int32_t& stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                                   const int32_t& stage_id) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                                    const int32_t&) const override;
+};
+
+using GatherV2CostPtr = std::shared_ptr<GatherV2Cost>;
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_

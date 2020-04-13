@@ -623,5 +623,34 @@ double DropOutCost::GetForwardComputationCost(const std::vector<TensorInfo>& inp
   Shape input0_slice_shape = input0.slice_shape();
   return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) * DROPOUT_COST_RATE;
 }
+
+// return the per device communication cost in the forward phase.
+double GatherV2Cost::GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                        const int32_t&) const {
+  // GatherV2Cost does not need communication in the forward phase
+  return 0.0;
+}
+
+// return the per device communication cost in the backward phase.
+double GatherV2Cost::GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                         const int32_t&) const {
+  // GatherV2Cost does not need communication in the backward phase
+  return 0.0;
+}
+
+double GatherV2Cost::GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>&,
+                                               const int32_t&) const {
+  // In forward phase, the computation cost = slice(A) + slice(B)
+  Shape input0_slice_shape = inputs[0].slice_shape();
+  Shape input1_slice_shape = inputs[1].slice_shape();
+  double result = ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]) +
+                  ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]);
+  return result;
+}
+
+double GatherV2Cost::GetBackwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                                const int32_t&) const {
+  return 0.0;
+}
 }  // namespace parallel
 }  // namespace mindspore

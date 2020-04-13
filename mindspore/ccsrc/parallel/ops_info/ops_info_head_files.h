@@ -24,6 +24,7 @@
 #include "parallel/ops_info/comparison_function_info.h"
 #include "parallel/ops_info/dropout_do_mask_info.h"
 #include "parallel/ops_info/elementary_function_info.h"
+#include "parallel/ops_info/gather_v2_info.h"
 #include "parallel/ops_info/get_next_info.h"
 #include "parallel/ops_info/l2_normalize_info.h"
 #include "parallel/ops_info/loss_info.h"
