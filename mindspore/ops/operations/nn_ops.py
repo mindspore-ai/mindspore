@@ -156,7 +156,7 @@ class ReLU(PrimitiveWithInfer):
         Tensor, with the same type and shape as the `input_x`.
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], np.float32))
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu = P.ReLU()
         >>> result = relu(input_x)
         [[0, 4.0, 0.0], [2.0, 0.0, 9.0]]
@@ -189,7 +189,7 @@ class ReLU6(PrimitiveWithInfer):
         Tensor, with the same type and shape as the `input_x`.
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], np.float32))
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu6 = P.ReLU6()
         >>> result = relu6(input_x)
     """
@@ -223,7 +223,7 @@ class Elu(PrimitiveWithInfer):
         Tensor, has the same shape and data type as `input_x`.
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], np.float32))
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> elu = P.Elu()
         >>> result = elu(input_x)
         Tensor([[-0.632  4.0   -0.999]

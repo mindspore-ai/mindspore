@@ -97,7 +97,7 @@ class MSE(Metric):
     Examples:
         >>> x = Tensor(np.array([0.1, 0.2, 0.6, 0.9]), mindspore.float32)
         >>> y = Tensor(np.array([0.1, 0.25, 0.5, 0.9]), mindspore.float32)
-        >>> error = MSE()
+        >>> error = nn.MSE()
         >>> error.clear()
         >>> error.update(x, y)
         >>> result = error.eval()

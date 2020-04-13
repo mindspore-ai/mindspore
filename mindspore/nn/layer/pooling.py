@@ -104,7 +104,7 @@ class MaxPool2d(_PoolNd):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> pool = MaxPool2d(kernel_size=3, stride=1)
+        >>> pool = nn.MaxPool2d(kernel_size=3, stride=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
         [[[[1. 5. 5. 1.]
            [0. 3. 4. 8.]
@@ -186,7 +186,7 @@ class AvgPool2d(_PoolNd):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> pool = AvgPool2d(kernel_size=3, strides=1)
+        >>> pool = nn.AvgPool2d(kernel_size=3, strides=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
         [[[[5. 5. 9. 9.]
             [8. 4. 3. 0.]

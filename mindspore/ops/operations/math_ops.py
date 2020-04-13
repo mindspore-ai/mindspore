@@ -133,7 +133,7 @@ class AssignAdd(PrimitiveWithInfer):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
         >>>         self.AssignAdd = P.AssignAdd()
-        >>>         self.variable = Parameter(initializer(1, [1], mindspore.int64), name="global_step")
+        >>>         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int64), name="global_step")
         >>>
         >>>     def construct(self, x):
         >>>         self.AssignAdd(self.variable, x)
@@ -176,7 +176,7 @@ class AssignSub(PrimitiveWithInfer):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
         >>>         self.AssignSub = P.AssignSub()
-        >>>         self.variable = Parameter(initializer(1, [1], mindspore.int64), name="global_step")
+        >>>         self.variable = mindspore.Parameter(initializer(1, [1], mindspore.int64), name="global_step")
         >>>
         >>>     def construct(self, x):
         >>>         self.AssignSub(self.variable, x)
