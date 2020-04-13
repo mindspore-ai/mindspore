@@ -129,7 +129,7 @@ def test_cell_assign():
             self.matrix_g = mindspore.Parameter(Tensor(np.ones([2, 2], np.float32)), name="matrix_g")
 
         def save_gradient(self, dout):
-            self.matrix_g = dout
+            self.matrix_g = dout + self.matrix_g
             return dout
 
         def construct(self, x, y):
