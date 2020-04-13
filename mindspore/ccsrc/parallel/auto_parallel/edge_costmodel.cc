@@ -61,11 +61,12 @@ Status Edge::InitEdgeCost() {
       auto target_output_lyt = target_output.second[prev_op_output_index_].tensor_layout();
       auto target_output_str = target_output.first;
       auto type_length = prev_op_->GetOutputTypeLengths()[prev_op_output_index_];
+      auto type = prev_op_->outputs_type()[prev_op_output_index_];
       for (auto& target_input : next_op_input_) {
         auto target_input_lyt = target_input.second[next_op_input_index_].tensor_layout();
         auto target_input_str = target_input.first;
         CostPtr cost;
-        if (GetRedistributionCost(target_output_lyt, target_input_lyt, type_length, &cost) != SUCCESS) {
+        if (GetRedistributionCost(target_output_lyt, target_input_lyt, type_length, type, &cost) != SUCCESS) {
           MS_LOG(EXCEPTION) << "Failure: redistribution cost calculation failed";
         }
         MS_EXCEPTION_IF_NULL(cost);
@@ -99,7 +100,7 @@ Status Edge::InitEdgeCost() {
 }
 
 Status Edge::GetRedistributionCost(const TensorLayout& prev_op_output_layout, const TensorLayout& next_op_input_layout,
-                                   size_t type_length, CostPtr* cost) {
+                                   size_t type_length, TypePtr type, CostPtr* cost) {
   MS_EXCEPTION_IF_NULL(prev_op_);
   MS_EXCEPTION_IF_NULL(cost);
   RankList dev_list = prev_op_->global_device_list();
@@ -119,6 +120,13 @@ Status Edge::GetRedistributionCost(const TensorLayout& prev_op_output_layout, co
   double backward_comm_cost = tensor_redistribution.backward_comm_cost();
   double computation_cost = tensor_redistribution.computation_cost();
 
+  // Now AllGather, ReduceScatter, AlltoAll don't support bool type
+  MS_EXCEPTION_IF_NULL(type);
+  if ((type->type_id() == kNumberTypeBool) && (comm_cost > 0)) {
+    computation_cost = INF;
+    comm_cost = INF;
+    MS_LOG(WARNING) << "Communication Operators don't support bool dtype!";
+  }
   *cost = std::make_shared<Cost>(type_length * computation_cost, type_length * comm_cost);
   (*cost)->communication_without_parameter_ = type_length * comm_cost;
   (*cost)->communication_with_partial_para_ =

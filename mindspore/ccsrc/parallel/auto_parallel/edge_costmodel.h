@@ -84,7 +84,7 @@ class Edge {
   // and the input tensor layout of v, return the redistribution cost,
   // and the op_list to carry out the redistribution.
   Status GetRedistributionCost(const TensorLayout& prev_op_output_layout, const TensorLayout& next_op_input_layout,
-                               size_t, CostPtr* cost);
+                               size_t, TypePtr type, CostPtr* cost);
 
   void set_pre_op_output(const std::vector<std::pair<std::shared_ptr<Strategy>, std::vector<TensorInfo>>>& output_set) {
     pre_op_output_ = output_set;

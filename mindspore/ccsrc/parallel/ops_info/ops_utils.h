@@ -42,6 +42,7 @@ constexpr size_t SoftmaxCrossEntropyWithLogitsAttrSize = 1;
 constexpr size_t SoftmaxCrossEntropyWithLogitsInputsSize = 2;
 constexpr size_t SoftmaxCrossEntropyWithLogitsOutputsSize = 2;
 constexpr double EPS = 1e-6;
+constexpr double INF = 1e20;
 
 constexpr char AUTO_PARALLEL_RUN_ONCE_ONLY[] = "auto_parallel_run_once_only";
 constexpr char SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY[] = "semi_auto_parallel_run_once_only";

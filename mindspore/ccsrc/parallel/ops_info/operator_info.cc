@@ -1197,6 +1197,16 @@ Status OperatorInfo::SetInputAndOutputTypeLength(const std::vector<size_t>& inpu
   return SUCCESS;
 }
 
+Status OperatorInfo::set_outputs_type(const std::vector<TypePtr>& outputs_type) {
+  if (outputs_type.size() != outputs_shape_.size()) {
+    MS_LOG(ERROR) << "Outputs type: " << outputs_type.size()
+                  << " do not have the same number of outputs shape: " << outputs_shape_.size();
+    return FAILED;
+  }
+  outputs_type_ = outputs_type;
+  return SUCCESS;
+}
+
 void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr& stra, const CostPtr& cost) {
   if (!stra->GetInputDim().empty() && !stra->GetInputDim()[0].empty()) {
     CheckGlobalDeviceManager();
