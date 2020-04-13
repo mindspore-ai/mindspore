@@ -1681,9 +1681,7 @@ class MindDataset(SourceDataset):
         args["block_reader"] = self.block_reader
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
-        if self.sampler:
-            args["sampler_name"] = self.sampler.__class__.__name__
-            args["sampler_params"] = self.sampler.__dict__
+        args["sampler"] = self.sampler
         return args
 
     def get_dataset_size(self):

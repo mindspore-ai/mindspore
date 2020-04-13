@@ -17,10 +17,12 @@
 #ifndef MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
 #define MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 #include "mindrecord/include/shard_operator.h"
+#include "mindrecord/include/shard_shuffle.h"
 
 namespace mindspore {
 namespace mindrecord {
@@ -32,21 +34,23 @@ class ShardSample : public ShardOperator {
 
   ShardSample(int num, int den, int par);
 
-  explicit ShardSample(const std::vector<int> &indices);
+  ShardSample(const std::vector<int64_t> &indices, uint32_t seed);
 
   ~ShardSample() override{};
 
   const std::pair<int, int> get_partitions() const;
 
-  MSRStatus operator()(ShardTask &tasks) override;
+  MSRStatus execute(ShardTask &tasks) override;
+  MSRStatus suf_execute(ShardTask &tasks) override;
 
  private:
   int numerator_;
   int denominator_;
   int no_of_samples_;
   int partition_id_;
-  std::vector<int> indices_;
+  std::vector<int64_t> indices_;
   SamplerType sampler_type_;
+  std::shared_ptr<ShardShuffle> shuffle_op_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore

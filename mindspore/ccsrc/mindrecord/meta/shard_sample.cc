@@ -46,13 +46,15 @@ ShardSample::ShardSample(int num, int den, int par)
       indices_({}),
       sampler_type_(kCustomTopPercentSampler) {}
 
-ShardSample::ShardSample(const std::vector<int> &indices)
+ShardSample::ShardSample(const std::vector<int64_t> &indices, uint32_t seed)
     : numerator_(0),
       denominator_(0),
       no_of_samples_(0),
       partition_id_(0),
       indices_(indices),
-      sampler_type_(kSubsetRandomSampler) {}
+      sampler_type_(kSubsetRandomSampler) {
+  shuffle_op_ = std::make_shared<ShardShuffle>(seed);
+}
 
 const std::pair<int, int> ShardSample::get_partitions() const {
   if (numerator_ == 1 && denominator_ > 1) {
@@ -61,7 +63,7 @@ const std::pair<int, int> ShardSample::get_partitions() const {
   return std::pair<int, int>(-1, -1);
 }
 
-MSRStatus ShardSample::operator()(ShardTask &tasks) {
+MSRStatus ShardSample::execute(ShardTask &tasks) {
   int no_of_categories = static_cast<int>(tasks.categories);
   int total_no = static_cast<int>(tasks.Size());
 
@@ -112,6 +114,15 @@ MSRStatus ShardSample::operator()(ShardTask &tasks) {
       new_tasks.InsertTask(tasks.get_task_by_id(tasks.permutation_[i % total_no]));
     }
     std::swap(tasks, new_tasks);
+  }
+  return SUCCESS;
+}
+
+MSRStatus ShardSample::suf_execute(ShardTask &tasks) {
+  if (sampler_type_ == kSubsetRandomSampler) {
+    if (SUCCESS != (*shuffle_op_)(tasks)) {
+      return FAILED;
+    }
   }
   return SUCCESS;
 }

@@ -81,8 +81,6 @@ def test_cv_minddataset_subset_random_sample_basic(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert data[indices[num_iter]]['file_name'] == "".join(
-            [chr(x) for x in item['file_name']])
         num_iter += 1
     assert num_iter == 5
 
@@ -107,8 +105,6 @@ def test_cv_minddataset_subset_random_sample_replica(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert data[indices[num_iter]]['file_name'] == "".join(
-            [chr(x) for x in item['file_name']])
         num_iter += 1
     assert num_iter == 6
 
@@ -133,8 +129,6 @@ def test_cv_minddataset_subset_random_sample_empty(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert data[indices[num_iter]]['file_name'] == "".join(
-            [chr(x) for x in item['file_name']])
         num_iter += 1
     assert num_iter == 0
 
@@ -159,8 +153,6 @@ def test_cv_minddataset_subset_random_sample_out_range(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert data[indices[num_iter] % len(data)]['file_name'] == "".join([
-            chr(x) for x in item['file_name']])
         num_iter += 1
     assert num_iter == 5
 
@@ -185,8 +177,6 @@ def test_cv_minddataset_subset_random_sample_negative(add_and_remove_cv_file):
             "-------------- item[file_name]: {} ------------------------".format(item["file_name"]))
         logger.info(
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
-        assert data[indices[num_iter] % len(data)]['file_name'] == "".join([
-            chr(x) for x in item['file_name']])
         num_iter += 1
     assert num_iter == 5
 

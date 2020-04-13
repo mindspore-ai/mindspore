@@ -32,7 +32,7 @@ class ShardCategory : public ShardOperator {
 
   const std::vector<std::pair<std::string, std::string>> &get_categories() const;
 
-  MSRStatus operator()(ShardTask &tasks) override;
+  MSRStatus execute(ShardTask &tasks) override;
 
  private:
   std::vector<std::pair<std::string, std::string>> categories_;
