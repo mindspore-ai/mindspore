@@ -366,3 +366,15 @@ def test_stop_gradient_11():
     with pytest.raises(RuntimeError):
         bprop(PrimWithNoBprop_(), Tensor(np.ones([2]).astype(np.float32)),
               Tensor(np.ones([2]).astype(np.float32)))
+
+def test_stop_print():
+    class StopPrint(nn.Cell):
+        def __init__(self):
+            super(StopPrint, self).__init__()
+            self.printm = P.Print()
+        def construct(self, x, y):
+            self.printm("StopPrint", x)
+            self.printm(y)
+            return x, y
+    C.grad_all(StopPrint())(Tensor(np.ones([2]).astype(np.float32)),
+                            Tensor(np.ones([2]).astype(np.float32)))
