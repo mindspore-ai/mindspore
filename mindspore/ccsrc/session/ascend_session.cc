@@ -186,7 +186,7 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
 void AscendSession::RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start";
   // data layout optimization
-  opt::AscendDataLayout(kernel_graph);
+  opt::RunOpAscendDataLayout(kernel_graph);
   // mixed precision optimization
   opt::AscendMixPrecision(kernel_graph);
   MS_LOG(INFO) << "Finish";
