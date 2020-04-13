@@ -46,14 +46,14 @@ class BatchNormFoldGpuKernel : public GpuKernel {
 
   ~BatchNormFoldGpuKernel() override { DestroyResource(); }
 
-  const std::vector<size_t> &GetInputSizeList() const { return input_size_list_; }
+  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
 
-  const std::vector<size_t> &GetOutputSizeList() const { return output_size_list_; }
+  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
 
-  const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
+  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
     (void)workspace;
     auto x = reinterpret_cast<T *>(inputs[0]->addr);
     auto mean = reinterpret_cast<T *>(inputs[1]->addr);
@@ -104,7 +104,7 @@ class BatchNormFoldGpuKernel : public GpuKernel {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) {
+  bool Init(const CNodePtr &kernel_node) override {
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 4) {
@@ -152,7 +152,7 @@ class BatchNormFoldGpuKernel : public GpuKernel {
   }
 
  protected:
-  void InitSizeLists() {
+  void InitSizeLists() override {
     // x, mean, variance, current_step
     input_size_list_.push_back(input_size_);
     input_size_list_.push_back(output_size_);
@@ -169,7 +169,7 @@ class BatchNormFoldGpuKernel : public GpuKernel {
     workspace_size_list_.push_back(input_size_);
   }
 
-  void InitResource() {
+  void InitResource() override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&x_desc_), "Create x desc failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&scale_bias_mean_var_desc_), "Create para desc failed");
