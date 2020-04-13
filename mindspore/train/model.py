@@ -360,6 +360,9 @@ class Model:
 
         Note:
             CPU is not supported when dataset_sink_mode is true.
+            If dataset_sink_mode is True, epoch of training should be equal to the count of repeat
+            operation in dataset processing. Otherwise, errors could occur since the amount of data
+            is not the amount training requires.
 
         Args:
             epoch (int): Total number of iterations on the data.
