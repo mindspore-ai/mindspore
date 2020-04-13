@@ -114,6 +114,7 @@ REGISTER(DropoutDoMaskInfo);
 REGISTER(ReshapeInfo);
 REGISTER(FloorDivInfo);
 REGISTER(MaximumInfo);
+REGISTER(MinimumInfo);
 REGISTER(CastInfo);
 REGISTER(GreaterInfo);
 REGISTER(SparseSoftmaxCrossEntropyWithLogitsInfo);
