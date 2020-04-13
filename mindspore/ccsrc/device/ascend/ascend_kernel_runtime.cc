@@ -85,8 +85,10 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     MS_EXCEPTION(DeviceProcessError) << "rtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }
 
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->FreeDeviceMemory();
+  if (mem_manager_ != nullptr) {
+    mem_manager_->FreeDeviceMemory();
+  }
+
   (void)DestroyHccl();
   (void)ResetDevice();
   (void)ProfilingManager::GetInstance().StopProfiling();

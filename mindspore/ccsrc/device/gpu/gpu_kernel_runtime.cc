@@ -101,8 +101,9 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
     CHECK_OP_RET_WITH_EXCEPT(GpuBufferMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
   }
   GPUDeviceManager::GetInstance().ReleaseDevice();
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->FreeDeviceMemory();
+  if (mem_manager_ != nullptr) {
+    mem_manager_->FreeDeviceMemory();
+  }
 }
 
 void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
