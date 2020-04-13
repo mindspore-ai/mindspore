@@ -73,7 +73,8 @@ FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, unsigned int nparam) {
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim));
   for (unsigned int i = 0; i < nparam; i++) {
-    if ((prim->name() == "ScalarSummary" || prim->name() == "TensorSummary" || prim->name() == "ImageSummary") &&
+    if ((prim->name() == "ScalarSummary" || prim->name() == "TensorSummary" || 
+        prim->name() == "ImageSummary" || prim->name() == "HistogramSummary") &&
         i == 0) {
       auto input = NewValueNode("testSummary");
       inputs.push_back(input);

@@ -131,6 +131,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimScalarSummary, {InferImplScalarSummary, true}},
     {prim::kPrimImageSummary, {InferImplTensorSummary, true}},
     {prim::kPrimTensorSummary, {InferImplTensorSummary, true}},
+    {prim::kPrimHistogramSummary, {InferImplTensorSummary, true}},
   };
   return prim_eval_implement_map;
 }

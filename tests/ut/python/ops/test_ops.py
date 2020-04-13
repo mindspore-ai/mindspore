@@ -160,6 +160,19 @@ class SummaryNet(nn.Cell):
         return self.add(x, y)
 
 
+class HistogramSummaryNet(nn.Cell):
+    def __init__(self,):
+        super(HistogramSummaryNet, self).__init__()
+        self.summary = P.HistogramSummary()
+        self.add = P.TensorAdd()
+
+    def construct(self, x, y):
+        out = self.add(x, y)
+        string_in = "out"
+        self.summary(string_in, out)
+        return out
+
+
 test_case_math_ops = [
     ('Neg', {
         'block': P.Neg(),
@@ -1104,6 +1117,12 @@ test_case_other_ops = [
         'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
                         Tensor(np.array([1.2]).astype(np.float32))],
         'skip': ['backward']}),
+    ('HistogramSummary', {
+        'block': HistogramSummaryNet(),
+        'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
+                        Tensor(np.array([1.2]).astype(np.float32))],
+        'skip': ['backward']}),
+    
 ]
 
 test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops, test_case_other_ops]
