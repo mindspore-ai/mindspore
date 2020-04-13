@@ -51,9 +51,9 @@ class ControlDepend(Primitive):
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>        super(Net, self).__init__()
-        >>>         self.global_step = Parameter(initializer(0, [1]), name="global_step")
+        >>>         self.global_step = mindspore.Parameter(initializer(0, [1]), name="global_step")
         >>>         self.rate = 0.2
-        >>>         self.control_depend = ControlDepend()
+        >>>         self.control_depend = P.ControlDepend()
         >>>
         >>>     def construct(self, x):
         >>>         data = self.rate * self.global_step + x
@@ -92,7 +92,7 @@ class GeSwitch(PrimitiveWithInfer):
         >>>	    super(Net, self).__init__()
         >>>         self.square = P.Square()
         >>>         self.add = P.TensorAdd()
-        >>>         self.value = Tensor(np.full((1), 3, dtype=np.float32))
+        >>>         self.value = Tensor(np.full((1), 3), mindspore.float32)
         >>>         self.switch = P.GeSwitch()
         >>>         self.merge = P.Merge()
         >>>         self.less = P.Less()

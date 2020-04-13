@@ -284,7 +284,7 @@ class SoftmaxCrossEntropyExpand(Cell):
         Tensor, a scalar tensor including the mean loss.
 
     Examples:
-        >>> loss = SoftmaxCrossEntropyExpand(sparse=True)
+        >>> loss = nn.SoftmaxCrossEntropyExpand(sparse=True)
         >>> input_data = Tensor(np.ones([64, 512]), dtype=mindspore.float32)
         >>> label = Tensor(np.ones([64]), dtype=mindspore.int32)
         >>> loss(input_data, label)

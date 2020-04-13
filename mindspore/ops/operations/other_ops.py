@@ -76,7 +76,7 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         Tensor, encoded bounding boxes.
 
     Examples:
-        >>> boundingbox_encode = BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0))
+        >>> boundingbox_encode = P.BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0))
         >>> delta_box = boundingbox_encode(anchor_box, groundtruth_box)
     """
 
@@ -119,7 +119,7 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         Tensor, decoded boxes.
 
     Examples:
-        >>> boundingbox_decode = BoundingBoxDecode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
+        >>> boundingbox_decode = P.BoundingBoxDecode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
                                                    max_shape=(768, 1280), wh_ratio_clip=0.016)
         >>> bbox = boundingbox_decode(anchor_box, deltas)
     """
@@ -208,7 +208,7 @@ class IOU(PrimitiveWithInfer):
         KeyError: When `mode` is not 'iou' or 'iof'.
 
     Examples:
-        >>> iou = IOU()
+        >>> iou = P.IOU()
         >>> anchor_boxes = Tensor(np.random.randint(1,5, [10, 4]))
         >>> gt_boxes = Tensor(np.random.randint(1,5, [3, 4]))
         >>> iou(anchor_boxes, gt_boxes)
@@ -255,15 +255,15 @@ class MakeRefKey(Primitive):
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
-        >>>         self.y = Parameter(Tensor(np.ones([6, 8, 10], np.int32)), name="y")
-        >>>         self.make_ref_key = MakeRefKey("y")
+        >>>         self.y = mindspore.Parameter(Tensor(np.ones([6, 8, 10]), mindspore.int32), name="y")
+        >>>         self.make_ref_key = P.MakeRefKey("y")
         >>>
         >>>     def construct(self, x):
         >>>         key = self.make_ref_key()
         >>>         ref = F.make_ref(key, x, self.y)
         >>>         return ref * x
         >>>
-        >>> x = Tensor(np.ones([3, 4, 5], np.int32))
+        >>> x = Tensor(np.ones([3, 4, 5]), mindspore.int32)
         >>> net = Net()
         >>> net(x)
     """
