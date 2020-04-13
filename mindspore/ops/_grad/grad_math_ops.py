@@ -340,9 +340,9 @@ def get_bprop_pow(self):
     ln = P.Log()
 
     def bprop(x, power, out, dout):
-        dx = power * pow_op(x, power - 1.0) * dout
-        dpower = pow_op(x, power) * ln(x) * dout
-        return dx, dpower
+        bc_dx = power * pow_op(x, power - 1.0) * dout
+        bc_dpower = out * ln(x) * dout
+        return binop_grad_common(x, power, bc_dx, bc_dpower)
     return bprop
 
 
