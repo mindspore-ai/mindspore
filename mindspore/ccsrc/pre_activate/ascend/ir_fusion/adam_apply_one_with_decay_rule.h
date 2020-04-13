@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include "pre_activate/common/optimizer.h"
+#include "utils/utils.h"
 namespace mindspore {
 namespace opt {
 class AdamApplyOneWithDecayRule : public PatternProcessPass {
@@ -36,6 +37,8 @@ class AdamApplyOneWithDecayRule : public PatternProcessPass {
     mul3_x_ = std::make_shared<Var>();
     mul4_x_ = std::make_shared<Var>();
     add2_y_ = std::make_shared<Var>();
+    add0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
+    add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
   }
   ~AdamApplyOneWithDecayRule() override = default;
   const BaseRef DefinePattern() const override;
@@ -54,6 +57,8 @@ class AdamApplyOneWithDecayRule : public PatternProcessPass {
   VarPtr mul3_x_;
   VarPtr mul4_x_;
   VarPtr add2_y_;
+  VarPtr add0_var_;
+  VarPtr add1_var_;
 };
 }  // namespace opt
 }  // namespace mindspore

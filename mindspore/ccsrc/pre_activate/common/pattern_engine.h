@@ -31,6 +31,7 @@
 #include <map>
 #include <stdexcept>
 #include <list>
+#include <utility>
 
 #include "pre_activate/common/visit.h"
 #include "ir/base.h"
@@ -44,16 +45,19 @@ using CondVarPtr = std::shared_ptr<CondVar>;
 using SVarPtr = std::shared_ptr<SeqVar>;
 const int kInvalidVarIndex = -2;
 
-using ConditionFunc = std::function<bool(const BaseRef&)>;
+using ConditionFunc = std::function<bool(const BaseRef &)>;
 
 // Base wildcard variable which could match any anf node.
 class Var : public Base {
   friend class VarHasher;
 
  public:
-  explicit Var(const std::string& tag = "") : tag_(tag) { EnsureTag(); }
-  Var(const Var& other) : Base(other), tag_(other.tag_) {}
-  virtual Var& operator=(const Var& other) {
+  explicit Var(std::string tag = "") : tag_(std::move(tag)), primitive_(nullptr) { EnsureTag(); }
+  explicit Var(const PrimitivePtr &primitive, std::string tag = "") : tag_(std::move(tag)), primitive_(primitive) {
+    EnsureTag();
+  }
+  Var(const Var &other) : Base(other), tag_(other.tag_) {}
+  virtual Var &operator=(const Var &other) {
     if (&other == this) {
       return *this;
     }
@@ -63,12 +67,13 @@ class Var : public Base {
   ~Var() override = default;
   MS_DECLARE_PARENT(Var, Base);
 
-  virtual bool matches(const BaseRef&) { return true; }
+  virtual bool matches(const BaseRef &) { return true; }
 
-  virtual bool operator==(const Var& other) const { return tag_ == other.tag_; }
-  bool operator!=(const Var& other) const { return !(&other == this); }
+  virtual bool operator==(const Var &other) const { return tag_ == other.tag_; }
+  bool operator!=(const Var &other) const { return !(&other == this); }
 
   std::string tag() const { return tag_; }
+  PrimitivePtr primitive() const { return primitive_; }
   std::string ToString() const override {
     std::ostringstream buffer;
     buffer << "Var(" << tag_ << ")";
@@ -80,12 +85,13 @@ class Var : public Base {
   void EnsureTag();
 
   std::string tag_;
+  PrimitivePtr primitive_;
 };
 
 // VarNode means variable node, a subclass of AnfNode
 class VarNode : public AnfNode {
  public:
-  VarNode(const VarPtr& value, const FuncGraphPtr& func_graph) : AnfNode(func_graph), var_(value) {}
+  VarNode(const VarPtr &value, const FuncGraphPtr &func_graph) : AnfNode(func_graph), var_(value) {}
   ~VarNode() override = default;
   MS_DECLARE_PARENT(VarNode, AnfNode);
 
@@ -95,16 +101,16 @@ using VarNodePtr = std::shared_ptr<VarNode>;
 
 class VarHasher {
  public:
-  std::size_t operator()(const Var& var) const { return var.hash(); }
+  std::size_t operator()(const Var &var) const { return var.hash(); }
 };
 
 // Condition Var, match an anf node when condition function return true.
 class CondVar : public Var {
  public:
-  explicit CondVar(const ConditionFunc& cond) : cond_fn_(cond) {}
+  explicit CondVar(const ConditionFunc &cond) : cond_fn_(cond) {}
   ~CondVar() override = default;
   MS_DECLARE_PARENT(CondVar, Var);
-  bool matches(const BaseRef& value) override {
+  bool matches(const BaseRef &value) override {
     MS_LOG(DEBUG) << "CondVarPtr match: " + value.ToString();
     if (utils::isa<Var>(value)) {
       return false;
@@ -124,55 +130,60 @@ class SeqVar : public Var {
   ~SeqVar() override = default;
   MS_DECLARE_PARENT(SeqVar, Var);
   explicit SeqVar(const VarPtr subvar) : subvar_(nullptr) { subvar_ = subvar; }
-  bool matches(const BaseRef& value) override {
+  bool matches(const BaseRef &value) override {
     // match Seq.
     if (utils::isa<Seq>(value)) {
-      const Seq& seq = utils::cast<Seq>(value);
-      return std::all_of(seq.begin(), seq.end(), [this](const BaseRef& v) {
+      const Seq &seq = utils::cast<Seq>(value);
+      return std::all_of(seq.begin(), seq.end(), [this](const BaseRef &v) {
         auto eq = subvar_->matches(v);
         return eq;
       });
     }
     return false;
   }
-  bool operator==(const SeqVar& other) const { return *subvar_ == *other.subvar_; }
+  bool operator==(const SeqVar &other) const { return *subvar_ == *other.subvar_; }
   std::string ToString() const override;
 
  private:
   VarPtr subvar_;
 };
 
-bool operator==(const VarPtr& lhs, const VarPtr& rhs);
+bool operator==(const VarPtr &lhs, const VarPtr &rhs);
 
-inline bool operator!=(const VarPtr& lhs, const VarPtr& rhs) { return !(lhs == rhs); }
+inline bool operator!=(const VarPtr &lhs, const VarPtr &rhs) { return !(lhs == rhs); }
 
-std::ostream& operator<<(std::ostream& os, const VarPtr& var);
+std::ostream &operator<<(std::ostream &os, const VarPtr &var);
 
 using Equiv = std::map<VarPtr, BaseRef>;
 using EquivPtr = std::shared_ptr<Equiv>;
+using PrimitiveVarMap = std::unordered_map<PrimitivePtr, VarPtr>;
+using PrimitiveVarMapPtr = std::shared_ptr<PrimitiveVarMap>;
 
-inline bool DefaultTypeEq(const BaseRef& x, const BaseRef& y) { return x.type() == y.type(); }
+inline bool DefaultTypeEq(const BaseRef &x, const BaseRef &y) { return x.type() == y.type(); }
 
 class PatternEngine {
  public:
-  PatternEngine(const std::shared_ptr<Visitor>& visitor, const std::function<bool(const BaseRef&, const BaseRef&)>& eq,
-                const std::function<bool(const BaseRef&, const BaseRef&)>& type_eq = DefaultTypeEq)
+  PatternEngine(const std::shared_ptr<Visitor> &visitor,
+                const std::function<bool(const BaseRef &, const BaseRef &)> &eq,
+                const std::function<bool(const BaseRef &, const BaseRef &)> &type_eq = DefaultTypeEq)
       : visitor_(visitor), eq_(eq), type_eq_(type_eq) {}
   ~PatternEngine() = default;
 
-  EquivPtr Match(const BaseRef& pattern, const BaseRef& expr, EquivPtr equiv) const;
+  EquivPtr Match(const BaseRef &pattern, const BaseRef &expr, const PrimitiveVarMap &primitive_vars,
+                 EquivPtr equiv) const;
   // Replace pattern with equivalent
-  BaseRef Replace(const BaseRef& pattern, const EquivPtr& equiv) const;
+  BaseRef Replace(const BaseRef &pattern, const EquivPtr &equiv) const;
 
  private:
-  EquivPtr AlignSVar(const VectorRef& values_pattern, const VectorRef& values_expr, EquivPtr equiv) const;
-  bool ToVector(const BaseRef& pattern, const BaseRef& expr, VectorRef* const values_pattern,
-                VectorRef* const values_expr) const;
-  bool ToVector(const VectorRef& pattern_ref, const VectorRef& expr_ref, VectorRef* const values_pattern,
-                VectorRef* const values_expr) const;
+  EquivPtr AlignSVar(const VectorRef &values_pattern, const VectorRef &values_expr,
+                     const PrimitiveVarMap &primitive_vars, EquivPtr equiv) const;
+  bool ToVector(const BaseRef &pattern, const BaseRef &expr, VectorRef *const values_pattern,
+                VectorRef *const values_expr) const;
+  bool ToVector(const VectorRef &pattern_ref, const VectorRef &expr_ref, VectorRef *const values_pattern,
+                VectorRef *const values_expr) const;
   std::shared_ptr<Visitor> visitor_;
-  std::function<bool(const BaseRef&, const BaseRef&)> eq_;
-  std::function<bool(const BaseRef&, const BaseRef&)> type_eq_;
+  std::function<bool(const BaseRef &, const BaseRef &)> eq_;
+  std::function<bool(const BaseRef &, const BaseRef &)> type_eq_;
 };
 }  // namespace mindspore
 namespace std {

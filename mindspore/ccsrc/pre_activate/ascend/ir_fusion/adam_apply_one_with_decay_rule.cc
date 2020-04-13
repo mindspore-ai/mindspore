@@ -17,48 +17,13 @@
 
 #include <memory>
 #include <vector>
-#include <tuple>
 
 #include "session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
-#include "utils/utils.h"
 #include "pre_activate/common/helper.h"
 
 namespace mindspore {
 namespace opt {
-namespace {
-std::tuple<AnfNodePtr, AnfNodePtr> GetAdd0Add1Node(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto sub0 = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(sub0);
-  auto mul5_anf = sub0->input(2);
-  MS_EXCEPTION_IF_NULL(mul5_anf);
-  auto mul5 = mul5_anf->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(mul5);
-  auto add3_anf = mul5->input(2);
-  MS_EXCEPTION_IF_NULL(add3_anf);
-  auto add3 = add3_anf->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(add3);
-  auto real_div0_anf = add3->input(1);
-  MS_EXCEPTION_IF_NULL(real_div0_anf);
-  auto real_div0 = real_div0_anf->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(real_div0);
-  auto add0_anf = real_div0->input(1);
-  MS_EXCEPTION_IF_NULL(add0_anf);
-  auto add2_anf = real_div0->input(2);
-  MS_EXCEPTION_IF_NULL(add2_anf);
-  auto add2 = add2_anf->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(add2);
-  auto sqrt0_anf = add2->input(1);
-  MS_EXCEPTION_IF_NULL(sqrt0_anf);
-  auto sqrt0 = sqrt0_anf->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(sqrt0);
-  auto add1_anf = sqrt0->input(1);
-  MS_EXCEPTION_IF_NULL(add1_anf);
-  return std::make_tuple(add0_anf, add1_anf);
-}
-}  // namespace
-
 std::vector<AnfNodePtr> AdamApplyOneWithDecayRule::GetFusionNodeInputs(const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(equiv);
   auto input0 = utils::cast<AnfNodePtr>((*equiv)[input0_]);
@@ -82,10 +47,10 @@ const BaseRef AdamApplyOneWithDecayRule::DefinePattern() const {
   VectorRef mul0_pattern({prim::kPrimMul, mul0_x_, input2_});
   VectorRef mul1_pattern({prim::kPrimMul, mul1_x_, input0_});
   VectorRef square0_pattern({prim::kPrimSquare, input0_});
-  VectorRef add0_pattern({prim::kPrimTensorAdd, mul0_pattern, mul1_pattern});
+  VectorRef add0_pattern({add0_var_, mul0_pattern, mul1_pattern});
   VectorRef mul2_pattern({prim::kPrimMul, mul2_x_, input1_});
   VectorRef mul3_pattern({prim::kPrimMul, mul3_x_, square0_pattern});
-  VectorRef add1_pattern({prim::kPrimTensorAdd, mul2_pattern, mul3_pattern});
+  VectorRef add1_pattern({add1_var_, mul2_pattern, mul3_pattern});
   VectorRef sqrt0_pattern({sqrt, add1_pattern});
   VectorRef add2_pattern({prim::kPrimTensorAdd, sqrt0_pattern, add2_y_});
   VectorRef mul4_pattern({prim::kPrimMul, mul4_x_, input3_});
@@ -107,9 +72,18 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(fusion_node);
   fusion_node->set_scope(node->scope());
 
-  AnfNodePtr add0 = nullptr;
-  AnfNodePtr add1 = nullptr;
-  std::tie(add0, add1) = GetAdd0Add1Node(node);
+  auto iter_add0 = (*equiv).find(add0_var_);
+  if (iter_add0 == (*equiv).end()) {
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add0 var after matched.";
+  }
+  auto iter_add1 = (*equiv).find(add1_var_);
+  if (iter_add1 == (*equiv).end()) {
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add1 var after matched.";
+  }
+  auto add0 = utils::cast<AnfNodePtr>(iter_add0->second);
+  MS_EXCEPTION_IF_NULL(add0);
+  auto add1 = utils::cast<AnfNodePtr>(iter_add1->second);
+  MS_EXCEPTION_IF_NULL(add1);
   auto types = {AnfAlgo::GetOutputInferDataType(add1, 0), AnfAlgo::GetOutputInferDataType(add0, 0),
                 AnfAlgo::GetOutputInferDataType(node, 0)};
   auto shapes = {AnfAlgo::GetOutputInferShape(add1, 0), AnfAlgo::GetOutputInferShape(add0, 0),
