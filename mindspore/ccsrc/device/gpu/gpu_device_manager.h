@@ -19,6 +19,7 @@
 
 #include <cudnn.h>
 #include <cublas_v2.h>
+#include <vector>
 #include <memory>
 #include "device/gpu/cuda_driver.h"
 #include "device/gpu/gpu_memory_allocator.h"
@@ -36,13 +37,15 @@ class GPUDeviceManager {
   uint32_t cur_device_id() const;
   bool is_device_id_init() const;
 
+  bool CreateStream(DeviceStream* stream);
+  bool SyncStream(const DeviceStream& stream) const;
   const DeviceStream& default_stream() const;
+
   const cudnnHandle_t& GetCudnnHandle() const;
   const cublasHandle_t& GetCublasHandle() const;
 
   bool CopyDeviceMemToHost(const HostMemPtr& dst, const DeviceMemPtr& src, size_t size) const;
   bool CopyHostMemToDevice(const DeviceMemPtr& dst, const void* src, size_t size) const;
-  bool SyncStream(const DeviceStream& stream) const;
 
   static GPUDeviceManager& GetInstance() {
     static GPUDeviceManager instance;
@@ -55,13 +58,16 @@ class GPUDeviceManager {
   GPUDeviceManager(const GPUDeviceManager&) = delete;
   GPUDeviceManager& operator=(const GPUDeviceManager&) = delete;
 
-  // default cuda stream used for all the kernels.
-  DeviceStream stream_{nullptr};
+  // default CUDA stream used for all the kernels.
+  DeviceStream default_stream_{nullptr};
 
-  // handle used for cudnn kernels.
+  // all gpu CUDA streams including default_stream_.
+  std::vector<DeviceStream> gpu_streams_;
+
+  // handle used for cuDNN kernels.
   cudnnHandle_t cudnn_handle_{nullptr};
 
-  // handle used for cublas kernels.
+  // handle used for cuBLAS kernels.
   cublasHandle_t cublas_handle_{nullptr};
 
   bool dev_id_init_;
