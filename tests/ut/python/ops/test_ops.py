@@ -80,6 +80,29 @@ class NetForConcat1(nn.Cell):
         return self.concat((x1, x2))
 
 
+class NetForPackInput(nn.Cell):
+    def __init__(self, op):
+        super(NetForPackInput, self).__init__()
+        self.op = op
+        self.mul = P.Mul()
+
+    def construct(self, *args):
+        t = ()
+        for i in range(len(args)):
+            t = t + (self.mul(args[i], args[i]),)
+        return self.op(t)
+
+
+class NetForUnpackInput(nn.Cell):
+    def __init__(self, op):
+        super(NetForUnpackInput, self).__init__()
+        self.op = op
+        self.mul = P.Mul()
+
+    def construct(self, x1):
+        return self.op((self.mul(x1, x1)))
+
+
 class NetForFlatten(nn.Cell):
     def __init__(self):
         super(NetForFlatten, self).__init__()
@@ -973,6 +996,36 @@ test_case_array_ops = [
                          Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)))],
         'desc_bprop': [[3,]]}),
+    ('Pack_0', {
+        'block': NetForPackInput(P.Pack()),
+        'desc_inputs':[[2, 2], [2, 2], [2, 2]],
+        'desc_bprop':[[3, 2, 2]],
+    }),
+    ('Pack_1', {
+        'block': NetForPackInput(P.Pack(axis=-2)),
+        'desc_inputs':[[3, 2, 3], [3, 2, 3], [3, 2, 3]],
+        'desc_bprop':[[3, 2, 3, 3]],
+    }),
+    ('Pack_2', {
+        'block': NetForPackInput(P.Pack()),
+        'desc_inputs':[[2, 2]],
+        'desc_bprop':[[2, 2, 2]],
+    }),
+    ('Pack_3', {
+        'block': NetForPackInput(P.Pack()),
+        'desc_inputs':[[128, 128], [128, 128]],
+        'desc_bprop':[[2, 128, 128]],
+    }),
+    ('Unpack_0', {
+        'block': NetForUnpackInput(P.Unpack(axis=0)),
+        'desc_inputs':[[2, 4]],
+        'desc_bprop':[[4], [4]],
+    }),
+    ('Unpack_1', {
+        'block': NetForUnpackInput(P.Unpack(axis=-1)),
+        'desc_inputs':[Tensor(np.array([[1, 1, 1]], np.float32))],
+        'desc_bprop':[[1], [1], [1]],
+    }),
     ('Diag', {
         'block': P.Diag(),
         'desc_inputs': [[4]],

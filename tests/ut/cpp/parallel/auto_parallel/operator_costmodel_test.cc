@@ -76,8 +76,8 @@ TEST_F(TestMatMulCost, test_CostGeneration) {
   mmcost_.SetInputAndOutputTypeLength(inputs_length, outputs_length);
   mmcost_.GetForwardCommCost(inputs, outputs, 0);
   mmcost_.GetBackwardCommCost(inputs, outputs, 0);
-  mmcost_.GetForwardMemoryCost(inputs, outputs, 0);
-  mmcost_.GetBackwardMemoryCost(inputs, outputs, 0);
+  mmcost_.GetForwardComputationCost(inputs, outputs, 0);
+  mmcost_.GetForwardComputationCost(inputs, outputs, 0);
 }
 
 class TestActivationCost : public UT::Common {
@@ -128,8 +128,8 @@ TEST_F(TestActivationCost, test_CostGeneration) {
   std::vector<size_t> inputs_length = {4, 4};
   std::vector<size_t> outputs_length = {4};
   ac_cost_.SetInputAndOutputTypeLength(inputs_length, outputs_length);
-  ac_cost_.GetForwardMemoryCost(inputs, outputs, 0);
-  ac_cost_.GetBackwardMemoryCost(inputs, outputs, 0);
+  ac_cost_.GetForwardComputationCost(inputs, outputs, 0);
+  ac_cost_.GetBackwardComputationCost(inputs, outputs, 0);
 }
 
 class TestPReLUCost : public UT::Common {
@@ -184,8 +184,8 @@ TEST_F(TestPReLUCost, test_CostGeneration) {
   prelu_cost_.SetInputAndOutputTypeLength(inputs_length, outputs_length);
   double BCC, FMC, GMC;
   BCC = prelu_cost_.GetBackwardCommCost(inputs, outputs, 0);
-  FMC = prelu_cost_.GetForwardMemoryCost(inputs, outputs, 0);
-  GMC = prelu_cost_.GetBackwardMemoryCost(inputs, outputs, 0);
+  FMC = prelu_cost_.GetForwardComputationCost(inputs, outputs, 0);
+  GMC = prelu_cost_.GetBackwardComputationCost(inputs, outputs, 0);
   ASSERT_EQ(BCC, 32 * 4);
   ASSERT_EQ(FMC, 8 * 32 * 8 * 8 * 4 + 32 * 4);
   ASSERT_EQ(GMC, 128);

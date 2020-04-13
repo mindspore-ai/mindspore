@@ -31,16 +31,13 @@ class BatchParallelInfo : public OperatorInfo {
  public:
   BatchParallelInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
                     const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs), dev_num_(1) {
-    bp_cost_ptr_ = std::make_shared<BatchParallelCost>();
-  }
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()), dev_num_(1) {}
 
   ~BatchParallelInfo() override = default;
   Status Init(const StrategyPtr& strategy) override;
   Status InitForCostModel(const StrategyPtr& strategy) override;
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return bp_cost_ptr_; }
 
  protected:
   Status CheckStrategy(const StrategyPtr& strategy) override;
@@ -55,7 +52,6 @@ class BatchParallelInfo : public OperatorInfo {
 
  private:
   int32_t dev_num_;
-  BatchParallelCostPtr bp_cost_ptr_;
 };
 
 class SparseSoftmaxCrossEntropyWithLogitsInfo : public BatchParallelInfo {

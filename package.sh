@@ -96,14 +96,29 @@ if [ -n "$1" ];then
 else
     export BACKEND_POLICY="ms"
 fi
-${PYTHON} "${BASEPATH}/setup_package.py" bdist_wheel
+
+# package name
+if [[ "X$1" = "Xge" ]]; then
+    export MS_PACKAGE_NAME="mindspore"
+elif [[ "X$1" = "Xms" && "X$2" = "Xgpu" ]]; then
+    export MS_PACKAGE_NAME="mindspore-gpu"
+elif [[ "X$1" = "Xms" && "X$2" = "Xascend" ]]; then
+    export MS_PACKAGE_NAME="mindspore-ascend"
+elif [[ "X$1" = "Xms" && "X$2" = "Xcpu" ]]; then
+    export MS_PACKAGE_NAME="mindspore"
+else
+    export MS_PACKAGE_NAME="mindspore"
+fi
+
+${PYTHON} "${BASEPATH}/setup.py" bdist_wheel
 
 chmod -R 700 ${PACKAGE_PATH}/mindspore/
-chmod -R 700 ${PACKAGE_PATH}/mindspore.egg-info/
+chmod -R 700 ${PACKAGE_PATH}/${MS_PACKAGE_NAME//-/_}.egg-info/
 
 # rename package
 PACKAGE_FULL_NAME=$(find "${PACKAGE_PATH}" -iname "*.whl")
 PACKAGE_BASE_NAME=$(echo ${PACKAGE_FULL_NAME} | awk -F / '{print $NF}' | awk -F - '{print $1"-"$2}')
+PACKAGE_BASE_NAME=${PACKAGE_BASE_NAME//_*-/-}
 
 PACKAGE_NEW_NAME="${PACKAGE_BASE_NAME}-${PY_TAGS}-${PLATFORM_TAG}.whl"
 cp -rf "${PACKAGE_PATH}/dist"/*.whl "${PACKAGE_PATH}/${PACKAGE_NEW_NAME}"

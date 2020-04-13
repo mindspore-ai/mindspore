@@ -26,8 +26,8 @@
 #include "common/utils.h"
 #include "dataset/util/status.h"
 #include "dataset/core/tensor_shape.h"
-#include "dataset/util/make_unique.h"
 #include "utils/log_adapter.h"
+#include "dataset/util/de_error.h"
 
 namespace mindspore {
 namespace dataset {
@@ -58,7 +58,7 @@ ColDescriptor::ColDescriptor(const std::string &col_name, DataType col_type, Ten
   // our shape.  Otherwise, set our shape to be empty.
   if (in_shape != nullptr) {
     // Create a shape and copy construct it into our column's shape.
-    tensor_shape_ = mindspore::make_unique<TensorShape>(*in_shape);
+    tensor_shape_ = std::make_unique<TensorShape>(*in_shape);
   } else {
     tensor_shape_ = nullptr;
   }
@@ -75,7 +75,7 @@ ColDescriptor::ColDescriptor(const std::string &col_name, DataType col_type, Ten
 ColDescriptor::ColDescriptor(const ColDescriptor &in_cd)
     : type_(in_cd.type_), rank_(in_cd.rank_), tensor_impl_(in_cd.tensor_impl_), col_name_(in_cd.col_name_) {
   // If it has a tensor shape, make a copy of it with our own unique_ptr.
-  tensor_shape_ = in_cd.hasShape() ? mindspore::make_unique<TensorShape>(in_cd.shape()) : nullptr;
+  tensor_shape_ = in_cd.hasShape() ? std::make_unique<TensorShape>(in_cd.shape()) : nullptr;
 }
 
 // Assignment overload
@@ -86,7 +86,7 @@ ColDescriptor &ColDescriptor::operator=(const ColDescriptor &in_cd) {
     tensor_impl_ = in_cd.tensor_impl_;
     col_name_ = in_cd.col_name_;
     // If it has a tensor shape, make a copy of it with our own unique_ptr.
-    tensor_shape_ = in_cd.hasShape() ? mindspore::make_unique<TensorShape>(in_cd.shape()) : nullptr;
+    tensor_shape_ = in_cd.hasShape() ? std::make_unique<TensorShape>(in_cd.shape()) : nullptr;
   }
   return *this;
 }

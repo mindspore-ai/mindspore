@@ -28,7 +28,6 @@
 #include "dataset/core/global_context.h"
 #include "dataset/core/pybind_support.h"
 #include "dataset/core/tensor_shape.h"
-#include "dataset/util/make_unique.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -53,7 +52,7 @@ namespace dataset {
 Tensor::Tensor(const TensorShape &shape, const DataType &type) : shape_(shape), type_(type), data_(nullptr) {
   // grab the mem pool from global context and create the allocator for char data area
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
-  data_allocator_ = mindspore::make_unique<Allocator<unsigned char>>(global_pool);
+  data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
 }
 
 Tensor::Tensor(const TensorShape &shape, const DataType &type, const unsigned char *data) : Tensor(shape, type) {
@@ -137,7 +136,7 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, py::array arr) {
   if ((*ptr)->type_ == DataType::DE_UNKNOWN) RETURN_STATUS_UNEXPECTED("Invalid data type.");
 
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
-  (*ptr)->data_allocator_ = mindspore::make_unique<Allocator<unsigned char>>(global_pool);
+  (*ptr)->data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
   static_cast<void>((*ptr)->StartAddr());
   int64_t byte_size = (*ptr)->SizeInBytes();
   unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);

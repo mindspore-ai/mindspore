@@ -38,7 +38,7 @@ from .iterators import DictIterator, TupleIterator
 from .validators import check, check_batch, check_shuffle, check_map, check_repeat, check_zip, check_rename, \
     check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
-    check_zip_dataset
+    check_zip_dataset, check_add_column
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -82,8 +82,6 @@ def zip(datasets):
     if len(datasets) <= 1:
         raise ValueError(
             "Can't zip empty or just one dataset!")
-    if not isinstance(datasets, tuple):
-        raise TypeError("The zip function %s type error!" % (datasets))
     return ZipDataset(datasets)
 
 
@@ -1814,7 +1812,7 @@ class TFRecordDataset(SourceDataset):
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files)
         >>> # 2) get all rows from dataset_files with user-defined schema:
         >>> schema = ds.Schema()
-        >>> schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
+        >>> schema.add_column('col_1d', de_type=mindspore.int64, shape=[2])
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema=schema)
         >>> # 3) get all rows from dataset_files with schema file "./schema.json":
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema="./schema.json")
@@ -2325,7 +2323,7 @@ class Schema:
         >>> import mindspore.common.dtype as mstype
         >>> # create schema, specify column name, mindspore.dtype and shape of the column
         >>> schema = ds.Schema()
-        >>> schema.add_column('col1', de_type=mstype.int64, shape=[2])
+        >>> schema.add_column('col1', de_type=mindspore.int64, shape=[2])
     """
 
     def __init__(self, schema_file=None):
@@ -2334,13 +2332,20 @@ class Schema:
             self.dataset_type = ''
             self.num_rows = 0
         else:
+            if not os.path.isfile(schema_file) or not os.access(schema_file, os.R_OK):
+                raise ValueError("The file %s does not exist or permission denied!" % schema_file)
             try:
                 with open(schema_file, 'r') as load_f:
                     json_obj = json.load(load_f)
-                    self.from_json(json_obj)
             except json.decoder.JSONDecodeError:
-                raise RuntimeError("Schema file failed to load")
+                raise RuntimeError("Schema file failed to load.")
+            except UnicodeDecodeError:
+                raise RuntimeError("Schema file failed to decode.")
+            except Exception:
+                raise RuntimeError("Schema file failed to open.")
+            self.from_json(json_obj)
 
+    @check_add_column
     def add_column(self, name, de_type, shape=None):
         """
         Add new column to the schema.
@@ -2359,10 +2364,8 @@ class Schema:
         if isinstance(de_type, typing.Type):
             de_type = mstype_to_detype(de_type)
             new_column["type"] = str(de_type)
-        elif isinstance(de_type, str):
-            new_column["type"] = str(DataType(de_type))
         else:
-            raise ValueError("Unknown column type")
+            new_column["type"] = str(DataType(de_type))
 
         if shape is not None:
             new_column["shape"] = shape
@@ -2391,7 +2394,7 @@ class Schema:
         Parse the columns and add it to self.
 
         Args:
-            columns (list[str]): names of columns.
+            columns (dict or list[str]): names of columns.
 
         Raises:
             RuntimeError: If failed to parse schema file.
@@ -2399,6 +2402,8 @@ class Schema:
             RuntimeError: If column's name field is missing.
             RuntimeError: If column's type field is missing.
         """
+        if columns is None:
+            raise TypeError("Expected non-empty dict or string list.")
         self.columns = []
         for col in columns:
             name = None
@@ -2443,6 +2448,8 @@ class Schema:
             RuntimeError: if dataset type is missing in the object.
             RuntimeError: if columns are missing in the object.
         """
+        if not isinstance(json_obj, dict) or json_obj is None:
+            raise ValueError("Expected non-empty dict.")
         for k, v in json_obj.items():
             if k == "datasetType":
                 self.dataset_type = v

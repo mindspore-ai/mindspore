@@ -225,7 +225,7 @@ Status DeviceQueueOp::SendDataToCPU() {
   MS_LOG(INFO) << "Device queue, sending data to CPU.";
   int64_t total_batch = 0;
 
-  std::unique_ptr<ChildIterator> child_iterator = mindspore::make_unique<ChildIterator>(this, 0, 0);
+  std::unique_ptr<ChildIterator> child_iterator = std::make_unique<ChildIterator>(this, 0, 0);
   while (!(child_iterator->eof_handled())) {
     TensorRow curr_row;
     RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&curr_row));

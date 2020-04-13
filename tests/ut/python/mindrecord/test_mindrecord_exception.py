@@ -16,7 +16,7 @@
 import os
 import pytest
 from mindspore.mindrecord import FileWriter, FileReader, MindPage
-from mindspore.mindrecord import MRMOpenError, MRMGenerateIndexError, ParamValueError
+from mindspore.mindrecord import MRMOpenError, MRMGenerateIndexError, ParamValueError, MRMGetMetaError
 from mindspore import log as logger
 from utils import get_data
 
@@ -280,3 +280,9 @@ def test_cv_file_writer_shard_num_greater_than_1000():
     with pytest.raises(ParamValueError) as err:
         FileWriter(CV_FILE_NAME, 1001)
     assert 'Shard number should between' in str(err.value)
+
+def test_add_index_without_add_schema():
+    with pytest.raises(MRMGetMetaError) as err:
+        fw = FileWriter(CV_FILE_NAME)
+        fw.add_index(["label"])
+    assert 'Failed to get meta info' in str(err.value)

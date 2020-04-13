@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """
-Function: 
+Function:
     test network
-Usage: 
+Usage:
     python test_network_main.py --net lenet --target Ascend
 """
 import os

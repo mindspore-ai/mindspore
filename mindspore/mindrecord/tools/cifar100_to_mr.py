@@ -24,7 +24,7 @@ from mindspore import log as logger
 from .cifar100 import Cifar100
 from ..common.exceptions import PathNotExistsError
 from ..filewriter import FileWriter
-from ..shardutils import check_filename
+from ..shardutils import check_filename, SUCCESS
 try:
     cv2 = import_module("cv2")
 except ModuleNotFoundError:
@@ -98,8 +98,11 @@ class Cifar100ToMR:
         data_list = _construct_raw_data(images, fine_labels, coarse_labels)
         test_data_list = _construct_raw_data(test_images, test_fine_labels, test_coarse_labels)
 
-        _generate_mindrecord(self.destination, data_list, fields, "img_train")
-        _generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test")
+        if _generate_mindrecord(self.destination, data_list, fields, "img_train") != SUCCESS:
+            return FAILED
+        if _generate_mindrecord(self.destination + "_test", test_data_list, fields, "img_test") != SUCCESS:
+            return FAILED
+        return SUCCESS
 
 def _construct_raw_data(images, fine_labels, coarse_labels):
     """

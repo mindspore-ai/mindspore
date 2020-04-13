@@ -276,13 +276,13 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
         shape (Union[tuple, list, int]): A list of integers, a tuple of integers or an integer as the shape of
             output. Default: None.
-        dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mstype.float32.
+        dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mindspore.float32.
 
     Returns:
         Tensor, initialized tensor.
 
     Examples:
-        >>> tensor = initializer('ones', [1, 2, 3], mstype.float32)
+        >>> tensor = initializer('ones', [1, 2, 3], mindspore.float32)
     """
     if not isinstance(init, (Tensor, numbers.Number, str, Initializer)):
         raise TypeError('Unsupported init type.')

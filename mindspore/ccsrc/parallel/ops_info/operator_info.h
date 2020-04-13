@@ -53,12 +53,13 @@ class Edge;
 
 class OperatorInfo {
  public:
-  OperatorInfo(std::string name, Shapes inputs_shape, Shapes outputs_shape, PrimitiveAttrs attrs)
+  OperatorInfo(std::string name, Shapes inputs_shape, Shapes outputs_shape, PrimitiveAttrs attrs, OperatorCostPtr cost)
       : name_(std::move(name)),
         inputs_shape_(std::move(inputs_shape)),
         outputs_shape_(std::move(outputs_shape)),
         attrs_(std::move(attrs)),
-        is_alive_(true) {
+        is_alive_(true),
+        cost_(cost) {
     std::vector<bool> not_parameteter(inputs_shape_.size(), false);
     is_parameter_ = not_parameteter;
     refkey_parameter_name_ = "";
@@ -75,7 +76,8 @@ class OperatorInfo {
   // Given the stage_id (which indicates the number of devices),
   // generate all strategies for this operator
   virtual Status GenerateStrategies(int32_t stage_id) = 0;
-  virtual OperatorCostPtr GetOperatorCost() const = 0;
+  const OperatorCostPtr& cost() const { return cost_; }
+  void set_cost(const OperatorCostPtr& cost) { cost_ = cost; }
   virtual Status SetCostUnderStrategy(const StrategyPtr& strategy) = 0;
 
   virtual std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies();
@@ -87,13 +89,9 @@ class OperatorInfo {
   // is checked
   Status SetCostUnderStrategyBase(const StrategyPtr& strategy);
   std::vector<std::shared_ptr<StrategyWithCost>> GetStrategyCost() { return strategy_cost_; }
-  // In the case of a Parameter (or a output) being used by multiple operators, the memory cost induced by
-  // the parameter (or a output) should be calculated only once. This method is used to
-  // remove this part from the 'strategy_cost_'.
-  Status CorrectStrategyCostForMultiOutputUse(size_t input_index);
   // When the input of a operator contains WEIGHT or a output from other operators involving WEIGHT, then these input
   // should stay in memory until it is used in the backward phase, which is kept in memory at the end of forward phase.
-  Status CorrectStrategyCostForMemoryReuse() const { return SUCCESS; }
+  Status CalculateMemoryCost() const { return SUCCESS; }
   int ComputeOpAndPrevEdgeParameterInvolved();
 
   ForwardOp forward_op() const { return forward_op_; }
@@ -119,7 +117,7 @@ class OperatorInfo {
   void ReplaceSuccEdge(const std::shared_ptr<OperatorInfo>& op, const std::shared_ptr<Edge>& new_edge);
   void ReplacePreEdges(const std::shared_ptr<OperatorInfo>& op, const std::shared_ptr<Edge>& new_edge);
   void ReplaceSuccEdges(const std::shared_ptr<OperatorInfo>& op, const std::shared_ptr<Edge>& new_edge);
-  std::vector<size_t> GetOutputTypeLengths() const { return GetOperatorCost()->outputs_type_lengths(); }
+  std::vector<size_t> GetOutputTypeLengths() const { return cost()->outputs_type_lengths(); }
   void SetSelectedStrategyAndCost(const StrategyPtr& s_strategy, const CostPtr& cost) {
     selected_strategy_ = s_strategy;
     selected_cost_ = cost;
@@ -225,6 +223,9 @@ class OperatorInfo {
   std::string refkey_parameter_name_;
   CNodePtr cnode_;
   int32_t used_devices_ = -1;
+
+ private:
+  OperatorCostPtr cost_;
 };
 
 Shape GetSliceShape(const Shape& tensor_shape, const Dimensions& strategy);

@@ -1978,6 +1978,7 @@ CNodePtr FindLossCNode(const FuncGraphPtr& func_graph) {
     current_prim = GetValueNode<PrimitivePtr>(pre_cnode->input(0));
   }
 
+
   // notice: the GetNext op has not input
   if (INVALID_LOSS_OPS.find(current_prim->name()) != INVALID_LOSS_OPS.end()) {
     MS_LOG(INFO) << "The loss is: " << current_prim->name();

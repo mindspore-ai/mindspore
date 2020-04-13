@@ -43,7 +43,7 @@ Status MnistOp::Builder::Build(std::shared_ptr<MnistOp> *ptr) {
   if (builder_sampler_ == nullptr) {
     builder_sampler_ = std::make_shared<SequentialSampler>();
   }
-  builder_schema_ = make_unique<DataSchema>();
+  builder_schema_ = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(
     builder_schema_->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));
   TensorShape scalar = TensorShape::CreateScalar();
@@ -89,7 +89,7 @@ Status MnistOp::TraversalSampleIds(const std::shared_ptr<Tensor> &sample_ids, st
     row_cnt_++;
     if (row_cnt_ % rows_per_buffer_ == 0) {
       RETURN_IF_NOT_OK(io_block_queues_[buf_cnt_++ % num_workers_]->Add(
-        make_unique<IOBlock>(IOBlock(*keys, IOBlock::kDeIoBlockNone))));
+        std::make_unique<IOBlock>(IOBlock(*keys, IOBlock::kDeIoBlockNone))));
       keys->clear();
     }
   }
@@ -115,21 +115,21 @@ Status MnistOp::operator()() {
     }
     if (keys.empty() == false) {
       RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
-        make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
+        std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
     }
     if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
       RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
+        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
+        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
       for (int32_t i = 0; i < num_workers_; ++i) {
         RETURN_IF_NOT_OK(
-          io_block_queues_[i]->Add(make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
+          io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
       }
       return Status::OK();
     } else {
       RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
+        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
       RETURN_IF_NOT_OK(wp_.Wait());  // Master thread goes to sleep after it has made all the IOBlocks
       wp_.Clear();
       RETURN_IF_NOT_OK(sampler_->GetNextBuffer(&sampler_buffer));
@@ -145,15 +145,15 @@ Status MnistOp::WorkerEntry(int32_t worker_id) {
   RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&iOBlock));
   while (iOBlock != nullptr) {
     if (iOBlock->eoe() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
+      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
       buffer_id = worker_id;
     } else if (iOBlock->eof() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
+      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
     } else {
       std::vector<int64_t> keys;
       RETURN_IF_NOT_OK(iOBlock->GetKeys(&keys));
       if (keys.empty() == true) return Status::OK();  // empty key is a quit signal for workers
-      std::unique_ptr<DataBuffer> db = make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
+      std::unique_ptr<DataBuffer> db = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
       RETURN_IF_NOT_OK(LoadBuffer(keys, &db));
       RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db)));
       buffer_id += num_workers_;
@@ -178,7 +178,7 @@ Status MnistOp::LoadTensorRow(const MnistLabelPair &mnist_pair, TensorRow *trow)
 
 // Looping over LoadTensorRow to make 1 DataBuffer. 1 function call produces 1 buffer
 Status MnistOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db) {
-  std::unique_ptr<TensorQTable> deq = make_unique<TensorQTable>();
+  std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
   TensorRow trow;
   for (const int64_t &key : keys) {
     RETURN_IF_NOT_OK(this->LoadTensorRow(image_label_pairs_[key], &trow));
@@ -309,8 +309,8 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
   CHECK_FAIL_RETURN_UNEXPECTED((num_images == num_labels), "num_images != num_labels");
   // The image size of the Mnist dataset is fixed at [28,28]
   int64_t size = kMnistImageRows * kMnistImageCols;
-  auto images_buf = mindspore::make_unique<char[]>(size * num_images);
-  auto labels_buf = mindspore::make_unique<char[]>(num_images);
+  auto images_buf = std::make_unique<char[]>(size * num_images);
+  auto labels_buf = std::make_unique<char[]>(num_images);
   if (images_buf == nullptr || labels_buf == nullptr) {
     std::string err_msg = "Fail to allocate memory for MNIST Buffer.";
     MS_LOG(ERROR) << err_msg.c_str();

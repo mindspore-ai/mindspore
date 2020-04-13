@@ -26,7 +26,7 @@ usage()
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-s] [-b ge|cpu] [-m infer|train] \\"
   echo "              [-a on|off] [-g on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
-  echo "              [-P on|off] [-z] [-M on|off] [-V 9.2|10.1] [-I] [-K]"
+  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
@@ -50,8 +50,8 @@ usage()
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
   echo "    -Q Enable dump end to end, default off"
   echo "    -D Enable dumping of function graph ir, default on"
-  echo "    -z Compile dataset & mindrecord, default off"
-  echo "    -M Enable MPI and NCCL for GPU training, default off"
+  echo "    -z Compile dataset & mindrecord, default on"
+  echo "    -M Enable MPI and NCCL for GPU training, default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 9.2"
   echo "    -I Compile predict, default off"
   echo "    -K Compile with AKG, default off"
@@ -88,8 +88,8 @@ checkopts()
   ENABLE_DUMP2PROTO="on"
   ENABLE_DUMPE2E="off"
   ENABLE_DUMP_IR="on"
-  COMPILE_MINDDATA="off"
-  ENABLE_MPI="off"
+  COMPILE_MINDDATA="on"
+  ENABLE_MPI="on"
   CUDA_VERSION="9.2"
   COMPILE_PREDICT="off"
   USE_GLOG="on"
@@ -177,7 +177,7 @@ checkopts()
         if [[ "X$OPTARG" == "Xgpu" ]]; then
           ENABLE_GPU="on"
           ENABLE_CPU="on"
-        elif [[ "X$OPTARG" == "Xd" ]]; then
+        elif [[ "X$OPTARG" == "Xd" || "X$OPTARG" == "Xascend" ]]; then
           ENABLE_D="on"
           ENABLE_CPU="on"
         elif [[ "X$OPTARG" == "Xcpu" ]]; then
@@ -216,7 +216,17 @@ checkopts()
         echo "enable dump function graph ir"
         ;;
       z)
-        COMPILE_MINDDATA="on"
+        eval ARG=\$\{$OPTIND\}
+        if [[ -n $ARG && $ARG != -* ]]; then
+          OPTARG=$ARG
+          check_on_off $OPTARG z
+          OPTIND=$((OPTIND + 1))
+        else
+          OPTARG=""
+        fi
+        if [[ "X$OPTARG" == "Xoff" ]]; then
+          COMPILE_MINDDATA="off"
+        fi
         ;;
       I)
         COMPILE_PREDICT="on"
@@ -452,8 +462,10 @@ if [[ "X$INC_BUILD" = "Xoff" ]]; then
         bash "${PROJECT_PATH}/package.sh" ge
     elif [[ "X$ENABLE_GPU" = "Xon" ]]; then
         bash "${PROJECT_PATH}/package.sh" ms gpu
-    elif [[ "X$ENABLE_D" = "Xon" ]] || [[ "X$ENABLE_CPU" = "Xon" ]]; then
-        bash "${PROJECT_PATH}/package.sh" ms
+    elif [[ "X$ENABLE_D" = "Xon" ]]; then
+        bash "${PROJECT_PATH}/package.sh" ms ascend
+    elif [[ "X$ENABLE_CPU" = "Xon" ]]; then
+        bash "${PROJECT_PATH}/package.sh" ms cpu
     else
         bash "${PROJECT_PATH}/package.sh" debug
     fi

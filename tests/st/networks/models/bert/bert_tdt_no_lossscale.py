@@ -103,9 +103,9 @@ def me_de_train_dataset():
     """test me de train dataset"""
     # apply repeat operations
     repeat_count = 1
-    ds = de.StorageDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
+    ds = de.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
                                                                "next_sentence_labels", "masked_lm_positions",
-                                                               "masked_lm_ids", "masked_lm_weights"])
+                                                               "masked_lm_ids", "masked_lm_weights"], shuffle=False)
     type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
     ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)

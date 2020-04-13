@@ -38,9 +38,7 @@ using DsOpPtr = std::shared_ptr<DatasetOp>;
 enum OpName {
   kStorage = 0,
   kShuffle,
-#ifdef ENABLE_MINDRECORD
   kMindrecord,
-#endif
   kBatch,
   kCache,
   kRepeat,
@@ -101,11 +99,9 @@ class DEPipeline {
 
   Status ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
-#ifdef ENABLE_MINDRECORD
   Status CheckMindRecordPartitionInfo(const py::dict &args, std::vector<int> *ptr);
 
   Status ParseMindRecordOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
-#endif
 
   Status ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 

@@ -16,5 +16,6 @@
 
 from .akg.gpu import *
 from .tbe import *
+from .aicpu import *
 
 __all__ = []

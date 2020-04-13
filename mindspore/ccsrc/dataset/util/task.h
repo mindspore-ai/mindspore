@@ -27,7 +27,6 @@
 #include <string>
 #include <thread>
 #include "dataset/util/de_error.h"
-#include "dataset/util/make_unique.h"
 #include "dataset/util/intrp_resource.h"
 #include "dataset/util/list.h"
 #include "dataset/util/memory_pool.h"

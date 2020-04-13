@@ -40,7 +40,7 @@ Status DataBuffer::CreateDataBuffer(
       case DatasetType::kTf: {
         // This type of buffer is for TF record data.
         // Allocate derived class version for a TF buffers
-        new_data_buffer = mindspore::make_unique<TFBuffer>(id, kDeBFlagNone, storage_client);
+        new_data_buffer = std::make_unique<TFBuffer>(id, kDeBFlagNone, storage_client);
         break;
       }
       default: {

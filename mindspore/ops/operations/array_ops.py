@@ -62,7 +62,7 @@ class ExpandDims(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> expand_dims = ExpandDims()
+        >>> expand_dims = P.ExpandDims()
         >>> output = expand_dims(input_tensor, 0)
     """
 
@@ -101,7 +101,7 @@ class DType(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> type = DType()(input_tensor)
+        >>> type = P.DType()(input_tensor)
     """
 
     @prim_attr_register
@@ -134,7 +134,7 @@ class SameTypeShape(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
         >>> input_y = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> out = SameTypeShape()(input_x, input_y)
+        >>> out = P.SameTypeShape()(input_x, input_y)
     """
 
     @prim_attr_register
@@ -175,7 +175,7 @@ class Cast(PrimitiveWithInfer):
         >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
         >>> input_x = Tensor(input_np)
         >>> type_dst = mindspore.int32
-        >>> cast = Cast()
+        >>> cast = P.Cast()
         >>> result = cast(input_x, type_dst)
         >>> expect = input_np.astype(type_dst)
     """
@@ -227,7 +227,7 @@ class IsSubClass(PrimitiveWithInfer):
         bool, the check result.
 
     Examples:
-        >>> result = IsSubClass()(mindspore.int32,  mindspore.intc)
+        >>> result = P.IsSubClass()(mindspore.int32,  mindspore.intc)
     """
 
     @prim_attr_register
@@ -262,7 +262,7 @@ class IsInstance(PrimitiveWithInfer):
 
     Examples:
         >>> a = 1
-        >>> result = IsInstance()(a, mindspore.int32)
+        >>> result = P.IsInstance()(a, mindspore.int32)
     """
 
     @prim_attr_register
@@ -303,7 +303,7 @@ class Reshape(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> reshape = Reshape()
+        >>> reshape = P.Reshape()
         >>> output = reshape(input_tensor, (3, 2))
     """
 
@@ -366,7 +366,7 @@ class Shape(Primitive):
 
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> shape = Shape()
+        >>> shape = P.Shape()
         >>> output = shape(input_tensor)
     """
 
@@ -398,7 +398,7 @@ class Squeeze(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> squeeze = Squeeze(2)
+        >>> squeeze = P.Squeeze(2)
         >>> output = squeeze(input_tensor)
     """
 
@@ -450,7 +450,7 @@ class Transpose(PrimitiveWithInfer):
     Examples:
         >>> input_tensor = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
         >>> perm = (0, 2, 1)
-        >>> transpose = Transpose()
+        >>> transpose = P.Transpose()
         >>> output = transpose(input_tensor, perm)
     """
 
@@ -504,10 +504,10 @@ class GatherV2(PrimitiveWithInfer):
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
 
     Examples:
-        >>> params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
-        >>> indices = Tensor(np.array([1, 2]), mindspore.int32)
+        >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
+        >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
         >>> axis = 1
-        >>> out = GatherV2()(params, indices, axis)
+        >>> out = P.GatherV2()(input_params, input_indices, axis)
     """
 
     @prim_attr_register
@@ -556,7 +556,7 @@ class Split(PrimitiveWithInfer):
         :math:`(y_1, y_2, ..., y_S)`.
 
     Examples:
-        >>> split = Split(1, 2)
+        >>> split = P.Split(1, 2)
         >>> x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
         >>> output = split(x)
     """
@@ -606,7 +606,7 @@ class Rank(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> rank = Rank()
+        >>> rank = P.Rank()
         >>> rank(input_tensor)
     """
 
@@ -640,7 +640,7 @@ class TruncatedNormal(PrimitiveWithInfer):
 
     Examples:
         >>> input_shape = Tensor(np.array([1, 2, 3]))
-        >>> truncated_normal = TruncatedNormal()
+        >>> truncated_normal = P.TruncatedNormal()
         >>> output = truncated_normal(input_shape)
     """
 
@@ -681,7 +681,7 @@ class Size(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32)
-        >>> size = Size()
+        >>> size = P.Size()
         >>> output = size(input_tensor)
     """
 
@@ -826,7 +826,7 @@ class TupleToArray(PrimitiveWithInfer):
         Tensor, if the input tuple contain `N` numbers, then the output tensor shape is (N,).
 
     Examples:
-        >>> type = TupleToArray()((1,2,3))
+        >>> type = P.TupleToArray()((1,2,3))
     """
 
     @prim_attr_register
@@ -861,7 +861,7 @@ class ScalarToArray(PrimitiveWithInfer):
         Tensor. 0-D Tensor and the content is the input.
 
     Examples:
-        >>> op = ScalarToArray()
+        >>> op = P.ScalarToArray()
         >>> data = 1.0
         >>> output = op(data)
     """
@@ -893,7 +893,7 @@ class ScalarToTensor(PrimitiveWithInfer):
         Tensor. 0-D Tensor and the content is the input.
 
     Examples:
-        >>> op = ScalarToTensor()
+        >>> op = P.ScalarToTensor()
         >>> data = 1
         >>> output = op(data, mindspore.float32)
     """
@@ -934,7 +934,7 @@ class InvertPermutation(PrimitiveWithInfer):
         tuple[int]. the lenth is same as input.
 
     Examples:
-        >>> invert = InvertPermutation()
+        >>> invert = P.InvertPermutation()
         >>> input_data = (3, 4, 0, 2, 1)
         >>> output = invert(input_data)
         >>> output == (2, 4, 3, 0, 1)
@@ -982,8 +982,8 @@ class Argmax(PrimitiveWithInfer):
         Tensor, indices of the max value of input tensor across the axis.
 
     Examples:
-        >>> input = Tensor(np.array([2.0, 3.1, 1.2]))
-        >>> index = Argmax()(input)
+        >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]))
+        >>> index = P.Argmax()(input_x)
         >>> assert index == Tensor(1, mindspore.int64)
     """
 
@@ -1030,8 +1030,8 @@ class Argmin(PrimitiveWithInfer):
         Tensor, indices of the min value of input tensor across the axis.
 
     Examples:
-        >>> input = Tensor(np.array([2.0, 3.1, 1.2]))
-        >>> index = Argmin()(input)
+        >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]))
+        >>> index = P.Argmin()(input_x)
         >>> assert index == Tensor(2, mindspore.int64)
     """
 
@@ -1082,8 +1082,8 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
 
     Examples:
-        >>> input = Tensor(np.random.rand(5))
-        >>> index, output = ArgMaxWithValue()(input)
+        >>> input_x = Tensor(np.random.rand(5))
+        >>> index, output = P.ArgMaxWithValue()(input_x)
     """
 
     @prim_attr_register
@@ -1129,8 +1129,8 @@ class ArgMinWithValue(PrimitiveWithInfer):
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
 
     Examples:
-        >>> input = Tensor(np.random.rand(5))
-        >>> index, output = ArgMinWithValue()(input)
+        >>> input_x = Tensor(np.random.rand(5))
+        >>> index, output = P.ArgMinWithValue()(input_x)
     """
     @prim_attr_register
     def __init__(self, axis=0, keep_dims=False):
@@ -1325,7 +1325,7 @@ class Concat(PrimitiveWithInfer):
     Examples:
         >>> data1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
         >>> data2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
-        >>> op = Concat()
+        >>> op = P.Concat()
         >>> output = op((data1, data2))
     """
 
@@ -1346,6 +1346,142 @@ class Concat(PrimitiveWithInfer):
         ret_shp[axis] = all_shp
         out = {'shape': ret_shp,
                'dtype': x_type[0],
+               'value': None}
+        return out
+
+
+def _get_pack_shape(x_shape, x_type, axis):
+    """for pack output shape"""
+    validator.check_type("shape", x_shape, [tuple])
+    validator.check_integer("len of input_x shape", len(x_shape), 0, Rel.GT)
+    validator.check_subclass("shape0", x_type[0], mstype.tensor)
+    validator.check_integer("len of input_x0 shape", len(x_shape[0]), 0, Rel.GT)
+    rank_base = len(x_shape[0])
+    N = len(x_shape)
+    out_shape = x_shape[0]
+    validator.check_int_range('axis', axis, -rank_base - 1, rank_base, Rel.INC_BOTH)
+    if axis < 0:
+        axis = axis + rank_base + 1
+    for i in range(1, N):
+        v = x_shape[i]
+        validator.check('len of x_shape[%d]' % i, len(v), 'len of rank_base', rank_base)
+        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0])
+        for j in range(rank_base):
+            if v[j] != x_shape[0][j]:
+                raise ValueError("Pack evaluator element %d shape in input can not pack with first element" % i)
+    out_shape.insert(axis, N)
+    return out_shape
+
+class Pack(PrimitiveWithInfer):
+    r"""
+    Packs a list of tensors in specified axis.
+
+    Packs the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
+
+    Given input tensors of shape :math:`(x_1, x_2, ..., x_R)`. Set the number of input tensors as `N`.
+    If :math:`0 \le axis`, the output tensor shape is :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
+
+    Args:
+        axis (int): Dimension along which to pack. Default: 0.
+                    Negative values wrap around. The range is [-(R+1), R+1).
+
+    Inputs:
+        - **input_x** (Union[tuple, list]) - A Tuple or list of Tensor objects with the same shape and type.
+
+    Outputs:
+        Tensor. A packed Tensor with the same type as `input_x`.
+
+    Examples:
+        >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
+        >>> data2 = Tensor(np.array([2, 3]).astype(np.float32))
+        >>> pack = P.Pack()
+        >>> output = pack([data1, data2])
+        [[0, 1], [2, 3]]
+    """
+
+    @prim_attr_register
+    def __init__(self, axis=0):
+        """init Pack"""
+        self.__setattr_flag__ = True
+        validator.check_type("axis", axis, [int])
+        self.axis = axis
+
+    def __infer__(self, value):
+        x_shape = value['shape']
+        x_type = value['dtype']
+        self.add_prim_attr('num', len(x_shape))
+        all_shape = _get_pack_shape(x_shape, x_type, self.axis)
+        out = {'shape': all_shape,
+               'dtype': x_type[0],
+               'value': None}
+        return out
+
+
+class Unpack(PrimitiveWithInfer):
+    r"""
+    Unpacks tensor in specified axis.
+
+    Unpacks a tensor of rank `R` along axis dimension, output tensors will have rank `(R-1)`.
+
+    Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
+    the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
+
+    This is the opposite of pack.
+
+    Args:
+        axis (int): Dimension along which to pack. Default: 0.
+                    Negative values wrap around. The range is [-R, R).
+        num (int): The number of tensors to be unpacked to. Default : "None".
+                   If `num` is not specified, it is inferred from the shape of `input_x`.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+          A rank R > 0 Tensor to be unpacked.
+
+    Outputs:
+        A tuple of Tensors, the shape of each objects is same.
+
+    Raises:
+        ValueError: If axis is out of the range [-len(input_x.shape()), len(input_x.shape())),
+                    or if len(input_x.shape[axis]) not equal to num.
+
+    Examples:
+        >>> unpack = P.Unpack()
+        >>> input_x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
+        >>> output = unpack(input_x)
+        ([1, 1, 1, 1], [2, 2, 2, 2])
+    """
+
+    @prim_attr_register
+    def __init__(self, axis=0):
+        """init Unpack"""
+        self.__setattr_flag__ = True
+        validator.check_type("axis", axis, [int])
+        self.axis = axis
+
+    def __infer__(self, x):
+        validator.check_subclass("x", x['dtype'], mstype.tensor)
+        x_shape = list(x['shape'])
+        dim = len(x_shape)
+        validator.check_int_range('axis value', self.axis, -dim, dim, Rel.INC_LEFT)
+        if self.axis < 0:
+            self.axis = self.axis + dim
+        output_num = x_shape[self.axis]
+        validator.check_type("num", output_num, [int])
+        validator.check_integer("output_num", output_num, 0, Rel.GT)
+        self.add_prim_attr('num', output_num)
+        output_valid_check = x_shape[self.axis] - output_num
+        validator.check_integer("The dimension which to unpack divides output_num", output_valid_check, 0, Rel.EQ)
+        out_shapes = []
+        out_dtypes = []
+        out_shape = x_shape[:self.axis] + x_shape[self.axis + 1:]
+        for _ in range(output_num):
+            out_shapes.append(tuple(out_shape))
+            out_dtypes.append(x['dtype'])
+        out_shapes = tuple(out_shapes)
+        out_dtypes = tuple(out_dtypes)
+        out = {'shape': out_shapes,
+               'dtype': out_dtypes,
                'value': None}
         return out
 
@@ -1463,7 +1599,7 @@ class Select(PrimitiveWithInfer):
         Tensor, has the same shape as input_y. The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
 
     Examples:
-        >>> select = Select()
+        >>> select = P.Select()
         >>> input_x = Tensor([True, False])
         >>> input_y = Tensor([2,3], mindspore.float32)
         >>> input_z = Tensor([1,2], mindspore.float32)
@@ -1535,8 +1671,9 @@ class StridedSlice(PrimitiveWithInfer):
             - Finally, the output is [3, 3, 3].
 
     Examples
-        >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6]]])
-        >>> slice = StridedSlice()
+        >>> input_x = Tensor([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]],
+        >>>                   [[5, 5, 5], [6, 6, 6]]], mindspore.float32)
+        >>> slice = P.StridedSlice()
         >>> output = slice(input_x, (1, 0, 0), (2, 1, 3), (1, 1, 1))
         >>> output.shape()
         (1, 1, 3)
@@ -1768,9 +1905,9 @@ class ScatterNd(PrimitiveWithInfer):
         Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
 
     Examples:
-        >>> op = ScatterNd()
-        >>> update = Tensor(np.array([3.2, 1.1]), mindspore.float32)
+        >>> op = P.ScatterNd()
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
+        >>> update = Tensor(np.array([3.2, 1.1]), mindspore.float32)
         >>> shape = (3, 3)
         >>> output = op(indices, update, shape)
     """
@@ -1819,7 +1956,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
 
     Examples:
         >>> input_tensor = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> resize = ResizeNearestNeighbor((2, 2))
+        >>> resize = P.ResizeNearestNeighbor((2, 2))
         >>> output = resize(input_tensor)
     """
 
@@ -1852,7 +1989,7 @@ class GatherNd(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> op = GatherNd()
+        >>> op = P.GatherNd()
         >>> output = op(input_x, indices)
     """
 
@@ -1894,7 +2031,7 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
-        >>> op = ScatterNdUpdate()
+        >>> op = P.ScatterNdUpdate()
         >>> output = op(input_x, indices, update)
     """
 
@@ -1945,7 +2082,7 @@ class SpaceToDepth(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.random.rand(1,3,2,2), mindspore.float32)
         >>> block_size = 2
-        >>> op = SpaceToDepth(block_size)
+        >>> op = P.SpaceToDepth(block_size)
         >>> output = op(x)
         >>> output.asnumpy().shape == (1,12,1,1)
     """
@@ -2003,7 +2140,7 @@ class DepthToSpace(PrimitiveWithInfer):
     Examples:
         >>> x = Tensor(np.random.rand(1,12,1,1), mindspore.float32)
         >>> block_size = 2
-        >>> op = DepthToSpace(block_size)
+        >>> op = P.DepthToSpace(block_size)
         >>> output = op(x)
         >>> output.asnumpy().shape == (1,3,2,2)
     """
@@ -2067,8 +2204,8 @@ class SpaceToBatch(PrimitiveWithInfer):
         >>> block_size = 2
         >>> paddings = [[0, 0], [0, 0]]
         >>> space_to_batch = P.SpaceToBatch(block_size, paddings)
-        >>> x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mstype.float32)
-        >>> space_to_batch(x)
+        >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
+        >>> space_to_batch(input_x)
         [[[[1.]]], [[[2.]]], [[[3.]]], [[[4.]]]]
 
     """
@@ -2135,8 +2272,8 @@ class BatchToSpace(PrimitiveWithInfer):
         >>> block_size = 2
         >>> crops = [[0, 0], [0, 0]]
         >>> op = P.BatchToSpace(block_size, crops)
-        >>> x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mstype.float32)
-        >>> output = op(x)
+        >>> input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]), mindspore.float32)
+        >>> output = op(input_x)
         [[[[1., 2.], [3., 4.]]]]
 
     """

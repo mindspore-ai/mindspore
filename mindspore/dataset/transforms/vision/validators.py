@@ -104,6 +104,10 @@ def check_padding(padding):
             raise ValueError("The size of the padding list or tuple should be 2 or 4.")
     else:
         raise TypeError("Padding can be any of: a number, a tuple or list of size 2 or 4.")
+    if not (isinstance(left, int) and isinstance(top, int) and isinstance(right, int) and isinstance(bottom, int)):
+        raise TypeError("Padding value should be integer.")
+    if left < 0 or top < 0 or right < 0 or bottom < 0:
+        raise ValueError("Padding value could not be negative.")
     return left, top, right, bottom
 
 

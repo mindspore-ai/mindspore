@@ -279,13 +279,14 @@ def _save_graph(network, file_name):
         os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
 
 
-def _exec_save_checkpoint(train_network, ckpoint_file_name):
+def _exec_save_checkpoint(train_network, ckpoint_file_name, integrated_save=True):
     """
     Saves checkpoint for 'ms' backend.
 
     Args:
         train_network (Network): The train network for training.
         ckpoint_file_name (str): The name of checkpoint file.
+        integrated_save (bool): Whether to intergrated save in automatic model parallel scene.
     """
 
     param_dict = {}
@@ -300,9 +301,9 @@ def _exec_save_checkpoint(train_network, ckpoint_file_name):
         else:
             param_data = Tensor(value.data)
 
-        # in model parallel scenario, some parameters were spliteds to all the devices,
+        # in automatic model parallel scenario, some parameters were spliteds to all the devices,
         # which should be combined before saving
-        if key in train_network.parameter_layout_dict:
+        if integrated_save and key in train_network.parameter_layout_dict:
             param_data = _get_merged_param_data(train_network, key, param_data)
 
         each_param["data"] = param_data
@@ -405,7 +406,7 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'LITE' format for exported model.
 
             - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
-            Ascend model.
+              Ascend model.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
             - LITE: Huawei model format for mobile.
     """

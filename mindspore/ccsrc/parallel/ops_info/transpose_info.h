@@ -35,15 +35,12 @@ class TransposeInfo : public OperatorInfo {
  public:
   TransposeInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
                 const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs) {
-    transpose_cost_ptr_ = std::make_shared<ActivationCost>();
-  }
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<TransposeCost>()) {}
   ~TransposeInfo() override = default;
   Status Init(const StrategyPtr& strategy) override;
   Status InitForCostModel(const StrategyPtr& strategy) override;
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return transpose_cost_ptr_; }
 
  protected:
   Status CheckStrategy(const StrategyPtr& strategy) override;
@@ -60,7 +57,6 @@ class TransposeInfo : public OperatorInfo {
   Status ComputeAxis();
   std::vector<int32_t> axis_v_;
   Dimensions input_strategy_;
-  ActivationCostPtr transpose_cost_ptr_;
 };
 }  // namespace parallel
 }  // namespace mindspore

@@ -43,7 +43,7 @@ def _c_array(ctype, values):
     return (ctype * len(values))(*values)
 
 
-def set_fusion_strategy_by_idx(idxList, group="hccl_world_group"):
+def _set_fusion_strategy_by_idx(idxList, group="hccl_world_group"):
     """
     A function set gradient segment strategy according to the index list.
 
@@ -100,7 +100,7 @@ def set_fusion_strategy_by_idx(idxList, group="hccl_world_group"):
         raise RuntimeError('Allreduce split error')
 
 
-def set_fusion_strategy_by_size(dataSizeList, group="hccl_world_group"):
+def _set_fusion_strategy_by_size(dataSizeList, group="hccl_world_group"):
     """
     A function set gradient segment strategy according to the data size percentage list.
 

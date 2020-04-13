@@ -39,6 +39,7 @@ constexpr auto kDtypeFormat = "dtype_format";
 constexpr auto kAttr = "attr";
 constexpr auto kIputs = "inputs";
 constexpr auto kOutputs = "outputs";
+constexpr auto kAiCPU = "AiCPU";
 constexpr auto kTbe = "TBE";
 constexpr auto kAkg = "akg";
 constexpr auto kAutodiff = "AutoDiff";
@@ -60,6 +61,8 @@ std::string ImplTypeToStr(OpImplyType impl_type) {
       return kTbe;
     case kAKG:
       return kAkg;
+    case kAICPU:
+      return kAiCPU;
     default:
       return "unknow";
   }
@@ -75,6 +78,9 @@ bool OpLib::RegOp(const std::string& json_string, const std::string& impl_path) 
       ret = DecodeOpInfo(op_json, imply_type, impl_path);
     } else if (imply_type_string == kAutodiff) {
       OpImplyType imply_type = kAKG;
+      ret = DecodeOpInfo(op_json, imply_type, impl_path);
+    } else if (imply_type_string == kAiCPU) {
+      OpImplyType imply_type = kAICPU;
       ret = DecodeOpInfo(op_json, imply_type, impl_path);
     } else {
       MS_LOG(DEBUG) << "Not support imply_type";
@@ -154,7 +160,9 @@ bool OpLib::DecodeAttr(const nlohmann::json& obj, const OpImplyType imply_type,
     std::shared_ptr<OpAttr> op_attr = std::make_shared<OpAttr>();
     MS_EXCEPTION_IF_NULL(op_attr);
     op_attr->set_name(obj.at(kName));
-    op_attr->set_param_type(obj.at(kParamType));
+    if (imply_type != kAICPU) {
+      op_attr->set_param_type(obj.at(kParamType));
+    }
     op_attr->set_type(obj.at(kType));
     if (imply_type == kTBE) {
       op_attr->set_value(obj.at(kValue));
@@ -242,9 +250,10 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string& op_name, OpImplyType im
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool is_gpu = (context->device_target() == kGPUDevice);
-  if ((is_gpu && imply_type == kTBE) || (!is_gpu && imply_type != kTBE)) {
-    MS_LOG(DEBUG) << "FindOp failed: opname:" << op_name << "imply_type:" << ImplTypeToStr(imply_type)
-                  << "current op num:" << op_info_.size();
+  if ((is_gpu && (imply_type == kTBE || imply_type == kAICPU)) ||
+      (!is_gpu && (imply_type != kTBE && imply_type != kAICPU))) {
+    MS_LOG(ERROR) << "FindOp failed: opname:" << op_name << ", imply_type:" << ImplTypeToStr(imply_type)
+                  << ", current op num:" << op_info_.size();
     return nullptr;
   }
   for (const auto& op_info : op_info_) {
@@ -253,8 +262,8 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string& op_name, OpImplyType im
       return op_info;
     }
   }
-  MS_LOG(DEBUG) << "FindOp failed: opname:" << op_name << "imply_type:" << ImplTypeToStr(imply_type)
-                << "current op num:" << op_info_.size();
+  MS_LOG(DEBUG) << "FindOp failed: opname:" << op_name << ", imply_type:" << ImplTypeToStr(imply_type)
+                << ", current op num:" << op_info_.size();
   return nullptr;
 }
 

@@ -266,6 +266,30 @@ def get_bprop_gather_v2(self):
     return bprop
 
 
+@bprop_getters.register(P.Pack)
+def get_bprop_pack(self):
+    """Generate bprop for Pack"""
+    axis = self.axis
+
+    def bprop(x, out, dout):
+        pack_grad = P.Unpack(axis)
+        out = pack_grad(dout)
+        return (out,)
+    return bprop
+
+
+@bprop_getters.register(P.Unpack)
+def get_bprop_unpack(self):
+    """Generate bprop for Unpack"""
+    axis = self.axis
+
+    def bprop(x, out, dout):
+        unpack_grad = P.Pack(axis)
+        out = unpack_grad(dout)
+        return (out,)
+    return bprop
+
+
 @bprop_getters.register(P.StridedSlice)
 def get_bprop_strided_slice(self):
     """Generate bprop for StridedSlice"""

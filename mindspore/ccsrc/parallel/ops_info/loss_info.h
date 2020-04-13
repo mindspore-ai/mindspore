@@ -36,16 +36,13 @@ class SoftmaxCrossEntropyWithLogitsInfo : public OperatorInfo {
  public:
   SoftmaxCrossEntropyWithLogitsInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
                                     const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs) {
-    softmax_loss_cost_ptr_ = std::make_shared<SoftmaxCrossEntropyWithLogitsCost>();
-  }
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<SoftmaxCrossEntropyWithLogitsCost>()) {}
   ~SoftmaxCrossEntropyWithLogitsInfo() override = default;
   Status Init(const StrategyPtr& strategy) override;
   Status InitForCostModel(const StrategyPtr& strategy) override;
 
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return softmax_loss_cost_ptr_; }
   void ReComputeBatchSplitFlagList() override;
 
  protected:
@@ -59,7 +56,6 @@ class SoftmaxCrossEntropyWithLogitsInfo : public OperatorInfo {
   // There are two outputs for SoftmaxCrossEntropyWithLogits, and outputs[1] is used for grad and overload
   // the InferAsLossDivisor.
   Status InferAsLossDivisor() override;
-  SoftmaxCrossEntropyWithLogitsCostPtr softmax_loss_cost_ptr_;
 
  private:
   int32_t axis_ = -1;  // default -1

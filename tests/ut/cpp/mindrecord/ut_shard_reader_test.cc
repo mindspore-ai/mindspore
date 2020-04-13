@@ -155,7 +155,7 @@ TEST_F(TestShardReader, TestShardReaderColumnNotInSchema) {
   auto column_list = std::vector<std::string>{"file_namex"};
   ShardReader dataset;
   MSRStatus ret = dataset.Open(file_name, 4, column_list);
-  ASSERT_EQ(ret, FAILED);
+  ASSERT_EQ(ret, ILLEGAL_COLUMN_LIST);
 }
 
 TEST_F(TestShardReader, TestShardVersion) {

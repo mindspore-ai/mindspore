@@ -33,12 +33,9 @@ class L2NormalizeInfo : public Activation {
  public:
   L2NormalizeInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
                   const PrimitiveAttrs& attrs)
-      : Activation(name, inputs_shape, outputs_shape, attrs) {
-    l2normalizecost_ptr_ = std::make_shared<L2NormalizeCost>();
-  }
+      : Activation(name, inputs_shape, outputs_shape, attrs) {}
   ~L2NormalizeInfo() override = default;
   Status GenerateStrategies(int32_t stage_id) override;
-  OperatorCostPtr GetOperatorCost() const override { return l2normalizecost_ptr_; }
 
  protected:
   Status GetAttrs() override;
@@ -47,7 +44,6 @@ class L2NormalizeInfo : public Activation {
 
  private:
   int32_t axis_ = 0;  // Default value = 0
-  L2NormalizeCostPtr l2normalizecost_ptr_;
 };
 }  // namespace parallel
 }  // namespace mindspore

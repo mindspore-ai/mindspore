@@ -592,19 +592,19 @@ Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr& 
   int32_t stage_id = strategy->GetInputStage();
   // Here, we use the origin outputs_, because we only use the slice size of the output tensor.
   // It does not matter whether the output tensor is transposed or not.
-  double memory_cost =
-    matmulcost_ptr->GetForwardMemoryCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
-  double communication_cost = matmulcost_ptr->GetCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
-  std::shared_ptr<Cost> result = std::make_shared<Cost>(memory_cost, communication_cost);
+  double computation_cost =
+    cost()->GetForwardComputationCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
+  double communication_cost = cost()->GetCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
+  std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
   result->communication_without_parameter_ =
-    matmulcost_ptr->GetForwardCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
+    cost()->GetForwardCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
   result->communication_with_partial_para_ =
     result->communication_without_parameter_ +
     COST_MODEL_GAMMA * (communication_cost - result->communication_without_parameter_);
 
   // Breaking ties for preferring data parallelization
   BreakingTiesForPerferringDataParallel(strategy, result);
-  MS_LOG(DEBUG) << name_ << " : memory_cost: " << result->memory_cost_
+  MS_LOG(DEBUG) << name_ << " : computation_cost: " << result->computation_cost_
                 << ", communication_cost: " << result->communication_cost_
                 << ", communication_without_parameter_: " << result->communication_without_parameter_
                 << ", communication_with_partial_para_: " << result->communication_with_partial_para_;

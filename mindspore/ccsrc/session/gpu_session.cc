@@ -102,10 +102,6 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   graph->set_execution_order(execution_order);
   // Alloc memory, including static memory and dynamic memory
   AllocateMemory(graph.get());
-  // Reset memory resource
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->FreeHostMemory();
   return graph_id;
 }
 

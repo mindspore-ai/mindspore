@@ -1,11 +1,11 @@
-set(mkl_dnn_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
-set(mkl_dnn_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
-mindspore_add_pkg(mkl_dnn
-        VER 1.1.1
+set(onednn_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+set(onednn_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+mindspore_add_pkg(onednn
+        VER 1.1.2
         LIBS dnnl mkldnn
-        URL https://github.com/intel/mkl-dnn/archive/v1.1.1.tar.gz
-        MD5 d6a422b00459600bdc22242590953f38
+        URL https://github.com/oneapi-src/oneDNN/archive/v1.1.2.tar.gz
+        MD5 ab40d52230f3ad1d7a6f06ce0f6bc17a
         CMAKE_OPTION -DDNNL_ARCH_OPT_FLAGS='' -DDNNL_CPU_RUNTIME='SEQ' -DDNNL_BUILD_EXAMPLES=OFF -DDNNL_BUILD_TESTS=OFF)
-include_directories(${mkl_dnn_INC})
-add_library(mindspore::dnnl ALIAS mkl_dnn::dnnl)
-add_library(mindspore::mkldnn ALIAS mkl_dnn::mkldnn)
+include_directories(${onednn_INC})
+add_library(mindspore::dnnl ALIAS onednn::dnnl)
+add_library(mindspore::mkldnn ALIAS onednn::mkldnn)

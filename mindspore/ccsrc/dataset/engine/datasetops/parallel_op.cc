@@ -48,7 +48,7 @@ Status ParallelOp::CreateWorkerConnector(int32_t worker_connector_size) {
   // Instantiate the worker connector.  This is the internal connector, not the operators
   // output connector.  It has single master consuming from it (num producers is 1), and the number
   // of workers is the defined count from the op.
-  worker_connector_ = mindspore::make_unique<DbConnector>(num_workers_, num_producers_, worker_connector_size);
+  worker_connector_ = std::make_unique<DbConnector>(num_workers_, num_producers_, worker_connector_size);
 
   return Status::OK();
 }

@@ -69,7 +69,7 @@ Status Edge::InitEdgeCost() {
           MS_LOG(EXCEPTION) << "Failure: redistribution cost calculation failed";
         }
         MS_EXCEPTION_IF_NULL(cost);
-        MS_LOG(DEBUG) << "The redistribution cost: memory_cost: " << cost->memory_cost_
+        MS_LOG(DEBUG) << "The redistribution cost: computation_cost: " << cost->computation_cost_
                       << ", communication_cost: " << cost->communication_cost_
                       << ", communication_without_parameter_: " << cost->communication_without_parameter_
                       << ", communication_with_partial_para_: " << cost->communication_with_partial_para_ << ".";
@@ -117,9 +117,9 @@ Status Edge::GetRedistributionCost(const TensorLayout& prev_op_output_layout, co
   double comm_cost = tensor_redistribution.comm_cost();
   double forward_comm_cost = tensor_redistribution.forward_comm_cost();
   double backward_comm_cost = tensor_redistribution.backward_comm_cost();
-  double mem_cost = tensor_redistribution.mem_cost();
+  double computation_cost = tensor_redistribution.computation_cost();
 
-  *cost = std::make_shared<Cost>(type_length * mem_cost, type_length * comm_cost);
+  *cost = std::make_shared<Cost>(type_length * computation_cost, type_length * comm_cost);
   (*cost)->communication_without_parameter_ = type_length * comm_cost;
   (*cost)->communication_with_partial_para_ =
     (*cost)->communication_without_parameter_ +
@@ -150,26 +150,26 @@ CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr& output_st_ptr
   (void)std::transform(edges.begin(), edges.end(), all_cost_list.begin(), LocalGetCostList);
 
   CostPtrList selected_cost_list(all_cost_list.size(), nullptr);
-  std::function<void(size_t, double, double, double)> recursive = [&](size_t k, double memory, double communication,
-                                                                      double communication_without_para) {
-    if (k == edges.size()) {
-      auto decision = std::make_shared<EdgeEliminationDecision>(selected_cost_list);
-      CostPtr new_cost = std::make_shared<Cost>(memory, communication);
-      MS_EXCEPTION_IF_NULL(new_cost);
-      new_cost->communication_without_parameter_ = communication_without_para;
-      new_cost->communication_with_partial_para_ =
-        communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
-      new_cost->decision_ptr_ = decision;
-      result.push_back(new_cost);
-      return;
-    }
-    for (auto& c : all_cost_list[k]) {
-      MS_EXCEPTION_IF_NULL(c);
-      selected_cost_list[k] = c;
-      recursive(k + 1, memory + c->memory_cost_, communication + c->communication_cost_,
-                communication_without_para + c->communication_without_parameter_);
-    }
-  };
+  std::function<void(size_t, double, double, double)> recursive =
+    [&](size_t k, double computation, double communication, double communication_without_para) {
+      if (k == edges.size()) {
+        auto decision = std::make_shared<EdgeEliminationDecision>(selected_cost_list);
+        CostPtr new_cost = std::make_shared<Cost>(computation, communication);
+        MS_EXCEPTION_IF_NULL(new_cost);
+        new_cost->communication_without_parameter_ = communication_without_para;
+        new_cost->communication_with_partial_para_ =
+          communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
+        new_cost->decision_ptr_ = decision;
+        result.push_back(new_cost);
+        return;
+      }
+      for (auto& c : all_cost_list[k]) {
+        MS_EXCEPTION_IF_NULL(c);
+        selected_cost_list[k] = c;
+        recursive(k + 1, computation + c->computation_cost_, communication + c->communication_cost_,
+                  communication_without_para + c->communication_without_parameter_);
+      }
+    };
   recursive(0, 0, 0, 0);
   SimplifyForDreasingCommunicationWithPartialPara(&result);
   return result;
@@ -203,7 +203,8 @@ void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtr
       MS_EXCEPTION_IF_NULL(middle_cost);
       for (auto& right_cost : right_cost_list) {
         MS_EXCEPTION_IF_NULL(right_cost);
-        double memory = left_cost->memory_cost_ + middle_cost->memory_cost_ + right_cost->memory_cost_;
+        double computation =
+          left_cost->computation_cost_ + middle_cost->computation_cost_ + right_cost->computation_cost_;
         double communication =
           left_cost->communication_cost_ + middle_cost->communication_cost_ + right_cost->communication_cost_;
         double communication_without_para = left_cost->communication_without_parameter_ +
@@ -211,7 +212,7 @@ void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtr
                                             right_cost->communication_without_parameter_;
 
         auto decision = std::make_shared<OpEliminationDecision>(op_strategy, left_cost, middle_cost, right_cost);
-        auto cost = std::make_shared<Cost>(memory, communication, decision);
+        auto cost = std::make_shared<Cost>(computation, communication, decision);
         MS_EXCEPTION_IF_NULL(cost);
         cost->communication_without_parameter_ = communication_without_para;
         cost->communication_with_partial_para_ =

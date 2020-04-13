@@ -19,7 +19,7 @@ Primitive operator classes.
 A collection of operators to build nerual networks or computing functions.
 """
 
-from .array_ops import (Argmax, Argmin, Cast, ConcatOffset, Concat,
+from .array_ops import (Argmax, Argmin, Cast, ConcatOffset, Concat, Pack, Unpack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, GatherNd, GatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
@@ -44,7 +44,7 @@ from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul
                        LogicalNot, LogicalOr, MatMul, Maximum,
                        Minimum, Mul, Neg, NMSWithMask, NotEqual,
                        NPUAllocFloatStatus, NPUClearFloatStatus,
-                       NPUGetFloatStatus, Pow, RealDiv,
+                       NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum,
                        Sin, Sqrt, Rsqrt,
                        Square, Sub, TensorAdd, Sign, Round)
@@ -112,6 +112,8 @@ __all__ = [
     'OneHot',
     'GatherV2',
     'Concat',
+    'Pack',
+    'Unpack',
     'Tile',
     'BiasAdd',
     'Gelu',
@@ -154,6 +156,10 @@ __all__ = [
     'NPUAllocFloatStatus',
     'NPUGetFloatStatus',
     'NPUClearFloatStatus',
+    'IsNan',
+    'IsFinite',
+    'IsInf',
+    'FloatStatus',
     'Reciprocal',
     'SmoothL1Loss',
     'ReduceAll',

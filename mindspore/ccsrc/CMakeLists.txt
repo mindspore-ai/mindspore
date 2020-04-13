@@ -132,6 +132,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "kernel/kash/*.cc"
         "device/kernel_info.cc"
         "device/kernel_runtime.cc"
+        "device/memory_manager.cc"
         "device/kernel_runtime_manager.cc"
         "device/convert_tensor_utils.cc"
         "pre_activate/common/*.cc"
@@ -295,7 +296,11 @@ if(ENABLE_D)
         endif()
     else()
         MESSAGE("use system default lib")
-        set(ASCEND_PATH /usr/local/Ascend)
+        if(DEFINED ENV{ASCEND_CUSTOM_PATH})
+            set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
+        else()
+            set(ASCEND_PATH /usr/local/Ascend)
+        endif()
         set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
         set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
     endif()
@@ -499,7 +504,11 @@ add_dependencies(add_ms_lib _c_expression)
 
 if (NOT ENABLE_GE)
     if (ENABLE_D)
-        set(ASCEND_PATH /usr/local/Ascend)
+        if(DEFINED ENV{ASCEND_CUSTOM_PATH})
+            set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
+        else()
+            set(ASCEND_PATH /usr/local/Ascend)
+        endif()
         set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
         add_custom_target(add_ge_lib ALL
                 COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/common/graph/libgraph.so ${MS_LIB_PATH}
@@ -542,7 +551,7 @@ endif()
 
 if (ENABLE_CPU)
     add_custom_target(add_cpu_lib ALL
-            COMMAND cp ${mkl_dnn_LIBPATH}/libdnnl.so.1.1 ${MS_LIB_PATH}/libdnnl.so.1
+            COMMAND cp ${onednn_LIBPATH}/libdnnl.so.1.1 ${MS_LIB_PATH}/libdnnl.so.1
             )
     add_dependencies(add_cpu_lib add_ms_lib)
 endif()

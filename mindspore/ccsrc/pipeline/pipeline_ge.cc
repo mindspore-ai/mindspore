@@ -116,7 +116,7 @@ bool InitExecDatasetGe(const std::string& queue_name, int64_t size, int64_t batc
     return transform::TransformUtil::ConvertDataType(i->type_id());
   });
 
-  ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_GRAPH_MODE);
+  ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
   ConfigManager::GetInstance().set_iter_num(size);
   ConfigManager::GetInstance().set_dataset_phase(phase);
 
@@ -453,8 +453,8 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr>& info, const py::
   }
 
   // process the first args of tensor
-  // only in Dataset Feed Mode, fp_bp graph need input tensors
-  if (ConfigManager::GetInstance().dataset_mode() == DS_FEED_MODE) {
+  // only in dataset normal(non-sink) mode, fp_bp graph need input tensors
+  if (ConfigManager::GetInstance().dataset_mode() == DS_NORMAL_MODE) {
     for (std::size_t i = 0; i < size; i++) {
       ValuePtr converted = nullptr;
       bool succ = parse::ConvertData(args[i], &converted);

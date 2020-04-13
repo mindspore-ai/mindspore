@@ -19,10 +19,15 @@ import inspect as ins
 import os
 from functools import wraps
 from multiprocessing import cpu_count
+from mindspore._c_expression import typing
 from . import samplers
 from . import datasets
 
 INT32_MAX = 2147483647
+valid_detype = [
+    "bool", "int8", "int16", "int32", "int64", "uint8", "uint16",
+    "uint32", "uint64", "float16", "float32", "float64"
+]
 
 
 def check(method):
@@ -100,13 +105,13 @@ def check(method):
                     "The %s function %s exceeds the boundary!" % (
                         func_name, param_name))
             if isinstance(arg, int) and param_name == "num_parallel_workers" and (
-                    arg <= 0 or arg > cpu_count()):
+                    arg < 1 or arg > cpu_count()):
                 raise ValueError(
                     "The %s function %s exceeds the boundary(%s)!" % (
                         func_name, param_name, cpu_count()))
             if isinstance(arg, int) and param_name != "seed" \
                     and param_name != "count" and param_name != "prefetch_size" \
-                    and param_name != "num_parallel_workers" and (arg <= 0 or arg > 2147483647):
+                    and param_name != "num_parallel_workers" and (arg < 1 or arg > 2147483647):
                 raise ValueError(
                     "The %s function %s exceeds the boundary!" % (
                         func_name, param_name))
@@ -188,6 +193,12 @@ def check(method):
     return wrapper
 
 
+def check_valid_detype(type_):
+    if type_ not in valid_detype:
+        raise ValueError("Unknown column type")
+    return True
+
+
 def check_filename(path):
     """
     check the filename in the path
@@ -260,8 +271,8 @@ def check_interval_closed(param, param_name, valid_range):
 
 def check_num_parallel_workers(value):
     check_type(value, 'num_parallel_workers', int)
-    if value <= 0 or value > cpu_count():
-        raise ValueError("num_parallel_workers exceeds the boundary between 0 and {}!".format(cpu_count()))
+    if value < 1 or value > cpu_count():
+        raise ValueError("num_parallel_workers exceeds the boundary between 1 and {}!".format(cpu_count()))
 
 
 def check_num_samples(value):
@@ -545,6 +556,11 @@ def check_generatordataset(method):
         if column_names is None:
             raise ValueError("column_names is not provided.")
 
+        # check prefetch_size range
+        prefetch_size = param_dict.get('prefetch_size')
+        if prefetch_size is not None and (prefetch_size <= 0 or prefetch_size > 1024):
+            raise ValueError("prefetch_size exceeds the boundary.")
+
         check_param_type(nreq_param_int, param_dict, int)
 
         check_param_type(nreq_param_list, param_dict, list)
@@ -739,6 +755,45 @@ def check_project(method):
         if columns is None:
             raise ValueError("columns is not provided.")
         check_columns(columns, 'columns')
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_shape(shape, name):
+    if isinstance(shape, list):
+        for element in shape:
+            if not isinstance(element, int):
+                raise TypeError(
+                    "Each element in {0} should be of type int. Got {1}.".format(name, type(element)))
+    else:
+        raise TypeError("Expected int list.")
+
+
+def check_add_column(method):
+    """check the input arguments of add_column."""
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check name; required argument
+        name = param_dict.get("name")
+        if not isinstance(name, str) or not name:
+            raise TypeError("Expected non-empty string.")
+
+        # check type; required argument
+        de_type = param_dict.get("de_type")
+        if de_type is not None:
+            if not isinstance(de_type, typing.Type) and not check_valid_detype(de_type):
+                raise ValueError("Unknown column type.")
+        else:
+            raise TypeError("Expected non-empty string.")
+
+        # check shape
+        shape = param_dict.get("shape")
+        if shape is not None:
+            check_shape(shape, "shape")
 
         return method(*args, **kwargs)
 

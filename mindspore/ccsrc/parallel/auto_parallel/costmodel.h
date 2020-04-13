@@ -44,14 +44,18 @@ using RedistributionOpListPtr = std::shared_ptr<std::pair<OperatorVector, OutPut
 
 struct Cost {
   Cost();
-  Cost(double memory, double commuication, const std::shared_ptr<Decision>& decision_ = nullptr)
-      : memory_cost_(memory), communication_cost_(commuication), decision_ptr_(std::move(decision_)) {
+  Cost(double computation, double commuication, const std::shared_ptr<Decision>& decision_ = nullptr)
+      : computation_cost_(computation), communication_cost_(commuication), decision_ptr_(std::move(decision_)) {
+    memory_with_reuse_ = 0.0;
     communication_without_parameter_ = 0.0;
     communication_with_partial_para_ = 0.0;
     communication_redis_forward_ = 0.0;
     communication_redis_backward_ = 0.0;
   }
-  double memory_cost_;
+  // 'memory_with_reuse_' calculates the peak memory usage in a training phase
+  double memory_with_reuse_;
+  // 'computation_cost_'  models the training time of an iteration in a training phase
+  double computation_cost_;
   // 'communication_cost_' includes communications from operators (forward and backward) and edges
   double communication_cost_;
   // communication_without_parameter_ = communication_cost_ - (backward communication from operators)

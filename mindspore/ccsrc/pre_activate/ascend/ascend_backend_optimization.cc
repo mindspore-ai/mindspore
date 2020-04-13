@@ -246,7 +246,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
     std::string file_path = save_graphs_path + "/" + "hwopt_d_end.ir";
-    DumpIR(file_path, kernel_graph);
+    DumpIR(file_path, kernel_graph, true);
     DumpIRProto(kernel_graph, "after_hwopt");
   }
 }

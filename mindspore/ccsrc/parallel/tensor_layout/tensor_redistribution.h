@@ -41,7 +41,7 @@ class TensorRedistribution {
         comm_cost_(0.0),
         forward_comm_cost_(0.0),
         backward_comm_cost_(0.0),
-        mem_cost_(0.0),
+        computation_cost_(0.0),
         construct_op_flag_(construct_op_flag),
         keep_reshape_(keep_reshape) {}
   Status Init(const TensorLayout& from, const TensorLayout& to, const RankList& dev_list);
@@ -51,7 +51,7 @@ class TensorRedistribution {
   bool reshape_flag() const { return reshape_flag_; }
   Status ComputeCost();
   double comm_cost() const { return comm_cost_; }
-  double mem_cost() const { return mem_cost_; }
+  double computation_cost() const { return computation_cost_; }
   double forward_comm_cost() const { return forward_comm_cost_; }
   double backward_comm_cost() const { return backward_comm_cost_; }
 
@@ -66,10 +66,13 @@ class TensorRedistribution {
   RankList dev_list_;
   OperatorList operator_list_;
   bool reshape_flag_;
+  // communication cost
   double comm_cost_;
+  // forward communication cost
   double forward_comm_cost_;
+  // backward communication cost
   double backward_comm_cost_;
-  double mem_cost_;
+  double computation_cost_;
   bool construct_op_flag_;
   bool keep_reshape_;
 };
