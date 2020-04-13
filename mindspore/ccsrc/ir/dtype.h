@@ -51,7 +51,7 @@ class String : public Object {
   TypeId generic_type_id() const override { return kObjectTypeString; }
 
   TypePtr DeepCopy() const override { return std::make_shared<String>(); }
-  std::string ToString() const override { return std::string("String:"); }
+  std::string ToString() const override { return std::string("String"); }
   std::string ToReprString() const override { return "string"; }
   std::string DumpText() const override { return "String"; }
 };
