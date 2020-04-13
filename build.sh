@@ -16,7 +16,6 @@
 
 set -e
 BASEPATH=$(cd "$(dirname $0)"; pwd)
-PROJECT_PATH="${BASEPATH}"
 CUDA_PATH=""
 CUDNN_PATH=""
 export BUILD_PATH="${BASEPATH}/build/"
@@ -24,7 +23,7 @@ export BUILD_PATH="${BASEPATH}/build/"
 usage()
 {
   echo "Usage:"
-  echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-s] [-b ge|cpu] [-m infer|train] \\"
+  echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge|cpu] [-m infer|train] \\"
   echo "              [-a on|off] [-g on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K]"
   echo ""
@@ -36,7 +35,6 @@ usage()
   echo "    -t Run testcases switch, default on"
   echo "    -g Use glog to output log, default on"
   echo "    -h Print usage"
-  echo "    -s Install or setup"
   echo "    -b Select other backend, available: \\"
   echo "           ge:graph engine, cpu"
   echo "    -m Select mode, available: infer, train, default is infer "
@@ -77,7 +75,6 @@ checkopts()
   VERBOSE=""
   ENABLE_COVERAGE="off"
   RUN_TESTCASES="off"
-  EXECUTE_SETUP="off"
   ENABLE_BACKEND=""
   TRAIN_MODE="INFER"
   ENABLE_ASAN="off"
@@ -129,9 +126,6 @@ checkopts()
         usage
         exit 0
         ;;
-      s)
-        EXECUTE_SETUP="on"
-        ;;
       b)
         if [[ "X$OPTARG" != "Xge" && "X$OPTARG" != "Xcpu" ]]; then
           echo "Invalid value ${OPTARG} for option -b"
@@ -139,9 +133,6 @@ checkopts()
           exit 1
         fi
         ENABLE_BACKEND=$(echo "$OPTARG" | tr '[a-z]' '[A-Z]')
-        if [[ "X$ENABLE_BACKEND" == "XGE" ]]; then
-          ENABLE_GE="on"
-        fi
         if [[ "X$ENABLE_BACKEND" != "XCPU" ]]; then
           ENABLE_CPU="on"
         fi
@@ -323,10 +314,7 @@ build_mindspore()
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ../..
     fi
-    make ${VERBOSE} -j$THREAD_NUM
-    if [[ "X$EXECUTE_SETUP" = "Xon" ]]; then
-      make install
-    fi
+    cmake --build . --target package ${VERBOSE} -j$THREAD_NUM
     echo "success to build mindspore project!"
 }
 
@@ -457,24 +445,7 @@ else
     build_mindspore
 fi
 
-if [[ "X$INC_BUILD" = "Xoff" ]]; then
-    if [[ "X$ENABLE_GE" = "Xon" ]]; then
-        bash "${PROJECT_PATH}/package.sh" ge
-    elif [[ "X$ENABLE_GPU" = "Xon" ]]; then
-        bash "${PROJECT_PATH}/package.sh" ms gpu
-    elif [[ "X$ENABLE_D" = "Xon" ]]; then
-        bash "${PROJECT_PATH}/package.sh" ms ascend
-    elif [[ "X$ENABLE_CPU" = "Xon" ]]; then
-        bash "${PROJECT_PATH}/package.sh" ms cpu
-    else
-        bash "${PROJECT_PATH}/package.sh" debug
-    fi
-fi
-
 cp -rf ${BUILD_PATH}/package/mindspore/lib ${BUILD_PATH}/../mindspore
 cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BUILD_PATH}/../mindspore
 
-if [[ -d "${BUILD_PATH}/package/build" ]]; then
-    rm -rf "${BUILD_PATH}/package/build"
-fi
 echo "---------------- mindspore: build end   ----------------"
