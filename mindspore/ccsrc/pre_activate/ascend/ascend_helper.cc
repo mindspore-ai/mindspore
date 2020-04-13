@@ -94,7 +94,7 @@ AnfNodePtr GetTransInputNodePtr(const FuncGraphPtr &func_graph, const CNodePtr &
   MS_EXCEPTION_IF_NULL(node);
   bool padding_flag = false;
   auto input_node = AnfAlgo::GetInputNode(node, index);
-  if (!AnfAlgo::IsFeatureMapInput(node, index)) {
+  if (input_node->isa<ValueNode>() || input_node->isa<Parameter>()) {
     input_node = InsertTransOpForOutput(func_graph, input_node, kernel_select);
     MS_EXCEPTION_IF_NULL(input_node);
     AnfAlgo::SetNodeInput(node, input_node, index);
