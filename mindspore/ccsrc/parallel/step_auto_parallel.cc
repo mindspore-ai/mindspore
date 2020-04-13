@@ -636,6 +636,15 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       // Dealing with the RefKey case
       auto refkeys = cnode_with_refkeys.second;
       auto cnode = cnode_with_refkeys.first;
+
+      auto cnode_ptr = cnode->cast<CNodePtr>();
+      if (cnode_ptr == nullptr || !IsValueNode<Primitive>(cnode_ptr->input(0))) {
+        continue;
+      }
+      if (!IsAutoParallelCareNode(cnode_ptr)) {
+        continue;
+      }
+
       if (refkeys.size() > 1) {
         MS_LOG(EXCEPTION) << "CNode: " << cnode->fullname_with_scope() << " 's inputs have more than 1 RefKeys.";
       }
