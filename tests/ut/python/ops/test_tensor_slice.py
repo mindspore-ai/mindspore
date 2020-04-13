@@ -383,7 +383,7 @@ def test_tensor_slice_reduce_out_of_bounds_neg():
     net = NetWork()
     with pytest.raises(ValueError) as ex:
         net(input_tensor)
-    assert "The `begin[0]` should be an int and must greater or equal to -6, but got -7" in str(ex.value)
+    assert "For 'StridedSlice' the `begin[0]` should be an int and must greater or equal to -6, but got `-7`" in str(ex.value)
 
 
 def test_tensor_slice_reduce_out_of_bounds_positive():
@@ -400,4 +400,4 @@ def test_tensor_slice_reduce_out_of_bounds_positive():
     net = NetWork()
     with pytest.raises(ValueError) as ex:
         net(input_tensor)
-    assert "The `begin[0]` should be an int and must less than 6, but got 6" in str(ex.value)
+    assert "For 'StridedSlice' the `begin[0]` should be an int and must less than 6, but got `6`" in str(ex.value)

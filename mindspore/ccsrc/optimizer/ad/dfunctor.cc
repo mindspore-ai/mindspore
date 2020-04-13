@@ -175,7 +175,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   UpdateAdjoint(node_adjoint);
   anfnode_to_adjoin_[morph] = node_adjoint;
   if (cnode_morph->stop_gradient()) {
-    MS_LOG(WARNING) << "MapMorphism node " << morph->ToString() << " is stopped.";
+    MS_LOG(DEBUG) << "MapMorphism node " << morph->ToString() << " is stopped.";
     return node_adjoint;
   }
 
