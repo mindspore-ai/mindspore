@@ -76,16 +76,27 @@ MSRStatus ShardWriter::Open(const std::vector<std::string> &paths, bool append) 
   // Open files
   for (const auto &file : file_paths_) {
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-    fs->open(common::SafeCStr(file), std::ios::in | std::ios::out | std::ios::binary);
-    if (fs->fail()) {
-      fs->open(common::SafeCStr(file), std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
-      if (fs->fail()) {
-        MS_LOG(ERROR) << "File could not opened";
+    if (!append) {
+      // if not append and mindrecord file exist, return FAILED
+      fs->open(common::SafeCStr(file), std::ios::in | std::ios::binary);
+      if (fs->good()) {
+        MS_LOG(ERROR) << "MindRecord file already existed.";
+        fs->close();
+        return FAILED;
+      }
+      fs->close();
+
+      // open the mindrecord file to write
+      fs->open(common::SafeCStr(file), std::ios::out | std::ios::binary);
+      if (!fs->good()) {
+        MS_LOG(ERROR) << "MindRecord file could not opened.";
         return FAILED;
       }
     } else {
-      if (!append) {
-        MS_LOG(ERROR) << "MindRecord file already existed";
+      // open the mindrecord file to append
+      fs->open(common::SafeCStr(file), std::ios::out | std::ios::in | std::ios::binary);
+      if (!fs->good()) {
+        MS_LOG(ERROR) << "MindRecord file could not opened for append.";
         return FAILED;
       }
     }
