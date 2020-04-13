@@ -2149,7 +2149,7 @@ class Adam(PrimitiveWithInfer):
         validator.check_param_equal("var_shape", var_shape, "m_shape", m_shape)
         validator.check_param_equal("var_shape", var_shape, "v_shape", v_shape)
         validator.check_param_equal("var_shape", var_shape, "grad_shape", grad_shape)
-        return var_shape
+        return var_shape, m_shape, v_shape
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
                     beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype):
@@ -2159,7 +2159,7 @@ class Adam(PrimitiveWithInfer):
         args = {"beta1_power_dtype": beta1_power_dtype, "beta2_power_dtype": beta2_power_dtype, 'lr_dtype': lr_dtype,
                 "beta1_dtype": beta1_dtype, "beta2_dtype": beta2_dtype, "epsilon_dtype": epsilon_dtype}
         validator.check_type_same(args, [mstype.float16, mstype.float32])
-        return var_dtype
+        return var_dtype, m_dtype, v_dtype
 
 
 class BinaryCrossEntropy(PrimitiveWithInfer):
