@@ -47,8 +47,8 @@ using mindspore::tensor::Tensor;
 
 namespace mindspore {
 namespace parallel {
-const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER, ALL_TO_ALL, REDUCE_SCATTER};
-const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS};
+static const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER, ALL_TO_ALL, REDUCE_SCATTER};
+static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS};
 // g_RefMap, for CNode B input i is a RefKey[Parameter C],
 // it will be one item in map with key: C, and value: (B, i)
 static std::map<AnfNodePtr, std::pair<AnfNodePtr, int>> g_RefMap;
@@ -1840,7 +1840,6 @@ void ParallelCommunication(const FuncGraphPtr& root, const std::vector<AnfNodePt
       if (cnode == loss_cnode) {
         is_loss_cnode = true;
       }
-
       // insert forward ops
       InsertForwardOps(distribute_operator, cnode);
 

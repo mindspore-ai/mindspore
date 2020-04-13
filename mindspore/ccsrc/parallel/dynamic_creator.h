@@ -125,6 +125,7 @@ REGISTER(GetNextInfo);
 REGISTER(NegInfo);
 REGISTER(BatchMatMulInfo);
 REGISTER(ExpandDimsInfo);
+REGISTER(SqueezeInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

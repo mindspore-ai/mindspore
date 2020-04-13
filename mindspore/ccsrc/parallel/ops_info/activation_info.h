@@ -184,6 +184,25 @@ class ExpandDimsInfo : public ActivationOther {
   Strategys inputs_strategy_;
   Strategys outputs_strategy_;
 };
+
+class SqueezeInfo : public ActivationOther {
+ public:
+  SqueezeInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
+              const PrimitiveAttrs& attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~SqueezeInfo() override = default;
+
+ protected:
+  Status InferAxis(const ValueTuplePtr& value_tuple);
+  Status GetAttrs() override;
+  Status InferReplaceOps(const StrategyPtr& strategy);
+  Status InferTensorMap() override;
+  Status InferTensorInfo() override;
+  Status Init(const StrategyPtr& strategy) override;
+
+ private:
+  ValueTuplePtr axis_;
+};
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_OPS_INFO_PARALLEL_ACTIVATION_INFO_H_
+#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_
