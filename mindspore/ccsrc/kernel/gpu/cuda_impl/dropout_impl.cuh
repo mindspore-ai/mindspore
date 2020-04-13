@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_GATHER_GPU_CU_H
-#define MINDSPORE_GATHER_GPU_CU_H
-template <typename T, typename S>
-void Gather(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
-            size_t input_dim1, cudaStream_t stream);
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_DROPOUT_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_DROPOUT_H_
 
-#endif
+#include "device/gpu/cuda_common.h"
+void DropoutForward(const float *input, float *mask, float *output, size_t num_count, float drop_prob,
+                    cudaStream_t cuda_stream);
+void DropoutBackward(const float *dy, const float *mask, float *dx, size_t num_count, float drop_prob,
+                     cudaStream_t cuda_stream);
+
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_DROPOUT_H_

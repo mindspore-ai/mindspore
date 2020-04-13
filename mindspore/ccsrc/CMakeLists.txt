@@ -472,6 +472,7 @@ if(ENABLE_GPU)
                           gpu_cuda_lib
                           gpu_queue
                           cublas
+                          ${CUDA_PATH}/lib64/libcurand.so
                           ${CUDNN_PATH}/lib64/libcudnn.so
                           ${CUDA_PATH}/lib64/libcudart.so
                           ${CUDA_PATH}/lib64/stubs/libcuda.so)
