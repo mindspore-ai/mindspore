@@ -2096,6 +2096,7 @@ class Pad(PrimitiveWithInfer):
         for item in paddings:
             if len(item) != 2:
                 raise ValueError('The shape of paddings must be (n, 2).')
+        self.paddings = paddings
 
     def infer_shape(self, x):
         paddings = np.array(self.paddings)
@@ -2108,7 +2109,76 @@ class Pad(PrimitiveWithInfer):
         return y_shape
 
     def infer_dtype(self, x):
+        validator.check_subclass("input_x", x, mstype.tensor)
         return x
+
+
+class MirrorPad(PrimitiveWithInfer):
+    """
+    Pads the input tensor according to the paddings and mode.
+
+    Args:
+        mode (string): Specifies padding mode. The optional values are "REFLECT", "SYMMETRIC".
+            Default: "REFLECT".
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+        - **paddings** (Tensor) - The paddings tensor. The value of `paddings` is a matrix(list),
+            and its shape is (N, 2). N is the rank of input data. All elements of paddings
+            are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
+            extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates
+            how many sizes to be extended behind of the `D` th dimension of the input tensor.
+
+    Outputs:
+        Tensor, the tensor after padding.
+
+        - If 'mode` is "REFLECT", it uses a way of symmetrical copying throught the axis of symmetry to fill in,
+          symmetry. If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
+          Outputs is [[6,5,4,5,6,5,4],[3,2,1,2,3,2,1],[6,5,4,5,6,5,4],[9,8,7,8,9,8,7],[6,5,4,5,6,5,4]].
+        - If 'mode' is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
+          according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
+          is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the Outputs is
+          [[2,1,1,2,3,3,2],[2,1,1,2,3,3,2],[5,4,4,5,6,6,5],[8,7,7,8,9,9,8],[8,7,7,8,9,9,8]].
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.pad = P.MirrorPad(mode="REFLECT")
+        >>>     def construct(self, x, paddings):
+        >>>         return self.pad(x, paddings)
+        >>> x = np.random.random(size=(2, 3)).astype(np.float32)
+        >>> paddings = Tensor([[1,1],[2,2]])
+        >>> pad = Net()
+        >>> ms_output = pad(Tensor(x), paddings)
+    """
+
+    @prim_attr_register
+    def __init__(self, mode='REFLECT'):
+        """Init Pad"""
+        validator.check_string('mode', mode, ['REFLECT', 'SYMMETRIC'])
+        self.mode = mode
+
+    def __infer__(self, input_x, paddings):
+        validator.check_subclass("input_x", input_x['dtype'], mstype.tensor)
+        validator.check_subclass("paddings", paddings['dtype'], mstype.tensor)
+        x_shape = list(input_x['shape'])
+        paddings_value = paddings['value'].asnumpy()
+        paddings_size = paddings_value.size
+        validator.check_integer('paddings.shape', paddings_size, len(x_shape) * 2, Rel.EQ)
+        if not np.all(paddings_size >= 0):
+            raise ValueError('All elements of paddings must be >= 0.')
+        y_shape = ()
+        for i in range(0, int(paddings_size / 2)):
+            y_shape += ((x_shape[i] + paddings_value[i, 0] + paddings_value[i, 1]),)
+
+        return {'shape': y_shape,
+                'dtype': input_x['dtype'],
+                'value': None}
 
 
 class ROIAlign(PrimitiveWithInfer):

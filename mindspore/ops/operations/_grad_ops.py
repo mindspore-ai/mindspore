@@ -947,6 +947,24 @@ class TanhGrad(PrimitiveWithInfer):
         return out
 
 
+class MirrorPadGrad(PrimitiveWithInfer):
+    """Gradients of MirrorPad operation."""
+
+    @prim_attr_register
+    def __init__(self, mode="REFLECT"):
+        """init MirrorPad"""
+        validator.check_string('mode', mode, ['REFLECT', 'SYMMETRIC'])
+        self.mode = mode
+
+    def __infer__(self, dout, paddings, x):
+        validator.check_subclass("dout", dout['dtype'], mstype.tensor)
+        validator.check_subclass("paddings", paddings['dtype'], mstype.tensor)
+        validator.check_subclass("input_x", x['dtype'], mstype.tensor)
+        return {'shape': x['shape'],
+                'dtype': dout['dtype'],
+                'value': None}
+
+
 class RefToEmbed(Primitive):
     r"""
     Make a key from Ref.
