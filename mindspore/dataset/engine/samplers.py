@@ -195,6 +195,8 @@ class SubsetRandomSampler():
     def create(self):
         return cde.SubsetRandomSampler(self.indices)
 
+    def _create_for_minddataset(self):
+        return cde.MindrecordSubsetRandomSampler(self.indices)
 
 class WeightedRandomSampler():
     """

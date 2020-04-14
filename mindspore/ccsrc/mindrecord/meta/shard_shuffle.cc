@@ -22,7 +22,7 @@ namespace mindspore {
 namespace mindrecord {
 ShardShuffle::ShardShuffle(uint32_t seed) : shuffle_seed_(seed) {}
 
-MSRStatus ShardShuffle::operator()(ShardTask &tasks) {
+MSRStatus ShardShuffle::execute(ShardTask &tasks) {
   if (tasks.categories < 1) {
     return FAILED;
   }

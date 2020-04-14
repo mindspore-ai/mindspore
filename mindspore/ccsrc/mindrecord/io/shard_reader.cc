@@ -779,8 +779,12 @@ MSRStatus ShardReader::Launch(bool isSimpleReader) {
 
   // Sort row group by (group_id, shard_id), prepare for parallel reading
   std::sort(row_group_summary.begin(), row_group_summary.end(), ResortRowGroups);
-  CreateTasks(row_group_summary, operators_);
-  MS_LOG(INFO) << "Launching read threads";
+  if (CreateTasks(row_group_summary, operators_) != SUCCESS) {
+    MS_LOG(ERROR) << "Failed to launch read threads.";
+    interrupt_ = true;
+    return FAILED;
+  }
+  MS_LOG(INFO) << "Launching read threads.";
 
   if (isSimpleReader) return SUCCESS;
 
@@ -1152,6 +1156,9 @@ std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetBlockNext() 
 }
 
 std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNext() {
+  if (interrupt_) {
+    return std::vector<std::tuple<std::vector<uint8_t>, json>>();
+  }
   if (block_reader_) return GetBlockNext();
   if (deliver_id_ >= static_cast<int>(tasks_.Size())) {
     return std::vector<std::tuple<std::vector<uint8_t>, json>>();
