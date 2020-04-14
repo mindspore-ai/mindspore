@@ -531,8 +531,8 @@ class Conv2D(PrimitiveWithInfer):
                        2 deconvolution, 3 depthwise convolution. Default: 1.
         pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
         pad (int): The pad value to fill. Default: 0.
-        stride (int): The stride to apply conv filter. Default: 1.
-        dilation (int): Specify the space to use between kernel elements. Default: 1.
+        stride (Union(int, tuple[int])): The stride to apply conv filter. Default: 1.
+        dilation (Union(int, tuple[int])): Specify the space to use between kernel elements. Default: 1.
         group (int): Split input into groups. Default: 1.
 
     Returns:
@@ -559,11 +559,35 @@ class Conv2D(PrimitiveWithInfer):
                  group=1):
         """init Conv2D"""
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
-        self.kernel_size = kernel_size
         self.kernel_size = validator.check_type('kernel_size', kernel_size, (int, tuple))
-        if isinstance(self.kernel_size, int):
-            self.kernel_size = (self.kernel_size, self.kernel_size)
-        validator.check_integer('length of kernel_size', len(self.kernel_size), 2, Rel.GE)
+        if isinstance(kernel_size, int):
+            self.kernel_size = (kernel_size, kernel_size)
+        if len(self.kernel_size) != 2 or (not isinstance(self.kernel_size[0], int)) or \
+                                         (not isinstance(self.kernel_size[1], int)) or \
+                                         self.kernel_size[0] < 1 or self.kernel_size[1] < 1:
+            raise ValueError(f"The \'kernel_size\' of \'Conv2D\' should be an positive int number or "
+                             f"a tuple of two positive int numbers, but got {kernel_size}")
+        self.stride = validator.check_type('stride', stride, (int, tuple))
+        if isinstance(stride, int):
+            self.stride = (stride, stride)
+        if len(self.stride) != 2 or (not isinstance(self.stride[0], int)) or \
+                                    (not isinstance(self.stride[1], int)) or \
+                                     self.stride[0] < 1 or self.stride[1] < 1:
+            raise ValueError(f"The \'stride\' of \'Conv2D\' should be an positive int number or "
+                             f"a tuple of two positive int numbers, but got {stride}")
+        self.add_prim_attr('stride', (1, 1, self.stride[0], self.stride[1]))
+        self.dilation = validator.check_type('dilation', dilation, (tuple, int))
+        if isinstance(dilation, int):
+            self.dilation = (1, 1, dilation, dilation)
+        elif len(dilation) == 2:
+            self.dilation = (1, 1, dilation[0], dilation[1])
+        if len(self.dilation) != 4 or (not isinstance(self.dilation[0], int) or self.dilation[0] < 1) or \
+                                      (not isinstance(self.dilation[1], int) or self.dilation[1] < 1) or \
+                                      (not isinstance(self.dilation[2], int) or self.dilation[2] < 1) or \
+                                      (not isinstance(self.dilation[3], int) or self.dilation[3] < 1):
+            raise ValueError(f"The \'dilation\' of \'Conv2D\' should be an positive int number or "
+                             f"a tuple of two or four positive int numbers, but got {dilation}")
+        self.add_prim_attr('dilation', self.dilation)
         validator.equal('type of pad', type(pad), 'not bool', not isinstance(pad, bool))
         validator.equal('type of pad', type(pad), 'int', isinstance(pad, int))
         self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'])
@@ -575,18 +599,6 @@ class Conv2D(PrimitiveWithInfer):
         self.add_prim_attr('data_format', "NCHW")
         self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT)
         self.group = validator.check_integer('group', group, 0, Rel.GT)
-        self.dilation = validator.check_integer('dilation', dilation, 1, Rel.GE)
-        validator.check_type('kernel_size', kernel_size, [int, tuple])
-        if isinstance(kernel_size, int) and kernel_size < 1:
-            raise ValueError('Attr \'kernel_size\' of \'Conv2D\' Op passed '
-                             + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
-        if isinstance(kernel_size, tuple) and (len(kernel_size) != 2 or
-                                               (not isinstance(kernel_size[0], int)) or
-                                               (not isinstance(kernel_size[1], int)) or
-                                               kernel_size[0] < 1 or kernel_size[1] < 1):
-            raise ValueError('Attr \'kernel_size\' of \'Conv2D\' Op passed '
-                             + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
-        self.stride = validator.check_integer('stride', stride, 1, Rel.GE)
 
     def infer_shape(self, x_shape, w_shape):
         validator.check_integer("weight_shape", len(w_shape), 4, Rel.EQ)
@@ -597,29 +609,33 @@ class Conv2D(PrimitiveWithInfer):
 
         kernel_size_h = w_shape[2]
         kernel_size_w = w_shape[3]
+        stride_h = self.stride[2]
+        stride_w = self.stride[3]
+        dilation_h = self.dilation[2]
+        dilation_w = self.dilation[3]
 
         if self.pad_mode == "valid":
-            h_out = math.ceil((x_shape[2] - self.dilation * (kernel_size_h - 1)) / self.stride)
-            w_out = math.ceil((x_shape[3] - self.dilation * (kernel_size_w - 1)) / self.stride)
+            h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
+            w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
             pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
         elif self.pad_mode == "same":
-            h_out = math.ceil(x_shape[2] / self.stride)
-            w_out = math.ceil(x_shape[3] / self.stride)
+            h_out = math.ceil(x_shape[2] / stride_h)
+            w_out = math.ceil(x_shape[3] / stride_w)
 
-            pad_needed_h = max(0, (h_out - 1) * self.stride + self.dilation * (kernel_size_h - 1) + 1 - x_shape[2])
+            pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
-            pad_needed_w = max(0, (w_out - 1) * self.stride + self.dilation * (kernel_size_w - 1) + 1 - x_shape[3])
+            pad_needed_w = max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3])
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
         elif self.pad_mode == 'pad':
             pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
 
-            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (self.dilation - 1)) \
-                    / self.stride
-            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (self.dilation - 1)) \
-                    / self.stride
+            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
+                    / stride_h
+            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
+                    / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
 
@@ -651,19 +667,19 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
 
     Args:
         channel_multiplier (int): The multipiler for the original output conv.
-        kernel_size (int or tuple): The size of the conv kernel.
+        kernel_size (Union[int, tuple[int]]): The size of the conv kernel.
         mode (int): 0 Math convolution, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 3.
         pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
         pad (int): The pad value to fill. Default: 0.
-        stride (int): The stride to apply conv filter. Default: 1.
-        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        stride (Union[int, tuple[int]]): The stride to apply conv filter. Default: 1.
+        dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits input into groups. Default: 1.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
         - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
-          :math:`(C_{out}, C_{in}, K_1, K_2)`.
+          :math:`(channel_multiplier, C_{in}, K_1, K_2)`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{in} * \text{channel_multiplier}, H_{out}, W_{out})`.
@@ -681,15 +697,33 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
                  group=1):
         """init DepthwiseConv2dNative"""
         validator.check_pad_value_by_mode(self.__class__.__name__, pad_mode, pad)
-        validator.check_type("kernel_size", kernel_size, (int, tuple))
+        self.kernel_size = validator.check_type('kernel_size', kernel_size, (int, tuple))
         if isinstance(kernel_size, int):
-            kernel_size = (kernel_size, kernel_size)
-        if isinstance(kernel_size, tuple) and (len(kernel_size) != 2 or
-                                               (not isinstance(kernel_size[0], int)) or
-                                               (not isinstance(kernel_size[1], int)) or
-                                               kernel_size[0] < 1 or kernel_size[1] < 1):
-            raise ValueError(f"Attr kernel_size of DepthwiseConv2dNative Op not passed "
-                             f"{kernel_size}, should be a int or tuple and equal to or greater than 1.")
+            self.kernel_size = (kernel_size, kernel_size)
+        if len(self.kernel_size) != 2 or (not isinstance(self.kernel_size[0], int)) or \
+                                         (not isinstance(self.kernel_size[1], int)) or \
+                                         self.kernel_size[0] < 1 or self.kernel_size[1] < 1:
+            raise ValueError(f"The \'kernel_size\' of \'DepthwiseConv2dNative\' should be an positive int number or "
+                             f"a tuple of two positive int numbers, but got {kernel_size}")
+        self.stride = validator.check_type('stride', stride, (int, tuple))
+        if isinstance(stride, int):
+            self.stride = (stride, stride)
+        if len(self.stride) != 2 or (not isinstance(self.stride[0], int)) or \
+                                    (not isinstance(self.stride[1], int)) or \
+                                    self.stride[0] < 1 or self.stride[1] < 1:
+            raise ValueError(f"The \'stride\' of \'DepthwiseConv2dNative\' should be an positive int number or "
+                             f"a tuple of two positive int numbers, but got {stride}")
+        self.add_prim_attr('stride', (1, 1, self.stride[0], self.stride[1]))
+        self.dilation = validator.check_type('dilation', dilation, (tuple, int))
+        if isinstance(dilation, int):
+            self.dilation = (dilation, dilation)
+        if len(self.dilation) != 2 or (not isinstance(self.dilation[0], int)) or \
+                                      (not isinstance(self.dilation[1], int)) or \
+                                      self.dilation[0] < 1 or self.dilation[1] < 1:
+            raise ValueError(f"The \'dilation\' of \'DepthwiseConv2dNative\' should be an positive int number or "
+                             f"a tuple of two or four positive int numbers, but got {dilation}")
+        self.add_prim_attr('dilation', (1, 1, self.dilation[0], self.dilation[1]))
+        validator.equal('type of pad', type(pad), 'not bool', not isinstance(pad, bool))
         if pad_mode not in ("same", "valid", "pad"):
             raise ValueError(f"Attr pad_mode of DepthwiseConv2dNative Op not passed"
                              f"{pad_mode} not in valid, same, pad.")
@@ -698,9 +732,6 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         self.add_prim_attr('data_format', "NCHW")
         self.channel_multiplier = validator.check_integer("channel_multiplier", channel_multiplier, 0, Rel.GT)
         self.group = validator.check_integer("group", group, 0, Rel.GT)
-        self.dilation = validator.check_integer("dilation", dilation, 1, Rel.GE)
-        self.kernel_size = validator.check_value_on_integer("kernel_size", kernel_size, 1, Rel.GE)
-        self.stride = validator.check_integer("stride", stride, 1, Rel.GE)
         self.pad = pad
 
     def infer_shape(self, x_shape, w_shape):
@@ -711,29 +742,33 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
 
         kernel_size_h = w_shape[2]
         kernel_size_w = w_shape[3]
+        stride_h = self.stride[2]
+        stride_w = self.stride[3]
+        dilation_h = self.dilation[2]
+        dilation_w = self.dilation[3]
 
         if self.pad_mode == "valid":
-            h_out = math.ceil((x_shape[2] - self.dilation * (kernel_size_h - 1)) / self.stride)
-            w_out = math.ceil((x_shape[3] - self.dilation * (kernel_size_w - 1)) / self.stride)
+            h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
+            w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
             pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
         elif self.pad_mode == "same":
-            h_out = math.ceil(x_shape[2] / self.stride)
-            w_out = math.ceil(x_shape[3] / self.stride)
+            h_out = math.ceil(x_shape[2] / stride_h)
+            w_out = math.ceil(x_shape[3] / stride_w)
 
-            pad_needed_h = max(0, (h_out - 1) * self.stride + self.dilation * (kernel_size_h - 1) + 1 - x_shape[2])
+            pad_needed_h = max(0, (h_out - 1) * stride_h+ dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
-            pad_needed_w = max(0, (w_out - 1) * self.stride + self.dilation * (kernel_size_w - 1) + 1 - x_shape[3])
+            pad_needed_w = max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3])
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
         elif self.pad_mode == 'pad':
             pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
 
-            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (self.dilation - 1)) \
-                    / self.stride
-            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (self.dilation - 1)) \
-                    / self.stride
+            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
+                    / stride_h
+            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
+                    / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
         else:
@@ -786,7 +821,7 @@ class _Pool(PrimitiveWithInfer):
                     (not isinstance(ksize[1], int)) or
                     ksize[0] <= 0 or
                     ksize[1] <= 0):
-                raise ValueError(f"The 'ksize' passed to operator {self.name} should be an positive int number or"
+                raise ValueError(f"The 'ksize' passed to operator {self.name} should be an positive int number or "
                                  f"a tuple of two positive int numbers, but got {ksize}")
             self.ksize = (1, 1, ksize[0], ksize[1])
         if self.is_maxpoolwithargmax:
@@ -802,7 +837,7 @@ class _Pool(PrimitiveWithInfer):
                     (not isinstance(strides[1], int)) or
                     strides[0] <= 0 or
                     strides[1] <= 0):
-                raise ValueError(f"The 'strides' passed to operator {self.name} should be an positive int number or"
+                raise ValueError(f"The 'strides' passed to operator {self.name} should be an positive int number or "
                                  f"a tuple of two positive int numbers, but got {strides}")
             self.strides = (1, 1, strides[0], strides[1])
         if self.is_maxpoolwithargmax:
@@ -924,7 +959,6 @@ class MaxPoolWithArgmax(_Pool):
         - **output** (Tensor) -  Maxpooling result, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
         - **mask** (Tensor) -  Max values' index represented by the mask.
     """
-
     def __init__(self, ksize=1, strides=1, padding="valid"):
         super(MaxPoolWithArgmax, self).__init__(ksize, strides, padding)
         self.is_tbe = context.get_context("device_target") == "Ascend"
@@ -1015,8 +1049,8 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         pad (int): The pad value to fill. Default: 0.
         mode (int): 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
-        stride (int): The stride to apply conv filter. Default: 1.
-        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        stride (Union[int. tuple[int]]): The stride to apply conv filter. Default: 1.
+        dilation (Union[int. tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits input into groups. Default: 1.
 
     Returns:
@@ -1038,25 +1072,41 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['out_backprop', 'filter', 'input_sizes'], outputs=['output'])
         self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT)
         self.kernel_size = validator.check_type('kernel_size', kernel_size, (int, tuple))
-        if isinstance(self.kernel_size, int):
-            if kernel_size < 1:
-                raise ValueError('Attr \'kernel_size\' of \'Conv2DBackpropInput\' Op passed '
-                                 + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
-            self.kernel_size = (self.kernel_size, self.kernel_size)
-        elif isinstance(kernel_size, tuple) and (len(kernel_size) != 2 or
-                                                 (not isinstance(kernel_size[0], int)) or
-                                                 (not isinstance(kernel_size[1], int)) or
-                                                 kernel_size[0] < 1 or kernel_size[1] < 1):
-            raise ValueError('Attr \'kernel_size\' of \'Conv2DBackpropInput\' Op passed '
-                             + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
+        if isinstance(kernel_size, int):
+            self.kernel_size = (kernel_size, kernel_size)
+        if len(self.kernel_size) != 2 or (not isinstance(self.kernel_size[0], int)) or \
+                                         (not isinstance(self.kernel_size[1], int)) or \
+                                         self.kernel_size[0] < 1 or self.kernel_size[1] < 1:
+            raise ValueError(f"The \'kernel_size\' of \'Conv2DBackpropInput\' should be an positive int number or "
+                             f"a tuple of two positive int numbers, but got {kernel_size}")
+        self.stride = validator.check_type('stride', stride, (int, tuple))
+        if isinstance(stride, int):
+            self.stride = (stride, stride)
+        elif isinstance(stride, tuple) and len(stride) == 4:
+            self.stride = (stride[2], stride[3])
+        if len(self.stride) != 2 or (not isinstance(self.stride[0], int)) or (not isinstance(self.stride[1], int)) or \
+                self.stride[0] < 1 or self.stride[1] < 1:
+            raise ValueError(f"The \'stride\' of \'Conv2DBackpropInput\' should be an positive int number or "
+                             f"a tuple of two or four positive int numbers, but got {stride}")
+        self.add_prim_attr('stride', self.stride)
+        self.dilation = validator.check_type('dilation', dilation, (tuple, int))
+        if isinstance(dilation, int):
+            self.dilation = (1, 1, dilation, dilation)
+        elif len(dilation) == 2:
+            self.dilation = (1, 1, dilation[0], dilation[1])
+        if len(self.dilation) != 4 or (not isinstance(self.dilation[0], int) or self.dilation[0] < 1) or \
+                                      (not isinstance(self.dilation[1], int) or self.dilation[1] < 1) or \
+                                      (not isinstance(self.dilation[2], int) or self.dilation[2] < 1) or \
+                                      (not isinstance(self.dilation[3], int) or self.dilation[3] < 1):
+            raise ValueError(f"The \'dilation\' of \'Conv2DBackpropInput\' should be an positive int number or "
+                             f"a tuple of two or four positive int numbers, but got {dilation}")
+        self.add_prim_attr('dilation', self.dilation)
         validator.equal('type of pad', type(pad), 'not bool', not isinstance(pad, bool))
         validator.equal('type of pad', type(pad), 'int', isinstance(pad, int))
         self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'])
         self.pad = validator.check_pad_value_by_mode(self.__class__.__name__, pad_mode, pad)
         self.mode = validator.check_integer('mode', mode, 1, Rel.EQ)
         self.group = validator.check_integer('group', group, 0, Rel.GT)
-        self.dilation = validator.check_integer('dilation', dilation, 1, Rel.GE)
-        self.stride = validator.check_integer('stride', stride, 1, Rel.GE)
         pad_mode = pad_mode.upper()
         self.add_prim_attr('pad_mode', pad_mode)
         self.add_prim_attr('data_format', "NCHW")
@@ -1075,16 +1125,18 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         dout_shape = doutput['shape']
         kernel_h = self.kernel_size[0]
         kernel_w = self.kernel_size[1]
+        stride_h = self.stride[0]
+        stride_w = self.stride[1]
         # default pad mode is valid
         pad_list = (0, 0, 0, 0)
         if self.pad_list:
             pad_list = tuple(self.pad_list)
         elif self.pad_mode == "SAME":
-            pad_needed_h = max(0, (dout_shape[2] - 1) * self.stride + kernel_h - x_size_v[2])
+            pad_needed_h = max(0, (dout_shape[2] - 1) * stride_h + kernel_h - x_size_v[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
-            pad_needed_w = max(0, (dout_shape[3] - 1) * self.stride + kernel_w - x_size_v[3])
+            pad_needed_w = max(0, (dout_shape[3] - 1) * stride_w + kernel_w - x_size_v[3])
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
             pad_list = (pad_top, pad_bottom, pad_left, pad_right)

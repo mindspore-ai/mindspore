@@ -179,7 +179,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(Squeeze, Squeeze,
 OPERATOR_ONNX_CONVERT_DEFINE(
   Conv2D, Conv,
   OpNameInfo()
-    .Attr("dilation", "dilations", onnx::AttributeProto_AttributeType_INTS, SetAttrValueToProto<Int32Imm, 2>)
+    .Attr("dilation", "dilations", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<2>)
     .Attr("group", "group", onnx::AttributeProto_AttributeType_INT, SetAttrValueToProto<Int32Imm>)
     .Attr("kernel_size", "kernel_shape", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<0>)
     .Attr("pad_mode", "auto_pad", onnx::AttributeProto_AttributeType_STRING,
@@ -197,8 +197,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(
                                        prim);
             }
           })
-    .Attr("stride", "strides", onnx::AttributeProto_AttributeType_INTS, SetAttrValueToProto<Int32Imm, 2>))
-
+    .Attr("stride", "strides", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<2>))
 OPERATOR_ONNX_CONVERT_DEFINE(BiasAdd, Add, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(MatMul, Gemm,
                              OpNameInfo()

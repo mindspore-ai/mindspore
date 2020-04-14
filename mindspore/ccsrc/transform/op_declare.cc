@@ -764,9 +764,9 @@ OUTPUT_MAP(MaxPoolGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
 // Conv2D
 INPUT_MAP(Conv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
 ATTR_MAP(Conv2D) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
 OUTPUT_MAP(Conv2D) = {{0, OUTPUT_DESC(y)}};
 
@@ -776,8 +776,8 @@ INPUT_ATTR_MAP(Conv2DBackpropInputD) = {
   {3, ATTR_DESC(input_sizes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(Conv2DBackpropInputD) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"stride", ATTR_DESC(strides, "strides", AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
 OUTPUT_MAP(Conv2DBackpropInputD) = {{0, OUTPUT_DESC(y)}};
 
@@ -787,17 +787,17 @@ INPUT_ATTR_MAP(Conv2DBackpropFilterD) = {
   {3, ATTR_DESC(filter_sizes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(Conv2DBackpropFilterD) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"stride", ATTR_DESC(strides, "strides", AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
 OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
 
 // DepthwiseConv2D
 INPUT_MAP(DepthwiseConv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
 ATTR_MAP(DepthwiseConv2D) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
 };
 OUTPUT_MAP(DepthwiseConv2D) = {{0, OUTPUT_DESC(y)}};
@@ -807,9 +807,9 @@ INPUT_MAP(DepthwiseConv2DBackpropInputD) = {{2, INPUT_DESC(filter)}, {3, INPUT_D
 INPUT_ATTR_MAP(DepthwiseConv2DBackpropInputD) = {
   {1, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(DepthwiseConv2DBackpropInputD) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
 OUTPUT_MAP(DepthwiseConv2DBackpropInputD) = {{0, OUTPUT_DESC(input_grad)}};
 
@@ -818,9 +818,9 @@ INPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{1, INPUT_DESC(input)}, {3, INPUT_D
 INPUT_ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
   {2, ATTR_DESC(filter_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
 OUTPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{0, OUTPUT_DESC(filter_grad)}};
 
