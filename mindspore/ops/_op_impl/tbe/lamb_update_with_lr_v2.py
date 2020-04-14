@@ -14,144 +14,31 @@
 # ============================================================================
 
 """LambUpdateWithLrV2 op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+lamb_update_with_lr_v2_op_info = TBERegOp("LambUpdateWithLrV2") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("lamb_update_with_lr_v2.so") \
+    .compute_cost(10) \
+    .kernel_name("lamb_update_with_lr_v2") \
+    .partial_flag(True) \
+    .input(0, "x1", False, "required", "all") \
+    .input(1, "x2", False, "required", "all") \
+    .input(2, "x3", False, "required", "all") \
+    .input(3, "x4", False, "required", "all") \
+    .input(4, "x5", False, "required", "all") \
+    .input(5, "greater_y", False, "required", "all") \
+    .input(6, "select_e", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name":"LambUpdateWithLrV2",
-    "imply_type":"TBE",
-    "fusion_type":"ELEMWISE",
-    "async_flag":false,
-    "binfile_name":"lamb_update_with_lr_v2.so",
-    "compute_cost":10,
-    "kernel_name":"lamb_update_with_lr_v2",
-    "partial_flag":true,
-    "attr":[],
-    "inputs":[
-        {
-            "index":0,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"x1",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":1,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"x2",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":2,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"x3",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":3,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"x4",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":4,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"x5",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":5,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"greater_y",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":6,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"select_e",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        }
-    ],
-    "outputs":[
-        {
-            "index":0,
-            "dtype":[
-                "float16",
-                "float32"
-            ],
-            "format":[
-                "DefaultFormat",
-                "DefaultFormat"
-            ],
-            "name":"y",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        }
-    ]
-}""")
+@op_info_register(lamb_update_with_lr_v2_op_info)
 def _lamb_update_with_lr_v2_tbe():
     """LambUpdateWithLrV2 TBE register"""
     return

@@ -14,94 +14,33 @@
 # ============================================================================
 
 """Select op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+select_op_info = TBERegOp("Select") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("select.so") \
+    .compute_cost(10) \
+    .kernel_name("select") \
+    .partial_flag(True) \
+    .input(0, "condition", False, "required", "all") \
+    .input(1, "x1", False, "required", "all") \
+    .input(2, "x2", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.BOOL_Default, DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.BOOL_5HD, DataType.I8_5HD, DataType.I8_5HD, DataType.I8_5HD) \
+    .dtype_format(DataType.BOOL_5HD, DataType.U8_5HD, DataType.U8_5HD, DataType.U8_5HD) \
+    .dtype_format(DataType.BOOL_5HD, DataType.I32_5HD, DataType.I32_5HD, DataType.I32_5HD) \
+    .dtype_format(DataType.BOOL_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.BOOL_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Select",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "select.so",
-    "compute_cost": 10,
-    "kernel_name": "select",
-    "partial_flag": true,
-    "attr":[
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "bool", "bool", "bool", "bool", "bool", "bool", "bool", "bool", "bool", "bool",
-                "bool", "bool", "bool", "bool", "bool", "bool", "bool", "bool", "bool", "bool"
-            ],
-            "format": [
-               "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat",
-               "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat",
-               "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat",
-               "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "condition",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16", "float16", "float16", "float16", "float", "float", "float", "float",
-                "int32", "int32", "int32", "int32", "int8", "int8", "int8", "int8", "uint8",
-                "uint8", "uint8", "uint8"
-            ],
-            "format": [
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat",
-                "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat",
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "x1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16", "float16", "float16", "float16", "float", "float", "float", "float", "int32",
-                "int32", "int32", "int32", "int8", "int8", "int8", "int8", "uint8", "uint8", "uint8", "uint8"
-            ],
-            "format": [
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat",
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "x2",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float16", "float16", "float", "float", "float", "float", "int32",
-                "int32", "int32", "int32", "int8", "int8", "int8", "int8", "uint8", "uint8", "uint8", "uint8"
-            ],
-            "format": [
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat",
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(select_op_info)
 def _select_tbe():
     """Select TBE register"""
     return

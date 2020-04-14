@@ -14,89 +14,26 @@
 # ============================================================================
 
 """TopKV2 op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+top_k_v2_op_info = TBERegOp("TopKV2") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("top_k_v2.so") \
+    .compute_cost(10) \
+    .kernel_name("top_k_v2") \
+    .partial_flag(True) \
+    .attr("k", "required", "int", "all")\
+    .attr("sorted", "required", "bool", "all")\
+    .input(0, "x", False, "required", "all") \
+    .input(1, "input_indices", False, "optional", "all") \
+    .output(0, "values", False, "required", "all") \
+    .output(1, "indices", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.I32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "TopKV2",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "top_k_v2.so",
-    "compute_cost": 10,
-    "kernel_name": "top_k_v2",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "k",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        },
-        {
-            "name": "sorted",
-            "param_type": "required",
-            "type": "bool",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "input_indices",
-            "need_compile": false,
-            "param_type": "optional",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "values",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "int32"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "indices",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(top_k_v2_op_info)
 def _topk_v2_tbe():
     """TopKV2 TBE register"""
     return

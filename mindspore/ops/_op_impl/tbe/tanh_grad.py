@@ -14,65 +14,26 @@
 # ============================================================================
 
 """TanhGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+tanh_grad_op_info = TBERegOp("TanhGrad") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("tanh_grad.so") \
+    .compute_cost(10) \
+    .kernel_name("tanh_grad") \
+    .partial_flag(True) \
+    .input(0, "y", False, "required", "all") \
+    .input(1, "dy", False, "required", "all") \
+    .output(0, "z", True, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "TanhGrad",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "tanh_grad.so",
-    "compute_cost": 10,
-    "kernel_name": "tanh_grad",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float", "float"
-            ],
-            "format": [
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "NC1HWC0"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16", "float16", "float", "float"
-            ],
-            "format": [
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "NC1HWC0"
-            ],
-            "name": "dy",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float", "float"
-            ],
-            "format": [
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "NC1HWC0"
-            ],
-            "name": "z",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(tanh_grad_op_info)
 def _tanh_grad_tbe():
     """TanhGrad TBE register"""
     return

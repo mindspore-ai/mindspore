@@ -14,111 +14,39 @@
 # ============================================================================
 
 """LayerNorm op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+layer_norm_op_info = TBERegOp("LayerNorm") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("layer_norm.so") \
+    .compute_cost(10) \
+    .kernel_name("layer_norm") \
+    .partial_flag(True) \
+    .attr("begin_norm_axis", "required", "int", "all") \
+    .attr("begin_params_axis", "required", "int", "all") \
+    .input(0, "x", False, "required", "all") \
+    .input(1, "gamma", False, "required", "all") \
+    .input(2, "beta", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .output(1, "mean", False, "required", "all") \
+    .output(2, "variance", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD,
+                  DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_Default, DataType.F16_Default, DataType.F16_FracNZ,
+                  DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_FracNZ, DataType.F32_Default, DataType.F32_Default, DataType.F32_FracNZ,
+                  DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "LayerNorm",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "layer_norm.so",
-    "compute_cost": 10,
-    "kernel_name": "layer_norm",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "begin_norm_axis",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        },
-        {
-            "name": "begin_params_axis",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float16","float","float","float"
-            ],
-            "format": [
-                "FRACTAL_NZ","DefaultFormat","NC1HWC0","FRACTAL_NZ","DefaultFormat","NC1HWC0"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float16","float16","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "gamma",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16","float16","float16","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "beta",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float16","float","float","float"
-            ],
-            "format": [
-                "FRACTAL_NZ","DefaultFormat","NC1HWC0","FRACTAL_NZ","DefaultFormat","NC1HWC0"
-            ],
-            "name": "y",
-            "param_type": "required"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float16","float16","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-
-            ],
-            "name": "mean",
-            "param_type": "required"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16","float16","float16","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-
-            ],
-            "name": "variance",
-            "param_type": "required"
-        }
-    ]
-}""")
+@op_info_register(layer_norm_op_info)
 def _layer_norm_tbe():
     """LayerNorm TBE register"""
     return

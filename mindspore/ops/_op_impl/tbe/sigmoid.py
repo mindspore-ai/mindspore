@@ -14,67 +14,31 @@
 # ============================================================================
 
 """Sigmoid op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+sigmoid_op_info = TBERegOp("Sigmoid") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("sigmoid.so") \
+    .compute_cost(10) \
+    .kernel_name("sigmoid") \
+    .partial_flag(True) \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_FracZ, DataType.F16_FracZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ) \
+    .dtype_format(DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ) \
+    .dtype_format(DataType.F32_FracNZ, DataType.F32_FracNZ) \
+    .dtype_format(DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Sigmoid",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "Sigmoid.so",
-    "compute_cost": 10,
-    "kernel_name": "sigmoid",
-    "partial_flag": true,
-    "attr": [
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float",
-                "float16","float",
-                "float16","float",
-                "float16","float",
-                "float16","float"
-            ],
-            "format": [
-                "FracZ","FracZ",
-                "FRACTAL_NZ","FRACTAL_NZ",
-                "C1HWNCoC0","C1HWNCoC0",
-                "NC1HWC0","NC1HWC0",
-                "DefaultFormat","DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float",
-                "float16","float",
-                "float16","float",
-                "float16","float",
-                "float16","float"
-            ],
-            "format": [
-                "FracZ","FracZ",
-                "FRACTAL_NZ","FRACTAL_NZ",
-                "C1HWNCoC0","C1HWNCoC0",
-                "NC1HWC0","NC1HWC0",
-                "DefaultFormat","DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(sigmoid_op_info)
 def _sigmoid_tbe():
     """Sigmoid TBE register"""
     return

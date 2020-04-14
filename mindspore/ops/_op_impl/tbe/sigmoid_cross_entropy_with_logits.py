@@ -14,64 +14,26 @@
 # ============================================================================
 
 """SigmoidCrossEntropyWithLogits op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+sigmoid_cross_entropy_with_logits_op_info = TBERegOp("SigmoidCrossEntropyWithLogits") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("sigmoid_cross_entropy_with_logits.so") \
+    .compute_cost(10) \
+    .kernel_name("sigmoid_cross_entropy_with_logits") \
+    .partial_flag(True) \
+    .input(0, "predict", False, "required", "all") \
+    .input(1, "target", False, "required", "all") \
+    .output(0, "loss", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "SigmoidCrossEntropyWithLogits",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "sigmoid_cross_entropy_with_logits.so",
-    "compute_cost": 10,
-    "kernel_name": "sigmoid_cross_entropy_with_logits",
-    "partial_flag": true,
-    "attr": [
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float", "float"
-            ],
-            "format": [
-                "NC1HWC0", "DefaultFormat", "NC1HWC0", "DefaultFormat"
-            ],
-            "name": "predict",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16", "float16", "float", "float"
-            ],
-            "format": [
-                "NC1HWC0", "DefaultFormat", "NC1HWC0", "DefaultFormat"
-            ],
-            "name": "target",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float", "float"
-            ],
-            "format": [
-                "NC1HWC0", "DefaultFormat", "NC1HWC0", "DefaultFormat"
-            ],
-            "name": "loss",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(sigmoid_cross_entropy_with_logits_op_info)
 def _sigmoid_cross_entropy_with_logits_tbe():
     """SigmoidCrossEntropyWithLogits TBE register"""
     return

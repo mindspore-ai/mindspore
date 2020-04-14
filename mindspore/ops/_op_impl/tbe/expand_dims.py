@@ -14,57 +14,25 @@
 # ============================================================================
 
 """ExpandDims op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+expand_dims_op_info = TBERegOp("ExpandDims") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("expand_dims.so") \
+    .compute_cost(10) \
+    .kernel_name("expand_dims") \
+    .partial_flag(True) \
+    .attr("axis", "required", "listInt", "all") \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "ExpandDims",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "expand_dims.so",
-    "compute_cost": 10,
-    "kernel_name": "expand_dims",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "axis",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float32", "int32"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float32", "int32"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(expand_dims_op_info)
 def _expand_dims_tbe():
     """ExpandDims TBE register"""
     return

@@ -14,181 +14,45 @@
 # ============================================================================
 
 """BatchNormGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+batch_norm_grad_op_info = TBERegOp("BatchNormGrad") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("batchnormgrad.so") \
+    .compute_cost(10) \
+    .kernel_name("batchnormgrad") \
+    .partial_flag(True) \
+    .attr("epsilon", "optional", "float", "all") \
+    .attr("data_format", "optional", "str", "all") \
+    .attr("is_training", "optional", "bool", "all") \
+    .input(0, "y_backprop", False, "required", "all") \
+    .input(1, "x", False, "required", "all") \
+    .input(2, "scale", False, "required", "all") \
+    .input(3, "reserve_space_1", False, "required", "all") \
+    .input(4, "reserve_space_2", False, "required", "all") \
+    .input(5, "reserve_space_3", False, "required", "all") \
+    .output(0, "x_backprop", False, "required", "all") \
+    .output(1, "scale_backprop", False, "required", "all") \
+    .output(2, "offset_backprop", False, "required", "all") \
+    .output(3, "reserve_space_4", False, "optional", "all") \
+    .output(4, "reserve_space_5", False, "optional", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F16_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD, DataType.F16_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "BatchNormGrad",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "batchnormgrad.so",
-    "compute_cost": 10,
-    "kernel_name": "batchnormgrad",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "epsilon",
-            "param_type": "optional",
-            "type": "float",
-            "value": "all"
-        },
-        {
-            "name": "data_format",
-            "param_type": "optional",
-            "type": "str",
-            "value": "all"
-        },
-        {
-            "name": "is_training",
-            "param_type": "optional",
-            "type": "bool",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float16","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "y_backprop",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float16","float16","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float","float","float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "scale",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 3,
-            "dtype": [
-                "float","float","float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "reserve_space_1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 4,
-            "dtype": [
-                "float","float","float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "reserve_space_2",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 5,
-            "dtype": [
-                "float","float","float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "reserve_space_3",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float16","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "x_backprop",
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float","float","float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "scale_backprop",
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float","float","float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "offset_backprop",
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 3,
-            "dtype": [
-                "float","float","float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "reserve_space_4",
-            "param_type": "optional",
-            "shape": "all"
-        },
-        {
-            "index": 4,
-            "dtype": [
-                "float","float","float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","NC1HWC0","DefaultFormat","DefaultFormat","NC1HWC0"
-            ],
-            "name": "reserve_space_5",
-            "param_type": "optional",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(batch_norm_grad_op_info)
 def _batch_norm_grad_tbe():
     """BatchNormGrad TBE register"""
     return

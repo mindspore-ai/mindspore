@@ -14,90 +14,28 @@
 # ============================================================================
 
 """ClipByNormNoDivSum op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+clip_by_norm_no_div_sum_op_info = TBERegOp("ClipByNormNoDivSum") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("clip_by_norm_no_div_sum.so") \
+    .compute_cost(10) \
+    .kernel_name("clip_by_norm_no_div_sum") \
+    .partial_flag(True) \
+    .input(0, "input_x", False, "required", "all") \
+    .input(1, "input1", False, "required", "all") \
+    .input(2, "input2", False, "required", "all") \
+    .input(3, "input3", False, "required", "all") \
+    .output(0, "output_y", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "ClipByNormNoDivSum",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "clip_by_norm_no_div_sum.so",
-    "compute_cost": 10,
-    "kernel_name": "clip_by_norm_no_div_sum",
-    "partial_flag": true,
-    "attr":[
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float32"
-            ],
-            "format": [
-               "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "input_x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16", "float32"
-            ],
-            "format": [
-               "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "input1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16", "float32"
-            ],
-            "format": [
-               "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "input2",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 3,
-            "dtype": [
-                "float16", "float32"
-            ],
-            "format": [
-               "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "input3",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float32"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "output_y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(clip_by_norm_no_div_sum_op_info)
 def _clip_by_norm_no_div_sum_tbe():
     """ClipByNormNoDivSum TBE register"""
     return

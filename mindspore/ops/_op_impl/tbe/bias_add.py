@@ -14,70 +14,26 @@
 # ============================================================================
 
 """BiasAdd op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+bias_add_grad_op_info = TBERegOp("BiasAdd") \
+    .fusion_type("COMMREDUCE") \
+    .async_flag(False) \
+    .binfile_name("bias_add.so") \
+    .compute_cost(10) \
+    .kernel_name("bias_add") \
+    .partial_flag(True) \
+    .attr("data_format", "required", "str", "all") \
+    .input(0, "x", False, "required", "all") \
+    .input(1, "bias", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "BiasAdd",
-    "imply_type": "TBE",
-    "fusion_type": "COMMREDUCE",
-    "async_flag": false,
-    "binfile_name": "bias_add.so",
-    "compute_cost": 10,
-    "kernel_name": "bias_add",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "data_format",
-            "param_type": "required",
-            "type": "str",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "int32", "float16", "float"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "int32", "float16", "float"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "bias",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "int32", "float16", "float"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(bias_add_grad_op_info)
 def _bias_add_tbe():
     """BiasAdd TBE register"""
     return

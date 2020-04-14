@@ -14,66 +14,32 @@
 # ============================================================================
 
 """Equal op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+equal_op_info = TBERegOp("Equal") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("equal.so") \
+    .compute_cost(10) \
+    .kernel_name("equal") \
+    .partial_flag(True) \
+    .input(0, "x1", False, "required", "all") \
+    .input(1, "x2", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I8_5HD, DataType.I8_5HD, DataType.BOOL_5HD) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.U8_5HD, DataType.U8_5HD, DataType.BOOL_5HD) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_5HD, DataType.BOOL_5HD) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.BOOL_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.BOOL_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Equal",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "equal.so",
-    "compute_cost": 10,
-    "kernel_name": "equal",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float","float","int32","int32","int8","int8","uint8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0","DefaultFormat",
-                "NC1HWC0","DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "x1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float16","float","float","int32","int32","int8","int8","uint8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0","DefaultFormat",
-                "NC1HWC0","DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "x2",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-         {
-            "index": 0,
-            "dtype": [
-                "bool","bool","bool","bool","bool","bool","bool","bool","bool","bool"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0","DefaultFormat",
-                "NC1HWC0","DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "y",
-            "param_type": "required"
-        }
-    ]
-}""")
+@op_info_register(equal_op_info)
 def _equal_tbe():
     """Equal TBE register"""
     return

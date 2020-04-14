@@ -14,93 +14,27 @@
 # ============================================================================
 
 """MaxPoolGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+max_pool_grad_op_info = TBERegOp("MaxPoolGrad") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("max_pool_grad.so") \
+    .compute_cost(10) \
+    .kernel_name("max_pool_grad") \
+    .partial_flag(True) \
+    .attr("ksize", "required", "listInt", "all") \
+    .attr("strides", "required", "listInt", "all") \
+    .attr("padding", "required", "str", "all") \
+    .input(0, "x1", False, "required", "all") \
+    .input(1, "x2", False, "required", "all") \
+    .input(2, "grad", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "MaxPoolGrad",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "max_pool_grad.so",
-    "compute_cost": 10,
-    "kernel_name": "max_pool_grad",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "ksize",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "strides",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "padding",
-            "param_type": "required",
-            "type": "str",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "x1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "x2",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "grad",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "y",
-            "param_type": "required"
-        }
-    ]
-}""")
+@op_info_register(max_pool_grad_op_info)
 def _max_pool_grad_tbe():
     """MaxPoolGrad TBE register"""
     return
