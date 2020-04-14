@@ -24,7 +24,7 @@ from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _callback_wrapper
 from ..nn.metrics import Loss
-from ..nn.wrap import WithLossCell, DataWrapper, WithEvalCell
+from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from .parallel_utils import ParallelMode
 from ..common import dtype as mstype
@@ -130,7 +130,7 @@ class Model:
                                                 self._loss_fn,
                                                 level=self._amp_level)
         elif self._loss_fn:
-            network = WithLossCell(network, self._loss_fn)
+            network = nn.WithLossCell(network, self._loss_fn)
         # If need to check if loss_fn is not None, but optimizer is None
         return network
 
@@ -150,10 +150,7 @@ class Model:
         else:
             if self._loss_fn is None:
                 raise ValueError("loss_fn can not be None.")
-            if self._optimizer:
-                self._eval_network = self._train_network.network
-            else:
-                self._eval_network = WithEvalCell(self._network, self._loss_fn)
+            self._eval_network = nn.WithEvalCell(self._network, self._loss_fn)
             self._eval_indexes = [0, 1, 2]
 
     def _clear_metrics(self):
@@ -263,7 +260,7 @@ class Model:
         dataset_helper = DatasetHelper(train_dataset)
         # remove later to deal with loop sink
         if need_wrap:
-            self._train_network = DataWrapper(self._train_network, *(dataset_helper.types_shapes()),
+            self._train_network = nn.DataWrapper(self._train_network, *(dataset_helper.types_shapes()),
                                               train_dataset.__ME_INITED__)
             cb_params.train_network = self._train_network
             self._train_network.set_train()
@@ -429,7 +426,7 @@ class Model:
 
         # remove later to deal with loop sink
         if need_wrap:
-            self._eval_network = DataWrapper(self._eval_network, *(dataset_helper.types_shapes()),
+            self._eval_network = nn.DataWrapper(self._eval_network, *(dataset_helper.types_shapes()),
                                              valid_dataset.__ME_INITED__)
             self._eval_network.set_train(mode=False)
             self._eval_network.phase = 'eval'
