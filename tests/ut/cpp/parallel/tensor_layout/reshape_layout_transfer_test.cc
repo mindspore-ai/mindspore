@@ -260,8 +260,8 @@ TEST_F(TestReshapeLayoutTransfer, ValidInferUnifiedLayoutCheck11) {
   ValidUnifiedLayoutCheck(device_arrangement, in_tensor_map, in_tensor_shape, out_tensor_map, out_tensor_shape);
 }
 
-void ValidInferUnifiedLayoutCheckAll(const int32_t& device_pow_size, const int32_t& tensor_pow_size,
-                                     const int32_t& max_device_dim, const int32_t& max_shape_dim) {
+void ValidInferUnifiedLayoutCheckAll(int32_t device_pow_size, int32_t tensor_pow_size,
+                                     int32_t max_device_dim, int32_t max_shape_dim) {
   std::vector<std::tuple<DeviceArrangement, TensorMap, TensorShape>> layout_list;
   GenerateValidLayoutByDeviceSizeAndTensorSize(device_pow_size, tensor_pow_size, max_device_dim, max_shape_dim,
                                                &layout_list);

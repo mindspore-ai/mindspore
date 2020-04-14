@@ -101,6 +101,7 @@ REGISTER(CosInfo);
 REGISTER(ACosInfo);
 REGISTER(LogicalNotInfo);
 REGISTER(L2NormalizeInfo);
+REGISTER(LayerNormInfo);
 REGISTER(ReduceMaxInfo);
 REGISTER(ArgMaxWithValueInfo);
 REGISTER(ArgMinWithValueInfo);

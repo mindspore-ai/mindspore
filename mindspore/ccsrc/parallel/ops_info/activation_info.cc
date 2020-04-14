@@ -195,8 +195,8 @@ Status Softmax::GetAttrs() {
 
   // for example: tensor dimension is 4, then axis range [-4, 3]
   int32_t dim = SizeToInt(inputs_shape_.at(0).size());
-  auto it = std::find_if(axis_.begin(), axis_.end(),
-                         [dim](const int32_t& element) { return ((element >= dim) || (element < -dim)); });
+  auto it =
+    std::find_if(axis_.begin(), axis_.end(), [dim](int32_t element) { return ((element >= dim) || (element < -dim)); });
   if (it != axis_.end()) {
     MS_LOG(ERROR) << name_ << " : The axis(" << *it << ") is out of range[" << -dim << ", " << dim - 1 << "].";
     return FAILED;
