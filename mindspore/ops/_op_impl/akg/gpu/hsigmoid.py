@@ -24,7 +24,7 @@ hsigmoid_op_info = AkgRegOp("HSigmoid") \
     .get_op_info()
 
 
-@op_info_register(hsigmoidgrad_op_info)
+@op_info_register(hsigmoid_op_info)
 def _hsigmoid_akg():
     """HSigmoid AutoDiff register"""
     return

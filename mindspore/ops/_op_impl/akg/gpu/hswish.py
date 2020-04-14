@@ -24,7 +24,7 @@ hswish_op_info = AkgRegOp("HSwish") \
     .get_op_info()
 
 
-@op_info_register(hsigmoidgrad_op_info)
+@op_info_register(hswish_op_info)
 def _hswish_akg():
     """HSwish AutoDiff register"""
     return
