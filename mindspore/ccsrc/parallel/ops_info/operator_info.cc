@@ -675,7 +675,7 @@ Status PrepareStrategyBase(int32_t stage_id, size_t dev_num, const Shapes& input
   for (auto& input_partition : inputs_partitions) {
     product *= std::accumulate(input_partition.begin(), input_partition.end(), 1, std::multiplies<int>());
   }
-  if (NOT_FULLY_USE_DEVICES) {
+  if (!FULLY_USE_DEVICES) {
     if (IntToSize(product) > dev_num) {
       return FAILED;
     }

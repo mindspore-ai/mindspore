@@ -60,7 +60,7 @@ void CostModelContext::ResetAlgoParameters() {
   costmodel_simplify_cal_ = DEFAULT_COST_MODEL_SIMPLIFY_CALCULATION;
   tensor_slice_alignment_enable_ = DEFAULT_TENSOR_SLICE_ALIGNMENT_ENABLE;
   tensor_slice_alignment_size_ = DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE;
-  not_fully_use_device_ = DEFAULT_NOT_FULLY_USE_DEVICES;
+  fully_use_device_ = DEFAULT_FULLY_USE_DEVICES;
   elementwise_stra_follow_ = DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW;
 }
 
@@ -118,7 +118,7 @@ void CostModelContext::set_tensor_slice_alignment_size(size_t ts_align_size) {
   tensor_slice_alignment_size_ = ts_align_size;
 }
 
-void CostModelContext::set_not_fully_use_device(bool not_fully_use) { not_fully_use_device_ = not_fully_use; }
+void CostModelContext::set_fully_use_device(bool fully_use) { fully_use_device_ = fully_use; }
 
 void CostModelContext::set_elementwise_stra_follow(bool elementwise_follow) {
   elementwise_stra_follow_ = elementwise_follow;

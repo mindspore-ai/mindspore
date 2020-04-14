@@ -85,10 +85,10 @@ Status Edge::InitEdgeCost() {
     }
   }
   if (!has_available_cost) {
-    if (!NOT_FULLY_USE_DEVICES) {
+    if (FULLY_USE_DEVICES) {
       MS_LOG(EXCEPTION) << "Generating cost for edge: " << edge_name_
-                        << " failed, it may be caused by setting 'not_fully_use_devices' false. Try to set "
-                           "'not_fully_use_devices' true.";
+                        << " failed, it may be caused by setting 'fully_use_devices' true. Try to set "
+                           "'fully_use_devices' false.";
     } else if (ELEMENTWISE_OP_STRA_FOLLOW) {
       MS_LOG(EXCEPTION) << "Generating cost for edge: " << edge_name_
                         << " failed, it may be caused by setting 'elementwise_op_strategy_follow' true. "

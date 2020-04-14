@@ -261,10 +261,10 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the parameter tensor_slice_size in strategy generation.")
     .def("get_tensor_slice_align_size", &CostModelContext::tensor_slice_alignment_size,
          "Get the parameter tensor_slice_size in strategy generation.")
-    .def("set_not_fully_use_devices", &CostModelContext::set_not_fully_use_device,
-         "Set the parameter not_fully_use_devices in the DP algorithm.")
-    .def("get_not_fully_use_devices", &CostModelContext::not_fully_use_device,
-         "Get the parameter not_fully_use_devices in the DP algorithm.")
+    .def("set_fully_use_devices", &CostModelContext::set_fully_use_device,
+         "Set the parameter fully_use_devices in the DP algorithm.")
+    .def("get_fully_use_devices", &CostModelContext::fully_use_device,
+         "Get the parameter fully_use_devices in the DP algorithm.")
     .def("set_elementwise_op_strategy_follow", &CostModelContext::set_elementwise_stra_follow,
          "Set the parameter elementwise_op_strategy_follow in the DP algorithm.")
     .def("get_elementwise_op_strategy_follow", &CostModelContext::elementwise_stra_follow,
