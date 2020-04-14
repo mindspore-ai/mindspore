@@ -51,7 +51,7 @@ class Activation : public ActivationBase {
  public:
   Activation(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
              const PrimitiveAttrs& attrs)
-      : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationCost>()) {}
+      : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationCost>(false)) {}
   ~Activation() override = default;
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
@@ -102,7 +102,7 @@ class Softmax : public ActivationBase {
  public:
   explicit Softmax(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
                    const PrimitiveAttrs& attrs)
-      : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<SoftmaxCost>()) {}
+      : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<SoftmaxCost>(false)) {}
   ~Softmax() override = default;
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;

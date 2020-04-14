@@ -248,6 +248,7 @@ CostPtrList CostGraph::CreateFinalCostList(const OperatorInfoPtr& u, const std::
             MS_EXCEPTION_IF_NULL(cost2);
             MS_EXCEPTION_IF_NULL(cost3);
             double computation = cost1->computation_cost_ + cost2->computation_cost_ + cost3->computation_cost_;
+            double memory = cost1->memory_with_reuse_ + cost2->memory_with_reuse_ + cost3->memory_with_reuse_;
             double commmunication =
               cost1->communication_cost_ + cost2->communication_cost_ + cost3->communication_cost_;
             double communication_without_para = cost1->communication_without_parameter_ +
@@ -260,6 +261,7 @@ CostPtrList CostGraph::CreateFinalCostList(const OperatorInfoPtr& u, const std::
             cost->communication_without_parameter_ = communication_without_para;
             cost->communication_with_partial_para_ =
               communication_without_para + COST_MODEL_GAMMA * (commmunication - communication_without_para);
+            cost->memory_with_reuse_ = memory;
             ret.push_back(cost);
           }
         }
@@ -288,6 +290,7 @@ CostPtrList CostGraph::CreateFinalSingleCostList(const OperatorInfoPtr& u) {
       new_cost->communication_with_partial_para_ =
         cost1->communication_without_parameter_ +
         COST_MODEL_GAMMA * (cost1->communication_cost_ - cost1->communication_without_parameter_);
+      new_cost->memory_with_reuse_ = cost1->memory_with_reuse_;
       ret.push_back(new_cost);
     }
   }
@@ -297,9 +300,14 @@ CostPtrList CostGraph::CreateFinalSingleCostList(const OperatorInfoPtr& u) {
 }
 
 CostPtr CostGraph::SelectCostWithMemoryConstraint(const CostPtrList& cost_list, double memory) {
-  if (cost_list.empty() || cost_list[0]->computation_cost_ >= memory) {
-    return nullptr;
+  CostPtrList after_mem_filter;
+  // Filter out the valid costs
+  for (auto& a_cost : cost_list) {
+    if (a_cost->memory_with_reuse_ <= memory) {
+      after_mem_filter.emplace_back(std::move(a_cost));
+    }
   }
+
   std::function<CostPtr(CostPtr, const CostPtr&)> LocalCompare = [&](CostPtr init, const CostPtr& cost_x) {
     MS_EXCEPTION_IF_NULL(cost_x);
     if (init == nullptr || cost_x->computation_cost_ < memory) {
@@ -308,7 +316,7 @@ CostPtr CostGraph::SelectCostWithMemoryConstraint(const CostPtrList& cost_list, 
     return init;
   };
   CostPtr ret = nullptr;
-  return std::accumulate(cost_list.begin(), cost_list.end(), ret, LocalCompare);
+  return std::accumulate(after_mem_filter.begin(), after_mem_filter.end(), ret, LocalCompare);
 }
 
 CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList& cost_list, double memory) {
@@ -318,36 +326,46 @@ CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList& cost_list, d
     MS_LOG(ERROR) << "Final cost list is null.";
     return nullptr;
   }
-  CostPtr ret = cost_list[0];
-  MS_EXCEPTION_IF_NULL(ret);
-  if (ret->computation_cost_ >= memory) {
-    MS_LOG(ERROR) << "No available cost; the minimum cost is " << ret->computation_cost_
+  CostPtrList after_mem_filter;
+  double minimum_memory = DBL_MAX;
+  // Filter out the valid costs.
+  for (auto& a_cost : cost_list) {
+    if (a_cost->memory_with_reuse_ <= memory) {
+      after_mem_filter.emplace_back(std::move(a_cost));
+    } else if (a_cost->memory_with_reuse_ < minimum_memory) {
+      minimum_memory = a_cost->memory_with_reuse_;
+    }
+  }
+  if (after_mem_filter.empty()) {
+    MS_LOG(ERROR) << "No available cost. The minimum memory cost is: " << minimum_memory
                   << ", the memory capacity is: " << memory << ".";
     return nullptr;
   }
+  // Init the returned value with first cost.
+  CostPtr ret = after_mem_filter[0];
+
   double minimum = costmodel_alpha_ * ret->computation_cost_ + costmodel_beta_ * ret->communication_with_partial_para_;
-  MS_LOG(INFO) << "minimum: " << minimum << ", computation_cost_: " << ret->computation_cost_
+  MS_LOG(INFO) << "Cost 0: "
+               << "memory_cost: " << ret->memory_with_reuse_ << ", computation_cost_: " << ret->computation_cost_
                << ", communication_with_partial_para_: " << ret->communication_with_partial_para_
                << ", communication_cost_: " << ret->communication_cost_
                << ", communication_without_parameter_: " << ret->communication_without_parameter_ << ".";
-  for (size_t i = 1; i < cost_list.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(cost_list[i]);
-    if (cost_list[i]->computation_cost_ >= memory) {
-      MS_LOG(INFO) << "cost_list " << i << " computation_cost_: " << cost_list[i]->computation_cost_
-                   << ", is larger than the memory capacity: " << memory << ".";
-      break;
-    }
-    MS_LOG(INFO) << "cost_list " << i << " computation_cost_: " << cost_list[i]->computation_cost_
-                 << ", communication_with_partial_para_: " << cost_list[i]->communication_with_partial_para_
-                 << ", communication_cost_: " << cost_list[i]->communication_cost_
-                 << ", communication_without_parameter_: " << cost_list[i]->communication_without_parameter_ << ".";
-    auto tmp = costmodel_alpha_ * cost_list[i]->computation_cost_ +
-               costmodel_beta_ * cost_list[i]->communication_with_partial_para_;
-    MS_LOG(INFO) << "tmp: " << tmp;
+  MS_LOG(INFO) << "Cost 0: totoal_cost: " << minimum;
+  for (size_t i = 1; i < after_mem_filter.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(after_mem_filter[i]);
+    MS_LOG(INFO) << "Cost " << i << ": memory_cost: " << after_mem_filter[i]->memory_with_reuse_
+                 << ", computation_cost_: " << after_mem_filter[i]->computation_cost_
+                 << ", communication_with_partial_para_: " << after_mem_filter[i]->communication_with_partial_para_
+                 << ", communication_cost_: " << after_mem_filter[i]->communication_cost_
+                 << ", communication_without_parameter_: " << after_mem_filter[i]->communication_without_parameter_
+                 << ".";
+    auto tmp = costmodel_alpha_ * after_mem_filter[i]->computation_cost_ +
+               costmodel_beta_ * after_mem_filter[i]->communication_with_partial_para_;
+    MS_LOG(INFO) << "Cost " << i << ": total_cost: " << tmp;
     if (minimum > tmp) {
       minimum = tmp;
-      ret = cost_list[i];
-      MS_LOG(INFO) << "selected: " << i;
+      ret = after_mem_filter[i];
+      MS_LOG(INFO) << "Selected: " << i;
     }
   }
   return ret;
@@ -356,17 +374,21 @@ CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList& cost_list, d
 CostPtrList CostGraph::SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList>& all_cost_list,
                                                                  double available_memory) {
   CostPtrList selected_cost_list(all_cost_list.size(), nullptr);
-  double minimum = 0.0, total_memory = 0.0;
+  double minimum = DBL_MAX, total_memory = 0.0;
   CostPtrList ret(all_cost_list.size(), nullptr);
+  // Check whether valid costs exist.
   for (size_t i = 0; i < all_cost_list.size(); ++i) {
     if (all_cost_list[i][0] == nullptr) {
       MS_LOG(ERROR) << "The cost list " << i << " is empty.";
       return ret;
     } else {
-      total_memory += all_cost_list[i][0]->computation_cost_;
-      minimum += costmodel_alpha_ * all_cost_list[i][0]->computation_cost_ +
-                 costmodel_beta_ * all_cost_list[i][0]->communication_with_partial_para_;
-      ret[i] = all_cost_list[i][0];
+      double memory_i_cost = DBL_MAX;
+      for (size_t j = 0; j < all_cost_list[i].size(); ++j) {
+        if (all_cost_list[i][j]->memory_with_reuse_ < memory_i_cost) {
+          memory_i_cost = all_cost_list[i][j]->memory_with_reuse_;
+        }
+      }
+      total_memory += memory_i_cost;
     }
   }
   if (total_memory >= available_memory) {
@@ -381,7 +403,7 @@ CostPtrList CostGraph::SelectCostListWithMinTrainingTimeMultiple(const std::vect
       double tmp_memory = 0.0, tmp_minimum = 0.0;
       for (size_t i = 0; i < selected_cost_list.size(); ++i) {
         MS_EXCEPTION_IF_NULL(selected_cost_list[i]);
-        tmp_memory += selected_cost_list[i]->computation_cost_;
+        tmp_memory += selected_cost_list[i]->memory_with_reuse_;
         tmp_minimum += costmodel_alpha_ * selected_cost_list[i]->computation_cost_ +
                        costmodel_beta_ * selected_cost_list[i]->communication_with_partial_para_;
       }
@@ -816,6 +838,7 @@ void CostGraph::CreateMergeEliminationSubCostList(StrategyPtr op_strategy, const
         auto& tar_cost = tar_cost_list[k];
         MS_EXCEPTION_IF_NULL(tar_cost);
         double computation = op_cost->computation_cost_ + edge_cost->computation_cost_ + tar_cost->computation_cost_;
+        double memory = op_cost->memory_with_reuse_ + edge_cost->memory_with_reuse_ + tar_cost->memory_with_reuse_;
         double communication =
           op_cost->communication_cost_ + edge_cost->communication_cost_ + tar_cost->communication_cost_;
         double communication_without_para = op_cost->communication_without_parameter_ +
@@ -829,6 +852,7 @@ void CostGraph::CreateMergeEliminationSubCostList(StrategyPtr op_strategy, const
         new_cost->communication_without_parameter_ = communication_without_para;
         new_cost->communication_with_partial_para_ =
           communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
+        new_cost->memory_with_reuse_ = memory;
         MS_EXCEPTION_IF_NULL(tar_cost_list_new);
         tar_cost_list_new->emplace_back(std::move(new_cost));
       }
@@ -894,6 +918,8 @@ void CostGraph::CreateContractEliminationSubCostList(StrategyPtr contract_op_str
         MS_EXCEPTION_IF_NULL(tar_cost);
         double computation =
           contract_op_cost->computation_cost_ + edge_cost->computation_cost_ + tar_cost->computation_cost_;
+        double memory =
+          contract_op_cost->memory_with_reuse_ + edge_cost->memory_with_reuse_ + tar_cost->memory_with_reuse_;
         double communication =
           contract_op_cost->communication_cost_ + edge_cost->communication_cost_ + tar_cost->communication_cost_;
         double communication_without_para = contract_op_cost->communication_without_parameter_ +
@@ -906,6 +932,7 @@ void CostGraph::CreateContractEliminationSubCostList(StrategyPtr contract_op_str
         new_cost->communication_without_parameter_ = communication_without_para;
         new_cost->communication_with_partial_para_ =
           communication_without_para + COST_MODEL_GAMMA * (communication - communication_without_para);
+        new_cost->memory_with_reuse_ = memory;
         tar_cost_list_new->emplace_back(std::move(new_cost));
       }
     }
@@ -966,23 +993,22 @@ void CostGraph::CreateTriangleEliminationSubCostList(StrategyPtr elimi_op_stra, 
       for (auto& left_node_cost : left_node_clist_origin) {
         MS_EXCEPTION_IF_NULL(left_node_cost);
         double new_computation = elimi_op_cost->computation_cost_ + left_edge_cost->computation_cost_ +
-                                 left_node_cost->computation_cost_ + right_edge_cost->computation_cost_ +
-                                 right_op_cost->computation_cost_;
+                                 left_node_cost->computation_cost_ + right_edge_cost->computation_cost_;
+        double new_memory = elimi_op_cost->memory_with_reuse_ + left_edge_cost->memory_with_reuse_ +
+                            left_node_cost->memory_with_reuse_ + right_edge_cost->memory_with_reuse_;
         double new_commu_cost = elimi_op_cost->communication_cost_ + left_edge_cost->communication_cost_ +
-                                left_node_cost->communication_cost_ + right_edge_cost->communication_cost_ +
-                                right_op_cost->communication_cost_;
+                                left_node_cost->communication_cost_ + right_edge_cost->communication_cost_;
         double new_commu_without =
           elimi_op_cost->communication_without_parameter_ + left_edge_cost->communication_without_parameter_ +
-          left_node_cost->communication_without_parameter_ + right_edge_cost->communication_without_parameter_ +
-          right_op_cost->communication_without_parameter_;
+          left_node_cost->communication_without_parameter_ + right_edge_cost->communication_without_parameter_;
 
-        auto decision =
-          std::make_shared<TriangleEliminationDecision>(elimi_op_stra, elimi_op_cost, left_edge_cost, right_edge_cost,
-                                                        left_op_stra, left_node_cost, right_op_stra, right_op_cost);
+        auto decision = std::make_shared<TriangleEliminationDecision>(elimi_op_stra, elimi_op_cost, left_edge_cost,
+                                                                      right_edge_cost, left_op_stra, left_node_cost);
         auto new_cost = std::make_shared<Cost>(new_computation, new_commu_cost, decision);
         new_cost->communication_without_parameter_ = new_commu_without;
         new_cost->communication_with_partial_para_ =
           new_commu_without + COST_MODEL_GAMMA * (new_commu_cost - new_commu_without);
+        new_cost->memory_with_reuse_ = new_memory;
         left_node_clist_new->emplace_back(std::move(new_cost));
       }
     }
@@ -1085,14 +1111,22 @@ void CostGraph::CreateStarEliminationSubCostList(const StrategyPtr& first_succ_n
         succ_nodes_costs[0] = first_succ_node_cost;
 
         double computation_cost = merged_node_cost->computation_cost_,
-               commu_cost = merged_node_cost->communication_cost_,
+               memory_cost = merged_node_cost->memory_with_reuse_, commu_cost = merged_node_cost->communication_cost_,
                commu_without = merged_node_cost->communication_without_parameter_;
         for (size_t i = 0; i < succ_nodes_stras.size(); ++i) {
           MS_EXCEPTION_IF_NULL(succ_edges_costs[i]);
-          computation_cost += succ_edges_costs[i]->computation_cost_ + succ_nodes_costs[i]->computation_cost_;
-          commu_cost += succ_edges_costs[i]->communication_cost_ + succ_nodes_costs[i]->communication_cost_;
-          commu_without += succ_edges_costs[i]->communication_without_parameter_ +
-                           succ_nodes_costs[i]->communication_without_parameter_;
+          if (i == 0) {
+            computation_cost += succ_edges_costs[i]->computation_cost_ + succ_nodes_costs[i]->computation_cost_;
+            memory_cost += succ_edges_costs[i]->memory_with_reuse_ + succ_nodes_costs[i]->memory_with_reuse_;
+            commu_cost += succ_edges_costs[i]->communication_cost_ + succ_nodes_costs[i]->communication_cost_;
+            commu_without += succ_edges_costs[i]->communication_without_parameter_ +
+                             succ_nodes_costs[i]->communication_without_parameter_;
+          } else {
+            computation_cost += succ_edges_costs[i]->computation_cost_;
+            memory_cost += succ_edges_costs[i]->memory_with_reuse_;
+            commu_cost += succ_edges_costs[i]->communication_cost_;
+            commu_without += succ_edges_costs[i]->communication_without_parameter_;
+          }
         }
 
         auto decision = std::make_shared<StarEliminationDecision>(merged_op_stra, merged_node_cost, succ_edges_costs,
@@ -1100,6 +1134,7 @@ void CostGraph::CreateStarEliminationSubCostList(const StrategyPtr& first_succ_n
         auto new_cost = std::make_shared<Cost>(computation_cost, commu_cost, decision);
         new_cost->communication_without_parameter_ = commu_without;
         new_cost->communication_with_partial_para_ = commu_without + COST_MODEL_GAMMA * (commu_cost - commu_without);
+        new_cost->memory_with_reuse_ = memory_cost;
         first_succ_node_clist_new->emplace_back(std::move(new_cost));
       }
     }
@@ -1258,6 +1293,36 @@ OperatorInfoPtr CostGraph::FindTmpIdentityByParameterName(std::string& p_name) c
     }
   }
   return nullptr;
+}
+Status CostGraph::CorrectOpsMemoryCost() {
+  for (auto& one_op : ops_) {
+    if ((one_op->name().find(IDENTITY_INFO) != std::string::npos) && (one_op->is_output_parameter_involve() == 1)) {
+      if (one_op->GetAliveSuccEdges().size() > 1) {
+        // Filter out the case when the TmpIdentity being used by multiple operators
+        std::map<size_t, int> output_count;
+        for (size_t i = 0; i < one_op->GetAliveSuccEdges().size(); ++i) {
+          auto output_index = one_op->GetAliveSuccEdges()[i]->prev_op_output_index();
+          output_count[output_index]++;
+        }
+        for (size_t i = 0; i < one_op->GetAliveSuccEdges().size(); ++i) {
+          auto output_index = one_op->GetAliveSuccEdges()[i]->prev_op_output_index();
+          if (output_count[output_index] <= 1) {
+            continue;
+          }
+          auto next_op = one_op->GetAliveSuccEdges()[i]->next_operator();
+          MS_EXCEPTION_IF_NULL(next_op);
+          auto input_index = one_op->GetAliveSuccEdges()[i]->next_op_input_index();
+          if (next_op->CorrectMemoryCost(input_index) != SUCCESS) {
+            MS_LOG(ERROR) << "The operator name: " << one_op->name() << ", the next operator name: " << next_op->name()
+                          << ", the output_index: " << output_index << ", the input_index: " << input_index << ".";
+            return FAILED;
+          }
+          output_count[output_index]--;
+        }
+      }
+    }
+  }
+  return SUCCESS;
 }
 }  // namespace parallel
 }  // namespace mindspore

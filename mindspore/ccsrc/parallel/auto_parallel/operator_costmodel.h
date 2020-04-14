@@ -43,10 +43,20 @@ double ListProduct(std::vector<T> vec) {
 // entries timing the length of each entry's data type
 class OperatorCost {
  public:
-  OperatorCost() {
+  explicit OperatorCost(bool is_inputs_related) : inputs_related_(is_inputs_related) {
     // this is only for the case when set_is_parameter() and SetInputAndOutputTypeLength() are not invoked
     for (size_t i = 0; i < MAXIMUM_INPUT_NUMBER; ++i) {
       is_parameter_.push_back(false);
+      is_parameter_involve_.push_back(false);
+      inputs_type_lengths_.push_back(DEFAULT_DATA_TYPE_LENGTH);
+      outputs_type_lengths_.push_back(DEFAULT_DATA_TYPE_LENGTH);
+    }
+  }
+  OperatorCost() : inputs_related_(false) {
+    // this is only for the case when set_is_parameter() and SetInputAndOutputTypeLength() are not invoked
+    for (size_t i = 0; i < MAXIMUM_INPUT_NUMBER; ++i) {
+      is_parameter_.push_back(false);
+      is_parameter_involve_.push_back(false);
       inputs_type_lengths_.push_back(DEFAULT_DATA_TYPE_LENGTH);
       outputs_type_lengths_.push_back(DEFAULT_DATA_TYPE_LENGTH);
     }
@@ -54,6 +64,8 @@ class OperatorCost {
   virtual ~OperatorCost() = default;
 
   void set_is_parameter(const std::vector<bool>& is_parameter);
+  void set_is_parameter_involve(const std::vector<bool>&);
+  void set_output_parameter_involve(int);
   void SetInputAndOutputTypeLength(const std::vector<size_t>& input_lengths, const std::vector<size_t>& output_lengths);
   std::vector<size_t> inputs_type_lengths() const { return inputs_type_lengths_; }
   std::vector<size_t> outputs_type_lengths() const { return outputs_type_lengths_; }
@@ -72,8 +84,19 @@ class OperatorCost {
                                            const std::vector<TensorInfo>& outputs, const int32_t& stage_id) const = 0;
   virtual double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs,
                                             const std::vector<TensorInfo>& outputs, const int32_t& stage_id) const = 0;
+  // per device PEAK memory cost in a training iteration
+  // Typically, the PEAK memory cost contributed by an operator is its output (if the output is parameter-invovled),
+  // plus necessary inputs.
+  virtual double GetMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs) const;
 
  protected:
+  // For each input in 'inputs_', a bool variable is true if the corresponding one is a parameter or a output of
+  // pre-operator that has parameters as input.
+  std::vector<bool> is_parameter_involve_;
+  int output_parameter_involve_ = -1;  // -1: unset; 0: not parameter_involved; 1: parameter_involved
+  // Whether the inputs are related or not? For example, TensorAdd's two inputs are independent (not related), while
+  // Mul's two inputs are dependent (related).
+  bool inputs_related_;
   // for each input in 'inputs_', there is a bool variable indicating whether that the corresponding input is parameter
   std::vector<bool> is_parameter_;
   // for each input and output, the followings record the number of bytes of each element
@@ -85,7 +108,8 @@ using OperatorCostPtr = std::shared_ptr<OperatorCost>;
 
 class MatMulCost : public OperatorCost {
  public:
-  MatMulCost() = default;
+  explicit MatMulCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  MatMulCost() : OperatorCost(true) {}
   ~MatMulCost() override = default;
 
   // per device communication cost
@@ -108,12 +132,12 @@ class MatMulCost : public OperatorCost {
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
                                     const int32_t& stage_id) const override;
 };
-
 using MatMulCostPtr = std::shared_ptr<MatMulCost>;
 
 class ActivationCost : public OperatorCost {
  public:
-  ActivationCost() = default;
+  explicit ActivationCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  ActivationCost() : OperatorCost(false) {}
   ~ActivationCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -133,14 +157,14 @@ class ActivationCost : public OperatorCost {
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
                                     const int32_t& stage_id) const override;
 };
-
 using ActivationCostPtr = std::shared_ptr<ActivationCost>;
 using TransposeCost = ActivationCost;
 using TransposeCostPtr = std::shared_ptr<TransposeCost>;
 
 class SoftmaxCost : public OperatorCost {
  public:
-  SoftmaxCost() = default;
+  explicit SoftmaxCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  SoftmaxCost() : OperatorCost(false) {}
   ~SoftmaxCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -160,12 +184,12 @@ class SoftmaxCost : public OperatorCost {
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
                                     const int32_t&) const override;
 };
-
 using SoftmaxCostPtr = std::shared_ptr<SoftmaxCost>;
 
 class TmpIdentityCost : public OperatorCost {
  public:
-  TmpIdentityCost() = default;
+  explicit TmpIdentityCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  TmpIdentityCost() : OperatorCost(false) {}
   ~TmpIdentityCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -184,12 +208,15 @@ class TmpIdentityCost : public OperatorCost {
                                    const int32_t& stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
                                     const int32_t& stage_id) const override;
+  // per device PEAK memory cost in a training iteration
+  double GetMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs) const override;
 };
 using TmpIdentityCostPtr = std::shared_ptr<TmpIdentityCost>;
 
 class BatchParallelCost : public OperatorCost {
  public:
-  BatchParallelCost() = default;
+  explicit BatchParallelCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  BatchParallelCost() : OperatorCost(false) {}
   ~BatchParallelCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -217,7 +244,8 @@ using BatchParallelCostPtr = std::shared_ptr<BatchParallelCost>;
 
 class VirtualDatasetCost : public OperatorCost {
  public:
-  VirtualDatasetCost() = default;
+  explicit VirtualDatasetCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  VirtualDatasetCost() : OperatorCost(false) {}
   ~VirtualDatasetCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -244,12 +272,17 @@ class VirtualDatasetCost : public OperatorCost {
                                     const int32_t&) const override {
     return 0.0;
   }
+  // per device PEAK memory cost in a training iteration
+  double GetMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs) const override {
+    return 0.0;
+  }
 };
 using VirtualDatasetCostPtr = std::shared_ptr<VirtualDatasetCost>;
 
 class GeneratorBaseCost : public OperatorCost {
  public:
-  GeneratorBaseCost() = default;
+  explicit GeneratorBaseCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  GeneratorBaseCost() : OperatorCost(false) {}
   ~GeneratorBaseCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -283,7 +316,8 @@ using GeneratorBaseCostPtr = std::shared_ptr<GeneratorBaseCost>;
 
 class PReLUCost : public OperatorCost {
  public:
-  PReLUCost() = default;
+  explicit PReLUCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  PReLUCost() : OperatorCost(true) {}
   ~PReLUCost() override = default;
 
   // per device communication cost
@@ -310,7 +344,8 @@ using PReLUCostPtr = std::shared_ptr<PReLUCost>;
 
 class OneHotCost : public OperatorCost {
  public:
-  OneHotCost() = default;
+  explicit OneHotCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  OneHotCost() : OperatorCost(true) {}
   ~OneHotCost() override = default;
 
   // per device communication cost
@@ -337,7 +372,8 @@ using OneHotCostPtr = std::shared_ptr<OneHotCost>;
 
 class SoftmaxCrossEntropyWithLogitsCost : public OperatorCost {
  public:
-  SoftmaxCrossEntropyWithLogitsCost() = default;
+  explicit SoftmaxCrossEntropyWithLogitsCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  SoftmaxCrossEntropyWithLogitsCost() : OperatorCost(false) {}
   ~SoftmaxCrossEntropyWithLogitsCost() override = default;
 
   // per device communication cost
@@ -364,7 +400,8 @@ using SoftmaxCrossEntropyWithLogitsCostPtr = std::shared_ptr<SoftmaxCrossEntropy
 
 class ReshapeCost : public OperatorCost {
  public:
-  ReshapeCost() = default;
+  explicit ReshapeCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  ReshapeCost() : OperatorCost(true) {}
 
   ~ReshapeCost() override = default;
 
@@ -396,7 +433,8 @@ using ReshapeCostPtr = std::shared_ptr<ReshapeCost>;
 
 class ArithmeticCost : public OperatorCost {
  public:
-  ArithmeticCost() = default;
+  explicit ArithmeticCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  ArithmeticCost() : OperatorCost(false) {}
   ~ArithmeticCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -425,7 +463,8 @@ using BiasAddCostPtr = std::shared_ptr<BiasAddCost>;
 
 class ReduceMethodCost : public OperatorCost {
  public:
-  ReduceMethodCost() = default;
+  explicit ReduceMethodCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  ReduceMethodCost() : OperatorCost(true) {}
   ~ReduceMethodCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -455,7 +494,8 @@ using ReduceMethodCostPtr = std::shared_ptr<ReduceMethodCost>;
 
 class ReduceMeanCost : public ReduceMethodCost {
  public:
-  ReduceMeanCost() = default;
+  explicit ReduceMeanCost(bool is_inputs_related) : ReduceMethodCost(is_inputs_related) {}
+  ReduceMeanCost() : ReduceMethodCost(true) {}
   ~ReduceMeanCost() override = default;
 
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -465,7 +505,8 @@ using ReduceMeanCostPtr = std::shared_ptr<ReduceMeanCost>;
 
 class GetNextCost : public OperatorCost {
  public:
-  GetNextCost() = default;
+  explicit GetNextCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  GetNextCost() : OperatorCost(false) {}
   ~GetNextCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -499,7 +540,8 @@ using GetNextCostPtr = std::shared_ptr<GetNextCost>;
 
 class DropOutCost : public OperatorCost {
  public:
-  DropOutCost() = default;
+  explicit DropOutCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  DropOutCost() : OperatorCost(true) {}
   ~DropOutCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
@@ -530,7 +572,8 @@ using DropOutCostPtr = std::shared_ptr<DropOutCost>;
 
 class GatherV2Cost : public OperatorCost {
  public:
-  GatherV2Cost() = default;
+  explicit GatherV2Cost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  GatherV2Cost() : OperatorCost(true) {}
   ~GatherV2Cost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,

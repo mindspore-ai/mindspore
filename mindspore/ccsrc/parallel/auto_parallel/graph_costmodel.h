@@ -187,6 +187,9 @@ class CostGraph {
   size_t GetNumPairs() const { return edges_.size(); }
   Status InitSelectedStrategy();
   OperatorInfoPtr FindTmpIdentityByParameterName(std::string&) const;
+  // When TmpIdentity is used by mulitple operators, the corresponding parameter's memory cost should be calculated only
+  // once (instead of multiple times), this method is used to correct this.
+  Status CorrectOpsMemoryCost();
   // Needed by rec_parser
   void add_inputs_tensor_name(const std::vector<std::string>& inputs_tensor_name) {
     inputs_tensor_name_list_.push_back(inputs_tensor_name);

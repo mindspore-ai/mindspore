@@ -34,7 +34,7 @@ class TmpIdentityInfo : public OperatorInfo {
  public:
   TmpIdentityInfo(const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs,
                   const std::string& name = IDENTITY_INFO)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<TmpIdentityCost>()) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<TmpIdentityCost>(false)) {}
   ~TmpIdentityInfo() override = default;
 
   Status Init(const StrategyPtr& strategy) override;

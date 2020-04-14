@@ -35,7 +35,7 @@ class PReLUInfo : public OperatorInfo {
  public:
   PReLUInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
             const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<PReLUCost>()) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<PReLUCost>(true)) {}
   ~PReLUInfo() override = default;
   Status Init(const StrategyPtr& strategy) override;
   Status InitForCostModel(const StrategyPtr& strategy) override;
