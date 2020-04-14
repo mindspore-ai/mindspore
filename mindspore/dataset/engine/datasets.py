@@ -499,6 +499,51 @@ class Dataset:
 
         return ProjectDataset(self, columns)
 
+    def apply(self, apply_func):
+        """
+        Apply a function in this dataset.
+
+        The specified apply_func is a function that must take one 'Dataset' as an argument
+        and return a preprogressing 'Dataset'.
+
+        Args:
+            apply_func (function): A function that must take one 'Dataset' as an argument and
+                                   return a preprogressing 'Dataset'.
+
+        Returns:
+            Dataset, applied by the function.
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore.dataset as ds
+            >>> # Generate 1d int numpy array from 0 - 6
+            >>> def generator_1d():
+            >>>     for i in range(6):
+            >>>         yield (np.array([i]),)
+            >>> # 1) get all data from dataset
+            >>> data = ds.GeneratorDataset(generator_1d, ["data"])
+            >>> # 2) declare a apply_func function
+            >>> def apply_func(ds):
+            >>>     ds = ds.batch(2)
+            >>>     return ds
+            >>> # 3) use apply to call apply_func
+            >>> data = data.apply(apply_func)
+            >>> for item in data.create_dict_iterator():
+            >>>     print(item["data"])
+
+        Raises:
+            TypeError: If apply_func is not a function.
+            TypeError: If apply_func doesn't return a Dataset.
+        """
+
+        if not hasattr(apply_func, '__call__'):
+            raise TypeError("apply_func must be a function.")
+
+        dataset = apply_func(self)
+        if not isinstance(dataset, Dataset):
+            raise TypeError("apply_func must return a dataset.")
+        return dataset
+
     def device_que(self, prefetch_size=None):
         """
         Returns a transferredDataset that transfer data through tdt.
