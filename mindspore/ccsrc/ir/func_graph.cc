@@ -640,8 +640,8 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList& args_spec_list)
 
 void FuncGraph::add_parameter_obj_node(const AnfNodePtr& p) { paramter_obj_nodes_.push_back(p); }
 
-std::list<CNodePtr> FuncGraph::GetOrderedCnodes(bool force_use_topo_sort) {
-  if (has_flag(GRAPH_FLAG_HAS_EFFECT) && !force_use_topo_sort) {
+std::list<CNodePtr> FuncGraph::GetOrderedCnodes() {
+  if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
     MS_LOG(DEBUG) << "Return ordered cnodes.";
     return order_;
   } else {
@@ -703,14 +703,14 @@ void FuncGraph::CheckOrder() {
         }
       }
     }
-    auto topo_sort = GetOrderedCnodes(true);
-    if (topo_sort.size() != order_.size()) {
-      DumpCNodeList();
-      DumpIR(ToString(), shared_from_base<FuncGraph>());
-      MS_LOG(INFO) << "Dump graph: " << ToString() << ".";
-      DumpFuncGraph(ToString());
-      MS_LOG(EXCEPTION) << "CNode order size " << order_.size() << " is not equal to topo sort list size "
-                        << topo_sort.size() << ".";
+    auto mng = manager_.lock();
+    if (mng != nullptr) {
+      const auto& nodes = mng->nodes()[shared_from_base<FuncGraph>()];
+      if (nodes.size() != (order_.size() + parameters_.size())) {
+        DumpCNodeList();
+        MS_LOG(EXCEPTION) << "CNode order size " << order_.size() << " is not equal to managed node size "
+                          << nodes.size() - parameters_.size() << ".";
+      }
     }
     MS_LOG(DEBUG) << "Check order okay.";
   }

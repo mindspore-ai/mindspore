@@ -258,7 +258,7 @@ class FuncGraph : public FuncGraphBase {
   std::map<std::string, AnfNodePtr> parameter_default_value_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> make_ref_params_;
 
-  std::list<CNodePtr> GetOrderedCnodes(bool force_use_topo_sort = false);
+  std::list<CNodePtr> GetOrderedCnodes();
   void EraseUnusedNodeInOrder(const AnfNodePtr &n);
   void EraseUnusedNodeInOrder();
   void CheckOrder();
