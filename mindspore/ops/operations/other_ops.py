@@ -271,3 +271,6 @@ class MakeRefKey(Primitive):
     @prim_attr_register
     def __init__(self, tag):
         validator.check_type('tag', tag, (str,))
+
+    def __call__(self):
+        pass

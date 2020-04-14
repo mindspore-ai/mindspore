@@ -14,7 +14,7 @@
 # ============================================================================
 
 """Parameter for cell."""
-from copy import copy
+from copy import copy, deepcopy
 import numpy as np
 from .initializer import initializer
 from .tensor import Tensor
@@ -156,16 +156,24 @@ class Parameter:
         return self.default_input
 
     def __add__(self, other):
-        return self.default_input + other
+        res = deepcopy(self)
+        res.default_input = res.default_input + other
+        return res
 
     def __sub__(self, other):
-        return self.default_input - other
+        res = deepcopy(self)
+        res.default_input = res.default_input - other
+        return res
 
     def __mul__(self, other):
-        return self.default_input * other
+        res = deepcopy(self)
+        res.default_input = res.default_input * other
+        return res
 
     def __truediv__(self, other):
-        return self.default_input / other
+        res = deepcopy(self)
+        res.default_input = res.default_input / other
+        return res
 
     def set_parameter_data(self, data):
         if isinstance(data, (Tensor, list, int, float,

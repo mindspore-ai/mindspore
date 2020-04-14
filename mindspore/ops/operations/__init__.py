@@ -19,7 +19,7 @@ Primitive operator classes.
 A collection of operators to build nerual networks or computing functions.
 """
 
-from .array_ops import (Argmax, Argmin, Cast, ConcatOffset, Concat, Pack, Unpack,
+from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, GatherNd, GatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
@@ -200,7 +200,6 @@ __all__ = [
     'LogicalOr',
     'Size',
     'DepthwiseConv2dNative',
-    'ConcatOffset',
     'UnsortedSegmentSum',
     "AllGather",
     "AllReduce",
