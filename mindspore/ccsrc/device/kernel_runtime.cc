@@ -466,7 +466,7 @@ void KernelRuntime::AssignWorkSpaceMem(int flag, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   size_t index = 0;
   for (auto &size : kernel_mod->GetWorkspaceSizeList()) {
-    auto ptr = mem_manager_->MallocWorkSpaceMem(node, flag, index, size);
+    auto ptr = mem_manager_->MallocWorkSpaceMem(node, index, flag, size);
     AnfAlgo::SetWorkspaceAddr(CreateDeviceAddress(ptr, size, "", kTypeUnknown), index, node.get());
     index++;
   }
