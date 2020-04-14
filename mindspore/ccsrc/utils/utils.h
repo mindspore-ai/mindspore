@@ -115,6 +115,8 @@ constexpr auto kBiasAddOpName = "BiasAdd";
 constexpr auto kConfusionMulGradOpName = "ConfusionMulGrad";
 constexpr auto kSendOpName = "Send";
 constexpr auto kRecvOpName = "Recv";
+constexpr auto kReluV2OpName = "ReluV2";
+constexpr auto kReluGradV2OpName = "ReluGradV2";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
