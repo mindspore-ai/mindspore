@@ -512,6 +512,10 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, const std
 
   std::fstream in;
   in.open(common::SafeCStr(shard_address), std::ios::in | std::ios::binary);
+  if (!in.good()) {
+    MS_LOG(ERROR) << "File could not opened";
+    return FAILED;
+  }
   (void)sqlite3_exec(db.second, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
   for (int raw_page_id : raw_page_ids) {
     auto sql = GenerateRawSQL(fields_);
