@@ -42,11 +42,12 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
         width_(0) {}
   ~BatchNormFoldGradGpuKernel() = default;
 
-  const std::vector<size_t> &GetInputSizeList() const { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
+  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
+  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
+  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
     (void)workspace;
     // 'd_batch_mean', 'd_batch_std', 'x', 'batch_mean', 'batch_std', 'current_step'
     T *d_batch_mean = GetDeviceAddress<T>(inputs, 0);
@@ -92,7 +93,8 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
                          reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) {
+
+  bool Init(const CNodePtr &kernel_node) override {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 6) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but BatchNormFoldGrad GpuKernel OP needs 6 input.";
@@ -128,7 +130,7 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
   }
 
  protected:
-  void InitSizeLists() {
+  void InitSizeLists() override {
     // 'd_batch_mean', 'd_batch_std', 'x', 'batch_mean', 'batch_std', 'current_step'
     input_size_list_.push_back(channel_size_);
     input_size_list_.push_back(channel_size_);

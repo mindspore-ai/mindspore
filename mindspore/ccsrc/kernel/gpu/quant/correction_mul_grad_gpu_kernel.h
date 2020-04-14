@@ -30,11 +30,12 @@ class CorrectionMulGradGpuKernel : public GpuKernel {
   CorrectionMulGradGpuKernel() : batch_size_(0), channel_(0), height_(0), width_(0) {}
   ~CorrectionMulGradGpuKernel() override { DestroyResource(); }
 
-  const std::vector<size_t> &GetInputSizeList() const { return input_size_list_; }
-  const std::vector<size_t> &GetOutputSizeList() const { return output_size_list_; }
-  const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
+  const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
+  const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
+  const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
     auto *d_out = GetDeviceAddress<T>(inputs, 0);
     auto *weight = GetDeviceAddress<T>(inputs, 1);
     auto *gamma = GetDeviceAddress<T>(inputs, 2);
@@ -49,7 +50,8 @@ class CorrectionMulGradGpuKernel : public GpuKernel {
                          reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
-  bool Init(const CNodePtr &kernel_node) {
+
+  bool Init(const CNodePtr &kernel_node) override {
     InitResource();
 
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -74,7 +76,7 @@ class CorrectionMulGradGpuKernel : public GpuKernel {
   }
 
  protected:
-  void InitSizeLists() {
+  void InitSizeLists() override {
     size_t input_size = batch_size_ * channel_ * height_ * width_ * sizeof(T);
     size_t weight_size = batch_size_ * sizeof(T);
     input_size_list_.push_back(input_size);      // d_out
@@ -85,7 +87,7 @@ class CorrectionMulGradGpuKernel : public GpuKernel {
     output_size_list_.push_back(weight_size);    // d_gamma
     workspace_size_list_.push_back(input_size);  // tmp d_out * weight
   }
-  void InitResource() {}
+  void InitResource() override {}
 
  private:
   void DestroyResource() noexcept {}
