@@ -27,6 +27,7 @@
 #include "utils/context/ms_context.h"
 #include "device/ascend/profiling/profiling_manager.h"
 #include "hccl/hcom.h"
+#include "common/trans.h"
 #include "runtime/context.h"
 #include "device/ascend/ascend_stream_assign.h"
 #include "device/ascend/ascend_memory_pool.h"
@@ -150,7 +151,7 @@ void DumpOutput(mindspore::session::KernelGraph *graph, const string &dump_path,
     auto output_size = AnfAlgo::GetOutputTensorNum(node);
     for (size_t j = 0; j < output_size; ++j) {
       auto addr = AnfAlgo::GetOutputAddr(node, j);
-      auto shape = AnfAlgo::GetOutputInferShape(node, j);
+      auto shape = trans::GetRuntimePaddingShape(node, j);
       auto type = AnfAlgo::GetOutputInferDataType(node, j);
       auto format = kOpFormat_DEFAULT;
       string filepath = dump_path + '/' + kernel_name + '_' + "output_" + std::to_string(j);
@@ -181,7 +182,7 @@ void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_p
       continue;
     }
     auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
-    auto shape = AnfAlgo::GetOutputInferShape(item, PRAMATER_OUTPUT_INDEX);
+    auto shape = trans::GetRuntimePaddingShape(item, PRAMATER_OUTPUT_INDEX);
     auto type = AnfAlgo::GetOutputInferDataType(item, PRAMATER_OUTPUT_INDEX);
     auto format = kOpFormat_DEFAULT;
     string filepath = dump_path + '/' + parameter_name + '_' + "output_0";

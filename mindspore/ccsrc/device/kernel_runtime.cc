@@ -105,7 +105,7 @@ size_t KernelRuntime::CountNodeDeviceMemorySize(const mindspore::AnfNodePtr &nod
   std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(node, output_index);
   auto format = AnfAlgo::GetOutputFormat(node, output_index);
   if (shape.empty() && format != kOpFormat_DEFAULT) {
-    shape = trans::TransShapeTo4d(shape);
+    shape = trans::PaddingShapeTo4d(shape, AnfAlgo::GetOutputReshapeType(node, output_index));
     shape = trans::TransShapeToDevice(shape, format);
   }
   // scalar's output shape is a empty vector
@@ -401,8 +401,9 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   auto address = CreateDeviceAddress(ptr, node_size, AnfAlgo::GetOutputFormat(value_node, output_idx), output_type_id);
   MS_EXCEPTION_IF_NULL(address);
   AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
-  if (!address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), tensor->data_c(false))) {
-    MS_EXCEPTION(NotExistsError) << "kValueNode SyncHostToDevice fail!" << value_node->DebugString() << "node format is"
+  if (!address->SyncHostToDevice(trans::GetRuntimePaddingShape(value_node, 0), tensor_size, tensor->data_type(),
+                                 tensor->data_c(false))) {
+    MS_EXCEPTION(NotExistsError) << "ValueNode SyncHostToDevice fail!" << value_node->DebugString() << "node format is"
                                  << AnfAlgo::GetOutputFormat(value_node, output_idx) << "node dtype is "
                                  << AnfAlgo::GetOutputInferDataType(value_node, output_idx);
   }
@@ -421,19 +422,6 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(node_value);
     if (node_value->isa<Tensor>()) {
       AssignValueNodeTensor(value_node, node_value, 0);
-    } else if (node_value->isa<ValueTuple>()) {
-      auto value_tuple = node_value->cast<ValueTuplePtr>();
-      if (value_tuple == nullptr) {
-        MS_LOG(WARNING) << "value_tuple is null";
-        continue;
-      }
-      size_t i = 0;
-      auto value_list = value_tuple->value();
-      for (auto value_ptr : value_list) {
-        if (value_ptr->isa<Tensor>()) {
-          AssignValueNodeTensor(value_node, value_ptr, i++);
-        }
-      }
     } else if (node_value->isa<StringImm>()) {
       auto value = GetValue<std::string>(node_value);
       size_t tensor_size = value.size();

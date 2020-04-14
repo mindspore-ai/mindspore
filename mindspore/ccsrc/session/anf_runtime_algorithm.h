@@ -102,7 +102,9 @@ class AnfRuntimeAlgorithm {
   static std::vector<size_t> GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx);
   // get input shapes which will built and run in device
   static std::vector<size_t> GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx);
+  // Get Input Padding Axis
   static std::vector<kernel::Axis> GetInputReshapeType(const AnfNodePtr &node, size_t output_idx);
+  // Get Output Padding Axis
   static std::vector<kernel::Axis> GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx);
   // get output data type inferred by ME of anf node
   static TypeId GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx);
@@ -166,6 +168,9 @@ class AnfRuntimeAlgorithm {
   // get graph id
   static uint32_t GetGraphId(const AnfNode *node);
   static AnfNodePtr GetInputNode(const CNodePtr &node, size_t index);
+  // charge if the node's output is a feature map output
+  static bool IsFeatureMapOutput(const AnfNodePtr &node);
+  // charge if the node's input is from a feature map output
   static bool IsFeatureMapInput(const AnfNodePtr &node, size_t input_index);
   // get real input index for some tbe ops which input order is different between me and tbe impl
   static size_t GetRealInputIndex(const AnfNodePtr &anf_node, const size_t cur_index);

@@ -67,21 +67,21 @@ bool TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   // if output_format=default transdata need split transdata->transpose else transpose->transdata
   if (output_format == kOpFormat_DEFAULT || output_format == kOpFormat_NCHW) {
     // trans input_format to hwcn
-    new_transdata_node = AddTransOpNodeToGraph(func_graph, node, kernel_select_, 0, false, input_format, kOpFormat_HWCN,
-                                               kTransDataOpName, true);
+    new_transdata_node =
+      AddTransOpNodeToGraph(func_graph, node, kernel_select_, 0, input_format, kOpFormat_HWCN, kTransDataOpName, true);
     // trans hwcn to default_format
-    new_transpose_node = AddTransOpNodeToGraph(func_graph, new_transdata_node, kernel_select_, 0, false, kOpFormat_HWCN,
+    new_transpose_node = AddTransOpNodeToGraph(func_graph, new_transdata_node, kernel_select_, 0, kOpFormat_HWCN,
                                                output_format, prim::kPrimTranspose->name(), false);
     AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int>{3, 2, 0, 1}), new_transpose_node);
     new_replace_node = new_transpose_node;
   } else {
     // trans default to hwcn
-    new_transpose_node = AddTransOpNodeToGraph(func_graph, node, kernel_select_, 0, false, input_format, kOpFormat_HWCN,
+    new_transpose_node = AddTransOpNodeToGraph(func_graph, node, kernel_select_, 0, input_format, kOpFormat_HWCN,
                                                prim::kPrimTranspose->name(), true);
     AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(std::vector<int>{2, 3, 1, 0}), new_transpose_node);
 
     // trans hwcn to output_format
-    new_transdata_node = AddTransOpNodeToGraph(func_graph, new_transpose_node, kernel_select_, 0, false, kOpFormat_HWCN,
+    new_transdata_node = AddTransOpNodeToGraph(func_graph, new_transpose_node, kernel_select_, 0, kOpFormat_HWCN,
                                                output_format, kTransDataOpName, false);
     new_replace_node = new_transdata_node;
   }
@@ -90,9 +90,9 @@ bool TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &n
   manager->AddFuncGraph(func_graph);
 
   if (!manager->Replace(node, new_replace_node)) {
-    MS_LOG(EXCEPTION) << "manager replace node failed";
+    MS_LOG(EXCEPTION) << "Manager replace node failed";
   }
-  MS_LOG(INFO) << "transdata node:" << cnode->DebugString() << "split success.";
+  MS_LOG(INFO) << "Transdata node:" << cnode->DebugString() << "split success.";
   return true;
 }
 }  // namespace opt

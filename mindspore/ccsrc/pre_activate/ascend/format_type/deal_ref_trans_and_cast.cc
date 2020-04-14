@@ -105,10 +105,8 @@ AnfNodePtr AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodeP
   // insert trans
   if (origin_format != cur_format) {
     auto kernel_select = std::make_shared<KernelSelect>();
-    bool need_padding =
-      (cur_format == kOpFormat_NC1HWC0 && AnfAlgo::GetOutputInferShape(final_node, 0).size() != kShape4dDims);
-    final_node = AddTransOpNodeToGraph(func_graph, final_node, kernel_select, 0, need_padding, cur_format,
-                                       origin_format, kTransDataOpName, false);
+    final_node = AddTransOpNodeToGraph(func_graph, final_node, kernel_select, 0, cur_format, origin_format,
+                                       kTransDataOpName, false);
     final_index = 0;
     MS_EXCEPTION_IF_NULL(final_node);
     MS_LOG(INFO) << "DealRefTransAndCast add trans op, op debug info is " << final_node->DebugString();

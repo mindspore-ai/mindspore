@@ -25,6 +25,7 @@
 
 #include "session/anf_runtime_algorithm.h"
 #include "utils/context/ms_context.h"
+#include "common/trans.h"
 #include "utils/config_manager.h"
 #include "common/utils.h"
 #include "kernel/kernel_build_info.h"
@@ -391,7 +392,8 @@ bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::Context> &c
       auto device_address = AnfAlgo::GetMutableOutputAddr(pk_node, 0);
       MS_EXCEPTION_IF_NULL(device_address);
       tensor->set_device_address(device_address);
-      if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
+      if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
+                                            LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                             tensor->data_c(false))) {
         MS_LOG(INFO) << "SyncHostToDevice failed.";
         return false;

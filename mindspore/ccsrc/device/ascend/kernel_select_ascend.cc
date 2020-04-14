@@ -184,7 +184,7 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
     }
     if (kernel_build_info.GetInputFormat(input_index) == AnfAlgo::GetPrevNodeOutputFormat(kernel_node, input_index)) {
       if (AnfAlgo::IsFeatureMapInput(kernel_node, input_index) &&
-          kSpecialFormatSet.find(kernel_build_info.GetInputFormat(input_index)) != kSpecialFormatSet.end()) {
+          kNeedTransFormatSet.find(kernel_build_info.GetInputFormat(input_index)) != kNeedTransFormatSet.end()) {
         (*cur_kernelinfo_match_counts)[MATCH_SPECIAL_FORMAT_COUNT]++;
       }
       (*cur_kernelinfo_match_counts)[MATCH_FORMAT_COUNT]++;
@@ -210,19 +210,22 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
       (*cur_kernelinfo_match_counts)[MATCH_OUTPUT_DTYPE_COUNT]++;
     }
   }
-}  // namespace
+}
 
 void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
     auto input_kernel_node = AnfAlgo::GetInputNode(kernel_node, input_index);
     MS_EXCEPTION_IF_NULL(input_kernel_node);
-    if (AnfAlgo::IsFeatureMapInput(kernel_node, input_index)) {
-      continue;
-    }
     auto input_with_index = AnfAlgo::VisitKernel(input_kernel_node, 0);
     MS_EXCEPTION_IF_NULL(input_with_index.first);
     auto real_input_node = input_with_index.first;
+    if (real_input_node->isa<CNode>()) {
+      continue;
+    }
+    if (real_input_node->isa<Parameter>() && !AnfAlgo::IsParameterWeight(real_input_node->cast<ParameterPtr>())) {
+      continue;
+    }
     std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder =
       std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     // we set special device info of a input tensor.

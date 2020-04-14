@@ -20,6 +20,8 @@
 #include <utility>
 #include "./securec.h"
 #include "common/utils.h"
+#include "session/anf_runtime_algorithm.h"
+#include "kernel/kernel.h"
 #include "device/convert_tensor_utils.h"
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
@@ -27,6 +29,33 @@
 
 namespace mindspore {
 namespace trans {
+namespace {
+std::vector<size_t> PaddingShapeTo4dByDefault(const std::vector<size_t> &shape) {
+  std::vector<size_t> shape_4d(4, 1);
+  switch (shape.size()) {
+    case 0:
+      return shape_4d;
+    case 1:
+      shape_4d[1] = shape[0];
+      break;
+    case 2:
+      shape_4d[1] = shape[0];
+      shape_4d[2] = shape[1];
+      break;
+    case 3:
+      shape_4d[1] = shape[0];
+      shape_4d[2] = shape[1];
+      shape_4d[3] = shape[2];
+      break;
+    case 4:
+      std::copy(shape.begin(), shape.end(), shape_4d.begin());
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "Unexpect shape size = " << shape.size();
+  }
+  return shape_4d;
+}
+}  // namespace
 const size_t kNchwDims = 4;
 const std::map<TypeId, size_t> type_map = {{kNumberTypeBool, 1},    {kNumberTypeInt, 4},     {kNumberTypeInt8, 1},
                                            {kNumberTypeInt16, 2},   {kNumberTypeInt32, 4},   {kNumberTypeInt64, 8},
@@ -154,38 +183,64 @@ size_t TypeIdSize(const TypeId data_type) {
   return unsupported_type_error;
 }
 
-std::vector<size_t> TransShapeTo4d(const std::vector<size_t> &shape) {
+bool IsNeedPadding(const std::string &format, const size_t shape_size) {
+  if (shape_size == 0) {
+    return false;
+  }
+  if (format == kOpFormat_DEFAULT || format == kOpFormat_FRAC_NZ) {
+    return false;
+  } else if (shape_size < 4) {
+    return true;
+  }
+  return false;
+}
+
+std::vector<int> GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
+  std::vector<int> shape;
+  std::vector<size_t> host_shape;
+  if (node->isa<ValueNode>()) {
+    auto value_node = node->cast<ValueNodePtr>();
+    auto node_value = value_node->value();
+    auto tensor = node_value->cast<tensor::TensorPtr>();
+    if (tensor == nullptr) {
+      MS_LOG(EXCEPTION) << " the node[ " << node->DebugString() << "]'s cannot convert ";
+    }
+    shape = tensor->shape();
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), IntToSize);
+    if (host_shape.empty()) {
+      host_shape.push_back(1);
+    }
+  } else {
+    host_shape = AnfAlgo::GetOutputInferShape(node, index);
+  }
+  if (trans::IsNeedPadding(AnfAlgo::GetOutputFormat(node, 0), host_shape.size())) {
+    host_shape = trans::PaddingShapeTo4d(host_shape, AnfAlgo::GetOutputReshapeType(node, 0));
+  }
+  std::transform(host_shape.begin(), host_shape.end(), std::back_inserter(shape), SizeToInt);
+  return shape;
+}
+
+std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std::vector<kernel::Axis> &padding_axis) {
+  if (padding_axis.empty() || shape.size() != padding_axis.size()) {
+    return PaddingShapeTo4dByDefault(shape);
+  }
   std::vector<size_t> shape_4d(4, 1);
-  switch (shape.size()) {
-    case 0:
-      break;
-    case 1:
-      shape_4d[1] = shape[0];
-      break;
-    case 2:
-      shape_4d[0] = shape[0];
-      shape_4d[1] = shape[1];
-      break;
-    case 3:
-      MS_LOG(EXCEPTION) << "Unexpected shape size = 3,it should has a default format";
-    case 4:
-      for (size_t i = 0; i < 4; ++i) {
-        shape_4d[i] = shape[i];
-      }
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "Unexpected shape size = " << shape.size();
+  for (size_t index = 0; index < padding_axis.size(); index++) {
+    shape_4d[padding_axis[index]] = shape[index];
   }
   return shape_4d;
 }
 
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format) {
+  if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
+    return shape;
+  }
+  auto temp_shape = shape;
   std::vector<size_t> device_shape;
   if (format == kOpFormat_FRAC_NZ) {
     if (shape.size() < 2) {
-      MS_EXCEPTION(NotSupportError) << "Format " << format << " is not support shape " << shape.size();
-    }
-    if (shape.size() > 2) {
+      MS_LOG(EXCEPTION) << "Format" << format << " is not support shape " << shape.size();
+    } else {
       (void)std::copy(shape.begin(), shape.end() - 2, std::back_inserter(device_shape));
     }
     auto h1 = (shape[shape.size() - 2] - 1) / kCubeSize + 1;
@@ -197,35 +252,36 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
     return device_shape;
   }
   if (shape.size() != 4) {
-    MS_LOG(EXCEPTION) << "shape_4d size should be 4";
+    MS_LOG(WARNING) << "Get Device Shape using a shape size is less than 4 ,should be Padding shape by Default firstly";
+    temp_shape = PaddingShapeTo4dByDefault(shape);
   }
   if (format == kOpFormat_NC1HWC0) {
-    size_t C1 = (shape[1] + kCubeSize - 1) / kCubeSize;
+    size_t C1 = (temp_shape[1] + kCubeSize - 1) / kCubeSize;
     size_t C0 = kCubeSize;
-    device_shape.push_back(shape[0]);
+    device_shape.push_back(temp_shape[0]);
     device_shape.push_back(C1);
-    device_shape.push_back(shape[2]);
-    device_shape.push_back(shape[3]);
+    device_shape.push_back(temp_shape[2]);
+    device_shape.push_back(temp_shape[3]);
     device_shape.push_back(C0);
     return device_shape;
   } else if (format == kOpFormat_FRAC_Z) {
-    size_t cout16 = ((shape[0] + kCubeSize - 1) / kCubeSize) * kCubeSize;
-    size_t cin16 = ((shape[1] + kCubeSize - 1) / kCubeSize) * kCubeSize;
-    device_shape.push_back(shape[2] * shape[3] * cin16 / kCubeSize);
+    size_t cout16 = ((temp_shape[0] + kCubeSize - 1) / kCubeSize) * kCubeSize;
+    size_t cin16 = ((temp_shape[1] + kCubeSize - 1) / kCubeSize) * kCubeSize;
+    device_shape.push_back(temp_shape[2] * temp_shape[3] * cin16 / kCubeSize);
     device_shape.push_back(cout16 / kCubeSize);
     device_shape.push_back(kCubeSize);
     device_shape.push_back(kCubeSize);
     return device_shape;
   } else if (format == kOpFormat_NHWC) {
-    device_shape.push_back(shape[0]);
-    device_shape.push_back(shape[2]);
-    device_shape.push_back(shape[3]);
-    device_shape.push_back(shape[1]);
+    device_shape.push_back(temp_shape[0]);
+    device_shape.push_back(temp_shape[2]);
+    device_shape.push_back(temp_shape[3]);
+    device_shape.push_back(temp_shape[1]);
     return device_shape;
-  } else if (format == kOpFormat_NCHW) {
-    return shape;
   } else if (format == kOpFormat_HWCN) {
-    return {shape[2], shape[3], shape[1], shape[0]};
+    return {temp_shape[2], temp_shape[3], temp_shape[1], temp_shape[0]};
+  } else if (format == kOpFormat_NCHW) {
+    return temp_shape;
   }
   MS_LOG(EXCEPTION) << "Unexpected format[" << format << "]";
 }

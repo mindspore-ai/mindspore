@@ -20,6 +20,7 @@
 #include "pipeline/parse/data_converter.h"
 #include "ir/manager.h"
 #include "operator/ops.h"
+#include "common/trans.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
 #include "session/anf_runtime_algorithm.h"
@@ -124,7 +125,8 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->enable_pynative_infer()) {
     tensor->set_device_address(AnfAlgo::GetMutableOutputAddr(node, output_index));
-  } else if (!address->SyncDeviceToHost(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
+  } else if (!address->SyncDeviceToHost(trans::GetRuntimePaddingShape(node, output_index),
+                                        LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                         tensor->data_c(true))) {
     MS_LOG(INFO) << "output sync device to host error!!!";
     tensor->set_dirty(false);
@@ -369,7 +371,7 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{input_tensor->device_address()->type_id()});
   }
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
-  // construct abstract of parameter
+  // ftruct abstract of parameter
   auto abstract = std::make_shared<abstract::AbstractTensor>(input_tensor);
   param->set_abstract(abstract);
   return param;
@@ -548,7 +550,8 @@ void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_grap
       if (need_sync) {
         tensor->set_device_address(device_address);
         MS_EXCEPTION_IF_NULL(device_address);
-        if (!device_address->SyncHostToDevice(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
+        if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(pk_node, 0),
+                                              LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                               tensor->data_c(false))) {
           MS_LOG(EXCEPTION) << "SyncHostToDevice failed.";
         }
@@ -620,8 +623,8 @@ void SessionBasic::Summary(KernelGraph *graph) {
     (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
     tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
     MS_EXCEPTION_IF_NULL(address);
-    if (!address->SyncDeviceToHost(tensor->shape(), LongToSize(tensor->data().nbytes()), tensor->data_type(),
-                                   tensor->data_c(true))) {
+    if (!address->SyncDeviceToHost(trans::GetRuntimePaddingShape(node, index), LongToSize(tensor->data().nbytes()),
+                                   tensor->data_type(), tensor->data_c(true))) {
       MS_LOG(ERROR) << "Failed to sync output from device to host.";
     }
     tensor->set_dirty(false);
