@@ -52,7 +52,8 @@ class NcclGpuKernel : public GpuKernel {
         nccl_reduce_type_(ncclSum),
         input_size_(0),
         output_size_(0),
-        collective_handle_(nullptr) {}
+        collective_handle_(nullptr),
+        comm_stream_(nullptr) {}
   ~NcclGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -63,34 +64,33 @@ class NcclGpuKernel : public GpuKernel {
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
+    cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
     switch (nccl_kernel_type_) {
       case NCCL_ALL_REDUCE: {
         auto all_reduce_funcptr =
           reinterpret_cast<AllReduce>(dlsym(const_cast<void *>(collective_handle_), "AllReduce"));
         MS_EXCEPTION_IF_NULL(all_reduce_funcptr);
-        CHECK_NCCL_RET_WITH_EXCEPT(
-          (*all_reduce_funcptr)(input_addr, output_addr, output_size_ / sizeof(T), nccl_data_type_, nccl_reduce_type_,
-                                reinterpret_cast<cudaStream_t>(stream_ptr)),
-          "ncclAllReduce failed");
+        CHECK_NCCL_RET_WITH_EXCEPT((*all_reduce_funcptr)(input_addr, output_addr, output_size_ / sizeof(T),
+                                                         nccl_data_type_, nccl_reduce_type_, stream),
+                                   "ncclAllReduce failed");
         break;
       }
       case NCCL_ALL_GATHER: {
         auto all_gather_funcptr =
           reinterpret_cast<AllGather>(dlsym(const_cast<void *>(collective_handle_), "AllGather"));
         MS_EXCEPTION_IF_NULL(all_gather_funcptr);
-        CHECK_NCCL_RET_WITH_EXCEPT((*all_gather_funcptr)(input_addr, output_addr, input_size_ / sizeof(T),
-                                                         nccl_data_type_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                                   "ncclAllGather failed");
+        CHECK_NCCL_RET_WITH_EXCEPT(
+          (*all_gather_funcptr)(input_addr, output_addr, input_size_ / sizeof(T), nccl_data_type_, stream),
+          "ncclAllGather failed");
         break;
       }
       case NCCL_REDUCE_SCATTER: {
         auto reduce_scatter_funcptr =
           reinterpret_cast<ReduceScatter>(dlsym(const_cast<void *>(collective_handle_), "ReduceScatter"));
         MS_EXCEPTION_IF_NULL(reduce_scatter_funcptr);
-        CHECK_NCCL_RET_WITH_EXCEPT(
-          (*reduce_scatter_funcptr)(input_addr, output_addr, output_size_ / sizeof(T), nccl_data_type_,
-                                    nccl_reduce_type_, reinterpret_cast<cudaStream_t>(stream_ptr)),
-          "ncclReduceScatter failed");
+        CHECK_NCCL_RET_WITH_EXCEPT((*reduce_scatter_funcptr)(input_addr, output_addr, output_size_ / sizeof(T),
+                                                             nccl_data_type_, nccl_reduce_type_, stream),
+                                   "ncclReduceScatter failed");
         break;
       }
       default: {
@@ -167,6 +167,7 @@ class NcclGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   const void *collective_handle_;
+  cudaStream_t comm_stream_;
 };
 }  // namespace kernel
 }  // namespace mindspore

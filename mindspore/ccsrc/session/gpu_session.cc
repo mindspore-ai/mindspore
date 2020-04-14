@@ -17,6 +17,7 @@
 #include "device/gpu/kernel_info_setter.h"
 #include "device/gpu/gpu_kernel_build.h"
 #include "device/gpu/gpu_kernel_runtime.h"
+#include "device/gpu/gpu_stream_assign.h"
 #include "pre_activate/common/optimizer.h"
 #include "pre_activate/common/pass_manager.h"
 #include "pre_activate/common/ir_fusion/allreduce_fusion.h"
@@ -53,6 +54,11 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+}
+
+void GPUSession::AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  device::gpu::AssignGpuStream(kernel_graph);
 }
 
 void GPUSession::BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
@@ -94,6 +100,8 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   StartKernelRT();
   // AllReduce Optimize
   Optimize(graph);
+  // Assign CUDA streams
+  AssignStream(graph);
   // Build kernel if node is cnode
   BuildKernel(graph);
   // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
