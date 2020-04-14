@@ -15,17 +15,11 @@
 """ test optimizer """
 import numpy as np
 import pytest
-from mindspore.nn.optim import Optimizer, SGD, Adam, AdamWeightDecay, AdamWeightDecayDynamicLR
 from mindspore import Tensor
+from mindspore.nn.optim import Optimizer, SGD, Adam, AdamWeightDecay, AdamWeightDecayDynamicLR
 from mindspore.common.parameter import Parameter
 
 
-gradient = Tensor(np.zeros([1, 2, 3]))
-accumulation = gradient
-variable = accumulation
-
-
-paramsTensor = Tensor(np.zeros([1, 2, 3]))
 class IterableObjc:
     def __iter__(self):
         cont = 0
@@ -56,6 +50,7 @@ class TestAdam():
 
     def test_construct(self):
         with pytest.raises(TypeError):
+            gradient = Tensor(np.zeros([1, 2, 3]))
             adam = Adam(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                         use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
             adam.construct(gradient)
@@ -105,4 +100,5 @@ class TestUnsupportParam():
 
     def test_Sgd_init(self):
         with pytest.raises(TypeError):
+            paramsTensor = Tensor(np.zeros([1, 2, 3]))
             SGD(paramsTensor)
