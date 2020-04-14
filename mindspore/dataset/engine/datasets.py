@@ -827,7 +827,7 @@ class Dataset:
         """
         if self.input:
             return self.input[0].get_class_indexing()
-        return None
+        raise NotImplementedError("Dataset {} has not supported api get_class_indexing yet.".format(type(self)))
 
     def reset(self):
         """Reset the dataset for next epoch"""
