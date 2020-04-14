@@ -155,6 +155,13 @@ void *MemoryManager::MallocMemFromMemPool(size_t size) {
   return nullptr;
 }
 
+void MemoryManager::FreeMemFromMemPool(const DeviceAddressPtr address) {
+  MS_EXCEPTION_IF_NULL(address);
+  MS_EXCEPTION_IF_NULL(address->ptr_);
+  FreeMemFromMemPool(address->ptr_);
+  address->ptr_ = nullptr;
+}
+
 void MemoryManager::FreeMemFromMemPool(void *device_ptr) {
   if (device_ptr == nullptr) {
     MS_LOG(ERROR) << "FreeMemFromMemPool device_ptr is null.";

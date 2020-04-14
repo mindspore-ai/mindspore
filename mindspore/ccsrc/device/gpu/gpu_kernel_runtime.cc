@@ -127,9 +127,10 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_enable_dynamic_mem = context_ptr->enable_dynamic_mem_pool();
+  bool is_enable_pynative_infer = context_ptr->enable_pynative_infer();
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
-  if (is_enable_dynamic_mem) {
+  if (is_enable_dynamic_mem && !is_enable_pynative_infer) {
     ret = LaunchKernelDynamic(graph);
   } else {
     ret = LaunchKernel(graph);
@@ -152,7 +153,7 @@ void GPUKernelRuntime::InitKernelRefCount(const session::KernelGraph *graph) {
   }
   mem_reuse_util_ptr->SetKernelDefMap();
   mem_reuse_util_ptr->SetReuseRefCount();
-  // Can't free the device address of graph output, so set the reference count of graph output specially,
+  // Can't free the device address of graph output, so set the reference count of graph output specially.
   mem_reuse_util_ptr->SetGraphOutputRefCount();
   mem_reuse_util_ptr_ = mem_reuse_util_ptr;
 }
@@ -351,6 +352,10 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
     if (kernel_ref_count_ptr == nullptr) {
       continue;
     }
+    // Can't free the output of graph.
+    if (kernel_ref_count_ptr->ref_count_dynamic_use_ == memreuse::kMaxRefCount) {
+      continue;
+    }
     kernel_ref_count_ptr->ref_count_dynamic_use_--;
     if (kernel_ref_count_ptr->ref_count_dynamic_use_ == 0) {
       // Reset the reference count.
@@ -360,14 +365,10 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
       FreeCommunicationOpDynamicRes(kernel, i, &is_communication_op);
       if (!is_communication_op) {
         auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
-        MS_EXCEPTION_IF_NULL(device_address);
-        MS_EXCEPTION_IF_NULL(device_address->ptr_);
-        mem_manager_->FreeMemFromMemPool(device_address->ptr_);
-        device_address->ptr_ = nullptr;
+        mem_manager_->FreeMemFromMemPool(device_address);
       }
     }
   }
-
   // Free the workspace of kernel.
   for (size_t i = 0; i < kernel_workspaces.size(); ++i) {
     auto workspace = kernel_workspaces[i];
@@ -388,10 +389,7 @@ void GPUKernelRuntime::FreeCommunicationOpDynamicRes(const mindspore::AnfNodePtr
     communication_op_input_ref_count_--;
     if (communication_op_input_ref_count_ == 0) {
       auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, 0);
-      MS_EXCEPTION_IF_NULL(device_address);
-      MS_EXCEPTION_IF_NULL(device_address->ptr_);
-      mem_manager_->FreeMemFromMemPool(device_address->ptr_);
-      device_address->ptr_ = nullptr;
+      mem_manager_->FreeMemFromMemPool(device_address);
     }
     *is_communication_op = true;
     return;
@@ -410,10 +408,7 @@ void GPUKernelRuntime::FreeCommunicationOpDynamicRes(const mindspore::AnfNodePtr
     communication_op_output_ref_count_--;
     if (communication_op_output_ref_count_ == 0) {
       auto device_address = AnfAlgo::GetMutableOutputAddr(kernel_input.first, 0);
-      MS_EXCEPTION_IF_NULL(device_address);
-      MS_EXCEPTION_IF_NULL(device_address->ptr_);
-      mem_manager_->FreeMemFromMemPool(device_address->ptr_);
-      device_address->ptr_ = nullptr;
+      mem_manager_->FreeMemFromMemPool(device_address);
     }
     *is_communication_op = true;
   }
