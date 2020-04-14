@@ -94,7 +94,7 @@ struct SubGraphIRInfo {
   OrderedMap<AnfNodePtr, int32_t> local_var_map;
 };
 
-void DumpGrobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer) {
+void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer) {
   if (graph == nullptr) {
     return;
   }
@@ -452,7 +452,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
 
   // dump global info
-  DumpGrobalInfoEntry(graph, buffer);
+  DumpGlobalInfoEntry(graph, buffer);
   DumpParams(graph, buffer, &para_map);
 
   OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
