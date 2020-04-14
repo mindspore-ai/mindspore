@@ -39,7 +39,7 @@ class Assign(PrimitiveWithInfer):
         >>>         self.y = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="y")
         >>>
         >>>     def construct(self, x):
-        >>>         Assign()(self.y, x)
+        >>>         P.Assign()(self.y, x)
         >>>         return x
         >>> x = Tensor([2.0], mindspore.float32)
         >>> net = Net()

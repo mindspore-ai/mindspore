@@ -50,7 +50,7 @@ class ControlDepend(Primitive):
         >>> # step should be increased, so the add operation should depend on the data calculation operation.
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
-        >>>        super(Net, self).__init__()
+        >>>         super(Net, self).__init__()
         >>>         self.global_step = mindspore.Parameter(initializer(0, [1]), name="global_step")
         >>>         self.rate = 0.2
         >>>         self.control_depend = P.ControlDepend()
@@ -89,7 +89,7 @@ class GeSwitch(PrimitiveWithInfer):
     Examples:
         >>> class Net(nn.Cell):
         >>> 	def __init__(self):
-        >>>	    super(Net, self).__init__()
+        >>>         super(Net, self).__init__()
         >>>         self.square = P.Square()
         >>>         self.add = P.TensorAdd()
         >>>         self.value = Tensor(np.full((1), 3), mindspore.float32)
