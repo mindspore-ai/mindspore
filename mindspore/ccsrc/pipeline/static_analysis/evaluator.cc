@@ -63,6 +63,9 @@ AnalysisContextPtr BaseFuncGraphEvaluator::MakeContext(const AnalysisEnginePtr &
 }
 
 static std::vector<AnfNodePtr> FastShadowSort(const AnfNodePtr &ret_node) {
+  auto ori_func_graph = ret_node->func_graph();
+  MS_EXCEPTION_IF_NULL(ori_func_graph);
+
   std::vector<AnfNodePtr> sorted_nodes;
   std::unordered_set<AnfNodePtr> checked_cnodes;
   std::size_t index = 0;
@@ -75,7 +78,8 @@ static std::vector<AnfNodePtr> FastShadowSort(const AnfNodePtr &ret_node) {
       auto &inputs = current->cast<CNodePtr>()->inputs();
       for (auto it = inputs.begin(); it != inputs.end(); it++) {
         AnfNodePtr input = *it;
-        if (input != nullptr && input->isa<CNode>() && checked_cnodes.find(input) == checked_cnodes.end()) {
+        if (input != nullptr && input->isa<CNode>() && checked_cnodes.find(input) == checked_cnodes.end() &&
+            input->func_graph() == ori_func_graph) {
           sorted_nodes.emplace_back(input);
           (void)checked_cnodes.insert(input);
         }
