@@ -13,40 +13,18 @@
 # limitations under the License.
 
 """HSigmoid op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
 
-@op_info_register("""{
-    "op_name": "HSigmoid",
-    "imply_type": "AutoDiff",
-    "fusion_type": "OPAQUE",
-    "processor": "cuda",
-    "attr": [
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float32", "float16"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "x"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float32", "float16"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "output"
-        }
-    ]
-}""")
+hsigmoid_op_info = AkgRegOp("HSigmoid") \
+    .fusion_type("OPAQUE") \
+    .input(0, "x") \
+    .output(0, "output") \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .get_op_info()
+
+
+@op_info_register(hsigmoidgrad_op_info)
 def _hsigmoid_akg():
     """HSigmoid AutoDiff register"""
     return
