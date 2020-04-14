@@ -89,13 +89,13 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
       parameters_indexs.push_back(0);
     }
   }
-  std::vector<size_t> clean_output_indexs;
+  std::vector<int> clean_output_indexs;
   // in parameters data sort as input->workspace->output
   size_t index = 0;
   while (index < output_num) {
     if (parameters_indexs[input_num + workspace_num + index] == 1) {
       atomic_flag = true;
-      clean_output_indexs.push_back(index);
+      clean_output_indexs.push_back(SizeToInt(index));
     }
     index++;
   }

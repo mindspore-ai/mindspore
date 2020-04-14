@@ -297,7 +297,7 @@ build_mindspore()
     if [[ "X$ENABLE_DUMPE2E" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_E2E=ON"
     fi
-    CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_IR=${ENABLE_DUMP_IR^^}"
+    CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_IR=${ENABLE_DUMP_IR}"
     if [[ "X$ENABLE_MPI" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_MPI=ON"
     fi
