@@ -355,6 +355,10 @@ void KernelRuntime::AssignNodeOutputMem(int flag, const AnfNodePtr &node, int in
     AssignCommunicationNodeOutputMem(flag, node);
     return;
   }
+  if (AnfAlgo::IsGetNext(NOT_NULL(node)) && flag == kReuseDynamicMem) {
+    MS_LOG(INFO) << "GetNext disable mem_reuse";
+    flag = kDynamicMem;
+  }
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto output_sizes = kernel_mod->GetOutputSizeList();

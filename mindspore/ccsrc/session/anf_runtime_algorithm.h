@@ -31,6 +31,7 @@
 #include "kernel/kernel.h"
 #include "kernel/kernel_build_info.h"
 #include "operator/ops.h"
+#include "utils/contract.h"
 
 namespace mindspore {
 namespace session {
@@ -175,6 +176,7 @@ class AnfRuntimeAlgorithm {
   // get real input index for some tbe ops which input order is different between me and tbe impl
   static size_t GetRealInputIndex(const AnfNodePtr &anf_node, const size_t cur_index);
   static bool IsCommunicationOp(const AnfNodePtr &node);
+  static bool IsGetNext(const NotNull<AnfNodePtr> &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
