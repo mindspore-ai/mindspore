@@ -18,11 +18,30 @@
 
 namespace mindspore {
 namespace mindrecord {
-ShardCategory::ShardCategory(const std::vector<std::pair<std::string, std::string>> &categories)
-    : categories_(categories) {}
+ShardCategory::ShardCategory(const std::vector<std::pair<std::string, std::string>> &categories, int64_t num_elements,
+                             bool replacement)
+    : categories_(categories),
+      category_field_(""),
+      num_elements_(num_elements),
+      num_categories_(0),
+      replacement_(replacement) {}
 
-const std::vector<std::pair<std::string, std::string>> &ShardCategory::get_categories() const { return categories_; }
+ShardCategory::ShardCategory(const std::string &category_field, int64_t num_elements, int64_t num_categories,
+                             bool replacement)
+    : categories_({}),
+      category_field_(category_field),
+      num_elements_(num_elements),
+      num_categories_(num_categories),
+      replacement_(replacement) {}
 
 MSRStatus ShardCategory::execute(ShardTask &tasks) { return SUCCESS; }
+
+int64_t ShardCategory::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
+  if (dataset_size == 0) return dataset_size;
+  if (dataset_size > 0 && num_categories_ > 0 && num_elements_ > 0) {
+    return std::min(num_categories_, num_classes) * num_elements_;
+  }
+  return -1;
+}
 }  // namespace mindrecord
 }  // namespace mindspore

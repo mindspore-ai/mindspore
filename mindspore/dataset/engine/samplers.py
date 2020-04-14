@@ -184,6 +184,8 @@ class PKSampler(BuiltinSampler):
     def create(self):
         return cde.PKSampler(self.num_val, self.shuffle)
 
+    def _create_for_minddataset(self):
+        return cde.MindrecordPkSampler(self.num_val, self.shuffle)
 
 class RandomSampler(BuiltinSampler):
     """

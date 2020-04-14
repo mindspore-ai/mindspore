@@ -56,6 +56,24 @@ ShardSample::ShardSample(const std::vector<int64_t> &indices, uint32_t seed)
   shuffle_op_ = std::make_shared<ShardShuffle>(seed);
 }
 
+int64_t ShardSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
+  if (sampler_type_ == kCustomTopNSampler) {
+    return no_of_samples_;
+  }
+
+  if (sampler_type_ == kCustomTopPercentSampler) {
+    if (dataset_size % denominator_ == 0) {
+      return dataset_size / denominator_ * numerator_;
+    } else {
+      return dataset_size / denominator_ * numerator_ + 1;
+    }
+  }
+  if (sampler_type_ == kSubsetRandomSampler) {
+    return indices_.size();
+  }
+  return -1;
+}
+
 const std::pair<int, int> ShardSample::get_partitions() const {
   if (numerator_ == 1 && denominator_ > 1) {
     return std::pair<int, int>(denominator_, partition_id_);

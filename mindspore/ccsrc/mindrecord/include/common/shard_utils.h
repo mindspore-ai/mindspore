@@ -72,6 +72,8 @@ enum ShardType {
 
 enum SamplerType { kCustomTopNSampler, kCustomTopPercentSampler, kSubsetRandomSampler, kPKSampler };
 
+enum ShuffleType { kShuffleCategory, kShuffleSample };
+
 const double kEpsilon = 1e-7;
 
 const int kThreadNumber = 14;
