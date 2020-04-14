@@ -40,6 +40,7 @@ class TestMatchEngine : public UT::Common {
  public:
   PatternEngine TU;
   EquivPtr equiv_null;
+  PrimitiveVarMap primitive_vars_null;
 };
 
 TEST_F(TestMatchEngine, Var) {
@@ -106,30 +107,30 @@ TEST_F(TestMatchEngine, MatchRaw_Var) {
 
   // common
   equiv_null->clear();
-  d = TU.Match(v1, 1, equiv_null);
+  d = TU.Match(v1, 1, primitive_vars_null, equiv_null);
   ASSERT_EQ((*d)[v1], 1);
 
   equiv_null->clear();
   (*equiv_null)[v1] = v2;
-  d = TU.Match(v1, 1, equiv_null);
+  d = TU.Match(v1, 1, primitive_vars_null, equiv_null);
   ASSERT_EQ(d->count(v2), std::size_t(1));
   ASSERT_EQ((*d)[v2], 1);
 
   equiv_null->clear();
   (*equiv_null)[v1] = v2;
   (*equiv_null)[v3] = 1;
-  d = TU.Match(v1, 1, equiv_null);
+  d = TU.Match(v1, 1, primitive_vars_null, equiv_null);
   ASSERT_EQ(d->count(v2), std::size_t(1));
   ASSERT_EQ((*d)[v2], 1);
 
   equiv_null->clear();
-  d = TU.Match(VectorRef({v1}), VectorRef({1}), equiv_null);
+  d = TU.Match(VectorRef({v1}), VectorRef({1}), primitive_vars_null, equiv_null);
   ASSERT_EQ(d->size(), std::size_t(1));
   ASSERT_EQ(d->count(v1), std::size_t(1));
   ASSERT_EQ((*d)[v1], 1);
 
   equiv_null->clear();
-  ASSERT_EQ(TU.Match(1, 2, equiv_null), nullptr);
+  ASSERT_EQ(TU.Match(1, 2, primitive_vars_null, equiv_null), nullptr);
 }
 
 TEST_F(TestMatchEngine, MatchRaw_SVar) {
@@ -139,22 +140,22 @@ TEST_F(TestMatchEngine, MatchRaw_SVar) {
   EquivPtr d;
 
   equiv_null->clear();
-  d = TU.Match(VectorRef({sv1}), VectorRef({1, 2}), equiv_null);
+  d = TU.Match(VectorRef({sv1}), VectorRef({1, 2}), primitive_vars_null, equiv_null);
   ASSERT_EQ(d->size(), std::size_t(1));
   ASSERT_EQ(d->count(sv1), std::size_t(1));
   ASSERT_EQ(utils::cast<Seq>((*d)[sv1]), Seq({1, 2}));
 
   equiv_null->clear();
-  d = TU.Match(VectorRef({v1, sv1}), VectorRef({1, 2}), equiv_null);
+  d = TU.Match(VectorRef({v1, sv1}), VectorRef({1, 2}), primitive_vars_null, equiv_null);
   ASSERT_EQ(d->size(), std::size_t(2));
   ASSERT_EQ(utils::cast<Seq>((*d)[sv1]), Seq({2}));
 
   equiv_null->clear();
-  ASSERT_EQ(TU.Match(VectorRef({sv1, sv2}), VectorRef({1, 2}), equiv_null), nullptr);
+  ASSERT_EQ(TU.Match(VectorRef({sv1, sv2}), VectorRef({1, 2}), primitive_vars_null, equiv_null), nullptr);
 
   equiv_null->clear();
   (*equiv_null)[sv1] = std::make_shared<Seq>(PatternListType{1, 2});
-  d = TU.Match(VectorRef({v1, sv1}), VectorRef({1, 1, 2}), equiv_null);
+  d = TU.Match(VectorRef({v1, sv1}), VectorRef({1, 1, 2}), primitive_vars_null, equiv_null);
   ASSERT_EQ(d->size(), std::size_t(2));
   ASSERT_EQ((*d)[v1], 1);
 }
@@ -167,13 +168,13 @@ TEST_F(TestMatchEngine, Match) {
   EquivPtr d;
 
   equiv_null->clear();
-  d = TU.Match(VectorRef({v1, v1, v2}), VectorRef({1, 1, 2}), equiv_null);
+  d = TU.Match(VectorRef({v1, v1, v2}), VectorRef({1, 1, 2}), primitive_vars_null, equiv_null);
   ASSERT_EQ(d->size(), std::size_t(2));
   ASSERT_EQ((*d)[v1], 1);
   ASSERT_EQ((*d)[v2], 2);
 
   equiv_null->clear();
-  d = TU.Match(static_cast<int>(1), static_cast<float>(1), equiv_null);
+  d = TU.Match(static_cast<int>(1), static_cast<float>(1), primitive_vars_null, equiv_null);
   ASSERT_EQ(d, nullptr);
 }
 
@@ -197,18 +198,19 @@ TEST_F(TestMatchEngine, Match_CondVar) {
   EquivPtr d;
 
   equiv_null->clear();
-  d = TU.Match(VectorRef({vf, vn}), VectorRef({static_cast<float>(1.0), -1}), equiv_null);
+  d = TU.Match(VectorRef({vf, vn}), VectorRef({static_cast<float>(1.0), -1}), primitive_vars_null, equiv_null);
   ASSERT_GE(d->size(), std::size_t(0));
   auto vfn = (*d)[vf];
   ASSERT_EQ((*d)[vf], static_cast<float>(1.0));
   ASSERT_EQ((*d)[vn], -1);
 
   equiv_null->clear();
-  d = TU.Match(VectorRef({vf, vn}), VectorRef({1, static_cast<float>(-1.0)}), equiv_null);
+  d = TU.Match(VectorRef({vf, vn}), VectorRef({1, static_cast<float>(-1.0)}), primitive_vars_null, equiv_null);
   ASSERT_EQ(d, nullptr);
 
   equiv_null->clear();
-  d = TU.Match(VectorRef({vf, vn}), VectorRef({static_cast<float>(1.0), static_cast<int>(1)}), equiv_null);
+  d = TU.Match(VectorRef({vf, vn}), VectorRef({static_cast<float>(1.0), static_cast<int>(1)}), primitive_vars_null,
+               equiv_null);
   ASSERT_EQ(d, nullptr);
 }
 

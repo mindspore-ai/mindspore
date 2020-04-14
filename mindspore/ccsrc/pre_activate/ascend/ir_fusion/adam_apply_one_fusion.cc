@@ -15,43 +15,9 @@
  */
 #include "pre_activate/ascend/ir_fusion/adam_apply_one_fusion.h"
 #include "pre_activate/common/helper.h"
-#include "utils/utils.h"
 
 namespace mindspore {
 namespace opt {
-namespace {
-void GetAdd0AndAdd1(const AnfNodePtr &sub0, AnfNodePtr *add0, AnfNodePtr *add1) {
-  MS_EXCEPTION_IF_NULL(sub0);
-  MS_EXCEPTION_IF_NULL(add0);
-  MS_EXCEPTION_IF_NULL(add1);
-  auto sub0_cnode = sub0->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(sub0_cnode);
-  CheckCNodeInputSize(sub0_cnode, kSubInputNum);
-  AnfNodePtr mul4 = sub0_cnode->input(2);
-  MS_EXCEPTION_IF_NULL(mul4);
-  auto mul4_cnode = mul4->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(mul4_cnode);
-  CheckCNodeInputSize(mul4_cnode, kMulInputNum);
-  AnfNodePtr true_div0 = mul4_cnode->input(2);
-  MS_EXCEPTION_IF_NULL(true_div0);
-  auto true_div0_cnode = true_div0->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(true_div0_cnode);
-  CheckCNodeInputSize(true_div0_cnode, kRealDivInputNum);
-  *add0 = true_div0_cnode->input(1);
-  AnfNodePtr add2 = true_div0_cnode->input(2);
-  MS_EXCEPTION_IF_NULL(add2);
-  auto add2_cnode = add2->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(add2_cnode);
-  CheckCNodeInputSize(add2_cnode, kAddInputNum);
-  AnfNodePtr sqrt0 = add2_cnode->input(1);
-  MS_EXCEPTION_IF_NULL(sqrt0);
-  auto sqrt0_cnode = sqrt0->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(sqrt0_cnode);
-  CheckCNodeInputSize(sqrt0_cnode, kSqrtInputNum);
-  *add1 = sqrt0_cnode->input(1);
-}
-}  // namespace
-
 AnfNodePtr AdamApplyOneFusion::CreateAdamApplyOneNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
@@ -79,10 +45,10 @@ const BaseRef AdamApplyOneFusion::DefinePattern() const {
   const auto prim_deal_div = std::make_shared<Primitive>(kRealDivOpName);
   VectorRef mul2 = VectorRef({prim::kPrimMul, mul_x_input_vars_[2], input_vars_[1]});
   VectorRef mul3 = VectorRef({prim::kPrimMul, mul_x_input_vars_[3], VectorRef({prim::kPrimSquare, input_vars_[0]})});
-  VectorRef sqrt0 = VectorRef({prim_sqrt, VectorRef({prim::kPrimTensorAdd, mul2, mul3})});
+  VectorRef sqrt0 = VectorRef({prim_sqrt, VectorRef({add1_var_, mul2, mul3})});
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
-  VectorRef add0 = VectorRef({prim::kPrimTensorAdd, mul0, mul1});
+  VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
   VectorRef true_div0 = VectorRef({prim_deal_div, add0, VectorRef({prim::kPrimTensorAdd, sqrt0, add2_y_})});
   return VectorRef({prim::kPrimSub, input_vars_[3], VectorRef({prim::kPrimMul, input_vars_[4], true_div0})});
 }
@@ -96,10 +62,17 @@ const AnfNodePtr AdamApplyOneFusion::Process(const FuncGraphPtr &func_graph, con
   new_node->set_scope(node->scope());
   // Set abstract of new node
   AbstractBasePtrList new_node_abstract_list;
-  AnfNodePtr add0 = nullptr;
-  AnfNodePtr add1 = nullptr;
-  GetAdd0AndAdd1(node, &add0, &add1);
+  auto iter_add0 = (*equiv).find(add0_var_);
+  if (iter_add0 == (*equiv).end()) {
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add0 var after matched.";
+  }
+  auto iter_add1 = (*equiv).find(add1_var_);
+  if (iter_add1 == (*equiv).end()) {
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add1 var after matched.";
+  }
+  auto add0 = utils::cast<AnfNodePtr>(iter_add0->second);
   MS_EXCEPTION_IF_NULL(add0);
+  auto add1 = utils::cast<AnfNodePtr>(iter_add1->second);
   MS_EXCEPTION_IF_NULL(add1);
   new_node_abstract_list.push_back(add1->abstract());
   new_node_abstract_list.push_back(add0->abstract());

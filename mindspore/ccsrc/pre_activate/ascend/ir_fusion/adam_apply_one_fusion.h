@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include "pre_activate/common/optimizer.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,6 +36,8 @@ class AdamApplyOneFusion : public PatternProcessPass {
       mul_x_input_vars_.push_back(std::make_shared<Var>());
     }
     add2_y_ = std::make_shared<Var>();
+    add0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
+    add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
   }
 
   ~AdamApplyOneFusion() override = default;
@@ -46,6 +49,8 @@ class AdamApplyOneFusion : public PatternProcessPass {
   std::vector<VarPtr> input_vars_;
   std::vector<VarPtr> mul_x_input_vars_;
   VarPtr add2_y_;
+  VarPtr add0_var_;
+  VarPtr add1_var_;
 };
 }  // namespace opt
 }  // namespace mindspore
