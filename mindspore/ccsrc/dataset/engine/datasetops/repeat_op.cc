@@ -58,10 +58,10 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
   out << "RepeatOp:"
       << "\nCurrent repeat count: " << repeat_count_ << "\nMax repeat count: " << max_repeats_
       << "\nLeaf Nodes in my execution path:";
-  if (!leaf_ops_.empty()) {
+  if (!eoe_ops_.empty()) {
     out << "\n";
-    for (size_t i = 0; i < leaf_ops_.size(); i++) {
-      out << "  Operator: " << leaf_ops_[i]->id() << "\n";
+    for (size_t i = 0; i < eoe_ops_.size(); i++) {
+      out << "  Operator: " << eoe_ops_[i]->id() << "\n";
     }
   } else {
     out << " kNone.";
@@ -71,21 +71,17 @@ void RepeatOp::Print(std::ostream &out, bool show_all) const {
 
 // Base-class override for executing specific RepeatOp configurations. This code will be called
 // during the execution tree prepare phase when it is visiting this operator.
-Status RepeatOp::PrepareNodeAction() {
+Status RepeatOp::PrepareNodePostAction() {
   // Run any common code from super class first before adding our own specific logic
-  RETURN_IF_NOT_OK(PipelineOp::PrepareNodeAction());
+  RETURN_IF_NOT_OK(PipelineOp::PrepareNodePostAction());
   std::shared_ptr<DatasetOp> leaf_op = tree_->PopFromRepeatStack();
   while (leaf_op != nullptr) {
     // Track the leaf operators that are under this repeat op.
-    leaf_ops_.push_back(leaf_op);
-
-    // Special case.  If the repeat count is 1, then pre-flag the leaf nodes
-    // to tell them they are already at their last op:
-    if (max_repeats_ == 1) {
-      leaf_op->set_control_flag(kDeOpLastRepeat);
-    }
+    eoe_ops_.push_back(leaf_op);
     leaf_op = tree_->PopFromRepeatStack();
   }
+  // Push ourselves to the stack in case one of our ascendants is repeat too.
+  tree_->AddToRepeatStack(shared_from_this());
   return Status::OK();
 }
 
@@ -127,16 +123,20 @@ Status RepeatOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
 Status RepeatOp::EoeReceived(int32_t worker_id) {
   repeat_count_++;
   MS_LOG(INFO) << "Repeat operator end of epoch message received. Repeat count is now: " << repeat_count_ << ".";
-
-  // If we've reached the requested repeat count, then flag the leaf nodes
+  bool repeated = BitTest(op_ctrl_flags_, kDeOpRepeated);
+  bool last_repeat = BitTest(op_ctrl_flags_, kDeOpLastRepeat);
+  // If we've reached the requested repeat count, then flag the eoe nodes
   // to tell them they've got one more epoch to perform.  When they reach the end
-  // of the last epoch, they quit rather than loop again.
-  if (max_repeats_ != kInfiniteRepeat && repeat_count_ == (max_repeats_ - 1)) {
-    for (size_t i = 0; i < leaf_ops_.size(); i++) {
-      leaf_ops_[i]->set_control_flag(kDeOpLastRepeat);
+  // of the last epoch, they quit rather than loop again. This happens in two cases:
+  // 1- We are also repeated (by another repeat op) and we are at the last repetition. Or,
+  // 2- We are not repeated
+  if (max_repeats_ != kInfiniteRepeat && repeat_count_ == (max_repeats_ - 1) && (!repeated || last_repeat)) {
+    for (auto &eoe_op : eoe_ops_) {
+      eoe_op->set_control_flag(kDeOpLastRepeat);
     }
   }
   if (repeat_count_ == max_repeats_) {
+    repeat_count_ = 0;
     state_ = OpState::kDeOpIdle;
     return Status::OK();
   }

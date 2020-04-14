@@ -162,30 +162,25 @@ Status ExecutionTree::Prepare() {
 // Recursive function used during prepare phase to visit a node and drive any pre- and post-
 // node actions during a tree walk.
 Status ExecutionTree::PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op) {
-  int32_t num_children = dataset_op->child_.size();
+  // execute PreAction
+  RETURN_IF_NOT_OK(dataset_op->PrepareNodePreAction());
 
-  // Before going down into children, make any prepare flags updates based on this
-  // operator.
+  // Before going down into children, make any prepare flags updates based on this operator.
   uint32_t op_prep_flags = dataset_op->PrepareFlags();
-  // Sanity check.  In future we can support nested repeats.  for now it's not allowed.
-  // If somebody above us already set the repeat flag, and now we are another repeat...
-  if (BitTest(op_prep_flags, kDePrepRepeat) && BitTest(prepare_flags_, kDePrepRepeat)) {
-    std::string err_msg("Nested RepeatOp detected! This is not supported yet.");
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
   BitSet(&prepare_flags_, op_prep_flags);
 
   // Now, descend to children
-  for (int32_t i = 0; i < num_children; ++i) {
-    RETURN_IF_NOT_OK(this->PrepareNode(dataset_op->child_[i]));
+  for (const auto &i : dataset_op->child_) {
+    RETURN_IF_NOT_OK(this->PrepareNode(i));
   }
-
-  // No more children, now we execute any prepare actions before going back up the
-  // the tree on recursive function exit
-  RETURN_IF_NOT_OK(dataset_op->PrepareNodeAction());
 
   // Then clear the flags from this op now that we have prepared it.
   BitClear(&prepare_flags_, op_prep_flags);
+
+  // No more children, now we execute any prepare actions before going back up the
+  // the tree on recursive function
+  RETURN_IF_NOT_OK(dataset_op->PrepareNodePostAction());
+
   return Status::OK();
 }
 
