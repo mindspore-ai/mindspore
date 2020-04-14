@@ -36,24 +36,34 @@ using OptimizerWeakPtr = std::weak_ptr<Optimizer>;
 using PredicateFuncType = std::function<bool(const AnfNodePtr &)>;
 using TransformFuncType = std::function<AnfNodePtr(const OptimizerPtr &, const AnfNodePtr &)>;
 
+// Define the interaction mode between an Optimize pass and Renormalize pass
+// FORCE_RENORM: if the pass modified the graph then the next Renormalize will be executed
+// CHECK_RENORM: check if the new node is un-typed to decide if the next Renormalize will be executted
+enum RenormAction : int { FORCE_RENORM = 0, CHECK_RENORM };
+
 class Substitution {
  public:
   TransformFuncType transform_{nullptr};
   std::string name_;
   PredicateFuncType predicate_{nullptr};
-  explicit Substitution(const TransformFuncType &transform, const std::string &name, const PredicateFuncType &predicate)
-      : transform_(transform), name_(name), predicate_(predicate) {}
+  // an enum to mark this Substitution relation to renormalize pass
+  RenormAction renorm_action_;
+  explicit Substitution(const TransformFuncType &transform, const std::string &name, const PredicateFuncType &predicate,
+                        const RenormAction &renorm_action)
+      : transform_(transform), name_(name), predicate_(predicate), renorm_action_(renorm_action) {}
   ~Substitution() = default;
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) const;
 };
 
 using SubstitutionPtr = std::shared_ptr<Substitution>;
 
-SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name, const PrimitivePtr &prim);
+SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name, const PrimitivePtr &prim,
+                                 const RenormAction &action_renorm = CHECK_RENORM);
 SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name,
-                                 const std::vector<PrimitivePtr> &prims);
+                                 const std::vector<PrimitivePtr> &prims,
+                                 const RenormAction &action_renorm = CHECK_RENORM);
 SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name,
-                                 const PredicateFuncType &predicate);
+                                 const PredicateFuncType &predicate, const RenormAction &action_renorm = CHECK_RENORM);
 
 class SubstitutionList {
  public:

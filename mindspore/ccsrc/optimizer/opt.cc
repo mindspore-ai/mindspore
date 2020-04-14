@@ -31,14 +31,14 @@
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
-SubstitutionPtr MakeSubstitution(const TransformFuncType& transform, const std::string& name,
-                                 const PrimitivePtr& prim) {
+SubstitutionPtr MakeSubstitution(const TransformFuncType& transform, const std::string& name, const PrimitivePtr& prim,
+                                 const RenormAction& renorm_action) {
   auto fn = [prim](const AnfNodePtr& node) -> bool { return IsPrimitiveCNode(node, prim); };
-  return std::make_shared<Substitution>(transform, name, fn);
+  return std::make_shared<Substitution>(transform, name, fn, renorm_action);
 }
 
 SubstitutionPtr MakeSubstitution(const TransformFuncType& transform, const std::string& name,
-                                 const std::vector<PrimitivePtr>& prims) {
+                                 const std::vector<PrimitivePtr>& prims, const RenormAction& renorm_action) {
   auto fn = [prims](const AnfNodePtr& node) -> bool {
     if (!node->isa<CNode>()) {
       return false;
@@ -52,12 +52,12 @@ SubstitutionPtr MakeSubstitution(const TransformFuncType& transform, const std::
     return false;
   };
 
-  return std::make_shared<Substitution>(transform, name, fn);
+  return std::make_shared<Substitution>(transform, name, fn, renorm_action);
 }
 
 SubstitutionPtr MakeSubstitution(const TransformFuncType& transform, const std::string& name,
-                                 const PredicateFuncType& predicate) {
-  return std::make_shared<Substitution>(transform, name, predicate);
+                                 const PredicateFuncType& predicate, const RenormAction& renorm_action) {
+  return std::make_shared<Substitution>(transform, name, predicate, renorm_action);
 }
 
 AnfNodePtr Substitution::operator()(const OptimizerPtr& optimizer, const AnfNodePtr& node) const {
@@ -74,6 +74,16 @@ AnfNodePtr Substitution::operator()(const OptimizerPtr& optimizer, const AnfNode
     }
   }
 #endif
+  if (optimizer != nullptr && optimizer->is_watch_renormalize() && result != nullptr) {
+    if (renorm_action_ == FORCE_RENORM) {
+      optimizer->add_node_to_renormalize(result);
+    } else {
+      // renorm_action_ is CHECK_RENORM
+      if (result->abstract() == nullptr) {
+        optimizer->add_node_to_renormalize(result);
+      }
+    }
+  }
 
   return result;
 }

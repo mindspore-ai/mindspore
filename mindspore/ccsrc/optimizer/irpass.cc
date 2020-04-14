@@ -52,7 +52,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   special_op_eliminate_ = MakeSubstitution(SpecialOpEliminater(), "special_op_eliminate",
                                            {prim::kPrimInsertGradientOf, prim::kPrimPrintShapeType,
                                             prim::kPrimGetRefKey, prim::kPrimMirror, prim::kPrimVirtualDiv});
-  zero_like_fill_zero_ = MakeSubstitution(ZeroLikeFillZero(), "zero_like_fill_zero", prim::kPrimZerosLikeTensor);
+  zero_like_fill_zero_ =
+    MakeSubstitution(ZeroLikeFillZero(), "zero_like_fill_zero", prim::kPrimZerosLikeTensor, opt::FORCE_RENORM);
 
   // ops eliminate
   item_tuple_eliminate_ =
@@ -81,7 +82,9 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   make_ref_eliminate_ = MakeSubstitution(MakeRefEliminater(), "make_ref_eliminate", prim::kPrimMakeRef);
   get_make_ref_eliminate_ =
     MakeSubstitution(GetMakeRefEliminater(), "get_make_ref_eliminate", {prim::kPrimGetRefKey, prim::kPrimGetRefValue});
-  replace_refkey_by_param_ = MakeSubstitution(ReplaceRefkeyByParam(), "replace_refkey_by_param", IsValueNode<RefKey>);
+
+  replace_refkey_by_param_ =
+    MakeSubstitution(ReplaceRefkeyByParam(), "replace_refkey_by_param", IsValueNode<RefKey>, opt::FORCE_RENORM);
   replace_old_param_ = MakeSubstitution(ReplaceOldParam(), "replace_old_param", IsParam);
 
   // Gradient transforms
