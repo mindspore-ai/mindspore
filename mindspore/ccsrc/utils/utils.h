@@ -42,6 +42,7 @@ constexpr auto kBNGrad2OpName = "BNGrad2";
 constexpr auto kBNGrad3OpName = "BNGrad3";
 constexpr auto kClearZeroOpName = "ClearZero";
 constexpr auto kAtomicAddrCleanOpName = "AtomicAddrClean";
+constexpr auto kGetNextOpName = "GetNext";
 constexpr auto kAllReduceOpName = "AllReduce";
 constexpr auto kAllGatherOpName = "AllGather";
 constexpr auto kBroadcastOpName = "Broadcast";

@@ -825,5 +825,10 @@ bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
   }
   return false;
 }
+
+bool AnfRuntimeAlgorithm::IsGetNext(const NotNull<AnfNodePtr> &node) {
+  auto kernel_name = AnfAlgo::GetCNodeName(node);
+  return kernel_name == kGetNextOpName;
+}
 }  // namespace session
 }  // namespace mindspore
