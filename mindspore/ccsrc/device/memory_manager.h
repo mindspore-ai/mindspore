@@ -47,6 +47,7 @@ class MemoryManager {
 
   virtual void MallocMemFromMemPool(const DeviceAddressPtr address, size_t size);
   virtual void *MallocMemFromMemPool(size_t size);
+  virtual void FreeMemFromMemPool(const DeviceAddressPtr address);
   virtual void FreeMemFromMemPool(void *device_ptr);
 
   size_t GetCommonAlignSize(size_t input_size) const;
