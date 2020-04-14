@@ -250,7 +250,7 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) 
   MS_EXCEPTION_IF_NULL(graph);
   auto nodes = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   for (const auto &node : nodes) {
-    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0);
+    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
     MS_EXCEPTION_IF_NULL(item_with_index.first);
     if (!item_with_index.first->isa<CNode>() || !AnfAlgo::IsRealKernel(item_with_index.first)) {
       continue;

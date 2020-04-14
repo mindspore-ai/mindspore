@@ -84,6 +84,7 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernel(const AnfNodePtr &anf_node, siz
 }
 
 KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr &anf_node, size_t index,
+                                                               bool visit_nop_node,
                                                                const std::vector<PrimitivePtr> &return_types) {
   MS_EXCEPTION_IF_NULL(anf_node);
   for (const auto &prim_type : return_types) {
@@ -109,12 +110,13 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
       auto value_node = input2->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
       int item_idx = GetValue<int>(value_node->value());
-      return VisitKernelWithReturnType(cnode->input(kRealInputNodeIndexInTupleGetItem), IntToSize(item_idx));
+      return VisitKernelWithReturnType(cnode->input(kRealInputNodeIndexInTupleGetItem), IntToSize(item_idx),
+                                       visit_nop_node);
     } else if (IsPrimitive(input0, prim::kPrimDepend) || IsPrimitive(input0, prim::kPrimControlDepend)) {
-      return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), 0);
-    } else if (opt::IsNopNode(cnode)) {
+      return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), 0, visit_nop_node);
+    } else if (opt::IsNopNode(cnode) && visit_nop_node) {
       if (cnode->inputs().size() == 2) {
-        return VisitKernelWithReturnType(cnode->input(1), 0);
+        return VisitKernelWithReturnType(cnode->input(1), 0, visit_nop_node);
       } else {
         MS_LOG(EXCEPTION) << cnode->DebugString() << "Invalid nop node";
       }
@@ -132,7 +134,7 @@ std::vector<AnfNodePtr> AnfRuntimeAlgorithm::GetAllOutput(const AnfNodePtr &node
   auto return_prim_type = return_types;
   // if visited make_tuple should return back
   return_prim_type.push_back(prim::kPrimMakeTuple);
-  auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, return_prim_type);
+  auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, false, return_prim_type);
   if (AnfAlgo::CheckPrimitiveType(item_with_index.first, prim::kPrimMakeTuple)) {
     MS_EXCEPTION_IF_NULL(item_with_index.first);
     auto make_tuple = item_with_index.first->cast<CNodePtr>();
