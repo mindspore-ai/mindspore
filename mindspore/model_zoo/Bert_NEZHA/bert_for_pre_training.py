@@ -370,7 +370,7 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
             self.reducer_flag = True
-        self.grad_reducer = None
+        self.grad_reducer = F.identity
         if self.reducer_flag:
             mean = context.get_auto_parallel_context("mirror_mean")
             degree = get_group_size()
@@ -428,9 +428,8 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
                                                            mstype.float32))
         grads = self.hyper_map(F.partial(grad_scale, scaling_sens), grads)
         grads = self.clip_gradients(grads, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE)
-        if self.reducer_flag:
-            # apply grad reducer on grads
-            grads = self.grad_reducer(grads)
+        # apply grad reducer on grads
+        grads = self.grad_reducer(grads)
         self.get_status(init)
         flag_sum = self.reduce_sum(init, (0,))
         if self.is_distributed:
