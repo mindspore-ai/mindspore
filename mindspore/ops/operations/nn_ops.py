@@ -679,7 +679,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
         - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
-          :math:`(channel_multiplier, C_{in}, K_1, K_2)`.
+          :math:`(channel_{multiplier}, C_{in}, K_1, K_2)`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{in} * \text{channel_multiplier}, H_{out}, W_{out})`.
