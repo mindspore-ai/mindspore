@@ -1008,6 +1008,7 @@ class Argmax(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         validator.check_subclass("input_x", x_dtype, mstype.tensor)
+        validator.check_typename('input_x', x_dtype, [mstype.float32, mstype.float16])
         return mstype.tensor_type(self.output_type)
 
 
@@ -1500,7 +1501,9 @@ class Slice(PrimitiveWithInfer):
         Tensor.
 
     Examples:
-        >>> data = Tensor(np.array([3,2,3]).astype(np.int32))
+        >>> data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
+        >>>                         [[3, 3, 3], [4, 4, 4]],
+        >>>                         [[5, 5, 5], [6, 6, 6]]]).astype(np.int32))
         >>> type = P.Slice()(data, (1, 0, 0), (1, 1, 3))
     """
 
