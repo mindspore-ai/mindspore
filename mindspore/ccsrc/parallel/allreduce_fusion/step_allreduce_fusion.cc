@@ -38,10 +38,12 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
       (root->has_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY))) {
     return changes;
   }
-
+#if defined(_WIN32) || defined(_WIN64)
+  auto start_time = std::chrono::steady_clock::now();
+#else
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
-
+#endif
   MS_LOG(INFO) << "Now entering allreduce fusion";
   DumpGraph(root, std::string(ALLREDUCE_FUSION_BEGIN));
 
@@ -63,11 +65,16 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   // allreduce fusion only run once
   root->flags()[ALLREDUCE_FUSION_RUN_ONCE_ONLY] = true;
   res->results()[pipeline::kStepParallelGraph] = root;
-
+#if defined(_WIN32) || defined(_WIN64)
+  auto end_time = std::chrono::steady_clock::now();
+  std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
+  MS_LOG(INFO) << "Now leaving allreduce fusion, used time: " << cost.count() << " us";
+#else
   (void)gettimeofday(&end_time, nullptr);
   uint64_t time = 1000000 * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   time += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "Now leaving allreduce fusion, used time: " << time << " us";
+#endif
   return changes;
 }
 }  // namespace parallel

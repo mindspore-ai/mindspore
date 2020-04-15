@@ -5,6 +5,10 @@ if(ENABLE_CPU)
     file(GLOB_RECURSE CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "device/cpu/*.cc"
     )
+    if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -DHAVE_SNPRINTF")
+        add_compile_definitions(BUILDING_DLL)
+    endif()
 endif()
 
 if(ENABLE_GPU)
@@ -150,7 +154,15 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "kernel/kash/*.cc"
         "device/gpu/distribution/collective_init.cc"
         )
-
+if (ENABLE_CPU)
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST "device/gpu/distribution/collective_init.cc")
+    if (WIN32)
+        list(REMOVE_ITEM MINDSPORE_SRC_LIST "kernel/kernel_query.cc")
+    endif()
+endif()
+if (NOT ENABLE_GPU)
+    list(APPEND MINDSPORE_SRC_LIST "device/gpu/distribution/collective_fake_init.cc")
+endif()
 file(GLOB_RECURSE MEM_REUSE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "pre_activate/mem_reuse/*.cc"
         )
@@ -248,6 +260,7 @@ file(GLOB_RECURSE MS_GVAR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 
 add_library(mindspore_gvar SHARED ${MS_GVAR_SRC_LIST})
 add_library(mindspore STATIC ${MINDSPORE_SRC_LIST})
+add_dependencies(mindspore GENERATED_OUTPUT_DIR)
 
 if(ENABLE_D)
     list(APPEND MINDSPORE_PROTO_LIST ${MINDSPORE_PROTO_AICPU_LIST})
@@ -315,19 +328,33 @@ if(ENABLE_D)
 endif()
 
 target_link_libraries(mindspore securec)
-target_link_libraries(mindspore dl)
+if (NOT WIN32)
+  target_link_libraries(mindspore dl)
+endif()
 target_link_libraries(mindspore mindspore::flatbuffers)
 # link protobuf
 if (ENABLE_D)
     target_link_libraries(mindspore mindspore::protobuf)
 endif()
 
+if (WIN32)
+    target_link_libraries(mindspore ${PYTHON_LIBRARIES} mindspore_gvar)
+endif()
+
 # set c_expression building
+if (WIN32)
+set(PYTHON_MODULE_SOURCE ${MS_GVAR_SRC_LIST}
+        pipeline/init.cc
+        kernel/oplib/oplib.cc
+        ${MINDSPORE_SRC_LIST} ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
+        ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
+else()
 set(PYTHON_MODULE_SOURCE
         pipeline/init.cc
         kernel/oplib/oplib.cc
-    ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
-    ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
+        ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
+        ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
+endif()
 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 pybind11_add_module(_c_expression ${PYTHON_MODULE_SOURCE})
@@ -339,6 +366,8 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
 elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set_target_properties(_c_expression PROPERTIES MACOSX_RPATH ON)
     set(ORIGIN_PATH @loader_path)
+elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set(ORIGIN_PATH $ORIGIN)
 else ()
     MESSAGE(FATAL_ERROR "other platform: ${CMAKE_SYSTEM_NAME}")
 endif ()
@@ -346,11 +375,22 @@ endif ()
 
 set(ORIGIN_PATH ${ORIGIN_PATH}/lib)
 set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
-target_link_libraries(_c_expression PRIVATE
-        mindspore::pybind11_module
-        mindspore
-        mindspore_gvar
-        )
+if (WIN32)
+    target_link_libraries(_c_expression PRIVATE
+            mindspore::pybind11_module
+            securec
+            proto_input
+            mindspore::flatbuffers
+            mindspore::glog
+            )
+else()
+    target_link_libraries(_c_expression PRIVATE
+            mindspore::pybind11_module
+            mindspore
+            mindspore_gvar
+            mindspore::glog
+            )
+endif()
 
 if(ENABLE_GPU)
 	execute_process(COMMAND bash ${CMAKE_SOURCE_DIR}/third_party/apply_patches.sh 
@@ -492,8 +532,4 @@ endif()
 if(ENABLE_MINDDATA)
     add_subdirectory(mindrecord)
     add_subdirectory(dataset)
-endif()
-
-if (USE_GLOG)
-    target_link_libraries(_c_expression PRIVATE mindspore::glog)
 endif()

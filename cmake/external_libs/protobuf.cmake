@@ -77,22 +77,36 @@ function(ms_protobuf_generate_py c_var h_var py_var)
         list(APPEND ${c_var} "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.cc")
         list(APPEND ${h_var} "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.h")
         list(APPEND ${py_var} "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py")
-
-        add_custom_command(
-                OUTPUT "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.cc"
-                "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.h"
-                "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
-                WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${rel_path}"
-                COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
-                COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
-                COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
-                COMMAND perl -pi -e "s/import (.+_pb2.*)/from . import \\1/"  "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
-                COMMAND cp "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py" "${PROJECT_SOURCE_DIR}/mindspore/train/"
-                DEPENDS protobuf::protoc ${abs_file}
-                COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM )
+        if (WIN32)
+            add_custom_command(
+                    OUTPUT "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.cc"
+                    "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.h"
+                    "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
+                    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${rel_path}"
+                    COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
+                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
+                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
+                    COMMAND perl -pi.bak -e "s/import (.+_pb2.*)/from . import \\1/"  "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py" "${PROJECT_SOURCE_DIR}/mindspore/train/"
+                    DEPENDS protobuf::protoc ${abs_file}
+                    COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM )
+        else()
+            add_custom_command(
+                    OUTPUT "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.cc"
+                    "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.h"
+                    "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
+                    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${rel_path}"
+                    COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
+                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
+                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
+                    COMMAND perl -pi -e "s/import (.+_pb2.*)/from . import \\1/"  "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
+                    COMMAND cp "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py" "${PROJECT_SOURCE_DIR}/mindspore/train/"
+                    DEPENDS protobuf::protoc ${abs_file}
+                    COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM )
+        endif()
     endforeach()
-
     set_source_files_properties(${${c_var}} ${${h_var}} ${${py_var}} PROPERTIES GENERATED TRUE)
     set(${c_var} ${${c_var}} PARENT_SCOPE)
     set(${h_var} ${${h_var}} PARENT_SCOPE)

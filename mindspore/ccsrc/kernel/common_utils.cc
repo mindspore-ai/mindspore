@@ -117,7 +117,11 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
 bool KernelMeta::ReadIndex(const std::string &bin_dir) {
   DIR *dir = opendir(bin_dir.c_str());
   if (dir == nullptr) {
+#if defined(_WIN32) || defined(_WIN64)
+    auto ret = mkdir(bin_dir.c_str());
+#else
     auto ret = mkdir(bin_dir.c_str(), S_IRWXG | S_IRWXU);
+#endif
     if (ret != 0) {
       MS_LOG(INFO) << "kernel dir not exist[" << bin_dir << "].";
       return false;
@@ -500,10 +504,17 @@ void SaveJsonInfo(const std::string &json_name, const std::string &info) {
   }
   filewrite << info << std::endl;
   filewrite.close();
+#if defined(_WIN32) || defined(_WIN64)
+  if (nullptr == _fullpath(real_path, path.c_str(), PATH_MAX)) {
+    MS_LOG(DEBUG) << "dir " << path << " does not exit.";
+    return;
+  }
+#else
   if (nullptr == realpath(path.c_str(), real_path)) {
     MS_LOG(DEBUG) << "dir " << path << " does not exit.";
     return;
   }
+#endif
   MS_LOG(INFO) << "real path is :" << real_path;
   if (chmod(real_path, S_IRUSR) == -1) {
     MS_LOG(DEBUG) << "modify file:" << real_path << " to read only fail.";

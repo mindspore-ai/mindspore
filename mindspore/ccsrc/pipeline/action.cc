@@ -264,7 +264,7 @@ bool TaskEmitAction(const ResourcePtr& res) {
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
   std::vector<PrimitivePtr> cut_list = compile::nonlinear_ops;
   if (bc_ptr->name() == kMsConvert) {
-    cut_list = compile::ms_nonlinear_ops;
+    cut_list = compile::GetMsNonlinearOps();
   }
   std::shared_ptr<CompileGraphs> compile = std::make_shared<CompileGraphs>(bc_ptr, cut_list);
   res->results()[kOutput] = compile->CompileAndLink(func_graph);

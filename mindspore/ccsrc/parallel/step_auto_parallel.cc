@@ -227,7 +227,7 @@ size_t GetLengthOfDataType(const TypePtr &type) {
     case kNumberTypeInt:
       return sizeof(int);
     case kNumberTypeUInt:
-      return sizeof(uint);
+      return sizeof(unsigned int);
     case kNumberTypeFloat:
       return sizeof(float);
     default:

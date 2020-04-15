@@ -62,11 +62,13 @@ class Services {
 
   std::shared_ptr<MemoryPool> GetServiceMemPool() { return pool_; }
 
+#if !defined(_WIN32) && !defined(_WIN64)
   static std::string GetUserName();
 
   static std::string GetHostName();
 
   static int GetLWP();
+#endif
 
   static std::string GetUniqueID();
 

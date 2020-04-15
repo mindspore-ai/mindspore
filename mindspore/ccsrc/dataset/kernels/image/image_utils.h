@@ -22,6 +22,10 @@
 #include <random>
 #include <string>
 #include <vector>
+#if defined(_WIN32) || defined(_WIN64)
+#undef HAVE_STDDEF_H
+#undef HAVE_STDLIB_H
+#endif
 #include "./jpeglib.h"
 #include "./jerror.h"
 #include <opencv2/imgproc/imgproc.hpp>

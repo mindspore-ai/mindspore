@@ -22,6 +22,10 @@
 #include <vector>
 #include "./securec.h"
 #include "utils/log_adapter.h"
+#if defined(_WIN32) || defined(_WIN64)
+#undef HAVE_STDDEF_H
+#undef HAVE_STDLIB_H
+#endif
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
