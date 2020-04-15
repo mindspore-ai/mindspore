@@ -132,7 +132,6 @@ class BatchNormFold2GpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
 };
-
 }  // namespace kernel
 }  // namespace mindspore
 

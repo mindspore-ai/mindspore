@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 DropoutGpuFwdKernel::DropoutGpuFwdKernel()
     : cudnn_handle_(nullptr),
       is_null_input_(false),
