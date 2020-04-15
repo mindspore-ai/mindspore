@@ -264,7 +264,11 @@ std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, bool va
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> parameters;
-  std::vector<AnfNodePtr> pre_graph_out = AnfAlgo::GetAllOutput(node, {prim::kPrimTupleGetItem});
+  std::vector<AnfNodePtr> pre_graph_out = {node};
+  // If a cnode is a call, it's input0 is a cnode too, so it doesn't have primitive
+  if (!AnfAlgo::IsRealKernel(node)) {
+    pre_graph_out = AnfAlgo::GetAllOutput(node, {prim::kPrimTupleGetItem});
+  }
   auto valid_inputs = graph->MutableValidInputs();
   MS_EXCEPTION_IF_NULL(valid_inputs);
   auto graph_inputs = graph->MutableInputs();

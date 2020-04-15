@@ -822,7 +822,7 @@ GraphId AscendSession::GetGraphIdByNode(const AnfNodePtr &front_anf) const {
     }
   }
   MS_EXCEPTION_IF_NULL(front_anf);
-  MS_LOG(WARNING) << "front_anf " << front_anf->DebugString() << " is not exist in any graph";
+  MS_LOG(DEBUG) << "front_anf " << front_anf->DebugString() << " is not exist in any graph";
   return kInvalidGraphId;
 }
 
