@@ -28,21 +28,25 @@ namespace device {
 namespace gpu {
 void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  std::vector<CNodePtr> allreduce_cnodes;
+  std::vector<CNodePtr> allreduce_kernels;
   auto execution_kernels = kernel_graph->execution_order();
-  for (auto kernel : execution_kernels) {
-    std::string kernel_name = AnfAlgo::GetCNodeName(kernel);
+  for (auto kernel_node : execution_kernels) {
+    std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == kAllReduceOpName) {
-      allreduce_cnodes.emplace_back(kernel);
+      allreduce_kernels.emplace_back(kernel_node);
+    } else {
+      DeviceStream compute_stream = GPUDeviceManager::GetInstance().default_stream();
+      AnfAlgo::SetNodeAttr("stream_id", MakeValue(reinterpret_cast<uintptr_t>(compute_stream)), kernel_node);
     }
   }
-  if (allreduce_cnodes.size() > 1) {
+  if (allreduce_kernels.size() > 1) {
     DeviceStream comm_stream = nullptr;
     GPUDeviceManager::GetInstance().CreateStream(&comm_stream);
-    std::transform(allreduce_cnodes.begin(), allreduce_cnodes.end(), allreduce_cnodes.begin(), [&](CNodePtr node) {
-      AnfAlgo::SetNodeAttr("stream_id", MakeValue(reinterpret_cast<uintptr_t>(comm_stream)), node);
-      return node;
-    });
+    std::transform(
+      allreduce_kernels.begin(), allreduce_kernels.end(), allreduce_kernels.begin(), [&](CNodePtr allreduce_kernel) {
+        AnfAlgo::SetNodeAttr("stream_id", MakeValue(reinterpret_cast<uintptr_t>(comm_stream)), allreduce_kernel);
+        return allreduce_kernel;
+      });
 
     std::vector<SendRecvPair> send_recv_pairs;
     FindAllReduceStreamSwitchPos(kernel_graph, &send_recv_pairs);
@@ -137,7 +141,7 @@ void InsertStreamSwitchNode(const std::shared_ptr<session::KernelGraph> &kernel_
   }
   // Step 3: insert stream switch CNodes into execution kernel list.
   auto execution_kernels = kernel_graph->execution_order();
-  for (auto node = ordered_stream_switch_nodes.begin(); node != ordered_stream_switch_nodes.end(); node++) {
+  for (auto node = ordered_stream_switch_nodes.rbegin(); node != ordered_stream_switch_nodes.rend(); node++) {
     execution_kernels.insert(execution_kernels.begin() + node->offset, node->cnode);
   }
   kernel_graph->set_execution_order(execution_kernels);
