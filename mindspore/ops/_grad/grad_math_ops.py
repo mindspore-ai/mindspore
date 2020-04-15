@@ -931,6 +931,18 @@ def get_bprop_scalar_cast(self):
     return bprop
 
 
+@bprop_getters.register(P.AccumulateNV2)
+def get_bprop_scalar_accumulatenv2(self):
+    """Generate bprop for AccumulateNV2"""
+
+    def bprop(x, out, dout):
+        dx = ()
+        for _ in range(len(x)):
+            dx = dx + (dout,)
+        return dx
+    return bprop
+
+
 @bprop_getters.register(P.AddN)
 def get_bprop_scalar_addn(self):
     """Generate bprop for AddN"""
