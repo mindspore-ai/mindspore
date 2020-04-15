@@ -41,8 +41,9 @@ class SliceGpuFwdKernel : public GpuKernel {
       CalStridedSlice(output_size_ / sizeof(T), input, input_shape_, begin_, size_, strides_, output,
                       reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
-      CalSlice(output_size_ / sizeof(T), input, input_shape_, begin_, size_, output,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
+      Slice4DKernel(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3], input_shape_[0],
+                    input_shape_[1], input_shape_[2], input_shape_[3], input, output,
+                    reinterpret_cast<cudaStream_t>(stream_ptr));
     }
     return true;
   }
