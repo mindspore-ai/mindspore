@@ -49,6 +49,7 @@ constexpr auto kBroadcastOpName = "Broadcast";
 constexpr auto kReduceScatterOpName = "ReduceScatter";
 constexpr auto kMemCpyAsyncOpName = "memcpy_async";
 constexpr auto kTopKOpName = "TopK";
+constexpr auto kExtractImagePatchesOpName = "ExtractImagePatches";
 constexpr auto kBNTrainingReduceOpName = "BNTrainingReduce";
 constexpr auto kBNTrainingUpdateOpName = "BNTrainingUpdate";
 constexpr auto kSimpleMeanGradOpName = "SimpleMeanGrad";
