@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 Status BatchParallelInfo::CheckStrategy(const StrategyPtr& strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {

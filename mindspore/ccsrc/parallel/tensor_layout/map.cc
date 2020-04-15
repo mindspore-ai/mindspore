@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 Status Map::Init(const std::vector<int32_t>& array) {
   Status status = Array::Init(array);
   if (status != Status::SUCCESS) {

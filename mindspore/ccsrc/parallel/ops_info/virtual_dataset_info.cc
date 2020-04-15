@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr& strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
@@ -225,8 +224,9 @@ Status VirtualDatasetInfo::GenerateStrategies(int32_t stage_id) {
   StrategyPtr sp;
   std::vector<Dimensions> strategy;
   for (auto& shape : inputs_shape_) {
-    Shape temp(shape.size(), 1);
-    temp[0] = SizeToInt(total_dev_num);
+    Shape temp;
+    temp.emplace_back(SizeToInt(total_dev_num));
+    (void)temp.insert(temp.end(), shape.size() - 1, 1);
     strategy.push_back(temp);
   }
   sp = std::make_shared<Strategy>(stage_id, strategy);

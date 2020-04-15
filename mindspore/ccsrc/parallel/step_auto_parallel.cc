@@ -477,7 +477,6 @@ Status ConstructCostGraphNodes(const std::vector<AnfNodePtr> &all_nodes, const F
         bool is_find_wrong = (current_op_ptr->name().find(VIRTUAL_DATA_SET_INFO) == std::string::npos) &&
                              (current_op_ptr->name().find(BATCH_PARALLEL) == std::string::npos) &&
                              (current_op_ptr->name().find(prim->name()) == std::string::npos);
-
         if (is_find_wrong) {
           MS_LOG(EXCEPTION) << "The OperatorInfo: " << current_op_ptr->name()
                             << " does not match the Prim: " << prim->name();
@@ -937,7 +936,6 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
 
   graph = EliminateGraph(graph, eli_list, index_list);
   size_t num_device = g_device_manager->DeviceNum();
-
   if (PartitionForAllDevices(num_device, graph) == SUCCESS) {
     MS_LOG(INFO) << "Partition Success With " << num_device << " devices.";
   } else {

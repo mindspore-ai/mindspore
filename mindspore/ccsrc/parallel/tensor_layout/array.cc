@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 std::string Array::ToString() const {
   std::ostringstream buffer;
   buffer << "[ ";

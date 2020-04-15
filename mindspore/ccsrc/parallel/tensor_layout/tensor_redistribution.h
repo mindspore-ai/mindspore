@@ -33,7 +33,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 class TensorRedistribution {
  public:
   explicit TensorRedistribution(bool construct_op_flag = true, bool keep_reshape = false)
@@ -83,7 +82,6 @@ class TensorRedistribution {
   bool construct_op_flag_;
   bool keep_reshape_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

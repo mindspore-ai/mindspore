@@ -52,7 +52,6 @@ class ConstructOperator {
   Shape dev_matrix_shape_;
   Status CreateGroupByDim(size_t axis, std::vector<Group>* group);
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

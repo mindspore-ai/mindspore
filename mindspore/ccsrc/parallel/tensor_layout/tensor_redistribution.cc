@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 Status TensorRedistribution::Init(const TensorLayout& from, const TensorLayout& to, const RankList& dev_list) {
   from_origin_ = from;
   to_origin_ = to;

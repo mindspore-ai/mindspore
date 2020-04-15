@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 using Shapes = std::vector<Shape>;
 
 class TensorInfo {
@@ -55,7 +54,6 @@ class TensorInfo {
   // reduce method's reduce dim
   std::vector<int32_t> reduce_dim_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

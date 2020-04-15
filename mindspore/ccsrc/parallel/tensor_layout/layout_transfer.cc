@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 std::string LayoutTransfer::ToString() const {
   std::ostringstream buffer;
   buffer << std::endl << std::string("from_in_ tensor layout:" + from_in_.ToString());
@@ -37,6 +36,5 @@ Status LayoutTransfer::Init(const TensorLayout& from_in, const TensorLayout& to_
   Status status = CheckValidTransfer();
   return status;
 }
-
 }  // namespace parallel
 }  // namespace mindspore

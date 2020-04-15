@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 /*
  * compute the accumulating product of all the values in shape from left to right,
  * the accumulating results are saved in shape_accum from left to right
@@ -167,7 +166,6 @@ Status ExpandAccumulateProduct(const std::vector<int64_t>& in_accum_reverse,
  * out = [2, 4, 2, 4, 8]
  */
 Status ExpandShape(const std::vector<int32_t>& in, const std::vector<int32_t>& expand, std::vector<int32_t>* out);
-
 }  // namespace parallel
 }  // namespace mindspore
 

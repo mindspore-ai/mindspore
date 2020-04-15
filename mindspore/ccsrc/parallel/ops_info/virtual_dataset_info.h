@@ -51,7 +51,6 @@ class VirtualDatasetInfo : public OperatorInfo {
   Status GetAttrs() override;
   Status InferAsLossDivisor() override;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

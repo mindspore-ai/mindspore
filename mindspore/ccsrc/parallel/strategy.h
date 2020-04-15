@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 #define MIN_SLICE_NUM 1
 
 using Dimensions = std::vector<int32_t>;

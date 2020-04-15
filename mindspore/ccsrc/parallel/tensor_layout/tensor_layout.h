@@ -30,7 +30,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 class TensorLayout {
  public:
   TensorLayout() = default;
@@ -94,7 +93,6 @@ class TensorLayout {
   Map tensor_map_;
   Arrangement tensor_shape_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

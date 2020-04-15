@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 enum Status {
   SUCCESS = 0,
   FAILED,

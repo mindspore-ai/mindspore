@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 DeviceMatrix::DeviceMatrix(int32_t rank, RankList dev_list, Shape dev_shape)
     : rank_(rank), dev_list_(std::move(dev_list)), dev_shape_(std::move(dev_shape)) {
   if (!std::any_of(dev_list_.begin(), dev_list_.end(), [rank](int32_t a) { return a == rank; })) {

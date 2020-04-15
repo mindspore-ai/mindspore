@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 std::string TensorLayout::ToString() const { return StandardToString() + OriginToString(); }
 
 std::string TensorLayout::StandardToString() const {
@@ -337,7 +336,7 @@ Status TensorLayout::UpdateTensorMap(uint32_t index, int32_t value) {
     MS_LOG(ERROR) << "Index is out of the size of the tensor map!";
     return Status::FAILED;
   }
-  Shape shape = tensor_map_.array();
+  auto shape = tensor_map_.array();
   shape[index] = value;
   if (tensor_map_.Init(shape) == Status::FAILED) {
     MS_LOG(ERROR) << "Update tensor map failed!";
