@@ -45,7 +45,7 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
 
     Examples:
         >>> rnd_choice_mask = P.RandomChoiceWithMask()
-        >>> input_x = Tensor(np.ones(shape=[240000, 4]), mindspore.bool_)
+        >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool))
         >>> output_y, output_mask = rnd_choice_mask(input_x)
     """
 
