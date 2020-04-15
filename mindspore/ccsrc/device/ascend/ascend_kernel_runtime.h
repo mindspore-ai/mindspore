@@ -55,6 +55,8 @@ class AscendKernelRuntime : public KernelRuntime {
   void ClearGraphModelMap();
   void ReleaseDeviceRes() override;
   uint32_t GetGraphModelId(const session::KernelGraph *kernel_graph);
+  bool GraphWithEmptyTaskList(const session::KernelGraph *graph) const;
+
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
   unordered_map<const session::KernelGraph *, vector<std::shared_ptr<TaskInfo>>> task_map_;
