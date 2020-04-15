@@ -21,7 +21,7 @@
 #include "pre_activate/ascend/ir_fission/bn_grad_split.h"
 #include "pre_activate/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "pre_activate/ascend/ir_fission/layer_norm_grad_split.h"
-#include "pre_activate/common/ir_fusion/allreduce_fusion.h"
+#include "pre_activate/pass/allreduce_fusion.h"
 #include "pre_activate/ascend/ir_fusion/square_sum_fusion.h"
 #include "pre_activate/ascend/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "pre_activate/ascend/ir_fusion/lamb_update_with_lr_rule_fusion.h"
@@ -58,8 +58,10 @@
 #include "pre_activate/ascend/ir_fission/add_memcpy_async.h"
 #include "pre_activate/ascend/format_type/insert_cast_for_runop.h"
 #include "pre_activate/ascend/format_type/insert_transdata_for_runop.h"
+#include "pre_activate/ascend/enhancer/getnext_memcpy_elimination.h"
 #include "pre_activate/ascend/ir_fission/addn_fission.h"
 #include "utils/context/ms_context.h"
+#include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
 
@@ -244,6 +246,9 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<BufferFusion>());
   other_pm->AddPass(std::make_shared<GetitemTuple>());
   other_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
+  if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
+    other_pm->AddPass(std::make_shared<GetnextMemcpyElimination>());
+  }
   other_pm->AddPass(std::make_shared<CheckConsistency>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
