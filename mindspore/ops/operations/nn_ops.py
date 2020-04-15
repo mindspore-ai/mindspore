@@ -2331,7 +2331,11 @@ class Adam(PrimitiveWithInfer):
         - **gradient** (Tensor) - Gradients.
 
     Outputs:
-        Tensor, has the same shape and data type as `var`.
+        Tuple of 3 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **m** (Tensor) - The same shape and data type as `m`.
+        - **v** (Tensor) - The same shape and data type as `v`.
     """
 
     @prim_attr_register
