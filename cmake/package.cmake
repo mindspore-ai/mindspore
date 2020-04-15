@@ -165,11 +165,11 @@ if (ENABLE_GPU)
         DESTINATION ${INSTALL_PY_DIR}/../
         COMPONENT mindspore
     )
-    if (EXISTS ${CMAKE_SOURCE_DIR}/mindspore/incubator-tvm)
+    if (EXISTS ${CMAKE_BINARY_DIR}/incubator-tvm)
         install(
             DIRECTORY
-                ${CMAKE_SOURCE_DIR}/mindspore/incubator-tvm/topi/python/topi
-                ${CMAKE_SOURCE_DIR}/mindspore/incubator-tvm/python/tvm
+                ${CMAKE_BINARY_DIR}/incubator-tvm/topi/python/topi
+                ${CMAKE_BINARY_DIR}/incubator-tvm/python/tvm
             DESTINATION ${INSTALL_PY_DIR}/../_akg
             COMPONENT mindspore
         )
