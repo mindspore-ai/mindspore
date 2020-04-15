@@ -204,10 +204,12 @@ void AscendSession::RunOpExecTask(const std::shared_ptr<KernelGraph> &kernel_gra
   MS_LOG(INFO) << "Finish!";
 }
 
-void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) {
+void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                            std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
   MS_LOG(INFO) << "Build op " << op_run_info.op_name << " start !";
   // construct graph include one op
-  auto graph = ConstructSingleOpGraph(op_run_info);
+  auto graph = ConstructSingleOpGraph(op_run_info, input_tensors);
   MS_EXCEPTION_IF_NULL(graph);
   opt::RunOpAscendBackendIRFusionOptimization(graph);
   // kernel select
@@ -222,14 +224,12 @@ void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   run_op_graphs_[graph_info] = graph;
 }
 
-py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) {
+py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                               const std::vector<tensor::TensorPtr> &input_tensors) {
   auto graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " start!";
   // malloc mem
-  std::vector<tensor::TensorPtr> input_tensors = {};
-  std::vector<bool> tensors_mask = {};
-  ToTensorPtr(op_run_info, &input_tensors, &tensors_mask);
   RunOpMemoryAlloc(input_tensors, graph.get());
   // load input data to device
   LoadInputData(graph, input_tensors);

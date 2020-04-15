@@ -158,8 +158,9 @@ py::object RunOpInMs(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* stat
   session->Init(ms_context->device_id());
 
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info);
-  session->BuildOp(*op_exec_info, graph_info);
-  py::tuple result = session->RunOp(*op_exec_info, graph_info);
+  std::vector<tensor::TensorPtr> input_tensors;
+  session->BuildOp(*op_exec_info, graph_info, &input_tensors);
+  py::tuple result = session->RunOp(*op_exec_info, graph_info, input_tensors);
   ms_context->set_enable_pynative_infer(false);
   *status = PYNATIVE_SUCCESS;
   return result;

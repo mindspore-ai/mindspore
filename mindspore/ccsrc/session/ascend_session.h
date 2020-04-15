@@ -41,8 +41,10 @@ class AscendSession : public SessionBasic {
   GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   void BuildGraph(GraphId) override;
-  void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) override;
-  py::tuple RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) override;
+  void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+               std::vector<tensor::TensorPtr> *input_tensors) override;
+  py::tuple RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                  const std::vector<tensor::TensorPtr> &input_tensors) override;
 
   // set parameters of final graph
   GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &args) override;

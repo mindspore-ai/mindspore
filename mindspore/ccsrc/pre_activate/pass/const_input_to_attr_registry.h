@@ -54,7 +54,7 @@ class ConstInputToAttrInfoRegistry {
   bool GetRegisterByOpName(const std::string &op_name, ConstInputToAttrInfoRegister *reg) const;
 
  private:
-  ConstInputToAttrInfoRegistry() = default;
+  ConstInputToAttrInfoRegistry();
   ~ConstInputToAttrInfoRegistry() = default;
   DISABLE_COPY_AND_ASSIGN(ConstInputToAttrInfoRegistry)
   std::unordered_map<std::string, ConstInputToAttrInfoRegister> op_input_to_attr_map_;
