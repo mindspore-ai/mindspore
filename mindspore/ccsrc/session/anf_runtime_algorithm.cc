@@ -858,6 +858,14 @@ bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
   return false;
 }
 
+bool AnfRuntimeAlgorithm::IsAllReduceOp(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kAllReduceOpName) {
+    return true;
+  }
+  return false;
+}
+
 bool AnfRuntimeAlgorithm::IsGetNext(const NotNull<AnfNodePtr> &node) {
   auto kernel_name = AnfAlgo::GetCNodeName(node);
   return kernel_name == kGetNextOpName;

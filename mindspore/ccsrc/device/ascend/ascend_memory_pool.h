@@ -26,6 +26,8 @@ namespace ascend {
 class AscendMemoryPool : public DynamicMemPoolBestFit {
  public:
   ~AscendMemoryPool() override = default;
+  AscendMemoryPool(const AscendMemoryPool&) = delete;
+  AscendMemoryPool& operator=(const AscendMemoryPool&) = delete;
 
   size_t AllocDeviceMem(size_t size, DeviceMemPtr* addr) override;
   bool FreeDeviceMem(const DeviceMemPtr& addr) override;
@@ -51,13 +53,11 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
 
  private:
   AscendMemoryPool() = default;
-  AscendMemoryPool(const AscendMemoryPool&) = delete;
-  AscendMemoryPool& operator=(const AscendMemoryPool&) = delete;
   bool has_malloc_{false};
   uint8_t* device_mem_pool_base_{nullptr};
   uint64_t device_mem_pool_size_{0};
-  size_t free_mem_size_;
-  size_t total_mem_size_;
+  size_t free_mem_size_{0};
+  size_t total_mem_size_{0};
 };
 }  // namespace ascend
 }  // namespace device
