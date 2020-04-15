@@ -27,10 +27,10 @@ namespace parallel {
 
 std::vector<std::vector<int32_t>> combine(const std::vector<int32_t>& in, int32_t target);
 
-void GenerateValidShapeBySizeAndDim(const int32_t& pow_size, const int32_t& dim,
+void GenerateValidShapeBySizeAndDim(int32_t pow_size, int32_t dim,
                                     std::vector<std::vector<int32_t>>* out);
 
-void GenerateValidShapeBySize(const int32_t& pow_size, std::vector<std::vector<int32_t>>* out);
+void GenerateValidShapeBySize(int32_t pow_size, std::vector<std::vector<int32_t>>* out);
 
 std::vector<int32_t> GenerateTensorMap(const uint32_t& map_size, const std::vector<int32_t>& pos_index,
                                        const std::vector<int32_t>& pos_value);
@@ -39,8 +39,8 @@ void GenerateValidTensorMap(const std::vector<int32_t>& device_arrangement, cons
                             std::vector<std::vector<int32_t>>* tensor_map_list);
 
 void GenerateValidLayoutByDeviceSizeAndTensorSize(
-  const int32_t& device_pow_size, const int32_t& tensor_pow_size, const int32_t& max_device_dim,
-  const int32_t& max_shape_dim,
+  int32_t device_pow_size, int32_t tensor_pow_size, int32_t max_device_dim,
+  int32_t max_shape_dim,
   std::vector<std::tuple<std::vector<int32_t>, std::vector<int32_t>, std::vector<int32_t>>>* layout_list);
 
 uint32_t ComputeNoneNumber(const std::vector<int32_t>& tensor_map);

@@ -245,8 +245,8 @@ void ValidRedistributionLayoutCheck(const DeviceArrangement& in_device_arrangeme
                          unified_out_tensor_map, unified_tensor_shape);
 }
 
-void ValidRedistributionLayoutCheckAll(const int32_t& device_pow_size, const int32_t& tensor_pow_size,
-                                       const int32_t& max_device_dim, const int32_t& max_shape_dim) {
+void ValidRedistributionLayoutCheckAll(int32_t device_pow_size, int32_t tensor_pow_size,
+                                       int32_t max_device_dim, int32_t max_shape_dim) {
   std::vector<std::tuple<DeviceArrangement, TensorMap, TensorShape>> layout_list;
   GenerateValidLayoutByDeviceSizeAndTensorSize(device_pow_size, tensor_pow_size, max_device_dim, max_shape_dim,
                                                &layout_list);
