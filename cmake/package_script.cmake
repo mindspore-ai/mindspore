@@ -76,8 +76,6 @@ if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     )
 endif ()
 
-set(PACKAGE_NAME "mindspore")
-
 file(GLOB WHL_FILE ${MS_PACK_ROOT_DIR}/dist/*.whl)
 get_filename_component(ORIGIN_FILE_NAME ${WHL_FILE} NAME)
 string(REPLACE "-" ";" ORIGIN_FILE_NAME ${ORIGIN_FILE_NAME})
