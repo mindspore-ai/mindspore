@@ -109,7 +109,7 @@ class Optimizer(Cell):
             tuple[Tensor], The gradients after weight decay.
         """
         if self.weight_decay > 0:
-            params = self.params
+            params = self.parameters
             gradients = self.hyper_map(F.partial(apply_decay, self.weight_decay), self.decay_flags, params, gradients)
 
         return gradients
