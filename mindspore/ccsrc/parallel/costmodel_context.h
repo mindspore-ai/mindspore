@@ -102,9 +102,9 @@ class CostModelContext {
   void set_tensor_slice_alignment_size(size_t);
   size_t tensor_slice_alignment_size() const { return tensor_slice_alignment_size_; }
 
-  // NOT_FULLY_USE_DEVICES
-  void set_not_fully_use_device(bool);
-  bool not_fully_use_device() const { return not_fully_use_device_; }
+  // FULLY_USE_DEVICES
+  void set_fully_use_device(bool);
+  bool fully_use_device() const { return fully_use_device_; }
 
   // ELEMENTWISE_OP_STRA_FOLLOW
   void set_elementwise_stra_follow(bool);
@@ -158,8 +158,8 @@ class CostModelContext {
   // TENSOR_SLICE_ALIGNMENT_SIZE
   size_t tensor_slice_alignment_size_;
 
-  // NOT_FULLY_USE_DEVICES
-  bool not_fully_use_device_;
+  // FULLY_USE_DEVICES
+  bool fully_use_device_;
 
   // ELEMENTWISE_OP_STRA_FOLLOW
   bool elementwise_stra_follow_;

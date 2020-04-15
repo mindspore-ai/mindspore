@@ -110,8 +110,6 @@ std::vector<std::string> splittable_op_ = {MATMUL,
 std::vector<std::string> elementwise_op_ = {ACTIVATION, GELU, TANH, SOFTMAX, LOG_SOFTMAX, RELU, SQRT,
                                             CAST,       POW,  EXP,  LOG,     COS,         ACOS, LOGICALNOT};
 
-std::vector<std::string> ignore_manual_strategy_op_ = {BATCH_NORM};
-
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
@@ -308,16 +306,6 @@ std::vector<TypePtr> ExtractOutputTypeByNode(const CNodePtr &node) {
   return outputs_type;
 }
 
-// Be careful the argument is cnode_full_name, not the op_name
-bool IsIgnoreStrategyOperator(const std::string &cnode_full_name) {
-  for (auto &ignore_op : ignore_manual_strategy_op_) {
-    if (cnode_full_name.find(ignore_op) != std::string::npos) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool IsElementWiseOperator(const std::string &op_name) {
   auto iter = std::find(elementwise_op_.begin(), elementwise_op_.end(), op_name);
   return (iter != elementwise_op_.end());
@@ -414,18 +402,20 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
       // Set cost for this configured strategy
       if (operator_info->SetCostUnderStrategy(strategyPtr) != SUCCESS) {
         MS_LOG(EXCEPTION) << "Failure: operator " << prim->name() << " SetCostUnderStrategy failed";
-      } else if (!NOT_FULLY_USE_DEVICES) {
-        if (!IsIgnoreStrategyOperator(cnode->fullname_with_scope())) {
-          // If configured to fully use devices, then checking for the user-specified strategy
-          int32_t used_devices = operator_info->used_devices();
-          MS_EXCEPTION_IF_NULL(g_device_manager);
-          auto total_device_num = g_device_manager->GetDeviceListByStageId(0).size();
-          // 'used_devices == -1' means that 'used_devices_' is not set
-          if ((used_devices == -1) || IntToSize(used_devices) != total_device_num) {
-            MS_LOG(EXCEPTION) << "In configuration 'NOT_FULLY_USE_DEVICES' = False, "
-                              << "but the specified strategy uses device: " << used_devices
-                              << ", total devices: " << total_device_num;
-          }
+      } else if (FULLY_USE_DEVICES) {
+        // If configured to fully use devices, then checking for the user-specified strategy
+        int32_t used_devices = operator_info->used_devices();
+        MS_EXCEPTION_IF_NULL(g_device_manager);
+        auto total_device_num = g_device_manager->GetDeviceListByStageId(0).size();
+        // 'used_devices == 1' means that ALL-1 strategy, which is valid in auto-parallel
+        if (used_devices == 1) {
+          return operator_info;
+        }
+        // 'used_devices == -1' means that 'used_devices_' is not set
+        if ((used_devices == -1) || IntToSize(used_devices) != total_device_num) {
+          MS_LOG(EXCEPTION) << "In configuration 'FULLY_USE_DEVICES' = True, "
+                            << "but the specified strategy uses device: " << used_devices
+                            << ", total devices: " << total_device_num;
         }
       }
     }

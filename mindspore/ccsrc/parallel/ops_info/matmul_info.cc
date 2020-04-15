@@ -465,7 +465,7 @@ Status MatMulBase::PrepareStrategy(int32_t stage_id, size_t dev_num,
                                    mindspore::parallel::Dimensions combined_partitions, size_t input0_shape_size,
                                    size_t input1_shape_size, mindspore::parallel::StrategyPtr* const sp) {
   int32_t product = std::accumulate(combined_partitions.begin(), combined_partitions.end(), 1, std::multiplies<int>());
-  if (NOT_FULLY_USE_DEVICES) {
+  if (!FULLY_USE_DEVICES) {
     if (IntToSize(product) > dev_num) {
       return FAILED;
     }

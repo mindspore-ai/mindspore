@@ -36,7 +36,7 @@ double COST_MODEL_COMMUNI_CONST = DEFAULT_COST_MODEL_COMMUNI_CONST;
 double COST_MODEL_COMMUNI_BIAS = DEFAULT_COST_MODEL_COMMUNI_BIAS;
 bool TENSOR_SLICE_ALIGNMENT_ENABLE = DEFAULT_TENSOR_SLICE_ALIGNMENT_ENABLE;
 size_t TENSOR_SLICE_ALIGNMENT_SIZE = DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE;
-bool NOT_FULLY_USE_DEVICES = DEFAULT_NOT_FULLY_USE_DEVICES;
+bool FULLY_USE_DEVICES = DEFAULT_FULLY_USE_DEVICES;
 bool ELEMENTWISE_OP_STRA_FOLLOW = DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW;
 
 void CostGraph::SetDeviceMemoryAndCostParameter() {
@@ -125,13 +125,13 @@ void CostGraph::SetDeviceMemoryAndCostParameter() {
   TENSOR_SLICE_ALIGNMENT_SIZE = align_size;
   MS_LOG(INFO) << "tensor_slice_align_size: " << TENSOR_SLICE_ALIGNMENT_SIZE << ".";
 
-  // NOT_FULLY_USE_DEVICES
-  auto not_fully_devices = CostModelContext::GetInstance()->not_fully_use_device();
-  NOT_FULLY_USE_DEVICES = not_fully_devices;
-  if (NOT_FULLY_USE_DEVICES) {
-    MS_LOG(INFO) << "not_fully_use_devices: true.";
+  // FULLY_USE_DEVICES
+  auto fully_devices = CostModelContext::GetInstance()->fully_use_device();
+  FULLY_USE_DEVICES = fully_devices;
+  if (FULLY_USE_DEVICES) {
+    MS_LOG(INFO) << "fully_use_devices: true.";
   } else {
-    MS_LOG(INFO) << "not_fully_use_devices: false.";
+    MS_LOG(INFO) << "fully_use_devices: false.";
   }
 
   // ELEMENTWISE_OP_STRA_FOLLOW
