@@ -1949,7 +1949,7 @@ class GetNext(PrimitiveWithInfer):
         and the type is described is `types`.
 
     Examples:
-        >>> get_next = P.GetNext([mindspore.float32, mindspore.int32], [[32, 1, 28, 28], [10]], 'shared_name')
+        >>> get_next = P.GetNext([mindspore.float32, mindspore.int32], [[32, 1, 28, 28], [10]], 2, 'shared_name')
         >>> feature, label = get_next()
     """
 
