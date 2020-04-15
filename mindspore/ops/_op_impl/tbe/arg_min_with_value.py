@@ -16,7 +16,7 @@
 """ArgMinWithValue op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-arg_min_with_value_op_info = TBERegOp("ArgMaxWithValue") \
+arg_min_with_value_op_info = TBERegOp("ArgMinWithValue") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
     .binfile_name("arg_min_with_value.so") \
