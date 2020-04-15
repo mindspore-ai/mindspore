@@ -19,15 +19,13 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
-  Concat,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   ConcatV2GpuFwdKernel, float)
+MS_REG_GPU_KERNEL_ONE(Concat,
+                      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                      ConcatV2GpuFwdKernel, int)
 MS_REG_GPU_KERNEL_ONE(
-  Concat, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  ConcatV2GpuFwdKernel, int)
-MS_REG_GPU_KERNEL_ONE(
-  Concat,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  Concat, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   ConcatV2GpuFwdKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
