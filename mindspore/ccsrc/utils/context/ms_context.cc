@@ -65,7 +65,7 @@ MsContext::MsContext(const std::string& policy, const std::string& target) {
   }
   backend_policy_ = policy_map_[policy];
   device_target_ = target;
-  execution_mode_ = kGraphMode;
+  execution_mode_ = kPynativeMode;
   enable_task_sink_ = true;
   ir_fusion_flag_ = true;
   enable_hccl_ = false;
