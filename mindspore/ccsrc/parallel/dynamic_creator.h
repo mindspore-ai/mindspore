@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 #define REGISTER(className)                                                                                  \
   OperatorInfoPtr objectCreator##className(std::string name, Shapes in, Shapes out, PrimitiveAttrs& attrs) { \
     return std::make_shared<className>(name, in, out, attrs);                                                \

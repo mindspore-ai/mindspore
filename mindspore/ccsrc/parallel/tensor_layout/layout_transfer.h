@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 class LayoutTransfer {
  public:
   LayoutTransfer() = default;
@@ -43,7 +42,6 @@ class LayoutTransfer {
  private:
   virtual Status CheckValidTransfer() = 0;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

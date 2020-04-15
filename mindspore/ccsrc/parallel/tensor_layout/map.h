@@ -46,7 +46,6 @@ class Map : public Array {
  private:
   bool IsValidMap();
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 Status RedistributionLayoutTransfer::CheckValidTransfer() { return Status::SUCCESS; }
 
 /*
@@ -66,6 +65,5 @@ std::shared_ptr<ReshapeLayoutTransfer> RedistributionLayoutTransfer::UnifyDevice
   }
   return unified_device_arrangement_ptr->UnifyDeviceArrangementAndTensorShape();
 }
-
 }  // namespace parallel
 }  // namespace mindspore

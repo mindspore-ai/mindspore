@@ -229,7 +229,8 @@ Status Softmax::GenerateStrategies(int32_t stage_id) {
   }
 
   is_auto_parallel_ = true;
-  Shape input0_split(inputs_shape_[0].size(), 1);
+  Shape input0_split;
+  (void)input0_split.insert(input0_split.begin(), inputs_shape_[0].size(), 1);
   for (auto& element : axis_) {
     int32_t axis_index = element;
     if (element < 0) {

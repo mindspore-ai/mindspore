@@ -28,7 +28,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 class Arrangement : public Array {
  public:
   Arrangement() : size_(1) {}
@@ -53,7 +52,6 @@ class Arrangement : public Array {
   void ComputeSize();
   int32_t size_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

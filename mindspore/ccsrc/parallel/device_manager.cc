@@ -370,6 +370,5 @@ void DeviceManager::Clear() {
   stage_devices_.clear();
   gm_.Clear();
 }
-
 }  // namespace parallel
 }  // namespace mindspore

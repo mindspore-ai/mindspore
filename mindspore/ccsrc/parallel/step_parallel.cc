@@ -2094,7 +2094,6 @@ CNodePtr FindLossCNodeFromRoot(const FuncGraphPtr& root) {
   MS_EXCEPTION_IF_NULL(root_return_node);
   const auto& all_nodes = root->nodes();
   FuncGraphPtr func_graph = FindForwardGraphByRootNodes(all_nodes);
-
   if (func_graph == nullptr) {
     return FindLossCNode(root);
   } else {
@@ -2109,7 +2108,6 @@ FuncGraphPtr ForwardGraph(const FuncGraphPtr& root) {
   MS_EXCEPTION_IF_NULL(root_return_node);
   const auto& all_nodes = root->nodes();
   FuncGraphPtr func_graph = FindForwardGraphByRootNodes(all_nodes);
-
   if (func_graph != nullptr) {
     forward_graph = func_graph;
   }

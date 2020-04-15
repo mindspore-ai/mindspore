@@ -28,7 +28,6 @@
 #include "utils/convert_utils.h"
 namespace mindspore {
 namespace parallel {
-
 using DeviceArrangement = std::vector<int32_t>;
 using TensorMap = std::vector<int32_t>;
 using TensorShape = std::vector<int32_t>;
@@ -69,7 +68,6 @@ class RedistributionOperatorInfer {
   RankList dev_list_;
   bool construct_op_flag_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

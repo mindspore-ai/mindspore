@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 class ReshapeLayoutTransfer : public LayoutTransfer {
  public:
   ReshapeLayoutTransfer() = default;
@@ -43,7 +42,6 @@ class ReshapeLayoutTransfer : public LayoutTransfer {
   bool FromTensorShapeCanBeExpandByTo() const;
   bool ToTensorShapeCanBeExpandByFrom() const;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

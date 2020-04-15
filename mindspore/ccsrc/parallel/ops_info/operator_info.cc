@@ -1255,6 +1255,5 @@ void OperatorInfo::BreakingTiesForPerferringDataParallel(const StrategyPtr& stra
 double OperatorInfo::GetForwardMemoryCostFromCNode() {
   return operator_cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, 0);
 }
-
 }  // namespace parallel
 }  // namespace mindspore

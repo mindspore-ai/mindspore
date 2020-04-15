@@ -413,8 +413,9 @@ Status ReshapeInfo::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   is_auto_parallel_ = true;
-  Shape input0_split(inputs_shape_[0].size(), 0);
-  input0_split[0] = 1;
+  Shape input0_split;
+  input0_split.emplace_back(1);
+  (void)input0_split.insert(input0_split.end(), inputs_shape_[0].size() - 1, 0);
   Shapes splittable_inputs = {input0_split};
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {

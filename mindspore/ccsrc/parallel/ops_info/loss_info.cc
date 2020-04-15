@@ -194,7 +194,8 @@ Status SoftmaxCrossEntropyWithLogitsInfo::GenerateStrategies(int32_t stage_id) {
   }
   is_auto_parallel_ = true;
 
-  Shape input0_split(inputs_shape_[0].size(), 1);
+  Shape input0_split;
+  (void)input0_split.insert(input0_split.begin(), inputs_shape_[0].size(), 1);
   input0_split[IntToSize(axis_index)] = 0;
   Shapes splittable_inputs = {input0_split, input0_split};
   std::vector<StrategyPtr> sp_vector;

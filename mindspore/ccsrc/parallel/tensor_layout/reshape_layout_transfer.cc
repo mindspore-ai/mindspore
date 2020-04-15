@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 Status ReshapeLayoutTransfer::CheckValidTransfer() {
   if (!IsSameDeviceArrangement()) {
     return Status::FAILED;
