@@ -209,8 +209,8 @@ class IOU(PrimitiveWithInfer):
 
     Examples:
         >>> iou = P.IOU()
-        >>> anchor_boxes = Tensor(np.random.randint(1,5, [10, 4]))
-        >>> gt_boxes = Tensor(np.random.randint(1,5, [3, 4]))
+        >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float32)
+        >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float32)
         >>> iou(anchor_boxes, gt_boxes)
     """
 
