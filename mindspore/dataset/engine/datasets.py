@@ -548,11 +548,15 @@ class Dataset:
 
     def device_que(self, prefetch_size=None):
         """
-        Returns a transferredDataset that transfer data through tdt.
+        Returns a transferredDataset that transfer data through device.
 
         Args:
             prefetch_size (int, optional): prefetch number of records ahead of the
                 user's request (default=None).
+
+        Note:
+            If device is Ascend, features of data will be transferred one by one. The limitation
+            of data transferation per time is 256M.
 
         Return:
             TransferDataset, dataset for transferring.
@@ -565,6 +569,10 @@ class Dataset:
 
         Args:
             num_batch (int, optional): limit the number of batch to be sent to device (default=None).
+
+        Note:
+            If device is Ascend, features of data will be transferred one by one. The limitation
+            of data transferation per time is 256M.
 
         Returns:
             TransferDataset, dataset for transferring.
