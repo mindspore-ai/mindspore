@@ -14,6 +14,8 @@
 # ============================================================================
 
 """tbe ops"""
+from .abs import _abs_tbe
+from .abs_grad import _abs_grad_tbe
 from .adam_apply_one_with_decay import _adam_apply_one_with_decay_tbe
 from .add import _add_tbe
 from .add_n import _add_n_tbe
@@ -49,7 +51,7 @@ from .sigmoid_cross_entropy_with_logits import _sigmoid_cross_entropy_with_logit
 from .sigmoid_cross_entropy_with_logits_grad import _sigmoid_cross_entropy_with_logits_grad_tbe
 from .tensor_add import _tensor_add_tbe
 from .trans_data import _trans_data_tbe
-from .topkv2 import _topk_v2_tbe
+from .top_k import _top_k_tbe
 from .matmul import _matmul_tbe
 from .sub import _sub_tbe
 from .reduce_mean_d import _reduce_mean_d_tbe
@@ -107,6 +109,7 @@ from .minimum_grad import _minimum_grad_tbe
 from .maximum_grad import _maximum_grad_tbe
 from .concat import _concat_tbe
 from .slice import _slice_tbe
+from .sign import _sign_tbe
 from .greater import _greater_tbe
 from .clip_by_norm_no_div_sum import _clip_by_norm_no_div_sum_tbe
 from .clip_by_value import _clip_by_value_tbe
@@ -130,6 +133,8 @@ from .resize_nearest_neighbor_grad_d import _resize_nearest_neighbor_grad_d_tbe
 from .pad_d import _pad_d_tbe
 from .arg_max_with_value import _arg_max_with_value_tbe
 from .arg_min_with_value import _arg_min_with_value_tbe
+from .smooth_l1_loss import _smooth_l1_loss_tbe
+from .smooth_l1_loss_grad import _smooth_l1_loss_grad_tbe
 from .fused_mul_add import _fused_mul_add_tbe
 from .fused_mul_add_n import _fused_mul_add_n_tbe
 from .fused_mul_apply_momentum import _fused_mul_apply_momentum_tbe

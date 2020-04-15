@@ -13,27 +13,29 @@
 # limitations under the License.
 # ============================================================================
 
-"""TopKV2 op"""
+"""Abs op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-top_k_v2_op_info = TBERegOp("TopKV2") \
-    .fusion_type("OPAQUE") \
+abs_op_info = TBERegOp("Abs") \
+    .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("top_k_v2.so") \
+    .binfile_name("abs.so") \
     .compute_cost(10) \
-    .kernel_name("top_k_v2") \
+    .kernel_name("abs") \
     .partial_flag(True) \
-    .attr("k", "required", "int", "all")\
-    .attr("sorted", "required", "bool", "all")\
-    .input(0, "x", False, "required", "all") \
-    .input(1, "input_indices", False, "optional", "all") \
-    .output(0, "values", False, "required", "all") \
-    .output(1, "indices", False, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.I32_Default) \
+    .op_pattern("formatAgnostic") \
+    .input(0, "x", None, "required", None) \
+    .output(0, "y", True, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_5HD) \
     .get_op_info()
 
 
-@op_info_register(top_k_v2_op_info)
-def _topk_v2_tbe():
-    """TopKV2 TBE register"""
+@op_info_register(abs_op_info)
+def _abs_tbe():
+    """Abs TBE register"""
     return

@@ -24,7 +24,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 class Net(nn.Cell):
     def __init__(self, k):
         super(Net, self).__init__()
-        self.topk = P.TopK()
+        self.topk = P.TopK(True)
         self.k = k
 
     def construct(self, x):
