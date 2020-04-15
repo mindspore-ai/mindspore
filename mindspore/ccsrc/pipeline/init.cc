@@ -29,8 +29,11 @@
 #include "parallel/context.h"
 #include "parallel/device_manager.h"
 #include "parallel/costmodel_context.h"
+#ifdef ENABLE_GPUQUE
 #include "device/gpu/distribution/collective_init.h"
-
+#else
+#include "device/gpu/distribution/collective_fake_init.h"
+#endif
 namespace py = pybind11;
 
 using FuncGraph = mindspore::FuncGraph;
@@ -297,9 +300,16 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)py::class_<OpLib, std::shared_ptr<OpLib>>(m, "Oplib")
     .def(py::init())
     .def("reg_op", &OpLib::RegOp, "Register op info.");
-
+#ifdef ENABLE_GPUQUE
   (void)m.def("init_gpu_collective", &mindspore::device::gpu::CollectiveInitializer::InitCollective,
               "Init gpu collective communication mode.");
   (void)m.def("finalize_gpu_collective", &mindspore::device::gpu::CollectiveInitializer::FinalizeCollective,
               "Finalize gpu collective communication mode.");
+#else
+  (void)m.def("init_gpu_collective", &mindspore::device::gpu::CollectiveFakeInitializer::InitCollective,
+              "Init gpu collective communication mode.");
+  (void)m.def("finalize_gpu_collective", &mindspore::device::gpu::CollectiveFakeInitializer::FinalizeCollective,
+              "Finalize gpu collective communication mode.");
+
+#endif
 }

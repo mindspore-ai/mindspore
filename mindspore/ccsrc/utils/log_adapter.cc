@@ -26,12 +26,19 @@ namespace mindspore {
 #ifdef USE_GLOG
 static std::string GetTime() {
 #define BUFLEN 80
+  static char buf[BUFLEN];
+#if defined(_WIN32) || defined(_WIN64)
+  time_t time_seconds = time(0);
+  struct tm now_time;
+  localtime_s(&now_time, &time_seconds);
+  sprintf_s(buf, BUFLEN, "%d-%d-%d %d:%d:%d", now_time.tm_year + 1900, now_time.tm_mon + 1, now_time.tm_mday,
+            now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
+#else
   struct timeval cur_time;
   (void)gettimeofday(&cur_time, NULL);
 
   struct tm now;
   (void)localtime_r(&cur_time.tv_sec, &now);
-  static char buf[BUFLEN];
   (void)strftime(buf, BUFLEN, "%Y-%m-%d-%H:%M:%S", &now);  // format date and time
   // set micro-second
   buf[27] = '\0';
@@ -44,6 +51,7 @@ static std::string GetTime() {
       buf[idx--] = '.';
     }
   }
+#endif
   return std::string(buf);
 }
 

@@ -85,7 +85,11 @@ Status ShuffleOp::SelfReset() {
   if (!reshuffle_each_epoch_) {
     rng_ = std::mt19937_64(shuffle_seed_);
   } else {
+#if defined(_WIN32) || defined(_WIN64)
+    std::random_device random_device;
+#else
     std::random_device random_device("/dev/urandom");
+#endif
     std::uniform_int_distribution<int32_t> distribution(0, std::numeric_limits<int32_t>::max());
     shuffle_seed_ = distribution(random_device);
     rng_ = std::mt19937_64(shuffle_seed_);

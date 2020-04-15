@@ -16,7 +16,9 @@
 #include "dataset/util/services.h"
 
 #include <limits.h>
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <sys/syscall.h>
+#endif
 #include <unistd.h>
 #include <random>
 #include "dataset/util/circular_pool.h"
@@ -28,6 +30,7 @@ namespace dataset {
 std::unique_ptr<Services> Services::instance_ = nullptr;
 std::once_flag Services::init_instance_flag_;
 
+#if !defined(_WIN32) && !defined(_WIN64)
 std::string Services::GetUserName() {
   char user[LOGIN_NAME_MAX];
   (void)getlogin_r(user, sizeof(user));
@@ -41,10 +44,15 @@ std::string Services::GetHostName() {
 }
 
 int Services::GetLWP() { return syscall(SYS_gettid); }
+#endif
 
 std::string Services::GetUniqueID() {
   const std::string kStr = "abcdefghijklmnopqrstuvwxyz0123456789";
+#if defined(_WIN32) || defined(_WIN64)
+  std::mt19937 gen{std::random_device{}()};
+#else
   std::mt19937 gen{std::random_device{"/dev/urandom"}()};
+#endif
   std::uniform_int_distribution<> dist(0, kStr.size() - 1);
   char buffer[UNIQUEID_LEN];
   for (int i = 0; i < UNIQUEID_LEN; i++) {

@@ -21,8 +21,10 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <sys/statfs.h>
 #include <sys/wait.h>
+#endif
 #include <unistd.h>
 #include <cassert>
 #include <cmath>

@@ -53,10 +53,15 @@ std::string Location::ToString(SourceLineTip tip) {
   }
 
   char path[PATH_MAX + 1] = {0x00};
+#if defined(_WIN32) || defined(_WIN64)
+  if (file_name_.size() > PATH_MAX || _fullpath(path, file_name_.c_str(), PATH_MAX) == nullptr) {
+    return debug_info_ss.str();
+  }
+#else
   if (file_name_.size() > PATH_MAX || realpath(file_name_.c_str(), path) == nullptr) {
     return debug_info_ss.str();
   }
-
+#endif
   auto src_path = std::string(path);
   std::ifstream file(src_path);
   if (!file.is_open()) {

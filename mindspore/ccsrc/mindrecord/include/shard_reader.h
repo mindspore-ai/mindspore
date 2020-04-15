@@ -19,7 +19,9 @@
 
 #include <dirent.h>
 #include <signal.h>
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <sys/prctl.h>
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>

@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_UTIL_SIG_HANDLER_H_
-#define DATASET_UTIL_SIG_HANDLER_H_
 
-#include <limits.h>
-#include <signal.h>
+#ifndef MINDSPORE_CCSRC_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_FAKE_INIT_H_
+#define MINDSPORE_CCSRC_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_FAKE_INIT_H_
 
 namespace mindspore {
-namespace dataset {
-// Register the custom signal handlers
-#if !defined(_WIN32) && !defined(_WIN64)
-extern void RegisterHandlers();
+namespace device {
+namespace gpu {
 
-// A signal handler for SIGINT.  Drives interrupt to watchdog
-extern void IntHandler(int sig_num,          // The signal that was raised
-                       siginfo_t *sig_info,  // The siginfo structure.
-                       void *context);       // context info
-#endif
-}  // namespace dataset
+class CollectiveFakeInitializer {
+ public:
+  CollectiveFakeInitializer() = default;
+  ~CollectiveFakeInitializer() = default;
+  CollectiveFakeInitializer(CollectiveFakeInitializer const &) = delete;
+  CollectiveFakeInitializer &operator=(const CollectiveFakeInitializer &) = delete;
+  static void InitCollective();
+  static void FinalizeCollective();
+};
+}  // namespace gpu
+}  // namespace device
 }  // namespace mindspore
 
-#endif  // DATASET_UTIL_SIG_HANDLER_H_
+#endif  // MINDSPORE_CCSRC_DEVICE_GPU_DISTRIBUTION_COLLECTIVE_FAKE_INIT_H_

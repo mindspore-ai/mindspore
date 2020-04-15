@@ -32,7 +32,11 @@ namespace dataset {
 uint32_t GetSeed() {
   uint32_t seed = GlobalContext::config_manager()->seed();
   if (seed == std::mt19937::default_seed) {
+#if defined(_WIN32) || defined(_WIN64)
+    std::random_device random_device;
+#else
     std::random_device random_device("/dev/urandom");
+#endif
     std::uniform_int_distribution<uint32_t> distribution(0, std::numeric_limits<uint32_t>::max());
     seed = distribution(random_device);
   }

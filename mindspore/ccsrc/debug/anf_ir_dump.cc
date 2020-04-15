@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 #include "debug/anf_ir_dump.h"
+#if defined(_WIN32) || defined(_WIN64)
+#include <stdlib.h>
+#endif
 #include <fstream>
 #include <map>
 #include <memory>
@@ -434,9 +437,15 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
     return;
   }
   char real_path[PATH_MAX] = {0};
+#if defined(_WIN32) || defined(_WIN64)
+  if (_fullpath(real_path, filename.c_str(), PATH_MAX) == nullptr) {
+    MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
+  }
+#else
   if (nullptr == realpath(filename.c_str(), real_path)) {
     MS_LOG(DEBUG) << "Dir " << filename << " does not exit.";
   }
+#endif
 
   OrderedMap<AnfNodePtr, int32_t> para_map;
   std::string path_string = real_path;

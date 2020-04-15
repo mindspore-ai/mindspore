@@ -1,5 +1,8 @@
 set(flatbuffers_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 set(flatbuffers_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
+if (WIN32)
+ set(flatbuffers_USE_STATIC_LIBS ON)
+endif()
 mindspore_add_pkg(flatbuffers
         VER 1.11.0
         LIBS flatbuffers

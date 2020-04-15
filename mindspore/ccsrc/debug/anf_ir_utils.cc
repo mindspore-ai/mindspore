@@ -48,9 +48,15 @@ std::string GetMsIrPath(void) {
   if (path_ptr != nullptr) {
     path = path_ptr;
     char real_path[PATH_MAX] = {0};
+#if defined(_WIN32) || defined(_WIN64)
+    if (path.size() > PATH_MAX || _fullpath(real_path, path.c_str(), PATH_MAX) == nullptr) {
+      MS_LOG(EXCEPTION) << "MS IR Path error, " << path_ptr;
+    }
+#else
     if (path.size() > PATH_MAX || nullptr == realpath(path.c_str(), real_path)) {
       MS_LOG(EXCEPTION) << "MS IR path error, " << path_ptr;
     }
+#endif
     path = real_path;
   }
   return path;
@@ -2247,8 +2253,14 @@ void DumpIRProto(const FuncGraphPtr& func_graph, const std::string& suffix) {
     return;
   }
   char real_path[PATH_MAX] = {0};
-  if (nullptr == realpath(file_path.c_str(), real_path)) {
-    MS_LOG(DEBUG) << "Dir " << file_path << " does not exit.";
+  char* real_path_ret = nullptr;
+#if defined(_WIN32) || defined(_WIN64)
+  real_path_ret = _fullpath(real_path, file_path.c_str(), PATH_MAX);
+#else
+  real_path_ret = realpath(file_path.c_str(), real_path);
+#endif
+  if (nullptr == real_path_ret) {
+    MS_LOG(DEBUG) << "dir " << file_path << " does not exit.";
   } else {
     std::string path_string = real_path;
     if (chmod(common::SafeCStr(path_string), S_IRUSR | S_IWUSR) == -1) {

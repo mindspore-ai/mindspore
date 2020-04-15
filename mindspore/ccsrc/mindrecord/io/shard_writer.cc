@@ -63,6 +63,15 @@ MSRStatus ShardWriter::Open(const std::vector<std::string> &paths, bool append) 
       MS_LOG(ERROR) << "Securec func failed";
       return FAILED;
     }
+#if defined(_WIN32) || defined(_WIN64)
+    if (_fullpath(resolved_path, dirname(&(buf[0])), PATH_MAX) == nullptr) {
+      MS_LOG(ERROR) << "Invalid file path";
+      return FAILED;
+    }
+    if (_fullpath(resolved_path, common::SafeCStr(path), PATH_MAX) == nullptr) {
+      MS_LOG(DEBUG) << "Path " << resolved_path;
+    }
+#else
     if (realpath(dirname(&(buf[0])), resolved_path) == nullptr) {
       MS_LOG(ERROR) << "Invalid file path";
       return FAILED;
@@ -70,6 +79,7 @@ MSRStatus ShardWriter::Open(const std::vector<std::string> &paths, bool append) 
     if (realpath(common::SafeCStr(path), resolved_path) == nullptr) {
       MS_LOG(DEBUG) << "Path " << resolved_path;
     }
+#endif
     file_paths_.emplace_back(string(resolved_path));
   }
 

@@ -42,7 +42,7 @@ extern const char kGeVm[];
 // A sub namespace in ME to support compile related definition.
 namespace compile {
 extern std::vector<PrimitivePtr> nonlinear_ops;
-extern std::vector<PrimitivePtr> ms_nonlinear_ops;
+const std::vector<PrimitivePtr>& GetMsNonlinearOps();
 
 using VmEvalFunc = std::function<BaseRef(const VectorRef&)>;
 using VmEvalFuncPtr = std::shared_ptr<std::function<BaseRef(const VectorRef&)>>;

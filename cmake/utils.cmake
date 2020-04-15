@@ -103,7 +103,7 @@ function(__download_pkg_with_git pkg_name pkg_url pkg_git_commit pkg_md5)
 endfunction()
 
 
-function(__find_pkg_then_add_target pkg_name pkg_exe)
+function(__find_pkg_then_add_target pkg_name pkg_exe lib_path)
 
     unset(${pkg_name}_LIBS)
 
@@ -129,15 +129,24 @@ function(__find_pkg_then_add_target pkg_name pkg_exe)
             set(_LIB_TYPE STATIC)
         endif ()
         set(${_LIB_NAME}_LIB ${_LIB_NAME}_LIB-NOTFOUND)
-        find_library(${_LIB_NAME}_LIB ${_LIB_SEARCH_NAME} PATHS ${${pkg_name}_BASE_DIR}/lib NO_DEFAULT_PATH)
+        find_library(${_LIB_NAME}_LIB ${_LIB_SEARCH_NAME} PATHS ${${pkg_name}_BASE_DIR}/${lib_path} NO_DEFAULT_PATH)
+
         if(NOT ${_LIB_NAME}_LIB)
             return()
         endif()
+
         add_library(${pkg_name}::${_LIB_NAME} ${_LIB_TYPE} IMPORTED GLOBAL)
-        set_target_properties(${pkg_name}::${_LIB_NAME} PROPERTIES
-                INTERFACE_INCLUDE_DIRECTORIES "${${pkg_name}_BASE_DIR}/include"
-                IMPORTED_LOCATION ${${_LIB_NAME}_LIB}
-                )
+        if (WIN32 AND ${_LIB_TYPE} STREQUAL "SHARED")
+            set_target_properties(${pkg_name}::${_LIB_NAME} PROPERTIES IMPORTED_IMPLIB_RELEASE ${${_LIB_NAME}_LIB})
+        else()
+            set_target_properties(${pkg_name}::${_LIB_NAME} PROPERTIES IMPORTED_LOCATION ${${_LIB_NAME}_LIB})
+        endif()
+
+        if (EXISTS ${${pkg_name}_BASE_DIR}/include)
+            set_target_properties(${pkg_name}::${_LIB_NAME} PROPERTIES 
+                INTERFACE_INCLUDE_DIRECTORIES "${${pkg_name}_BASE_DIR}/include")
+        endif ()
+
         list(APPEND ${pkg_name}_LIBS ${pkg_name}::${_LIB_NAME})
         message("found ${${_LIB_NAME}_LIB}")
         STRING( REGEX REPLACE "(.+)/(.+)" "\\1" LIBPATH ${${_LIB_NAME}_LIB})
@@ -192,12 +201,18 @@ set(MS_FIND_NO_DEFAULT_PATH ${MS_FIND_NO_DEFAULT_PATH} PARENT_SCOPE)
 function(mindspore_add_pkg pkg_name )
 
     set(options )
-    set(oneValueArgs URL MD5 GIT_REPOSITORY GIT_TAG VER EXE DIR HEAD_ONLY CMAKE_PATH)
+    set(oneValueArgs URL MD5 GIT_REPOSITORY GIT_TAG VER EXE DIR HEAD_ONLY CMAKE_PATH RELEASE LIB_PATH)
     set(multiValueArgs CMAKE_OPTION LIBS PRE_CONFIGURE_COMMAND CONFIGURE_COMMAND BUILD_OPTION INSTALL_INCS INSTALL_LIBS PATCHES)
     cmake_parse_arguments(PKG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
-    if (NOT PKG_CMAKE_PATH)
-        set(PKG_CMAKE_PATH .)
+
+    if (NOT PKG_LIB_PATH)
+        set(PKG_LIB_PATH lib)
     endif ()
+
+    if(NOT PKG_EXE)
+        set(PKG_EXE 0)
+    endif()
+
     set(__FIND_PKG_NAME ${pkg_name})
     string(TOLOWER ${pkg_name} pkg_name)
     message("pkg name:${__FIND_PKG_NAME},${pkg_name}")
@@ -225,18 +240,17 @@ function(mindspore_add_pkg pkg_name )
         set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/${PKG_HEAD_ONLY} PARENT_SCOPE)
         add_library(${pkg_name} INTERFACE)
         target_include_directories(${pkg_name} INTERFACE ${${pkg_name}_INC})
+        if (${PKG_RELEASE})
+            __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH} ${PKG_LIBS})
+        endif ()
         return()
     endif ()
-
-    if(NOT PKG_EXE)
-        set(PKG_EXE 0)
-    endif()
 
     set(${__FIND_PKG_NAME}_ROOT ${${pkg_name}_BASE_DIR})
     set(${__FIND_PKG_NAME}_ROOT ${${pkg_name}_BASE_DIR} PARENT_SCOPE)
 
     if (PKG_LIBS)
-        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIBS})
+        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH} ${PKG_LIBS})
         if(${pkg_name}_LIBS)
             set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/include PARENT_SCOPE)
             message("Found libs: ${${pkg_name}_LIBS}")
@@ -283,8 +297,10 @@ function(mindspore_add_pkg pkg_name )
             file(GLOB ${pkg_name}_SOURCE_SUBDIRS ${${pkg_name}_SOURCE_DIR}/*)
             file(COPY ${${pkg_name}_SOURCE_SUBDIRS} DESTINATION ${${pkg_name}_BASE_DIR})
             set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/${PKG_HEAD_ONLY} PARENT_SCOPE)
-            add_library(${pkg_name} INTERFACE)
-            target_include_directories(${pkg_name} INTERFACE ${${pkg_name}_INC})
+            if (NOT PKG_RELEASE)
+                add_library(${pkg_name} INTERFACE)
+                target_include_directories(${pkg_name} INTERFACE ${${pkg_name}_INC})
+            endif ()
 
         elseif (PKG_CMAKE_OPTION)
             # in cmake
@@ -355,7 +371,7 @@ function(mindspore_add_pkg pkg_name )
     endif()
 
     if (PKG_LIBS)
-        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIBS})
+        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH} ${PKG_LIBS})
         set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/include PARENT_SCOPE)
         if(NOT ${pkg_name}_LIBS)
             message(FATAL_ERROR "Can not find pkg: ${pkg_name}")
