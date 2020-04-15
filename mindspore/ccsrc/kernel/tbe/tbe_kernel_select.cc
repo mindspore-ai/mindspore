@@ -542,7 +542,7 @@ void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<Ke
     }
   }
   if (kernel_info_list->empty()) {
-    MS_LOG(DEBUG) << "Tbe dose not has metadata of op[" << op_name << "].";
+    MS_LOG(DEBUG) << "Tbe dose not have op [" << op_name << "].";
   }
 }
 }  // namespace kernel

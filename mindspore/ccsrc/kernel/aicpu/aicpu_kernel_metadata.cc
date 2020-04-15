@@ -34,7 +34,7 @@ void AicpuMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<
   }
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kAICPU);
   if (op_info_ptr == nullptr) {
-    MS_LOG(WARNING) << "Aicpu doestn't have metadata of op [" << op_name << "]";
+    MS_LOG(DEBUG) << "Aicpu does not have op [" << op_name << "]";
     return;
   }
   // For compatibility with the current framework
