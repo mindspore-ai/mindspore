@@ -96,6 +96,13 @@ static int GetGlogLevel(MsLogLevel level) {
   }
 }
 #else
+
+#undef Dlog
+#define Dlog(module_id, level, format, ...)                   \
+  do {                                                        \
+    DlogInner((module_id), (level), (format), ##__VA_ARGS__); \
+  } while (0)
+
 // convert MsLogLevel to corresponding slog level
 static int GetSlogLevel(MsLogLevel level) {
   switch (level) {
