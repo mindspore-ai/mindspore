@@ -1,12 +1,12 @@
-FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
 
 MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
-ENV PATH ${CMAKE_ROOT_PATH}/bin:/usr/local/bin:$PATH
-ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+ENV OMPI_ROOT_PATH /usr/local/openmpi-3.1.5
+ENV PATH ${OMPI_ROOT_PATH}/bin:/usr/local/bin:$PATH
+ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:$LD_LIBRARY_PATH
 
 # Install base tools
 RUN apt update \
@@ -35,7 +35,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     autoconf \
     libtool \
     automake \
-    flex
+    flex \
+    libnccl2=2.4.8-1+cuda10.1 \
+    libnccl-dev=2.4.8-1+cuda10.1
 
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
@@ -63,12 +65,16 @@ RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
 RUN mkdir -pv /root/.pip \
     && echo "[global]" > /root/.pip/pip.conf \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
-    && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf \
-    && pip install --no-cache-dir wheel
+    && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf
 
-# Install cmake (v3.14.1)
+# Install openmpi (v3.1.5)
 RUN cd /tmp \
-    && wget https://github.com/Kitware/CMake/releases/download/v3.14.1/cmake-3.14.1-Linux-x86_64.sh \
-    && mkdir -p ${CMAKE_ROOT_PATH} \
-    && bash ./cmake-3.14.1-Linux-x86_64.sh --prefix=${CMAKE_ROOT_PATH} --exclude-subdir --skip-license \
-    && rm -f /tmp/cmake-3.14.1-Linux-x86_64.sh
+    && wget https://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.5.tar.gz \
+    && tar -xvf openmpi-3.1.5.tar.gz \
+    && cd /tmp/openmpi-3.1.5 \
+    && mkdir -p ${OMPI_ROOT_PATH} \
+    && ./configure --prefix=${OMPI_ROOT_PATH} \
+    && make -j4 \
+    && make install -j4 \
+    && rm -rf /tmp/openmpi-3.1.5 \
+    && rm -f /tmp/openmpi-3.1.5.tar.gz
