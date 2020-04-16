@@ -34,12 +34,13 @@ extern double GetTime();
 class ProfileBase;
 
 struct TimeInfo {
-  explicit TimeInfo(double time = -1.0) : time_(time), dict_(nullptr) {}
+  explicit TimeInfo(double time = -1.0) : time_(time), dict_(nullptr), actionNum_(0) {}
   TimeInfo(const TimeInfo&) = delete;
   ~TimeInfo();
 
   double time_;
   TimeInfoMap* dict_;
+  size_t actionNum_;
 };
 
 // Utility class for Profile.
