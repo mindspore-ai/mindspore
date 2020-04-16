@@ -54,7 +54,6 @@ class CorrectionMulGpuKernel : public GpuKernel {
     }
 
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-
     if (input_shape.size() != 4) {
       MS_LOG(ERROR) << "CorrectionMulGpuKernel input shape needs (N,C,H,W).";
       return false;

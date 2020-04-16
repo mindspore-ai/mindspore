@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 MS_REG_GPU_KERNEL_ONE(BatchNormFold,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)

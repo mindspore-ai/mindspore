@@ -39,6 +39,11 @@ class FakeQuantPerChannelGpuKernel : public GpuKernel {
   void InitSizeLists() override;
 
  private:
+  void CalFakeQuantizeForTraining(float *input, float *output, float *input_min, float *input_max, float *d_nudge_min,
+                                  float *d_nudge_max, float *d_scale, uintptr_t stream_ptr);
+  void CalFakeQuantizeForInfer(float *input, float *output, float *input_min, float *input_max, float *d_nudge_min,
+                               float *d_nudge_max, float *d_scale, uintptr_t stream_ptr);
+
   size_t input_size_;
   size_t min_size_;
   size_t max_size_;
