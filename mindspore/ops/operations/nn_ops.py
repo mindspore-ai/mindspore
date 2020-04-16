@@ -1345,11 +1345,7 @@ class ApplyMomentum(PrimitiveWithInfer):
         Tensor, parameters to be updated.
 
     Examples:
-        >>> net = ResNet50()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> opt = P.ApplyMomentum(Tensor(np.array([0.001])), Tensor(np.array([0.9])),
-                                filter(lambda x: x.requires_grad, net.get_parameters()))
-        >>> model = Model(net, loss, opt)
+        Please refer to the usage in nn.ApplyMomentum.
     """
     __mindspore_signature__ = (
         ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD),

@@ -983,8 +983,7 @@ class Argmax(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]))
-        >>> index = P.Argmax()(input_x)
-        >>> assert index == Tensor(1, mindspore.int64)
+        >>> index = P.Argmax(output_type=mindspore.int32)(input_x)
     """
 
     @prim_attr_register
