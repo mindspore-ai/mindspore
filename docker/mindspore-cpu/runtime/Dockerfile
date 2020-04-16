@@ -1,12 +1,10 @@
-FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
+FROM ubuntu:18.04
 
 MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
-ENV PATH ${CMAKE_ROOT_PATH}/bin:/usr/local/bin:$PATH
-ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
+ENV PATH /usr/local/bin:$PATH
 
 # Install base tools
 RUN apt update \
@@ -63,12 +61,4 @@ RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
 RUN mkdir -pv /root/.pip \
     && echo "[global]" > /root/.pip/pip.conf \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
-    && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf \
-    && pip install --no-cache-dir wheel
-
-# Install cmake (v3.14.1)
-RUN cd /tmp \
-    && wget https://github.com/Kitware/CMake/releases/download/v3.14.1/cmake-3.14.1-Linux-x86_64.sh \
-    && mkdir -p ${CMAKE_ROOT_PATH} \
-    && bash ./cmake-3.14.1-Linux-x86_64.sh --prefix=${CMAKE_ROOT_PATH} --exclude-subdir --skip-license \
-    && rm -f /tmp/cmake-3.14.1-Linux-x86_64.sh
+    && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf

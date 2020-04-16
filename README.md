@@ -70,7 +70,7 @@ MindSpore offers build options across multiple backends:
 | GPU CUDA 10.1 | Ubuntu-x86 | ✔️ |
 | CPU | Ubuntu-x86 | ✔️ |
 
-For installation using `pip`, take `Ubuntu-x86` and `CPU` build version as an example:
+For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an example:
 
 1. Download whl from [MindSpore download page](https://www.mindspore.cn/versions/en), and install the package.
 
@@ -97,9 +97,11 @@ currently the containerized build options are supported as follows:
 | :---------------- | :---------------------- | :-- | :---------- |
 | CPU | `mindspore/mindspore-cpu` | `0.1.0-alpha` | Production environment with pre-installed MindSpore `0.1.0-alpha` CPU release. |
 |  |  | `devel` | Development environment provided to build MindSpore (with `CPU` backend) from the source, refer to https://www.mindspore.cn/install/en for installation details. |
+|  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `CPU` backend. |
 | GPU | `mindspore/mindspore-gpu` | `0.1.0-alpha` | Production environment with pre-installed MindSpore `0.1.0-alpha` GPU release. |
 |  |  | `devel` | Development environment provided to build MindSpore (with `GPU CUDA10.1` backend) from the source, refer to https://www.mindspore.cn/install/en for installation details. |
-| Ascend | <center>—</center> | <center>—</center> | Coming soon. |
+|  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `GPU` backend. |
+| Ascend | <center>&mdash;</center> | <center>&mdash;</center> | Coming soon. |
 
 * CPU
 
@@ -111,7 +113,7 @@ currently the containerized build options are supported as follows:
 
 * GPU
 
-    For `GPU` backend, please make sure the `nvidia-container-toolkit` has been installed in advance, here are some install guidelines for Ubuntu users:
+    For `GPU` backend, please make sure the `nvidia-container-toolkit` has been installed in advance, here are some install guidelines for `Ubuntu` users:
     ```
     DISTRIBUTION=$(. /etc/os-release; echo $ID$VERSION_ID)
     curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -
@@ -153,7 +155,7 @@ currently the containerized build options are supported as follows:
     [ 2.  2.  2.  2.]]]
     ```
 
-If anyone wants to learn more about the build process of MindSpore docker images,
+If you want to learn more about the building process of MindSpore docker images,
 please check out `docker` folder for the details.
 
 ## Quickstart

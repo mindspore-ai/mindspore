@@ -4,9 +4,9 @@ MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
 ENV OMPI_ROOT_PATH /usr/local/openmpi-3.1.5
-ENV PATH ${PYTHON_ROOT_PATH}/bin:${CMAKE_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:/usr/local/bin:$PATH
+ENV PATH ${OMPI_ROOT_PATH}/bin:/usr/local/bin:$PATH
+ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:$LD_LIBRARY_PATH
 
 # Install base tools
 RUN apt update \
@@ -66,21 +66,6 @@ RUN mkdir -pv /root/.pip \
     && echo "[global]" > /root/.pip/pip.conf \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf
-
-# Install pip package
-RUN pip install --no-cache-dir \
-    numpy \
-    wheel \
-    nose \
-    pytest \
-    pytest-xdist
-
-# Install cmake (v3.14.1)
-RUN cd /tmp \
-    && wget https://github.com/Kitware/CMake/releases/download/v3.14.1/cmake-3.14.1-Linux-x86_64.sh \
-    && mkdir -p ${CMAKE_ROOT_PATH} \
-    && bash ./cmake-3.14.1-Linux-x86_64.sh --prefix=${CMAKE_ROOT_PATH} --exclude-subdir --skip-license \
-    && rm -f /tmp/cmake-3.14.1-Linux-x86_64.sh
 
 # Install openmpi (v3.1.5)
 RUN cd /tmp \

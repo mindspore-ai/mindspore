@@ -62,15 +62,8 @@ RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
 RUN mkdir -pv /root/.pip \
     && echo "[global]" > /root/.pip/pip.conf \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
-    && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf
-
-# Install pip package
-RUN pip install --no-cache-dir \
-    numpy \
-    wheel \
-    nose \
-    pytest \
-    pytest-xdist
+    && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf \
+    && pip install --no-cache-dir wheel
 
 # Install cmake (v3.14.1)
 RUN cd /tmp \

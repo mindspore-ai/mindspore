@@ -4,8 +4,7 @@ MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
-ENV PATH ${PYTHON_ROOT_PATH}/bin:${CMAKE_ROOT_PATH}/bin:/usr/local/bin:$PATH
+ENV PATH /usr/local/bin:$PATH
 
 # Install base tools
 RUN apt update \
@@ -63,21 +62,6 @@ RUN mkdir -pv /root/.pip \
     && echo "[global]" > /root/.pip/pip.conf \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf
-
-# Install pip package
-RUN pip install --no-cache-dir \
-    numpy \
-    wheel \
-    nose \
-    pytest \
-    pytest-xdist
-
-# Install cmake (v3.14.1)
-RUN cd /tmp \
-    && wget https://github.com/Kitware/CMake/releases/download/v3.14.1/cmake-3.14.1-Linux-x86_64.sh \
-    && mkdir -p ${CMAKE_ROOT_PATH} \
-    && bash ./cmake-3.14.1-Linux-x86_64.sh --prefix=${CMAKE_ROOT_PATH} --exclude-subdir --skip-license \
-    && rm -f /tmp/cmake-3.14.1-Linux-x86_64.sh
 
 # Install MindSpore cpu whl package
 RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.1.0-alpha/MindSpore/cpu/ubuntu-x86/mindspore-0.1.0-cp37-cp37m-linux_x86_64.whl
