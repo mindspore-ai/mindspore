@@ -1436,9 +1436,9 @@ class SGD(PrimitiveWithInfer):
         nesterov (bool): Enable Nesterov momentum. Default: False.
 
     Inputs:
-        - **parameters** (Tensor) - Parameters to be updated.
+        - **parameters** (Tensor) - Parameters to be updated. Their data type can be list or tuple.
         - **gradient** (Tensor) - Gradients.
-        - **learning_rate** (Tensor) - Learning rate. e.g. Tensor(0.1, mindspore.float32).
+        - **learning_rate** (Tensor) - Learning rate. Must be float value. e.g. Tensor(0.1, mindspore.float32).
         - **accum** (Tensor) - Accum(velocity) to be updated.
         - **momentum** (Tensor) - Momentum. e.g. Tensor(0.1, mindspore.float32).
         - **stat** (Tensor) - States to be updated with the same shape as gradient.
@@ -1449,6 +1449,7 @@ class SGD(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dampening=0.0, weight_decay=0.0, nesterov=False):
+        validator.check_type("nesterov", nesterov, [bool])
         self.init_prim_io_names(inputs=['parameters', 'gradient', 'learning_rate', 'accum', 'momentum', 'stat'],
                                 outputs=['output'])
 

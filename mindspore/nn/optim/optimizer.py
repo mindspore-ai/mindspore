@@ -81,8 +81,22 @@ class Optimizer(Cell):
             else:
                 raise TypeError("Learning rate should be float, Tensor or Iterable.")
 
+        if isinstance(weight_decay, int):
+            weight_decay = float(weight_decay)
+
+        if not isinstance(weight_decay, float):
+            raise TypeError("weight_decay should be a float number!")
+
+        if isinstance(loss_scale, int):
+            loss_scale = float(loss_scale)
+
+        if not isinstance(loss_scale, float):
+            raise TypeError("loss_scale should be a float number!")
+
         if loss_scale <= 0.0:
             raise ValueError("Loss scale should be greater than 0, but got {}".format(loss_scale))
+        self.loss_scale = loss_scale
+
         if weight_decay < 0.0:
             raise ValueError("Weight decay should be equal or greater than 0, but got {}".format(weight_decay))
 
