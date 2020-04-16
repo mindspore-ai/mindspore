@@ -124,6 +124,12 @@ class NcclGpuKernel : public GpuKernel {
     InferCommType(kernel_node);
     collective_handle_ = device::gpu::CollectiveInitializer::instance().collective_handle();
     MS_EXCEPTION_IF_NULL(collective_handle_);
+
+    auto comm_stream_attr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stream_id");
+    if (comm_stream_attr) {
+      comm_stream_ = reinterpret_cast<cudaStream_t>(GetValue<uintptr_t>(comm_stream_attr));
+      MS_EXCEPTION_IF_NULL(comm_stream_);
+    }
     return true;
   }
 
