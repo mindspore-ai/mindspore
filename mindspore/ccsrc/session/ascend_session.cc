@@ -709,18 +709,17 @@ void AscendSession::SetChildGraphParameter(const AnfNodePtr &front_anf, const An
                    << "of graph " << AnfAlgo::GetGraphId(backend_arg.get());
       return;
     }
-  }
-  // if a parameter is a weight and not linked to any executable node,device type will be kTypeUnknown,set it's device
-  // type same to arg
-  if (AnfAlgo::GetOutputDeviceDataType(backend_parameter, 0) == kTypeUnknown) {
-    AnfAlgo::SetSelectKernelBuildInfo(AnfAlgo::GetSelectKernelBuildInfo(backend_arg), backend_parameter.get());
+    // if a parameter is a weight and not linked to any executable node,device type will be kTypeUnknown,set it's device
+    // type same to arg
+    if (AnfAlgo::GetOutputDeviceDataType(backend_parameter, 0) == kTypeUnknown) {
+      AnfAlgo::SetSelectKernelBuildInfo(AnfAlgo::GetSelectKernelBuildInfo(backend_arg), backend_parameter.get());
+    }
+    // if front anf is a parameter,we can assign the value back,because backend_parameter won't be change in it's graph
+    // unless it's a weight.If backend_parameter is a weight,we should assign the value back.
+    AnfAlgo::SetOutputAddr(AnfAlgo::GetMutableOutputAddr(backend_arg, 0), 0, backend_parameter.get());
+    return;
   }
   InsertAssignToGraph(from_graph_id, backend_arg, backend_parameter);
-  // if front anf is a parameter,we can assign the value back,because backend_parameter won't be change in it's graph
-  // unless it's a weigth.If backend_parameter is a weight,we do should assign the value back
-  if (backend_arg->isa<Parameter>() && !to_graph->execution_order().empty()) {
-    InsertAssignToGraph(to_graph_id, backend_parameter, backend_arg);
-  }
   MS_LOG(INFO) << "Finish!";
 }
 

@@ -337,10 +337,6 @@ bool IsNopNode(const AnfNodePtr &node) {
   if (nop_nodes.find(AnfAlgo::GetCNodeName(cnode)) == nop_nodes.end()) {
     return false;
   }
-  if (cnode->inputs().size() != 2) {
-    MS_LOG(EXCEPTION) << "Nop node(" + cnode->DebugString() + ") should have only 1 input, but it has "
-                      << cnode->inputs().size() - 1 << " inputs.";
-  }
   return true;
 }
 
