@@ -346,7 +346,7 @@ class GroupNorm(Cell):
         self.sqrt = P.Sqrt()
 
     def construct(self, x):
-        batch, channel, height,width = self.shape(x)
+        batch, channel, height, width = self.shape(x)
         x = self.reshape(x, (batch, self.num_groups, channel*height*width/self.num_groups))
         mean = self.reduce_mean(x, 2)
         var = self.reduce_sum(self.square(x - mean), 2) / (channel * height * width / self.num_groups - 1)
