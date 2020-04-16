@@ -6,7 +6,6 @@ MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
 ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
 ENV PATH ${CMAKE_ROOT_PATH}/bin:/usr/local/bin:$PATH
-ENV LD_LIBRARY_PATH /usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 
 # Install base tools
 RUN apt update \
@@ -36,6 +35,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     libtool \
     automake \
     flex
+
+# Configure cuDNN (v7.6.5)
+RUN ln -s /usr/lib/x86_64-linux-gnu/libcudnn.so.7.6.5 /usr/local/cuda/lib64/libcudnn.so
 
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
