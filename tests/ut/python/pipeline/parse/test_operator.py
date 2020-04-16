@@ -131,3 +131,72 @@ def test_ME_arithmetic_operator_0070():
 def test_ME_logical_operator_0020():
     """ test_ME_logical_operator_0020 """
     logical_operator_base('or')
+
+
+def test_ops():
+    class OpsNet(Cell):
+        """ OpsNet definition """
+
+        def __init__(self, x, y):
+            super(OpsNet, self).__init__()
+            self.x = x
+            self.y = y
+            self.int = 4
+            self.float = 3.2
+            self.str_a = "hello"
+            self.str_b = "world"
+
+        def construct(self, x, y):
+            h = x // y
+            m = x ** y
+            n = x % y
+            r = self.x // self.y
+            s = self.x ** self.y
+            t = self.x % self.y
+            p = h + m + n
+            q = r + s + t
+            ret_pow = p ** q + q ** p
+            ret_mod = p % q + q % p
+            ret_floor = p // q + q // p
+            ret = ret_pow + ret_mod + ret_floor
+            if self.int > self.float:
+                if self.str_a + self.str_b == "helloworld":
+                    return ret
+            return x
+
+    net = OpsNet(9, 2)
+    x = Tensor(np.random.randint(low=1, high=10, size=(2, 3, 4), dtype=np.int32))
+    y = Tensor(np.random.randint(low=10, high=20, size=(2, 3, 4), dtype=np.int32))
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    net(x, y)
+
+
+def test_in_dict():
+    class InDictNet(Cell):
+        """ InDictNet definition """
+
+        def __init__(self, key_in, key_not_in):
+            super(InDictNet, self).__init__()
+            self.key_in = key_in
+            self.key_not_in = key_not_in
+
+        def construct(self, x, y, z):
+            d = {"a": x, "b": y}
+            ret_in = 1
+            ret_not_in = 2
+            if self.key_in in d:
+                ret_in = d[self.key_in]
+            if self.key_not_in not in d:
+                ret_not_in = z
+            ret = ret_in + ret_not_in
+            return ret
+
+    net = InDictNet("a", "c")
+    x = Tensor(np.random.randint(low=1, high=10, size=(2, 3, 4), dtype=np.int32))
+    y = Tensor(np.random.randint(low=10, high=20, size=(2, 3, 4), dtype=np.int32))
+    z = Tensor(np.random.randint(low=20, high=30, size=(2, 3, 4), dtype=np.int32))
+    context.set_context(mode=context.GRAPH_MODE)
+    net(x, y, z)
+
+
+

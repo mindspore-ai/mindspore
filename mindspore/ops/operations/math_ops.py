@@ -667,8 +667,8 @@ class AddN(PrimitiveWithInfer):
         >>>         return self.addN(z)
         >>>
         >>> net = NetAddN()
-        >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.int32)
+        >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.float32)
         >>> net(input_x, input_y, input_x, input_y)
         Tensor([10, 14, 18], shape=(3,), dtype=mindspore.int32)
     """

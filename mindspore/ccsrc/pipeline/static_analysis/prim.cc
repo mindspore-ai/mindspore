@@ -52,6 +52,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSwitch, {InferImplSwitch, true}},
     {prim::kPrimIs_, {InferImplIs_, true}},
     {prim::kPrimIsNot, {InferImplIsNot, true}},
+    {prim::kPrimInDict, {InferImplInDict, true}},
+    {prim::kPrimNotInDict, {InferImplNotInDict, true}},
     // Maths
     {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, true}},
     {prim::kPrimMinimumGrad, {InferImplMinOrMaxGrad, true}},
@@ -91,6 +93,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMakeRange, {InferImplMakeRange, false}},
     {prim::kPrimStopGradient, {InferImplStopGradient, false}},
     {prim::kPrimStringEqual, {InferImplStringEqual, false}},
+    {prim::kPrimStringConcat, {InferImplStringConcat, false}},
     {prim::kPrimDictLen, {InferImplDictLen, false}},
     // NN
     {prim::kPrimPooling, {InferImplPooling, true}},
@@ -988,6 +991,8 @@ PrimitiveToImplMap &GetUniformPrimitiveToImplMap() {
     {prim::kPrimScalarMul, {prim::ScalarMul, true, nullptr, true}},
     {prim::kPrimScalarDiv, {prim::ScalarDiv, true, nullptr, true}},
     {prim::kPrimScalarMod, {prim::ScalarMod, true, nullptr, true}},
+    {prim::kPrimScalarPow, {prim::ScalarPow, true, nullptr, true}},
+    {prim::kPrimScalarFloordiv, {prim::ScalarFloordiv, true, nullptr, true}},
     {prim::kPrimScalarUadd, {prim::ScalarUAdd, true, nullptr, true}},
     {prim::kPrimScalarUsub, {prim::ScalarUSub, true, nullptr, true}},
     {prim::kPrimScalarLog, {prim::ScalarLog, true, nullptr, true}},

@@ -103,7 +103,7 @@ T InnerScalarMul(T x, T y) {
 }
 
 template <typename T>
-T InnerScalarDiv(T x, T y) {
+float InnerScalarDiv(T x, T y) {
   if (y == 0) {
     MS_LOG(EXCEPTION) << "Divisor could not be zero";
   }
@@ -111,23 +111,41 @@ T InnerScalarDiv(T x, T y) {
     MS_LOG(EXCEPTION) << "Overflow of the div of two signed number x: " << std::to_string(x)
                       << ", y: " << std::to_string(y) << ".";
   }
-  return x / y;
+  return static_cast<float>(x) / static_cast<float>(y);
 }
 
-int32_t InnerScalarMod(int32_t x, int32_t y) {
+template <typename T>
+T InnerScalarFloordiv(T x, T y) {
+  auto ret = std::floor(InnerScalarDiv(x, y));
+  if (std::is_integral<T>::value) {
+    return static_cast<int>(ret);
+  }
+  return ret;
+}
+
+template <typename T>
+T InnerScalarMod(T x, T y) {
   if (y == 0) {
     MS_LOG(EXCEPTION) << "Could not mod to zero.";
   }
-  if (IsSignedIntOverflow(x, y, OpType::MOD)) {
+  if (std::is_integral<T>::value && std::is_signed<T>::value && IsSignedIntOverflow(x, y, OpType::MOD)) {
     MS_LOG(EXCEPTION) << "Overflow of the mod of two signed number x: " << std::to_string(x)
                       << ", y: " << std::to_string(y) << ".";
   }
-  return x % y;
+  if (std::is_integral<T>::value) {
+    return static_cast<int>(x) % static_cast<int>(y);
+  }
+  float x_int = std::floor(x);
+  float y_int = std::ceil(y);
+  float max = x_int / y_int;
+  float ret = x - y * max;
+  return ret;
 }
 
-float InnerScalarMod(float, float) { MS_LOG(EXCEPTION) << "Float does not support mod operator."; }
-
-double InnerScalarMod(double, double) { MS_LOG(EXCEPTION) << "Double does not support mod operator."; }
+template <typename T, typename U>
+T InnerScalarPow(T x, U y) {
+  return std::pow(x, y);
+}
 
 template <typename T, typename U>
 bool InnerScalarEq(T x, U y) {
@@ -193,6 +211,8 @@ SCALAR_OP(Sub)
 SCALAR_OP(Mul)
 SCALAR_OP(Div)
 SCALAR_OP(Mod)
+SCALAR_OP(Pow)
+SCALAR_OP(Floordiv)
 
 #define LOGIC_OP(op_t)                                                                       \
   ValuePtr Scalar##op_t(const ValuePtrList& list) {                                          \
@@ -225,6 +245,10 @@ SCALAR_OP(Mod)
     }                                                                                        \
     if (x->isa<FP32Imm>() && y->isa<Int32Imm>()) {                                           \
       bool sum = InnerScalar##op_t(GetValue<float>(x), GetValue<int>(y));                    \
+      return MakeValue(sum);                                                                 \
+    }                                                                                        \
+    if (x->isa<Int32Imm>() && y->isa<FP32Imm>()) {                                           \
+      bool sum = InnerScalar##op_t(GetValue<int>(x), GetValue<float>(y));                    \
       return MakeValue(sum);                                                                 \
     }                                                                                        \
     if (x->isa<Int64Imm>() && y->isa<Int32Imm>()) {                                          \

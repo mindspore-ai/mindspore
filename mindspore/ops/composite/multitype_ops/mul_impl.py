@@ -56,8 +56,7 @@ def _scalar_mul_tensor(x, y):
     Outputs:
        Tensor, has the same dtype as x.
     """
-    z = F.scalar_to_tensor(x, F.dtype(y))
-    return F.tensor_mul(z, y)
+    return F.tensor_mul(x, y)
 
 
 @mul.register("Tensor", "Number")
@@ -68,5 +67,4 @@ def _tensor_mul_scalar(x, y):
     Outputs:
         Tensor, has the same dtype as x.
     """
-    z = F.scalar_to_tensor(y, F.dtype(x))
-    return F.tensor_mul(x, z)
+    return F.tensor_mul(x, y)
