@@ -62,6 +62,7 @@
 #include "pre_activate/ascend/format_type/insert_transdata_for_runop.h"
 #include "pre_activate/ascend/enhancer/getnext_memcpy_elimination.h"
 #include "pre_activate/ascend/ir_fission/addn_fission.h"
+#include "pre_activate/ascend/enhancer/insert_memcpy_async_for_getnext.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -186,6 +187,12 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
     ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
     ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
+  }
+
+  if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
+    ir_fusion_pm->AddPass(std::make_shared<InsertMemcpyAsyncForGetNext>());
+    ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
+    ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   }
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);

@@ -24,9 +24,7 @@ void AscendStreamAssign::AssignStreamNew(const KernelGraphPtr &graph) { return; 
 
 uint32_t AscendStreamAssign::GetTotalStreamNum() const { return 1; }
 
-std::vector<uint32_t> AscendStreamAssign::GetWaitStreams() { return vector<uint32_t>(); }
-
-std::vector<uint32_t> AscendStreamAssign::GetHcomStreams() { return vector<uint32_t>(); }
+void AscendStreamAssign::GetWaitStreams(vector<uint32_t> *wait_active_stream_list) { return; }
 
 namespace tasksink {
 bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *const task_info_list,
