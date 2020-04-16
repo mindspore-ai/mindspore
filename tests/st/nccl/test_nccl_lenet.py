@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 init('nccl')
 
 epoch = 2
-total = 50000
+total = 5000
 batch_size = 32
 mini_batch = total // batch_size
 
@@ -94,3 +94,4 @@ def test_lenet_nccl():
     with open("ms_loss.txt", "w") as fo2:
         fo2.write("loss:")
         fo2.write(str(losses[-5:]))
+    assert(losses[-1] < 0.01)
