@@ -20,7 +20,11 @@ IF NOT %errorlevel% == 0 (
     goto run_fail
     )
  
-cmake --build . --target all -- -j6
+IF "%1%" == "" (
+    cmake --build . --target all -- -j6
+    ) ELSE (
+        cmake --build . --target all -- -j%1%
+    )
 IF NOT %errorlevel% == 0 (
     goto run_fail
     )
