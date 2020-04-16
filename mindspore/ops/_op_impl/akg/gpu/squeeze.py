@@ -15,7 +15,7 @@
 """Squeeze op"""
 from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
 
-squeeze_op_info = AkgRegOp("SqueezeGrad") \
+squeeze_op_info = AkgRegOp("Squeeze") \
     .fusion_type("OPAQUE") \
     .input(0, "x") \
     .output(0, "output") \
