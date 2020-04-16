@@ -15,6 +15,8 @@
 """Built-in iterators.
 """
 from abc import abstractmethod
+import copy
+import weakref
 
 from mindspore._c_dataengine import DEPipeline
 from mindspore._c_dataengine import OpName
@@ -27,7 +29,9 @@ ITERATORS_LIST = list()
 
 def _cleanup():
     for itr in ITERATORS_LIST:
-        itr.release()
+        iter_ref = itr()
+        if itr is not None:
+            iter_ref.release()
 
 
 def alter_tree(node):
@@ -73,8 +77,10 @@ class Iterator:
     """
 
     def __init__(self, dataset):
-        ITERATORS_LIST.append(self)
-        self.dataset = alter_tree(dataset)
+        ITERATORS_LIST.append(weakref.ref(self))
+        # create a copy of tree and work on it.
+        self.dataset = copy.deepcopy(dataset)
+        self.dataset = alter_tree(self.dataset)
         if not self.__is_tree():
             raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers)")
         self.depipeline = DEPipeline()
