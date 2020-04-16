@@ -363,7 +363,7 @@ class Tensor {
   // @return TensorIterator
   template <typename T>
   TensorIterator<T> end() {
-    return TensorIterator<T>(data_ + SizeInBytes());
+    return TensorIterator<T>(data_end_);
   }
 
  protected:
@@ -402,6 +402,8 @@ class Tensor {
   unsigned char *data_;
   // An allocator for data_
   CharAllocPtr data_allocator_;
+  // pointer to the end of the physical data
+  unsigned char *data_end_ = nullptr;
 };
 }  // namespace dataset
 }  // namespace mindspore
