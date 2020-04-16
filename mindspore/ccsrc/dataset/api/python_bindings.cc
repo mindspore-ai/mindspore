@@ -55,6 +55,7 @@
 #include "dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "dataset/engine/jagged_connector.h"
+#include "dataset/engine/datasetops/source/text_file_op.h"
 #include "dataset/kernels/data/to_float16_op.h"
 #include "dataset/util/random.h"
 #include "mindrecord/include/shard_operator.h"
@@ -174,6 +175,17 @@ void bindDatasetOps(py::module *m) {
     .def_static("get_num_rows", [](const std::string &dir, int64_t numSamples) {
       int64_t count = 0;
       THROW_IF_ERROR(MnistOp::CountTotalRows(dir, numSamples, &count));
+      return count;
+    });
+
+  (void)py::class_<TextFileOp, DatasetOp, std::shared_ptr<TextFileOp>>(*m, "TextFileOp")
+    .def_static("get_num_rows", [](const py::list &files) {
+      int64_t count = 0;
+      std::vector<std::string> filenames;
+      for (auto file : files) {
+        !file.is_none() ? filenames.push_back(py::str(file)) : (void)filenames.emplace_back("");
+      }
+      THROW_IF_ERROR(TextFileOp::CountAllFileRows(filenames, &count));
       return count;
     });
 }
@@ -463,7 +475,8 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("VOC", OpName::kVoc)
     .value("CIFAR10", OpName::kCifar10)
     .value("CIFAR100", OpName::kCifar100)
-    .value("CELEBA", OpName::kCelebA);
+    .value("CELEBA", OpName::kCelebA)
+    .value("TEXTFILE", OpName::kTextFile);
 
   (void)py::enum_<InterpolationMode>(m, "InterpolationMode", py::arithmetic())
     .value("DE_INTER_LINEAR", InterpolationMode::kLinear)

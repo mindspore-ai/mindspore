@@ -29,7 +29,7 @@ from importlib import import_module
 
 import numpy as np
 from mindspore._c_dataengine import DataType, TFReaderOp, ImageFolderOp, CifarOp, MnistOp, ManifestOp, \
-    MindRecordOp, CBatchInfo
+    MindRecordOp, TextFileOp, CBatchInfo
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
@@ -38,7 +38,7 @@ from .iterators import DictIterator, TupleIterator
 from .validators import check, check_batch, check_shuffle, check_map, check_repeat, check_skip, check_zip, check_rename, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
-    check_zip_dataset, check_add_column
+    check_zip_dataset, check_add_column, check_textfiledataset
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -887,6 +887,29 @@ class SourceDataset(Dataset):
     """
 
     # No need for __init__ since it is the same as the super's init
+
+    @staticmethod
+    def _find_files(patterns):
+        """
+        Utility function to search for files with the given glob patterns.
+
+        Args:
+            patterns (str or list[str]): string or list of patterns to be searched.
+
+        Returns:
+            List, files.
+        """
+
+        def flat(lists):
+            return list(np.array(lists).flatten())
+
+        if not isinstance(patterns, list):
+            patterns = [patterns]
+
+        file_list = flat([glob.glob(file, recursive=True) for file in patterns])
+        if file_list:  # not empty
+            return file_list
+        raise ValueError("The list of path names matching the patterns is empty.")
 
 
 class DatasetOp(Dataset):
@@ -2126,30 +2149,6 @@ class TFRecordDataset(SourceDataset):
         >>> # 3) get all rows from dataset_files with schema file "./schema.json":
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema="./schema.json")
     """
-
-    @staticmethod
-    def _find_files(patterns):
-        """
-        Utility function to search for files with the given glob patterns.
-
-        Args:
-            patterns (str or list[str]): string or list of patterns to be searched.
-
-        Returns:
-            List, files.
-        """
-
-        def flat(lists):
-            return list(np.array(lists).flatten())
-
-        if not isinstance(patterns, list):
-            patterns = [patterns]
-
-        file_list = flat([glob.glob(file, recursive=True) for file in patterns])
-        if file_list:  # not empty
-            return file_list
-        raise ValueError("The list of path names matching the patterns is empty.")
-
     @check_tfrecorddataset
     def __init__(self, dataset_files, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None,
                  shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False):
@@ -2952,3 +2951,82 @@ class CelebADataset(SourceDataset):
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         return args
+
+class TextFileDataset(SourceDataset):
+    """
+    A source dataset that reads and parses datasets stored on disk in text format.
+    The generated dataset has one columns ['text'].
+
+    Args:
+        dataset_files (str or list[str]): String or list of files to be read or glob strings to search for a pattern of
+            files. The list will be sorted in a lexicographical order.
+        num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, Shuffle level, optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument should be specified only when num_shards is also specified.
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>> dataset_files = ["/path/to/1", "/path/to/2"] # contains 1 or multiple text files
+        >>> dataset = ds.TextFileDataset(dataset_files=dataset_files)
+    """
+
+    @check_textfiledataset
+    def __init__(self, dataset_files, num_samples=None, num_parallel_workers=None,
+                 shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None):
+        super().__init__(num_parallel_workers)
+        self.dataset_files = self._find_files(dataset_files)
+        self.dataset_files.sort()
+        self.num_samples = num_samples
+
+        if not isinstance(shuffle, (bool, Shuffle)):
+            raise TypeError("shuffle should be of boolean or enum 'Shuffle'.")
+        if not isinstance(shuffle, Shuffle):
+            if shuffle:
+                self.shuffle_level = Shuffle.GLOBAL
+                self.shuffle_files = True
+            else:
+                self.shuffle_level = None
+                self.shuffle_files = False
+        else:
+            self.shuffle_level = shuffle
+            self.shuffle_files = True
+
+        self.num_shards = num_shards
+        self.shard_id = shard_id
+
+    def get_args(self):
+        args = super().get_args()
+        args["dataset_files"] = self.dataset_files
+        args["num_samples"] = self.num_samples
+        if self.shuffle_files is not None:
+            args["shuffle_files"] = self.shuffle_files
+        args["shuffle"] = self.shuffle_level
+        args["num_shards"] = self.num_shards
+        args["shard_id"] = self.shard_id
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        if self._dataset_size is None:
+            num_rows = TextFileOp.get_num_rows(self.dataset_files)
+            num_rows = get_num_rows(num_rows, self.num_shards)
+            if self.num_samples is None:
+                return num_rows
+            return min(self.num_samples, num_rows)
+        return self._dataset_size

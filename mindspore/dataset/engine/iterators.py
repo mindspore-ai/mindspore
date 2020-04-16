@@ -48,12 +48,16 @@ def alter_tree(node):
 
 def _alter_node(node):
     """Performing some alteration to a dataset node. A common alteration is to insert a node."""
-    if isinstance(node, de.TFRecordDataset) and node.shuffle_level == de.Shuffle.GLOBAL:
+    if isinstance(node, (de.TFRecordDataset, de.TextFileDataset)) and node.shuffle_level == de.Shuffle.GLOBAL:
         # Remove the connection between the parent's node to the current node because we are inserting a node.
         if node.output:
             node.output.pop()
         # Perform a fast scan for average rows per file
-        avg_rows_per_file = node.get_dataset_size(True) // len(node.dataset_files)
+        if isinstance(node, de.TFRecordDataset):
+            avg_rows_per_file = node.get_dataset_size(True) // len(node.dataset_files)
+        else:
+            avg_rows_per_file = node.get_dataset_size() // len(node.dataset_files)
+
         # Shuffle between 4 files with a minimum size of 10000 rows
         new_shuffle = node.shuffle(max(avg_rows_per_file * 4, 10000))
         return new_shuffle
@@ -157,6 +161,8 @@ class Iterator:
             op_type = OpName.CIFAR100
         elif isinstance(dataset, de.CelebADataset):
             op_type = OpName.CELEBA
+        elif isinstance(dataset, de.TextFileDataset):
+            op_type = OpName.TEXTFILE
         else:
             raise ValueError("Unsupported DatasetOp")
 
