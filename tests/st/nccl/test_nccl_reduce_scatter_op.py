@@ -62,8 +62,6 @@ def test_ReduceScatter():
     expect1 = np.ones([1, 1, 3, 3]).astype(np.float32) * 0.01 * size
     diff1 = output[1].asnumpy() - expect1
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
-    print(expect1)
-    print(output[1])
     assert np.all(diff1 < error1)
     assert (output[1].shape() == expect1.shape)
 
