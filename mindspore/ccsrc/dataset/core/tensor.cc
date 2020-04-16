@@ -85,6 +85,7 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept {
     shape_ = other.shape();
     type_ = other.type();
     data_ = other.StartAddr();
+    data_end_ = other.data_end_;
     data_allocator_ = std::move(other.data_allocator_);
     other.Invalidate();
   }
@@ -208,11 +209,13 @@ Tensor::~Tensor() {
     if (data_allocator_ != nullptr) {
       data_allocator_->deallocate(data_);
       data_ = nullptr;
+      data_end_ = nullptr;
     } else {
       // If we didn't have an allocator, but data_ is not null then it must
       // be a stand-alone tensor that used malloc directly.
       free(data_);
       data_ = nullptr;
+      data_end_ = nullptr;
     }
   }
 }
@@ -338,8 +341,10 @@ unsigned char *Tensor::StartAddr() {
     // on the shape and type and allocate it.
     if (data_allocator_ != nullptr) {
       data_ = data_allocator_->allocate(this->SizeInBytes());
+      data_end_ = data_ + SizeInBytes();
     } else {
       data_ = static_cast<unsigned char *>(malloc(this->SizeInBytes()));
+      data_end_ = data_ + SizeInBytes();
       if (data_ == nullptr) {
         return nullptr;
       }
@@ -362,6 +367,7 @@ void Tensor::Invalidate() {
   shape_ = TensorShape::CreateUnknownRankShape();
   type_ = DataType(DataType::DE_UNKNOWN);
   data_ = nullptr;
+  data_end_ = nullptr;
   data_allocator_ = nullptr;
 }
 
