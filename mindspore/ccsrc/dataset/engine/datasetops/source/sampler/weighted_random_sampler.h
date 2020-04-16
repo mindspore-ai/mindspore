@@ -43,7 +43,7 @@ class WeightedRandomSampler : public Sampler {
   // Initialize the sampler.
   // @param op (Not used in this sampler)
   // @return Status
-  Status Init(const RandomAccessOp *op) override;
+  Status InitSampler() override;
 
   // Reset the internal variable to the initial state and reshuffle the indices.
   Status Reset() override;
@@ -68,6 +68,9 @@ class WeightedRandomSampler : public Sampler {
 
   // Random engine and device
   std::mt19937 rand_gen_;
+
+  // num_samples from user
+  int64_t user_num_samples_;
 
   // Discrete distribution for generating weighted random numbers with replacement.
   std::unique_ptr<std::discrete_distribution<int64_t>> discrete_dist_;

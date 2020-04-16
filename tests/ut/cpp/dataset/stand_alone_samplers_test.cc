@@ -75,7 +75,7 @@ TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
   std::shared_ptr<Tensor> tensor;
   for (int i = 0; i < 6; i++) {
     std::unique_ptr<Sampler> sampler = std::make_unique<DistributedSampler>(3, i % 3, (i < 3 ? false : true));
-    sampler->Init(&mock);
+    sampler->HandshakeRandomAccessOp(&mock);
     sampler->GetNextBuffer(&db);
     db->GetTensor(&tensor, 0, 0);
     MS_LOG(DEBUG) << (*tensor);
@@ -95,7 +95,7 @@ TEST_F(MindDataTestStandAloneSampler, TestStandAoneSequentialSampler) {
   std::shared_ptr<Sampler> sampler = std::make_shared<SequentialSampler>(3);
   std::unique_ptr<DataBuffer> db;
   std::shared_ptr<Tensor> tensor;
-  sampler->Init(&mock);
+  sampler->HandshakeRandomAccessOp(&mock);
   sampler->GetNextBuffer(&db);
   db->GetTensor(&tensor, 0, 0);
   EXPECT_TRUE((*tensor) == (*label1));

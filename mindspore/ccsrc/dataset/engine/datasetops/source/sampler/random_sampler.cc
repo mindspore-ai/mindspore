@@ -49,10 +49,9 @@ Status RandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
   return Status::OK();
 }
 
-Status RandomSampler::Init(const RandomAccessOp *op) {
-  RETURN_IF_NOT_OK(Sampler::Init(op));
+Status RandomSampler::InitSampler() {
   num_samples_ = (user_num_samples_ < num_samples_) ? user_num_samples_ : num_samples_;
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && num_rows_ > 0, "Fail to init RandomSampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && num_rows_ > 0, "both num_samples & num_rows need to be positive");
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
   if (replacement_ == false) {
     shuffled_ids_.reserve(num_rows_);

@@ -60,8 +60,8 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotReplacement) {
 
   // create sampler with replacement = true
   WeightedRandomSampler m_sampler(weights, num_samples, true);
-  DummyRandomAccessOp dummy_random_access_op(total_samples);
-  m_sampler.Init(&dummy_random_access_op);
+  DummyRandomAccessOp dummyRandomAccessOp(total_samples);
+  m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
@@ -90,8 +90,8 @@ TEST_F(MindDataTestWeightedRandomSampler, TestOneshotNoReplacement) {
 
   // create sampler with replacement = replacement
   WeightedRandomSampler m_sampler(weights, num_samples, false);
-  DummyRandomAccessOp dummy_random_access_op(total_samples);
-  m_sampler.Init(&dummy_random_access_op);
+  DummyRandomAccessOp dummyRandomAccessOp(total_samples);
+  m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
@@ -126,8 +126,8 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextBufferReplacement) {
 
   // create sampler with replacement = replacement
   WeightedRandomSampler m_sampler(weights, num_samples, true, samples_per_buffer);
-  DummyRandomAccessOp dummy_random_access_op(total_samples);
-  m_sampler.Init(&dummy_random_access_op);
+  DummyRandomAccessOp dummyRandomAccessOp(total_samples);
+  m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
@@ -162,8 +162,8 @@ TEST_F(MindDataTestWeightedRandomSampler, TestGetNextBufferNoReplacement) {
 
   // create sampler with replacement = replacement
   WeightedRandomSampler m_sampler(weights, num_samples, false, samples_per_buffer);
-  DummyRandomAccessOp dummy_random_access_op(total_samples);
-  m_sampler.Init(&dummy_random_access_op);
+  DummyRandomAccessOp dummyRandomAccessOp(total_samples);
+  m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
@@ -203,8 +203,8 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetReplacement) {
 
   // create sampler with replacement = true
   WeightedRandomSampler m_sampler(weights, num_samples, true);
-  DummyRandomAccessOp dummy_random_access_op(total_samples);
-  m_sampler.Init(&dummy_random_access_op);
+  DummyRandomAccessOp dummyRandomAccessOp(total_samples);
+  m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
@@ -248,8 +248,8 @@ TEST_F(MindDataTestWeightedRandomSampler, TestResetNoReplacement) {
 
   // create sampler with replacement = true
   WeightedRandomSampler m_sampler(weights, num_samples, false);
-  DummyRandomAccessOp dummy_random_access_op(total_samples);
-  m_sampler.Init(&dummy_random_access_op);
+  DummyRandomAccessOp dummyRandomAccessOp(total_samples);
+  m_sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;

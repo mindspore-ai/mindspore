@@ -100,7 +100,7 @@ Status CelebAOp::LaunchThreadsAndInitOp() {
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&CelebAOp::WorkerEntry, this, std::placeholders::_1)));
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(ParseImageAttrInfo());
-  RETURN_IF_NOT_OK(sampler_->Init(this));
+  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
 
   return Status::OK();
 }

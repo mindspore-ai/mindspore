@@ -29,21 +29,21 @@ namespace dataset {
 //  Constructor.
 WeightedRandomSampler::WeightedRandomSampler(const std::vector<double> &weights, int64_t num_samples, bool replacement,
                                              int64_t samples_per_buffer)
-    : Sampler(samples_per_buffer), weights_(weights), replacement_(replacement), sample_id_(0), buffer_id_(0) {
-  num_samples_ = num_samples;  // this variable is defined in base class sampler
-}
+    : Sampler(samples_per_buffer),
+      weights_(weights),
+      replacement_(replacement),
+      sample_id_(0),
+      buffer_id_(0),
+      user_num_samples_(num_samples) {}
 
 // Initialized this Sampler.
-Status WeightedRandomSampler::Init(const RandomAccessOp *op) {
-  RETURN_UNEXPECTED_IF_NULL(op);
-  RETURN_IF_NOT_OK(op->GetNumRowsInDataset(&num_rows_));
-
+Status WeightedRandomSampler::InitSampler() {
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0 && user_num_samples_, "num_samples & num_rows need to be positive");
+  CHECK_FAIL_RETURN_UNEXPECTED(samples_per_buffer_ > 0, "samples_per_buffer<=0\n");
   // Initialize random generator with seed from config manager
   rand_gen_.seed(GetSeed());
 
-  samples_per_buffer_ = (samples_per_buffer_ > num_samples_) ? num_samples_ : samples_per_buffer_;
-
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && samples_per_buffer_ > 0, "Fail to init WeightedRandomSampler");
+  samples_per_buffer_ = (samples_per_buffer_ > user_num_samples_) ? user_num_samples_ : samples_per_buffer_;
 
   if (!replacement_) {
     exp_dist_ = std::make_unique<std::exponential_distribution<>>(1);
@@ -65,8 +65,8 @@ void WeightedRandomSampler::InitOnePassSampling() {
   }
 
   // Partial sort the first `numSamples` elements.
-  std::partial_sort(val_idx.begin(), val_idx.begin() + num_samples_, val_idx.end());
-  for (int64_t i = 0; i < num_samples_; i++) {
+  std::partial_sort(val_idx.begin(), val_idx.begin() + user_num_samples_, val_idx.end());
+  for (int64_t i = 0; i < user_num_samples_; i++) {
     onepass_ids_.push_back(val_idx[i].second);
   }
 }
@@ -91,11 +91,11 @@ Status WeightedRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buf
                   "number of samples weights is more than num of rows. Might generate id out of bound OR other errors");
   }
 
-  if (!replacement_ && (weights_.size() < static_cast<size_t>(num_samples_))) {
+  if (!replacement_ && (weights_.size() < static_cast<size_t>(user_num_samples_))) {
     RETURN_STATUS_UNEXPECTED("Without replacement, sample weights less than numSamples");
   }
 
-  if (sample_id_ == num_samples_) {
+  if (sample_id_ == user_num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
   } else {
     (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
@@ -103,8 +103,8 @@ Status WeightedRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buf
 
     int64_t last_id = sample_id_ + samples_per_buffer_;
     // Handling the return all samples at once, and when last draw is not a full batch.
-    if (last_id > num_samples_) {
-      last_id = num_samples_;
+    if (last_id > user_num_samples_) {
+      last_id = user_num_samples_;
     }
 
     // Allocate tensor.
