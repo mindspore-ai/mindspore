@@ -120,6 +120,15 @@ class AssignSubInfo : public ArithmeticBase {
       : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
   ~AssignSubInfo() override = default;
 };
+
+// All dimensions can be split arbitrarily, but the split method of Logits should be the same as that of label.
+class SigmoidCrossEntropyWithLogitsInfo : public ArithmeticBase {
+ public:
+  SigmoidCrossEntropyWithLogitsInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
+                                    const PrimitiveAttrs& attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+  ~SigmoidCrossEntropyWithLogitsInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 

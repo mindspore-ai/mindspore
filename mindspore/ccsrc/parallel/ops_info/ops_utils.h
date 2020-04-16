@@ -138,6 +138,7 @@ constexpr char ALL_GATHER[] = "AllGather";
 constexpr char REDUCE_SCATTER[] = "ReduceScatter";
 constexpr char CONCAT[] = "Concat";
 constexpr char SOFTMAX_CROSS_ENTROPY_WITH_LOGITS[] = "SoftmaxCrossEntropyWithLogits";
+constexpr char SIGMOID_CROSS_ENTROPY_WITH_LOGITS[] = "SigmoidCrossEntropyWithLogits";
 constexpr char MATMUL[] = "MatMul";
 constexpr char GELU[] = "Gelu";
 constexpr char TANH[] = "Tanh";
