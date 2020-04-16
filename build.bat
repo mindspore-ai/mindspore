@@ -21,9 +21,9 @@ IF NOT %errorlevel% == 0 (
     )
  
 IF "%1%" == "" (
-    cmake --build . --target all -- -j6
+    cmake --build . --target package -- -j6
     ) ELSE (
-        cmake --build . --target all -- -j%1%
+        cmake --build . --target package -- -j%1%
     )
 IF NOT %errorlevel% == 0 (
     goto run_fail
