@@ -65,6 +65,14 @@ def get_rank_size(group=None):
         return int(group.split("-")[0])
     raise ValueError
 
+def get_group_size(group=None):
+    hccl = Hccl()
+    if group is None:
+        return hccl.rank_size
+    if isinstance(group, str):
+        return int(group.split("-")[0])
+    raise ValueError
+
 # pylint: disable=unused-argument
 def get_world_rank_from_group_rank(group, group_rank_id):
     return group_rank_id
