@@ -461,7 +461,6 @@ Status ConstructCostGraphNodes(const std::vector<AnfNodePtr> &all_nodes, const F
       // Needed by rec_parser
       operator_info->set_type(prim->name());
       std::vector<std::string> inputs_tensor_name = ExtractInputsTensorName(cnode);
-      operator_info->set_cnode_name(cnode->ToString());
 
       entire_costgraph->AddOperator(operator_info);
       (void)cnode->set_operator_info(operator_info);
@@ -934,9 +933,8 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   std::shared_ptr<std::vector<size_t>> index_list(new std::vector<size_t>);
   std::shared_ptr<std::vector<std::vector<size_t>>> eli_list(new std::vector<std::vector<size_t>>);
 
-  std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names, ops_nodes_list);
+  std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names);
 
-  graph = EliminateGraph(graph, eli_list, index_list);
   size_t num_device = g_device_manager->DeviceNum();
   if (PartitionForAllDevices(num_device, graph) == SUCCESS) {
     MS_LOG(INFO) << "Partition Success With " << num_device << " devices.";
