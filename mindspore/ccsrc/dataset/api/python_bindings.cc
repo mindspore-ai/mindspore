@@ -225,11 +225,13 @@ void bindTensor(py::module *m) {
   (void)py::class_<DataType>(*m, "DataType")
     .def(py::init<std::string>())
     .def(py::self == py::self)
-    .def("__str__", &DataType::ToString);
+    .def("__str__", &DataType::ToString)
+    .def("__deepcopy__", [](py::object &t, py::dict memo) { return t; });
 }
 
 void bindTensorOps1(py::module *m) {
-  (void)py::class_<TensorOp, std::shared_ptr<TensorOp>>(*m, "TensorOp");
+  (void)py::class_<TensorOp, std::shared_ptr<TensorOp>>(*m, "TensorOp")
+    .def("__deepcopy__", [](py::object &t, py::dict memo) { return t; });
 
   (void)py::class_<NormalizeOp, TensorOp, std::shared_ptr<NormalizeOp>>(
     *m, "NormalizeOp", "Tensor operation to normalize an image. Takes mean and std.")
