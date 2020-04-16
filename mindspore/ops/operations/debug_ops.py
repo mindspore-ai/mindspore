@@ -123,6 +123,7 @@ class InsertGradientOf(PrimitiveWithInfer):
         >>>     return ret
         >>>
         >>> clip = P.InsertGradientOf(clip_gradient)
+        >>> grad_all = C.GradOperation('get_all', get_all=True)
         >>> def InsertGradientOfClipDemo():
         >>>     def clip_test(x, y):
         >>>         x = clip(x)
@@ -135,7 +136,7 @@ class InsertGradientOf(PrimitiveWithInfer):
         >>>         return clip_test(x, y)
         >>>
         >>>     def fd(x, y):
-        >>>         return C.grad_all(clip_test)(x, y)
+        >>>         return grad_all(clip_test)(x, y)
         >>>
         >>>     print("forward: ", f(1.1, 0.1))
         >>>     print("clip_gradient:", fd(1.1, 0.1))
