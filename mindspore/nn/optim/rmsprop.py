@@ -14,7 +14,7 @@
 # ============================================================================
 """rmsprop"""
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
 
 rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
@@ -144,8 +144,8 @@ class RMSProp(Optimizer):
         self.decay = decay
         self.epsilon = epsilon
 
-        validator.check_type("use_locking", use_locking, [bool])
-        validator.check_type("centered", centered, [bool])
+        validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
+        validator.check_value_type("centered", centered, [bool], self.cls_name)
         self.centered = centered
         if centered:
             self.opt = P.ApplyCenteredRMSProp(use_locking)

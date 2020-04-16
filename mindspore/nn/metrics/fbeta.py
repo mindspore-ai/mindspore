@@ -15,7 +15,7 @@
 """Fbeta."""
 import sys
 import numpy as np
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from .metric import Metric
 
 
@@ -104,7 +104,7 @@ class Fbeta(Metric):
         Returns:
             Float, computed result.
         """
-        validator.check_type("average", average, [bool])
+        validator.check_value_type("average", average, [bool], self.__class__.__name__)
         if self._class_num == 0:
             raise RuntimeError('Input number of samples can not be 0.')
 

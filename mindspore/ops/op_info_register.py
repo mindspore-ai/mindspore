@@ -19,7 +19,7 @@ import os
 import json
 import inspect
 from mindspore._c_expression import Oplib
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 
 # path of built-in op info register.
 BUILT_IN_OPS_REGISTER_PATH = "mindspore/ops/_op_impl"
@@ -43,7 +43,7 @@ def op_info_register(op_info):
             op_info_real = json.dumps(op_info)
         else:
             op_info_real = op_info
-        validator.check_type("op_info", op_info_real, [str])
+        validator.check_value_type("op_info", op_info_real, [str], None)
         op_lib = Oplib()
         file_path = os.path.realpath(inspect.getfile(func))
         # keep the path custom ops implementation.

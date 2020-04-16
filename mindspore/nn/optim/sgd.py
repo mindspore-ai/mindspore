@@ -15,7 +15,7 @@
 """sgd"""
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.parameter import Parameter
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
 
 sgd_opt = C.MultitypeFuncGraph("sgd_opt")
@@ -100,7 +100,7 @@ class SGD(Optimizer):
             raise ValueError("dampening should be at least 0.0, but got dampening {}".format(dampening))
         self.dampening = dampening
 
-        validator.check_type("nesterov", nesterov, [bool])
+        validator.check_value_type("nesterov", nesterov, [bool], self.cls_name)
         self.nesterov = nesterov
 
         self.opt = P.SGD(dampening, weight_decay, nesterov)

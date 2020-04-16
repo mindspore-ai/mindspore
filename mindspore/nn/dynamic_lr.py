@@ -15,7 +15,7 @@
 """dynamic learning rate"""
 import math
 
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 
 
@@ -43,16 +43,16 @@ def piecewise_constant_lr(milestone, learning_rates):
         >>> lr = piecewise_constant_lr(milestone, learning_rates)
         [0.1, 0.1, 0.05, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01]
     """
-    validator.check_type('milestone', milestone, (tuple, list))
-    validator.check_type('learning_rates', learning_rates, (tuple, list))
+    validator.check_value_type('milestone', milestone, (tuple, list), None)
+    validator.check_value_type('learning_rates', learning_rates, (tuple, list), None)
     if len(milestone) != len(learning_rates):
         raise ValueError('The size of `milestone` must be same with the size of `learning_rates`.')
 
     lr = []
     last_item = 0
     for i, item in enumerate(milestone):
-        validator.check_integer(f'milestone[{i}]', item, 0, Rel.GT)
-        validator.check_type(f'learning_rates[{i}]', learning_rates[i], [float])
+        validator.check_integer(f'milestone[{i}]', item, 0, Rel.GT, None)
+        validator.check_value_type(f'learning_rates[{i}]', learning_rates[i], [float], None)
         if item < last_item:
             raise ValueError(f'The value of milestone[{i}] must be greater than milestone[{i - 1}]')
         lr += [learning_rates[i]] * (item - last_item)
@@ -62,12 +62,12 @@ def piecewise_constant_lr(milestone, learning_rates):
 
 
 def _check_inputs(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair):
-    validator.check_integer('total_step', total_step, 0, Rel.GT)
-    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT)
-    validator.check_integer('decay_epoch', decay_epoch, 0, Rel.GT)
-    validator.check_float_positive('learning_rate', learning_rate)
-    validator.check_float_positive('decay_rate', decay_rate)
-    validator.check_type('is_stair', is_stair, [bool])
+    validator.check_integer('total_step', total_step, 0, Rel.GT, None)
+    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT, None)
+    validator.check_integer('decay_epoch', decay_epoch, 0, Rel.GT, None)
+    validator.check_float_positive('learning_rate', learning_rate, None)
+    validator.check_float_positive('decay_rate', decay_rate, None)
+    validator.check_value_type('is_stair', is_stair, [bool], None)
 
 
 def exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False):
@@ -228,11 +228,11 @@ def cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch):
         >>> lr = cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
         [0.1, 0.1, 0.05500000000000001, 0.05500000000000001, 0.01, 0.01]
     """
-    validator.check_float_positive('min_lr', min_lr)
-    validator.check_float_positive('max_lr', max_lr)
-    validator.check_integer('total_step', total_step, 0, Rel.GT)
-    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT)
-    validator.check_integer('decay_epoch', decay_epoch, 0, Rel.GT)
+    validator.check_float_positive('min_lr', min_lr, None)
+    validator.check_float_positive('max_lr', max_lr, None)
+    validator.check_integer('total_step', total_step, 0, Rel.GT, None)
+    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT, None)
+    validator.check_integer('decay_epoch', decay_epoch, 0, Rel.GT, None)
 
     delta = 0.5 * (max_lr - min_lr)
     lr = []
@@ -279,13 +279,13 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         >>> lr = polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power)
         [0.1, 0.1, 0.07363961030678928, 0.07363961030678928, 0.01, 0.01]
     """
-    validator.check_float_positive('learning_rate', learning_rate)
-    validator.check_float_positive('end_learning_rate', end_learning_rate)
-    validator.check_integer('total_step', total_step, 0, Rel.GT)
-    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT)
-    validator.check_integer('decay_epoch', decay_epoch, 0, Rel.GT)
-    validator.check_type('power', power, [float])
-    validator.check_type('update_decay_epoch', update_decay_epoch, [bool])
+    validator.check_float_positive('learning_rate', learning_rate, None)
+    validator.check_float_positive('end_learning_rate', end_learning_rate, None)
+    validator.check_integer('total_step', total_step, 0, Rel.GT, None)
+    validator.check_integer('step_per_epoch', step_per_epoch, 0, Rel.GT, None)
+    validator.check_integer('decay_epoch', decay_epoch, 0, Rel.GT, None)
+    validator.check_value_type('power', power, [float], None)
+    validator.check_value_type('update_decay_epoch', update_decay_epoch, [bool], None)
 
     function = lambda x, y: (x, min(x, y))
     if update_decay_epoch:

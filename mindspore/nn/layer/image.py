@@ -19,7 +19,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from ..cell import Cell
 
@@ -134,15 +134,15 @@ class SSIM(Cell):
     """
     def __init__(self, max_val=1.0, filter_size=11, filter_sigma=1.5, k1=0.01, k2=0.03):
         super(SSIM, self).__init__()
-        validator.check_type('max_val', max_val, [int, float])
-        validator.check('max_val', max_val, '', 0.0, Rel.GT)
+        validator.check_value_type('max_val', max_val, [int, float], self.cls_name)
+        validator.check_number('max_val', max_val, 0.0, Rel.GT, self.cls_name)
         self.max_val = max_val
-        self.filter_size = validator.check_integer('filter_size', filter_size, 1, Rel.GE)
-        self.filter_sigma = validator.check_float_positive('filter_sigma', filter_sigma)
-        validator.check_type('k1', k1, [float])
-        self.k1 = validator.check_number_range('k1', k1, 0.0, 1.0, Rel.INC_NEITHER)
-        validator.check_type('k2', k2, [float])
-        self.k2 = validator.check_number_range('k2', k2, 0.0, 1.0, Rel.INC_NEITHER)
+        self.filter_size = validator.check_integer('filter_size', filter_size, 1, Rel.GE, self.cls_name)
+        self.filter_sigma = validator.check_float_positive('filter_sigma', filter_sigma, self.cls_name)
+        validator.check_value_type('k1', k1, [float], self.cls_name)
+        self.k1 = validator.check_number_range('k1', k1, 0.0, 1.0, Rel.INC_NEITHER, self.cls_name)
+        validator.check_value_type('k2', k2, [float], self.cls_name)
+        self.k2 = validator.check_number_range('k2', k2, 0.0, 1.0, Rel.INC_NEITHER, self.cls_name)
         self.mean = P.DepthwiseConv2dNative(channel_multiplier=1, kernel_size=filter_size)
 
     def construct(self, img1, img2):
@@ -231,8 +231,8 @@ class PSNR(Cell):
     """
     def __init__(self, max_val=1.0):
         super(PSNR, self).__init__()
-        validator.check_type('max_val', max_val, [int, float])
-        validator.check('max_val', max_val, '', 0.0, Rel.GT)
+        validator.check_value_type('max_val', max_val, [int, float], self.cls_name)
+        validator.check_number('max_val', max_val, 0.0, Rel.GT, self.cls_name)
         self.max_val = max_val
 
     def construct(self, img1, img2):

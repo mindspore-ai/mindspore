@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Loss scale manager abstract class."""
-from .._checkparam import ParamValidator as validator
+from .._checkparam import Validator as validator
 from .._checkparam import Rel
 from .. import nn
 
@@ -97,7 +97,7 @@ class DynamicLossScaleManager(LossScaleManager):
         if init_loss_scale < 1.0:
             raise ValueError("Loss scale value should be > 1")
         self.loss_scale = init_loss_scale
-        validator.check_integer("scale_window", scale_window, 0, Rel.GT)
+        validator.check_integer("scale_window", scale_window, 0, Rel.GT, self.__class__.__name__)
         self.scale_window = scale_window
         if scale_factor <= 0:
             raise ValueError("Scale factor should be > 1")

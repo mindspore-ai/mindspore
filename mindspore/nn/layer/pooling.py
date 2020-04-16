@@ -14,8 +14,7 @@
 # ============================================================================
 """pooling"""
 from mindspore.ops import operations as P
-from mindspore._checkparam import ParamValidator as validator
-from mindspore._checkparam import Rel
+from mindspore._checkparam import Validator as validator
 from ... import context
 from ..cell import Cell
 
@@ -24,35 +23,27 @@ class _PoolNd(Cell):
     """N-D  AvgPool"""
 
     def __init__(self, kernel_size, stride, pad_mode):
-        name = self.__class__.__name__
         super(_PoolNd, self).__init__()
-        validator.check_type('kernel_size', kernel_size, [int, tuple])
-        validator.check_type('stride', stride, [int, tuple])
-        self.pad_mode = validator.check_string('pad_mode', pad_mode.upper(), ['VALID', 'SAME'])
+        self.pad_mode = validator.check_string('pad_mode', pad_mode.upper(), ['VALID', 'SAME'], self.cls_name)
 
-        if isinstance(kernel_size, int):
-            validator.check_integer("kernel_size", kernel_size, 1, Rel.GE)
-        else:
-            if (len(kernel_size) != 2 or
-                    (not isinstance(kernel_size[0], int)) or
-                    (not isinstance(kernel_size[1], int)) or
-                    kernel_size[0] <= 0 or
-                    kernel_size[1] <= 0):
-                raise ValueError(f'The kernel_size passed to cell {name} should be an positive int number or'
-                                 f'a tuple of two positive int numbers, but got {kernel_size}')
-        self.kernel_size = kernel_size
+        def _check_int_or_tuple(arg_name, arg_value):
+            validator.check_value_type(arg_name, arg_value, [int, tuple], self.cls_name)
+            error_msg = f'For \'{self.cls_name}\' the {arg_name} should be an positive int number or ' \
+                        f'a tuple of two positive int numbers, but got {arg_value}'
+            if isinstance(arg_value, int):
+                if arg_value <= 0:
+                    raise ValueError(error_msg)
+            elif len(arg_value) == 2:
+                for item in arg_value:
+                    if isinstance(item, int) and item > 0:
+                        continue
+                    raise ValueError(error_msg)
+            else:
+                raise ValueError(error_msg)
+            return arg_value
 
-        if isinstance(stride, int):
-            validator.check_integer("stride", stride, 1, Rel.GE)
-        else:
-            if (len(stride) != 2 or
-                    (not isinstance(stride[0], int)) or
-                    (not isinstance(stride[1], int)) or
-                    stride[0] <= 0 or
-                    stride[1] <= 0):
-                raise ValueError(f'The stride passed to cell {name} should be an positive int number or'
-                                 f'a tuple of two positive int numbers, but got {stride}')
-        self.stride = stride
+        self.kernel_size = _check_int_or_tuple('kernel_size', kernel_size)
+        self.stride = _check_int_or_tuple('stride', stride)
 
     def construct(self, *inputs):
         pass

@@ -19,7 +19,7 @@ from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from ..cell import Cell
-from ..._checkparam import ParamValidator as validator
+from ..._checkparam import Validator as validator
 
 
 class Embedding(Cell):
@@ -59,7 +59,7 @@ class Embedding(Cell):
     """
     def __init__(self, vocab_size, embedding_size, use_one_hot=False, embedding_table='normal', dtype=mstype.float32):
         super(Embedding, self).__init__()
-        validator.check_subclass("dtype", dtype, mstype.number_type)
+        validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         self.vocab_size = vocab_size
         self.embedding_size = embedding_size
         self.use_one_hot = use_one_hot

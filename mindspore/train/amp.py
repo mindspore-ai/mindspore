@@ -16,7 +16,7 @@
 from easydict import EasyDict as edict
 
 from .. import nn
-from .._checkparam import ParamValidator as validator
+from .._checkparam import Validator as validator
 from .._checkparam import Rel
 from ..common import dtype as mstype
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
@@ -73,14 +73,14 @@ def _check_kwargs(key_words):
             raise  ValueError(f"Unsupported arg '{arg}'")
 
     if 'cast_model_type' in key_words:
-        validator.check('cast_model_type', key_words['cast_model_type'],
-                        [mstype.float16, mstype.float32], Rel.IN)
+        validator.check_type_name('cast_model_type', key_words['cast_model_type'],
+                                  [mstype.float16, mstype.float32], None)
     if 'keep_batchnorm_fp32' in key_words:
-        validator.check_isinstance('keep_batchnorm_fp32', key_words['keep_batchnorm_fp32'], bool)
+        validator.check_value_type('keep_batchnorm_fp32', key_words['keep_batchnorm_fp32'], bool, None)
     if 'loss_scale_manager' in key_words:
         loss_scale_manager = key_words['loss_scale_manager']
         if loss_scale_manager:
-            validator.check_isinstance('loss_scale_manager', loss_scale_manager, LossScaleManager)
+            validator.check_value_type('loss_scale_manager', loss_scale_manager, LossScaleManager, None)
 
 
 def _add_loss_network(network, loss_fn, cast_model_type):
@@ -97,7 +97,7 @@ def _add_loss_network(network, loss_fn, cast_model_type):
             label = _mp_cast_helper(mstype.float32, label)
             return self._loss_fn(F.cast(out, mstype.float32), label)
 
-    validator.check_isinstance('loss_fn', loss_fn, nn.Cell)
+    validator.check_value_type('loss_fn', loss_fn, nn.Cell, None)
     if cast_model_type == mstype.float16:
         network = WithLossCell(network, loss_fn)
     else:
@@ -126,9 +126,9 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', **kwargs):
         loss_scale_manager (Union[None, LossScaleManager]): If None, not scale the loss, or else
             scale the loss by LossScaleManager. If set, overwrite the level setting.
     """
-    validator.check_isinstance('network', network, nn.Cell)
-    validator.check_isinstance('optimizer', optimizer, nn.Optimizer)
-    validator.check('level', level, "", ['O0', 'O2'], Rel.IN)
+    validator.check_value_type('network', network, nn.Cell, None)
+    validator.check_value_type('optimizer', optimizer, nn.Optimizer, None)
+    validator.check('level', level, "", ['O0', 'O2'], Rel.IN, None)
     _check_kwargs(kwargs)
     config = dict(_config_level[level], **kwargs)
     config = edict(config)

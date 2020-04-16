@@ -52,7 +52,7 @@ def test_psnr_max_val_negative():
 
 def test_psnr_max_val_bool():
     max_val = True
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         net = PSNRNet(max_val)
 
 def test_psnr_max_val_zero():
