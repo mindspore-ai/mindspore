@@ -2032,7 +2032,7 @@ class GeneratorDataset(SourceDataset):
         if self.sampler is not None and hasattr(source, "__getitem__"):
             if isinstance(self.sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
                                          samplers.RandomSampler, samplers.SubsetRandomSampler,
-                                         samplers.WeightedRandomSampler)):
+                                         samplers.WeightedRandomSampler, samplers.Sampler)):
                 if num_samples is None:
                     num_samples = len(source)
                 sampler_instance = self.sampler.create()

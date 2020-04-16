@@ -297,9 +297,7 @@ def check_sampler_shuffle_shard_options(param_dict):
     shuffle, sampler = param_dict.get('shuffle'), param_dict.get('sampler')
     num_shards, shard_id = param_dict.get('num_shards'), param_dict.get('shard_id')
 
-    if sampler is not None and not isinstance(sampler, (
-            samplers.DistributedSampler, samplers.PKSampler, samplers.RandomSampler, samplers.SequentialSampler,
-            samplers.SubsetRandomSampler, samplers.WeightedRandomSampler)):
+    if sampler is not None and not isinstance(sampler, (samplers.BuiltinSampler, samplers.Sampler)):
         raise ValueError("sampler is not a valid Sampler type.")
 
     if sampler is not None:
@@ -579,11 +577,11 @@ def check_generatordataset(method):
                 raise ValueError("PKSampler is not supported by GeneratorDataset")
             if not isinstance(sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
                                         samplers.RandomSampler, samplers.SubsetRandomSampler,
-                                        samplers.WeightedRandomSampler)):
+                                        samplers.WeightedRandomSampler, samplers.Sampler)):
                 try:
                     iter(sampler)
                 except TypeError:
-                    raise TypeError("sampler should be either iterable or from dataset.samplers.py")
+                    raise TypeError("sampler should be either iterable or from mindspore.dataset.samplers")
 
         return method(*args, **kwargs)
 
