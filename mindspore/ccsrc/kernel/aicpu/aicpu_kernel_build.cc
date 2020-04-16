@@ -39,8 +39,6 @@ namespace mindspore {
 namespace kernel {
 using FNodeAttrHandle = std::function<void(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto)>;
 
-const std::vector<std::string> local_framework_op_vec = {kInitData, kGetNext, kDropoutGenMask, kPrint};
-
 bool SetIOIputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input_num,
                    std::vector<size_t> *input_size_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -298,19 +296,12 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   kernel_mod_ptr->SetAnfNode(anf_node);
   kernel_mod_ptr->SetNodeName(op_name);
-  auto iter = std::find(local_framework_op_vec.begin(), local_framework_op_vec.end(), op_name);
-  if (iter != local_framework_op_vec.end()) {
-    if (!CreateNodeDefBytes(anf_node, kernel_mod_ptr)) {
-      MS_LOG(EXCEPTION) << "Create nodeDefBytes faild!";
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "Aicpu don't support node [" << op_name << "]";
+  if (!CreateNodeDefBytes(anf_node, kernel_mod_ptr)) {
+    MS_LOG(EXCEPTION) << "Create nodeDefBytes faild!";
   }
-
   if (!SetIOSize(anf_node, kernel_mod_ptr)) {
     MS_LOG(EXCEPTION) << "Set input output size list failed.";
   }
-
   return kernel_mod_ptr;
 }
 }  // namespace kernel
