@@ -19,6 +19,7 @@ import pytest
 import mindspore.nn as nn
 from mindspore.common.api import _executor
 from mindspore import Tensor, Parameter
+from mindspore.communication.management import init
 
 
 def test_bn_pars_valid1():
@@ -70,3 +71,17 @@ def test_compile_groupnorm():
     net = nn.GroupNorm(16, 64)
     input_data = Tensor(np.random.rand(1,64,256,256).astype(np.float32))
     _executor.compile(net, input_data)
+
+class GlobalBNNet(nn.Cell):
+    def __init__(self):
+        super(GlobalBNNet, self).__init__()
+        self.bn = nn.GlobalBatchNorm(num_features = 2, group = 4)
+    def construct(self, x):
+        return self.bn(x)
+
+def test_gloabl_bn():
+    init("hccl")
+    net = GlobalBNNet()
+    input_data = Tensor(np.array([[2.4, 2.1], [3.2, 5.4]], dtype=np.float32))
+    net.set_train()
+    out = net(input_data)
