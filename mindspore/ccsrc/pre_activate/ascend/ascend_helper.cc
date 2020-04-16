@@ -360,5 +360,17 @@ AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePt
   AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
   return tuple_getitem;
 }
+
+AnfNodePtr CreateMemcpyAsyncOp(const FuncGraphPtr &graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  auto prim = std::make_shared<Primitive>(kMemCpyAsyncOpName);
+  std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(prim), node};
+  auto new_node = graph->NewCNode(new_node_inputs);
+  MS_EXCEPTION_IF_NULL(new_node);
+  new_node->set_abstract(node->abstract());
+  new_node->set_scope(node->scope());
+  return new_node;
+}
 }  // namespace opt
 }  // namespace mindspore

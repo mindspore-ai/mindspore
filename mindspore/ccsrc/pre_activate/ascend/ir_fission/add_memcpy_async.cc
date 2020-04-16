@@ -18,22 +18,11 @@
 #include "utils/utils.h"
 #include "session/anf_runtime_algorithm.h"
 #include "optimizer/opt.h"
+#include "pre_activate/ascend/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-AnfNodePtr CreateMemcpyAsyncOp(const FuncGraphPtr &graph, const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(node);
-  auto prim = std::make_shared<Primitive>(kMemCpyAsyncOpName);
-  std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(prim), node};
-  auto new_node = graph->NewCNode(new_node_inputs);
-  MS_EXCEPTION_IF_NULL(new_node);
-  new_node->set_abstract(node->abstract());
-  new_node->set_scope(node->scope());
-  return new_node;
-}
-
 const AnfNodePtr AddMemcpyAsyncIfInputIsUsedByOthers(const FuncGraphPtr &graph, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);

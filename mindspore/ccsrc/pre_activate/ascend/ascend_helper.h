@@ -65,6 +65,8 @@ AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodeP
 CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
 AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx);
+
+AnfNodePtr CreateMemcpyAsyncOp(const FuncGraphPtr &graph, const AnfNodePtr &node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ASCEND_HELPER_H_
