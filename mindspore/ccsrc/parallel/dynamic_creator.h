@@ -127,6 +127,7 @@ REGISTER(NegInfo);
 REGISTER(BatchMatMulInfo);
 REGISTER(ExpandDimsInfo);
 REGISTER(SqueezeInfo);
+REGISTER(SigmoidCrossEntropyWithLogitsInfo);
 }  // namespace parallel
 }  // namespace mindspore
 
