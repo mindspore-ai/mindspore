@@ -60,7 +60,7 @@ void GetRtKelInfo(const CNodePtr &kernel_node,
   MS_EXCEPTION_IF_NULL(ker_desc_ptr);
   auto kernel_info = ker_desc_ptr->GetKernelInfo();
   if (kernel_info.empty()) {
-    MS_LOG(WARNING) << "Rt dose not has op[" << opNameLower << "].";
+    MS_LOG(DEBUG) << "Rt dose not have op [" << opNameLower << "].";
     return;
   }
   *kernel_info_list = kernel_info;

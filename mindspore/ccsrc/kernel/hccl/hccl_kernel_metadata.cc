@@ -27,7 +27,7 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
   if (op_name != kAllGather && op_name != kAllReduce && op_name != kBroadcast && op_name != kReduceScatter) {
-    MS_LOG(INFO) << "Hccl can't find op [" << op_name << "]";
+    MS_LOG(DEBUG) << "Hccl does not have op [" << op_name << "]";
     return;
   }
 
