@@ -20,6 +20,8 @@ import mindspore.nn as nn
 from mindspore.common.api import _executor
 from mindspore import Tensor, Parameter
 from mindspore.communication.management import init
+from mindspore import context
+from mindspore import ParallelMode
 
 
 def test_bn_pars_valid1():
@@ -75,12 +77,17 @@ def test_compile_groupnorm():
 class GlobalBNNet(nn.Cell):
     def __init__(self):
         super(GlobalBNNet, self).__init__()
-        self.bn = nn.GlobalBatchNorm(num_features = 2, group = 4)
+        self.bn = nn.GlobalBatchNorm(num_features = 2, group = 2)
     def construct(self, x):
         return self.bn(x)
 
-def test_gloabl_bn():
+def test_global_bn():
     init("hccl")
+    size = 4
+    context.set_context(mode=context.GRAPH_MODE)
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
+                                      device_num=size, parameter_broadcast=True)
     net = GlobalBNNet()
     input_data = Tensor(np.array([[2.4, 2.1], [3.2, 5.4]], dtype=np.float32))
     net.set_train()
