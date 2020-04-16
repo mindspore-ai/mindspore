@@ -201,6 +201,14 @@ bool InnerScalarGe(T x, U y) {
         int sum = InnerScalar##op_t(GetValue<int>(x), GetValue<int>(y));                       \
         return MakeValue(sum);                                                                 \
       }                                                                                        \
+      if (x->isa<Int32Imm>() && y->isa<FP32Imm>()) {                                           \
+        float sum = InnerScalar##op_t(IntToFloat(GetValue<int>(x)), GetValue<float>(y));       \
+        return MakeValue(sum);                                                                 \
+      }                                                                                        \
+      if (x->isa<FP32Imm>() && y->isa<Int32Imm>()) {                                           \
+        float sum = InnerScalar##op_t(GetValue<float>(x), IntToFloat(GetValue<int>(y)));       \
+        return MakeValue(sum);                                                                 \
+      }                                                                                        \
       MS_LOG(EXCEPTION) << "Unsupported Value for Scalar" << #op_t << ", x: " << x->ToString() \
                         << ", y: " << y->ToString();                                           \
     } while (0);                                                                               \
