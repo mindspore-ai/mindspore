@@ -381,15 +381,17 @@ if (WIN32)
             securec
             proto_input
             mindspore::flatbuffers
-            mindspore::glog
             )
 else()
     target_link_libraries(_c_expression PRIVATE
             mindspore::pybind11_module
             mindspore
             mindspore_gvar
-            mindspore::glog
             )
+endif()
+
+if(USE_GLOG)
+    target_link_libraries(_c_expression PRIVATE mindspore::glog)
 endif()
 
 if(ENABLE_GPU)
