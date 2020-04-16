@@ -697,3 +697,37 @@ TEST_F(MindDataTestTFReaderOp, TestTotalRowsBasic) {
   TFReaderOp::CountTotalRows(&total_rows, filenames, 729, true);
   ASSERT_EQ(total_rows, 60);
 }
+
+TEST_F(MindDataTestTFReaderOp, TestTFReaderInvalidFiles) {
+  // Start with an empty execution tree
+  auto my_tree = std::make_shared<ExecutionTree>();
+
+  std::string valid_file = datasets_root_path_ + "/testTFTestAllTypes/test.data";
+  std::string schema_file = datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json";
+  std::string invalid_file = datasets_root_path_ + "/testTFTestAllTypes/invalidFile.txt";
+  std::string nonexistent_file = "this/file/doesnt/exist";
+
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  TFReaderOp::Builder builder;
+  builder.SetDatasetFilesList({invalid_file, valid_file, schema_file})
+      .SetRowsPerBuffer(16)
+      .SetNumWorkers(16);
+
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  schema->LoadSchemaFile(schema_file, {});
+  builder.SetDataSchema(std::move(schema));
+
+  Status rc = builder.Build(&my_tfreader_op);
+  ASSERT_TRUE(!rc.IsOk());
+
+  builder.SetDatasetFilesList({invalid_file, valid_file, schema_file, nonexistent_file})
+      .SetRowsPerBuffer(16)
+      .SetNumWorkers(16);
+
+  schema = std::make_unique<DataSchema>();
+  schema->LoadSchemaFile(schema_file, {});
+  builder.SetDataSchema(std::move(schema));
+
+  rc = builder.Build(&my_tfreader_op);
+  ASSERT_TRUE(!rc.IsOk());
+}

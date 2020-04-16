@@ -900,13 +900,22 @@ class SourceDataset(Dataset):
             List, files.
         """
 
-        def flat(lists):
-            return list(np.array(lists).flatten())
-
         if not isinstance(patterns, list):
             patterns = [patterns]
 
-        file_list = flat([glob.glob(file, recursive=True) for file in patterns])
+        file_list = []
+        unmatched_patterns = []
+        for pattern in patterns:
+            matches = [match for match in glob.glob(pattern, recursive=True) if os.path.isfile(match)]
+
+            if matches:
+                file_list.extend(matches)
+            else:
+                unmatched_patterns.append(pattern)
+
+        if unmatched_patterns:
+            raise ValueError("The following patterns did not match any files: ", unmatched_patterns)
+
         if file_list:  # not empty
             return file_list
         raise ValueError("The list of path names matching the patterns is empty.")
