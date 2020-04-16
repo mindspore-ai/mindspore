@@ -69,6 +69,7 @@ MindSpore offers build options across multiple backends:
 | GPU CUDA 9.2 | Ubuntu-x86 | ✔️ |
 | GPU CUDA 10.1 | Ubuntu-x86 | ✔️ |
 | CPU | Ubuntu-x86 | ✔️ |
+| CPU | Windows-x86 | ✔️ |
 
 For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an example:
 

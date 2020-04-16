@@ -30,8 +30,17 @@ include(CPack)
 # set install path
 set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Installation directory for libraries")
 set(INSTALL_PY_DIR ".")
-set(INSTALL_LIB_DIR "lib")
 set(INSTALL_BASE_DIR ".")
+
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set(INSTALL_LIB_DIR ".")
+    set(onednn_LIBPATH ${onednn_LIBPATH}/../bin/)
+    set(glog_LIBPATH ${glog_LIBPATH}/../bin/)
+    set(opencv_LIBPATH ${opencv_LIBPATH}/../bin/)
+    set(jpeg_turbo_LIBPATH ${jpeg_turbo_LIBPATH}/../bin/)
+else ()
+    set(INSTALL_LIB_DIR "lib")
+endif ()
 
 # set package files
 install(
@@ -80,7 +89,7 @@ if (ENABLE_CPU)
     elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
         file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/libdnnl*${CMAKE_SHARED_LIBRARY_SUFFIX}*)
     elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
-        file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/dnnl.lib)
+        file(GLOB_RECURSE DNNL_LIB_LIST ${onednn_LIBPATH}/dnnl.dll)
     endif ()
     install(
         FILES ${DNNL_LIB_LIST}
@@ -138,6 +147,18 @@ if (NOT ENABLE_GE)
             COMPONENT mindspore
         )
     endif ()
+endif ()
+
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
+    file(GLOB CXX_LIB_LIST ${CXX_DIR}/*.dll)
+    file(GLOB JPEG_LIB_LIST ${jpeg_turbo_LIBPATH}/*.dll)
+    file(GLOB SQLITE_LIB_LIST ${sqlite_LIBPATH}/*.dll)
+    install(
+        FILES ${CXX_LIB_LIST} ${JPEG_LIB_LIST} ${SQLITE_LIB_LIST}
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
 endif ()
 
 # set python files
