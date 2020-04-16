@@ -20,7 +20,7 @@ from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 import mindspore.context as context
-from mindspore._checkparam import  check_int_positive, check_bool,check_typename
+from mindspore._checkparam import  check_int_positive, check_bool, check_typename
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
@@ -327,7 +327,7 @@ class GroupNorm(Cell):
         self.num_channels = check_int_positive(num_channels)
         if num_channels % num_groups != 0:
             raise ValueError("num_channels should be divided by num_groups")
-        self.eps = Tensor(check_typename('eps', eps, (float,)),mstype.float32)
+        self.eps = Tensor(check_typename('eps', eps, (float,)), mstype.float32)
         self.affine = check_bool(affine)
 
         gamma = initializer('ones', [num_channels, 1, 1], mstype.float32)
@@ -346,8 +346,8 @@ class GroupNorm(Cell):
         self.sqrt = P.Sqrt()
 
     def construct(self, x):
-        batch,channel,height,width = self.shape(x)
-        x = self.reshape(x,(batch, self.num_groups,channel*height*width/self.num_groups))
+        batch, channel, height,width = self.shape(x)
+        x = self.reshape(x, (batch, self.num_groups, channel*height*width/self.num_groups))
         mean = self.reduce_mean(x, 2)
         var = self.reduce_sum(self.square(x - mean), 2) / (channel * height * width / self.num_groups - 1)
         std = self.sqrt(var + self.eps)
@@ -357,4 +357,6 @@ class GroupNorm(Cell):
         return output
 
     def extend_repr(self):
-        return 'num_groups={}, num_channels={}'.format(self.num_groups,self.num_channels)
+        """Display instance object as string."""
+        s = 'num_groups={}, num_channels={}'.format(self.num_groups, self.num_channels)
+        return s
