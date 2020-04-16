@@ -20,7 +20,7 @@ from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 import mindspore.context as context
-from mindspore._checkparam import  check_int_positive, check_bool, check_typename
+from mindspore._checkparam import check_int_positive, check_bool, check_typename
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
@@ -293,7 +293,7 @@ class LayerNorm(Cell):
 
 class GroupNorm(Cell):
     r"""
-    Group  Normalization over a mini-batch of inputs.
+    Group Normalization over a mini-batch of inputs.
 
     Group normalization is widely used in recurrent neural networks. It applies
     normalization over a mini-batch of inputs for each single training case as described
