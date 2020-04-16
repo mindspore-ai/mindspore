@@ -27,29 +27,28 @@
 
 namespace mindspore {
 namespace parallel {
-void GenerateStrategy(const std::shared_ptr<Graph> graph, std::vector<std::shared_ptr<OperatorInfo>> ops,
-                      const std::shared_ptr<std::vector<size_t>> ops_nodes_list,
-                      const std::shared_ptr<std::vector<size_t>> index_list,
-                      const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list);
-void PrepareMatMul(const std::shared_ptr<Graph> graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                   const size_t iter_ops, const size_t iter_nodes, const size_t iter_op_inputs, std::vector<int32_t> s);
-void PrepareConv2D(const std::shared_ptr<Graph> graph, const size_t iter_nodes, const size_t iter_op_inputs,
-                   std::vector<int32_t> s);
-void PrepareBiasAdd(const std::shared_ptr<Graph> graph, const size_t iter_nodes, const size_t iter_op_inputs,
-                    std::vector<int32_t> s);
-void PrepareBN(const std::shared_ptr<Graph> graph, const size_t iter_nodes, const size_t iter_op_inputs,
-               std::vector<int32_t> s);
-void PrepareSparse(const size_t iter_op_inputs, std::vector<int32_t> s);
-void RefillOrigin(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                  const size_t iter_op_inputs, std::vector<int32_t> s);
-std::vector<int32_t> PrepareStrategy(const std::shared_ptr<Graph> graph,
-                                     const std::vector<std::shared_ptr<OperatorInfo>> &ops, const std::string &type,
-                                     const size_t iter_ops, const size_t iter_nodes, const size_t iter_op_inputs);
-size_t IterNodes(const std::shared_ptr<std::vector<size_t>> ops_nodes_list,
-                 const std::shared_ptr<std::vector<size_t>> index_list,
-                 const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list, const size_t iter_ops,
-                 size_t iter_nodes);
-void MaskNoSupportedOps(const std::shared_ptr<Graph> graph);
+void GenerateStrategy(std::shared_ptr<Graph> graph, bool mask_special_ops,
+                      const std::vector<std::shared_ptr<OperatorInfo>> &ops);
+std::vector<int32_t> PrepareMatMul(const std::shared_ptr<Graph> &graph,
+                                   const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_nodes,
+                                   const size_t iter_op_inputs);
+std::vector<int32_t> PrepareConv2D(const std::shared_ptr<Graph> &graph, const size_t iter_nodes,
+                                   const size_t iter_op_inputs);
+std::vector<int32_t> PrepareBiasAdd(const std::shared_ptr<Graph> &graph, const size_t iter_nodes,
+                                    const size_t iter_op_inputs);
+std::vector<int32_t> PrepareBN(const std::shared_ptr<Graph> &graph, const size_t iter_nodes,
+                               const size_t iter_op_inputs);
+std::vector<int32_t> PrepareSparse(const size_t iter_op_inputs);
+std::vector<int32_t> MakeOriginalStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                                          const size_t iter_op_inputs);
+std::vector<int32_t> MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph, const size_t iter_ops,
+                                           const size_t iter_op_inputs);
+std::vector<int32_t> MakeDataParallelStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                              const size_t iter_ops, const size_t iter_op_inputs);
+std::vector<int32_t> PrepareStrategy(const std::shared_ptr<Graph> &graph,
+                                     const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                                     const size_t iter_op_inputs);
+void MaskSpecialOps(std::shared_ptr<Graph> graph);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_GENERATE_STRATEGY_H_

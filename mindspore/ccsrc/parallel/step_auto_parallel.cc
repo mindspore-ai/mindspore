@@ -931,12 +931,9 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   }
 
   std::shared_ptr<std::vector<size_t>> ops_nodes_list(new std::vector<size_t>);
-  std::shared_ptr<std::vector<size_t>> index_list(new std::vector<size_t>);
-  std::shared_ptr<std::vector<std::vector<size_t>>> eli_list(new std::vector<std::vector<size_t>>);
 
   std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names, ops_nodes_list);
 
-  graph = EliminateGraph(graph, eli_list, index_list);
   size_t num_device = g_device_manager->DeviceNum();
   if (PartitionForAllDevices(num_device, graph) == SUCCESS) {
     MS_LOG(INFO) << "Partition Success With " << num_device << " devices.";
@@ -945,7 +942,8 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     return FAILED;
   }
 
-  GenerateStrategy(graph, ops, ops_nodes_list, index_list, eli_list);
+  bool mask_special_ops = true;
+  GenerateStrategy(graph, mask_special_ops, ops);
 
   if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
     MS_LOG(INFO) << "Init selected strategy succeeded.";
