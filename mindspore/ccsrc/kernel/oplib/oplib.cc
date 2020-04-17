@@ -94,6 +94,20 @@ bool OpLib::RegOp(const std::string& json_string, const std::string& impl_path) 
   return ret;
 }
 
+void OpLib::DecodeTBESpecificInfo(const nlohmann::json& obj, const std::shared_ptr<OpInfo>& op_info) {
+  op_info->set_async_flag(obj.at(kAsyncFlag));
+  op_info->set_binfile_name(obj.at(kBinfileName));
+  op_info->set_compute_cost(obj.at(kComputeCost));
+  op_info->set_kernel_name(obj.at(kKernelName));
+  op_info->set_partial_flag(obj.at(kPartialFlag));
+  if (obj.find(kOpPattern) != obj.end()) {
+    op_info->set_op_pattern(obj.at(kOpPattern));
+  }
+  if (obj.find(kDynamicFormat) != obj.end()) {
+    op_info->set_dynamic_format(obj.at(kDynamicFormat));
+  }
+}
+
 bool OpLib::DecodeOpInfo(const nlohmann::json& obj, const mindspore::kernel::OpImplyType imply_type,
                          const std::string& impl_path) {
   std::shared_ptr<OpInfo> op_info = std::make_shared<OpInfo>();
@@ -103,17 +117,7 @@ bool OpLib::DecodeOpInfo(const nlohmann::json& obj, const mindspore::kernel::OpI
   op_info->set_imply_type(imply_type);
   op_info->set_fusion_type(obj.at(kFusionType));
   if (imply_type == kTBE) {
-    op_info->set_async_flag(obj.at(kAsyncFlag));
-    op_info->set_binfile_name(obj.at(kBinfileName));
-    op_info->set_compute_cost(obj.at(kComputeCost));
-    op_info->set_kernel_name(obj.at(kKernelName));
-    op_info->set_partial_flag(obj.at(kPartialFlag));
-    if (obj.find(kOpPattern) != obj.end()) {
-      op_info->set_op_pattern(obj.at(kOpPattern));
-    }
-    if (obj.find(kDynamicFormat) != obj.end()) {
-      op_info->set_dynamic_format(obj.at(kDynamicFormat));
-    }
+    DecodeTBESpecificInfo(obj, op_info);
   }
   auto attrs = obj.at(kAttr);
   for (const auto& attr : attrs) {

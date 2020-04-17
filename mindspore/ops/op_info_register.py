@@ -57,7 +57,7 @@ def op_info_register(op_info):
     return register_decorator
 
 
-class RegOp():
+class RegOp:
     """
     Base class for op info register.
 
@@ -483,9 +483,9 @@ class TBERegOp(RegOp):
         return self
 
 
-class DataType():
+class DataType:
     """
-    Various combinations of dtype and formatself.
+    Various combinations of dtype and format.
 
     The current list below maybe not completed. If necessary, please add it.
     """
