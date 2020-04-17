@@ -722,8 +722,7 @@ bool TbeKernelBuild::GenFusionComputeOutputJson(const mindspore::CNodePtr &cnode
                                                 std::vector<nlohmann::json> *output_desc_list) {
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
   if (AnfAlgo::HasNodeAttr(kAttrOutputUsedNum, cnode)) {
-    // wait anther pr: auto output_used_nums = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode, kAttrOutputUsedNum);
-    auto output_used_nums = {SizeToInt(AnfAlgo::GetNodeAttr<std::size_t>(cnode, kAttrOutputUsedNum))};
+    auto output_used_nums = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode, kAttrOutputUsedNum);
     MS_LOG(INFO) << "This node's output has been reused, node name: " << cnode->fullname_with_scope();
     if (output_used_nums.size() != output_size) {
       MS_LOG(INFO) << "Fusion error: output tenor num(" << output_size << ")"
