@@ -43,23 +43,6 @@ def _tensor_run_opt(lars, weight_decay, learning_rate, gradient, weight, decay_f
     return gradient
 
 
-@lars_opt.register("Function", "Number", "Number", "Tensor", "Tensor", "Bool", "Bool")
-def _tensor_run_opt_v2(lars, weight_decay, learning_rate, gradient, weight, decay_flag, lars_flag):
-    """Apply lars optimizer to the weight parameter."""
-    if lars_flag:
-        op_reduce = P.ReduceSum()
-        w_square_sum = op_reduce(F.square(weight))
-        grad_square_sum = op_reduce(F.square(gradient))
-        if decay_flag:
-            grad_t = lars(weight, gradient, w_square_sum, grad_square_sum, weight_decay, learning_rate)
-        else:
-            num_zero = 0.0
-            grad_t = lars(weight, gradient, w_square_sum, grad_square_sum, num_zero, learning_rate)
-        return grad_t
-
-    return gradient
-
-
 class LARS(Optimizer):
     """
     Implements the LARS algorithm with LARSUpdate Operator.

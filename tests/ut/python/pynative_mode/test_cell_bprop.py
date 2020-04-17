@@ -51,7 +51,7 @@ class InlineMulADD(nn.Cell):
     def __init__(self):
         super(InlineMulADD, self).__init__()
         self.mul_add = MulAdd()
-        self.param = Parameter(2, 'param')
+        self.param = 2
 
     def construct(self, x, y):
         return self.mul_add(x, y) + x + self.param * y

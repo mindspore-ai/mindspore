@@ -21,34 +21,17 @@ rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
 centered_rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
 
 
-@rmsprop_opt.register("Function", "Number", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
-def _rmsprop_opt(opt, learning_rate, decay, epsilon, momentum, weight, ms, mom, grad):
-    """Apply rmsprop optimizer to the weight parameter."""
-    success = True
-    success = F.depend(success, opt(weight, ms, mom, grad, learning_rate, decay, momentum, epsilon))
-    return success
-
-
 @rmsprop_opt.register("Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
-def _rmsprop_opt_dynamic_lr(opt, learning_rate, decay, epsilon, momentum, weight, ms, mom, grad):
+def _rmsprop_opt(opt, learning_rate, decay, epsilon, momentum, weight, ms, mom, grad):
     """Apply rmsprop optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, ms, mom, grad, learning_rate, decay, momentum, epsilon))
     return success
 
 
-@centered_rmsprop_opt.register("Function", "Number", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor",
-                               "Tensor", "Tensor")
-def _centered_rmsprop_opt(opt, learning_rate, decay, epsilon, momentum, weight, mg, ms, mom, grad):
-    """Apply centered rmsprop optimizer to the weight parameter."""
-    success = True
-    success = F.depend(success, opt(weight, mg, ms, mom, grad, learning_rate, decay, momentum, epsilon))
-    return success
-
-
 @centered_rmsprop_opt.register("Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor",
                                "Tensor", "Tensor")
-def _centered_rmsprop_opt_dynamic_lr(opt, learning_rate, decay, epsilon, momentum, weight, mg, ms, mom, grad):
+def _centered_rmsprop_opt(opt, learning_rate, decay, epsilon, momentum, weight, mg, ms, mom, grad):
     """Apply centered rmsprop optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, mg, ms, mom, grad, learning_rate, decay, momentum, epsilon))
