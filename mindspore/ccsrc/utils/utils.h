@@ -186,8 +186,10 @@ constexpr auto kOpFormat_FRAC_Z = "FracZ";
 constexpr auto kOpFormat_FRAC_NZ = "FRACTAL_NZ";
 constexpr auto kOpFormat_C1HWNCoC0 = "C1HWNCoC0";
 constexpr auto kOpFormat_NC1HWC0_C04 = "NC1HWC0_C04";
-const std::set<std::string> k1DSupportFormat = {kOpFormat_DEFAULT, kOpFormat_NCHW,        kOpFormat_NHWC,
-                                                kOpFormat_FRAC_Z,  kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0};
+const std::set<std::string> k1DSupportFormat = {kOpFormat_DEFAULT,  kOpFormat_NCHW,        kOpFormat_NHWC,
+                                                kOpFormat_FRAC_Z,   kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
+                                                kOpFormat_C1HWNCoC0};
+
 const std::set<std::string> k2DSupportFormat = {kOpFormat_DEFAULT, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_FRAC_Z,
                                                 kOpFormat_NC1KHKWHWC0};
 const std::set<std::string> k3DSupportFormat = {kOpFormat_DEFAULT, kOpFormat_NC1KHKWHWC0};
