@@ -1872,7 +1872,7 @@ class NMSWithMask(PrimitiveWithInfer):
         >>> bbox = np.random.rand(128, 5)
         >>> bbox[:, 2] += bbox[:, 0]
         >>> bbox[:, 3] += bbox[:, 1]
-        >>> inputs = Tensor(bbox)
+        >>> inputs = Tensor(bbox, mindspore.float32)
         >>> nms = P.NMSWithMask(0.5)
         >>> output_boxes, indices, mask = nms(inputs)
     """
