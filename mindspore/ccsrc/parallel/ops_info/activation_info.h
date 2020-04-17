@@ -203,6 +203,14 @@ class SqueezeInfo : public ActivationOther {
  private:
   ValueTuplePtr axis_;
 };
+
+class SquareInfo : public ActivationOther {
+ public:
+  SquareInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
+             const PrimitiveAttrs& attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~SquareInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_

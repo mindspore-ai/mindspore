@@ -104,13 +104,14 @@ std::vector<std::string> splittable_op_ = {MATMUL,
                                            SQRT,
                                            GET_NEXT,
                                            CAST,
-                                           Neg,
+                                           NEG,
+                                           SQUARE,
                                            BATCH_MATMUL,
                                            EXPAND_DIMS,
                                            SQUEEZE};
 
-std::vector<std::string> elementwise_op_ = {ACTIVATION, GELU, TANH, SOFTMAX, LOG_SOFTMAX, RELU, SQRT,
-                                            CAST,       POW,  EXP,  LOG,     COS,         ACOS, LOGICALNOT};
+std::vector<std::string> elementwise_op_ = {ACTIVATION, GELU, TANH, SOFTMAX, LOG_SOFTMAX, RELU,       SQRT, CAST,
+                                            POW,        EXP,  LOG,  COS,     ACOS,        LOGICALNOT, NEG,  SQUARE};
 
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   MS_EXCEPTION_IF_NULL(root);
