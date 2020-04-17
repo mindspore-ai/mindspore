@@ -291,7 +291,7 @@ Status GatherV2Info::GenerateStrategies(int32_t stage_id) {
   }
 
   is_auto_parallel_ = true;
-  Shape input0_split(inputs_shape_[0].size());
+  Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
   std::vector<StrategyPtr> sp_vector;
