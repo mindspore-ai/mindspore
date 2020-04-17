@@ -68,9 +68,7 @@ AnfNodePtr GetMixedPrecisionCastHelp(const FuncGraphPtr &func_graph, const AnfNo
     return param;
   }
   auto cast_helper = prim::GetPythonOps("_mp_cast_helper", "mindspore.ops.composite.base");
-  auto partial =
-    func_graph->NewCNode({NewValueNode(prim::kPrimPartial), NewValueNode(cast_helper), NewValueNode(dst_type)});
-  auto cast = func_graph->NewCNode({NewValueNode(prim::kCompositeHyperMap), partial, param});
+  auto cast = func_graph->NewCNode({NewValueNode(cast_helper), NewValueNode(dst_type), param});
   return cast;
 }
 
