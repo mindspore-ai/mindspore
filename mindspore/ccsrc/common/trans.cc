@@ -205,8 +205,8 @@ std::vector<int> GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
     if (tensor == nullptr) {
       MS_LOG(EXCEPTION) << " the node[ " << node->DebugString() << "]'s cannot convert ";
     }
-    shape = tensor->shape();
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(host_shape), IntToSize);
+    auto shape_temp = tensor->shape();
+    (void)std::transform(shape_temp.begin(), shape_temp.end(), std::back_inserter(host_shape), IntToSize);
     if (host_shape.empty()) {
       host_shape.push_back(1);
     }

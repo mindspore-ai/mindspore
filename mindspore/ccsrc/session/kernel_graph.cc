@@ -239,7 +239,7 @@ std::vector<AnfNodePtr> KernelGraph::SplitTupleValueNodeToNodeList(const ValueNo
     AddValueNodeToGraph(new_value_node);
     convert_inputs.emplace_back(new_value_node);
   }
-  if (RemoveValueNodeFromGraph(value_node)) {
+  if (!RemoveValueNodeFromGraph(value_node)) {
     MS_LOG(WARNING) << "failed to remove the value_node " << value_node->DebugString();
   }
   return convert_inputs;
