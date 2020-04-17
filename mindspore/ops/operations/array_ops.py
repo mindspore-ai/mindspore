@@ -175,10 +175,9 @@ class Cast(PrimitiveWithInfer):
     Examples:
         >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
         >>> input_x = Tensor(input_np)
-        >>> type_dst = mindspore.int32
+        >>> type_dst = mindspore.float16
         >>> cast = P.Cast()
         >>> result = cast(input_x, type_dst)
-        >>> expect = input_np.astype(type_dst)
     """
 
     @prim_attr_register
