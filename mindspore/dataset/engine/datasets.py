@@ -516,22 +516,14 @@ class Dataset:
             Dataset, applied by the function.
 
         Examples:
-            >>> import numpy as np
             >>> import mindspore.dataset as ds
-            >>> # Generate 1d int numpy array from 0 - 6
-            >>> def generator_1d():
-            >>>     for i in range(6):
-            >>>         yield (np.array([i]),)
-            >>> # 1) get all data from dataset
-            >>> data = ds.GeneratorDataset(generator_1d, ["data"])
-            >>> # 2) declare a apply_func function
+            >>> # data is an instance of Dataset object
+            >>> # declare an apply_func function which returns a Dataset object
             >>> def apply_func(ds):
             >>>     ds = ds.batch(2)
             >>>     return ds
-            >>> # 3) use apply to call apply_func
+            >>> # use apply to call apply_func
             >>> data = data.apply(apply_func)
-            >>> for item in data.create_dict_iterator():
-            >>>     print(item["data"])
 
         Raises:
             TypeError: If apply_func is not a function.
