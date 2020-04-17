@@ -28,10 +28,10 @@ ITERATORS_LIST = list()
 
 
 def _cleanup():
-    for itr in ITERATORS_LIST:
-        iter_ref = itr()
+    for itr_ref in ITERATORS_LIST:
+        itr = itr_ref()
         if itr is not None:
-            iter_ref.release()
+            itr.release()
 
 
 def alter_tree(node):
