@@ -45,8 +45,8 @@ endif()
 
 if (DEBUG_MODE)
     set(CMAKE_BUILD_TYPE "Debug")
-else()
     add_compile_definitions(MEM_REUSE_DEBUG)
+else()
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 

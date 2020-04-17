@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 from mindspore.ops import operations as P
 from mindspore.ops import Primitive
 import mindspore as ms
+import mindspore.common.dtype as mstype
+from mindspore.common.tensor import Tensor
+import numpy as np
 
-get_next = P.GetNext([ms.float32, ms.int32], [[32, 64], [32]], 2, "")
-memcpy_async = Primitive('memcpy_async')
 make_tuple = Primitive('make_tuple')
-tuple_getitem = Primitive('tuple_getitem')
-
+tuple_get_item = Primitive("tuple_getitem");
+LSTM = P.LSTM(input_size=10,hidden_size=2,num_layers=1,has_bias=True,bidirectional=False,dropout=0.0)
+add = P.TensorAdd()
 
 class FnDict:
     def __init__(self):
@@ -34,25 +35,20 @@ class FnDict:
         return self.fnDict[name]
 
 
-def test_insert_memcpy_async_for_getnext(tag):
+def test_convert_tuple_output_to_maketuple(tag):
     fns = FnDict()
 
     @fns
-    def getnext_multi_output_before():
-        res = get_next()
+    def before(x, h, c, w):
+        res = LSTM(x, h, c, w)
         return res
 
     @fns
-    def getnext_multi_output_after():
-        res = get_next()
-        data = tuple_getitem(res, 0)
-        label = tuple_getitem(res, 1)
-        memcpy_async_data = memcpy_async(data)
-        memcpy_async_label = memcpy_async(label)
-        bind_tuple = make_tuple(memcpy_async_data, memcpy_async_label)
-        get_item0 = tuple_getitem(bind_tuple, 0)
-        get_item1 = tuple_getitem(bind_tuple, 1)
-        bind_tuple = make_tuple(make_tuple(get_item0, get_item1))
-        return bind_tuple
+    def after(x, h, c, w):
+        res = LSTM(x, h, c, w)
+        res = make_tuple(
+            make_tuple(tuple_get_item(res, 0), tuple_get_item(res, 1), tuple_get_item(res, 2), tuple_get_item(res, 3),
+                       tuple_get_item(res, 4)));
+        return res
 
     return fns[tag]

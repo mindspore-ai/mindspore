@@ -146,6 +146,8 @@ void HideNopNode(session::KernelGraph *const graph);
 
 void RemoveNopNode(session::KernelGraph *const graph);
 
+AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx);
+
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
 }  // namespace opt
 }  // namespace mindspore

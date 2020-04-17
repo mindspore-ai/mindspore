@@ -17,6 +17,7 @@
 #include <vector>
 #include <memory>
 #include "pre_activate/ascend/ascend_helper.h"
+#include "pre_activate/common/helper.h"
 #include "session/anf_runtime_algorithm.h"
 
 namespace mindspore {
