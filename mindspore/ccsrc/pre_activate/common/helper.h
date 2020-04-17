@@ -29,6 +29,7 @@ constexpr size_t kTransOpInputNum = 2;
 constexpr size_t kCastInputNum = 2;
 constexpr size_t kDependInputNum = 3;
 constexpr size_t kReluInputNum = 2;
+constexpr size_t kReluGradInputNum = 3;
 constexpr size_t kAddInputNum = 3;
 constexpr size_t kAddNInputNum = 3;
 constexpr size_t kTupleGetitemInputNum = 3;
