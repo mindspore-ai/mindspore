@@ -104,7 +104,7 @@ class FTRL(Optimizer):
         self.lr_power = lr_power
         self.reciprocal_scale = 1.0 / loss_scale
         self.weight_decay = weight_decay
-        self.decay_tf = tuple((lambda:True)() for x in self.parameters)
+        self.decay_tf = tuple((lambda: True)() for x in self.parameters)
         self.hyper_map = C.HyperMap()
         self.opt = P.ApplyFtrl(use_locking=use_locking)
         self.one = Tensor(1, mstype.int32)
@@ -118,5 +118,6 @@ class FTRL(Optimizer):
         if self.reciprocal_scale != 1.0:
             grads = self.hyper_map(F.partial(grad_scale, self.reciprocal_scale), grads)
         lr = self.learning_rate
-        success = self.hyper_map(F.partial(ftrl_opt, self.opt, lr, self.l1, self.l2, self.lr_power), linear, grads, params, moments)
+        success = self.hyper_map(F.partial(ftrl_opt, self.opt, lr, self.l1, self.l2, self.lr_power), linear, grads,
+                                 params, moments)
         return success
