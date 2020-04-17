@@ -140,7 +140,10 @@ class Cell:
         if context.get_context("mode") == context.GRAPH_MODE:
             out = self.compile_and_run(*inputs)
             return out
-        return self.construct(*inputs)
+        output = self.construct(*inputs)
+        if isinstance(output, Parameter):
+            output = output.data
+        return output
 
     def __setattr__(self, name, value):
         cells = self.__dict__.get('_cells')

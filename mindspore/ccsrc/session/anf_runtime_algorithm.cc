@@ -457,7 +457,7 @@ TypeId AnfRuntimeAlgorithm::GetOutputInferDataType(const AnfNodePtr &node, size_
     } else if (tuple_i->isa<Number>()) {
       return tuple_i->type_id();
     } else {
-      MS_LOG(EXCEPTION) << "Not support type " << tuple_i->ToString();
+      MS_LOG(WARNING) << "Not support type " << tuple_i->ToString();
       return tuple_i->type_id();
     }
   } else if (type_ptr->isa<Number>()) {

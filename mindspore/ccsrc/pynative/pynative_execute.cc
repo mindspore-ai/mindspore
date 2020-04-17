@@ -39,7 +39,7 @@
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
 // primitive unable to infer value for constant input in PyNative mode
-const std::unordered_set<std::string> vm_operators = {"partial", "depend"};
+const std::unordered_set<std::string> vm_operators = {"partial", "depend", "make_ref"};
 
 namespace mindspore {
 namespace pynative {
@@ -141,7 +141,7 @@ OpExecInfoPtr GenerateOpExecInfo(const py::args& args) {
   op_exec_info->op_inputs = py_args;
   op_exec_info->inputs_mask = args[PY_INPUT_MASK];
   if (op_exec_info->op_inputs.size() != op_exec_info->inputs_mask.size()) {
-    MS_LOG(ERROR) << "op:" << op_exec_info->op_name << " inputs size not equal op_mask";
+    MS_LOG(ERROR) << "Op:" << op_exec_info->op_name << " inputs size not equal op_mask";
     return nullptr;
   }
   return op_exec_info;
@@ -163,7 +163,7 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr& op_exec_info) {
   // get prim and abstract info
   (void)graph_info.append(std::to_string((uintptr_t)(op_exec_info->py_primitive.get())) + "_" +
                           op_exec_info->abstract->ToString());
-  MS_LOG(INFO) << "graph info [" << graph_info << "]";
+  MS_LOG(INFO) << "Graph info [" << graph_info << "]";
   return graph_info;
 }
 
