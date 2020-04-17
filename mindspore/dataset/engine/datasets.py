@@ -2597,19 +2597,24 @@ class Schema:
 
         Args:
             columns (dict or list[dict]): dataset attribution information, decoded from schema file.
-            if list: columns element must be dict, 'name' and 'type' must be in keys, 'shape' optional.
-            if dict: columns.keys() as name, element in columns.values() is dict, and 'type' inside, 'shape' optional.
-              example 1)
-                [{'name': 'image', 'type': 'int8', 'shape': [3, 3]},
-                 {'name': 'label', 'type': 'int8', 'shape': [1]}]
-              example 2)
-                {'image': {'shape': [3, 3], 'type': 'int8'}, 'label': {'shape': [1], 'type': 'int8'}}
+
+                - list[dict], 'name' and 'type' must be in keys, 'shape' optional.
+
+                - dict, columns.keys() as name, columns.values() is dict, and 'type' inside, 'shape' optional.
 
         Raises:
             RuntimeError: If failed to parse columns.
             RuntimeError: If unknown items in columns.
             RuntimeError: If column's name field is missing.
             RuntimeError: If column's type field is missing.
+
+        Example:
+            >>> schema = Schema()
+            >>> columns1 = [{'name': 'image', 'type': 'int8', 'shape': [3, 3]},
+            >>>             {'name': 'label', 'type': 'int8', 'shape': [1]}]
+            >>> schema.parse_columns(columns1)
+            >>> columns2 = {'image': {'shape': [3, 3], 'type': 'int8'}, 'label': {'shape': [1], 'type': 'int8'}}
+            >>> schema.parse_columns(columns2)
         """
         self.columns = []
         if isinstance(columns, list):
