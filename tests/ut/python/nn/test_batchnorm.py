@@ -90,5 +90,4 @@ def test_global_bn():
                                       device_num=size, parameter_broadcast=True)
     net = GlobalBNNet()
     input_data = Tensor(np.array([[2.4, 2.1], [3.2, 5.4]], dtype=np.float32))
-    net.set_train()
-    out = net(input_data)
+    _executor.compile(net,input_data)
