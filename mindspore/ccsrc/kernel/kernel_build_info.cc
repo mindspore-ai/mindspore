@@ -22,28 +22,32 @@ namespace mindspore {
 namespace kernel {
 std::string KernelBuildInfo::GetInputFormat(size_t input_index) const {
   if (input_index >= inputs_format_.size()) {
-    MS_LOG(EXCEPTION) << "The index [" << input_index << "] is exceed the number of input node";
+    MS_LOG(ERROR) << "The index [" << input_index << "] is exceed the number of input node";
+    return kInvalidFormat;
   }
   return inputs_format_[input_index];
 }
 
 std::string KernelBuildInfo::GetOutputFormat(size_t output_index) const {
   if (output_index >= outputs_format_.size()) {
-    MS_LOG(EXCEPTION) << "The index [" << output_index << "] is exceed the number of input node";
+    MS_LOG(ERROR) << "The index [" << output_index << "] is exceed the number of input node";
+    return kInvalidFormat;
   }
   return outputs_format_[output_index];
 }
 
 TypeId KernelBuildInfo::GetInputDeviceType(size_t input_index) const {
   if (input_index >= inputs_device_type_.size()) {
-    MS_LOG(EXCEPTION) << "The index [" << input_index << "] is exceed the number of input node";
+    MS_LOG(ERROR) << "The index [" << input_index << "] is exceed the number of input";
+    return TypeId::kNumberTypeEnd;
   }
   return inputs_device_type_[input_index];
 }
 
 TypeId KernelBuildInfo::GetOutputDeviceType(size_t output_index) const {
   if (output_index >= outputs_device_type_.size()) {
-    MS_LOG(EXCEPTION) << "The index [" << output_index << "] is exceed the number of input node";
+    MS_LOG(ERROR) << "The index [" << output_index << "] is exceed the number of output";
+    return TypeId::kNumberTypeEnd;
   }
   return outputs_device_type_[output_index];
 }

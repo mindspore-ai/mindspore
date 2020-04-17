@@ -417,9 +417,8 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, K
 
 KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   std::unordered_map<AnfNodePtr, AnfNodePtr> other_graph_cnode;
-  auto graph = std::make_shared<KernelGraph>();
-  graph->set_graph_id(graph_sum_);
-  MS_LOG(INFO) << "Create graph: " << graph_sum_;
+  auto graph = NewKernelGraph();
+  MS_LOG(INFO) << "Create graph: " << graph->graph_id();
   size_t from_other_graph_depend_num = 0;
   for (const auto &node : lst) {
     MS_EXCEPTION_IF_NULL(node);
@@ -456,7 +455,6 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   }
   graph->SetExecOrderByDefault();
   opt::BackendCommonOptimization(graph);
-  graphs_[graph_sum_++] = graph;
   return graph;
 }
 
@@ -588,13 +586,13 @@ void SessionBasic::Summary(KernelGraph *graph) {
 CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> output_args;
+  for (const auto &output : outputs) {
+    MS_LOG(INFO) << "output:" << output->DebugString();
+  }
   auto FindEqu = [graph, outputs](const AnfNodePtr &out) -> AnfNodePtr {
     auto backend_anf = graph->GetBackendAnfByFrontAnf(out);
     if (backend_anf != nullptr) {
       return backend_anf;
-    }
-    for (const auto &output : outputs) {
-      MS_LOG(INFO) << "output:" << output->DebugString();
     }
     MS_LOG(EXCEPTION) << "Can't find the node in the equiv map!";
   };
@@ -694,6 +692,13 @@ BaseRef SessionBasic::TransformBaseRefListToTuple(const BaseRef &base_ref) {
   } else {
     MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor!";
   }
+}
+
+KernelGraphPtr SessionBasic::NewKernelGraph() {
+  auto graph = std::make_shared<KernelGraph>();
+  graph->set_graph_id(graph_sum_);
+  graphs_[graph_sum_++] = graph;
+  return graph;
 }
 }  // namespace session
 }  // namespace mindspore

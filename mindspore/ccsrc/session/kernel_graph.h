@@ -27,6 +27,7 @@
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "utils/graph_utils.h"
+#include "device/kernel_info.h"
 
 namespace mindspore {
 namespace session {
@@ -37,6 +38,7 @@ class KernelGraph : public FuncGraph {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
     execution_order_ = {};
     executable_ = true;
+    stream_distinction_label_ = kInvalidDistincLabel;
   }
   ~KernelGraph() override = default;
 
@@ -88,7 +90,15 @@ class KernelGraph : public FuncGraph {
   void set_executable(bool executable) { executable_ = executable; }
   // set invalid inputs for control sink
   std::vector<bool> *MutableValidInputs() { return &valid_inputs_; }
-  const std::vector<bool> &ValidInputs() const { return valid_inputs_; }
+  std::vector<bool> valid_inputs() const { return valid_inputs_; }
+  // replace node in graph
+  void ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf_node);
+  // set stream label of graph
+  void set_stream_distinction_label(uint32_t stream_label) { stream_distinction_label_ = stream_label; }
+  // get stream label of graph
+  uint32_t stream_distinction_label() { return stream_distinction_label_; }
+  // refresh execute kernel stream label
+  void UpdateExecuteKernelStreamLabel();
 
  private:
   // remove value node form graph
@@ -108,6 +118,7 @@ class KernelGraph : public FuncGraph {
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
   std::vector<CNodePtr> execution_order_;
   uint32_t graph_id_;
+  uint32_t stream_distinction_label_;
 
   // record map bettween front anf and backend anf,use two map implement bidirectional map
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_backend_anf_map_;
