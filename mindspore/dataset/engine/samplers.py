@@ -112,8 +112,7 @@ class RandomSampler():
 
     Args:
         replacement (bool, optional): If True, put the sample ID back for the next draw (default=False).
-        num_samples (int, optional): Number of elements to sample (default=None, all elements). This
-            argument should be specified only when 'replacement' is "True".
+        num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:
         >>> import mindspore.dataset as ds

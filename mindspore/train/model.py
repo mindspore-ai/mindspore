@@ -362,6 +362,8 @@ class Model:
             If dataset_sink_mode is True, epoch of training should be equal to the count of repeat
             operation in dataset processing. Otherwise, errors could occur since the amount of data
             is not the amount training requires.
+            If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
+            of data will be transferred one by one. The limitation of data transmission per time is 256M.
 
         Args:
             epoch (int): Total number of iterations on the data.
@@ -485,6 +487,8 @@ class Model:
 
         Note:
             CPU is not supported when dataset_sink_mode is true.
+            If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
+            of data will be transferred one by one. The limitation of data transmission per time is 256M.
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
