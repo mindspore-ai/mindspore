@@ -45,9 +45,10 @@ enum MatchCountPriority : int {
 const size_t kMaxCount = 0xffffffff;
 const int kUnSupportMixedDataTypeIndex = -1;
 
-const std::set<std::string> kOpFormatList = {
-  kOpFormat_DEFAULT, kOpFormat_NC1KHKWHWC0, kOpFormat_ND,     kOpFormat_NCHW,      kOpFormat_NHWC,
-  kOpFormat_HWCN,    kOpFormat_NC1HWC0,     kOpFormat_FRAC_Z, kOpFormat_C1HWNCoC0, kOpFormat_FRAC_NZ};
+const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT, kOpFormat_NC1KHKWHWC0, kOpFormat_ND,
+                                             kOpFormat_NCHW,    kOpFormat_NHWC,        kOpFormat_HWCN,
+                                             kOpFormat_NC1HWC0, kOpFormat_FRAC_Z,      kOpFormat_C1HWNCoC0,
+                                             kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04};
 
 bool IsShapeMatchFormat(const std::vector<size_t> &shape, const std::string &format) {
   // if format is default, it remarkes support all format
