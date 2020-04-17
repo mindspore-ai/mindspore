@@ -616,17 +616,19 @@ py::object ExecutorPy::Run(const py::tuple& args, const py::object& phase) {
     return ExecDFGraph(info_, args, phase_s);
   }
 #else
-  if (backend == "ge") {
-    std::shared_ptr<py::object> ret_val = std::make_shared<py::object>();
+  if (backend == "ms" || backend == "ge") {
+    auto ret_val = std::make_shared<py::object>();
     if (info_.count(phase_s) != 0 && info_[phase_s]->func_graph != nullptr) {
       if (IsGraphOutputValueNodeOrParameter(info_[phase_s]->func_graph->output(), args, ret_val)) {
         return *ret_val;
       }
     }
-    if (args.size() > 0) {
-      return args[0];
+    if (backend == "ge") {
+      if (args.size() > 0) {
+        return args[0];
+      }
+      return args;
     }
-    return args;
   }
 #endif
   std::size_t full_arg_size = ArgListSize(phase_s);

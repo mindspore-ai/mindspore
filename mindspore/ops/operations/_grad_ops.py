@@ -20,6 +20,7 @@ from ..._c_expression import signature_kind as sig_kind
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ..._checkparam import ParamValidator as validator
 from ..._checkparam import Rel, check_int_positive, check_bool
+from .._utils import _get_concat_offset
 from ...common import dtype as mstype
 
 
@@ -106,6 +107,33 @@ class BinaryCrossEntropyGrad(PrimitiveWithInfer):
         if weight_type:
             validator.check_two_types_same('x_type', x_type, 'weight_type', weight_type)
         return x_type
+
+class ConcatOffset(PrimitiveWithInfer):
+    """primitive for computing Concat's gradient."""
+
+    @prim_attr_register
+    def __init__(self, N=2, axis=0):
+        """init ConcatOffset"""
+
+    def __infer__(self, input_x):
+        axis = self.axis
+        x_shp = input_x['shape']
+        x_type = input_x['dtype']
+        offset, _, axis = _get_concat_offset(x_shp, x_type, axis)
+        self.add_prim_attr('T', x_type[0].element_type())
+        offset_values = []
+        for i in range(len(x_shp)):
+            values = []
+            for j in range(len(x_shp[0])):
+                value = 0
+                if j == axis:
+                    value = offset[i]
+                values.append(value)
+            offset_values.append(tuple(values))
+        out = {'shape': None,
+               'dtype': None,
+               'value': tuple(offset_values)}
+        return out
 
 
 class Conv2DBackpropFilter(PrimitiveWithInfer):

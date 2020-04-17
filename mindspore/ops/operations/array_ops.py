@@ -29,6 +29,7 @@ from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ..operations.math_ops import _infer_shape_reduce
+from .._utils import _get_concat_offset
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 
 def _check_infer_attr_reduce(axis, keep_dims):
@@ -1275,30 +1276,6 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         return out
 
 
-def _get_concat_offset(x_shp, x_type, axis):
-    """for concat and concatoffset check args and compute offset"""
-    validator.check_type("shape", x_shp, [tuple])
-    validator.check_integer("len of input_x shape", len(x_shp), 0, Rel.GT)
-    validator.check_subclass("shape0", x_type[0], mstype.tensor)
-    validator.check_integer("len of input_x0 shape", len(x_shp[0]), 0, Rel.GT)
-    rank_base = len(x_shp[0])
-    validator.check_int_range('axis', axis, -rank_base - 1, rank_base, Rel.INC_BOTH)
-    if axis < 0:
-        axis = axis + rank_base
-    all_shp = x_shp[0][axis]
-    offset = [0,]
-    for i in range(1, len(x_shp)):
-        v = x_shp[i]
-        validator.check('len of x_shp[%d]' % i, len(v), 'len of base', len(x_shp[0]))
-        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0])
-        for j in range(rank_base):
-            if j != axis and v[j] != x_shp[0][j]:
-                raise ValueError("Concat evaluator element %d shape in input can not concat with first element" % i)
-        offset.append(all_shp)
-        all_shp += v[axis]
-    return offset, all_shp, axis
-
-
 class Concat(PrimitiveWithInfer):
     r"""
     Concat tensor in specified axis.
@@ -1531,34 +1508,6 @@ class Slice(PrimitiveWithInfer):
         return {'shape': size_v,
                 'dtype': x['dtype'],
                 'value': None}
-
-
-class ConcatOffset(PrimitiveWithInfer):
-    """primitive for computing Concat's gradient."""
-
-    @prim_attr_register
-    def __init__(self, N=2, axis=0):
-        """init ConcatOffset"""
-
-    def __infer__(self, input_x):
-        axis = self.axis
-        x_shp = input_x['shape']
-        x_type = input_x['dtype']
-        offset, _, axis = _get_concat_offset(x_shp, x_type, axis)
-        self.add_prim_attr('T', x_type[0].element_type())
-        offset_values = []
-        for i in range(len(x_shp)):
-            values = []
-            for j in range(len(x_shp[0])):
-                value = 0
-                if j == axis:
-                    value = offset[i]
-                values.append(value)
-            offset_values.append(tuple(values))
-        out = {'shape': None,
-               'dtype': None,
-               'value': tuple(offset_values)}
-        return out
 
 
 class Select(PrimitiveWithInfer):

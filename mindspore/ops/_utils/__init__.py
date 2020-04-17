@@ -14,6 +14,6 @@
 # ============================================================================
 
 """ops utils."""
-from .broadcast import _get_broadcast_shape
+from .utils import _get_broadcast_shape, _get_concat_offset
 
-__all__ = ['_get_broadcast_shape']
+__all__ = ['_get_broadcast_shape', '_get_concat_offset']

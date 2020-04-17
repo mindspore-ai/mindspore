@@ -13,8 +13,11 @@
 # limitations under the License.
 # ============================================================================
 
-"""broadcast"""
+"""utils for operator"""
 
+from ..._checkparam import ParamValidator as validator
+from ..._checkparam import Rel
+from ...common import dtype as mstype
 
 def _get_broadcast_shape(x_shape, y_shape, prim_name):
     """
@@ -57,3 +60,27 @@ def _get_broadcast_shape(x_shape, y_shape, prim_name):
     broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
     broadcast_shape = broadcast_shape_front + broadcast_shape_back
     return broadcast_shape
+
+
+def _get_concat_offset(x_shp, x_type, axis):
+    """for concat and concatoffset check args and compute offset"""
+    validator.check_type("shape", x_shp, [tuple])
+    validator.check_integer("len of input_x shape", len(x_shp), 0, Rel.GT)
+    validator.check_subclass("shape0", x_type[0], mstype.tensor)
+    validator.check_integer("len of input_x0 shape", len(x_shp[0]), 0, Rel.GT)
+    rank_base = len(x_shp[0])
+    validator.check_int_range('axis', axis, -rank_base - 1, rank_base, Rel.INC_BOTH)
+    if axis < 0:
+        axis = axis + rank_base
+    all_shp = x_shp[0][axis]
+    offset = [0,]
+    for i in range(1, len(x_shp)):
+        v = x_shp[i]
+        validator.check('len of x_shp[%d]' % i, len(v), 'len of base', len(x_shp[0]))
+        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0])
+        for j in range(rank_base):
+            if j != axis and v[j] != x_shp[0][j]:
+                raise ValueError("Concat evaluator element %d shape in input can not concat with first element" % i)
+        offset.append(all_shp)
+        all_shp += v[axis]
+    return offset, all_shp, axis
