@@ -1,6 +1,10 @@
 include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
+if (CMAKE_SYSTEM_NAME MATCHES "Windows" AND ${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.17.0)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .dll ${CMAKE_FIND_LIBRARY_SUFFIXES})
+endif ()
+
 function(mindspore_add_submodule_obj des_submodule_objs sub_dir submodule_name_obj)
 
     add_subdirectory(${sub_dir})
