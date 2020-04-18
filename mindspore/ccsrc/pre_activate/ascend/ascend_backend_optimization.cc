@@ -45,6 +45,7 @@
 #include "pre_activate/ascend/ir_fusion/mul_add_fusion.h"
 #include "pre_activate/ascend/ir_fusion/mul_addn_fusion.h"
 #include "pre_activate/ascend/ir_fusion/matmul_biasadd_fusion.h"
+#include "pre_activate/ascend/ir_fusion/remove_reshape_pair.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/pass/getitem_tuple.h"
 #include "pre_activate/pass/optimize_dependence.h"
@@ -113,6 +114,7 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<InsertTransOp>());
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
+  data_layout_pm->AddPass(std::make_shared<RemoveReshapePair>());
   data_layout_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   data_layout_pm->AddPass(std::make_shared<OptimizeDependence>());
   data_layout_pm->AddPass(std::make_shared<TransDataSplit>());
