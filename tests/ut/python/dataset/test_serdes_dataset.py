@@ -19,7 +19,7 @@ import filecmp
 import glob
 import json
 import os
-
+import pytest
 import numpy as np
 
 import mindspore.dataset as ds
@@ -27,7 +27,6 @@ import mindspore.dataset.transforms.c_transforms as c
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore.dataset.transforms.vision import Inter
 from mindspore import log as logger
-
 
 def test_imagefolder(remove_json_files=True):
     """
@@ -217,6 +216,38 @@ def delete_json_files():
         except IOError:
             logger.info("Error while deleting: {}".format(f))
 
+# Test save load minddataset
+from test_minddataset_sampler import add_and_remove_cv_file, get_data, CV_DIR_NAME, CV_FILE_NAME, FILES_NUM, \
+    FileWriter, Inter
+
+def test_minddataset(add_and_remove_cv_file):
+    """tutorial for cv minderdataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    indices = [1, 2, 3, 5, 7]
+    sampler = ds.SubsetRandomSampler(indices)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+
+    # Serializing into python dictionary
+    ds1_dict = ds.serialize(data_set)
+    # Serializing into json object
+    ds1_json = json.dumps(ds1_dict, sort_keys=True)
+
+    # Reconstruct dataset pipeline from its serialized form
+    data_set = ds.deserialize(input_dict=ds1_dict)
+    ds2_dict = ds.serialize(data_set)
+    # Serializing into json object
+    ds2_json = json.dumps(ds2_dict, sort_keys=True)
+
+    assert ds1_json == ds2_json
+
+    data = get_data(CV_DIR_NAME)
+    assert data_set.get_dataset_size() == 10
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        num_iter += 1
+    assert num_iter == 5
 
 
 if __name__ == '__main__':
