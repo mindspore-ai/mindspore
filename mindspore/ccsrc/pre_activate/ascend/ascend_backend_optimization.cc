@@ -37,6 +37,7 @@
 #include "pre_activate/ascend/ir_fusion/transpose_reshape_fusion.h"
 #include "pre_activate/ascend/ir_fusion/adam_apply_one_fusion.h"
 #include "pre_activate/ascend/ir_fusion/adam_apply_one_with_decay_rule.h"
+#include "pre_activate/ascend/ir_fusion/parameter_and_transop_fusion.h"
 #include "pre_activate/ascend/ir_fusion/transpose_transdata_fusion.h"
 #include "pre_activate/ascend/ir_fusion/transdata_split.h"
 #include "pre_activate/ascend/ir_fission/topk_split.h"
@@ -243,6 +244,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
+  other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<BufferFusion>());
   other_pm->AddPass(std::make_shared<GetitemTuple>());
   other_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());

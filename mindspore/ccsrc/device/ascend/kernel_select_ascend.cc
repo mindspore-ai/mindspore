@@ -45,64 +45,6 @@ enum MatchCountPriority : int {
 const size_t kMaxCount = 0xffffffff;
 const int kUnSupportMixedDataTypeIndex = -1;
 
-const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT, kOpFormat_NC1KHKWHWC0, kOpFormat_ND,
-                                             kOpFormat_NCHW,    kOpFormat_NHWC,        kOpFormat_HWCN,
-                                             kOpFormat_NC1HWC0, kOpFormat_FRAC_Z,      kOpFormat_C1HWNCoC0,
-                                             kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04};
-
-bool IsShapeMatchFormat(const std::vector<size_t> &shape, const std::string &format) {
-  // if format is default, it remarkes support all format
-  if (kOpFormatList.find(format) == kOpFormatList.end()) {
-    MS_LOG(EXCEPTION) << "got the unknown format " << format;
-  }
-  if (format == kOpFormat_DEFAULT) {
-    return true;
-  }
-  // if shape size is 0, the shape will be a scalar
-  if (shape.empty()) {
-    return true;
-  }
-  if (shape.size() > kShapeSupportFormatMap.size()) {
-    return false;
-  }
-  if (format == kOpFormat_FRAC_NZ && shape.size() >= 2) {
-    return true;
-  }
-  return !(kShapeSupportFormatMap[shape.size() - 1].find(format) == kShapeSupportFormatMap[shape.size() - 1].end());
-}
-
-bool IsValidKernelInfo(const std::shared_ptr<CNode> &kernel_node, const kernel::KernelBuildInfo &kernel_build_info) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  auto check_function = [](const std::vector<size_t> &shape, const std::string &format) -> bool {
-    if (!IsShapeMatchFormat(shape, format)) {
-      return false;
-    }
-    for (auto shape_value : shape) {
-      if (shape_value == 0) {
-        MS_LOG(EXCEPTION) << "dimension size of the tensor shape should be a positive integer, but got " << shape_value;
-      }
-    }
-    return true;
-  };
-  if (AnfAlgo::GetCNodeName(kernel_node) == prim::kPrimCast->name()) {
-    return AnfAlgo::GetOutputInferDataType(kernel_node, 0) == kernel_build_info.GetOutputDeviceType(0) &&
-           AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0) == kernel_build_info.GetInputDeviceType(0);
-  }
-  for (size_t index = 0; index < kernel_build_info.GetOutputNum(); ++index) {
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, index);
-    if (!check_function(output_shape, kernel_build_info.GetOutputFormat(index))) {
-      return false;
-    }
-  }
-  for (size_t index = 0; index < kernel_build_info.GetInputNum(); ++index) {
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
-    if (!check_function(input_shape, kernel_build_info.GetInputFormat(index))) {
-      return false;
-    }
-  }
-  return true;
-}
-
 bool MatchInferOutputDataType(const CNodePtr &cnode, const kernel::KernelBuildInfo &kernel_build_info) {
   MS_EXCEPTION_IF_NULL(cnode);
   // Check input data type
@@ -459,6 +401,29 @@ int PrecisionReduce(const std::vector<int> &node_mix_precision_datatype_index,
   // raise precision
   int selected_index = RaiseDataTypePrecisionSelect(node_mix_precision_datatype_index, node_mix_precision_datatype,
                                                     kernel_support_datatype, kernel_match_datatype_idx);
+  if (selected_index != -1) {
+    int max_match = 0;
+    auto iter = kernel_match_datatype_idx->begin();
+    int match_count = 0;
+    while (iter != kernel_match_datatype_idx->end()) {
+      auto kernel_datatypes = kernel_support_datatype.find(iter->first);
+      if (kernel_datatypes == kernel_support_datatype.end()) {
+        MS_LOG(EXCEPTION) << "Can not find kernel index" << iter->first << "'s datatype.";
+      }
+      if (kernel_datatypes->second.size() < node_mix_precision_datatype.size()) {
+        MS_LOG(EXCEPTION) << "Kernel datatype size is not equal to node datatype size!";
+      }
+      for (size_t i = 0; i < node_mix_precision_datatype.size(); ++i) {
+        if (node_mix_precision_datatype[i] == kernel_datatypes->second[i]) {
+          ++match_count;
+        }
+      }
+      if (match_count > max_match) {
+        selected_index = SizeToInt(iter->first);
+      }
+      ++iter;
+    }
+  }
   if (selected_index == -1 && context_ptr->enable_reduce_precision()) {
     selected_index =
       RaiseOrReduceDataTypePrecisionSelect(node_mix_precision_datatype_index, node_mix_precision_datatype,
@@ -507,9 +472,6 @@ void SelectKernelInfo(const CNodePtr &kernel_node) {
   kernel::KernelQuery(kernel_node, &kernel_info_list);
   std::vector<int> most_match_counts = {-1, -1, -1, -1};
   int selected_index = -1;
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool auto_mixed_precision = context_ptr->auto_mixed_precision_flag();
   std::unordered_map<size_t, std::vector<int>> kernel_match_datatype_idx;
   std::unordered_map<size_t, std::vector<TypeId>> kernel_support_datatype;
   std::vector<int> node_mix_precision_datatype_index;
@@ -517,16 +479,13 @@ void SelectKernelInfo(const CNodePtr &kernel_node) {
   for (size_t info_index = 0; info_index < kernel_info_list.size(); ++info_index) {
     std::vector<int> cur_kernel_info_match_counts = {0, 0, 0, 0};
     auto kernel_build_info = *(kernel_info_list[info_index]);
-    if (!IsValidKernelInfo(kernel_node, kernel_build_info)) {
-      continue;
-    }
     std::vector<int> support_indexes;
     std::vector<TypeId> support_datatypes;
     AddNodeAndKernelDataType(kernel_node, kernel_build_info, &support_indexes, &node_mix_precision_datatype,
                              &support_datatypes, &node_mix_precision_datatype_index);
     kernel_match_datatype_idx[info_index] = support_indexes;
     kernel_support_datatype[info_index] = support_datatypes;
-    if (!auto_mixed_precision && !MatchInferOutputDataType(kernel_node, kernel_build_info)) {
+    if (!MatchInferOutputDataType(kernel_node, kernel_build_info)) {
       continue;
     }
     std::shared_ptr<kernel::KernelBuildInfo> kernel_info_ptr = kernel_info_list[info_index];
