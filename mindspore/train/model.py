@@ -71,7 +71,7 @@ class Model:
         >>>         self.bn = nn.BatchNorm2d(64)
         >>>         self.relu = nn.ReLU()
         >>>         self.flatten = nn.Flatten()
-        >>>         self.fc = nn.Dense(64*222*222, 3) # padding=0
+        >>>         self.fc = nn.Dense(64*224*224, 12) # padding=0
         >>>
         >>>     def construct(self, x):
         >>>         x = self.conv(x)
