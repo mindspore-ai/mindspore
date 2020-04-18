@@ -109,11 +109,15 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
 
 // Gets the next buffer from the given child
 Status DatasetOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
+#if defined(_WIN32) || defined(_WIN64)
+  RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), p_buffer, retry_if_eoe));
+#else
   std::unique_ptr<DataBuffer> next_buff;
   // pop is a blocked call and will throw an interruption if the whole group shuts down.
   RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), &next_buff, retry_if_eoe));
 
   *p_buffer = std::move(next_buff);
+#endif
   return Status::OK();
 }
 

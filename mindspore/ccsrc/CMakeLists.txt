@@ -156,7 +156,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         )
 if (ENABLE_CPU)
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "device/gpu/distribution/collective_init.cc")
-    if (WIN32)
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         list(REMOVE_ITEM MINDSPORE_SRC_LIST "kernel/kernel_query.cc")
     endif()
 endif()
@@ -337,19 +337,19 @@ if (ENABLE_D)
     target_link_libraries(mindspore mindspore::protobuf)
 endif()
 
-if (WIN32)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(mindspore ${PYTHON_LIBRARIES} mindspore_gvar)
 endif()
 
 # set c_expression building
-if (WIN32)
-set(PYTHON_MODULE_SOURCE ${MS_GVAR_SRC_LIST}
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(PYTHON_MODULE_SOURCE ${MS_GVAR_SRC_LIST}
         pipeline/init.cc
         kernel/oplib/oplib.cc
         ${MINDSPORE_SRC_LIST} ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
         ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
 else()
-set(PYTHON_MODULE_SOURCE
+    set(PYTHON_MODULE_SOURCE
         pipeline/init.cc
         kernel/oplib/oplib.cc
         ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
@@ -426,13 +426,5 @@ endif()
 
 if(ENABLE_MINDDATA)
     add_subdirectory(mindrecord)
-    if (WIN32)
-	set(_md_tmp_CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
-	set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O0 -Wl,--allow-shlib-undefined -DHALF_ENABLE_CPP11_USER_LITERALS=0")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_FORTIFY_SOURCE=2")
-        add_subdirectory(dataset)
-	set(CMAKE_CXX_FLAGS_RELEASE ${_md_tmp_CMAKE_CXX_FLAGS_RELEASE})
-    else()
-	add_subdirectory(dataset)
-    endif()
+    add_subdirectory(dataset)
 endif()

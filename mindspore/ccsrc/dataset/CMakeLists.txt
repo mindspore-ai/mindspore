@@ -12,6 +12,9 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-format")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--image-base -Wl,0x10000000")
+endif()
 ############################# Options ################################
 if (ENABLE_GPUQUE)
     add_definitions(-D ENABLE_GPUQUE)
@@ -80,7 +83,7 @@ set_target_properties(_c_dataengine PROPERTIES
 ######################################################################
 
 ################# Link with external libraries ########################
-if (WIN32)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(_c_dataengine PRIVATE mindspore)
     target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} mindspore::protobuf ${SECUREC_LIBRARY})
 else()
@@ -101,7 +104,7 @@ if (ENABLE_TDTQUE)
 endif ()
 
 add_dependencies(_c_dataengine _c_mindrecord)
-if (WIN32)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(MINDRECORD_LINK_OBJECT ${CMAKE_BINARY_DIR}/mindspore/ccsrc/mindrecord/CMakeFiles/_c_mindrecord.dir/objects.a)
     target_link_libraries(_c_dataengine PRIVATE _c_mindrecord ${MINDRECORD_LINK_OBJECT} mindspore::sqlite)
 else()
