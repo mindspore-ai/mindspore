@@ -696,6 +696,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
                  dilation=1,
                  group=1):
         """init DepthwiseConv2dNative"""
+        self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         validator.check_pad_value_by_mode(self.__class__.__name__, pad_mode, pad)
         self.kernel_size = validator.check_type('kernel_size', kernel_size, (int, tuple))
         if isinstance(kernel_size, int):

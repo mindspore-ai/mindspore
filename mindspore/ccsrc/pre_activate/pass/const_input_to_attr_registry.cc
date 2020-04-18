@@ -27,6 +27,8 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(prim::kPrimCast->name(), {1});
   Register(prim::kPrimConv2DBackpropInput->name(), {2});
   Register(prim::kPrimConv2DBackpropFilter->name(), {2});
+  Register(prim::kPrimDepthwiseConv2dNativeBackpropFilter->name(), {1});
+  Register(prim::kPrimDepthwiseConv2dNativeBackpropInput->name(), {0});
   Register(prim::kPrimReshape->name(), {1});
   Register(prim::kPrimReduceMax->name(), {1});
   Register(prim::kPrimReduceMin->name(), {1});
