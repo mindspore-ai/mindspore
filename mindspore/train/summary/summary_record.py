@@ -46,10 +46,14 @@ def _cache_summary_tensor_data(summary):
 
 class SummaryRecord:
     """
-    Summary log record.
-
     SummaryRecord is used to record the summary value.
-    The API will create an event file in a given directory and add summaries and events to it.
+
+    Note:
+        The API will create an event file in a given directory and add summaries and events to it.
+        It writes the event log to a file by executing the record method. In addition,
+        if the SummaryRecord object is created and the summary operator is used in the network,
+        even if the record method is not called, the event in the cache will be written to the
+        file at the end of execution or when the summary is closed.
 
     Args:
         log_dir (str): The log_dir is a directory location to save the summary.
