@@ -743,7 +743,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList& types) {
     }
     oss << ++idx << ". " << item.first << "\n  " << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
   }
-  MS_LOG(EXCEPTION) << "Fail to find overload function for `" << name_ << "` with type " << buffer.str() << "\n"
+  MS_LOG(EXCEPTION) << "The '" << name_ << "' operation does not support the type " << buffer.str() << "\n"
                     << oss.str();
 }
 
