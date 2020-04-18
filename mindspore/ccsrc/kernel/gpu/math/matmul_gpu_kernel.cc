@@ -26,5 +26,13 @@ MS_REG_GPU_KERNEL_ONE(
   MatMul,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   MatMulGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  BatchMatMul,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  MatMulGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  BatchMatMul,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  MatMulGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
