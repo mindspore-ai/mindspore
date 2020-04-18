@@ -81,6 +81,7 @@ inline size_t FloatToSize(float u) {
   }
   return static_cast<size_t>(u);
 }
+inline float IntToFloat(int32_t v) { return static_cast<float>(v); }
 
 inline uint32_t IntToUint(int32_t u) {
   if (u < 0) {

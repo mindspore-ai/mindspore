@@ -445,6 +445,9 @@ AbstractBasePtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const 
   }
 
   ValuePtr inferred_value = RunImpl(value_list);
+  if (!(*inferred_value == *kAnyValue)) {
+    ret_value_type = inferred_value->type();
+  }
   // for comparison primitives , return type shall have be specified to be bool.
   if (specify_out_type_ != nullptr) {
     ret_value_type = specify_out_type_;
