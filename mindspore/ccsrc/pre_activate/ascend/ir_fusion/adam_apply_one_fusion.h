@@ -18,21 +18,23 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "pre_activate/common/optimizer.h"
 #include "utils/utils.h"
 
 namespace mindspore {
 namespace opt {
-constexpr size_t kAdamApplyOneInputNum = 5;
-constexpr size_t kAdamApplyOneMulInputNum = 4;
+constexpr size_t kAdamApplyOneInputVarNum = 5;
+constexpr size_t kAdamApplyOneMulInputVarNum = 4;
 
 class AdamApplyOneFusion : public PatternProcessPass {
  public:
-  explicit AdamApplyOneFusion(bool multigraph = true) : PatternProcessPass("adam_apply_one_fusion", multigraph) {
-    for (size_t i = 0; i < kAdamApplyOneInputNum; ++i) {
+  explicit AdamApplyOneFusion(const std::string &name = "adam_apply_one_fusion", bool multigraph = true)
+      : PatternProcessPass(name, multigraph) {
+    for (size_t i = 0; i < kAdamApplyOneInputVarNum; ++i) {
       input_vars_.push_back(std::make_shared<Var>());
     }
-    for (size_t i = 0; i < kAdamApplyOneMulInputNum; ++i) {
+    for (size_t i = 0; i < kAdamApplyOneMulInputVarNum; ++i) {
       mul_x_input_vars_.push_back(std::make_shared<Var>());
     }
     add2_y_ = std::make_shared<Var>();
@@ -44,13 +46,49 @@ class AdamApplyOneFusion : public PatternProcessPass {
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
- private:
+ protected:
   AnfNodePtr CreateAdamApplyOneNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const;
   std::vector<VarPtr> input_vars_;
   std::vector<VarPtr> mul_x_input_vars_;
   VarPtr add2_y_;
   VarPtr add0_var_;
   VarPtr add1_var_;
+};
+
+class AdamApplyOneCond1Fusion : public AdamApplyOneFusion {
+ public:
+  explicit AdamApplyOneCond1Fusion(bool multigraph = true)
+      : AdamApplyOneFusion("adam_apply_one_cond1_fusion", multigraph) {}
+
+  ~AdamApplyOneCond1Fusion() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneCond2Fusion : public AdamApplyOneFusion {
+ public:
+  explicit AdamApplyOneCond2Fusion(bool multigraph = true)
+      : AdamApplyOneFusion("adam_apply_one_cond2_fusion", multigraph) {}
+
+  ~AdamApplyOneCond2Fusion() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneCond3Fusion : public AdamApplyOneFusion {
+ public:
+  explicit AdamApplyOneCond3Fusion(bool multigraph = true)
+      : AdamApplyOneFusion("adam_apply_one_cond3_fusion", multigraph) {}
+
+  ~AdamApplyOneCond3Fusion() override = default;
+  const BaseRef DefinePattern() const override;
+};
+
+class AdamApplyOneCond4Fusion : public AdamApplyOneFusion {
+ public:
+  explicit AdamApplyOneCond4Fusion(bool multigraph = true)
+      : AdamApplyOneFusion("adam_apply_one_cond4_fusion", multigraph) {}
+
+  ~AdamApplyOneCond4Fusion() override = default;
+  const BaseRef DefinePattern() const override;
 };
 }  // namespace opt
 }  // namespace mindspore
