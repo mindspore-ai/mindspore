@@ -35,7 +35,7 @@ from mindspore._c_expression import typing
 from mindspore import log as logger
 from . import samplers
 from .iterators import DictIterator, TupleIterator
-from .validators import check, check_batch, check_shuffle, check_map, check_repeat, check_skip, check_zip, check_rename, \
+from .validators import check, check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, check_rename, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
     check_zip_dataset, check_add_column, check_textfiledataset
@@ -384,6 +384,32 @@ class Dataset:
             >>> ds_mapped = ds_pyfunc.map(input_columns, operations, output_columns, columns_order)
         """
         return MapDataset(self, input_columns, operations, output_columns, columns_order, num_parallel_workers)
+
+    @check_filter
+    def filter(self, predicate, input_columns=None, num_parallel_workers=1):
+        """
+        Filter dataset by predicate.
+
+        Note:
+             If input_columns not provided or empty, all columns will be used.
+
+        Args:
+            predicate: python callable which returns a boolean value.
+            input_columns: (list[str]): List of names of the input columns, when
+            default=None, the predicate will be applied on all columns in the dataset.
+            num_parallel_workers (int, optional): Number of workers to process the Dataset
+            in parallel (default=None).
+
+        Returns:
+            FilterDataset, dataset filter.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # generator data(0 ~ 63)
+            >>> # filter the data that greater than or equal to 11
+            >>> dataset_f = dataset.filter(predicate=lambda data: data < 11, input_columns = ["data"])
+        """
+        return FilterDataset(self, predicate, input_columns, num_parallel_workers)
 
     @check_repeat
     def repeat(self, count=None):
@@ -1103,6 +1129,44 @@ class MapDataset(DatasetOp):
             Number, number of batches.
         """
         return self.input[0].get_dataset_size()
+
+
+class FilterDataset(DatasetOp):
+    """
+    The result of applying filter predicate to the input Dataset.
+
+    Args:
+        input_dataset: Input Dataset to be mapped.
+        predicate: python callable which returns a boolean value.
+        input_columns: (list[str]): List of names of the input columns, when
+        default=None, the predicate will be applied all columns in the dataset.
+        num_parallel_workers (int, optional): Number of workers to process the Dataset
+            in parallel (default=None).
+    """
+
+    def __init__(self, input_dataset, predicate, input_columns=None, num_parallel_workers=None):
+        super().__init__(num_parallel_workers)
+        self.predicate = lambda *args: bool(predicate(*args))
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        if input_columns is not None and not isinstance(input_columns, list):
+            input_columns = [input_columns]
+        self.input_columns = input_columns
+
+    def get_args(self):
+        args = super().get_args()
+        args["predicate"] = self.predicate
+        args["input_columns"] = self.input_columns
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+        the size cannot be determined before we run the pipeline
+        Return:
+            0
+        """
+        return 0
 
 
 class RepeatDataset(DatasetOp):

@@ -29,6 +29,7 @@
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/celeba_op.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
+#include "dataset/engine/datasetops/filter_op.h"
 #include "mindrecord/include/shard_category.h"
 #include "mindrecord/include/shard_sample.h"
 #include "mindrecord/include/shard_shuffle.h"
@@ -45,6 +46,7 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kShuffle, &DEPipeline::ParseShuffleOp},
                                                                    {kMindrecord, &DEPipeline::ParseMindRecordOp},
                                                                    {kMap, &DEPipeline::ParseMapOp},
+                                                                   {kFilter, &DEPipeline::ParseFilterOp},
                                                                    {kBatch, &DEPipeline::ParseBatchOp},
                                                                    {kRepeat, &DEPipeline::ParseRepeatOp},
                                                                    {kSkip, &DEPipeline::ParseSkipOp},
@@ -502,6 +504,41 @@ Status DEPipeline::ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *
   return Status::OK();
 }
 
+Status DEPipeline::ParseFilterOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<FilterOp::Builder> builder = std::make_shared<FilterOp::Builder>();
+
+  if (args["predicate"].is_none()) {
+    RETURN_STATUS_UNEXPECTED("Error: 'predicate' is not set. \n");
+  }
+
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "predicate") {
+        py::handle op = args["predicate"];
+        if (!py::isinstance<py::function>(op)) {
+          RETURN_STATUS_UNEXPECTED("Error: predicate is not recognised (not pyfunc).");
+        }
+        py::function predicate_func = op.cast<py::function>();
+        (void)builder->SetPredicateFunc(std::move(predicate_func));
+      } else if (key == "input_columns") {
+        std::vector<std::string> in_col_names = ToStringVector(args["input_columns"]);
+        (void)builder->SetInColNames(in_col_names);
+      } else {
+        RETURN_STATUS_UNEXPECTED("Error: Unhandled key: " + key);
+      }
+    }
+  }
+
+  std::shared_ptr<FilterOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
 Status DEPipeline::ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   if (args["count"].is_none()) {
     std::string err_msg = "Error: count is invalid or not set.";
@@ -670,8 +707,6 @@ Status DEPipeline::ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *
   *ptr = op;
   return Status::OK();
 }
-
-DsOpPtr DEPipeline::ParseFilterOp(const py::dict &args) const { return DsOpPtr(); }
 
 Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   // Required arguments

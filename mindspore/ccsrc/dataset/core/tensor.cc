@@ -240,7 +240,7 @@ void Tensor::PrintItemAt(const std::vector<dsize_t> &index, std::ostream &out) c
   DS_ASSERT(data_);
 
   switch (type_.value()) {
-    CASE_PRINT_HEX(DataType::DE_BOOL, uint8_t);
+    CASE_PRINT_HEX(DataType::DE_BOOL, bool);
 
     CASE_PRINT_HEX(DataType::DE_INT8, int8_t);
 

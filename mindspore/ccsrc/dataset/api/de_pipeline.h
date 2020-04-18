@@ -107,6 +107,8 @@ class DEPipeline {
 
   Status ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
+  Status ParseFilterOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
   Status ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
@@ -120,8 +122,6 @@ class DEPipeline {
   Status ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
-
-  DsOpPtr ParseFilterOp(const py::dict &args) const;
 
   Status ParseDeviceQueueOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
