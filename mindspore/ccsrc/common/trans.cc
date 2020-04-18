@@ -920,7 +920,7 @@ bool NchwToC1hwncoc0(const FormatArgs &args, void *result) {
                                         : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
               size_t c_i = c0_i + c1_i * c0;
               size_t src_offset = (n_i * c * h * w + c_i * h * w + h_i * w + w_i) * size;
-              error_t ret;
+              errno_t ret;
               if (c_i < c && c0_i == co_i) {
                 ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
                                static_cast<uint8_t const *>(args.data) + src_offset, size);
