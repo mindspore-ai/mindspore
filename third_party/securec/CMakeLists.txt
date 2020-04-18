@@ -8,12 +8,7 @@ SET(CMAKE_C_FLAGS_RELEASE "$ENV{CFLAGS} -fPIC -O3 -Wall -Wno-deprecated-declarat
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #add flags
-if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/include")
-else()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/include -Werror")
-endif()
-
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/include -Werror")
 
 include_directories(./include)
 add_subdirectory(src)
