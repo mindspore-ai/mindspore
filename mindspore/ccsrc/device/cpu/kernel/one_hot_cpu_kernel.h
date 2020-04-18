@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEVICE_CPU_RESHAPE_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_DEVICE_CPU_RESHAPE_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_DEVICE_CPU_ONE_HOT_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_DEVICE_CPU_ONE_HOT_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
 #include "device/cpu/cpu_kernel.h"
@@ -23,22 +23,25 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-class ReshapeCPUKernel : public CPUKernel {
+class OneHotCPUKernel : public CPUKernel {
  public:
-  ReshapeCPUKernel() = default;
-  ~ReshapeCPUKernel() override = default;
+  OneHotCPUKernel() = default;
+  ~OneHotCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
+
+ private:
+  size_t depth_;
+  size_t stride_;
+  size_t axis_;
 };
 
-MS_REG_CPU_KERNEL(Reshape, ReshapeCPUKernel);
-MS_REG_CPU_KERNEL(Flatten, ReshapeCPUKernel);
-MS_REG_CPU_KERNEL(ExpandDims, ReshapeCPUKernel);
+MS_REG_CPU_KERNEL(OneHot, OneHotCPUKernel);
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_DEVICE_CPU_RESHAPE_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_DEVICE_CPU_ONE_HOT_CPU_KERNEL_H_
