@@ -161,6 +161,9 @@ class Print(PrimitiveWithInfer):
     """
     Output tensor or string to stdout.
 
+    Note:
+        The print operation cannot support float64 and bool types currently.
+
     Inputs:
         - **input_x** (Union[Tensor, str]) - The graph node to attach to. The input supports
           multiple strings and tensors which are separated by ','.

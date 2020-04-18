@@ -65,7 +65,7 @@ class AllReduce(PrimitiveWithInfer):
         The contents depend on the specified operation.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
         >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
@@ -130,7 +130,7 @@ class AllGather(PrimitiveWithInfer):
         then the shape of output is :math:`(N, x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
         >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
@@ -187,7 +187,7 @@ class ReduceScatter(PrimitiveWithInfer):
         ValueError: If the first dimension of input can not be divided by rank size.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
         >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
@@ -252,7 +252,7 @@ class Broadcast(PrimitiveWithInfer):
         TypeError: If root_rank is not a integer or group is not a string.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
         >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
