@@ -117,7 +117,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const std::vector<int> &shape, size_t
   } else {
     auto iter = kNeedTransFormatSet.find(format_);
     if (iter != kNeedTransFormatSet.end()) {
-      sync_ok = ConvertFormatAndSyncHostToDevice(shape, size, type, host_ptr);
+      sync_ok = SyncDeviceToHostAndConvertFormat(shape, size, type, host_ptr);
     }
   }
   if (!sync_ok) {
