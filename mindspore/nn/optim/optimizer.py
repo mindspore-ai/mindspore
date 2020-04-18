@@ -57,7 +57,7 @@ class Optimizer(Cell):
 
     def __init__(self, learning_rate, parameters, weight_decay=0.0, loss_scale=1.0,
                  decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
-        super(Optimizer, self).__init__()
+        super(Optimizer, self).__init__(auto_prefix=False)
         if isinstance(learning_rate, float):
             self.dynamic_lr = False
             self.gather = None
