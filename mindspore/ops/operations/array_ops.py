@@ -795,7 +795,7 @@ class ZerosLike(PrimitiveWithInfer):
 
     Examples:
         >>> zeroslike = P.ZerosLike()
-        >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
+        >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> output = zeroslike(x)
     """
 
