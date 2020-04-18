@@ -19,9 +19,6 @@ import pytest
 import mindspore.nn as nn
 from mindspore.common.api import _executor
 from mindspore import Tensor, Parameter
-from mindspore.communication.management import init
-from mindspore import context
-from mindspore import ParallelMode
 
 
 def test_bn_pars_valid1():
