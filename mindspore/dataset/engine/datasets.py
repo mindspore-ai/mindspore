@@ -35,7 +35,7 @@ from mindspore._c_expression import typing
 from mindspore import log as logger
 from . import samplers
 from .iterators import DictIterator, TupleIterator
-from .validators import check, check_batch, check_shuffle, check_map, check_repeat, check_zip, check_rename, \
+from .validators import check, check_batch, check_shuffle, check_map, check_repeat, check_skip, check_zip, check_rename, \
     check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
     check_zip_dataset, check_add_column
@@ -422,6 +422,25 @@ class Dataset:
         if count == 1:
             return self
         return RepeatDataset(self, count)
+
+    @check_skip
+    def skip(self, count):
+        """
+        Skip the first N elements of this dataset.
+
+        Args:
+            count (int): Number of elements the dataset should be skipped.
+
+        Returns:
+            SkipDataset, dataset skipped.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object.
+            >>> # creates a dataset which skips first 3 elements from data
+            >>> data = data.skip(3)
+        """
+        return SkipDataset(self, count)
 
     @check_zip_dataset
     def zip(self, datasets):
@@ -1081,6 +1100,39 @@ class RepeatDataset(DatasetOp):
         """
         return self.count
 
+class SkipDataset(DatasetOp):
+    """
+    The result of applying Skip operator to the input Dataset.
+
+    Args:
+        datasets (tuple): A tuple of datasets to be skipped.
+        count (int): Number of rows the dataset should be skipped.
+    """
+
+    def __init__(self, input_dataset, count):
+        super().__init__()
+        self.count = count
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        self._input_indexs = input_dataset.input_indexs
+
+    def get_args(self):
+        args = super().get_args()
+        args["count"] = self.count
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        child_size = self.input[0].get_dataset_size()
+        output_size = 0
+        if self.count >= 0 and self.count < child_size:
+            output_size = child_size - self.count
+        return output_size
 
 class ZipDataset(DatasetOp):
     """

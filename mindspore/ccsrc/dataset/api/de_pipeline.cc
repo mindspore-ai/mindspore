@@ -47,6 +47,7 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kMap, &DEPipeline::ParseMapOp},
                                                                    {kBatch, &DEPipeline::ParseBatchOp},
                                                                    {kRepeat, &DEPipeline::ParseRepeatOp},
+                                                                   {kSkip, &DEPipeline::ParseSkipOp},
                                                                    {kZip, &DEPipeline::ParseZipOp},
                                                                    {kRename, &DEPipeline::ParseRenameOp},
                                                                    {kDeviceQueue, &DEPipeline::ParseDeviceQueueOp},
@@ -507,6 +508,17 @@ Status DEPipeline::ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp
   repeat_num_ = ToInt(args["count"]);
   std::shared_ptr<RepeatOp> op;
   RETURN_IF_NOT_OK(RepeatOp::Builder(ToInt(args["count"])).Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  if (args["count"].is_none()) {
+    std::string err_msg = "Error: count is invalid or not set.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::shared_ptr<SkipOp> op;
+  RETURN_IF_NOT_OK(SkipOp::Builder(ToInt(args["count"])).Build(&op));
   *ptr = op;
   return Status::OK();
 }

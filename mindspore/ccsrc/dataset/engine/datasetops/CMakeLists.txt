@@ -11,6 +11,7 @@ add_library(engine-datasetops OBJECT
     project_op.cc
     rename_op.cc
     repeat_op.cc
+    skip_op.cc
     shuffle_op.cc
     zip_op.cc
     )

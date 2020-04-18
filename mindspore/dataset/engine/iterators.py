@@ -127,6 +127,8 @@ class Iterator:
             op_type = OpName.MAP
         elif isinstance(dataset, de.RepeatDataset):
             op_type = OpName.REPEAT
+        elif isinstance(dataset, de.SkipDataset):
+            op_type = OpName.SKIP
         elif isinstance(dataset, de.StorageDataset):
             op_type = OpName.STORAGE
         elif isinstance(dataset, de.ImageFolderDatasetV2):
