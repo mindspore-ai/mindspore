@@ -401,6 +401,11 @@ test_case_math_ops = [
         'block': P.NotEqual(),
         'desc_inputs': [[4, 1], [2, 3, 4, 5]],
         'desc_bprop': [Tensor(np.ones((2, 3, 4, 5), np.bool_))]}),
+    ('NotEqual_0', {
+        'block': P.NotEqual(),
+        'desc_inputs': [ 1, [2, 3, 4, 5]],
+        'desc_bprop': [Tensor(np.ones((2, 3, 4, 5), np.bool_))],
+        'skip': ['backward']}),
     ('Greater', {
         'block': P.Greater(),
         'desc_inputs': [[2, 3, 4, 1], [4, 5]],
