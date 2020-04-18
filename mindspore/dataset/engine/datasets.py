@@ -567,7 +567,7 @@ class Dataset:
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
-            of data transferation per time is 256M.
+            of data transmission per time is 256M.
 
         Return:
             TransferDataset, dataset for transferring.
@@ -583,7 +583,7 @@ class Dataset:
 
         Note:
             If device is Ascend, features of data will be transferred one by one. The limitation
-            of data transferation per time is 256M.
+            of data transmission per time is 256M.
 
         Returns:
             TransferDataset, dataset for transferring.
@@ -1941,7 +1941,7 @@ class GeneratorDataset(SourceDataset):
         >>>     for i in range(maxid):
         >>>         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]]))
         >>> # create multi_column_generator_dataset with GeneratorMC and column names "col1" and "col2"
-        >>> multi_column_generator_dataset = de.GeneratorDataset(generator_mc, ["col1, col2"])
+        >>> multi_column_generator_dataset = de.GeneratorDataset(generator_mc, ["col1", "col2"])
         >>> # 3) Iterable dataset as iterable input
         >>> class MyIterable():
         >>>     def __iter__(self):
