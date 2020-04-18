@@ -292,12 +292,16 @@ function(mindspore_add_pkg pkg_name )
     message("${pkg_name}_SOURCE_DIR : ${${pkg_name}_SOURCE_DIR}")
 
     foreach(_PATCH_FILE ${PKG_PATCHES})
-        message("patching ${${pkg_name}_SOURCE_DIR} -p1 < ${_PATCH_FILE}")
-        execute_process(COMMAND patch -p1 INPUT_FILE ${_PATCH_FILE}
+        get_filename_component(_PATCH_FILE_NAME ${_PATCH_FILE} NAME)
+        set(_LF_PATCH_FILE ${CMAKE_BINARY_DIR}/_ms_patch/${_PATCH_FILE_NAME})
+        configure_file(${_PATCH_FILE} ${_LF_PATCH_FILE} NEWLINE_STYLE LF)
+
+        message("patching ${${pkg_name}_SOURCE_DIR} -p1 < ${_LF_PATCH_FILE}")
+        execute_process(COMMAND ${Patch_EXECUTABLE} -p1 INPUT_FILE ${_LF_PATCH_FILE}
                 WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}
                 RESULT_VARIABLE Result)
         if(NOT Result EQUAL "0")
-            message(FATAL_ERROR "Failed patch: ${_PATCH_FILE}")
+            message(FATAL_ERROR "Failed patch: ${_LF_PATCH_FILE}")
         endif()
     endforeach(_PATCH_FILE)
         

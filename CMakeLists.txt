@@ -20,6 +20,9 @@ set(PYBIND11_CPP_STANDARD -std=c++17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTION_CXX_FLAGS}")
 
 find_package(Threads)
+find_package(Patch)
+message(PATCH_EXECUTABLE = ${Patch_EXECUTABLE})
+
 include(${CMAKE_SOURCE_DIR}/cmake/mind_expression.cmake)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/flatbuffers/include)
