@@ -686,9 +686,6 @@ class TimeMonitor(Callback):
     def __init__(self, data_size):
         super(TimeMonitor, self).__init__()
         self.data_size = data_size
-        self.step_time_cost = []
-        self.epoch_time_cost = []
-        self.per_step_time = []
 
     def epoch_begin(self, run_context):
         self.epoch_time = time.time()
@@ -696,8 +693,6 @@ class TimeMonitor(Callback):
     def epoch_end(self, run_context):
         epoch_mseconds = (time.time() - self.epoch_time) * 1000
         per_step_mseconds = epoch_mseconds / self.data_size
-        self.epoch_time_cost.append(epoch_mseconds)
-        self.per_step_time.append(per_step_mseconds)
         print("epoch time: {0}, per step time: {1}".format(epoch_mseconds, per_step_mseconds), flush=True)
 
     def step_begin(self, run_context):
@@ -705,6 +700,5 @@ class TimeMonitor(Callback):
 
     def step_end(self, run_context):
         step_mseconds = (time.time() - self.step_time) * 1000
-        self.step_time_cost.append(step_mseconds)
         print('step time', step_mseconds, flush=True)
 
