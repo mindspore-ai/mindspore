@@ -64,6 +64,7 @@ SET(DE_UT_SRCS
     voc_op_test.cc
     cifar_op_test.cc
     celeba_op_test.cc
+    take_op_test.cc
     )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})

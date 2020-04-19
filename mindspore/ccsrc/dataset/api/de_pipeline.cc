@@ -54,6 +54,7 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kGenerator, &DEPipeline::ParseGeneratorOp},
                                                                    {kTfReader, &DEPipeline::ParseTFReaderOp},
                                                                    {kProject, &DEPipeline::ParseProjectOp},
+                                                                   {kTake, &DEPipeline::ParseTakeOp},
                                                                    {kImageFolder, &DEPipeline::ParseImageFolderOp},
                                                                    {kMnist, &DEPipeline::ParseMnistOp},
                                                                    {kManifest, &DEPipeline::ParseManifestOp},
@@ -650,7 +651,16 @@ Status DEPipeline::ParseRenameOp(const py::dict &args, std::shared_ptr<DatasetOp
   return Status::OK();
 }
 
-DsOpPtr DEPipeline::ParseTakeOp(const py::dict &args) const { return DsOpPtr(); }
+Status DEPipeline::ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  if (args["count"].is_none()) {
+    std::string err_msg = "Error: count is invalid or not set.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::shared_ptr<TakeOp> op;
+  RETURN_IF_NOT_OK(TakeOp::Builder(ToInt(args["count"])).Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
 
 Status DEPipeline::ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   std::shared_ptr<ZipOp::Builder> builder = std::make_shared<ZipOp::Builder>();

@@ -88,6 +88,10 @@ Status SkipOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t work
   // If buffer is none or the rows of buffer is 0,
   // then get a buffer from child.
   if (!buf || buf->NumRows() == 0) {
+    if (buf && buf->eof()) {
+      *p_buffer = std::move(buf);
+      return Status::OK();
+    }
     RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf, worker_id, true));
   }
 

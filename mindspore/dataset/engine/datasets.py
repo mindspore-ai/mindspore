@@ -36,7 +36,7 @@ from mindspore import log as logger
 from . import samplers
 from .iterators import DictIterator, TupleIterator
 from .validators import check, check_batch, check_shuffle, check_map, check_repeat, check_skip, check_zip, check_rename, \
-    check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
+    check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
     check_zip_dataset, check_add_column
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -441,6 +441,33 @@ class Dataset:
             >>> data = data.skip(3)
         """
         return SkipDataset(self, count)
+
+    @check_take
+    def take(self, count=-1):
+        """
+        Takes at most given numbers of elements from the dataset.
+
+        Note:
+            1. If count is greater than the number of element in dataset or equal to -1,
+            all the element in dataset will be taken.
+            2. The order of using take and batch effects. If take before batch operation,
+            then taken given number of rows, otherwise take given number of batches.
+
+        Args:
+            count (int, optional): Number of elements to be taken from the dataset (default=-1).
+
+        Returns:
+            TakeDataset, dataset taken.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object.
+            >>> # creates a dataset where the dataset including 50 elements.
+            >>> data = data.take(50)
+        """
+        if count == -1:
+            return self
+        return TakeDataset(self, count)
 
     @check_zip_dataset
     def zip(self, datasets):
@@ -1100,6 +1127,7 @@ class RepeatDataset(DatasetOp):
         """
         return self.count
 
+
 class SkipDataset(DatasetOp):
     """
     The result of applying Skip operator to the input Dataset.
@@ -1133,6 +1161,41 @@ class SkipDataset(DatasetOp):
         if self.count >= 0 and self.count < child_size:
             output_size = child_size - self.count
         return output_size
+
+
+class TakeDataset(DatasetOp):
+    """
+    The result of applying Take operator to the input Dataset.
+
+    Args:
+        input_dataset (Dataset): Input Dataset to be taken element from.
+        count (int): Number of elements to be taken from the dataset.
+    """
+
+    def __init__(self, input_dataset, count):
+        super().__init__()
+        self.count = count
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        self._input_indexs = input_dataset.input_indexs
+
+    def get_args(self):
+        args = super().get_args()
+        args["count"] = self.count
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        child_size = self.input[0].get_dataset_size()
+        if child_size < self.count:
+            return child_size
+        return self.count
+
 
 class ZipDataset(DatasetOp):
     """
