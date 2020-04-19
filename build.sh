@@ -314,7 +314,10 @@ build_mindspore()
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ../..
     fi
-    cmake --build . --target package ${VERBOSE} -j$THREAD_NUM
+    if [[ -n "$VERBOSE" ]]; then
+      CMAKE_VERBOSE="--verbose"
+    fi
+    cmake --build . --target package ${CMAKE_VERBOSE} -j$THREAD_NUM
     echo "success to build mindspore project!"
 }
 
