@@ -14,7 +14,7 @@
 # ==============================================================================
 import numpy as np
 import pytest
-
+import copy
 import mindspore.dataset as ds
 from mindspore.dataset.engine.iterators import ITERATORS_LIST, _cleanup
 
@@ -81,3 +81,33 @@ def test_iterator_weak_ref():
     assert sum(itr() is not None for itr in ITERATORS_LIST) == 2
 
     _cleanup()
+
+
+class MyDict(dict):
+    def __getattr__(self, key):
+        return self[key]
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __call__(self, t):
+        return t
+
+
+def test_tree_copy():
+    #  Testing copying the tree with a pyfunc that cannot be pickled
+
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=COLUMNS)
+    data1 = data.map(operations=[MyDict()])
+
+    itr = data1.create_tuple_iterator()
+
+    assert id(data1) != id(itr.dataset)
+    assert id(data) != id(itr.dataset.input[0])
+    assert id(data1.operations[0]) == id(itr.dataset.operations[0])
+
+    itr.release()
+
+
+if __name__ == '__main__':
+    test_tree_copy()
