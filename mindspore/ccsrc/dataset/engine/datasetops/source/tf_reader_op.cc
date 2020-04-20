@@ -163,6 +163,9 @@ Status TFReaderOp::Init() {
   if (total_rows_ == 0) {
     total_rows_ = data_schema_->num_rows();
   }
+  if (total_rows_ < 0) {
+    RETURN_STATUS_UNEXPECTED("The num_sample or numRows for TFRecordDataset should be greater than 0");
+  }
 
   // Build the index with our files such that each file corresponds to a key id.
   RETURN_IF_NOT_OK(filename_index_->insert(dataset_files_list_));

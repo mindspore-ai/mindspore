@@ -1455,7 +1455,7 @@ class StorageDataset(SourceDataset):
 
     Args:
         dataset_files (list[str]): List of files to be read.
-        schema (str): Path to the json schema file.
+        schema (str): Path to the json schema file. If numRows(parsed from schema) is not exist, read the full dataset.
         distribution (str, optional): Path of distribution config file (default="").
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns).
         num_parallel_workers (int, optional): Number of parallel working threads (default=None).
@@ -2193,7 +2193,10 @@ class TFRecordDataset(SourceDataset):
         schema (str or Schema, optional): Path to the json schema file or schema object (default=None).
             If the schema is not provided, the meta data from the TFData file is considered the schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
-        num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
+        num_samples (int, optional): number of samples(rows) to read (default=None).
+            If num_samples is None and numRows(parsed from schema) is not exist, read the full dataset;
+            If num_samples is None and numRows(parsed from schema) is greater than 0, read numRows rows;
+            If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
         shuffle (bool, Shuffle level, optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
@@ -2711,10 +2714,10 @@ class Schema:
     """
 
     def __init__(self, schema_file=None):
+        self.num_rows = None
         if schema_file is None:
             self.columns = []
             self.dataset_type = ''
-            self.num_rows = 0
         else:
             if not os.path.isfile(schema_file) or not os.access(schema_file, os.R_OK):
                 raise ValueError("The file %s does not exist or permission denied!" % schema_file)
@@ -2859,6 +2862,9 @@ class Schema:
             raise RuntimeError("DatasetType field is missing.")
         if self.columns is None:
             raise RuntimeError("Columns are missing.")
+        if self.num_rows is not None:
+            if not isinstance(self.num_rows, int) or self.num_rows <= 0:
+                raise ValueError("numRows must be greater than 0")
 
     def __str__(self):
         return self.to_json()

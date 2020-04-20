@@ -162,7 +162,11 @@ Status StorageClient::numRowsFromFile(uint32_t &num_rows) const {
     std::ifstream in(schemaFile);
     nlohmann::json js;
     in >> js;
-    num_rows = js.value("numRows", 0);
+    if (js.find("numRows") == js.end()) {
+      num_rows = MAX_INTEGER_INT32;
+    } else {
+      num_rows = js.value("numRows", 0);
+    }
     if (num_rows == 0) {
       std::string err_msg =
         "Storage client has not properly done dataset "
