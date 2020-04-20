@@ -22,7 +22,11 @@ from mindspore import log as logger
 DATA_DIR_TF2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR_TF2 = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
+
 def test_tf_skip():
+    """
+    a simple skip operation.
+    """
     data1 = ds.TFRecordDataset(DATA_DIR_TF2, SCHEMA_DIR_TF2, shuffle=False)
 
     resize_height, resize_width = 32, 32
@@ -37,10 +41,14 @@ def test_tf_skip():
         num_iter += 1
     assert num_iter == 1
 
+
 def generator_md():
-    # Create a dataset with [0, 1, 2, 3, 4]
+    """
+    create a dataset with [0, 1, 2, 3, 4]
+    """
     for i in range(5):
         yield (np.array([i]), )
+
 
 def test_generator_skip():
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
@@ -53,6 +61,7 @@ def test_generator_skip():
         buf.append(data[0][0])
     assert len(buf) == 2
 
+
 def test_skip_1():
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
@@ -64,6 +73,7 @@ def test_skip_1():
         buf.append(data[0][0])
     assert len(buf) == 0
 
+
 def test_skip_2():
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
@@ -74,6 +84,7 @@ def test_skip_2():
     for data in ds1:
         buf.append(data[0][0])
     assert len(buf) == 5
+
 
 def test_skip_repeat_1():
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
@@ -89,6 +100,7 @@ def test_skip_repeat_1():
         buf.append(data[0][0])
     assert len(buf) == 7
 
+
 def test_skip_repeat_2():
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
 
@@ -102,6 +114,7 @@ def test_skip_repeat_2():
     for data in ds1:
         buf.append(data[0][0])
     assert len(buf) == 4
+
 
 def test_skip_repeat_3():
     ds1 = ds.GeneratorDataset(generator_md, ["data"])
@@ -119,6 +132,7 @@ def test_skip_repeat_3():
     for data in ds1:
         buf.append(data[0][0])
     assert len(buf) == 6
+
 
 if __name__ == "__main__":
     test_tf_skip()
