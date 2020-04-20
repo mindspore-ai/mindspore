@@ -26,7 +26,7 @@ depthwise_conv2d_backprop_filter_op_info = TBERegOp("DepthwiseConv2dNativeBackpr
     .attr("filter_size", "required", "listInt", "all") \
     .attr("stride", "required", "listInt", "all") \
     .attr("dilation", "required", "listInt", "all") \
-    .attr("pads", "required", "str", "all") \
+    .attr("pads", "required", "listInt", "all") \
     .attr("data_format", "required", "str", "all") \
     .input(0, "input", False, "required", "all") \
     .input(1, "out_backprop", False, "required", "all") \
