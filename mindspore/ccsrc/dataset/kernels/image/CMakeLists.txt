@@ -19,6 +19,7 @@ if (WIN32)
       rescale_op.cc
       resize_bilinear_op.cc
       resize_op.cc
+      uniform_aug_op.cc
       )
 else()
   add_library(kernels-image OBJECT
@@ -42,5 +43,6 @@ else()
       rescale_op.cc
       resize_bilinear_op.cc
       resize_op.cc
+      uniform_aug_op.cc
       )
 endif()
