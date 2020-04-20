@@ -114,6 +114,7 @@ convert_object_map = {
     T.map:          C.HyperMap(),
     T.partial:      F.partial,
     T.zip:          C.zip_operation,
+    T.print:        F.print_,
 
     # custom define operation
     T.iter:         M.ms_iter,

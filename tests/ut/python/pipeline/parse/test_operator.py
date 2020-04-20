@@ -160,8 +160,10 @@ def test_ops():
             ret_floor = p // q + q // p
             ret = ret_pow + ret_mod + ret_floor
             if self.int > self.float:
-                if self.str_a + self.str_b == "helloworld":
-                    return ret
+                if [1, 2, 3] != None:
+                    if self.str_a + self.str_b == "helloworld":
+                        print("hello world")
+                        return ret
             return x
 
     net = OpsNet(9, 2)

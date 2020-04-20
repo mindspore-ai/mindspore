@@ -151,8 +151,6 @@ def vm_impl_max_pool_grad_with_argmax(self):
     """Generate vm_impl function for MaxPoolGradWithArgmax"""
 
     def vm_impl(x, dout, argmax):
-        print("buxue")
-        print(argmax)
         x = x.asnumpy()
         dout = dout.asnumpy()
         arg_max = argmax.asnumpy()
