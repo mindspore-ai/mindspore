@@ -15,7 +15,7 @@
 
 import mindspore.dataset.transforms.vision.c_transforms as vision
 import numpy as np
-
+import matplotlib.pyplot as plt
 import mindspore.dataset as ds
 from mindspore import log as logger
 
@@ -114,6 +114,7 @@ def test_decode_op():
         # plt.subplot(131)
         # plt.imshow(image)
         # plt.title("DE image")
+        # plt.show()
         num_iter += 1
 
 
@@ -138,8 +139,8 @@ def test_decode_normalize_op():
         # plt.subplot(131)
         # plt.imshow(image)
         # plt.title("DE image")
+        # plt.show()
         num_iter += 1
-        break
 
 
 if __name__ == "__main__":

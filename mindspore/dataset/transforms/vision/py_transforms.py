@@ -220,7 +220,7 @@ class Decode:
 
 class Normalize:
     """
-    Normalize the input Numpy image array of shape (H, W, C) with the given mean and standard deviation.
+    Normalize the input Numpy image array of shape (C, H, W) with the given mean and standard deviation.
 
     The values of the array need to be in range [0.0, 1.0].
 
