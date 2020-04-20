@@ -132,7 +132,7 @@ def _none_not_equal_scalar(x, y):
 
 
 @not_equal.register("Tuple", "Tuple")
-def _euqal_tuple(x, y):
+def _not_euqal_tuple(x, y):
     """
     Determine if two tuples are not equal by element.
 
@@ -147,7 +147,7 @@ def _euqal_tuple(x, y):
 
 
 @not_equal.register("List", "List")
-def _euqal_list(x, y):
+def _not_euqal_list(x, y):
     """
     Determine if two lists are not equal by element.
 
@@ -162,7 +162,7 @@ def _euqal_list(x, y):
 
 
 @not_equal.register("Tuple", "None")
-def _tuple_euqal_none(x, y):
+def _tuple_not_euqal_none(x, y):
     """
     Determine if tuple element not equals none element.
 
@@ -189,6 +189,7 @@ def _none_not_equal_tuple(x, y):
        bool, return True.
    """
     return True
+
 
 @not_equal.register("Tensor", "Number")
 @not_equal.register("Number", "Tensor")
@@ -233,5 +234,35 @@ def _none_not_equal_tensor(x, y):
 
     Returns:
        bool, return True.
+   """
+    return True
+
+
+@not_equal.register("List", "None")
+def _list_not_equal_none(x, y):
+    """
+    Determine if list not equal none.
+
+    Args:
+       x (list): The first input which is a list.
+       y (none): The second input which is none.
+
+    Returns:
+       bool, return true.
+   """
+    return True
+
+
+@not_equal.register("None", "List")
+def _none_not_equal_list(x, y):
+    """
+    Determine if none not equal list.
+
+    Args:
+       x (none): The first input which is none.
+       y (list): The second input which is a list.
+
+    Returns:
+       bool, return true.
    """
     return True

@@ -108,6 +108,7 @@ class BinaryCrossEntropyGrad(PrimitiveWithInfer):
             validator.check_two_types_same('x_type', x_type, 'weight_type', weight_type)
         return x_type
 
+
 class ConcatOffset(PrimitiveWithInfer):
     """primitive for computing Concat's gradient."""
 
