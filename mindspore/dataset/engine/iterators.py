@@ -63,6 +63,10 @@ def _alter_node(node):
         return new_shuffle
 
     if isinstance(node, de.MapDataset):
+        if node.python_multiprocessing:
+            # Bootstrap can only be performed on a copy of the original dataset node.
+            # Bootstrap on original dataset node will make all iterators share the same process pool
+            node.iterator_bootstrap()
         if node.columns_order is not None:
             # Remove the connection between the parent's node to the current node because we are inserting a node.
             if node.output:
