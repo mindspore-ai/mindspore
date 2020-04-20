@@ -64,7 +64,7 @@ set(_ge_tmp_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 string(REPLACE " -Wall" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 string(REPLACE " -Werror" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 # force __FILE__ to show relative path of file, from source directory
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILE__='\"$(subst ${CMAKE_SOURCE_DIR}/,,$(abspath $<))\"' -Wno-builtin-macro-redefined")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__FILE__='\"$(subst $(realpath ${CMAKE_SOURCE_DIR})/,,$(abspath $<))\"' -Wno-builtin-macro-redefined")
 add_subdirectory(${GE_SOURCE_DIR}/src/common/graph)
 if(ENABLE_D)
     add_subdirectory(${GE_SOURCE_DIR}/src/ge/common)
