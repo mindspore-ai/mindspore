@@ -191,17 +191,11 @@ if (ENABLE_GPU)
         DESTINATION ${INSTALL_PY_DIR}/../
         COMPONENT mindspore
     )
-    if (EXISTS ${incubator_tvm_gpu_ROOT})
-        file(GLOB_RECURSE GLOG_LIB_LIST ${incubator_tvm_gpu_LIBPATH}/lib*)
-        install(
-                FILES ${GLOG_LIB_LIST}
-                DESTINATION ${INSTALL_LIB_DIR}
-                COMPONENT mindspore
-        )
+    if (EXISTS ${CMAKE_BINARY_DIR}/incubator-tvm)
         install(
             DIRECTORY
-                ${incubator_tvm_gpu_ROOT}/topi/python/topi
-                ${incubator_tvm_gpu_ROOT}/python/tvm
+                ${CMAKE_BINARY_DIR}/incubator-tvm/topi/python/topi
+                ${CMAKE_BINARY_DIR}/incubator-tvm/python/tvm
             DESTINATION ${INSTALL_PY_DIR}/../_akg
             COMPONENT mindspore
         )
