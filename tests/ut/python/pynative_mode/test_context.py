@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_context """
+import os
 import pytest
 from mindspore import context
 # pylint: disable=W0212
@@ -74,11 +75,12 @@ def test_dump_target():
 def test_set_context():
     """ test_set_context """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
-                        device_id=0, save_graphs=True, save_graphs_path="/mindspore")
+                        device_id=0, save_graphs=True, save_graphs_path="mindspore_ir_path")
     assert context.get_context("device_id") == 0
     assert context.get_context("device_target") == "Ascend"
     assert context.get_context("save_graphs")
-    assert context.get_context("save_graphs_path") == "/mindspore"
+    assert os.path.exists("mindspore_ir_path")
+    assert context.get_context("save_graphs_path").find("mindspore_ir_path") > 0
     assert context.get_context("mode") == context.GRAPH_MODE
 
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -87,3 +89,16 @@ def test_set_context():
 
     with pytest.raises(ValueError):
         context.set_context(modex="ge")
+
+
+def teardown_module():
+    dirs = ['mindspore_ir_path']
+    for item in dirs:
+        item_name = './' + item
+        if not os.path.exists(item_name):
+            continue
+        if os.path.isdir(item_name):
+            os.rmdir(item_name)
+        elif os.path.isfile(item_name):
+            os.remove(item_name)
+

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_backend """
+import os
 import numpy as np
 import pytest
 from mindspore.ops import operations as P
@@ -51,10 +52,11 @@ def test_vm_backend():
 
 def test_vm_set_context():
     """ test_vm_set_context """
-    context.set_context(save_graphs=True, save_graphs_path="/home/mindspore", mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True, save_graphs_path="mindspore_ir_path", mode=context.GRAPH_MODE)
     assert context.get_context("save_graphs")
     assert context.get_context("mode") == context.GRAPH_MODE
-    assert context.get_context("save_graphs_path") == "/home/mindspore"
+    assert os.path.exists("mindspore_ir_path")
+    assert context.get_context("save_graphs_path").find("mindspore_ir_path") > 0
     context.set_context(mode=context.PYNATIVE_MODE)
 
 @args_type_check(v_str=str, v_int=int, v_tuple=tuple)
@@ -74,3 +76,15 @@ def test_args_type_check():
     with pytest.raises(TypeError):
         check_input("name", 100, "age")
     check_input("name", 100, (10, 10))
+
+
+def teardown_module():
+    dirs = ['mindspore_ir_path']
+    for item in dirs:
+        item_name = './' + item
+        if not os.path.exists(item_name):
+            continue
+        if os.path.isdir(item_name):
+            os.rmdir(item_name)
+        elif os.path.isfile(item_name):
+            os.remove(item_name)

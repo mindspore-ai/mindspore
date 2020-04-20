@@ -16,6 +16,7 @@
 The context of mindspore, used to configure the current execution environment,
 including execution mode, execution backend and other feature switchs.
 """
+import os
 import threading
 from collections import namedtuple
 from types import FunctionType
@@ -31,6 +32,31 @@ __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_aut
 
 GRAPH_MODE = 0
 PYNATIVE_MODE = 1
+
+
+def _make_directory(path: str):
+    """Make directory."""
+    real_path = None
+    if path is None or not isinstance(path, str) or path.strip() == "":
+        raise ValueError(f"Input path `{path}` is invaild type")
+
+    # convert the relative paths
+    path = os.path.realpath(path)
+    logger.debug("The absolute path is %r", path)
+
+    # check whether the path is already existed and has written permissions
+    if os.path.exists(path):
+        real_path = path
+    else:
+        # All exceptions need to be caught because create directory maybe have some limit(permissions)
+        logger.debug("The directory(%s) doesn't exist, will create it", path)
+        try:
+            os.makedirs(path)
+            real_path = path
+        except PermissionError as e:
+            logger.error(f"No write permission on the directory `{path}, error = {e}")
+            raise ValueError(f"No write permission on the directory `{path}`.")
+    return real_path
 
 
 class _ThreadLocalInfo(threading.local):
@@ -173,7 +199,7 @@ class _Context:
 
     @save_graphs_path.setter
     def save_graphs_path(self, save_graphs_path):
-        self._context_handle.set_save_graphs_path(save_graphs_path)
+        self._context_handle.set_save_graphs_path(_make_directory(save_graphs_path))
 
     @property
     def device_target(self):
