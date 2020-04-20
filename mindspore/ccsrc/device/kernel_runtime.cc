@@ -135,10 +135,11 @@ void KernelRuntime::AssignMemory(session::KernelGraph *graph) {
 }
 
 void KernelRuntime::RunOpAssignMemory(const std::vector<tensor::TensorPtr> &input_tensors,
-                                      const session::KernelGraph *graph) {
+                                      session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   // assign memory for input nodes
   RunOpAssignInputMemory(input_tensors, graph);
+  AssignStaticMemoryValueNode(graph);
   for (const auto &cnode : graph->execution_order()) {
     // assign memory for output nodes
     RunOpAssignOutputMemory(cnode);

@@ -210,6 +210,10 @@ class Print(PrimitiveWithInfer):
     def __init__(self):
         pass
 
+    def __call__(self, *args):
+        for arg in args:
+            print(arg)
+
     def infer_shape(self, *inputs):
         return [1]
 
