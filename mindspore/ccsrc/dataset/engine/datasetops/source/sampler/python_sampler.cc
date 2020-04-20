@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,8 @@ Status PythonSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
         Tensor::CreateTensor(&sample_ids, np_sample_ids);  // copy numpy to tensor
       } catch (const py::error_already_set &e) {
         return Status(StatusCode::kPyFuncException, e.what());
+      } catch (const py::cast_error &e) {
+        return Status(StatusCode::kPyFuncException, "Python Sampler iterator should return integer index");
       }
     }
     TensorRow row(1, sample_ids);
