@@ -196,12 +196,6 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 // @param output: Adjusted image of same shape and type.
 Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &hue);
 
-Status GenerateRandomCropBox(int input_height, int input_width, float ratio, float lb, float ub, int max_itr,
-                             cv::Rect *crop_box, uint32_t seed = std::mt19937::default_seed);
-
-Status CheckOverlapConstraint(const cv::Rect &crop_box, const std::vector<cv::Rect> &bounding_boxes,
-                              float min_intersect_ratio, bool *is_satisfied);
-
 // Masks out a random section from the image with set dimension
 // @param input: input Tensor
 // @param output: cutOut Tensor
@@ -214,8 +208,8 @@ Status CheckOverlapConstraint(const cv::Rect &crop_box, const std::vector<cv::Re
 // @param fill_g: green fill value for erase
 // @param fill_b: blue fill value for erase.
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
-             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, uint8_t fill_r = 0,
-             uint8_t fill_g = 0, uint8_t fill_b = 0);
+             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
+             uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 
 // Pads the input image and puts the padded image in the output
 // @param input: input Tensor
