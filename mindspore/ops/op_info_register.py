@@ -599,3 +599,4 @@ class DataType:
     F32_NCHW = ("float32", "NCHW")
     F32_NHWC = ("float32", "NHWC")
     F32_HWCN = ("float32", "HWCN")
+ 

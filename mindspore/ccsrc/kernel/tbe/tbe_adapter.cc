@@ -42,7 +42,6 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"depthwise_conv2d_native", "depthwise_conv2d"},
   {"depthwise_conv2d_native_backprop_filter", "depthwise_conv2d_backprop_filter_d"},
   {"depthwise_conv2d_native_backprop_input", "depthwise_conv2d_backprop_input_d"},
-  {"top_kv2", "top_k"},
   {"scatter_nd", "scatter_nd_d"},
   {"tile", "tile_d"},
   {"gather_v2", "gather_v2_d"},
