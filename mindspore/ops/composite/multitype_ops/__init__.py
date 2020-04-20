@@ -23,6 +23,7 @@ from .pow_impl import pow_
 from .floordiv_impl import floordiv
 from .mod_impl import mod
 from .getitem_impl import getitem
+from .setitem_impl import setitem
 from .zeros_like_impl import zeros_like
 from .ones_like_impl import ones_like
 from .equal_impl import equal
@@ -55,6 +56,7 @@ __all__ = [
     'greater_equal',
     'negative',
     'getitem',
+    'setitem',
     'logical_and',
     'logical_or',
     'logical_not'

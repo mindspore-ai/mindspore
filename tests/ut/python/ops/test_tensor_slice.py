@@ -18,6 +18,7 @@ import pytest
 
 from mindspore import Tensor
 from mindspore import context
+from mindspore import dtype as mstype
 from mindspore.nn import Cell
 
 from ....mindspore_test_framework.mindspore_test import mindspore_test
@@ -79,7 +80,102 @@ class NetWorkReduceToScalar(Cell):
         return ret
 
 
+class TensorAssignWithBoolTensorIndex(Cell):
+    def __init__(self):
+        super(TensorAssignWithBoolTensorIndex, self).__init__()
+        self.t = Tensor(np.arange(6).reshape([2,3]), dtype = mstype.float64)
+
+    def construct(self, a, b, c, u_tensor, _scalar):
+        a[c] = u_scalar
+        a[b] = u_tensor
+        z = a + self.t
+        return z
+
+
+class TensorAssignWithBoolTensorIndexError(Cell):
+    def __init__(self):
+        super(TensorAssignWithBoolTensorIndexError, self).__init__()
+
+    def construct(self, a, b, c, u_tensor):
+        a[b][c] = u_tensor
+        return a
+
+
+class TensorAssignWithBoolTensorIndex2(Cell):
+    def __init__(self):
+        super(TensorAssignWithBoolTensorIndex2, self).__init__()
+        self.t = Tensor(np.arange(6).reshape([2,3]), dtype = mstype.float64)
+
+    def construct(self, a, u_tensor, _scalar):
+        a[a>8] = u_tensor
+        a[a>=6] = u_scalar
+        a[a<3] = u_scalar
+        a[a<=5] = u_tensor
+        a[a==5] = u_scalar
+        z = a + self.t
+        return z
+
+
+class TensorAssignWithBoolTensorIndex2Error(Cell):
+    def __init__(self):
+        super(TensorAssignWithBoolTensorIndex2Error, self).__init__()
+
+    def construct(self, a, u_tensor):
+        a[a>8][a>5] = u_tensor
+        return a
+
+
+a = np.random.uniform(1,10,[2,3])
+b = a > 5
+c = a < 3
+Ta = Tensor(a)
+Tb = Tensor(b)
+Tc = Tensor(c)
+Td = Tensor([True, True])
+u_tensor = Tensor([1])
+u_tensor_error = Tensor([1, 2])
+u_scalar = 5
+
+
+def test_tensor_assign_bool_index():
+    net1 = TensorAssignWithBoolTensorIndex()
+    net2 = TensorAssignWithBoolTensorIndex2()
+
+    net1(Ta, Tb, Tc, u_tensor, u_scalar)
+    with pytest.raises(ValueError):
+        net1(Ta, Td, Tc, u_tensor, u_scalar)
+    with pytest.raises(ValueError):
+        net1(Ta, u_tensor, Tc, u_tensor, u_scalar)
+    with pytest.raises(ValueError):
+        net1(Ta, Tb, Td, u_tensor, u_scalar)
+    with pytest.raises(ValueError):
+        net1(Ta, Tb, Ta, u_tensor, u_scalar)
+    with pytest.raises(ValueError):
+        net1(Ta, Tb, Tc, u_tensor_error, u_scalar)
+    #net1(Ta, u_tensor, Tc, u_tensor_error, u_scalar)
+    with pytest.raises(ValueError):
+        net2(Ta, u_tensor_error, u_scalar)
+    net3 = TensorAssignWithBoolTensorIndexError()
+    with pytest.raises(AttributeError):
+        net3(Ta, Tb, Tc, u_tensor)
+    with pytest.raises(AttributeError):
+        net3(Ta, Tb, Tc, u_scalar)
+    net4 = TensorAssignWithBoolTensorIndex2Error()
+    with pytest.raises(AttributeError):
+        net4(Ta, u_tensor)
+    with pytest.raises(AttributeError):
+        net4(Ta, u_scalar)
+
+
 test_cases = [
+    ('TensorAssignWithBoolTensorIndex', {
+        'block': TensorAssignWithBoolTensorIndex(),
+        'desc_inputs': [Ta, Tb, Tc, u_tensor, u_scalar],
+    }),
+    ('TensorAssignWithBoolTensorIndex2', {
+        'block': TensorAssignWithBoolTensorIndex2(),
+        'desc_inputs': [Ta, u_tensor, u_scalar],
+    }),
     ('SlicePositive', {
         'block': NetWorkSlicePositive(),
         'desc_inputs': [Tensor(np.ones([6, 8, 10], np.int32))],
