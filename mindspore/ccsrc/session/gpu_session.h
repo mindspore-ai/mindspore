@@ -40,7 +40,7 @@ class GPUSession : public SessionBasic {
 
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-               std::vector<tensor::TensorPtr> *input_tensors) override;
+               const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<bool> &tensors_mask) override;
   py::tuple RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                   const std::vector<tensor::TensorPtr> &input_tensors) override;
 

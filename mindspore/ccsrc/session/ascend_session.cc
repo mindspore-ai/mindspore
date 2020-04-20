@@ -250,11 +250,11 @@ void AscendSession::RunOpExecTask(const std::shared_ptr<KernelGraph> &kernel_gra
 }
 
 void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                            std::vector<tensor::TensorPtr> *input_tensors) {
-  MS_EXCEPTION_IF_NULL(input_tensors);
+                            const std::vector<tensor::TensorPtr> &input_tensors,
+                            const std::vector<bool> &tensors_mask) {
   MS_LOG(INFO) << "Build op " << op_run_info.op_name << " start !";
   // construct graph include one op
-  auto graph = ConstructSingleOpGraph(op_run_info, input_tensors);
+  auto graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
   MS_EXCEPTION_IF_NULL(graph);
   opt::RunOpAscendBackendIRFusionOptimization(graph);
   // kernel select
