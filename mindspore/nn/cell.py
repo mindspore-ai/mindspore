@@ -103,6 +103,10 @@ class Cell:
     def parameter_layout_dict(self):
         return self._parameter_layout_dict
 
+    @property
+    def cls_name(self):
+        return self.__class__.__name__
+
     @parameter_layout_dict.setter
     def parameter_layout_dict(self, value):
         if not isinstance(value, dict):

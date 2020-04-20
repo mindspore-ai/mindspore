@@ -38,7 +38,7 @@ def test_avgpool2d_error_input():
     """ test_avgpool2d_error_input """
     kernel_size = 5
     stride = 2.3
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         nn.AvgPool2d(kernel_size, stride)
 
 

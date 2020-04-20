@@ -594,14 +594,14 @@ test_cases_for_verify_exception = [
     ('MaxPool2d_ValueError_2', {
         'block': (
             lambda _: nn.MaxPool2d(kernel_size=120, stride=True, pad_mode="valid"),
-            {'exception': ValueError},
+            {'exception': TypeError},
         ),
         'desc_inputs': [Tensor(np.random.randn(32, 3, 112, 112).astype(np.float32).transpose(0, 3, 1, 2))],
     }),
     ('MaxPool2d_ValueError_3', {
         'block': (
             lambda _: nn.MaxPool2d(kernel_size=3, stride=True, pad_mode="valid"),
-            {'exception': ValueError},
+            {'exception': TypeError},
         ),
         'desc_inputs': [Tensor(np.random.randn(32, 3, 112, 112).astype(np.float32).transpose(0, 3, 1, 2))],
     }),

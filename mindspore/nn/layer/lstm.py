@@ -17,7 +17,7 @@ from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 
 
 class LSTM(Cell):
@@ -114,7 +114,7 @@ class LSTM(Cell):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.has_bias = has_bias
-        self.batch_first = validator.check_type("batch_first", batch_first, [bool])
+        self.batch_first = validator.check_value_type("batch_first", batch_first, [bool], self.cls_name)
         self.dropout = float(dropout)
         self.bidirectional = bidirectional
 
