@@ -198,6 +198,19 @@ class ScalarSummaryNet(nn.Cell):
         return out
 
 
+class HistogramSummaryNet(nn.Cell):
+    """HistogramSummaryNet definition"""
+
+    def __init__(self):
+        super(HistogramSummaryNet, self).__init__()
+        self.summary = P.HistogramSummary()
+
+    def construct(self, tensor):
+        string_in = "wight_value"
+        out = self.summary(string_in, tensor)
+        return out
+
+
 class FusedBatchNormGrad(nn.Cell):
     """ FusedBatchNormGrad definition """
 
@@ -442,6 +455,10 @@ test_cases = [
     ('ScalarSummary', {
         'block': ScalarSummaryNet(),
         'desc_inputs': [2.2],
+    }),
+    ('HistogramSummary', {
+        'block': HistogramSummaryNet(),
+        'desc_inputs': [[1,2,3]],
     }),
     ('FusedBatchNormGrad', {
         'block': FusedBatchNormGrad(nn.BatchNorm2d(num_features=512, eps=1e-5, momentum=0.1)),

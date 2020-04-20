@@ -98,6 +98,33 @@ class TensorSummary(Primitive):
         """init"""
 
 
+class HistogramSummary(Primitive):
+    """
+    Output tensor to protocol buffer through histogram summary operator.
+
+    Inputs:
+        - **name** (str) - The name of the input variable.
+        - **value** (Tensor) - The value of tensor, and the rank of tensor should be greater than 0.
+
+    Examples:
+        >>> class SummaryDemo(nn.Cell):
+        >>>     def __init__(self,):
+        >>>         super(SummaryDemo, self).__init__()
+        >>>         self.summary = P.HistogramSummary()
+        >>>         self.add = P.TensorAdd()
+        >>>
+        >>>     def construct(self, x, y):
+        >>>         x = self.add(x, y)
+        >>>         name = "x"
+        >>>         self.summary(name, x)
+        >>>         return x
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init"""
+
+
 class InsertGradientOf(PrimitiveWithInfer):
     """
     Attach callback to graph node that will be invoked on the node's gradient.

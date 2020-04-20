@@ -246,6 +246,7 @@ constexpr char STATESETITEM[] = "state_setitem";
 constexpr char SCALARSUMMARY[] = "ScalarSummary";
 constexpr char IMAGESUMMARY[] = "ImageSummary";
 constexpr char TENSORSUMMARY[] = "TensorSummary";
+constexpr char HISTOGRAMSUMMARY[] = "HistogramSummary";
 constexpr char BROADCASTGRADIENTARGS[] = "BroadcastGradientArgs";
 constexpr char INVERTPERMUTATION[] = "InvertPermutation";
 constexpr char CONTROLDEPEND[] = "ControlDepend";

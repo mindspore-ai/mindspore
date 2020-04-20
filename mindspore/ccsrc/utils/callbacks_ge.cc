@@ -131,7 +131,7 @@ static TensorPtr GetMeTensorForSummary(const std::string& name, const std::share
     auto shape = std::vector<int>({ONE_SHAPE});
     return TransformUtil::ConvertGeTensor(ge_tensor_ptr, shape);
   }
-  if (tname == "[:Tensor]") {
+  if (tname == "[:Tensor]" || tname == "[:Histogram]") {
     MS_LOG(DEBUG) << "The summary(" << name << ") is Tensor";
     // process the tensor summary
     // Now we can't get the real shape, so we keep same shape with GE

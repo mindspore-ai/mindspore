@@ -45,7 +45,7 @@ void GetSummaryNodes(const KernelGraph *graph, std::unordered_map<std::string, s
   for (auto &n : apply_list) {
     MS_EXCEPTION_IF_NULL(n);
     if (IsPrimitiveCNode(n, prim::kPrimScalarSummary) || IsPrimitiveCNode(n, prim::kPrimTensorSummary) ||
-        IsPrimitiveCNode(n, prim::kPrimImageSummary)) {
+        IsPrimitiveCNode(n, prim::kPrimImageSummary) || IsPrimitiveCNode(n, prim::kPrimHistogramSummary)) {
       int index = 0;
       auto cnode = n->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
@@ -83,7 +83,7 @@ bool ExistSummaryNode(const KernelGraph *graph) {
   auto all_nodes = DeepLinkedGraphSearch(ret);
   for (auto &n : all_nodes) {
     if (IsPrimitiveCNode(n, prim::kPrimScalarSummary) || IsPrimitiveCNode(n, prim::kPrimTensorSummary) ||
-        IsPrimitiveCNode(n, prim::kPrimImageSummary)) {
+        IsPrimitiveCNode(n, prim::kPrimImageSummary) || IsPrimitiveCNode(n, prim::kPrimHistogramSummary)) {
       return true;
     }
   }

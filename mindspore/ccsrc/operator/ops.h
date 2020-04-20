@@ -225,6 +225,7 @@ extern const PrimitivePtr kPrimStateSetItem;
 extern const PrimitivePtr kPrimScalarSummary;
 extern const PrimitivePtr kPrimImageSummary;
 extern const PrimitivePtr kPrimTensorSummary;
+extern const PrimitivePtr kPrimHistogramSummary;
 extern const PrimitivePtr kPrimBroadcastGradientArgs;
 extern const PrimitivePtr kPrimControlDepend;
 extern const PrimitivePtr kPrimIs_;

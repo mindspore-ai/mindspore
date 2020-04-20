@@ -49,6 +49,15 @@ def get_bprop_image_summary(self):
     return bprop
 
 
+@bprop_getters.register(P.HistogramSummary)
+def get_bprop_histogram_summary(self):
+    """Generate bprop for HistogramSummary"""
+
+    def bprop(tag, x, out, dout):
+        return tag, zeros_like(x)
+    return bprop
+
+
 @bprop_getters.register(P.InsertGradientOf)
 def get_bprop_insert_gradient_of(self):
     """Generate bprop for InsertGradientOf"""
