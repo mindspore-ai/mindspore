@@ -58,7 +58,8 @@ enum OpName {
   kVoc,
   kCifar10,
   kCifar100,
-  kCelebA
+  kCelebA,
+  kTextFile
 };
 
 // The C++ binder class that we expose to the python script.
@@ -147,6 +148,8 @@ class DEPipeline {
   Status SetBatchParameters(const py::dict &args);
 
   Status ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status ParseTextFileOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
  private:
   // Execution tree that links the dataset operators.
