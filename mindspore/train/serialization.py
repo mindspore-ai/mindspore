@@ -426,7 +426,7 @@ def export(net, *inputs, file_name, file_format='GEIR'):
             - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
               Ascend model.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
-            - LITE: Huawei model format for mobile.
+            - LITE: Huawei model format for mobile. A lite model only for the MindSpore Lite
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
