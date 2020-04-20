@@ -26,6 +26,8 @@ Note:
     - The Primitive operators in operations need to be used after instantiation.
     - The composite operators are pre-defined combination of operator.
     - The functional operators are the pre-instantiated Primitive operators, which can be used directly like a function.
+    - For functional operators usage, please refer to
+      https://gitee.com/mindspore/mindspore/blob/master/mindspore/ops/functional.py
 """
 
 from .primitive import Primitive, PrimitiveWithInfer, prim_attr_register
