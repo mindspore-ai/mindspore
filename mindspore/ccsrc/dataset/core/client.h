@@ -31,6 +31,7 @@
 #include "dataset/engine/datasetops/map_op.h"
 #include "dataset/engine/datasetops/project_op.h"
 #include "dataset/engine/datasetops/rename_op.h"
+#include "dataset/engine/datasetops/filter_op.h"
 #include "dataset/engine/datasetops/repeat_op.h"
 #include "dataset/engine/datasetops/skip_op.h"
 #include "dataset/engine/datasetops/shuffle_op.h"

@@ -693,6 +693,26 @@ def check_map(method):
     return new_method
 
 
+def check_filter(method):
+    """"check the input arguments of filter."""
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+        predicate = param_dict.get("predicate")
+        if not callable(predicate):
+            raise ValueError("Predicate should be a python function or a callable python object.")
+
+        nreq_param_int = ['num_parallel_workers']
+        check_param_type(nreq_param_int, param_dict, int)
+        param_name = "input_columns"
+        param = param_dict.get(param_name)
+        if param is not None:
+            check_columns(param, param_name)
+        return method(*args, **kwargs)
+
+    return new_method
+
+
 def check_repeat(method):
     """check the input arguments of repeat."""
     @wraps(method)

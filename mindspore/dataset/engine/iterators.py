@@ -129,6 +129,8 @@ class Iterator:
             op_type = OpName.ZIP
         elif isinstance(dataset, de.MapDataset):
             op_type = OpName.MAP
+        elif isinstance(dataset, de.FilterDataset):
+            op_type = OpName.FILTER
         elif isinstance(dataset, de.RepeatDataset):
             op_type = OpName.REPEAT
         elif isinstance(dataset, de.SkipDataset):

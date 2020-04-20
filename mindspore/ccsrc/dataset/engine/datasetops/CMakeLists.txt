@@ -14,5 +14,6 @@ add_library(engine-datasetops OBJECT
     take_op.cc
     shuffle_op.cc
     zip_op.cc
+    filter_op.cc
     )
 
