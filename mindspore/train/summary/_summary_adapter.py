@@ -71,12 +71,14 @@ class SummaryType(Enum):
         TENSOR (Number): Summary TENSOR enum.
         IMAGE (Number): Summary image enum.
         GRAPH (Number): Summary graph enum.
+        HISTOGRAM (Number): Summary histogram enum.
         INVALID (Number): Unknow type.
     """
     SCALAR = 1      # Scalar summary
     TENSOR = 2      # Tensor summary
     IMAGE = 3       # Image summary
     GRAPH = 4       # graph
+    HISTOGRAM = 5   # Histogram Summary
     INVALID = 0xFF  # unknow type
 
 
@@ -148,7 +150,7 @@ def package_summary_event(data_id, step):
     """
     data_list = get_summary_data(data_id)
     if data_list is None:
-        logger.error("The step(%r) does not have record data.", self.step)
+        logger.error("The step(%r) does not have record data.", step)
     del_summary_data(data_id)
     # create the event of summary
     summary_event = Event()
@@ -177,6 +179,12 @@ def package_summary_event(data_id, step):
             summary_value.tag = tag
             summary_image = summary_value.image
             _get_image_summary(tag, data, summary_image, MS_IMAGE_TENSOR_FORMAT)
+        elif summary_type is SummaryType.HISTOGRAM:
+            logger.debug("Now process Histogram summary, tag = %r", tag)
+            summary_value = summary.value.add()
+            summary_value.tag = tag
+            summary_histogram = summary_value.histogram
+            _fill_histogram_summary(tag, data, summary_histogram)
         else:
             # The data is invalid ,jump the data
             logger.error("Summary type is error, tag = %r", tag)
@@ -282,6 +290,74 @@ def _get_tensor_summary(tag: str, np_value, summary_tensor):
         summary_tensor.dims.append(v)
 
     return summary_tensor
+
+
+def _fill_histogram_summary(tag: str, np_value: np.array, summary_histogram) -> None:
+    """
+    Package the histogram summary.
+
+    Args:
+        tag (str): Summary tag describe.
+        np_value (np.array): Summary data.
+        summary_histogram (summary_pb2.Summary.Histogram): Summary histogram data.
+    """
+    logger.debug("Set(%r) the histogram summary value", tag)
+    # Default bucket for tensor with no valid data.
+    default_bucket_left = -0.5
+    default_bucket_width = 1.0
+
+    if np_value.size == 0:
+        bucket = summary_histogram.buckets.add()
+        bucket.left = default_bucket_left
+        bucket.width = default_bucket_width
+        bucket.count = 0
+
+        summary_histogram.nan_count = 0
+        summary_histogram.pos_inf_count = 0
+        summary_histogram.neg_inf_count = 0
+
+        summary_histogram.max = 0
+        summary_histogram.min = 0
+        summary_histogram.sum = 0
+
+        summary_histogram.count = 0
+
+        return
+
+    summary_histogram.nan_count = np.count_nonzero(np.isnan(np_value))
+    summary_histogram.pos_inf_count = np.count_nonzero(np.isposinf(np_value))
+    summary_histogram.neg_inf_count = np.count_nonzero(np.isneginf(np_value))
+    summary_histogram.count = np_value.size
+
+    masked_value = np.ma.masked_invalid(np_value)
+    tensor_max = masked_value.max()
+    tensor_min = masked_value.min()
+    tensor_sum = masked_value.sum()
+
+    # No valid value in tensor.
+    if tensor_max is np.ma.masked:
+        bucket = summary_histogram.buckets.add()
+        bucket.left = default_bucket_left
+        bucket.width = default_bucket_width
+        bucket.count = 0
+
+        summary_histogram.max = np.nan
+        summary_histogram.min = np.nan
+        summary_histogram.sum = 0
+
+        return
+
+    counts, edges = np.histogram(np_value, bins='auto', range=(tensor_min, tensor_max))
+
+    for ind, count in enumerate(counts):
+        bucket = summary_histogram.buckets.add()
+        bucket.left = edges[ind]
+        bucket.width = edges[ind + 1] - edges[ind]
+        bucket.count = count
+
+    summary_histogram.max = tensor_max
+    summary_histogram.min = tensor_min
+    summary_histogram.sum = tensor_sum
 
 
 def _get_image_summary(tag: str, np_value, summary_image, input_format='NCHW'):
