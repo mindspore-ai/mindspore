@@ -33,6 +33,8 @@
 
 namespace mindspore {
 namespace parallel {
+constexpr double ALLTOALL_SCALE_FACTOR = 2.0;
+constexpr double ALLGATHER_REDUCESCATTER_SCALE_FACTOR = 0.5;
 class TensorRedistribution {
  public:
   explicit TensorRedistribution(bool construct_op_flag = true, bool keep_reshape = false)
@@ -46,7 +48,7 @@ class TensorRedistribution {
         keep_reshape_(keep_reshape) {}
   Status Init(const TensorLayout& from, const TensorLayout& to, const RankList& dev_list);
   ~TensorRedistribution() = default;
-  RedistributionOpListPtr InferTensorRedistributionOperatorList();
+  RedistributionOpListPtr InferTensorRedistributionOperatorList(bool is_cost_model = false);
   OperatorList operator_list() const { return operator_list_; }
   bool reshape_flag() const { return reshape_flag_; }
   Status ComputeCost();
