@@ -24,6 +24,7 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <set>
 
 #include "./common.h"
 #include "optimizer/opt.h"
@@ -142,13 +143,13 @@ bool StepParallel(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optim
 
 int32_t GetTupleGetItemIndex(const CNodePtr &cnode);
 
-CNodePtr FindLossCNodeFromRoot(const FuncGraphPtr &root);
+std::vector<CNodePtr> FindLossCNodeFromRoot(const FuncGraphPtr &root);
 
 Status ParallelInit();
 
 std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node);
 
-FuncGraphPtr ForwardGraph(const FuncGraphPtr &root);
+std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root);
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -399,7 +399,12 @@ Status AllreduceFusion::ProcessAllreduceFusion(const CNodePtr &ret) {
   ret_ = ret;
   root_graph_ = ret_->func_graph();
   MS_EXCEPTION_IF_NULL(root_graph_);
-  auto forward_graph = ForwardGraph(root_graph_);
+  auto graph_set = ForwardGraph(root_graph_);
+  if (graph_set.size() > 1) {
+    MS_LOG(WARNING) << "AllReduce fusion don't support multiple subgraphs now.";
+    return SUCCESS;
+  }
+  auto forward_graph = *(graph_set.begin());
   MS_EXCEPTION_IF_NULL(forward_graph);
   forward_ret_ = forward_graph->get_return();
   MS_EXCEPTION_IF_NULL(forward_ret_);
