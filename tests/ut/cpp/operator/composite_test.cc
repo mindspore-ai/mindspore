@@ -128,8 +128,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_one_number) {
     trace::ClearTraceStack();
     engine_->Run(tupleSliceGraphPtr, args_spec_list);
     FAIL() << "Excepted exception :Args type is wrong";
-  } catch (std::runtime_error const &err) {
-    ASSERT_TRUE(std::string(err.what()).find("TypeError") != std::string::npos);
+  } catch (pybind11::type_error const &err) {
+    ASSERT_TRUE(true);
   } catch (...) {
     FAIL() << "Excepted exception :Args type is wrong";
   }

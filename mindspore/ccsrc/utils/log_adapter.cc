@@ -179,7 +179,7 @@ void LogWriter::operator^(const LogStream &stream) const {
 
   std::ostringstream oss;
   oss << location_.file_ << ":" << location_.line_ << " " << location_.func_ << "] ";
-  if (exception_type_ != NoExceptionType) {
+  if (exception_type_ != NoExceptionType && exception_type_ != TypeError && exception_type_ != ValueError) {
     oss << ExceptionTypeToString(exception_type_) << " ";
   }
   oss << msg.str();
@@ -241,6 +241,10 @@ void mindspore_log_init(void) {
   // set default log level to WARNING
   if (mindspore::GetEnv("GLOG_v").empty()) {
     FLAGS_v = mindspore::WARNING;
+  }
+  // set default log file mode to 0640
+  if (mindspore::GetEnv("GLOG_logfile_mode").empty()) {
+    FLAGS_logfile_mode = 0640;
   }
   // default print log to screen
   if (mindspore::GetEnv("GLOG_logtostderr").empty()) {
