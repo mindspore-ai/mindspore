@@ -182,8 +182,6 @@ def test_random_color_jitter_op_saturation():
     ]
     transform = py_vision.ComposeOp(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    # data2 = data2.map(input_columns=["image"], operations=decode_op)
-    # data2 = data2.map(input_columns=["image"], operations=c_vision.Decode())
     data2 = data2.map(input_columns=["image"], operations=transform())
 
     num_iter = 0
@@ -220,8 +218,6 @@ def test_random_color_jitter_op_hue():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
-    # channel_swap_op = c_vision.ChannelSwap()
-    # change_mode_op = c_vision.ChangeMode()
 
     random_jitter_op = c_vision.RandomColorAdjust((1, 1), (1, 1), (1, 1), (0.2, 0.2))
 
