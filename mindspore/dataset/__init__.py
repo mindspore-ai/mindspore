@@ -23,7 +23,7 @@ from .engine.datasets import StorageDataset, TFRecordDataset, ImageFolderDataset
     GeneratorDataset, ManifestDataset, Cifar10Dataset, Cifar100Dataset, VOCDataset, CelebADataset, TextFileDataset, \
     Schema, Shuffle, zip
 from .engine.samplers import DistributedSampler, PKSampler, RandomSampler, SequentialSampler, SubsetRandomSampler, \
-    WeightedRandomSampler
+    WeightedRandomSampler, Sampler
 from .engine.serializer_deserializer import serialize, deserialize, show
 
 __all__ = ["config", "ImageFolderDatasetV2", "MnistDataset", "StorageDataset",

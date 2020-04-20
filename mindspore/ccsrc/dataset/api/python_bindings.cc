@@ -53,6 +53,7 @@
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
+#include "dataset/engine/datasetops/source/sampler/python_sampler.h"
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "dataset/engine/jagged_connector.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
@@ -427,6 +428,7 @@ void bindSamplerOps(py::module *m) {
 
   (void)py::class_<SequentialSampler, Sampler, std::shared_ptr<SequentialSampler>>(*m, "SequentialSampler")
     .def(py::init<>());
+
   (void)py::class_<SubsetRandomSampler, Sampler, std::shared_ptr<SubsetRandomSampler>>(*m, "SubsetRandomSampler")
     .def(py::init<std::vector<int64_t>>(), py::arg("indices"));
 
@@ -437,6 +439,9 @@ void bindSamplerOps(py::module *m) {
   (void)py::class_<WeightedRandomSampler, Sampler, std::shared_ptr<WeightedRandomSampler>>(*m, "WeightedRandomSampler")
     .def(py::init<std::vector<double>, int64_t, bool>(), py::arg("weights"), py::arg("numSamples"),
          py::arg("replacement"));
+
+  (void)py::class_<PythonSampler, Sampler, std::shared_ptr<PythonSampler>>(*m, "PythonSampler")
+    .def(py::init<py::object>(), py::arg("pySampler"));
 }
 
 void bindInfoObjects(py::module *m) {
