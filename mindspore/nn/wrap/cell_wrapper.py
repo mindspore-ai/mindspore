@@ -226,7 +226,7 @@ class DataWrapper(Cell):
     """
 
     def __init__(self, network, dataset_types, dataset_shapes, queue_name):
-        super(DataWrapper, self).__init__(auto_prefix=False)
+        super(DataWrapper, self).__init__(auto_prefix=False, flags=network.get_flags())
 
         self.get_next = P.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
         self.network = network
