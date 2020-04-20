@@ -45,13 +45,10 @@ def test_addn_fission(tag):
         b = addn((input2, input3))
         c = addn((input4, input5))
         d = addn((input6, input7))
-        e = addn((input8,))
         f = addn((a, b))
         g = addn((c, d))
-        h = addn((e,))
         i = addn((f, g))
-        j = addn((h,))
-        return addn((i, j))
+        return addn((i, input8))
 
     @fns
     def after_divided_by_3(input0, input1, input2, input3, input4, input5, input6, input7, input8):
@@ -64,14 +61,12 @@ def test_addn_fission(tag):
     def after_divided_by_4(input0, input1, input2, input3, input4, input5, input6, input7, input8):
         a = addn((input0, input1, input2, input3))
         b = addn((input4, input5, input6, input7))
-        c = addn((input8,))
-        return addn((a, b, c))
+        return addn((a, b, input8))
 
     @fns
     def after_divided_by_8(input0, input1, input2, input3, input4, input5, input6, input7, input8):
         a = addn((input0, input1, input2, input3, input4, input5, input6, input7))
-        b = addn((input8,))
-        return addn((a, b))
+        return addn((a, input8))
 
     @fns
     def after_divided_by_9(input0, input1, input2, input3, input4, input5, input6, input7, input8):
