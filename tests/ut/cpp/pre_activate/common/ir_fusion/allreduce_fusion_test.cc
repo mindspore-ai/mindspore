@@ -20,7 +20,7 @@
 #include "ir/manager.h"
 #include "debug/anf_ir_dump.h"
 #include "session/anf_runtime_algorithm.h"
-#include "pre_activate/pass/allreduce_fusion.h"
+#include "pre_activate/pass/communication_op_fusion.h"
 #include "pre_activate/common/optimizer.h"
 #include "device/kernel_info.h"
 #include "pre_activate/common/pass_manager.h"
