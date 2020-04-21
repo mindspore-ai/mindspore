@@ -45,8 +45,10 @@ class Optimizer(Cell):
         learning_rate (float): A floating point value for the learning rate. Should be greater than 0.
         parameters (list): A list of parameter, which will be updated. The element in `parameters`
             should be class mindspore.Parameter.
-        weight_decay (float): A floating point value for the weight decay. Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. Default: 1.0. Should be greater than 0.
+        weight_decay (float): A floating point value for the weight decay. If the type of `weight_decay`
+            input is int, it will be convertd to float. Default: 0.0.
+        loss_scale (float): A floating point value for the loss scale. It should be greater than 0. If the
+            type of `loss_scale` input is int, it will be convertd to float. Default: 1.0.
         decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default: lambda
             x: 'beta' not in x.name and 'gamma' not in x.name.
 
