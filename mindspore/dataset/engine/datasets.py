@@ -1882,7 +1882,8 @@ class MindDataset(SourceDataset):
         block_reader (bool, optional): Whether read data by block mode (default=False).
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, sampler is exclusive
-            with shuffle and block_reader). Support list: SubsetRandomSampler.
+            with shuffle and block_reader). Support list: SubsetRandomSampler,
+            PkSampler
 
     Raises:
         ValueError: If num_shards is specified but shard_id is None.
@@ -1915,8 +1916,10 @@ class MindDataset(SourceDataset):
         if block_reader is True:
             logger.warning("WARN: global shuffle is not used.")
 
-        if sampler is not None and isinstance(sampler, samplers.SubsetRandomSampler) is False:
-            raise ValueError("the sampler is not supported yet.")
+        if sampler is not None:
+            if isinstance(sampler, samplers.SubsetRandomSampler) is False and \
+            isinstance(sampler, samplers.PKSampler) is False:
+                raise ValueError("the sampler is not supported yet.")
 
         # sampler exclusive
         if block_reader is True and sampler is not None:
@@ -1952,7 +1955,7 @@ class MindDataset(SourceDataset):
             Number, number of batches.
         """
 
-        num_rows = MindRecordOp.get_num_rows(self.dataset_file)
+        num_rows = MindRecordOp.get_num_rows(self.dataset_file, self.sampler)
         if self.partitions is not None and self.partitions[0] > 0:
             if num_rows % self.partitions[0] == 0:
                 num_rows = num_rows // self.partitions[0]

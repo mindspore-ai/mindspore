@@ -60,6 +60,7 @@
 #include "dataset/kernels/data/to_float16_op.h"
 #include "dataset/util/random.h"
 #include "mindrecord/include/shard_operator.h"
+#include "mindrecord/include/shard_pk_sample.h"
 #include "mindrecord/include/shard_sample.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
@@ -152,9 +153,14 @@ void bindDatasetOps(py::module *m) {
     });
 
   (void)py::class_<MindRecordOp, DatasetOp, std::shared_ptr<MindRecordOp>>(*m, "MindRecordOp")
-    .def_static("get_num_rows", [](const std::string &path) {
+    .def_static("get_num_rows", [](const std::string &path, const py::object &sampler) {
       int64_t count = 0;
-      THROW_IF_ERROR(MindRecordOp::CountTotalRows(path, &count));
+      std::shared_ptr<mindrecord::ShardOperator> op;
+      if (py::hasattr(sampler, "_create_for_minddataset")) {
+        auto create = sampler.attr("_create_for_minddataset");
+        op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
+      }
+      THROW_IF_ERROR(MindRecordOp::CountTotalRows(path, op, &count));
       return count;
     });
 
@@ -435,6 +441,16 @@ void bindSamplerOps(py::module *m) {
   (void)py::class_<mindrecord::ShardSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardSample>>(
     *m, "MindrecordSubsetRandomSampler")
     .def(py::init<std::vector<int64_t>, uint32_t>(), py::arg("indices"), py::arg("seed") = GetSeed());
+  (void)py::class_<mindrecord::ShardPkSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardPkSample>>(
+    *m, "MindrecordPkSampler")
+    .def(py::init([](int64_t kVal, bool shuffle) {
+      if (shuffle == true) {
+        return std::make_shared<mindrecord::ShardPkSample>("label", kVal, std::numeric_limits<int64_t>::max(),
+                                                           GetSeed());
+      } else {
+        return std::make_shared<mindrecord::ShardPkSample>("label", kVal);
+      }
+    }));
 
   (void)py::class_<WeightedRandomSampler, Sampler, std::shared_ptr<WeightedRandomSampler>>(*m, "WeightedRandomSampler")
     .def(py::init<std::vector<double>, int64_t, bool>(), py::arg("weights"), py::arg("numSamples"),

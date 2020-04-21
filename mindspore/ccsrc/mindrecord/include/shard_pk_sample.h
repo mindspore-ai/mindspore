@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
-#define MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
+#ifndef MINDRECORD_INCLUDE_SHARD_PK_SAMPLE_H_
+#define MINDRECORD_INCLUDE_SHARD_PK_SAMPLE_H_
 
 #include <memory>
 #include <string>
@@ -23,39 +23,27 @@
 #include <vector>
 #include "mindrecord/include/shard_operator.h"
 #include "mindrecord/include/shard_shuffle.h"
+#include "mindrecord/include/shard_category.h"
 
 namespace mindspore {
 namespace mindrecord {
-class ShardSample : public ShardOperator {
+class ShardPkSample : public ShardCategory {
  public:
-  explicit ShardSample(int n);
+  ShardPkSample(const std::string &category_field, int64_t num_elements);
 
-  ShardSample(int num, int den);
+  ShardPkSample(const std::string &category_field, int64_t num_elements, int64_t num_categories);
 
-  ShardSample(int num, int den, int par);
+  ShardPkSample(const std::string &category_field, int64_t num_elements, int64_t num_categories, uint32_t seed);
 
-  ShardSample(const std::vector<int64_t> &indices, uint32_t seed);
-
-  ~ShardSample() override{};
-
-  const std::pair<int, int> get_partitions() const;
-
-  MSRStatus execute(ShardTask &tasks) override;
+  ~ShardPkSample() override{};
 
   MSRStatus suf_execute(ShardTask &tasks) override;
 
-  int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
-
  private:
-  int numerator_;
-  int denominator_;
-  int no_of_samples_;
-  int partition_id_;
-  std::vector<int64_t> indices_;
-  SamplerType sampler_type_;
+  bool shuffle_;
   std::shared_ptr<ShardShuffle> shuffle_op_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore
 
-#endif  // MINDRECORD_INCLUDE_SHARD_SAMPLE_H_
+#endif  // MINDRECORD_INCLUDE_SHARD_PK_SAMPLE_H_

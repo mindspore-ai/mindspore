@@ -655,9 +655,10 @@ Status MindRecordOp::LaunchThreadAndInitOp() {
   return Status::OK();
 }
 
-Status MindRecordOp::CountTotalRows(const std::string dataset_path, int64_t *count) {
+Status MindRecordOp::CountTotalRows(const std::string dataset_path, const std::shared_ptr<ShardOperator> &op,
+                                    int64_t *count) {
   std::unique_ptr<ShardReader> shard_reader = std::make_unique<ShardReader>();
-  MSRStatus rc = shard_reader->CountTotalRows(dataset_path, count);
+  MSRStatus rc = shard_reader->CountTotalRows(dataset_path, op, count);
   if (rc == MSRStatus::FAILED) {
     RETURN_STATUS_UNEXPECTED("MindRecordOp count total rows failed.");
   }

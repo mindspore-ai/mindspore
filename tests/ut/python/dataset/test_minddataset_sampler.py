@@ -46,7 +46,7 @@ def add_and_remove_cv_file():
         if os.path.exists("{}.db".format(x)):
             os.remove("{}.db".format(x))
     writer = FileWriter(CV_FILE_NAME, FILES_NUM)
-    data = get_data(CV_DIR_NAME)
+    data = get_data(CV_DIR_NAME, True)
     cv_schema_json = {"id": {"type": "int32"},
                       "file_name": {"type": "string"},
                       "label": {"type": "int32"},
@@ -61,6 +61,59 @@ def add_and_remove_cv_file():
         os.remove("{}.db".format(x))
 
 
+def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
+    """tutorial for cv minderdataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.PKSampler(2)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        logger.info("-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info("-------------- item[file_name]: \
+                {}------------------------".format("".join([chr(x) for x in item["file_name"]])))
+        logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
+        num_iter += 1
+
+    
+def test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file):
+    """tutorial for cv minderdataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.PKSampler(3, None, True)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+
+    assert data_set.get_dataset_size() == 9
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        logger.info("-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info("-------------- item[file_name]: \
+                {}------------------------".format("".join([chr(x) for x in item["file_name"]])))
+        logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
+        num_iter += 1
+
+
+def test_cv_minddataset_pk_sample_out_of_range(add_and_remove_cv_file):
+    """tutorial for cv minderdataset."""
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.PKSampler(5, None, True)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
+                              sampler=sampler)
+    assert data_set.get_dataset_size() == 15
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        logger.info("-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info("-------------- item[file_name]: \
+                {}------------------------".format("".join([chr(x) for x in item["file_name"]])))
+        logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
+        num_iter += 1
+
+
 def test_cv_minddataset_subset_random_sample_basic(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
@@ -69,8 +122,7 @@ def test_cv_minddataset_subset_random_sample_basic(add_and_remove_cv_file):
     sampler = ds.SubsetRandomSampler(indices)
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
                               sampler=sampler)
-    data = get_data(CV_DIR_NAME)
-    assert data_set.get_dataset_size() == 10
+    assert data_set.get_dataset_size() == 5
     num_iter = 0
     for item in data_set.create_dict_iterator():
         logger.info(
@@ -93,8 +145,7 @@ def test_cv_minddataset_subset_random_sample_replica(add_and_remove_cv_file):
     sampler = ds.SubsetRandomSampler(indices)
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
                               sampler=sampler)
-    data = get_data(CV_DIR_NAME)
-    assert data_set.get_dataset_size() == 10
+    assert data_set.get_dataset_size() == 6 
     num_iter = 0
     for item in data_set.create_dict_iterator():
         logger.info(
@@ -117,8 +168,7 @@ def test_cv_minddataset_subset_random_sample_empty(add_and_remove_cv_file):
     sampler = ds.SubsetRandomSampler(indices)
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
                               sampler=sampler)
-    data = get_data(CV_DIR_NAME)
-    assert data_set.get_dataset_size() == 10
+    assert data_set.get_dataset_size() == 0
     num_iter = 0
     for item in data_set.create_dict_iterator():
         logger.info(
@@ -133,7 +183,7 @@ def test_cv_minddataset_subset_random_sample_empty(add_and_remove_cv_file):
     assert num_iter == 0
 
 
-def test_cv_minddataset_subset_random_sample_out_range(add_and_remove_cv_file):
+def test_cv_minddataset_subset_random_sample_out_of_range(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -141,8 +191,7 @@ def test_cv_minddataset_subset_random_sample_out_range(add_and_remove_cv_file):
     sampler = ds.SubsetRandomSampler(indices)
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
                               sampler=sampler)
-    data = get_data(CV_DIR_NAME)
-    assert data_set.get_dataset_size() == 10
+    assert data_set.get_dataset_size() == 5 
     num_iter = 0
     for item in data_set.create_dict_iterator():
         logger.info(
@@ -165,8 +214,7 @@ def test_cv_minddataset_subset_random_sample_negative(add_and_remove_cv_file):
     sampler = ds.SubsetRandomSampler(indices)
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
                               sampler=sampler)
-    data = get_data(CV_DIR_NAME)
-    assert data_set.get_dataset_size() == 10
+    assert data_set.get_dataset_size() == 5
     num_iter = 0
     for item in data_set.create_dict_iterator():
         logger.info(
@@ -181,7 +229,7 @@ def test_cv_minddataset_subset_random_sample_negative(add_and_remove_cv_file):
     assert num_iter == 5
 
 
-def get_data(dir_name):
+def get_data(dir_name, sampler=False):
     """
     usage: get data from imagenet dataset
     params:
@@ -191,7 +239,10 @@ def get_data(dir_name):
     if not os.path.isdir(dir_name):
         raise IOError("Directory {} not exists".format(dir_name))
     img_dir = os.path.join(dir_name, "images")
-    ann_file = os.path.join(dir_name, "annotation.txt")
+    if sampler:
+        ann_file = os.path.join(dir_name, "annotation_sampler.txt")
+    else:
+        ann_file = os.path.join(dir_name, "annotation.txt")
     with open(ann_file, "r") as file_reader:
         lines = file_reader.readlines()
 

@@ -24,7 +24,7 @@ namespace mindspore {
 namespace mindrecord {
 class ShardShuffle : public ShardOperator {
  public:
-  explicit ShardShuffle(uint32_t seed = 0);
+  explicit ShardShuffle(uint32_t seed = 0, ShuffleType shuffle_type = kShuffleCategory);
 
   ~ShardShuffle() override{};
 
@@ -32,6 +32,7 @@ class ShardShuffle : public ShardOperator {
 
  private:
   uint32_t shuffle_seed_;
+  ShuffleType shuffle_type_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore
