@@ -32,7 +32,7 @@ def piecewise_constant_lr(milestone, learning_rates):
 
     Args:
         milestone (Union[list[int], tuple[int]]): A list of milestone. This list is a monotone increasing list.
-        learning_rates (Union[list[float], tuple[int]]): A list of learning rates.
+        learning_rates (Union[list[float], tuple[float]]): A list of learning rates.
 
     Returns:
         list[float]. The size of list is :math:`M_N`.
