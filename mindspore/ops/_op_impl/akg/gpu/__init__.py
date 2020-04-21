@@ -23,3 +23,7 @@ from .relu6_grad import _relu6_grad_akg
 from .squeeze import _squeeze_akg
 from .squeeze_grad import _squeeze_grad_akg
 from .tile import _tile_akg
+from .hsigmoid import _hsigmoid_akg
+from .hsigmoid_grad import _hsigmoid_grad_akg
+from .hswish import _hswish_akg
+from .hswish_grad import _hswish_grad_akg

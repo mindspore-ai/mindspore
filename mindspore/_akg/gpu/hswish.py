@@ -33,9 +33,9 @@ def topi_nn_hswish(x):
                                                                              x(*i) * (x(*i) + 3) / 6)))
 
 
-def Hswish(x):
+def HSwish(x):
     """
-    Hswish
+    HSwish
     Args:
         x:
 
@@ -45,9 +45,9 @@ def Hswish(x):
     return topi_nn_hswish(x)
 
 
-def gpu_schedule_Hswish(outs):
+def gpu_schedule_HSwish(outs):
     """
-    gpu schedule Hswish
+    gpu schedule HSwish
     Args:
         outs:
 

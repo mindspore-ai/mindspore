@@ -346,7 +346,7 @@ class HSwish(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of Hswish.
+        - **input_data** (Tensor) - The input of HSwish.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
