@@ -227,19 +227,22 @@ TEST_F(TestPartition, test_PartitionNode) {
 
 TEST_F(TestPartition, test_PartitionForAllDevices) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
-  ASSERT_EQ(PartitionForAllDevices(1024, graph), SUCCESS);
+  double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
+  ASSERT_EQ(PartitionForAllDevices(1024, device_memory, graph), SUCCESS);
 }
 
 TEST_F(TestPartition, test_PartitionForAllDevices2) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
-  ASSERT_EQ(PartitionForAllDevices(2, graph), SUCCESS);
+  double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
+  ASSERT_EQ(PartitionForAllDevices(2, device_memory, graph), SUCCESS);
 }
 
 // Negative case: parition on 0 device
 TEST_F(TestPartition, test_PartitionForAllDevices0) {
   std::shared_ptr<Graph> graph = MakeMatMulData(9);
+  double device_memory = 1024.0 * 1024.0 * 1024.0 * 16.0;
   // Throw Exception "Number of devices can't be 0"
-  EXPECT_ANY_THROW(PartitionForAllDevices(0, graph));
+  EXPECT_ANY_THROW(PartitionForAllDevices(0, device_memory, graph));
 }
 
 TEST_F(TestPartition, test_ApplyStrToTensor) {

@@ -935,7 +935,8 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names);
 
   size_t num_device = g_device_manager->DeviceNum();
-  if (PartitionForAllDevices(num_device, graph) == SUCCESS) {
+  double device_memory = entire_costgraph->GetDeviceMemory();
+  if (PartitionForAllDevices(num_device, device_memory, graph) == SUCCESS) {
     MS_LOG(INFO) << "Partition Success With " << num_device << " devices.";
   } else {
     MS_LOG(ERROR) << "PartitionForAllDevices failed.";

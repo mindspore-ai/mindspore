@@ -40,7 +40,7 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
                           const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                           std::shared_ptr<Graph> graph);
 
-Status PartitionForAllDevices(const size_t num_device, std::shared_ptr<Graph> graph);
+Status PartitionForAllDevices(const size_t num_device, const double device_memory, std::shared_ptr<Graph> graph);
 
 Graph::NodeType ApplyStrToTensor(Graph::NodeType Node);
 
@@ -50,7 +50,7 @@ void ApplyLastStrategy(const uint64_t node_index, std::shared_ptr<Graph> graph);
 
 void ApplyNextStrategy(const uint64_t node_index, std::shared_ptr<Graph> graph);
 
-Status DevicesMemoryControl(std::shared_ptr<Graph> graph);
+Status DevicesMemoryControl(const double device_memory, std::shared_ptr<Graph> graph);
 
 size_t GetDataTypeSize(const TensorType &type);
 }  // namespace parallel
