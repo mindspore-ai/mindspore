@@ -67,9 +67,10 @@ Status SkipOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t work
   }
 
   std::unique_ptr<DataBuffer> buf;
+  RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf, worker_id, true));
+
   // Drop first max_skips_ rows
   while (skip_count_ < max_skips_) {
-    RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf, worker_id, true));
     if (buf->eoe() || buf->eof()) {
       break;
     }
@@ -77,31 +78,24 @@ Status SkipOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t work
     // Consider the rows of buffer more than 1
     TensorRow drop_row;
     int row_num = buf->NumRows();
-    for (int i = 0; i < row_num; i++) {
+    int drop_num = row_num + skip_count_ < max_skips_ ? row_num : max_skips_ - skip_count_;
+    skip_count_ += drop_num;
+    for (int i = 0; i < drop_num; i++) {
       RETURN_IF_NOT_OK(buf->PopRow(&drop_row));
-      if (++skip_count_ == max_skips_) {
-        break;
-      }
+    }
+    if (buf->NumRows() == 0) {
+      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf, worker_id, true));
     }
   }
 
-  // If buffer is none or the rows of buffer is 0,
-  // then get a buffer from child.
-  if (!buf || buf->NumRows() == 0) {
-    if (buf && buf->eof()) {
-      *p_buffer = std::move(buf);
-      return Status::OK();
-    }
-    RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf, worker_id, true));
-  }
-
-  // Handling eoe and eof
-  if (buf->eoe() || buf->eof()) {
+  // Handling eoe
+  if (buf->eoe()) {
     RETURN_IF_NOT_OK(EoeReceived(worker_id));
-    if (state_ == OpState::kDeOpIdle) {
-      *p_buffer = std::move(buf);
-      return Status::OK();
-    }
+  }
+
+  // Handling eof
+  if (buf->eof()) {
+    RETURN_IF_NOT_OK(EofReceived(worker_id));
   }
 
   *p_buffer = std::move(buf);
@@ -125,7 +119,7 @@ Status SkipOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. SkipOp is a
 
 // Base-class override for handling cases when an eof is received.
 Status SkipOp::EofReceived(int32_t worker_id) {
-  MS_LOG(INFO) << "Skip operator EOF received, do nothing now.";
+  MS_LOG(DEBUG) << "Skip operator EOF received, do nothing now.";
   return Status::OK();
 }
 }  // namespace dataset
