@@ -14,7 +14,7 @@
 # ============================================================================
 """
 The context of mindspore, used to configure the current execution environment,
-including execution mode, execution backend and other feature switchs.
+including execution mode, execution backend and other feature switches.
 """
 import os
 import threading
@@ -22,7 +22,7 @@ from collections import namedtuple
 from types import FunctionType
 from mindspore import log as logger
 from mindspore._c_expression import MSContext
-from mindspore._extends.pynative_helper import args_type_check
+from mindspore._checkparam import args_type_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
 
@@ -38,7 +38,7 @@ def _make_directory(path: str):
     """Make directory."""
     real_path = None
     if path is None or not isinstance(path, str) or path.strip() == "":
-        raise ValueError(f"Input path `{path}` is invaild type")
+        raise ValueError(f"Input path `{path}` is invalid type")
 
     # convert the relative paths
     path = os.path.realpath(path)
@@ -63,6 +63,7 @@ class _ThreadLocalInfo(threading.local):
     """
     Thread local Info used for store thread local attributes.
     """
+
     def __init__(self):
         super(_ThreadLocalInfo, self).__init__()
         self._reserve_class_name_in_scope = True
@@ -90,6 +91,7 @@ class _ContextSwitchInfo(threading.local):
     Args:
         is_pynative (bool): Whether to adopt the PyNative mode.
     """
+
     def __init__(self, is_pynative):
         super(_ContextSwitchInfo, self).__init__()
         self.context_stack = []
@@ -209,7 +211,7 @@ class _Context:
     def device_target(self, target):
         success = self._context_handle.set_device_target(target)
         if not success:
-            raise ValueError("target device name is invalid!!!")
+            raise ValueError("Target device name is invalid!!!")
 
     @property
     def device_id(self):
@@ -335,7 +337,7 @@ class _Context:
 
     @graph_memory_max_size.setter
     def graph_memory_max_size(self, graph_memory_max_size):
-        if check_input_fotmat(graph_memory_max_size):
+        if check_input_format(graph_memory_max_size):
             graph_memory_max_size_ = graph_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
             self._context_handle.set_graph_memory_max_size(graph_memory_max_size_)
         else:
@@ -347,7 +349,7 @@ class _Context:
 
     @variable_memory_max_size.setter
     def variable_memory_max_size(self, variable_memory_max_size):
-        if check_input_fotmat(variable_memory_max_size):
+        if check_input_format(variable_memory_max_size):
             variable_memory_max_size_ = variable_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
             self._context_handle.set_variable_memory_max_size(variable_memory_max_size_)
         else:
@@ -367,11 +369,12 @@ class _Context:
         thread_info.debug_runtime = enable
 
 
-def check_input_fotmat(x):
+def check_input_format(x):
     import re
     pattern = r'[1-9][0-9]*(\.)?[0-9]*GB|0\.[0-9]*GB'
     result = re.match(pattern, x)
     return result is not None
+
 
 _k_context = None
 

@@ -17,7 +17,7 @@ import threading
 import mindspore.context as context
 from mindspore.parallel._dp_allreduce_fusion import _set_fusion_strategy_by_idx, _set_fusion_strategy_by_size
 from mindspore._c_expression import AutoParallelContext
-from mindspore._extends.pynative_helper import args_type_check
+from mindspore._checkparam import args_type_check
 
 
 class _AutoParallelContext:
