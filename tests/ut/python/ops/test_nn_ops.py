@@ -516,7 +516,7 @@ test_cases = [
 
 test_cases_for_verify_exception = [
     ('Conv2d_ValueError_1', {
-        'block': (lambda _: P.Conv2D(3, 4, mode=-2.0), {'exception': ValueError}),
+        'block': (lambda _: P.Conv2D(3, 4, mode=-2.0), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('Conv2d_ValueError_2', {
@@ -528,7 +528,7 @@ test_cases_for_verify_exception = [
         'desc_inputs': [0],
     }),
     ('MaxPoolWithArgmax_ValueError_2', {
-        'block': (lambda _: P.MaxPoolWithArgmax(ksize='1'), {'exception': ValueError}),
+        'block': (lambda _: P.MaxPoolWithArgmax(ksize='1'), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('MaxPoolWithArgmax_ValueError_3', {
@@ -540,7 +540,7 @@ test_cases_for_verify_exception = [
         'desc_inputs': [0],
     }),
     ('FusedBatchNorm_ValueError_1', {
-        'block': (lambda _: P.FusedBatchNorm(mode="1", epsilon=1e-5, momentum=0.1), {'exception': ValueError}),
+        'block': (lambda _: P.FusedBatchNorm(mode="1", epsilon=1e-5, momentum=0.1), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('FusedBatchNorm_ValueError_2', {
@@ -560,31 +560,31 @@ test_cases_for_verify_exception = [
         'desc_inputs': [0],
     }),
     ('Softmax_ValueError_1', {
-        'block': (lambda _: P.Softmax("1"), {'exception': ValueError}),
+        'block': (lambda _: P.Softmax("1"), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('Softmax_ValueError_2', {
-        'block': (lambda _: P.Softmax(1.1), {'exception': ValueError}),
+        'block': (lambda _: P.Softmax(1.1), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('Softmax_ValueError_3', {
-        'block': (lambda _: P.Softmax(axis="1"), {'exception': ValueError}),
+        'block': (lambda _: P.Softmax(axis="1"), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('DropoutGenMask_ValueError_1', {
-        'block': (lambda _: P.DropoutGenMask(Seed0="seed0"), {'exception': ValueError}),
+        'block': (lambda _: P.DropoutGenMask(Seed0="seed0"), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('DropoutGenMask_ValueError_2', {
-        'block': (lambda _: P.DropoutGenMask(Seed0=1.0), {'exception': ValueError}),
+        'block': (lambda _: P.DropoutGenMask(Seed0=1.0), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('DropoutGenMask_ValueError_3', {
-        'block': (lambda _: P.DropoutGenMask(Seed1="seed1"), {'exception': ValueError}),
+        'block': (lambda _: P.DropoutGenMask(Seed1="seed1"), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('DropoutGenMask_ValueError_4', {
-        'block': (lambda _: P.DropoutGenMask(Seed1=2.0), {'exception': ValueError}),
+        'block': (lambda _: P.DropoutGenMask(Seed1=2.0), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('MaxPool2d_ValueError_1', {
