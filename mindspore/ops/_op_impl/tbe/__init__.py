@@ -33,6 +33,7 @@ from .cast import _cast_tbe
 from .conv2d import _conv2d_tbe
 from .conv2d_backprop_filter import _conv2d_backprop_filter_tbe
 from .conv2d_backprop_input import _conv2d_backprop_input_tbe
+from .confusion_mul_grad import _confusion_mul_grad_tbe
 from .dropout_do_mask import _dropout_do_mask_tbe
 from .gelu import _gelu_tbe
 from .gelu_grad import _gelu_grad_tbe
@@ -46,6 +47,8 @@ from .relu import _relu_tbe
 from .relu_grad import _relu_grad_tbe
 from .relu6 import _relu6_tbe
 from .relu6_grad import _relu6_grad_tbe
+from .relu_v2 import _relu_v2_tbe
+from .relu_grad_v2 import _relu_grad_v2_tbe
 from .softmax_cross_entropy_with_logits import _softmax_cross_entropy_with_logits_tbe
 from .sigmoid_cross_entropy_with_logits import _sigmoid_cross_entropy_with_logits_tbe
 from .sigmoid_cross_entropy_with_logits_grad import _sigmoid_cross_entropy_with_logits_grad_tbe
