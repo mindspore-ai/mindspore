@@ -51,7 +51,7 @@ class Optimizer(Cell):
     """
 
     def __init__(self, learning_rate, parameters):
-        super(Optimizer, self).__init__()
+        super(Optimizer, self).__init__(auto_prefix=False)
         if isinstance(learning_rate, float):
             validator.check_number_range("learning rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT)
         elif isinstance(learning_rate, Iterable):
