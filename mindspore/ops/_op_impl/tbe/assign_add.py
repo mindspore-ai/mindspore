@@ -25,7 +25,7 @@ assign_add_op_info = TBERegOp("AssignAdd") \
     .partial_flag(True) \
     .input(0, "ref", False, "required", "all") \
     .input(1, "value", False, "required", "all") \
-    .output(0, "output_ref", False, "required", "all") \
+    .output(0, "ref", False, "required", "all") \
     .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
     .dtype_format(DataType.I8_5HD, DataType.I8_5HD, DataType.I8_5HD) \
     .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
