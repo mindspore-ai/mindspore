@@ -52,20 +52,6 @@ else()
   target_link_libraries(mspredict pthread tvm_kernel libsecurec.a)
 endif()
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  if(ENABLE_PREDICT_ARM64)
-      add_custom_command(TARGET mspredict POST_BUILD
-	      COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip "${PREDICT_BUILD_DIR}/src/libmspredict.so"
-	      COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip "${PREDICT_BUILD_DIR}/module/tvm_kernel/lite/libtvm_kernel.so"
-	      )
-  else()
-      add_custom_command(TARGET mspredict POST_BUILD
-	      COMMAND strip "${PREDICT_BUILD_DIR}/src/libmspredict.so"
-	      COMMAND strip "${PREDICT_BUILD_DIR}/module/tvm_kernel/lite/libtvm_kernel.so"
-	      )
-  endif()
-endif()
-
 add_dependencies(mspredict tvm_kernel)
 add_dependencies(mspredict securec)
 add_dependencies(mspredict gtest)
