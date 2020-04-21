@@ -931,8 +931,6 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   }
 
   std::shared_ptr<std::vector<size_t>> ops_nodes_list(new std::vector<size_t>);
-  std::shared_ptr<std::vector<size_t>> index_list(new std::vector<size_t>);
-  std::shared_ptr<std::vector<std::vector<size_t>>> eli_list(new std::vector<std::vector<size_t>>);
 
   std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names);
 
@@ -944,7 +942,8 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     return FAILED;
   }
 
-  GenerateStrategy(graph, ops, ops_nodes_list, index_list, eli_list);
+  bool mask_special_ops = true;
+  GenerateStrategy(graph, mask_special_ops, ops);
 
   if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
     MS_LOG(INFO) << "Init selected strategy succeeded.";
