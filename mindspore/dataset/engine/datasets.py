@@ -24,6 +24,7 @@ import math
 import os
 import random
 import uuid
+import multiprocessing
 from enum import Enum
 from importlib import import_module
 
@@ -231,7 +232,7 @@ class Dataset:
 
     @check_map
     def map(self, input_columns=None, operations=None, output_columns=None, columns_order=None,
-            num_parallel_workers=None):
+            num_parallel_workers=None, python_multiprocessing=False):
         """
         Applies each operation in operations to this dataset.
 
@@ -270,6 +271,8 @@ class Dataset:
                 same).
             num_parallel_workers (int, optional): Number of threads used to process the dataset in
                 parallel (default=None, the value from the config will be used).
+            python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
+                option could be beneficial if the python operation is computational heavy (default=False).
 
         Returns:
             MapDataset, dataset after mapping operation.
@@ -383,7 +386,8 @@ class Dataset:
             >>> columns_order = ["mod7", "mod3", "col1"]
             >>> ds_mapped = ds_pyfunc.map(input_columns, operations, output_columns, columns_order)
         """
-        return MapDataset(self, input_columns, operations, output_columns, columns_order, num_parallel_workers)
+        return MapDataset(self, input_columns, operations, output_columns, columns_order, num_parallel_workers,
+                          python_multiprocessing)
 
     @check_filter
     def filter(self, predicate, input_columns=None, num_parallel_workers=1):
@@ -1076,6 +1080,55 @@ class ShuffleDataset(DatasetOp):
         return args
 
 
+# Pyfunc collection for multiprocess pyfunc
+# This global variable will only be used within subprocesses
+_GLOBAL_PYFUNC_LIST = []
+
+
+# Pyfunc worker init function
+# Python multiprocessing library forbid sending lambda function through pipe.
+# This init function allow us to add all python function to a global collection and then fork afterwards.
+def _pyfunc_worker_init(pyfunc_list):
+    global _GLOBAL_PYFUNC_LIST
+    _GLOBAL_PYFUNC_LIST = pyfunc_list
+
+
+# Pyfunc worker execution function
+# All exceptions will be raised to main processes
+def _pyfunc_worker_exec(index, *args):
+    try:
+        return _GLOBAL_PYFUNC_LIST[index](*args)
+    except KeyboardInterrupt:
+        raise Exception("Multiprocess MapOp worker receives KeyboardInterrupt")
+
+
+# PythonCallable wrapper for multiprocess pyfunc
+class _PythonCallable:
+    """
+    Internal python function wrapper for multiprocessing pyfunc
+    """
+    def __init__(self, py_callable, idx, pool=None):
+        # Original python callable from user.
+        self.py_callable = py_callable
+        # Process pool created for current iterator.
+        self.pool = pool
+        # Python callable index for subprocess _GLOBAL_PYFUNC_LIST
+        self.idx = idx
+
+    def __call__(self, *args):
+        if self.pool is not None:
+            try:
+                # This call will send the tensors along with Python callable index to the process pool.
+                # Block, yield GIL. Current thread will reacquire GIL once result is returned.
+                return self.pool.apply(_pyfunc_worker_exec, [self.idx, *args])
+            except KeyboardInterrupt:
+                self.pool.terminate()
+                self.pool.join()
+                raise Exception("Multiprocess MapOp worker receives KeyboardInterrupt")
+        # Invoke original python callable in master process in case the pool is gone.
+        return self.py_callable(*args)
+
+
 class MapDataset(DatasetOp):
     """
     The result of applying Map operator to the input Dataset.
@@ -1095,13 +1148,15 @@ class MapDataset(DatasetOp):
             The argument is mandatory if len(input_columns) != len(output_columns).
         num_parallel_workers (int, optional): Number of workers to process the Dataset
             in parallel (default=None).
+        python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
+            option could be beneficial if the python operation is computational heavy (default=False).
 
         Raises:
             ValueError: If len(input_columns) != len(output_columns) and columns_order is not specified.
     """
 
     def __init__(self, input_dataset, input_columns=None, operations=None, output_columns=None, columns_order=None,
-                 num_parallel_workers=None):
+                 num_parallel_workers=None, python_multiprocessing=False):
         super().__init__(num_parallel_workers)
         self.input.append(input_dataset)
         if input_columns is not None and not isinstance(input_columns, list):
@@ -1122,6 +1177,8 @@ class MapDataset(DatasetOp):
 
         input_dataset.output.append(self)
         self._input_indexs = input_dataset.input_indexs
+        self.python_multiprocessing = python_multiprocessing
+        self.process_pool = None
 
     def get_args(self):
         args = super().get_args()
@@ -1138,6 +1195,40 @@ class MapDataset(DatasetOp):
             Number, number of batches.
         """
         return self.input[0].get_dataset_size()
+
+    # Iterator bootstrap will be called on iterator construction.
+    # A deep copy of Dataset object is created prior of iterator_bootstrap.
+    # This method will create per iterator process pool and bind pyfunc execution to the pool.
+    def iterator_bootstrap(self):
+        """
+        Per iterator bootstrap callback.
+        """
+        if self.python_multiprocessing:
+            iter_specific_operations = []
+            callable_list = []
+
+            # Pass #1, look for python callables and build list
+            for op in self.operations:
+                if callable(op):
+                    callable_list.append(op)
+
+            if callable_list:
+                # Construct pool with the callable list
+                # The callable list and _pyfunc_worker_init are used to pass lambda function in to subprocesses
+                self.process_pool = multiprocessing.Pool(processes=self.num_parallel_workers,
+                                                         initializer=_pyfunc_worker_init,
+                                                         initargs=(callable_list,))
+                # Pass #2
+                idx = 0
+                for op in self.operations:
+                    if callable(op):
+                        # Wrap python callable into _PythonCallable
+                        iter_specific_operations.append(_PythonCallable(op, idx, self.process_pool))
+                        idx += 1
+                    else:
+                        # CPP ops remain the same
+                        iter_specific_operations.append(op)
+                self.operations = iter_specific_operations
 
 
 class FilterDataset(DatasetOp):
