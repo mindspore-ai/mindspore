@@ -25,7 +25,7 @@ inline std::size_t hash_combine(std::size_t hash_sum, std::size_t hash_val) {
   return ((hash_sum << 6) + (hash_sum >> 2) + 0x9e3779b9 + hash_val) ^ hash_sum;
 }
 
-inline std::size_t hash_combine(const std::initializer_list<std::size_t>& hash_vals) {
+inline std::size_t hash_combine(const std::initializer_list<std::size_t> &hash_vals) {
   std::size_t hash_sum = 0;
   for (auto hash_val : hash_vals) {
     hash_sum = hash_combine(hash_sum, hash_val);

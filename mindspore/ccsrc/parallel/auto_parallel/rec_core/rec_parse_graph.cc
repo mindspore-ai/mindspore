@@ -35,7 +35,7 @@ const TensorParam MakeTensor(int n, int c, int h, int w) {
   new_tensor.tensor_shape.shape_c = c;
   new_tensor.tensor_shape.shape_h = h;
   new_tensor.tensor_shape.shape_w = w;
-  const TensorParam& tensor = new_tensor;
+  const TensorParam &tensor = new_tensor;
   return tensor;
 }
 
@@ -71,7 +71,7 @@ Graph::NodeType MakeNewOperator(std::vector<std::shared_ptr<OperatorInfo>> ops, 
   return NewOp;
 }
 
-TensorParam Fill2DTensor(const std::vector<std::shared_ptr<OperatorInfo>>& ops, const size_t iter_ops,
+TensorParam Fill2DTensor(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                          Graph::NodeType NewTensor) {
   if (NewTensor.apply.op_type == OperatorType::kRecMatMul) {
     auto attrs = ops[iter_ops]->attrs();
@@ -94,7 +94,7 @@ TensorParam Fill2DTensor(const std::vector<std::shared_ptr<OperatorInfo>>& ops, 
   return NewTensor.tensor_parm;
 }
 
-OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>>& ops, const size_t iter_ops,
+OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                    Graph::NodeType NewTensor) {
   for (size_t iter_input_tensors = 0; iter_input_tensors < ops[iter_ops]->inputs_tensor_info().size();
        iter_input_tensors++) {
@@ -118,7 +118,7 @@ OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInf
   return NewTensor.apply;
 }
 
-TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>>& ops, const size_t iter_ops,
+TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                              const size_t iter_input_tensors, Graph::NodeType NewTensor) {
   if (NewTensor.apply.op_type == OperatorType::kRecMatMul) {
     auto attrs = ops[iter_ops]->attrs();
@@ -145,8 +145,8 @@ TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>>& o
   return NewTensor.apply.arguments[iter_input_tensors];
 }
 
-std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>>& ops,
-                                  const std::vector<std::vector<std::string>>& input_tensor_names) {
+std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                  const std::vector<std::vector<std::string>> &input_tensor_names) {
   std::shared_ptr<Graph> graph(new Graph);
   if (ops.size() > SIZE_MAX / 2) {
     MS_LOG(EXCEPTION) << "Total number of operators is bigger than " << SIZE_MAX / 2;
@@ -161,7 +161,7 @@ std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo
   return graph;
 }
 
-void MakeEdge(const std::vector<std::vector<std::string>>& input_tensor_names, std::shared_ptr<Graph> graph) {
+void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, std::shared_ptr<Graph> graph) {
   for (size_t iter_i = 0; iter_i < input_tensor_names.size(); iter_i++) {
     for (size_t iter_j = 1; iter_j < input_tensor_names[iter_i].size(); iter_j++) {
       size_t head_node_index = GetIndexInInputTensorNames(input_tensor_names, input_tensor_names[iter_i][iter_j]);
@@ -173,8 +173,8 @@ void MakeEdge(const std::vector<std::vector<std::string>>& input_tensor_names, s
   }
 }
 
-size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>>& input_tensor_name,
-                                  const std::string& input_name) {
+size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &input_tensor_name,
+                                  const std::string &input_name) {
   for (size_t index = 0; index < input_tensor_name.size(); index++) {
     if (input_tensor_name[index][0] == input_name) {
       return index;

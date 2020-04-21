@@ -48,15 +48,17 @@
 namespace ge {
 class CustomOperator : public Operator {
  public:
-  CustomOperator(const string& name, const string& type) : Operator(name, type) {}
+  CustomOperator(const string &name, const string &type) : Operator(name, type) {}
 
   ~CustomOperator() override{};
 
-  void CustomInputRegister(const string& name) { Operator::InputRegister(name); }
+  void CustomInputRegister(const string &name) { Operator::InputRegister(name); }
 
-  void CustomOutputRegister(const string& name) { Operator::OutputRegister(name); }
+  void CustomOutputRegister(const string &name) { Operator::OutputRegister(name); }
 
-  void CustomInferFuncRegister(const std::function<graphStatus(Operator&)>& func) { Operator::InferFuncRegister(func); }
+  void CustomInferFuncRegister(const std::function<graphStatus(Operator &)> &func) {
+    Operator::InferFuncRegister(func);
+  }
 };
 }  // namespace ge
 
@@ -69,7 +71,7 @@ struct OutHandler {
   OperatorPtr op;
   std::string out;
   OutHandler() : op(nullptr), out("") {}
-  OutHandler(const OperatorPtr& op, const std::string out) : op(op), out(out) {}
+  OutHandler(const OperatorPtr &op, const std::string out) : op(op), out(out) {}
 };
 
 struct ControlEdge {
@@ -119,33 +121,33 @@ struct DynOutputDesc {
 class BaseOpAdapter {
  public:
   virtual ~BaseOpAdapter() {}
-  virtual OperatorPtr generate(const AnfNodePtr& anf) = 0;
-  virtual OperatorPtr generate(const std::string& type) { return std::make_shared<ge::Operator>(type); }
-  virtual int setInput(const OperatorPtr& op, int index, const OperatorPtr& input) = 0;
-  virtual int setInput(const OperatorPtr& op, int index, const OutHandler& handle) = 0;
-  virtual int setInput(const OperatorPtr& op, int index,
-                       const std::shared_ptr<std::vector<OutHandler>>& handler_vec) = 0;
-  virtual int setAttr(const OperatorPtr& op, const std::string& attrKey, const ValuePtr& attrValue) = 0;
-  virtual int setAttr(const OperatorPtr& op, const PrimitivePtr& prim) = 0;
-  virtual int setAttr(const OperatorPtr& op, const AnfNodePtr& node) = 0;
+  virtual OperatorPtr generate(const AnfNodePtr &anf) = 0;
+  virtual OperatorPtr generate(const std::string &type) { return std::make_shared<ge::Operator>(type); }
+  virtual int setInput(const OperatorPtr &op, int index, const OperatorPtr &input) = 0;
+  virtual int setInput(const OperatorPtr &op, int index, const OutHandler &handle) = 0;
+  virtual int setInput(const OperatorPtr &op, int index,
+                       const std::shared_ptr<std::vector<OutHandler>> &handler_vec) = 0;
+  virtual int setAttr(const OperatorPtr &op, const std::string &attrKey, const ValuePtr &attrValue) = 0;
+  virtual int setAttr(const OperatorPtr &op, const PrimitivePtr &prim) = 0;
+  virtual int setAttr(const OperatorPtr &op, const AnfNodePtr &node) = 0;
   virtual std::unordered_map<std::string, ValuePtr> GetExtraAttr() = 0;
   template <typename T, typename _ = typename std::enable_if<!std::is_base_of<Value, T>::value>::type>
-  int setAttr(const OperatorPtr& op, const std::string& attrKey, const std::shared_ptr<T>& attrValue) {
+  int setAttr(const OperatorPtr &op, const std::string &attrKey, const std::shared_ptr<T> &attrValue) {
     return setAttr(op, attrKey, MakeValue(attrValue));
   }
   template <typename T, typename _ = typename std::enable_if<!is_shared_ptr<T>::value>::type>
-  int setAttr(const OperatorPtr& op, const std::string& attrKey, const T& attrValue) {
+  int setAttr(const OperatorPtr &op, const std::string &attrKey, const T &attrValue) {
     return setAttr(op, attrKey, MakeValue(attrValue));
   }
-  virtual OutHandler getOutput(const OperatorPtr& op, int index) = 0;
-  virtual void updateOutputDesc(const OperatorPtr& op, const abstract::BaseShapePtr& shp, const TypePtr& type,
-                                const AnfNodePtr& node) = 0;
-  virtual const std::unordered_map<int, InputDesc>& getInputMap() = 0;
-  virtual const std::unordered_map<unsigned int, AttrDesc>& getInputAttrMap() = 0;
-  virtual const std::unordered_map<int, DynInputDesc>& getDynInputMap() = 0;
-  virtual const std::unordered_map<int, OutputDesc>& getOutputMap() = 0;
-  void AddAttrToDrawGraph(const std::string& attr_str) { attrs_vec_.push_back(attr_str); }
-  const std::vector<std::string>& GetAttrsFromDrawGraph() const { return attrs_vec_; }
+  virtual OutHandler getOutput(const OperatorPtr &op, int index) = 0;
+  virtual void updateOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
+                                const AnfNodePtr &node) = 0;
+  virtual const std::unordered_map<int, InputDesc> &getInputMap() = 0;
+  virtual const std::unordered_map<unsigned int, AttrDesc> &getInputAttrMap() = 0;
+  virtual const std::unordered_map<int, DynInputDesc> &getDynInputMap() = 0;
+  virtual const std::unordered_map<int, OutputDesc> &getOutputMap() = 0;
+  void AddAttrToDrawGraph(const std::string &attr_str) { attrs_vec_.push_back(attr_str); }
+  const std::vector<std::string> &GetAttrsFromDrawGraph() const { return attrs_vec_; }
   void clearAttrVect() { attrs_vec_.clear(); }
 
  private:

@@ -29,37 +29,37 @@ namespace mindspore {
 namespace parallel {
 class ExpInfo : public ActivationOther {
  public:
-  ExpInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+  ExpInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~ExpInfo() override = default;
 };
 
 class LogInfo : public ActivationOther {
  public:
-  LogInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+  LogInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~LogInfo() override = default;
 };
 
 class CosInfo : public ActivationOther {
  public:
-  CosInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+  CosInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~CosInfo() override = default;
 };
 
 class ACosInfo : public ActivationOther {
  public:
-  ACosInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-           const PrimitiveAttrs& attrs)
+  ACosInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~ACosInfo() override = default;
 };
 
 class LogicalNotInfo : public ActivationOther {
  public:
-  LogicalNotInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-                 const PrimitiveAttrs& attrs)
+  LogicalNotInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~LogicalNotInfo() override = default;
 };

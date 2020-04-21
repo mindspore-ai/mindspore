@@ -23,7 +23,7 @@ namespace common {
 const int CACHED_STR_NUM = 1 << 8;
 const int CACHED_STR_MASK = CACHED_STR_NUM - 1;
 std::vector<std::string> STR_HOLDER(CACHED_STR_NUM);
-const char* SafeCStr(const std::string&& str) {
+const char *SafeCStr(const std::string &&str) {
   static std::atomic<uint32_t> index{0};
   uint32_t cur_index = index++;
   cur_index = cur_index & CACHED_STR_MASK;

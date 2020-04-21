@@ -31,7 +31,7 @@ namespace mindspore {
 
 namespace tensor {
 
-void DataBuf2Contiguous(const py::array& src, py::array* const dest) {
+void DataBuf2Contiguous(const py::array &src, py::array *const dest) {
   if (dest == nullptr) {
     MS_LOG(EXCEPTION) << "Failed to copy data to a contiguous buffer as dest is nullptr!";
   }
@@ -55,9 +55,9 @@ void DataBuf2Contiguous(const py::array& src, py::array* const dest) {
 // MetaTensor has default type_id_ which is TypeId::kTypeUnknown.
 MetaTensor::MetaTensor() : data_type_(TypeId::kTypeUnknown) {}
 
-MetaTensor::MetaTensor(const TypeId data_type, const std::vector<int>& shape) : data_type_(data_type), shape_(shape) {}
+MetaTensor::MetaTensor(const TypeId data_type, const std::vector<int> &shape) : data_type_(data_type), shape_(shape) {}
 
-MetaTensor::MetaTensor(const TypePtr& type_ptr, const py::tuple& shape) {
+MetaTensor::MetaTensor(const TypePtr &type_ptr, const py::tuple &shape) {
   TypeId data_type = TypeId::kTypeUnknown;
   if (type_ptr != nullptr) {
     data_type = type_ptr->type_id();
@@ -69,10 +69,10 @@ MetaTensor::MetaTensor(const TypePtr& type_ptr, const py::tuple& shape) {
   }
 }
 
-MetaTensor::MetaTensor(const MetaTensor& meta_tensor)
+MetaTensor::MetaTensor(const MetaTensor &meta_tensor)
     : Value(meta_tensor), data_type_(meta_tensor.data_type()), shape_(meta_tensor.shape()) {}
 
-MetaTensor& MetaTensor::operator=(const MetaTensor& meta_tensor) {
+MetaTensor &MetaTensor::operator=(const MetaTensor &meta_tensor) {
   if (&meta_tensor == this) {
     return *this;
   }
@@ -84,7 +84,7 @@ MetaTensor& MetaTensor::operator=(const MetaTensor& meta_tensor) {
   return *this;
 }
 
-bool MetaTensor::operator==(const MetaTensor& meta_tensor) const {
+bool MetaTensor::operator==(const MetaTensor &meta_tensor) const {
   return data_type_ == meta_tensor.data_type() && shape_ == meta_tensor.shape();
 }
 
@@ -117,7 +117,7 @@ TypePtr MetaTensor::SetDtype(const TypePtr type_ptr) {
   return type_ptr;
 }
 
-void MetaTensor::SetDeviceInfo(const std::string& format, const TypePtr& data_type) {
+void MetaTensor::SetDeviceInfo(const std::string &format, const TypePtr &data_type) {
   DeviceInfo info(format, data_type);
   set_device_info(info);
 }
@@ -138,7 +138,7 @@ std::string MetaTensor::DumpText() const {
   return oss.str();
 }
 
-Tensor::Tensor(const TypePtr& type_ptr, const py::tuple& shape) {
+Tensor::Tensor(const TypePtr &type_ptr, const py::tuple &shape) {
   TypeId data_type = TypeId::kTypeUnknown;
   if (type_ptr != nullptr) {
     data_type = type_ptr->type_id();
@@ -151,24 +151,24 @@ Tensor::Tensor(const TypePtr& type_ptr, const py::tuple& shape) {
   init(data_type_, shape_, &data_);
 }
 
-Tensor::Tensor(TypeId data_type, const std::vector<int>& shape) { init(data_type, shape, &data_); }
+Tensor::Tensor(TypeId data_type, const std::vector<int> &shape) { init(data_type, shape, &data_); }
 
-Tensor::Tensor(const py::array& input, const TypePtr& data_type) { init(input, data_type); }
+Tensor::Tensor(const py::array &input, const TypePtr &data_type) { init(input, data_type); }
 
-Tensor::Tensor(const py::list& input, const TypePtr& data_type) { init(py::array(input), data_type); }
+Tensor::Tensor(const py::list &input, const TypePtr &data_type) { init(py::array(input), data_type); }
 
-Tensor::Tensor(const py::tuple& input, const TypePtr& data_type) { init(py::array(input), data_type); }
+Tensor::Tensor(const py::tuple &input, const TypePtr &data_type) { init(py::array(input), data_type); }
 
-Tensor::Tensor(const py::float_& input, const TypePtr& data_type) { init(py::array(input), data_type); }
+Tensor::Tensor(const py::float_ &input, const TypePtr &data_type) { init(py::array(input), data_type); }
 
-Tensor::Tensor(const py::int_& input, const TypePtr& data_type) { init(py::array(input), data_type); }
+Tensor::Tensor(const py::int_ &input, const TypePtr &data_type) { init(py::array(input), data_type); }
 
-Tensor::Tensor(const Tensor& tensor, const TypePtr& data_type)
+Tensor::Tensor(const Tensor &tensor, const TypePtr &data_type)
     : MetaTensor(tensor), device_address_(tensor.device_address()) {
   init(tensor.data_, data_type);
 }
 
-Tensor& Tensor::operator=(const Tensor& tensor) {
+Tensor &Tensor::operator=(const Tensor &tensor) {
   if (this != &tensor) {
     MetaTensor::operator=(tensor);
     dirty_ = tensor.is_dirty();
@@ -178,11 +178,11 @@ Tensor& Tensor::operator=(const Tensor& tensor) {
   return *this;
 }
 
-bool Tensor::operator==(const Tensor& tensor) const {
+bool Tensor::operator==(const Tensor &tensor) const {
   return (MetaTensor::operator==(tensor) && data_ == tensor.data_);
 }
 
-bool Tensor::ValueEqualPy(const py::object& other) const {
+bool Tensor::ValueEqualPy(const py::object &other) const {
   if (!py::isinstance<Tensor>(other)) {
     MS_LOG(WARNING) << "compare other not a tensor";
     return false;
@@ -190,7 +190,7 @@ bool Tensor::ValueEqualPy(const py::object& other) const {
   return ValueEqual(py::cast<Tensor>(other));
 }
 
-bool Tensor::ValueEqual(const Tensor& other) const {
+bool Tensor::ValueEqual(const Tensor &other) const {
   auto equal = [&other, this]() -> bool {
     auto np = py::module::import("numpy");
     auto equal = np.attr("equal")(data_, other.data_);
@@ -218,7 +218,7 @@ int Tensor::data_type_c() const { return static_cast<int>(data_type_); }
 
 std::vector<int> Tensor::shape_c(void) const { return shape(); }
 
-void* Tensor::data_c(bool writable) {
+void *Tensor::data_c(bool writable) {
   // operand of bit operation should be unsigned int.
   unsigned int flags = ((unsigned int)data_.flags()) & pybind11::detail::npy_api::NPY_ARRAY_C_CONTIGUOUS_;
   bool is_c_contiguous = (flags != 0) ? true : false;
@@ -231,7 +231,7 @@ void* Tensor::data_c(bool writable) {
   return data_.request(writable).ptr;
 }
 
-TypeId Tensor::GetDataType(const py::buffer_info& buf) const {
+TypeId Tensor::GetDataType(const py::buffer_info &buf) const {
   TypeId data_type = TypeId::kTypeUnknown;
   if (buf.format.compare("e") == 0) {
     data_type = TypeId::kNumberTypeFloat16;
@@ -263,7 +263,7 @@ TypeId Tensor::GetDataType(const py::buffer_info& buf) const {
   return data_type;
 }
 
-void Tensor::init(const py::array& input, const TypePtr& type_ptr) {
+void Tensor::init(const py::array &input, const TypePtr &type_ptr) {
   TypeId data_type = TypeId::kTypeUnknown;
   if (type_ptr != nullptr) {
     data_type = type_ptr->type_id();
@@ -271,7 +271,7 @@ void Tensor::init(const py::array& input, const TypePtr& type_ptr) {
   init(input, data_type);
 }
 
-void Tensor::init(const py::array& input, const TypeId& data_type) {
+void Tensor::init(const py::array &input, const TypeId &data_type) {
   py::buffer_info buf = input.request();
 
   data_type_ = GetDataType(buf);
@@ -301,7 +301,7 @@ void Tensor::init(const py::array& input, const TypeId& data_type) {
   }
 }
 
-void Tensor::init(TypeId data_type, const std::vector<int>& shape, py::array* const data) {
+void Tensor::init(TypeId data_type, const std::vector<int> &shape, py::array *const data) {
   data_type_ = data_type;
   shape_ = shape;
   switch (data_type) {
@@ -368,7 +368,7 @@ TypeId Tensor::set_data_type(const TypeId data_type) {
   return data_type_;
 }
 
-bool Tensor::convert_data(const py::array& in, const TypeId in_data_type, py::array* const out,
+bool Tensor::convert_data(const py::array &in, const TypeId in_data_type, py::array *const out,
                           const TypeId out_data_type) {
   if (out == nullptr) {
     return false;
@@ -458,7 +458,7 @@ py::array Tensor::data_sync() {
   return data_;
 }
 
-REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                          // dtype should define before Tensor, because Tensor init depend dtype
                          (void)py::class_<Tensor, std::shared_ptr<Tensor>>(*m, "Tensor")
                            .def(py::init<TypePtr, py::tuple>(), py::arg("dtype"), py::arg("shape"))
@@ -541,11 +541,11 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module* m) {
                            .def("__repr__", &Tensor::ToStringRepr)
                            .def("__eq__", &Tensor::ValueEqualPy)
                            .def(py::pickle(
-                             [](const Tensor& t) {  // __getstate__
+                             [](const Tensor &t) {  // __getstate__
                                /* Return a tuple that fully encodes the state of the object */
                                return py::make_tuple(t.data());
                              },
-                             [](const py::tuple& t) {  // __setstate__
+                             [](const py::tuple &t) {  // __setstate__
                                if (t.size() != 1) {
                                  throw std::runtime_error("Invalid state!");
                                }

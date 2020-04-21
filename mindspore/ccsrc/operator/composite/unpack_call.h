@@ -40,11 +40,11 @@ namespace prim {
 // and generate positional parameters and key-value pairs for function.
 class UnpackCall : public MetaFuncGraph {
  public:
-  explicit UnpackCall(const std::string& name) : MetaFuncGraph(name) {}
+  explicit UnpackCall(const std::string &name) : MetaFuncGraph(name) {}
   ~UnpackCall() override = default;
   MS_DECLARE_PARENT(UnpackCall, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) override;
-  friend bool operator==(const UnpackCall& lhs, const UnpackCall& rhs) { return lhs.name_ == rhs.name_; }
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const UnpackCall &lhs, const UnpackCall &rhs) { return lhs.name_ == rhs.name_; }
 };
 using UnpackCallPtr = std::shared_ptr<UnpackCall>;
 

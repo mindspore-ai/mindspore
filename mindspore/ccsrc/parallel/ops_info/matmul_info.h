@@ -32,21 +32,21 @@ namespace mindspore {
 namespace parallel {
 class MatMulBase : public OperatorInfo {
  public:
-  MatMulBase(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-             const PrimitiveAttrs& attrs)
+  MatMulBase(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<MatMulCost>(true)) {}
   ~MatMulBase() override = default;
 
-  Status Init(const StrategyPtr& strategy) override;
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status Init(const StrategyPtr &strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
 
   // Generate all strategies and the corresponding cost for this MatMul operator
   Status GenerateStrategies(int32_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   Status PrepareStrategy(int32_t stage_id, size_t dev_num, Dimensions combined_partitions, size_t input0_shape_size,
-                         size_t input1_shape_size, StrategyPtr* sp);
+                         size_t input1_shape_size, StrategyPtr *sp);
 
-  Status SwapLastTwoElements(Shape* shape);
+  Status SwapLastTwoElements(Shape *shape);
 
  protected:
   Status InferMirrorOps() override;
@@ -54,8 +54,8 @@ class MatMulBase : public OperatorInfo {
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  Status InferTensorLayout(TensorLayouts* inputs_layout, TensorLayouts* outputs_layout);
-  void InitTensorInfoForCost(std::vector<TensorInfo>*);
+  Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
+  void InitTensorInfoForCost(std::vector<TensorInfo> *);
   Status CheckForTensorSliceValid() const;
   Status GetAttrs() override;
 
@@ -67,26 +67,26 @@ class MatMulBase : public OperatorInfo {
 
 class MatMul : public MatMulBase {
  public:
-  MatMul(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+  MatMul(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : MatMulBase(name, inputs_shape, outputs_shape, attrs) {}
   ~MatMul() override = default;
 
  protected:
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
 };
 
 class MatMulInfo : public MatMul {
  public:
-  MatMulInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-             const PrimitiveAttrs& attrs)
+  MatMulInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
       : MatMul(name, inputs_shape, outputs_shape, attrs) {}
   ~MatMulInfo() override = default;
 };
 
 class BatchMatMulInfo : public MatMul {
  public:
-  BatchMatMulInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-                  const PrimitiveAttrs& attrs)
+  BatchMatMulInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                  const PrimitiveAttrs &attrs)
       : MatMul(name, inputs_shape, outputs_shape, attrs) {}
   ~BatchMatMulInfo() override = default;
 };

@@ -43,11 +43,11 @@ class Dump {
 
   uint32_t cur_iter() const { return cur_iter_; }
 
-  bool IsKernelNeedDump(const std::string& kernel_name);
+  bool IsKernelNeedDump(const std::string &kernel_name);
 
   bool SetDumpConfFromJsonFile();
 
-  static bool DumpToFile(const std::string& filename, const void* data, size_t len);
+  static bool DumpToFile(const std::string &filename, const void *data, size_t len);
 
  protected:
   bool dump_enable_;
@@ -59,14 +59,14 @@ class Dump {
   uint32_t cur_iter_;
   std::vector<std::string> dump_kernels_;
 
-  static bool GetRealPath(const std::string& inpath, std::string* outpath);
+  static bool GetRealPath(const std::string &inpath, std::string *outpath);
 
-  static bool CreateNotExistDirs(const std::string& path);
+  static bool CreateNotExistDirs(const std::string &path);
 
  private:
-  bool ParseDumpConfig(const std::string& dump_config_file);
-  bool IsConfigExist(const nlohmann::json& dumpSettings);
-  bool IsConfigValid(const nlohmann::json& dumpSettings);
+  bool ParseDumpConfig(const std::string &dump_config_file);
+  bool IsConfigExist(const nlohmann::json &dumpSettings);
+  bool IsConfigValid(const nlohmann::json &dumpSettings);
 };
 
 using DumpConfPtr = std::shared_ptr<Dump>;

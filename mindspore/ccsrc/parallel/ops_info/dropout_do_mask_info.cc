@@ -32,7 +32,7 @@ namespace mindspore {
 namespace parallel {
 static int32_t SEED_NUM = 1;
 
-Status DropoutDoMaskInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status DropoutDoMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (strategy == nullptr) {
     MS_LOG(ERROR) << name_ << ": The strategy is null";
     return FAILED;
@@ -129,7 +129,7 @@ Status DropoutDoMaskInfo::InferTensorInfo() {
   return SUCCESS;
 }
 
-Status DropoutDoMaskInfo::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status DropoutDoMaskInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";
@@ -159,7 +159,7 @@ Status DropoutDoMaskInfo::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy";
@@ -178,7 +178,7 @@ std::shared_ptr<std::vector<std::vector<int32_t>>> DropoutDoMaskInfo::GenerateBa
   return std::make_shared<std::vector<std::vector<int32_t>>>(strategy_v);
 }
 
-Status DropoutDoMaskInfo::Init(const StrategyPtr& strategy) {
+Status DropoutDoMaskInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
@@ -188,7 +188,7 @@ Status DropoutDoMaskInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status DropoutDoMaskInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status DropoutDoMaskInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
@@ -202,7 +202,7 @@ Status DropoutDoMaskInfo::InitForCostModel(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-PrimitivePtr GetDropoutGenMaskPrim(const CNodePtr& cnode) {
+PrimitivePtr GetDropoutGenMaskPrim(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
     MS_LOG(EXCEPTION) << "The size of dropout do mask cnode's inputs must be " << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
@@ -237,7 +237,7 @@ PrimitivePtr GetDropoutGenMaskPrim(const CNodePtr& cnode) {
 // split. Find the DropoutGenMask node in the anf graph according to DropoutDoMask node, and modify the input shape
 // of DropoutGenMask according to the strategy of DropoutDoMask. When the DropoutDoMask performs repeated calculation
 // and both seeds of DropoutGenMask are 0, two new seeds are automatically generated for DropoutGenMask.
-Operator DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodePtr& cnode) {
+Operator DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   PrimitivePtr prim = GetDropoutGenMaskPrim(cnode);
   MS_EXCEPTION_IF_NULL(prim);

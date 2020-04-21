@@ -44,7 +44,7 @@ const int NUM_MAX_SEQUENCE_ELEMS = 0x00FFFFFF;
 // get MindSpore Intermediate Representation Path
 std::string GetMsIrPath(void) {
   std::string path;
-  const char* path_ptr = getenv("MS_IR_PATH");
+  const char *path_ptr = getenv("MS_IR_PATH");
   if (path_ptr != nullptr) {
     path = path_ptr;
     char real_path[PATH_MAX] = {0};
@@ -62,13 +62,13 @@ std::string GetMsIrPath(void) {
   return path;
 }
 
-std::string dump_obj(const py::object& obj, const std::string& path) {
+std::string dump_obj(const py::object &obj, const std::string &path) {
   py::module mod = parse::python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   py::object name = parse::python_adapter::CallPyModFn(mod, "dump_obj", obj, py::str(path));
   return py::str(name);
 }
 
-py::object load_obj(const std::string& path) {
+py::object load_obj(const std::string &path) {
   py::module mod = parse::python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
   py::object obj = parse::python_adapter::CallPyModFn(mod, "load_obj", py::str(path));
   return obj;
@@ -76,7 +76,7 @@ py::object load_obj(const std::string& path) {
 
 // ============================================= MindSpore IR Exporter =============================================
 
-std::string AnfExporter::GetNodeType(const AnfNodePtr& nd) {
+std::string AnfExporter::GetNodeType(const AnfNodePtr &nd) {
   abstract::ShapePtr shape = nd->Shape() == nullptr ? nullptr : dyn_cast<abstract::Shape>(nd->Shape());
   TypePtr type = dyn_cast<Type>(nd->Type());
   std::ostringstream oss;
@@ -90,7 +90,7 @@ std::string AnfExporter::GetNodeType(const AnfNodePtr& nd) {
   return oss.str();
 }
 
-std::string AnfExporter::DumpObject(const py::object& obj, const std::string& category) const {
+std::string AnfExporter::DumpObject(const py::object &obj, const std::string &category) const {
   std::string pkl_path = GetMsIrPath();
   // if not specified env 'MS_IR_PATH', do not create any files
   if (pkl_path.empty() || (getenv("MS_IR_FILE") != nullptr)) {
@@ -101,7 +101,7 @@ std::string AnfExporter::DumpObject(const py::object& obj, const std::string& ca
   return file_prefix + file_name;
 }
 
-int AnfExporter::GetParamIndex(const FuncGraphPtr& func_graph, const AnfNodePtr& param, bool throw_excp) {
+int AnfExporter::GetParamIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &param, bool throw_excp) {
   if (func_graph == nullptr || param == nullptr) {
     return -1;
   }
@@ -129,13 +129,13 @@ int AnfExporter::GetParamIndex(const FuncGraphPtr& func_graph, const AnfNodePtr&
 
 // try to find index of parameter for SymbolicKeyInstance from all exported graphs
 // NOTICE: Suppose name of all parameters in SymbolicKeyInstance are different
-int AnfExporter::GetParamIndexFromExported(const AnfNodePtr& param) {
+int AnfExporter::GetParamIndexFromExported(const AnfNodePtr &param) {
   if (param == nullptr) {
     return -1;
   }
 
   int ret = -1;
-  for (const auto& item : exported) {
+  for (const auto &item : exported) {
     auto pram_iter = item.second.find(param);
     if (pram_iter != item.second.end()) {
       return pram_iter->second;
@@ -144,12 +144,12 @@ int AnfExporter::GetParamIndexFromExported(const AnfNodePtr& param) {
   return ret;
 }
 
-std::string AnfExporter::GetValueNodeText(const FuncGraphPtr& fg, const ValueNodePtr& node) {
+std::string AnfExporter::GetValueNodeText(const FuncGraphPtr &fg, const ValueNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return GetValueText(fg, node->value());
 }
 
-std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr& mt_func_graph) {
+std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr &mt_func_graph) {
   auto py_funcs = mt_func_graph->GetPyFunctions();
   if (py_funcs.empty()) {
     return "";
@@ -159,7 +159,7 @@ std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGrap
 
   oss << "{";
   bool is_first = true;
-  for (const auto& py_func : py_funcs) {
+  for (const auto &py_func : py_funcs) {
     if (is_first) {
       is_first = false;
     } else {
@@ -193,7 +193,7 @@ std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGrap
  * ├── GradOperation
  * └── TupleAdd
  */
-std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr& meta_func_graph) {
+std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph) {
   if (meta_func_graph == nullptr) {
     return "";
   }
@@ -244,7 +244,7 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr& meta_func_
   return oss.str();
 }
 
-std::string AnfExporter::GetPrimitiveText(const PrimitivePtr& prim) {
+std::string AnfExporter::GetPrimitiveText(const PrimitivePtr &prim) {
   std::ostringstream oss;
   if (prim == nullptr) {
     return oss.str();
@@ -266,7 +266,7 @@ std::string AnfExporter::GetPrimitiveText(const PrimitivePtr& prim) {
 
   if (prim->isa<prim::DoSignaturePrimitive>()) {
     auto do_signature = dyn_cast<prim::DoSignaturePrimitive>(prim);
-    auto& func = do_signature->function();
+    auto &func = do_signature->function();
     if (func->isa<Primitive>()) {
       auto sig_prim = dyn_cast<Primitive>(func);
       oss << sig_prim->GetAttrsText();
@@ -276,7 +276,7 @@ std::string AnfExporter::GetPrimitiveText(const PrimitivePtr& prim) {
   return oss.str();
 }
 
-std::string AnfExporter::GetNameSpaceText(const parse::NameSpacePtr& ns) {
+std::string AnfExporter::GetNameSpaceText(const parse::NameSpacePtr &ns) {
   std::ostringstream oss;
   if (ns == nullptr) {
     return oss.str();
@@ -288,8 +288,8 @@ std::string AnfExporter::GetNameSpaceText(const parse::NameSpacePtr& ns) {
   return oss.str();
 }
 
-std::string AnfExporter::GetSymbolicKeyInstanceText(const FuncGraphPtr& func_graph,
-                                                    const SymbolicKeyInstancePtr& sym_inst) {
+std::string AnfExporter::GetSymbolicKeyInstanceText(const FuncGraphPtr &func_graph,
+                                                    const SymbolicKeyInstancePtr &sym_inst) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(sym_inst);
   AnfNodePtr sym_node = sym_inst->node();
@@ -317,7 +317,7 @@ std::string AnfExporter::GetSymbolicKeyInstanceText(const FuncGraphPtr& func_gra
   return oss.str();
 }
 
-std::string AnfExporter::GetSequenceText(const FuncGraphPtr& func_graph, const ValuePtr& value) {
+std::string AnfExporter::GetSequenceText(const FuncGraphPtr &func_graph, const ValuePtr &value) {
   std::ostringstream oss;
   // output ValueList, ValueTuple
   ValueSequeuePtr seq = dyn_cast<ValueSequeue>(value);
@@ -338,12 +338,12 @@ std::string AnfExporter::GetSequenceText(const FuncGraphPtr& func_graph, const V
   return oss.str();
 }
 
-std::string AnfExporter::GetDictText(const FuncGraphPtr& func_graph, const ValuePtr& value) {
+std::string AnfExporter::GetDictText(const FuncGraphPtr &func_graph, const ValuePtr &value) {
   std::ostringstream oss;
   ValueDictionaryPtr dict = value->cast<ValueDictionaryPtr>();
   oss << "{";
   bool first_flag = true;
-  for (const auto& elem : dict->value()) {
+  for (const auto &elem : dict->value()) {
     if (first_flag) {
       first_flag = false;
     } else {
@@ -355,7 +355,7 @@ std::string AnfExporter::GetDictText(const FuncGraphPtr& func_graph, const Value
   return oss.str();
 }
 
-std::string AnfExporter::GetOtherValueText(const FuncGraphPtr&, const ValuePtr& value) {
+std::string AnfExporter::GetOtherValueText(const FuncGraphPtr &, const ValuePtr &value) {
   std::ostringstream oss;
 
   if (check_integrity_) {
@@ -366,7 +366,7 @@ std::string AnfExporter::GetOtherValueText(const FuncGraphPtr&, const ValuePtr& 
   return oss.str();
 }
 
-std::string AnfExporter::GetValueText(const FuncGraphPtr& func_graph, const ValuePtr& value) {
+std::string AnfExporter::GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value) {
   std::ostringstream oss;
   bool is_null_ptr = (func_graph == nullptr || value == nullptr);
   if (is_null_ptr) {
@@ -413,8 +413,8 @@ std::string AnfExporter::GetValueText(const FuncGraphPtr& func_graph, const Valu
 }
 
 // this function is used to output node in CNode's inputs
-std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr& func_graph, const AnfNodePtr& node,
-                                        const std::map<AnfNodePtr, int>& apply_map) {
+std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                        const std::map<AnfNodePtr, int> &apply_map) {
   std::ostringstream oss;
   if (func_graph == nullptr || node == nullptr) {
     return oss.str();
@@ -444,10 +444,10 @@ std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr& func_graph, const An
   return oss.str();
 }
 
-void AnfExporter::OutputParameters(std::ofstream& ofs, const std::vector<AnfNodePtr>& parameters,
-                                   OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual>* param_map) {
+void AnfExporter::OutputParameters(std::ofstream &ofs, const std::vector<AnfNodePtr> &parameters,
+                                   OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> *param_map) {
   bool first_flag = true;
-  for (const AnfNodePtr& param : parameters) {
+  for (const AnfNodePtr &param : parameters) {
     if (first_flag) {
       first_flag = false;
       ofs << "        ";
@@ -479,13 +479,13 @@ void AnfExporter::OutputParameters(std::ofstream& ofs, const std::vector<AnfNode
   }
 }
 
-void AnfExporter::OutputStatementComment(std::ofstream& ofs, const CNodePtr& node) {
+void AnfExporter::OutputStatementComment(std::ofstream &ofs, const CNodePtr &node) {
   if (node == nullptr) {
     return;
   }
 
   // output type of each input argument
-  auto& inputs = node->inputs();
+  auto &inputs = node->inputs();
   if (inputs.size() > 1) {
     ofs << "    #(";
     for (size_t i = 1; i < inputs.size(); ++i) {
@@ -521,15 +521,15 @@ void AnfExporter::OutputStatementComment(std::ofstream& ofs, const CNodePtr& nod
   ofs << " #scope: " << node->scope()->name();
 }
 
-void AnfExporter::OutputCNodes(std::ofstream& ofs, const std::vector<AnfNodePtr>& nodes,
-                               const FuncGraphPtr& func_graph) {
+void AnfExporter::OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes,
+                               const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     return;
   }
 
   int idx = 1;
   std::map<AnfNodePtr, int> apply_map;
-  for (const AnfNodePtr& node : nodes) {
+  for (const AnfNodePtr &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
@@ -541,7 +541,7 @@ void AnfExporter::OutputCNodes(std::ofstream& ofs, const std::vector<AnfNodePtr>
     }
 
     auto cnode = node->cast<CNodePtr>();
-    auto& inputs = cnode->inputs();
+    auto &inputs = cnode->inputs();
     std::string op_text = GetAnfNodeText(func_graph, inputs[0], apply_map);
     // non-return node
     if (node != func_graph->get_return()) {
@@ -578,7 +578,7 @@ void AnfExporter::OutputCNodes(std::ofstream& ofs, const std::vector<AnfNodePtr>
   }
 }
 
-void AnfExporter::ExportOneFuncGraph(std::ofstream& ofs, const FuncGraphPtr& func_graph) {
+void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     return;
   }
@@ -612,7 +612,7 @@ void AnfExporter::ExportOneFuncGraph(std::ofstream& ofs, const FuncGraphPtr& fun
   ofs << "}\n";
 }
 
-void AnfExporter::ExportFuncGraph(const std::string& filename, const FuncGraphPtr& func_graph) {
+void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     return;
   }
@@ -637,7 +637,7 @@ void AnfExporter::ExportFuncGraph(const std::string& filename, const FuncGraphPt
   ofs.close();
 }
 
-void AnfExporter::ExportFuncGraph(const std::string& filename, const std::vector<TaggedGraph>& graphs) {
+void AnfExporter::ExportFuncGraph(const std::string &filename, const std::vector<TaggedGraph> &graphs) {
   if (graphs.empty()) {
     return;
   }
@@ -650,7 +650,7 @@ void AnfExporter::ExportFuncGraph(const std::string& filename, const std::vector
 
   param_index = 1;
 
-  for (const auto& tagged_graph : graphs) {
+  for (const auto &tagged_graph : graphs) {
     tagged_cnodes_ = tagged_graph.second;
     ExportOneFuncGraph(ofs, tagged_graph.first);
     tagged_cnodes_.clear();
@@ -663,7 +663,7 @@ void AnfExporter::ExportFuncGraph(const std::string& filename, const std::vector
 }
 
 #ifdef ENABLE_DUMP_IR
-void ExportIR(const std::string& filename, const std::string& id, const FuncGraphPtr& func_graph) {
+void ExportIR(const std::string &filename, const std::string &id, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     return;
   }
@@ -675,7 +675,7 @@ void ExportIR(const std::string& filename, const std::string& id, const FuncGrap
   ChangeFileMode(filename, S_IRUSR);
 }
 
-void ExportIR(const std::string& filename, const std::vector<TaggedGraph>& graphs) {
+void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graphs) {
   AnfExporter exporter("", false);
   ChangeFileMode(filename, S_IRWXU);
   exporter.ExportFuncGraph(filename, graphs);
@@ -683,7 +683,7 @@ void ExportIR(const std::string& filename, const std::vector<TaggedGraph>& graph
   ChangeFileMode(filename, S_IRUSR);
 }
 #else
-void ExportIR(const std::string&, const std::string&, const FuncGraphPtr&) {
+void ExportIR(const std::string &, const std::string &, const FuncGraphPtr &) {
   static bool already_printed = false;
   if (already_printed) {
     return;
@@ -693,7 +693,7 @@ void ExportIR(const std::string&, const std::string&, const FuncGraphPtr&) {
                   << "please recompile source to enable it. See help of building script.";
 }
 
-void ExportIR(const std::string& filename, const std::vector<TaggedGraph>& graphs) {
+void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graphs) {
   static bool already_printed = false;
   if (already_printed) {
     return;
@@ -732,7 +732,7 @@ enum Token : int {
   TOK_ERROR          // file read error
 };
 
-std::map<Token, const char*> token_text = {
+std::map<Token, const char *> token_text = {
   {TOK_INVALID, "invalid"},      // invalid token
   {TOK_LPARENTHESIS, "("},       // ( left parenthesis
   {TOK_RPARENTHESIS, ")"},       // ) right parenthesis
@@ -761,14 +761,14 @@ std::map<Token, const char*> token_text = {
 class Lexer {
  public:
   // filename is checked in ImportIR;
-  explicit Lexer(const char* filename) : fin(filename) {}
+  explicit Lexer(const char *filename) : fin(filename) {}
 
   ~Lexer() {
     try {
       if (fin.is_open()) {
         fin.close();
       }
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Exception when closing file";
     } catch (...) {
       std::string exName(abi::__cxa_current_exception_type()->name());
@@ -776,7 +776,7 @@ class Lexer {
     }
   }
 
-  bool IsSingleCharToken(char ch, Token* token_ptr) {
+  bool IsSingleCharToken(char ch, Token *token_ptr) {
     // clang-format off
     std::unordered_map<char, Token> char_to_token = {
       {'(', TOK_LPARENTHESIS},
@@ -806,7 +806,7 @@ class Lexer {
   Token GetNextToken() {
 #ifdef DEBUG
     Token token = GetNextTokenInner();
-    const char* str = token_text[token];
+    const char *str = token_text[token];
     std::string text = (str == nullptr ? GetTokenText() : str);
     MS_LOG(DEBUG) << "------Parse token] " << text;
     return token;
@@ -1064,11 +1064,11 @@ const unsigned Lexer::BUF_SIZE;
 
 class IrParser {
  public:
-  explicit IrParser(const char* filename) : lexer_(filename) {}
+  explicit IrParser(const char *filename) : lexer_(filename) {}
 
   ~IrParser() {}
 
-  py::object LoadObject(const std::string& file_name) const {
+  py::object LoadObject(const std::string &file_name) const {
     std::string pkl_path = GetMsIrPath();
     py::object default_obj = load_obj(pkl_path + "/" + file_name);
     return default_obj;
@@ -1087,7 +1087,7 @@ class IrParser {
     MS_LOG(INFO) << "Total graphs: " << func_graphs_.size();
   }
 
-  Token ParseParent(FuncGraphPtr* const parent_ptr) {
+  Token ParseParent(FuncGraphPtr *const parent_ptr) {
     if (lexer_.GetNextToken() != TOK_IDENTIFIER) {
       return TOK_ERROR;
     }
@@ -1168,7 +1168,7 @@ class IrParser {
     return func_graph;
   }
 
-  FuncGraphPtr ParseStatements(const FuncGraphPtr& func_graph) {
+  FuncGraphPtr ParseStatements(const FuncGraphPtr &func_graph) {
     Token tok = lexer_.SkipWhiteToken();
     while (tok == TOK_VARIABLE) {
       if (ParseStatement(func_graph) == nullptr) {
@@ -1264,56 +1264,56 @@ class IrParser {
     return func_graph;
   }
 
-  void SetBasicType(TypePtr* ptr, const TypePtr& dtype) const {
+  void SetBasicType(TypePtr *ptr, const TypePtr &dtype) const {
     if (ptr == nullptr) {
       return;
     }
     *ptr = dtype;
   }
 
-  void SetTupleType(TypePtr* ptr) {
+  void SetTupleType(TypePtr *ptr) {
     if (ptr == nullptr) {
       return;
     }
     *ptr = std::make_shared<Tuple>();
   }
 
-  void SetTupleType(TypePtr* ptr, const TypePtrList& elems) {
+  void SetTupleType(TypePtr *ptr, const TypePtrList &elems) {
     if (ptr == nullptr) {
       return;
     }
     *ptr = std::make_shared<Tuple>(elems);
   }
 
-  void SetArrayType(TypePtr* const ptr, const TypePtr& elem_type, const std::vector<int>&) {
+  void SetArrayType(TypePtr *const ptr, const TypePtr &elem_type, const std::vector<int> &) {
     if (ptr == nullptr) {
       return;
     }
     *ptr = std::make_shared<TensorType>(elem_type);
   }
 
-  void SetListType(TypePtr* ptr) {
+  void SetListType(TypePtr *ptr) {
     if (ptr == nullptr) {
       return;
     }
     *ptr = std::make_shared<List>();
   }
 
-  void SetListType(TypePtr* ptr, const TypePtrList& elems) {
+  void SetListType(TypePtr *ptr, const TypePtrList &elems) {
     if (ptr == nullptr) {
       return;
     }
     *ptr = std::make_shared<List>(elems);
   }
 
-  void SetJTaggedType(TypePtr* ptr, const TypePtr& elem) {
+  void SetJTaggedType(TypePtr *ptr, const TypePtr &elem) {
     if (ptr == nullptr) {
       return;
     }
     *ptr = std::make_shared<JTagged>(elem);
   }
 
-  void SetBasicType(AbstractBasePtr* ptr, const TypePtr& dtype) const {
+  void SetBasicType(AbstractBasePtr *ptr, const TypePtr &dtype) const {
     if (ptr == nullptr) {
       return;
     }
@@ -1321,45 +1321,45 @@ class IrParser {
   }
 
   // void SetBasicType(AbstractBasePtr *ptr, const SymbolicKeyTypePtr& dtype) {}
-  void SetBasicType(AbstractBasePtr* const ptr, const TypeNonePtr&) const {
+  void SetBasicType(AbstractBasePtr *const ptr, const TypeNonePtr &) const {
     if (ptr == nullptr) {
       return;
     }
     *ptr = std::make_shared<abstract::AbstractNone>();
   }
 
-  void SetBasicType(AbstractBasePtr*, const FunctionPtr&) const {}
-  void SetBasicType(AbstractBasePtr*, const TensorTypePtr&) const {}
+  void SetBasicType(AbstractBasePtr *, const FunctionPtr &) const {}
+  void SetBasicType(AbstractBasePtr *, const TensorTypePtr &) const {}
 
-  void SetTupleType(AbstractBasePtr* const ptr, const AbstractBasePtrList& elems) {
+  void SetTupleType(AbstractBasePtr *const ptr, const AbstractBasePtrList &elems) {
     if (ptr == nullptr) {
       return;
     }
     // if one of elems is nullptr, just return
-    if (std::any_of(std::begin(elems), std::end(elems), [](const AbstractBasePtr& elem) { return elem == nullptr; })) {
+    if (std::any_of(std::begin(elems), std::end(elems), [](const AbstractBasePtr &elem) { return elem == nullptr; })) {
       return;
     }
     *ptr = std::make_shared<abstract::AbstractTuple>(elems);
   }
 
-  void SetArrayType(AbstractBasePtr* const ptr, const TypePtr& elem_type, const std::vector<int>& shape) {
+  void SetArrayType(AbstractBasePtr *const ptr, const TypePtr &elem_type, const std::vector<int> &shape) {
     if (ptr == nullptr) {
       return;
     }
     *ptr = std::make_shared<abstract::AbstractTensor>(elem_type, shape);
   }
 
-  void SetListType(AbstractBasePtr* const ptr, const AbstractBasePtrList& elems) {
+  void SetListType(AbstractBasePtr *const ptr, const AbstractBasePtrList &elems) {
     if (ptr == nullptr) {
       return;
     }
-    if (std::any_of(std::begin(elems), std::end(elems), [](const AbstractBasePtr& elem) { return elem == nullptr; })) {
+    if (std::any_of(std::begin(elems), std::end(elems), [](const AbstractBasePtr &elem) { return elem == nullptr; })) {
       return;
     }
     *ptr = std::make_shared<abstract::AbstractList>(elems);
   }
 
-  void SetJTaggedType(AbstractBasePtr* const ptr, const AbstractBasePtr& elem) {
+  void SetJTaggedType(AbstractBasePtr *const ptr, const AbstractBasePtr &elem) {
     if (ptr == nullptr) {
       return;
     }
@@ -1367,7 +1367,7 @@ class IrParser {
   }
 
   template <typename T>
-  Token ParseTypeVector(const FuncGraphPtr& func_graph, Token tok, const std::string& type, T* const ptr = nullptr) {
+  Token ParseTypeVector(const FuncGraphPtr &func_graph, Token tok, const std::string &type, T *const ptr = nullptr) {
     if (tok != TOK_LBRACKET) {
       MS_LOG(EXCEPTION) << "Illegal case, , wrong token start symbol.";
       return tok;
@@ -1415,7 +1415,7 @@ class IrParser {
   }
 
   template <typename T>
-  Token ParseTypeArray(const FuncGraphPtr& func_graph, Token tok, T* const ptr = nullptr) {
+  Token ParseTypeArray(const FuncGraphPtr &func_graph, Token tok, T *const ptr = nullptr) {
     if (tok != TOK_LPARENTHESIS) {
       if (ptr != nullptr) {
         SetBasicType(ptr, std::make_shared<TensorType>());
@@ -1454,7 +1454,7 @@ class IrParser {
     return lexer_.GetNextToken();
   }
 
-  bool IsNumberType(const std::string& type, TypeId* typeid_ptr) {
+  bool IsNumberType(const std::string &type, TypeId *typeid_ptr) {
     // clang-format off
     static std::unordered_map<std::string, TypeId> basic_types = {
       {"Bool", kNumberTypeBool},
@@ -1486,7 +1486,7 @@ class IrParser {
   }
 
   template <typename T>
-  void ParseNumberType(const std::string& type, TypeId typeId, T* const ptr = nullptr) {
+  void ParseNumberType(const std::string &type, TypeId typeId, T *const ptr = nullptr) {
     TypePtr dtype = nullptr;
 
     std::unordered_map<int, TypePtr> type_map = {
@@ -1519,7 +1519,7 @@ class IrParser {
   }
 
   template <typename T>
-  Token ParseTrivalType(const std::string& type, T* const ptr = nullptr) {
+  Token ParseTrivalType(const std::string &type, T *const ptr = nullptr) {
     if (type == "NoneType") {
       SetBasicType(ptr, std::make_shared<TypeNone>());
       return lexer_.GetNextToken();
@@ -1541,7 +1541,7 @@ class IrParser {
   }
 
   template <typename T>
-  Token ParseOneType(const FuncGraphPtr& func_graph, Token tok, T* const ptr = nullptr) {
+  Token ParseOneType(const FuncGraphPtr &func_graph, Token tok, T *const ptr = nullptr) {
     if (tok != TOK_IDENTIFIER) {
       return TOK_ERROR;
     }
@@ -1588,11 +1588,11 @@ class IrParser {
     }
   }
 
-  Token ParseType(const FuncGraphPtr& func_graph, AbstractBasePtr* const abstract = nullptr) {
+  Token ParseType(const FuncGraphPtr &func_graph, AbstractBasePtr *const abstract = nullptr) {
     return ParseOneType(func_graph, lexer_.GetNextToken(), abstract);
   }
 
-  Token ParseAttributes(const FuncGraphPtr& func_graph, const PrimitivePtr& prim) {
+  Token ParseAttributes(const FuncGraphPtr &func_graph, const PrimitivePtr &prim) {
     Token tok = ParseAttribute(func_graph, prim);
     while (tok == TOK_COMMA) {
       tok = ParseAttribute(func_graph, prim);
@@ -1603,7 +1603,7 @@ class IrParser {
     return lexer_.GetNextToken();
   }
 
-  Token ParseAttribute(const FuncGraphPtr& func_graph, const PrimitivePtr& prim) {
+  Token ParseAttribute(const FuncGraphPtr &func_graph, const PrimitivePtr &prim) {
     Token tok = lexer_.GetNextToken();
     if (tok != TOK_IDENTIFIER) {
       return TOK_ERROR;
@@ -1670,7 +1670,7 @@ class IrParser {
     return tok == TOK_RPARENTHESIS ? func_graph : nullptr;
   }
 
-  FuncGraphPtr ParseArguments(FuncGraphPtr func_graph, std::vector<AnfNodePtr>* const inputs_ptr) {
+  FuncGraphPtr ParseArguments(FuncGraphPtr func_graph, std::vector<AnfNodePtr> *const inputs_ptr) {
     Token tok = ParseArgument(func_graph, inputs_ptr);
     while (tok == TOK_COMMA) {
       tok = ParseArgument(func_graph, inputs_ptr);
@@ -1681,9 +1681,9 @@ class IrParser {
     return func_graph;
   }
 
-  AnfNodePtr FindParameter(FuncGraphPtr func_graph, const std::string& param_name) {
+  AnfNodePtr FindParameter(FuncGraphPtr func_graph, const std::string &param_name) {
     while (func_graph != nullptr) {
-      for (auto& ptr : func_graph->parameters()) {
+      for (auto &ptr : func_graph->parameters()) {
         MS_EXCEPTION_IF_NULL(ptr);
         ParameterPtr param = ptr->cast<ParameterPtr>();
         MS_EXCEPTION_IF_NULL(param);
@@ -1701,12 +1701,12 @@ class IrParser {
     return nullptr;
   }
 
-  bool Match(const std::string& str, const std::string& pattern) const {
+  bool Match(const std::string &str, const std::string &pattern) const {
     return strncmp(str.c_str(), pattern.c_str(), pattern.length()) == 0;
   }
 
   template <typename T, typename V>
-  Token ParseScalar(ValuePtr* const val_ptr) {
+  Token ParseScalar(ValuePtr *const val_ptr) {
     if (lexer_.GetNextToken() != TOK_NUMBER) {
       return TOK_ERROR;
     }
@@ -1725,7 +1725,7 @@ class IrParser {
   }
 
   template <typename VT, typename V, typename T>
-  Token ParseScalar(ValuePtr* const val_ptr, Token tok) {
+  Token ParseScalar(ValuePtr *const val_ptr, Token tok) {
     if (tok != TOK_LPARENTHESIS) {
       *val_ptr = std::make_shared<T>();
       return tok;
@@ -1735,7 +1735,7 @@ class IrParser {
   }
 
   template <typename VT, typename V, typename T, const unsigned nbits>
-  Token ParseScalar(ValuePtr* const val_ptr, Token tok) {
+  Token ParseScalar(ValuePtr *const val_ptr, Token tok) {
     if (tok != TOK_LPARENTHESIS) {
       *val_ptr = std::make_shared<T>(nbits);
       return tok;
@@ -1745,7 +1745,7 @@ class IrParser {
   }
 
   template <typename T>
-  T StringToScalar(const std::string& text) {
+  T StringToScalar(const std::string &text) {
     std::stringstream ss;
     T value;
     ss << text;
@@ -1753,7 +1753,7 @@ class IrParser {
     return value;
   }
 
-  Token ParseTensor(ValuePtr* const val_ptr) {
+  Token ParseTensor(ValuePtr *const val_ptr) {
     // parse type
     TypeId type;
     if (lexer_.GetNextToken() != TOK_LPARENTHESIS) {
@@ -1803,7 +1803,7 @@ class IrParser {
     return lexer_.GetNextToken();
   }
 
-  Token ParsePrimType(Token tok, PrimType* prim_type_ptr) {
+  Token ParsePrimType(Token tok, PrimType *prim_type_ptr) {
     if (tok != TOK_LBRACE) {
       return tok;
     }
@@ -1830,7 +1830,7 @@ class IrParser {
     return lexer_.GetNextToken();
   }
 
-  Token ParseMultitypeFuncGraphItem(const prim::MultitypeFuncGraphPtr& mt_func_graph, Token tok) {
+  Token ParseMultitypeFuncGraphItem(const prim::MultitypeFuncGraphPtr &mt_func_graph, Token tok) {
     if (tok != TOK_LPARENTHESIS) {
       return TOK_ERROR;
     }
@@ -1855,7 +1855,7 @@ class IrParser {
     return lexer_.GetNextToken();
   }
 
-  Token ParseMultitypeFuncGraph(const prim::MultitypeFuncGraphPtr& mt_func_graph, Token tok) {
+  Token ParseMultitypeFuncGraph(const prim::MultitypeFuncGraphPtr &mt_func_graph, Token tok) {
     if (tok != TOK_LBRACE) {
       return tok;
     }
@@ -1868,7 +1868,7 @@ class IrParser {
     return lexer_.GetNextToken();
   }
 
-  Token ParseBoolValue(const std::string& key, bool* val_ptr) {
+  Token ParseBoolValue(const std::string &key, bool *val_ptr) {
     if (lexer_.GetNextToken() != TOK_IDENTIFIER || lexer_.GetTokenText() != key) {
       return TOK_ERROR;
     }
@@ -1892,7 +1892,7 @@ class IrParser {
     return lexer_.GetNextToken();
   }
 
-  Token ParseValueGradOperation(const std::string& name, ValuePtr* const val_ptr) {
+  Token ParseValueGradOperation(const std::string &name, ValuePtr *const val_ptr) {
     if (lexer_.GetNextToken() != TOK_LBRACE) {
       return TOK_ERROR;
     }
@@ -1920,7 +1920,7 @@ class IrParser {
     return lexer_.GetNextToken();
   }
 
-  Token ParseSymbolicKeyInstance(const FuncGraphPtr& func_graph, AnfNodePtr* const node_ptr = nullptr) {
+  Token ParseSymbolicKeyInstance(const FuncGraphPtr &func_graph, AnfNodePtr *const node_ptr = nullptr) {
     if (lexer_.GetNextToken() != TOK_LPARENTHESIS) {
       return TOK_ERROR;
     }
@@ -1951,7 +1951,7 @@ class IrParser {
     return lexer_.GetNextToken();
   }
 
-  Token ParsePrimitivePy(const FuncGraphPtr& func_graph, const std::string& id, ValuePtr* const val_ptr) {
+  Token ParsePrimitivePy(const FuncGraphPtr &func_graph, const std::string &id, ValuePtr *const val_ptr) {
     if (lexer_.GetNextToken() != TOK_AT_FILE) {
       return TOK_ERROR;
     }
@@ -1984,7 +1984,7 @@ class IrParser {
     return next;
   }
 
-  Token ParseValueGraphAndNamespace(const std::string& id, ValuePtr* val_ptr) {
+  Token ParseValueGraphAndNamespace(const std::string &id, ValuePtr *val_ptr) {
     if (Match(id, "MultitypeFuncGraph::")) {
       std::string name = id.substr(strlen("MultitypeFuncGraph::"));
       auto mt_func_graph = std::make_shared<prim::MultitypeFuncGraph>(name);
@@ -2024,8 +2024,8 @@ class IrParser {
     }
   }
 
-  Token ParseValueBasic(const FuncGraphPtr& func_graph, const std::string& id, ValuePtr* val_ptr,
-                        AnfNodePtr* const node_ptr = nullptr) {
+  Token ParseValueBasic(const FuncGraphPtr &func_graph, const std::string &id, ValuePtr *val_ptr,
+                        AnfNodePtr *const node_ptr = nullptr) {
     if (id == "None") {
       *val_ptr = std::make_shared<None>();
       return lexer_.GetNextToken();
@@ -2075,9 +2075,9 @@ class IrParser {
     }
   }
 
-  Token SetListOrTupleValue(const FuncGraphPtr& func_graph, Token left_tok, Token next, bool node_is_valid,
-                            const std::vector<ValuePtr>& elems, const std::vector<AnfNodePtr>& nodes,
-                            ValuePtr* const val_ptr, AnfNodePtr* node_ptr) {
+  Token SetListOrTupleValue(const FuncGraphPtr &func_graph, Token left_tok, Token next, bool node_is_valid,
+                            const std::vector<ValuePtr> &elems, const std::vector<AnfNodePtr> &nodes,
+                            ValuePtr *const val_ptr, AnfNodePtr *node_ptr) {
     if (left_tok == TOK_LPARENTHESIS && next == TOK_RPARENTHESIS) {
       if (node_is_valid && node_ptr != nullptr) {
         MS_EXCEPTION_IF_NULL(func_graph);
@@ -2097,8 +2097,8 @@ class IrParser {
     }
   }
 
-  Token ParseListOrTupleValue(const FuncGraphPtr& func_graph, Token tok, ValuePtr* const val_ptr,
-                              AnfNodePtr* node_ptr = nullptr) {
+  Token ParseListOrTupleValue(const FuncGraphPtr &func_graph, Token tok, ValuePtr *const val_ptr,
+                              AnfNodePtr *node_ptr = nullptr) {
     Token left_tok = tok;
 
     std::vector<ValuePtr> elems;
@@ -2138,7 +2138,7 @@ class IrParser {
     return SetListOrTupleValue(func_graph, left_tok, next, node_is_valid, elems, nodes, val_ptr, node_ptr);
   }
 
-  Token ParseValue(const FuncGraphPtr& func_graph, Token tok, ValuePtr* const val_ptr, AnfNodePtr* node_ptr = nullptr) {
+  Token ParseValue(const FuncGraphPtr &func_graph, Token tok, ValuePtr *const val_ptr, AnfNodePtr *node_ptr = nullptr) {
     // tuple or list
     if (tok == TOK_LPARENTHESIS || tok == TOK_LBRACKET) {
       return ParseListOrTupleValue(func_graph, tok, val_ptr, node_ptr);
@@ -2152,7 +2152,7 @@ class IrParser {
     return TOK_ERROR;
   }
 
-  Token ParseItem(const FuncGraphPtr& func_graph, AnfNodePtr* node_ptr, ValuePtr* const val_ptr,
+  Token ParseItem(const FuncGraphPtr &func_graph, AnfNodePtr *node_ptr, ValuePtr *const val_ptr,
                   Token tok = TOK_INVALID) {
     if (tok == TOK_INVALID) {
       tok = lexer_.GetNextToken();
@@ -2193,7 +2193,7 @@ class IrParser {
     return lexer_.GetNextToken();
   }
 
-  Token ParseArgument(const FuncGraphPtr& func_graph, std::vector<AnfNodePtr>* const inputs_ptr) {
+  Token ParseArgument(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *const inputs_ptr) {
     Token tok = lexer_.GetNextToken();
     if (tok == TOK_RPARENTHESIS) {
       return tok;
@@ -2208,7 +2208,7 @@ class IrParser {
     return tok;
   }
 
-  const std::vector<FuncGraphPtr>& GetFuncGraphs() const { return func_graphs_; }
+  const std::vector<FuncGraphPtr> &GetFuncGraphs() const { return func_graphs_; }
 
  private:
   Lexer lexer_;
@@ -2226,14 +2226,14 @@ class IrParser {
   std::map<std::string, ParameterPtr> param_nodes_;  // map parameter name to parameter
 };
 
-std::vector<FuncGraphPtr> ImportIR(const std::string& filename) {
+std::vector<FuncGraphPtr> ImportIR(const std::string &filename) {
   IrParser parser(filename.c_str());
   parser.ParseFile();
   return parser.GetFuncGraphs();
 }
 
 #ifdef ENABLE_DUMP_IR
-void DumpIRProto(const FuncGraphPtr& func_graph, const std::string& suffix) {
+void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Func graph is nullptr";
     return;
@@ -2253,7 +2253,7 @@ void DumpIRProto(const FuncGraphPtr& func_graph, const std::string& suffix) {
     return;
   }
   char real_path[PATH_MAX] = {0};
-  char* real_path_ret = nullptr;
+  char *real_path_ret = nullptr;
 #if defined(_WIN32) || defined(_WIN64)
   real_path_ret = _fullpath(real_path, file_path.c_str(), PATH_MAX);
 #else
@@ -2281,7 +2281,7 @@ void DumpIRProto(const FuncGraphPtr& func_graph, const std::string& suffix) {
   ChangeFileMode(file_path, S_IRUSR);
 }
 #else
-void DumpIRProto(const FuncGraphPtr&, const std::string&) {
+void DumpIRProto(const FuncGraphPtr &, const std::string &) {
   static bool already_printed = false;
   if (already_printed) {
     return;

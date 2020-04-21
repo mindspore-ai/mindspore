@@ -43,7 +43,7 @@ using transform::GraphRunner;
 using transform::GraphRunnerOptions;
 using transform::OperatorPtr;
 static std::shared_ptr<session::SessionBasic> session = nullptr;
-inline ValuePtr PyAttrValue(const py::object& obj) {
+inline ValuePtr PyAttrValue(const py::object &obj) {
   ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(obj, &converted_ret);
   if (!converted) {
@@ -52,7 +52,7 @@ inline ValuePtr PyAttrValue(const py::object& obj) {
   return converted_ret;
 }
 
-MeTensorPtr ConvertPyObjToTensor(const py::object& obj) {
+MeTensorPtr ConvertPyObjToTensor(const py::object &obj) {
   MeTensorPtr me_tensor_ptr = nullptr;
   if (py::isinstance<MeTensor>(obj)) {
     me_tensor_ptr = py::cast<MeTensorPtr>(obj);
@@ -72,8 +72,8 @@ MeTensorPtr ConvertPyObjToTensor(const py::object& obj) {
   return me_tensor_ptr;
 }
 
-bool SetInputsForSingleOpGraph(const OpExecInfoPtr& op_exec_info, const std::vector<GeTensorPtr>& inputs,
-                               const OperatorPtr& op, std::vector<GeOperator>* graph_input_nodes) {
+bool SetInputsForSingleOpGraph(const OpExecInfoPtr &op_exec_info, const std::vector<GeTensorPtr> &inputs,
+                               const OperatorPtr &op, std::vector<GeOperator> *graph_input_nodes) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_EXCEPTION_IF_NULL(graph_input_nodes);
   auto op_inputs = op_exec_info->op_inputs;
@@ -103,7 +103,7 @@ bool SetInputsForSingleOpGraph(const OpExecInfoPtr& op_exec_info, const std::vec
     auto pointer_cast_const_op = std::static_pointer_cast<transform::Constant>(const_op);
     MS_EXCEPTION_IF_NULL(pointer_cast_const_op);
     (void)pointer_cast_const_op->update_output_desc_y(*const_op_desc);
-    auto& input_map = adapter->getInputMap();
+    auto &input_map = adapter->getInputMap();
     if (input_map.find(op_input_idx) == input_map.end()) {
       continue;
     }
@@ -116,8 +116,8 @@ bool SetInputsForSingleOpGraph(const OpExecInfoPtr& op_exec_info, const std::vec
   return true;
 }
 
-bool BuildSingleOpGraph(const OpExecInfoPtr& op_exec_info, const std::vector<GeTensorPtr>& inputs,
-                        const std::unordered_map<std::string, ValuePtr>& attrs, const GeGraphPtr& graph) {
+bool BuildSingleOpGraph(const OpExecInfoPtr &op_exec_info, const std::vector<GeTensorPtr> &inputs,
+                        const std::unordered_map<std::string, ValuePtr> &attrs, const GeGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   std::string op_name = op_exec_info->op_name;
   auto op_inputs = op_exec_info->op_inputs;
@@ -145,8 +145,8 @@ bool BuildSingleOpGraph(const OpExecInfoPtr& op_exec_info, const std::vector<GeT
     (void)adapter->setAttr(op, attr.first, attr.second);
   }
   // set input attributes
-  auto& input_attr_map = adapter->getInputAttrMap();
-  for (auto& it : input_attr_map) {
+  auto &input_attr_map = adapter->getInputAttrMap();
+  for (auto &it : input_attr_map) {
     if (op_inputs.size() < it.first) {
       continue;
     }
@@ -165,7 +165,7 @@ bool BuildSingleOpGraph(const OpExecInfoPtr& op_exec_info, const std::vector<GeT
   return true;
 }
 
-void ToTensorPtr(const OpExecInfoPtr op_exec_info, std::vector<GeTensorPtr>* const inputs) {
+void ToTensorPtr(const OpExecInfoPtr op_exec_info, std::vector<GeTensorPtr> *const inputs) {
   MS_EXCEPTION_IF_NULL(inputs);
   MS_EXCEPTION_IF_NULL(op_exec_info);
   auto op_inputs = op_exec_info->op_inputs;
@@ -185,12 +185,12 @@ void ToTensorPtr(const OpExecInfoPtr op_exec_info, std::vector<GeTensorPtr>* con
   }
 }
 
-PynativeStatusCode ConvertAttributes(const OpExecInfoPtr& op_exec_info, const std::vector<GeTensorPtr>& inputs) {
+PynativeStatusCode ConvertAttributes(const OpExecInfoPtr &op_exec_info, const std::vector<GeTensorPtr> &inputs) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   auto op_attrs = op_exec_info->op_attrs;
   std::unordered_map<std::string, ValuePtr> attrs{};
 
-  for (auto& item : op_attrs) {
+  for (auto &item : op_attrs) {
     if (!py::isinstance<py::str>(item.first)) {
       MS_LOG(ERROR) << "Type error in py dict convert";
       return PYNATIVE_OP_ATTRS_ERR;
@@ -218,8 +218,8 @@ PynativeStatusCode ConvertAttributes(const OpExecInfoPtr& op_exec_info, const st
   return PYNATIVE_SUCCESS;
 }
 
-std::vector<MeTensorPtr> ConvertOutputTensors(const OpExecInfoPtr& op_exec_info,
-                                              const std::vector<GeTensorPtr>& ge_tensors) {
+std::vector<MeTensorPtr> ConvertOutputTensors(const OpExecInfoPtr &op_exec_info,
+                                              const std::vector<GeTensorPtr> &ge_tensors) {
   std::vector<MeTensorPtr> outputs;
   AbstractBasePtr abs_base = op_exec_info->abstract;
   std::vector<std::vector<int>> shapes;
@@ -242,7 +242,7 @@ std::vector<MeTensorPtr> ConvertOutputTensors(const OpExecInfoPtr& op_exec_info,
     outputs = transform::TransformUtil::ConvertGeTensors(ge_tensors, shapes);
     return outputs;
   }
-  for (auto& it : ge_tensors) {
+  for (auto &it : ge_tensors) {
     auto tensor = transform::TransformUtil::ConvertGeTensor(it);
     if (tensor != nullptr) {
       outputs.emplace_back(tensor);
@@ -251,7 +251,7 @@ std::vector<MeTensorPtr> ConvertOutputTensors(const OpExecInfoPtr& op_exec_info,
   return outputs;
 }
 
-py::object RunOpInGE(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* status) {
+py::object RunOpInGE(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
   MS_LOG(INFO) << "RunOpInGe start";
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_EXCEPTION_IF_NULL(status);

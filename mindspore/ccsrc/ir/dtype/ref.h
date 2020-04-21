@@ -51,7 +51,7 @@ class RefKeyType : public Object {
 class RefType : public Object {
  public:
   RefType() : Object(kObjectTypeRef) {}
-  RefType(const TypePtr& subtype, const TypePtr& subtype_origin)
+  RefType(const TypePtr &subtype, const TypePtr &subtype_origin)
       : Object(kObjectTypeRef, false), subtype_(subtype), subtype_origin_(subtype_origin) {}
   ~RefType() override {}
   MS_DECLARE_PARENT(RefType, Object)

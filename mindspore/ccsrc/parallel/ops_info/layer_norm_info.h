@@ -38,20 +38,20 @@ constexpr char BEGIN_NORM_AXIS[] = "begin_norm_axis";
 // arbitrarily. Gamma and beta should match input to meet the broadcast requirements of mul and add.
 class LayerNormInfo : public OperatorInfo {
  public:
-  LayerNormInfo(const std::string& operator_name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-                const PrimitiveAttrs& attrs)
+  LayerNormInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                const PrimitiveAttrs &attrs)
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<LayerNormCost>(true)),
         begin_norm_axis_(0) {}
   ~LayerNormInfo() override = default;
 
-  Status Init(const StrategyPtr& strategy) override;
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status Init(const StrategyPtr &strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
   Status GenerateStrategies(int32_t) override;
-  Status SetCostUnderStrategy(const StrategyPtr&) override;
+  Status SetCostUnderStrategy(const StrategyPtr &) override;
 
  protected:
   Status GetAttrs() override;
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferTensorInfo() override;
@@ -61,7 +61,7 @@ class LayerNormInfo : public OperatorInfo {
   Status CreateTensorMap(size_t input_index);
   Status CreateTensorInfo(size_t input_index);
   Status CreateMirrorOp(size_t input_index);
-  Status GenerateGammaAndBetaStrategies(const std::vector<StrategyPtr>& sp_vector);
+  Status GenerateGammaAndBetaStrategies(const std::vector<StrategyPtr> &sp_vector);
   Status InitShapes();
 
  private:

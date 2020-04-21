@@ -65,7 +65,7 @@ struct OpElimination : public Elimination {
 
 // Edge Elimination
 struct EdgeElimination : public Elimination {
-  EdgeElimination(const EdgePtr& n_edge, std::vector<EdgePtr> eds)
+  EdgeElimination(const EdgePtr &n_edge, std::vector<EdgePtr> eds)
       : Elimination(n_edge, Elimination::EliminationType::EDGE), edges_(std::move(eds)) {}
 
   std::vector<EdgePtr> edges_;
@@ -139,7 +139,7 @@ using TriangleEliminationPtr = std::shared_ptr<TriangleElimination>;
 using StarEliminationPtr = std::shared_ptr<StarElimination>;
 
 // Phase 1 and Phase 2
-Status GetStrategy(const CostGraphPtr& graph);
+Status GetStrategy(const CostGraphPtr &graph);
 
 // Phase 3
 Status RecoverStrategy(std::vector<EliminationPtr> eliminations);

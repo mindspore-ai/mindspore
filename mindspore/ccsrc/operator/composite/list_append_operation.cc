@@ -27,7 +27,7 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
-FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList& args_list) {
+FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList &args_list) {
   abstract::CheckArgsSize("ListAppend", args_list, 2);
 
   AbstractBasePtr arg0 = args_list[0];
@@ -52,9 +52,9 @@ FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList& 
   return ret;
 }
 
-REGISTER_PYBIND_DEFINE(ListAppend_, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(ListAppend_, ([](const py::module *m) {
                          (void)py::class_<ListAppend, MetaFuncGraph, std::shared_ptr<ListAppend>>(*m, "ListAppend_")
-                           .def(py::init<std::string&>());
+                           .def(py::init<std::string &>());
                        }));
 }  // namespace prim
 }  // namespace mindspore

@@ -46,7 +46,7 @@ using mindspore::transform::MeTensorPtr;
 using mindspore::transform::Status;
 using mindspore::transform::TransformUtil;
 
-void DoExecNonInputGraph(const std::string& phase) {
+void DoExecNonInputGraph(const std::string &phase) {
   std::vector<GeTensorPtr> ge_tensors;
   std::vector<GeTensorPtr> ge_outputs;
   transform::RunOptions run_options;
@@ -68,7 +68,7 @@ void DoExecNonInputGraph(const std::string& phase) {
   }
 }
 
-void SetGeOption(const std::map<std::string, std::string>& options) {
+void SetGeOption(const std::map<std::string, std::string> &options) {
   ConfigManager::GetInstance().set_ge_initialize_options(options);
 }
 
@@ -108,11 +108,11 @@ Status CreateSessionAndGraphRunner(bool is_training = true) {
   return Status::SUCCESS;
 }
 
-bool InitExecDatasetGe(const std::string& queue_name, int64_t size, int64_t batch_size,
-                       const std::vector<TypePtr>& types, const std::vector<std::vector<int64_t>>& shapes,
-                       const std::vector<int64_t>& input_indexes, const std::string& phase) {
+bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batch_size,
+                       const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
+                       const std::vector<int64_t> &input_indexes, const std::string &phase) {
   std::vector<int64_t> ge_types;
-  (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types), [](const TypePtr& i) -> int64_t {
+  (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types), [](const TypePtr &i) -> int64_t {
     return transform::TransformUtil::ConvertDataType(i->type_id());
   });
 
@@ -145,7 +145,7 @@ bool InitExecDatasetGe(const std::string& queue_name, int64_t size, int64_t batc
   return true;
 }
 
-void ConvertObjectToTensors(const py::dict& dict, TensorOrderMap* const tensors) {
+void ConvertObjectToTensors(const py::dict &dict, TensorOrderMap *const tensors) {
   for (auto item : dict) {
     if ((!py::isinstance<py::str>(item.first))) {
       MS_LOG(WARNING) << "Type of key of py_dict is not string, ignore it.";
@@ -156,11 +156,11 @@ void ConvertObjectToTensors(const py::dict& dict, TensorOrderMap* const tensors)
     if (py::isinstance<py::float_>(item.second.attr("default_input"))) {
       // convert float to tensor with shape([1])
       tensor = std::make_shared<Tensor>(kNumberTypeFloat32, std::vector<int>({1}));
-      *(static_cast<float*>(tensor->data_c(true))) = py::cast<float>(item.second.attr("default_input"));
+      *(static_cast<float *>(tensor->data_c(true))) = py::cast<float>(item.second.attr("default_input"));
     } else if (py::isinstance<py::int_>(item.second.attr("default_input"))) {
       // convert int to tensor with shape([1])
       tensor = std::make_shared<Tensor>(kNumberTypeInt32, std::vector<int>({1}));
-      *(static_cast<float*>(tensor->data_c(true))) = py::cast<float>(item.second.attr("default_input"));
+      *(static_cast<float *>(tensor->data_c(true))) = py::cast<float>(item.second.attr("default_input"));
     } else if (py::hasattr(item.second.attr("default_input"), PYTHON_TENSOR_FLAG)) {
       // cast tensor
       tensor = py::cast<std::shared_ptr<Tensor>>(item.second.attr("default_input"));
@@ -173,8 +173,8 @@ void ConvertObjectToTensors(const py::dict& dict, TensorOrderMap* const tensors)
   }
 }
 
-bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const py::dict& init_params,
-                const std::string& phase, const py::object& broadcast_params) {
+bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::dict &init_params,
+                const std::string &phase, const py::object &broadcast_params) {
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
   DfGraphConvertor convertor(anf_graph);
 
@@ -237,8 +237,8 @@ bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const py::di
   return true;
 }
 
-FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const py::dict& init_params,
-                          const std::string& phase, const py::object& broadcast_params) {
+FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::dict &init_params,
+                          const std::string &phase, const py::object &broadcast_params) {
   if (info.count(phase) == 0) {
     MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
   }
@@ -268,13 +268,13 @@ FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, co
   return anf_graph;
 }
 
-void RunGEInitGraph(const py::dict& init_params, const std::string& phase) {
+void RunGEInitGraph(const py::dict &init_params, const std::string &phase) {
   MS_LOG(DEBUG) << "ExecInitGraph start.";
   TensorOrderMap inputs_with_name{};
   ConvertObjectToTensors(init_params, &inputs_with_name);
   std::vector<tensor::TensorPtr> inputs;
   (void)std::transform(inputs_with_name.begin(), inputs_with_name.end(), std::back_inserter(inputs),
-                       [](const std::pair<std::string, tensor::TensorPtr>& item) { return item.second; });
+                       [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
 
   std::vector<GeTensorPtr> ge_tensors = TransformUtil::ConvertInputTensors(inputs, kOpFormat_NCHW);
   if (ge_tensors.size() != inputs.size()) {
@@ -317,7 +317,7 @@ void RunGEInitGraph(const py::dict& init_params, const std::string& phase) {
   }
 }
 
-py::object ExtractGeneralCnodeRet(const AbstractBasePtr& cnode_data, const py::tuple& data, size_t* count) {
+py::object ExtractGeneralCnodeRet(const AbstractBasePtr &cnode_data, const py::tuple &data, size_t *count) {
   MS_EXCEPTION_IF_NULL(cnode_data);
   if (*count >= data.size()) {
     MS_LOG(EXCEPTION) << "The number of elements in the outputs : " << data.size()
@@ -350,7 +350,7 @@ py::object ExtractGeneralCnodeRet(const AbstractBasePtr& cnode_data, const py::t
   return std::move(tp);
 }
 
-py::object StructureOutput(const AnfNodePtr& output_node, const py::tuple& data, size_t* count) {
+py::object StructureOutput(const AnfNodePtr &output_node, const py::tuple &data, size_t *count) {
   MS_EXCEPTION_IF_NULL(output_node);
 
   if (output_node->isa<ValueNode>()) {
@@ -387,8 +387,8 @@ py::object StructureOutput(const AnfNodePtr& output_node, const py::tuple& data,
   return ExtractGeneralCnodeRet(output_c->abstract(), data, count);
 }
 
-std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr& graph, const std::vector<MeTensorPtr>& inputs,
-                                        const std::string& phase) {
+std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr &graph, const std::vector<MeTensorPtr> &inputs,
+                                        const std::string &phase) {
   std::vector<GeTensorPtr> ge_tensors = TransformUtil::ConvertInputTensors(inputs, kOpFormat_NCHW);
   if (ge_tensors.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Convert me args to ge tensor error.";
@@ -438,8 +438,8 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr& graph, const std::ve
   return ret;
 }
 
-void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr>& info, const py::tuple& args, const std::string& phase,
-                  std::vector<tensor::TensorPtr>* inputs) {
+void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr> &info, const py::tuple &args, const std::string &phase,
+                  std::vector<tensor::TensorPtr> *inputs) {
   // check the arg and use the ExecutorPy args
   std::size_t size = args.size();
 
@@ -470,8 +470,8 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr>& info, const py::
   }
 }
 
-py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const py::tuple& args,
-                       const std::string& phase) {
+py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::tuple &args,
+                       const std::string &phase) {
   std::string phase_prefix = GetPhasePrefix(phase);
 
   if (phase_prefix == "save") {
@@ -514,7 +514,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const
     MS_LOG(EXCEPTION) << "Exec graph failed";
   }
 }
-void ExportDFGraph(const std::string& file_name, const std::string& phase) {
+void ExportDFGraph(const std::string &file_name, const std::string &phase) {
   MS_LOG(DEBUG) << "ExportGraph Begin";
   transform::DfGraphWrapperPtr wrap_ptr = DfGraphManager::GetInstance().GetGraphByName(phase);
   if (wrap_ptr == nullptr) {

@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status Activation::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status Activation::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";
@@ -41,7 +41,7 @@ Status Activation::SetCostUnderStrategy(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status Activation::CheckStrategy(const StrategyPtr& strategy) {
+Status Activation::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
@@ -110,7 +110,7 @@ Status Activation::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy";
@@ -120,7 +120,7 @@ Status Activation::GenerateStrategies(int32_t stage_id) {
   return SUCCESS;
 }
 
-Status Softmax::CheckStrategy(const StrategyPtr& strategy) {
+Status Softmax::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
@@ -133,7 +133,7 @@ Status Softmax::CheckStrategy(const StrategyPtr& strategy) {
   std::vector<Dimensions> stra = strategy->GetInputDim();
   Dimensions input_strategy = stra.at(0);
 
-  for (auto& element : axis_) {
+  for (auto &element : axis_) {
     int32_t axis_index = element;
     if (element < 0) {
       size_t input_dim = inputs_shape_.at(0).size();
@@ -176,7 +176,7 @@ Status Softmax::GetAttrs() {
       }
       std::vector<ValuePtr> value_vector = value_tuple->value();
       (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_),
-                           [](const ValuePtr& value) { return static_cast<int32_t>(GetValue<int>(value)); });
+                           [](const ValuePtr &value) { return static_cast<int32_t>(GetValue<int>(value)); });
       if (axis_.empty()) {
         MS_LOG(ERROR) << name_ << " : The axis tuple is empty.";
         return FAILED;
@@ -205,7 +205,7 @@ Status Softmax::GetAttrs() {
   return SUCCESS;
 }
 
-Status Softmax::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status Softmax::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";
@@ -231,7 +231,7 @@ Status Softmax::GenerateStrategies(int32_t stage_id) {
   is_auto_parallel_ = true;
   Shape input0_split;
   (void)input0_split.insert(input0_split.begin(), inputs_shape_[0].size(), 1);
-  for (auto& element : axis_) {
+  for (auto &element : axis_) {
     int32_t axis_index = element;
     if (element < 0) {
       size_t input_dim = inputs_shape_.at(0).size();
@@ -247,7 +247,7 @@ Status Softmax::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy.";
@@ -334,7 +334,7 @@ Status ActivationBase::InferTensorInfo() {
   return SUCCESS;
 }
 
-Status ActivationBase::Init(const StrategyPtr& strategy) {
+Status ActivationBase::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed.";
     return FAILED;
@@ -344,7 +344,7 @@ Status ActivationBase::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status ActivationBase::InitForCostModel(const StrategyPtr& strategy) {
+Status ActivationBase::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
@@ -547,7 +547,7 @@ Status ExpandDimsInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
-Status SqueezeInfo::InferAxis(const ValueTuplePtr& value_tuple) {
+Status SqueezeInfo::InferAxis(const ValueTuplePtr &value_tuple) {
   std::vector<int32_t> axis;
   auto axis_list = value_tuple->value();
   if (inputs_shape_.empty()) {
@@ -568,7 +568,7 @@ Status SqueezeInfo::InferAxis(const ValueTuplePtr& value_tuple) {
   }
 
   // convert negative axis to positive.
-  for (auto& dim : axis_list) {
+  for (auto &dim : axis_list) {
     if (!dim->isa<Int32Imm>()) {
       MS_LOG(ERROR) << name_ << ": The type of axis is not int";
       return FAILED;
@@ -595,7 +595,7 @@ Status SqueezeInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status SqueezeInfo::InferReplaceOps(const StrategyPtr& strategy) {
+Status SqueezeInfo::InferReplaceOps(const StrategyPtr &strategy) {
   Attr attr = std::make_pair(AXIS, axis_);
   OperatorAttrs attrs = {attr};
   OperatorParams params;
@@ -689,7 +689,7 @@ Status SqueezeInfo::InferTensorInfo() {
   return SUCCESS;
 }
 
-Status SqueezeInfo::Init(const StrategyPtr& strategy) {
+Status SqueezeInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed.";
   }

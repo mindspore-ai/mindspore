@@ -18,9 +18,9 @@
 #include "pipeline/static_analysis/abstract_value.h"
 
 namespace mindspore {
-bool Named::operator==(const Value& other) const {
+bool Named::operator==(const Value &other) const {
   if (other.isa<Named>()) {
-    auto other_named = static_cast<const Named&>(other);
+    auto other_named = static_cast<const Named &>(other);
     return *this == other_named;
   } else {
     return false;

@@ -31,20 +31,20 @@
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
-SubstitutionPtr MakeSubstitution(const TransformFuncType& transform, const std::string& name, const PrimitivePtr& prim,
-                                 const RenormAction& renorm_action) {
-  auto fn = [prim](const AnfNodePtr& node) -> bool { return IsPrimitiveCNode(node, prim); };
+SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name, const PrimitivePtr &prim,
+                                 const RenormAction &renorm_action) {
+  auto fn = [prim](const AnfNodePtr &node) -> bool { return IsPrimitiveCNode(node, prim); };
   return std::make_shared<Substitution>(transform, name, fn, renorm_action);
 }
 
-SubstitutionPtr MakeSubstitution(const TransformFuncType& transform, const std::string& name,
-                                 const std::vector<PrimitivePtr>& prims, const RenormAction& renorm_action) {
-  auto fn = [prims](const AnfNodePtr& node) -> bool {
+SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name,
+                                 const std::vector<PrimitivePtr> &prims, const RenormAction &renorm_action) {
+  auto fn = [prims](const AnfNodePtr &node) -> bool {
     if (!node->isa<CNode>()) {
       return false;
     }
 
-    for (auto& prim : prims) {
+    for (auto &prim : prims) {
       if (IsPrimitiveCNode(node, prim)) {
         return true;
       }
@@ -55,12 +55,12 @@ SubstitutionPtr MakeSubstitution(const TransformFuncType& transform, const std::
   return std::make_shared<Substitution>(transform, name, fn, renorm_action);
 }
 
-SubstitutionPtr MakeSubstitution(const TransformFuncType& transform, const std::string& name,
-                                 const PredicateFuncType& predicate, const RenormAction& renorm_action) {
+SubstitutionPtr MakeSubstitution(const TransformFuncType &transform, const std::string &name,
+                                 const PredicateFuncType &predicate, const RenormAction &renorm_action) {
   return std::make_shared<Substitution>(transform, name, predicate, renorm_action);
 }
 
-AnfNodePtr Substitution::operator()(const OptimizerPtr& optimizer, const AnfNodePtr& node) const {
+AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) const {
 #ifdef ENABLE_PROFILE
   double t = GetTime();
 #endif
@@ -88,8 +88,8 @@ AnfNodePtr Substitution::operator()(const OptimizerPtr& optimizer, const AnfNode
   return result;
 }
 
-bool SubstitutionList::ApplyTransform(const OptimizerPtr& optimizer, const AnfNodePtr& root_node,
-                                      const SubstitutionPtr& transform) const {
+bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNodePtr &root_node,
+                                      const SubstitutionPtr &transform) const {
   FuncGraphManagerPtr manager = optimizer->manager();
   std::unordered_set<AnfNodePtr> seen_node;
   std::deque<AnfNodePtr> todo{root_node};
@@ -131,13 +131,13 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr& optimizer, const AnfNo
     }
 
     if (node->isa<CNode>()) {
-      auto& inputs = node->cast<CNodePtr>()->inputs();
+      auto &inputs = node->cast<CNodePtr>()->inputs();
       (void)std::copy(inputs.begin(), inputs.end(), std::back_inserter(todo));
     }
 
-    auto& node_users = manager->node_users();
+    auto &node_users = manager->node_users();
     if (change && node_users.find(node) != node_users.end()) {
-      for (auto& use : node_users[node]) {
+      for (auto &use : node_users[node]) {
         auto use_node = use.first;
         todo.push_back(use_node);
         if (seen_node.find(use_node) != seen_node.end()) {
@@ -152,7 +152,7 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr& optimizer, const AnfNo
   return changes;
 }
 
-bool SubstitutionList::operator()(const FuncGraphPtr& func_graph, const OptimizerPtr& optimizer) const {
+bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) const {
   MS_EXCEPTION_IF_NULL(optimizer);
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = optimizer->manager();
@@ -163,7 +163,7 @@ bool SubstitutionList::operator()(const FuncGraphPtr& func_graph, const Optimize
 
   do {
     loop = false;
-    for (auto const& transform : list_) {
+    for (auto const &transform : list_) {
       auto change = ApplyTransform(optimizer, func_graph->output(), transform);
       changes = changes || change;
       loop = loop || change;

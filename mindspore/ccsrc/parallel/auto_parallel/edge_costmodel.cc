@@ -28,19 +28,19 @@ namespace mindspore {
 namespace parallel {
 Status Edge::InitEdgeCost() {
   bool has_available_cost = false;
-  for (auto& swc : prev_op_->GetStrategyCost()) {
+  for (auto &swc : prev_op_->GetStrategyCost()) {
     MS_EXCEPTION_IF_NULL(swc);
     pre_op_output_.emplace_back(std::make_pair(swc->strategy_ptr, swc->outputs_ptr));
   }
-  for (auto& swc : next_op_->GetStrategyCost()) {
+  for (auto &swc : next_op_->GetStrategyCost()) {
     MS_EXCEPTION_IF_NULL(swc);
     next_op_input_.emplace_back(std::make_pair(swc->strategy_ptr, swc->inputs_ptr));
   }
   if (is_identity_edge) {
-    for (auto& target_output : pre_op_output_) {
+    for (auto &target_output : pre_op_output_) {
       auto target_output_lyt = target_output.second[prev_op_output_index_].tensor_layout();
       auto target_output_str = target_output.first;
-      for (auto& target_input : next_op_input_) {
+      for (auto &target_input : next_op_input_) {
         auto target_input_lyt = target_input.second[next_op_input_index_].tensor_layout();
         auto target_input_str = target_input.first;
         if (target_output_lyt == target_input_lyt) {
@@ -57,12 +57,12 @@ Status Edge::InitEdgeCost() {
       }
     }
   } else {
-    for (auto& target_output : pre_op_output_) {
+    for (auto &target_output : pre_op_output_) {
       auto target_output_lyt = target_output.second[prev_op_output_index_].tensor_layout();
       auto target_output_str = target_output.first;
       auto type_length = prev_op_->GetOutputTypeLengths()[prev_op_output_index_];
       auto type = prev_op_->outputs_type()[prev_op_output_index_];
-      for (auto& target_input : next_op_input_) {
+      for (auto &target_input : next_op_input_) {
         auto target_input_lyt = target_input.second[next_op_input_index_].tensor_layout();
         auto target_input_str = target_input.first;
         CostPtr cost;
@@ -99,8 +99,8 @@ Status Edge::InitEdgeCost() {
   return Status::SUCCESS;
 }
 
-Status Edge::GetRedistributionCost(const TensorLayout& prev_op_output_layout, const TensorLayout& next_op_input_layout,
-                                   size_t type_length, TypePtr type, CostPtr* cost) {
+Status Edge::GetRedistributionCost(const TensorLayout &prev_op_output_layout, const TensorLayout &next_op_input_layout,
+                                   size_t type_length, TypePtr type, CostPtr *cost) {
   MS_EXCEPTION_IF_NULL(prev_op_);
   MS_EXCEPTION_IF_NULL(cost);
   RankList dev_list = prev_op_->global_device_list();
@@ -148,9 +148,9 @@ CostPtrList Edge::GetCostList(StrategyPtr output_str, StrategyPtr input_str) {
   return result;
 }
 
-CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr& output_st_ptr, const std::vector<EdgePtr>& edges,
-                                                const StrategyPtr& input_st_ptr) {
-  std::function<CostPtrList(EdgePtr)> LocalGetCostList = [&](const EdgePtr& edge) {
+CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr &output_st_ptr, const std::vector<EdgePtr> &edges,
+                                                const StrategyPtr &input_st_ptr) {
+  std::function<CostPtrList(EdgePtr)> LocalGetCostList = [&](const EdgePtr &edge) {
     MS_EXCEPTION_IF_NULL(edge);
     return edge->GetCostList(output_st_ptr, input_st_ptr);
   };
@@ -174,7 +174,7 @@ CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr& output_st_ptr
         result.push_back(new_cost);
         return;
       }
-      for (auto& c : all_cost_list[k]) {
+      for (auto &c : all_cost_list[k]) {
         MS_EXCEPTION_IF_NULL(c);
         selected_cost_list[k] = c;
         recursive(k + 1, computation + c->computation_cost_, memory + c->memory_with_reuse_,
@@ -187,11 +187,11 @@ CostPtrList Edge::CreateEdgeEliminationCostList(const StrategyPtr& output_st_ptr
   return result;
 }
 
-void Edge::EdgeEliminationSetNewCost(OperatorInfoPtr, const std::vector<EdgePtr>& edges, OperatorInfoPtr) {
+void Edge::EdgeEliminationSetNewCost(OperatorInfoPtr, const std::vector<EdgePtr> &edges, OperatorInfoPtr) {
   bool valid = false;
-  for (const auto& output_pair : pre_op_output_) {
+  for (const auto &output_pair : pre_op_output_) {
     StrategyPtr output_st_ptr = output_pair.first;
-    for (const auto& input_pair : next_op_input_) {
+    for (const auto &input_pair : next_op_input_) {
       StrategyPtr input_st_ptr = input_pair.first;
       CostPtrList clist = CreateEdgeEliminationCostList(output_st_ptr, edges, input_st_ptr);
       CostPtrKey key = {output_st_ptr, input_st_ptr};
@@ -206,14 +206,14 @@ void Edge::EdgeEliminationSetNewCost(OperatorInfoPtr, const std::vector<EdgePtr>
   }
 }
 
-void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList& left_cost_list,
-                                          const CostPtrList& middle_cost_list, const CostPtrList& right_cost_list,
-                                          CostPtrList* ret_cost_list) {
-  for (auto& left_cost : left_cost_list) {
+void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList &left_cost_list,
+                                          const CostPtrList &middle_cost_list, const CostPtrList &right_cost_list,
+                                          CostPtrList *ret_cost_list) {
+  for (auto &left_cost : left_cost_list) {
     MS_EXCEPTION_IF_NULL(left_cost);
-    for (auto& middle_cost : middle_cost_list) {
+    for (auto &middle_cost : middle_cost_list) {
       MS_EXCEPTION_IF_NULL(middle_cost);
-      for (auto& right_cost : right_cost_list) {
+      for (auto &right_cost : right_cost_list) {
         MS_EXCEPTION_IF_NULL(right_cost);
         double computation =
           left_cost->computation_cost_ + middle_cost->computation_cost_ + right_cost->computation_cost_;
@@ -238,14 +238,14 @@ void Edge::CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtr
   }
 }
 
-CostPtrList Edge::CreateOpEliminationCostList(const EdgePtr& e1, const StrategyPtr& output_st_ptr,
-                                              const OperatorInfoPtr& op, const EdgePtr& e2,
-                                              const StrategyPtr& input_st_ptr) {
+CostPtrList Edge::CreateOpEliminationCostList(const EdgePtr &e1, const StrategyPtr &output_st_ptr,
+                                              const OperatorInfoPtr &op, const EdgePtr &e2,
+                                              const StrategyPtr &input_st_ptr) {
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(e1);
   MS_EXCEPTION_IF_NULL(e2);
   CostPtrList result;
-  for (const auto& op_strategy : op->GetStrategyCost()) {
+  for (const auto &op_strategy : op->GetStrategyCost()) {
     MS_EXCEPTION_IF_NULL(op_strategy);
     auto middle_strategy = op_strategy->strategy_ptr;
     CreateOpEliminationSubCostList(middle_strategy, e1->GetCostList(output_st_ptr, middle_strategy),
@@ -255,11 +255,11 @@ CostPtrList Edge::CreateOpEliminationCostList(const EdgePtr& e1, const StrategyP
   return result;
 }
 
-void Edge::OpEliminationSetNewCost(const EdgePtr& e1, const OperatorInfoPtr& op, const EdgePtr& e2) {
+void Edge::OpEliminationSetNewCost(const EdgePtr &e1, const OperatorInfoPtr &op, const EdgePtr &e2) {
   bool valid = false;
-  for (const auto& output_pair : pre_op_output_) {
+  for (const auto &output_pair : pre_op_output_) {
     StrategyPtr output_st_ptr = output_pair.first;
-    for (const auto& input_pair : next_op_input_) {
+    for (const auto &input_pair : next_op_input_) {
       StrategyPtr input_st_ptr = input_pair.first;
 
       CostPtrList clist = CreateOpEliminationCostList(e1, output_st_ptr, op, e2, input_st_ptr);
@@ -283,8 +283,8 @@ Status Edge::CalculateMemoryCost() {
   if (is_output_parameter_involve_ == 0) {
     // In this case, it is sure that the tensor redistribution along this edge is NOT parameter-involved, thus it is
     // unnecessary to keep them in memory.
-    for (auto& cost_kv : cost_map_) {
-      auto& cost_v = cost_kv.second;
+    for (auto &cost_kv : cost_map_) {
+      auto &cost_v = cost_kv.second;
       if (!cost_v.empty()) {
         cost_v[0]->memory_with_reuse_ = 0;
       }

@@ -44,7 +44,7 @@ using RedistributionOpListPtr = std::shared_ptr<std::pair<OperatorVector, OutPut
 
 struct Cost {
   Cost();
-  Cost(double computation, double commuication, const std::shared_ptr<Decision>& decision_ = nullptr)
+  Cost(double computation, double commuication, const std::shared_ptr<Decision> &decision_ = nullptr)
       : computation_cost_(computation), communication_cost_(commuication), decision_ptr_(std::move(decision_)) {
     memory_with_reuse_ = 0.0;
     communication_without_parameter_ = 0.0;
@@ -76,8 +76,8 @@ class StrategyWithCost {
   StrategyWithCost(StrategyPtr strategy, std::vector<TensorInfo> inputs_, std::vector<TensorInfo> outputs_)
       : strategy_ptr(std::move(strategy)), inputs_ptr(std::move(inputs_)), outputs_ptr(std::move(outputs_)) {}
 
-  StrategyWithCost(const StrategyWithCost& swc) = delete;
-  StrategyWithCost(StrategyWithCost&& swc)
+  StrategyWithCost(const StrategyWithCost &swc) = delete;
+  StrategyWithCost(StrategyWithCost &&swc)
       : strategy_ptr(swc.strategy_ptr),
         inputs_ptr(swc.inputs_ptr),
         outputs_ptr(swc.outputs_ptr),
@@ -295,9 +295,9 @@ using StarEliminationDecisionPtr = std::shared_ptr<StarEliminationDecision>;
 using FinalDecisionPtr = std::shared_ptr<FinalDecision>;
 using FinalSingleDecisionPtr = std::shared_ptr<FinalSingleDecision>;
 
-void Simplify(CostPtrList* clist);
-void SimplifyForDreasingCommunicationWithPartialPara(CostPtrList* clist);
-void RefineForPracticalCost(const CostPtr&, bool is_redistribution);
+void Simplify(CostPtrList *clist);
+void SimplifyForDreasingCommunicationWithPartialPara(CostPtrList *clist);
+void RefineForPracticalCost(const CostPtr &, bool is_redistribution);
 }  // namespace parallel
 }  // namespace mindspore
 

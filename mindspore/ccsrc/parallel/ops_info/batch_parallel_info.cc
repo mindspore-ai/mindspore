@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status BatchParallelInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status BatchParallelInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
@@ -161,7 +161,7 @@ Status BatchParallelInfo::InferTensorInfo() {
 
 Status BatchParallelInfo::GetAttrs() { return SUCCESS; }
 
-Status BatchParallelInfo::Init(const StrategyPtr& strategy) {
+Status BatchParallelInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed.";
     return FAILED;
@@ -170,7 +170,7 @@ Status BatchParallelInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status BatchParallelInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status BatchParallelInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
@@ -184,7 +184,7 @@ Status BatchParallelInfo::InitForCostModel(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";

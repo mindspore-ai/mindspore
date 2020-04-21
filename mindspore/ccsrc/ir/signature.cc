@@ -21,8 +21,8 @@
 #include "pipeline/parse/data_converter.h"
 
 namespace mindspore {
-Signature::Signature(const std::string& arg_name, const SignatureEnumRW& rw_tag, const SignatureEnumKind& arg_kind,
-                     const py::object& arg_default, const SignatureEnumDType& arg_dtype)
+Signature::Signature(const std::string &arg_name, const SignatureEnumRW &rw_tag, const SignatureEnumKind &arg_kind,
+                     const py::object &arg_default, const SignatureEnumDType &arg_dtype)
     : name(arg_name), rw(rw_tag), kind(arg_kind), dtype(arg_dtype) {
   if (py::isinstance<SignatureEnumKind>(arg_default) &&
       py::cast<SignatureEnumKind>(arg_default) == SignatureEnumKind::kKindEmptyDefaultValue) {
@@ -32,14 +32,14 @@ Signature::Signature(const std::string& arg_name, const SignatureEnumRW& rw_tag,
   }
 }
 
-Signature::Signature(const std::string& arg_name, const SignatureEnumRW& rw_tag, const SignatureEnumKind& arg_kind)
+Signature::Signature(const std::string &arg_name, const SignatureEnumRW &rw_tag, const SignatureEnumKind &arg_kind)
     : name(arg_name),
       rw(rw_tag),
       kind(arg_kind),
       default_value(nullptr),
       dtype(SignatureEnumDType::kDTypeEmptyDefaultValue) {}
 
-REGISTER_PYBIND_DEFINE(SignatureEnumRW, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(SignatureEnumRW, ([](const py::module *m) {
                          (void)py::enum_<SignatureEnumRW>(*m, "signature_rw", py::arithmetic())
                            .value("RW_READ", SignatureEnumRW::kRWRead)
                            .value("RW_WRITE", SignatureEnumRW::kRWWrite)

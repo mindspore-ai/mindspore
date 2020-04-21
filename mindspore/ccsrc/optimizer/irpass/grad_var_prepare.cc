@@ -44,7 +44,7 @@ static AnfNodePtr GenerateUnpackGraphNode(std::vector<AnfNodePtr> inputs_y, Func
     nodes.push_back(func_node);
     // {unpackcall, {GradOperation, ...}, args...}
     std::transform(inputs_y.begin() + 2, inputs_y.end(), std::back_inserter(nodes),
-                   [](const AnfNodePtr& node) { return node; });
+                   [](const AnfNodePtr &node) { return node; });
     unpack_graph_node = func_graph->NewCNode(nodes);
   } else {
     auto unpack_graph = std::make_shared<prim::UnpackGraphPrimitive>("unpack_graph", sens_param, false);
@@ -52,14 +52,14 @@ static AnfNodePtr GenerateUnpackGraphNode(std::vector<AnfNodePtr> inputs_y, Func
     nodes.push_back(func_node);
     // {{GradOperation, ...}, args...}
     std::transform(inputs_y.begin() + 1, inputs_y.end(), std::back_inserter(nodes),
-                   [](const AnfNodePtr& node) { return node; });
+                   [](const AnfNodePtr &node) { return node; });
     unpack_graph_node = func_graph->NewCNode(nodes);
   }
   return unpack_graph_node;
 }
 
 // get metagraph of value node
-MetaFuncGraphPtr GetMetaFuncGraphOfValueNode(const AnfNodePtr& node) {
+MetaFuncGraphPtr GetMetaFuncGraphOfValueNode(const AnfNodePtr &node) {
   ValuePtr value;
   if (IsValueNode<prim::DoSignaturePrimitive>(node)) {
     value = GetValueNode(node)->cast<prim::DoSignaturePrimitivePtr>()->function();
@@ -73,7 +73,7 @@ MetaFuncGraphPtr GetMetaFuncGraphOfValueNode(const AnfNodePtr& node) {
 }
 
 // check if node is a specific metafuncgraph op
-bool IsMetaFuncGraph(const AnfNodePtr& node, const MetaFuncGraphPtr meta_func_graph) {
+bool IsMetaFuncGraph(const AnfNodePtr &node, const MetaFuncGraphPtr meta_func_graph) {
   if (node != nullptr) {
     auto meta_func_graph_ptr = GetMetaFuncGraphOfValueNode(node);
     if (meta_func_graph_ptr == nullptr) {
@@ -89,7 +89,7 @@ bool IsMetaFuncGraph(const AnfNodePtr& node, const MetaFuncGraphPtr meta_func_gr
 
 // {{GradOperation, g, w}, Ys}
 // {UnPackCall, {GradOperation, g, w}, Ys}
-AnfNodePtr GradVarPrepare::operator()(const OptimizerPtr&, const AnfNodePtr& node) {
+AnfNodePtr GradVarPrepare::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
   if (!node->isa<CNode>() || node->func_graph() == nullptr) {
     return nullptr;
   }

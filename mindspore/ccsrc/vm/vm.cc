@@ -32,29 +32,29 @@ namespace compile {
 // Arguments:
 //   fn_: Callable function.
 //   args_: Sequence of function args.
-StructPartial::StructPartial(int fn, const VectorRef& args) : fn_(fn), args_(args) {}
+StructPartial::StructPartial(int fn, const VectorRef &args) : fn_(fn), args_(args) {}
 
-std::ostream& operator<<(std::ostream& os, const StructPartial& other) {
+std::ostream &operator<<(std::ostream &os, const StructPartial &other) {
   os << "partial(" << other.fn_ << ", " << other.args_.ToString() << ")";
   return os;
 }
 
-bool operator==(const StructPartial& lhs, const StructPartial& rhs) {
+bool operator==(const StructPartial &lhs, const StructPartial &rhs) {
   return (lhs.fn_ == rhs.fn_ && lhs.args_ == rhs.args_);
 }
 
-StructSimuSwitch::StructSimuSwitch(const BaseRef& fn, const BaseRef& value) : fn_(fn), value_(value) {}
+StructSimuSwitch::StructSimuSwitch(const BaseRef &fn, const BaseRef &value) : fn_(fn), value_(value) {}
 
-std::ostream& operator<<(std::ostream& os, const StructSimuSwitch& other) {
+std::ostream &operator<<(std::ostream &os, const StructSimuSwitch &other) {
   os << "SimulSwitch(" << other.fn_.ToString() << ", " << other.value_.ToString() << ")";
   return os;
 }
 
-bool operator==(const StructSimuSwitch& lhs, const StructSimuSwitch& rhs) {
+bool operator==(const StructSimuSwitch &lhs, const StructSimuSwitch &rhs) {
   return (lhs.fn_ == rhs.fn_ && lhs.value_ == rhs.value_);
 }
 
-std::ostream& operator<<(std::ostream& os, const SwitchCondStatus& other) {
+std::ostream &operator<<(std::ostream &os, const SwitchCondStatus &other) {
   os << "SwitchCondStatus(" << static_cast<int>(other) << ")";
   return os;
 }
@@ -66,13 +66,13 @@ std::ostream& operator<<(std::ostream& os, const SwitchCondStatus& other) {
 //   retp_: The call stack.
 //   pc_: program counter (next instruction)
 //   sp_: stack pointer (for the value stack)
-FinalVM::FinalVM(const InstSet& insts, const BackendPtr& backend) : insts_(insts), pc_(0), sp_(0), backend_(backend) {
+FinalVM::FinalVM(const InstSet &insts, const BackendPtr &backend) : insts_(insts), pc_(0), sp_(0), backend_(backend) {
   MS_LOG(DEBUG) << "InstSet size:" << insts_.size();
   insts_stack_.emplace_back(BaseRef());
   retp_.push(-1);
 }
 
-void FinalVM::Push(const BaseRef& v) {
+void FinalVM::Push(const BaseRef &v) {
   MS_LOG(DEBUG) << "Push " << v.ToString() << " sp_:" << sp_;
   insts_stack_[IntToSize(sp_++)] = v;
 }
@@ -140,7 +140,7 @@ void FinalVM::Popsp() {
   }
 }
 
-void FinalVM::DoJmp(const BaseRef& jmp_orig) {
+void FinalVM::DoJmp(const BaseRef &jmp_orig) {
   MS_LOG(DEBUG) << "Start";
 
   BaseRef jmp = jmp_orig;
@@ -173,7 +173,7 @@ void FinalVM::DoJmp(const BaseRef& jmp_orig) {
   MS_LOG(DEBUG) << "End do jump pc_:" << pc_;
 }
 
-BaseRef FinalVM::Eval(const VectorRef& args) {
+BaseRef FinalVM::Eval(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start: " << args.size();
   insts_stack_.clear();
   insts_stack_.resize(args.size());
@@ -212,7 +212,7 @@ BaseRef FinalVM::Eval(const VectorRef& args) {
   return insts_stack_[0];
 }
 
-void FinalVM::InstCall(const VectorRef& args) {
+void FinalVM::InstCall(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 1;
   if (args.size() != args_size) {
@@ -228,7 +228,7 @@ void FinalVM::InstCall(const VectorRef& args) {
   MS_LOG(DEBUG) << "Instcall end sp :" << sp_;
 }
 
-void FinalVM::InstTailCall(const VectorRef& args) {
+void FinalVM::InstTailCall(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 3;
   if (args.size() != args_size) {
@@ -258,7 +258,7 @@ void FinalVM::InstTailCall(const VectorRef& args) {
   MS_LOG(DEBUG) << "End";
 }
 
-void FinalVM::InstSwitchReturn(const VectorRef& args) {
+void FinalVM::InstSwitchReturn(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   if (args.size() != 1) {
     MS_LOG(ERROR) << "" << __FUNCTION__ << " requires one parameter, while the input size is " << args.size() << ".";
@@ -268,7 +268,7 @@ void FinalVM::InstSwitchReturn(const VectorRef& args) {
   Popsp();
 }
 
-void FinalVM::InstReturn(const VectorRef& args) {
+void FinalVM::InstReturn(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 2;
   if (args.size() != args_size) {
@@ -291,7 +291,7 @@ void FinalVM::InstReturn(const VectorRef& args) {
   MS_LOG(DEBUG) << "End";
 }
 
-void FinalVM::InstPartial(const VectorRef& args) {
+void FinalVM::InstPartial(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 1;
   if (args.size() < args_size) {
@@ -306,12 +306,12 @@ void FinalVM::InstPartial(const VectorRef& args) {
   std::vector<BaseRef> outs(args.size() - 1);
 
   (void)std::transform(args.begin() + 1, args.end(), outs.begin(),
-                       [&, this](const BaseRef& a) { return Ref(utils::cast<int>(a)); });
+                       [&, this](const BaseRef &a) { return Ref(utils::cast<int>(a)); });
   Push(std::make_shared<StructPartial>(fn, VectorRef(outs)));
   MS_LOG(DEBUG) << "End";
 }
 
-void FinalVM::InstSimuSwitch(const VectorRef& args) {
+void FinalVM::InstSimuSwitch(const VectorRef &args) {
   const size_t args_size = 4;
   if (args.size() != args_size) {
     MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is "
@@ -365,7 +365,7 @@ void FinalVM::InstSimuSwitch(const VectorRef& args) {
   }
 }
 
-void FinalVM::InstRealSwitch(const VectorRef& args) {
+void FinalVM::InstRealSwitch(const VectorRef &args) {
   const size_t args_size = 3;
   if (args.size() != args_size) {
     MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is "
@@ -392,7 +392,7 @@ void FinalVM::InstRealSwitch(const VectorRef& args) {
   }
 }
 
-void FinalVM::InstSwitch(const VectorRef& args) {
+void FinalVM::InstSwitch(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   if (backend_->is_multi_graph_sink()) {
     InstSimuSwitch(args);
@@ -401,7 +401,7 @@ void FinalVM::InstSwitch(const VectorRef& args) {
   }
 }
 
-void FinalVM::InstTuple(const VectorRef& args) {
+void FinalVM::InstTuple(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   VectorRef tuple;
   auto iter = args.begin();
@@ -413,7 +413,7 @@ void FinalVM::InstTuple(const VectorRef& args) {
   MS_LOG(DEBUG) << "End";
 }
 
-void FinalVM::InstPush(const VectorRef& args) {
+void FinalVM::InstPush(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 1;
   if (args.size() != args_size) {
@@ -427,7 +427,7 @@ void FinalVM::InstPush(const VectorRef& args) {
   MS_LOG(DEBUG) << "End";
 }
 
-void FinalVM::InstInput(const VectorRef& args) {
+void FinalVM::InstInput(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 1;
   if (args.size() != args_size) {
@@ -441,7 +441,7 @@ void FinalVM::InstInput(const VectorRef& args) {
   MS_LOG(DEBUG) << "End";
 }
 
-void FinalVM::InstPadStack(const VectorRef& args) {
+void FinalVM::InstPadStack(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 1;
   if (args.size() != args_size) {
@@ -461,7 +461,7 @@ void FinalVM::InstPadStack(const VectorRef& args) {
   MS_LOG(DEBUG) << "End";
 }
 
-void FinalVM::InstExternal(const VectorRef& args) {
+void FinalVM::InstExternal(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start:" << args.size();
 
   if (args.empty()) {
@@ -490,14 +490,14 @@ void FinalVM::InstExternal(const VectorRef& args) {
 
   auto outs = (*fn)(tuple);
   MS_LOG(DEBUG) << "'fn' out size:" << outs.size();
-  for (auto& o : outs) {
+  for (auto &o : outs) {
     MS_LOG(DEBUG) << "InstExternal value:" << o.ToString();
     Push(o);
   }
   MS_LOG(DEBUG) << "End";
 }
 
-void FinalVM::InstPushPrim(const VectorRef& args) {
+void FinalVM::InstPushPrim(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start: " << args.size();
   const size_t args_size = 2;
   if (args.size() < args_size) {

@@ -36,7 +36,7 @@ Dump::Dump()
       dump_iter_(0),
       cur_iter_(0) {}
 
-bool Dump::IsKernelNeedDump(const std::string& kernel_name) {
+bool Dump::IsKernelNeedDump(const std::string &kernel_name) {
   if (dump_mode_ == 0) {
     // Dump All Kernels mode
     return true;
@@ -49,7 +49,7 @@ bool Dump::IsKernelNeedDump(const std::string& kernel_name) {
   return false;
 }
 
-bool Dump::ParseDumpConfig(const std::string& dump_config_file) {
+bool Dump::ParseDumpConfig(const std::string &dump_config_file) {
   std::ifstream jsonFile(dump_config_file);
   if (!jsonFile.is_open()) {
     MS_LOG(ERROR) << dump_config_file << " open failed.";
@@ -79,7 +79,7 @@ bool Dump::ParseDumpConfig(const std::string& dump_config_file) {
   return true;
 }
 
-bool Dump::IsConfigExist(const nlohmann::json& dumpSettings) {
+bool Dump::IsConfigExist(const nlohmann::json &dumpSettings) {
   if (dumpSettings.find("trans_flag") == dumpSettings.end() || dumpSettings.find("enable") == dumpSettings.end() ||
       dumpSettings.find("mode") == dumpSettings.end() || dumpSettings.find("path") == dumpSettings.end() ||
       dumpSettings.find("net_name") == dumpSettings.end() || dumpSettings.find("iteration") == dumpSettings.end() ||
@@ -91,7 +91,7 @@ bool Dump::IsConfigExist(const nlohmann::json& dumpSettings) {
   return true;
 }
 
-bool Dump::IsConfigValid(const nlohmann::json& dumpSettings) {
+bool Dump::IsConfigValid(const nlohmann::json &dumpSettings) {
   auto trans_flag = dumpSettings.at("trans_flag");
   auto enable = dumpSettings.at("enable");
   auto mode = dumpSettings.at("mode");
@@ -112,14 +112,14 @@ bool Dump::IsConfigValid(const nlohmann::json& dumpSettings) {
   dump_path_ = path;
   dump_net_name_ = net_name;
   dump_iter_ = iteration;
-  for (const auto& kernel : kernels) {
+  for (const auto &kernel : kernels) {
     dump_kernels_.push_back(kernel);
   }
   return true;
 }
 
 bool Dump::SetDumpConfFromJsonFile() {
-  const char* config_path_str = std::getenv("MINDSPORE_CONFIG_PATH");
+  const char *config_path_str = std::getenv("MINDSPORE_CONFIG_PATH");
   if (config_path_str != nullptr) {
     MS_LOG(INFO) << "Getenv MINDSPORE_CONFIG_PATH :" << config_path_str;
   } else {
@@ -148,7 +148,7 @@ bool Dump::SetDumpConfFromJsonFile() {
   return ParseDumpConfig(dump_config_file);
 }
 
-bool Dump::DumpToFile(const std::string& filename, const void* data, size_t len) {
+bool Dump::DumpToFile(const std::string &filename, const void *data, size_t len) {
   if (filename.empty() || data == nullptr || len == 0) {
     MS_LOG(ERROR) << "Incorrect parameter.";
     return false;
@@ -166,12 +166,12 @@ bool Dump::DumpToFile(const std::string& filename, const void* data, size_t len)
     MS_LOG(ERROR) << "Open file " << realpath << " fail.";
     return false;
   }
-  (void)fd.write(reinterpret_cast<const char*>(data), SizeToLong(len));
+  (void)fd.write(reinterpret_cast<const char *>(data), SizeToLong(len));
   fd.close();
   return true;
 }
 
-bool Dump::GetRealPath(const std::string& inpath, std::string* outpath) {
+bool Dump::GetRealPath(const std::string &inpath, std::string *outpath) {
   MS_EXCEPTION_IF_NULL(outpath);
   auto path_split_pos = inpath.find_last_of('/');
   if (path_split_pos == std::string::npos) {
@@ -213,7 +213,7 @@ bool Dump::GetRealPath(const std::string& inpath, std::string* outpath) {
   return true;
 }
 
-bool Dump::CreateNotExistDirs(const std::string& path) {
+bool Dump::CreateNotExistDirs(const std::string &path) {
   std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
   MS_EXCEPTION_IF_NULL(fs);
   char temp_path[PATH_MAX] = {0};

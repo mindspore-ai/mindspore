@@ -54,7 +54,7 @@ Status OneHotInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status OneHotInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status OneHotInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (inputs_shape_.size() != 3) {
     MS_LOG(ERROR) << name_ << ": inputs_shape_ size must be 3, but is " << inputs_shape_.size();
     return FAILED;
@@ -185,7 +185,7 @@ Status OneHotInfo::ExtractInputInfo() {
   return SUCCESS;
 }
 
-Status OneHotInfo::ComputeReplaceGraph(const CNodePtr& cnode) {
+Status OneHotInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   if (dev_matrix_shape_.back() == 1) {
     replace_graph_ = nullptr;
     return SUCCESS;
@@ -222,7 +222,7 @@ Status OneHotInfo::ComputeReplaceGraph(const CNodePtr& cnode) {
   return SUCCESS;
 }
 
-ReplaceGraphPtr OneHotInfo::replace_graph(const CNodePtr& cnode) {
+ReplaceGraphPtr OneHotInfo::replace_graph(const CNodePtr &cnode) {
   if (ComputeReplaceGraph(cnode) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": ComputeReplaceGraph failed.";
     return nullptr;
@@ -230,7 +230,7 @@ ReplaceGraphPtr OneHotInfo::replace_graph(const CNodePtr& cnode) {
   return replace_graph_;
 }
 
-Status OneHotInfo::Init(const StrategyPtr& strategy) {
+Status OneHotInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
@@ -244,7 +244,7 @@ Status OneHotInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status OneHotInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status OneHotInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
@@ -276,7 +276,7 @@ Status OneHotInfo::GenerateStrategies(int32_t stage_id) {
   }
 
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
@@ -287,7 +287,7 @@ Status OneHotInfo::GenerateStrategies(int32_t stage_id) {
   return SUCCESS;
 }
 
-Status OneHotInfo::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status OneHotInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";

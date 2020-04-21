@@ -32,18 +32,18 @@ namespace mindspore {
 
 class SymbolicKeyInstance : public Value {
  public:
-  SymbolicKeyInstance(const AnfNodePtr& node, const abstract::AbstractBasePtr& abstract)
+  SymbolicKeyInstance(const AnfNodePtr &node, const abstract::AbstractBasePtr &abstract)
       : node_(node), abstract_(abstract) {}
   ~SymbolicKeyInstance() override = default;
   MS_DECLARE_PARENT(SymbolicKeyInstance, Value);
   AnfNodePtr node() const { return node_; }
   abstract::AbstractBasePtr abstract() const { return abstract_; }
-  bool operator==(const SymbolicKeyInstance& other) const {
+  bool operator==(const SymbolicKeyInstance &other) const {
     return (*node_ == *other.node_) && (*abstract_ == *other.abstract_);
   }
 
   std::size_t hash() const override { return std::hash<AnfNodePtr>{}(node_); }
-  friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<SymbolicKeyInstance>& inst) {
+  friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<SymbolicKeyInstance> &inst) {
     if (inst == nullptr) {
       os << "[Key]["
          << "Invalid symbolic key instance"
@@ -56,9 +56,9 @@ class SymbolicKeyInstance : public Value {
   std::string ToString() const override {
     return node_ == nullptr ? "Invalid node" : "[Key][" + node_->type_name() + "]" + node_->ToString();
   }
-  bool operator==(const Value& other) const override {
+  bool operator==(const Value &other) const override {
     if (other.isa<SymbolicKeyInstance>()) {
-      auto other_ = static_cast<const SymbolicKeyInstance&>(other);
+      auto other_ = static_cast<const SymbolicKeyInstance &>(other);
       return *this == other_;
     } else {
       return false;
@@ -106,19 +106,19 @@ using EnvInstanceContentsMap =
 // with inferred properties.
 class EnvInstance : public Value {
  public:
-  friend std::ostream& operator<<(std::ostream& out, const std::shared_ptr<EnvInstance>& env);
+  friend std::ostream &operator<<(std::ostream &out, const std::shared_ptr<EnvInstance> &env);
 
-  explicit EnvInstance(const EnvInstanceContentsMap& contents = {}) : contents_(contents) {}
+  explicit EnvInstance(const EnvInstanceContentsMap &contents = {}) : contents_(contents) {}
   ~EnvInstance() override = default;
   MS_DECLARE_PARENT(EnvInstance, Value);
   abstract::AbstractBasePtr ToAbstract() override {
     return std::make_shared<abstract::AbstractScalar>(shared_from_base<EnvInstance>(), std::make_shared<EnvType>());
   }
-  bool operator==(const EnvInstance& other) const;
-  bool operator==(const Value& other) const override;
-  EnvInstance(const EnvInstance& v) : Value(v), contents_(v.contents_) {}
-  EnvInstance(EnvInstance&& v) = default;
-  EnvInstance& operator=(EnvInstance&& src) noexcept {
+  bool operator==(const EnvInstance &other) const;
+  bool operator==(const Value &other) const override;
+  EnvInstance(const EnvInstance &v) : Value(v), contents_(v.contents_) {}
+  EnvInstance(EnvInstance &&v) = default;
+  EnvInstance &operator=(EnvInstance &&src) noexcept {
     if (&src != this) {
       contents_ = src.contents_;
     }
@@ -126,7 +126,7 @@ class EnvInstance : public Value {
   };
 
   // Get the sensitivity list for the given key
-  const Any& Get(const SymbolicKeyInstancePtr& key, const Any& def) const {
+  const Any &Get(const SymbolicKeyInstancePtr &key, const Any &def) const {
     auto iterator = contents_.find(key);
     if (iterator != contents_.end()) {
       return iterator->second;
@@ -135,14 +135,14 @@ class EnvInstance : public Value {
   }
 
   // Set a value for the given key.
-  EnvInstance Set(const SymbolicKeyInstancePtr& key, const Any& value) const {
+  EnvInstance Set(const SymbolicKeyInstancePtr &key, const Any &value) const {
     EnvInstance rval(contents_);
     rval.contents_[key] = value;
     return rval;
   }
 
   // Add two EnvInstances.
-  EnvInstance Add(const EnvInstance& other) const {
+  EnvInstance Add(const EnvInstance &other) const {
     EnvInstance rval(contents_);
     for (auto iter_other : other.contents_) {
       auto item_self = contents_.find(iter_other.first);

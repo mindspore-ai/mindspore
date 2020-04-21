@@ -28,21 +28,21 @@
 
 namespace mindspore {
 namespace parse {
-FunctionBlock::FunctionBlock(const Parser& parser) : parser_(parser) {
+FunctionBlock::FunctionBlock(const Parser &parser) : parser_(parser) {
   func_graph_ = std::make_shared<FuncGraph>();
   matured_ = false;
 }
 
-void FunctionBlock::AddPrevBlock(const FunctionBlockPtr& block) { prev_blocks_.push_back(block.get()); }
+void FunctionBlock::AddPrevBlock(const FunctionBlockPtr &block) { prev_blocks_.push_back(block.get()); }
 
 // write variable records the variable name to corresponding node
-void FunctionBlock::WriteVariable(const std::string& var_name, const AnfNodePtr& node) {
+void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr &node) {
   MS_LOG(DEBUG) << "" << func_graph_->ToString() << " write var " << var_name << " with node " << node->DebugString();
   vars_[var_name] = node;
 }
 
 // read variable from predecessors
-AnfNodePtr FunctionBlock::ReadVariable(const std::string& var) {
+AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
   // get var node if it is found
   if (vars_.count(var)) {
     AnfNodePtr node = vars_[var];
@@ -82,7 +82,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string& var) {
 }
 
 // Resolve Ast operator node
-AnfNodePtr FunctionBlock::MakeResolveAstOp(const py::object& op) {
+AnfNodePtr FunctionBlock::MakeResolveAstOp(const py::object &op) {
   auto ast = parser_.ast();
   MS_EXCEPTION_IF_NULL(ast);
   TraceGuard trace_guard(parser_.GetLocation(op));
@@ -105,7 +105,7 @@ AnfNodePtr FunctionBlock::MakeResolveClassMember(std::string attr) {
 }
 
 // Make a resolve node for symbol string
-AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string& value) {
+AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string &value) {
   if (value.compare(0, strlen("self."), "self.") == 0) {
     auto start = value.find_first_of('.') + 1;
     if (start >= value.size()) {
@@ -122,14 +122,14 @@ AnfNodePtr FunctionBlock::MakeResolveSymbol(const std::string& value) {
   return MakeResolve(name_space, symbol);
 }
 
-AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string& value) {
+AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
   py::tuple namespace_var = parser_.ast()->CallParserObjMethod(PYTHON_PARSE_GET_OPERATION_NAMESPACE_SYMBOL, value);
   NameSpacePtr name_space = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_COMMON_OPS, namespace_var[0]);
   SymbolPtr symbol = std::make_shared<Symbol>(namespace_var[1].cast<std::string>());
   return MakeResolve(name_space, symbol);
 }
 
-AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr& name_space, const SymbolPtr& resolve_symbol) {
+AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const SymbolPtr &resolve_symbol) {
   MS_LOG(DEBUG) << "MakeResolve for " << ((std::string)py::str(name_space->obj())) << " , "
                 << ((std::string)resolve_symbol->symbol());
   ValueNodePtr module_node = NewValueNode(name_space);
@@ -139,10 +139,10 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr& name_space, const Symb
 }
 
 // add input for the block's phi parameter
-void FunctionBlock::SetPhiArgument(const ParameterPtr& phi) {
+void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
   std::string var = phi_nodes_[phi];
   MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " set phi " << phi->ToString() << " for var " << var;
-  for (auto& pred : prev_blocks_) {
+  for (auto &pred : prev_blocks_) {
     MS_EXCEPTION_IF_NULL(pred);
     MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " pred_blocks_ " << pred->func_graph_->ToString();
     AnfNodePtr arg_node = pred->ReadVariable(var);
@@ -161,9 +161,9 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr& phi) {
   }
 }
 
-AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string& var, const ParameterPtr& phi) {
+AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string &var, const ParameterPtr &phi) {
   AnfNodePtr arg_node = nullptr;
-  for (auto& prev : prev_blocks_) {
+  for (auto &prev : prev_blocks_) {
     MS_EXCEPTION_IF_NULL(prev);
     AnfNodePtr temp_node = prev->ReadVariable(var);
     MS_LOG(DEBUG) << "graph " << prev->func_graph_->ToString() << " phi " << phi->ToString() << " for var " << var
@@ -204,7 +204,7 @@ AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string& var, const Parame
 // 2. it's costly to iterate the graph to replace the phi for each phi.
 // Args :
 // phi  : This parameter node is functioning as a phi node.
-void FunctionBlock::CollectRemovablePhi(const ParameterPtr& phi) {
+void FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
   MS_EXCEPTION_IF_NULL(phi);
   std::string var = phi_nodes_[phi];
   MS_LOG(DEBUG) << "check phi " << phi->ToString() << " for " << var << " in graph " << func_graph_->ToString();
@@ -221,15 +221,15 @@ void FunctionBlock::CollectRemovablePhi(const ParameterPtr& phi) {
     removable_phis_[phi] = arg_node;
     // The following equal to statement "The φ-function defining v1, which now reads φ(v2, v1), is optimized
     // recursively". check if phi1 is assigned with this phi before, then phi1 can be replaced with arg_node.
-    for (auto& prev : prev_blocks_) {
+    for (auto &prev : prev_blocks_) {
       MS_EXCEPTION_IF_NULL(prev);
       if (!prev->matured_) {
         continue;
       }
-      for (auto& phi_iter : prev->removable_phis_) {
+      for (auto &phi_iter : prev->removable_phis_) {
         MS_EXCEPTION_IF_NULL(phi_iter.second);
         if (phi_iter.second->isa<Parameter>()) {
-          const auto& param = phi_iter.second->cast<ParameterPtr>();
+          const auto &param = phi_iter.second->cast<ParameterPtr>();
           if (param == phi) {
             MS_LOG(DEBUG) << "graph " << prev->func_graph_->ToString() << " var " << phi_iter.first->DebugString()
                           << " can be replaced from " << param->DebugString() << " with " << arg_node->DebugString();
@@ -243,8 +243,8 @@ void FunctionBlock::CollectRemovablePhi(const ParameterPtr& phi) {
 
 // A block should be marked matured if its predecessor blocks have been processed
 void FunctionBlock::Mature() {
-  const auto& graphParamVec = func_graph_->parameters();
-  for (auto& paramItr : graphParamVec) {
+  const auto &graphParamVec = func_graph_->parameters();
+  for (auto &paramItr : graphParamVec) {
     MS_EXCEPTION_IF_NULL(paramItr);
     ParameterPtr param = paramItr->cast<ParameterPtr>();
     if (phi_nodes_.find(param) != phi_nodes_.cend()) {
@@ -255,7 +255,7 @@ void FunctionBlock::Mature() {
 }
 
 // Force the conditIon node to bool using bool operation
-CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr& cond) {
+CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr &cond) {
   TraceManager::DebugTrace(std::make_shared<TraceForceBool>(cond->debug_info()));
   CNodePtr op_apply_node = func_graph()->NewCNode({MakeResolveOperation(NAMED_PRIMITIVE_BOOL), cond});
   TraceManager::EndTrace();
@@ -263,7 +263,7 @@ CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr& cond) {
 }
 
 // Perform a jump from this block to target block
-void FunctionBlock::Jump(const FunctionBlockPtr& target_block, AnfNodePtr node) {
+void FunctionBlock::Jump(const FunctionBlockPtr &target_block, AnfNodePtr node) {
   if (func_graph()->get_return() != nullptr) {
     MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
                       << trace::GetDebugInfo(func_graph()->get_return()->debug_info());
@@ -283,8 +283,8 @@ void FunctionBlock::Jump(const FunctionBlockPtr& target_block, AnfNodePtr node) 
 
 // Perform a conditional jump using switch operation.
 // The first CNode select graph with condition, and than execute this graph
-void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr& true_block,
-                                    const FunctionBlockPtr& false_block) {
+void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr &true_block,
+                                    const FunctionBlockPtr &false_block) {
   if (func_graph()->get_return() != nullptr) {
     MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
                       << trace::GetDebugInfo(func_graph()->get_return()->debug_info());
@@ -297,15 +297,15 @@ void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr&
   InsertDependItemsBeforeReturn();
 }
 
-void FunctionBlock::SetStateAssgin(const AnfNodePtr& target, const std::string& readid) {
+void FunctionBlock::SetStateAssgin(const AnfNodePtr &target, const std::string &readid) {
   state_assign_[target] = readid;
 }
 
-void FunctionBlock::AddAutoDepend(const AnfNodePtr& target) { auto_depends_.push_back(target); }
+void FunctionBlock::AddAutoDepend(const AnfNodePtr &target) { auto_depends_.push_back(target); }
 
 void FunctionBlock::InsertDependItemsBeforeReturn() {
   if (!prev_blocks_.empty()) {
-    for (auto& prev_block : prev_blocks_) {
+    for (auto &prev_block : prev_blocks_) {
       MS_LOG(DEBUG) << "Has prev_block " << prev_block->func_graph()->debug_info().get();
     }
   }
@@ -324,14 +324,14 @@ void FunctionBlock::InsertDependItemsBeforeReturn() {
   AnfNodePtr state = nullptr;
   std::vector<AnfNodePtr> vec_states;
   vec_states.emplace_back(make_tuple_op);
-  for (auto& item : state_assign_) {
+  for (auto &item : state_assign_) {
     auto source = ReadVariable(item.second);
     auto refkey = func_graph()->NewCNode({get_refkey_op, item.first});
     auto assign = func_graph()->NewCNode({assign_op, refkey, source});
     MS_LOG(INFO) << "SetState read " << item.first->ToString() << ", " << item.second;
     vec_states.emplace_back(assign);
   }
-  for (auto& item : auto_depends_) {
+  for (auto &item : auto_depends_) {
     MS_LOG(DEBUG) << "auto_depends " << item->ToString();
     vec_states.emplace_back(item);
   }

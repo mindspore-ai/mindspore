@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-StrategyCheckpoint& StrategyCheckpoint::GetInstance() {
+StrategyCheckpoint &StrategyCheckpoint::GetInstance() {
   static StrategyCheckpoint instance = StrategyCheckpoint();
   return instance;
 }
@@ -47,7 +47,7 @@ Status StrategyCheckpoint::RemoveCheckPoint() const {
   return FAILED;
 }
 
-Status StrategyCheckpoint::Load(StrategyMap* strategy_map) {
+Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
   if (strategy_map == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:strategy_map is nullptr";
   }
@@ -82,18 +82,18 @@ Status StrategyCheckpoint::Load(StrategyMap* strategy_map) {
   return SUCCESS;
 }
 
-Status StrategyCheckpoint::Save(const StrategyMap& strategy_map) {
+Status StrategyCheckpoint::Save(const StrategyMap &strategy_map) {
   straspb::ParallelStrategyMap parallel_strategy_map;
   parallel_strategy_map.set_train_time(IntToUint(++current_train_time_));
-  for (auto& node_stra : strategy_map) {
-    straspb::ParallelStrategyItem* parallel_strategy_item = parallel_strategy_map.add_parallel_strategy_item();
+  for (auto &node_stra : strategy_map) {
+    straspb::ParallelStrategyItem *parallel_strategy_item = parallel_strategy_map.add_parallel_strategy_item();
     MS_EXCEPTION_IF_NULL(parallel_strategy_item);
     parallel_strategy_item->set_node_name(node_stra.first);
-    straspb::ParallelStrategys* parallel_strategys = parallel_strategy_item->mutable_parallel_strategys();
+    straspb::ParallelStrategys *parallel_strategys = parallel_strategy_item->mutable_parallel_strategys();
     MS_EXCEPTION_IF_NULL(parallel_strategys);
     parallel_strategys->set_stage(IntToUint(node_stra.second->GetInputStage()));
-    for (auto& dims : node_stra.second->GetInputDim()) {
-      straspb::ParallelStrategy* parallel_strategy = parallel_strategys->add_parallel_strategy();
+    for (auto &dims : node_stra.second->GetInputDim()) {
+      straspb::ParallelStrategy *parallel_strategy = parallel_strategys->add_parallel_strategy();
       MS_EXCEPTION_IF_NULL(parallel_strategy);
       for (auto dim : dims) {
         parallel_strategy->add_dim(IntToUint(dim));

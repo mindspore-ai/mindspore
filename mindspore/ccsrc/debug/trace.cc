@@ -37,7 +37,7 @@
 namespace mindspore {
 // namespace to support debug trace infomation
 namespace trace {
-std::string GetAbstractStr(const abstract::AbstractBasePtr& abs) {
+std::string GetAbstractStr(const abstract::AbstractBasePtr &abs) {
   if (abs == nullptr) {
     return "Null Abstract";
   }
@@ -69,7 +69,7 @@ std::vector<DebugInfoPtr> GetSourceCodeDebugInfoVec(DebugInfoPtr debug_info) {
   return debug_with_loc_vec;
 }
 
-DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr& info) {
+DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info) {
   auto debug_with_loc_vec = GetSourceCodeDebugInfoVec(info);
   if (debug_with_loc_vec.size() > 0) {
     return debug_with_loc_vec[0];
@@ -78,7 +78,7 @@ DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr& info) {
   }
 }
 
-std::string GetDebugInfo(const DebugInfoPtr& info, SourceLineTip tip) {
+std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip) {
   if (info == nullptr) {
     return "";
   }
@@ -91,7 +91,7 @@ std::string GetDebugInfo(const DebugInfoPtr& info, SourceLineTip tip) {
 
 // a trace info identifies a node transform, so we can trace the node transform through
 // a link of trace info and debug info
-std::string GetInfoWithAction(const std::vector<DebugInfoPtr>& info_vec, SourceLineTip tip) {
+std::string GetInfoWithAction(const std::vector<DebugInfoPtr> &info_vec, SourceLineTip tip) {
   if (info_vec.size() < 1) {
     return "";
   }
@@ -109,7 +109,7 @@ std::string GetInfoWithAction(const std::vector<DebugInfoPtr>& info_vec, SourceL
   return traced_info;
 }
 
-std::string GetTracedDebugInfo(const DebugInfoPtr& info, SourceLineTip tip) {
+std::string GetTracedDebugInfo(const DebugInfoPtr &info, SourceLineTip tip) {
   if (info == nullptr) {
     return "";
   }
@@ -124,7 +124,7 @@ std::string GetTracedDebugInfo(const DebugInfoPtr& info, SourceLineTip tip) {
   return "";
 }
 
-std::string GetDebugInfo(const DebugInfoPtr& info, const std::string& prefix, SourceLineTip tip) {
+std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix, SourceLineTip tip) {
   std::ostringstream oss;
   if (info == nullptr) {
     return "";
@@ -139,7 +139,7 @@ std::string GetDebugInfo(const DebugInfoPtr& info, const std::string& prefix, So
   return oss.str();
 }
 
-std::string GetGraphParamString(const FuncGraphPtr& graph, abstract::AbstractBasePtrList args_spec_list) {
+std::string GetGraphParamString(const FuncGraphPtr &graph, abstract::AbstractBasePtrList args_spec_list) {
   std::ostringstream oss;
   oss << "graph:" << graph->ToString() << " with args[";
   auto params = graph->parameters();
@@ -151,8 +151,8 @@ std::string GetGraphParamString(const FuncGraphPtr& graph, abstract::AbstractBas
   return oss.str();
 }
 
-void DumpInferStack(std::ostringstream& oss) {
-  auto& infer_stack = GetCurrenGraphInferStack();
+void DumpInferStack(std::ostringstream &oss) {
+  auto &infer_stack = GetCurrenGraphInferStack();
   if (infer_stack.empty()) {
     return;
   }
@@ -164,7 +164,7 @@ void DumpInferStack(std::ostringstream& oss) {
   }
   std::reverse(infer_vec.begin(), infer_vec.end());
   int index = 0;
-  for (auto& item : infer_vec) {
+  for (auto &item : infer_vec) {
     auto graph_infer = std::dynamic_pointer_cast<abstract::BaseFuncGraphEvaluator>(item.first);
     if (graph_infer == nullptr) {
       MS_LOG(WARNING) << "DumpInferStack failed, got null graph evaluator";
@@ -183,7 +183,7 @@ void DumpInferStack(std::ostringstream& oss) {
 }
 
 void TraceGraphInfer() {
-  auto& infer_stack = GetCurrenGraphInferStack();
+  auto &infer_stack = GetCurrenGraphInferStack();
   std::ostringstream oss;
   if (infer_stack.empty()) {
     return;
@@ -200,15 +200,15 @@ class AnalyzedFuncGraphExporter : public AnfExporter {
   AnalyzedFuncGraphExporter() : AnfExporter("", true, false) {}
   ~AnalyzedFuncGraphExporter() override = default;
 
-  void ExportFuncGraph(const std::string& filename, const std::vector<abstract::AnfNodeConfigPtr>& node_cfgs);
+  void ExportFuncGraph(const std::string &filename, const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs);
 
  private:
-  std::string GetNodeType(const AnfNodePtr& nd) override;
+  std::string GetNodeType(const AnfNodePtr &nd) override;
 };
 
 std::unordered_map<FuncGraphPtr, TaggedNodeMap> CalcTaggedFuncGraphs() {
   std::unordered_map<FuncGraphPtr, TaggedNodeMap> tagged_func_graphs;
-  auto& list = GetCNodeDebugStack();
+  auto &list = GetCNodeDebugStack();
   for (size_t i = 0; i < list.size(); ++i) {
     auto node_cfg = list[i];
     auto fg = node_cfg->context()->func_graph();
@@ -223,7 +223,7 @@ void OutputAnalyzedGraphWithType() {
   exporter.ExportFuncGraph("analyze_fail.dat", GetCNodeDebugStack());
 }
 
-std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr& node) {
+std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
   if (node_cfg_ == nullptr) {
     return AnfExporter::GetNodeType(node);
   }
@@ -248,8 +248,8 @@ std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr& node) {
   return oss.str();
 }
 
-void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string& filename,
-                                                const std::vector<abstract::AnfNodeConfigPtr>& node_cfgs) {
+void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
+                                                const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs) {
   if (node_cfgs.empty()) {
     MS_LOG(DEBUG) << "Node configs is empty";
     return;
@@ -265,7 +265,7 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string& filename,
   auto tagged_func_graphs = CalcTaggedFuncGraphs();
 
   // first output graph on the analysis stack
-  for (const auto& node_cfg : node_cfgs) {
+  for (const auto &node_cfg : node_cfgs) {
     auto fg = node_cfg->context()->func_graph();
     // the graph is already output, skip it
     if (exported.find(fg) != exported.end()) {
@@ -296,7 +296,7 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string& filename,
   ofs.close();
 }
 
-void GetInferStackInfo(std::ostringstream& oss) {
+void GetInferStackInfo(std::ostringstream &oss) {
   MS_LOG(INFO) << "Get graph analysis information begin";
   auto stack = GetCNodeDebugStack();
   if (stack.empty()) {
@@ -336,7 +336,7 @@ void GetInferStackInfo(std::ostringstream& oss) {
 static std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> graph_infer_stack;
 // trace the cnode infer debug info
 static std::vector<abstract::AnfNodeConfigPtr> cnode_debug_stack{};
-void TraceGraphInferEnter(const abstract::EvaluatorPtr& eval, const abstract::AnfNodeConfigPtr& node) {
+void TraceGraphInferEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node) {
   if (eval == nullptr) {
     MS_LOG(EXCEPTION) << "GraphInferEnter got null eval";
   }
@@ -345,7 +345,7 @@ void TraceGraphInferEnter(const abstract::EvaluatorPtr& eval, const abstract::An
   }
 }
 
-void TraceGraphInferLeave(const abstract::EvaluatorPtr& eval) {
+void TraceGraphInferLeave(const abstract::EvaluatorPtr &eval) {
   if (eval == nullptr) {
     MS_LOG(EXCEPTION) << "GraphInferEnter got null eval";
   }
@@ -354,13 +354,13 @@ void TraceGraphInferLeave(const abstract::EvaluatorPtr& eval) {
   }
 }
 
-void TraceInferCNodeEnter(const abstract::AnfNodeConfigPtr& node_cfg) { cnode_debug_stack.push_back(node_cfg); }
+void TraceInferCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg) { cnode_debug_stack.push_back(node_cfg); }
 
 void TraceInferCNodeLeave() { cnode_debug_stack.pop_back(); }
 
-std::vector<abstract::AnfNodeConfigPtr>& GetCNodeDebugStack() { return cnode_debug_stack; }
+std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack() { return cnode_debug_stack; }
 
-std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>>& GetCurrenGraphInferStack() {
+std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphInferStack() {
   return graph_infer_stack;
 }
 void ClearTraceStack() {

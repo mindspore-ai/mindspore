@@ -238,7 +238,7 @@ const PrimitivePtr kPrimImageSummary = std::make_shared<Primitive>("ImageSummary
 const PrimitivePtr kPrimTensorSummary = std::make_shared<Primitive>("TensorSummary");
 const PrimitivePtr kPrimHistogramSummary = std::make_shared<Primitive>("HistogramSummary");
 
-ValuePtr GetPythonOps(const std::string& op_name, const std::string& module_name) {
+ValuePtr GetPythonOps(const std::string &op_name, const std::string &module_name) {
   py::object obj = parse::python_adapter::GetPyFn(module_name, op_name);
   ValuePtr node = nullptr;
   bool succ = parse::ConvertData(obj, &node);

@@ -30,15 +30,15 @@ namespace mindspore {
 namespace parallel {
 DeviceManagerPtr g_device_manager = nullptr;
 
-Stage::Stage(const std::vector<mindspore::parallel::Device>& devices, int num, int rank)
+Stage::Stage(const std::vector<mindspore::parallel::Device> &devices, int num, int rank)
     : devices_(devices), number_(num), rank_(rank) {
   gm_ = GroupManager();
 }
 
 // NOTE: '-1' indicates ERROR
-int Stage::global_rank(Group* g) const { return ((g == nullptr) ? rank_ : -1); }
+int Stage::global_rank(Group *g) const { return ((g == nullptr) ? rank_ : -1); }
 
-bool InitDevice(int32_t device_num, int32_t global_rank, const std::string& backend) {
+bool InitDevice(int32_t device_num, int32_t global_rank, const std::string &backend) {
   if (device_num <= 0) {
     MS_LOG(ERROR) << "'device_num' must be positive.";
     return false;
@@ -87,7 +87,7 @@ void CheckGlobalDeviceManager() {
   }
 }
 
-int32_t GetListMemberByIndex(size_t index, const RankList& devices) {
+int32_t GetListMemberByIndex(size_t index, const RankList &devices) {
   size_t i = 0;
   int32_t result = 0;
   if ((devices.empty()) || (index >= devices.size())) {
@@ -104,7 +104,7 @@ int32_t GetListMemberByIndex(size_t index, const RankList& devices) {
   return result;
 }
 
-std::shared_ptr<Device> GetListMemberByIndex(size_t index, const std::vector<std::shared_ptr<Device>>& device_list) {
+std::shared_ptr<Device> GetListMemberByIndex(size_t index, const std::vector<std::shared_ptr<Device>> &device_list) {
   size_t i = 0;
   std::shared_ptr<Device> result;
   if ((device_list.empty()) || (index >= device_list.size())) {
@@ -123,8 +123,8 @@ std::shared_ptr<Device> GetListMemberByIndex(size_t index, const std::vector<std
 
 // E.g. devices = [4, 5, 2, 1, 7, 8, 10], stage_map = [4, 3],
 // therefore the stage_devices_ = [[4, 5, 2, 1], [7, 8, 10]].
-Status DeviceManager::Init(const RankList& devices, int32_t global_device_rank, const RankList& stage_map,
-                           const std::string& backend) {
+Status DeviceManager::Init(const RankList &devices, int32_t global_device_rank, const RankList &stage_map,
+                           const std::string &backend) {
   auto dev_it = devices.begin();
   auto stage_it = stage_map.begin();
   int32_t sum = 0;
@@ -211,7 +211,7 @@ std::shared_ptr<Stage> DeviceManager::GetStageById(int32_t stage_id) {
     return res;
   }
   int32_t index = 0;
-  for (auto& stage : stages_) {
+  for (auto &stage : stages_) {
     if (index == stage_id) return stage;
     index++;
   }
@@ -224,7 +224,7 @@ RankList DeviceManager::GetDeviceListByStageId(int32_t stage_id) const {
                   << ", is out of the scope of 'stage_devices_': " << stage_devices_.size();
   RankList res;
   int32_t index = 0;
-  for (auto& stage : stage_devices_) {
+  for (auto &stage : stage_devices_) {
     if (index == stage_id) {
       return stage;
     }
@@ -280,19 +280,19 @@ Device DeviceManager::CreateNewDeviceByRank(int32_t rank) const { return Device(
 
 std::vector<Device> DeviceManager::CreateDeviceListByRankList(RankList ranks) {
   std::vector<Device> dev_list;
-  for (auto& rank : ranks) {
+  for (auto &rank : ranks) {
     Device one = CreateNewDeviceByRank(rank);
     dev_list.push_back(one);
   }
   return dev_list;
 }
 
-DeviceManager& DeviceManager::GetInstance() {
+DeviceManager &DeviceManager::GetInstance() {
   static DeviceManager instance = DeviceManager();
   return instance;
 }
 
-std::string DeviceManager::FindRankListNameByHashName(const std::string& hash_name) {
+std::string DeviceManager::FindRankListNameByHashName(const std::string &hash_name) {
   std::string tmp = "WORLD_GROUP";
   if ((hash_name == HCCL_WORLD_GROUP) || (hash_name == NCCL_WORLD_GROUP)) {
     return tmp;
@@ -305,7 +305,7 @@ std::string DeviceManager::FindRankListNameByHashName(const std::string& hash_na
   return iter->second;
 }
 
-std::string HashName(const std::string& origin_name) { return std::to_string(std::hash<string>{}(origin_name)); }
+std::string HashName(const std::string &origin_name) { return std::to_string(std::hash<string>{}(origin_name)); }
 
 // Group name is generated using the increasing ranks of the devices.
 // E.g. the devices' ranks are '<0, 5, 3, 7, 1>', and the generated group name
@@ -343,8 +343,8 @@ std::string DeviceManager::GenerateGroupNameByRanks(RankList ranks) {
 // Create the group with the given devices and the given name. The GroupManager
 // gm_ will create a new group only if there does not exit a group with the same
 // name. Otherwise, let the pointer g point to that group.
-Group DeviceManager::CreateGroup(const std::string& group_name,
-                                 const std::vector<mindspore::parallel::Device>& devices) {
+Group DeviceManager::CreateGroup(const std::string &group_name,
+                                 const std::vector<mindspore::parallel::Device> &devices) {
   if ((world_group() == NCCL_WORLD_GROUP) && (devices.size() != devices_.size())) {
     MS_LOG(EXCEPTION) << "Do not support sub group for nccl";
   }
@@ -354,7 +354,7 @@ Group DeviceManager::CreateGroup(const std::string& group_name,
 }
 
 // Create the group with only the given devices' ranks.
-Group DeviceManager::CreateGroup(const RankList& dev_ranks) {
+Group DeviceManager::CreateGroup(const RankList &dev_ranks) {
   std::unordered_set<int32_t> rank_set(dev_ranks.begin(), dev_ranks.end());
   if (dev_ranks.size() != rank_set.size()) {
     MS_LOG(EXCEPTION) << "Invalid dev ranks(" << dev_ranks << "), it has the Duplicate elements in list";

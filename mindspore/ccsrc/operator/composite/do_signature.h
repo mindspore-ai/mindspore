@@ -37,17 +37,17 @@ namespace mindspore {
 namespace prim {
 class DoSignatureMetaFuncGraph : public MetaFuncGraph {
  public:
-  explicit DoSignatureMetaFuncGraph(const std::string& name, const ValuePtr& function)
+  explicit DoSignatureMetaFuncGraph(const std::string &name, const ValuePtr &function)
       : MetaFuncGraph("S-" + name), function_(function) {}
 
   ~DoSignatureMetaFuncGraph() override = default;
 
   MS_DECLARE_PARENT(DoSignatureMetaFuncGraph, MetaFuncGraph)
 
-  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList& args_spec_list) override;
+  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &args_spec_list) override;
   const ValuePtr function() const { return function_; }
 
-  friend bool operator==(const DoSignatureMetaFuncGraph& lhs, const DoSignatureMetaFuncGraph& rhs) {
+  friend bool operator==(const DoSignatureMetaFuncGraph &lhs, const DoSignatureMetaFuncGraph &rhs) {
     return &lhs == &rhs;
   }
 
@@ -56,8 +56,8 @@ class DoSignatureMetaFuncGraph : public MetaFuncGraph {
 };
 using RWSignaturePtr = std::shared_ptr<DoSignatureMetaFuncGraph>;
 
-AnfNodePtr GenerateCNode(const FuncGraphPtr& func_graph, const std::string& func_name, const ValuePtr& function,
-                         const AbstractBasePtrList& args_spec_list, const AnfNodePtrList& old_node_inputs);
+AnfNodePtr GenerateCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
+                         const AbstractBasePtrList &args_spec_list, const AnfNodePtrList &old_node_inputs);
 }  // namespace prim
 }  // namespace mindspore
 

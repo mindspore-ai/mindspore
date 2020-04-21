@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace parallel {
-void Simplify(CostPtrList* clist_ptrs) {
+void Simplify(CostPtrList *clist_ptrs) {
   // Sort the cost_list with the computation_cost_ increasing, and communication_cost decreasing order. This method
   // excludes the cost with greater computation_cost_ and greater communication_cost.
   // E.g. clist_ptrs = {<100, 20>, <200, 10>, <300, 50>}. After this method, clist_ptrs = {<200, 10>, <100, 20>}
@@ -44,7 +44,7 @@ void Simplify(CostPtrList* clist_ptrs) {
   *clist_ptrs = std::move(ret);
 }
 
-void SimplifyForDreasingCommunicationWithPartialPara(CostPtrList* clist_ptrs) {
+void SimplifyForDreasingCommunicationWithPartialPara(CostPtrList *clist_ptrs) {
   // Sort the cost_list with the computation_cost_ increasing, and communication_with_partial_para_cost decreasing
   // order. This method excludes the cost with greater computation_cost_ and greater communication_without_para_cost.
   if (!COST_MODEL_SIMPLIFY_CALCULATION) {
@@ -66,7 +66,7 @@ void SimplifyForDreasingCommunicationWithPartialPara(CostPtrList* clist_ptrs) {
   *clist_ptrs = std::move(ret);
 }
 
-void RefineForPracticalCost(const CostPtr& origin_cost, bool is_redistribution) {
+void RefineForPracticalCost(const CostPtr &origin_cost, bool is_redistribution) {
   MS_EXCEPTION_IF_NULL(origin_cost);
   if (is_redistribution) {
     // Redistribution cost

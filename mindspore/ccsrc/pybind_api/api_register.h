@@ -29,19 +29,19 @@ namespace py = pybind11;
 
 namespace mindspore {
 
-using PybindDefineFunc = std::function<void(py::module*)>;
+using PybindDefineFunc = std::function<void(py::module *)>;
 
 class PybindDefineRegister {
  public:
-  static void Register(const std::string& name, const PybindDefineFunc& fn) {
+  static void Register(const std::string &name, const PybindDefineFunc &fn) {
     return GetSingleton().RegisterFn(name, fn);
   }
 
-  PybindDefineRegister(const PybindDefineRegister&) = delete;
+  PybindDefineRegister(const PybindDefineRegister &) = delete;
 
-  PybindDefineRegister& operator=(const PybindDefineRegister&) = delete;
+  PybindDefineRegister &operator=(const PybindDefineRegister &) = delete;
 
-  static std::map<std::string, PybindDefineFunc>& AllFuncs() { return GetSingleton().fns_; }
+  static std::map<std::string, PybindDefineFunc> &AllFuncs() { return GetSingleton().fns_; }
 
   std::map<std::string, PybindDefineFunc> fns_;
 
@@ -50,14 +50,14 @@ class PybindDefineRegister {
 
   virtual ~PybindDefineRegister() = default;
 
-  static PybindDefineRegister& GetSingleton();
+  static PybindDefineRegister &GetSingleton();
 
-  void RegisterFn(const std::string& name, const PybindDefineFunc& fn) { fns_[name] = fn; }
+  void RegisterFn(const std::string &name, const PybindDefineFunc &fn) { fns_[name] = fn; }
 };
 
 class PybindDefineRegisterer {
  public:
-  PybindDefineRegisterer(const std::string& name, const PybindDefineFunc& fn) {
+  PybindDefineRegisterer(const std::string &name, const PybindDefineFunc &fn) {
     PybindDefineRegister::Register(name, fn);
   }
   ~PybindDefineRegisterer() = default;

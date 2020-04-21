@@ -38,22 +38,22 @@ constexpr size_t GATHER_V2_INPUTS_VALUE_SIZE = 3;
 // If Index is a scalar or n-dimension vector(n > 1), the strategy corresponding to axis must be 1.
 class GatherV2Info : public OperatorInfo {
  public:
-  GatherV2Info(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-               const PrimitiveAttrs& attrs)
+  GatherV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+               const PrimitiveAttrs &attrs)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherV2Cost>()),
         axis_(-1),
         index_size_(0),
         axis_strategy_(1) {}
   ~GatherV2Info() override = default;
-  Status Init(const StrategyPtr& strategy) override;
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status Init(const StrategyPtr &strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
 
   Status GenerateStrategies(int32_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
 
  protected:
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferTensorInfo() override;

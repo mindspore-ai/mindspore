@@ -73,11 +73,11 @@ void ParallelContext::set_cast_before_mirror(bool cast_before_mirror) { cast_bef
 
 void ParallelContext::set_loss_repeated_mean(bool loss_repeated_mean) { loss_repeated_mean_ = loss_repeated_mean; }
 
-void ParallelContext::set_communication_backend(const std::string& communication_backend) {
+void ParallelContext::set_communication_backend(const std::string &communication_backend) {
   communication_backend_ = communication_backend;
 }
 
-bool ParallelContext::set_parallel_mode(const std::string& parallel_mode) {
+bool ParallelContext::set_parallel_mode(const std::string &parallel_mode) {
   auto iter = std::find(PARALLEL_MODE_LIST.begin(), PARALLEL_MODE_LIST.end(), parallel_mode);
   if (iter == PARALLEL_MODE_LIST.end()) {
     MS_LOG(INFO) << "Invalid parallel mode:" << parallel_mode;
@@ -87,7 +87,7 @@ bool ParallelContext::set_parallel_mode(const std::string& parallel_mode) {
   return true;
 }
 
-bool ParallelContext::set_strategy_search_mode(const std::string& strategy_search_mode) {
+bool ParallelContext::set_strategy_search_mode(const std::string &strategy_search_mode) {
   auto iter = std::find(STRATEGY_SEARCH_MODE_LIST.begin(), STRATEGY_SEARCH_MODE_LIST.end(), strategy_search_mode);
   if (iter == STRATEGY_SEARCH_MODE_LIST.end()) {
     MS_LOG(INFO) << "Invalid strategy search mode mode: " << strategy_search_mode;

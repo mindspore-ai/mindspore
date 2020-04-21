@@ -26,8 +26,8 @@
 namespace mindspore {
 // namespace to support primitive operators
 namespace prim {
-ValuePtr GetPythonOps(const std::string& op_name,
-                      const std::string& module_name = "mindspore._extends.parse.standard_method");
+ValuePtr GetPythonOps(const std::string &op_name,
+                      const std::string &module_name = "mindspore._extends.parse.standard_method");
 
 // Arithmetic
 extern const PrimitivePtr kPrimScalarAdd;
@@ -241,7 +241,7 @@ extern const PrimitivePtr kPrimVirtualDataset;
 
 class DoSignaturePrimitive : public Primitive {
  public:
-  explicit DoSignaturePrimitive(const std::string& name, const ValuePtr& function)
+  explicit DoSignaturePrimitive(const std::string &name, const ValuePtr &function)
       : Primitive("S-Prim-" + name), function_(function) {}
 
   ~DoSignaturePrimitive() override = default;
@@ -257,7 +257,7 @@ using DoSignaturePrimitivePtr = std::shared_ptr<DoSignaturePrimitive>;
 
 class UnpackGraphPrimitive : public Primitive {
  public:
-  explicit UnpackGraphPrimitive(const std::string& name, const bool& with_sens, const bool& need_unpack_args)
+  explicit UnpackGraphPrimitive(const std::string &name, const bool &with_sens, const bool &need_unpack_args)
       : Primitive("UnpackGraph"), with_sens_in_args_(with_sens), need_unpack_args_(need_unpack_args) {}
   ~UnpackGraphPrimitive() override = default;
   MS_DECLARE_PARENT(UnpackGraphPrimitive, Primitive)

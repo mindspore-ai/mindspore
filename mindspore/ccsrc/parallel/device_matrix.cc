@@ -53,7 +53,7 @@ Status DeviceMatrix::CreateGroupList() {
   return Status::SUCCESS;
 }
 
-Status DeviceMatrix::GetDevicesAlongDim(const uint32_t& dim, RankList* devices) {
+Status DeviceMatrix::GetDevicesAlongDim(const uint32_t &dim, RankList *devices) {
   if (dim >= dev_shape_.size()) {
     MS_LOG(EXCEPTION) << "The dimension " << dim << " is out of the size of the device shape!";
   }
@@ -78,7 +78,7 @@ Status DeviceMatrix::GetDevicesAlongDim(const uint32_t& dim, RankList* devices) 
 
   for (int32_t i = 0; i < step; i++) {
     local_group_list.push_back(group);
-    (void)std::for_each(group.begin(), group.end(), [](int32_t& a) { a++; });
+    (void)std::for_each(group.begin(), group.end(), [](int32_t &a) { a++; });
   }
 
   // higher than dim
@@ -88,19 +88,19 @@ Status DeviceMatrix::GetDevicesAlongDim(const uint32_t& dim, RankList* devices) 
   // search rank
   int32_t target = rank_;
   for (int32_t i = 0; i < len; i++) {
-    for (RankList& temp : local_group_list) {
+    for (RankList &temp : local_group_list) {
       if (std::any_of(temp.begin(), temp.end(), [target](int32_t a) { return a == target; })) {
         *devices = temp;
         return Status::SUCCESS;
       }
-      (void)std::for_each(temp.begin(), temp.end(), [step](int32_t& a) { a = a + step; });
+      (void)std::for_each(temp.begin(), temp.end(), [step](int32_t &a) { a = a + step; });
     }
   }
   MS_LOG(ERROR) << "Can't find groups for rank" << rank_ << " in device list!";
   return Status::FAILED;
 }
 
-Shape ConvertRankToCoordinate(int32_t rank, const Shape& dev_shape) {
+Shape ConvertRankToCoordinate(int32_t rank, const Shape &dev_shape) {
   Shape dev_coordinate;
   for (size_t i = 0; i < dev_shape.size(); ++i) {
     int32_t size = dev_shape[dev_shape.size() - i - 1];
@@ -115,8 +115,8 @@ Shape ConvertRankToCoordinate(int32_t rank, const Shape& dev_shape) {
   return dev_coordinate;
 }
 
-Status DeviceMatrix::GetDevicesByTensorMap(const Shape& tensor_map, RankList* rank_list) {
-  for (auto& element : tensor_map) {
+Status DeviceMatrix::GetDevicesByTensorMap(const Shape &tensor_map, RankList *rank_list) {
+  for (auto &element : tensor_map) {
     // -1 means the corresponding dimension is not split.
     if (element == MAP_NONE) {
       continue;
@@ -127,10 +127,10 @@ Status DeviceMatrix::GetDevicesByTensorMap(const Shape& tensor_map, RankList* ra
   }
 
   Shape current_rank_coordinate = ConvertRankToCoordinate(rank_, dev_shape_);
-  for (auto& tmp_rank : dev_list_) {
+  for (auto &tmp_rank : dev_list_) {
     Shape tmp_rank_coordinate = ConvertRankToCoordinate(tmp_rank, dev_shape_);
     bool matched = true;
-    for (auto& map : tensor_map) {
+    for (auto &map : tensor_map) {
       if (map == MAP_NONE) {
         continue;
       }
@@ -148,7 +148,7 @@ Status DeviceMatrix::GetDevicesByTensorMap(const Shape& tensor_map, RankList* ra
   return SUCCESS;
 }
 
-std::string ShapeToString(const Shape& shape) {
+std::string ShapeToString(const Shape &shape) {
   std::string str = "[";
   for (size_t i = 0; i < shape.size(); ++i) {
     str += std::to_string(shape[i]);
@@ -159,9 +159,9 @@ std::string ShapeToString(const Shape& shape) {
   return str + "]";
 }
 
-std::string ListToString(const std::vector<int32_t>& list) {
+std::string ListToString(const std::vector<int32_t> &list) {
   std::string str = "[";
-  for (auto& element : list) {
+  for (auto &element : list) {
     str += std::to_string(element) + ", ";
   }
   return str + "]";

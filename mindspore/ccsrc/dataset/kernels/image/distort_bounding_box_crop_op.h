@@ -45,16 +45,16 @@ class DistortBoundingBoxCropOp : public TensorOp {
 
   ~DistortBoundingBoxCropOp() override = default;
 
-  void Print(std::ostream& out) const override {
+  void Print(std::ostream &out) const override {
     out << "DistortBoundingBoxCropOp: " << max_attempts_ << " " << intersect_ratio_;
   }
 
-  Status Compute(const std::vector<std::shared_ptr<Tensor>>& input,
-                 std::vector<std::shared_ptr<Tensor>>* output) override;
+  Status Compute(const std::vector<std::shared_ptr<Tensor>> &input,
+                 std::vector<std::shared_ptr<Tensor>> *output) override;
 
   uint32_t NumInput() override { return 5; }
-  Status OutputShape(const std::vector<TensorShape>& inputs, std::vector<TensorShape>& outputs) override;
-  Status OutputType(const std::vector<DataType>& inputs, std::vector<DataType>& outputs) override;
+  Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
+  Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;
 
  private:
   int32_t max_attempts_;

@@ -24,7 +24,7 @@
 #include "pybind_api/export_flags.h"
 
 namespace mindspore {
-static std::string DumpTypeVector(const std::vector<TypePtr>& elements, bool is_dumptext) {
+static std::string DumpTypeVector(const std::vector<TypePtr> &elements, bool is_dumptext) {
   std::ostringstream oss;
   bool begin = true;
   int cnt = 0;
@@ -65,7 +65,7 @@ TypePtr List::DeepCopy() const {
   } else {
     TypePtrList elements;
     (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(elements),
-                         [](const TypePtr& ele) { return ele->DeepCopy(); });
+                         [](const TypePtr &ele) { return ele->DeepCopy(); });
     auto copy = std::make_shared<List>(elements);
     return copy;
   }
@@ -78,11 +78,11 @@ const TypePtr List::operator[](std::size_t dim) const {
   return elements_[dim];
 }
 
-bool List::operator==(const Type& other) const {
+bool List::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  const List& other_list = static_cast<const List&>(other);
+  const List &other_list = static_cast<const List &>(other);
   if (elements_.size() != other_list.elements_.size()) {
     return false;
   }
@@ -94,8 +94,8 @@ bool List::operator==(const Type& other) const {
   return true;
 }
 
-Class::Class(const Named& tag, const ClassAttrVector& attributes,
-             const std::unordered_map<std::string, ValuePtr>& methods)
+Class::Class(const Named &tag, const ClassAttrVector &attributes,
+             const std::unordered_map<std::string, ValuePtr> &methods)
     : Object(kObjectTypeClass, false), attributes_(attributes), tag_(tag), methods_(methods) {}
 
 std::string List::ToString() const {
@@ -122,7 +122,7 @@ std::string List::DumpText() const {
   return buffer.str();
 }
 
-bool Class::operator==(const Type& other) const {
+bool Class::operator==(const Type &other) const {
   // Class is cached for each pyobj in ParseDataClass, so ClassPtr is one by one map to pyobj.
   return &other == this;
 }
@@ -143,7 +143,7 @@ std::string Class::ToString() const {
   } else {
     bool begin = true;
     buffer << "cls." << tag_ << "[";
-    for (auto& attr : attributes_) {
+    for (auto &attr : attributes_) {
       if (!begin) {
         buffer << ", ";
       } else {
@@ -163,7 +163,7 @@ std::string Class::DumpText() const {
   } else {
     bool begin = true;
     buffer << "Cls." << tag_ << "[";
-    for (auto& attr : attributes_) {
+    for (auto &attr : attributes_) {
       if (!begin) {
         buffer << ", ";
       } else {
@@ -182,17 +182,17 @@ TypePtr Tuple::DeepCopy() const {
   } else {
     TypePtrList elements;
     (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(elements),
-                         [](const TypePtr& ele) { return ele->DeepCopy(); });
+                         [](const TypePtr &ele) { return ele->DeepCopy(); });
     auto copy = std::make_shared<Tuple>(elements);
     return copy;
   }
 }
 
-bool Tuple::operator==(const Type& other) const {
+bool Tuple::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_tuple = static_cast<const Tuple&>(other);
+  auto other_tuple = static_cast<const Tuple &>(other);
   if (elements_.size() != other_tuple.elements_.size()) {
     return false;
   }
@@ -242,7 +242,7 @@ TypePtr Dictionary::DeepCopy() const {
     std::vector<std::pair<std::string, TypePtr>> kv;
     (void)std::transform(
       key_values_.begin(), key_values_.end(), std::back_inserter(kv),
-      [](const std::pair<std::string, TypePtr>& item) { return std::make_pair(item.first, item.second->DeepCopy()); });
+      [](const std::pair<std::string, TypePtr> &item) { return std::make_pair(item.first, item.second->DeepCopy()); });
     return std::make_shared<Dictionary>(kv);
   }
 }
@@ -259,7 +259,7 @@ std::string Dictionary::ToString() const {
   std::ostringstream buffer;
   std::vector<std::string> keys;
   std::vector<TypePtr> values;
-  for (const auto& kv : key_values_) {
+  for (const auto &kv : key_values_) {
     keys.push_back(kv.first);
     values.push_back(kv.second);
   }
@@ -276,12 +276,12 @@ std::string Dictionary::ToString() const {
 
 std::string Dictionary::DumpText() const { return ToString(); }
 
-bool Dictionary::operator==(const mindspore::Type& other) const {
+bool Dictionary::operator==(const mindspore::Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
 
-  const auto& other_dict = static_cast<const Dictionary&>(other);
+  const auto &other_dict = static_cast<const Dictionary &>(other);
   if (key_values_.size() != other_dict.key_values_.size()) {
     return false;
   }

@@ -53,14 +53,14 @@ enum Instruction {
 
 using InstType = std::pair<Instruction, VectorRef>;
 using InstSet = std::vector<InstType>;
-using InstFunctionMap = std::map<Instruction, std::function<void(const VectorRef&)>>;
+using InstFunctionMap = std::map<Instruction, std::function<void(const VectorRef &)>>;
 
 const std::vector<std::string> inst_str{"call",  "tail_call", "return", "partial",   "switch", "switch_return", "tuple",
                                         "input", "external",  "push",   "primitive", "graph",  "pad_stack"};
 class StructPartial : public Base {
  public:
   // Initialize StructPartial.
-  StructPartial(int fn, const VectorRef& args);
+  StructPartial(int fn, const VectorRef &args);
 
   virtual ~StructPartial() = default;
   MS_DECLARE_PARENT(StructPartial, Base)
@@ -69,12 +69,12 @@ class StructPartial : public Base {
   VectorRef args_;
 };
 
-std::ostream& operator<<(std::ostream& os, const StructPartial& other);
-bool operator==(const StructPartial& lhs, const StructPartial& rhs);
+std::ostream &operator<<(std::ostream &os, const StructPartial &other);
+bool operator==(const StructPartial &lhs, const StructPartial &rhs);
 
 class StructSimuSwitch : public Base {
  public:
-  StructSimuSwitch(const BaseRef& fn, const BaseRef& value);
+  StructSimuSwitch(const BaseRef &fn, const BaseRef &value);
 
   virtual ~StructSimuSwitch() = default;
   MS_DECLARE_PARENT(StructSimuSwitch, Base)
@@ -83,43 +83,43 @@ class StructSimuSwitch : public Base {
   BaseRef value_;
 };
 
-std::ostream& operator<<(std::ostream& os, const StructSimuSwitch& other);
-bool operator==(const StructSimuSwitch& lhs, const StructSimuSwitch& rhs);
+std::ostream &operator<<(std::ostream &os, const StructSimuSwitch &other);
+bool operator==(const StructSimuSwitch &lhs, const StructSimuSwitch &rhs);
 
 class FinalVM {
  public:
   // Create a VM with the specified instructions and backend.
-  explicit FinalVM(const InstSet& insts, const BackendPtr& backend);
+  explicit FinalVM(const InstSet &insts, const BackendPtr &backend);
 
   virtual ~FinalVM() = default;
 
-  BaseRef Eval(const VectorRef& args);
-  void InstCall(const VectorRef& args);
-  void InstTailCall(const VectorRef& args);
-  void InstReturn(const VectorRef& args);
-  void InstPartial(const VectorRef& args);
-  void InstSwitch(const VectorRef& args);
-  void InstSimuSwitch(const VectorRef& args);
-  void InstRealSwitch(const VectorRef& args);
-  void InstTuple(const VectorRef& args);
-  void InstPush(const VectorRef& args);
-  void InstInput(const VectorRef& args);
-  void InstPadStack(const VectorRef& args);
-  void InstExternal(const VectorRef& args);
-  void InstPushPrim(const VectorRef& args);
-  void InstSwitchReturn(const VectorRef& args);
-  void set_insts(const InstSet& value) { insts_ = value; }
+  BaseRef Eval(const VectorRef &args);
+  void InstCall(const VectorRef &args);
+  void InstTailCall(const VectorRef &args);
+  void InstReturn(const VectorRef &args);
+  void InstPartial(const VectorRef &args);
+  void InstSwitch(const VectorRef &args);
+  void InstSimuSwitch(const VectorRef &args);
+  void InstRealSwitch(const VectorRef &args);
+  void InstTuple(const VectorRef &args);
+  void InstPush(const VectorRef &args);
+  void InstInput(const VectorRef &args);
+  void InstPadStack(const VectorRef &args);
+  void InstExternal(const VectorRef &args);
+  void InstPushPrim(const VectorRef &args);
+  void InstSwitchReturn(const VectorRef &args);
+  void set_insts(const InstSet &value) { insts_ = value; }
 
  protected:
   BaseRef Ref(int i);
-  void Push(const BaseRef& v);
+  void Push(const BaseRef &v);
   void Pop(int n = 1);
   void MoveStack(int nitems, int height);
   void Pushp();
   void Popp();
   void Pushsp();
   void Popsp();
-  void DoJmp(const BaseRef& jmp);
+  void DoJmp(const BaseRef &jmp);
 
  private:
   InstSet insts_;
@@ -130,18 +130,18 @@ class FinalVM {
   int sp_;
   BackendPtr backend_;
   const InstFunctionMap inst_function_map = {
-    {Instruction::kCall, [this](const VectorRef& args) { InstCall(args); }},
-    {Instruction::kTailCall, [this](const VectorRef& args) { InstTailCall(args); }},
-    {Instruction::kReturn, [this](const VectorRef& args) { InstReturn(args); }},
-    {Instruction::kPartial, [this](const VectorRef& args) { InstPartial(args); }},
-    {Instruction::kSwitch, [this](const VectorRef& args) { InstSwitch(args); }},
-    {Instruction::kTuple, [this](const VectorRef& args) { InstTuple(args); }},
-    {Instruction::kPush, [this](const VectorRef& args) { InstPush(args); }},
-    {Instruction::kInput, [this](const VectorRef& args) { InstInput(args); }},
-    {Instruction::kPadStack, [this](const VectorRef& args) { InstPadStack(args); }},
-    {Instruction::kExternal, [this](const VectorRef& args) { InstExternal(args); }},
-    {Instruction::kPrim, [this](const VectorRef& args) { InstPushPrim(args); }},
-    {Instruction::kSwitchReturn, [this](const VectorRef& args) { InstSwitchReturn(args); }},
+    {Instruction::kCall, [this](const VectorRef &args) { InstCall(args); }},
+    {Instruction::kTailCall, [this](const VectorRef &args) { InstTailCall(args); }},
+    {Instruction::kReturn, [this](const VectorRef &args) { InstReturn(args); }},
+    {Instruction::kPartial, [this](const VectorRef &args) { InstPartial(args); }},
+    {Instruction::kSwitch, [this](const VectorRef &args) { InstSwitch(args); }},
+    {Instruction::kTuple, [this](const VectorRef &args) { InstTuple(args); }},
+    {Instruction::kPush, [this](const VectorRef &args) { InstPush(args); }},
+    {Instruction::kInput, [this](const VectorRef &args) { InstInput(args); }},
+    {Instruction::kPadStack, [this](const VectorRef &args) { InstPadStack(args); }},
+    {Instruction::kExternal, [this](const VectorRef &args) { InstExternal(args); }},
+    {Instruction::kPrim, [this](const VectorRef &args) { InstPushPrim(args); }},
+    {Instruction::kSwitchReturn, [this](const VectorRef &args) { InstSwitchReturn(args); }},
   };
 };
 

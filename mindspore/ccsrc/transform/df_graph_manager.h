@@ -35,7 +35,7 @@ using OptionMap = std::map<std::string, std::string>;
 
 struct DfGraphWrapper {
  public:
-  DfGraphWrapper(const std::string& name, const int& id, const DfGraphPtr& graph_ptr, const OptionMap& options);
+  DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr, const OptionMap &options);
   ~DfGraphWrapper() {}
 
   std::string name_;
@@ -51,19 +51,19 @@ class DfGraphManager {
   ~DfGraphManager();
   void ClearGraph() noexcept;
 
-  static DfGraphManager& GetInstance();
-  Status AddGraph(const std::string& name, const DfGraphPtr& graph, const OptionMap& options = {});
+  static DfGraphManager &GetInstance();
+  Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options = {});
   std::vector<DfGraphWrapperPtr> GetAllGraphs();
   std::set<string> GetSavedGraphs();
-  void AddSavedGraphs(const std::string& id);
-  DfGraphWrapperPtr GetGraphByName(const std::string& name);
-  DfGraphManager(const DfGraphManager&) = delete;
-  void SetAnfGraph(const std::string& name, const AnfGraphPtr& anf_graph_ptr);
+  void AddSavedGraphs(const std::string &id);
+  DfGraphWrapperPtr GetGraphByName(const std::string &name);
+  DfGraphManager(const DfGraphManager &) = delete;
+  void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr);
   AnfGraphPtr GetAnfGraph(uint32_t graph_id);
   std::shared_ptr<transform::GraphRunner> GetGraphRunner();
-  void SetGraphRunner(const std::shared_ptr<transform::GraphRunner>& graph_runner_ptr) noexcept;
+  void SetGraphRunner(const std::shared_ptr<transform::GraphRunner> &graph_runner_ptr) noexcept;
   void DeleteGraphRunner() noexcept;
-  void SetGeSession(const std::shared_ptr<ge::Session>& sess_ptr);
+  void SetGeSession(const std::shared_ptr<ge::Session> &sess_ptr);
   std::shared_ptr<ge::Session> GetGeSession();
   void DeleteGeSession() noexcept;
   void EraseAnfGraph();

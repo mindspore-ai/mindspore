@@ -37,8 +37,8 @@ class DeviceMatrix {
   ~DeviceMatrix() = default;
   std::vector<RankList> group_list() const { return group_list_; }
   Status CreateGroupList();
-  Status GetDevicesByTensorMap(const Shape& tensor_map, RankList* rank_list);
-  Status GetDevicesAlongDim(const uint32_t& dim, RankList* devices);
+  Status GetDevicesByTensorMap(const Shape &tensor_map, RankList *rank_list);
+  Status GetDevicesAlongDim(const uint32_t &dim, RankList *devices);
 
  private:
   int32_t rank_ = -1;
@@ -48,8 +48,8 @@ class DeviceMatrix {
   std::vector<RankList> group_list_;
 };
 
-std::string ShapeToString(const Shape& shape);
-std::string ListToString(const std::vector<int32_t>& list);
+std::string ShapeToString(const Shape &shape);
+std::string ListToString(const std::vector<int32_t> &list);
 }  // namespace parallel
 }  // namespace mindspore
 

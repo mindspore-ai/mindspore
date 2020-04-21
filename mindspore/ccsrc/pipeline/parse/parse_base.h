@@ -128,15 +128,15 @@ enum ClassInstanceTypeDef {
 };
 
 // Convert python object to ValuePtr
-bool ConvertData(const py::object& obj, ValuePtr* data, bool use_signature = false);
+bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature = false);
 
 // Convert python obj to graph
-FuncGraphPtr ConvertToFuncGraph(const py::object& obj,
-                                const std::string& python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
+FuncGraphPtr ConvertToFuncGraph(const py::object &obj,
+                                const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
 
 // Parse the python object to graph
-FuncGraphPtr ParsePythonCode(const py::object& obj,
-                             const std::string& python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
+FuncGraphPtr ParsePythonCode(const py::object &obj,
+                             const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
 }  // namespace parse
 }  // namespace mindspore
 

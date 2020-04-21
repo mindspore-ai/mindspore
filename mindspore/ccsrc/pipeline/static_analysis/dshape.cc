@@ -26,31 +26,31 @@
 namespace mindspore {
 namespace abstract {
 // used for print BaseShape content
-std::ostream& operator<<(std::ostream& os, const BaseShape& bs) {
+std::ostream &operator<<(std::ostream &os, const BaseShape &bs) {
   os << bs.ToString();
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const std::shared_ptr<BaseShape> bs) {
+std::ostream &operator<<(std::ostream &os, const std::shared_ptr<BaseShape> bs) {
   MS_EXCEPTION_IF_NULL(bs);
   os << bs->ToString();
   return os;
 }
 
-bool BaseShape::operator==(const BaseShape& other) const {
+bool BaseShape::operator==(const BaseShape &other) const {
   if (tid() != other.tid()) {
     return false;
   }
   return true;
 }
 
-bool BaseShape::operator!=(const BaseShape& other) const { return !(*this == other); }
+bool BaseShape::operator!=(const BaseShape &other) const { return !(*this == other); }
 
 std::string Shape::ToString() const {
   std::ostringstream buffer;
   bool f_begin = true;
   buffer << "(";
-  for (auto& x : shape_) {
+  for (auto &x : shape_) {
     if (!f_begin) {
       buffer << ", ";
     } else {
@@ -72,11 +72,11 @@ std::string Shape::DumpText() const {
   return buffer.str();
 }
 
-bool Shape::operator==(const BaseShape& other) const {
+bool Shape::operator==(const BaseShape &other) const {
   if (tid() != other.tid()) {
     return false;
   }
-  return shape_ == static_cast<const Shape&>(other).shape_;
+  return shape_ == static_cast<const Shape &>(other).shape_;
 }
 
 const int Shape::SHP_ANY;
@@ -111,11 +111,11 @@ BaseShapePtrList SequeueShape::ElementsClone() const {
 }
 
 template <typename T>
-bool SequeueShape::SequeueEqual(const BaseShape& other) const {
+bool SequeueShape::SequeueEqual(const BaseShape &other) const {
   if (tid() != other.tid()) {
     return false;
   }
-  auto other_shapes = static_cast<const T&>(other).p_shapes_;
+  auto other_shapes = static_cast<const T &>(other).p_shapes_;
   if (other_shapes.size() != p_shapes_.size()) {
     return false;
   }
@@ -126,8 +126,8 @@ bool SequeueShape::SequeueEqual(const BaseShape& other) const {
   }
   return true;
 }
-template bool SequeueShape::SequeueEqual<TupleShape>(const BaseShape&) const;
-template bool SequeueShape::SequeueEqual<ListShape>(const BaseShape&) const;
+template bool SequeueShape::SequeueEqual<TupleShape>(const BaseShape &) const;
+template bool SequeueShape::SequeueEqual<ListShape>(const BaseShape &) const;
 
 const std::shared_ptr<NoShape> kNoShape = std::make_shared<NoShape>();
 }  // namespace abstract

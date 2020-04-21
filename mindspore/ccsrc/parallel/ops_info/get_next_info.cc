@@ -39,7 +39,7 @@ Status GetNextInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status GetNextInfo::InferTensorLayout(TensorLayouts* outputs_layout) {
+Status GetNextInfo::InferTensorLayout(TensorLayouts *outputs_layout) {
   if (outputs_layout == nullptr) {
     MS_LOG(ERROR) << name_ << " : The layout is null.";
     return FAILED;
@@ -96,7 +96,7 @@ Status GetNextInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status GetNextInfo::Init(const StrategyPtr& strategy) {
+Status GetNextInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed";
     return FAILED;
@@ -109,7 +109,7 @@ Status GetNextInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status GetNextInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status GetNextInfo::CheckStrategy(const StrategyPtr &strategy) {
   std::vector<Dimensions> stras = strategy->GetInputDim();
   for (Dimensions stra : stras) {
     if (stra.size() != 0) {
@@ -135,7 +135,7 @@ Status GetNextInfo::GetAttrTypes() {
       auto iter_cast = iter->second->cast<ValueListPtr>();
       MS_EXCEPTION_IF_NULL(iter_cast);
       auto types = iter_cast->value();
-      for (auto& type : types) {
+      for (auto &type : types) {
         MS_EXCEPTION_IF_NULL(type);
         types_.push_back(type->ToString());
       }
@@ -143,7 +143,7 @@ Status GetNextInfo::GetAttrTypes() {
       auto iter_cast = iter->second->cast<ValueTuplePtr>();
       MS_EXCEPTION_IF_NULL(iter_cast);
       auto types = iter_cast->value();
-      for (auto& type : types) {
+      for (auto &type : types) {
         MS_EXCEPTION_IF_NULL(type);
         types_.push_back(type->ToString());
       }
@@ -189,7 +189,7 @@ Status GetNextInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status GetNextInfo::InferReplaceOps(const StrategyPtr&) {
+Status GetNextInfo::InferReplaceOps(const StrategyPtr &) {
   Shapes out_shapes = outputs_shape_;
   for (size_t i = 0; i < out_shapes.size(); ++i) {
     if (dev_num_ <= 0) {
@@ -214,7 +214,7 @@ Status GetNextInfo::InferReplaceOps(const StrategyPtr&) {
   return SUCCESS;
 }
 
-Status GetNextInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status GetNextInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
@@ -227,7 +227,7 @@ Status GetNextInfo::InitForCostModel(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status GetNextInfo::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status GetNextInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";

@@ -40,8 +40,8 @@ constexpr char RECURSIVE_PROGRAMMING[] = "recursive_programming";
 class ParallelContext {
  public:
   ~ParallelContext() = default;
-  ParallelContext(const ParallelContext&) = delete;
-  ParallelContext& operator=(const ParallelContext&) = delete;
+  ParallelContext(const ParallelContext &) = delete;
+  ParallelContext &operator=(const ParallelContext &) = delete;
 
   static std::shared_ptr<ParallelContext> GetInstance();
 
@@ -60,13 +60,13 @@ class ParallelContext {
   void set_global_rank(int32_t global_rank);
   int32_t global_rank() const { return global_rank_; }
 
-  void set_communication_backend(const std::string& communication_backend);
+  void set_communication_backend(const std::string &communication_backend);
   std::string communication_backend() const { return communication_backend_; }
 
-  bool set_parallel_mode(const std::string& parallel_mode);
+  bool set_parallel_mode(const std::string &parallel_mode);
   std::string parallel_mode() const { return parallel_mode_; }
 
-  bool set_strategy_search_mode(const std::string& strategy_search_mode);
+  bool set_strategy_search_mode(const std::string &strategy_search_mode);
   std::string strategy_search_mode() const { return strategy_search_mode_; }
 
   void set_parameter_broadcast(bool parameter_broadcast);

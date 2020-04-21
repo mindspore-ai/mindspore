@@ -33,25 +33,25 @@ namespace mindspore {
 namespace parallel {
 #define USING_HASH_NAME "USING_HASH_NAME"
 // Get the operator's path where the operator has be defined
-std::string GetOpPythonPath(const OperatorName& op_name);
+std::string GetOpPythonPath(const OperatorName &op_name);
 
 // Init python operator Instance
-ValuePtr CreatOpInstance(const OperatorAttrs& attrs, const OperatorName& op_name, const std::string& instance_name);
+ValuePtr CreatOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name);
 
 AnfNodePtr CreatTypeInt(int32_t value);
 AnfNodePtr CreatInt32Imm(int32_t value);
 AnfNodePtr CreateInt32Tensor(int32_t value);
-std::string HashInstanceName(const std::string& name);
+std::string HashInstanceName(const std::string &name);
 
 class GenerateGraph {
  public:
   GenerateGraph() : name_idx_(0) {}
-  Status Init(const CNodePtr& cnode);
+  Status Init(const CNodePtr &cnode);
   ~GenerateGraph() = default;
   AnfNodePtr virtual_input_node() { return virtual_input_node_; }
-  AnfNodePtr NewOpInst(const OperatorName& op_name, const OperatorAttrs& attrs);
-  AnfNodePtr NewOpInst(const OperatorName& op_name);
-  AnfNodePtr PushBack(const std::vector<AnfNodePtr>& inputs);
+  AnfNodePtr NewOpInst(const OperatorName &op_name, const OperatorAttrs &attrs);
+  AnfNodePtr NewOpInst(const OperatorName &op_name);
+  AnfNodePtr PushBack(const std::vector<AnfNodePtr> &inputs);
 
  private:
   CNodePtr cnode_;

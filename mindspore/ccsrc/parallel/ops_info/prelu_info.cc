@@ -34,7 +34,7 @@ namespace parallel {
  *  w: Float Tensor, w > 0: there is only two shapes are legitimate: 1, or the number of channels at input.
  *  the strategy of w should equal to the channel dimension of strategy of A
  */
-Status PReLUInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status PReLUInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
@@ -119,7 +119,7 @@ Dimensions PReLUInfo::GetOutputStrategy() {
   return output_strategy;
 }
 
-Status PReLUInfo::InferTensorLayout(TensorLayouts* inputs_layout, TensorLayouts* outputs_layout) {
+Status PReLUInfo::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout) {
   if (inputs_layout == nullptr || outputs_layout == nullptr) {
     MS_LOG(ERROR) << name_ << ": InferTensorLayout: the layout is null.";
     return FAILED;
@@ -181,7 +181,7 @@ Status PReLUInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status PReLUInfo::Init(const StrategyPtr& strategy) {
+Status PReLUInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
@@ -190,7 +190,7 @@ Status PReLUInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status PReLUInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status PReLUInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
@@ -224,7 +224,7 @@ Status PReLUInfo::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
@@ -234,7 +234,7 @@ Status PReLUInfo::GenerateStrategies(int32_t stage_id) {
   return SUCCESS;
 }
 
-Status PReLUInfo::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status PReLUInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";

@@ -45,22 +45,22 @@ const TensorParam MakeTensor(int n, int c, int h, int w);
 
 Graph::NodeType MakeNewOperator(std::vector<std::shared_ptr<OperatorInfo>> ops, size_t iter_ops);
 
-TensorParam Fill2DTensor(const std::vector<std::shared_ptr<OperatorInfo>>& ops, const size_t iter_ops,
+TensorParam Fill2DTensor(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                          Graph::NodeType NewTensor);
 
-OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>>& ops, const size_t iter_ops,
+OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                    Graph::NodeType NewTensor);
 
-TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>>& ops, const size_t iter_ops,
+TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                              const size_t iter_input_tensor, Graph::NodeType NewTensor);
 
-std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>>& ops,
-                                  const std::vector<std::vector<std::string>>& input_tensor_names);
+std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                  const std::vector<std::vector<std::string>> &input_tensor_names);
 
-void MakeEdge(const std::vector<std::vector<std::string>>& input_tensor_names, std::shared_ptr<Graph> graph);
+void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, std::shared_ptr<Graph> graph);
 
-size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>>& input_tensor_names,
-                                  const std::string& input_name);
+size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &input_tensor_names,
+                                  const std::string &input_name);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_PARSE_GRAPH_H_

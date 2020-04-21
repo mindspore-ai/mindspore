@@ -27,7 +27,7 @@ namespace pipeline {
 using HashCache = std::unordered_map<std::size_t, std::vector<AnfNodePtr>>;
 using HashValue = std::unordered_map<AnfNodePtr, std::size_t>;
 
-void TryToDoReplace(FuncGraphManager* manager, const AnfNodePtr& node, HashCache* hash_cache, HashValue* hash_value);
+void TryToDoReplace(FuncGraphManager *manager, const AnfNodePtr &node, HashCache *hash_cache, HashValue *hash_value);
 }  // namespace pipeline
 }  // namespace mindspore
 
