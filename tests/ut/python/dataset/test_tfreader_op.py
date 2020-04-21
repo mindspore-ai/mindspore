@@ -37,6 +37,36 @@ def test_case_tf_shape():
     assert (len(output_shape[-1]) == 1)
 
 
+def test_case_tf_read_all_dataset():
+    schema_file = "../data/dataset/testTFTestAllTypes/datasetSchemaNoRow.json"
+    ds1 = ds.TFRecordDataset(FILES, schema_file)
+    assert ds1.get_dataset_size() == 12
+    count = 0
+    for data in ds1.create_tuple_iterator():
+        count += 1
+    assert count == 12
+
+
+def test_case_num_samples():
+    schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema7Rows.json"
+    ds1 = ds.TFRecordDataset(FILES, schema_file, num_samples=8)
+    assert ds1.get_dataset_size() == 8
+    count = 0
+    for data in ds1.create_dict_iterator():
+        count += 1
+    assert count == 8
+
+
+def test_case_num_samples2():
+    schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema7Rows.json"
+    ds1 = ds.TFRecordDataset(FILES, schema_file)
+    assert ds1.get_dataset_size() == 7
+    count = 0
+    for data in ds1.create_dict_iterator():
+        count += 1
+    assert count == 7
+
+
 def test_case_tf_shape_2():
     ds1 = ds.TFRecordDataset(FILES, SCHEMA_FILE)
     ds1 = ds1.batch(2)
