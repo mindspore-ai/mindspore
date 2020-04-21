@@ -43,7 +43,7 @@ struct ProfilingTraceInfo {
   // 3. insert profiling_trace_bp_end.
   // 4. insert profiling_trace_net_output if profiling_trace_bp_end is not empty.
 
-  bool IsValid() const { return !(trace_begin.empty() || trace_bp_end.empty() || trace_netoutput.empty()); }
+  bool IsValid() const { return !(trace_begin.empty() || trace_netoutput.empty()); }
 };
 
 struct ProfilingContent {
@@ -109,8 +109,10 @@ class ProfilingUtils {
   static CNodePtr CreateProfilingCNodeWithStream(const AnfNodePtr &anf_node, const ProfilingContent &profiling_content,
                                                  NotNull<session::KernelGraph *> graph_ptr);
   static std::string GetTraceBegin(const std::vector<CNodePtr> &cnode_exec_order);
-  static std::string GetTraceBpEnd();
+  static std::string GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order);
   static std::string GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order);
+  static void GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order,
+                           NotNull<ProfilingTraceInfo *> profiling_trace);
 
   // graph id --> (kernel name list)
   static std::unordered_map<uint32_t, std::vector<std::string>> graph_kernel_name_;
