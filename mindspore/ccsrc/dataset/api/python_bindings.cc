@@ -40,6 +40,7 @@
 #include "dataset/kernels/image/rescale_op.h"
 #include "dataset/kernels/image/resize_bilinear_op.h"
 #include "dataset/kernels/image/resize_op.h"
+#include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
@@ -269,6 +270,10 @@ void bindTensorOps1(py::module *m) {
     *m, "ResizeOp", "Tensor operation to resize an image. Takes height, width and mode")
     .def(py::init<int32_t, int32_t, InterpolationMode>(), py::arg("targetHeight"),
          py::arg("targetWidth") = ResizeOp::kDefWidth, py::arg("interpolation") = ResizeOp::kDefInterpolation);
+
+  (void)py::class_<UniformAugOp, TensorOp, std::shared_ptr<UniformAugOp>>(
+    *m, "UniformAugOp", "Tensor operation to apply random augmentation(s).")
+    .def(py::init<py::list, int32_t>(), py::arg("operations"), py::arg("NumOps") = UniformAugOp::kDefNumOps);
 
   (void)py::class_<ResizeBilinearOp, TensorOp, std::shared_ptr<ResizeBilinearOp>>(
     *m, "ResizeBilinearOp",

@@ -45,7 +45,7 @@ import mindspore._c_dataengine as cde
 from .utils import Inter, Border
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
-    check_resize, check_rescale, check_pad, check_cutout
+    check_resize, check_rescale, check_pad, check_cutout, check_uniform_augmentation
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -447,3 +447,19 @@ class Pad(cde.PadOp):
             fill_value = tuple([fill_value] * 3)
         padding_mode = DE_C_BORDER_TYPE[padding_mode]
         super().__init__(*padding, padding_mode, *fill_value)
+
+
+class UniformAugment(cde.UniformAugOp):
+    """
+    Tensor operation to perform randomly selected augmentation
+
+    Args:
+        operations: list of python operations.
+        NumOps (int): number of OPs to be selected and applied.
+    """
+
+    @check_uniform_augmentation
+    def __init__(self, operations, num_ops=2):
+        self.operations = operations
+        self.num_ops = num_ops
+        super().__init__(operations, num_ops)
