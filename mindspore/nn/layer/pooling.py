@@ -214,27 +214,23 @@ class AvgPool1d(_PoolNd):
     r"""
     Average pooling for temporal data.
 
-    Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
+    Applies a 1D average pooling over an input Tensor which can be regarded as a composition of 1D input planes.
 
-    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPool2d outputs
-    regional average in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
-    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows.
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPool1d outputs
+    regional average in the :math:`(W_{in})`-dimension. Given kernel size
+    :math:`ks = (w_{ker})` and stride :math:`s = (s_0)`, the operation is as follows.
 
     .. math::
-        \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
-        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
+        \text{output}(N_i, C_j, h_k, w) = \frac{1}{w_{ker}} \sum_{n=0}^{w_{ker}-1}
+        \text{input}(N_i, C_j, h_k, s_0 \times w + n)
 
     Note:
         pad_mode for training only supports "same" and "valid".
 
     Args:
-        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
-            is an int number that represents height and width are both kernel_size,
-            or a tuple of two int numbers that represent height and width respectively.
-            Default: 1.
-        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the height and width of movement are both strides, or a tuple of two int numbers that
-            represent height and width of movement respectively. Default: 1.
+        kernel_size (int): The size of kernel window used to take the average value, Default: 1.
+        stride (int): The distance of kernel moving, an int number that represents
+            the width of movement is strides, Default: 1.
         pad_mode (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
@@ -254,24 +250,11 @@ class AvgPool1d(_PoolNd):
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> pool = nn.AvgPool2d(kernel_size=3, strides=1)
+        >>> pool = nn.AvgPool1d(kernel_size=3, strides=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
-        [[[[5. 5. 9. 9.]
-            [8. 4. 3. 0.]
-            [2. 7. 1. 2.]
-            [1. 8. 3. 3.]]
-           [[6. 8. 2. 4.]
-            [3. 0. 2. 1.]
-            [0. 8. 9. 7.]
-            [2. 1. 4. 9.]]]]
         >>> output = pool(x)
         >>> output.shape()
-        (1, 2, 2, 2)
         >>> output
-        [[[[4.888889  4.4444447]
-           [4.111111  3.4444444]]
-          [[4.2222223 4.5555553]
-           [3.2222223 4.5555553]]]]
     """
 
     def __init__(self,
