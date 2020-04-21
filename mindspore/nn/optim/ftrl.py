@@ -23,7 +23,7 @@ from mindspore._checkparam import Rel
 from .optimizer import Optimizer, apply_decay, grad_scale
 
 ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
-@ftrl_opt.register("Function", "Number", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
+@ftrl_opt.register("Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
 def _tensor_run_opt(opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment):
     """Apply ftrl optimizer to the weight parameter."""
     success = True

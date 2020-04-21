@@ -15,7 +15,6 @@
 
 """Parameter for cell."""
 from copy import copy, deepcopy
-import numpy as np
 from .initializer import initializer
 from .tensor import Tensor
 from .._checkparam import _check_str_by_regular
@@ -176,14 +175,15 @@ class Parameter:
         return res
 
     def set_parameter_data(self, data):
-        if isinstance(data, (Tensor, list, int, float,
-                             np.float16, np.float32, np.int32, np.int16, np.ndarray)) and not isinstance(data, bool):
-            if isinstance(data, Tensor):
-                # make a copy of Tensor to init the parameter
-                data = Tensor(data.asnumpy().copy())
-            self.default_input = data
+        """Set `default_input` of current `Parameter`."""
+        if isinstance(data, bool):
+            raise ValueError('Parameter data can not be `bool`')
+        if isinstance(data, Tensor):
+            # make a copy of Tensor to init the parameter
+            data = Tensor(data.asnumpy().copy())
         else:
-            raise ValueError("Parameter data must be tensor or number.")
+            data = Tensor(data)
+        self.default_input = data
 
 
 class ParameterTuple(tuple):

@@ -31,7 +31,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 run_opt = C.MultitypeFuncGraph("run_opt")
 
 
-@run_opt.register("Function", "Int", "Number", "Number",
+@run_opt.register("Function", "Tensor", "Tensor", "Tensor",
                   "Tensor", "Tensor",
                   "Tensor")
 def tensor_run_opt(opt, iters, learning_rate, momentum,

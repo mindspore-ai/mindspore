@@ -22,6 +22,7 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
+import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.common.tensor import Tensor
@@ -66,6 +67,7 @@ class Optimizer(Cell):
             self.assignadd = None
             self.global_step = None
             validator.check_number_range("learning rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+            learning_rate = Tensor(learning_rate, mstype.float32)
         else:
             self.dynamic_lr = True
             self.gather = P.GatherV2()

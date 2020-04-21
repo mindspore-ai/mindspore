@@ -94,10 +94,6 @@ def test_parameter_update_float32():
 def test_parameter_update_error():
     """ test_parameter_update """
     input_np = np.array([1])
-    input_parameter = Parameter(np.array([1]), 'input_parameter')
 
     with pytest.raises(TypeError):
         ParameterUpdate(input_np)
-
-    with pytest.raises(TypeError):
-        ParameterUpdate(input_parameter)

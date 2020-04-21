@@ -36,7 +36,6 @@ tensor_to_ms_type = {"Int8": mstype.int8, "Int16": mstype.int16, "Int32": mstype
 tensor_to_np_type = {"Int8": np.int8, "Int16": np.int16, "Int32": np.int32, "Int64": np.int64,
                      "Float16": np.float16, "Float32": np.float32, "Float64": np.float64}
 
-
 def _special_process_par(par, new_par):
     """
     Processes the special condition.
@@ -182,8 +181,14 @@ def load_checkpoint(ckpoint_file_name, net=None):
             param_data = np.fromstring(data, np_type)
             dims = element.tensor.dims
 
-            if dims in [[0], [1]]:
-                parameter_dict[element.tag] = Parameter(param_data[0], name=element.tag)
+            if dims == [0]:
+                if 'Float' in data_type:
+                    param_data = float(param_data[0])
+                elif 'Int' in data_type:
+                    param_data = int(param_data[0])
+                parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
+            elif dims == [1]:
+                parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
             else:
                 param_dim = []
                 for dim in dims:

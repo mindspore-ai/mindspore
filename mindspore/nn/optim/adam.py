@@ -101,17 +101,6 @@ def _run_opt_with_one_number(opt, lr, beta1_power, beta2_power, beta1, beta2, ep
     return success
 
 
-@adam_opt.register("Function", "Number", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
-                   "Tensor")
-def _run_opt_with_two_number(opt, lr, beta1_power, beta2_power, beta1, beta2, eps, gradient, params, moment1,
-                             moment2):
-    """Apply adam optimizer to the weight parameter using Tensor."""
-    success = True
-    success = F.depend(success, opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
-                                    eps, gradient))
-    return success
-
-
 class Adam(Optimizer):
     r"""
     Updates gradients by Adaptive Moment Estimation (Adam) algorithm.
@@ -183,7 +172,6 @@ class Adam(Optimizer):
         self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
 
-        self.decay_tf = tuple(decay_filter(x) for x in self.parameters)
         self.hyper_map = C.HyperMap()
         self.opt = P.Adam(use_locking, use_nesterov)
 
