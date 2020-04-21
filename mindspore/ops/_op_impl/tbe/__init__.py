@@ -139,6 +139,8 @@ from .smooth_l1_loss_grad import _smooth_l1_loss_grad_tbe
 from .fused_mul_add import _fused_mul_add_tbe
 from .fused_mul_add_n import _fused_mul_add_n_tbe
 from .fused_mul_apply_momentum import _fused_mul_apply_momentum_tbe
+from .fill_d import _fill_d_op_tbe
+from .erf import _erf_op_tbe
 from .depthwise_conv2d import _depthwise_conv2d_tbe
 from .depthwise_conv2d_backprop_filter import _depthwise_conv2d_backprop_filter_tbe
 from .depthwise_conv2d_backprop_input import _depthwise_conv2d_backprop_input_tbe

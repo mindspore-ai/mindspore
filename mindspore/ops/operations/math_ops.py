@@ -1007,6 +1007,36 @@ class Log(PrimitiveWithInfer):
         return x
 
 
+class Erf(PrimitiveWithInfer):
+    r"""
+    Computes the Gauss error function of `input_x` element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
+        >>> erf = P.Erf()
+        >>> erf(input_x)
+        [-0.8427168, 0., 0.8427168, 0.99530876, 0.99997765]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Erf"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_tensor_type_same({"x": x_type}, [mstype.float16, mstype.float32], self.name)
+        return x_type
+
+
 class Minimum(_MathBinaryOp):
     """
     Computes the element-wise minimum of input tensors.

@@ -53,6 +53,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(kExpandDimsOpName, {1});
   Register(kSplitOpName, {0});
   Register(kTopKOpName, {1});
+  Register(kErfOpName, {1});
   Register(kSparseApplyAdagradOpName, {2});
   Register(kResizeNearestNeighborGrad, {1});
 }
