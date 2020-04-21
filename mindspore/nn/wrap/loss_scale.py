@@ -209,6 +209,7 @@ class TrainOneStepWithLossScaleCell(Cell):
             self.gpu_target = True
             self.float_status = P.FloatStatus()
             self.addn = P.AddN()
+            self.reshape = P.Reshape()
         else:
             self.gpu_target = False
             self.alloc_status = NPUAllocFloatStatus()
@@ -260,6 +261,8 @@ class TrainOneStepWithLossScaleCell(Cell):
         else:
             flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
             flag_sum = self.addn(flag_sum)
+            # convert flag_sum to scalar
+            flag_sum = self.reshape(flag_sum, (()))
         if self.is_distributed:
             # sum overflow flag over devices
             flag_reduce = self.allreduce(flag_sum)
