@@ -111,12 +111,12 @@ KernelWithIndex AnfRuntimeAlgorithm::VisitKernelWithReturnType(const AnfNodePtr 
       MS_EXCEPTION_IF_NULL(value_node);
       int item_idx = GetValue<int>(value_node->value());
       return VisitKernelWithReturnType(cnode->input(kRealInputNodeIndexInTupleGetItem), IntToSize(item_idx),
-                                       visit_nop_node);
+                                       visit_nop_node, return_types);
     } else if (IsPrimitive(input0, prim::kPrimDepend) || IsPrimitive(input0, prim::kPrimControlDepend)) {
-      return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), 0, visit_nop_node);
+      return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), 0, visit_nop_node, return_types);
     } else if (opt::IsNopNode(cnode) && visit_nop_node) {
       if (cnode->inputs().size() == 2) {
-        return VisitKernelWithReturnType(cnode->input(1), 0, visit_nop_node);
+        return VisitKernelWithReturnType(cnode->input(1), 0, visit_nop_node, return_types);
       } else {
         MS_LOG(EXCEPTION) << cnode->DebugString() << "Invalid nop node";
       }
