@@ -31,5 +31,8 @@ abstract::AbstractBasePtr None::ToAbstract() { return std::make_shared<abstract:
 const NamedPtr kNone = std::make_shared<None>();
 
 abstract::AbstractBasePtr NullObj::ToAbstract() { return std::make_shared<abstract::AbstractNull>(); }
-const NamedPtr kNullObj = std::make_shared<NullObj>();
+const NamedPtr kNull = std::make_shared<NullObj>();
+
+abstract::AbstractBasePtr EllipsisObj::ToAbstract() { return std::make_shared<abstract::AbstractEllipsis>(); }
+const NamedPtr kEllipsis = std::make_shared<EllipsisObj>();
 }  // namespace mindspore

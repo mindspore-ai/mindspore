@@ -150,7 +150,7 @@ def _tensor_getitem_by_number(data, number_index):
 @getitem.register("Tensor", "Slice")
 def _tensor_getitem_by_slice(data, slice_index):
     """
-    Getting item of tensor by slice index.
+    Getting item of tensor by slice.
 
     Inputs:
         data (Tensor): A tensor.
@@ -165,7 +165,7 @@ def _tensor_getitem_by_slice(data, slice_index):
 @getitem.register("Tensor", "Tuple")
 def _tensor_getitem_by_slice_tuple(data, slice_tuple_index):
     """
-    Getting item of tensor by slice tuple index.
+    Getting item of tensor by slice tuple.
 
     Inputs:
         data (Tensor): A tensor.
@@ -175,3 +175,18 @@ def _tensor_getitem_by_slice_tuple(data, slice_tuple_index):
         Tensor, element type is same as the element type of data.
     """
     return _tensor_slice(data, slice_tuple_index)
+
+
+@getitem.register("Tensor", "Ellipsis")
+def _tensor_getitem_by_ellipsis(data, ellipsis_index):
+    """
+    Getting item of tensor by Ellipsis.
+
+    Inputs:
+        data (Tensor): A tensor.
+        ellipsis (Ellipsis): A Ellipsis object.
+
+    Outputs:
+        Tensor, same as data.
+    """
+    return _tensor_slice(data, ellipsis_index)

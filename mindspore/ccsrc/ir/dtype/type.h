@@ -49,6 +49,7 @@ enum TypeId : int {
   kMetaTypeExternal,
   kMetaTypeNone,
   kMetaTypeNull,
+  kMetaTypeEllipsis,
   kMetaTypeEnd,
   //
   // Object types

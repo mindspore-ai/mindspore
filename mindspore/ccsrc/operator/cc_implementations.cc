@@ -135,9 +135,9 @@ T InnerScalarMod(T x, T y) {
   if (std::is_integral<T>::value) {
     return static_cast<int>(x) % static_cast<int>(y);
   }
-  float x_int = std::floor(x);
-  float y_int = std::ceil(y);
-  float max = x_int / y_int;
+  int x_int = std::floor(x);
+  int y_int = std::ceil(y);
+  int max = x_int / y_int;
   float ret = x - y * max;
   return ret;
 }
