@@ -269,7 +269,7 @@ def polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_e
         total_step (int): The total number of steps.
         step_per_epoch (int): The number of steps in per epoch.
         decay_epoch (int): A value used to calculate decayed learning rate.
-        power (float): A value used to calculate decayed learning rate.
+        power (float): A value used to calculate decayed learning rate. This parameter should be greater than 0.
         update_decay_epoch (bool): If true, update `decay_epoch`. Default: False.
 
     Returns:
