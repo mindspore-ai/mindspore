@@ -67,6 +67,7 @@ class KernelRuntime {
                                                TypeId type_id) = 0;
   virtual bool SyncStream() = 0;
   void AssignStaticMemory(session::KernelGraph *graph);
+  void AssignStaticMemoryValueNode(session::KernelGraph *graph);
   void AssignDynamicMemory(session::KernelGraph *graph);
   void ReuseAssignDynamicMemory(session::KernelGraph *graph);
   void AssignNodeOutputMem(int flag, const AnfNodePtr &node, int index);
@@ -81,7 +82,6 @@ class KernelRuntime {
 
  private:
   void AssignStaticMemoryOutput(const session::KernelGraph *graph);
-  void AssignStaticMemoryValueNode(session::KernelGraph *graph);
   void GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod, const AnfNodePtr &kernel,
                      AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces, AddressPtrList *kernel_outputs);
   bool LaunchKernelMod(const session::KernelGraph &graph);

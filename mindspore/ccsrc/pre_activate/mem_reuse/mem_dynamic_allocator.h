@@ -79,6 +79,8 @@ class DynamicMemPoolBestFit {
   virtual ~DynamicMemPoolBestFit();
   // The main program entry of memory alloc.
   DeviceMemPtr AllocTensorMem(size_t size);
+  // The main program entry of continuous memory alloc.
+  std::vector<DeviceMemPtr> AllocContinuousTensorMem(size_t total_size, std::vector<size_t> size_list);
   // The main program entry of memory free.
   void FreeTensorMem(const DeviceMemPtr device_addr);
   // Release the real device memory.

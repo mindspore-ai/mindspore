@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_MEMORY_MANAGER_H_
 #define MINDSPORE_MINDSPORE_CCSRC_DEVICE_MEMORY_MANAGER_H_
 #include <memory>
+#include <vector>
 #include "pre_activate/mem_reuse/mem_reuse.h"
 #include "pre_activate/mem_reuse/mem_reuse_allocator.h"
 namespace mindspore {
@@ -49,6 +50,9 @@ class MemoryManager {
   virtual void *MallocMemFromMemPool(size_t size);
   virtual void FreeMemFromMemPool(const DeviceAddressPtr address);
   virtual void FreeMemFromMemPool(void *device_ptr);
+  virtual void MallocContinuousMemFromMemPool(const DeviceAddressPtrList addr_list, size_t total_size,
+                                              std::vector<size_t> size_list);
+  virtual std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list);
 
   size_t GetCommonAlignSize(size_t input_size) const;
   size_t GetCommunicationAlignSize(size_t input_size) const;
