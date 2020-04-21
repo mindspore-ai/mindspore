@@ -15,6 +15,7 @@
 """Check parameters."""
 import re
 import inspect
+import math
 from enum import Enum
 from functools import reduce, wraps
 from itertools import repeat
@@ -317,6 +318,16 @@ class Validator:
                              f' but got {get_typename(arg_type)}.')
         raise ValueError(f'{msg_prefix} type of `{arg_name}` should be one of {type_names},'
                          f' but got {get_typename(arg_type)}.')
+
+    @staticmethod
+    def check_float_legal_value(arg_name, arg_value, prim_name):
+        """Checks whether a legal value of float type"""
+        msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
+        if isinstance(arg_value, float):
+            if math.isinf(arg_value) or math.isnan(arg_value):
+                raise ValueError(f"{msg_prefix} `{arg_name}` must be legal value, but got {arg_value}.")
+            return arg_value
+        raise TypeError(f"{msg_prefix} `{arg_name}` must be float.")
 
 
 class ParamValidator:
