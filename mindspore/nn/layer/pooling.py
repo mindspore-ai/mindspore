@@ -208,3 +208,87 @@ class AvgPool2d(_PoolNd):
 
     def construct(self, x):
         return self.avg_pool(x)
+
+
+class AvgPool1d(_PoolNd):
+    r"""
+    Average pooling for temporal data.
+
+    Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
+
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPool2d outputs
+    regional average in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
+    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, h, w) = \frac{1}{h_{ker} * w_{ker}} \sum_{m=0}^{h_{ker}-1} \sum_{n=0}^{w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
+
+    Note:
+        pad_mode for training only supports "same" and "valid".
+
+    Args:
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
+            is an int number that represents height and width are both kernel_size,
+            or a tuple of two int numbers that represent height and width respectively.
+            Default: 1.
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively. Default: 1.
+        pad_mode (str): The optional values for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
+
+            - same: Adopts the way of completion. Output height and width will be the same as
+              the input. Total number of padding will be calculated for horizontal and vertical
+              direction and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possibly largest height and width of output
+              will be return without padding. Extra pixels will be discarded.
+
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Examples:
+        >>> pool = nn.AvgPool2d(kernel_size=3, strides=1)
+        >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
+        [[[[5. 5. 9. 9.]
+            [8. 4. 3. 0.]
+            [2. 7. 1. 2.]
+            [1. 8. 3. 3.]]
+           [[6. 8. 2. 4.]
+            [3. 0. 2. 1.]
+            [0. 8. 9. 7.]
+            [2. 1. 4. 9.]]]]
+        >>> output = pool(x)
+        >>> output.shape()
+        (1, 2, 2, 2)
+        >>> output
+        [[[[4.888889  4.4444447]
+           [4.111111  3.4444444]]
+          [[4.2222223 4.5555553]
+           [3.2222223 4.5555553]]]]
+    """
+
+    def __init__(self,
+                 kernel_size=1,
+                 stride=1,
+                 pad_mode="valid"):
+        super(AvgPool1d, self).__init__(kernel_size, stride, pad_mode)
+        if not isinstance(kernel_size, int):
+            raise ValueError("kernel_size should be 1 int number but got {}".
+                             format(kernel_size))
+        if not isinstance(stride, int):
+            raise ValueError("stride should be 1 int number but got {}".format(stride))
+        self.kernel_size = (1, kernel_size)
+        self.stride = (1, stride)
+        self.avg_pool = P.AvgPool(ksize=self.kernel_size,
+                                  strides=self.stride,
+                                  padding=self.pad_mode)
+
+    def construct(self, x):
+        return self.avg_pool(x)
