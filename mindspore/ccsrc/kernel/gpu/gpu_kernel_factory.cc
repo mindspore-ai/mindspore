@@ -41,8 +41,9 @@ void GpuKernelFactory::CheckIOParam(const std::string &kernel_name, const Kernel
                                     size_t attr_index) {
   if (kernel_info->GetInputNum() != iter_second->at(attr_index).first.GetInputSize()) {
     if (iter_second->at(attr_index).first.GetAllSame()) {
+      auto dtype = iter_second->at(attr_index).first.GetInputAttr(0).first;
       for (size_t attr = 1; attr < kernel_info->GetInputNum(); ++attr) {
-        (void)iter_second->at(attr_index).first.AddInputAttr(kernel_info->GetInputDeviceType(0));
+        (void)iter_second->at(attr_index).first.AddInputAttr(dtype);
       }
     } else {
       MS_LOG(EXCEPTION) << "op[" << kernel_name << "] Input size is mismatching!";
@@ -50,8 +51,9 @@ void GpuKernelFactory::CheckIOParam(const std::string &kernel_name, const Kernel
   }
   if (kernel_info->GetOutputNum() != iter_second->at(attr_index).first.GetOutputSize()) {
     if (iter_second->at(attr_index).first.GetAllSame()) {
+      auto dtype = iter_second->at(attr_index).first.GetOutputAttr(0).first;
       for (size_t attr = 1; attr < kernel_info->GetOutputNum(); ++attr) {
-        (void)iter_second->at(attr_index).first.AddOutputAttr(kernel_info->GetOutputDeviceType(0));
+        (void)iter_second->at(attr_index).first.AddOutputAttr(dtype);
       }
     } else {
       MS_LOG(EXCEPTION) << "op[" << kernel_name << "] Output size is mismatching!";

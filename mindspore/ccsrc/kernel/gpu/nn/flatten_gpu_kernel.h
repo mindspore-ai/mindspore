@@ -48,14 +48,10 @@ class FlattenGpuFwdKernel : public GpuKernel {
   }
   bool Init(const CNodePtr &kernel_node) override {
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    input_size_ = sizeof(T);
     for (size_t i = 0; i < shape.size(); ++i) {
-      if (input_size_ == 0) {
-        input_size_ = 1;
-      }
       input_size_ *= shape[i];
     }
-    input_size_ = input_size_ * sizeof(T);
-
     InitSizeLists();
     return true;
   }
