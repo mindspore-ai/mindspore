@@ -43,7 +43,7 @@ const std::unordered_set<std::string> vm_operators = {"partial", "depend", "make
 
 namespace mindspore {
 namespace pynative {
-inline ValuePtr PyAttrValue(const py::object& obj) {
+inline ValuePtr PyAttrValue(const py::object &obj) {
   ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(obj, &converted_ret);
   if (!converted) {
@@ -52,11 +52,11 @@ inline ValuePtr PyAttrValue(const py::object& obj) {
   return converted_ret;
 }
 
-py::tuple ConvertInputs(const PrimitivePyPtr& prim, const py::tuple& py_args) {
+py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::tuple &py_args) {
   auto signature = prim->signatures();
   std::vector<SignatureEnumDType> dtypes;
   (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
-                       [](const Signature& sig) { return sig.dtype; });
+                       [](const Signature &sig) { return sig.dtype; });
   int empty_dtype_count = std::count(dtypes.begin(), dtypes.end(), SignatureEnumDType::kDTypeEmptyDefaultValue);
   if (dtypes.size() == 0 || static_cast<int>(dtypes.size()) == empty_dtype_count) {
     return py_args;
@@ -103,7 +103,7 @@ py::tuple ConvertInputs(const PrimitivePyPtr& prim, const py::tuple& py_args) {
   return py_inputs;
 }
 
-void PynativeInfer(const PrimitivePyPtr& prim, const py::tuple& py_args, OpExecInfo* const op_exec_info) {
+void PynativeInfer(const PrimitivePyPtr &prim, const py::tuple &py_args, OpExecInfo *const op_exec_info) {
   size_t size = py_args.size();
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < size; i++) {
@@ -118,7 +118,7 @@ void PynativeInfer(const PrimitivePyPtr& prim, const py::tuple& py_args, OpExecI
   op_exec_info->abstract = infer_res;
 }
 
-OpExecInfoPtr GenerateOpExecInfo(const py::args& args) {
+OpExecInfoPtr GenerateOpExecInfo(const py::args &args) {
   if (args.size() != PY_ARGS_NUM) {
     MS_LOG(ERROR) << "Four args are needed by RunOp";
     return nullptr;
@@ -147,7 +147,7 @@ OpExecInfoPtr GenerateOpExecInfo(const py::args& args) {
   return op_exec_info;
 }
 
-std::string GetSingleOpGraphInfo(const OpExecInfoPtr& op_exec_info) {
+std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   std::string graph_info;
   MS_EXCEPTION_IF_NULL(op_exec_info->abstract);
@@ -167,7 +167,7 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr& op_exec_info) {
   return graph_info;
 }
 
-py::object RunOpInVM(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* status) {
+py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
   MS_LOG(INFO) << "RunOpInVM start";
 
   MS_EXCEPTION_IF_NULL(status);
@@ -188,7 +188,7 @@ py::object RunOpInVM(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* stat
   return std::move(result);
 }
 
-py::object RunOpInMs(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* status) {
+py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_LOG(INFO) << "Start run op[" << op_exec_info->op_name << "] with backend policy ms";
   auto ms_context = MsContext::GetInstance();
@@ -212,7 +212,7 @@ py::object RunOpInMs(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* stat
 }
 
 py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr op_exec_info,
-                                  PynativeStatusCode* const status) {
+                                  PynativeStatusCode *const status) {
   MS_EXCEPTION_IF_NULL(status);
   py::object result;
   switch (backend_policy) {
@@ -248,7 +248,7 @@ py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecIn
   return result;
 }
 
-py::tuple RunOp(const py::args& args) {
+py::tuple RunOp(const py::args &args) {
   py::object result;
   // returns a null py::tuple on error
   py::tuple err_ret(0);

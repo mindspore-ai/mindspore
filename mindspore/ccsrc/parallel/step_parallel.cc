@@ -76,7 +76,7 @@ void SetCommunicationOpGroupLabel(std::vector<AnfNodePtr> new_node_input) {
   }
 }
 
-std::vector<AnfNodePtr> CreateInput(const Operator& op, const AnfNodePtr& node, const std::string& instance_name) {
+std::vector<AnfNodePtr> CreateInput(const Operator &op, const AnfNodePtr &node, const std::string &instance_name) {
   MS_EXCEPTION_IF_NULL(node);
   OperatorArgs arg_forward = op.second;
   ValuePtr pyop_instance = CreatOpInstance(arg_forward.first, op.first, instance_name);
@@ -85,7 +85,7 @@ std::vector<AnfNodePtr> CreateInput(const Operator& op, const AnfNodePtr& node, 
 
   std::vector<AnfNodePtr> new_node_input = {NewValueNode(pyop_instance), node};
   if (!params.empty()) {
-    for (auto& param : params) {
+    for (auto &param : params) {
       AnfNodePtr val = NewValueNode(param.first.second);
       MS_EXCEPTION_IF_NULL(val);
       int32_t position = param.second;
@@ -98,8 +98,8 @@ std::vector<AnfNodePtr> CreateInput(const Operator& op, const AnfNodePtr& node, 
   return new_node_input;
 }
 
-void InsertNode(const Operator& op, const CNodePtr& node, size_t index, const AnfNodePtr& pre_node,
-                const FuncGraphPtr& func_graph, const std::string& instance_name) {
+void InsertNode(const Operator &op, const CNodePtr &node, size_t index, const AnfNodePtr &pre_node,
+                const FuncGraphPtr &func_graph, const std::string &instance_name) {
   // insert new node before the node
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -121,7 +121,7 @@ void InsertNode(const Operator& op, const CNodePtr& node, size_t index, const An
   manager->SetEdge(node, SizeToInt(index), new_node);
 }
 
-std::string CreateInstanceName(const CNodePtr& node, size_t index) {
+std::string CreateInstanceName(const CNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   if (!IsValueNode<Primitive>(node->input(0))) {
     MS_LOG(EXCEPTION) << "CreateInstanceName: " << node->ToString() << " doesn't have primitive";
@@ -132,7 +132,7 @@ std::string CreateInstanceName(const CNodePtr& node, size_t index) {
   return instance_name;
 }
 
-void ForwardCommunication(OperatorVector forward_op, const CNodePtr& node) {
+void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   // step1:get graph manager distribute_operator
   FuncGraphPtr func_graph = node->func_graph();
@@ -141,7 +141,7 @@ void ForwardCommunication(OperatorVector forward_op, const CNodePtr& node) {
   MS_EXCEPTION_IF_NULL(manager);
   auto uses_set = manager->node_users()[node];
   CNodePtr node_to_insert = node;
-  for (auto& uses_pair : uses_set) {
+  for (auto &uses_pair : uses_set) {
     auto uses_cnode = uses_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(uses_cnode);
     if (!IsValueNode<Primitive>(uses_cnode->input(0))) {
@@ -175,7 +175,7 @@ void ForwardCommunication(OperatorVector forward_op, const CNodePtr& node) {
   }
 }
 
-CNodePtr InsertMakeTuple(const AnfNodePtr& prev, uint32_t num, const FuncGraphPtr& func_graph) {
+CNodePtr InsertMakeTuple(const AnfNodePtr &prev, uint32_t num, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(prev);
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> make_tuple_inputs;
@@ -195,8 +195,8 @@ CNodePtr InsertMakeTuple(const AnfNodePtr& prev, uint32_t num, const FuncGraphPt
   return make_tuple;
 }
 
-void InsertRedistribution(const RedistributionOpListPtr& redistribution_oplist_ptr, const CNodePtr& node,
-                          const FuncGraphPtr& func_graph, int pos, const CNodePtr& pre_node) {
+void InsertRedistribution(const RedistributionOpListPtr &redistribution_oplist_ptr, const CNodePtr &node,
+                          const FuncGraphPtr &func_graph, int pos, const CNodePtr &pre_node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(pre_node);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -226,8 +226,8 @@ void InsertRedistribution(const RedistributionOpListPtr& redistribution_oplist_p
   }
 }
 
-void InsertGetTensorSliceOp(const Operator& op, const CNodePtr& node, const FuncGraphPtr& func_graph, int pos,
-                            const std::string& instance_name) {
+void InsertGetTensorSliceOp(const Operator &op, const CNodePtr &node, const FuncGraphPtr &func_graph, int pos,
+                            const std::string &instance_name) {
   if (func_graph == nullptr) {
     MS_LOG(EXCEPTION) << "InsertGetTensorSliceOp: the graph is null, the instance name is " << instance_name;
   }
@@ -244,8 +244,8 @@ void InsertGetTensorSliceOp(const Operator& op, const CNodePtr& node, const Func
   InsertNode(op, node, IntToSize(pos), pre_node, func_graph, instance_name);
 }
 
-TensorLayout GetTensorInLayout(const CNodePtr& middle_node, const PrimitivePtr& middle_prim,
-                               const OperatorInfoPtr& distribute_operator) {
+TensorLayout GetTensorInLayout(const CNodePtr &middle_node, const PrimitivePtr &middle_prim,
+                               const OperatorInfoPtr &distribute_operator) {
   TensorInfo tensorinfo_in;
   if (middle_prim->name() == TUPLE_GETITEM) {
     auto value_node = middle_node->input(2)->cast<ValueNodePtr>();
@@ -265,7 +265,7 @@ TensorLayout GetTensorInLayout(const CNodePtr& middle_node, const PrimitivePtr& 
   return tensorinfo_in.tensor_layout();
 }
 
-OperatorInfoPtr GetDistributeOperator(const CNodePtr& node) {
+OperatorInfoPtr GetDistributeOperator(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!IsParallelCareNode(node)) {
     return nullptr;
@@ -277,9 +277,9 @@ OperatorInfoPtr GetDistributeOperator(const CNodePtr& node) {
   return distribute_operator;
 }
 
-void Redistribution(const std::pair<AnfNodePtr, int>& node_pair, const OperatorInfoPtr& distribute_operator,
-                    const CNodePtr& middle_node, int index, TensorRedistribution tensor_redistribution,
-                    const CNodePtr& pre_node) {
+void Redistribution(const std::pair<AnfNodePtr, int> &node_pair, const OperatorInfoPtr &distribute_operator,
+                    const CNodePtr &middle_node, int index, TensorRedistribution tensor_redistribution,
+                    const CNodePtr &pre_node) {
   FuncGraphPtr func_graph = middle_node->func_graph();
   if (func_graph == nullptr) {
     MS_LOG(EXCEPTION) << "Redistribution:get graph failed";
@@ -333,13 +333,13 @@ bool StrategyFound(std::unordered_map<std::string, ValuePtr> attrs) {
   return !((iter == attrs.end()) || (iter->second->type_name() == NONE));
 }
 
-bool IsCommunicationOp(const PrimitivePtr& prim) {
+bool IsCommunicationOp(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (COMMUNICATION_OPS.find(prim->name()) != COMMUNICATION_OPS.end());
 }
 
-bool FindCommunicationOp(const std::vector<AnfNodePtr>& all_nodes) {
-  for (auto& node : all_nodes) {
+bool FindCommunicationOp(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
@@ -364,7 +364,7 @@ bool FindCommunicationOp(const std::vector<AnfNodePtr>& all_nodes) {
   return false;
 }
 
-bool IsParallelCareNode(const CNodePtr& cnode) {
+bool IsParallelCareNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   ValueNodePtr prim_node = cnode->input(0)->cast<ValueNodePtr>();
   if (prim_node == nullptr) {
@@ -389,8 +389,8 @@ bool IsParallelCareNode(const CNodePtr& cnode) {
   return cnode->in_forward_flag();
 }
 
-void StepRedistribution(const CNodePtr& node, const OperatorInfoPtr& distribute_operator, const CNodePtr& insert_node,
-                        const TensorRedistribution& tensor_redistribution, const CNodePtr& pre_node) {
+void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_operator, const CNodePtr &insert_node,
+                        const TensorRedistribution &tensor_redistribution, const CNodePtr &pre_node) {
   MS_EXCEPTION_IF_NULL(node->func_graph());
   FuncGraphManagerPtr manager = node->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -406,7 +406,7 @@ void StepRedistribution(const CNodePtr& node, const OperatorInfoPtr& distribute_
     insert_node_new = insert_node;
   }
   MS_EXCEPTION_IF_NULL(insert_node_new);
-  for (auto& node_pair : node_set) {
+  for (auto &node_pair : node_set) {
     CNodePtr use_cnode = node_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(use_cnode);
     if (!IsValueNode<Primitive>(use_cnode->input(0))) {
@@ -429,7 +429,7 @@ void StepRedistribution(const CNodePtr& node, const OperatorInfoPtr& distribute_
   }
 }
 
-void SplitTensor(const AnfNodePtr& node, const CNodePtr& next_node, int index) {
+void SplitTensor(const AnfNodePtr &node, const CNodePtr &next_node, int index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(next_node);
   OperatorInfoPtr op_info = next_node->operator_info();
@@ -474,11 +474,11 @@ void SplitTensor(const AnfNodePtr& node, const CNodePtr& next_node, int index) {
   }
 }
 
-void StepSplitTensor(const AnfNodePtr& node, const FuncGraphManagerPtr& manager) {
+void StepSplitTensor(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(manager);
   AnfNodeIndexSet node_set = manager->node_users()[node];
-  for (auto& node_pair : node_set) {
+  for (auto &node_pair : node_set) {
     CNodePtr use_cnode = node_pair.first->cast<CNodePtr>();
     if (use_cnode == nullptr || !IsValueNode<Primitive>(use_cnode->input(0))) {
       continue;
@@ -496,8 +496,8 @@ void StepSplitTensor(const AnfNodePtr& node, const FuncGraphManagerPtr& manager)
   }
 }
 
-std::vector<AnfNodePtr> ReplaceOpInput(const Operator& replace_op, const std::string& instance_name,
-                                       const CNodePtr& node) {
+std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,
+                                       const CNodePtr &node) {
   OperatorArgs arg_replace_op = replace_op.second;
   ValuePtr pyop_instance = CreatOpInstance(arg_replace_op.first, replace_op.first, instance_name);
   if (pyop_instance == nullptr) {
@@ -518,7 +518,7 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator& replace_op, const std::st
     if (first_position == 1) {
       replace_input.pop_back();
     }
-    for (auto& param : params) {
+    for (auto &param : params) {
       AnfNodePtr val = NewValueNode(param.first.second);
       if (val == nullptr) {
         MS_LOG(EXCEPTION) << "Failure:val is nullptr";
@@ -531,7 +531,7 @@ std::vector<AnfNodePtr> ReplaceOpInput(const Operator& replace_op, const std::st
   return replace_input;
 }
 
-void ReplaceOneOp(const Operator& replace_op, const CNodePtr& node) {
+void ReplaceOneOp(const Operator &replace_op, const CNodePtr &node) {
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();
@@ -551,7 +551,7 @@ void ReplaceOneOp(const Operator& replace_op, const CNodePtr& node) {
   (void)manager->Replace(node, replace_node);
 }
 
-void StepReplaceOp(OperatorVector replace_op, const CNodePtr& node) {
+void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
   // step1:get graph manager distribute_operator
   OperatorInfoPtr distribute_operator = node->operator_info();
   if (distribute_operator == nullptr) {
@@ -599,15 +599,15 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr& node) {
   MS_LOG(INFO) << "Insert ReplaceOp success for " << distribute_operator->name();
 }
 
-bool IsSomePrimitive(const CNodePtr& cnode, const std::string& name) {
+bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   ValueNodePtr anf_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(anf_node);
   PrimitivePtr prim = anf_node->value()->cast<PrimitivePtr>();
   return (prim->name() == name);
 }
 
-void StepReplaceGraph(const std::shared_ptr<std::pair<std::vector<AnfNodePtr>, AnfNodePtr>>& replace_graph,
-                      const CNodePtr& node) {
+void StepReplaceGraph(const std::shared_ptr<std::pair<std::vector<AnfNodePtr>, AnfNodePtr>> &replace_graph,
+                      const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(replace_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(replace_graph->second);
@@ -627,7 +627,7 @@ void StepReplaceGraph(const std::shared_ptr<std::pair<std::vector<AnfNodePtr>, A
   if (replace_graph->first.size() != 2) {
     MS_LOG(EXCEPTION) << "Failure:replace_graph->first.size() must be 2 for OneHot Primitive!";
   }
-  for (auto& replace_input : replace_graph->first) {
+  for (auto &replace_input : replace_graph->first) {
     MS_EXCEPTION_IF_NULL(replace_input);
     manager->SetEdge(replace_input, 1, pre_node);
     CNodePtr replace_input_cnode = replace_input->cast<CNodePtr>();
@@ -645,7 +645,7 @@ void StepReplaceGraph(const std::shared_ptr<std::pair<std::vector<AnfNodePtr>, A
   replace_output_cnode->set_in_forward_flag(true);  // mark this new cnode is forward node
 }
 
-int32_t GetTupleGetItemIndex(const CNodePtr& cnode) {
+int32_t GetTupleGetItemIndex(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().size() != 3) {
     MS_LOG(EXCEPTION) << cnode->ToString() << " size( " << cnode->inputs().size() << " ) is not 3";
@@ -666,7 +666,7 @@ int32_t GetTupleGetItemIndex(const CNodePtr& cnode) {
 // Judge whether the node is a loss, and if there are multiple outputs,
 // get which output is a grad according to the tuple getitem.
 // Currently, it is not supported that the sens is a tuple.
-LossNodeInfo GetLossNodeInfo(const AnfNodePtr& loss_node) {
+LossNodeInfo GetLossNodeInfo(const AnfNodePtr &loss_node) {
   MS_EXCEPTION_IF_NULL(loss_node);
   FuncGraphPtr sub_graph = loss_node->func_graph();
   MS_EXCEPTION_IF_NULL(sub_graph);
@@ -718,7 +718,7 @@ LossNodeInfo GetLossNodeInfo(const AnfNodePtr& loss_node) {
   MS_LOG(EXCEPTION) << "Invalid loss";
 }
 
-void InsertVirtualDivOp(const VirtualDivOp& virtual_div_op, const CNodePtr& node) {
+void InsertVirtualDivOp(const VirtualDivOp &virtual_div_op, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   size_t node_size = node->inputs().size();
   FuncGraphPtr func_graph = node->func_graph();
@@ -742,7 +742,7 @@ void InsertVirtualDivOp(const VirtualDivOp& virtual_div_op, const CNodePtr& node
   }
 }
 
-std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr& node, const FuncGraphPtr& func_graph) {
+std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
   if (!node->isa<Parameter>() && !node->isa<CNode>() && !node->isa<ValueNode>()) {
     return std::make_pair(nullptr, false);
   } else if (node->isa<Parameter>()) {
@@ -790,7 +790,7 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr& node, const FuncGrap
   return std::make_pair(nullptr, false);
 }
 
-std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr& anode, const std::string& name, const FuncGraphPtr& func_graph) {
+std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(anode);
   MS_EXCEPTION_IF_NULL(anode->func_graph());
   FuncGraphManagerPtr manager = anode->func_graph()->manager();
@@ -798,7 +798,7 @@ std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr& anode, const std::string& 
   AnfNodeIndexSet node_set = manager->node_users()[anode];
   bool result = false;
   CNodePtr cnode_return = nullptr;
-  for (auto& node_pair : node_set) {
+  for (auto &node_pair : node_set) {
     CNodePtr use_apply = node_pair.first->cast<CNodePtr>();
     if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
       continue;
@@ -820,7 +820,7 @@ std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr& anode, const std::string& 
   return std::make_pair(result, cnode_return);
 }
 
-bool IsCastBeforMirror(const CNodePtr& node, size_t index) {
+bool IsCastBeforMirror(const CNodePtr &node, size_t index) {
   // only if cast_before_mirror is true, pre node is cast and type is not float32 return true
   if (!ParallelContext::GetInstance()->cast_before_mirror()) {
     return false;
@@ -850,7 +850,7 @@ bool IsCastBeforMirror(const CNodePtr& node, size_t index) {
   return (type_id != kNumberTypeFloat32);
 }
 
-void InsertMirrorOps(const MirrorOps& mirror_ops, const CNodePtr& node) {
+void InsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   size_t node_size = node->inputs().size();
   FuncGraphPtr func_graph = node->func_graph();
@@ -887,7 +887,7 @@ void InsertMirrorOps(const MirrorOps& mirror_ops, const CNodePtr& node) {
     }
     std::string instance_name = MIRROR_OP;
     if (IsCastBeforMirror(node, index)) {
-      for (auto& op : backward_op) {
+      for (auto &op : backward_op) {
         // insert new node before the node
         CNodePtr cnode = node->input(index)->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(cnode);
@@ -895,7 +895,7 @@ void InsertMirrorOps(const MirrorOps& mirror_ops, const CNodePtr& node) {
         InsertNode(op, cnode, size_t(1), pre_node, func_graph, instance_name);
       }
     } else {
-      for (auto& op : backward_op) {
+      for (auto &op : backward_op) {
         AnfNodePtr pre_node = node->input(index);
         InsertNode(op, node, index, pre_node, func_graph, instance_name);
       }
@@ -903,7 +903,7 @@ void InsertMirrorOps(const MirrorOps& mirror_ops, const CNodePtr& node) {
   }
 }
 
-void BackwardCommunication(const OperatorInfoPtr& distribute_operator, const CNodePtr& node, bool is_loss_node) {
+void BackwardCommunication(const OperatorInfoPtr &distribute_operator, const CNodePtr &node, bool is_loss_node) {
   MS_EXCEPTION_IF_NULL(distribute_operator);
   MS_EXCEPTION_IF_NULL(node);
   MirrorOps mirror_ops = distribute_operator->mirror_ops();
@@ -920,7 +920,7 @@ void BackwardCommunication(const OperatorInfoPtr& distribute_operator, const CNo
   }
 }
 
-std::string GetDisOpName(const std::string& prim_name) {
+std::string GetDisOpName(const std::string &prim_name) {
   std::string op_name = prim_name;
   if (!prim_name.empty() && (prim_name[0] == '_')) {
     op_name = prim_name.substr(1);
@@ -928,8 +928,8 @@ std::string GetDisOpName(const std::string& prim_name) {
   return op_name + "Info";
 }
 
-OperatorInfoPtr OperatorInstanceByName(const std::string& name, const PrimitiveAttrs& attrs,
-                                       const std::vector<Shapes>& shape_list) {
+OperatorInfoPtr OperatorInstanceByName(const std::string &name, const PrimitiveAttrs &attrs,
+                                       const std::vector<Shapes> &shape_list) {
   if (shape_list.size() != 2) {
     MS_LOG(ERROR) << "The size of shape list is not 2";
     return nullptr;
@@ -951,8 +951,8 @@ OperatorInfoPtr OperatorInstanceByName(const std::string& name, const PrimitiveA
   return operator_;
 }
 
-OperatorInfoPtr OperatorInstance(const PrimitivePtr& prim, const PrimitiveAttrs& attrs,
-                                 const std::vector<Shapes>& shape_list) {
+OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
+                                 const std::vector<Shapes> &shape_list) {
   MS_EXCEPTION_IF_NULL(prim);
   OperatorInfoPtr operator_ = OperatorInstanceByName(prim->name(), attrs, shape_list);
   if (operator_ == nullptr) {
@@ -963,7 +963,7 @@ OperatorInfoPtr OperatorInstance(const PrimitivePtr& prim, const PrimitiveAttrs&
   return operator_;
 }
 
-OperatorInfoPtr NewOperatorInstance(const PrimitivePtr& prim, const PrimitiveAttrs& attrs,
+OperatorInfoPtr NewOperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
                                     std::vector<Shapes> shape_list) {
   OperatorInfoPtr operator_ = OperatorInstance(prim, attrs, shape_list);
   for (size_t i = 0; i < shape_list[0].size(); ++i) {
@@ -992,7 +992,7 @@ StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs) {
 
         std::vector<ValuePtr> value_vector = value_tuple->value();
         (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(dim),
-                             [](const ValuePtr& value) { return static_cast<int32_t>(GetValue<int>(value)); });
+                             [](const ValuePtr &value) { return static_cast<int32_t>(GetValue<int>(value)); });
         strategy.push_back(dim);
       } else {
         MS_LOG(EXCEPTION) << "Failure:Strategy's format is wrong! Need ValueSequeue";
@@ -1007,7 +1007,7 @@ StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs) {
   return strategyPtr;
 }
 
-Shapes GetNodeShape(const AnfNodePtr& node) {
+Shapes GetNodeShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   Shapes shapes;
   BaseShapePtr base_shape_ptr = node->Shape();
@@ -1039,7 +1039,7 @@ Shapes GetNodeShape(const AnfNodePtr& node) {
   auto tuple_shape_ptr = dyn_cast<abstract::TupleShape>(base_shape_ptr);
   if (tuple_shape_ptr != nullptr) {
     auto tuple_shape = tuple_shape_ptr->shape();
-    for (auto& shape : tuple_shape) {
+    for (auto &shape : tuple_shape) {
       auto each_shape = dyn_cast<abstract::Shape>(shape);
       MS_EXCEPTION_IF_NULL(each_shape);
       shapes.push_back(each_shape->shape());
@@ -1052,7 +1052,7 @@ Shapes GetNodeShape(const AnfNodePtr& node) {
   return shapes;
 }
 
-std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr& node, const FuncGraphPtr& func_graph) {
+std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> parameters;
@@ -1075,7 +1075,7 @@ std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr& node, const 
 
   FuncGraphPtr root_g = roots.back();
   MS_EXCEPTION_IF_NULL(root_g);
-  for (auto& param_node : root_g->parameters()) {
+  for (auto &param_node : root_g->parameters()) {
     auto param = param_node->cast<ParameterPtr>();
     if (param && (name == param->name())) {
       parameters.push_back(param_node);
@@ -1088,7 +1088,7 @@ std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr& node, const 
   return parameters;
 }
 
-Shapes GetRefKeyNodeShape(const AnfNodePtr& node, const FuncGraphPtr& func_graph) {
+Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(func_graph);
 
@@ -1107,7 +1107,7 @@ Shapes GetRefKeyNodeShape(const AnfNodePtr& node, const FuncGraphPtr& func_graph
   return input_shapes;
 }
 
-std::vector<Shapes> ExtractShape(const CNodePtr& node) {
+std::vector<Shapes> ExtractShape(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   Shapes shape_inputs, shape_outputs;
   std::vector<Shapes> shape_all;
@@ -1145,14 +1145,14 @@ std::vector<Shapes> ExtractShape(const CNodePtr& node) {
   return shape_all;
 }
 
-std::pair<AnfNodePtr, int> FindParallelCareNode(const AnfNodePtr& node) {
+std::pair<AnfNodePtr, int> FindParallelCareNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   AnfNodeIndexSet node_set = manager->node_users()[node];
-  for (auto& node_pair : node_set) {
+  for (auto &node_pair : node_set) {
     CNodePtr cnode = node_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (!IsValueNode<Primitive>(cnode->input(0))) {
@@ -1174,7 +1174,7 @@ std::pair<AnfNodePtr, int> FindParallelCareNode(const AnfNodePtr& node) {
   return std::make_pair(nullptr, 0);
 }
 
-std::pair<AnfNodePtr, int> FindSubGraph(const FuncGraphPtr& graph, const AnfNodePtr& parameter) {
+std::pair<AnfNodePtr, int> FindSubGraph(const FuncGraphPtr &graph, const AnfNodePtr &parameter) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(parameter);
   FuncGraphManagerPtr manager = graph->manager();
@@ -1184,7 +1184,7 @@ std::pair<AnfNodePtr, int> FindSubGraph(const FuncGraphPtr& graph, const AnfNode
     return prim_anf_node_pair;
   } else {
     AnfNodeIndexSet param_sub_set = manager->node_users()[parameter];
-    for (auto& param_pair : param_sub_set) {
+    for (auto &param_pair : param_sub_set) {
       CNodePtr graph_cnode = param_pair.first->cast<CNodePtr>();
       if ((graph_cnode == nullptr) || !graph_cnode->input(0)->isa<CNode>()) {
         continue;
@@ -1208,7 +1208,7 @@ std::pair<AnfNodePtr, int> FindSubGraph(const FuncGraphPtr& graph, const AnfNode
   return std::make_pair(nullptr, 0);
 }
 
-void SetParallelShape(const AnfNodePtr& parameter, const std::pair<AnfNodePtr, int>& res) {
+void SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNodePtr, int> &res) {
   MS_EXCEPTION_IF_NULL(parameter);
   AbstractBasePtr abstract = parameter->abstract();
   MS_EXCEPTION_IF_NULL(abstract);
@@ -1237,10 +1237,10 @@ void SetParallelShape(const AnfNodePtr& parameter, const std::pair<AnfNodePtr, i
   parameter_ptr->set_tensor_layout(std::make_shared<TensorLayout>(tensor_layout));
 }
 
-void CoverSliceShape(const FuncGraphPtr& root) {
+void CoverSliceShape(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
   auto parameters = root->parameters();
-  for (auto& parameter : parameters) {
+  for (auto &parameter : parameters) {
     MS_EXCEPTION_IF_NULL(parameter->Shape());
     auto iter = g_RefMap.find(parameter);
     if (iter != g_RefMap.end()) {
@@ -1258,7 +1258,7 @@ void CoverSliceShape(const FuncGraphPtr& root) {
   g_RefMap.clear();
 }
 
-bool ParameterIsCloned(const FuncGraphPtr& root, const AnfNodePtr& parameter_node) {
+bool ParameterIsCloned(const FuncGraphPtr &root, const AnfNodePtr &parameter_node) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(parameter_node);
   FuncGraphManagerPtr manager = root->manager();
@@ -1281,9 +1281,9 @@ bool ParameterIsCloned(const FuncGraphPtr& root, const AnfNodePtr& parameter_nod
   return true;
 }
 
-void SetClonedTensorShapeForOptimizer(const FuncGraphPtr& root) {
+void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
-  for (auto& cloned_parameter_node : root->parameters()) {
+  for (auto &cloned_parameter_node : root->parameters()) {
     MS_EXCEPTION_IF_NULL(cloned_parameter_node);
     auto cloned_parameter = cloned_parameter_node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(cloned_parameter);
@@ -1300,7 +1300,7 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr& root) {
     bool found_be_cloned_parameter = false;
     ParameterPtr cloned_from_parameter = nullptr;
     AnfNodePtr cloned_from_node = nullptr;
-    for (auto& be_cloned_parameter_node : root->parameters()) {
+    for (auto &be_cloned_parameter_node : root->parameters()) {
       MS_EXCEPTION_IF_NULL(be_cloned_parameter_node);
       auto be_cloned_parameter = be_cloned_parameter_node->cast<ParameterPtr>();
       MS_EXCEPTION_IF_NULL(be_cloned_parameter);
@@ -1315,7 +1315,7 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr& root) {
 
       // get the be cloned index
       py::list be_cloned_index = parse::python_adapter::GetPyObjAttr(be_cloned_info, BE_CLONED_INDEX);
-      for (auto& index : be_cloned_index) {
+      for (auto &index : be_cloned_index) {
         if (cloned_index == py::cast<int32_t>(index)) {
           found_be_cloned_parameter = true;
           cloned_from_parameter = be_cloned_parameter;
@@ -1341,7 +1341,7 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr& root) {
   }
 }
 
-void SetVirtualDatasetStrategy(const CNodePtr& node) {
+void SetVirtualDatasetStrategy(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(node->input(0));
   MS_EXCEPTION_IF_NULL(prim);
@@ -1370,8 +1370,8 @@ void SetVirtualDatasetStrategy(const CNodePtr& node) {
   }
 }
 
-void ExtractInformation(const std::vector<AnfNodePtr>& all_nodes) {
-  for (auto& node : all_nodes) {
+void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
@@ -1390,7 +1390,7 @@ void ExtractInformation(const std::vector<AnfNodePtr>& all_nodes) {
       if (operator_ == nullptr) {
         MS_LOG(EXCEPTION) << "Failure:Primitive " << prim->name() << " OperatorInstance failed";
       }
-      auto& inputs = cnode->inputs();
+      auto &inputs = cnode->inputs();
       std::vector<ValuePtr> input_value;
       for (size_t index = 1; index < inputs.size(); ++index) {
         if (inputs[index]->isa<ValueNode>()) {
@@ -1440,7 +1440,7 @@ void ExtractInformation(const std::vector<AnfNodePtr>& all_nodes) {
   }
 }
 
-TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int>& node_pair) {
+TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int> &node_pair) {
   CNodePtr cnode = node_pair.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
@@ -1456,13 +1456,13 @@ TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int>& node_pair
 }
 
 // if reshape's output connect to several primitive, return the first layout found
-std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr& cnode) {
+std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(cnode->func_graph());
   FuncGraphManagerPtr manager = cnode->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
   AnfNodeIndexSet node_set = manager->node_users()[cnode];
-  for (auto& node_pair : node_set) {
+  for (auto &node_pair : node_set) {
     CNodePtr use_apply = node_pair.first->cast<CNodePtr>();
     if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
       continue;
@@ -1492,7 +1492,7 @@ std::shared_ptr<TensorLayout> FindNextLayout(const CNodePtr& cnode) {
   return nullptr;
 }
 
-std::shared_ptr<TensorLayout> GetOutputLayoutFromCNode(const CNodePtr& cnode, size_t output_index) {
+std::shared_ptr<TensorLayout> GetOutputLayoutFromCNode(const CNodePtr &cnode, size_t output_index) {
   MS_EXCEPTION_IF_NULL(cnode);
   OperatorInfoPtr distribute_operator = GetDistributeOperator(cnode);
   MS_EXCEPTION_IF_NULL(distribute_operator);
@@ -1505,7 +1505,7 @@ std::shared_ptr<TensorLayout> GetOutputLayoutFromCNode(const CNodePtr& cnode, si
   return std::make_shared<TensorLayout>(tensorlayout_out);
 }
 
-std::shared_ptr<TensorLayout> FindPrevParallelCareNodeLayout(const AnfNodePtr& node, size_t output_index) {
+std::shared_ptr<TensorLayout> FindPrevParallelCareNodeLayout(const AnfNodePtr &node, size_t output_index) {
   if (!node->isa<CNode>()) {
     return nullptr;
   }
@@ -1523,7 +1523,7 @@ std::shared_ptr<TensorLayout> FindPrevParallelCareNodeLayout(const AnfNodePtr& n
   return nullptr;
 }
 
-std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr& node) {
+std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
   if (node->isa<Parameter>()) {
     MS_LOG(EXCEPTION) << "Failure: parameter before reshape is not supported temporary";
   }
@@ -1567,8 +1567,8 @@ std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr& node) {
   return nullptr;
 }
 
-void ReshapeInit(const std::vector<AnfNodePtr>& all_nodes) {
-  for (auto& node : all_nodes) {
+void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
       continue;
@@ -1608,7 +1608,7 @@ void ReshapeInit(const std::vector<AnfNodePtr>& all_nodes) {
 }
 
 // Sens node satisfies the following conditions: cnode(sens)-->cnode(tuple_getitem)-->cnode-->cnode(J)
-bool IsGradSensNode(const AnfNodePtr& node) {
+bool IsGradSensNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return false;
   }
@@ -1660,7 +1660,7 @@ bool IsGradSensNode(const AnfNodePtr& node) {
   return (expect_j_prim->name() == J);
 }
 
-TensorLayouts GetLossNodeGradOutputLayout(const CNodePtr& loss_cnode) {
+TensorLayouts GetLossNodeGradOutputLayout(const CNodePtr &loss_cnode) {
   MS_EXCEPTION_IF_NULL(loss_cnode);
   AnfNodePtr node = loss_cnode->cast<AnfNodePtr>();
   MS_EXCEPTION_IF_NULL(node);
@@ -1700,7 +1700,7 @@ TensorLayouts GetLossNodeGradOutputLayout(const CNodePtr& loss_cnode) {
   return ret;
 }
 
-void SplitSens(const AnfNodePtr& grad_sens_node, const TensorLayout& loss_grad_layout) {
+void SplitSens(const AnfNodePtr &grad_sens_node, const TensorLayout &loss_grad_layout) {
   MS_EXCEPTION_IF_NULL(grad_sens_node);
 
   auto cnode = grad_sens_node->cast<CNodePtr>();
@@ -1752,7 +1752,7 @@ void SplitSens(const AnfNodePtr& grad_sens_node, const TensorLayout& loss_grad_l
   InsertGetTensorSliceOp(op, cnode, func_graph, 1, SPLIT_SENS);
 }
 
-void InsertForwardOps(const OperatorInfoPtr& distribute_operator, const CNodePtr& cnode) {
+void InsertForwardOps(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(distribute_operator);
   MS_EXCEPTION_IF_NULL(cnode);
   OperatorVector forward_op = distribute_operator->forward_op();
@@ -1762,7 +1762,7 @@ void InsertForwardOps(const OperatorInfoPtr& distribute_operator, const CNodePtr
   }
 }
 
-void StepReplace(const OperatorInfoPtr& distribute_operator, const CNodePtr& cnode) {
+void StepReplace(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(distribute_operator);
   MS_EXCEPTION_IF_NULL(cnode);
   // StepReplaceOp
@@ -1783,7 +1783,7 @@ void StepReplace(const OperatorInfoPtr& distribute_operator, const CNodePtr& cno
   }
 }
 
-void HandleDropoutNode(const OperatorInfoPtr& distribute_operator, const CNodePtr& cnode) {
+void HandleDropoutNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(distribute_operator);
   MS_EXCEPTION_IF_NULL(cnode);
 
@@ -1801,12 +1801,12 @@ void HandleDropoutNode(const OperatorInfoPtr& distribute_operator, const CNodePt
   ReplaceOneOp(replace_op, cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
 }
 
-void HandleSpecialNode(const OperatorInfoPtr& distribute_operator, const CNodePtr& cnode) {
+void HandleSpecialNode(const OperatorInfoPtr &distribute_operator, const CNodePtr &cnode) {
   HandleDropoutNode(distribute_operator, cnode);
 }
 
-void ParallelCommunication(const FuncGraphPtr& root, const std::vector<AnfNodePtr>& all_nodes,
-                           const FuncGraphManagerPtr& manager) {
+void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
+                           const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(manager);
   TensorRedistribution tensor_redistribution;
@@ -1817,7 +1817,7 @@ void ParallelCommunication(const FuncGraphPtr& root, const std::vector<AnfNodePt
   // get output layout of loss must before inserting the operators below
   TensorLayouts loss_layout = GetLossNodeGradOutputLayout(loss_cnode);
 
-  for (auto& node : all_nodes) {
+  for (auto &node : all_nodes) {
     // find sens node
     if ((grad_sens_node == nullptr) && IsGradSensNode(node)) {
       grad_sens_node = node;
@@ -1866,16 +1866,16 @@ void ParallelCommunication(const FuncGraphPtr& root, const std::vector<AnfNodePt
 }
 
 namespace {
-void RevertSymbolicKeyInstance(const FuncGraphPtr& root, const AnfNodePtr& node) {
+void RevertSymbolicKeyInstance(const FuncGraphPtr &root, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(node);
   auto symbolic_key = GetValueNode<SymbolicKeyInstancePtr>(node);
   MS_EXCEPTION_IF_NULL(symbolic_key);
   auto all_upstream_node = root->manager()->node_users()[node];
-  for (auto& upstream_node : all_upstream_node) {
+  for (auto &upstream_node : all_upstream_node) {
     FuncGraphPtr fg = upstream_node.first->func_graph();
     if (symbolic_key->node()->isa<Parameter>()) {
-      for (auto& param : root->parameters()) {
+      for (auto &param : root->parameters()) {
         if (*param == *symbolic_key->node()) {
           AnfNodePtr reverted_node = root->NewCNode({NewValueNode(prim::kPrimEmbed), param});
           MS_EXCEPTION_IF_NULL(reverted_node);
@@ -1889,9 +1889,9 @@ void RevertSymbolicKeyInstance(const FuncGraphPtr& root, const AnfNodePtr& node)
 }
 }  // namespace
 
-void HandleSymbolicKeyInstance(const FuncGraphPtr& root, const std::vector<AnfNodePtr>& all_nodes) {
+void HandleSymbolicKeyInstance(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   MS_EXCEPTION_IF_NULL(root);
-  for (auto& node : all_nodes) {
+  for (auto &node : all_nodes) {
     // revert back SymbolicKeyInstance to embed() primitive
     if (IsValueNode<SymbolicKeyInstance>(node)) {
       RevertSymbolicKeyInstance(root, node);
@@ -1900,13 +1900,13 @@ void HandleSymbolicKeyInstance(const FuncGraphPtr& root, const std::vector<AnfNo
   }
 }
 
-void CheckpointStrategy(const FuncGraphPtr& func_graph) {
+void CheckpointStrategy(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "Save strategy to checkpoint begin";
   StrategyMap straMap;
   auto ret = func_graph->get_return();
   auto all_nodes = DeepScopedGraphSearch(ret);
-  for (auto& node : all_nodes) {
+  for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
@@ -1931,7 +1931,7 @@ void CheckpointStrategy(const FuncGraphPtr& func_graph) {
   }
 }
 
-void RestoreStrategy(const FuncGraphPtr& func_graph) {
+void RestoreStrategy(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "Extract strategy from checkpoint begin";
   StrategyMap straMap;
@@ -1943,7 +1943,7 @@ void RestoreStrategy(const FuncGraphPtr& func_graph) {
   }
   auto ret = func_graph->get_return();
   auto all_nodes = DeepScopedGraphSearch(ret);
-  for (auto& node : all_nodes) {
+  for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
@@ -1968,8 +1968,8 @@ void RestoreStrategy(const FuncGraphPtr& func_graph) {
   }
 }
 
-void SetForwardFlag(const std::vector<AnfNodePtr>& all_nodes) {
-  for (auto& node : all_nodes) {
+void SetForwardFlag(const std::vector<AnfNodePtr> &all_nodes) {
+  for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
@@ -1986,8 +1986,8 @@ void SetForwardFlag(const std::vector<AnfNodePtr>& all_nodes) {
   }
 }
 
-void SetForwardFlag(const AnfNodeSet& all_nodes) {
-  for (auto& node : all_nodes) {
+void SetForwardFlag(const AnfNodeSet &all_nodes) {
+  for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
@@ -2003,7 +2003,7 @@ void SetForwardFlag(const AnfNodeSet& all_nodes) {
   }
 }
 
-CNodePtr FindLossCNode(const FuncGraphPtr& func_graph) {
+CNodePtr FindLossCNode(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   CNodePtr return_node = func_graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
@@ -2059,8 +2059,8 @@ CNodePtr FindLossCNode(const FuncGraphPtr& func_graph) {
   return pre_cnode;
 }
 
-FuncGraphPtr FindForwardGraphByRootNodes(const AnfNodeSet& root_all_nodes) {
-  for (auto& node : root_all_nodes) {
+FuncGraphPtr FindForwardGraphByRootNodes(const AnfNodeSet &root_all_nodes) {
+  for (auto &node : root_all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
@@ -2088,11 +2088,11 @@ FuncGraphPtr FindForwardGraphByRootNodes(const AnfNodeSet& root_all_nodes) {
   return nullptr;
 }
 
-CNodePtr FindLossCNodeFromRoot(const FuncGraphPtr& root) {
+CNodePtr FindLossCNodeFromRoot(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
   AnfNodePtr root_return_node = root->get_return();
   MS_EXCEPTION_IF_NULL(root_return_node);
-  const auto& all_nodes = root->nodes();
+  const auto &all_nodes = root->nodes();
   FuncGraphPtr func_graph = FindForwardGraphByRootNodes(all_nodes);
   if (func_graph == nullptr) {
     return FindLossCNode(root);
@@ -2101,12 +2101,12 @@ CNodePtr FindLossCNodeFromRoot(const FuncGraphPtr& root) {
   }
 }
 
-FuncGraphPtr ForwardGraph(const FuncGraphPtr& root) {
+FuncGraphPtr ForwardGraph(const FuncGraphPtr &root) {
   FuncGraphPtr forward_graph = root;
   MS_EXCEPTION_IF_NULL(root);
   AnfNodePtr root_return_node = root->get_return();
   MS_EXCEPTION_IF_NULL(root_return_node);
-  const auto& all_nodes = root->nodes();
+  const auto &all_nodes = root->nodes();
   FuncGraphPtr func_graph = FindForwardGraphByRootNodes(all_nodes);
   if (func_graph != nullptr) {
     forward_graph = func_graph;
@@ -2114,11 +2114,11 @@ FuncGraphPtr ForwardGraph(const FuncGraphPtr& root) {
   return forward_graph;
 }
 
-void MarkForwardCNode(const FuncGraphPtr& root) {
+void MarkForwardCNode(const FuncGraphPtr &root) {
   MS_EXCEPTION_IF_NULL(root);
   AnfNodePtr root_return_node = root->get_return();
   MS_EXCEPTION_IF_NULL(root_return_node);
-  auto& all_nodes = root->nodes();
+  auto &all_nodes = root->nodes();
   FuncGraphPtr func_graph = FindForwardGraphByRootNodes(all_nodes);
 
   if (func_graph == nullptr) {
@@ -2178,7 +2178,7 @@ Status ParallelInit() {
   return SUCCESS;
 }
 
-bool StepParallel(const FuncGraphPtr& root, const opt::OptimizerPtr& optimizer) {
+bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(optimizer);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
@@ -2258,12 +2258,12 @@ bool StepParallel(const FuncGraphPtr& root, const opt::OptimizerPtr& optimizer) 
 }
 
 // Needed by rec_parser
-std::vector<std::string> ExtractInputsTensorName(const CNodePtr& node) {
+std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node) {
   std::vector<std::string> name_inputs;
   std::vector<AnfNodePtr> all_inputs = node->inputs();
   std::vector<AnfNodePtr> node_inputs{all_inputs.begin() + 1, all_inputs.end()};
 
-  for (auto& input : node_inputs) {
+  for (auto &input : node_inputs) {
     std::string name;
     if (IsValueNode<Tensor>(input) || input->isa<CNode>() || input->isa<Parameter>()) {
       name = input->ToString();

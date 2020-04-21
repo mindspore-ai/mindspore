@@ -36,10 +36,10 @@ using GeGraphPtr = std::shared_ptr<GeGraph>;
 
 namespace mindspore {
 namespace pynative {
-bool BuildSingleOpGraph(const OpExecInfoPtr& op_exec_info, const std::vector<GeTensorPtr>& inputs,
-                        const std::unordered_map<std::string, ValuePtr>& attrs, const GeGraphPtr& graph);
+bool BuildSingleOpGraph(const OpExecInfoPtr &op_exec_info, const std::vector<GeTensorPtr> &inputs,
+                        const std::unordered_map<std::string, ValuePtr> &attrs, const GeGraphPtr &graph);
 
-py::object RunOpInGE(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* status);
+py::object RunOpInGE(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
 }  // namespace pynative
 }  // namespace mindspore
 

@@ -40,10 +40,10 @@ namespace mindspore {
 class List : public Object {
  public:
   List() : Object(kObjectTypeList) {}
-  List(const std::initializer_list<TypePtr>& objs)
+  List(const std::initializer_list<TypePtr> &objs)
       : Object(kObjectTypeList, false), elements_(objs.begin(), objs.end()) {}
   // Shadow copy;
-  explicit List(const TypePtrList& obj) : Object(kObjectTypeList, false), elements_(obj) {}
+  explicit List(const TypePtrList &obj) : Object(kObjectTypeList, false), elements_(obj) {}
   ~List() override {}
   MS_DECLARE_PARENT(List, Object)
 
@@ -51,7 +51,7 @@ class List : public Object {
   TypeId generic_type_id() const override { return kObjectTypeList; }
   TypePtr DeepCopy() const override;
 
-  bool operator==(const Type& other) const override;
+  bool operator==(const Type &other) const override;
   std::size_t size() const { return elements_.size(); }
   TypePtrList elements() const { return elements_; }
   std::string ToString() const override;
@@ -68,22 +68,22 @@ using ClassAttrVector = std::vector<std::pair<std::string, TypePtr>>;
 class Class : public Object {
  public:
   Class() : Object(kObjectTypeClass), tag_(Named("Class")) {}
-  Class(const Named& tag, const ClassAttrVector& attributes, const std::unordered_map<std::string, ValuePtr>& methods);
+  Class(const Named &tag, const ClassAttrVector &attributes, const std::unordered_map<std::string, ValuePtr> &methods);
   ~Class() override {}
   MS_DECLARE_PARENT(Class, Object)
 
   TypeId generic_type_id() const override { return kObjectTypeClass; }
 
-  bool operator==(const Type& other) const override;
+  bool operator==(const Type &other) const override;
   TypePtr DeepCopy() const override;
   std::string ToString() const override;
   std::string DumpText() const override;
-  void set_value(const std::unordered_map<std::string, ValuePtr>& v) { attributes_value_ = v; }
+  void set_value(const std::unordered_map<std::string, ValuePtr> &v) { attributes_value_ = v; }
 
   Named tag() { return tag_; }
   std::unordered_map<std::string, ValuePtr> GetValue() { return attributes_value_; }
   std::unordered_map<std::string, ValuePtr> methods() { return methods_; }
-  ClassAttrVector& GetAttributes() { return attributes_; }
+  ClassAttrVector &GetAttributes() { return attributes_; }
 
   ClassAttrVector attributes_;
 
@@ -99,11 +99,11 @@ class Tuple : public Object {
  public:
   Tuple() : Object(kObjectTypeTuple) {}
   // usage : Tuple t = {std::make_shared<Bool>(), std::make_shared<Int>(32)};
-  Tuple(const std::initializer_list<TypePtr>& objs)
+  Tuple(const std::initializer_list<TypePtr> &objs)
       : Object(kObjectTypeTuple, false), elements_(objs.begin(), objs.end()) {}
 
   // Shadow copy
-  explicit Tuple(const TypePtrList& objs) : Object(kObjectTypeTuple, false), elements_(objs.begin(), objs.end()) {}
+  explicit Tuple(const TypePtrList &objs) : Object(kObjectTypeTuple, false), elements_(objs.begin(), objs.end()) {}
 
   ~Tuple() override {}
   MS_DECLARE_PARENT(Tuple, Object)
@@ -115,7 +115,7 @@ class Tuple : public Object {
   std::string ToReprString() const override { return "tuple_"; }
   std::string DumpText() const override;
   const TypePtr operator[](size_t dim) const;
-  bool operator==(const Type& other) const override;
+  bool operator==(const Type &other) const override;
 
   TypePtrList elements() const { return elements_; }
   std::size_t size() const { return elements_.size(); }
@@ -128,7 +128,7 @@ using TuplePtr = std::shared_ptr<Tuple>;
 class Dictionary : public Object {
  public:
   Dictionary() : Object(kObjectTypeDictionary) {}
-  explicit Dictionary(const std::vector<std::pair<std::string, TypePtr>>& key_values)
+  explicit Dictionary(const std::vector<std::pair<std::string, TypePtr>> &key_values)
       : Object(kObjectTypeDictionary, false), key_values_(key_values) {}
 
   ~Dictionary() override {}
@@ -136,7 +136,7 @@ class Dictionary : public Object {
 
   TypeId generic_type_id() const override { return kObjectTypeDictionary; }
 
-  bool operator==(const Type& other) const override;
+  bool operator==(const Type &other) const override;
   TypePtr DeepCopy() const override;
   std::string ToString() const override;
   std::string DumpText() const override;

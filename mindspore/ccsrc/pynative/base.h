@@ -58,7 +58,7 @@ struct OpExecInfo {
   py::dict op_attrs;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
-OpExecInfoPtr GenerateOpExecInfo(const py::args& args);
+OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
 
 const std::set<std::string> ignore_infer_prim = {"partial", "make_ref"};
 

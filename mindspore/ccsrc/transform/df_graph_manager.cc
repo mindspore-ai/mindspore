@@ -31,8 +31,8 @@
 
 namespace mindspore {
 namespace transform {
-DfGraphWrapper::DfGraphWrapper(const std::string& name, const int& id, const DfGraphPtr& graph_ptr,
-                               const OptionMap& options)
+DfGraphWrapper::DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr,
+                               const OptionMap &options)
     : name_(name), id_(id), graph_ptr_(graph_ptr), options_(options) {}
 
 DfGraphManager::DfGraphManager() {
@@ -49,7 +49,7 @@ DfGraphManager::~DfGraphManager() {
   parse::python_adapter::set_python_env_flag(false);
 }
 
-DfGraphManager& DfGraphManager::GetInstance() {
+DfGraphManager &DfGraphManager::GetInstance() {
   static DfGraphManager instance;
   return instance;
 }
@@ -63,7 +63,7 @@ int DfGraphManager::GenerateId() {
   return graph_id_;
 }
 
-Status DfGraphManager::AddGraph(const std::string& name, const DfGraphPtr& graph_ptr, const OptionMap& options) {
+Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr, const OptionMap &options) {
   std::lock_guard<std::mutex> lg(lock_);
   if (name.empty()) {
     MS_LOG(ERROR) << "The graph name is null, add graph failed";
@@ -101,9 +101,9 @@ std::vector<DfGraphWrapperPtr> DfGraphManager::GetAllGraphs() {
 }
 std::set<string> DfGraphManager::GetSavedGraphs() { return saved_graphs_; }
 
-void DfGraphManager::AddSavedGraphs(const std::string& id) { saved_graphs_.insert(id); }
+void DfGraphManager::AddSavedGraphs(const std::string &id) { saved_graphs_.insert(id); }
 
-DfGraphWrapperPtr DfGraphManager::GetGraphByName(const std::string& name) {
+DfGraphWrapperPtr DfGraphManager::GetGraphByName(const std::string &name) {
   std::lock_guard<std::mutex> lg(lock_);
   if (name.empty()) {
     MS_LOG(ERROR) << "The graph name is null";
@@ -126,7 +126,7 @@ void DfGraphManager::ClearGraph() noexcept {
   MS_LOG(INFO) << "Remove all graphs in GraphManager";
 }
 
-void DfGraphManager::SetAnfGraph(const std::string& name, const AnfGraphPtr& anf_graph_ptr) {
+void DfGraphManager::SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr) {
   DfGraphWrapperPtr df_graph = GetGraphByName(name);
   if (df_graph == nullptr) {
     MS_LOG(ERROR) << "Can't found graph name: " << name;
@@ -152,7 +152,7 @@ void DfGraphManager::EraseAnfGraph() {
   anf_graphs_.clear();
 }
 
-void DfGraphManager::SetGeSession(const std::shared_ptr<ge::Session>& sess_ptr) {
+void DfGraphManager::SetGeSession(const std::shared_ptr<ge::Session> &sess_ptr) {
   std::lock_guard<std::mutex> lg(lock_);
   if (sess_ptr == nullptr) {
     MS_LOG(WARNING) << "You are adding a empty Ge Session";
@@ -182,7 +182,7 @@ void DfGraphManager::DeleteGeSession() noexcept {
   }
 }
 
-void DfGraphManager::SetGraphRunner(const std::shared_ptr<transform::GraphRunner>& graph_runner_ptr) noexcept {
+void DfGraphManager::SetGraphRunner(const std::shared_ptr<transform::GraphRunner> &graph_runner_ptr) noexcept {
   std::lock_guard<std::mutex> lg(lock_);
   if (graph_runner_ptr == nullptr) {
     MS_LOG(WARNING) << "You are adding a empty GraphRunner";

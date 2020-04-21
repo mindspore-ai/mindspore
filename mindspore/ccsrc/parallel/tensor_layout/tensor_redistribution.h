@@ -46,7 +46,7 @@ class TensorRedistribution {
         memory_cost_(0.0),
         construct_op_flag_(construct_op_flag),
         keep_reshape_(keep_reshape) {}
-  Status Init(const TensorLayout& from, const TensorLayout& to, const RankList& dev_list);
+  Status Init(const TensorLayout &from, const TensorLayout &to, const RankList &dev_list);
   ~TensorRedistribution() = default;
   RedistributionOpListPtr InferTensorRedistributionOperatorList(bool is_cost_model = false);
   OperatorList operator_list() const { return operator_list_; }
@@ -59,8 +59,8 @@ class TensorRedistribution {
   double memory_cost() const { return memory_cost_; }
 
  private:
-  Status InferReshape(const TensorLayout& from_layout, const TensorLayout& to_layout,
-                      OperatorVector* const operator_vector, OutPutInfoVector* const output_info_vector);
+  Status InferReshape(const TensorLayout &from_layout, const TensorLayout &to_layout,
+                      OperatorVector *const operator_vector, OutPutInfoVector *const output_info_vector);
 
   TensorLayout from_origin_;
   TensorLayout to_origin_;

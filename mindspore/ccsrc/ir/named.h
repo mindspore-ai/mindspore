@@ -27,18 +27,18 @@
 namespace mindspore {
 class Named : public Value {
  public:
-  explicit Named(const std::string& name) : name_(name) { hash_id_ = std::hash<std::string>{}(name); }
-  Named(const Named& other) : Value(other) {
+  explicit Named(const std::string &name) : name_(name) { hash_id_ = std::hash<std::string>{}(name); }
+  Named(const Named &other) : Value(other) {
     this->name_ = other.name_;
     hash_id_ = std::hash<std::string>{}(other.name_);
   }
   ~Named() override = default;
   MS_DECLARE_PARENT(Named, Value);
 
-  const std::string& name() const { return name_; }
-  virtual bool operator==(const Named& other) const { return name_ == other.name(); }
-  bool operator==(const Value& other) const override;
-  Named& operator=(const Named& other) {
+  const std::string &name() const { return name_; }
+  virtual bool operator==(const Named &other) const { return name_ == other.name(); }
+  bool operator==(const Value &other) const override;
+  Named &operator=(const Named &other) {
     if (&other != this) {
       this->type_ = other.type_;
       this->name_ = other.name_;
@@ -50,7 +50,7 @@ class Named : public Value {
   std::size_t Hash() const { return hash_id_; }
   std::size_t hash() const override { return hash_id_; }
 
-  friend std::ostream& operator<<(std::ostream& os, const Named& nmd) {
+  friend std::ostream &operator<<(std::ostream &os, const Named &nmd) {
     os << nmd.name();
     return os;
   }

@@ -37,8 +37,8 @@ DistortBoundingBoxCropOp::DistortBoundingBoxCropOp(float aspect_ratio, float int
   rnd_.seed(seed_);
 }
 
-Status DistortBoundingBoxCropOp::Compute(const std::vector<std::shared_ptr<Tensor>>& input,
-                                         std::vector<std::shared_ptr<Tensor>>* output) {
+Status DistortBoundingBoxCropOp::Compute(const std::vector<std::shared_ptr<Tensor>> &input,
+                                         std::vector<std::shared_ptr<Tensor>> *output) {
   IO_CHECK_VECTOR(input, output);
   if (input.size() != NumInput())
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Number of inputs is not 5");
@@ -98,8 +98,8 @@ Status DistortBoundingBoxCropOp::Compute(const std::vector<std::shared_ptr<Tenso
   return Status::OK();
 }
 
-Status DistortBoundingBoxCropOp::OutputShape(const std::vector<TensorShape>& inputs,
-                                             std::vector<TensorShape>& outputs) {
+Status DistortBoundingBoxCropOp::OutputShape(const std::vector<TensorShape> &inputs,
+                                             std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
   TensorShape out = TensorShape{-1, -1};
@@ -108,7 +108,7 @@ Status DistortBoundingBoxCropOp::OutputShape(const std::vector<TensorShape>& inp
   if (!outputs.empty()) return Status::OK();
   return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
 }
-Status DistortBoundingBoxCropOp::OutputType(const std::vector<DataType>& inputs, std::vector<DataType>& outputs) {
+Status DistortBoundingBoxCropOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputType(inputs, outputs));
   outputs[0] = inputs[0];
   return Status::OK();

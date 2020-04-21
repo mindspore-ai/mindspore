@@ -80,7 +80,7 @@ const std::set<std::string> BLACK_LIST = {TUPLE_GETITEM,
                                           REF_TO_EMBED,
                                           STOP_GRADIENT};
 
-bool IsInBlackList(const PrimitivePtr& prim) {
+bool IsInBlackList(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (BLACK_LIST.find(prim->name()) != BLACK_LIST.end());
 }

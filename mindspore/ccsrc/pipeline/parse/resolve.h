@@ -39,7 +39,7 @@ namespace parse {
 // NameSpace class for resolving python code.
 class NameSpace : public Named {
  public:
-  NameSpace(const std::string& module, const py::object& obj) : Named(module), module_(module), obj_(obj) {}
+  NameSpace(const std::string &module, const py::object &obj) : Named(module), module_(module), obj_(obj) {}
   ~NameSpace() override = default;
   MS_DECLARE_PARENT(NameSpace, Named);
 
@@ -60,8 +60,8 @@ using NameSpacePtr = std::shared_ptr<NameSpace>;
 // Symbol in NameSpace or Class which shall be resolved.
 class Symbol : public Named {
  public:
-  explicit Symbol(const std::string& symbol) : Named(symbol), symbol_(symbol) {}
-  explicit Symbol(const std::string& symbol, const std::string& name) : Named(name), symbol_(symbol) {}
+  explicit Symbol(const std::string &symbol) : Named(symbol), symbol_(symbol) {}
+  explicit Symbol(const std::string &symbol, const std::string &name) : Named(name), symbol_(symbol) {}
 
   ~Symbol() override = default;
   MS_DECLARE_PARENT(Symbol, Named);
@@ -79,7 +79,7 @@ using SymbolPtr = std::shared_ptr<Symbol>;
 // PyObjectWrapper class wrappers resolved python object for further processing.
 class PyObjectWrapper : public Named {
  public:
-  explicit PyObjectWrapper(const py::object& obj, const std::string name = "Python object") : Named(name), obj_(obj) {}
+  explicit PyObjectWrapper(const py::object &obj, const std::string name = "Python object") : Named(name), obj_(obj) {}
   ~PyObjectWrapper() override = default;
   MS_DECLARE_PARENT(PyObjectWrapper, Named);
   py::object obj() { return obj_; }
@@ -92,7 +92,7 @@ class PyObjectWrapper : public Named {
 // ClassObject class wrappers dataclass
 class ClassObject : public PyObjectWrapper {
  public:
-  explicit ClassObject(const py::object& obj, const std::string name = "Python dataclass")
+  explicit ClassObject(const py::object &obj, const std::string name = "Python dataclass")
       : PyObjectWrapper(obj, name) {}
   ~ClassObject() override = default;
   MS_DECLARE_PARENT(ClassObject, PyObjectWrapper);
@@ -102,7 +102,7 @@ class ClassObject : public PyObjectWrapper {
 // ClassType class wrappers class name in python
 class ClassType : public PyObjectWrapper {
  public:
-  explicit ClassType(const py::object& obj, const std::string name = "Python class type")
+  explicit ClassType(const py::object &obj, const std::string name = "Python class type")
       : PyObjectWrapper(obj, name) {}
   ~ClassType() override = default;
   MS_DECLARE_PARENT(ClassType, PyObjectWrapper);
@@ -112,7 +112,7 @@ class ClassType : public PyObjectWrapper {
 // SymbolResolver class for resolving symbol extracted from AnfNode.
 class SymbolResolver {
  public:
-  SymbolResolver(const NameSpacePtr& name_space, const SymbolPtr& symbol, const AnfNodePtr& node)
+  SymbolResolver(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node)
       : namespace_(name_space), symbol_(symbol), resolved_node_(node) {}
 
   ~SymbolResolver() = default;
@@ -124,7 +124,7 @@ class SymbolResolver {
 
   SymbolPtr symbol() { return symbol_; }
 
-  py::object& result() { return result_; }
+  py::object &result() { return result_; }
 
   AnfNodePtr resolved_node() { return resolved_node_; }
 
@@ -141,15 +141,15 @@ class SymbolResolver {
 };
 using SymbolResolverPtr = std::shared_ptr<SymbolResolver>;
 // Resolve symbol in namespace.
-AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr& manager, const NameSpacePtr& name_space, const SymbolPtr& symbol,
-                         const AnfNodePtr& node);
+AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
+                         const AnfNodePtr &node);
 
 // Resolve one graph which normally is the root graph. FuncGraph shall be managed by res->manager().
-bool ResolveFuncGraph(const FuncGraphPtr& func_graph, const pipeline::ResourceBasePtr& res, bool use_profile = true);
+bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &res, bool use_profile = true);
 
 // Resolve all graphs in manager which is defined outside of pipeline::Resource.
 // Mainly used for test cases or resolve graphs which will not be managed by manager.
-bool ResolveAll(const FuncGraphManagerPtr& manager);
+bool ResolveAll(const FuncGraphManagerPtr &manager);
 
 }  // namespace parse
 }  // namespace mindspore

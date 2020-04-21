@@ -31,8 +31,8 @@ namespace mindspore {
 namespace parallel {
 class L2NormalizeInfo : public Activation {
  public:
-  L2NormalizeInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-                  const PrimitiveAttrs& attrs)
+  L2NormalizeInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                  const PrimitiveAttrs &attrs)
       : Activation(name, inputs_shape, outputs_shape, attrs) {}
   ~L2NormalizeInfo() override = default;
   Status GenerateStrategies(int32_t stage_id) override;
@@ -40,7 +40,7 @@ class L2NormalizeInfo : public Activation {
  protected:
   Status GetAttrs() override;
   Status InferMirrorOps() override;
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
 
  private:
   int32_t axis_ = 0;  // Default value = 0

@@ -17,17 +17,17 @@
 #include "utils/base_ref.h"
 
 namespace mindspore {
-iterator ConstIteratorCast(std::vector<BaseRef>* v, const const_iterator iter) {
+iterator ConstIteratorCast(std::vector<BaseRef> *v, const const_iterator iter) {
   return std::next(v->begin(), std::distance(v->cbegin(), iter));
 }
 
-BaseRef::BaseRef(const BaseRef& other) : Base(other), m_ptr(other.m_ptr) {
+BaseRef::BaseRef(const BaseRef &other) : Base(other), m_ptr(other.m_ptr) {
   if (!m_ptr) {
     m_ptr = other.copy();
   }
 }
 
-bool BaseRef::operator==(const BaseRef& other) const {
+bool BaseRef::operator==(const BaseRef &other) const {
   if (m_ptr == other.m_ptr) {
     return true;
   }
@@ -55,7 +55,7 @@ bool BaseRef::operator==(const BaseRef& other) const {
 }
 
 // left reference
-BaseRef& BaseRef::operator=(const BaseRef& other) {
+BaseRef &BaseRef::operator=(const BaseRef &other) {
   if ((m_ptr != nullptr && m_ptr == other.m_ptr) || this == &other) {
     return *this;
   }
@@ -64,7 +64,7 @@ BaseRef& BaseRef::operator=(const BaseRef& other) {
 }
 
 // right reference
-BaseRef& BaseRef::operator=(BaseRef&& other) {
+BaseRef &BaseRef::operator=(BaseRef &&other) {
   if ((m_ptr != nullptr && m_ptr == other.m_ptr) || this == &other) {
     return *this;
   }
@@ -88,7 +88,7 @@ uint32_t BaseRef::type() const {
 }
 
 // left reference
-SetRef& SetRef::operator=(const SetRef& other) {
+SetRef &SetRef::operator=(const SetRef &other) {
   if (elements_ == other.elements_ || this == &other) {
     return *this;
   }
@@ -100,7 +100,7 @@ std::string SetRef::ToString() const {
   std::ostringstream buffer;
   bool begin = true;
   buffer << "set[";
-  for (auto& attr : elements_) {
+  for (auto &attr : elements_) {
     if (!begin) {
       buffer << ", ";
     } else {
@@ -113,7 +113,7 @@ std::string SetRef::ToString() const {
 }
 
 // left reference
-VectorRef& VectorRef::operator=(const VectorRef& other) {
+VectorRef &VectorRef::operator=(const VectorRef &other) {
   if (elements_ == other.elements_ || this == &other) {
     return *this;
   }
@@ -125,7 +125,7 @@ std::string VectorRef::ToString() const {
   std::ostringstream buffer;
   bool begin = true;
   buffer << "vector[";
-  for (auto& attr : elements_) {
+  for (auto &attr : elements_) {
     if (!begin) {
       buffer << ", ";
     } else {
@@ -137,14 +137,14 @@ std::string VectorRef::ToString() const {
   return buffer.str();
 }
 
-bool VectorRef::operator==(const BaseRef& other) const {
+bool VectorRef::operator==(const BaseRef &other) const {
   if (!utils::isa<VectorRef>(other)) {
     return false;
   }
   return *this == utils::cast<VectorRef>(other);
 }
 
-bool VectorRef::operator==(const VectorRef& other) const {
+bool VectorRef::operator==(const VectorRef &other) const {
   if (elements_.size() != other.elements_.size()) {
     return false;
   }
@@ -156,14 +156,14 @@ bool VectorRef::operator==(const VectorRef& other) const {
   return true;
 }
 
-bool SetRef::operator==(const BaseRef& other) const {
+bool SetRef::operator==(const BaseRef &other) const {
   if (!utils::isa<SetRef>(other)) {
     return false;
   }
   return *this == utils::cast<SetRef>(other);
 }
 
-bool SetRef::operator==(const SetRef& other) const {
+bool SetRef::operator==(const SetRef &other) const {
   if (elements_.size() != other.elements_.size()) {
     return false;
   }
@@ -177,21 +177,21 @@ bool SetRef::operator==(const SetRef& other) const {
   return true;
 }
 
-bool RunFunctionRef::operator==(const BaseRef& other) const {
+bool RunFunctionRef::operator==(const BaseRef &other) const {
   if (!utils::isa<RunFunctionRef>(other)) {
     return false;
   }
   return *this == utils::cast<RunFunctionRef>(other);
 }
 
-bool RunFunctionRef::operator==(const RunFunctionRef& other) const { return func_ == other.func_; }
+bool RunFunctionRef::operator==(const RunFunctionRef &other) const { return func_ == other.func_; }
 
-bool PyObjectRef::operator==(const BaseRef& other) const {
+bool PyObjectRef::operator==(const BaseRef &other) const {
   if (!utils::isa<PyObjectRef>(other)) {
     return false;
   }
   return *this == utils::cast<PyObjectRef>(other);
 }
 
-bool PyObjectRef::operator==(const PyObjectRef& other) const { return object_ == other.object_; }
+bool PyObjectRef::operator==(const PyObjectRef &other) const { return object_ == other.object_; }
 }  // namespace mindspore

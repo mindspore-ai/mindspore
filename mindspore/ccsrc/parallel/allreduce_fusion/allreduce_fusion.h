@@ -50,15 +50,15 @@ class AllreduceFusion {
         allreduce_bandwidth_(0),
         computation_time_parameter_(0) {}
   virtual ~AllreduceFusion() = default;
-  Status ProcessAllreduceFusion(const CNodePtr& ret);
+  Status ProcessAllreduceFusion(const CNodePtr &ret);
 
  private:
   Status AddNodeToGraph();
-  CNodeCostMap FindCNode(const AnfNodePtr& from, uint32_t recursive_times = 0) const;
-  CNodeCostMap FindNextCNodes(const CNodePtr& from, uint32_t recursive_times = 0) const;
+  CNodeCostMap FindCNode(const AnfNodePtr &from, uint32_t recursive_times = 0) const;
+  CNodeCostMap FindNextCNodes(const CNodePtr &from, uint32_t recursive_times = 0) const;
   Status AddEdgeToGraph();
   std::vector<double> GenerateCostMap(int32_t fusion_times, double tail_percent) const;
-  Status SetFusion(const std::vector<double>& cost_map);
+  Status SetFusion(const std::vector<double> &cost_map);
   Status SetFusionByAlgorithm(int32_t algorithm);
   Status SetFusionByBackwardCompTime();
   Status SetFusionByBackwardCompAndAllreduceTime();

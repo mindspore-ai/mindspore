@@ -67,7 +67,7 @@ std::string ImplTypeToStr(OpImplyType impl_type) {
       return "unknow";
   }
 }
-bool OpLib::RegOp(const std::string& json_string, const std::string& impl_path) {
+bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) {
   bool ret = false;
   try {
     auto op_json = nlohmann::json::parse(json_string);
@@ -88,13 +88,13 @@ bool OpLib::RegOp(const std::string& json_string, const std::string& impl_path) 
     if (!ret) {
       MS_LOG(DEBUG) << "RegOp failed: opname:" << op_name << "imply_type" << imply_type_string;
     }
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     MS_LOG(DEBUG) << "get op_json elements failed:" << e.what();
   }
   return ret;
 }
 
-void OpLib::DecodeTBESpecificInfo(const nlohmann::json& obj, const std::shared_ptr<OpInfo>& op_info) {
+void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info) {
   op_info->set_async_flag(obj.at(kAsyncFlag));
   op_info->set_binfile_name(obj.at(kBinfileName));
   op_info->set_compute_cost(obj.at(kComputeCost));
@@ -108,8 +108,8 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json& obj, const std::shared_p
   }
 }
 
-bool OpLib::DecodeOpInfo(const nlohmann::json& obj, const mindspore::kernel::OpImplyType imply_type,
-                         const std::string& impl_path) {
+bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpImplyType imply_type,
+                         const std::string &impl_path) {
   std::shared_ptr<OpInfo> op_info = std::make_shared<OpInfo>();
   MS_EXCEPTION_IF_NULL(op_info);
   op_info->set_op_name(obj.at(kOpName));
@@ -120,7 +120,7 @@ bool OpLib::DecodeOpInfo(const nlohmann::json& obj, const mindspore::kernel::OpI
     DecodeTBESpecificInfo(obj, op_info);
   }
   auto attrs = obj.at(kAttr);
-  for (const auto& attr : attrs) {
+  for (const auto &attr : attrs) {
     if (!DecodeAttr(attr, imply_type, op_info)) {
       MS_LOG(DEBUG) << "DecodeAttr Failed";
       return false;
@@ -131,14 +131,14 @@ bool OpLib::DecodeOpInfo(const nlohmann::json& obj, const mindspore::kernel::OpI
     dtype_format = obj.at(kDtypeFormat);
   }
   auto inputs = obj.at(kIputs);
-  for (const auto& input : inputs) {
+  for (const auto &input : inputs) {
     if (!DecodeInputOutput(input, imply_type, kInput, op_info, dtype_format)) {
       MS_LOG(DEBUG) << "DecodeInputOutput Failed";
       return false;
     }
   }
   auto outputs = obj.at(kOutputs);
-  for (const auto& output : outputs) {
+  for (const auto &output : outputs) {
     if (!DecodeInputOutput(output, imply_type, kOutput, op_info, dtype_format)) {
       MS_LOG(DEBUG) << "DecodeInputOutput Failed";
       return false;
@@ -156,8 +156,8 @@ bool OpLib::DecodeOpInfo(const nlohmann::json& obj, const mindspore::kernel::OpI
   return true;
 }
 
-bool OpLib::DecodeAttr(const nlohmann::json& obj, const OpImplyType imply_type,
-                       const std::shared_ptr<OpInfo>& op_info) {
+bool OpLib::DecodeAttr(const nlohmann::json &obj, const OpImplyType imply_type,
+                       const std::shared_ptr<OpInfo> &op_info) {
   MS_EXCEPTION_IF_NULL(op_info);
   bool ret = true;
   try {
@@ -175,34 +175,34 @@ bool OpLib::DecodeAttr(const nlohmann::json& obj, const OpImplyType imply_type,
       op_attr->set_default_value(obj.at(kDefaultValue));
     }
     op_info->add_attrs_ptr(op_attr);
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     MS_LOG(DEBUG) << "DecodeAttr failed:" << e.what();
     ret = false;
   }
   return ret;
 }
 
-bool OpLib::DecodeDtypeFormat(const nlohmann::json& dtype_format, const std::shared_ptr<OpIOInfo>& op_io,
+bool OpLib::DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::shared_ptr<OpIOInfo> &op_io,
                               size_t index) {
   bool ret = true;
   try {
     std::vector<std::string> dtype;
     std::vector<std::string> format;
-    for (const auto& it : dtype_format) {
+    for (const auto &it : dtype_format) {
       dtype.emplace_back(it[index][0]);
       format.emplace_back(it[index][1]);
     }
     op_io->set_dtypes(dtype);
     op_io->set_formats(format);
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     MS_LOG(ERROR) << "DecodeDtypeFormat falied" << e.what();
     ret = false;
   }
   return ret;
 }
 
-bool OpLib::DecodeInputOutput(const nlohmann::json& obj, const OpImplyType imply_type, const OpIOType io_type,
-                              const std::shared_ptr<OpInfo>& op_info, const nlohmann::json& dtype_format) {
+bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType imply_type, const OpIOType io_type,
+                              const std::shared_ptr<OpInfo> &op_info, const nlohmann::json &dtype_format) {
   bool ret = true;
   try {
     std::shared_ptr<OpIOInfo> op_io = std::make_shared<OpIOInfo>();
@@ -243,14 +243,14 @@ bool OpLib::DecodeInputOutput(const nlohmann::json& obj, const OpImplyType imply
     } else if (io_type == kOutput) {
       op_info->add_outputs_ptr(op_io);
     }
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     MS_LOG(DEBUG) << "DecodeInputOutput failed" << e.what();
     ret = false;
   }
   return ret;
 }
 
-std::shared_ptr<OpInfo> OpLib::FindOp(const std::string& op_name, OpImplyType imply_type) {
+std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType imply_type) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool is_gpu = (context->device_target() == kGPUDevice);
@@ -260,7 +260,7 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string& op_name, OpImplyType im
                   << ", current op num:" << op_info_.size();
     return nullptr;
   }
-  for (const auto& op_info : op_info_) {
+  for (const auto &op_info : op_info_) {
     MS_EXCEPTION_IF_NULL(op_info);
     if (op_info->op_name() == op_name && op_info->imply_type() == imply_type) {
       return op_info;
@@ -271,14 +271,14 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string& op_name, OpImplyType im
   return nullptr;
 }
 
-bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo>& op_info) {
+bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo> &op_info) {
   MS_EXCEPTION_IF_NULL(op_info);
-  const auto& output_infos = op_info->outputs_ptr();
-  const auto& input_infos = op_info->inputs_ptr();
+  const auto &output_infos = op_info->outputs_ptr();
+  const auto &input_infos = op_info->inputs_ptr();
   for (size_t out_index = 0; out_index < output_infos.size(); out_index++) {
-    const auto& out_name = output_infos[out_index]->name();
+    const auto &out_name = output_infos[out_index]->name();
     for (size_t in_index = 0; in_index < input_infos.size(); in_index++) {
-      const auto& in_name = input_infos[in_index]->name();
+      const auto &in_name = input_infos[in_index]->name();
       if (out_name == in_name) {
         if (op_info->has_ref_index(out_index)) {
           MS_LOG(DEBUG) << "The out_index" << out_index << "is already in ref_info";
@@ -293,9 +293,9 @@ bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo>& op_info) {
   return true;
 }
 
-bool OpLib::CheckRepetition(const std::shared_ptr<OpInfo>& op_info) {
+bool OpLib::CheckRepetition(const std::shared_ptr<OpInfo> &op_info) {
   MS_EXCEPTION_IF_NULL(op_info);
-  for (const auto& exist_op_info : op_info_) {
+  for (const auto &exist_op_info : op_info_) {
     MS_EXCEPTION_IF_NULL(exist_op_info);
     if (exist_op_info->op_name() == op_info->op_name() && exist_op_info->imply_type() == op_info->imply_type() &&
         exist_op_info->impl_path() != op_info->impl_path()) {

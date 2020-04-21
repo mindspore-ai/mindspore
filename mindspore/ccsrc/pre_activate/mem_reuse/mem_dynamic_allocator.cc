@@ -121,7 +121,7 @@ bool DynamicMemPoolBestFit::IsDivide(size_t tensor_size, size_t mem_buf_size) co
   return mem_buf_size - tensor_size >= DYNAMIC_MEM_ALIGN_SIZE;
 }
 
-void DynamicMemPoolBestFit::DivideMemBuf(size_t size, const DynamicMemBufPtr& mem_buf) {
+void DynamicMemPoolBestFit::DivideMemBuf(size_t size, const DynamicMemBufPtr &mem_buf) {
   MS_EXCEPTION_IF_NULL(mem_buf);
   auto mem_block = FindMemBlock(mem_buf->device_addr_);
   MS_EXCEPTION_IF_NULL(mem_block);
@@ -160,7 +160,7 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr device_addr) {
   CombineMemBuf(mem_block, device_addr);
 }
 
-void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr& mem_block, const DeviceMemPtr device_addr) {
+void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr device_addr) {
   MS_EXCEPTION_IF_NULL(mem_block);
   MS_EXCEPTION_IF_NULL(device_addr);
   auto iter = mem_block->block_all_mem_buf_map_.find(device_addr);

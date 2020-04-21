@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-size_t AscendMemoryPool::AllocDeviceMem(size_t size, DeviceMemPtr* addr) {
+size_t AscendMemoryPool::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
   if (has_malloc_) {
     MS_LOG(EXCEPTION) << "Has alloc memory pool memory !";
   }
@@ -37,7 +37,7 @@ size_t AscendMemoryPool::AllocDeviceMem(size_t size, DeviceMemPtr* addr) {
   return size;
 }
 
-bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr& addr) {
+bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   MS_EXCEPTION_IF_NULL(addr);
   has_malloc_ = false;
   free_mem_size_ = total_mem_size_;
@@ -53,7 +53,7 @@ size_t AscendMemoryPool::AlignMemorySize(size_t size) const {
 
 size_t AscendMemoryPool::mem_alloc_unit_size() const { return free_mem_size_ - 512; }
 
-void AscendMemoryPool::set_device_mem_pool_base(uint8_t* device_mem_pool_base) {
+void AscendMemoryPool::set_device_mem_pool_base(uint8_t *device_mem_pool_base) {
   MS_EXCEPTION_IF_NULL(device_mem_pool_base);
   device_mem_pool_base_ = device_mem_pool_base;
 }

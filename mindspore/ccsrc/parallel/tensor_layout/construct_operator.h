@@ -34,7 +34,7 @@ class ConstructOperator {
   const int32_t DEFAULT = 0;
   ConstructOperator() : dev_size_(0) {}
   ~ConstructOperator() = default;
-  Status Init(const RankList& dev_list, const Shape& dev_matrix_shape);
+  Status Init(const RankList &dev_list, const Shape &dev_matrix_shape);
   Status ReshapeOP(Shape shape);
   Status StridedSliceOP(Args args);
   Status AllGatherOP(int32_t dev_dim);
@@ -42,7 +42,7 @@ class ConstructOperator {
   Status ConcatOP(int32_t concat_dim);
   Status AlltoAllOP(Args args);
   Operator GetOperator() const { return op_; }
-  void UpdateTensorShape(const Shape& tensor_shape) { tensor_shape_ = tensor_shape; }
+  void UpdateTensorShape(const Shape &tensor_shape) { tensor_shape_ = tensor_shape; }
 
  private:
   Operator op_;
@@ -50,7 +50,7 @@ class ConstructOperator {
   Shape tensor_shape_;
   RankList dev_list_;
   Shape dev_matrix_shape_;
-  Status CreateGroupByDim(size_t axis, std::vector<Group>* group);
+  Status CreateGroupByDim(size_t axis, std::vector<Group> *group);
 };
 }  // namespace parallel
 }  // namespace mindspore

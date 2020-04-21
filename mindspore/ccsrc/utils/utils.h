@@ -213,7 +213,7 @@ const std::set<std::string> kOptOperatorSet = {
 const std::set<std::string> kNeedTransFormatSet = {kOpFormat_FRAC_Z, kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
                                                    kOpFormat_FRAC_NZ, kOpFormat_C1HWNCoC0};
 
-static inline void ChangeFileMode(const std::string& file_name, mode_t mode) {
+static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   if (access(file_name.c_str(), F_OK) != 0) {
     MS_LOG(DEBUG) << "File `" << file_name << "` does not exist.";
     return;

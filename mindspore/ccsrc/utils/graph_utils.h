@@ -38,42 +38,42 @@ namespace mindspore {
 
 enum IncludeType { FOLLOW, NOFOLLOW, EXCLUDE };
 
-using IncludeFunc = std::function<IncludeType(const AnfNodePtr&)>;
+using IncludeFunc = std::function<IncludeType(const AnfNodePtr &)>;
 using SuccFunc = std::function<std::vector<AnfNodePtr>(AnfNodePtr)>;
-using SearchFunc = std::function<std::vector<AnfNodePtr>(const AnfNodePtr&, const IncludeFunc&)>;
+using SearchFunc = std::function<std::vector<AnfNodePtr>(const AnfNodePtr &, const IncludeFunc &)>;
 
-std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr& node);
-std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr& node);
-std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr& node);
-std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr& fg, const AnfNodePtr& node);
+std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node);
+std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node);
+std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node);
+std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node);
 
-IncludeType AlwaysInclude(const AnfNodePtr& node);
-IncludeType IncludeBelongGraph(const FuncGraphPtr& fg, const AnfNodePtr& node);
+IncludeType AlwaysInclude(const AnfNodePtr &node);
+IncludeType IncludeBelongGraph(const FuncGraphPtr &fg, const AnfNodePtr &node);
 
-std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr& root, const IncludeFunc& include = AlwaysInclude);
-std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr& root, const IncludeFunc& include = AlwaysInclude);
-std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr& root, const IncludeFunc& include = AlwaysInclude);
+std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include = AlwaysInclude);
+std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include = AlwaysInclude);
+std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include = AlwaysInclude);
 
-std::vector<AnfNodePtr> TopoSort(const AnfNodePtr& root, const SuccFunc& succ = SuccIncoming,
-                                 const IncludeFunc& include = AlwaysInclude);
+std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ = SuccIncoming,
+                                 const IncludeFunc &include = AlwaysInclude);
 
 class FuncGraphIndex {
  public:
-  explicit FuncGraphIndex(const FuncGraphPtr& fg, const SearchFunc& search = DeepScopedGraphSearch,
-                          const IncludeFunc& include = AlwaysInclude);
-  FuncGraphIndex(const FuncGraphIndex&) = delete;
-  FuncGraphIndex& operator=(const FuncGraphIndex&) = delete;
+  explicit FuncGraphIndex(const FuncGraphPtr &fg, const SearchFunc &search = DeepScopedGraphSearch,
+                          const IncludeFunc &include = AlwaysInclude);
+  FuncGraphIndex(const FuncGraphIndex &) = delete;
+  FuncGraphIndex &operator=(const FuncGraphIndex &) = delete;
 
   virtual ~FuncGraphIndex() {}
 
-  std::set<FuncGraphPtr> GetFuncGraphs(const std::string& key);
-  std::set<AnfNodePtr> GetNodes(const std::string& key);
-  FuncGraphPtr GetFirstFuncGraph(const std::string& key);
-  AnfNodePtr GetFirstNode(const std::string& key);
+  std::set<FuncGraphPtr> GetFuncGraphs(const std::string &key);
+  std::set<AnfNodePtr> GetNodes(const std::string &key);
+  FuncGraphPtr GetFirstFuncGraph(const std::string &key);
+  AnfNodePtr GetFirstNode(const std::string &key);
 
  private:
-  void Acquire(const FuncGraphPtr& key);
-  void Acquire(const AnfNodePtr& key);
+  void Acquire(const FuncGraphPtr &key);
+  void Acquire(const AnfNodePtr &key);
 
   std::map<std::string, std::set<FuncGraphPtr>> index_func_graph_;
   std::map<std::string, std::set<AnfNodePtr>> index_node_;
@@ -83,7 +83,7 @@ class FuncGraphIndex {
 
 struct PairHasher {
   template <class T1, class T2>
-  std::size_t operator()(const std::pair<T1, T2>& p) const {
+  std::size_t operator()(const std::pair<T1, T2> &p) const {
     auto h1 = std::hash<T1>{}(p.first);
     auto h2 = std::hash<T2>{}(p.second);
     return h1 ^ h2;
@@ -95,9 +95,9 @@ enum EquivState { kNotEquiv = 0, kEquiv = 1, kPending = 2 };
 using FuncGraphPairMapEquiv = std::unordered_map<std::pair<FuncGraphPtr, FuncGraphPtr>, EquivState, PairHasher>;
 using NodeMapEquiv = std::unordered_map<AnfNodePtr, AnfNodePtr>;
 
-bool Isomorphic(FuncGraphPtr g1, FuncGraphPtr g2, FuncGraphPairMapEquiv* equiv_func_graph, NodeMapEquiv* equiv_node);
+bool Isomorphic(FuncGraphPtr g1, FuncGraphPtr g2, FuncGraphPairMapEquiv *equiv_func_graph, NodeMapEquiv *equiv_node);
 
-tensor::TensorPtr ScalarToTensor(const ScalarPtr& scalar);
+tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_GRAPH_UTILS_H_

@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status RedistributionOperatorInfer::Init(const TensorLayout& tensor_layout, const Map& out_tensor_map,
+Status RedistributionOperatorInfer::Init(const TensorLayout &tensor_layout, const Map &out_tensor_map,
                                          RankList dev_list, bool is_cost_model) {
   in_tensor_map_ = tensor_layout.tensor_map();
   dev_mat_ = tensor_layout.device_arrangement();
@@ -105,7 +105,7 @@ Status RedistributionOperatorInfer::InferSplitByAxis() {
     }
     if (in_dim == NONE &&
         !std::any_of(map_.begin(), map_.end(),
-                     [out_dim](const RedistributionOperatorMap::value_type& a) { return a.second == out_dim; })) {
+                     [out_dim](const RedistributionOperatorMap::value_type &a) { return a.second == out_dim; })) {
       Args args = {dev_mat_.GetDimByReverseIdx(IntToUint(out_dim)), UintToInt(index), out_dim};
       if (InsertOperator(SPLIT_BY_AXIS, args) == Status::FAILED) {
         MS_LOG(ERROR) << "Insert SplitByAxis Error!";
@@ -130,7 +130,7 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
     }
     if (in_dim == NONE &&
         std::any_of(map_.begin(), map_.end(),
-                    [out_dim](const RedistributionOperatorMap::value_type& a) { return a.second == out_dim; })) {
+                    [out_dim](const RedistributionOperatorMap::value_type &a) { return a.second == out_dim; })) {
       int32_t cat_dim = in_tensor_map_.GetIndexByValue(out_dim);
       int32_t dev_num = dev_mat_.GetDimByReverseIdx(IntToUint(out_dim));
       if (is_cost_model_) {

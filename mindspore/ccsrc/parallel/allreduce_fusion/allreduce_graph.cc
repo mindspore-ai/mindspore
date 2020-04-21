@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status AllreduceGraph::AddNode(const CNodePtr& node, const AnfNodePtr& para) {
+Status AllreduceGraph::AddNode(const CNodePtr &node, const AnfNodePtr &para) {
   AllreduceNodePtr arnode;
   auto cnode_emplace_return = cnode_set_.emplace(node);
   if (!cnode_emplace_return.second) {
@@ -64,7 +64,7 @@ Status AllreduceGraph::AddNode(const CNodePtr& node, const AnfNodePtr& para) {
   return SUCCESS;
 }
 
-Status AllreduceGraph::AddEdge(const CNodePtr& from, const CNodePtr& to, double dist) {
+Status AllreduceGraph::AddEdge(const CNodePtr &from, const CNodePtr &to, double dist) {
   auto from_arnode_iter = cnode_arnode_map_.find(from);
   if (from_arnode_iter == cnode_arnode_map_.end()) {
     MS_LOG(ERROR) << "cnode from: " << from->DebugString() << "has not been added";
@@ -94,14 +94,14 @@ Status AllreduceGraph::AddEdge(const CNodePtr& from, const CNodePtr& to, double 
   return SUCCESS;
 }
 
-bool AllreduceGraph::NodeInGraph(const CNodePtr& node) const {
+bool AllreduceGraph::NodeInGraph(const CNodePtr &node) const {
   auto cnode_iter = cnode_set_.find(node);
   return !(cnode_iter == cnode_set_.end());
 }
 
 std::vector<AnfNodePtr> AllreduceGraph::GetParaByCost(double from, double to) {
   std::vector<AnfNodePtr> nodes;
-  for (auto& cnode_arnode : cnode_arnode_map_) {
+  for (auto &cnode_arnode : cnode_arnode_map_) {
     MS_LOG(DEBUG) << "cnode: " << cnode_arnode.first->DebugString()
                   << ", depend_feat_size: " << cnode_arnode.second->depend_feat_size()
                   << " curr_para_size: " << cnode_arnode.second->curr_para_size();
@@ -117,7 +117,7 @@ std::pair<std::vector<AnfNodePtr>, double> AllreduceGraph::GetParaByParaSize(dou
   std::vector<AnfNodePtr> nodes;
   double cur_para_size = 0;
   double from = to;
-  for (auto& arnode : arnode_vec_) {
+  for (auto &arnode : arnode_vec_) {
     if (arnode.depend_feat_size() != max_ && arnode.depend_feat_size() >= to) {
       continue;
     }
@@ -135,14 +135,14 @@ std::pair<std::vector<AnfNodePtr>, double> AllreduceGraph::GetParaByParaSize(dou
 
 void AllreduceGraph::PrintCNodeSet() const {
   MS_LOG(INFO) << "CNodeSet:";
-  for (auto& cnode : cnode_set_) {
+  for (auto &cnode : cnode_set_) {
     MS_LOG(INFO) << cnode->DebugString();
   }
 }
 
 void AllreduceGraph::PrintAllredueGraphInfo() const {
   MS_LOG(INFO) << "max: " << max_;
-  for (auto& cnode_arnode : cnode_arnode_map_) {
+  for (auto &cnode_arnode : cnode_arnode_map_) {
     MS_LOG(INFO) << "cnode: " << cnode_arnode.first->DebugString();
     MS_LOG(INFO) << "arnode info: ";
     cnode_arnode.second->ToString();
@@ -151,21 +151,21 @@ void AllreduceGraph::PrintAllredueGraphInfo() const {
 
 void AllreduceGraph::PrintArnodeVec() const {
   MS_LOG(INFO) << "ArnodeVec:";
-  for (auto& arnode : arnode_vec_) {
+  for (auto &arnode : arnode_vec_) {
     arnode.ToString();
   }
 }
 
 void AllreduceGraph::PrintArnodeSet() const {
   MS_LOG(INFO) << "ArnodeSet:";
-  for (auto& arnode : arnode_set_) {
+  for (auto &arnode : arnode_set_) {
     arnode->ToString();
   }
 }
 
 void AllreduceGraph::SortArnode() {
   arnode_vec_.clear();
-  for (auto& node : arnode_set_) {
+  for (auto &node : arnode_set_) {
     arnode_vec_.emplace_back(*node);
   }
   std::sort(arnode_vec_.begin(), arnode_vec_.end(), std::greater<>());
@@ -173,8 +173,8 @@ void AllreduceGraph::SortArnode() {
 
 Status AllreduceGraph::RemoveExtraParas() {
   std::unordered_set<AnfNodePtr> para_map;
-  for (auto& node : arnode_vec_) {
-    for (auto& para : node.paras()) {
+  for (auto &node : arnode_vec_) {
+    for (auto &para : node.paras()) {
       auto emplac_result = para_map.emplace(para);
       if (!emplac_result.second) {
         MS_LOG(DEBUG) << "parameter: " << para->fullname_with_scope() << "in arnode";
@@ -188,7 +188,7 @@ Status AllreduceGraph::RemoveExtraParas() {
   return SUCCESS;
 }
 
-Status AllreduceGraph::set_head_cnode(const CNodePtr& node) {
+Status AllreduceGraph::set_head_cnode(const CNodePtr &node) {
   auto arnode = std::make_shared<AllreduceNode>(AllreduceNode());
   if (arnode->Init(node) != SUCCESS) {
     MS_LOG(ERROR) << "AllreduceNode Init failed";

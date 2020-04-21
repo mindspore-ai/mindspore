@@ -35,15 +35,15 @@ const int ONE_SHAPE = 1;
 using mindspore::transform::Status;
 using mindspore::transform::TransformUtil;
 
-bool GetParameterShape(const FuncGraphPtr& graph, const std::string& param_name,
-                       const std::shared_ptr<std::vector<int>>& shape) {
+bool GetParameterShape(const FuncGraphPtr &graph, const std::string &param_name,
+                       const std::shared_ptr<std::vector<int>> &shape) {
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Graph is null, can not get graph parameter";
     return false;
   }
 
   auto parameter_nodes = graph->parameters();
-  for (auto& node : parameter_nodes) {
+  for (auto &node : parameter_nodes) {
     ParameterPtr param_node = std::static_pointer_cast<Parameter>(node);
     if (param_node == nullptr) {
       MS_LOG(ERROR) << "Parameter node is null, can not get graph parameter";
@@ -65,8 +65,8 @@ bool GetParameterShape(const FuncGraphPtr& graph, const std::string& param_name,
   return false;
 }
 
-static TensorPtr GetMeTensorTransformed(uint32_t graph_id, const std::string& parameter_name,
-                                        const std::shared_ptr<ge::Tensor>& ge_tensor_ptr) {
+static TensorPtr GetMeTensorTransformed(uint32_t graph_id, const std::string &parameter_name,
+                                        const std::shared_ptr<ge::Tensor> &ge_tensor_ptr) {
   FuncGraphPtr anf_graph = transform::DfGraphManager::GetInstance().GetAnfGraph(graph_id);
   if (anf_graph == nullptr) {
     MS_LOG(ERROR) << "Get anf graph failed during callback";
@@ -82,13 +82,13 @@ static TensorPtr GetMeTensorTransformed(uint32_t graph_id, const std::string& pa
   return TransformUtil::ConvertGeTensor(ge_tensor_ptr, *parameter_shape_ptr);
 }
 
-uint32_t CheckpointSaveCallback(uint32_t graph_id, const std::map<std::string, ge::Tensor>& params_list) {
+uint32_t CheckpointSaveCallback(uint32_t graph_id, const std::map<std::string, ge::Tensor> &params_list) {
   // Acquire GIL before calling Python code
   py::gil_scoped_acquire acquire;
 
   MS_LOG(DEBUG) << "Start the checkpoint save callback function in checkpoint save process.";
   py::list parameter_list = py::list();
-  for (auto& item : params_list) {
+  for (auto &item : params_list) {
     std::string name = item.first;
     std::shared_ptr<ge::Tensor> ge_tensor_ptr = std::make_shared<ge::Tensor>(item.second);
     TensorPtr tensor_ptr = GetMeTensorTransformed(graph_id, name, ge_tensor_ptr);
@@ -112,7 +112,7 @@ uint32_t CheckpointSaveCallback(uint32_t graph_id, const std::map<std::string, g
   return status;
 }
 
-static TensorPtr GetMeTensorForSummary(const std::string& name, const std::shared_ptr<ge::Tensor>& ge_tensor_ptr) {
+static TensorPtr GetMeTensorForSummary(const std::string &name, const std::shared_ptr<ge::Tensor> &ge_tensor_ptr) {
   // confirm the type by name
   // Format: xxx[:Scalar] xxx[:Image] xxx[:Tensor]
   if (name.empty()) {
@@ -149,14 +149,14 @@ static TensorPtr GetMeTensorForSummary(const std::string& name, const std::share
 
 // Cache the summary callback data
 // Output Format: [{"name": tag_name, "data": tensor}, {"name": tag_name, "data": tensor},...]
-uint32_t MS_EXPORT SummarySaveCallback(uint32_t graph_id, const std::map<std::string, ge::Tensor>& params_list) {
+uint32_t MS_EXPORT SummarySaveCallback(uint32_t graph_id, const std::map<std::string, ge::Tensor> &params_list) {
   // Acquire GIL before calling Python code
   py::gil_scoped_acquire acquire;
 
   MS_LOG(DEBUG) << "Start the summary save callback function for graph " << graph_id << ".";
   py::list summary_list = py::list();
   MS_LOG(DEBUG) << "Param list size = " << params_list.size();
-  for (auto& item : params_list) {
+  for (auto &item : params_list) {
     std::string tag_name = item.first;
     std::shared_ptr<ge::Tensor> ge_tensor_ptr = std::make_shared<ge::Tensor>(item.second);
     TensorPtr tensor_ptr = GetMeTensorForSummary(tag_name, ge_tensor_ptr);

@@ -45,8 +45,8 @@ std::string TensorLayout::OriginToString() const {
   return buffer.str();
 }
 
-Status TensorLayout::Init(const Arrangement& device_arrangement, const Map& tensor_map,
-                          const Arrangement& tensor_shape) {
+Status TensorLayout::Init(const Arrangement &device_arrangement, const Map &tensor_map,
+                          const Arrangement &tensor_shape) {
   device_arrangement_origin_ = device_arrangement;
   tensor_map_origin_ = tensor_map;
   tensor_shape_origin_ = tensor_shape;
@@ -64,8 +64,8 @@ Status TensorLayout::Init(const Arrangement& device_arrangement, const Map& tens
   }
 }
 
-Status TensorLayout::InitFromVector(const std::vector<int32_t>& device_arrangement,
-                                    const std::vector<int32_t>& tensor_map, const std::vector<int32_t>& tensor_shape) {
+Status TensorLayout::InitFromVector(const std::vector<int32_t> &device_arrangement,
+                                    const std::vector<int32_t> &tensor_map, const std::vector<int32_t> &tensor_shape) {
   if (device_arrangement_origin_.Init(device_arrangement) != SUCCESS) {
     return FAILED;
   }
@@ -124,7 +124,7 @@ void TensorLayout::RemoveElementEqualToOneInDeviceArrangement() {
       if (idx != -1) {
         tensor_map_shape[static_cast<uint32_t>(idx)] = -1;
       }
-      for (auto& value : tensor_map_shape) {
+      for (auto &value : tensor_map_shape) {
         if (value >= dev_num_left - 1 - static_cast<int32_t>(i)) {
           value--;
         }
@@ -153,7 +153,7 @@ int32_t TensorLayout::GetSliceNumByTensorDimensionIndex(uint32_t idx) const {
   return device_arrangement_.GetDimByIdx(static_cast<uint32_t>(GetSliceDeviceDimensionByTensorDimensionIndex(idx)));
 }
 
-std::shared_ptr<TensorLayout> TensorLayout::ExpandTensorShape(const Arrangement& expanded_shape) const {
+std::shared_ptr<TensorLayout> TensorLayout::ExpandTensorShape(const Arrangement &expanded_shape) const {
   std::shared_ptr<Arrangement> expanded_arrangement_ptr = ComputeArrangementByExpandedShape(expanded_shape);
   if (expanded_arrangement_ptr == nullptr) {
     return nullptr;
@@ -174,7 +174,7 @@ std::shared_ptr<TensorLayout> TensorLayout::ExpandTensorShape(const Arrangement&
  *  =>
  *    out_device_arrangement = [8, 2, 2]
  */
-std::shared_ptr<Arrangement> TensorLayout::ComputeArrangementByExpandedShape(const Arrangement& tensor_shape) const {
+std::shared_ptr<Arrangement> TensorLayout::ComputeArrangementByExpandedShape(const Arrangement &tensor_shape) const {
   std::shared_ptr<std::vector<Arrangement>> expand_list_ptr = tensor_shape_.GetExpandShapeList(tensor_shape);
   if (expand_list_ptr == nullptr) {
     return nullptr;
@@ -204,7 +204,7 @@ std::shared_ptr<Arrangement> TensorLayout::ComputeArrangementByExpandedShape(con
  *    out_tensor_map = [1, -1, 0, -1],
  */
 std::shared_ptr<TensorLayout> TensorLayout::ExpandTensorShapeWithoutExtendDeviceArrangement(
-  const Arrangement& expanded_shape) const {
+  const Arrangement &expanded_shape) const {
   std::shared_ptr<std::pair<std::vector<Arrangement>, Arrangement>> expand_list_pair_ptr =
     tensor_shape_.GetExpandShapeListPair(expanded_shape);
   if (expand_list_pair_ptr == nullptr) {
@@ -259,7 +259,7 @@ std::shared_ptr<TensorLayout> TensorLayout::ExpandTensorShapeWithoutExtendDevice
  *    out_tensor_map = [0, 2, 1],
  *    out_tensor_shape = [512, 4, 256]
  */
-std::shared_ptr<TensorLayout> TensorLayout::ExpandDeviceArrangement(const Arrangement& expanded_arrangement) const {
+std::shared_ptr<TensorLayout> TensorLayout::ExpandDeviceArrangement(const Arrangement &expanded_arrangement) const {
   std::shared_ptr<std::pair<std::vector<Arrangement>, Arrangement>> expand_list_pair_ptr =
     device_arrangement_.GetExpandShapeListPair(expanded_arrangement);
   if (expand_list_pair_ptr == nullptr) {
@@ -287,7 +287,7 @@ std::shared_ptr<TensorLayout> TensorLayout::ExpandDeviceArrangement(const Arrang
   return std::make_shared<TensorLayout>(tensor_layout_new);
 }
 
-bool TensorLayout::TensorShapeCanBeExpanded(const Arrangement& expand_shape) const {
+bool TensorLayout::TensorShapeCanBeExpanded(const Arrangement &expand_shape) const {
   std::vector<int32_t> in_expand_shape_shape;
   Status status = ExpandShape(tensor_shape_.array(), expand_shape.array(), &in_expand_shape_shape);
   if (status != Status::SUCCESS) {
@@ -296,7 +296,7 @@ bool TensorLayout::TensorShapeCanBeExpanded(const Arrangement& expand_shape) con
   return (in_expand_shape_shape == tensor_shape_.array());
 }
 
-std::shared_ptr<Arrangement> TensorLayout::ComputeExpandedTensorShape(const Arrangement& expand_shape) const {
+std::shared_ptr<Arrangement> TensorLayout::ComputeExpandedTensorShape(const Arrangement &expand_shape) const {
   std::vector<int32_t> in_expand_shape_shape;
   Status status = ExpandShape(tensor_shape_.array(), expand_shape.array(), &in_expand_shape_shape);
   if (status != Status::SUCCESS) {
@@ -345,7 +345,7 @@ Status TensorLayout::UpdateTensorMap(uint32_t index, int32_t value) {
   return Status::SUCCESS;
 }
 
-bool TensorLayout::operator==(const TensorLayout& t1) const {
+bool TensorLayout::operator==(const TensorLayout &t1) const {
   return (IsSameDeviceArrangement(t1) && IsSameTensorMap(t1) && IsSameTensorShape(t1));
 }
 

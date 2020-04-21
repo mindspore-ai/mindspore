@@ -43,14 +43,14 @@ bool GPUMemoryAllocator::Finalize() {
   return true;
 }
 
-bool GPUMemoryAllocator::AllocBufferQueueMem(size_t size, DeviceMemPtr* addr) {
+bool GPUMemoryAllocator::AllocBufferQueueMem(size_t size, DeviceMemPtr *addr) {
   auto alloc_size = AllocDeviceMem(size, addr);
   buffer_q_addr_ = *addr;
   // Buffer queue needs to ensure that the alloc_size and size is equal.
   return (alloc_size == size) ? true : false;
 }
 
-size_t GPUMemoryAllocator::AllocDeviceMem(size_t size, DeviceMemPtr* addr) {
+size_t GPUMemoryAllocator::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
   if (size == 0) {
     MS_LOG(EXCEPTION) << "The memory alloc size is 0.";
   }
@@ -68,7 +68,7 @@ size_t GPUMemoryAllocator::AllocDeviceMem(size_t size, DeviceMemPtr* addr) {
   return alloc_size;
 }
 
-bool GPUMemoryAllocator::FreeDeviceMem(const DeviceMemPtr& addr) { return CudaDriver::FreeDeviceMem(addr); }
+bool GPUMemoryAllocator::FreeDeviceMem(const DeviceMemPtr &addr) { return CudaDriver::FreeDeviceMem(addr); }
 
 size_t GPUMemoryAllocator::free_mem_size() { return CudaDriver::free_mem_size(); }
 

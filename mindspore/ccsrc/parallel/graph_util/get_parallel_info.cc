@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace parallel {
-py::dict GetParameterLayout(const FuncGraphPtr& graph) {
+py::dict GetParameterLayout(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   py::dict dict;
   std::vector<AnfNodePtr> graph_params = graph->parameters();
@@ -50,7 +50,7 @@ py::dict GetParameterLayout(const FuncGraphPtr& graph) {
   return dict;
 }
 
-py::dict GetCNodeStrategy(const FuncGraphPtr& graph) {
+py::dict GetCNodeStrategy(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   py::dict dict;
   auto ret = graph->get_return();
@@ -75,7 +75,7 @@ py::dict GetCNodeStrategy(const FuncGraphPtr& graph) {
   return dict;
 }
 
-py::dict GetAllreduceFusion(const FuncGraphPtr& graph) {
+py::dict GetAllreduceFusion(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   py::dict dict;
   auto allreduce_prim_list = FindPrimtive(graph, ALL_REDUCE);

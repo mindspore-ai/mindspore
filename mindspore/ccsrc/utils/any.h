@@ -35,23 +35,23 @@
 namespace mindspore {
 // usage:AnyPtr sp = std::make_shared<Any>(aname);
 template <class T>
-std::string type(const T& t) {
+std::string type(const T &t) {
   return demangle(typeid(t).name());
 }
 
-std::ostream& operator<<(std::ostream& os, const pybind11::object& obj);
+std::ostream &operator<<(std::ostream &os, const pybind11::object &obj);
 
 class Any {
  public:
   // constructors
   Any() : m_ptr(nullptr), m_tpIndex(std::type_index(typeid(void))) {}
-  Any(const Any& other) : m_ptr(other.clone()), m_tpIndex(other.m_tpIndex) {}
-  Any(Any&& other) : m_ptr(std::move(other.m_ptr)), m_tpIndex(std::move(other.m_tpIndex)) {}
+  Any(const Any &other) : m_ptr(other.clone()), m_tpIndex(other.m_tpIndex) {}
+  Any(Any &&other) : m_ptr(std::move(other.m_ptr)), m_tpIndex(std::move(other.m_tpIndex)) {}
 
-  Any& operator=(Any&& other);
+  Any &operator=(Any &&other);
   // right reference constructor
   template <class T, class = typename std::enable_if<!std::is_same<typename std::decay<T>::type, Any>::value, T>::type>
-  Any(T&& t) : m_tpIndex(typeid(typename std::decay<T>::type)) {  // NOLINT
+  Any(T &&t) : m_tpIndex(typeid(typename std::decay<T>::type)) {  // NOLINT
     BasePtr new_val(new Derived<typename std::decay<T>::type>(std::forward<T>(t)));
     std::swap(m_ptr, new_val);
   }
@@ -67,7 +67,7 @@ class Any {
     return m_tpIndex == std::type_index(typeid(T));
   }
 
-  const std::type_info& type() const { return m_ptr ? m_ptr->type() : typeid(void); }
+  const std::type_info &type() const { return m_ptr ? m_ptr->type() : typeid(void); }
 
   std::size_t Hash() const {
     std::stringstream buffer;
@@ -79,7 +79,7 @@ class Any {
   }
 
   template <typename T>
-  bool Apply(const std::function<void(T&)>& fn) {
+  bool Apply(const std::function<void(T &)> &fn) {
     if (type() == typeid(T)) {
       T x = cast<T>();
       fn(x);
@@ -96,23 +96,23 @@ class Any {
     }
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const Any& any) {
+  friend std::ostream &operator<<(std::ostream &os, const Any &any) {
     os << any.GetString();
     return os;
   }
 
   // type cast
   template <class T>
-  T& cast() const {
+  T &cast() const {
     if (!is<T>() || !m_ptr) {
       // Use MS_LOGFATAL replace throw std::bad_cast()
       MS_LOG(EXCEPTION) << "can not cast " << m_tpIndex.name() << " to " << typeid(T).name();
     }
-    auto ptr = static_cast<Derived<T>*>(m_ptr.get());
+    auto ptr = static_cast<Derived<T> *>(m_ptr.get());
     return ptr->m_value;
   }
 
-  bool operator==(const Any& other) const {
+  bool operator==(const Any &other) const {
     if (m_tpIndex != other.m_tpIndex) {
       return false;
     }
@@ -125,11 +125,11 @@ class Any {
     return *m_ptr == *other.m_ptr;
   }
 
-  bool operator!=(const Any& other) const { return !(operator==(other)); }
+  bool operator!=(const Any &other) const { return !(operator==(other)); }
 
-  Any& operator=(const Any& other);
+  Any &operator=(const Any &other);
 
-  bool operator<(const Any& other) const;
+  bool operator<(const Any &other) const;
 
   std::string ToString() const {
     std::ostringstream buffer;
@@ -154,26 +154,26 @@ class Any {
 
   // type base definition
   struct Base {
-    virtual const std::type_info& type() const = 0;
+    virtual const std::type_info &type() const = 0;
     virtual BasePtr clone() const = 0;
     virtual ~Base() = default;
-    virtual bool operator==(const Base& other) const = 0;
+    virtual bool operator==(const Base &other) const = 0;
     virtual std::string GetString() = 0;
   };
 
   template <typename T>
   struct Derived : public Base {
     template <typename... Args>
-    explicit Derived(Args&&... args) : m_value(std::forward<Args>(args)...), serialize_cache_("") {}
+    explicit Derived(Args &&... args) : m_value(std::forward<Args>(args)...), serialize_cache_("") {}
 
-    bool operator==(const Base& other) const override {
+    bool operator==(const Base &other) const override {
       if (typeid(*this) != typeid(other)) {
         return false;
       }
-      return m_value == static_cast<const Derived<T>&>(other).m_value;
+      return m_value == static_cast<const Derived<T> &>(other).m_value;
     }
 
-    const std::type_info& type() const override { return typeid(T); }
+    const std::type_info &type() const override { return typeid(T); }
 
     BasePtr clone() const override { return BasePtr(new Derived<T>(m_value)); }
 
@@ -204,14 +204,14 @@ class Any {
 using AnyPtr = std::shared_ptr<Any>;
 
 struct AnyHash {
-  std::size_t operator()(const Any& c) const { return c.Hash(); }
+  std::size_t operator()(const Any &c) const { return c.Hash(); }
 };
 
 struct AnyLess {
-  bool operator()(const Any& a, const Any& b) const { return a.Hash() < b.Hash(); }
+  bool operator()(const Any &a, const Any &b) const { return a.Hash() < b.Hash(); }
 };
 
-bool AnyIsLiteral(const Any& any);
+bool AnyIsLiteral(const Any &any);
 
 }  // namespace mindspore
 

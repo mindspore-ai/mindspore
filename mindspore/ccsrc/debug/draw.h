@@ -31,9 +31,9 @@ namespace parse = mindspore::parse;
 
 class Graphviz {
  public:
-  Graphviz(const std::string& name, const std::string& filename) : name_(name), filename_(filename), fout_(filename_) {}
+  Graphviz(const std::string &name, const std::string &filename) : name_(name), filename_(filename), fout_(filename_) {}
 
-  explicit Graphviz(const std::string& name) : name_(name) {}
+  explicit Graphviz(const std::string &name) : name_(name) {}
 
   virtual ~Graphviz() {}
 
@@ -41,8 +41,8 @@ class Graphviz {
   virtual void End() {}
 
   virtual std::string Shape(AnfNodePtr node);
-  std::string Color(const AnfNodePtr& node);
-  std::ostringstream& buffer() { return buffer_; }
+  std::string Color(const AnfNodePtr &node);
+  std::ostringstream &buffer() { return buffer_; }
   std::ostringstream buffer_;
 
  protected:
@@ -53,8 +53,8 @@ class Graphviz {
 
 class BaseDigraph : public Graphviz {
  public:
-  BaseDigraph(const std::string& name, const std::string& filename) : Graphviz(name, filename) {}
-  explicit BaseDigraph(const std::string& name) : Graphviz(name) {}
+  BaseDigraph(const std::string &name, const std::string &filename) : Graphviz(name, filename) {}
+  explicit BaseDigraph(const std::string &name) : Graphviz(name) {}
   ~BaseDigraph() override = default;
 
   virtual void Node(AnfNodePtr node, int id = 0) = 0;
@@ -63,21 +63,21 @@ class BaseDigraph : public Graphviz {
   void Start() override;
   void End() override;
   virtual void Edge(AnfNodePtr start, FuncGraphPtr end, int id_start);
-  void FuncGraphParameters(const FuncGraphPtr& key);
-  void SubGraph(const FuncGraphPtr& key, const std::shared_ptr<BaseDigraph>& gsub);
+  void FuncGraphParameters(const FuncGraphPtr &key);
+  void SubGraph(const FuncGraphPtr &key, const std::shared_ptr<BaseDigraph> &gsub);
 
-  const std::string& name() const { return name_; }
+  const std::string &name() const { return name_; }
 
  protected:
-  void Head(const AnfNodePtr& node, int id = 0);
-  void Tail(const AnfNodePtr& node, int idx, int id = 0);
-  void Tail(const FuncGraphPtr& func_graph);
+  void Head(const AnfNodePtr &node, int id = 0);
+  void Tail(const AnfNodePtr &node, int idx, int id = 0);
+  void Tail(const FuncGraphPtr &func_graph);
 };
 
 class Digraph : public BaseDigraph {
  public:
-  Digraph(const std::string& name, const std::string& filename) : BaseDigraph(name, filename) {}
-  explicit Digraph(const std::string& name) : BaseDigraph(name) {}
+  Digraph(const std::string &name, const std::string &filename) : BaseDigraph(name, filename) {}
+  explicit Digraph(const std::string &name) : BaseDigraph(name) {}
   ~Digraph() override;
 
   void Node(AnfNodePtr node, int id = 0) override;
@@ -86,8 +86,8 @@ class Digraph : public BaseDigraph {
 
 class ModelDigraph : public BaseDigraph {
  public:
-  ModelDigraph(const std::string& name, const std::string& filename) : BaseDigraph(name, filename) {}
-  explicit ModelDigraph(const std::string& name) : BaseDigraph(name) {}
+  ModelDigraph(const std::string &name, const std::string &filename) : BaseDigraph(name, filename) {}
+  explicit ModelDigraph(const std::string &name) : BaseDigraph(name) {}
   ~ModelDigraph() override;
 
   std::string Shape(AnfNodePtr node) override;
@@ -96,8 +96,8 @@ class ModelDigraph : public BaseDigraph {
 };
 
 // API to draw
-void Draw(const std::string& filename, const FuncGraphPtr& func_graph);
-void DrawUserFuncGraph(const std::string& filename, const FuncGraphPtr& func_graph);
+void Draw(const std::string &filename, const FuncGraphPtr &func_graph);
+void DrawUserFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph);
 
 }  // namespace draw
 }  // namespace mindspore

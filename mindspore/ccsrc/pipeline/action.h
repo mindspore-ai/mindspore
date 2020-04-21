@@ -30,22 +30,22 @@ extern const char kMsConvert[];
 namespace pipeline {
 using ActionItem = std::pair<std::string, std::function<bool(ResourcePtr)>>;
 
-bool ParseAction(const ResourcePtr& res);
-bool SymbolResolveAction(const ResourcePtr& res);
-bool AbstractSpecializeAction(const ResourcePtr& res);
-bool GeOptimizeAction(const ResourcePtr& res);
-bool VmOptimizeAction(const ResourcePtr& res);
-bool TaskEmitAction(const ResourcePtr& res);
-bool ExecuteAction(const ResourcePtr& res);
+bool ParseAction(const ResourcePtr &res);
+bool SymbolResolveAction(const ResourcePtr &res);
+bool AbstractSpecializeAction(const ResourcePtr &res);
+bool GeOptimizeAction(const ResourcePtr &res);
+bool VmOptimizeAction(const ResourcePtr &res);
+bool TaskEmitAction(const ResourcePtr &res);
+bool ExecuteAction(const ResourcePtr &res);
 
 std::vector<ActionItem> GePipeline();
 std::vector<ActionItem> VmPipeline();
-abstract::AnalysisResult AbstractAnalyze(const ResourcePtr& res, const FuncGraphPtr& func_graph,
-                                         const abstract::AbstractBasePtrList& args_spec, bool clear = false);
-FuncGraphPtr ProgramSpecialize(const ResourcePtr& res, const FuncGraphPtr& func_graph,
-                               const abstract::AnalysisContextPtr& context);
-FuncGraphPtr Renormalize(const ResourcePtr& res, const FuncGraphPtr& func_graph,
-                         const abstract::AbstractBasePtrList& args_spec);
+abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraphPtr &func_graph,
+                                         const abstract::AbstractBasePtrList &args_spec, bool clear = false);
+FuncGraphPtr ProgramSpecialize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
+                               const abstract::AnalysisContextPtr &context);
+FuncGraphPtr Renormalize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
+                         const abstract::AbstractBasePtrList &args_spec);
 }  // namespace pipeline
 }  // namespace mindspore
 

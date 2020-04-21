@@ -53,7 +53,7 @@ static std::map<MeDataType, GeDataType> datatype_trans_map = {
   {MeDataType::kNumberTypeUInt16, GeDataType::DT_UINT16},   {MeDataType::kNumberTypeUInt32, GeDataType::DT_UINT32},
   {MeDataType::kNumberTypeUInt64, GeDataType::DT_UINT64},   {MeDataType::kNumberTypeBool, GeDataType::DT_BOOL}};
 
-GeDataType TransformUtil::ConvertDataType(const MeDataType& type) {
+GeDataType TransformUtil::ConvertDataType(const MeDataType &type) {
   MS_LOG(DEBUG) << "Convert me data type: " << TypeIdLabel(type) << " to ge data type";
   if (datatype_trans_map.find(type) != datatype_trans_map.end()) {
     return datatype_trans_map[type];
@@ -70,7 +70,7 @@ static std::map<MeDataType, size_t> datatype_size_map = {
   {MeDataType::kNumberTypeUInt16, sizeof(uint16_t)},   {MeDataType::kNumberTypeUInt32, sizeof(uint32_t)},
   {MeDataType::kNumberTypeUInt64, sizeof(uint64_t)},   {MeDataType::kNumberTypeBool, sizeof(bool)}};
 
-size_t TransformUtil::GetDataTypeSize(const MeDataType& type) {
+size_t TransformUtil::GetDataTypeSize(const MeDataType &type) {
   if (datatype_size_map.find(type) != datatype_size_map.end()) {
     return datatype_size_map[type];
   } else {
@@ -79,7 +79,7 @@ size_t TransformUtil::GetDataTypeSize(const MeDataType& type) {
   }
 }
 
-GeFormat TransformUtil::ConvertFormat(const string& format) {
+GeFormat TransformUtil::ConvertFormat(const string &format) {
   if (format == kOpFormat_NCHW) {
     return GeFormat::FORMAT_NCHW;
   } else if (format == kOpFormat_NC1HWC0) {
@@ -95,8 +95,8 @@ GeFormat TransformUtil::ConvertFormat(const string& format) {
 
 static int64_t IntegerCastFunc(size_t temp) { return static_cast<int64_t>(temp); }
 
-std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const std::vector<int>& me_shape,
-                                                             const MeDataType& me_type, const std::string& format) {
+std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const std::vector<int> &me_shape,
+                                                             const MeDataType &me_type, const std::string &format) {
   // convert me shape to ge shape
   std::vector<int64_t> ge_shape;
 
@@ -135,8 +135,8 @@ std::shared_ptr<GeTensorDesc> TransformUtil::GetGeTensorDesc(const std::vector<i
 }
 
 // if failed, return empty vector.
-std::vector<GeTensorPtr> TransformUtil::ConvertInputTensors(const std::vector<MeTensorPtr>& me_tensors,
-                                                            const std::string& format) {
+std::vector<GeTensorPtr> TransformUtil::ConvertInputTensors(const std::vector<MeTensorPtr> &me_tensors,
+                                                            const std::string &format) {
   std::vector<GeTensorPtr> ge_tensors;
 
   for (size_t index = 0; index < me_tensors.size(); index++) {
@@ -163,7 +163,7 @@ std::vector<GeTensorPtr> TransformUtil::ConvertInputTensors(const std::vector<Me
   return ge_tensors;
 }
 
-GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr& tensor, const std::string& format) {
+GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::string &format) {
   // get tensor data type size
   MS_EXCEPTION_IF_NULL(tensor);
   size_t type_size = GetDataTypeSize(tensor->data_type());
@@ -192,15 +192,15 @@ GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr& tensor, const std::s
     MS_LOG(ERROR) << "Failed to get Tensor Desc";
     return nullptr;
   }
-  GeTensorPtr tensor_ptr = make_shared<GeTensor>(*desc, static_cast<uint8_t*>(tensor->data_c()), data_buff_size);
+  GeTensorPtr tensor_ptr = make_shared<GeTensor>(*desc, static_cast<uint8_t *>(tensor->data_c()), data_buff_size);
   if (tensor_ptr != nullptr) {
     MS_LOG(INFO) << "Convert Me Tensor to Ge Tensor success!";
   }
   return tensor_ptr;
 }
 
-std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTensorPtr>& ge_tensors,
-                                                         const std::vector<std::vector<int>>& request_dims) {
+std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors,
+                                                         const std::vector<std::vector<int>> &request_dims) {
   std::vector<MeTensorPtr> outputs;
 
   for (size_t index = 0; index < ge_tensors.size(); index++) {
@@ -222,7 +222,7 @@ std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTen
   return outputs;
 }
 
-std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTensorPtr>& ge_tensors) {
+std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors) {
   std::vector<MeTensorPtr> outputs;
 
   for (size_t index = 0; index < ge_tensors.size(); index++) {
@@ -237,7 +237,7 @@ std::vector<MeTensorPtr> TransformUtil::ConvertGeTensors(const std::vector<GeTen
   return outputs;
 }
 
-MeDataType TransformUtil::ConvertGeDataType(const GeDataType& type) {
+MeDataType TransformUtil::ConvertGeDataType(const GeDataType &type) {
   switch (type) {
     case GeDataType::DT_FLOAT16:
       return MeDataType::kNumberTypeFloat16;
@@ -274,7 +274,7 @@ MeDataType TransformUtil::ConvertGeDataType(const GeDataType& type) {
 }
 
 namespace {
-bool IsGeShapeCompatible(const GeShape& ge_shape, const std::vector<int>& request_dims) {
+bool IsGeShapeCompatible(const GeShape &ge_shape, const std::vector<int> &request_dims) {
   MS_LOG(INFO) << "GeTensor's shape is " << TransformUtil::PrintVector(ge_shape.GetDims());
   MS_LOG(INFO) << "Me request shape is " << TransformUtil::PrintVector(request_dims);
 
@@ -311,20 +311,20 @@ bool IsGeShapeCompatible(const GeShape& ge_shape, const std::vector<int>& reques
 }
 }  // namespace
 
-GeShape TransformUtil::ConvertMeShape(const std::vector<int>& me_dims) {
+GeShape TransformUtil::ConvertMeShape(const std::vector<int> &me_dims) {
   std::vector<int64_t> ge_dims;
   (void)std::copy(me_dims.begin(), me_dims.end(), std::back_inserter(ge_dims));
   return GeShape(ge_dims);
 }
 
-std::vector<int> TransformUtil::ConvertGeShape(const GeShape& ge_shape) {
+std::vector<int> TransformUtil::ConvertGeShape(const GeShape &ge_shape) {
   std::vector<int> me_dims;
   std::vector<int64_t> ge_dims = ge_shape.GetDims();
   (void)std::copy(ge_dims.begin(), ge_dims.end(), std::back_inserter(me_dims));
   return me_dims;
 }
 
-std::vector<int> TransformUtil::ConvertGeShape(const GeShape& ge_shape, const std::vector<int>& request_dims) {
+std::vector<int> TransformUtil::ConvertGeShape(const GeShape &ge_shape, const std::vector<int> &request_dims) {
   vector<int> ret;
   if (ge_shape.GetDimNum() == 0) {
     MS_LOG(DEBUG) << "GeTensor's shape is scalar";
@@ -340,12 +340,12 @@ std::vector<int> TransformUtil::ConvertGeShape(const GeShape& ge_shape, const st
   return ret;
 }
 
-MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr& ge_tensor, const std::vector<int>& me_dims,
-                                            const TypeId& me_type) {
+MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr &ge_tensor, const std::vector<int> &me_dims,
+                                            const TypeId &me_type) {
   MeTensor me_tensor(me_type, me_dims);
 
   // Get the writable data pointer of the tensor and cast it to its data type
-  auto me_data_ptr = reinterpret_cast<uint8_t*>(me_tensor.data_c(true));
+  auto me_data_ptr = reinterpret_cast<uint8_t *>(me_tensor.data_c(true));
   size_t me_data_size = static_cast<size_t>(me_tensor.data().nbytes());
   MS_EXCEPTION_IF_NULL(me_data_ptr);
   MS_EXCEPTION_IF_NULL(ge_tensor);
@@ -369,7 +369,7 @@ MeTensorPtr TransformUtil::GenerateMeTensor(const GeTensorPtr& ge_tensor, const 
   return make_shared<MeTensor>(me_tensor);
 }
 
-MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr& ge_tensor) {
+MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr &ge_tensor) {
   MS_EXCEPTION_IF_NULL(ge_tensor);
   GeShape ge_shape = ge_tensor->GetTensorDesc().GetShape();
   vector<int> me_dims = ConvertGeShape(ge_shape);
@@ -384,7 +384,7 @@ MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr& ge_tensor) {
 }
 
 // if request_dims is empty, use ge tensor's shape,otherwise convert to request shape
-MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr ge_tensor, const std::vector<int>& request_dims) {
+MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr ge_tensor, const std::vector<int> &request_dims) {
   MS_EXCEPTION_IF_NULL(ge_tensor);
   GeShape ge_shape = ge_tensor->GetTensorDesc().GetShape();
   vector<int> me_dims = ConvertGeShape(ge_shape, request_dims);

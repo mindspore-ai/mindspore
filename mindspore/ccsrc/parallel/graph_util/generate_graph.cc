@@ -25,7 +25,7 @@ using mindspore::tensor::Tensor;
 
 namespace mindspore {
 namespace parallel {
-std::string GetOpPythonPath(const OperatorName& op_name) {
+std::string GetOpPythonPath(const OperatorName &op_name) {
   // almost all ops are defined in two main paths
   const std::string ops_module = OP_PATH;
   py::module mod = py::module::import(common::SafeCStr(ops_module));
@@ -35,7 +35,7 @@ std::string GetOpPythonPath(const OperatorName& op_name) {
   return ops_module;
 }
 
-ValuePtr CreatOpInstance(const OperatorAttrs& attrs, const OperatorName& op_name, const std::string& instance_name) {
+ValuePtr CreatOpInstance(const OperatorAttrs &attrs, const OperatorName &op_name, const std::string &instance_name) {
   std::string op_path = GetOpPythonPath(op_name);
   py::module mod = py::module::import(common::SafeCStr(op_path));
   if (!py::hasattr(mod, common::SafeCStr(op_name))) {
@@ -44,7 +44,7 @@ ValuePtr CreatOpInstance(const OperatorAttrs& attrs, const OperatorName& op_name
   }
   std::vector<py::object> arg_list;
   (void)std::transform(attrs.begin(), attrs.end(), std::back_inserter(arg_list),
-                       [](const Attr& attr) { return ValuePtrToPyData(attr.second); });
+                       [](const Attr &attr) { return ValuePtrToPyData(attr.second); });
   py::object obj =
     parse::python_adapter::CallPyFn(GET_OP_FUNCTION_PATH, GET_OP_FUNCTION, op_name, op_path, instance_name, arg_list);
   ValuePtr op_instance = nullptr;
@@ -56,7 +56,7 @@ ValuePtr CreatOpInstance(const OperatorAttrs& attrs, const OperatorName& op_name
   return op_instance;
 }
 
-AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr& value_ptr) {
+AnfNodePtr ValuePtrToAnfNodePtr(const ValuePtr &value_ptr) {
   auto value_node = NewValueNode(value_ptr);
   MS_EXCEPTION_IF_NULL(value_node);
   return value_node->cast<AnfNodePtr>();
@@ -85,7 +85,7 @@ AnfNodePtr CreatInt32Imm(int32_t value) {
   return ValuePtrToAnfNodePtr(value_ptr);
 }
 
-std::string GetInstanceNameByCNode(const CNodePtr& cnode) {
+std::string GetInstanceNameByCNode(const CNodePtr &cnode) {
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   if (!prim) {
     MS_LOG(EXCEPTION) << "The first input of the cnode is not a PrimitivePtr.";
@@ -94,7 +94,7 @@ std::string GetInstanceNameByCNode(const CNodePtr& cnode) {
   return HashInstanceName(instance_name);
 }
 
-std::string HashInstanceName(const std::string& name) {
+std::string HashInstanceName(const std::string &name) {
   auto using_hash_name = common::GetEnv(USING_HASH_NAME);
   std::string instance_name;
   if ((using_hash_name.empty()) || (using_hash_name == "on")) {
@@ -105,7 +105,7 @@ std::string HashInstanceName(const std::string& name) {
   return instance_name;
 }
 
-Status GenerateGraph::Init(const CNodePtr& cnode) {
+Status GenerateGraph::Init(const CNodePtr &cnode) {
   if (!cnode) {
     MS_LOG(ERROR) << "Init:cnode is nullptr";
     return FAILED;
@@ -133,7 +133,7 @@ Status GenerateGraph::Init(const CNodePtr& cnode) {
   return SUCCESS;
 }
 
-AnfNodePtr GenerateGraph::PushBack(const std::vector<AnfNodePtr>& inputs) {
+AnfNodePtr GenerateGraph::PushBack(const std::vector<AnfNodePtr> &inputs) {
   CNodePtr cnode = func_graph_->NewCNode(inputs);  // using NewCNode to creat anfnode
   MS_EXCEPTION_IF_NULL(cnode);
   cnode->set_scope(scope_);
@@ -146,7 +146,7 @@ AnfNodePtr GenerateGraph::PushBack(const std::vector<AnfNodePtr>& inputs) {
   return new_anf_node_ptr;
 }
 
-AnfNodePtr GenerateGraph::NewOpInst(const OperatorName& op_name, const OperatorAttrs& attrs) {
+AnfNodePtr GenerateGraph::NewOpInst(const OperatorName &op_name, const OperatorAttrs &attrs) {
   name_idx_++;
   ValuePtr pyop_instance = CreatOpInstance(attrs, op_name, instance_name_base_ + op_name + std::to_string(name_idx_));
   if (pyop_instance == nullptr) {
@@ -156,7 +156,7 @@ AnfNodePtr GenerateGraph::NewOpInst(const OperatorName& op_name, const OperatorA
   return value_node->cast<AnfNodePtr>();
 }
 
-AnfNodePtr GenerateGraph::NewOpInst(const OperatorName& op_name) {
+AnfNodePtr GenerateGraph::NewOpInst(const OperatorName &op_name) {
   name_idx_++;
   OperatorAttrs attrs;
   ValuePtr pyop_instance = CreatOpInstance(attrs, op_name, instance_name_base_ + std::to_string(name_idx_));

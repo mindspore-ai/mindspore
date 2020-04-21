@@ -29,17 +29,17 @@ class Counter {
   Counter() = default;
   ~Counter() = default;
 
-  Counter(const Counter& other) { data = other.data; }
-  Counter& operator=(const Counter& other) {
+  Counter(const Counter &other) { data = other.data; }
+  Counter &operator=(const Counter &other) {
     if (this != &other) {
       data = other.data;
     }
     return *this;
   }
 
-  int& operator[](const T& t) { return data[t]; }
+  int &operator[](const T &t) { return data[t]; }
 
-  counter_type operator-(const counter_type& other) {
+  counter_type operator-(const counter_type &other) {
     counter_type new_counter;
     for (auto iter = begin(); iter != end(); ++iter) {
       auto key = iter->first;
@@ -58,7 +58,7 @@ class Counter {
     return new_counter;
   }
 
-  counter_type operator+(const counter_type& other) {
+  counter_type operator+(const counter_type &other) {
     counter_type new_counter;
     for (auto iter = begin(); iter != end(); ++iter) {
       auto key = iter->first;
@@ -84,7 +84,7 @@ class Counter {
 
   std::size_t size() const { return data.size(); }
 
-  bool contains(const T& t) const { return data.find(t) != data.end(); }
+  bool contains(const T &t) const { return data.find(t) != data.end(); }
 
   typename OrderedMap<T, int, Hash, Equal>::iterator begin() { return data.begin(); }
 

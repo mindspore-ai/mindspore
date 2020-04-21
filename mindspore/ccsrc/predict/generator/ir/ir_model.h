@@ -23,7 +23,7 @@ namespace mindspore {
 namespace generator {
 class IRModel {
  public:
-  void SetIrTaskInfos(const std::vector<IRtaskInfoPtr>& ir_tasks);
+  void SetIrTaskInfos(const std::vector<IRtaskInfoPtr> &ir_tasks);
   IRModel() = default;
   ~IRModel();
 

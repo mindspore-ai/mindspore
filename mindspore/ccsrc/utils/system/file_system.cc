@@ -25,7 +25,7 @@ namespace system {
 
 #if defined(SYSTEM_ENV_POSIX)
 // Implement the Posix file systen
-WriteFilePtr PosixFileSystem::CreateWriteFile(const string& file_name) {
+WriteFilePtr PosixFileSystem::CreateWriteFile(const string &file_name) {
   if (file_name.empty()) {
     MS_LOG(ERROR) << "Create write file failed because the file name is null.";
     return nullptr;
@@ -43,7 +43,7 @@ WriteFilePtr PosixFileSystem::CreateWriteFile(const string& file_name) {
   return fp;
 }
 
-bool PosixFileSystem::FileExist(const string& file_name) {
+bool PosixFileSystem::FileExist(const string &file_name) {
   if (file_name.empty()) {
     MS_LOG(WARNING) << "The file name is null.";
     return false;
@@ -56,7 +56,7 @@ bool PosixFileSystem::FileExist(const string& file_name) {
   return true;
 }
 
-bool PosixFileSystem::DeleteFile(const string& file_name) {
+bool PosixFileSystem::DeleteFile(const string &file_name) {
   if (file_name.empty()) {
     MS_LOG(WARNING) << "The file name is null.";
     return false;
@@ -70,7 +70,7 @@ bool PosixFileSystem::DeleteFile(const string& file_name) {
 }
 
 static const int DEFAULT_MKDIR_MODE = 0700;
-bool PosixFileSystem::CreateDir(const string& dir_name) {
+bool PosixFileSystem::CreateDir(const string &dir_name) {
   if (dir_name.empty()) {
     MS_LOG(WARNING) << "The directory name is null.";
     return false;
@@ -83,7 +83,7 @@ bool PosixFileSystem::CreateDir(const string& dir_name) {
   return true;
 }
 
-bool PosixFileSystem::DeleteDir(const string& dir_name) {
+bool PosixFileSystem::DeleteDir(const string &dir_name) {
   if (dir_name.empty()) {
     MS_LOG(WARNING) << "The directory name is null.";
     return false;

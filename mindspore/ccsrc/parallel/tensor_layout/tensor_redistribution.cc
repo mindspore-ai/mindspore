@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status TensorRedistribution::Init(const TensorLayout& from, const TensorLayout& to, const RankList& dev_list) {
+Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &to, const RankList &dev_list) {
   from_origin_ = from;
   to_origin_ = to;
   if (from_origin_.tensor_shape().size() != to_origin_.tensor_shape().size()) {
@@ -87,9 +87,9 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
     std::make_pair(operator_vector, output_info_vector));
 }
 
-Status TensorRedistribution::InferReshape(const TensorLayout& from_layout, const TensorLayout& to_layout,
-                                          OperatorVector* const operator_vector,
-                                          OutPutInfoVector* const output_info_vector) {
+Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const TensorLayout &to_layout,
+                                          OperatorVector *const operator_vector,
+                                          OutPutInfoVector *const output_info_vector) {
   MS_EXCEPTION_IF_NULL(operator_vector);
   MS_EXCEPTION_IF_NULL(output_info_vector);
   ConstructOperator constructor;
@@ -144,7 +144,7 @@ Status TensorRedistribution::ComputeCost() {
     return Status::FAILED;
   }
   // Compute redistribution communication cost and computation cost
-  for (auto& op_cost : operator_list_) {
+  for (auto &op_cost : operator_list_) {
     OperatorR op = op_cost.first;
     Shape slice_shape = op_cost.second;
     double prod =

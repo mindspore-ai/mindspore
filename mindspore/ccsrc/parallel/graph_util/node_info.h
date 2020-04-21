@@ -22,9 +22,9 @@
 
 namespace mindspore {
 namespace parallel {
-std::string ParameterName(const AnfNodePtr& node_ptr);
+std::string ParameterName(const AnfNodePtr &node_ptr);
 
-bool ParameterRequireGrad(const AnfNodePtr& node_ptr);
+bool ParameterRequireGrad(const AnfNodePtr &node_ptr);
 }  // namespace parallel
 }  // namespace mindspore
 

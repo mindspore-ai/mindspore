@@ -24,7 +24,7 @@
 
 namespace mindspore {
 
-struct TypeIdManager* TypeIdManager::Get() {
+struct TypeIdManager *TypeIdManager::Get() {
   static TypeIdManager manager;
   return &manager;
 }

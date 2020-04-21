@@ -53,13 +53,13 @@ class Stage {
   explicit Stage(std::vector<Device> devices) : devices_(std::move(devices)), number_(0), rank_(0) {
     gm_ = GroupManager();
   }
-  Stage(const std::vector<mindspore::parallel::Device>& devices, int num, int rank);
+  Stage(const std::vector<mindspore::parallel::Device> &devices, int num, int rank);
   ~Stage() = default;
 
   int GetStageNum() const { return number_; }
   size_t GetDevicesNum() const { return devices_.size(); }
   std::vector<Device> GetDevicesList() { return devices_; }
-  int global_rank(Group* g) const;
+  int global_rank(Group *g) const;
 
  private:
   std::vector<Device> devices_;
@@ -70,11 +70,11 @@ class Stage {
 
 // This method is used for initializing the global DeviceManager 'g_device_manager',
 // arguments including 'device_num' and 'global_rank'
-bool InitDevice(int32_t device_num, int32_t global_rank, const std::string& backend);
+bool InitDevice(int32_t device_num, int32_t global_rank, const std::string &backend);
 
 void CheckGlobalDeviceManager();
 
-std::string HashName(const std::string& rank_list_name);
+std::string HashName(const std::string &rank_list_name);
 
 class DeviceManager {
   // This class is used to manage the abstract devices, including group-related and stage-related management.
@@ -82,9 +82,9 @@ class DeviceManager {
   DeviceManager() : local_rank_(0), global_rank_(0), stage_num_(0) { gm_ = GroupManager(); }
   ~DeviceManager() = default;
 
-  Status Init(const RankList& devices, int32_t local_device, const RankList& stage_map, const std::string& backend);
+  Status Init(const RankList &devices, int32_t local_device, const RankList &stage_map, const std::string &backend);
 
-  static DeviceManager& GetInstance();
+  static DeviceManager &GetInstance();
   RankList GetDeviceListByStageId(int32_t stage_id) const;
   RankList global_device_list(int32_t stage_id, int32_t rank, int32_t split_num) const;
 
@@ -92,8 +92,8 @@ class DeviceManager {
   std::vector<Device> CreateDeviceListByRankList(RankList ranks);
 
   std::string GenerateGroupNameByRanks(RankList dev_ranks);
-  Group CreateGroup(const std::string& group_name, const std::vector<Device>& devices);
-  Group CreateGroup(const RankList& dev_ranks);
+  Group CreateGroup(const std::string &group_name, const std::vector<Device> &devices);
+  Group CreateGroup(const RankList &dev_ranks);
   std::shared_ptr<Stage> GetStageById(int32_t stage_id);
 
   size_t DeviceNum() const { return devices_.size(); }
@@ -105,7 +105,7 @@ class DeviceManager {
   void set_global_rank(int32_t global_rank) { global_rank_ = global_rank; }
   void Clear();
   std::string world_group() const { return gm_.world_group(); }
-  std::string FindRankListNameByHashName(const std::string& hash_name);
+  std::string FindRankListNameByHashName(const std::string &hash_name);
 
  private:
   std::vector<std::shared_ptr<Device>> devices_;

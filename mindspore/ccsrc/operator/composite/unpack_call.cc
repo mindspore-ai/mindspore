@@ -40,7 +40,7 @@ using mindspore::abstract::AbstractKeywordArg;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 
-FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // slice a tensor
   // args: tensor, slice or slice tuple
   const std::string op_name = std::string("UnpackCall");
@@ -70,7 +70,7 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList& args_spec_
       AnfNodePtr para_dict = ret_graph->add_parameter();
       auto dict_elems = arg_dict->elements();
       (void)std::transform(dict_elems.begin(), dict_elems.end(), std::back_inserter(elems),
-                           [ret_graph, para_dict](const AbstractAttribute& item) {
+                           [ret_graph, para_dict](const AbstractAttribute &item) {
                              auto dict_get_item = ret_graph->NewCNode(
                                {NewValueNode(prim::kPrimDictGetItem), para_dict, NewValueNode(item.first)});
                              return ret_graph->NewCNode(
@@ -85,9 +85,9 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList& args_spec_
   return ret_graph;
 }
 
-REGISTER_PYBIND_DEFINE(UnpackCall_, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(UnpackCall_, ([](const py::module *m) {
                          (void)py::class_<UnpackCall, MetaFuncGraph, std::shared_ptr<UnpackCall>>(*m, "UnpackCall_")
-                           .def(py::init<std::string&>());
+                           .def(py::init<std::string &>());
                        }));
 
 }  // namespace prim

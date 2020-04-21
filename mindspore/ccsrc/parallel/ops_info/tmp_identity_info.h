@@ -32,19 +32,19 @@ class TmpIdentityInfo : public OperatorInfo {
   // consider this parameter tensor as TmpIdentityInfo operator. TmpIdentityInfo operator tasks as input a tensor,
   // and outputs the same tensor. After the transformation, subsequent operators can share the output tensor.
  public:
-  TmpIdentityInfo(const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs,
-                  const std::string& name = IDENTITY_INFO)
+  TmpIdentityInfo(const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs,
+                  const std::string &name = IDENTITY_INFO)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<TmpIdentityCost>(false)) {}
   ~TmpIdentityInfo() override = default;
 
-  Status Init(const StrategyPtr& strategy) override;
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status Init(const StrategyPtr &strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
 
   Status GenerateStrategies(int32_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
   Status GetAttrs() override { return SUCCESS; }
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }

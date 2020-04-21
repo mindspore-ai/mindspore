@@ -33,27 +33,27 @@ enum BlockQueueStatus_T : int { SUCCESS = 0, QUEUE_NOT_EXIST, HANDLE_NOT_EXIST, 
 
 class GpuQueue {
  public:
-  GpuQueue(void* addr, size_t feature_size, size_t label_size, size_t capacity);
+  GpuQueue(void *addr, size_t feature_size, size_t label_size, size_t capacity);
   virtual ~GpuQueue();
 
-  void RegisterRelease(const std::function<void(void*)>& func) { host_release_ = func; }
+  void RegisterRelease(const std::function<void(void *)> &func) { host_release_ = func; }
 
   inline bool IsEmpty() const { return head_ == tail_; }
   inline bool IsFull() const { return head_ == ((tail_ + 1) % (capacity_)); }
 
-  BlockQueueStatus_T Push(void* feature_addr, size_t feature_size, void* label_addr, size_t label_size);
-  BlockQueueStatus_T Front(void** feature_addr, size_t* feature_size, void** label_addr, size_t* label_size) const;
+  BlockQueueStatus_T Push(void *feature_addr, size_t feature_size, void *label_addr, size_t label_size);
+  BlockQueueStatus_T Front(void **feature_addr, size_t *feature_size, void **label_addr, size_t *label_size) const;
   BlockQueueStatus_T Pop();
   bool Destroy();
 
  private:
   struct NodeInfo {
     std::unique_ptr<cudaEvent_t> event_;
-    void* host_feature_addr_;
-    void* host_label_addr_;
+    void *host_feature_addr_;
+    void *host_label_addr_;
   };
 
-  void* buffer_;
+  void *buffer_;
   size_t head_;
   size_t tail_;
   size_t feature_size_;
@@ -61,10 +61,10 @@ class GpuQueue {
   size_t capacity_;
   cudaStream_t stream_;
   std::unique_ptr<NodeInfo[]> node_info_;
-  std::function<void(void*)> host_release_;
+  std::function<void(void *)> host_release_;
 
-  GpuQueue(const GpuQueue&) = delete;
-  GpuQueue& operator=(const GpuQueue&) = delete;
+  GpuQueue(const GpuQueue &) = delete;
+  GpuQueue &operator=(const GpuQueue &) = delete;
 };
 
 class BlockingQueue {
@@ -72,11 +72,11 @@ class BlockingQueue {
   BlockingQueue() : queue_(nullptr) {}
   ~BlockingQueue() = default;
 
-  BlockQueueStatus_T Create(void* addr, size_t feature_size, size_t label_size, size_t capacity);
-  void RegisterRelease(const std::function<void(void*)>& func);
-  BlockQueueStatus_T Push(void* feature_addr, size_t feature_size, void* label_addr, size_t label_size,
+  BlockQueueStatus_T Create(void *addr, size_t feature_size, size_t label_size, size_t capacity);
+  void RegisterRelease(const std::function<void(void *)> &func);
+  BlockQueueStatus_T Push(void *feature_addr, size_t feature_size, void *label_addr, size_t label_size,
                           unsigned int timeout_in_sec);
-  BlockQueueStatus_T Front(void** feature_addr, size_t* feature_size, void** label_addr, size_t* label_size);
+  BlockQueueStatus_T Front(void **feature_addr, size_t *feature_size, void **label_addr, size_t *label_size);
   BlockQueueStatus_T Pop();
   bool Destroy();
 

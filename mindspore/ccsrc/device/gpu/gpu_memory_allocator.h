@@ -29,22 +29,22 @@ class GPUMemoryAllocator : public DynamicMemPoolBestFit {
   ~GPUMemoryAllocator() override = default;
   bool Init();
   bool Finalize();
-  bool AllocBufferQueueMem(size_t size, DeviceMemPtr* addr);
+  bool AllocBufferQueueMem(size_t size, DeviceMemPtr *addr);
 
-  size_t AllocDeviceMem(size_t size, DeviceMemPtr* addr) override;
-  bool FreeDeviceMem(const DeviceMemPtr& addr) override;
+  size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;
+  bool FreeDeviceMem(const DeviceMemPtr &addr) override;
   size_t free_mem_size() override;
   size_t total_mem_size() override;
 
-  static GPUMemoryAllocator& GetInstance() {
+  static GPUMemoryAllocator &GetInstance() {
     static GPUMemoryAllocator instance;
     return instance;
   }
 
  private:
   GPUMemoryAllocator() = default;
-  GPUMemoryAllocator(const GPUMemoryAllocator&) = delete;
-  GPUMemoryAllocator& operator=(const GPUMemoryAllocator&) = delete;
+  GPUMemoryAllocator(const GPUMemoryAllocator &) = delete;
+  GPUMemoryAllocator &operator=(const GPUMemoryAllocator &) = delete;
 
   // Used to track address of data buffer queue.
   DeviceMemPtr buffer_q_addr_{nullptr};
