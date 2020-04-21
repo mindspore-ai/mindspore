@@ -33,9 +33,9 @@ def topi_nn_hsigmoid(x):
                                                                              (x(*i) + 3) / 6)))
 
 
-def Hsigmoid(x):
+def HSigmoid(x):
     """
-    Hsigmoid
+    HSigmoid
     Args:
         x:
 
@@ -45,9 +45,9 @@ def Hsigmoid(x):
     return topi_nn_hsigmoid(x)
 
 
-def gpu_schedule_Hsigmoid(outs):
+def gpu_schedule_HSigmoid(outs):
     """
-    gpu schedule Hsigmoid
+    gpu schedule HSigmoid
     Args:
         outs:
 

@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Hsigmoid grad"""
+"""HSigmoid grad"""
 import _akg.topi as topi
 import _akg.tvm as tvm
 
 
-def HsigmoidGrad(y_grad, x):
+def HSigmoidGrad(y_grad, x):
     """
-    HsigmoidGrad
+    HSigmoidGrad
     Args:
         y_grad:
         x:
@@ -32,7 +32,7 @@ def HsigmoidGrad(y_grad, x):
                                                                              y_grad(*i) / 6)))
 
 
-def gpu_schedule_HsigmoidGrad(outs):
+def gpu_schedule_HSigmoidGrad(outs):
     """
     gpu schedule ReLU6Grad
     Args:
