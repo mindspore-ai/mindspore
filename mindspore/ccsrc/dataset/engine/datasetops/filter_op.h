@@ -141,8 +141,7 @@ class FilterOp : public ParallelOp {
   // @param to_proess_indices Indices of columns to be processed.
   // @param out data buffer that are filtered by predicate.
   // @return Status The error code return.
-  Status WorkerCompute(DataBuffer *in_buffer, const std::vector<size_t> &to_proess_indices,
-                       std::unique_ptr<TensorQTable> *out);
+  Status WorkerCompute(DataBuffer *in_buffer, std::unique_ptr<TensorQTable> *out);
 
   // Collector databuffer.
   // @return Status The error code return.
@@ -166,13 +165,12 @@ class FilterOp : public ParallelOp {
   Status ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map,
                            std::vector<std::string> *input_columns);
 
-  // Private function that initialize some internal data structure used by WorkerEntry().
+  // Private function for checking the column legality
   // @param in_buf A raw pointer to the DataBuffer. A raw pointer is fine because this function does not manage memory
   //     and is not shared with other threads.
   // @param[out] to_process_indices Indices of columns that will feed to predicate.
   // @param input_columns The vector of input column names used in the current thread.
-  Status WorkerEntryInit(const DataBuffer *in_buf, std::vector<size_t> *to_process_indices,
-                         std::vector<std::string> *input_columns);
+  Status CheckColumns(const DataBuffer *in_buf, std::vector<std::string> *input_columns);
 };
 
 }  // namespace dataset
