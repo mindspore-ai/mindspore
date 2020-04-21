@@ -34,7 +34,7 @@ class DataBuffer;
 
 class ZipOp : public PipelineOp {
  public:
-  //  The nested builder class inside of the BatchOp is used to help manage all of
+  //  The nested builder class inside of the ZipOp is used to help manage all of
   //  the arguments for constructing it.  Use the builder by setting each argument
   //  with the provided set methods, and then finally call the build method to execute
   //  the actual construction.
@@ -76,8 +76,8 @@ class ZipOp : public PipelineOp {
   };
 
   // Constructor for ZipOp
-  // @param rows_per_buffer number of rows in output buffer
-  // @param op_connector_size connector
+  // @param rows_per_buffer - number of rows in output buffer
+  // @param op_connector_size - connector size
   ZipOp(int32_t rows_per_buffer, int32_t op_connector_size);
 
   // Destructor
@@ -88,8 +88,8 @@ class ZipOp : public PipelineOp {
   Status EoeReceived(int32_t) override;
 
   // Print function for Zip
-  // @param out output stream to print to
-  // @param show_all if it should print everything
+  // @param out - output stream to print to
+  // @param show_all - if it should print everything
   void Print(std::ostream &out, bool show_all) const override;
 
   // Provide stream operator for displaying it
@@ -113,14 +113,14 @@ class ZipOp : public PipelineOp {
   Status fillBuffer(TensorQTable *const table);
 
   // Special handle case where an empty row has been received from child iterator
-  // @note we need to drain eoe signals from all children connectors.
-  // @details when this function is called, then we encountered eoe at child iterator
+  // @note - we need to drain eoe signals from all children connectors.
+  // @details - when this function is called, then we encountered eoe at child iterator
   // we have to drain rows from other child iterators until we hit eoe from all other child iterators
   Status drainPipeline();
 
   // Merges 1 row from each childIterator together
-  // @param new_zip_row input and output, will return a non-empty row if all rows from childConnectors are non-empty
-  // @param updateColumnMapping generates a new column name to index mapping (mColNameIdMap) if set to true
+  // @param new_zip_row - input and output, will be a non-empty row if all rows from childConnectors are non-empty
+  // @param updateColumnMapping - generates a new column name to index mapping (mColNameIdMap) if set to true
   // @details merge rows from iterator together. This is the main functionality for ZipOp
   //          this function takes one row and fills it with tensors from rows fetched
   //          from childIterators.

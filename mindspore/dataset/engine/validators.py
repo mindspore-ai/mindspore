@@ -652,6 +652,22 @@ def check_batch(method):
 
     return new_method
 
+def check_sync_wait(method):
+    """check the input arguments of sync_wait."""
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        nreq_param_str = ['condition_name']
+        nreq_param_int = ['step_size']
+
+        check_param_type(nreq_param_int, param_dict, int)
+
+        check_param_type(nreq_param_str, param_dict, str)
+
+        return method(*args, **kwargs)
+
+    return new_method
 
 def check_shuffle(method):
     """check the input arguments of shuffle."""

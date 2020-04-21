@@ -28,6 +28,7 @@ import multiprocessing
 import queue
 from enum import Enum
 from importlib import import_module
+import threading
 
 import numpy as np
 from mindspore._c_dataengine import DataType, TFReaderOp, ImageFolderOp, CifarOp, MnistOp, ManifestOp, \
@@ -40,7 +41,7 @@ from .iterators import DictIterator, TupleIterator
 from .validators import check, check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, check_rename, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
-    check_zip_dataset, check_add_column, check_textfiledataset
+    check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -141,6 +142,7 @@ class Dataset:
         self._batch_size = None
         self._num_classes = None
         self._repeat_count = None
+        self._sync = False
 
     def get_args(self):
         """
@@ -198,6 +200,30 @@ class Dataset:
         """
         return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns)
 
+    @check_sync_wait
+    def sync_wait(self, condition_name, num_batch=1, callback=None):
+        '''
+        Add a blocking condition to the input Dataset
+
+        Args:
+            input_dataset (Dataset): Input dataset to apply flow control
+            num_batch (int): the number of batches without blocking at the start of each epoch
+            condition_name (str): The condition name that is used to toggle sending next row
+            callback (function): The callback funciton that will be invoked when sync_update is called
+
+        Raises:
+            RuntimeError: If condition name already exists.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object.
+            >>> data = data.sync_wait("callback1")
+            >>> data = data.batch(batch_size)
+            >>> for batch_data in data.create_dict_iterator():
+            >>>     data = data.sync_update("callback1")
+        '''
+        return SyncWaitDataset(self, condition_name, num_batch, callback)
+
     @check_shuffle
     def shuffle(self, buffer_size):
         """
@@ -219,6 +245,9 @@ class Dataset:
 
         Returns:
             ShuffleDataset, dataset shuffled.
+
+        Raises:
+            RuntimeError: If exist sync operators before shuffle.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -821,6 +850,9 @@ class Dataset:
         self._input_indexs = value
 
     def _get_pipeline_info(self):
+        """
+        Gets pipeline information.
+        """
         device_iter = TupleIterator(self)
         self._output_shapes = device_iter.get_output_shapes()
         self._output_types = device_iter.get_output_types()
@@ -874,6 +906,30 @@ class Dataset:
         if self.input:
             return self.input[0].num_classes()
         return None
+
+    def get_sync_notifiers(self):
+        if self.input:
+            return self.input[0].get_sync_notifiers()
+        return {}
+
+    def is_sync(self):
+        if self.input:
+            return self.input[0].is_sync()
+        return False
+
+    def sync_update(self, condition_name, num_batch=None, data=None):
+        """
+        condition_name (str): The condition name that is used to toggle sending next row
+        step_size (int or None): The number of steps(rows) that are released
+                         when pass_rows is None, will update the same number as sync_wait specified
+        data (dict or None): The data passed to the callback
+        """
+        notifiers_dict = self.get_sync_notifiers()
+        if condition_name not in notifiers_dict:
+            raise RuntimeError("Condition name not found")
+        if num_batch is not None:
+            num_batch *= self.get_batch_size()
+        notifiers_dict[condition_name](num_batch, data)
 
     def get_batch_size(self):
         """
@@ -978,6 +1034,8 @@ class BatchDataset(DatasetOp):
         if BatchDataset._is_ancestor_of_repeat(input_dataset):
             logger.warning("Repeat is located before batch, data from two epochs can be batched together.")
 
+        BatchDataset._update_batch_size_for_syncwait(input_dataset, batch_size)
+
         self.batch_size = batch_size
         self.drop_remainder = drop_remainder
         self.per_batch_map = per_batch_map
@@ -1034,6 +1092,20 @@ class BatchDataset(DatasetOp):
             flag = flag | BatchDataset._is_ancestor_of_repeat(input_dataset)
         return flag
 
+    @staticmethod
+    def _update_batch_size_for_syncwait(dataset, batch_size):
+        """
+        Utility function to notify batch size to sync_wait.
+
+        Args:
+             dataset (Dataset): dataset to be checked
+             batchsize (int): batch size to notify
+        """
+        if isinstance(dataset, SyncWaitDataset):
+            dataset.update_sync_batch_size(batch_size)
+        for input_dataset in dataset.input:
+            BatchDataset._update_batch_size_for_syncwait(input_dataset, batch_size)
+
 
 class BatchInfo(CBatchInfo):
     """
@@ -1058,6 +1130,108 @@ class BatchInfo(CBatchInfo):
         """
         return
 
+class BlockReleasePair:
+    """
+    The blocking condition class used by SyncWaitDataset
+
+    Args:
+        init_release_rows (int): Number of lines to allow through the pipeline
+        callback (function): The callback funciton that will be called when release is called
+    """
+    def __init__(self, init_release_rows, callback=None):
+        self.row_count = -init_release_rows
+        self.cv = threading.Condition()
+        self.callback = callback
+        self.default_rows = init_release_rows
+
+    def __deepcopy__(self, memodict):
+        if id(self) in memodict:
+            return memodict[id(self)]
+        memodict[id(self)] = self
+        # condition variable and callback are the same, but reset the counter
+        self.reset()
+        return self
+
+    def reset(self):
+        with self.cv:
+            self.row_count = -self.default_rows
+            self.cv.notify_all()
+
+    def update_batched_size(self, batch_size):
+        # should only use before the pipeline creates
+        self.row_count *= batch_size
+        self.default_rows *= batch_size
+
+    def block_func(self):
+        with self.cv:
+            self.cv.wait_for(lambda: self.row_count < 0)
+            self.row_count += 1
+        return True
+
+    def release_func(self, pass_rows=None, data=None):
+        with self.cv:
+            if pass_rows is None:
+                pass_rows = self.default_rows
+            self.row_count -= pass_rows
+            if self.callback is not None:
+                self.callback(data)
+            self.cv.notify_all()
+
+class SyncWaitDataset(DatasetOp):
+    """
+    The result of adding a blocking condition to the input Dataset
+
+    Args:
+        input_dataset (Dataset): Input dataset to apply flow control
+        num_batch (int): the number of batches without blocking at the start of each epoch
+        condition_name (str): The condition name that is used to toggle sending next row
+        callback (function): The callback funciton that will be invoked when sync_update is called
+
+    Raises:
+        RuntimeError: If condition name already exists.
+    """
+
+    def __init__(self, input_dataset, condition_name, num_batch, callback=None):
+        super().__init__()
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        # set to the default value, waiting for the batch to update it
+        self._condition_name = condition_name
+        self._pair = BlockReleasePair(num_batch, callback)
+        if self._condition_name in self.input[0].get_sync_notifiers():
+            raise RuntimeError("Condition name is already in use")
+
+    def get_sync_notifiers(self):
+        return {**self.input[0].get_sync_notifiers(), **{self._condition_name: self._pair.release_func}}
+
+    def is_sync(self):
+        return True
+
+    def get_args(self):
+        args = super().get_args()
+        args["condition_name"] = self._condition_name
+        args["condition_func"] = self._pair.block_func
+        return args
+
+    def update_sync_batch_size(self, batch_size):
+        self._pair.update_batched_size(batch_size)
+
+    @staticmethod
+    def _is_ancestor_of_batch(dataset):
+        """
+        Utility function to find the case where sync_wait is used before batch.
+
+        Args:
+             dataset (Dataset): dataset to be checked
+        Return:
+            True or False
+        """
+        if isinstance(dataset, BatchDataset):
+            return True
+        flag = False
+        for input_dataset in dataset.input:
+            flag = flag | SyncWaitDataset._is_ancestor_of_batch(input_dataset)
+        return flag
 
 class ShuffleDataset(DatasetOp):
     """
@@ -1066,6 +1240,9 @@ class ShuffleDataset(DatasetOp):
     Args:
         input_dataset (Dataset): Input Dataset to be shuffled.
         buffer_size (int): The size of the buffer.
+
+    Raises:
+        RuntimeError: If exist sync operators before shuffle.
     """
 
     def __init__(self, input_dataset, buffer_size):
@@ -1074,6 +1251,8 @@ class ShuffleDataset(DatasetOp):
         self.input.append(input_dataset)
         input_dataset.output.append(self)
         self._input_indexs = input_dataset.input_indexs
+        if self.is_sync():
+            raise RuntimeError("No shuffle after sync operators")
 
     def get_args(self):
         args = super().get_args()
@@ -1426,6 +1605,9 @@ class ZipDataset(DatasetOp):
             Number, number of classes.
         """
         return None
+
+    def is_sync(self):
+        return any([c.is_sync() for c in self.input])
 
     def get_args(self):
         args = super().get_args()
