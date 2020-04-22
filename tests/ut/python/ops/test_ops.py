@@ -250,6 +250,10 @@ test_case_math_ops = [
         'block': P.Exp(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Erf', {
+        'block': P.Erf(),
+        'desc_inputs': [Tensor(np.array([-2, -1, 0, 1, 2]).astype(np.float16))],
+        'desc_bprop': [Tensor(np.array([-2, -1, 0, 1, 2]).astype(np.float16))]}),
     ('Floor', {
         'block': P.Floor(),
         'desc_inputs': [[2, 512, 56, 56]],

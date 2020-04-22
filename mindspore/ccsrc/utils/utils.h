@@ -92,6 +92,7 @@ constexpr auto kClipByNormNoDivSumOpName = "ClipByNormNoDivSum";
 constexpr auto kGreaterOpName = "Greater";
 constexpr auto kSqrtOpName = "Sqrt";
 constexpr auto kRsqrtOpName = "Rsqrt";
+constexpr auto kErfOpName = "Erf";
 constexpr auto kRealDivOpName = "RealDiv";
 constexpr auto kLambUpdateWithLROpName = "LambUpdateWithLR";
 constexpr auto kLambNextMVWithDecayOpName = "LambNextMVWithDecay";

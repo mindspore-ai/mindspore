@@ -57,6 +57,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"strided_slice", "strided_slice_d"},
   {"strided_slice_grad", "strided_slice_grad_d"},
   {"transpose", "transpose_d"},
+  {"fill", "fill_d"},
   {"unsorted_segment_sum", "unsorted_segment_sum_d"},
   {"concat", "concat_d"},
   {"slice", "slice_d"},
