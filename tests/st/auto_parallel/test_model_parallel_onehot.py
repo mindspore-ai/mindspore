@@ -16,6 +16,7 @@
 import os
 import pytest
 
+
 def test_expand_loss():
     ret = os.system("sh run_onehot_model_parallel.sh")
-    assert(ret==0)
+    assert(ret == 0)

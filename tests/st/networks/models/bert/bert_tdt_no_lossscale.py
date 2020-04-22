@@ -18,20 +18,21 @@
 import os
 import pytest
 import numpy as np
-from numpy import allclose
+import mindspore.context as context
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine.datasets as de
 import mindspore.dataset.transforms.c_transforms as C
-from mindspore import context
-from mindspore.common.tensor import Tensor
+from mindspore import Tensor
 from mindspore.train.model import Model
 from mindspore.train.callback import Callback
 from mindspore.model_zoo.Bert_NEZHA import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell
 from mindspore.nn.optim import Momentum
 from mindspore import log as logger
+
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
 SCHEMA_DIR = "/home/workspace/mindspore_dataset/bert/example/datasetSchema.json"
+
 
 def get_config(version='base', batch_size=1):
     """get config"""
@@ -99,13 +100,14 @@ def get_config(version='base', batch_size=1):
         bert_config = BertConfig(batch_size=batch_size)
     return bert_config
 
+
 def me_de_train_dataset():
     """test me de train dataset"""
     # apply repeat operations
     repeat_count = 1
     ds = de.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
-                                                               "next_sentence_labels", "masked_lm_positions",
-                                                               "masked_lm_ids", "masked_lm_weights"], shuffle=False)
+                                                                "next_sentence_labels", "masked_lm_positions",
+                                                                "masked_lm_ids", "masked_lm_weights"], shuffle=False)
     type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
     ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)
@@ -136,6 +138,7 @@ class ModelCallback(Callback):
         cb_params = run_context.original_args()
         self.loss_list.append(cb_params.net_outputs.asnumpy()[0])
         logger.info("epoch: {}, outputs are {}".format(cb_params.cur_epoch_num, str(cb_params.net_outputs)))
+
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -180,7 +183,8 @@ def test_bert_tdt():
     expect_out = [12.19179, 11.965041, 11.969687, 11.97815, 11.969171, 12.603289, 12.165594,
                   12.824818, 12.38842, 12.604046]
     logger.info("expected loss value output: {}".format(expect_out))
-    assert allclose(loss_value, expect_out, 0.00001, 0.00001)
+    assert np.allclose(loss_value, expect_out, 0.00001, 0.00001)
+
 
 if __name__ == '__main__':
     test_bert_tdt()

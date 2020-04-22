@@ -19,6 +19,7 @@ from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common import dtype as mstype
 
+
 def weight_variable(shape):
     return initializer('XavierUniform', shape=shape, dtype=mstype.float32)
 
@@ -297,4 +298,3 @@ class ResNet(nn.Cell):
 
 def resnet50(batch_size, num_classes):
     return ResNet(ResidualBlock, [3, 4, 6, 3], num_classes, batch_size)
-

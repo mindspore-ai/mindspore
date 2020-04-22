@@ -33,10 +33,12 @@ SUMMARY_DIR = CUR_DIR + "/test_temp_summary_event_file/"
 
 context.set_context(device_target="Ascend")
 
+
 class MsWrapper(nn.Cell):
     def __init__(self, network):
         super(MsWrapper, self).__init__(auto_prefix=False)
         self._network = network
+
     @ms_function
     def construct(self, *args):
         return self._network(*args)
@@ -45,14 +47,15 @@ class MsWrapper(nn.Cell):
 def me_train_tensor(net, input_np, label_np, epoch_size=2):
     context.set_context(mode=context.GRAPH_MODE)
     loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
-    opt = ApplyMomentum(Tensor(np.array([0.1])), Tensor(np.array([0.9])), filter(lambda x: x.requires_grad, net.get_parameters()))
+    opt = ApplyMomentum(Tensor(np.array([0.1])), Tensor(np.array([0.9])),
+                        filter(lambda x: x.requires_grad, net.get_parameters()))
     Model(net, loss, opt)
     _network = wrap.WithLossCell(net, loss)
     _train_net = MsWrapper(wrap.TrainOneStepCell(_network, opt))
     _train_net.set_train()
     summary_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=_train_net)
     for epoch in range(0, epoch_size):
-        print(f"epoch %d"%(epoch))
+        print(f"epoch %d" % (epoch))
         output = _train_net(Tensor(input_np), Tensor(label_np))
         summary_writer.record(i)
         print("********output***********")

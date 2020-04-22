@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-import mindspore.common.dtype as mstype
 import numpy as np
 import mindspore.context as context
-from mindspore.common.parameter import Parameter
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.ops import operations as P
+
 context.set_context(mode=context.GRAPH_MODE, device_id=4, device_target="Ascend")
-#context.set_context(enable_task_sink=True)
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -39,6 +38,7 @@ class Net(nn.Cell):
         z = self.add(z1, z2)
         return z
 
+
 def test_net():
     x = np.random.randn(32, 10).astype(np.float32)
     y = np.random.randn(32, 10).astype(np.float32)
@@ -46,6 +46,4 @@ def test_net():
     h = np.random.randn(10).astype(np.float32)
     relu_relu = Net()
     output = relu_relu(Tensor(x), Tensor(y), Tensor(k), Tensor(h))
-    print(x)
     print(output.asnumpy())
-
