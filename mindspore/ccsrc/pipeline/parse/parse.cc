@@ -594,8 +594,9 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
       std::string var_name = "self.";
       std::string attr_name = node.attr("attr").cast<std::string>();
       (void)var_name.append(attr_name);
+      auto obj = ast()->obj().attr(attr_name.c_str());
       if (py::hasattr(ast()->obj(), attr_name.c_str()) &&
-          py::hasattr(ast()->obj().attr(attr_name.c_str()), PYTHON_PRIMITIVE_FLAG)) {
+          (data_converter::IsCellInstance(obj) || py::hasattr(obj, PYTHON_PRIMITIVE_FLAG))) {
         return block->MakeResolveSymbol(var_name);
       } else {
         return block->ReadVariable(var_name);
