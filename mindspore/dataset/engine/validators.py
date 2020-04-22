@@ -443,9 +443,8 @@ def check_vocdataset(method):
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
 
-        nreq_param_int = ['num_samples', 'num_parallel_workers']
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
         nreq_param_bool = ['shuffle', 'decode']
-        nreq_param_str = ['distribution']
 
         # check dataset_dir; required argument
         dataset_dir = param_dict.get('dataset_dir')
@@ -457,7 +456,7 @@ def check_vocdataset(method):
 
         check_param_type(nreq_param_bool, param_dict, bool)
 
-        check_param_type(nreq_param_str, param_dict, str)
+        check_sampler_shuffle_shard_options(param_dict)
 
         return method(*args, **kwargs)
 
