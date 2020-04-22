@@ -31,9 +31,12 @@ namespace mindspore {
 namespace trans {
 struct TypeIdArgs {
   const void *data;
-  size_t host_shape_size;  // Multiply each dimension elements. [a, b, c, d] => a*b*c*d
-  TypeId host_data_type;
-  TypeId device_data_type;
+  size_t src_size;
+  size_t dst_size;
+  TypeId src_type;
+  TypeId dst_type;
+  size_t src_shape_size;
+  size_t dst_shape_size;
 };
 
 struct FormatArgs {
