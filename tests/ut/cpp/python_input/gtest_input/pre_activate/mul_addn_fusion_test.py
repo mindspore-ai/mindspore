@@ -42,7 +42,7 @@ def test_mul_addn_fusion(tag):
     @fns
     def before(a, b):
         res = mul(scalar, a)
-        res = addn((b, res))
+        res = addn((res, b))
         return res
 
     @fns
