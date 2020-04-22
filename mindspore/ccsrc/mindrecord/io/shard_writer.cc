@@ -40,17 +40,7 @@ ShardWriter::~ShardWriter() {
   }
 }
 
-MSRStatus ShardWriter::Open(const std::vector<std::string> &paths, bool append) {
-  shard_count_ = paths.size();
-  if (shard_count_ > kMaxShardCount || shard_count_ == 0) {
-    MS_LOG(ERROR) << "The Shard Count greater than max value or equal to 0.";
-    return FAILED;
-  }
-  if (schema_count_ > kMaxSchemaCount) {
-    MS_LOG(ERROR) << "The schema Count greater than max value.";
-    return FAILED;
-  }
-
+MSRStatus ShardWriter::GetFullPathFromFileName(const std::vector<std::string> &paths) {
   // Get full path from file name
   for (const auto &path : paths) {
     if (!CheckIsValidUtf8(path)) {
@@ -60,7 +50,7 @@ MSRStatus ShardWriter::Open(const std::vector<std::string> &paths, bool append) 
     char resolved_path[PATH_MAX] = {0};
     char buf[PATH_MAX] = {0};
     if (strncpy_s(buf, PATH_MAX, common::SafeCStr(path), path.length()) != EOK) {
-      MS_LOG(ERROR) << "Securec func failed";
+      MS_LOG(ERROR) << "Secure func failed";
       return FAILED;
     }
 #if defined(_WIN32) || defined(_WIN64)
@@ -82,7 +72,10 @@ MSRStatus ShardWriter::Open(const std::vector<std::string> &paths, bool append) 
 #endif
     file_paths_.emplace_back(string(resolved_path));
   }
+  return SUCCESS;
+}
 
+MSRStatus ShardWriter::OpenDataFiles(bool append) {
   // Open files
   for (const auto &file : file_paths_) {
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
@@ -116,6 +109,67 @@ MSRStatus ShardWriter::Open(const std::vector<std::string> &paths, bool append) 
   return SUCCESS;
 }
 
+MSRStatus ShardWriter::RemoveLockFile() {
+  // Remove temporary file
+  int ret = std::remove(pages_file_.c_str());
+  if (ret == 0) {
+    MS_LOG(DEBUG) << "Remove page file.";
+  }
+
+  ret = std::remove(lock_file_.c_str());
+  if (ret == 0) {
+    MS_LOG(DEBUG) << "Remove lock file.";
+  }
+  return SUCCESS;
+}
+
+MSRStatus ShardWriter::InitLockFile() {
+  if (file_paths_.size() == 0) {
+    MS_LOG(ERROR) << "File path not initialized.";
+    return FAILED;
+  }
+
+  lock_file_ = file_paths_[0] + kLockFileSuffix;
+  pages_file_ = file_paths_[0] + kPageFileSuffix;
+
+  if (RemoveLockFile() == FAILED) {
+    MS_LOG(ERROR) << "Remove file failed.";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+MSRStatus ShardWriter::Open(const std::vector<std::string> &paths, bool append) {
+  shard_count_ = paths.size();
+  if (shard_count_ > kMaxShardCount || shard_count_ == 0) {
+    MS_LOG(ERROR) << "The Shard Count greater than max value or equal to 0.";
+    return FAILED;
+  }
+  if (schema_count_ > kMaxSchemaCount) {
+    MS_LOG(ERROR) << "The schema Count greater than max value.";
+    return FAILED;
+  }
+
+  // Get full path from file name
+  if (GetFullPathFromFileName(paths) == FAILED) {
+    MS_LOG(ERROR) << "Get full path from file name failed.";
+    return FAILED;
+  }
+
+  // Open files
+  if (OpenDataFiles(append) == FAILED) {
+    MS_LOG(ERROR) << "Open data files failed.";
+    return FAILED;
+  }
+
+  // Init lock file
+  if (InitLockFile() == FAILED) {
+    MS_LOG(ERROR) << "Init lock file failed.";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 MSRStatus ShardWriter::OpenForAppend(const std::string &path) {
   if (!IsLegalFile(path)) {
     return FAILED;
@@ -143,11 +197,28 @@ MSRStatus ShardWriter::OpenForAppend(const std::string &path) {
 }
 
 MSRStatus ShardWriter::Commit() {
+  // Read pages file
+  std::ifstream page_file(pages_file_.c_str());
+  if (page_file.good()) {
+    page_file.close();
+    if (shard_header_->FileToPages(pages_file_) == FAILED) {
+      MS_LOG(ERROR) << "Read pages from file failed";
+      return FAILED;
+    }
+  }
+
   if (WriteShardHeader() == FAILED) {
     MS_LOG(ERROR) << "Write metadata failed";
     return FAILED;
   }
   MS_LOG(INFO) << "Write metadata successfully.";
+
+  // Remove lock file
+  if (RemoveLockFile() == FAILED) {
+    MS_LOG(ERROR) << "Remove lock file failed.";
+    return FAILED;
+  }
+
   return SUCCESS;
 }
 
@@ -455,15 +526,65 @@ void ShardWriter::FillArray(int start, int end, std::map<uint64_t, vector<json>>
   }
 }
 
-MSRStatus ShardWriter::WriteRawData(std::map<uint64_t, std::vector<json>> &raw_data,
-                                    std::vector<std::vector<uint8_t>> &blob_data, bool sign) {
+int ShardWriter::LockWriter(bool parallel_writer) {
+  if (!parallel_writer) {
+    return 0;
+  }
+  const int fd = open(lock_file_.c_str(), O_WRONLY | O_CREAT, 0666);
+  if (fd >= 0) {
+    flock(fd, LOCK_EX);
+  } else {
+    MS_LOG(ERROR) << "Shard writer failed when locking file";
+    return -1;
+  }
+
+  // Open files
+  file_streams_.clear();
+  for (const auto &file : file_paths_) {
+    std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
+    fs->open(common::SafeCStr(file), std::ios::in | std::ios::out | std::ios::binary);
+    if (fs->fail()) {
+      MS_LOG(ERROR) << "File could not opened";
+      return -1;
+    }
+    file_streams_.push_back(fs);
+  }
+
+  if (shard_header_->FileToPages(pages_file_) == FAILED) {
+    MS_LOG(ERROR) << "Read pages from file failed";
+    return -1;
+  }
+  return fd;
+}
+
+MSRStatus ShardWriter::UnlockWriter(int fd, bool parallel_writer) {
+  if (!parallel_writer) {
+    return SUCCESS;
+  }
+
+  if (shard_header_->PagesToFile(pages_file_) == FAILED) {
+    MS_LOG(ERROR) << "Write pages to file failed";
+    return FAILED;
+  }
+
+  for (int i = static_cast<int>(file_streams_.size()) - 1; i >= 0; i--) {
+    file_streams_[i]->close();
+  }
+
+  flock(fd, LOCK_UN);
+  close(fd);
+  return SUCCESS;
+}
+
+MSRStatus ShardWriter::WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>> &raw_data,
+                                            std::vector<std::vector<uint8_t>> &blob_data, bool sign, int *schema_count,
+                                            int *row_count) {
   // check the free disk size
   auto st_space = GetDiskSize(file_paths_[0], kFreeSize);
   if (st_space.first != SUCCESS || st_space.second < kMinFreeDiskSize) {
     MS_LOG(ERROR) << "IO error / there is no free disk to be used";
     return FAILED;
   }
-
   // Add 4-bytes dummy blob data if no any blob fields
   if (blob_data.size() == 0 && raw_data.size() > 0) {
     blob_data = std::vector<std::vector<uint8_t>>(raw_data[0].size(), std::vector<uint8_t>(kUnsignedInt4, 0));
@@ -479,10 +600,29 @@ MSRStatus ShardWriter::WriteRawData(std::map<uint64_t, std::vector<json>> &raw_d
     MS_LOG(ERROR) << "Validate raw data failed";
     return FAILED;
   }
+  *schema_count = std::get<1>(v);
+  *row_count = std::get<2>(v);
+  return SUCCESS;
+}
+
+MSRStatus ShardWriter::WriteRawData(std::map<uint64_t, std::vector<json>> &raw_data,
+                                    std::vector<std::vector<uint8_t>> &blob_data, bool sign, bool parallel_writer) {
+  // Lock Writer if loading data parallel
+  int fd = LockWriter(parallel_writer);
+  if (fd < 0) {
+    MS_LOG(ERROR) << "Lock writer failed";
+    return FAILED;
+  }
 
   // Get the count of schemas and rows
-  int schema_count = std::get<1>(v);
-  int row_count = std::get<2>(v);
+  int schema_count = 0;
+  int row_count = 0;
+
+  // Serialize raw data
+  if (WriteRawDataPreCheck(raw_data, blob_data, sign, &schema_count, &row_count) == FAILED) {
+    MS_LOG(ERROR) << "Check raw data failed";
+    return FAILED;
+  }
 
   if (row_count == kInt0) {
     MS_LOG(INFO) << "Raw data size is 0.";
@@ -516,11 +656,17 @@ MSRStatus ShardWriter::WriteRawData(std::map<uint64_t, std::vector<json>> &raw_d
   }
   MS_LOG(INFO) << "Write " << bin_raw_data.size() << " records successfully.";
 
+  if (UnlockWriter(fd, parallel_writer) == FAILED) {
+    MS_LOG(ERROR) << "Unlock writer failed";
+    return FAILED;
+  }
+
   return SUCCESS;
 }
 
 MSRStatus ShardWriter::WriteRawData(std::map<uint64_t, std::vector<py::handle>> &raw_data,
-                                    std::map<uint64_t, std::vector<py::handle>> &blob_data, bool sign) {
+                                    std::map<uint64_t, std::vector<py::handle>> &blob_data, bool sign,
+                                    bool parallel_writer) {
   std::map<uint64_t, std::vector<json>> raw_data_json;
   std::map<uint64_t, std::vector<json>> blob_data_json;
 
@@ -554,11 +700,11 @@ MSRStatus ShardWriter::WriteRawData(std::map<uint64_t, std::vector<py::handle>> 
     MS_LOG(ERROR) << "Serialize raw data failed in write raw data";
     return FAILED;
   }
-  return WriteRawData(raw_data_json, bin_blob_data, sign);
+  return WriteRawData(raw_data_json, bin_blob_data, sign, parallel_writer);
 }
 
 MSRStatus ShardWriter::WriteRawData(std::map<uint64_t, std::vector<py::handle>> &raw_data,
-                                    vector<vector<uint8_t>> &blob_data, bool sign) {
+                                    vector<vector<uint8_t>> &blob_data, bool sign, bool parallel_writer) {
   std::map<uint64_t, std::vector<json>> raw_data_json;
   (void)std::transform(raw_data.begin(), raw_data.end(), std::inserter(raw_data_json, raw_data_json.end()),
                        [](const std::pair<uint64_t, std::vector<py::handle>> &pair) {
@@ -568,7 +714,7 @@ MSRStatus ShardWriter::WriteRawData(std::map<uint64_t, std::vector<py::handle>> 
                                               [](const py::handle &obj) { return nlohmann::detail::ToJsonImpl(obj); });
                          return std::make_pair(pair.first, std::move(json_raw_data));
                        });
-  return WriteRawData(raw_data_json, blob_data, sign);
+  return WriteRawData(raw_data_json, blob_data, sign, parallel_writer);
 }
 
 MSRStatus ShardWriter::ParallelWriteData(const std::vector<std::vector<uint8_t>> &blob_data,

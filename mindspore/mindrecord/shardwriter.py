@@ -135,7 +135,7 @@ class ShardWriter:
     def get_shard_header(self):
         return self._header
 
-    def write_raw_data(self, data, validate=True):
+    def write_raw_data(self, data, validate=True, parallel_writer=False):
         """
         Write raw data of cv dataset.
 
@@ -145,6 +145,7 @@ class ShardWriter:
         Args:
            data (list[dict]): List of raw data.
            validate (bool, optional): verify data according schema if it equals to True.
+           parallel_writer (bool, optional): Load data parallel if it equals to True.
 
         Returns:
             MSRStatus, SUCCESS or FAILED.
@@ -165,7 +166,7 @@ class ShardWriter:
             if row_raw:
                 raw_data.append(row_raw)
         raw_data = {0: raw_data} if raw_data else {}
-        ret = self._writer.write_raw_data(raw_data, blob_data, validate)
+        ret = self._writer.write_raw_data(raw_data, blob_data, validate, parallel_writer)
         if ret != ms.MSRStatus.SUCCESS:
             logger.error("Failed to write dataset.")
             raise MRMWriteDatasetError

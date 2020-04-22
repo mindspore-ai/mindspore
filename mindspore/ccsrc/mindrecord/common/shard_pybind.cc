@@ -75,12 +75,9 @@ void BindShardWriter(py::module *m) {
     .def("set_header_size", &ShardWriter::set_header_size)
     .def("set_page_size", &ShardWriter::set_page_size)
     .def("set_shard_header", &ShardWriter::SetShardHeader)
-    .def("write_raw_data",
-         (MSRStatus(ShardWriter::*)(std::map<uint64_t, std::vector<py::handle>> &, vector<vector<uint8_t>> &, bool)) &
-           ShardWriter::WriteRawData)
-    .def("write_raw_nlp_data", (MSRStatus(ShardWriter::*)(std::map<uint64_t, std::vector<py::handle>> &,
-                                                          std::map<uint64_t, std::vector<py::handle>> &, bool)) &
-                                 ShardWriter::WriteRawData)
+    .def("write_raw_data", (MSRStatus(ShardWriter::*)(std::map<uint64_t, std::vector<py::handle>> &,
+                                                      vector<vector<uint8_t>> &, bool, bool)) &
+                             ShardWriter::WriteRawData)
     .def("commit", &ShardWriter::Commit);
 }
 
