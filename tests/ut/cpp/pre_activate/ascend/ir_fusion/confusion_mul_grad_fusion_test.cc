@@ -32,6 +32,11 @@ class TestHWOptimizeConfusionMulGradFusion : public BackendCommon {
 TEST_F(TestHWOptimizeConfusionMulGradFusion, test_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_confusion_mul_grad_fusion", "before");
   EXPECT_NE(g, nullptr);
+  auto bert_scope = std::make_shared<Scope>("bert/encoder");
+  for (auto node : TopoSort(g->get_return())) {
+    node->set_scope(bert_scope);
+  }
+
   std::vector<int> shp{1, 1, 1, 1};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;

@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <string>
 #include "session/anf_runtime_algorithm.h"
 #include "ir/primitive.h"
 #include "utils/utils.h"
@@ -89,6 +90,9 @@ const AnfNodePtr ConfusionMulGradFusion::Process(const FuncGraphPtr &graph, cons
   auto reduce_sum = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(reduce_sum);
   auto mul1 = reduce_sum->input(1);
+  if (mul1->fullname_with_scope().find("bert/encoder") == std::string::npos) {
+    return nullptr;
+  }
   if (IsUsedByOthers(graph, mul1)) {
     MS_LOG(INFO) << "Mul1 is used by others, quit fusion!";
     return nullptr;
