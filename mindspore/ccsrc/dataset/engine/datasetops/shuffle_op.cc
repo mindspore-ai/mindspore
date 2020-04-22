@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#if defined(_WIN32) || defined(_WIN64)
+#include <stdlib.h>
+#endif
 #include <securec.h>
 #include <algorithm>
 #include <chrono>
@@ -86,7 +89,9 @@ Status ShuffleOp::SelfReset() {
     rng_ = std::mt19937_64(shuffle_seed_);
   } else {
 #if defined(_WIN32) || defined(_WIN64)
-    std::random_device random_device;
+    unsigned int number;
+    rand_s(&number);
+    std::mt19937 random_device{static_cast<uint32_t>(number)};
 #else
     std::random_device random_device("/dev/urandom");
 #endif

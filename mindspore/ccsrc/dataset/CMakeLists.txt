@@ -13,6 +13,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-format")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
 
 ############################# Options ################################
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_definitions(-D _CRT_RAND_S)
+endif ()
 if (ENABLE_GPUQUE)
     add_definitions(-D ENABLE_GPUQUE)
     message(STATUS "GPU queue is enabled")

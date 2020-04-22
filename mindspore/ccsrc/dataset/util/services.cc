@@ -18,6 +18,8 @@
 #include <limits.h>
 #if !defined(_WIN32) && !defined(_WIN64)
 #include <sys/syscall.h>
+#else
+#include <stdlib.h>
 #endif
 #include <unistd.h>
 #include <random>
@@ -49,7 +51,9 @@ int Services::GetLWP() { return syscall(SYS_gettid); }
 std::string Services::GetUniqueID() {
   const std::string kStr = "abcdefghijklmnopqrstuvwxyz0123456789";
 #if defined(_WIN32) || defined(_WIN64)
-  std::mt19937 gen{std::random_device{}()};
+  unsigned int number;
+  rand_s(&number);
+  std::mt19937 gen{static_cast<uint32_t>(number)};
 #else
   std::mt19937 gen{std::random_device{"/dev/urandom"}()};
 #endif
