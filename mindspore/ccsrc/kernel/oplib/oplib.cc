@@ -83,13 +83,13 @@ bool OpLib::RegOp(const std::string &json_string, const std::string &impl_path) 
       OpImplyType imply_type = kAICPU;
       ret = DecodeOpInfo(op_json, imply_type, impl_path);
     } else {
-      MS_LOG(DEBUG) << "Not support imply_type";
+      MS_LOG(ERROR) << "Not support imply_type";
     }
     if (!ret) {
-      MS_LOG(DEBUG) << "RegOp failed: opname:" << op_name << "imply_type" << imply_type_string;
+      MS_LOG(ERROR) << "RegOp failed: op_name: " << op_name << " imply_type " << imply_type_string;
     }
   } catch (const std::exception &e) {
-    MS_LOG(DEBUG) << "get op_json elements failed:" << e.what();
+    MS_LOG(ERROR) << "get op json elements failed: " << e.what();
   }
   return ret;
 }
@@ -122,7 +122,7 @@ bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpI
   auto attrs = obj.at(kAttr);
   for (const auto &attr : attrs) {
     if (!DecodeAttr(attr, imply_type, op_info)) {
-      MS_LOG(DEBUG) << "DecodeAttr Failed";
+      MS_LOG(ERROR) << "DecodeAttr Failed";
       return false;
     }
   }
@@ -133,23 +133,23 @@ bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpI
   auto inputs = obj.at(kIputs);
   for (const auto &input : inputs) {
     if (!DecodeInputOutput(input, imply_type, kInput, op_info, dtype_format)) {
-      MS_LOG(DEBUG) << "DecodeInputOutput Failed";
+      MS_LOG(ERROR) << "DecodeInputOutput Failed";
       return false;
     }
   }
   auto outputs = obj.at(kOutputs);
   for (const auto &output : outputs) {
     if (!DecodeInputOutput(output, imply_type, kOutput, op_info, dtype_format)) {
-      MS_LOG(DEBUG) << "DecodeInputOutput Failed";
+      MS_LOG(ERROR) << "DecodeInputOutput Failed";
       return false;
     }
   }
   if (!GetRefInfo(op_info)) {
-    MS_LOG(DEBUG) << "GetRefInfo Failed";
+    MS_LOG(ERROR) << "GetRefInfo Failed";
     return false;
   }
   if (!CheckRepetition(op_info)) {
-    MS_LOG(DEBUG) << "CheckRepetition Failed";
+    MS_LOG(ERROR) << "CheckRepetition Failed";
     return false;
   }
   op_info_.push_back(op_info);
@@ -176,7 +176,7 @@ bool OpLib::DecodeAttr(const nlohmann::json &obj, const OpImplyType imply_type,
     }
     op_info->add_attrs_ptr(op_attr);
   } catch (const std::exception &e) {
-    MS_LOG(DEBUG) << "DecodeAttr failed:" << e.what();
+    MS_LOG(ERROR) << "DecodeAttr failed:" << e.what();
     ret = false;
   }
   return ret;
@@ -219,8 +219,8 @@ bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType imply
       op_io->set_formats(obj.at(kFormat));
     }
     if (op_io->dtypes().size() != op_io->formats().size()) {
-      MS_LOG(DEBUG) << "op" << op_io->name() << "dtype size:" << op_io->dtypes()
-                    << "is not equal to format size:" << op_io->formats();
+      MS_LOG(ERROR) << "op " << op_io->name() << " dtype size: " << op_io->dtypes()
+                    << " is not equal to format size: " << op_io->formats();
       return false;
     }
     if (obj.find(kParamType) != obj.end()) {
@@ -244,7 +244,7 @@ bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType imply
       op_info->add_outputs_ptr(op_io);
     }
   } catch (const std::exception &e) {
-    MS_LOG(DEBUG) << "DecodeInputOutput failed" << e.what();
+    MS_LOG(ERROR) << "DecodeInputOutput failed" << e.what();
     ret = false;
   }
   return ret;
@@ -256,8 +256,8 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
   bool is_gpu = (context->device_target() == kGPUDevice);
   if ((is_gpu && (imply_type == kTBE || imply_type == kAICPU)) ||
       (!is_gpu && (imply_type != kTBE && imply_type != kAICPU))) {
-    MS_LOG(ERROR) << "FindOp failed: opname:" << op_name << ", imply_type:" << ImplTypeToStr(imply_type)
-                  << ", current op num:" << op_info_.size();
+    MS_LOG(ERROR) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
+                  << ", current op num: " << op_info_.size();
     return nullptr;
   }
   for (const auto &op_info : op_info_) {
@@ -266,8 +266,8 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
       return op_info;
     }
   }
-  MS_LOG(DEBUG) << "FindOp failed: opname:" << op_name << ", imply_type:" << ImplTypeToStr(imply_type)
-                << ", current op num:" << op_info_.size();
+  MS_LOG(DEBUG) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
+                << ", current op num: " << op_info_.size();
   return nullptr;
 }
 
@@ -281,7 +281,7 @@ bool OpLib::GetRefInfo(const std::shared_ptr<OpInfo> &op_info) {
       const auto &in_name = input_infos[in_index]->name();
       if (out_name == in_name) {
         if (op_info->has_ref_index(out_index)) {
-          MS_LOG(DEBUG) << "The out_index" << out_index << "is already in ref_info";
+          MS_LOG(ERROR) << "The out_index " << out_index << " is already in ref_info";
           return false;
         }
         op_info->add_ref_pair(out_index, in_index);
@@ -299,8 +299,8 @@ bool OpLib::CheckRepetition(const std::shared_ptr<OpInfo> &op_info) {
     MS_EXCEPTION_IF_NULL(exist_op_info);
     if (exist_op_info->op_name() == op_info->op_name() && exist_op_info->imply_type() == op_info->imply_type() &&
         exist_op_info->impl_path() != op_info->impl_path()) {
-      MS_LOG(DEBUG) << "Has already exist, drop the latter one, op name:" << op_info->op_name()
-                    << "op type:" << ImplTypeToStr(op_info->imply_type());
+      MS_LOG(ERROR) << "Op has already exist, please use other name, op name: " << op_info->op_name()
+                    << " op type: " << ImplTypeToStr(op_info->imply_type());
       return false;
     }
   }
