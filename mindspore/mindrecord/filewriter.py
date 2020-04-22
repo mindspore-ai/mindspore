@@ -200,24 +200,13 @@ class FileWriter:
             raw_data.pop(i)
             logger.warning(v)
 
-    def open_and_set_header(self):
-        """
-        Open writer and set header
-
-        """
-        if not self._writer.is_open:
-            self._writer.open(self._paths)
-        if not self._writer.get_shard_header():
-            self._writer.set_shard_header(self._header)
-
-    def write_raw_data(self, raw_data, parallel_writer=False):
+    def write_raw_data(self, raw_data):
         """
         Write raw data and generate sequential pair of MindRecord File and \
         validate data based on predefined schema by default.
 
         Args:
            raw_data (list[dict]): List of raw data.
-           parallel_writer (bool, optional): Load data parallel if it equals to True (default=False).
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -236,7 +225,7 @@ class FileWriter:
             if not isinstance(each_raw, dict):
                 raise ParamTypeError('raw_data item', 'dict')
         self._verify_based_on_schema(raw_data)
-        return self._writer.write_raw_data(raw_data, True, parallel_writer)
+        return self._writer.write_raw_data(raw_data, True)
 
     def set_header_size(self, header_size):
         """
