@@ -65,8 +65,8 @@ Status BarrierOp::operator()() {
   TaskManager::FindMe()->Post();
 
   // create child iterator, right now this barrier is a pipeline operator
-  int32_t worker_id = 0;
-  int32_t child_idx = 0;
+  const int32_t worker_id = 0;
+  const int32_t child_idx = 0;
   child_iterator_ = std::make_unique<ChildIterator>(this, worker_id, child_idx);
 
   // Loop until eof is true
