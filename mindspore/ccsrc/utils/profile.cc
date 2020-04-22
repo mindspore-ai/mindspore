@@ -38,26 +38,32 @@ void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent
 
 void PrintTimeInfoMap(std::ostringstream &oss, const TimeInfoMap &dict, int indent = 0,
                       std::map<std::string, double> *sums = nullptr, const std::string &prefix = "") {
-  for (auto iter = dict.begin(); iter != dict.end(); ++iter) {
-    if (iter->second == nullptr) {
+  size_t count = 0;
+  for (const auto &iter : dict) {
+    count++;
+    if (iter.second == nullptr) {
       continue;
     }
     // indent by multiples of 4 spaces.
-    auto name = iter->first.substr(TIME_INFO_PREFIX_NUM_LEN);
+    if (iter.first.size() < TIME_INFO_PREFIX_NUM_LEN) {
+      MS_LOG(EXCEPTION) << "In TimeInfoMap, the " << count << "th string key is " << iter.first
+                        << ", but the length is less than " << TIME_INFO_PREFIX_NUM_LEN;
+    }
+    auto name = iter.first.substr(TIME_INFO_PREFIX_NUM_LEN);
     oss << std::setw(indent * 4) << ""
-        << "[" << name << "]: " << iter->second->time_;
-    if (iter->second->dict_ != nullptr) {
-      oss << ", [" << iter->second->dict_->size() << "]";
+        << "[" << name << "]: " << iter.second->time_;
+    if (iter.second->dict_ != nullptr) {
+      oss << ", [" << iter.second->dict_->size() << "]";
     }
     oss << "\n";
 
     std::string newPrefix = prefix;
-    if (iter->first.find("Cycle ") == std::string::npos) {
-      newPrefix = prefix.empty() ? iter->first : prefix + "." + iter->first;
+    if (iter.first.find("Cycle ") == std::string::npos) {
+      newPrefix = prefix.empty() ? iter.first : prefix + "." + iter.first;
     }
-    PrintProfile(oss, *iter->second, indent + 1, sums, newPrefix);
-    if (iter->second->dict_ == nullptr) {
-      (*sums)[newPrefix] += iter->second->time_;
+    PrintProfile(oss, *iter.second, indent + 1, sums, newPrefix);
+    if (iter.second->dict_ == nullptr) {
+      (*sums)[newPrefix] += iter.second->time_;
     }
   }
 }
