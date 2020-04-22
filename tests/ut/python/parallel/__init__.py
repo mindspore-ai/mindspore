@@ -13,10 +13,12 @@
 # limitations under the License.
 
 import mindspore.context as context
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.parallel._utils import _reset_op_id
 
 
 def setup_module(module):
+    auto_parallel_context().set_enable_all_reduce_fusion(enable_all_reduce_fusion=True)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
     _reset_op_id()
 
