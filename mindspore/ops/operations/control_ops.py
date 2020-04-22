@@ -16,7 +16,8 @@
 """control_ops"""
 
 from ...common import dtype as mstype
-from ..._checkparam import ParamValidator as validator
+from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 
 
@@ -123,11 +124,11 @@ class GeSwitch(PrimitiveWithInfer):
         raise NotImplementedError
 
     def infer_shape(self, data, pred):
-        validator.check_scalar_shape_input("pred", pred)
+        validator.check_integer("pred rank", len(pred), 0, Rel.EQ, self.name)
         return (data, data)
 
     def infer_dtype(self, data_type, pred_type):
-        validator.check_type("pred", pred_type, [type(mstype.bool_)])
+        validator.check_tensor_type_same({"pred": pred_type}, [mstype.bool_], self.name)
         return (data_type, data_type)
 
 
