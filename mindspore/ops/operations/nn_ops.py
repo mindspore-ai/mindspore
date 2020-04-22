@@ -859,6 +859,11 @@ class MaxPool(_Pool):
 
     Outputs:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Examples:
+        >>> input_tensor = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
+        >>> maxpool_op = P.MaxPool(padding="VALID", ksize=2, strides=1)
+        >>> output_tensor = maxpool_op(input_tensor)
     """
 
     @prim_attr_register
@@ -905,6 +910,11 @@ class MaxPoolWithArgmax(_Pool):
 
         - **output** (Tensor) -  Maxpooling result, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
         - **mask** (Tensor) -  Max values' index represented by the mask.
+
+    Examples:
+        >>> input_tensor = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
+        >>> maxpool_arg_op = P.MaxPoolWithArgmax(padding="VALID", ksize=2, strides=1)
+        >>> output_tensor, argmax = maxpool_arg_op(input_tensor)
     """
     def __init__(self, ksize=1, strides=1, padding="valid"):
         super(MaxPoolWithArgmax, self).__init__(ksize, strides, padding)
