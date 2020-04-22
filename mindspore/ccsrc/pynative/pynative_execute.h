@@ -36,6 +36,9 @@ namespace py = pybind11;
 py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
 
 py::tuple RunOp(const py::args &args);
+
+void ClearPyNativeSession();
+
 }  // namespace pynative
 }  // namespace mindspore
 

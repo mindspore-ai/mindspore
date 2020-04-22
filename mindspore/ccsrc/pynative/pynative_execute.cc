@@ -44,6 +44,7 @@ const std::set<std::string> vm_operators = {"partial", "depend", "make_ref", "ze
 
 namespace mindspore {
 namespace pynative {
+static std::shared_ptr<session::SessionBasic> session = nullptr;
 inline ValuePtr PyAttrValue(const py::object &obj) {
   ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(obj, &converted_ret);
@@ -310,7 +311,11 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   if (device_target != kAscendDevice && device_target != kGPUDevice) {
     MS_EXCEPTION(ArgumentError) << "Device target [" << device_target << "] is not supported in Pynative mode";
   }
-  std::shared_ptr<session::SessionBasic> session = session::SessionFactory::Get().Create(device_target);
+
+  if (session == nullptr) {
+    session = session::SessionFactory::Get().Create(device_target);
+  }
+
   MS_EXCEPTION_IF_NULL(session);
   session->Init(ms_context->device_id());
 
@@ -407,5 +412,7 @@ py::tuple RunOp(const py::args &args) {
   MS_LOG(INFO) << "RunOp end";
   return result;
 }
+
+void ClearPyNativeSession() { session = nullptr; }
 }  // namespace pynative
 }  // namespace mindspore
