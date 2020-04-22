@@ -513,36 +513,36 @@ bool TbeKernelBuild::GenFusionScopeJson(const vector<mindspore::AnfNodePtr> &inp
   return true;
 }
 
-void TbeKernelBuild::GenDescJson(const shared_ptr<mindspore::AnfNode> &anf_node, size_t out_idx,
-                                 nlohmann::json *output_desc) {
+void TbeKernelBuild::GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t node_out_idx,
+                                 size_t desc_output_idx, nlohmann::json *output_desc) {
   std::string output_desc_name = anf_node->fullname_with_scope();
-  if (out_idx > 0) {
-    output_desc_name = output_desc_name + "_" + std::to_string(out_idx);
+  if (node_out_idx > 0) {
+    output_desc_name = output_desc_name + "_" + std::to_string(node_out_idx);
   }
   (*output_desc)["name"] = NormalizeFullScopeName(output_desc_name);
-  auto type_id = AnfAlgo::GetOutputDeviceDataType(anf_node, out_idx);
+  auto type_id = AnfAlgo::GetOutputDeviceDataType(anf_node, node_out_idx);
   (*output_desc)["data_type"] = tbe::TypeIdToString(type_id);
-  auto ori_shape = AnfAlgo::GetOutputInferShape(anf_node, out_idx);
+  auto ori_shape = AnfAlgo::GetOutputInferShape(anf_node, node_out_idx);
   if (ori_shape.empty()) {
     ori_shape.emplace_back(1);
   }
   (*output_desc)["ori_shape"] = ori_shape;
-  auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, out_idx);
+  auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, node_out_idx);
   if (shape.empty()) {
     shape.emplace_back(1);
   }
   (*output_desc)["shape"] = shape;
-  auto format = AnfAlgo::GetOutputFormat(anf_node, out_idx);
+  auto format = AnfAlgo::GetOutputFormat(anf_node, node_out_idx);
   if (format == kOpFormat_DEFAULT) {
     if (ori_shape.size() == 4) {
       format = kOpFormat_NCHW;
     } else {
-      format = "ND";
+      format = kOpFormat_ND;
     }
   }
   (*output_desc)["format"] = format;
   (*output_desc)["ori_format"] = kOpFormat_NCHW;
-  (*output_desc)["output_index"] = out_idx;
+  (*output_desc)["output_index"] = desc_output_idx;
 }
 
 void TbeKernelBuild::GenReusedOutputDesc(const shared_ptr<mindspore::AnfNode> &anf_node, size_t index,
@@ -605,7 +605,7 @@ bool TbeKernelBuild::GenFusionDataInputJson(const shared_ptr<mindspore::AnfNode>
     MS_LOG(INFO) << "real name " << real_node->fullname_with_scope() << " index:" << real_idx;
     // "output_desc"
     nlohmann::json output_desc;
-    GenDescJson(real_node, real_idx, &output_desc);
+    GenDescJson(real_node, real_idx, real_idx, &output_desc);
     output_desc_list.push_back(output_desc);
     (*data_str)["name"] = NormalizeFullScopeName(real_node->fullname_with_scope());
   }
@@ -653,9 +653,9 @@ size_t TbeKernelBuild::GetOptionalInput(const mindspore::CNodePtr &cnode, bool i
   return (op_info->inputs_ptr().size() + 1 - cnode->inputs().size());
 }
 
-bool TbeKernelBuild::GenFusionComputeInputeJson(const mindspore::CNodePtr &cnode,
-                                                std::vector<std::vector<mindspore::AnfNodePtr>>::iterator *layer_iter,
-                                                std::vector<nlohmann::json> *input_desc_list, size_t *index) {
+bool TbeKernelBuild::GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
+                                               std::vector<std::vector<mindspore::AnfNodePtr>>::iterator *layer_iter,
+                                               std::vector<nlohmann::json> *input_desc_list, size_t *index) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_desc_list);
   bool is_dynamic_input = IsDynamicInput(cnode);
@@ -666,7 +666,7 @@ bool TbeKernelBuild::GenFusionComputeInputeJson(const mindspore::CNodePtr &cnode
     size_t real_idx = kernel_idx.second;
     MS_LOG(INFO) << "real name" << real_node->fullname_with_scope() << "index:" << real_idx;
     nlohmann::json input_desc;
-    GenDescJson(real_node, real_idx, &input_desc);
+    GenDescJson(real_node, real_idx, real_idx, &input_desc);
     if (is_dynamic_input) {
       MS_LOG(INFO) << "node has dynamic input.";
       input_desc["dyn_index"] = (i - 1);
@@ -687,6 +687,66 @@ bool TbeKernelBuild::GenFusionComputeInputeJson(const mindspore::CNodePtr &cnode
   return true;
 }
 
+std::vector<size_t> TbeKernelBuild::GetDescOutputIndex(const std::vector<int> &output_used_nums) {
+  std::vector<size_t> desc_output_index = {};
+  bool find_reused = false;
+  size_t reused_num = 0;
+  for (size_t idx = 0; idx < output_used_nums.size(); ++idx) {
+    auto output_use_num_item = output_used_nums[idx];
+    MS_LOG(INFO) << "output used num[" << idx << "] = " << output_use_num_item;
+    if (output_use_num_item == 1 || output_use_num_item == 0) {
+      desc_output_index.emplace_back(idx);
+    } else {
+      if (!find_reused) {
+        desc_output_index.emplace_back(idx);
+      } else {
+        desc_output_index.emplace_back(output_used_nums[idx - 1]);
+      }
+      reused_num += (output_use_num_item - 1);
+      find_reused = true;
+    }
+  }
+  auto pad_value = output_used_nums.size() == 1 ? 0 : desc_output_index[desc_output_index.size() - 1] + 1;
+  for (size_t i = 0; i < reused_num; ++i) {
+    desc_output_index.emplace_back(pad_value);
+  }
+  return desc_output_index;
+}
+
+bool TbeKernelBuild::GenFusionComputeOutputJson(const mindspore::CNodePtr &cnode,
+                                                std::vector<nlohmann::json> *output_desc_list) {
+  auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
+  if (AnfAlgo::HasNodeAttr(kAttrOutputUsedNum, cnode)) {
+    auto output_used_nums = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode, kAttrOutputUsedNum);
+    MS_LOG(INFO) << "This node's output has been reused, node name: " << cnode->fullname_with_scope();
+    if (output_used_nums.size() != output_size) {
+      MS_LOG(INFO) << "Fusion error: output tenor num(" << output_size << ")"
+                   << " is not match output used num(" << output_used_nums.size() << ")";
+      return false;
+    }
+    auto desc_output_index = GetDescOutputIndex(output_used_nums);
+    for (size_t i = 0; i < output_size; ++i) {
+      MS_LOG(INFO) << "Fusion index: " << i << ", desc_output_index: " << desc_output_index[i];
+      nlohmann::json output_desc;
+      GenDescJson(cnode, i, desc_output_index[i], &output_desc);
+      output_desc_list->emplace_back(output_desc);
+    }
+    for (size_t j = output_size; j < desc_output_index.size(); ++j) {
+      MS_LOG(INFO) << "Fusion index: " << j << ", desc_output_index: " << desc_output_index[j];
+      nlohmann::json output_desc;
+      GenReusedOutputDesc(cnode, j, desc_output_index[j], &output_desc);
+      output_desc_list->emplace_back(output_desc);
+    }
+  } else {
+    for (size_t i = 0; i < output_size; ++i) {
+      nlohmann::json output_desc;
+      GenDescJson(cnode, i, i, &output_desc);
+      output_desc_list->push_back(output_desc);
+    }
+  }
+  return true;
+}
+
 bool TbeKernelBuild::GenFusionComputeJson(const mindspore::AnfNodePtr &compute_node,
                                           std::vector<std::vector<mindspore::AnfNodePtr>>::iterator *layer_iter,
                                           nlohmann::json *compute_op_str, std::string *fusion_kernel_name,
@@ -696,28 +756,14 @@ bool TbeKernelBuild::GenFusionComputeJson(const mindspore::AnfNodePtr &compute_n
   MS_EXCEPTION_IF_NULL(cnode);
   // gen input desc
   std::vector<nlohmann::json> input_desc_list;
-  (void)GenFusionComputeInputeJson(cnode, layer_iter, &input_desc_list, index);
+  (void)GenFusionComputeInputJson(cnode, layer_iter, &input_desc_list, index);
   (*compute_op_str)["input_desc"] = input_desc_list;
   // gen output desc
   std::vector<nlohmann::json> output_desc_list;
-  auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
-  for (size_t i = 0; i < output_size; ++i) {
-    nlohmann::json output_desc;
-    GenDescJson(cnode, i, &output_desc);
-    output_desc_list.push_back(output_desc);
+  if (!GenFusionComputeOutputJson(cnode, &output_desc_list)) {
+    MS_LOG(INFO) << "Fusion Error: gen fusion output desc faild, node full name: " << cnode->fullname_with_scope();
+    return false;
   }
-
-  if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimConv2D->name()) {
-    if (AnfAlgo::HasNodeAttr(kAttrOutputUsedNum, compute_node)) {
-      auto output_used_num = AnfAlgo::GetNodeAttr<size_t>(compute_node, kAttrOutputUsedNum);
-      for (size_t i = output_size; i < output_used_num; ++i) {
-        nlohmann::json output_desc;
-        GenReusedOutputDesc(cnode, i, 0, &output_desc);
-        output_desc_list.push_back(output_desc);
-      }
-    }
-  }
-
   (*compute_op_str)["output_desc"] = output_desc_list;
   // gen others
   auto type = AnfAlgo::GetCNodeName(cnode);
