@@ -1329,7 +1329,7 @@ class Concat(PrimitiveWithInfer):
 
 def _get_pack_shape(x_shape, x_type, axis):
     """for pack output shape"""
-    validator.check_type("shape", x_shape, [tuple])
+    validator.check_type("shape", x_shape, [tuple, list])
     validator.check_integer("len of input_x shape", len(x_shape), 0, Rel.GT)
     validator.check_subclass("shape0", x_type[0], mstype.tensor)
     validator.check_integer("len of input_x0 shape", len(x_shape[0]), 0, Rel.GT)

@@ -582,6 +582,10 @@ test_case_nn_ops = [
         'block': P.ReLU6(),
         'desc_inputs': [[1, 3, 4, 4]],
         'desc_bprop': [[1, 3, 4, 4]]}),
+    ('ReLUV2', {
+        'block': P.ReLUV2(),
+        'desc_inputs': [[1, 3, 4, 4]],
+        'desc_bprop': [[1, 3, 4, 4], [1, 3, 4, 4]]}),
     ('ReLUGrad', {
         'block': G.ReluGrad(),
         'desc_inputs': [[1, 3, 4, 4], [1, 3, 4, 4]],
@@ -1133,6 +1137,21 @@ test_case_other_ops = [
         'block': SummaryNet(),
         'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
                         Tensor(np.array([1.2]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('ConfusionMulGrad_1', {
+        'block': P.ConfusionMulGrad(axis = [0], keep_dims = False),
+        'desc_inputs': [[3, 2], [3, 2], [3, 2]],
+        'desc_bprop': [[3, 2], [2]],
+        'skip': ['backward']}),
+    ('ConfusionMulGrad_2', {
+        'block': P.ConfusionMulGrad(axis = [0], keep_dims = True),
+        'desc_inputs': [[3, 2], [3, 2], [3, 2]],
+        'desc_bprop': [[3, 2], [1, 2]],
+        'skip': ['backward']}),
+    ('ConfusionMulGrad_3', {
+        'block':  P.ConfusionMulGrad(axis = (), keep_dims = True),
+        'desc_inputs': [[2, 3, 4], [2, 3, 4], [2, 3, 4]],
+        'desc_bprop': [[2, 3, 4], [1, 1, 1]],
         'skip': ['backward']}),
     ('HistogramSummary', {
         'block': HistogramSummaryNet(),

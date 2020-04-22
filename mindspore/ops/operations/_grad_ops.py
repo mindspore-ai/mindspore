@@ -730,6 +730,27 @@ class ReLU6Grad(PrimitiveWithInfer):
         return x_dtype
 
 
+class ReluGradV2(PrimitiveWithInfer):
+    """Performs grad of ReLUV2 operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['gradients', 'mask'], outputs=['output'])
+
+    def __call__(self, gradients, mask):
+        raise NotImplementedError
+
+    def infer_shape(self, gradients_shape, mask_shape):
+        return gradients_shape
+
+    def infer_dtype(self, gradients_dtype, mask_dtype):
+        args_type = {'gradients': gradients_dtype, 'mask': mask_dtype}
+        validator.check_args_tensor(args_type)
+        validator.check_typename("gradients_dtype", gradients_dtype, mstype.number_type)
+        validator.check_typename("mask_dtype", mask_dtype, (mstype.uint8,))
+        return gradients_dtype
+
+
 class EluGrad(PrimitiveWithInfer):
     """Performs grad of Elu operation."""
 

@@ -227,6 +227,18 @@ def get_bprop_relu6(self):
     return bprop
 
 
+@bprop_getters.register(P.ReLUV2)
+def get_bprop_relu_v2(self):
+    """Grad definition for `ReLUV2` operation."""
+    input_grad = G.ReluGradV2()
+
+    def bprop(x, out, dout):
+        mask = out[1]
+        dx = input_grad(dout[0], mask)
+        return (dx,)
+    return bprop
+
+
 @bprop_getters.register(P.HSwish)
 def get_bprop_hswish(self):
     """Grad definition for `HSwish` operation."""

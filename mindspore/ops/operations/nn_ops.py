@@ -28,6 +28,7 @@ from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+from ..operations.math_ops import _infer_shape_reduce
 
 
 def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=False, ret_four=False):
@@ -231,6 +232,62 @@ class ReLU6(PrimitiveWithInfer):
     def infer_dtype(self, input_x):
         validator.check_tensor_type_same({'input_x': input_x}, (mstype.float16, mstype.float32), self.name)
         return input_x
+
+
+class ReLUV2(PrimitiveWithInfer):
+    r"""
+    Computes ReLU(Rectified Linear Unit) of input tensor element-wise.
+
+    It returns :math:`\max(x,\  0)` element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor should be a 4-D tensor.
+
+    Outputs:
+        - **output** (Tensor) - Has the same type and shape as the `input_x`.
+        - **mask** (Tensor) - A tensor whose data type must be uint8.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[[1, -2], [-3, 4]], [[-5, 6], [7, -8]]]]), mindspore.float32)
+        >>> relu_v2 = P.ReLUV2()
+        >>> output = relu_v2(input_x)
+        ([[[[1., 0.], [0., 4.]], [[0., 6.], [7., 0.]]]],
+         [[[[1, 0], [2, 0]], [[2, 0], [1, 0]]]])
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init ReLUV2"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output', 'mask'])
+
+    def __infer__(self, input_x):
+        input_shape = list(input_x['shape'])
+        input_dtype = input_x['dtype']
+        mask_shape = []
+        if len(input_shape) != 4:
+            raise ValueError("The `input_x` should be a 4-D tensor, "
+                             f"but got a {len(input_shape)}-D tensor whose shape is {input_shape}")
+        for i in enumerate(input_shape):
+            if i[0] == 1:
+                if input_dtype == mstype.uint8 and input_dtype == mstype.int8:
+                    mask_shape.append((input_shape[1] + 31) // 32)
+                else:
+                    mask_shape.append((input_shape[1] + 15) // 16)
+            else:
+                mask_shape.append(i[1])
+        if input_dtype == mstype.uint8 and input_dtype == mstype.int8:
+            mask_shape.append(4)
+        else:
+            mask_shape.append(2)
+
+        output_shape = (input_x['shape'], mask_shape)
+        validator.check_subclass("input_x", input_dtype, mstype.tensor, self.name)
+        validator.check_tensor_type_same({'input_x': input_dtype}, mstype.number_type, self.name)
+        mask_dtype = mstype.uint8
+        output_dtype = (input_dtype, mask_dtype)
+
+        return {'shape': output_shape,
+                'dtype': output_dtype,
+                'value': None}
 
 
 class Elu(PrimitiveWithInfer):
@@ -2580,3 +2637,51 @@ class ExtractImagePatches(PrimitiveWithInfer):
     def infer_dtype(self, input_x):
         validator.check_tensor_type_same({"input_x": input_x}, (mstype.int8, mstype.float16, mstype.float32), self.name)
         return input_x
+
+
+class ConfusionMulGrad(PrimitiveWithInfer):
+    """
+    `output0` is the result of which input0 dot multily input1.
+
+    `output1` is the result of which input0 dot multily input1, then reducesum it.
+
+    Args:
+        axis (Union[int, tuple[int], list[int]]): The dimensions to reduce.
+            Default:(), reduce all dimensions. Only constant value is allowed.
+        keep_dims (bool):
+            - If true, keep these reduced dimensions and the length is 1.
+            - If false, don't keep these dimensions. Default:False.
+
+    Inputs:
+        - **input_0** (Tensor) - The input Tensor.
+        - **input_1** (Tensor) - The input Tensor.
+        - **input_2** (Tensor) - The input Tensor.
+
+    outputs:
+        - **output_0** (Tensor) - The same shape with `input0`.
+        - **output_1** (Tensor)
+
+            - If axis is (), and keep_dims is false, the output is a 0-D array representing
+              the sum of all elements in the input array.
+            - If axis is int, set as 2, and keep_dims is false,
+              the shape of output is :math:`(x_1,x_3,...,x_R)`.
+            - If axis is tuple(int), set as (2,3), and keep_dims is false,
+              the shape of output is :math:`(x_1,x_4,...x_R)`.
+    """
+
+    @prim_attr_register
+    def __init__(self, axis = (), keep_dims = False):
+        self.init_prim_io_names(inputs = ["input0", "input1", "input2"], outputs = ["output0", "output1"])
+        self.axis_ = validator.check_value_type("axis", axis, [int, tuple, list], self.name)
+        self.keep_dims_ = validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
+
+    def infer_shape(self, input0_shape, input1_shape, input2_shape):
+        outshape0 = input0_shape
+        outshape1 = _infer_shape_reduce(input1_shape, self.axis_, self.keep_dims_, self.name)
+        return outshape0, outshape1
+
+    def infer_dtype(self, input0_dtype, input1_dtype, input2_dtype):
+        validator.check_subclass("input0_dtype", input0_dtype, mstype.tensor, self.name)
+        validator.check_subclass("input1_dtype", input1_dtype, mstype.tensor, self.name)
+        validator.check_subclass("input2_dtype", input2_dtype, mstype.tensor, self.name)
+        return input0_dtype, input1_dtype
