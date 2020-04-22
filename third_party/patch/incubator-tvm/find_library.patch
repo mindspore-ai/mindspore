@@ -18,11 +18,11 @@
 -    lib_path = libinfo.find_lib_path()
 +    """Load library by searching possible path."""
 +    pwd = os.path.dirname(os.path.realpath(__file__))
-+    path = os.path.realpath(pwd+"/../../../mindspore")
++    path = os.path.realpath(pwd+"/../../../mindspore/lib")
 +    lib_path = []
 +    files = os.listdir(path)
 +    for f in files:
-+        if f.startswith("_c_expression.") and f.endswith(".so"):
++        if f.startswith("libtvm.") and f.endswith(".so"):
 +            lib_path.append(path+"/"+f)
 +            break
 +    if not lib_path:
@@ -56,11 +56,11 @@ diff -Npur tvm/topi/python/topi/cpp/impl.py tvm_new/topi/python/topi/cpp/impl.py
 -        return None, None
 +    """Load library by searching possible path."""
 +    pwd = os.path.dirname(os.path.realpath(__file__)) 	
-+    path = os.path.realpath(pwd+"/../../../mindspore")
++    path = os.path.realpath(pwd+"/../../../mindspore/lib")
 +    lib_path = []
 +    files = os.listdir(path)
 +    for f in files:
-+        if f.startswith("_c_expression.") and f.endswith(".so"):
++        if f.startswith("libtvm.") and f.endswith(".so"):
 +            lib_path.append(path+"/"+f)
 +            break
 +    if not lib_path:
