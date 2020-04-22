@@ -456,6 +456,17 @@ def get_bprop_smooth_l1_loss(self):
     return bprop
 
 
+@bprop_getters.register(P.L2Loss)
+def get_bprop_l2_loss(self):
+    """Grad definition for `L2Loss` operation."""
+
+    def bprop(x, out, dout):
+        dx = x * dout
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.PReLU)
 def get_bprop_prelu(self):
     """Grad definition for `PReLU` operation."""

@@ -1332,6 +1332,41 @@ class SmoothL1Loss(PrimitiveWithInfer):
         return prediction
 
 
+class L2Loss(PrimitiveWithInfer):
+    """
+    Calculates half of the L2 norm of a tensor without using the `sqrt`.
+
+    Set `input_x` as x and output as loss.
+
+    .. math::
+        loss = sum(x ** 2) / 2
+
+    Inputs:
+        - **input_x** (Tensor) - A input Tensor.
+
+    Outputs:
+        Tensor. Has the same dtype as `input_x`. The output tensor is the value of loss which is a scalar tensor.
+
+    Examples
+        >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float16)
+        >>> l2_loss = P.L2Loss()
+        >>> l2_loss(input_x)
+        7.0
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init L2Loss"""
+
+    def infer_shape(self, input_x):
+        loss_shape = []
+        return loss_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_subclass("x_type", x_type, mstype.tensor, self.name)
+        validator.check_tensor_type_same({'x_type': x_type}, [mstype.double, mstype.float_, mstype.float16], self.name)
+        return x_type
+
+
 class SGD(PrimitiveWithInfer):
     """
     Computes stochastic gradient descent (optionally with momentum).
