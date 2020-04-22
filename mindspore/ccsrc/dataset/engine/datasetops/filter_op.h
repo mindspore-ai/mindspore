@@ -100,6 +100,9 @@ class FilterOp : public ParallelOp {
   FilterOp(const std::vector<std::string> &in_col_names, int32_t num_workers, int32_t op_queue_size,
            py::function predicate_func);
 
+  // Destructor
+  ~FilterOp() = default;
+
   // Class functor operator () override.
   // All dataset ops operate by launching a thread (see ExecutionTree),This class functor will
   // provide the master loop that drives the logic for performing the work.
@@ -163,14 +166,14 @@ class FilterOp : public ParallelOp {
   // @param input_columns The vector of input column names used in the current thread.
   // @return Status The error code return.
   Status ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map,
-                           std::vector<std::string> *input_columns);
+                           const std::vector<std::string> *input_columns);
 
   // Private function for checking the column legality
   // @param in_buf A raw pointer to the DataBuffer. A raw pointer is fine because this function does not manage memory
   //     and is not shared with other threads.
   // @param[out] to_process_indices Indices of columns that will feed to predicate.
   // @param input_columns The vector of input column names used in the current thread.
-  Status CheckColumns(const DataBuffer *in_buf, std::vector<std::string> *input_columns);
+  Status CheckColumns(const DataBuffer *in_buf, const std::vector<std::string> *input_columns);
 };
 
 }  // namespace dataset
