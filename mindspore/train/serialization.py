@@ -408,10 +408,11 @@ def _fill_param_into_net(net, parameter_list):
     for each_param in parameter_list:
         param_name = each_param["name"]
         np_val = each_param["data"].asnumpy()
-        if np_val.shape == (1,):  # to scalar
-            parameter_dict[param_name] = Parameter(np_val[0], name=param_name)
+        if np_val.shape == (1,):
+            parameter_dict[param_name] = Parameter(np_val, name=param_name)
         elif np_val.shape == ():
-            parameter_dict[param_name] = Parameter(np_val.tolist(), name=param_name)
+            parameter_dict[param_name] = Parameter(Tensor(np_val.tolist(), mstype.pytype_to_dtype(np_val.dtype)),
+                                                   name=param_name)
         else:
             parameter_dict[param_name] = Parameter(Tensor(np_val), name=param_name)
 
