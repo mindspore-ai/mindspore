@@ -495,6 +495,8 @@ TypePtr StringToType(const std::string &type_name) {
   TypePtr type = nullptr;
   if (type_name.compare("None") == 0) {
     type = std::make_shared<TypeNone>();
+  } else if (type_name.compare("Ellipsis") == 0) {
+    type = std::make_shared<Ellipsis>();
   } else if (type_name.compare("TypeType") == 0) {
     type = std::make_shared<TypeType>();
   } else if (type_name.compare("SymbolicKeyType") == 0) {

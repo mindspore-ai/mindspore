@@ -42,6 +42,20 @@ class NetWorkSlicePositive(Cell):
         return ret0, ret1, ret2, ret3
 
 
+class NetWorkSliceEllipsis(Cell):
+    def __init__(self):
+        super(NetWorkSliceEllipsis, self).__init__()
+        self.tensor_ret0 = Tensor(np.ones([2, 7, 8], np.int32))
+        self.tensor_ret1 = Tensor(np.ones([6, 7, 8, 9], np.int32))
+        self.tensor_ret2 = Tensor(np.ones([1, 6, 7, 8, 9], np.int32))
+
+    def construct(self, tensor):
+        ret0 = tensor[0:4:2, ..., 1] + self.tensor_ret0
+        ret1 = tensor[...] + self.tensor_ret1
+        ret2 = tensor[True] + self.tensor_ret2
+        return ret0, ret1, ret2
+
+
 class NetWorkReduceDimension(Cell):
     def __init__(self):
         super(NetWorkReduceDimension, self).__init__()
@@ -83,7 +97,7 @@ class NetWorkReduceToScalar(Cell):
 class TensorAssignWithBoolTensorIndex(Cell):
     def __init__(self):
         super(TensorAssignWithBoolTensorIndex, self).__init__()
-        self.t = Tensor(np.arange(6).reshape([2,3]), dtype = mstype.float64)
+        self.t = Tensor(np.arange(6).reshape([2, 3]), dtype=mstype.float64)
 
     def construct(self, a, b, c, u_tensor, _scalar):
         a[c] = u_scalar
@@ -104,14 +118,14 @@ class TensorAssignWithBoolTensorIndexError(Cell):
 class TensorAssignWithBoolTensorIndex2(Cell):
     def __init__(self):
         super(TensorAssignWithBoolTensorIndex2, self).__init__()
-        self.t = Tensor(np.arange(6).reshape([2,3]), dtype = mstype.float64)
+        self.t = Tensor(np.arange(6).reshape([2, 3]), dtype=mstype.float64)
 
     def construct(self, a, u_tensor, _scalar):
-        a[a>8] = u_tensor
-        a[a>=6] = u_scalar
-        a[a<3] = u_scalar
-        a[a<=5] = u_tensor
-        a[a==5] = u_scalar
+        a[a > 8] = u_tensor
+        a[a >= 6] = u_scalar
+        a[a < 3] = u_scalar
+        a[a <= 5] = u_tensor
+        a[a == 5] = u_scalar
         z = a + self.t
         return z
 
@@ -121,11 +135,11 @@ class TensorAssignWithBoolTensorIndex2Error(Cell):
         super(TensorAssignWithBoolTensorIndex2Error, self).__init__()
 
     def construct(self, a, u_tensor):
-        a[a>8][a>5] = u_tensor
+        a[a > 8][a > 5] = u_tensor
         return a
 
 
-a = np.random.uniform(1,10,[2,3])
+a = np.random.uniform(1, 10, [2, 3])
 b = a > 5
 c = a < 3
 Ta = Tensor(a)
@@ -152,7 +166,7 @@ def test_tensor_assign_bool_index():
         net1(Ta, Tb, Ta, u_tensor, u_scalar)
     with pytest.raises(ValueError):
         net1(Ta, Tb, Tc, u_tensor_error, u_scalar)
-    #net1(Ta, u_tensor, Tc, u_tensor_error, u_scalar)
+    # net1(Ta, u_tensor, Tc, u_tensor_error, u_scalar)
     with pytest.raises(ValueError):
         net2(Ta, u_tensor_error, u_scalar)
     net3 = TensorAssignWithBoolTensorIndexError()
@@ -192,7 +206,10 @@ test_cases = [
         'block': NetWorkReduceToScalar(),
         'desc_inputs': [Tensor(np.ones([6, 8, 10], np.int32))],
     }),
-
+    ('NetWorkSliceEllipsis', {
+        'block': NetWorkSliceEllipsis(),
+        'desc_inputs': [Tensor(np.ones([6, 7, 8, 9], np.int32))],
+    }),
 ]
 
 

@@ -109,6 +109,7 @@ void Parser::BuildMethodMap() {
   expr_method_map_["Index"] = &Parser::ParseIndex;
   expr_method_map_["UnaryOp"] = &Parser::ParseUnaryOp;
   expr_method_map_["Dict"] = &Parser::ParseDict;
+  expr_method_map_["Ellipsis"] = &Parser::ParseEllipsis;
 }
 
 void Parser::UpdateTopFuncGraph(const FuncGraphPtr &func_graph) { top_func_graph_ = FuncGraphWeakPtr(func_graph); }
@@ -187,7 +188,7 @@ void Parser::GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, 
 
     namelist_for_default_value.push_back(arg_name);
     if (py::isinstance<py::none>(defaults[i])) {
-      default_values.push_back(NewValueNode(kNullObj));
+      default_values.push_back(NewValueNode(kNull));
     } else {
       default_values.push_back(ParseExprNode(block, defaults[i]));
     }
@@ -435,6 +436,11 @@ AnfNodePtr Parser::ParseName(const FunctionBlockPtr &block, const py::object &no
 AnfNodePtr Parser::ParseNone(const FunctionBlockPtr &, const py::object &) {
   MS_LOG(DEBUG) << "Process ast NoneType";
   return NewValueNode(kNone);
+}
+
+AnfNodePtr Parser::ParseEllipsis(const FunctionBlockPtr &, const py::object &) {
+  MS_LOG(DEBUG) << "Process ast Ellipsis";
+  return NewValueNode(kEllipsis);
 }
 
 AnfNodePtr Parser::ParseNum(const FunctionBlockPtr &, const py::object &node) {

@@ -892,10 +892,27 @@ bool AbstractNull::operator==(const AbstractBase &other) const {
 
 std::string AbstractNull::ToString() const {
   std::ostringstream buffer;
-  buffer << type_name() << "("
-         << "Value: "
-         << "Null"
-         << ")";
+  buffer << type_name() << "(Value: Null)";
+  return buffer.str();
+}
+
+bool AbstractEllipsis::operator==(const AbstractEllipsis &) const { return true; }
+
+bool AbstractEllipsis::operator==(const AbstractBase &other) const {
+  if (&other == this) {
+    return true;
+  }
+  if (other.isa<AbstractEllipsis>()) {
+    auto other_none = static_cast<const AbstractEllipsis *>(&other);
+    return *this == *other_none;
+  } else {
+    return false;
+  }
+}
+
+std::string AbstractEllipsis::ToString() const {
+  std::ostringstream buffer;
+  buffer << type_name() << "(Value: Ellipsis)";
   return buffer.str();
 }
 

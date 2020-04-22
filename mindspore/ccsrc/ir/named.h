@@ -61,7 +61,6 @@ class Named : public Value {
   std::string name_;
   std::size_t hash_id_;
 };
-
 using NamedPtr = std::shared_ptr<Named>;
 
 class None : public Named {
@@ -71,7 +70,6 @@ class None : public Named {
   MS_DECLARE_PARENT(None, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-
 extern const NamedPtr kNone;
 
 class NullObj : public Named {
@@ -81,7 +79,15 @@ class NullObj : public Named {
   MS_DECLARE_PARENT(NullObj, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
+extern const NamedPtr kNull;
 
-extern const NamedPtr kNullObj;
+class EllipsisObj : public Named {
+ public:
+  EllipsisObj() : Named("Ellipsis") {}
+  ~EllipsisObj() override = default;
+  MS_DECLARE_PARENT(EllipsisObj, Named);
+  abstract::AbstractBasePtr ToAbstract() override;
+};
+extern const NamedPtr kEllipsis;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_IR_NAMED_H_
