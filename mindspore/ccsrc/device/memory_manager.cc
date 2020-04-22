@@ -167,5 +167,28 @@ void MemoryManager::FreeMemFromMemPool(void *device_ptr) {
     MS_LOG(ERROR) << "FreeMemFromMemPool device_ptr is null.";
   }
 }
+
+void MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList addr_list, size_t total_size,
+                                                   std::vector<size_t> size_list) {
+  auto device_ptr_list = MallocContinuousMemFromMemPool(total_size, size_list);
+  if (addr_list.size() != device_ptr_list.size()) {
+    MS_LOG(EXCEPTION) << "The size of device list is not equal  to the size of address list.";
+  }
+  for (size_t i = 0; i < addr_list.size(); i++) {
+    MS_EXCEPTION_IF_NULL(device_ptr_list[i]);
+    MS_EXCEPTION_IF_NULL(addr_list[i]);
+    addr_list[i]->ptr_ = device_ptr_list[i];
+    addr_list[i]->from_mem_pool_ = true;
+  }
+}
+
+std::vector<void *> MemoryManager::MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list) {
+  if (total_size == 0) {
+    MS_LOG(ERROR) << "MallocContinuousMemFromMemPool total_size is 0.";
+  }
+  std::vector<void *> device_ptr_list;
+  device_ptr_list.emplace_back(nullptr);
+  return device_ptr_list;
+}
 }  // namespace device
 }  // namespace mindspore

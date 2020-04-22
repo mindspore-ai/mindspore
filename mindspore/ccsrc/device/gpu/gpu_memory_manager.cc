@@ -29,6 +29,10 @@ void GPUMemoryManager::FreeMemFromMemPool(void *device_ptr) {
   GPUMemoryAllocator::GetInstance().FreeTensorMem(device_ptr);
 }
 
+std::vector<void *> GPUMemoryManager::MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list) {
+  return GPUMemoryAllocator::GetInstance().AllocContinuousTensorMem(total_size, size_list);
+}
+
 void GPUMemoryManager::MallocDeviceMemory() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

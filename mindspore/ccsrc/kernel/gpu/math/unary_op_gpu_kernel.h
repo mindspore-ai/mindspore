@@ -81,6 +81,7 @@ class UnaryOpGpuKernel : public GpuKernel {
         break;
       }
       case UNARY_OP_ZEROSLIKE: {
+        Zeroslike(output_addr, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         return true;
       }
       default: {

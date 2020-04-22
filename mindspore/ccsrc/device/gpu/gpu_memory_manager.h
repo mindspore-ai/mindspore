@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_MINDSPORE_CCSRC_DEVICE_GPU_GPU_MEMORY_MANAGER_H_
 #define MINDSPORE_MINDSPORE_CCSRC_DEVICE_GPU_GPU_MEMORY_MANAGER_H_
+#include <vector>
 #include "device/memory_manager.h"
 namespace mindspore {
 namespace device {
@@ -30,6 +31,7 @@ class GPUMemoryManager : public MemoryManager {
 
   void *MallocMemFromMemPool(size_t size) override;
   void FreeMemFromMemPool(void *device_ptr) override;
+  std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list);
 
  protected:
   uint8_t *MallocStaticMem(size_t size, bool communication_mem) override;

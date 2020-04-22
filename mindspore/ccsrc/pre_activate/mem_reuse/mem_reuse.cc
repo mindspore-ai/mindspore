@@ -162,10 +162,6 @@ void MemReuseUtil::SetInputMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr
         if (iter == kernel_def_ptr->inputs_.end()) {
           kernel_def_ptr->inputs_[key].push_back(ref_ptr);
         } else {
-          if (std::any_of(iter->second.begin(), iter->second.end(),
-                          [ref_ptr](const KernelRefCountPtr &it) { return (it.get() == ref_ptr.get()); })) {
-            break;
-          }
           iter->second.push_back(ref_ptr);
         }
       }
@@ -185,10 +181,6 @@ void MemReuseUtil::SetOutputMap(const CNodePtr &kernel, KernelDef *kernel_def_pt
     if (iter == kernel_def_ptr->outputs_.end()) {
       kernel_def_ptr->outputs_[key].push_back(kernel_ref);
     } else {
-      if (std::any_of(iter->second.begin(), iter->second.end(),
-                      [kernel_ref](const KernelRefCountPtr &it) { return (it == kernel_ref); })) {
-        break;
-      }
       iter->second.push_back(kernel_ref);
     }
   }

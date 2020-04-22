@@ -60,6 +60,14 @@ __global__ void SquareKernel(T *input, T *output, size_t count) {
   return;
 }
 template <typename T>
+__global__ void ZeroslikeKernel(T *output, size_t count) {
+  T zero = 0.0;
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = zero;
+  }
+  return;
+}
+template <typename T>
 void Exponential(T *input, T *output, size_t count, cudaStream_t cuda_stream) {
   ExponentialKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -84,13 +92,21 @@ void Square(T *input, T *output, size_t count, cudaStream_t cuda_stream) {
   SquareKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
+template <typename T>
+void Zeroslike(T *output, size_t count, cudaStream_t cuda_stream) {
+  ZeroslikeKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(output, count);
+  return;
+}
+
 template void Exponential<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Logarithm<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Negative<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Reciprocal<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
 template void Square<float>(float *input, float *output, size_t count, cudaStream_t cuda_stream);
+template void Zeroslike<float>(float *output, size_t count, cudaStream_t cuda_stream);
 template void Exponential<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Logarithm<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Negative<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Reciprocal<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
 template void Square<half>(half *input, half *output, size_t count, cudaStream_t cuda_stream);
+template void Zeroslike<half>(half *output, size_t count, cudaStream_t cuda_stream);
