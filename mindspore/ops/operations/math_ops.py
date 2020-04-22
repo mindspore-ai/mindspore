@@ -773,8 +773,8 @@ class Mul(_MathBinaryOp):
         Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
 
     Examples:
-        >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.int32)
+        >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> input_y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
         >>> mul = P.Mul()
         >>> mul(input_x, input_y)
         [4, 10, 18]
