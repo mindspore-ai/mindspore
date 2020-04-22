@@ -75,7 +75,7 @@ Status FilterOp::EoeReceived(int32_t) { return Status::OK(); }
 
 // Validating if each of the input_columns exists in the DataBuffer.
 Status FilterOp::ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map,
-                                   std::vector<std::string> *input_columns) {
+                                   const std::vector<std::string> *input_columns) {
   for (const auto &inCol : *input_columns) {
     bool found = col_name_id_map.find(inCol) != col_name_id_map.end() ? true : false;
     if (!found) {
@@ -202,7 +202,7 @@ Status FilterOp::Collector() {
 }
 
 // Private function for checking the column legality.
-Status FilterOp::CheckColumns(const DataBuffer *in_buf, std::vector<std::string> *input_columns) {
+Status FilterOp::CheckColumns(const DataBuffer *in_buf, const std::vector<std::string> *input_columns) {
   int32_t num_rows = in_buf->NumRows();
   int32_t num_cols = in_buf->NumCols();
   if (num_rows == 0 || num_cols == 0) {
