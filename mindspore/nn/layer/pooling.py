@@ -255,14 +255,6 @@ class AvgPool1d(_PoolNd):
     Examples:
         >>> pool = nn.AvgPool1d(kernel_size=3, strides=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
-        [[[[8. 8. 7. 4.]
-           [8. 4. 0. 9.]
-           [6. 4. 6. 1.]
-           [6. 8. 8. 5.]]
-          [[4. 8. 5. 4.]
-           [8. 4. 7. 5.]
-           [3. 5. 3. 9.]
-           [7. 5. 4. 7.]]]]
         >>> output = pool(x)
         >>> output.shape()
         (1, 2, 4, 2)
