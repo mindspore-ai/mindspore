@@ -334,8 +334,8 @@ def _create_group_helper(group, rank_ids, backend):
         if not isinstance(rank_ids, list):
             raise TypeError("Rank_ids {} should be list".format(rank_ids))
         rank_size = len(rank_ids)
-        if rank_size < 2:
-            raise ValueError("Rank_ids size {} should be large than 1".format(rank_size))
+        if rank_size < 1:
+            raise ValueError("Rank_ids size {} should be large than 0".format(rank_size))
         if len(rank_ids) - len(list(set(rank_ids))) > 0:
             raise ValueError("List rank_ids in Group {} has duplicate data!".format(group))
         hccl.create_group(group, rank_size, rank_ids)
