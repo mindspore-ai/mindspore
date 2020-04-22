@@ -121,10 +121,6 @@ class ShardHeader {
 
   std::vector<std::string> SerializeHeader();
 
-  MSRStatus PagesToFile(const std::string dump_file_name);
-
-  MSRStatus FileToPages(const std::string dump_file_name);
-
  private:
   MSRStatus InitializeHeader(const std::vector<json> &headers);
 
