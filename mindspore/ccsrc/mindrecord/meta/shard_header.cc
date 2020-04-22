@@ -677,5 +677,43 @@ std::pair<std::shared_ptr<Statistics>, MSRStatus> ShardHeader::GetStatisticByID(
   }
   return std::make_pair(statistics_.at(statistic_id), SUCCESS);
 }
+
+MSRStatus ShardHeader::PagesToFile(const std::string dump_file_name) {
+  // write header content to file, dump whatever is in the file before
+  std::ofstream page_out_handle(dump_file_name.c_str(), std::ios_base::trunc | std::ios_base::out);
+  if (page_out_handle.fail()) {
+    MS_LOG(ERROR) << "Failed in opening page file";
+    return FAILED;
+  }
+
+  auto pages = SerializePage();
+  for (const auto &shard_pages : pages) {
+    page_out_handle << shard_pages << "\n";
+  }
+
+  page_out_handle.close();
+  return SUCCESS;
+}
+
+MSRStatus ShardHeader::FileToPages(const std::string dump_file_name) {
+  for (auto &v : pages_) {  // clean pages
+    v.clear();
+  }
+  // attempt to open the file contains the page in json
+  std::ifstream page_in_handle(dump_file_name.c_str());
+
+  if (!page_in_handle.good()) {
+    MS_LOG(INFO) << "No page file exists.";
+    return SUCCESS;
+  }
+
+  std::string line;
+  while (std::getline(page_in_handle, line)) {
+    ParsePage(json::parse(line));
+  }
+
+  page_in_handle.close();
+  return SUCCESS;
+}
 }  // namespace mindrecord
 }  // namespace mindspore
