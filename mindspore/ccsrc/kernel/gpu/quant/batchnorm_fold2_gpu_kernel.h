@@ -114,8 +114,7 @@ class BatchNormFold2GpuKernel : public GpuKernel {
 
     output_size_list_.push_back(input_size);
 
-    size_t workspace_size = 0;
-    workspace_size_list_.push_back(workspace_size);
+    workspace_size_list_.push_back(sizeof(int32_t));
   }
 
  private:

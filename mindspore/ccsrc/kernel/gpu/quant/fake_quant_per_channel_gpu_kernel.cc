@@ -107,11 +107,13 @@ bool FakeQuantPerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
 }
 
 void FakeQuantPerChannelGpuKernel::InitSizeLists() {
-  input_size_list_.push_back(input_size_);  // input
-  input_size_list_.push_back(min_size_);    // min
-  input_size_list_.push_back(max_size_);    // max
-  output_size_list_.push_back(output_size_);
-  workspace_size_list_.push_back(workspace_size_);
+  input_size_list_.push_back(input_size_);                       // input in tensor
+  input_size_list_.push_back(min_size_);                         // min one scalar
+  input_size_list_.push_back(max_size_);                         // max on scalar
+  output_size_list_.push_back(output_size_);                     // output in tensor
+  workspace_size_list_.push_back(sizeof(float) * channel_out_);  // scale in channel
+  workspace_size_list_.push_back(sizeof(float) * channel_out_);  // min in channel
+  workspace_size_list_.push_back(sizeof(float) * channel_out_);  // max in channel
 }
 
 void FakeQuantPerChannelGpuKernel::CalFakeQuantizeForTraining(float *input, float *output, float *input_min,
@@ -128,8 +130,9 @@ void FakeQuantPerChannelGpuKernel::CalFakeQuantizeForTraining(float *input, floa
     CalFakeQuantizePerChannel(input, output, input_size_ / sizeof(float), channel_out_, d_nudge_min, d_nudge_max,
                               d_scale, symmetric_, reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpy(output, input, input_size_, cudaMemcpyDeviceToDevice),
-                              "Copy gpu memory failed.");
+    CHECK_CUDA_RET_WITH_ERROR(
+      cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "Copy gpu memory failed.");
   }
   global_step_++;
 }
@@ -152,6 +155,9 @@ bool FakeQuantPerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
   float *input = GetDeviceAddress<float>(inputs, 0);
   float *input_min = GetDeviceAddress<float>(inputs, 1);
   float *input_max = GetDeviceAddress<float>(inputs, 2);
+  float *d_scale = GetDeviceAddress<float>(workspace, 0);
+  float *d_nudge_min = GetDeviceAddress<float>(workspace, 1);
+  float *d_nudge_max = GetDeviceAddress<float>(workspace, 2);
 
   if (input == nullptr) {
     MS_LOG(EXCEPTION) << "FakeQuantPerChannelGpuKernel input is null.";
@@ -160,27 +166,12 @@ bool FakeQuantPerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
     MS_LOG(EXCEPTION) << "FakeQuantPerChannelGpuKernel input min or max is null.";
   }
 
-  // Allocate space for device copies
-  float *d_scale = nullptr;
-  float *d_nudge_min = nullptr;
-  float *d_nudge_max = nullptr;
-  CHECK_CUDA_RET_WITH_ERROR(cudaMalloc(reinterpret_cast<void **>(&d_scale), sizeof(float) * channel_out_),
-                            "Malloc gpu memory failed");
-  CHECK_CUDA_RET_WITH_ERROR(cudaMalloc(reinterpret_cast<void **>(&d_nudge_min), sizeof(float) * channel_out_),
-                            "Malloc gpu memory failed");
-  CHECK_CUDA_RET_WITH_ERROR(cudaMalloc(reinterpret_cast<void **>(&d_nudge_max), sizeof(float) * channel_out_),
-                            "Malloc gpu memory failed");
-
   if (training_) {
     CalFakeQuantizeForTraining(input, output, input_min, input_max, d_nudge_min, d_nudge_max, d_scale, stream_ptr);
   } else {
     CalFakeQuantizeForInfer(input, output, input_min, input_max, d_nudge_min, d_nudge_max, d_scale, stream_ptr);
   }
 
-  // Cleanup
-  CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_scale), "Free gpu memory failed");
-  CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_nudge_min), "Free gpu memory failed");
-  CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_nudge_max), "Free gpu memory failed");
   return true;
 }
 

@@ -57,7 +57,8 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
     T *batch_std = GetDeviceAddress<T>(inputs, 4);
     int *current_step = GetDeviceAddress<int>(inputs, 5);
     int current_step_host[1];
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpy(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost),
+    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost,
+                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memoy failed.");
     if (d_batch_mean == nullptr) {
       MS_LOG(ERROR) << "BatchNormFoldGradGpuKernel d_batch_mean is null.";
@@ -83,7 +84,7 @@ class BatchNormFoldGradGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "BatchNormFoldGradGpuKernel current_step is null.";
       return false;
     }
-    T *dx = reinterpret_cast<T *>(outputs[0]->addr);
+    T *dx = GetDeviceAddress<T>(outputs, 0);
 
     if (!is_training_ || current_step_host[0] >= freeze_bn_) {
       ThrustFillWith(dx, batch_ * channel_ * height_ * width_, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));

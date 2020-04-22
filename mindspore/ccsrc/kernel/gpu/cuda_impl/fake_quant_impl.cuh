@@ -17,16 +17,16 @@
 #ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_FAKEQUANTIZE_H_
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_FAKEQUANTIZE_H_
 
-void CalFakeQuantize(const float* input, float* output, const int size, const float* nudge_min, const float* nudge_max,
-                     const float* scale, bool symmetric, cudaStream_t cuda_stream);
+void CalFakeQuantize(const float *input, float *output, const int size, const float *nudge_min, const float *nudge_max,
+                     const float *scale, bool symmetric, cudaStream_t cuda_stream);
 
-void CalFakeQuantizeGrad(const float* input, const float* gradient, float* output, const int size,
-                         const float* nudge_min, const float* nudge_max, cudaStream_t cuda_stream);
+void CalFakeQuantizeGrad(const float *input, const float *gradient, float *output, const int size,
+                         const float *nudge_min, const float *nudge_max, cudaStream_t cuda_stream);
 
-void CalNudge(const float* input_min, const float* input_max, const float quant_min, const float quant_max,
-              float* nudge_min, float* nudge_max, float* scale, cudaStream_t cuda_stream);
+void CalNudge(const float *input_min, const float *input_max, const float quant_min, const float quant_max,
+              float *nudge_min, float *nudge_max, float *scale, cudaStream_t cuda_stream);
 
-void CalMinMax(float* input, float* input_min, float* input_max, const int size, const float ema_decay, const bool ema,
+void CalMinMax(float *input, float *input_min, float *input_max, const int size, const float ema_decay, const bool ema,
                cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_FAKEQUANTIZE_H_
