@@ -108,6 +108,6 @@ def me_scalar_summary(steps, tag=None, value=None):
 def test_scalarsummary_scalar1_step10_summaryrecord1():
     clean_environment_file(SUMMARY_DIR_ME_TEMP)
     output_dict = me_scalar_summary(10)
-    print("test_scalarsummary_scalar1_step10_summaryrecord1 \n",output_dict)
+    print("test_scalarsummary_scalar1_step10_summaryrecord1 \n", output_dict)
     save_summary_events_file(SUMMARY_DIR_ME_TEMP, SUMMARY_DIR_ME)
     clean_environment_file(SUMMARY_DIR_ME)

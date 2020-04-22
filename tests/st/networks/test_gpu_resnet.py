@@ -19,34 +19,32 @@ from __future__ import print_function
 
 import pytest
 import numpy as np
-
+import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.conv import Conv2d
 from mindspore.nn.layer.basic import Flatten
 from mindspore.nn.layer.normalization import BatchNorm2d
 from mindspore.nn.layer.pooling import MaxPool2d
 from mindspore.ops.operations import TensorAdd
-import mindspore.nn as nn
-
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn import Dense
-from mindspore import Tensor
 from mindspore.common.initializer import initializer
 
-import mindspore.context as context
-
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
 
 def random_normal_init(shape, mean=0.0, stddev=0.01, seed=None):
     init_value = np.ones(shape).astype(np.float32) * 0.01
     return Tensor(init_value)
 
+
 def variance_scaling_raw(shape):
     variance_scaling_value = np.ones(shape).astype(np.float32) * 0.01
     return Tensor(variance_scaling_value)
-
 
 
 def weight_variable_0(shape):
@@ -323,6 +321,7 @@ class ResNet(Cell):
 def resnet50(num_classes):
     return ResNet(ResidualBlock, [3, 4, 6, 3], num_classes)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -335,9 +334,9 @@ def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
     train_network.set_train()
-    losses=[]
+    losses = []
     for i in range(0, epoch):
-        data = Tensor(np.ones([batch_size, 3 ,224, 224]).astype(np.float32) * 0.01)
+        data = Tensor(np.ones([batch_size, 3, 224, 224]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         loss = train_network(data, label)
         losses.append(loss)

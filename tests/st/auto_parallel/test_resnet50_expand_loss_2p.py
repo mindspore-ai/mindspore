@@ -11,10 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ============================================================================
 
+import os
 import numpy as np
 import pytest
-from numpy import allclose
+import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor
@@ -22,20 +24,20 @@ from mindspore.ops import operations as P
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.common.initializer import One
 from mindspore.train.model import Model, ParallelMode
-from mindspore import context
-import os
 from mindspore.communication.management import init
 import mindspore.ops.functional as F
 from mindspore.nn.loss.loss import _Loss
 from mindspore.train.callback import Callback
 from mindspore.parallel import set_algo_parameters
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(enable_hccl=True)
-context.set_context(enable_task_sink=True,device_id=int(os.getenv('DEVICE_ID')))
+context.set_context(enable_task_sink=True, device_id=int(os.getenv('DEVICE_ID')))
 context.set_context(enable_ir_fusion=True)
 context.set_context(enable_loop_sink=False)
 init()
 context.set_auto_parallel_context(mirror_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL)
+
 
 def weight_variable(shape, factor=0.1):
     return One()
@@ -52,6 +54,7 @@ def _conv1x1(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=1, stride=stride, padding=padding, pad_mode=pad_mode, weight_init=init_value)
 
+
 def _conv7x7(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
     init_value = weight_variable((out_channels, in_channels, 7, 7))
     return nn.Conv2d(in_channels, out_channels,
@@ -62,6 +65,7 @@ def _fused_bn(channels, momentum=0.9):
     init_weight = weight_variable((channels,))
     init_bias = weight_variable((channels,))
     return nn.BatchNorm2d(channels, momentum=momentum)
+
 
 class BasicBlock(nn.Cell):
     expansion = 1
@@ -172,7 +176,7 @@ class ResNet(nn.Cell):
                  layer_nums,
                  in_channels,
                  out_channels,
-                 strides=[1,2,2,2],
+                 strides=[1, 2, 2, 2],
                  num_classes=100):
         super(ResNet, self).__init__()
 
@@ -292,17 +296,19 @@ class SoftmaxCrossEntropyExpand(_Loss):
 
 rank_id = int(os.environ["RANK_ID"])
 device_num = int(os.environ["RANK_SIZE"])
+
+
 class DataGenerator():
     def get_parallel_blocks(self, input_, strategy):
         blocks = [input_]
         i = 0
         for stra in strategy:
             temp = []
-            while len(blocks)>0:
+            while len(blocks) > 0:
                 block = blocks.pop(0)
                 temp.extend(np.split(block, stra, axis=i))
             blocks.extend(temp)
-            i+=1
+            i += 1
         return blocks
 
     def generate_data(self, shape):
@@ -321,7 +327,7 @@ class DataGenerator():
         stra = [1]*len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
-        return Tensor(data),Tensor(datas[rank_id])
+        return Tensor(data), Tensor(datas[rank_id])
 
 
 class Dataset():
@@ -359,6 +365,7 @@ class ModelCallback(Callback):
     def __init__(self):
         super(ModelCallback, self).__init__()
         self.loss_list = []
+
     def epoch_end(self, run_context, *args):
         cb_params = run_context.original_args()
         result = cb_params.net_outputs
@@ -382,7 +389,7 @@ def test_train_feed(num_classes=8192):
     model.train(5, dataset, dataset_sink_mode=False, callbacks=parallel_callback)
     loss_value = np.array(parallel_callback.loss_list)
     expect_out = [9.010913, 8.855984, 8.56246, 8.146317, 7.624489]
-    assert allclose(loss_value, expect_out, 0.0001, 0.0001)
+    assert np.allclose(loss_value, expect_out, 0.0001, 0.0001)
 
 
 @pytest.mark.level0
@@ -402,4 +409,4 @@ def test_train_feed2(num_classes=1001):
     model.train(5, dataset, dataset_sink_mode=False, callbacks=parallel_callback)
     loss_value = np.array(parallel_callback.loss_list)
     expect_out = [6.908755, 6.8358116, 6.6986914, 6.506859, 6.2708097]
-    assert allclose(loss_value, expect_out, 0.0001, 0.0001)
+    assert np.allclose(loss_value, expect_out, 0.0001, 0.0001)

@@ -13,24 +13,26 @@
 # limitations under the License.
 # ============================================================================
 """
-Function: 
+Function:
     test network
-Usage: 
+Usage:
     python test_network_main.py --net lenet --target Ascend
 """
 import os
 import time
 import numpy as np
 import argparse
-import mindspore.nn as nn
-from mindspore.common.tensor import Tensor
-from mindspore.nn import TrainOneStepCell, WithLossCell
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from models.lenet import LeNet
 from models.resnetv1_5 import resnet50
 from models.alexnet import AlexNet
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 def train(net, data, label):
     learning_rate = 0.01
@@ -42,28 +44,30 @@ def train(net, data, label):
     train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
     train_network.set_train()
     res = train_network(data, label)
-    print("+++++++++Loss+++++++++++++")
     print(res)
-    print("+++++++++++++++++++++++++++")
     assert res
 
+
 def test_resnet50():
-    data = Tensor(np.ones([32, 3 ,224, 224]).astype(np.float32) * 0.01)
+    data = Tensor(np.ones([32, 3, 224, 224]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))
     net = resnet50(32, 10)
     train(net, data, label)
 
+
 def test_lenet():
-    data = Tensor(np.ones([32, 1 ,32, 32]).astype(np.float32) * 0.01)
+    data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))
     net = LeNet()
     train(net, data, label)
 
+
 def test_alexnet():
-    data = Tensor(np.ones([32, 3 ,227, 227]).astype(np.float32) * 0.01)
+    data = Tensor(np.ones([32, 3, 227, 227]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))
     net = AlexNet()
     train(net, data, label)
+
 
 parser = argparse.ArgumentParser(description='MindSpore Testing Network')
 parser.add_argument('--net', default='resnet50', type=str, help='net name')

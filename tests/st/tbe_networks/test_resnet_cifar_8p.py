@@ -112,6 +112,7 @@ class CrossEntropyLoss(nn.Cell):
         loss = self.mean(loss, (-1,))
         return loss
 
+
 class LossGet(Callback):
     def __init__(self, per_print_times=1):
         super(LossGet, self).__init__()
@@ -142,6 +143,7 @@ class LossGet(Callback):
 
     def get_loss(self):
         return self._loss
+
 
 def train_process(q, device_id, epoch_size, num_classes, device_num, batch_size, enable_hccl):
     os.system("mkdir " + str(device_id))

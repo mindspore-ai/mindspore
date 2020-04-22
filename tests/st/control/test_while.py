@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.common.tensor import Tensor
-from mindspore.common import dtype as mstype
 import mindspore.context as context
-from mindspore.ops import operations as P
 import mindspore.nn as nn
-from mindspore.common import ms_function
+from mindspore import Tensor, ms_function
+from mindspore.common import dtype as mstype
+from mindspore.ops import operations as P
+
 
 @ms_function
 def t1_while(x, y, z):
@@ -28,8 +28,9 @@ def t1_while(x, y, z):
     x = x + 3
     return x
 
+
 def test_net():
-    context.set_context(mode=context.GRAPH_MODE,device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(enable_task_sink=True)
     c1 = Tensor([2], mstype.int32)
     c2 = Tensor([14], mstype.int32)
@@ -37,6 +38,7 @@ def test_net():
     expect = Tensor([21], mstype.int32)
     ret = t1_while(c1, c2, c3)
     assert (ret == expect)
+
 
 if __name__ == "__main__":
     test_net()

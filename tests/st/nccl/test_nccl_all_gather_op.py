@@ -12,29 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
 import numpy as np
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import init, NCCL_WORLD_COMM_GROUP, get_rank, get_group_size
+
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
 init('nccl')
 rank = get_rank()
 size = get_group_size()
-x = np.ones([1,1,3,3]).astype(np.float32) * 0.01 * (rank + 1)
+x = np.ones([1, 1, 3, 3]).astype(np.float32) * 0.01 * (rank + 1)
+
 
 class Net(nn.Cell):
-    def __init__( self):
+    def __init__(self):
         super(Net, self).__init__()
         self.all_gather = P.AllGather(group=NCCL_WORLD_COMM_GROUP)
         self.x = Parameter(initializer(Tensor(x), x.shape), name='x')
 
     def construct(self):
         return self.all_gather(self.x)
+
 
 def test_AllGather():
     all_gather = Net()
