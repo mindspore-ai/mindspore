@@ -56,7 +56,8 @@ class CudaCommon {
 #define GET_BLOCKS(total_threads) mindspore::device::gpu::CudaCommon::GetInstance().blocks_num(total_threads)
 #define GET_THREADS mindspore::device::gpu::CudaCommon::GetInstance().threads_num()
 #define GET_MAJOR_SM mindspore::device::gpu::CudaCommon::GetInstance().major_sm()
-#define MINIUM_SM 7
+#define MINIUM_SM 6
+#define RECOMMEND_SM 7
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
