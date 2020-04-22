@@ -21,11 +21,12 @@ from mindspore.nn.optim import Momentum
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
 from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 init('nccl')
 
-epoch = 2
+epoch = 5
 total = 5000
 batch_size = 32
 mini_batch = total // batch_size
@@ -67,12 +68,20 @@ class LeNet(nn.Cell):
         return output
 
 
+def multisteplr(total_steps, gap, base_lr=0.9, gamma=0.1, dtype=mstype.float32):
+    lr = []
+    for step in range(total_steps):
+        lr_ = base_lr * gamma ** (step//gap)
+        lr.append(lr_)
+    return Tensor(np.array(lr), dtype)
+
+
 def test_lenet_nccl():
     net = LeNet()
     net.set_train()
 
-    learning_rate = 0.01
-    momentum = 0.9
+    learning_rate = multisteplr(epoch, 2)
+    momentum = Tensor(np.array([0.9]).astype(np.float32))
     mom_optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
     criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
     net_with_criterion = WithLossCell(net, criterion)
