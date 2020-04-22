@@ -233,8 +233,13 @@ def make_param_dict(method, args, kwargs):
     params = sig.parameters
     keys = list(params.keys())
     param_dict = dict()
-    for name, value in enumerate(args):
-        param_dict[keys[name]] = value
+    try:
+        for name, value in enumerate(args):
+            param_dict[keys[name]] = value
+    except IndexError:
+        raise TypeError("{0}() expected {1} arguments, but {2} were given".format(
+            method.__name__, len(keys) - 1, len(args) - 1))
+
     param_dict.update(zip(params.keys(), args))
     param_dict.update(kwargs)
 
