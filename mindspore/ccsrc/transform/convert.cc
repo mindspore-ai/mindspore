@@ -269,7 +269,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameArgMinWithValue), ADPT_DESC(ArgMinWithValue)},
     {prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSumD)},
     {prim::kPrimReduceMean->name(), ADPT_DESC(ReduceMeanD)},
-    {prim::kPrimReduceAll->name(), ADPT_DESC(ReduceAll)},
+    {prim::kPrimReduceAll->name(), ADPT_DESC(ReduceAllD)},
     {prim::kPrimReduceMin->name(), ADPT_DESC(ReduceMinD)},
     {prim::kPrimReduceMax->name(), ADPT_DESC(ReduceMaxD)},
     {string(kNameLARSUpdate), ADPT_DESC(LarsV2Update)},
