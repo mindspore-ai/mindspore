@@ -344,5 +344,5 @@ class ParameterUpdate(Cell):
         self._param = param
 
     def construct(self, x):
-        self._param = x
+        F.assign(self._param, x)
         return x

@@ -52,12 +52,69 @@ def test_parameter_tuple_illegal():
 
 
 def test_parameter_init_illegal():
+    import numpy as np
+    dat = np.array([[1, 2, 3], [2, 3, 4]])
+    tensor = Tensor(dat)
+    data_none = None
     data_bool = True
     data_str = "nicai"
+    data_int = 3
+    data_list = [1, "2", True]
+    data_tuple = (1, 2, 3)
+
+    # test data
+    Parameter(tensor, name=data_str)
+    Parameter(data_int, name=data_str)
+    Parameter(dat, name=data_str)
     with pytest.raises(ValueError):
         Parameter(data_bool, name=data_str)
 
+    # test name
+    Parameter(tensor, name=data_none)
+    with pytest.raises(ValueError):
+        Parameter(tensor, name=dat)
+    with pytest.raises(ValueError):
+        Parameter(tensor, name=tensor)
+    with pytest.raises(ValueError):
+        Parameter(tensor, name=data_bool)
+    with pytest.raises(ValueError):
+        Parameter(tensor, name=data_int)
+    with pytest.raises(ValueError):
+        Parameter(tensor, name=data_list)
+    with pytest.raises(ValueError):
+        Parameter(tensor, name=data_tuple)
 
+    Parameter(tensor, name=data_str, requires_grad=data_bool)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_none)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=dat)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=tensor)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_str)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_int)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_list)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_tuple)
+
+    Parameter(tensor, name=data_str, requires_grad=data_bool,layerwise_parallel=data_bool)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_bool,layerwise_parallel=dat)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_bool,layerwise_parallel=tensor)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_bool,layerwise_parallel=data_none)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_bool,layerwise_parallel=data_str)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_bool,layerwise_parallel=data_int)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_bool,layerwise_parallel=data_list)
+    with pytest.raises(TypeError):
+        Parameter(tensor, name=data_str, requires_grad=data_bool,layerwise_parallel=data_tuple)
 
 
 def test_check_str_by_regular():
