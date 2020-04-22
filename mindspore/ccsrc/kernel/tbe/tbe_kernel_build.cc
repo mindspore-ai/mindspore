@@ -383,6 +383,10 @@ bool TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_no
       attr_obj["name"] = attr_name;
       attr_obj["valid"] = true;
       (*attrs_json).push_back(attr_obj);
+    } else {
+      if (attr_ptr->param_type() == "required" && creater_type_ == SINGLE_BUILD && op_info->impl_path() != "") {
+        MS_LOG(EXCEPTION) << "op name: " << op_info->op_name() << " attr: " << attr_name << "is required, but not set.";
+      }
     }
   }
   return true;
