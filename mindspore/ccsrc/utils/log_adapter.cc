@@ -229,13 +229,19 @@ static void InitMsLogLevel() {
 
 extern "C" {
 // shared lib init hook
+#if defined(_WIN32) || defined(_WIN64)
+__attribute__((constructor)) void mindspore_log_init(void) {
+#else
 void mindspore_log_init(void) {
+#endif
 #ifdef USE_GLOG
   // do not use glog predefined log prefix
   FLAGS_log_prefix = false;
   static bool is_glog_initialzed = false;
   if (!is_glog_initialzed) {
+#if !defined(_WIN32) && !defined(_WIN64)
     google::InitGoogleLogging("mindspore");
+#endif
     is_glog_initialzed = true;
   }
   // set default log level to WARNING

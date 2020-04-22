@@ -31,7 +31,9 @@ CPUKernelFactory &CPUKernelFactory::Get() {
 void CPUKernelFactory::Register(const std::string &kernel_name, CPUKernelCreator &&kernel_creator) {
   if (kernel_creators_.find(kernel_name) == kernel_creators_.end()) {
     (void)kernel_creators_.emplace(kernel_name, kernel_creator);
+#if !defined(_WIN32) && !defined(_WIN64)
     MS_LOG(DEBUG) << "CPUKernelFactory register operator: " << kernel_name;
+#endif
   }
 }
 
