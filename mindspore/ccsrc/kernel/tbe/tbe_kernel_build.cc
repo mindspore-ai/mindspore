@@ -700,7 +700,7 @@ std::vector<size_t> TbeKernelBuild::GetDescOutputIndex(const std::vector<int> &o
       if (!find_reused) {
         desc_output_index.emplace_back(idx);
       } else {
-        desc_output_index.emplace_back(output_used_nums[idx - 1]);
+        desc_output_index.emplace_back(desc_output_index[idx - 1]);
       }
       reused_num += (output_use_num_item - 1);
       find_reused = true;
@@ -717,7 +717,8 @@ bool TbeKernelBuild::GenFusionComputeOutputJson(const mindspore::CNodePtr &cnode
                                                 std::vector<nlohmann::json> *output_desc_list) {
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
   if (AnfAlgo::HasNodeAttr(kAttrOutputUsedNum, cnode)) {
-    auto output_used_nums = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode, kAttrOutputUsedNum);
+    // wait anther pr: auto output_used_nums = AnfAlgo::GetNodeAttr<std::vector<int>>(cnode, kAttrOutputUsedNum);
+    auto output_used_nums = {SizeToInt(AnfAlgo::GetNodeAttr<std::size_t>(cnode, kAttrOutputUsedNum))};
     MS_LOG(INFO) << "This node's output has been reused, node name: " << cnode->fullname_with_scope();
     if (output_used_nums.size() != output_size) {
       MS_LOG(INFO) << "Fusion error: output tenor num(" << output_size << ")"
