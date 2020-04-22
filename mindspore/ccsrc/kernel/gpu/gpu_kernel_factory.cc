@@ -96,9 +96,13 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
     bool flag = true;
     // data type matching check of all input parameters of kernel
     for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
-      if (marjor_sm < MINIUM_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
-        MS_LOG(EXCEPTION) << "Half precision op can be used on Devices which compute capacity is above " << MINIUM_SM
-                          << ", but your device's compute capacity is " << marjor_sm;
+      if (marjor_sm < RECOMMEND_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
+        if (marjor_sm < MINIUM_SM) {
+          MS_LOG(EXCEPTION) << "Half precision ops can be used on Devices which computing capacity is >= " << MINIUM_SM
+                            << ", but the current device's computing capacity is " << marjor_sm;
+        }
+        MS_LOG(WARNING) << "It is recommended to use devices with a computing capacity >= " << RECOMMEND_SM
+                        << ", but the current device's computing capacity is " << marjor_sm;
       }
       if (kernel_info->GetInputDeviceType(input_index) !=
           (iter->second)[attr_index].first.GetInputAttr(input_index).first) {
