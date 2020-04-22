@@ -600,9 +600,11 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
       std::string var_name = "self.";
       std::string attr_name = node.attr("attr").cast<std::string>();
       (void)var_name.append(attr_name);
-      auto obj = ast()->obj().attr(attr_name.c_str());
+      auto attr_obj = ast()->obj().attr(attr_name.c_str());
       if (py::hasattr(ast()->obj(), attr_name.c_str()) &&
-          (data_converter::IsCellInstance(obj) || py::hasattr(obj, PYTHON_PRIMITIVE_FLAG))) {
+          (py::hasattr(attr_obj, PYTHON_PRIMITIVE_FLAG) || py::isinstance<py::int_>(attr_obj) ||
+           py::isinstance<py::float_>(attr_obj) || py::isinstance<py::bool_>(attr_obj) ||
+           py::isinstance<py::str>(attr_obj) || data_converter::IsCellInstance(attr_obj))) {
         return block->MakeResolveSymbol(var_name);
       } else {
         return block->ReadVariable(var_name);
@@ -944,9 +946,6 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   MS_LOG(INFO) << "Parse while statement";
   TraceManager::DebugTrace(std::make_shared<TraceWhileHeader>(block->func_graph()->debug_info()));
   FunctionBlockPtr header_block = MakeFunctionBlock(*this);
-  if (MsContext::GetInstance()->is_multi_graph_sink()) {
-    header_block->func_graph()->set_flags(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
-  }
   TraceManager::EndTrace();
 
   TraceManager::DebugTrace(std::make_shared<TraceWhileBody>(block->func_graph()->debug_info()));
