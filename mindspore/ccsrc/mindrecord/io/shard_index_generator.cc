@@ -520,13 +520,16 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, const std
   for (int raw_page_id : raw_page_ids) {
     auto sql = GenerateRawSQL(fields_);
     if (sql.first != SUCCESS) {
+      MS_LOG(ERROR) << "Generate raw SQL failed";
       return FAILED;
     }
     auto data = GenerateRowData(shard_no, blob_id_to_page_id, raw_page_id, in);
     if (data.first != SUCCESS) {
+      MS_LOG(ERROR) << "Generate raw data failed";
       return FAILED;
     }
     if (BindParameterExecuteSQL(db.second, sql.second, data.second) == FAILED) {
+      MS_LOG(ERROR) << "Execute SQL failed";
       return FAILED;
     }
     MS_LOG(INFO) << "Insert " << data.second.size() << " rows to index db.";
