@@ -78,18 +78,18 @@ TensorParam Fill2DTensor(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
     bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
     bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
     if (transpose_a) {
-      NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->inputs_tensor_info()[0].shape()[1],
-                                         ops[iter_ops]->inputs_tensor_info()[0].shape()[0]);
+      NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[1],
+                                         ops[iter_ops]->outputs_tensor_info()[0].shape()[0]);
     } else if (transpose_b) {
-      NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->inputs_tensor_info()[0].shape()[1],
-                                         ops[iter_ops]->inputs_tensor_info()[0].shape()[0]);
+      NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[1],
+                                         ops[iter_ops]->outputs_tensor_info()[0].shape()[0]);
     } else {
-      NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->inputs_tensor_info()[0].shape()[0],
-                                         ops[iter_ops]->inputs_tensor_info()[0].shape()[1]);
+      NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[0],
+                                         ops[iter_ops]->outputs_tensor_info()[0].shape()[1]);
     }
   } else {
-    NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->inputs_tensor_info()[0].shape()[0],
-                                       ops[iter_ops]->inputs_tensor_info()[0].shape()[1]);
+    NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[0],
+                                       ops[iter_ops]->outputs_tensor_info()[0].shape()[1]);
   }
   return NewTensor.tensor_parm;
 }
