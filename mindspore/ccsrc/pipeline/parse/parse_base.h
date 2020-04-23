@@ -79,6 +79,8 @@ const char PYTHON_PARSE_EXPAND_EXPR_STATEMENT[] = "expand_expr_statement";
 const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
 
+const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
+
 // define the common name
 const char NAMED_PRIMITIVE_ITER[] = "iter";
 const char NAMED_PRIMITIVE_NEXT[] = "next";

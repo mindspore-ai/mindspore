@@ -123,6 +123,9 @@ class ValueSlice : public Value {
 
   abstract::AbstractBasePtr ToAbstract() override;
   std::string DumpText() const override { return ToString(); }
+  ValuePtr start() const { return start_; }
+  ValuePtr stop() const { return stop_; }
+  ValuePtr step() const { return step_; }
 
  private:
   ValuePtr start_;

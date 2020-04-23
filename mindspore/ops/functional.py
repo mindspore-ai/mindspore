@@ -68,6 +68,7 @@ tuple_to_array = P.TupleToArray()
 scalar_cast = P.ScalarCast()
 print_ = P.Print()
 expand_dims = P.ExpandDims()
+scatter_nd = P.ScatterNd()
 
 tuple_setitem = Primitive('tuple_setitem')
 tuple_getitem = Primitive('tuple_getitem')
