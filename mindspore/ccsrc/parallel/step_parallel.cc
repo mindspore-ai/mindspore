@@ -1523,9 +1523,32 @@ std::shared_ptr<TensorLayout> FindPrevParallelCareNodeLayout(const AnfNodePtr &n
   return nullptr;
 }
 
+std::shared_ptr<TensorLayout> CreateParameterLayout(const AnfNodePtr &node) {
+  // Create DataParallel tensor layout for parameter(support WideDeep).
+  CheckGlobalDeviceManager();
+  int32_t dev_num = SizeToInt(g_device_manager->GetDeviceListByStageId(0).size());
+  TensorLayout input_tensor_layout;
+  // create input_shape
+  Shapes inputs_shape = GetNodeShape(node);
+  Shape input_shape_array = inputs_shape[0];
+  if (input_shape_array.empty()) {
+    MS_LOG(EXCEPTION) << "Don't support reshape a scalar parameter.";
+  }
+  // create tensor_map
+  size_t shape_size = input_shape_array.size();
+  TensorMap input_tensor_map_array(SizeToInt(shape_size) - 1, -1);
+  input_tensor_map_array.insert(input_tensor_map_array.begin(), 0);
+  // create dev_matrix
+  Shape dev_matrix_array = {dev_num};
+  if (input_tensor_layout.InitFromVector(dev_matrix_array, input_tensor_map_array, input_shape_array) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Create tensor layout for parameter failed.";
+  }
+  return std::make_shared<TensorLayout>(input_tensor_layout);
+}
+
 std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
   if (node->isa<Parameter>()) {
-    MS_LOG(EXCEPTION) << "Failure: parameter before reshape is not supported temporary";
+    return CreateParameterLayout(node);
   }
   if (!node->isa<CNode>()) {
     return nullptr;
