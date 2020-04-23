@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 using RankList = std::vector<int32_t>;
 using Shape = std::vector<int32_t>;
 
