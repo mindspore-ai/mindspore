@@ -150,14 +150,11 @@ class OperatorInfo {
   // needed by rec_parser
   void set_type(const std::string &type) { type_ = type; }
   const std::string &type() const { return type_; }
-  void set_cnode_name(const std::string &cnode_name) { cnode_name_ = cnode_name; }
-  const std::string &cnode_name() const { return cnode_name_; }
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
 
  protected:
   // needed by rec_parser
   std::string type_;
-  std::string cnode_name_;
   virtual Status CheckStrategy(const StrategyPtr &strategy) = 0;
   virtual Status InferTensorMap() = 0;
   virtual Status InferForwardCommunication() = 0;

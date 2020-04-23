@@ -2278,13 +2278,10 @@ std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node) {
   std::vector<AnfNodePtr> all_inputs = node->inputs();
   std::vector<AnfNodePtr> node_inputs{all_inputs.begin() + 1, all_inputs.end()};
 
+  std::string node_id = node->UniqueId();
+  name_inputs.push_back(node_id);
   for (auto &input : node_inputs) {
-    std::string name;
-    if (IsValueNode<Tensor>(input) || input->isa<CNode>() || input->isa<Parameter>()) {
-      name = input->ToString();
-    } else {
-      continue;
-    }
+    std::string name = input->UniqueId();
     name_inputs.push_back(name);
   }
 
