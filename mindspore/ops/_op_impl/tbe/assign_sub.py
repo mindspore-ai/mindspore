@@ -14,65 +14,27 @@
 # ============================================================================
 
 """AssignSub op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+assign_sub_op_info = TBERegOp("AssignSub") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("assign_sub.so") \
+    .compute_cost(10) \
+    .kernel_name("assign_sub") \
+    .partial_flag(True) \
+    .input(0, "var", False, "required", "all") \
+    .input(1, "value", False, "required", "all") \
+    .output(0, "output_ref", False, "required", "all") \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "AssignSub",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "assign_sub.so",
-    "compute_cost": 10,
-    "kernel_name": "assign_sub",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float", "int32", "int8", "uint8"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "var",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16", "float", "int32", "int8", "uint8"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "value",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float", "int32", "int8", "uint8"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "out_ref",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(assign_sub_op_info)
 def _assign_sub_tbe():
     """AssignSub TBE register"""
     return

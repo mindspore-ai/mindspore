@@ -13,50 +13,19 @@
 # limitations under the License.
 
 """Equal op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
 
-@op_info_register("""{
-    "op_name": "Equal",
-    "imply_type": "AutoDiff",
-    "fusion_type": "OPAQUE",
-    "processor": "cuda",
-    "attr": [
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float32", "float16"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "x"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float32", "float16"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "y"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "bool", "bool"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "output"
-        }
-    ]
-}""")
+equal_op_info = AkgRegOp("Equal") \
+    .fusion_type("OPAQUE") \
+    .input(0, "x") \
+    .input(1, "y") \
+    .output(0, "output") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.BOOL_Default) \
+    .get_op_info()
+
+
+@op_info_register(equal_op_info)
 def _equal_akg():
     """Equal AutoDiff register"""
     return

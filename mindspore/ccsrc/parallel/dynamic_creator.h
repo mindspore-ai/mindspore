@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 #define REGISTER(className)                                                                                  \
   OperatorInfoPtr objectCreator##className(std::string name, Shapes in, Shapes out, PrimitiveAttrs& attrs) { \
     return std::make_shared<className>(name, in, out, attrs);                                                \
@@ -102,6 +101,7 @@ REGISTER(CosInfo);
 REGISTER(ACosInfo);
 REGISTER(LogicalNotInfo);
 REGISTER(L2NormalizeInfo);
+REGISTER(LayerNormInfo);
 REGISTER(ReduceMaxInfo);
 REGISTER(ArgMaxWithValueInfo);
 REGISTER(ArgMinWithValueInfo);
@@ -111,10 +111,10 @@ REGISTER(ReduceMinInfo);
 REGISTER(TransposeInfo);
 REGISTER(PReLUInfo);
 REGISTER(DropoutDoMaskInfo);
-REGISTER(DropoutGenMaskInfo)
 REGISTER(ReshapeInfo);
 REGISTER(FloorDivInfo);
 REGISTER(MaximumInfo);
+REGISTER(MinimumInfo);
 REGISTER(CastInfo);
 REGISTER(GreaterInfo);
 REGISTER(SparseSoftmaxCrossEntropyWithLogitsInfo);
@@ -126,6 +126,9 @@ REGISTER(GetNextInfo);
 REGISTER(NegInfo);
 REGISTER(BatchMatMulInfo);
 REGISTER(ExpandDimsInfo);
+REGISTER(SqueezeInfo);
+REGISTER(SigmoidCrossEntropyWithLogitsInfo);
+REGISTER(SquareInfo);
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -14,74 +14,26 @@
 # ============================================================================
 
 """MaxPool op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+max_pool_op_info = TBERegOp("MaxPool") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("max_pool.so") \
+    .compute_cost(10) \
+    .kernel_name("max_pool") \
+    .partial_flag(True) \
+    .attr("ksize", "required", "listInt", "all") \
+    .attr("strides", "required", "listInt", "all") \
+    .attr("padding", "required", "str", "all") \
+    .attr("data_format", "required", "str", "all") \
+    .input(0, "input_data", False, "required", "all") \
+    .output(0, "output_data", False, "required", "all") \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "MaxPool",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "max_pool.so",
-    "compute_cost": 10,
-    "kernel_name": "max_pool",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "ksize",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "strides",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "padding",
-            "param_type": "required",
-            "type": "str",
-            "value": "all"
-        },
-        {
-            "name": "data_format",
-            "param_type": "required",
-            "type": "str",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "input_data",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "output_data",
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(max_pool_op_info)
 def _max_pool_tbe():
     """MaxPool TBE register"""
     return

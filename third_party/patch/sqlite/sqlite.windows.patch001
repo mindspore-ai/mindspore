@@ -1,0 +1,133 @@
+diff -uprN sqlite-amalgamation-3310100/CMakeLists.txt sqlite-patch/CMakeLists.txt
+--- sqlite-amalgamation-3310100/CMakeLists.txt	1970-01-01 08:00:00.000000000 +0800
++++ sqlite-patch/CMakeLists.txt	2020-04-18 09:16:28.258637600 +0800
+@@ -0,0 +1,6 @@
++cmake_minimum_required(VERSION 3.14)
++project (Sqlite[C])
++add_library(sqlite3 SHARED sqlite3.c)
++set_target_properties(sqlite3 PROPERTIES PUBLIC_HEADER "sqlite3.h;sqlite3ext.h")
++include(GNUInstallDirs)
++install(TARGETS sqlite3 PUBLIC_HEADER)
+diff -uprN sqlite-amalgamation-3310100/sqlite3.c sqlite-patch/sqlite3.c
+--- sqlite-amalgamation-3310100/sqlite3.c	2020-01-28 03:25:14.000000000 +0800
++++ sqlite-patch/sqlite3.c	2020-04-17 15:40:21.005440300 +0800
+@@ -1167,7 +1167,7 @@ extern "C" {
+ */
+ #define SQLITE_VERSION        "3.31.1"
+ #define SQLITE_VERSION_NUMBER 3031001
+-#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837bb4d6"
++#define SQLITE_SOURCE_ID      "2020-02-17 19:25:07 387240fc85ea3549ff8a6ed060ef07c6184548457fb91cd7c6fc39ddb678alt1"
+ 
+ /*
+ ** CAPI3REF: Run-Time Library Version Numbers
+@@ -17428,8 +17428,11 @@ struct Table {
+ */
+ #ifndef SQLITE_OMIT_VIRTUALTABLE
+ #  define IsVirtual(X)      ((X)->nModuleArg)
++#  define ExprIsVtab(X)  \
++              ((X)->op==TK_COLUMN && (X)->y.pTab!=0 && (X)->y.pTab->nModuleArg)
+ #else
+ #  define IsVirtual(X)      0
++#  define ExprIsVtab(X)     0
+ #endif
+ 
+ /*
+@@ -104133,19 +104136,25 @@ static int impliesNotNullRow(Walker *pWa
+     case TK_LT:
+     case TK_LE:
+     case TK_GT:
+-    case TK_GE:
++    case TK_GE: {
++      Expr *pLeft = pExpr->pLeft;
++      Expr *pRight = pExpr->pRight;
+       testcase( pExpr->op==TK_EQ );
+       testcase( pExpr->op==TK_NE );
+       testcase( pExpr->op==TK_LT );
+       testcase( pExpr->op==TK_LE );
+       testcase( pExpr->op==TK_GT );
+       testcase( pExpr->op==TK_GE );
+-      if( (pExpr->pLeft->op==TK_COLUMN && IsVirtual(pExpr->pLeft->y.pTab))
+-       || (pExpr->pRight->op==TK_COLUMN && IsVirtual(pExpr->pRight->y.pTab))
++      /* The y.pTab=0 assignment in wherecode.c always happens after the
++      ** impliesNotNullRow() test */
++      if( (pLeft->op==TK_COLUMN && ALWAYS(pLeft->y.pTab!=0)
++                               && IsVirtual(pLeft->y.pTab))
++       || (pRight->op==TK_COLUMN && ALWAYS(pRight->y.pTab!=0)
++                               && IsVirtual(pRight->y.pTab))
+       ){
+-       return WRC_Prune;
++        return WRC_Prune;
+       }
+-
++    }
+     default:
+       return WRC_Continue;
+   }
+@@ -142591,7 +142600,8 @@ static int isAuxiliaryVtabOperator(
+     **       MATCH(expression,vtab_column)
+     */
+     pCol = pList->a[1].pExpr;
+-    if( pCol->op==TK_COLUMN && IsVirtual(pCol->y.pTab) ){
++    testcase( pCol->op==TK_COLUMN && pCol->y.pTab==0 );
++    if( ExprIsVtab(pCol) ){
+       for(i=0; i<ArraySize(aOp); i++){
+         if( sqlite3StrICmp(pExpr->u.zToken, aOp[i].zOp)==0 ){
+           *peOp2 = aOp[i].eOp2;
+@@ -142613,7 +142623,8 @@ static int isAuxiliaryVtabOperator(
+     ** with function names in an arbitrary case.
+     */
+     pCol = pList->a[0].pExpr;
+-    if( pCol->op==TK_COLUMN && IsVirtual(pCol->y.pTab) ){
++    testcase( pCol->op==TK_COLUMN && pCol->y.pTab==0 );
++    if( ExprIsVtab(pCol) ){
+       sqlite3_vtab *pVtab;
+       sqlite3_module *pMod;
+       void (*xNotUsed)(sqlite3_context*,int,sqlite3_value**);
+@@ -142636,10 +142647,12 @@ static int isAuxiliaryVtabOperator(
+     int res = 0;
+     Expr *pLeft = pExpr->pLeft;
+     Expr *pRight = pExpr->pRight;
+-    if( pLeft->op==TK_COLUMN && IsVirtual(pLeft->y.pTab) ){
++    testcase( pLeft->op==TK_COLUMN && pLeft->y.pTab==0 );
++    if( ExprIsVtab(pLeft) ){
+       res++;
+     }
+-    if( pRight && pRight->op==TK_COLUMN && IsVirtual(pRight->y.pTab) ){
++    testcase( pRight && pRight->op==TK_COLUMN && pRight->y.pTab==0 );
++    if( pRight && ExprIsVtab(pRight) ){
+       res++;
+       SWAP(Expr*, pLeft, pRight);
+     }
+@@ -223667,7 +223680,7 @@ static void fts5SourceIdFunc(
+ ){
+   assert( nArg==0 );
+   UNUSED_PARAM2(nArg, apUnused);
+-  sqlite3_result_text(pCtx, "fts5: 2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837bb4d6", -1, SQLITE_TRANSIENT);
++  sqlite3_result_text(pCtx, "fts5: 2020-02-17 19:25:07 abc473fb8fb999005dc79a360e34f97b3b25429decf1820dd2afa5c19577753d", -1, SQLITE_TRANSIENT);
+ }
+ 
+ /*
+@@ -228440,9 +228453,9 @@ SQLITE_API int sqlite3_stmt_init(
+ #endif /* !defined(SQLITE_CORE) || defined(SQLITE_ENABLE_STMTVTAB) */
+ 
+ /************** End of stmt.c ************************************************/
+-#if __LINE__!=228443
++#if __LINE__!=228456
+ #undef SQLITE_SOURCE_ID
+-#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837balt2"
++#define SQLITE_SOURCE_ID      "2020-02-17 19:25:07 387240fc85ea3549ff8a6ed060ef07c6184548457fb91cd7c6fc39ddb678alt2"
+ #endif
+ /* Return the source-id for this library */
+ SQLITE_API const char *sqlite3_sourceid(void){ return SQLITE_SOURCE_ID; }
+diff -uprN sqlite-amalgamation-3310100/sqlite3.h sqlite-patch/sqlite3.h
+--- sqlite-amalgamation-3310100/sqlite3.h	2020-01-28 03:25:14.000000000 +0800
++++ sqlite-patch/sqlite3.h	2020-04-17 15:40:21.005440300 +0800
+@@ -125,7 +125,7 @@ extern "C" {
+ */
+ #define SQLITE_VERSION        "3.31.1"
+ #define SQLITE_VERSION_NUMBER 3031001
+-#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837bb4d6"
++#define SQLITE_SOURCE_ID      "2020-02-17 19:25:07 387240fc85ea3549ff8a6ed060ef07c6184548457fb91cd7c6fc39ddb678alt1"
+ 
+ /*
+ ** CAPI3REF: Run-Time Library Version Numbers

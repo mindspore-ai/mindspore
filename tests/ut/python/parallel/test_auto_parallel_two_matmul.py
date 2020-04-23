@@ -100,7 +100,7 @@ def test_two_matmul():
     set_algo_parameters(simplify_cal=True,
                                           tensor_slice_align_enable=False,
                                           tensor_slice_align_size=32,
-                                          not_fully_use_devices=True,
+                                          fully_use_devices=False,
                                           elementwise_op_strategy_follow=False)
     para_simplify_cal = get_algo_parameters("simplify_cal")
     assert para_simplify_cal == True
@@ -108,8 +108,8 @@ def test_two_matmul():
     assert para_slice_align_enable == False
     para_slice_align_size = get_algo_parameters("tensor_slice_align_size")
     assert para_slice_align_size == 32
-    not_fully_use_devices  = get_algo_parameters("not_fully_use_devices")
-    assert not_fully_use_devices == True
+    fully_use_devices = get_algo_parameters("fully_use_devices")
+    assert fully_use_devices == False
     elementwise_op_strategy_follow = get_algo_parameters("elementwise_op_strategy_follow")
     assert elementwise_op_strategy_follow == False
 
@@ -120,8 +120,8 @@ def test_two_matmul():
     assert para_slice_align_enable == False
     para_slice_align_size = get_algo_parameters("tensor_slice_align_size")
     assert para_slice_align_size == 16
-    not_fully_use_devices  = get_algo_parameters("not_fully_use_devices")
-    assert not_fully_use_devices == False
+    fully_use_devices = get_algo_parameters("fully_use_devices")
+    assert fully_use_devices == True
     elementwise_op_strategy_follow = get_algo_parameters("elementwise_op_strategy_follow")
     assert elementwise_op_strategy_follow == False
 

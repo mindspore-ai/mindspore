@@ -17,9 +17,10 @@
 #include "device/gpu/kernel_info_setter.h"
 #include "device/gpu/gpu_kernel_build.h"
 #include "device/gpu/gpu_kernel_runtime.h"
+#include "device/gpu/gpu_stream_assign.h"
 #include "pre_activate/common/optimizer.h"
 #include "pre_activate/common/pass_manager.h"
-#include "pre_activate/common/ir_fusion/allreduce_fusion.h"
+#include "pre_activate/pass/allreduce_fusion.h"
 #include "device/kernel_runtime_manager.h"
 #include "predict/predict.h"
 #include "common/utils.h"
@@ -53,6 +54,11 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+}
+
+void GPUSession::AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  device::gpu::AssignGpuStream(kernel_graph);
 }
 
 void GPUSession::BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
@@ -94,6 +100,8 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   StartKernelRT();
   // AllReduce Optimize
   Optimize(graph);
+  // Assign CUDA streams
+  AssignStream(graph);
   // Build kernel if node is cnode
   BuildKernel(graph);
   // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
@@ -124,9 +132,11 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   }
 }
 
-void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) {
+void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                         std::vector<tensor::TensorPtr> *input_tensors) {
   // Prepare the graph
-  auto kernel_graph = ConstructSingleOpGraph(op_run_info);
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  auto kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   SelectKernel(kernel_graph);
   StartKernelRT();
@@ -134,12 +144,10 @@ void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_in
   run_op_graphs_[graph_info] = kernel_graph;
 }
 
-py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) {
+py::tuple GPUSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                            const std::vector<tensor::TensorPtr> &input_tensors) {
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  std::vector<tensor::TensorPtr> input_tensors = {};
-  std::vector<bool> tensors_mask = {};
-  ToTensorPtr(op_run_info, &input_tensors, &tensors_mask);
   RunOpAllocateMemory(input_tensors, kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, input_tensors);

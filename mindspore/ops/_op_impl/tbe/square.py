@@ -14,56 +14,30 @@
 # ============================================================================
 
 """Square op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+square_op_info = TBERegOp("Square") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("square.so") \
+    .compute_cost(10) \
+    .kernel_name("square") \
+    .partial_flag(True) \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_5HD) \
+    .dtype_format(DataType.I32_NHWC, DataType.I32_NHWC) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_NHWC, DataType.F16_NHWC) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Square",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "square.so",
-    "compute_cost": 10,
-    "kernel_name": "sqrt",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float16", "float", "float", "float",
-                "int32", "int32", "int32"
-            ],
-            "format": [
-                "DefaultFormat", "NC1HWC0", "NHWC", "DefaultFormat", "NC1HWC0", "NHWC",
-                "DefaultFormat", "NC1HWC0", "NHWC"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float16", "float", "float", "float",
-                "int32", "int32", "int32"
-            ],
-            "format": [
-                "DefaultFormat", "NC1HWC0", "NHWC", "DefaultFormat", "NC1HWC0", "NHWC",
-                "DefaultFormat", "NC1HWC0", "NHWC"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(square_op_info)
 def _square_tbe():
     """Square TBE register"""
     return

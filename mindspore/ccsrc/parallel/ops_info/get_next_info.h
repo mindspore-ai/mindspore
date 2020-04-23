@@ -32,7 +32,7 @@ class GetNextInfo : public OperatorInfo {
  public:
   GetNextInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
               const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<GetNextCost>()) {}
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<GetNextCost>(false)) {}
   ~GetNextInfo() override = default;
 
   Status Init(const StrategyPtr &strategy) override;

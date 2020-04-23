@@ -52,8 +52,8 @@ TEST_F(MindDataTestSubsetRandomSampler, TestAllAtOnce) {
   std::unordered_set<int64_t> in_set(in.begin(), in.end());
   SubsetRandomSampler sampler(in);
 
-  DummyRandomAccessOp dummy_random_access_op(5);
-  sampler.Init(&dummy_random_access_op);
+  DummyRandomAccessOp dummyRandomAccessOp(5);
+  sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
@@ -80,8 +80,8 @@ TEST_F(MindDataTestSubsetRandomSampler, TestGetNextBuffer) {
   std::vector<int64_t> input(total_samples, 1);
   SubsetRandomSampler sampler(input, samples_per_buffer);
 
-  DummyRandomAccessOp dummy_random_access_op(total_samples);
-  sampler.Init(&dummy_random_access_op);
+  DummyRandomAccessOp dummyRandomAccessOp(total_samples);
+  sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;
@@ -111,8 +111,8 @@ TEST_F(MindDataTestSubsetRandomSampler, TestReset) {
   std::unordered_set<int64_t> in_set(in.begin(), in.end());
   SubsetRandomSampler sampler(in);
 
-  DummyRandomAccessOp dummy_random_access_op(5);
-  sampler.Init(&dummy_random_access_op);
+  DummyRandomAccessOp dummyRandomAccessOp(5);
+  sampler.HandshakeRandomAccessOp(&dummyRandomAccessOp);
 
   std::unique_ptr<DataBuffer> db;
   TensorRow row;

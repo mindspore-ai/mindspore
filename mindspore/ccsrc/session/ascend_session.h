@@ -41,17 +41,18 @@ class AscendSession : public SessionBasic {
   GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   void BuildGraph(GraphId) override;
-  void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) override;
-  py::tuple RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) override;
+  void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+               std::vector<tensor::TensorPtr> *input_tensors) override;
+  py::tuple RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                  const std::vector<tensor::TensorPtr> &input_tensors) override;
 
   // set parameters of final graph
   GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &args) override;
   // set output of final graph
   void SetFinalGraphOutput(const BaseRef &output) override;
   // insert switch and set the relative active ops
-  void SwitchCompile(GraphId cond_g, GraphId true_g, GraphId false_g) override;
-  // set args of child graph. the arg maybe come from a output of other child graphs,
-  // or from final graph's parameter
+  void SwitchCompile(GraphId cond_g, GraphId true_g, GraphId false_g, const AnfNodePtr &condition_output) override;
+  // set args of child graph.the arg maybe come from a output of other child graphs,or from final graph's parameter
   void SetChildGraphInput(GraphId g, const VectorRef &args) override;
   // get graph id in child graphs by ME front anf node pointer
   GraphId GetGraphIdByNode(const AnfNodePtr &front_anf) const override;
@@ -116,6 +117,7 @@ class AscendSession : public SessionBasic {
   std::unordered_map<GraphId, GraphId> while_condition_graphs_;
   // record all conditions
   std::unordered_map<GraphId, std::pair<GraphId, GraphId>> switches_;
+  std::unordered_map<GraphId, AnfNodePtr> condition_output_;
   // final_graph_id is used in every root graph has it's own session situation
   GraphId final_graph_id_;
 };

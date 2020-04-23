@@ -14,57 +14,25 @@
 # ============================================================================
 
 """Tile op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+tile_op_info = TBERegOp("Tile") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("tile_d.so") \
+    .compute_cost(10) \
+    .kernel_name("tile_d") \
+    .partial_flag(True) \
+    .attr("multiples", "optional", "listInt", "all")\
+    .input(0, "x1", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Tile",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "tile_d.so",
-    "compute_cost": 10,
-    "kernel_name": "tile_d",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "multiples",
-            "param_type": "optional",
-            "type": "listInt",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float32", "int32", "float16", "int32"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "x1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float32", "int32", "float16", "int32"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(tile_op_info)
 def _tile_tbe():
     """Tile TBE register"""
     return

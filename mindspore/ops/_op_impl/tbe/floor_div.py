@@ -14,64 +14,27 @@
 # ============================================================================
 
 """FloorDiv op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+floordiv_op_info = TBERegOp("FloorDiv") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("floordiv.so") \
+    .compute_cost(10) \
+    .kernel_name("floordiv") \
+    .partial_flag(True) \
+    .input(0, "x1", False, "required", "all") \
+    .input(1, "x2", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "FloorDiv",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "floordiv.so",
-    "compute_cost": 10,
-    "kernel_name": "floordiv",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float","int32","int8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float","int32","int8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x2",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-         {
-            "index": 0,
-            "dtype": [
-                "float16","float","int32","int8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "y",
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(floordiv_op_info)
 def _floor_div_tbe():
     """FloorDiv TBE register"""
     return

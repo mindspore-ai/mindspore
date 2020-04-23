@@ -42,10 +42,8 @@ class RandomSampler : public Sampler {
   // @return - The error code return
   Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
 
-  // first handshake between StorageOp and Sampler
-  // @param op - StorageOp pointer, pass in so Sampler can call GetNumSamples() and get ClassIds()
-  // @return
-  Status Init(const RandomAccessOp *op) override;
+  // meant to be called by base class or python
+  Status InitSampler() override;
 
   // for next epoch of sampleIds
   // @return - The error code return

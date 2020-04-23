@@ -51,11 +51,6 @@ def test_activation_empty():
     assert nn.get_activation('') is None
 
 
-def test_activation_invalid():
-    with pytest.raises(KeyError):
-        nn.get_activation('relu6')
-
-
 # test softmax
 def test_softmax_axis():
     layer = nn.Softmax(1)

@@ -14,96 +14,35 @@
 # ============================================================================
 
 """OneHot op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+one_hot_op_info = TBERegOp("OneHot") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("one_hot.so") \
+    .compute_cost(10) \
+    .kernel_name("one_hot") \
+    .partial_flag(True) \
+    .attr("depth", "required", "int", "all") \
+    .attr("axis", "required", "int", "all") \
+    .input(0, "x", False, "required", "all") \
+    .input(1, "on_value", False, "required", "all") \
+    .input(2, "off_value", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.U8_Default, DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.U8_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.U8_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.U8_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "OneHot",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "one_hot.so",
-    "compute_cost": 10,
-    "kernel_name": "one_hot",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "depth",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        },
-        {
-            "name": "axis",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "int32","int32","int32","int32","int32",
-                "uint8","uint8","uint8","uint8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float32","int32","int8","uint8",
-                "float16","float32","int32","int8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "on_value",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16","float32","int32","int8","uint8",
-                "float16","float32","int32","int8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "off_value",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-         {
-            "index": 0,
-            "dtype": [
-                "float16","float32","int32","int8","uint8",
-                "float16","float32","int32","int8","uint8"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "y",
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(one_hot_op_info)
 def _one_hot_tbe():
     """OneHot TBE register"""
     return

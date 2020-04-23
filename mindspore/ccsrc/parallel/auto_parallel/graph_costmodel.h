@@ -42,7 +42,7 @@ namespace parallel {
 #define DEFAULT_COST_MODEL_COMMUNI_BIAS 1024.0
 #define DEFAULT_TENSOR_SLICE_ALIGNMENT_ENABLE false
 #define DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE 16
-#define DEFAULT_NOT_FULLY_USE_DEVICES false
+#define DEFAULT_FULLY_USE_DEVICES true
 #define DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW false
 
 class CostGraph;
@@ -57,7 +57,7 @@ extern double COST_MODEL_COMMUNI_CONST;
 extern double COST_MODEL_COMMUNI_BIAS;
 extern bool TENSOR_SLICE_ALIGNMENT_ENABLE;
 extern size_t TENSOR_SLICE_ALIGNMENT_SIZE;
-extern bool NOT_FULLY_USE_DEVICES;
+extern bool FULLY_USE_DEVICES;
 extern bool ELEMENTWISE_OP_STRA_FOLLOW;
 
 class CostGraph {
@@ -187,6 +187,9 @@ class CostGraph {
   size_t GetNumPairs() const { return edges_.size(); }
   Status InitSelectedStrategy();
   OperatorInfoPtr FindTmpIdentityByParameterName(std::string&) const;
+  // When TmpIdentity is used by mulitple operators, the corresponding parameter's memory cost should be calculated only
+  // once (instead of multiple times), this method is used to correct this.
+  Status CorrectOpsMemoryCost();
   // Needed by rec_parser
   void add_inputs_tensor_name(const std::vector<std::string>& inputs_tensor_name) {
     inputs_tensor_name_list_.push_back(inputs_tensor_name);

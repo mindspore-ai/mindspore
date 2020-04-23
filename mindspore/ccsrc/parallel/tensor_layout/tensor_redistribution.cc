@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 Status TensorRedistribution::Init(const TensorLayout& from, const TensorLayout& to, const RankList& dev_list) {
   from_origin_ = from;
   to_origin_ = to;
@@ -159,6 +158,7 @@ Status TensorRedistribution::ComputeCost() {
       backward_comm_cost_ += prod;
       comm_cost_ += 2.0 * prod;
       computation_cost_ += prod;
+      memory_cost_ += prod;
     } else if (str == CONCAT_BY_AXIS) {
       // communication cost = all_gather + reduce_scatter = before_slice_shape + after_slice_shape
       // computation cost = before_slice_shape
@@ -175,20 +175,25 @@ Status TensorRedistribution::ComputeCost() {
       if (concat_dim == 0) {
         // computation cost = all_gather
         computation_cost_ += prod;
+        memory_cost_ += prod * dev_num;
       } else {
         // computation cost = all_gather + split + concat
         computation_cost_ += (prod + prod * dev_num + prod * dev_num);
+        memory_cost_ += (prod * dev_num + prod * dev_num + prod);
       }
     } else {
       // There is only computation cost in SplitByAxis.
       // computation cost = before_slice_shape
       computation_cost_ += prod;
+      // This addtion may be  erroneous
+      memory_cost_ += prod;
     }
   }
   if (reshape_flag()) {
     Shape prev_slice_shape = from_.slice_shape().array();
     double prev_prod = std::accumulate(prev_slice_shape.begin(), prev_slice_shape.end(), 1, std::multiplies<int>());
     computation_cost_ += 2.0 * prev_prod;
+    memory_cost_ += 2.0 * prev_prod;
   }
   return Status::SUCCESS;
 }

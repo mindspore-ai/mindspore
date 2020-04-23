@@ -3,10 +3,18 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sequence-point")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-variable")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-uninitialized")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
+endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-format")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--image-base -Wl,0x10000000")
+endif()
 ############################# Options ################################
 if (ENABLE_GPUQUE)
     add_definitions(-D ENABLE_GPUQUE)
@@ -75,14 +83,19 @@ set_target_properties(_c_dataengine PROPERTIES
 ######################################################################
 
 ################# Link with external libraries ########################
-target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
-target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl protobuf::libprotobuf ${SECUREC_LIBRARY})
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    target_link_libraries(_c_dataengine PRIVATE mindspore)
+    target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} mindspore::protobuf ${SECUREC_LIBRARY})
+else()
+    target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
+    target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl mindspore::protobuf ${SECUREC_LIBRARY})
+endif()
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::opencv_core mindspore::opencv_imgcodecs
         mindspore::opencv_imgproc)
 if (ENABLE_GPUQUE)
     target_link_libraries(_c_dataengine PRIVATE gpu_queue
                                      ${CUDNN_PATH}/lib64/libcudnn.so
-                                     ${CUDA_PATH}/lib64/libcudart.so
+				     ${CUDA_PATH}/lib64/libcudart.so
                                      ${CUDA_PATH}/lib64/stubs/libcuda.so)
 endif ()
 
@@ -91,7 +104,12 @@ if (ENABLE_TDTQUE)
 endif ()
 
 add_dependencies(_c_dataengine _c_mindrecord)
-target_link_libraries(_c_dataengine PRIVATE _c_mindrecord)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(MINDRECORD_LINK_OBJECT ${CMAKE_BINARY_DIR}/mindspore/ccsrc/mindrecord/CMakeFiles/_c_mindrecord.dir/objects.a)
+    target_link_libraries(_c_dataengine PRIVATE _c_mindrecord ${MINDRECORD_LINK_OBJECT} mindspore::sqlite)
+else()
+    target_link_libraries(_c_dataengine PRIVATE _c_mindrecord)
+endif()
 
 if (USE_GLOG)
     target_link_libraries(_c_dataengine PRIVATE mindspore::glog)

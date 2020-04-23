@@ -66,7 +66,7 @@ NameWithTrace RootName(const DebugInfoPtr& debug_info, TraceLabelType trace_labe
   return trace_name;
 }
 
-std::string CombineTraceTypes(const std::string& root_name, std::vector<std::string> trace_labels) {
+std::string CombineTraceTypes(const std::string& root_name, const std::vector<std::string>& trace_labels) {
   std::string tags = "";
   for (auto& itr : trace_labels) {
     std::string symbol = itr;

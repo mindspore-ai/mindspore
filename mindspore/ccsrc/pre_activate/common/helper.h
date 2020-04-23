@@ -29,6 +29,7 @@ constexpr size_t kTransOpInputNum = 2;
 constexpr size_t kCastInputNum = 2;
 constexpr size_t kDependInputNum = 3;
 constexpr size_t kReluInputNum = 2;
+constexpr size_t kReluGradInputNum = 3;
 constexpr size_t kAddInputNum = 3;
 constexpr size_t kAddNInputNum = 3;
 constexpr size_t kTupleGetitemInputNum = 3;
@@ -135,11 +136,18 @@ void CreateOutputsOfFusedBn3(const FuncGraphPtr &graph, const AnfNodePtr &data_i
 void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &anf_node_ptr, size_t output_num,
                                     std::vector<AnfNodePtr> *outputs);
 
+tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_ptr, const TypePtr &type_ptr,
+                                             size_t data_length);
+
+tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple);
+
 bool IsNopNode(const AnfNodePtr &node);
 
 void HideNopNode(session::KernelGraph *const graph);
 
 void RemoveNopNode(session::KernelGraph *const graph);
+
+AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx);
 
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
 }  // namespace opt

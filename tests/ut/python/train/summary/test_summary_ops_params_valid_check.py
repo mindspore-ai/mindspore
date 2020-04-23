@@ -40,6 +40,7 @@ class SummaryDemoTag(nn.Cell):
     def __init__(self, tag1, tag2, tag3):
         super(SummaryDemoTag, self).__init__()
         self.s = P.ScalarSummary()
+        self.histogram_summary = P.HistogramSummary()
         self.add = P.TensorAdd()
         self.tag1 = tag1
         self.tag2 = tag2
@@ -50,6 +51,7 @@ class SummaryDemoTag(nn.Cell):
         z = self.add(x, y)
         self.s(self.tag2, z)
         self.s(self.tag3, y)
+        self.histogram_summary(self.tag1, x)
         return z
 
 
@@ -58,6 +60,7 @@ class SummaryDemoTagForSet(nn.Cell):
     def __init__(self, tag_tuple):
         super(SummaryDemoTagForSet, self).__init__()
         self.s = P.ScalarSummary()
+        self.histogram_summary = P.HistogramSummary()
         self.add = P.TensorAdd()
         self.tag_tuple = tag_tuple
 
@@ -65,6 +68,7 @@ class SummaryDemoTagForSet(nn.Cell):
         z = self.add(x, y)
         for tag in self.tag_tuple:
             self.s(tag, x)
+            self.histogram_summary(tag, x)
         return z
 
 
@@ -98,6 +102,19 @@ class SummaryDemoValueForSet(nn.Cell):
             self.s(tag, self.v)
         return z
 
+
+class HistogramSummaryNet(nn.Cell):
+    "HistogramSummaryNet definition"
+    def __init__(self, value):
+        self.histogram_summary = P.HistogramSummary()
+        self.add = P.TensorAdd()
+        self.value = value
+    
+    def construct(self, tensors1, tensor2):
+        self.histogram_summary("value", self.value)
+        return self.add(tensors1, tensor2)
+
+
 def run_case(net):
     """ run_case """
     # step 0: create the thread
@@ -121,8 +138,8 @@ def run_case(net):
 
 
 # Test 1: use the repeat tag
-def test_scalar_summary_use_repeat_tag():
-    log.debug("begin test_scalar_summary_use_repeat_tag")
+def test_summary_use_repeat_tag():
+    log.debug("begin test_summary_use_repeat_tag")
     net = SummaryDemoTag("x", "x", "x")
     try:
         run_case(net)
@@ -130,12 +147,12 @@ def test_scalar_summary_use_repeat_tag():
         assert False
     else:
         assert True
-    log.debug("finished test_scalar_summary_use_repeat_tag")
+    log.debug("finished test_summary_use_repeat_tag")
 
 
 # Test 2: repeat tag use for set summary
-def test_scalar_summary_use_repeat_tag_for_set():
-    log.debug("begin test_scalar_summary_use_repeat_tag_for_set")
+def test_summary_use_repeat_tag_for_set():
+    log.debug("begin test_summary_use_repeat_tag_for_set")
     net = SummaryDemoTagForSet(("x", "x", "x"))
     try:
         run_case(net)
@@ -143,12 +160,12 @@ def test_scalar_summary_use_repeat_tag_for_set():
         assert False
     else:
         assert True
-    log.debug("finished test_scalar_summary_use_repeat_tag_for_set")
+    log.debug("finished test_summary_use_repeat_tag_for_set")
 
 
 # Test3: test with invalid tag(None, bool, "", int)
-def test_scalar_summary_use_invalid_tag_None():
-    log.debug("begin test_scalar_summary_use_invalid_tag_None")
+def test_summary_use_invalid_tag_None():
+    log.debug("begin test_summary_use_invalid_tag_None")
     net = SummaryDemoTag(None, None, None)
     try:
         run_case(net)
@@ -156,31 +173,31 @@ def test_scalar_summary_use_invalid_tag_None():
         assert True
     else:
         assert False
-    log.debug("finished test_scalar_summary_use_invalid_tag_None")
+    log.debug("finished test_summary_use_invalid_tag_None")
 
 
 # Test4: test with invalid tag(None, bool, "", int)
-def test_scalar_summary_use_invalid_tag_Bool():
-    log.debug("begin test_scalar_summary_use_invalid_tag_Bool")
+def test_summary_use_invalid_tag_Bool():
+    log.debug("begin test_summary_use_invalid_tag_Bool")
     net = SummaryDemoTag(True, True, True)
     run_case(net)
-    log.debug("finished test_scalar_summary_use_invalid_tag_Bool")
+    log.debug("finished test_summary_use_invalid_tag_Bool")
 
 
 # Test5: test with invalid tag(None, bool, "", int)
-def test_scalar_summary_use_invalid_tag_null():
-    log.debug("begin test_scalar_summary_use_invalid_tag_null")
+def test_summary_use_invalid_tag_null():
+    log.debug("begin test_summary_use_invalid_tag_null")
     net = SummaryDemoTag("", "", "")
     run_case(net)
-    log.debug("finished test_scalar_summary_use_invalid_tag_null")
+    log.debug("finished test_summary_use_invalid_tag_null")
 
 
 # Test6: test with invalid tag(None, bool, "", int)
-def test_scalar_summary_use_invalid_tag_Int():
-    log.debug("begin test_scalar_summary_use_invalid_tag_Int")
+def test_summary_use_invalid_tag_Int():
+    log.debug("begin test_summary_use_invalid_tag_Int")
     net = SummaryDemoTag(1, 2, 3)
     run_case(net)
-    log.debug("finished test_scalar_summary_use_invalid_tag_Int")
+    log.debug("finished test_summary_use_invalid_tag_Int")
 
 
 # Test7: test with invalid value(None, "")
@@ -194,7 +211,6 @@ def test_scalar_summary_use_invalid_value_None():
     else:
         assert False
     log.debug("finished test_scalar_summary_use_invalid_tag_Int")
-
 
 
 # Test8: test with invalid value(None, "")
@@ -221,3 +237,30 @@ def test_scalar_summary_use_invalid_value_null():
     else:
         assert False
     log.debug("finished test_scalar_summary_use_invalid_value_null")
+
+
+def test_histogram_summary_use_valid_value():
+    """Test histogram summary with valid value"""
+    log.debug("Begin test_histogram_summary_use_valid_value")
+    try:
+        net = HistogramSummaryNet(Tensor(np.array([1,2,3])))
+        run_case(net)
+    except:
+        assert True
+    else:
+        assert False
+    log.debug("Finished test_histogram_summary_use_valid_value")
+
+
+def test_histogram_summary_use_scalar_value():
+    """Test histogram summary use scalar value"""
+    log.debug("Begin test_histogram_summary_use_scalar_value")
+    try:
+        scalar = Tensor(1)
+        net = HistogramSummaryNet(scalar)
+        run_case(net)
+    except:
+        assert True
+    else:
+        assert False
+    log.debug("Finished test_histogram_summary_use_scalar_value")

@@ -83,9 +83,9 @@ convert_object_map = {
     T.mul:          multitype_ops.mul,
     T.truediv:      multitype_ops.div,
     T.getitem:      multitype_ops.getitem,
-    T.floordiv:     NO_IMPLEMENT,
-    T.mod:          F.scalar_mod,
-    T.pow:          F.scalar_pow,
+    T.floordiv:     multitype_ops.floordiv,
+    T.mod:          multitype_ops.mod,
+    T.pow:          multitype_ops.pow_,
     T.matmul:       F.dot,
     T.lshift:       NO_IMPLEMENT,
     T.rshift:       NO_IMPLEMENT,
@@ -104,8 +104,8 @@ convert_object_map = {
     T.ge:           multitype_ops.greater_equal,
     T.is_:          F.is_,
     T.is_not:       F.is_not,
-    T.contains:     NO_IMPLEMENT,
-    T.not_contains: NO_IMPLEMENT,
+    T.contains:     F.in_dict,
+    T.not_contains: F.not_in_dict,
 
     # system function
     T.len:          M.ms_len,

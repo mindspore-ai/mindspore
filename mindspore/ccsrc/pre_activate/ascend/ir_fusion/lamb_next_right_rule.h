@@ -18,6 +18,8 @@
 
 #include <memory>
 #include "pre_activate/common/optimizer.h"
+#include "utils/utils.h"
+
 namespace mindspore {
 namespace opt {
 class LambNextRightRule : public PatternProcessPass {
@@ -29,7 +31,8 @@ class LambNextRightRule : public PatternProcessPass {
         mul2_x_(std::make_shared<Var>()),
         mul3_x_(std::make_shared<Var>()),
         true_div1_recip_(std::make_shared<Var>()),
-        add2_y_(std::make_shared<Var>()) {}
+        add2_y_(std::make_shared<Var>()),
+        add1_var_(std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()))) {}
 
   ~LambNextRightRule() override = default;
   const BaseRef DefinePattern() const override;
@@ -44,6 +47,7 @@ class LambNextRightRule : public PatternProcessPass {
   VarPtr mul3_x_;
   VarPtr true_div1_recip_;
   VarPtr add2_y_;
+  VarPtr add1_var_;
 };
 }  // namespace opt
 }  // namespace mindspore

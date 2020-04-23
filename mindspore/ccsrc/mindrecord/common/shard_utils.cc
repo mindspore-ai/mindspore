@@ -65,6 +65,15 @@ std::pair<MSRStatus, std::string> GetFileName(const std::string &path) {
     return {FAILED, ""};
   }
   char tmp[PATH_MAX] = {0};
+#if defined(_WIN32) || defined(_WIN64)
+  if (_fullpath(tmp, dirname(&(buf[0])), PATH_MAX) == nullptr) {
+    MS_LOG(ERROR) << "Invalid file path, path: " << buf;
+    return {FAILED, ""};
+  }
+  if (_fullpath(real_path, common::SafeCStr(path), PATH_MAX) == nullptr) {
+    MS_LOG(DEBUG) << "Path: " << common::SafeCStr(path) << "check successfully";
+  }
+#else
   if (realpath(dirname(&(buf[0])), tmp) == nullptr) {
     MS_LOG(ERROR) << "Invalid file path, path: " << buf;
     return {FAILED, ""};
@@ -72,6 +81,7 @@ std::pair<MSRStatus, std::string> GetFileName(const std::string &path) {
   if (realpath(common::SafeCStr(path), real_path) == nullptr) {
     MS_LOG(DEBUG) << "Path: " << path << "check successfully";
   }
+#endif
   std::string s = real_path;
   char sep = '/';
   size_t i = s.rfind(sep, s.length());
@@ -91,6 +101,15 @@ std::pair<MSRStatus, std::string> GetParentDir(const std::string &path) {
     return {FAILED, ""};
   }
   char tmp[PATH_MAX] = {0};
+#if defined(_WIN32) || defined(_WIN64)
+  if (_fullpath(tmp, dirname(&(buf[0])), PATH_MAX) == nullptr) {
+    MS_LOG(ERROR) << "Invalid file path, path: " << buf;
+    return {FAILED, ""};
+  }
+  if (_fullpath(real_path, common::SafeCStr(path), PATH_MAX) == nullptr) {
+    MS_LOG(DEBUG) << "Path: " << common::SafeCStr(path) << "check successfully";
+  }
+#else
   if (realpath(dirname(&(buf[0])), tmp) == nullptr) {
     MS_LOG(ERROR) << "Invalid file path, path: " << buf;
     return {FAILED, ""};
@@ -98,6 +117,7 @@ std::pair<MSRStatus, std::string> GetParentDir(const std::string &path) {
   if (realpath(common::SafeCStr(path), real_path) == nullptr) {
     MS_LOG(DEBUG) << "Path: " << path << "check successfully";
   }
+#endif
   std::string s = real_path;
   if (s.rfind('/') + 1 <= s.size()) {
     return {SUCCESS, s.substr(0, s.rfind('/') + 1)};
@@ -144,6 +164,9 @@ bool IsLegalFile(const std::string &path) {
 }
 
 std::pair<MSRStatus, uint64_t> GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type) {
+#if defined(_WIN32) || defined(_WIN64)
+  return {SUCCESS, 100};
+#else
   uint64_t ll_count = 0;
   struct statfs disk_info;
   if (statfs(common::SafeCStr(str_dir), &disk_info) == -1) {
@@ -166,6 +189,7 @@ std::pair<MSRStatus, uint64_t> GetDiskSize(const std::string &str_dir, const Dis
   }
 
   return {SUCCESS, ll_count};
+#endif
 }
 
 uint32_t GetMaxThreadNum() {

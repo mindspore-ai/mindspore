@@ -23,7 +23,7 @@ namespace ascend {
 class AscendMemoryManager : public MemoryManager {
  public:
   AscendMemoryManager() = default;
-  virtual ~AscendMemoryManager() = default;
+  ~AscendMemoryManager() override = default;
 
   void MallocDeviceMemory() override;
   void FreeDeviceMemory() override;

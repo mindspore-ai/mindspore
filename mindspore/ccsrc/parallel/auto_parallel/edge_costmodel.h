@@ -84,7 +84,7 @@ class Edge {
   // and the input tensor layout of v, return the redistribution cost,
   // and the op_list to carry out the redistribution.
   Status GetRedistributionCost(const TensorLayout& prev_op_output_layout, const TensorLayout& next_op_input_layout,
-                               size_t, CostPtr* cost);
+                               size_t, TypePtr type, CostPtr* cost);
 
   void set_pre_op_output(const std::vector<std::pair<std::shared_ptr<Strategy>, std::vector<TensorInfo>>>& output_set) {
     pre_op_output_ = output_set;
@@ -133,7 +133,7 @@ class Edge {
   void set_parameter_involve(int para_invol) { is_output_parameter_involve_ = para_invol; }
   // When the input of a operator contains WEIGHT or a output from other operators involving WEIGHT, then these input
   // should stay in memory until it is used in the backward phase, which is kept in memory at the end of forward phase.
-  Status CalculateMemoryCost() const { return SUCCESS; }
+  Status CalculateMemoryCost();
 
  private:
   std::string edge_name_;

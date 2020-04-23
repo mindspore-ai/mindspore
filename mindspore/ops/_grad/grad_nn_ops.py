@@ -14,7 +14,7 @@
 # ============================================================================
 
 """Define the grad rules of neural network related operations."""
-
+from mindspore.common import dtype as mstype
 from .. import functional as F
 from .. import operations as P
 from ..operations import _grad_ops as G
@@ -49,6 +49,61 @@ def get_bprop_conv2d(self):
         dx = input_grad(dout, w, get_shape(x))
         dw = filter_grad(dout, x, get_shape(w))
         return dx, dw
+    return bprop
+
+
+@bprop_getters.register(P.ExtractImagePatches)
+def get_bprop_extract_image_patches(self):
+    """Grad definition for `ExtractImagePatches` operation."""
+    get_shape = P.Shape()
+    reshape = P.Reshape()
+    extract_image_patches = P.ExtractImagePatches(ksizes=self.ksizes,
+                                                  strides=self.strides,
+                                                  rates=self.rates,
+                                                  padding=self.padding)
+    concat = P.Concat(axis=-1)
+    expand_dims = P.ExpandDims()
+    scatter_nd = P.ScatterNd()
+    dtype = P.DType()
+    fill = P.Fill()
+    slice_op = P.Slice()
+    transpose = P.Transpose()
+    matmul = P.MatMul()
+    cast = P.Cast()
+    _, ksizes_row, ksizes_col, _ = self.ksizes
+
+    def bprop(x, out, dout):
+        x_shape = get_shape(x)
+        x_batch, x_row, x_col, x_depth = x_shape
+        x_indices_num = x_row * x_col + 1
+        x_idx = F.tuple_to_array(range(1, x_indices_num))
+        x_idx = reshape(x_idx, (1, x_row, x_col, 1))
+        x_idx = cast(x_idx, mstype.float16)
+        x_idx_patch = extract_image_patches(x_idx)
+        x_idx_patch = transpose(x_idx_patch, (0, 3, 1, 2))
+        x_idx_patch = cast(x_idx_patch, mstype.int32)
+
+        out_shape = get_shape(out)
+        _, out_row, out_col, _ = out_shape
+        out_indices_num = out_row * out_col * ksizes_row * ksizes_col
+        out_idx = F.tuple_to_array(range(out_indices_num))
+        out_idx = reshape(out_idx, (1, ksizes_row * ksizes_col, out_row, out_col))
+
+        idx_tensor = concat((expand_dims(x_idx_patch, -1), expand_dims(out_idx, -1)))
+        idx_tensor = reshape(idx_tensor, (-1, 2))
+        sp_shape = (x_indices_num, out_indices_num)
+        sp_tensor = scatter_nd(idx_tensor, fill(dtype(dout), (out_indices_num,), 1), sp_shape)
+        sp_tensor = slice_op(sp_tensor, (1, 0), (x_indices_num - 1, out_indices_num))
+
+        grad = reshape(dout, (x_batch, out_row, out_col, ksizes_row, ksizes_col, x_depth))
+        grad = transpose(grad, (1, 2, 3, 4, 0, 5))
+        grad = reshape(grad, (-1, x_batch * x_depth))
+
+        jac = matmul(sp_tensor, grad)
+        dx = reshape(jac, (x_row, x_col, x_batch, x_depth))
+        dx = transpose(dx, (2, 0, 1, 3))
+
+        return (dx,)
     return bprop
 
 
@@ -165,6 +220,28 @@ def get_bprop_relu(self):
 def get_bprop_relu6(self):
     """Grad definition for `ReLU6` operation."""
     input_grad = G.ReLU6Grad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, x)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.HSwish)
+def get_bprop_hswish(self):
+    """Grad definition for `HSwish` operation."""
+    input_grad = G.HSwishGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, x)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.HSigmoid)
+def get_bprop_hsigmoid(self):
+    """Grad definition for `HSigmoid` operation."""
+    input_grad = G.HSigmoidGrad()
 
     def bprop(x, out, dout):
         dx = input_grad(dout, x)
@@ -445,6 +522,17 @@ def get_bprop_pad(self):
         shp = shape_op(x)
         dx = P.Slice()(dout, begin, shp)
         return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.MirrorPad)
+def get_bprop_mirror_pad(self):
+    """Grad definition for `MirrorPad` operation."""
+    mirror_pad_grad = G.MirrorPadGrad(self.mode)
+
+    def bprop(x, paddings, out, dout):
+        dx = mirror_pad_grad(dout, paddings, x)
+        return (dx, zeros_like(paddings))
     return bprop
 
 

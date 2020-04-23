@@ -543,27 +543,47 @@ def check_generatordataset(method):
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
 
-        nreq_param_int = ['prefetch_size']
-        nreq_param_list = ['column_names', 'column_types']
-
         # check generator_function; required argument
-        generator_function = param_dict.get('generator_function')
-        if generator_function is None:
-            raise ValueError("generator_function is not provided.")
+        source = param_dict.get('source')
+        if source is None:
+            raise ValueError("source is not provided.")
+        if not callable(source):
+            try:
+                iter(source)
+            except TypeError:
+                raise TypeError("source should be callable, iterable or random accessible")
 
         # check column_names; required argument
         column_names = param_dict.get('column_names')
         if column_names is None:
             raise ValueError("column_names is not provided.")
 
-        # check prefetch_size range
-        prefetch_size = param_dict.get('prefetch_size')
-        if prefetch_size is not None and (prefetch_size <= 0 or prefetch_size > 1024):
-            raise ValueError("prefetch_size exceeds the boundary.")
-
+        # check optional argument
+        nreq_param_int = ["num_samples", "num_parallel_workers", "num_shards", "shard_id"]
         check_param_type(nreq_param_int, param_dict, int)
-
+        nreq_param_list = ["column_types"]
         check_param_type(nreq_param_list, param_dict, list)
+
+        num_shards = param_dict.get("num_shards")
+        shard_id = param_dict.get("shard_id")
+        if (num_shards is None) != (shard_id is None):
+            # These two parameters appear together.
+            raise ValueError("num_shards and shard_id need to be passed in together")
+        if num_shards is not None:
+            if shard_id >= num_shards:
+                raise ValueError("shard_id should be less than num_shards")
+
+        sampler = param_dict.get("sampler")
+        if sampler is not None:
+            if isinstance(sampler, samplers.PKSampler):
+                raise ValueError("PKSampler is not supported by GeneratorDataset")
+            if not isinstance(sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
+                                        samplers.RandomSampler, samplers.SubsetRandomSampler,
+                                        samplers.WeightedRandomSampler)):
+                try:
+                    iter(sampler)
+                except TypeError:
+                    raise TypeError("sampler should be either iterable or from dataset.samplers.py")
 
         return method(*args, **kwargs)
 
@@ -582,7 +602,7 @@ def check_batch_size(batch_size):
 def check_count(count):
     check_type(count, 'count', int)
     if (count <= 0 and count != -1) or count > INT32_MAX:
-        raise ValueError("repeat count should be either -1 or positive integer.")
+        raise ValueError("count should be either -1 or positive integer.")
 
 
 def check_columns(columns, name):
@@ -690,6 +710,36 @@ def check_repeat(method):
     return new_method
 
 
+def check_skip(method):
+    """check the input arguments of skip."""
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        count = param_dict.get('count')
+        check_type(count, 'count', int)
+        if count < 0:
+            raise ValueError("Skip count must be positive integer or 0.")
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_take(method):
+    """check the input arguments of take."""
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        count = param_dict.get('count')
+        check_count(count)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
 def check_zip(method):
     """check the input arguments of zip."""
     @wraps(method)
@@ -724,6 +774,7 @@ def check_zip_dataset(method):
         return method(*args, **kwargs)
 
     return new_method
+
 
 def check_rename(method):
     """check the input arguments of rename."""

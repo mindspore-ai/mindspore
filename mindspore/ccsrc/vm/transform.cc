@@ -41,8 +41,10 @@ using TypedPrimitiveAbstractClosurePtr = std::shared_ptr<abstract::TypedPrimitiv
 
 std::vector<PrimitivePtr> nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
                                            prim::kPrimMakeTuple};
-
-std::vector<PrimitivePtr> ms_nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch};
+const std::vector<PrimitivePtr>& GetMsNonlinearOps() {
+  static const std::vector<PrimitivePtr> ms_nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch};
+  return ms_nonlinear_ops;
+}
 
 CompileGraph::CompileGraph(const BackendPtr& backend, const std::vector<PrimitivePtr>& cut_list)
     : backend_(backend), cut_list_(cut_list) {

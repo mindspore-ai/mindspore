@@ -188,11 +188,11 @@ TEST_F(TestTensorAddInfo, GenerateStrategies) {
     tensor_add->InitForCostModel(sp);
     std::vector<TensorInfo> inputs_info = tensor_add->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = tensor_add->outputs_tensor_info();
-    double memory_cost0 = tensor_add->cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage());
+    double memory_cost0 = tensor_add->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage());
     double memory_cost1 = cost.computation_cost_;
     bool memory = memory_cost0 - memory_cost1 <= 1.0;
 
-    double comm_cost0 = tensor_add->cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage());
+    double comm_cost0 = tensor_add->operator_cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage());
     double comm_cost1 = cost.communication_cost_;
     bool comm = comm_cost0 - comm_cost1 <= 1.0;
 
@@ -210,11 +210,11 @@ TEST_F(TestTensorAddInfo, GenerateStrategies1) {
     tensor_add1->InitForCostModel(sp);
     std::vector<TensorInfo> inputs_info = tensor_add1->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = tensor_add1->outputs_tensor_info();
-    double memory_cost0 = tensor_add1->cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage());
+    double memory_cost0 = tensor_add1->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage());
     double memory_cost1 = cost.computation_cost_;
     bool memory = memory_cost0 - memory_cost1 <= 1.0;
 
-    double comm_cost0 = tensor_add1->cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage());
+    double comm_cost0 = tensor_add1->operator_cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage());
     double comm_cost1 = cost.communication_cost_;
     bool comm = comm_cost0 - comm_cost1 <= 1.0;
 

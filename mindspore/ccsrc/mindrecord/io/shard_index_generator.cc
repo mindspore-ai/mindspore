@@ -38,7 +38,7 @@ ShardIndexGenerator::ShardIndexGenerator(const std::string &file_path, bool appe
 MSRStatus ShardIndexGenerator::Build() {
   ShardHeader header = ShardHeader();
   if (header.Build(file_path_) != SUCCESS) {
-    MS_LOG(ERROR) << "Build shard schema failed";
+    MS_LOG(ERROR) << "Build shard schema failed.";
     return FAILED;
   }
   shard_header_ = header;
@@ -46,35 +46,49 @@ MSRStatus ShardIndexGenerator::Build() {
   return SUCCESS;
 }
 
-std::vector<std::string> ShardIndexGenerator::GetField(const string &field_path, json schema) {
-  std::vector<std::string> field_name = StringSplit(field_path, kPoint);
-  std::vector<std::string> res;
-  if (schema.empty()) {
-    res.emplace_back("null");
-    return res;
-  }
-  for (uint64_t i = 0; i < field_name.size(); i++) {
-    // Check if field is part of an array of objects
-    auto &child = schema.at(field_name[i]);
-    if (child.is_array() && !child.empty() && child[0].is_object()) {
-      schema = schema[field_name[i]];
-      std::string new_field_path;
-      for (uint64_t j = i + 1; j < field_name.size(); j++) {
-        if (j > i + 1) new_field_path += '.';
-        new_field_path += field_name[j];
-      }
-      // Return multiple field data since multiple objects in array
-      for (auto &single_schema : schema) {
-        auto child_res = GetField(new_field_path, single_schema);
-        res.insert(res.end(), child_res.begin(), child_res.end());
-      }
-      return res;
-    }
-    schema = schema.at(field_name[i]);
+std::pair<MSRStatus, std::string> ShardIndexGenerator::GetValueByField(const string &field, json input) {
+  if (field.empty()) {
+    MS_LOG(ERROR) << "The input field is None.";
+    return {FAILED, ""};
   }
 
-  // Return vector of one field data (not array of objects)
-  return std::vector<std::string>{schema.dump()};
+  if (input.empty()) {
+    MS_LOG(ERROR) << "The input json is None.";
+    return {FAILED, ""};
+  }
+
+  // parameter input does not contain the field
+  if (input.find(field) == input.end()) {
+    MS_LOG(ERROR) << "The field " << field << " is not found in parameter " << input;
+    return {FAILED, ""};
+  }
+
+  // schema does not contain the field
+  auto schema = shard_header_.get_schemas()[0]->GetSchema()["schema"];
+  if (schema.find(field) == schema.end()) {
+    MS_LOG(ERROR) << "The field " << field << " is not found in schema " << schema;
+    return {FAILED, ""};
+  }
+
+  // field should be scalar type
+  if (kScalarFieldTypeSet.find(schema[field]["type"]) == kScalarFieldTypeSet.end()) {
+    MS_LOG(ERROR) << "The field " << field << " type is " << schema[field]["type"] << ", it is not retrievable";
+    return {FAILED, ""};
+  }
+
+  if (kNumberFieldTypeSet.find(schema[field]["type"]) != kNumberFieldTypeSet.end()) {
+    auto schema_field_options = schema[field];
+    if (schema_field_options.find("shape") == schema_field_options.end()) {
+      return {SUCCESS, input[field].dump()};
+    } else {
+      // field with shape option
+      MS_LOG(ERROR) << "The field " << field << " shape is " << schema[field]["shape"] << " which is not retrievable";
+      return {FAILED, ""};
+    }
+  }
+
+  // the field type is string in here
+  return {SUCCESS, input[field].get<std::string>()};
 }
 
 std::string ShardIndexGenerator::TakeFieldType(const string &field_path, json schema) {
@@ -304,6 +318,7 @@ MSRStatus ShardIndexGenerator::BindParameterExecuteSQL(
       const auto &place_holder = std::get<0>(field);
       const auto &field_type = std::get<1>(field);
       const auto &field_value = std::get<2>(field);
+
       int index = sqlite3_bind_parameter_index(stmt, common::SafeCStr(place_holder));
       if (field_type == "INTEGER") {
         if (sqlite3_bind_int(stmt, index, std::stoi(field_value)) != SQLITE_OK) {
@@ -463,17 +478,24 @@ INDEX_FIELDS ShardIndexGenerator::GenerateIndexFields(const std::vector<json> &s
     if (field.first >= schema_detail.size()) {
       return {FAILED, {}};
     }
-    auto field_value = GetField(field.second, schema_detail[field.first]);
+    auto field_value = GetValueByField(field.second, schema_detail[field.first]);
+    if (field_value.first != SUCCESS) {
+      MS_LOG(ERROR) << "Get value from json by field name failed";
+      return {FAILED, {}};
+    }
+
     auto result = shard_header_.GetSchemaByID(field.first);
     if (result.second != SUCCESS) {
       return {FAILED, {}};
     }
+
     std::string field_type = ConvertJsonToSQL(TakeFieldType(field.second, result.first->GetSchema()["schema"]));
     auto ret = GenerateFieldName(field);
     if (ret.first != SUCCESS) {
       return {FAILED, {}};
     }
-    fields.emplace_back(ret.second, field_type, field_value[0]);
+
+    fields.emplace_back(ret.second, field_type, field_value.second);
   }
   return {SUCCESS, std::move(fields)};
 }
@@ -490,6 +512,10 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, const std
 
   std::fstream in;
   in.open(common::SafeCStr(shard_address), std::ios::in | std::ios::binary);
+  if (!in.good()) {
+    MS_LOG(ERROR) << "File could not opened";
+    return FAILED;
+  }
   (void)sqlite3_exec(db.second, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
   for (int raw_page_id : raw_page_ids) {
     auto sql = GenerateRawSQL(fields_);

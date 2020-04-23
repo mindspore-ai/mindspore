@@ -160,6 +160,19 @@ class SummaryNet(nn.Cell):
         return self.add(x, y)
 
 
+class HistogramSummaryNet(nn.Cell):
+    def __init__(self,):
+        super(HistogramSummaryNet, self).__init__()
+        self.summary = P.HistogramSummary()
+        self.add = P.TensorAdd()
+
+    def construct(self, x, y):
+        out = self.add(x, y)
+        string_in = "out"
+        self.summary(string_in, out)
+        return out
+
+
 test_case_math_ops = [
     ('Neg', {
         'block': P.Neg(),
@@ -224,10 +237,14 @@ test_case_math_ops = [
         'block': P.Minimum(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]]}),
-    ('Pow', {
+    ('Pow_0', {
         'block': P.Pow(),
         'desc_const': [2.0],
         'desc_inputs': [[2, 3, 3, 5]],
+        'desc_bprop': [[2, 3, 3, 5]]}),
+    ('Pow_1', {
+        'block': P.Pow(),
+        'desc_inputs': [[3, 5], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]]}),
     ('Exp', {
         'block': P.Exp(),
@@ -786,11 +803,6 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 3], [3, 3], [3, 3], Tensor(np.ones((3,), np.int32))],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
-    ('SparseApplyFtrlD', {
-        'block': P.SparseApplyFtrlD(0.1, 0.1, 0.1, -0.1),
-        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3], Tensor(2*np.ones((3,), np.int32))],
-        'desc_bprop': [3, 3],
-        'skip': ['backward']}),
     ('Flatten_1', {
         'block': NetForFlatten(),
         'desc_inputs': [Tensor(np.ones([2, 3, 4]).astype(np.int32)), Tensor(np.ones([2, 12]).astype(np.int32))],
@@ -1105,6 +1117,12 @@ test_case_other_ops = [
         'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
                         Tensor(np.array([1.2]).astype(np.float32))],
         'skip': ['backward']}),
+    ('HistogramSummary', {
+        'block': HistogramSummaryNet(),
+        'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
+                        Tensor(np.array([1.2]).astype(np.float32))],
+        'skip': ['backward']}),
+    
 ]
 
 test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops, test_case_other_ops]

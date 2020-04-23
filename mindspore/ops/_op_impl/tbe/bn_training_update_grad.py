@@ -14,109 +14,30 @@
 # ============================================================================
 
 """BatchNormGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+bn_training_update_grad_op_info = TBERegOp("BNTrainingUpdateGrad") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("bn_training_update_grad.so") \
+    .compute_cost(10) \
+    .kernel_name("bn_training_update_grad") \
+    .partial_flag(True) \
+    .attr("epsilon", "optional", "float", "all") \
+    .input(0, "grads", False, "required", "all") \
+    .input(1, "x", False, "required", "all") \
+    .input(2, "batch_mean", False, "required", "all") \
+    .input(3, "batch_variance", False, "required", "all") \
+    .output(0, "diff_scale", False, "required", "all") \
+    .output(1, "diff_offset", False, "required", "all") \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "BNTrainingUpdateGrad",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "bn_training_update_grad.so",
-    "compute_cost": 10,
-    "kernel_name": "bn_training_update_grad",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "epsilon",
-            "param_type": "optional",
-            "type": "float",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float"
-            ],
-            "format": [
-                "NC1HWC0","NC1HWC0"
-            ],
-            "name": "grads",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16", "float"
-            ],
-            "format": [
-                "NC1HWC0","NC1HWC0"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float", "float"
-            ],
-            "format": [
-                "NC1HWC0","NC1HWC0"
-            ],
-            "name": "batch_mean",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 3,
-            "dtype": [
-                "float", "float"
-            ],
-            "format": [
-                "NC1HWC0","NC1HWC0"
-            ],
-            "name": "batch_variance",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float", "float"
-            ],
-            "format": [
-                "NC1HWC0","NC1HWC0"
-            ],
-            "name": "diff_scale",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float", "float"
-            ],
-            "format": [
-                "NC1HWC0","NC1HWC0"
-            ],
-            "name": "diff_offset",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(bn_training_update_grad_op_info)
 def _bn_training_update_grad_tbe():
     """BNTrainingUpdateGrad TBE register"""
     return

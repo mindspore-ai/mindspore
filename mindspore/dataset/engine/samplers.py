@@ -20,7 +20,6 @@ SequentialSampler, SubsetRandomSampler, WeightedRandomSampler.
 
 import mindspore._c_dataengine as cde
 
-
 class DistributedSampler():
     """
     Sampler that access a shard of the dataset.
@@ -113,8 +112,7 @@ class RandomSampler():
 
     Args:
         replacement (bool, optional): If True, put the sample ID back for the next draw (default=False).
-        num_samples (int, optional): Number of elements to sample (default=None, all elements). This
-            argument should be specified only when 'replacement' is "True".
+        num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -195,6 +193,8 @@ class SubsetRandomSampler():
     def create(self):
         return cde.SubsetRandomSampler(self.indices)
 
+    def _create_for_minddataset(self):
+        return cde.MindrecordSubsetRandomSampler(self.indices)
 
 class WeightedRandomSampler():
     """

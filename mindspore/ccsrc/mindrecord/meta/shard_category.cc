@@ -23,6 +23,6 @@ ShardCategory::ShardCategory(const std::vector<std::pair<std::string, std::strin
 
 const std::vector<std::pair<std::string, std::string>> &ShardCategory::get_categories() const { return categories_; }
 
-MSRStatus ShardCategory::operator()(ShardTask &tasks) { return SUCCESS; }
+MSRStatus ShardCategory::execute(ShardTask &tasks) { return SUCCESS; }
 }  // namespace mindrecord
 }  // namespace mindspore

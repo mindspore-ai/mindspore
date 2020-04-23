@@ -24,7 +24,25 @@ namespace mindrecord {
 class ShardOperator {
  public:
   virtual ~ShardOperator() = default;
-  virtual MSRStatus operator()(ShardTask &tasks) = 0;
+
+  MSRStatus operator()(ShardTask &tasks) {
+    if (SUCCESS != this->pre_execute(tasks)) {
+      return FAILED;
+    }
+    if (SUCCESS != this->execute(tasks)) {
+      return FAILED;
+    }
+    if (SUCCESS != this->suf_execute(tasks)) {
+      return FAILED;
+    }
+    return SUCCESS;
+  }
+
+  virtual MSRStatus pre_execute(ShardTask &tasks) { return SUCCESS; }
+
+  virtual MSRStatus execute(ShardTask &tasks) = 0;
+
+  virtual MSRStatus suf_execute(ShardTask &tasks) { return SUCCESS; }
 };
 }  // namespace mindrecord
 }  // namespace mindspore

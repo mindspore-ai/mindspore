@@ -37,7 +37,7 @@ constexpr auto kProcessorCuda = "cuda";
 constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
 constexpr unsigned int AUTODIFF_COMPILE_OVERTIME = 600;
-constexpr auto kAkgModule = "akg";
+constexpr auto kAkgModule = "_akg";
 constexpr auto kArgDataformat = "data_format";
 
 const std::vector<std::string> support_devices = {"aicore", "aicpu", "cuda"};

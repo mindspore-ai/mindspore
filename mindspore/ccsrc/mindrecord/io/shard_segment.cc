@@ -311,14 +311,23 @@ std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, json>>> ShardS
     MS_LOG(ERROR) << "Get category info";
     return {FAILED, std::vector<std::tuple<std::vector<uint8_t>, json>>{}};
   }
+
+  // category_name to category_id
+  int64_t category_id = -1;
   for (const auto &categories : ret.second) {
-    if (std::get<1>(categories) == category_name) {
-      auto result = ReadAllAtPageById(std::get<0>(categories), page_no, n_rows_of_page);
-      return {SUCCESS, result.second};
+    std::string categories_name = std::get<1>(categories);
+
+    if (categories_name == category_name) {
+      category_id = std::get<0>(categories);
+      break;
     }
   }
 
-  return {SUCCESS, std::vector<std::tuple<std::vector<uint8_t>, json>>{}};
+  if (category_id == -1) {
+    return {FAILED, std::vector<std::tuple<std::vector<uint8_t>, json>>{}};
+  }
+
+  return ReadAllAtPageById(category_id, page_no, n_rows_of_page);
 }
 
 std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>> ShardSegment::ReadAtPageByIdPy(

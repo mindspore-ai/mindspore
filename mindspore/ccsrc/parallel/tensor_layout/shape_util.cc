@@ -21,7 +21,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 /*
  * example:
  * shape = [2, 8, 32]
@@ -260,6 +259,5 @@ Status ExpandShape(const std::vector<int32_t>& in, const std::vector<int32_t>& e
   }
   return status;
 }
-
 }  // namespace parallel
 }  // namespace mindspore

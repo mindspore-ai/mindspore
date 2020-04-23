@@ -14,64 +14,26 @@
 # ============================================================================
 
 """SigmoidGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+sigmoid_cross_entropy_with_logits_op_info = TBERegOp("SigmoidGrad") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("sigmoid_grad.so") \
+    .compute_cost(10) \
+    .kernel_name("sigmoid_grad") \
+    .partial_flag(True) \
+    .input(0, "x", False, "required", "all") \
+    .input(1, "y", False, "required", "all") \
+    .output(0, "z", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "SigmoidGrad",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "sigmoid_grad.so",
-    "compute_cost": 10,
-    "kernel_name": "sigmoid_grad",
-    "partial_flag": true,
-    "attr": [
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float","float16","float"
-            ],
-            "format": [
-                "NC1HWC0","NC1HWC0","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float","float16","float"
-            ],
-            "format": [
-                "NC1HWC0","NC1HWC0","DefaultFormat","DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float","float16","float"
-            ],
-            "format": [
-                "NC1HWC0","NC1HWC0","DefaultFormat","DefaultFormat"
-            ],
-            "name": "z",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(sigmoid_cross_entropy_with_logits_op_info)
 def _sigmoid_grad_tbe():
     """SigmoidGrad TBE register"""
     return

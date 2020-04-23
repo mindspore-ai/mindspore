@@ -13,45 +13,19 @@
 # limitations under the License.
 
 """SimpleMeanGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
 
-@op_info_register("""{
-    "op_name": "SimpleMeanGrad",
-    "imply_type": "AutoDiff",
-    "fusion_type": "OPAQUE",
-    "processor": "cuda",
-    "attr": [
-        {
-            "name": "input_shape",
-            "param_type": "required",
-            "type": "listInt"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float32", "float16"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "HEAD"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float32", "float16"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "output"
-        }
-    ]
-}""")
+mean_grad_op_info = AkgRegOp("SimpleMeanGrad") \
+    .fusion_type("OPAQUE") \
+    .input(0, "HEAD") \
+    .output(0, "output") \
+    .attr("input_shape", "required", "listInt") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
+
+
+@op_info_register(mean_grad_op_info)
 def _simple_mean_grad_akg():
     """SimpleMeanGrad AutoDiff register"""
     return

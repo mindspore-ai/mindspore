@@ -22,6 +22,7 @@
 #include <utility>
 #include <string>
 #include <queue>
+#include <stack>
 #include <map>
 #include <unordered_set>
 #include "ir/func_graph.h"
@@ -86,12 +87,15 @@ class KernelGraph : public FuncGraph {
   bool executable() const { return executable_; }
   // set executable of graph
   void set_executable(bool executable) { executable_ = executable; }
+  // set invalid inputs for control sink
+  std::vector<bool> *MutableValidInputs() { return &valid_inputs_; }
+  std::vector<bool> ValidInputs() { return valid_inputs_; }
 
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
-  // BFS to update all nodes' output
-  void BfsToUpdateNodeOutput();
+  // update node edge list
+  void UpdateNodeEdgeList(std::stack<AnfNodePtr> *seed_nodes);
   // add node depend edge by data edge or control depend
   void AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num);
   // handle control depend
@@ -111,13 +115,15 @@ class KernelGraph : public FuncGraph {
   std::unordered_map<tensor::TensorPtr, ValueNodePtr> tensor_to_value_node_map_;
   // include all value nodes
   std::unordered_set<ValueNodePtr> graph_value_nodes_;
-  std::unordered_map<AnfNodePtr, size_t> node_output_num_;
+  std::unordered_map<AnfNodePtr, size_t> node_input_num_;
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_input_edges_;
   // record map between ref final output anf with index and ref origin input with index
   std::map<AnfWithOutIndex, AnfWithOutIndex> ref_out_in_map_;
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
   // graph needn't execute
   bool executable_;
+  // valid inputs
+  std::vector<bool> valid_inputs_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

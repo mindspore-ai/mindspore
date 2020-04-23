@@ -42,6 +42,7 @@ enum OpName {
   kBatch,
   kCache,
   kRepeat,
+  kSkip,
   kTake,
   kZip,
   kMap,
@@ -107,13 +108,15 @@ class DEPipeline {
 
   Status ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
+  Status ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
   Status ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseGeneratorOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseRenameOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
-  DsOpPtr ParseTakeOp(const py::dict &args) const;
+  Status ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 

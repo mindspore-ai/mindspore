@@ -18,6 +18,7 @@
 #include "operator/ops.h"
 #include "ir/meta_tensor.h"
 #include "ir/anf.h"
+#include "common/trans.h"
 #include "device/kernel_runtime.h"
 #include "device/ascend/kernel_select_ascend.h"
 #include "device/ascend/kernel_build_ascend.h"
@@ -90,6 +91,51 @@ GraphId GetDistinctionLabel(const KernelGraphPtr &graph) {
   }
   // else use first node of execution order as label
   return AnfAlgo::GetStreamDistinctionLabel(graph->execution_order()[0].get());
+}
+
+std::vector<BaseRef> GetRealArgs(const KernelGraphPtr graph, const VectorRef &args) {
+  MS_EXCEPTION_IF_NULL(graph);
+  std::vector<AnfNodePtr> graph_inputs = graph->inputs();
+  auto valid_inputs = graph->ValidInputs();
+  size_t real_args_size = 0;
+  std::vector<BaseRef> real_args = {};
+  for (size_t i = 0; i < args.size(); i++) {
+    if (utils::isa<AnfNodePtr>(args[i])) {
+      auto tmp_args = AnfAlgo::GetAllOutput(utils::cast<AnfNodePtr>(args[i]), {prim::kPrimTupleGetItem});
+      for (auto &real_arg : tmp_args) {
+        auto anf_node = utils::cast<AnfNodePtr>(real_arg);
+        MS_EXCEPTION_IF_NULL(anf_node);
+        auto abstract = anf_node->abstract();
+        MS_EXCEPTION_IF_NULL(abstract);
+        // create multiple parameters if is a tuple output real kernel
+        if (abstract->isa<abstract::AbstractTuple>() &&
+            !AnfAlgo::CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
+          auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
+          real_args_size += tuple_abstract->size();
+          continue;
+        }
+        real_args_size += 1;
+        real_args.push_back(real_arg);
+      }
+    } else {
+      real_args_size += 1;
+      real_args.push_back(args[i]);
+    }
+  }
+  if (graph_inputs.size() != valid_inputs.size()) {
+    MS_LOG(EXCEPTION) << "graph_inputs.size(): " << graph_inputs.size()
+                      << ", valid_inputs.size(): " << valid_inputs.size() << " not equal";
+  }
+  if (real_args_size != graph_inputs.size()) {
+    for (size_t j = 0; j < valid_inputs.size(); j++) {
+      if (valid_inputs[j]) {
+        MS_LOG(INFO) << "index: " << j << ", nodes: " << graph_inputs[j]->DebugString();
+      }
+    }
+    MS_LOG(WARNING) << "real_args_size: " << real_args_size << ", graph_inputs.size(): " << graph_inputs.size()
+                    << " not equal";
+  }
+  return real_args;
 }
 }  // namespace
 
@@ -186,7 +232,7 @@ void AscendSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::
 void AscendSession::RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start";
   // data layout optimization
-  opt::AscendDataLayout(kernel_graph);
+  opt::RunOpAscendDataLayout(kernel_graph);
   // mixed precision optimization
   opt::AscendMixPrecision(kernel_graph);
   MS_LOG(INFO) << "Finish";
@@ -203,10 +249,12 @@ void AscendSession::RunOpExecTask(const std::shared_ptr<KernelGraph> &kernel_gra
   MS_LOG(INFO) << "Finish!";
 }
 
-void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) {
+void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                            std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
   MS_LOG(INFO) << "Build op " << op_run_info.op_name << " start !";
   // construct graph include one op
-  auto graph = ConstructSingleOpGraph(op_run_info);
+  auto graph = ConstructSingleOpGraph(op_run_info, input_tensors);
   MS_EXCEPTION_IF_NULL(graph);
   opt::RunOpAscendBackendIRFusionOptimization(graph);
   // kernel select
@@ -221,14 +269,12 @@ void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   run_op_graphs_[graph_info] = graph;
 }
 
-py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) {
+py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                               const std::vector<tensor::TensorPtr> &input_tensors) {
   auto graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " start!";
   // malloc mem
-  std::vector<tensor::TensorPtr> input_tensors = {};
-  std::vector<bool> tensors_mask = {};
-  ToTensorPtr(op_run_info, &input_tensors, &tensors_mask);
   RunOpMemoryAlloc(input_tensors, graph.get());
   // load input data to device
   LoadInputData(graph, input_tensors);
@@ -506,11 +552,13 @@ void AscendSession::InsertSwitchToGraph(GraphId condition_graph_id, GraphId true
   kernel_build_info_builder->SetFusionType(kernel::FusionType::OPAQUE);
   kernel_build_info_builder->SetProcessor(kernel::Processor::AICORE);
   kernel_build_info_builder->SetKernelType(KernelType::RT_KERNEL);
-  // condition graph's output must be single output
-  if (condition_graph->outputs().size() != 1) {
-    MS_LOG(EXCEPTION) << "Condition_graph output num " << condition_graph_id << " should be 1";
+  auto cond_output_it = condition_output_.find(condition_graph_id);
+  if (cond_output_it == condition_output_.end()) {
+    MS_LOG(EXCEPTION) << "Can't find condition graph" << condition_graph_id;
   }
-  AnfNodePtr cond_output_kernel = condition_graph->outputs()[0];
+  auto cond_output_kernel =
+    AnfAlgo::VisitKernel(condition_graph->GetBackendAnfByFrontAnf(cond_output_it->second), 0).first;
+  MS_EXCEPTION_IF_NULL(cond_output_kernel);
   std::vector<AnfNodePtr> inputs = {NewValueNode(switch_primitive), cond_output_kernel, counter_const};
   CNodePtr switch_node = condition_graph->NewCNode(inputs);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), switch_node.get());
@@ -569,12 +617,14 @@ void AscendSession::CopyOutputOfIf(GraphId false_graph_id) {
   }
 }
 
-void AscendSession::SwitchCompile(GraphId cond_graph_id, GraphId true_graph_id, GraphId false_graph_id) {
+void AscendSession::SwitchCompile(GraphId cond_graph_id, GraphId true_graph_id, GraphId false_graph_id,
+                                  const AnfNodePtr &output) {
   if (switches_.find(cond_graph_id) != switches_.end()) {
     MS_LOG(WARNING) << "Condition graph" << cond_graph_id << " has been set before ";
     return;
   }
   switches_[cond_graph_id] = std::pair<GraphId, GraphId>(true_graph_id, false_graph_id);
+  condition_output_[cond_graph_id] = output;
   MS_LOG(INFO) << "New switch compile " << cond_graph_id << " " << true_graph_id << " " << false_graph_id;
   // set the type of condition graph
   auto cond_graph_index = ExecOrderOfChildGraph(final_graph_id_, cond_graph_id);
@@ -682,12 +732,14 @@ void AscendSession::SetChildGraphParameter(const AnfNodePtr &front_anf, const An
   auto from_graph_id = GetGraphIdByNode(front_anf);
   auto from_graph = GetGraph(from_graph_id);
   MS_EXCEPTION_IF_NULL(from_graph);
-
+  auto to_graph_id = AnfAlgo::GetGraphId(backend_parameter.get());
+  auto to_graph = GetGraph(to_graph_id);
+  auto backend_arg = from_graph->GetBackendAnfByFrontAnf(front_anf);
+  MS_EXCEPTION_IF_NULL(to_graph);
   MS_LOG(INFO) << "Set node[" << front_anf->DebugString() << "] of graph[" << from_graph_id << "]to node["
                << backend_parameter->DebugString() << "] of graph[" << AnfAlgo::GetGraphId(backend_parameter.get())
                << "]";
   // a node should not assign to itself
-  auto backend_arg = from_graph->GetBackendAnfByFrontAnf(front_anf);
   if (backend_arg.get() == backend_parameter.get()) {
     return;
   }
@@ -702,17 +754,17 @@ void AscendSession::SetChildGraphParameter(const AnfNodePtr &front_anf, const An
                    << "of graph " << AnfAlgo::GetGraphId(backend_arg.get());
       return;
     }
+    // if a parameter is a weight and not linked to any executable node,device type will be kTypeUnknown,set it's device
+    // type same to arg
+    if (AnfAlgo::GetOutputDeviceDataType(backend_parameter, 0) == kTypeUnknown) {
+      AnfAlgo::SetSelectKernelBuildInfo(AnfAlgo::GetSelectKernelBuildInfo(backend_arg), backend_parameter.get());
+    }
+    // if front anf is a parameter,we can assign the value back,because backend_parameter won't be change in it's graph
+    // unless it's a weight.If backend_parameter is a weight,we should assign the value back.
+    AnfAlgo::SetOutputAddr(AnfAlgo::GetMutableOutputAddr(backend_arg, 0), 0, backend_parameter.get());
+    return;
   }
-  InsertMultipleAssignToGraph(from_graph_id, backend_arg, backend_parameter);
-  // if front anf is a parameter, we can assign the value back, because backend_parameter
-  // won't be changed in it's graph unless it's a weight. If backend_parameter is a weight,
-  // we do should assign the value back.
-  auto to_graph_id = AnfAlgo::GetGraphId(backend_parameter.get());
-  auto to_graph = GetGraph(to_graph_id);
-  MS_EXCEPTION_IF_NULL(to_graph);
-  if (backend_arg->isa<Parameter>() && !to_graph->execution_order().empty()) {
-    InsertMultipleAssignToGraph(to_graph_id, backend_parameter, backend_arg);
-  }
+  InsertAssignToGraph(from_graph_id, backend_arg, backend_parameter);
   MS_LOG(INFO) << "Finish!";
 }
 
@@ -723,8 +775,8 @@ void AscendSession::SetChildGraphParameter(const tensor::TensorPtr &front_tensor
   size_t tensor_size = front_tensor->data().nbytes();
   auto addr = AnfAlgo::GetOutputAddr(backend_parameter, 0);
   MS_EXCEPTION_IF_NULL(addr);
-  if (!addr->SyncHostToDevice(front_tensor->shape(), tensor_size, front_tensor->data_type(),
-                              front_tensor->data_c(false))) {
+  if (!addr->SyncHostToDevice(trans::GetRuntimePaddingShape(backend_parameter, 0), tensor_size,
+                              front_tensor->data_type(), front_tensor->data_c(false))) {
     MS_LOG(EXCEPTION) << "Tensor SyncHostToDevice fail!";
   }
   MS_LOG(INFO) << "Finish!";
@@ -755,17 +807,27 @@ void AscendSession::SetChildGraphInput(GraphId g, const VectorRef &args) {
   DumpGraphInputArgs(args);
   UpdateGraphOrder(g);
   std::vector<AnfNodePtr> graph_inputs = to_graph->inputs();
+  auto valid_inputs = to_graph->ValidInputs();
+  auto real_args = GetRealArgs(to_graph, args);
   size_t input_index = 0;
-  for (size_t i = 0; i < args.size(); i++) {
+  for (size_t i = 0; i < real_args.size(); i++) {
     if (input_index >= graph_inputs.size()) {
       MS_LOG(EXCEPTION) << "input_index " << input_index << " out of range size " << graph_inputs.size();
     }
-    if (utils::isa<AnfNodePtr>(args[i])) {
+    if (utils::isa<AnfNodePtr>(real_args[i])) {
       // arg is a anf node
-      for (const auto &real_arg : AnfAlgo::GetAllOutput(utils::cast<AnfNodePtr>(args[i]), {prim::kPrimTupleGetItem})) {
-        SetChildGraphParameter(real_arg, graph_inputs[input_index]);
-        input_index++;
+      auto real_arg = utils::cast<AnfNodePtr>(real_args[i]);
+      auto real_arg_output_num = AnfAlgo::GetOutputTensorNum(real_arg);
+      if (!AnfAlgo::CheckPrimitiveType(real_arg, prim::kPrimTupleGetItem) && real_arg_output_num > 1) {
+        input_index += real_arg_output_num;
+        continue;
       }
+      if (valid_inputs[input_index]) {
+        SetChildGraphParameter(real_arg, graph_inputs[input_index]);
+      } else {
+        MS_LOG(DEBUG) << "Invalid input arg" << real_arg->DebugString();
+      }
+      input_index++;
     } else if (utils::isa<ValuePtr>(args[i])) {
       auto value = utils::cast<ValuePtr>(args[i]);
       MS_EXCEPTION_IF_NULL(value);
@@ -792,7 +854,7 @@ GraphId AscendSession::GetGraphIdByNode(const AnfNodePtr &front_anf) const {
     }
   }
   MS_EXCEPTION_IF_NULL(front_anf);
-  MS_LOG(WARNING) << "front_anf " << front_anf->DebugString() << " is not exist in any graph";
+  MS_LOG(DEBUG) << "front_anf " << front_anf->DebugString() << " is not exist in any graph";
   return kInvalidGraphId;
 }
 

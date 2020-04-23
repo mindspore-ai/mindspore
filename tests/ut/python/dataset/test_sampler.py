@@ -87,7 +87,28 @@ def test_random_sampler_multi_iter(print_res=False):
     test_config(replacement=True, num_samples=5, num_repeats=5, validate=[0, 1, 2, 3, 4, 5])
 
 
+def test_sampler_py_api():
+    sampler = ds.SequentialSampler().create()
+    sampler.set_num_rows(128)
+    sampler.set_num_samples(64)
+    sampler.initialize()
+    sampler.get_indices()
+
+    sampler = ds.RandomSampler().create()
+    sampler.set_num_rows(128)
+    sampler.set_num_samples(64)
+    sampler.initialize()
+    sampler.get_indices()
+
+    sampler = ds.DistributedSampler(8, 4).create()
+    sampler.set_num_rows(128)
+    sampler.set_num_samples(64)
+    sampler.initialize()
+    sampler.get_indices()
+
+
 if __name__ == '__main__':
     test_sequential_sampler(True)
     test_random_sampler(True)
     test_random_sampler_multi_iter(True)
+    test_sampler_py_api()

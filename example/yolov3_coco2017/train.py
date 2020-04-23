@@ -67,6 +67,7 @@ if __name__ == '__main__':
     parser.add_argument("--distribute", type=bool, default=False, help="Run distribute, default is false.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
+    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate, default is 0.001.")
     parser.add_argument("--mode", type=str, default="sink", help="Run sink mode or not, default is sink")
     parser.add_argument("--epoch_size", type=int, default=10, help="Epoch size, default is 10")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size, default is 32.")
@@ -137,8 +138,8 @@ if __name__ == '__main__':
         ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset_size * args_opt.save_checkpoint_epochs)
         ckpoint_cb = ModelCheckpoint(prefix="yolov3", directory=None, config=ckpt_config)
 
-        lr = Tensor(get_lr(learning_rate=0.001, start_step=0, global_step=args_opt.epoch_size * dataset_size,
-                           decay_step=1000, decay_rate=0.95))
+        lr = Tensor(get_lr(learning_rate=args_opt.lr, start_step=0, global_step=args_opt.epoch_size * dataset_size,
+                           decay_step=1000, decay_rate=0.95, steps=True))
         opt = nn.Adam(filter(lambda x: x.requires_grad, net.get_parameters()), lr, loss_scale=loss_scale)
         net = TrainingWrapper(net, opt, loss_scale)
 

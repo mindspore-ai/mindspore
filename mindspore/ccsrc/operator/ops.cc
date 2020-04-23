@@ -28,6 +28,7 @@ const PrimitivePtr kPrimScalarAdd = std::make_shared<Primitive>("scalar_add");
 const PrimitivePtr kPrimScalarSub = std::make_shared<Primitive>("scalar_sub");
 const PrimitivePtr kPrimScalarMul = std::make_shared<Primitive>("scalar_mul");
 const PrimitivePtr kPrimScalarDiv = std::make_shared<Primitive>("scalar_div");
+const PrimitivePtr kPrimScalarFloordiv = std::make_shared<Primitive>("scalar_floordiv");
 const PrimitivePtr kPrimScalarMod = std::make_shared<Primitive>("scalar_mod");
 const PrimitivePtr kPrimScalarPow = std::make_shared<Primitive>("scalar_pow");
 const PrimitivePtr kPrimScalarTrunc = std::make_shared<Primitive>("scalar_trunc");
@@ -78,6 +79,7 @@ const PrimitivePtr kPrimCreateInstance = std::make_shared<Primitive>("create_ins
 
 // Structure
 const PrimitivePtr kPrimStringEqual = std::make_shared<Primitive>("string_equal");
+const PrimitivePtr kPrimStringConcat = std::make_shared<Primitive>("string_concat");
 const PrimitivePtr kPrimMakeTuple = std::make_shared<Primitive>("make_tuple");
 const PrimitivePtr kPrimMakeList = std::make_shared<Primitive>("make_list");
 const PrimitivePtr kPrimMakeDict = std::make_shared<Primitive>("make_dict");
@@ -154,6 +156,9 @@ const PrimitivePtr kPrimMul = std::make_shared<Primitive>("Mul");
 const PrimitivePtr kPrimMinimum = std::make_shared<Primitive>("Minimum");
 const PrimitivePtr kPrimMaximum = std::make_shared<Primitive>("Maximum");
 const PrimitivePtr kPrimSquare = std::make_shared<Primitive>("Square");
+const PrimitivePtr kPrimEqual = std::make_shared<Primitive>("Equal");
+const PrimitivePtr kPrimLess = std::make_shared<Primitive>("Less");
+const PrimitivePtr kPrimLessEqual = std::make_shared<Primitive>("LessEqual");
 
 // NN
 const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
@@ -218,6 +223,8 @@ const PrimitivePtr kPrimBroadcastGradientArgs = std::make_shared<Primitive>("Bro
 const PrimitivePtr kPrimControlDepend = std::make_shared<Primitive>("ControlDepend");
 const PrimitivePtr kPrimIs_ = std::make_shared<Primitive>("is_");
 const PrimitivePtr kPrimIsNot = std::make_shared<Primitive>("is_not");
+const PrimitivePtr kPrimInDict = std::make_shared<Primitive>("in_dict");
+const PrimitivePtr kPrimNotInDict = std::make_shared<Primitive>("not_in_dict");
 
 // Comm ops
 const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");
@@ -228,6 +235,7 @@ const PrimitivePtr kPrimVirtualDataset = std::make_shared<Primitive>("_VirtualDa
 const PrimitivePtr kPrimScalarSummary = std::make_shared<Primitive>("ScalarSummary");
 const PrimitivePtr kPrimImageSummary = std::make_shared<Primitive>("ImageSummary");
 const PrimitivePtr kPrimTensorSummary = std::make_shared<Primitive>("TensorSummary");
+const PrimitivePtr kPrimHistogramSummary = std::make_shared<Primitive>("HistogramSummary");
 
 ValuePtr GetPythonOps(const std::string& op_name, const std::string& module_name) {
   py::object obj = parse::python_adapter::GetPyFn(module_name, op_name);

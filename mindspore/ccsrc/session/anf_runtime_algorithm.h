@@ -31,6 +31,7 @@
 #include "kernel/kernel.h"
 #include "kernel/kernel_build_info.h"
 #include "operator/ops.h"
+#include "utils/contract.h"
 
 namespace mindspore {
 namespace session {
@@ -41,6 +42,7 @@ class AnfRuntimeAlgorithm {
   // get input_anf_node's real kernel by recurse
   static KernelWithIndex VisitKernel(const AnfNodePtr &input_anf_node, size_t output_index);
   static KernelWithIndex VisitKernelWithReturnType(const AnfNodePtr &input_anf_node, size_t output_index,
+                                                   bool visit_nop_node = false,
                                                    const std::vector<PrimitivePtr> &return_types = {
                                                      prim::kPrimMakeTuple});
   static std::vector<AnfNodePtr> GetAllOutput(const AnfNodePtr &node,
@@ -89,6 +91,8 @@ class AnfRuntimeAlgorithm {
   static std::string GetOutputFormat(const AnfNodePtr &node, size_t output_idx);
   // get input format select of anf node
   static std::string GetInputFormat(const AnfNodePtr &node, size_t input_idx);
+  // get prev node output width output index
+  static KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx);
   // get output format from prev node,input_index is the input index of current node related to prev node
   static std::string GetPrevNodeOutputFormat(const AnfNodePtr &node, size_t input_idx);
   // get output shapes inferred by ME from input nodes.
@@ -99,7 +103,9 @@ class AnfRuntimeAlgorithm {
   static std::vector<size_t> GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx);
   // get input shapes which will built and run in device
   static std::vector<size_t> GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx);
+  // Get Input Padding Axis
   static std::vector<kernel::Axis> GetInputReshapeType(const AnfNodePtr &node, size_t output_idx);
+  // Get Output Padding Axis
   static std::vector<kernel::Axis> GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx);
   // get output data type inferred by ME of anf node
   static TypeId GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx);
@@ -163,10 +169,15 @@ class AnfRuntimeAlgorithm {
   // get graph id
   static uint32_t GetGraphId(const AnfNode *node);
   static AnfNodePtr GetInputNode(const CNodePtr &node, size_t index);
+  // charge if the node's output is a feature map output
+  static bool IsFeatureMapOutput(const AnfNodePtr &node);
+  // charge if the node's input is from a feature map output
   static bool IsFeatureMapInput(const AnfNodePtr &node, size_t input_index);
   // get real input index for some tbe ops which input order is different between me and tbe impl
   static size_t GetRealInputIndex(const AnfNodePtr &anf_node, const size_t cur_index);
   static bool IsCommunicationOp(const AnfNodePtr &node);
+  static bool IsAllReduceOp(const AnfNodePtr &node);
+  static bool IsGetNext(const NotNull<AnfNodePtr> &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

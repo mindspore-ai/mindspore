@@ -16,36 +16,9 @@
 #include "pre_activate/ascend/ir_fusion/lamb_next_right_rule.h"
 #include <vector>
 #include "pre_activate/common/helper.h"
-#include "utils/utils.h"
 
 namespace mindspore {
 namespace opt {
-namespace {
-AnfNodePtr GetAdd1Node(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto add2_cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(add2_cnode);
-  if (add2_cnode->inputs().size() != kAddInputNum) {
-    MS_LOG(ERROR) << "The input size of Add2 is not equal to " << kAddInputNum;
-  }
-  AnfNodePtr sqrt0 = add2_cnode->input(1);
-  MS_EXCEPTION_IF_NULL(sqrt0);
-  auto sqrt0_cnode = sqrt0->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(sqrt0_cnode);
-  if (sqrt0_cnode->inputs().size() != kSqrtInputNum) {
-    MS_LOG(ERROR) << "The input size of Sqrt0 is not equal to " << kSqrtInputNum;
-  }
-  AnfNodePtr real_div1 = sqrt0_cnode->input(1);
-  MS_EXCEPTION_IF_NULL(real_div1);
-  auto real_div1_cnode = real_div1->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(real_div1_cnode);
-  if (real_div1_cnode->inputs().size() != kMulInputNum) {
-    MS_LOG(ERROR) << "The input size of RealDiv1 is not equal to " << kMulInputNum;
-  }
-  return real_div1_cnode->input(1);
-}
-}  // namespace
-
 AnfNodePtr LambNextRightRule::CreateLambNextRightNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
@@ -79,7 +52,7 @@ const BaseRef LambNextRightRule::DefinePattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
   MS_EXCEPTION_IF_NULL(prim_sqrt);
   VectorRef mul3 = VectorRef({prim::kPrimMul, mul3_x_, VectorRef({prim::kPrimSquare, input0_})});
-  VectorRef add1 = VectorRef({prim::kPrimTensorAdd, VectorRef({prim::kPrimMul, mul2_x_, input1_}), mul3});
+  VectorRef add1 = VectorRef({add1_var_, VectorRef({prim::kPrimMul, mul2_x_, input1_}), mul3});
   return VectorRef(
     {prim::kPrimTensorAdd, VectorRef({prim_sqrt, VectorRef({prim::kPrimMul, add1, true_div1_recip_})}), add2_y_});
 }
@@ -91,7 +64,11 @@ const AnfNodePtr LambNextRightRule::Process(const FuncGraphPtr &func_graph, cons
   auto new_node = CreateLambNextRightNode(func_graph, equiv);
   MS_EXCEPTION_IF_NULL(new_node);
   // Set abstract of new node
-  AnfNodePtr add1 = GetAdd1Node(node);
+  auto iter_add1 = (*equiv).find(add1_var_);
+  if (iter_add1 == (*equiv).end()) {
+    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add1 var after matched.";
+  }
+  auto add1 = utils::cast<AnfNodePtr>(iter_add1->second);
   MS_EXCEPTION_IF_NULL(add1);
   AbstractBasePtrList new_node_abstract_list;
   new_node_abstract_list.push_back(add1->abstract());

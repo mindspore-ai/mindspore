@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 class Array {
  public:
   Array() = default;
@@ -43,7 +42,6 @@ class Array {
  protected:
   std::vector<int32_t> array_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -5,6 +5,10 @@ if(ENABLE_CPU)
     file(GLOB_RECURSE CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "device/cpu/*.cc"
     )
+    if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -DHAVE_SNPRINTF")
+        add_compile_definitions(BUILDING_DLL)
+    endif()
 endif()
 
 if(ENABLE_GPU)
@@ -150,17 +154,24 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "kernel/kash/*.cc"
         "device/gpu/distribution/collective_init.cc"
         )
-
+if (ENABLE_CPU)
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST "device/gpu/distribution/collective_init.cc")
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        list(REMOVE_ITEM MINDSPORE_SRC_LIST "kernel/kernel_query.cc")
+    endif()
+endif()
+if (NOT ENABLE_GPU)
+    list(APPEND MINDSPORE_SRC_LIST "device/gpu/distribution/collective_fake_init.cc")
+endif()
 file(GLOB_RECURSE MEM_REUSE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "pre_activate/mem_reuse/*.cc"
         )
 if(NOT ENABLE_DUMP_E2E)
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "debug/e2e_dump.cc")
 endif()
-
 file(COPY "${ms_onnx_INC}/onnx/onnx.proto" DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
 file(GLOB_RECURSE ONNX_PROTO RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/onnx.proto")
-message(“onnx proto path is : ${ONNX_PROTO}”)
+message("onnx proto path is : ${ONNX_PROTO}")
 ms_protobuf_generate(ONNX_PROTO_SRCS ONNX_PROTO_HDRS ${ONNX_PROTO})
 list(APPEND MINDSPORE_PROTO_LIST ${ONNX_PROTO_SRCS})
 
@@ -249,6 +260,7 @@ file(GLOB_RECURSE MS_GVAR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 
 add_library(mindspore_gvar SHARED ${MS_GVAR_SRC_LIST})
 add_library(mindspore STATIC ${MINDSPORE_SRC_LIST})
+add_dependencies(mindspore GENERATED_OUTPUT_DIR)
 
 if(ENABLE_D)
     list(APPEND MINDSPORE_PROTO_LIST ${MINDSPORE_PROTO_AICPU_LIST})
@@ -302,6 +314,7 @@ if(ENABLE_D)
             set(ASCEND_PATH /usr/local/Ascend)
         endif()
         set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
+        set(ASCEND_DRIVER_BACK_PATH ${ASCEND_PATH}/driver/lib64/driver)
         set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
     endif()
 
@@ -309,36 +322,52 @@ if(ENABLE_D)
     find_library(HCCL hccl ${ASCEND_RUNTIME_PATH})
     find_library(CCE_LIB cce ${ASCEND_RUNTIME_PATH})
     find_library(RUNTIME_LIB runtime ${ASCEND_RUNTIME_PATH})
-    find_library(TSDCLIENT tsdclient ${ASCEND_RUNTIME_PATH})
+    find_library(TSDCLIENT tsdclient HINTS ${ASCEND_RUNTIME_PATH} ${ASCEND_DRIVER_BACK_PATH})
     find_library(PROFILING msprof ${ASCEND_DRIVER_PATH})
     target_link_libraries(mindspore ge_runtime ${CCE_LIB} ${RUNTIME_LIB} ${TSDCLIENT} ${PROFILING} ${HCCL} ${TSDCLIENT})
 endif()
 
 target_link_libraries(mindspore securec)
-target_link_libraries(mindspore dl)
+if (NOT WIN32)
+  target_link_libraries(mindspore dl)
+endif()
 target_link_libraries(mindspore mindspore::flatbuffers)
 # link protobuf
 if (ENABLE_D)
-    target_link_libraries(mindspore protobuf::libprotobuf)
+    target_link_libraries(mindspore mindspore::protobuf)
+endif()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    target_link_libraries(mindspore ${PYTHON_LIBRARIES} mindspore_gvar)
 endif()
 
 # set c_expression building
-set(PYTHON_MODULE_SOURCE
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(PYTHON_MODULE_SOURCE ${MS_GVAR_SRC_LIST}
         pipeline/init.cc
         kernel/oplib/oplib.cc
-    ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
-    ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
+        ${MINDSPORE_SRC_LIST} ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
+        ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
+else()
+    set(PYTHON_MODULE_SOURCE
+        pipeline/init.cc
+        kernel/oplib/oplib.cc
+        ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
+        ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
+endif()
 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 pybind11_add_module(_c_expression ${PYTHON_MODULE_SOURCE})
-target_link_options(_c_expression PRIVATE -Wl,-init,mindspore_log_init)
 
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_options(_c_expression PRIVATE -Wl,-init,mindspore_log_init)
     set(ORIGIN_PATH $ORIGIN)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set_target_properties(_c_expression PROPERTIES MACOSX_RPATH ON)
     set(ORIGIN_PATH @loader_path)
+elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set(ORIGIN_PATH $ORIGIN)
 else ()
     MESSAGE(FATAL_ERROR "other platform: ${CMAKE_SYSTEM_NAME}")
 endif ()
@@ -346,125 +375,31 @@ endif ()
 
 set(ORIGIN_PATH ${ORIGIN_PATH}/lib)
 set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
-target_link_libraries(_c_expression PRIVATE
-        mindspore::pybind11_module
-        mindspore
-        mindspore_gvar
-        )
+if (WIN32)
+    target_link_libraries(_c_expression PRIVATE
+            mindspore::pybind11_module
+            securec
+            proto_input
+            mindspore::flatbuffers
+            )
+else()
+    target_link_libraries(_c_expression PRIVATE
+            mindspore::pybind11_module
+            mindspore
+            mindspore_gvar
+            )
+endif()
+
+if(USE_GLOG)
+    target_link_libraries(_c_expression PRIVATE mindspore::glog)
+endif()
 
 if(ENABLE_GPU)
-	execute_process(COMMAND bash ${CMAKE_SOURCE_DIR}/third_party/apply_patches.sh 
-		${CMAKE_BINARY_DIR} 
-		${dlpack_DIRPATH} 
-		${dmlc_core_DIRPATH} 
-		${rang_DIRPATH} 
-		${incubator_tvm_gpu_DIRPATH})
-    set(TVM_DIR "${CMAKE_BINARY_DIR}/incubator-tvm")
-    # Utility functions
-    include(${TVM_DIR}/cmake/util/Util.cmake)
-    include(${TVM_DIR}/cmake/util/FindCUDA.cmake)
-
-    # include directories
-    include_directories(AFTER "${TVM_DIR}/include")
-    include_directories(AFTER "${TVM_DIR}/src")
-    include_directories(AFTER "${TVM_DIR}")
-    include_directories(AFTER "${TVM_DIR}/src/schedule")
-
-    include_directories(AFTER "${TVM_DIR}/3rdparty/dmlc-core/include")
-    include_directories(AFTER "${TVM_DIR}/3rdparty/dlpack/include")
-    include_directories(AFTER "${TVM_DIR}/3rdparty/compiler-rt")
-    include_directories(AFTER "${TVM_DIR}/3rdparty/rang/include")
-
-    # lib contain dlopen and dlclose
-    set(TVM_RUNTIME_LINKER_LIBS ${CMAKE_DL_LIBS})
-
-    # add source group
-    file(GLOB_RECURSE GROUP_SOURCE "${TVM_DIR}/src/*.cc" "src/*.cc")
-    file(GLOB_RECURSE GROUP_INCLUDE "${TVM_DIR}/src/*.h"
-        "${TVM_DIR}/include/*.h" "src/*.h" "include/*.h")
-    assign_source_group("Source" ${GROUP_SOURCE})
-    assign_source_group("Include" ${GROUP_INCLUDE})
-
-    file(GLOB COMPILER_SRCS
-        "pre_activate/gpu/*.cc"
-        ${TVM_DIR}/src/api/*.cc
-        ${TVM_DIR}/src/arithmetic/*.cc
-        ${TVM_DIR}/src/autotvm/*.cc
-        ${TVM_DIR}/src/codegen/*.cc
-        ${TVM_DIR}/src/lang/*.cc
-        ${TVM_DIR}/src/pass/*.cc
-        ${TVM_DIR}/src/op/*.cc
-        ${TVM_DIR}/src/node/*.cc
-        ${TVM_DIR}/src/schedule/*.cc
-        ${TVM_DIR}/src/runtime/*.cc
-        ${TVM_DIR}/src/runtime/vm/*.cc
-        ${TVM_DIR}/src/runtime/vm/profiler/*.cc
-        ${TVM_DIR}/src/codegen/stackvm/*.cc)
-
-    file(GLOB_RECURSE RELAY_SRCS ${TVM_DIR}/src/relay/*.cc)
-    list(APPEND COMPILER_SRCS ${RELAY_SRCS})
-
-    file(GLOB DATATYPE_SRCS ${TVM_DIR}/src/codegen/datatype/*.cc)
-    list(APPEND COMPILER_SRCS ${DATATYPE_SRCS})
-
-    file(GLOB COMPILER_VERILOG_SRCS ${TVM_DIR}/src/codegen/verilog/*.cc)
-    list(APPEND COMPILER_SRCS ${COMPILER_VERILOG_SRCS})
-
-    file(GLOB TOPI_SRCS ${TVM_DIR}/topi/src/*.cc)
-
-    file(GLOB RUNTIME_SRCS
-        ${TVM_DIR}/src/runtime/*.cc
-        ${TVM_DIR}/src/runtime/vm/*.cc
-        ${TVM_DIR}/src/runtime/stub/*.cc
-        ${TVM_DIR}/src/runtime/stackvm/*.cc)
-
-
-    file(GLOB COMPILER_OFF_SRCS
-        ${TVM_DIR}/src/codegen/opt/build_*_off.cc)
-    set(USE_CUDA "OFF")
-    if(ENABLE_GPU)
-        list(REMOVE_ITEM COMPILER_OFF_SRCS
-            ${TVM_DIR}/src/codegen/opt/build_cuda_off.cc)
-        set(USE_CUDA "ON")
-    endif()
-    list(APPEND COMPILER_SRCS ${COMPILER_OFF_SRCS})
-    # Module rules
-    include(${TVM_DIR}/cmake/modules/CUDA.cmake)
-
-    set(CMAKE_C_FLAGS_AKG  -pipe -Wall -fPIC -fstack-protector-all)
-    set(CMAKE_C_FLAGS_AKG ${CMAKE_C_FLAGS_AKG} -Wl,-z,relro,-z,now,-z,noexecstack)
-
-    set(CMAKE_CXX_FLAGS_AKG  -std=c++11 -pipe -Wall -fPIC -fstack-protector-all)
-    set(CMAKE_CXX_FLAGS_AKG ${CMAKE_CXX_FLAGS_AKG} -Wl,-z,relro,-z,now,-z,noexecstack)
-
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-        message("-- Build in Debug mode")
-        set(CMAKE_C_FLAGS_AKG ${CMAKE_C_FLAGS_AKG} -O0 -g -rdynamic)
-        set(CMAKE_CXX_FLAGS_AKG ${CMAKE_CXX_FLAGS_AKG} -O0 -g -rdynamic)
-    else()
-        message("-- Build in Release mode")
-        set(CMAKE_C_FLAGS_AKG ${CMAKE_C_FLAGS_AKG} -O2 -Werror)
-        set(CMAKE_CXX_FLAGS_AKG ${CMAKE_CXX_FLAGS_AKG} -O2 -Werror)
-    endif()
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION
-                                               VERSION_GREATER 7.0)
-        set(CMAKE_CXX_FLAGS_AKG ${CMAKE_CXX_FLAGS_AKG} -faligned-new)
-    endif()
-
-    add_library(akg OBJECT ${COMPILER_SRCS} ${RUNTIME_SRCS} ${TOPI_SRCS})
-
-    target_link_libraries(akg ${TVM_LINKER_LIBS} ${TVM_RUNTIME_LINKER_LIBS})
-    target_compile_options(akg PRIVATE
-        $<$<COMPILE_LANGUAGE:C>:${CMAKE_C_FLAGS_AKG}>
-        $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CXX_FLAGS_AKG}>)
-    target_include_directories(akg PRIVATE "${TVM_DIR}/topi/include")
-
-    add_dependencies(_c_expression akg)
-    target_link_libraries(_c_expression PRIVATE akg)
+    target_link_libraries(_c_expression PRIVATE mindspore::tvm)
 endif()
 
 if(ENABLE_DUMP_PROTO)
-    target_link_libraries(_c_expression PRIVATE protobuf::libprotobuf)
+    target_link_libraries(_c_expression PRIVATE mindspore::protobuf)
 endif()
 
 if(ENABLE_GPU)
@@ -473,6 +408,7 @@ if(ENABLE_GPU)
                           gpu_cuda_lib
                           gpu_queue
                           cublas
+                          ${CUDA_PATH}/lib64/libcurand.so
                           ${CUDNN_PATH}/lib64/libcudnn.so
                           ${CUDA_PATH}/lib64/libcudart.so
                           ${CUDA_PATH}/lib64/stubs/libcuda.so)
@@ -491,91 +427,4 @@ endif()
 if(ENABLE_MINDDATA)
     add_subdirectory(mindrecord)
     add_subdirectory(dataset)
-endif()
-set(MS_PACK_PATH ${CMAKE_SOURCE_DIR}/build/package/mindspore/)
-set(MS_LIB_PATH ${CMAKE_SOURCE_DIR}/build/package/mindspore/lib/)
-
-add_custom_target(add_ms_lib ALL
-    COMMAND mkdir -pv ${MS_LIB_PATH}
-    COMMAND cp ${MS_CCSRC_BUILD_PATH}/_c_expression* ${MS_PACK_PATH}
-    COMMAND cp ${MS_CCSRC_BUILD_PATH}/libmindspore_gvar.so ${MS_LIB_PATH}
-)
-add_dependencies(add_ms_lib _c_expression)
-
-if (NOT ENABLE_GE)
-    if (ENABLE_D)
-        if(DEFINED ENV{ASCEND_CUSTOM_PATH})
-            set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
-        else()
-            set(ASCEND_PATH /usr/local/Ascend)
-        endif()
-        set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
-        add_custom_target(add_ge_lib ALL
-                COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/common/graph/libgraph.so ${MS_LIB_PATH}
-                COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/ge/common/libge_common.so ${MS_LIB_PATH}
-                COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/ge/ge_runtime/libge_runtime.so ${MS_LIB_PATH}
-                COMMAND cp ${ASCEND_DRIVER_PATH}/libslog.so ${MS_LIB_PATH}
-                COMMAND cp ${ASCEND_DRIVER_PATH}/libc_sec.so ${MS_LIB_PATH}
-        )
-        add_dependencies(add_ge_lib add_ms_lib)
-        add_dependencies(add_ge_lib graph)
-        add_dependencies(add_ge_lib ge_runtime)
-    elseif(ENABLE_TESTCASES)
-        add_custom_target(add_ge_lib ALL
-                COMMAND cp ${MS_CCSRC_BUILD_PATH}/../../graphengine/src/common/graph/libgraph.so  ${MS_LIB_PATH}
-                COMMAND cp ${CMAKE_SOURCE_DIR}/graphengine/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR}/libslog.so ${MS_LIB_PATH}
-                COMMAND cp ${CMAKE_SOURCE_DIR}/graphengine/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR}/libc_sec.so ${MS_LIB_PATH}
-        )
-        add_dependencies(add_ge_lib add_ms_lib)
-        add_dependencies(add_ge_lib graph)
-    endif()
-endif()
-
-if (ENABLE_GPU)
-    if (ENABLE_MPI)
-        add_custom_target(add_mpi_lib ALL
-            COMMAND cp ${MS_CCSRC_BUILD_PATH}/_ms_mpi* ${MS_PACK_PATH}
-        )
-        add_dependencies(add_mpi_lib _ms_mpi)
-        add_custom_target(add_gpu_collective_lib ALL
-            COMMAND mkdir -pv ${MS_LIB_PATH}
-            COMMAND cp ${MS_CCSRC_BUILD_PATH}/libgpu_collective* ${MS_LIB_PATH}
-            )
-        add_dependencies(add_gpu_collective_lib gpu_collective)
-    endif()   
-    add_custom_target(add_gpu_queue_lib ALL
-        COMMAND cp ${MS_CCSRC_BUILD_PATH}/libgpu_queue* ${MS_LIB_PATH}
-            )
-    add_dependencies(add_gpu_queue_lib add_ms_lib)
-endif()
-
-if (ENABLE_CPU)
-    add_custom_target(add_cpu_lib ALL
-            COMMAND cp ${onednn_LIBPATH}/libdnnl.so.1.1 ${MS_LIB_PATH}/libdnnl.so.1
-            )
-    add_dependencies(add_cpu_lib add_ms_lib)
-endif()
-
-if (ENABLE_MINDDATA)
-    add_custom_target(add_minddata_lib ALL
-        COMMAND cp ${MS_CCSRC_BUILD_PATH}/dataset/*.so ${MS_PACK_PATH}
-        COMMAND cp ${MS_CCSRC_BUILD_PATH}/mindrecord/*.so ${MS_PACK_PATH}
-        COMMAND cp ${opencv_LIBPATH}/libopencv_core.so.4.2.0 ${MS_LIB_PATH}/libopencv_core.so.4.2
-        COMMAND cp ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.2.0 ${MS_LIB_PATH}/libopencv_imgcodecs.so.4.2
-        COMMAND cp ${opencv_LIBPATH}/libopencv_imgproc.so.4.2.0 ${MS_LIB_PATH}/libopencv_imgproc.so.4.2
-    )
-    add_dependencies(add_minddata_lib add_ms_lib)
-    add_dependencies(add_minddata_lib _c_mindrecord)
-    add_dependencies(add_minddata_lib _c_dataengine)
-
-    add_dependencies(_c_mindrecord mindspore)
-    add_dependencies(_c_dataengine mindspore)
-endif()
-
-if (USE_GLOG)
-    target_link_libraries(_c_expression PRIVATE mindspore::glog)
-    add_custom_target(add_glog_lib ALL
-        COMMAND cp ${glog_LIBPATH}/libglog*.so.0 ${MS_LIB_PATH}
-            )
-    add_dependencies(add_glog_lib add_ms_lib)
 endif()

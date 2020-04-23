@@ -32,7 +32,7 @@ def _compiletask(platform, *jsons):
 
         """
     if platform == "AKG":
-        p = __import__("akg", globals(), locals(), ['ms'], 0)
+        p = __import__("_akg", globals(), locals(), ['ms'], 0)
         func = getattr(p.ms, "compilewithjson")
         for json_item in jsons:
             res = func(json_item)

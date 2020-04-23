@@ -30,6 +30,8 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
+
+
 # pylint: disable=W0613
 # pylint: disable=W0231
 # W0613: unused-argument
@@ -82,9 +84,10 @@ def test_sqrt():
 def test_pow():
     """ test_pow """
     input_tensor = Tensor(np.array([[2, 2], [3, 3]]))
+    power = Tensor(np.array(3.0, np.int64))
     testpow = P.Pow()
     expect = np.array([[8, 8], [27, 27]])
-    result = testpow(input_tensor, 3.0)
+    result = testpow(input_tensor, power)
     assert np.all(result.asnumpy() == expect)
 
 
@@ -105,7 +108,7 @@ def test_realdiv():
     result = div(x, y)
     x = x.asnumpy()
     y = y.asnumpy()
-    expect = x/y
+    expect = x / y
     assert np.all(result.asnumpy() == expect)
 
 
@@ -121,6 +124,7 @@ def test_eye():
 
 class VirtualLossGrad(PrimitiveWithInfer):
     """ VirtualLossGrad definition """
+
     @prim_attr_register
     def __init__(self):
         """init VirtualLossGrad"""
@@ -137,6 +141,7 @@ class VirtualLossGrad(PrimitiveWithInfer):
 
 class VirtualLoss(PrimitiveWithInfer):
     """ VirtualLoss definition """
+
     @prim_attr_register
     def __init__(self):
         """init VirtualLoss"""
@@ -150,6 +155,7 @@ class VirtualLoss(PrimitiveWithInfer):
         def bprop(x, out, dout):
             dx = loss_grad(x, out, dout)
             return (dx,)
+
         return bprop
 
     def infer_shape(self, x_shape):
@@ -161,6 +167,7 @@ class VirtualLoss(PrimitiveWithInfer):
 
 class NetWithLoss(nn.Cell):
     """ NetWithLoss definition """
+
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
         self.loss = VirtualLoss()
@@ -173,6 +180,7 @@ class NetWithLoss(nn.Cell):
 
 class GradWrap(nn.Cell):
     """ GradWrap definition """
+
     def __init__(self, network):
         super(GradWrap, self).__init__()
         self.network = network
@@ -183,6 +191,7 @@ class GradWrap(nn.Cell):
 
 class MatMulNet(nn.Cell):
     """ MatMulNet definition """
+
     def __init__(self):
         super(MatMulNet, self).__init__()
         self.matmul = P.MatMul()
@@ -194,6 +203,7 @@ class MatMulNet(nn.Cell):
 
 class NetWithLossSub(nn.Cell):
     """ NetWithLossSub definition """
+
     def __init__(self, network):
         super(NetWithLossSub, self).__init__()
         self.loss = VirtualLoss()
@@ -206,6 +216,7 @@ class NetWithLossSub(nn.Cell):
 
 class GradWrapSub(nn.Cell):
     """ GradWrapSub definition """
+
     def __init__(self, network):
         super(GradWrapSub, self).__init__()
         self.network = network
@@ -216,6 +227,7 @@ class GradWrapSub(nn.Cell):
 
 class SubNet(nn.Cell):
     """ SubNet definition """
+
     def __init__(self):
         super(SubNet, self).__init__()
         self.sub = P.Sub()
@@ -226,6 +238,7 @@ class SubNet(nn.Cell):
 
 class NpuFloatNet(nn.Cell):
     """ NpuFloat definition """
+
     def __init__(self):
         super(NpuFloatNet, self).__init__()
         self.mul = P.Mul()
@@ -257,6 +270,7 @@ class NpuFloatNet(nn.Cell):
 
 class DiagNet(nn.Cell):
     """ DiagNet definition """
+
     def __init__(self):
         super(DiagNet, self).__init__()
         self.fill = P.Fill()
@@ -268,6 +282,7 @@ class DiagNet(nn.Cell):
 
 class NetWithLossCumSum(nn.Cell):
     """ NetWithLossCumSum definition """
+
     def __init__(self, network):
         super(NetWithLossCumSum, self).__init__()
         self.loss = VirtualLoss()
@@ -280,6 +295,7 @@ class NetWithLossCumSum(nn.Cell):
 
 class GradWrapCumSum(nn.Cell):
     """ GradWrap definition """
+
     def __init__(self, network):
         super(GradWrapCumSum, self).__init__()
         self.network = network
@@ -290,6 +306,7 @@ class GradWrapCumSum(nn.Cell):
 
 class NetCumSum(nn.Cell):
     """ NetCumSum definition """
+
     def __init__(self):
         super(NetCumSum, self).__init__()
         self.cumsum = P.CumSum()
@@ -320,8 +337,8 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('CumSumGrad', {
         'block': GradWrapCumSum(NetWithLossCumSum(NetCumSum())),
-        'desc_inputs': [Tensor(np.array([[3, 4, 6, 10],[1, 6, 7, 9],[4, 3, 8, 7],[1, 3, 7, 9]]).astype(np.float16))],
-        'desc_bprop': [Tensor(np.array([[3, 4, 6, 10],[1, 6, 7, 9],[4, 3, 8, 7],[1, 3, 7, 9]]).astype(np.float16))],
+        'desc_inputs': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float16))],
+        'desc_bprop': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float16))],
         'skip': ['backward']}),
     ('Diag', {
         'block': DiagNet(),
@@ -350,7 +367,6 @@ test_case_math_ops = [
         'skip': ['backward']}),
 ]
 
-
 test_case_lists = [test_case_math_ops]
 test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
@@ -358,6 +374,7 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 
 
 import mindspore.context as context
+
 
 @non_graph_engine
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
@@ -368,16 +385,16 @@ def test_exec():
 
 raise_set = [
     ('StridedSlice_1_Error', {
-        'block': (lambda x : P.StridedSlice(begin_mask="1"), {'exception': ValueError}),
+        'block': (lambda x: P.StridedSlice(begin_mask="1"), {'exception': ValueError}),
         'desc_inputs': [0]}),
     ('StridedSlice_2_Error', {
-        'block': (lambda x : P.StridedSlice(end_mask="1"), {'exception': ValueError}),
+        'block': (lambda x: P.StridedSlice(end_mask="1"), {'exception': ValueError}),
         'desc_inputs': [0]}),
     ('StridedSlice_3_Error', {
-        'block': (lambda x : P.StridedSlice(ellipsis_mask=1.1), {'exception': ValueError}),
+        'block': (lambda x: P.StridedSlice(ellipsis_mask=1.1), {'exception': ValueError}),
         'desc_inputs': [0]}),
     ('StridedSlice_4_Error', {
-        'block': (lambda x : P.StridedSlice(new_axis_mask="1.1"), {'exception': ValueError}),
+        'block': (lambda x: P.StridedSlice(new_axis_mask="1.1"), {'exception': ValueError}),
         'desc_inputs': [0]}),
 ]
 

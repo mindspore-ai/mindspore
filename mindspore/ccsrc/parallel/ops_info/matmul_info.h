@@ -34,7 +34,7 @@ class MatMulBase : public OperatorInfo {
  public:
   MatMulBase(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
              const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<MatMulCost>()) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<MatMulCost>(true)) {}
   ~MatMulBase() override = default;
 
   Status Init(const StrategyPtr& strategy) override;

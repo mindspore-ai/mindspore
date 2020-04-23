@@ -61,6 +61,30 @@ message Summary {
         required bytes encoded_image = 4;
     }
 
+    message Histogram {
+      message bucket{
+          // Count number of values fallen in [left, left + width).
+          // For the right most bucket, range is [left, left + width].
+          required double left = 1;
+          required double width = 2;
+          required int64 count = 3;
+      }
+  
+      repeated bucket buckets = 1;
+      optional int64 nan_count = 2;
+      optional int64 pos_inf_count = 3;
+      optional int64 neg_inf_count = 4;
+
+      // max, min, sum will not take nan and inf into account.
+      // If there is no valid value in tensor, max will be nan, min will be nan, sum will be 0.
+      optional double max = 5;
+      optional double min = 6;
+      optional double sum = 7;
+
+      // total number of values, including nan and inf
+      optional int64 count = 8;
+    }
+
     message Value {
         // Tag name for the data.
         required string tag = 1;
@@ -70,6 +94,7 @@ message Summary {
             float scalar_value = 3;
             Image image = 4;
             TensorProto tensor = 8;
+            Histogram histogram = 9;
         }
     }
 

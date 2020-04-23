@@ -28,6 +28,7 @@ class DealRefTransAndCast : public PatternProcessPass {
  public:
   explicit DealRefTransAndCast(bool multigraph = true) : PatternProcessPass("deal_ref_trans_and_cast", multigraph) {}
   ~DealRefTransAndCast() override = default;
+  const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 }  // namespace opt

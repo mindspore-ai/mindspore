@@ -29,6 +29,7 @@ from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ..operations.math_ops import _infer_shape_reduce
+from .._utils import _get_concat_offset
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 
 def _check_infer_attr_reduce(axis, keep_dims):
@@ -174,10 +175,9 @@ class Cast(PrimitiveWithInfer):
     Examples:
         >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
         >>> input_x = Tensor(input_np)
-        >>> type_dst = mindspore.int32
+        >>> type_dst = mindspore.float16
         >>> cast = P.Cast()
         >>> result = cast(input_x, type_dst)
-        >>> expect = input_np.astype(type_dst)
     """
 
     @prim_attr_register
@@ -795,7 +795,7 @@ class ZerosLike(PrimitiveWithInfer):
 
     Examples:
         >>> zeroslike = P.ZerosLike()
-        >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
+        >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> output = zeroslike(x)
     """
 
@@ -983,8 +983,7 @@ class Argmax(PrimitiveWithInfer):
 
     Examples:
         >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]))
-        >>> index = P.Argmax()(input_x)
-        >>> assert index == Tensor(1, mindspore.int64)
+        >>> index = P.Argmax(output_type=mindspore.int32)(input_x)
     """
 
     @prim_attr_register
@@ -1008,6 +1007,7 @@ class Argmax(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         validator.check_subclass("input_x", x_dtype, mstype.tensor)
+        validator.check_typename('input_x', x_dtype, [mstype.float32, mstype.float16])
         return mstype.tensor_type(self.output_type)
 
 
@@ -1097,7 +1097,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         axis = self.axis
         x_rank = len(x_shape)
         validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT)
-        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.prim_name())
+        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.name)
         return ouput_shape, ouput_shape
 
     def infer_dtype(self, x_dtype):
@@ -1143,7 +1143,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         axis = self.axis
         x_rank = len(x_shape)
         validator.check_int_range("axis", axis, -x_rank, x_rank, Rel.INC_LEFT)
-        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.prim_name())
+        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.name)
         return ouput_shape, ouput_shape
 
     def infer_dtype(self, x_dtype):
@@ -1238,7 +1238,8 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         >>> input_x = [1, 2, 3, 4]
         >>> segment_ids = [0, 0, 1, 2]
         >>> num_segments = 4
-        >>> type = P.UnsortedSegmentSum()(input_x, segment_ids, num_segments)
+        >>> P.UnsortedSegmentSum()(input_x, segment_ids, num_segments)
+        [3, 3, 4, 0]
     """
 
     @prim_attr_register
@@ -1272,30 +1273,6 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
                'dtype': mstype.tensor_type(x_type.element_type()),
                'value': None}
         return out
-
-
-def _get_concat_offset(x_shp, x_type, axis):
-    """for concat and concatoffset check args and compute offset"""
-    validator.check_type("shape", x_shp, [tuple])
-    validator.check_integer("len of input_x shape", len(x_shp), 0, Rel.GT)
-    validator.check_subclass("shape0", x_type[0], mstype.tensor)
-    validator.check_integer("len of input_x0 shape", len(x_shp[0]), 0, Rel.GT)
-    rank_base = len(x_shp[0])
-    validator.check_int_range('axis', axis, -rank_base - 1, rank_base, Rel.INC_BOTH)
-    if axis < 0:
-        axis = axis + rank_base
-    all_shp = x_shp[0][axis]
-    offset = [0,]
-    for i in range(1, len(x_shp)):
-        v = x_shp[i]
-        validator.check('len of x_shp[%d]' % i, len(v), 'len of base', len(x_shp[0]))
-        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0])
-        for j in range(rank_base):
-            if j != axis and v[j] != x_shp[0][j]:
-                raise ValueError("Concat evaluator element %d shape in input can not concat with first element" % i)
-        offset.append(all_shp)
-        all_shp += v[axis]
-    return offset, all_shp, axis
 
 
 class Concat(PrimitiveWithInfer):
@@ -1499,7 +1476,9 @@ class Slice(PrimitiveWithInfer):
         Tensor.
 
     Examples:
-        >>> data = Tensor(np.array([3,2,3]).astype(np.int32))
+        >>> data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
+        >>>                         [[3, 3, 3], [4, 4, 4]],
+        >>>                         [[5, 5, 5], [6, 6, 6]]]).astype(np.int32))
         >>> type = P.Slice()(data, (1, 0, 0), (1, 1, 3))
     """
 
@@ -1528,34 +1507,6 @@ class Slice(PrimitiveWithInfer):
         return {'shape': size_v,
                 'dtype': x['dtype'],
                 'value': None}
-
-
-class ConcatOffset(PrimitiveWithInfer):
-    """primitive for computing Concat's gradient."""
-
-    @prim_attr_register
-    def __init__(self, N=2, axis=0):
-        """init ConcatOffset"""
-
-    def __infer__(self, input_x):
-        axis = self.axis
-        x_shp = input_x['shape']
-        x_type = input_x['dtype']
-        offset, _, axis = _get_concat_offset(x_shp, x_type, axis)
-        self.add_prim_attr('T', x_type[0].element_type())
-        offset_values = []
-        for i in range(len(x_shp)):
-            values = []
-            for j in range(len(x_shp[0])):
-                value = 0
-                if j == axis:
-                    value = offset[i]
-                values.append(value)
-            offset_values.append(tuple(values))
-        out = {'shape': None,
-               'dtype': None,
-               'value': tuple(offset_values)}
-        return out
 
 
 class Select(PrimitiveWithInfer):

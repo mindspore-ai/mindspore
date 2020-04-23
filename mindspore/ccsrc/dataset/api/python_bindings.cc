@@ -19,7 +19,9 @@
 #include "dataset/kernels/no_op.h"
 #include "dataset/kernels/data/one_hot_op.h"
 #include "dataset/kernels/image/center_crop_op.h"
+#if !defined(_WIN32) && !defined(_WIN64)
 #include "dataset/kernels/image/change_mode_op.h"
+#endif
 #include "dataset/kernels/image/cut_out_op.h"
 #include "dataset/kernels/image/decode_op.h"
 #include "dataset/kernels/image/distort_bounding_box_crop_op.h"
@@ -54,6 +56,9 @@
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "dataset/engine/jagged_connector.h"
 #include "dataset/kernels/data/to_float16_op.h"
+#include "dataset/util/random.h"
+#include "mindrecord/include/shard_operator.h"
+#include "mindrecord/include/shard_sample.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "pybind11/stl_bind.h"
@@ -220,11 +225,13 @@ void bindTensor(py::module *m) {
   (void)py::class_<DataType>(*m, "DataType")
     .def(py::init<std::string>())
     .def(py::self == py::self)
-    .def("__str__", &DataType::ToString);
+    .def("__str__", &DataType::ToString)
+    .def("__deepcopy__", [](py::object &t, py::dict memo) { return t; });
 }
 
 void bindTensorOps1(py::module *m) {
-  (void)py::class_<TensorOp, std::shared_ptr<TensorOp>>(*m, "TensorOp");
+  (void)py::class_<TensorOp, std::shared_ptr<TensorOp>>(*m, "TensorOp")
+    .def("__deepcopy__", [](py::object &t, py::dict memo) { return t; });
 
   (void)py::class_<NormalizeOp, TensorOp, std::shared_ptr<NormalizeOp>>(
     *m, "NormalizeOp", "Tensor operation to normalize an image. Takes mean and std.")
@@ -276,9 +283,11 @@ void bindTensorOps2(py::module *m) {
          py::arg("fillG") = RandomCropOp::kDefFillG, py::arg("fillB") = RandomCropOp::kDefFillB);
   (void)py::class_<HwcToChwOp, TensorOp, std::shared_ptr<HwcToChwOp>>(*m, "ChannelSwapOp").def(py::init<>());
 
+#if !defined(_WIN32) && !defined(_WIN64)
   (void)py::class_<ChangeModeOp, TensorOp, std::shared_ptr<ChangeModeOp>>(
     *m, "ChangeModeOp", "Tensor operation to change colors from BGR to RGB")
     .def(py::init<>());
+#endif
 
   (void)py::class_<OneHotOp, TensorOp, std::shared_ptr<OneHotOp>>(
     *m, "OneHotOp", "Tensor operation to apply one hot encoding. Takes number of classes.")
@@ -381,7 +390,17 @@ void bindTensorOps4(py::module *m) {
 }
 
 void bindSamplerOps(py::module *m) {
-  (void)py::class_<Sampler, std::shared_ptr<Sampler>>(*m, "Sampler");
+  (void)py::class_<Sampler, std::shared_ptr<Sampler>>(*m, "Sampler")
+    .def("set_num_rows", [](Sampler &self, int64_t rows) { THROW_IF_ERROR(self.SetNumRowsInDataset(rows)); })
+    .def("set_num_samples", [](Sampler &self, int64_t samples) { THROW_IF_ERROR(self.SetNumSamples(samples)); })
+    .def("initialize", [](Sampler &self) { THROW_IF_ERROR(self.InitSampler()); })
+    .def("get_indices", [](Sampler &self) {
+      py::array ret;
+      THROW_IF_ERROR(self.GetAllIdsThenReset(&ret));
+      return ret;
+    });
+
+  (void)py::class_<mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardOperator>>(*m, "ShardOperator");
 
   (void)py::class_<DistributedSampler, Sampler, std::shared_ptr<DistributedSampler>>(*m, "DistributedSampler")
     .def(py::init<int64_t, int64_t, bool, uint32_t>(), py::arg("numDev"), py::arg("devId"), py::arg("shuffle"),
@@ -399,6 +418,10 @@ void bindSamplerOps(py::module *m) {
   (void)py::class_<SubsetRandomSampler, Sampler, std::shared_ptr<SubsetRandomSampler>>(*m, "SubsetRandomSampler")
     .def(py::init<std::vector<int64_t>>(), py::arg("indices"));
 
+  (void)py::class_<mindrecord::ShardSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardSample>>(
+    *m, "MindrecordSubsetRandomSampler")
+    .def(py::init<std::vector<int64_t>, uint32_t>(), py::arg("indices"), py::arg("seed") = GetSeed());
+
   (void)py::class_<WeightedRandomSampler, Sampler, std::shared_ptr<WeightedRandomSampler>>(*m, "WeightedRandomSampler")
     .def(py::init<std::vector<double>, int64_t, bool>(), py::arg("weights"), py::arg("numSamples"),
          py::arg("replacement"));
@@ -406,7 +429,7 @@ void bindSamplerOps(py::module *m) {
 
 void bindInfoObjects(py::module *m) {
   (void)py::class_<BatchOp::CBatchInfo>(*m, "CBatchInfo")
-    .def(py::init<int32_t, int32_t, int32_t>())
+    .def(py::init<int64_t, int64_t, int64_t>())
     .def("get_epoch_num", &BatchOp::CBatchInfo::get_epoch_num)
     .def("get_batch_num", &BatchOp::CBatchInfo::get_batch_num);
 }
@@ -423,6 +446,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("MINDRECORD", OpName::kMindrecord)
     .value("CACHE", OpName::kCache)
     .value("REPEAT", OpName::kRepeat)
+    .value("SKIP", OpName::kSkip)
     .value("TAKE", OpName::kTake)
     .value("ZIP", OpName::kZip)
     .value("MAP", OpName::kMap)

@@ -47,12 +47,14 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kMap, &DEPipeline::ParseMapOp},
                                                                    {kBatch, &DEPipeline::ParseBatchOp},
                                                                    {kRepeat, &DEPipeline::ParseRepeatOp},
+                                                                   {kSkip, &DEPipeline::ParseSkipOp},
                                                                    {kZip, &DEPipeline::ParseZipOp},
                                                                    {kRename, &DEPipeline::ParseRenameOp},
                                                                    {kDeviceQueue, &DEPipeline::ParseDeviceQueueOp},
                                                                    {kGenerator, &DEPipeline::ParseGeneratorOp},
                                                                    {kTfReader, &DEPipeline::ParseTFReaderOp},
                                                                    {kProject, &DEPipeline::ParseProjectOp},
+                                                                   {kTake, &DEPipeline::ParseTakeOp},
                                                                    {kImageFolder, &DEPipeline::ParseImageFolderOp},
                                                                    {kMnist, &DEPipeline::ParseMnistOp},
                                                                    {kManifest, &DEPipeline::ParseManifestOp},
@@ -422,6 +424,11 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
       } else if (key == "global_shuffle" && ToBool(value) == true) {
         uint32_t seed = args["partitions"].is_none() ? GetSeed() : 0;
         operators.push_back(std::make_shared<mindrecord::ShardShuffle>(seed));
+      } else if (key == "sampler") {
+        auto create = py::reinterpret_borrow<py::object>(value).attr("_create_for_minddataset");
+        std::shared_ptr<mindrecord::ShardOperator> sample_op =
+          create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
+        operators.push_back(sample_op);
       }
     }
   }
@@ -506,13 +513,24 @@ Status DEPipeline::ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp
   return Status::OK();
 }
 
+Status DEPipeline::ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  if (args["count"].is_none()) {
+    std::string err_msg = "Error: count is invalid or not set.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::shared_ptr<SkipOp> op;
+  RETURN_IF_NOT_OK(SkipOp::Builder(ToInt(args["count"])).Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
 Status DEPipeline::ParseGeneratorOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   std::shared_ptr<GeneratorOp::Builder> builder = std::make_shared<GeneratorOp::Builder>();
   for (auto arg : args) {
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "generator_function") {
+      if (key == "source") {
         py::object obj = py::cast(&value);
         if (!py::isinstance<py::function>(obj)) {
           std::string err_msg = "Error: generator is invalid or not set.";
@@ -633,7 +651,16 @@ Status DEPipeline::ParseRenameOp(const py::dict &args, std::shared_ptr<DatasetOp
   return Status::OK();
 }
 
-DsOpPtr DEPipeline::ParseTakeOp(const py::dict &args) const { return DsOpPtr(); }
+Status DEPipeline::ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  if (args["count"].is_none()) {
+    std::string err_msg = "Error: count is invalid or not set.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::shared_ptr<TakeOp> op;
+  RETURN_IF_NOT_OK(TakeOp::Builder(ToInt(args["count"])).Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
 
 Status DEPipeline::ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   std::shared_ptr<ZipOp::Builder> builder = std::make_shared<ZipOp::Builder>();

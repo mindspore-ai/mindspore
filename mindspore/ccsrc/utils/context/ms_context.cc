@@ -65,7 +65,7 @@ MsContext::MsContext(const std::string& policy, const std::string& target) {
   }
   backend_policy_ = policy_map_[policy];
   device_target_ = target;
-  execution_mode_ = kGraphMode;
+  execution_mode_ = kPynativeMode;
   enable_task_sink_ = true;
   ir_fusion_flag_ = true;
   enable_hccl_ = false;
@@ -75,7 +75,7 @@ MsContext::MsContext(const std::string& policy, const std::string& target) {
   precompile_only_ = false;
   auto_mixed_precision_flag_ = true;
   enable_pynative_infer_ = false;
-  enable_dynamic_mem_pool_ = false;
+  enable_dynamic_mem_pool_ = true;
   graph_memory_max_size_ = "0";
   variable_memory_max_size_ = "0";
   MS_LOG(INFO) << "Create context with backend policy:" << policy << ", device target:" << target << ".";

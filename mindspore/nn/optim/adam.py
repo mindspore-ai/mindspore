@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """adam"""
-from typing import Iterable
 import numpy as np
 
 from mindspore.common import dtype as mstype
@@ -25,7 +24,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import ParamValidator as validator
 from mindspore._checkparam import Rel
-from .optimizer import Optimizer, apply_decay, grad_scale
+from .optimizer import Optimizer
 
 _learning_rate_update_func = ['linear', 'cos', 'sin']
 
@@ -166,22 +165,14 @@ class Adam(Optimizer):
     """
 
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
-                 use_nesterov=False, weight_decay=0.0, loss_scale=1.0):
-        super(Adam, self).__init__(learning_rate, params)
+                 use_nesterov=False, weight_decay=0.0, loss_scale=1.0,
+                 decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
+        super(Adam, self).__init__(learning_rate, params, weight_decay, loss_scale, decay_filter)
         _check_param_value(beta1, beta2, eps, weight_decay)
         validator.check_type("use_locking", use_locking, [bool])
         validator.check_type("use_nesterov", use_nesterov, [bool])
         validator.check_type("loss_scale", loss_scale, [float])
         validator.check_number_range("loss_scale", loss_scale, 1.0, float("inf"), Rel.INC_LEFT)
-
-        self.dynamic_lr = False
-        if isinstance(learning_rate, Iterable) or \
-                (isinstance(learning_rate, Tensor) and learning_rate.dim() == 1):
-            self.dynamic_lr = True
-            self.gather = P.GatherV2()
-            self.assignadd = P.AssignAdd()
-            self.global_step = Parameter(initializer(0, [1], mstype.int32), name="global_step")
-            self.axis = 0
 
         self.beta1 = Tensor(beta1, mstype.float32)
         self.beta2 = Tensor(beta2, mstype.float32)
@@ -192,10 +183,9 @@ class Adam(Optimizer):
         self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
 
+        self.decay_tf = tuple(decay_filter(x) for x in self.parameters)
         self.hyper_map = C.HyperMap()
         self.opt = P.Adam(use_locking, use_nesterov)
-        self.weight_decay = weight_decay * loss_scale
-        self.reciprocal_scale = 1.0 / loss_scale
 
         self.pow = P.Pow()
         self.sqrt = P.Sqrt()
@@ -206,15 +196,9 @@ class Adam(Optimizer):
         params = self.parameters
         moment1 = self.moment1
         moment2 = self.moment2
-        if self.weight_decay > 0:
-            gradients = self.hyper_map(F.partial(apply_decay, self.weight_decay), self.decay_tf, params, gradients)
-        if self.reciprocal_scale != 1.0:
-            gradients = self.hyper_map(F.partial(grad_scale, self.reciprocal_scale), gradients)
-
-        lr = self.learning_rate
-        if self.dynamic_lr:
-            lr = self.gather(self.learning_rate, self.global_step, self.axis)
-            F.control_depend(lr, self.assignadd(self.global_step, self.one))
+        gradients = self.decay_weight(gradients)
+        gradients = self.scale_grad(gradients)
+        lr = self.get_lr()
 
         beta1_power = self.beta1_power * self.beta1
         self.beta1_power = beta1_power

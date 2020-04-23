@@ -33,7 +33,7 @@ class DropoutDoMaskInfo : public OperatorInfo {
  public:
   DropoutDoMaskInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
                     const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<DropOutCost>(true)) {}
   ~DropoutDoMaskInfo() override = default;
 
   Status Init(const StrategyPtr& strategy) override;
@@ -41,6 +41,7 @@ class DropoutDoMaskInfo : public OperatorInfo {
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
   Status InitForCostModel(const StrategyPtr& strategy) override;
   std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
+  Operator GetDropoutGenMaskReplaceOp(const CNodePtr& cnode);
 
  protected:
   Status CheckStrategy(const StrategyPtr& strategy) override;
@@ -51,6 +52,8 @@ class DropoutDoMaskInfo : public OperatorInfo {
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
 };
+
+using DropoutDoMaskInfoPtr = std::shared_ptr<DropoutDoMaskInfo>;
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -52,17 +52,27 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
   size_t num = 0;
   for (const auto &pass : passes) {
     if (pass != nullptr) {
+#if defined(_WIN32) || defined(_WIN64)
+      auto start_time = std::chrono::steady_clock::now();
+#else
       struct timeval start_time {};
       struct timeval end_time {};
       (void)gettimeofday(&start_time, nullptr);
+#endif
       if (pass->Run(func_graph)) {
         changed = true;
       }
+#if defined(_WIN32) || defined(_WIN64)
+      auto end_time = std::chrono::steady_clock::now();
+      std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
+      MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost.count() << " us";
+#else
       (void)gettimeofday(&end_time, nullptr);
       const uint64_t kUSecondInSecond = 1000000;
       uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
       cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
       MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost << " us";
+#endif
       if (save_graphs) {
         auto dump_file_path =
           save_graphs_path + "/" + "hwopt_" + name() + "_" + std::to_string(num) + "_" + pass->name() + ".ir";

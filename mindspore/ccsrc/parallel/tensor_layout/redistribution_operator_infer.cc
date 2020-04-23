@@ -22,7 +22,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 Status RedistributionOperatorInfer::Init(const TensorLayout& tensor_layout, const Map& out_tensor_map,
                                          RankList dev_list) {
   in_tensor_map_ = tensor_layout.tensor_map();
@@ -273,6 +272,5 @@ Status RedistributionOperatorInfer::TransferConcatByAxis(Args args) {
   }
   return Status::SUCCESS;
 }
-
 }  // namespace parallel
 }  // namespace mindspore

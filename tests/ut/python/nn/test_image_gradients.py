@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test loss """
+""" test image gradients """
 import numpy as np
 import mindspore.nn as nn
 import mindspore.context as context

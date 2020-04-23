@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import init, NCCL_WORLD_COMM_GROUP, get_rank, get_group_size
-context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+context.set_context(mode=context.GRAPH_MODE, device_target='GPU', enable_dynamic_memory=False)
 
 init('nccl')
 rank = get_rank()

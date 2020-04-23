@@ -15,6 +15,8 @@
 """Built-in iterators.
 """
 from abc import abstractmethod
+import copy
+import weakref
 
 from mindspore._c_dataengine import DEPipeline
 from mindspore._c_dataengine import OpName
@@ -26,8 +28,10 @@ ITERATORS_LIST = list()
 
 
 def _cleanup():
-    for itr in ITERATORS_LIST:
-        itr.release()
+    for itr_ref in ITERATORS_LIST:
+        itr = itr_ref()
+        if itr is not None:
+            itr.release()
 
 
 def alter_tree(node):
@@ -73,8 +77,10 @@ class Iterator:
     """
 
     def __init__(self, dataset):
-        ITERATORS_LIST.append(self)
-        self.dataset = alter_tree(dataset)
+        ITERATORS_LIST.append(weakref.ref(self))
+        # create a copy of tree and work on it.
+        self.dataset = copy.deepcopy(dataset)
+        self.dataset = alter_tree(self.dataset)
         if not self.__is_tree():
             raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers)")
         self.depipeline = DEPipeline()
@@ -121,6 +127,10 @@ class Iterator:
             op_type = OpName.MAP
         elif isinstance(dataset, de.RepeatDataset):
             op_type = OpName.REPEAT
+        elif isinstance(dataset, de.SkipDataset):
+            op_type = OpName.SKIP
+        elif isinstance(dataset, de.TakeDataset):
+            op_type = OpName.TAKE
         elif isinstance(dataset, de.StorageDataset):
             op_type = OpName.STORAGE
         elif isinstance(dataset, de.ImageFolderDatasetV2):
@@ -222,6 +232,9 @@ class Iterator:
 
     def num_classes(self):
         return self.depipeline.GetNumClasses()
+
+    def __deepcopy__(self, memo):
+        return Iterator(copy.deepcopy(self.dataset, memo))
 
 
 class DictIterator(Iterator):

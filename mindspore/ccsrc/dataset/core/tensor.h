@@ -22,6 +22,10 @@
 #include <vector>
 #include "./securec.h"
 #include "utils/log_adapter.h"
+#if defined(_WIN32) || defined(_WIN64)
+#undef HAVE_STDDEF_H
+#undef HAVE_STDLIB_H
+#endif
 #include "pybind11/numpy.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
@@ -359,7 +363,7 @@ class Tensor {
   // @return TensorIterator
   template <typename T>
   TensorIterator<T> end() {
-    return TensorIterator<T>(data_ + SizeInBytes());
+    return TensorIterator<T>(data_end_);
   }
 
  protected:
@@ -398,6 +402,8 @@ class Tensor {
   unsigned char *data_;
   // An allocator for data_
   CharAllocPtr data_allocator_;
+  // pointer to the end of the physical data
+  unsigned char *data_end_ = nullptr;
 };
 }  // namespace dataset
 }  // namespace mindspore

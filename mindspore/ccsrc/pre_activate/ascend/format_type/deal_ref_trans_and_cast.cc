@@ -22,6 +22,7 @@
 #include "kernel/oplib/oplib.h"
 #include "session/anf_runtime_algorithm.h"
 #include "session/kernel_graph.h"
+#include "pre_activate/common/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -100,14 +101,12 @@ AnfNodePtr AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodeP
   auto origin_type = AnfAlgo::GetOutputDeviceDataType(origin_pair.first, origin_pair.second);
   auto cur_format = AnfAlgo::GetOutputFormat(cnode, output_index);
   auto cur_type = AnfAlgo::GetOutputDeviceDataType(cnode, output_index);
-  auto cur_shape = AnfAlgo::GetOutputInferShape(cnode, 0);
+  auto cur_shape = AnfAlgo::GetOutputInferShape(cnode, output_index);
   // insert trans
-  if (origin_format != cur_format) {
+  if (origin_format != cur_format && cur_shape.size() > 1) {
     auto kernel_select = std::make_shared<KernelSelect>();
-    bool need_padding =
-      (cur_format == kOpFormat_NC1HWC0 && AnfAlgo::GetOutputInferShape(final_node, 0).size() != kShape4dDims);
-    final_node = AddTransOpNodeToGraph(func_graph, final_node, kernel_select, 0, need_padding, cur_format,
-                                       origin_format, kTransDataOpName, false);
+    final_node = AddTransOpNodeToGraph(func_graph, final_node, kernel_select, 0, cur_format, origin_format,
+                                       kTransDataOpName, false);
     final_index = 0;
     MS_EXCEPTION_IF_NULL(final_node);
     MS_LOG(INFO) << "DealRefTransAndCast add trans op, op debug info is " << final_node->DebugString();
@@ -168,11 +167,18 @@ AnfNodePtr DealRefSigleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cn
 }
 }  // namespace
 
+const BaseRef DealRefTransAndCast::DefinePattern() const {
+  VarPtr V = std::make_shared<CondVar>(UnVisited);
+  VarPtr Xs = std::make_shared<SeqVar>();
+  return VectorRef({V, Xs});
+}
+
 const AnfNodePtr DealRefTransAndCast::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                               const EquivPtr &) const {
   if (node == nullptr || !node->isa<CNode>()) {
     return nullptr;
   }
+  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   if (!AnfAlgo::IsRealCNodeKernel(cnode)) {

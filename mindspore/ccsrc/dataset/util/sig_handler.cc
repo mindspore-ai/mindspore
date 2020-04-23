@@ -16,13 +16,16 @@
 #include "dataset/util/sig_handler.h"
 #include <signal.h>
 #include <sys/types.h>
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <ucontext.h>
+#endif
 #include <unistd.h>
 #include "dataset/util/task_manager.h"
 
 namespace mindspore {
 namespace dataset {
 // Register the custom signal handlers
+#if !defined(_WIN32) && !defined(_WIN64)
 void RegisterHandlers() {
   struct sigaction new_int_action;
 
@@ -40,5 +43,6 @@ extern void IntHandler(int sig_num,          // The signal that was raised
   // Wake up the watchdog which is designed as async-signal-safe.
   TaskManager::WakeUpWatchDog();
 }
+#endif
 }  // namespace dataset
 }  // namespace mindspore

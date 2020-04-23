@@ -621,6 +621,12 @@ TEST_F(TestConvert, TestTensorSummaryOps) {
   ASSERT_TRUE(ret);
 }
 
+TEST_F(TestConvert, TestHistogramSummaryOps) {
+  auto prim = prim::kPrimHistogramSummary;
+  bool ret = MakeDfGraph(prim, 2);
+  ASSERT_TRUE(ret);
+}
+
 TEST_F(TestConvert, TestGreaterOps) {
   auto prim = std::make_shared<Primitive>("Greater");
   bool ret = MakeDfGraph(prim, 2);

@@ -109,11 +109,15 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
 
 // Gets the next buffer from the given child
 Status DatasetOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
+#if defined(_WIN32) || defined(_WIN64)
+  RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), p_buffer, retry_if_eoe));
+#else
   std::unique_ptr<DataBuffer> next_buff;
   // pop is a blocked call and will throw an interruption if the whole group shuts down.
   RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), &next_buff, retry_if_eoe));
 
   *p_buffer = std::move(next_buff);
+#endif
   return Status::OK();
 }
 
@@ -161,15 +165,18 @@ Status DatasetOp::EofReceived(int32_t worker_id) {
   return (out_connector_->Add(static_cast<int>(worker_id), std::move(eof_buffer)));
 }
 
-// During tree prepare phase, operators may have specific operations to perform depending on
+// During tree prepare phase, operators may have specific pre-operations to perform depending on
 // their role.
-Status DatasetOp::PrepareNodeAction() {
+Status DatasetOp::PrepareNodePreAction() {
+  if (BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepRepeat)) set_control_flag(kDeOpRepeated);
+  return Status::OK();
+}
+// During tree prepare phase, operators may have specific post-operations to perform depending on
+// their role.
+Status DatasetOp::PrepareNodePostAction() {
   // If this op does not have any children and it is in a repeat path of the tree...
-  if (child_.size() == 0 && BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepRepeat)) {
-    // Then, flag this operator as a leaf node in a repeat path of tree execution.
-    BitSet(&op_ctrl_flags_, kDeOpRepeated);
-
-    // Secondly, push ourselves onto the tree repeat stack.  Later, the repeat operator
+  if (child_.empty() && BitTest(op_ctrl_flags_, kDeOpRepeated)) {
+    // push ourselves onto the tree repeat stack.  Later, the repeat operator
     // above us will consume them.
     tree_->AddToRepeatStack(shared_from_this());
   }

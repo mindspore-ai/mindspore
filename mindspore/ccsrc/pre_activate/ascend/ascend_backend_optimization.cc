@@ -21,7 +21,7 @@
 #include "pre_activate/ascend/ir_fission/bn_grad_split.h"
 #include "pre_activate/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "pre_activate/ascend/ir_fission/layer_norm_grad_split.h"
-#include "pre_activate/common/ir_fusion/allreduce_fusion.h"
+#include "pre_activate/pass/allreduce_fusion.h"
 #include "pre_activate/ascend/ir_fusion/square_sum_fusion.h"
 #include "pre_activate/ascend/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "pre_activate/ascend/ir_fusion/lamb_update_with_lr_rule_fusion.h"
@@ -37,6 +37,7 @@
 #include "pre_activate/ascend/ir_fusion/transpose_reshape_fusion.h"
 #include "pre_activate/ascend/ir_fusion/adam_apply_one_fusion.h"
 #include "pre_activate/ascend/ir_fusion/adam_apply_one_with_decay_rule.h"
+#include "pre_activate/ascend/ir_fusion/parameter_and_transop_fusion.h"
 #include "pre_activate/ascend/ir_fusion/transpose_transdata_fusion.h"
 #include "pre_activate/ascend/ir_fusion/transdata_split.h"
 #include "pre_activate/ascend/ir_fission/topk_split.h"
@@ -58,7 +59,10 @@
 #include "pre_activate/ascend/ir_fission/add_memcpy_async.h"
 #include "pre_activate/ascend/format_type/insert_cast_for_runop.h"
 #include "pre_activate/ascend/format_type/insert_transdata_for_runop.h"
+#include "pre_activate/ascend/enhancer/getnext_memcpy_elimination.h"
+#include "pre_activate/ascend/ir_fission/addn_fission.h"
 #include "utils/context/ms_context.h"
+#include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
 
@@ -90,6 +94,7 @@ void RunOpAscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel
   mixed_precision_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   mixed_precision_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   mixed_precision_pm->AddPass(std::make_shared<OptimizeDependence>());
+  mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
   mixed_precision_pm->AddPass(std::make_shared<DealRefTransAndCast>());
   mixed_precision_pm->AddPass(std::make_shared<GetitemTuple>());
   mixed_precision_pm->AddPass(std::make_shared<MergeCastToOp>());
@@ -110,8 +115,8 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   data_layout_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   data_layout_pm->AddPass(std::make_shared<OptimizeDependence>());
-  data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
   data_layout_pm->AddPass(std::make_shared<TransDataSplit>());
+  data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
   optimizer->AddPassManager(data_layout_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -126,6 +131,7 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   mixed_precision_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   mixed_precision_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   mixed_precision_pm->AddPass(std::make_shared<OptimizeDependence>());
+  mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
   mixed_precision_pm->AddPass(std::make_shared<DealRefTransAndCast>());
   mixed_precision_pm->AddPass(std::make_shared<GetitemTuple>());
   mixed_precision_pm->AddPass(std::make_shared<MergeCastToOp>());
@@ -175,6 +181,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
     ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
     ir_fusion_pm->AddPass(std::make_shared<MatmulBiasaddFusion>());
+    ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
     ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
     ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
   }
@@ -237,9 +244,13 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
+  other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<BufferFusion>());
   other_pm->AddPass(std::make_shared<GetitemTuple>());
   other_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
+  if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
+    other_pm->AddPass(std::make_shared<GetnextMemcpyElimination>());
+  }
   other_pm->AddPass(std::make_shared<CheckConsistency>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);

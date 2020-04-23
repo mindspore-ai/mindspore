@@ -173,9 +173,9 @@ const char kNameAbsGrad[] = "AbsGrad";
 const char kNameBinaryCrossEntropy[] = "BinaryCrossEntropy";
 const char kNameBinaryCrossEntropyGrad[] = "BinaryCrossEntropyGrad";
 const char kNameSparseApplyAdagrad[] = "SparseApplyAdagrad";
+const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
 const char kNameAcosh[] = "Acosh";
 const char kNameFloorMod[] = "FloorMod";
-const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
 const char kNameSpaceToDepth[] = "SpaceToDepth";
 const char kNameDepthToSpace[] = "DepthToSpace";
 const char kNameSign[] = "Sign";
@@ -191,7 +191,6 @@ const char kNameAtan2[] = "Atan2";
 const char kNameApplyRMSProp[] = "ApplyRMSProp";
 const char kNameApplyCenteredRMSProp[] = "ApplyCenteredRMSProp";
 
-
 // -----------------OpAdapter initialization--------------
 std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_map() {
   static std::unordered_map<std::string, OpAdapterDescPtr> adpt_map = {
@@ -205,6 +204,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameMaxPoolWithArgmax), ADPT_DESC(MaxPoolWithArgmax)},
     {string(kNameTopK), ADPT_DESC(TopK)},
     {string(kNamePack), ADPT_DESC(Pack)},
+    {string(kNameUnpack), ADPT_DESC(Unpack)},
     {string(kNameSplitD), ADPT_DESC(SplitD)},
     {string(kNameAllReduce), ADPT_DESC(HcomAllReduce)},
     {string(kNameBroadcast), ADPT_DESC(HcomBroadcast)},
@@ -348,6 +348,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimScalarSummary->name(), ADPT_DESC(Summary)},
     {prim::kPrimImageSummary->name(), ADPT_DESC(Summary)},
     {prim::kPrimTensorSummary->name(), ADPT_DESC(Summary)},
+    {prim::kPrimHistogramSummary->name(), ADPT_DESC(Summary)},
     {prim::kPrimTensorAdd->name(),
      std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(1)}})),
                                      std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(1)}})))},
@@ -1023,8 +1024,8 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
     }
   }
 
-  // set up dependencies
-  MS_LOG(DEBUG) << "set up dependencies";
+  // set up dependices
+  MS_LOG(DEBUG) << "set up dependices";
   std::vector<AnfNodePtr> nodes = ::mindspore::TopoSort(anf_graph_->get_return());
   for (auto &it : nodes) {
     SetNodeInput(it);

@@ -24,6 +24,7 @@ import pytest
 import mindspore as ms
 import mindspore.common.api as me
 import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from ..ut_filter import non_graph_engine
@@ -396,3 +397,24 @@ def test_tensor_dtype_fp32_to_bool():
         input = ms.Tensor(input)
         input_me = ms.Tensor(input, dtype=ms.bool_)
 
+
+def test_tensor_operation():
+    x = Tensor(np.ones((3,3)) * 4)
+    res = x + 1
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 5)
+    res = 1 + x
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 5)
+    res = x - 2
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
+    res = 6 - x
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
+    res = x * 3
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 12)
+    res = 3 * x
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 12)
+    res = x / 2
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
+    res = 8 / x
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
+    with pytest.raises(TypeError):
+        res = x * (2, 3)

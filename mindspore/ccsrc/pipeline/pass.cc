@@ -114,11 +114,9 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
   opt::OptPassConfig grad = opt::OptPassConfig({irpass.expand_jprim_}, true);
   opt::irpass::ResolveIRPassLib resolve_irpass;
 
-  opt::OptPassConfig resolve_pass = opt::OptPassConfig({
-    resolve_irpass.resolver_resolve_,
-    resolve_irpass.resolver_getattr_,
-    irpass.get_make_ref_eliminate_,
-  });
+  opt::OptPassConfig resolve_pass =
+    opt::OptPassConfig({resolve_irpass.resolver_resolve_, resolve_irpass.resolver_getattr_,
+                        irpass.get_make_ref_eliminate_, irpass.replace_old_param_});
 
   OptPassGroupMap map_a({{"a_1", a_1},
                          {"a_2", a_2},
@@ -187,8 +185,8 @@ void InitOpt(const ResourcePtr& res) {
   if (g_pass_opts.size() == 0) {
     opt::irpass::OptimizeIRPassLib irpass;
     g_pass_opts["opt_a"] = Optimizer::MakeOptimizer("opt_a", res, GetOptPassesA(irpass));
-    g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", res, GetOptPassesB(irpass));
-    g_pass_opts["opt_control"] = Optimizer::MakeOptimizer("opt_control", res, GetControlPhases(irpass));
+    g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", res, GetOptPassesB(irpass), false, true);
+    g_pass_opts["opt_control"] = Optimizer::MakeOptimizer("opt_control", res, GetControlPhases(irpass), false, true);
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", res, GetPreparePhases(irpass));
   }
 }

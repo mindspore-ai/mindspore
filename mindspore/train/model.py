@@ -24,8 +24,7 @@ from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _callback_wrapper
 from ..nn.metrics import Loss
-from ..nn.wrap import WithLossCell, WithEvalCell, \
-    DataWrapper
+from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
 from .parallel_utils import ParallelMode
 from ..common import dtype as mstype
@@ -72,7 +71,7 @@ class Model:
         >>>         self.bn = nn.BatchNorm2d(64)
         >>>         self.relu = nn.ReLU()
         >>>         self.flatten = nn.Flatten()
-        >>>         self.fc = nn.Dense(64*222*222, 3) # padding=0
+        >>>         self.fc = nn.Dense(64*224*224, 12) # padding=0
         >>>
         >>>     def construct(self, x):
         >>>         x = self.conv(x)
@@ -131,7 +130,7 @@ class Model:
                                                 self._loss_fn,
                                                 level=self._amp_level)
         elif self._loss_fn:
-            network = WithLossCell(network, self._loss_fn)
+            network = nn.WithLossCell(network, self._loss_fn)
         # If need to check if loss_fn is not None, but optimizer is None
         return network
 
@@ -151,7 +150,7 @@ class Model:
         else:
             if self._loss_fn is None:
                 raise ValueError("loss_fn can not be None.")
-            self._eval_network = WithEvalCell(self._network, self._loss_fn)
+            self._eval_network = nn.WithEvalCell(self._network, self._loss_fn)
             self._eval_indexes = [0, 1, 2]
 
     def _clear_metrics(self):
@@ -206,6 +205,8 @@ class Model:
                                      function respectively.
             callbacks (list): List of callback object. Callbacks which should be executed while training. Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
+                                      Configure pynative mode, the training process will be performed with
+                                      dataset not sink.
         """
         epoch = check_int_positive(epoch)
         self._train_network.set_train()
@@ -227,8 +228,13 @@ class Model:
         cb_params.train_dataset = train_dataset
         cb_params.list_callback = list_callback
 
-        if dataset_sink_mode and context.get_context("mode") == context.GRAPH_MODE:
-            self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params)
+        if dataset_sink_mode:
+            if context.get_context("mode") == context.PYNATIVE_MODE:
+                logger.warning("The pynative mode cannot support dataset sink mode currently."
+                               "So the training process will be performed with dataset not sink.")
+                self._train_process(epoch, train_dataset, list_callback, cb_params)
+            else:
+                self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params)
         else:
             self._train_process(epoch, train_dataset, list_callback, cb_params)
 
@@ -248,13 +254,14 @@ class Model:
         """
         # remove later to deal with loop sink
         need_wrap = False
-        if not hasattr(train_dataset, '__ME_INITED__') and context.get_context("enable_loop_sink"):
+        if not hasattr(train_dataset, '__ME_INITED__') and context.get_context("enable_loop_sink") \
+               and not context.get_context("enable_ge"):
             need_wrap = True
 
         dataset_helper = DatasetHelper(train_dataset)
         # remove later to deal with loop sink
         if need_wrap:
-            self._train_network = DataWrapper(self._train_network, *(dataset_helper.types_shapes()),
+            self._train_network = nn.DataWrapper(self._train_network, *(dataset_helper.types_shapes()),
                                               train_dataset.__ME_INITED__)
             cb_params.train_network = self._train_network
             self._train_network.set_train()
@@ -349,10 +356,15 @@ class Model:
         """
         Training API where the iteration is controlled by python front-end.
 
-        Configure to pynative mode, the training will be performed with dataset non-sink mode.
+        When setting pynative mode, the training process will be performed with dataset not sink.
 
         Note:
             CPU is not supported when dataset_sink_mode is true.
+            If dataset_sink_mode is True, epoch of training should be equal to the count of repeat
+            operation in dataset processing. Otherwise, errors could occur since the amount of data
+            is not the amount training requires.
+            If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
+            of data will be transferred one by one. The limitation of data transmission per time is 256M.
 
         Args:
             epoch (int): Total number of iterations on the data.
@@ -363,6 +375,8 @@ class Model:
                                      function respectively.
             callbacks (list): List of callback object. Callbacks which should be excuted while training. Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
+                                      Configure pynative mode, the training process will be performed with
+                                      dataset not sink.
 
 
         Examples:
@@ -407,7 +421,8 @@ class Model:
 
         # remove later to deal with loop sink
         need_wrap = False
-        if not hasattr(valid_dataset, '__ME_INITED__') and context.get_context("enable_loop_sink"):
+        if not hasattr(valid_dataset, '__ME_INITED__') and context.get_context("enable_loop_sink") \
+               and not context.get_context("enable_ge"):
             need_wrap = True
 
         valid_dataset.__loop_size__ = 1
@@ -415,7 +430,7 @@ class Model:
 
         # remove later to deal with loop sink
         if need_wrap:
-            self._eval_network = DataWrapper(self._eval_network, *(dataset_helper.types_shapes()),
+            self._eval_network = nn.DataWrapper(self._eval_network, *(dataset_helper.types_shapes()),
                                              valid_dataset.__ME_INITED__)
             self._eval_network.set_train(mode=False)
             self._eval_network.phase = 'eval'
@@ -474,6 +489,8 @@ class Model:
 
         Note:
             CPU is not supported when dataset_sink_mode is true.
+            If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
+            of data will be transferred one by one. The limitation of data transmission per time is 256M.
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
@@ -508,7 +525,7 @@ class Model:
 
         self._clear_metrics()
 
-        if dataset_sink_mode and context.get_context("mode") == context.GRAPH_MODE:
+        if dataset_sink_mode:
             return self._eval_dataset_sink_process(valid_dataset, list_callback, cb_params)
         return self._eval_process(valid_dataset, list_callback, cb_params)
 

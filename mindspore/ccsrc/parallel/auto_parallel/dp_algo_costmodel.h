@@ -102,20 +102,17 @@ struct ContractElimination : public Elimination {
 
 // Triangle Elimination
 struct TriangleElimination : public Elimination {
-  TriangleElimination(OperatorInfoPtr elim_node, EdgePtr l_edge, OperatorInfoPtr l_node, EdgePtr r_edge,
-                      OperatorInfoPtr r_node)
+  TriangleElimination(OperatorInfoPtr elim_node, EdgePtr l_edge, OperatorInfoPtr l_node, EdgePtr r_edge)
       : Elimination(nullptr, Elimination::EliminationType::TRIANGLE),
         eliminated_node_(std::move(elim_node)),
         left_edge_(std::move(l_edge)),
         left_node_(std::move(l_node)),
-        right_edge_(std::move(r_edge)),
-        right_node_(std::move(r_node)) {}
+        right_edge_(std::move(r_edge)) {}
 
   OperatorInfoPtr eliminated_node_;
   EdgePtr left_edge_;
   OperatorInfoPtr left_node_;
   EdgePtr right_edge_;
-  OperatorInfoPtr right_node_;
   MS_DECLARE_PARENT(TriangleElimination, Elimination);
 };
 

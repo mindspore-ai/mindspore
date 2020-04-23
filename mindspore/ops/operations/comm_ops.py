@@ -65,7 +65,7 @@ class AllReduce(PrimitiveWithInfer):
         The contents depend on the specified operation.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
         >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
@@ -130,7 +130,7 @@ class AllGather(PrimitiveWithInfer):
         then the shape of output is :math:`(N, x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
         >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
@@ -162,6 +162,8 @@ class AllGather(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
+        if x_dtype == mstype.bool_:
+            raise TypeError("AllGather does not support 'Bool' as the dtype of input!")
         return x_dtype
 
     def __call__(self, tensor):
@@ -185,7 +187,7 @@ class ReduceScatter(PrimitiveWithInfer):
         ValueError: If the first dimension of input can not be divided by rank size.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
         >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
@@ -219,6 +221,8 @@ class ReduceScatter(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
+        if x_dtype == mstype.bool_:
+            raise TypeError("ReduceScatter does not support 'Bool' as the dtype of input!")
         return x_dtype
 
     def __call__(self, tensor):
@@ -248,7 +252,7 @@ class Broadcast(PrimitiveWithInfer):
         TypeError: If root_rank is not a integer or group is not a string.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
         >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
@@ -276,6 +280,8 @@ class Broadcast(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
+        if x_dtype == mstype.bool_:
+            raise TypeError("Broadcast does not support 'Bool' as the dtype of input!")
         return x_dtype
 
 
@@ -318,6 +324,8 @@ class _AlltoAll(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
+        if x_dtype == mstype.bool_:
+            raise TypeError("AlltoAll does not support 'Bool' as the dtype of input!")
         return x_dtype
 
     def __call__(self, tensor):

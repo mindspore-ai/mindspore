@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <unordered_map>
 #include "device/kernel_runtime.h"
 #include "device/kernel_runtime_manager.h"
 
@@ -57,11 +58,12 @@ class GPUKernelRuntime : public KernelRuntime {
   void AllocCommunicationOpDynamicRes(const session::KernelGraph *graph);
   void AllocCommunicationOpInputDynamicRes(const mindspore::AnfNodePtr &kernel);
   void AllocCommunicationOpOutputDynamicRes(const mindspore::AnfNodePtr &kernel);
-  void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel, const AddressPtrList &kernel_workspaces);
+  void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel, const AddressPtrList &kernel_workspaces,
+                            uint32_t graph_id);
   void FreeCommunicationOpDynamicRes(const mindspore::AnfNodePtr &kernel, size_t input_idx, bool *is_communication_op);
   size_t communication_op_input_ref_count_{0};
   size_t communication_op_output_ref_count_{0};
-  MemReuseUtilPtr mem_reuse_util_ptr_{nullptr};
+  std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
 };
 MS_REG_KERNEL_RUNTIME(kGPUDevice, GPUKernelRuntime);
 }  // namespace gpu

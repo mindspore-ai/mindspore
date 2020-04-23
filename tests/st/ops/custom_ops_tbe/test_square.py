@@ -16,7 +16,7 @@ import numpy as np
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
-from .cus_square import CusSquare
+from cus_square import CusSquare
 import pytest
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -32,6 +32,7 @@ class Net(nn.Cell):
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_net():
     x = np.array([1.0, 4.0, 9.0]).astype(np.float32)

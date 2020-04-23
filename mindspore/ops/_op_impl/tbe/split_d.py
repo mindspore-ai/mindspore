@@ -14,71 +14,45 @@
 # ============================================================================
 
 """Add op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+split_d_op_info = TBERegOp("Split") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("split_d.so") \
+    .compute_cost(10) \
+    .kernel_name("split_d") \
+    .partial_flag(True) \
+    .attr("axis", "required", "int", "all") \
+    .attr("output_num", "required", "int", "all") \
+    .input(0, "value", False, "required", "all") \
+    .output(0, "output", False, "dynamic", "all") \
+    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.BOOL_NHWC, DataType.BOOL_NHWC) \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.I8_NHWC, DataType.I8_NHWC) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.U8_NHWC, DataType.U8_NHWC) \
+    .dtype_format(DataType.I16_Default, DataType.I16_Default) \
+    .dtype_format(DataType.I16_NHWC, DataType.I16_NHWC) \
+    .dtype_format(DataType.U16_Default, DataType.U16_Default) \
+    .dtype_format(DataType.U16_NHWC, DataType.U16_NHWC) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_NHWC, DataType.I32_NHWC) \
+    .dtype_format(DataType.U32_Default, DataType.U32_Default) \
+    .dtype_format(DataType.U32_NHWC, DataType.U32_NHWC) \
+    .dtype_format(DataType.I64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.I64_NHWC, DataType.I64_NHWC) \
+    .dtype_format(DataType.U64_Default, DataType.U64_Default) \
+    .dtype_format(DataType.U64_NHWC, DataType.U64_NHWC) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_NHWC, DataType.F16_NHWC) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Split",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "split_d.so",
-    "compute_cost": 10,
-    "kernel_name": "split_d",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "axis",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        },
-        {
-            "name": "output_num",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16","float32", "float32", "int32", "int32", "int8", "int8",
-                "int16", "int16", "int64", "int64", "uint8", "uint8", "uint16", "uint16",
-                "uint32", "uint32", "uint64", "uint64", "bool", "bool"
-            ],
-            "format": [
-                "DefaultFormat", "NHWC", "DefaultFormat", "NHWC", "DefaultFormat", "NHWC", "DefaultFormat", "NHWC"
-                , "DefaultFormat", "NHWC", "DefaultFormat", "NHWC", "DefaultFormat", "NHWC", "DefaultFormat", "NHWC"
-                , "DefaultFormat", "NHWC", "DefaultFormat", "NHWC", "DefaultFormat", "NHWC"
-            ],
-            "name": "value",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16","float32", "float32", "int32", "int32", "int8", "int8",
-                "int16", "int16", "int64", "int64", "uint8", "uint8", "uint16", "uint16",
-                "uint32", "uint32", "uint64", "uint64", "bool", "bool"
-            ],
-            "format": [
-                "DefaultFormat", "NHWC", "DefaultFormat", "NHWC", "DefaultFormat", "NHWC", "DefaultFormat", "NHWC"
-                , "DefaultFormat", "NHWC", "DefaultFormat", "NHWC", "DefaultFormat", "NHWC", "DefaultFormat", "NHWC"
-                , "DefaultFormat", "NHWC", "DefaultFormat", "NHWC", "DefaultFormat", "NHWC"
-            ],
-            "name": "output",
-            "need_compile": false,
-            "param_type": "dynamic",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(split_d_op_info)
 def _split_d_tbe():
     """Add TBE register"""
     return

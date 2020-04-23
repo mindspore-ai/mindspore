@@ -22,6 +22,8 @@ from functools import reduce
 import numpy as np
 
 from ... import context
+from ..._c_expression import signature_rw as sig_rw
+from ..._c_expression import signature_kind as sig_kind
 from ..._checkparam import ParamValidator as validator
 from ..._checkparam import Rel, check_bool, check_int_positive
 from ...common import dtype as mstype
@@ -154,7 +156,7 @@ class ReLU(PrimitiveWithInfer):
         Tensor, with the same type and shape as the `input_x`.
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], np.float32))
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu = P.ReLU()
         >>> result = relu(input_x)
         [[0, 4.0, 0.0], [2.0, 0.0, 9.0]]
@@ -187,7 +189,7 @@ class ReLU6(PrimitiveWithInfer):
         Tensor, with the same type and shape as the `input_x`.
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], np.float32))
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> relu6 = P.ReLU6()
         >>> result = relu6(input_x)
     """
@@ -207,7 +209,7 @@ class ReLU6(PrimitiveWithInfer):
 
 
 class Elu(PrimitiveWithInfer):
-    """
+    r"""
     Computes exponential linear: `alpha * (exp(x) - 1)` if x < 0, `x` otherwise.
     The data type of input tensor should be float.
 
@@ -221,7 +223,7 @@ class Elu(PrimitiveWithInfer):
         Tensor, has the same shape and data type as `input_x`.
 
     Examples:
-        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], np.float32))
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> elu = P.Elu()
         >>> result = elu(input_x)
         Tensor([[-0.632  4.0   -0.999]
@@ -242,6 +244,40 @@ class Elu(PrimitiveWithInfer):
         return input_x
 
 
+class HSwish(PrimitiveWithInfer):
+    r"""
+    Hard swish activation function.
+
+    Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
+
+    Hard swish is defined as:
+
+    .. math::
+        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
+
+    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+
+    Inputs:
+        - **input_data** (Tensor) - The input of Hswish.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_data`.
+
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, xshape):
+        return xshape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("x_dtype", x_dtype, mstype.tensor)
+        validator.check_typename("x_dtype", x_dtype, (mstype.float16, mstype.float32))
+        return x_dtype
+
+
+
 class Sigmoid(PrimitiveWithInfer):
     r"""
     Sigmoid activation function.
@@ -258,6 +294,7 @@ class Sigmoid(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
+
     """
 
     @prim_attr_register
@@ -271,6 +308,40 @@ class Sigmoid(PrimitiveWithInfer):
         validator.check_subclass("input_x", input_x, mstype.tensor)
         validator.check_typename("input_x", input_x, (mstype.float16, mstype.float32))
         return input_x
+
+
+class HSigmoid(PrimitiveWithInfer):
+    r"""
+    Hard sigmoid activation function.
+
+    Applies hard sigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    Hard sigmoid is defined as:
+
+    .. math::
+        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{2 * x_{i} + 5}{10})),
+
+    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+
+    Inputs:
+        - **input_data** (Tensor) - The input of HSigmoid.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_data`.
+
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_subclass("x_dtype", x_dtype, mstype.tensor)
+        validator.check_typename("x_dtype", x_dtype, (mstype.float16, mstype.float32))
+        return x_dtype
 
 
 class Tanh(PrimitiveWithInfer):
@@ -460,8 +531,8 @@ class Conv2D(PrimitiveWithInfer):
                        2 deconvolution, 3 depthwise convolution. Default: 1.
         pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
         pad (int): The pad value to fill. Default: 0.
-        stride (int): The stride to apply conv filter. Default: 1.
-        dilation (int): Specify the space to use between kernel elements. Default: 1.
+        stride (Union(int, tuple[int])): The stride to apply conv filter. Default: 1.
+        dilation (Union(int, tuple[int])): Specify the space to use between kernel elements. Default: 1.
         group (int): Split input into groups. Default: 1.
 
     Returns:
@@ -488,11 +559,35 @@ class Conv2D(PrimitiveWithInfer):
                  group=1):
         """init Conv2D"""
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
-        self.kernel_size = kernel_size
         self.kernel_size = validator.check_type('kernel_size', kernel_size, (int, tuple))
-        if isinstance(self.kernel_size, int):
-            self.kernel_size = (self.kernel_size, self.kernel_size)
-        validator.check_integer('length of kernel_size', len(self.kernel_size), 2, Rel.GE)
+        if isinstance(kernel_size, int):
+            self.kernel_size = (kernel_size, kernel_size)
+        if len(self.kernel_size) != 2 or (not isinstance(self.kernel_size[0], int)) or \
+                                         (not isinstance(self.kernel_size[1], int)) or \
+                                         self.kernel_size[0] < 1 or self.kernel_size[1] < 1:
+            raise ValueError(f"The \'kernel_size\' of \'Conv2D\' should be an positive int number or "
+                             f"a tuple of two positive int numbers, but got {kernel_size}")
+        self.stride = validator.check_type('stride', stride, (int, tuple))
+        if isinstance(stride, int):
+            self.stride = (stride, stride)
+        if len(self.stride) != 2 or (not isinstance(self.stride[0], int)) or \
+                                    (not isinstance(self.stride[1], int)) or \
+                                     self.stride[0] < 1 or self.stride[1] < 1:
+            raise ValueError(f"The \'stride\' of \'Conv2D\' should be an positive int number or "
+                             f"a tuple of two positive int numbers, but got {stride}")
+        self.add_prim_attr('stride', (1, 1, self.stride[0], self.stride[1]))
+        self.dilation = validator.check_type('dilation', dilation, (tuple, int))
+        if isinstance(dilation, int):
+            self.dilation = (1, 1, dilation, dilation)
+        elif len(dilation) == 2:
+            self.dilation = (1, 1, dilation[0], dilation[1])
+        if len(self.dilation) != 4 or (not isinstance(self.dilation[0], int) or self.dilation[0] < 1) or \
+                                      (not isinstance(self.dilation[1], int) or self.dilation[1] < 1) or \
+                                      (not isinstance(self.dilation[2], int) or self.dilation[2] < 1) or \
+                                      (not isinstance(self.dilation[3], int) or self.dilation[3] < 1):
+            raise ValueError(f"The \'dilation\' of \'Conv2D\' should be an positive int number or "
+                             f"a tuple of two or four positive int numbers, but got {dilation}")
+        self.add_prim_attr('dilation', self.dilation)
         validator.equal('type of pad', type(pad), 'not bool', not isinstance(pad, bool))
         validator.equal('type of pad', type(pad), 'int', isinstance(pad, int))
         self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'])
@@ -504,18 +599,6 @@ class Conv2D(PrimitiveWithInfer):
         self.add_prim_attr('data_format', "NCHW")
         self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT)
         self.group = validator.check_integer('group', group, 0, Rel.GT)
-        self.dilation = validator.check_integer('dilation', dilation, 1, Rel.GE)
-        validator.check_type('kernel_size', kernel_size, [int, tuple])
-        if isinstance(kernel_size, int) and kernel_size < 1:
-            raise ValueError('Attr \'kernel_size\' of \'Conv2D\' Op passed '
-                             + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
-        if isinstance(kernel_size, tuple) and (len(kernel_size) != 2 or
-                                               (not isinstance(kernel_size[0], int)) or
-                                               (not isinstance(kernel_size[1], int)) or
-                                               kernel_size[0] < 1 or kernel_size[1] < 1):
-            raise ValueError('Attr \'kernel_size\' of \'Conv2D\' Op passed '
-                             + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
-        self.stride = validator.check_integer('stride', stride, 1, Rel.GE)
 
     def infer_shape(self, x_shape, w_shape):
         validator.check_integer("weight_shape", len(w_shape), 4, Rel.EQ)
@@ -526,29 +609,33 @@ class Conv2D(PrimitiveWithInfer):
 
         kernel_size_h = w_shape[2]
         kernel_size_w = w_shape[3]
+        stride_h = self.stride[2]
+        stride_w = self.stride[3]
+        dilation_h = self.dilation[2]
+        dilation_w = self.dilation[3]
 
         if self.pad_mode == "valid":
-            h_out = math.ceil((x_shape[2] - self.dilation * (kernel_size_h - 1)) / self.stride)
-            w_out = math.ceil((x_shape[3] - self.dilation * (kernel_size_w - 1)) / self.stride)
+            h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
+            w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
             pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
         elif self.pad_mode == "same":
-            h_out = math.ceil(x_shape[2] / self.stride)
-            w_out = math.ceil(x_shape[3] / self.stride)
+            h_out = math.ceil(x_shape[2] / stride_h)
+            w_out = math.ceil(x_shape[3] / stride_w)
 
-            pad_needed_h = max(0, (h_out - 1) * self.stride + self.dilation * (kernel_size_h - 1) + 1 - x_shape[2])
+            pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
-            pad_needed_w = max(0, (w_out - 1) * self.stride + self.dilation * (kernel_size_w - 1) + 1 - x_shape[3])
+            pad_needed_w = max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3])
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
         elif self.pad_mode == 'pad':
             pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
 
-            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (self.dilation - 1)) \
-                    / self.stride
-            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (self.dilation - 1)) \
-                    / self.stride
+            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
+                    / stride_h
+            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
+                    / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
 
@@ -580,19 +667,19 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
 
     Args:
         channel_multiplier (int): The multipiler for the original output conv.
-        kernel_size (int or tuple): The size of the conv kernel.
+        kernel_size (Union[int, tuple[int]]): The size of the conv kernel.
         mode (int): 0 Math convolution, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 3.
         pad_mode (str): "valid", "same", "pad" the mode to fill padding. Default: "valid".
         pad (int): The pad value to fill. Default: 0.
-        stride (int): The stride to apply conv filter. Default: 1.
-        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        stride (Union[int, tuple[int]]): The stride to apply conv filter. Default: 1.
+        dilation (Union[int, tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits input into groups. Default: 1.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
         - **weight** (Tensor) - Set size of kernel is :math:`(K_1, K_2)`, then the shape is
-          :math:`(C_{out}, C_{in}, K_1, K_2)`.
+          :math:`(\text{channel_multiplier}, C_{in}, K_1, K_2)`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{in} * \text{channel_multiplier}, H_{out}, W_{out})`.
@@ -609,16 +696,35 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
                  dilation=1,
                  group=1):
         """init DepthwiseConv2dNative"""
+        self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         validator.check_pad_value_by_mode(self.__class__.__name__, pad_mode, pad)
-        validator.check_type("kernel_size", kernel_size, (int, tuple))
+        self.kernel_size = validator.check_type('kernel_size', kernel_size, (int, tuple))
         if isinstance(kernel_size, int):
-            kernel_size = (kernel_size, kernel_size)
-        if isinstance(kernel_size, tuple) and (len(kernel_size) != 2 or
-                                               (not isinstance(kernel_size[0], int)) or
-                                               (not isinstance(kernel_size[1], int)) or
-                                               kernel_size[0] < 1 or kernel_size[1] < 1):
-            raise ValueError(f"Attr kernel_size of DepthwiseConv2dNative Op not passed "
-                             f"{kernel_size}, should be a int or tuple and equal to or greater than 1.")
+            self.kernel_size = (kernel_size, kernel_size)
+        if len(self.kernel_size) != 2 or (not isinstance(self.kernel_size[0], int)) or \
+                                         (not isinstance(self.kernel_size[1], int)) or \
+                                         self.kernel_size[0] < 1 or self.kernel_size[1] < 1:
+            raise ValueError(f"The \'kernel_size\' of \'DepthwiseConv2dNative\' should be an positive int number or "
+                             f"a tuple of two positive int numbers, but got {kernel_size}")
+        self.stride = validator.check_type('stride', stride, (int, tuple))
+        if isinstance(stride, int):
+            self.stride = (stride, stride)
+        if len(self.stride) != 2 or (not isinstance(self.stride[0], int)) or \
+                                    (not isinstance(self.stride[1], int)) or \
+                                    self.stride[0] < 1 or self.stride[1] < 1:
+            raise ValueError(f"The \'stride\' of \'DepthwiseConv2dNative\' should be an positive int number or "
+                             f"a tuple of two positive int numbers, but got {stride}")
+        self.add_prim_attr('stride', (1, 1, self.stride[0], self.stride[1]))
+        self.dilation = validator.check_type('dilation', dilation, (tuple, int))
+        if isinstance(dilation, int):
+            self.dilation = (dilation, dilation)
+        if len(self.dilation) != 2 or (not isinstance(self.dilation[0], int)) or \
+                                      (not isinstance(self.dilation[1], int)) or \
+                                      self.dilation[0] < 1 or self.dilation[1] < 1:
+            raise ValueError(f"The \'dilation\' of \'DepthwiseConv2dNative\' should be an positive int number or "
+                             f"a tuple of two or four positive int numbers, but got {dilation}")
+        self.add_prim_attr('dilation', (1, 1, self.dilation[0], self.dilation[1]))
+        validator.equal('type of pad', type(pad), 'not bool', not isinstance(pad, bool))
         if pad_mode not in ("same", "valid", "pad"):
             raise ValueError(f"Attr pad_mode of DepthwiseConv2dNative Op not passed"
                              f"{pad_mode} not in valid, same, pad.")
@@ -627,9 +733,6 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         self.add_prim_attr('data_format', "NCHW")
         self.channel_multiplier = validator.check_integer("channel_multiplier", channel_multiplier, 0, Rel.GT)
         self.group = validator.check_integer("group", group, 0, Rel.GT)
-        self.dilation = validator.check_integer("dilation", dilation, 1, Rel.GE)
-        self.kernel_size = validator.check_value_on_integer("kernel_size", kernel_size, 1, Rel.GE)
-        self.stride = validator.check_integer("stride", stride, 1, Rel.GE)
         self.pad = pad
 
     def infer_shape(self, x_shape, w_shape):
@@ -640,29 +743,33 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
 
         kernel_size_h = w_shape[2]
         kernel_size_w = w_shape[3]
+        stride_h = self.stride[2]
+        stride_w = self.stride[3]
+        dilation_h = self.dilation[2]
+        dilation_w = self.dilation[3]
 
         if self.pad_mode == "valid":
-            h_out = math.ceil((x_shape[2] - self.dilation * (kernel_size_h - 1)) / self.stride)
-            w_out = math.ceil((x_shape[3] - self.dilation * (kernel_size_w - 1)) / self.stride)
+            h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
+            w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
             pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
         elif self.pad_mode == "same":
-            h_out = math.ceil(x_shape[2] / self.stride)
-            w_out = math.ceil(x_shape[3] / self.stride)
+            h_out = math.ceil(x_shape[2] / stride_h)
+            w_out = math.ceil(x_shape[3] / stride_w)
 
-            pad_needed_h = max(0, (h_out - 1) * self.stride + self.dilation * (kernel_size_h - 1) + 1 - x_shape[2])
+            pad_needed_h = max(0, (h_out - 1) * stride_h+ dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
-            pad_needed_w = max(0, (w_out - 1) * self.stride + self.dilation * (kernel_size_w - 1) + 1 - x_shape[3])
+            pad_needed_w = max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape[3])
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
         elif self.pad_mode == 'pad':
             pad_top, pad_bottom, pad_left, pad_right = self.pad, self.pad, self.pad, self.pad
 
-            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (self.dilation - 1)) \
-                    / self.stride
-            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (self.dilation - 1)) \
-                    / self.stride
+            h_out = 1 + (x_shape[2] + 2 * self.pad - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
+                    / stride_h
+            w_out = 1 + (x_shape[3] + 2 * self.pad - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
+                    / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
         else:
@@ -715,7 +822,7 @@ class _Pool(PrimitiveWithInfer):
                     (not isinstance(ksize[1], int)) or
                     ksize[0] <= 0 or
                     ksize[1] <= 0):
-                raise ValueError(f"The 'ksize' passed to operator {self.name} should be an positive int number or"
+                raise ValueError(f"The 'ksize' passed to operator {self.name} should be an positive int number or "
                                  f"a tuple of two positive int numbers, but got {ksize}")
             self.ksize = (1, 1, ksize[0], ksize[1])
         if self.is_maxpoolwithargmax:
@@ -731,7 +838,7 @@ class _Pool(PrimitiveWithInfer):
                     (not isinstance(strides[1], int)) or
                     strides[0] <= 0 or
                     strides[1] <= 0):
-                raise ValueError(f"The 'strides' passed to operator {self.name} should be an positive int number or"
+                raise ValueError(f"The 'strides' passed to operator {self.name} should be an positive int number or "
                                  f"a tuple of two positive int numbers, but got {strides}")
             self.strides = (1, 1, strides[0], strides[1])
         if self.is_maxpoolwithargmax:
@@ -853,7 +960,6 @@ class MaxPoolWithArgmax(_Pool):
         - **output** (Tensor) -  Maxpooling result, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
         - **mask** (Tensor) -  Max values' index represented by the mask.
     """
-
     def __init__(self, ksize=1, strides=1, padding="valid"):
         super(MaxPoolWithArgmax, self).__init__(ksize, strides, padding)
         self.is_tbe = context.get_context("device_target") == "Ascend"
@@ -944,8 +1050,8 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         pad (int): The pad value to fill. Default: 0.
         mode (int): 0 Math convolutiuon, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 1.
-        stride (int): The stride to apply conv filter. Default: 1.
-        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        stride (Union[int. tuple[int]]): The stride to apply conv filter. Default: 1.
+        dilation (Union[int. tuple[int]]): Specifies the dilation rate to use for dilated convolution. Default: 1.
         group (int): Splits input into groups. Default: 1.
 
     Returns:
@@ -967,25 +1073,41 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['out_backprop', 'filter', 'input_sizes'], outputs=['output'])
         self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT)
         self.kernel_size = validator.check_type('kernel_size', kernel_size, (int, tuple))
-        if isinstance(self.kernel_size, int):
-            if kernel_size < 1:
-                raise ValueError('Attr \'kernel_size\' of \'Conv2DBackpropInput\' Op passed '
-                                 + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
-            self.kernel_size = (self.kernel_size, self.kernel_size)
-        elif isinstance(kernel_size, tuple) and (len(kernel_size) != 2 or
-                                                 (not isinstance(kernel_size[0], int)) or
-                                                 (not isinstance(kernel_size[1], int)) or
-                                                 kernel_size[0] < 1 or kernel_size[1] < 1):
-            raise ValueError('Attr \'kernel_size\' of \'Conv2DBackpropInput\' Op passed '
-                             + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
+        if isinstance(kernel_size, int):
+            self.kernel_size = (kernel_size, kernel_size)
+        if len(self.kernel_size) != 2 or (not isinstance(self.kernel_size[0], int)) or \
+                                         (not isinstance(self.kernel_size[1], int)) or \
+                                         self.kernel_size[0] < 1 or self.kernel_size[1] < 1:
+            raise ValueError(f"The \'kernel_size\' of \'Conv2DBackpropInput\' should be an positive int number or "
+                             f"a tuple of two positive int numbers, but got {kernel_size}")
+        self.stride = validator.check_type('stride', stride, (int, tuple))
+        if isinstance(stride, int):
+            self.stride = (stride, stride)
+        elif isinstance(stride, tuple) and len(stride) == 4:
+            self.stride = (stride[2], stride[3])
+        if len(self.stride) != 2 or (not isinstance(self.stride[0], int)) or (not isinstance(self.stride[1], int)) or \
+                self.stride[0] < 1 or self.stride[1] < 1:
+            raise ValueError(f"The \'stride\' of \'Conv2DBackpropInput\' should be an positive int number or "
+                             f"a tuple of two or four positive int numbers, but got {stride}")
+        self.add_prim_attr('stride', self.stride)
+        self.dilation = validator.check_type('dilation', dilation, (tuple, int))
+        if isinstance(dilation, int):
+            self.dilation = (1, 1, dilation, dilation)
+        elif len(dilation) == 2:
+            self.dilation = (1, 1, dilation[0], dilation[1])
+        if len(self.dilation) != 4 or (not isinstance(self.dilation[0], int) or self.dilation[0] < 1) or \
+                                      (not isinstance(self.dilation[1], int) or self.dilation[1] < 1) or \
+                                      (not isinstance(self.dilation[2], int) or self.dilation[2] < 1) or \
+                                      (not isinstance(self.dilation[3], int) or self.dilation[3] < 1):
+            raise ValueError(f"The \'dilation\' of \'Conv2DBackpropInput\' should be an positive int number or "
+                             f"a tuple of two or four positive int numbers, but got {dilation}")
+        self.add_prim_attr('dilation', self.dilation)
         validator.equal('type of pad', type(pad), 'not bool', not isinstance(pad, bool))
         validator.equal('type of pad', type(pad), 'int', isinstance(pad, int))
         self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'])
         self.pad = validator.check_pad_value_by_mode(self.__class__.__name__, pad_mode, pad)
         self.mode = validator.check_integer('mode', mode, 1, Rel.EQ)
         self.group = validator.check_integer('group', group, 0, Rel.GT)
-        self.dilation = validator.check_integer('dilation', dilation, 1, Rel.GE)
-        self.stride = validator.check_integer('stride', stride, 1, Rel.GE)
         pad_mode = pad_mode.upper()
         self.add_prim_attr('pad_mode', pad_mode)
         self.add_prim_attr('data_format', "NCHW")
@@ -1004,16 +1126,18 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         dout_shape = doutput['shape']
         kernel_h = self.kernel_size[0]
         kernel_w = self.kernel_size[1]
+        stride_h = self.stride[0]
+        stride_w = self.stride[1]
         # default pad mode is valid
         pad_list = (0, 0, 0, 0)
         if self.pad_list:
             pad_list = tuple(self.pad_list)
         elif self.pad_mode == "SAME":
-            pad_needed_h = max(0, (dout_shape[2] - 1) * self.stride + kernel_h - x_size_v[2])
+            pad_needed_h = max(0, (dout_shape[2] - 1) * stride_h + kernel_h - x_size_v[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
-            pad_needed_w = max(0, (dout_shape[3] - 1) * self.stride + kernel_w - x_size_v[3])
+            pad_needed_w = max(0, (dout_shape[3] - 1) * stride_w + kernel_w - x_size_v[3])
             pad_left = math.floor(pad_needed_w / 2)
             pad_right = pad_needed_w - pad_left
             pad_list = (pad_top, pad_bottom, pad_left, pad_right)
@@ -1222,35 +1346,33 @@ class ApplyMomentum(PrimitiveWithInfer):
         Tensor, parameters to be updated.
 
     Examples:
-        >>> net = ResNet50()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> opt = P.ApplyMomentum(Tensor(np.array([0.001])), Tensor(np.array([0.9])),
-                                filter(lambda x: x.requires_grad, net.get_parameters()))
-        >>> model = Model(net, loss, opt)
+        Please refer to the usage in nn.ApplyMomentum.
     """
-
+    __mindspore_signature__ = (
+        ('variable', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD),
+        ('accumulation', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD),
+        ('learning_rate', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD),
+        ('gradient', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD),
+        ('momentum', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD)
+    )
     @prim_attr_register
     def __init__(self, use_nesterov=False, use_locking=False, gradient_scale=1.0):
         self.init_prim_io_names(inputs=['variable', 'accumulation', 'learning_rate', 'gradient', 'momentum'],
                                 outputs=['output'])
 
     def infer_shape(self, v_shape, a_shape, l_shape, g_shape, m_shape):
-        validator.check(f'variable shape {v_shape}', len(v_shape), '', 0, Rel.GT)
-        validator.check(f'accumulation shape {a_shape}', len(a_shape), '', 0, Rel.GT)
-        validator.check(f'learning rate shape {l_shape}', len(l_shape), '', 0, Rel.GE)
-        validator.check(f'gradient shape {g_shape}', len(g_shape), '', 0, Rel.GE)
-        validator.check(f'momentum shape {m_shape}', len(m_shape), '', 0, Rel.GE)
         return v_shape
 
     def infer_dtype(self, v_dtype, a_dtype, l_dtype, g_dtype, m_dtype):
-        validator.check_subclass("v_dtype", v_dtype, mstype.tensor)
-        validator.check_subclass("a_dtype", a_dtype, mstype.tensor)
-        v_type = validator.check_typename("v_dtype", v_dtype, [mstype.float16, mstype.float32, mstype.float64])
-        validator.check_typename("a_dtype", a_dtype, [mstype.float16, mstype.float32, mstype.float64])
+        if v_dtype != mstype.type_refkey and a_dtype != mstype.type_refkey:
+            validator.check_subclass("v_dtype", v_dtype, mstype.tensor)
+            validator.check_subclass("a_dtype", a_dtype, mstype.tensor)
+            validator.check_typename("v_dtype", v_dtype, [mstype.float16, mstype.float32, mstype.float64])
+            validator.check_typename("a_dtype", a_dtype, [mstype.float16, mstype.float32, mstype.float64])
         validator.check_typename("l_dtype", l_dtype, [mstype.float16, mstype.float32, mstype.float64])
         validator.check_typename("g_dtype", g_dtype, [mstype.float16, mstype.float32, mstype.float64])
         validator.check_typename("m_dtype", m_dtype, [mstype.float16, mstype.float32, mstype.float64])
-        return v_type
+        return g_dtype
 
 
 class SmoothL1Loss(PrimitiveWithInfer):
@@ -1311,9 +1433,9 @@ class SGD(PrimitiveWithInfer):
         nesterov (bool): Enable Nesterov momentum. Default: False.
 
     Inputs:
-        - **parameters** (Tensor) - Parameters to be updated.
+        - **parameters** (Tensor) - Parameters to be updated. Their data type can be list or tuple.
         - **gradient** (Tensor) - Gradients.
-        - **learning_rate** (Tensor) - Learning rate. e.g. Tensor(0.1, mindspore.float32).
+        - **learning_rate** (Tensor) - Learning rate. Must be float value. e.g. Tensor(0.1, mindspore.float32).
         - **accum** (Tensor) - Accum(velocity) to be updated.
         - **momentum** (Tensor) - Momentum. e.g. Tensor(0.1, mindspore.float32).
         - **stat** (Tensor) - States to be updated with the same shape as gradient.
@@ -1324,6 +1446,7 @@ class SGD(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, dampening=0.0, weight_decay=0.0, nesterov=False):
+        validator.check_type("nesterov", nesterov, [bool])
         self.init_prim_io_names(inputs=['parameters', 'gradient', 'learning_rate', 'accum', 'momentum', 'stat'],
                                 outputs=['output'])
 
@@ -1824,7 +1947,7 @@ class GetNext(PrimitiveWithInfer):
         and the type is described is `types`.
 
     Examples:
-        >>> get_next = P.GetNext([mindspore.float32, mindspore.int32], [[32, 1, 28, 28], [10]], 'shared_name')
+        >>> get_next = P.GetNext([mindspore.float32, mindspore.int32], [[32, 1, 28, 28], [10]], 2, 'shared_name')
         >>> feature, label = get_next()
     """
 
@@ -2023,6 +2146,7 @@ class Pad(PrimitiveWithInfer):
         for item in paddings:
             if len(item) != 2:
                 raise ValueError('The shape of paddings must be (n, 2).')
+        self.paddings = paddings
 
     def infer_shape(self, x):
         paddings = np.array(self.paddings)
@@ -2035,7 +2159,76 @@ class Pad(PrimitiveWithInfer):
         return y_shape
 
     def infer_dtype(self, x):
+        validator.check_subclass("input_x", x, mstype.tensor)
         return x
+
+
+class MirrorPad(PrimitiveWithInfer):
+    """
+    Pads the input tensor according to the paddings and mode.
+
+    Args:
+        mode (string): Specifies padding mode. The optional values are "REFLECT", "SYMMETRIC".
+            Default: "REFLECT".
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+        - **paddings** (Tensor) - The paddings tensor. The value of `paddings` is a matrix(list),
+            and its shape is (N, 2). N is the rank of input data. All elements of paddings
+            are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
+            extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates
+            how many sizes to be extended behind of the `D` th dimension of the input tensor.
+
+    Outputs:
+        Tensor, the tensor after padding.
+
+        - If 'mode` is "REFLECT", it uses a way of symmetrical copying throught the axis of symmetry to fill in,
+          symmetry. If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
+          Outputs is [[6,5,4,5,6,5,4],[3,2,1,2,3,2,1],[6,5,4,5,6,5,4],[9,8,7,8,9,8,7],[6,5,4,5,6,5,4]].
+        - If 'mode' is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
+          according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
+          is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the Outputs is
+          [[2,1,1,2,3,3,2],[2,1,1,2,3,3,2],[5,4,4,5,6,6,5],[8,7,7,8,9,9,8],[8,7,7,8,9,9,8]].
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.pad = P.MirrorPad(mode="REFLECT")
+        >>>     def construct(self, x, paddings):
+        >>>         return self.pad(x, paddings)
+        >>> x = np.random.random(size=(2, 3)).astype(np.float32)
+        >>> paddings = Tensor([[1,1],[2,2]])
+        >>> pad = Net()
+        >>> ms_output = pad(Tensor(x), paddings)
+    """
+
+    @prim_attr_register
+    def __init__(self, mode='REFLECT'):
+        """Init Pad"""
+        validator.check_string('mode', mode, ['REFLECT', 'SYMMETRIC'])
+        self.mode = mode
+
+    def __infer__(self, input_x, paddings):
+        validator.check_subclass("input_x", input_x['dtype'], mstype.tensor)
+        validator.check_subclass("paddings", paddings['dtype'], mstype.tensor)
+        x_shape = list(input_x['shape'])
+        paddings_value = paddings['value'].asnumpy()
+        paddings_size = paddings_value.size
+        validator.check_integer('paddings.shape', paddings_size, len(x_shape) * 2, Rel.EQ)
+        if not np.all(paddings_size >= 0):
+            raise ValueError('All elements of paddings must be >= 0.')
+        y_shape = ()
+        for i in range(0, int(paddings_size / 2)):
+            y_shape += ((x_shape[i] + paddings_value[i, 0] + paddings_value[i, 1]),)
+
+        return {'shape': y_shape,
+                'dtype': input_x['dtype'],
+                'value': None}
 
 
 class ROIAlign(PrimitiveWithInfer):
@@ -2136,7 +2329,11 @@ class Adam(PrimitiveWithInfer):
         - **gradient** (Tensor) - Gradients.
 
     Outputs:
-        Tensor, has the same shape and data type as `var`.
+        Tuple of 3 Tensor, the updated parameters.
+
+        - **var** (Tensor) - The same shape and data type as `var`.
+        - **m** (Tensor) - The same shape and data type as `m`.
+        - **v** (Tensor) - The same shape and data type as `v`.
     """
 
     @prim_attr_register
@@ -2149,7 +2346,7 @@ class Adam(PrimitiveWithInfer):
         validator.check_param_equal("var_shape", var_shape, "m_shape", m_shape)
         validator.check_param_equal("var_shape", var_shape, "v_shape", v_shape)
         validator.check_param_equal("var_shape", var_shape, "grad_shape", grad_shape)
-        return var_shape
+        return var_shape, m_shape, v_shape
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
                     beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype):
@@ -2159,7 +2356,7 @@ class Adam(PrimitiveWithInfer):
         args = {"beta1_power_dtype": beta1_power_dtype, "beta2_power_dtype": beta2_power_dtype, 'lr_dtype': lr_dtype,
                 "beta1_dtype": beta1_dtype, "beta2_dtype": beta2_dtype, "epsilon_dtype": epsilon_dtype}
         validator.check_type_same(args, [mstype.float16, mstype.float32])
-        return var_dtype
+        return var_dtype, m_dtype, v_dtype
 
 
 class BinaryCrossEntropy(PrimitiveWithInfer):
@@ -2272,79 +2469,6 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         return var_type
 
 
-class SparseApplyFtrlD(PrimitiveWithInfer):
-    r"""
-    Conduct experiment on updating on parameters related to FTRL optimization algorithm.
-
-    .. math ::
-            \text{accum} = \text{grad} * \text{grad}
-
-    .. math ::
-            \text{linear} += \text{grad} + (\text{accum} ^ {\text{-lr_power}} -
-            \frac{\text{accum} ^ \text{-lr_power}}{\text{lr}} * \text{var})
-
-    .. math ::
-            \text{quadratic} = {\text{1.0}/({\text{accum}^\text{lr_power} * \text{lr}}) + 2*\text{l2}
-
-    .. math ::
-            \text{var} = {\text{sign}({linear}) * \text{l1} - \text{linear}})/{ quadratic }
-            if \vert linear \vert > l1 \ else \ 0.0
-
-    Args:
-        lr (float): Learning rate.
-        l1 (float): temp value NO.1.
-        l2 (float): temp value No.2.
-        lr_power (float): temp value used as power number.
-        use_locking (bool): If true, updating the var and accum tensors will be protected. Default: False.
-
-    Inputs:
-       - **var** (Tensor) - Variable to be update. The type must be float32.
-       - **accum** (Tensor) - Accum to be update. The shape must be the same as `var`'s shape,
-         the type must be float32.
-       - **linear** (Tensor) - Linear to be update. The shape must be the same as `var`'s shape,
-         the type must be float32.
-       - **grad** (Tensor) - Gradient. The shape must be the same as `var`'s shape,
-         the type must be float32.
-       - **indices** (Tensor) - A vector of indices into the first dimension of 'var' and 'accum',
-         the shape of `indices` must be the same as `grad` in first dimension, the type must be int32.
-
-    Output:
-        Tensors, has the same shape and type as `var`.
-
-    """
-
-    @prim_attr_register
-    def __init__(self, lr, l1, l2, lr_power, use_locking=False):
-        """init SparseApplyFtrlD"""
-        self.lr = validator.check_type("lr", lr, [float])
-        self.l1 = validator.check_type("l1", l1, [float])
-        self.l2 = validator.check_type("l2", l2, [float])
-        self.lr_power = validator.check_type("lr_power", lr_power, [float])
-        self.use_locking = validator.check_type("use_locking", use_locking, [bool])
-
-    def infer_shape(self, var_shape, accum_shape, linear_shape, grad_shape, indices_shape):
-        validator.check_param_equal('var shape', var_shape, 'accum shape', accum_shape)
-        validator.check_param_equal('len of var shape', len(var_shape), 'len of grad shape', len(grad_shape))
-        validator.check_param_equal('len of var shape', len(var_shape), 'len of linear shape', len(linear_shape))
-        if len(var_shape) > 1:
-            validator.check_param_equal('var_shape', var_shape[1:], 'grad_shape', grad_shape[1:])
-            validator.check_param_equal('var_shape', var_shape[1:], 'linear_shape', linear_shape[1:])
-        validator.check_integer("len of indices shape", len(indices_shape), 1, Rel.EQ)
-        validator.check('the first dimension of grad', grad_shape[0],
-                        'the shape of indices', indices_shape[0], Rel.EQ)
-
-        return var_shape
-
-    def infer_dtype(self, var_type, accum_type, linear_type, grad_type, indices_type):
-        validator.check_subclass("var_type", var_type, mstype.tensor)
-        validator.check_subclass("accum_type", accum_type, mstype.tensor)
-        validator.check_subclass("linear_type", linear_type, mstype.tensor)
-        validator.check_subclass("grad_type", grad_type, mstype.tensor)
-        validator.check_subclass("indices_type", indices_type, mstype.tensor)
-
-        return var_type
-
-
 class LARSUpdate(PrimitiveWithInfer):
     """
     Conduct lars (layer-wise adaptive rate scaling) update on the square sum of gradient.
@@ -2424,6 +2548,7 @@ class ApplyFtrl(PrimitiveWithInfer):
     Outputs:
         Tensor, representing the updated var.
     """
+
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'lr', 'l1', 'l2', 'lr_power'],
@@ -2444,8 +2569,99 @@ class ApplyFtrl(PrimitiveWithInfer):
         args = {'var_type': var_type, 'accum_type': accum_type, 'linear_type': linear_type, 'grad_type': grad_type}
         validator.check_type_same(args, (mstype.float32, mstype.float16))
 
-        validator.check_typename("lr", lr_type,[mstype.float16, mstype.float32])
-        validator.check_typename("l1", l1_type,[mstype.float16, mstype.float32])
-        validator.check_typename("l2", l2_type,[mstype.float16, mstype.float32])
-        validator.check_typename("lr_power", lr_power_type,[mstype.float16, mstype.float32])
+        validator.check_typename("lr", lr_type, [mstype.float16, mstype.float32])
+        validator.check_typename("l1", l1_type, [mstype.float16, mstype.float32])
+        validator.check_typename("l2", l2_type, [mstype.float16, mstype.float32])
+        validator.check_typename("lr_power", lr_power_type, [mstype.float16, mstype.float32])
         return var_type
+
+
+class ExtractImagePatches(PrimitiveWithInfer):
+    """
+    Extract patches from images.
+    The input tensor must be a 4-D tensor and the data format is NHWC.
+
+    Args:
+        ksizes (Union[tuple[int], list[int]]): The size of sliding window, should be a tuple or list of int,
+            and the format is [1, ksize_row, ksize_col, 1].
+        strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
+            should be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
+        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dim
+            pixel positions, should be a tuple or list of int, and the format is [1, rate_row, rate_col, 1].
+        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
+            not case sensitive. Default: "valid".
+
+            - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
+
+            - valid: Means that the patch area taken must be completely contained in the original image.
+
+    Inputs:
+        - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_row, in_col, in_depth] and
+          data type is int8, float16, uint8.
+
+    Outputs:
+        Tensor, a 4-D tensor whose data type is same as 'input_x',
+        and the shape is [out_batch, out_row, out_col, out_depth], the out_batch is same as the in_batch.
+    """
+
+    @prim_attr_register
+    def __init__(self, ksizes, strides, rates, padding="valid"):
+        """init"""
+        validator.check_type("ksizes", ksizes, [tuple, list])
+        validator.check_type("strides", strides, [tuple, list])
+        validator.check_type("rates", rates, [tuple, list])
+        self.padding = validator.check_string('padding', padding.upper(), ['VALID', 'SAME'])
+        self.add_prim_attr("padding", self.padding)
+
+        if len(ksizes) != 4 or ksizes[0] != 1 or ksizes[3] != 1:
+            raise ValueError("The format of ksizes should be [1, ksize_row, ksize_col, 1], "
+                             f"but got {ksizes}.")
+        if not isinstance(ksizes[1], int) or not isinstance(ksizes[2], int) or \
+                ksizes[1] < 1 or ksizes[2] < 1:
+            raise ValueError("The ksize_row and ksize_col in ksizes should be an positive integer number, "
+                             f"but got ksize_row is {ksizes[1]}, ksize_col is {ksizes[2]}")
+
+        if len(strides) != 4 or strides[0] != 1 or strides[3] != 1:
+            raise ValueError("The format of strides should be [1, stride_row, stride_col, 1], "
+                             f"but got {strides}.")
+        if not isinstance(strides[1], int) or not isinstance(strides[2], int) or \
+                strides[1] < 1 or strides[2] < 1:
+            raise ValueError("The stride_row and stride_col in strides should be an positive integer number, "
+                             f"but got stride_row is {strides[1]}, stride_col is {strides[2]}")
+
+        if len(rates) != 4 or rates[0] != 1 or rates[3] != 1:
+            raise ValueError("The format of rates should be [1, rate_row, rate_col, 1], "
+                             f"but got {rates}.")
+        if not isinstance(rates[1], int) or not isinstance(rates[2], int) or \
+                rates[1] < 1 or rates[2] < 1:
+            raise ValueError("The rate_row and rate_col in rates should be an positive integer number, "
+                             f"but got rate_row is {rates[1]}, rate_col is {rates[2]}")
+
+    def infer_shape(self, input_x):
+        in_batch, in_row, in_col, in_depth = input_x
+        _, ksize_row, ksize_col, _ = self.ksizes
+        _, stride_row, stride_col, _ = self.strides
+        _, rate_row, rate_col, _ = self.rates
+        if len(input_x) != 4:
+            raise ValueError("The `input_x` should be a 4-D tensor, "
+                             f"but got a {len(input_x)}-D tensor whose shape is {input_x}")
+
+        out_batch = in_batch
+        out_depth = ksize_row * ksize_col * in_depth
+
+        if self.padding == "VALID":
+            out_row = \
+                (in_row - (ksize_row + (ksize_row - 1) * (rate_row - 1))) // stride_row + 1
+            out_col = \
+                (in_col - (ksize_col + (ksize_col - 1) * (rate_col - 1))) // stride_col + 1
+        else:
+            out_row = (in_row - 1) // stride_row + 1
+            out_col = (in_col - 1) // stride_col + 1
+
+        out_shape = [out_batch, out_row, out_col, out_depth]
+        return out_shape
+
+    def infer_dtype(self, input_x):
+        validator.check_subclass("input_x", input_x, mstype.tensor)
+        validator.check_typename("input_x_dtype", input_x, (mstype.int8, mstype.float16, mstype.float32))
+        return input_x

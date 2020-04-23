@@ -178,6 +178,7 @@ void TestDPAlgo::SetUp() {
   Shapes outputs_shape_0 = {{4096, 1024}};
   matmul0 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_0, outputs_shape_0, attr_0);
   matmul0->set_name("MatMul0");
+  matmul0->set_outputs_type({kFloat32});
 
   // matmul1
   ValuePtr transpose_a_1 = MakeValue(false);
@@ -187,6 +188,7 @@ void TestDPAlgo::SetUp() {
   Shapes outputs_shape_1 = {{128, 4096}};
   matmul1 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_1, outputs_shape_1, attr_1);
   matmul1->set_name("MatMul1");
+  matmul1->set_outputs_type({kFloat32});
 
   // matmul2
   ValuePtr transpose_a_2 = MakeValue(false);
@@ -196,6 +198,7 @@ void TestDPAlgo::SetUp() {
   Shapes outputs_shape_2 = {{128, 1024}};
   matmul2 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_2, outputs_shape_2, attr_2);
   matmul2->set_name("MatMul2");
+  matmul2->set_outputs_type({kFloat32});
 
   // matmul3
   ValuePtr transpose_a_3 = MakeValue(false);
@@ -205,6 +208,7 @@ void TestDPAlgo::SetUp() {
   Shapes outputs_shape_3 = {{1024, 4096}};
   matmul3 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_3);
   matmul3->set_name("MatMul3");
+  matmul3->set_outputs_type({kFloat32});
 
   // matmul4
   ValuePtr transpose_a_4 = MakeValue(false);
@@ -214,6 +218,7 @@ void TestDPAlgo::SetUp() {
   Shapes outputs_shape_4 = {{128, 4096}};
   matmul4 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_4, outputs_shape_4, attr_4);
   matmul4->set_name("MatMul4");
+  matmul4->set_outputs_type({kFloat32});
 
   // matmul5
   ValuePtr transpose_a_5 = MakeValue(false);
@@ -223,6 +228,7 @@ void TestDPAlgo::SetUp() {
   Shapes outputs_shape_5 = {{128, 4096}};
   matmul5 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_5, outputs_shape_5, attr_5);
   matmul5->set_name("MatMul5");
+  matmul5->set_outputs_type({kFloat32});
 
   // matmul6
   ValuePtr transpose_a_6 = MakeValue(false);
@@ -232,6 +238,7 @@ void TestDPAlgo::SetUp() {
   Shapes outputs_shape_6 = {{4096, 1024}};
   matmul6 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_6, outputs_shape_6, attr_6);
   matmul6->set_name("MatMul6");
+  matmul6->set_outputs_type({kFloat32});
 
   // matmul7
   ValuePtr transpose_a_7 = MakeValue(false);
@@ -241,6 +248,7 @@ void TestDPAlgo::SetUp() {
   Shapes outputs_shape_7 = {{64, 4096}};
   matmul7 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_7, outputs_shape_7, attr_7);
   matmul7->set_name("MatMul7");
+  matmul7->set_outputs_type({kFloat32});
 
   // matmul8
   ValuePtr transpose_a_8 = MakeValue(false);
@@ -250,6 +258,7 @@ void TestDPAlgo::SetUp() {
   Shapes outputs_shape_8 = {{64, 40960}};
   matmul8 = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_8, outputs_shape_8, attr_8);
   matmul8->set_name("MatMul8");
+  matmul8->set_outputs_type({kFloat32});
 }
 
 void TestDPAlgo::ConstructTwoLargeMatMul() {
@@ -278,12 +287,15 @@ void TestDPAlgo::ConstructBatmanGraph() {
   Shapes outputs_shape = {{64, 64}};
   tmp_identity_ptr1 = std::make_shared<TmpIdentityInfo>(inputs_shape, outputs_shape, attr);
   tmp_identity_ptr1->set_name("identity_info1");
+  tmp_identity_ptr1->set_outputs_type({kFloat32});
 
   tmp_identity_ptr2 = std::make_shared<TmpIdentityInfo>(inputs_shape, outputs_shape, attr);
   tmp_identity_ptr2->set_name("identity_info2");
+  tmp_identity_ptr2->set_outputs_type({kFloat32});
 
   tmp_identity_ptr = std::make_shared<TmpIdentityInfo>(inputs_shape, outputs_shape, attr);
   tmp_identity_ptr->set_name("identity_info");
+  tmp_identity_ptr->set_outputs_type({kFloat32});
 
   // mm1_ptr
   ValuePtr transpose_a_1 = MakeValue(false);
@@ -292,6 +304,7 @@ void TestDPAlgo::ConstructBatmanGraph() {
   Shapes inputs_shape_1 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_1 = {{64, 64}};
   mm1_ptr = std::make_shared<MatMulInfo>("matmul_info1", inputs_shape_1, outputs_shape_1, attr_1);
+  mm1_ptr->set_outputs_type({kFloat32});
 
   // mm2_ptr
   ValuePtr transpose_a_2 = MakeValue(false);
@@ -300,6 +313,7 @@ void TestDPAlgo::ConstructBatmanGraph() {
   Shapes inputs_shape_2 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_2 = {{64, 64}};
   mm2_ptr = std::make_shared<MatMulInfo>("matmul_info2", inputs_shape_2, outputs_shape_2, attr_2);
+  mm2_ptr->set_outputs_type({kFloat32});
 
   // mm3_ptr
   ValuePtr transpose_a_3 = MakeValue(false);
@@ -308,6 +322,7 @@ void TestDPAlgo::ConstructBatmanGraph() {
   Shapes inputs_shape_3 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_3 = {{64, 64}};
   mm3_ptr = std::make_shared<MatMulInfo>("matmul_info3", inputs_shape_3, outputs_shape_3, attr_3);
+  mm3_ptr->set_outputs_type({kFloat32});
 
   // mm4_ptr
   ValuePtr transpose_a_4 = MakeValue(false);
@@ -316,6 +331,7 @@ void TestDPAlgo::ConstructBatmanGraph() {
   Shapes inputs_shape_4 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_4 = {{64, 64}};
   mm4_ptr = std::make_shared<MatMulInfo>("matmul_info4", inputs_shape_4, outputs_shape_4, attr_4);
+  mm4_ptr->set_outputs_type({kFloat32});
 
   // mm5_ptr
   ValuePtr transpose_a_5 = MakeValue(false);
@@ -324,6 +340,7 @@ void TestDPAlgo::ConstructBatmanGraph() {
   Shapes inputs_shape_5 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_5 = {{64, 64}};
   mm5_ptr = std::make_shared<MatMulInfo>("matmul_info5", inputs_shape_5, outputs_shape_5, attr_5);
+  mm5_ptr->set_outputs_type({kFloat32});
 
   // mm6_ptr
   ValuePtr transpose_a_6 = MakeValue(false);
@@ -332,6 +349,7 @@ void TestDPAlgo::ConstructBatmanGraph() {
   Shapes inputs_shape_6 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_6 = {{64, 64}};
   mm6_ptr = std::make_shared<MatMulInfo>("matmul_info6", inputs_shape_6, outputs_shape_6, attr_6);
+  mm6_ptr->set_outputs_type({kFloat32});
 
   // mm7_ptr
   ValuePtr transpose_a_7 = MakeValue(false);
@@ -340,6 +358,7 @@ void TestDPAlgo::ConstructBatmanGraph() {
   Shapes inputs_shape_7 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_7 = {{64, 64}};
   mm7_ptr = std::make_shared<MatMulInfo>("matmul_info7", inputs_shape_7, outputs_shape_7, attr_7);
+  mm7_ptr->set_outputs_type({kFloat32});
 
   // create edges
   edge_i0_m3 = std::make_shared<Edge>(edge_iden_matmul_name, tmp_identity_ptr, mm3_ptr, 0, 0, false, true);
@@ -451,6 +470,7 @@ void TestDPAlgo::ConstructTriangleGraph() {
   Shapes outputs_shape = {{64, 64}};
   tmp_identity_ptr1 = std::make_shared<TmpIdentityInfo>(inputs_shape, outputs_shape, attr);
   tmp_identity_ptr1->set_name("identity_info1");
+  tmp_identity_ptr1->set_outputs_type({kFloat32});
 
   // mm6_ptr
   ValuePtr transpose_a_6 = MakeValue(false);
@@ -459,9 +479,11 @@ void TestDPAlgo::ConstructTriangleGraph() {
   Shapes inputs_shape_6 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_6 = {{64, 64}};
   mm6_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_6, outputs_shape_6, attr_6);
+  mm6_ptr->set_outputs_type({kFloat32});
 
   tmp_identity_ptr2 = std::make_shared<TmpIdentityInfo>(inputs_shape, outputs_shape, attr);
   tmp_identity_ptr2->set_name("identity_info2");
+  tmp_identity_ptr2->set_outputs_type({kFloat32});
 
   // mm1_ptr
   ValuePtr transpose_a_1 = MakeValue(false);
@@ -470,6 +492,7 @@ void TestDPAlgo::ConstructTriangleGraph() {
   Shapes inputs_shape_1 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_1 = {{64, 64}};
   mm1_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_1, outputs_shape_1, attr_1);
+  mm1_ptr->set_outputs_type({kFloat32});
 
   // mm2_ptr
   ValuePtr transpose_a_2 = MakeValue(false);
@@ -478,6 +501,7 @@ void TestDPAlgo::ConstructTriangleGraph() {
   Shapes inputs_shape_2 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_2 = {{64, 64}};
   mm2_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_2, outputs_shape_2, attr_2);
+  mm2_ptr->set_outputs_type({kFloat32});
 
   // mm3_ptr
   ValuePtr transpose_a_3 = MakeValue(false);
@@ -486,6 +510,7 @@ void TestDPAlgo::ConstructTriangleGraph() {
   Shapes inputs_shape_3 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_3 = {{64, 64}};
   mm3_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_3);
+  mm3_ptr->set_outputs_type({kFloat32});
 
   // mm4_ptr
   ValuePtr transpose_a_4 = MakeValue(false);
@@ -494,6 +519,7 @@ void TestDPAlgo::ConstructTriangleGraph() {
   Shapes inputs_shape_4 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_4 = {{64, 64}};
   mm4_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_4, outputs_shape_4, attr_4);
+  mm4_ptr->set_outputs_type({kFloat32});
 
   // mm5_ptr
   ValuePtr transpose_a_5 = MakeValue(false);
@@ -502,6 +528,7 @@ void TestDPAlgo::ConstructTriangleGraph() {
   Shapes inputs_shape_5 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_5 = {{64, 64}};
   mm5_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_5, outputs_shape_5, attr_5);
+  mm5_ptr->set_outputs_type({kFloat32});
 
   // create edges
   std::string edge_matmul_matmul_name = "MatMul-MatMul";
@@ -584,6 +611,7 @@ void TestDPAlgo::ConstructTriangleGraph2() {
   Shapes outputs_shape = {{64, 64}};
   tmp_identity_ptr1 = std::make_shared<TmpIdentityInfo>(inputs_shape, outputs_shape, attr);
   tmp_identity_ptr1->set_name("identity_info1");
+  tmp_identity_ptr1->set_outputs_type({kFloat32});
 
   // mm1_ptr
   ValuePtr transpose_a_1 = MakeValue(false);
@@ -592,6 +620,7 @@ void TestDPAlgo::ConstructTriangleGraph2() {
   Shapes inputs_shape_1 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_1 = {{64, 64}};
   mm1_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_1, outputs_shape_1, attr_1);
+  mm1_ptr->set_outputs_type({kFloat32});
 
   // mm2_ptr
   ValuePtr transpose_a_2 = MakeValue(false);
@@ -600,6 +629,7 @@ void TestDPAlgo::ConstructTriangleGraph2() {
   Shapes inputs_shape_2 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_2 = {{64, 64}};
   mm2_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_2, outputs_shape_2, attr_2);
+  mm2_ptr->set_outputs_type({kFloat32});
 
   // mm3_ptr
   ValuePtr transpose_a_3 = MakeValue(false);
@@ -608,6 +638,7 @@ void TestDPAlgo::ConstructTriangleGraph2() {
   Shapes inputs_shape_3 = {{64, 64}, {64, 64}};
   Shapes outputs_shape_3 = {{64, 64}};
   mm3_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_3);
+  mm3_ptr->set_outputs_type({kFloat32});
 
   // create edges
   std::string edge_matmul_matmul_name = "MatMul-MatMul";
@@ -953,6 +984,7 @@ void TestDPAlgo::ConstructMMRGraph() {
   Shapes inputs_shape_1 = {{32, 16}, {16, 32}};
   Shapes outputs_shape_1 = {{32, 32}};
   mm1_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_1, outputs_shape_1, attr_1);
+  mm1_ptr->set_outputs_type({kFloat32});
 
   // mm2_ptr
   ValuePtr transpose_a_2 = MakeValue(false);
@@ -961,6 +993,7 @@ void TestDPAlgo::ConstructMMRGraph() {
   Shapes inputs_shape_2 = {{8, 32}, {32, 32}};
   Shapes outputs_shape_2 = {{8, 32}};
   mm2_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_2, outputs_shape_2, attr_2);
+  mm2_ptr->set_outputs_type({kFloat32});
 
   // mm3_ptr
   ValuePtr transpose_a_3 = MakeValue(false);
@@ -969,6 +1002,7 @@ void TestDPAlgo::ConstructMMRGraph() {
   Shapes inputs_shape_3 = {{32, 32}, {32, 64}};
   Shapes outputs_shape_3 = {{32, 64}};
   mm3_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_3);
+  mm3_ptr->set_outputs_type({kFloat32});
 
   // mm4_ptr
   ValuePtr transpose_a_4 = MakeValue(false);
@@ -977,6 +1011,7 @@ void TestDPAlgo::ConstructMMRGraph() {
   Shapes inputs_shape_4 = {{64, 32}, {32, 32}};
   Shapes outputs_shape_4 = {{64, 32}};
   mm4_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_4, outputs_shape_4, attr_4);
+  mm4_ptr->set_outputs_type({kFloat32});
 
   // mm5_ptr
   ValuePtr transpose_a_5 = MakeValue(false);
@@ -985,6 +1020,7 @@ void TestDPAlgo::ConstructMMRGraph() {
   Shapes inputs_shape_5 = {{8, 32}, {32, 64}};
   Shapes outputs_shape_5 = {{8, 64}};
   mm5_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_5, outputs_shape_5, attr_5);
+  mm5_ptr->set_outputs_type({kFloat32});
 
   // mm5_ptr
   ValuePtr transpose_a_6 = MakeValue(false);
@@ -993,6 +1029,7 @@ void TestDPAlgo::ConstructMMRGraph() {
   Shapes inputs_shape_6 = {{8, 64}, {64, 32}};
   Shapes outputs_shape_6 = {{8, 32}};
   mm6_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_6, outputs_shape_6, attr_6);
+  mm6_ptr->set_outputs_type({kFloat32});
 
   ValuePtr relu = MakeValue(std::string("relu"));
   std::unordered_map<std::string, ValuePtr> relu_attr = {{"activation_type", relu}};
@@ -1001,26 +1038,31 @@ void TestDPAlgo::ConstructMMRGraph() {
   Shapes relu1_inputs_shape = {{8, 32}};
   Shapes relu1_outputs_shape = {{8, 32}};
   relu1_ptr = std::make_shared<ActivationInfo>("relu_info", relu1_inputs_shape, relu1_outputs_shape, relu_attr);
+  relu1_ptr->set_outputs_type({kFloat32});
 
   // relu2_ptr
   Shapes relu2_inputs_shape = {{32, 64}};
   Shapes relu2_outputs_shape = {{32, 64}};
   relu2_ptr = std::make_shared<ActivationInfo>("relu_info", relu2_inputs_shape, relu2_outputs_shape, relu_attr);
+  relu2_ptr->set_outputs_type({kFloat32});
 
   // relu3_ptr
   Shapes relu3_inputs_shape = {{64, 32}};
   Shapes relu3_outputs_shape = {{64, 32}};
   relu3_ptr = std::make_shared<ActivationInfo>("relu_info", relu3_inputs_shape, relu3_outputs_shape, relu_attr);
+  relu3_ptr->set_outputs_type({kFloat32});
 
   // relu4_ptr
   Shapes relu4_inputs_shape = {{8, 64}};
   Shapes relu4_outputs_shape = {{8, 64}};
   relu4_ptr = std::make_shared<ActivationInfo>("relu_info", relu4_inputs_shape, relu4_outputs_shape, relu_attr);
+  relu4_ptr->set_outputs_type({kFloat32});
 
   // relu5_ptr
   Shapes relu5_inputs_shape = {{8, 32}};
   Shapes relu5_outputs_shape = {{8, 32}};
   relu5_ptr = std::make_shared<ActivationInfo>("relu_info", relu5_inputs_shape, relu5_outputs_shape, relu_attr);
+  relu5_ptr->set_outputs_type({kFloat32});
 
   std::string edge_matmul_matmul_name = "MatMul-MatMul";
   std::string edge_matmul_relu_name = "MatMul-ReLU";
@@ -1134,6 +1176,7 @@ void TestDPAlgo::ConstructIdentityDiamondGraph() {
   Shapes inputs_shape = {{32, 64}};
   Shapes outputs_shape = {{32, 64}};
   tmp_identity_ptr = std::make_shared<TmpIdentityInfo>(inputs_shape, outputs_shape, attr);
+  tmp_identity_ptr->set_outputs_type({kFloat32});
 
   // mm1_ptr
   ValuePtr transpose_a_1 = MakeValue(false);
@@ -1142,6 +1185,7 @@ void TestDPAlgo::ConstructIdentityDiamondGraph() {
   Shapes inputs_shape_1 = {{32, 64}, {64, 128}};
   Shapes outputs_shape_1 = {{32, 128}};
   mm1_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_1, outputs_shape_1, attr_1);
+  mm1_ptr->set_outputs_type({kFloat32});
 
   // mm2_ptr
   ValuePtr transpose_a_2 = MakeValue(false);
@@ -1150,6 +1194,7 @@ void TestDPAlgo::ConstructIdentityDiamondGraph() {
   Shapes inputs_shape_2 = {{128, 32}, {32, 64}};
   Shapes outputs_shape_2 = {{128, 64}};
   mm2_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_2, outputs_shape_2, attr_2);
+  mm2_ptr->set_outputs_type({kFloat32});
 
   // mm3_ptr
   ValuePtr transpose_a_3 = MakeValue(false);
@@ -1158,6 +1203,7 @@ void TestDPAlgo::ConstructIdentityDiamondGraph() {
   Shapes inputs_shape_3 = {{32, 128}, {128, 64}};
   Shapes outputs_shape_3 = {{32, 64}};
   mm3_ptr = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_3, outputs_shape_3, attr_3);
+  mm3_ptr->set_outputs_type({kFloat32});
 
   // create edges
   std::string edge_matmul_matmul_name = "MatMul-MatMul";

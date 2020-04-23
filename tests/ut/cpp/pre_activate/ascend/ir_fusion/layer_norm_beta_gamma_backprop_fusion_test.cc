@@ -80,6 +80,8 @@ TEST_F(TestHWLayerNormBetaGammaBackpropFusion, layernorm_beta_gamma_backprop_fus
   builder1.SetOutputsDeviceType({kNumberTypeFloat32});
   cast0->set_kernel_info(std::make_shared<device::KernelInfo>());
   cast1->set_kernel_info(std::make_shared<device::KernelInfo>());
+  cast0->set_abstract(x_abstract);
+  cast1->set_abstract(x_abstract);
   AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), cast0.get());
   AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), cast1.get());
 

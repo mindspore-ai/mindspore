@@ -116,9 +116,20 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
 
     pad_height_ = GetAttr<int>(kernel_node, "pad");
     pad_width_ = pad_height_;
-    stride_ = GetAttr<int>(kernel_node, "stride");
-    dilation_ = GetAttr<int>(kernel_node, "dilation");
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
+    auto stride_ori = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "stride");
+    auto dilation_ori = AnfAlgo::GetNodeAttr<std::vector<int>>(kernel_node, "dilation");
+    if (stride_ori.size() != 2 || stride_ori[0] != stride_ori[1]) {
+      MS_LOG(EXCEPTION) << "ConvGradFilterGpuBkwKernel only support equal stride, and stride must be 2d!";
+    }
+    if (dilation_ori.size() != 4 || dilation_ori[2] != dilation_ori[3]) {
+      MS_LOG(EXCEPTION) << "ConvGradFilterGpuBkwKernel only support equal dilation, and dilation must be 4d!";
+    }
+    if (dilation_ori[0] != 1 || dilation_ori[1] != 1) {
+      MS_LOG(EXCEPTION) << "ConvGradFilterGpuBkwKernel dilation only support 1 in N axis and C axis!";
+    }
+    stride_ = stride_ori[0];
+    dilation_ = dilation_ori[2];
     cudnnTensorDescriptor_t x_desc_real = nullptr;
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {
       SetPad(in_shape, kernel_node);

@@ -44,19 +44,29 @@ bool KernelRuntime::Run(session::KernelGraph *graph) {
   bool ret = false;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+#if defined(_WIN32) || defined(_WIN64)
+  auto start_time = std::chrono::steady_clock::now();
+#else
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
+#endif
   bool is_task_sink = context_ptr->enable_task_sink();
   if (is_task_sink) {
     ret = RunTask(graph);
   } else {
     ret = LaunchKernel(graph);
   }
+#if defined(_WIN32) || defined(_WIN64)
+  auto end_time = std::chrono::steady_clock::now();
+  std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
+  MS_LOG(INFO) << "Call MS Run Success in " << cost.count() << " us";
+#else
   (void)gettimeofday(&end_time, nullptr);
   const uint64_t kUSecondInSecond = 1000000;
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "Call MS Run Success in " << cost << " us";
+#endif
   return ret;
 }
 
@@ -105,7 +115,7 @@ size_t KernelRuntime::CountNodeDeviceMemorySize(const mindspore::AnfNodePtr &nod
   std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(node, output_index);
   auto format = AnfAlgo::GetOutputFormat(node, output_index);
   if (shape.empty() && format != kOpFormat_DEFAULT) {
-    shape = trans::TransShapeTo4d(shape);
+    shape = trans::PaddingShapeTo4d(shape, AnfAlgo::GetOutputReshapeType(node, output_index));
     shape = trans::TransShapeToDevice(shape, format);
   }
   // scalar's output shape is a empty vector
@@ -250,7 +260,7 @@ void KernelRuntime::AssignStaticMemoryOutput(const session::KernelGraph *graph) 
   MS_EXCEPTION_IF_NULL(graph);
   auto nodes = AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem});
   for (const auto &node : nodes) {
-    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0);
+    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
     MS_EXCEPTION_IF_NULL(item_with_index.first);
     if (!item_with_index.first->isa<CNode>() || !AnfAlgo::IsRealKernel(item_with_index.first)) {
       continue;
@@ -355,6 +365,10 @@ void KernelRuntime::AssignNodeOutputMem(int flag, const AnfNodePtr &node, int in
     AssignCommunicationNodeOutputMem(flag, node);
     return;
   }
+  if (AnfAlgo::IsGetNext(NOT_NULL(node)) && flag == kReuseDynamicMem) {
+    MS_LOG(INFO) << "GetNext disable mem_reuse";
+    flag = kDynamicMem;
+  }
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto output_sizes = kernel_mod->GetOutputSizeList();
@@ -401,8 +415,9 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   auto address = CreateDeviceAddress(ptr, node_size, AnfAlgo::GetOutputFormat(value_node, output_idx), output_type_id);
   MS_EXCEPTION_IF_NULL(address);
   AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
-  if (!address->SyncHostToDevice(tensor->shape(), tensor_size, tensor->data_type(), tensor->data_c(false))) {
-    MS_EXCEPTION(NotExistsError) << "kValueNode SyncHostToDevice fail!" << value_node->DebugString() << "node format is"
+  if (!address->SyncHostToDevice(trans::GetRuntimePaddingShape(value_node, 0), tensor_size, tensor->data_type(),
+                                 tensor->data_c(false))) {
+    MS_EXCEPTION(NotExistsError) << "ValueNode SyncHostToDevice fail!" << value_node->DebugString() << "node format is"
                                  << AnfAlgo::GetOutputFormat(value_node, output_idx) << "node dtype is "
                                  << AnfAlgo::GetOutputInferDataType(value_node, output_idx);
   }
@@ -421,19 +436,6 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
     MS_EXCEPTION_IF_NULL(node_value);
     if (node_value->isa<Tensor>()) {
       AssignValueNodeTensor(value_node, node_value, 0);
-    } else if (node_value->isa<ValueTuple>()) {
-      auto value_tuple = node_value->cast<ValueTuplePtr>();
-      if (value_tuple == nullptr) {
-        MS_LOG(WARNING) << "value_tuple is null";
-        continue;
-      }
-      size_t i = 0;
-      auto value_list = value_tuple->value();
-      for (auto value_ptr : value_list) {
-        if (value_ptr->isa<Tensor>()) {
-          AssignValueNodeTensor(value_node, value_ptr, i++);
-        }
-      }
     } else if (node_value->isa<StringImm>()) {
       auto value = GetValue<std::string>(node_value);
       size_t tensor_size = value.size();
@@ -474,7 +476,7 @@ void KernelRuntime::AssignWorkSpaceMem(int flag, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   size_t index = 0;
   for (auto &size : kernel_mod->GetWorkspaceSizeList()) {
-    auto ptr = mem_manager_->MallocWorkSpaceMem(node, flag, index, size);
+    auto ptr = mem_manager_->MallocWorkSpaceMem(node, index, flag, size);
     AnfAlgo::SetWorkspaceAddr(CreateDeviceAddress(ptr, size, "", kTypeUnknown), index, node.get());
     index++;
   }
@@ -569,8 +571,12 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
     AddressPtrList kernel_workspaces;
     AddressPtrList kernel_outputs;
     GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+#if defined(_WIN32) || defined(_WIN64)
+    auto start_time = std::chrono::steady_clock::now();
+#else
     struct timeval start_time, end_time;
     (void)gettimeofday(&start_time, nullptr);
+#endif
     auto ret =
       kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, reinterpret_cast<uintptr_t>(stream_));
     if (!ret) {
@@ -580,11 +586,17 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
       if (AnfAlgo::GetKernelType(kernel) == TBE_KERNEL && !SyncStream()) {
         MS_LOG(EXCEPTION) << "SyncStream failed.";
       }
+#if defined(_WIN32) || defined(_WIN64)
+      auto end_time = std::chrono::steady_clock::now();
+      std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
+      MS_LOG(DEBUG) << "d " << kernel->fullname_with_scope() << " in  " << cost.count() << " us";
+#else
       (void)gettimeofday(&end_time, nullptr);
       const uint64_t kUSecondInSecond = 1000000;
       uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
       cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
       MS_LOG(DEBUG) << "d " << kernel->fullname_with_scope() << " in  " << cost << " us";
+#endif
     }
   }
   return true;

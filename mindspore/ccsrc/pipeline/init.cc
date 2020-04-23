@@ -29,8 +29,11 @@
 #include "parallel/context.h"
 #include "parallel/device_manager.h"
 #include "parallel/costmodel_context.h"
+#ifdef ENABLE_GPU_COLLECTIVE
 #include "device/gpu/distribution/collective_init.h"
-
+#else
+#include "device/gpu/distribution/collective_fake_init.h"
+#endif
 namespace py = pybind11;
 
 using FuncGraph = mindspore::FuncGraph;
@@ -261,10 +264,10 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the parameter tensor_slice_size in strategy generation.")
     .def("get_tensor_slice_align_size", &CostModelContext::tensor_slice_alignment_size,
          "Get the parameter tensor_slice_size in strategy generation.")
-    .def("set_not_fully_use_devices", &CostModelContext::set_not_fully_use_device,
-         "Set the parameter not_fully_use_devices in the DP algorithm.")
-    .def("get_not_fully_use_devices", &CostModelContext::not_fully_use_device,
-         "Get the parameter not_fully_use_devices in the DP algorithm.")
+    .def("set_fully_use_devices", &CostModelContext::set_fully_use_device,
+         "Set the parameter fully_use_devices in the DP algorithm.")
+    .def("get_fully_use_devices", &CostModelContext::fully_use_device,
+         "Get the parameter fully_use_devices in the DP algorithm.")
     .def("set_elementwise_op_strategy_follow", &CostModelContext::set_elementwise_stra_follow,
          "Set the parameter elementwise_op_strategy_follow in the DP algorithm.")
     .def("get_elementwise_op_strategy_follow", &CostModelContext::elementwise_stra_follow,
@@ -297,9 +300,16 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)py::class_<OpLib, std::shared_ptr<OpLib>>(m, "Oplib")
     .def(py::init())
     .def("reg_op", &OpLib::RegOp, "Register op info.");
-
+#ifdef ENABLE_GPU_COLLECTIVE
   (void)m.def("init_gpu_collective", &mindspore::device::gpu::CollectiveInitializer::InitCollective,
               "Init gpu collective communication mode.");
   (void)m.def("finalize_gpu_collective", &mindspore::device::gpu::CollectiveInitializer::FinalizeCollective,
               "Finalize gpu collective communication mode.");
+#else
+  (void)m.def("init_gpu_collective", &mindspore::device::gpu::CollectiveFakeInitializer::InitCollective,
+              "Init gpu collective communication mode.");
+  (void)m.def("finalize_gpu_collective", &mindspore::device::gpu::CollectiveFakeInitializer::FinalizeCollective,
+              "Finalize gpu collective communication mode.");
+
+#endif
 }

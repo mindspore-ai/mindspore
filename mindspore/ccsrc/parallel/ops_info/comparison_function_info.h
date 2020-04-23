@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_COMPARISON_FUNCTION_INFO_H_
 
 #include <string>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 #include "ir/value.h"
@@ -31,7 +32,7 @@ class EqualInfo : public ArithmeticBase {
  public:
   EqualInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
             const PrimitiveAttrs& attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
   ~EqualInfo() override = default;
 };
 
@@ -39,7 +40,7 @@ class NotEqualInfo : public ArithmeticBase {
  public:
   NotEqualInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
                const PrimitiveAttrs& attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
   ~NotEqualInfo() override = default;
 };
 
@@ -47,10 +48,18 @@ class MaximumInfo : public ArithmeticBase {
  public:
   MaximumInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
               const PrimitiveAttrs& attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
   ~MaximumInfo() override = default;
+};
+
+class MinimumInfo : public ArithmeticBase {
+ public:
+  MinimumInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
+              const PrimitiveAttrs& attrs)
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
+  ~MinimumInfo() override = default;
 };
 }  // namespace parallel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_OPS_INFO_PARALLEL_COMPARISON_FUNCTION_INFO_H_
+#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_COMPARISON_FUNCTION_INFO_H_

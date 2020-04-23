@@ -14,57 +14,24 @@
 # ============================================================================
 
 """LogSoftmax op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+log_softmax_op_info = TBERegOp("LogSoftmax") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("log_softmax.so") \
+    .compute_cost(10) \
+    .kernel_name("log_softmax") \
+    .partial_flag(True) \
+    .attr("axis", "optional", "listInt", "all") \
+    .input(0, "logits", False, "required", "all") \
+    .output(0, "logsoftmax", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "LogSoftmax",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "log_softmax.so",
-    "compute_cost": 10,
-    "kernel_name": "log_softmax",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "axis",
-            "param_type": "optional",
-            "type": "listInt",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float"
-            ],
-            "format": [
-                    "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "logits",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float"
-            ],
-            "format": [
-                    "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "logsoftmax",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(log_softmax_op_info)
 def _logsoftmax_tbe():
     """LogSoftMaxGrad TBE register"""
     return

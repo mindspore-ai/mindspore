@@ -19,7 +19,7 @@ Primitive operator classes.
 A collection of operators to build nerual networks or computing functions.
 """
 
-from .array_ops import (Argmax, Argmin, Cast, ConcatOffset, Concat, Pack, Unpack,
+from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, GatherNd, GatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
@@ -34,7 +34,7 @@ from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice)
 from .debug_ops import (ImageSummary, InsertGradientOf, ScalarSummary,
-                        TensorSummary, Print)
+                        TensorSummary, HistogramSummary, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
 from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul,
@@ -57,18 +57,19 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      Gelu, Elu,
                      GetNext, L2Normalize, LayerNorm,
                      LogSoftmax,
-                     MaxPool,
+                     MaxPool, ExtractImagePatches,
                      AvgPool, Conv2DBackpropInput,
-                     MaxPoolWithArgmax, OneHot, Pad, PReLU, ReLU, ReLU6,
+                     MaxPoolWithArgmax, OneHot, Pad, MirrorPad, PReLU, ReLU, ReLU6, HSwish, HSigmoid,
                      ResizeBilinear, Sigmoid,
                      SigmoidCrossEntropyWithLogits,
                      SmoothL1Loss, Softmax,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
-                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrlD,
+                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl,
                      ApplyRMSProp, ApplyCenteredRMSProp)
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey
-
+from . import _quant_ops
+from ._quant_ops import *
 
 __all__ = [
     'TensorAdd',
@@ -88,6 +89,7 @@ __all__ = [
     'Sqrt',
     'Square',
     'Conv2D',
+    'ExtractImagePatches',
     'Flatten',
     'MaxPoolWithArgmax',
     'FusedBatchNorm',
@@ -138,12 +140,15 @@ __all__ = [
     'ReLU6',
     'Elu',
     'Sigmoid',
+    'HSwish',
+    'HSigmoid',
     'Tanh',
     'RandomChoiceWithMask',
     'ResizeBilinear',
     'ScalarSummary',
     'ImageSummary',
     'TensorSummary',
+    'HistogramSummary',
     "Print",
     'InsertGradientOf',
     'InvertPermutation',
@@ -177,6 +182,7 @@ __all__ = [
     'ScatterNd',
     'ResizeNearestNeighbor',
     'Pad',
+    'MirrorPad',
     'GatherNd',
     'ScatterNdUpdate',
     'Floor',
@@ -195,7 +201,6 @@ __all__ = [
     'LogicalOr',
     'Size',
     'DepthwiseConv2dNative',
-    'ConcatOffset',
     'UnsortedSegmentSum',
     "AllGather",
     "AllReduce",
@@ -227,7 +232,6 @@ __all__ = [
     "Abs",
     "BinaryCrossEntropy",
     "SparseApplyAdagrad",
-    "SparseApplyFtrlD",
     "SpaceToDepth",
     "DepthToSpace",
     "Conv2DBackpropInput",
@@ -242,4 +246,5 @@ __all__ = [
     "ApplyCenteredRMSProp"
 ]
 
+__all__.extend(_quant_ops.__all__)
 __all__.sort()

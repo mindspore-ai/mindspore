@@ -220,7 +220,7 @@ Status VOCOp::ParseImageIds() {
 }
 
 Status VOCOp::InitSampler() {
-  RETURN_IF_NOT_OK(sampler_->Init(this));
+  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
   return Status::OK();
 }
 

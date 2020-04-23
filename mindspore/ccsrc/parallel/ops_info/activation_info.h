@@ -51,7 +51,7 @@ class Activation : public ActivationBase {
  public:
   Activation(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
              const PrimitiveAttrs& attrs)
-      : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationCost>()) {}
+      : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationCost>(false)) {}
   ~Activation() override = default;
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
@@ -102,7 +102,7 @@ class Softmax : public ActivationBase {
  public:
   explicit Softmax(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
                    const PrimitiveAttrs& attrs)
-      : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<SoftmaxCost>()) {}
+      : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<SoftmaxCost>(false)) {}
   ~Softmax() override = default;
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
@@ -184,6 +184,33 @@ class ExpandDimsInfo : public ActivationOther {
   Strategys inputs_strategy_;
   Strategys outputs_strategy_;
 };
+
+class SqueezeInfo : public ActivationOther {
+ public:
+  SqueezeInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
+              const PrimitiveAttrs& attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~SqueezeInfo() override = default;
+
+ protected:
+  Status InferAxis(const ValueTuplePtr& value_tuple);
+  Status GetAttrs() override;
+  Status InferReplaceOps(const StrategyPtr& strategy);
+  Status InferTensorMap() override;
+  Status InferTensorInfo() override;
+  Status Init(const StrategyPtr& strategy) override;
+
+ private:
+  ValueTuplePtr axis_;
+};
+
+class SquareInfo : public ActivationOther {
+ public:
+  SquareInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
+             const PrimitiveAttrs& attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
+  ~SquareInfo() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_OPS_INFO_PARALLEL_ACTIVATION_INFO_H_
+#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_

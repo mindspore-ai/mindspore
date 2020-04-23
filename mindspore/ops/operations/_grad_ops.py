@@ -20,6 +20,7 @@ from ..._c_expression import signature_kind as sig_kind
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ..._checkparam import ParamValidator as validator
 from ..._checkparam import Rel, check_int_positive, check_bool
+from .._utils import _get_concat_offset
 from ...common import dtype as mstype
 
 
@@ -107,6 +108,33 @@ class BinaryCrossEntropyGrad(PrimitiveWithInfer):
             validator.check_two_types_same('x_type', x_type, 'weight_type', weight_type)
         return x_type
 
+class ConcatOffset(PrimitiveWithInfer):
+    """primitive for computing Concat's gradient."""
+
+    @prim_attr_register
+    def __init__(self, N=2, axis=0):
+        """init ConcatOffset"""
+
+    def __infer__(self, input_x):
+        axis = self.axis
+        x_shp = input_x['shape']
+        x_type = input_x['dtype']
+        offset, _, axis = _get_concat_offset(x_shp, x_type, axis)
+        self.add_prim_attr('T', x_type[0].element_type())
+        offset_values = []
+        for i in range(len(x_shp)):
+            values = []
+            for j in range(len(x_shp[0])):
+                value = 0
+                if j == axis:
+                    value = offset[i]
+                values.append(value)
+            offset_values.append(tuple(values))
+        out = {'shape': None,
+               'dtype': None,
+               'value': tuple(offset_values)}
+        return out
+
 
 class Conv2DBackpropFilter(PrimitiveWithInfer):
     """
@@ -119,8 +147,8 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
         pad (int): The pad value to fill. Default: 0.
         mode (int): 0 Math convolutiuon, 1 cross-correlation convolution ,
                     2 deconvolution, 3 depthwise convolution. Default: 1.
-        stride (int): The stride to apply conv filter. Default: 1.
-        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        stride (tuple): The stride to apply conv filter. Default: (1, 1).
+        dilation (tuple): Specifies the dilation rate to use for dilated convolution. Default: (1, 1, 1, 1).
         group (int): Splits input into groups. Default: 1.
 
     Returns:
@@ -135,8 +163,8 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
                  pad=0,
                  pad_list=(0, 0, 0, 0),
                  mode=1,
-                 stride=1,
-                 dilation=1,
+                 stride=(1, 1),
+                 dilation=(1, 1, 1, 1),
                  group=1):
         """init Convolution"""
         self.init_prim_io_names(inputs=['out_backprop', 'input', 'filter_sizes'], outputs=['output'])
@@ -146,7 +174,9 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
         pad_mode = pad_mode.upper()
         self.add_prim_attr('pad_mode', pad_mode)
         self.pad = pad
-        self.stride = stride
+        if isinstance(stride, tuple) and len(stride) == 4:
+            self.stride = (stride[2], stride[3])
+            self.add_prim_attr('stride', self.stride)
         self.dilation = dilation
         self.group = group
         self.add_prim_attr('data_format', "NCHW")
@@ -805,6 +835,38 @@ class SigmoidGrad(PrimitiveWithInfer):
         return out
 
 
+class HSigmoidGrad(PrimitiveWithInfer):
+    """Gets the gradient of HSigmoid operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
+
+    def infer_shape(self, y_grad_shape, x_shape):
+        return x_shape
+
+    def infer_dtype(self, y_grad_dtype, x_dtype):
+        validator.check_typename("y_grad dtype", y_grad_dtype, (mstype.float16, mstype.float32))
+        validator.check_typename("x dtype", x_dtype, (mstype.float16, mstype.float32))
+        return x_dtype
+
+
+class HSwishGrad(PrimitiveWithInfer):
+    """Gets the gradient of HSwish operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['output'])
+
+    def infer_shape(self, y_grad_shape, x_shape):
+        return x_shape
+
+    def infer_dtype(self, y_grad_dtype, x_dtype):
+        validator.check_typename("y_grad dtype", y_grad_dtype, (mstype.float16, mstype.float32))
+        validator.check_typename("x_ dtype", x_dtype, (mstype.float16, mstype.float32))
+        return x_dtype
+
+
 class SigmoidCrossEntropyWithLogitsGrad(PrimitiveWithInfer):
     """Computes the gradients of `SigmoidCrossEntropyWithLogits`."""
 
@@ -913,6 +975,24 @@ class TanhGrad(PrimitiveWithInfer):
         args = {"out type": out, "dout type": dout}
         validator.check_type_same(args, mstype.number_type)
         return out
+
+
+class MirrorPadGrad(PrimitiveWithInfer):
+    """Gradients of MirrorPad operation."""
+
+    @prim_attr_register
+    def __init__(self, mode="REFLECT"):
+        """init MirrorPad"""
+        validator.check_string('mode', mode, ['REFLECT', 'SYMMETRIC'])
+        self.mode = mode
+
+    def __infer__(self, dout, paddings, x):
+        validator.check_subclass("dout", dout['dtype'], mstype.tensor)
+        validator.check_subclass("paddings", paddings['dtype'], mstype.tensor)
+        validator.check_subclass("input_x", x['dtype'], mstype.tensor)
+        return {'shape': x['shape'],
+                'dtype': dout['dtype'],
+                'value': None}
 
 
 class RefToEmbed(Primitive):

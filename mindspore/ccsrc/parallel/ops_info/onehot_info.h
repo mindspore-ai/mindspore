@@ -33,7 +33,7 @@ class OneHotInfo : public OperatorInfo {
  public:
   OneHotInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
              const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<OneHotCost>()) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<OneHotCost>(false)) {}
   ~OneHotInfo() override = default;
   Status Init(const StrategyPtr& strategy) override;
   Status InitForCostModel(const StrategyPtr& strategy) override;
@@ -65,4 +65,4 @@ class OneHotInfo : public OperatorInfo {
 };
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_OPS_INFO_PARALLEL_ONEHOT_INFO_H_
+#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ONEHOT_INFO_H_

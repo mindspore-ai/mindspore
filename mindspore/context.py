@@ -487,8 +487,8 @@ def set_context(**kwargs):
         enable_loop_sink (bool): Whether to enable loop sink. Default: False.
         enable_task_sink (bool): Whether to enable task sink. Default: True.
         enable_mem_reuse (bool): Whether to enable memory reuse. Default: True.
-        save_ms_model (bool): Whether to save model converted by graph. Default: False.
-        save_ms_model_path (str): Path to save converted model. Default: "."
+        save_ms_model (bool): Whether to save lite model converted by graph. Default: False.
+        save_ms_model_path (str): Path to save converted lite model. Default: "."
         enable_gpu_summary (bool): Whether to enable gpu summary. Default: True.
         save_graphs_path (str): Path to save graphs. Default: "."
         enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: True.

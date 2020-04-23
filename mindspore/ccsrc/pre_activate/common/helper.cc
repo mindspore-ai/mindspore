@@ -28,6 +28,7 @@
 
 namespace mindspore {
 namespace opt {
+constexpr size_t kType32Len = 4;
 std::vector<int> Convert2Int(const std::vector<size_t> &v) {
   std::vector<int> result;
   (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToInt);
@@ -264,6 +265,62 @@ void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNod
   }
 }
 
+template <typename T>
+tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_ptr, const TypePtr &type_ptr,
+                                             size_t data_length) {
+  MS_EXCEPTION_IF_NULL(value_tuple_ptr);
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  std::vector<T> values;
+  for (const auto &v : value_tuple_ptr->value()) {
+    MS_EXCEPTION_IF_NULL(v);
+    if (v->isa<Scalar>()) {
+      ScalarPtr scalar = v->cast<ScalarPtr>();
+      values.push_back(GetValue<T>(scalar));
+    } else {
+      MS_LOG(WARNING) << "The value " << v << "of tuple is not a scalar";
+      return nullptr;
+    }
+  }
+  std::vector<int> tensor_shape = {SizeToInt(values.size())};
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_ptr->type_id(), tensor_shape);
+  MS_EXCEPTION_IF_NULL(tensor);
+  tensor::DeviceInfo device_info{kOpFormat_DEFAULT, type_ptr};
+  tensor->set_device_info(device_info);
+  auto data_ptr = tensor->data_c(true);
+  MS_EXCEPTION_IF_NULL(data_ptr);
+  auto elem_num = values.size() * data_length;
+  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), values.data(), elem_num);
+  if (ret_code != 0) {
+    MS_LOG(EXCEPTION) << "Failed to copy data into Tensor.";
+  }
+  return tensor;
+}
+
+tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
+  MS_EXCEPTION_IF_NULL(value_tuple);
+  tensor::TensorPtr tensor = nullptr;
+  ValuePtr v = *(value_tuple->value().begin());
+  MS_EXCEPTION_IF_NULL(v);
+  // Currently we only deal with the scalar tuple
+  if (!v->isa<Scalar>()) {
+    MS_LOG(WARNING) << "The value " << v << "of tuple is not a scalar";
+    return nullptr;
+  }
+  ScalarPtr scalar = v->cast<ScalarPtr>();
+  MS_EXCEPTION_IF_NULL(scalar);
+  if (scalar->isa<IntergerImm>()) {
+    tensor = CreateTensorWithValueTuple<int>(value_tuple, kInt32, kType32Len);
+  } else if (scalar->isa<FloatImm>()) {
+    tensor = CreateTensorWithValueTuple<float>(value_tuple, kFloat32, kType32Len);
+  } else {
+    auto type = scalar->type();
+    auto type_str = (type == nullptr) ? "nullptr" : type->ToString();
+    MS_LOG(ERROR) << "Invalid scalar type: " << type_str;
+    return nullptr;
+  }
+  return tensor;
+}
+
 bool IsNopNode(const AnfNodePtr &node) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -279,10 +336,6 @@ bool IsNopNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (nop_nodes.find(AnfAlgo::GetCNodeName(cnode)) == nop_nodes.end()) {
     return false;
-  }
-  if (cnode->inputs().size() != 2) {
-    MS_LOG(EXCEPTION) << "Nop node(" + cnode->DebugString() + ") should have only 1 input, but it has "
-                      << cnode->inputs().size() - 1 << " inputs.";
   }
   return true;
 }
@@ -353,6 +406,21 @@ bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
     MS_LOG(EXCEPTION) << "node has no output in manager";
   }
   return manager->node_users()[node].size() > 1;
+}
+
+AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
+  auto idx = NewValueNode(SizeToInt(output_idx));
+  MS_EXCEPTION_IF_NULL(idx);
+  auto imm = std::make_shared<Int32Imm>(SizeToInt(output_idx));
+  auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
+  idx->set_abstract(abstract_scalar);
+  AnfNodePtr tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
+  MS_EXCEPTION_IF_NULL(tuple_getitem);
+  tuple_getitem->set_scope(node->scope());
+  std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);
+  TypeId origin_type = AnfAlgo::GetOutputInferDataType(node, output_idx);
+  AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
+  return tuple_getitem;
 }
 }  // namespace opt
 }  // namespace mindspore

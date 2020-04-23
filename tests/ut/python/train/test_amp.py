@@ -14,12 +14,15 @@
 # ============================================================================
 """ auto mixed precision """
 import numpy as np
+import pytest
 from mindspore import amp
 from mindspore import nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 import mindspore.context as context
 from mindspore.model_zoo.resnet import resnet50
+from mindspore.train import Model
+from ....dataset_mock import MindData
 
 
 def setup_module(module):
@@ -85,3 +88,52 @@ def test_amp_o0_loss():
     optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_network = amp.build_train_network(net, optimizer, loss)
     output = train_network(inputs, label)
+
+
+class MindDataSet(MindData):
+    def __init__(self, dataset_types, dataset_shapes):
+        super(MindDataSet, self).__init__(size=2, batch_size=32,
+                                          np_types=dataset_types,
+                                          output_shapes=dataset_shapes,
+                                          input_indexs=(0, 1))
+    def __next__(self):
+        if self._size < self._iter_num:
+            raise StopIteration
+        self._iter_num += 1
+        next = []
+        for shape, type in zip(self._output_shapes, self._np_types):
+            next.append(Tensor(np.ones(shape).astype(type)))
+        return tuple(next)
+
+
+def test_compile_model_train_O0():
+    dataset_types = (np.float32, np.float32)
+    dataset_shapes = ((16, 16), (16, 16))
+
+    dataset = MindDataSet(dataset_types, dataset_shapes)
+
+    net = NetNoLoss(16, 16)
+    loss = nn.MSELoss()
+    optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+
+    model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={"acc"}, amp_level="O0")
+    model.train(2, dataset, dataset_sink_mode=False)
+    with pytest.raises(ValueError):
+        # not actual run, the metrics step will fail, check if compile ok.
+        model.eval(dataset)
+
+def test_compile_model_train_O2():
+    dataset_types = (np.float32, np.float32)
+    dataset_shapes = ((16, 16), (16, 16))
+
+    dataset = MindDataSet(dataset_types, dataset_shapes)
+
+    net = NetNoLoss(16, 16)
+    loss = nn.MSELoss()
+    optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+
+    model = Model(net, loss_fn=loss, optimizer=optimizer, metrics={"acc"}, amp_level="O2")
+    model.train(2, dataset, dataset_sink_mode=False)
+    with pytest.raises(ValueError):
+        # not actual run, the metrics step will fail, check if compile ok.
+        model.eval(dataset)

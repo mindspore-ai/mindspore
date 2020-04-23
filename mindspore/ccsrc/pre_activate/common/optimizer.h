@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -46,6 +47,7 @@ class PatternProcessPass : public NodePass {
   AnfNodePtr pattern_ = nullptr;
   bool multigraph_ = true;
   PatternEngine pattern_engine_;
+  PrimitiveVarMapPtr primitive_vars_;
 };
 
 class GraphOptimizer {

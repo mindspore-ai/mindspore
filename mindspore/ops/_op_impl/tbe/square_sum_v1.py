@@ -14,63 +14,25 @@
 # ============================================================================
 
 """SquareSumV1 op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+square_sum_v1_op_info = TBERegOp("SquareSumV1") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("square_sum_v1.so") \
+    .compute_cost(10) \
+    .kernel_name("square_sum_v1") \
+    .partial_flag(True) \
+    .attr("axis", "optional", "listInt", "all") \
+    .attr("keep_dims", "optional", "bool", "all") \
+    .input(0, "input_x", False, "required", "all") \
+    .output(0, "output1", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "SquareSumV1",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "square_sum_v1.so",
-    "compute_cost": 10,
-    "kernel_name": "square_sum_v1",
-    "partial_flag": true,
-    "attr":[
-        {
-            "name":"axis",
-            "param_type":"optional",
-            "type":"listInt",
-            "value":"all"
-        },
-        {
-            "name":"keep_dims",
-            "param_type":"optional",
-            "type":"bool",
-            "value":"all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float32"
-            ],
-            "format": [
-               "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "input_x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float32"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "output1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(square_sum_v1_op_info)
 def _square_sum_v1_tbe():
     """SquareSumV1 TBE register"""
     return

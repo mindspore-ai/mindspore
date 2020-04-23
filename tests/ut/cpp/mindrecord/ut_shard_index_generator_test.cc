@@ -53,6 +53,7 @@ class TestShardIndexGenerator : public UT::Common {
   TestShardIndexGenerator() {}
 };
 
+/*
 TEST_F(TestShardIndexGenerator, GetField) {
   MS_LOG(INFO) << FormatInfo("Test ShardIndex: get field");
 
@@ -82,6 +83,8 @@ TEST_F(TestShardIndexGenerator, GetField) {
     }
   }
 }
+*/
+
 TEST_F(TestShardIndexGenerator, TakeFieldType) {
   MS_LOG(INFO) << FormatInfo("Test ShardSchema: take field Type");
 

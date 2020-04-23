@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_GATHER_GPU_CU_H
 #define MINDSPORE_GATHER_GPU_CU_H
-template <typename T, typename  S>
+template <typename T, typename S>
 void Gather(T *input, S *indices, T *output, size_t output_dim0, size_t output_dim1, size_t output_dim2,
             size_t input_dim1, cudaStream_t stream);
 

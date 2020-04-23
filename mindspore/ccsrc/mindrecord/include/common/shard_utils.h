@@ -21,8 +21,10 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <sys/statfs.h>
 #include <sys/wait.h>
+#endif
 #include <unistd.h>
 #include <cassert>
 #include <cmath>
@@ -33,6 +35,7 @@
 #include <map>
 #include <random>
 #include <set>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -66,6 +69,8 @@ enum ShardType {
   kNLP = 0,
   kCV = 1,
 };
+
+enum SamplerType { kCustomTopNSampler, kCustomTopPercentSampler, kSubsetRandomSampler, kPKSampler };
 
 const double kEpsilon = 1e-7;
 
@@ -116,6 +121,12 @@ const char kPoint = '.';
 
 // field type used by check schema validation
 const std::set<std::string> kFieldTypeSet = {"bytes", "string", "int32", "int64", "float32", "float64"};
+
+// can be searched field list
+const std::set<std::string> kScalarFieldTypeSet = {"string", "int32", "int64", "float32", "float64"};
+
+// number field list
+const std::set<std::string> kNumberFieldTypeSet = {"int32", "int64", "float32", "float64"};
 
 /// \brief split a string using a character
 /// \param[in] field target string

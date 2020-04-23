@@ -27,6 +27,7 @@
 #include "utils/context/ms_context.h"
 #include "device/ascend/profiling/profiling_manager.h"
 #include "hccl/hcom.h"
+#include "common/trans.h"
 #include "runtime/context.h"
 #include "device/ascend/ascend_stream_assign.h"
 #include "device/ascend/ascend_memory_pool.h"
@@ -53,9 +54,9 @@ static const size_t PRAMATER_OUTPUT_INDEX = 0;
 AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
 
 void AscendKernelRuntime::ClearGraphModelMap() {
-  for (auto &iter : graph_model_id_map_) {
-    MS_LOG(INFO) << "Ge UnloadModel " << iter.second;
-    auto ret = ge::model_runner::ModelRunner::Instance().UnloadModel(iter.second);
+  for (auto &iter : graph_model_map_) {
+    MS_LOG(INFO) << "Ge UnloadModel " << iter.first;
+    auto ret = ge::model_runner::ModelRunner::Instance().UnloadModel(iter.first);
     if (!ret) {
       MS_LOG(ERROR) << "UnloadModel failed";
     }
@@ -85,8 +86,10 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
     MS_EXCEPTION(DeviceProcessError) << "rtSetDevice, ret[" << static_cast<int>(ret) << "]";
   }
 
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->FreeDeviceMemory();
+  if (mem_manager_ != nullptr) {
+    mem_manager_->FreeDeviceMemory();
+  }
+
   (void)DestroyHccl();
   (void)ResetDevice();
   (void)ProfilingManager::GetInstance().StopProfiling();
@@ -148,14 +151,18 @@ void DumpOutput(mindspore::session::KernelGraph *graph, const string &dump_path,
     auto output_size = AnfAlgo::GetOutputTensorNum(node);
     for (size_t j = 0; j < output_size; ++j) {
       auto addr = AnfAlgo::GetOutputAddr(node, j);
-      auto shape = AnfAlgo::GetOutputInferShape(node, j);
+      std::vector<int> int_shapes;
+      if (trans_flag) {
+        int_shapes = trans::GetRuntimePaddingShape(node, j);
+      } else {
+        auto shape = AnfAlgo::GetOutputDeviceShape(node, j);
+        (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                             [](size_t inner_item) { return SizeToInt(inner_item); });
+      }
       auto type = AnfAlgo::GetOutputInferDataType(node, j);
       auto format = kOpFormat_DEFAULT;
       string filepath = dump_path + '/' + kernel_name + '_' + "output_" + std::to_string(j);
       auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
-      std::vector<int> int_shapes;
-      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                           [](size_t inner_item) { return SizeToInt(inner_item); });
       auto ret = ascend_addr->DumpMemToFile(trans_flag, filepath, format, int_shapes, type);
       if (!ret) {
         MS_LOG(ERROR) << "DumpMemToFile Failed: flag:" << trans_flag << ", path:" << filepath
@@ -179,14 +186,18 @@ void DumpParameters(mindspore::session::KernelGraph *graph, const string &dump_p
       continue;
     }
     auto addr = AnfAlgo::GetOutputAddr(item, PRAMATER_OUTPUT_INDEX);
-    auto shape = AnfAlgo::GetOutputInferShape(item, PRAMATER_OUTPUT_INDEX);
+    std::vector<int> int_shapes;
+    if (trans_flag) {
+      int_shapes = trans::GetRuntimePaddingShape(item, PRAMATER_OUTPUT_INDEX);
+    } else {
+      auto shape = AnfAlgo::GetOutputDeviceShape(item, PRAMATER_OUTPUT_INDEX);
+      (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
+                           [](size_t inner_item) { return SizeToInt(inner_item); });
+    }
     auto type = AnfAlgo::GetOutputInferDataType(item, PRAMATER_OUTPUT_INDEX);
     auto format = kOpFormat_DEFAULT;
     string filepath = dump_path + '/' + parameter_name + '_' + "output_0";
     auto ascend_addr = dynamic_cast<const mindspore::device::ascend::AscendDeviceAddress *>(addr);
-    std::vector<int> int_shapes;
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
-                         [](size_t inner_item) { return SizeToInt(inner_item); });
     auto ret = ascend_addr->DumpMemToFile(trans_flag, filepath, format, int_shapes, type);
     if (!ret) {
       MS_LOG(ERROR) << "DumpMemToFile Failed: flag:" << trans_flag << ", path:" << filepath
@@ -238,6 +249,10 @@ DeviceAddressPtr AscendKernelRuntime::CreateDeviceAddress(void *device_ptr, size
 }
 
 bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
+  if (graph == nullptr) {
+    MS_EXCEPTION(NotExistsError) << "session::KernelGraph is NULL!";
+  }
+  MS_LOG(INFO) << "GenTask start. GraphId:" << graph->graph_id();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_task_sink = context_ptr->enable_task_sink();
@@ -250,12 +265,21 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
     mindspore::memreuse::MemReuseChecker::GetInstance().CheckNormalIR(graph);
   }
 #endif
-  if (graph == nullptr) {
-    MS_EXCEPTION(NotExistsError) << "session::KernelGraph is NULL!";
-  }
   vector<std::shared_ptr<TaskInfo>> task_info_list;
   auto anf_node_list = graph->execution_order();
   TaskGenerator::GenTasks(anf_node_list, &task_info_list, graph->graph_id());
+
+  // Store the task_info_list
+  auto insert_ret = task_map_.insert(std::make_pair(graph->graph_id(), task_info_list));
+  if (!insert_ret.second) {
+    MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
+  }
+
+  // Graph may have no compute node, such TensorAddGrad.
+  if (task_info_list.empty()) {
+    MS_LOG(WARNING) << "graph " << graph->graph_id() << " have no compute node";
+    return true;
+  }
 
   AscendStreamAssign &assign_instance = AscendStreamAssign::GetInstance();
   // the streams' flag not HEAD_STREAM
@@ -272,29 +296,19 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
     task_info_list, empty_list, empty_list, empty_list, empty_list, wait_active_stream_list, force_copy_stream_list, 0,
     0, 0, 0, 0, 0, assign_instance.GetTotalStreamNum(), 1, assign_instance.GetTotalEventNum(), 0);
 
-  graph_model_map_[graph] = model;
-  graph_model_id_map_[graph] = graph->graph_id();
-  MS_LOG(INFO) << "TaskGenerator GetTaskInfo end...";
-
-  // Store the task_info_list
-  task_map_.insert(std::make_pair(graph, task_info_list));
-
-  return true;
-}
-
-uint32_t AscendKernelRuntime::GetGraphModelId(const session::KernelGraph *kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto iter = graph_model_id_map_.find(kernel_graph);
-  if (iter == graph_model_id_map_.end()) {
-    MS_LOG(EXCEPTION) << "graph not in the map";
+  auto ret = graph_model_map_.insert(std::make_pair(graph->graph_id(), model));
+  if (!ret.second) {
+    MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";
   }
-  return iter->second;
+  MS_LOG(INFO) << "TaskGenerator GetTaskInfo end...";
+  return true;
 }
 
 bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   if (graph == nullptr) {
     MS_EXCEPTION(NotExistsError) << "Null pointer graph, LoadTask failed. ";
   }
+  MS_LOG(INFO) << "LoadTask start. GraphId:" << graph->graph_id();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_task_sink = context_ptr->enable_task_sink();
@@ -302,23 +316,27 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
     return true;
   }
 
-  auto task_iter = graph_model_map_.find(graph);
-  if (task_iter == graph_model_map_.end()) {
-    MS_LOG(ERROR) << "task not exist";
+  if (GraphWithEmptyTaskList(graph)) {
+    MS_LOG(WARNING) << "LoadTask end, task list is empty";
+    return true;
+  }
+
+  auto model_iter = graph_model_map_.find(graph->graph_id());
+  if (model_iter == graph_model_map_.end()) {
+    MS_LOG(ERROR) << "GraphId:" << graph->graph_id() << " Invalid! Graph LoadTask without GenTask.";
     return false;
   }
 
-  auto model_id = GetGraphModelId(graph);
   std::shared_ptr<ge::ModelListener> listener;
-  MS_LOG(INFO) << "LoadDavinciModel mode_id:" << model_id;
-  bool status =
-    ge::model_runner::ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_id, task_iter->second, listener);
+  MS_LOG(INFO) << "LoadDavinciModel mode_id:" << model_iter->first;
+  bool status = ge::model_runner::ModelRunner::Instance().LoadDavinciModel(device_id_, 0, model_iter->first,
+                                                                           model_iter->second, listener);
   if (!status) {
-    MS_LOG(INFO) << "load task failed";
+    MS_LOG(ERROR) << "load task failed";
     return false;
   }
   if (ProfilingManager::GetInstance().IsProfiling()) {
-    std::vector<uint32_t> task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(model_id);
+    std::vector<uint32_t> task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(model_iter->first);
     ProfilingUtils::ReportProfilingData(graph->graph_id(), task_ids);
   }
   return true;
@@ -326,12 +344,23 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
 
 bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "RunTask start. GraphId:" << graph->graph_id();
+
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   ge::InputData input_tensors = ge::InputData();
   ge::OutputData *output_tensors = nullptr;
-  auto model_id = GetGraphModelId(graph);
-  bool status = ge::model_runner::ModelRunner::Instance().RunModel(model_id, input_tensors, output_tensors);
+  if (GraphWithEmptyTaskList(graph)) {
+    MS_LOG(WARNING) << "RunTask end, no task info found";
+    return true;
+  }
+
+  if (!CheckGraphIdValid(graph->graph_id())) {
+    MS_LOG(ERROR) << "GraphId:" << graph->graph_id() << " Invalid! Graph RunTask without GenTask.";
+    return false;
+  }
+
+  bool status = ge::model_runner::ModelRunner::Instance().RunModel(graph->graph_id(), input_tensors, output_tensors);
   if (!status) {
     MS_LOG(INFO) << "run task failed";
     return false;
@@ -464,6 +493,18 @@ bool AscendKernelRuntime::DestroyHccl() {
   MS_LOG(INFO) << "hccl destroy successful, status = " << res << ".";
   context_ptr->set_enable_hccl(false);
   return true;
+}
+
+bool AscendKernelRuntime::GraphWithEmptyTaskList(const session::KernelGraph *graph) const {
+  auto iter = task_map_.find(graph->graph_id());
+  if (iter == task_map_.end()) {
+    MS_LOG(EXCEPTION) << "Unknown graph ptr";
+  }
+  return iter->second.empty();
+}
+
+bool AscendKernelRuntime::CheckGraphIdValid(GraphId graph_id) const {
+  return task_map_.find(graph_id) != task_map_.end() && graph_model_map_.find(graph_id) != graph_model_map_.end();
 }
 }  // namespace ascend
 }  // namespace device

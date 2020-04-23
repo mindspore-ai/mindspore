@@ -190,7 +190,7 @@ def vm_impl_slice(self):
     return vm_impl
 
 
-@vm_impl_getters.register(P.ConcatOffset)
+@vm_impl_getters.register(P._grad_ops.ConcatOffset)
 def vm_impl_concatOffset(self):
     """Generate vm_impl function for ConcatOffset"""
     def vm_impl(x):

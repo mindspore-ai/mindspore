@@ -1,6 +1,10 @@
 include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
+if (CMAKE_SYSTEM_NAME MATCHES "Windows" AND ${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.17.0)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .dll ${CMAKE_FIND_LIBRARY_SUFFIXES})
+endif ()
+
 function(mindspore_add_submodule_obj des_submodule_objs sub_dir submodule_name_obj)
 
     add_subdirectory(${sub_dir})
@@ -103,7 +107,7 @@ function(__download_pkg_with_git pkg_name pkg_url pkg_git_commit pkg_md5)
 endfunction()
 
 
-function(__find_pkg_then_add_target pkg_name pkg_exe)
+function(__find_pkg_then_add_target pkg_name pkg_exe lib_path)
 
     unset(${pkg_name}_LIBS)
 
@@ -129,15 +133,24 @@ function(__find_pkg_then_add_target pkg_name pkg_exe)
             set(_LIB_TYPE STATIC)
         endif ()
         set(${_LIB_NAME}_LIB ${_LIB_NAME}_LIB-NOTFOUND)
-        find_library(${_LIB_NAME}_LIB ${_LIB_SEARCH_NAME} PATHS ${${pkg_name}_BASE_DIR}/lib NO_DEFAULT_PATH)
+        find_library(${_LIB_NAME}_LIB ${_LIB_SEARCH_NAME} PATHS ${${pkg_name}_BASE_DIR}/${lib_path} NO_DEFAULT_PATH)
+
         if(NOT ${_LIB_NAME}_LIB)
             return()
         endif()
+
         add_library(${pkg_name}::${_LIB_NAME} ${_LIB_TYPE} IMPORTED GLOBAL)
-        set_target_properties(${pkg_name}::${_LIB_NAME} PROPERTIES
-                INTERFACE_INCLUDE_DIRECTORIES "${${pkg_name}_BASE_DIR}/include"
-                IMPORTED_LOCATION ${${_LIB_NAME}_LIB}
-                )
+        if (WIN32 AND ${_LIB_TYPE} STREQUAL "SHARED")
+            set_target_properties(${pkg_name}::${_LIB_NAME} PROPERTIES IMPORTED_IMPLIB_RELEASE ${${_LIB_NAME}_LIB})
+        else()
+            set_target_properties(${pkg_name}::${_LIB_NAME} PROPERTIES IMPORTED_LOCATION ${${_LIB_NAME}_LIB})
+        endif()
+
+        if (EXISTS ${${pkg_name}_BASE_DIR}/include)
+            set_target_properties(${pkg_name}::${_LIB_NAME} PROPERTIES 
+                INTERFACE_INCLUDE_DIRECTORIES "${${pkg_name}_BASE_DIR}/include")
+        endif ()
+
         list(APPEND ${pkg_name}_LIBS ${pkg_name}::${_LIB_NAME})
         message("found ${${_LIB_NAME}_LIB}")
         STRING( REGEX REPLACE "(.+)/(.+)" "\\1" LIBPATH ${${_LIB_NAME}_LIB})
@@ -192,9 +205,17 @@ set(MS_FIND_NO_DEFAULT_PATH ${MS_FIND_NO_DEFAULT_PATH} PARENT_SCOPE)
 function(mindspore_add_pkg pkg_name )
 
     set(options )
-    set(oneValueArgs URL MD5 GIT_REPOSITORY GIT_TAG VER EXE DIR HEAD_ONLY)
-    set(multiValueArgs CMAKE_OPTION LIBS PRE_CONFIGURE_COMMAND CONFIGURE_COMMAND BUILD_OPTION INSTALL_INCS INSTALL_LIBS PATCHES)
+    set(oneValueArgs URL MD5 GIT_REPOSITORY GIT_TAG VER EXE DIR HEAD_ONLY CMAKE_PATH RELEASE LIB_PATH)
+    set(multiValueArgs CMAKE_OPTION LIBS PRE_CONFIGURE_COMMAND CONFIGURE_COMMAND BUILD_OPTION INSTALL_INCS INSTALL_LIBS PATCHES SUBMODULES SOURCEMODULES)
     cmake_parse_arguments(PKG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+
+    if (NOT PKG_LIB_PATH)
+        set(PKG_LIB_PATH lib)
+    endif ()
+
+    if(NOT PKG_EXE)
+        set(PKG_EXE 0)
+    endif()
 
     set(__FIND_PKG_NAME ${pkg_name})
     string(TOLOWER ${pkg_name} pkg_name)
@@ -223,18 +244,17 @@ function(mindspore_add_pkg pkg_name )
         set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/${PKG_HEAD_ONLY} PARENT_SCOPE)
         add_library(${pkg_name} INTERFACE)
         target_include_directories(${pkg_name} INTERFACE ${${pkg_name}_INC})
+        if (${PKG_RELEASE})
+            __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH} ${PKG_LIBS})
+        endif ()
         return()
     endif ()
-
-    if(NOT PKG_EXE)
-        set(PKG_EXE 0)
-    endif()
 
     set(${__FIND_PKG_NAME}_ROOT ${${pkg_name}_BASE_DIR})
     set(${__FIND_PKG_NAME}_ROOT ${${pkg_name}_BASE_DIR} PARENT_SCOPE)
 
     if (PKG_LIBS)
-        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIBS})
+        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH} ${PKG_LIBS})
         if(${pkg_name}_LIBS)
             set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/include PARENT_SCOPE)
             message("Found libs: ${${pkg_name}_LIBS}")
@@ -250,11 +270,21 @@ function(mindspore_add_pkg pkg_name )
     endif ()
 
     if (NOT PKG_DIR)
-	if (PKG_GIT_REPOSITORY)
-	    __download_pkg_with_git(${pkg_name} ${PKG_GIT_REPOSITORY} ${PKG_GIT_TAG} ${PKG_MD5})
-	else()
+        if (PKG_GIT_REPOSITORY)
+            __download_pkg_with_git(${pkg_name} ${PKG_GIT_REPOSITORY} ${PKG_GIT_TAG} ${PKG_MD5})
+        else()
             __download_pkg(${pkg_name} ${PKG_URL} ${PKG_MD5})
-	endif()
+        endif()
+        foreach(_SUBMODULE_FILE ${PKG_SUBMODULES})
+            STRING( REGEX REPLACE "(.+)_(.+)" "\\1" _SUBMODEPATH ${_SUBMODULE_FILE})
+            STRING( REGEX REPLACE "(.+)/(.+)" "\\2" _SUBMODENAME ${_SUBMODEPATH})
+            file(GLOB ${pkg_name}_INSTALL_SUBMODULE ${_SUBMODULE_FILE}/*)
+            file(COPY ${${pkg_name}_INSTALL_SUBMODULE} DESTINATION ${${pkg_name}_SOURCE_DIR}/3rdparty/${_SUBMODENAME})
+        endforeach (_SUBMODULE_FILE)
+        foreach(_SOURCE_DIR ${PKG_SOURCEMODULES})
+            file(GLOB ${pkg_name}_INSTALL_SOURCE ${${pkg_name}_SOURCE_DIR}/${_SOURCE_DIR}/*)
+            file(COPY ${${pkg_name}_INSTALL_SOURCE} DESTINATION ${${pkg_name}_BASE_DIR}/${_SOURCE_DIR}/)
+        endforeach (_SUBMODULE_FILE)
     else()
         set(${pkg_name}_SOURCE_DIR ${PKG_DIR})
     endif ()
@@ -262,12 +292,16 @@ function(mindspore_add_pkg pkg_name )
     message("${pkg_name}_SOURCE_DIR : ${${pkg_name}_SOURCE_DIR}")
 
     foreach(_PATCH_FILE ${PKG_PATCHES})
-        message("patching ${${pkg_name}_SOURCE_DIR} -p1 < ${_PATCH_FILE}")
-        execute_process(COMMAND patch -p1 INPUT_FILE ${_PATCH_FILE}
+        get_filename_component(_PATCH_FILE_NAME ${_PATCH_FILE} NAME)
+        set(_LF_PATCH_FILE ${CMAKE_BINARY_DIR}/_ms_patch/${_PATCH_FILE_NAME})
+        configure_file(${_PATCH_FILE} ${_LF_PATCH_FILE} NEWLINE_STYLE LF)
+
+        message("patching ${${pkg_name}_SOURCE_DIR} -p1 < ${_LF_PATCH_FILE}")
+        execute_process(COMMAND ${Patch_EXECUTABLE} -p1 INPUT_FILE ${_LF_PATCH_FILE}
                 WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}
                 RESULT_VARIABLE Result)
         if(NOT Result EQUAL "0")
-            message(FATAL_ERROR "Failed patch: ${_PATCH_FILE}")
+            message(FATAL_ERROR "Failed patch: ${_LF_PATCH_FILE}")
         endif()
     endforeach(_PATCH_FILE)
         
@@ -281,8 +315,10 @@ function(mindspore_add_pkg pkg_name )
             file(GLOB ${pkg_name}_SOURCE_SUBDIRS ${${pkg_name}_SOURCE_DIR}/*)
             file(COPY ${${pkg_name}_SOURCE_SUBDIRS} DESTINATION ${${pkg_name}_BASE_DIR})
             set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/${PKG_HEAD_ONLY} PARENT_SCOPE)
-            add_library(${pkg_name} INTERFACE)
-            target_include_directories(${pkg_name} INTERFACE ${${pkg_name}_INC})
+            if (NOT PKG_RELEASE)
+                add_library(${pkg_name} INTERFACE)
+                target_include_directories(${pkg_name} INTERFACE ${${pkg_name}_INC})
+            endif ()
 
         elseif (PKG_CMAKE_OPTION)
             # in cmake
@@ -304,7 +340,7 @@ function(mindspore_add_pkg pkg_name )
 
             __exec_cmd(COMMAND ${CMAKE_COMMAND} ${PKG_CMAKE_OPTION} -G ${CMAKE_GENERATOR}
                     ${${pkg_name}_CMAKE_CFLAGS} ${${pkg_name}_CMAKE_CXXFLAGS} ${${pkg_name}_CMAKE_LDFLAGS}
-                    -DCMAKE_INSTALL_PREFIX=${${pkg_name}_BASE_DIR} ..
+                    -DCMAKE_INSTALL_PREFIX=${${pkg_name}_BASE_DIR} ${${pkg_name}_SOURCE_DIR}/${PKG_CMAKE_PATH}
                     WORKING_DIRECTORY ${${pkg_name}_SOURCE_DIR}/_build)
 
             __exec_cmd(COMMAND ${CMAKE_COMMAND} --build . --target install -- -j${THNUM}
@@ -353,7 +389,7 @@ function(mindspore_add_pkg pkg_name )
     endif()
 
     if (PKG_LIBS)
-        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIBS})
+        __find_pkg_then_add_target(${pkg_name} ${PKG_EXE} ${PKG_LIB_PATH} ${PKG_LIBS})
         set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/include PARENT_SCOPE)
         if(NOT ${pkg_name}_LIBS)
             message(FATAL_ERROR "Can not find pkg: ${pkg_name}")

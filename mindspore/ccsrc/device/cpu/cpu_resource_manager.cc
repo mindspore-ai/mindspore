@@ -60,6 +60,7 @@ void CPUResourceManager::MemMalloc(const session::KernelGraph *graph) {
 void *CPUResourceManager::MemMalloc(size_t mem_size) {
   void *ptr = malloc(mem_size);
   if (ptr != nullptr) {
+    memset_s(ptr, mem_size, 0, mem_size);
     dynamic_mem_[ptr] = mem_size;
     return ptr;
   } else {

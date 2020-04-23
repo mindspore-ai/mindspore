@@ -19,7 +19,11 @@ option(ENABLE_MPI "enable mpi" OFF)
 option(ENABLE_AKG "enable akg" OFF)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(OPTION_CXX_FLAGS "${OPTION_CXX_FLAGS} -fstack-protector-all -Wl,-z,relro,-z,now,-z,noexecstack")
+    if (WIN32)
+        set(OPTION_CXX_FLAGS "${OPTION_CXX_FLAGS} -fstack-protector-all")
+    else()
+        set(OPTION_CXX_FLAGS "${OPTION_CXX_FLAGS} -fstack-protector-all -Wl,-z,relro,-z,now,-z,noexecstack")
+    endif()
 endif()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
@@ -41,8 +45,8 @@ endif()
 
 if (DEBUG_MODE)
     set(CMAKE_BUILD_TYPE "Debug")
-else()
     add_compile_definitions(MEM_REUSE_DEBUG)
+else()
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
@@ -60,6 +64,7 @@ endif()
 
 if (ENABLE_GPU)
     set(ENABLE_GPUQUE ON)
+    add_compile_definitions(ENABLE_GPU_COLLECTIVE)
 endif()
 
 if (ENABLE_GE)

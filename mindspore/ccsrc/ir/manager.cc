@@ -985,40 +985,14 @@ void ParentComputer::RealRecompute(FuncGraphPtr fg) {
   }
 }
 
-// children include:
-//  A. func graphs which use variables in fg as free variables; (child_direct_)
-//  B. func graphs which call func func graph in A. (all_users_)
-FuncGraphSetPtr ChildrenComputer::SeekChildren(const FuncGraphPtr& fg, const FuncGraphSetPtr& path) {
-  if (path == nullptr || path->contains(fg)) {
-    return std::make_shared<FuncGraphSet>();
-  }
-  std::shared_ptr<FuncGraphSet> children = std::make_shared<FuncGraphSet>();
-  auto& deps = *child_direct_;
-  auto& users = *all_users_;
-  MS_LOG(DEBUG) << "" << fg->ToString() << " start func graph dep size:" << deps[fg].size();
-  for (auto& dep : deps[fg]) {
-    FuncGraphPtr child = dep.first;
-    children->add(child);
-    path->add(child);
-    MS_LOG(DEBUG) << "Child func graph:" << fg->ToString() << " child " << child->ToString();
-    for (auto& user : users[child]) {
-      auto user_func_graph = user.first;
-      MS_LOG(DEBUG) << "Func graph:" << fg->ToString() << " user " << user_func_graph->ToString();
-      children->add(user_func_graph);
-      path->add(user_func_graph);
-    }
-    children->update(SeekChildren(child, path));
-  }
-  (void)children->erase(fg);
-  MS_LOG(DEBUG) << "End in children: " << children->size();
-  return children;
-}
-
 void ChildrenComputer::RealRecompute(FuncGraphPtr fg) {
   MS_EXCEPTION_IF_NULL(manager_);
-  child_direct_ = &manager_->func_graph_child_direct();
-  all_users_ = &manager_->func_graph_users();
-  children_analysis_[fg].update(SeekChildren(fg));
+  auto used_fg_total = manager_->func_graphs_used_total(fg);
+  for (auto& used_fg : used_fg_total) {
+    if (manager_->parent(used_fg) == fg) {
+      children_analysis_[fg].add(used_fg);
+    }
+  }
 }
 
 void ScopeComputer::RealRecompute(FuncGraphPtr fg) {

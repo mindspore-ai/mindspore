@@ -31,9 +31,8 @@ SubsetRandomSampler::SubsetRandomSampler(const std::vector<int64_t> &indices, in
     : Sampler(samples_per_buffer), indices_(indices), sample_id_(0), buffer_id_(0) {}
 
 // Initialized this Sampler.
-Status SubsetRandomSampler::Init(const RandomAccessOp *op) {
-  // Calling base class init.
-  RETURN_IF_NOT_OK(Sampler::Init(op));
+Status SubsetRandomSampler::InitSampler() {
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "num_rows <= 0\n");
 
   // Initialize random generator with seed from config manager
   rand_gen_.seed(GetSeed());

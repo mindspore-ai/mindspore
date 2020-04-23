@@ -64,14 +64,15 @@ def test_grad_inline_mul_add():
 class WithParameter(nn.Cell):
     def __init__(self):
         super(WithParameter, self).__init__()
-        self.param = Parameter(2, 'param')
+        self.param1 = Parameter(1, 'param1')
+        self.param2 = Parameter(2, 'param2')
 
     def construct(self, x, y):
-        return self.param * x + y
+        return self.param1 * self.param2 * x + y
 
     def bprop(self, x, y, out, dout):
         # In this test case, The user defined bprop is wrong defined purposely to distinguish from ad result
-        return self.param * dout, 2 * y
+        return self.param1 * self.param2 * dout, 2 * y
 
 def test_with_param():
     with_param = WithParameter()

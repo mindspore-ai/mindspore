@@ -14,11 +14,9 @@
 # ============================================================================
 """sgd"""
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore._checkparam import ParamValidator as validator
-import mindspore.common.dtype as mstype
-from .optimizer import Optimizer, grad_scale
+from .optimizer import Optimizer
 
 sgd_opt = C.MultitypeFuncGraph("sgd_opt")
 
@@ -63,7 +61,8 @@ class SGD(Optimizer):
         dampening (float): A floating point value of dampening for momentum. Default: 0.
         weight_decay (float): Weight decay (L2 penalty). Default: 0.
         nesterov (bool): Enables the Nesterov momentum. Default: False.
-        loss_scale (float): A floating point value for the loss scale. Default: 1.0.
+        loss_scale (float): A floating point value for the loss scale, which should be larger
+        than 0.0. Default: 1.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -83,53 +82,40 @@ class SGD(Optimizer):
     def __init__(self, params, learning_rate=0.1, momentum=0.0, dampening=0.0, weight_decay=0.0, nesterov=False,
                  loss_scale=1.0):
 
-        super(SGD, self).__init__(learning_rate, params)
+        super(SGD, self).__init__(learning_rate, params, weight_decay, loss_scale)
+
+        if not isinstance(momentum, float):
+            raise TypeError("momentum should be float number!")
 
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
 
+        if not isinstance(dampening, float):
+            raise TypeError("dampening should be float number")
+
+        if isinstance(dampening, int):
+            dampening = float(dampening)
+
         if dampening < 0.0:
             raise ValueError("dampening should be at least 0.0, but got dampening {}".format(dampening))
         self.dampening = dampening
-
-        if weight_decay < 0.0:
-            raise ValueError("weight_decay should be at least 0.0, but got weight_decay {}".format(weight_decay))
-        self.weight_decay = weight_decay
 
         validator.check_type("nesterov", nesterov, [bool])
         self.nesterov = nesterov
 
         self.opt = P.SGD(dampening, weight_decay, nesterov)
 
-        self.dynamic_lr = False
-        self.gather = None
-        self.global_step = None
-        self.axis = None
-        if not isinstance(learning_rate, float):
-            self.dynamic_lr = True
-            self.gather = P.GatherV2()
-            self.assignadd = P.AssignAdd()
-            self.global_step = Parameter(initializer(0, [1], mstype.int32), name="global_step")
-            self.axis = 0
         self.momentum = Parameter(momentum, name="momentum")
-        self.params = self.parameters
-        self.accum = self.params.clone(prefix="accum", init='zeros')
-        self.stat = self.params.clone(prefix="stat", init='ones')
+        self.accum = self.parameters.clone(prefix="accum", init='zeros')
+        self.stat = self.parameters.clone(prefix="stat", init='ones')
         self.hyper_map = C.HyperMap()
 
-        self.weight_decay = weight_decay * loss_scale
-        self.reciprocal_scale = 1.0 / loss_scale
-
     def construct(self, gradients):
-        params = self.params
+        params = self.parameters
         accum = self.accum
         stat = self.stat
-        if self.reciprocal_scale != 1.0:
-            gradients = self.hyper_map(F.partial(grad_scale, self.reciprocal_scale), gradients)
-        if self.dynamic_lr:
-            lr = self.gather(self.learning_rate, self.global_step, self.axis)
-            F.control_depend(lr, self.assignadd(self.global_step, 1))
-        else:
-            lr = self.learning_rate
+        gradients = self.decay_weight(gradients)
+        gradients = self.scale_grad(gradients)
+        lr = self.get_lr()
         success = self.hyper_map(F.partial(sgd_opt, self.opt, lr, self.momentum), gradients, params, accum, stat)
         return success

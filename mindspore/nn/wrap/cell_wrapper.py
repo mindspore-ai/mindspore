@@ -14,15 +14,23 @@
 # ============================================================================
 """Cell_wrapper."""
 import copy
+
 import numpy as np
+
+from mindspore.parallel._utils import (_get_device_num, _get_mirror_mean,
+                                       _get_parallel_mode)
 from mindspore.train.parallel_utils import ParallelMode
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
-from ...ops import composite as C, functional as F, operations as P
-from ...common import Tensor, dtype as mstype
-from ..cell import Cell
+
+from ...common import Tensor
+from ...common import dtype as mstype
 from ...common.initializer import initializer
 from ...common.parameter import Parameter, ParameterTuple
+from ...ops import composite as C
+from ...ops import functional as F
+from ...ops import operations as P
+from ...ops.composite.base import _mp_cast_helper
 from ...ops.operations.comm_ops import _VirtualDataset
+from ..cell import Cell
 from .grad_reducer import DistributedGradReducer
 
 
@@ -310,8 +318,8 @@ class WithEvalCell(Cell):
 
     def construct(self, data, label):
         outputs = self._network(data)
-        loss = self._loss_fn(outputs, label)
-
+        label = _mp_cast_helper(mstype.float32, label)
+        loss = self._loss_fn(F.cast(outputs, mstype.float32), label)
         return loss, outputs, label
 
 

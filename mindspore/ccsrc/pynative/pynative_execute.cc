@@ -20,11 +20,13 @@
 #include <map>
 #include <set>
 #include <unordered_set>
+#include <algorithm>
 
 #include "utils/any.h"
 #include "utils/utils.h"
 #include "utils/context/ms_context.h"
 #include "operator/ops.h"
+#include "operator/composite/do_signature.h"
 #include "pipeline/parse/data_converter.h"
 #include "pipeline/static_analysis/prim.h"
 #include "session/session_factory.h"
@@ -37,7 +39,7 @@
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
 // primitive unable to infer value for constant input in PyNative mode
-const std::unordered_set<std::string> vm_operators = {"partial", "depend"};
+const std::unordered_set<std::string> vm_operators = {"partial", "depend", "make_ref"};
 
 namespace mindspore {
 namespace pynative {
@@ -48,6 +50,57 @@ inline ValuePtr PyAttrValue(const py::object& obj) {
     MS_LOG(EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(obj));
   }
   return converted_ret;
+}
+
+py::tuple ConvertInputs(const PrimitivePyPtr& prim, const py::tuple& py_args) {
+  auto signature = prim->signatures();
+  std::vector<SignatureEnumDType> dtypes;
+  (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
+                       [](const Signature& sig) { return sig.dtype; });
+  int empty_dtype_count = std::count(dtypes.begin(), dtypes.end(), SignatureEnumDType::kDTypeEmptyDefaultValue);
+  if (dtypes.size() == 0 || static_cast<int>(dtypes.size()) == empty_dtype_count) {
+    return py_args;
+  }
+  std::map<SignatureEnumDType, std::vector<size_t>> type_indexs;
+  for (size_t i = 0; i < dtypes.size(); ++i) {
+    auto it = type_indexs.find(dtypes[i]);
+    if (it == type_indexs.end()) {
+      (void)type_indexs.insert(std::make_pair(dtypes[i], std::vector<size_t>{i}));
+    } else {
+      it->second.push_back(i);
+    }
+  }
+  std::map<SignatureEnumDType, size_t> dst_type;
+  for (auto it = type_indexs.begin(); it != type_indexs.end(); (void)++it) {
+    auto type = it->first;
+    auto indexs = it->second;
+    if (indexs.size() < 2) {
+      continue;
+    }
+    size_t m_index = indexs[0];
+    for (size_t i = 1; i < indexs.size(); ++i) {
+      if (py::isinstance<tensor::Tensor>(py_args[indexs[i]])) {
+        m_index = indexs[i];
+      }
+    }
+    (void)dst_type.insert(std::make_pair(type, m_index));
+  }
+  py::tuple py_inputs(py_args.size());
+  for (size_t i = 0; i < py_args.size(); ++i) {
+    auto it = dst_type.find(dtypes[i]);
+    if (it != dst_type.end() && it->second != i &&
+        (py::isinstance<py::int_>(py_args[i]) || py::isinstance<py::float_>(py_args[i]))) {
+      auto tensor_ptr = py::cast<tensor::TensorPtr>(py_args[it->second]);
+      if (py::isinstance<py::int_>(py_args[i])) {
+        py_inputs[i] = std::make_shared<tensor::Tensor>(py::cast<py::int_>(py_args[i]), tensor_ptr->Dtype());
+      } else {
+        py_inputs[i] = std::make_shared<tensor::Tensor>(py::cast<py::float_>(py_args[i]), tensor_ptr->Dtype());
+      }
+      continue;
+    }
+    py_inputs[i] = py_args[i];
+  }
+  return py_inputs;
 }
 
 void PynativeInfer(const PrimitivePyPtr& prim, const py::tuple& py_args, OpExecInfo* const op_exec_info) {
@@ -73,30 +126,22 @@ OpExecInfoPtr GenerateOpExecInfo(const py::args& args) {
   auto op_exec_info = std::make_shared<OpExecInfo>();
   MS_EXCEPTION_IF_NULL(op_exec_info);
   op_exec_info->op_name = py::cast<std::string>(args[PY_NAME]);
-  if (py::isinstance<py::none>(args[PY_PRIM])) {
-    py::module ops_mod = py::module::import("mindspore.ops.operations");
-    py::object py_primitive = ops_mod.attr(op_exec_info->op_name.c_str())();
-    op_exec_info->py_primitive = py::cast<PrimitivePyPtr>(py_primitive);
-    py::dict none_attrs = py::dict();
-    op_exec_info->op_attrs = none_attrs;
-  } else {
-    PrimitivePyPtr prim = py::cast<PrimitivePyPtr>(args[PY_PRIM]);
-    auto pyobj = prim->GetPyObj();
-    if (pyobj == nullptr) {
-      MS_LOG(EXCEPTION) << "pyobj is empty";
-    }
-    py::tuple py_args = args[PY_INPUTS];
-    // use python infer method
-    if (ignore_infer_prim.find(op_exec_info->op_name) == ignore_infer_prim.end()) {
-      PynativeInfer(prim, py_args, op_exec_info.get());
-    }
-    op_exec_info->py_primitive = prim;
-    op_exec_info->op_attrs = py::getattr(args[PY_PRIM], "attrs");
+  auto prim = py::cast<PrimitivePyPtr>(args[PY_PRIM]);
+  auto pyobj = prim->GetPyObj();
+  if (pyobj == nullptr) {
+    MS_LOG(EXCEPTION) << "pyobj is empty";
   }
-  op_exec_info->op_inputs = args[PY_INPUTS];
+  py::tuple py_args = ConvertInputs(prim, args[PY_INPUTS]);
+  // use python infer method
+  if (ignore_infer_prim.find(op_exec_info->op_name) == ignore_infer_prim.end()) {
+    PynativeInfer(prim, py_args, op_exec_info.get());
+  }
+  op_exec_info->py_primitive = prim;
+  op_exec_info->op_attrs = py::getattr(args[PY_PRIM], "attrs");
+  op_exec_info->op_inputs = py_args;
   op_exec_info->inputs_mask = args[PY_INPUT_MASK];
   if (op_exec_info->op_inputs.size() != op_exec_info->inputs_mask.size()) {
-    MS_LOG(ERROR) << "" << op_exec_info->op_name << " op_inputs size not equal op_mask";
+    MS_LOG(ERROR) << "Op:" << op_exec_info->op_name << " inputs size not equal op_mask";
     return nullptr;
   }
   return op_exec_info;
@@ -118,7 +163,7 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr& op_exec_info) {
   // get prim and abstract info
   (void)graph_info.append(std::to_string((uintptr_t)(op_exec_info->py_primitive.get())) + "_" +
                           op_exec_info->abstract->ToString());
-  MS_LOG(INFO) << "graph info [" << graph_info << "]";
+  MS_LOG(INFO) << "Graph info [" << graph_info << "]";
   return graph_info;
 }
 
@@ -158,8 +203,9 @@ py::object RunOpInMs(const OpExecInfoPtr& op_exec_info, PynativeStatusCode* stat
   session->Init(ms_context->device_id());
 
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info);
-  session->BuildOp(*op_exec_info, graph_info);
-  py::tuple result = session->RunOp(*op_exec_info, graph_info);
+  std::vector<tensor::TensorPtr> input_tensors;
+  session->BuildOp(*op_exec_info, graph_info, &input_tensors);
+  py::tuple result = session->RunOp(*op_exec_info, graph_info, input_tensors);
   ms_context->set_enable_pynative_infer(false);
   *status = PYNATIVE_SUCCESS;
   return result;

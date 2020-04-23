@@ -69,7 +69,6 @@ std::vector<std::string> splittable_op_ = {MATMUL,
                                            RELU,
                                            ONEHOT,
                                            DROPOUT_DO_MASK,
-                                           DROPOUT_GEN_MASK,
                                            REDUCE_MAX,
                                            REDUCE_MIN,
                                            ARGMAXWITHVALUE,
@@ -79,10 +78,12 @@ std::vector<std::string> splittable_op_ = {MATMUL,
                                            FUSE_BATCH_NORM,
                                            POOLING,
                                            SOFTMAX_CROSS_ENTROPY_WITH_LOGITS,
+                                           SIGMOID_CROSS_ENTROPY_WITH_LOGITS,
                                            MAX_POOL_WITH_ARGMAX,
                                            SIMPLE_MEAN,
                                            FLATTEN,
                                            BATCH_NORM,
+                                           LAYER_NORM,
                                            BIAS_ADD,
                                            ASSIGN_SUB,
                                            COS,
@@ -94,6 +95,7 @@ std::vector<std::string> splittable_op_ = {MATMUL,
                                            SIGMOID,
                                            POW,
                                            MAXIMUM,
+                                           MINIMUM,
                                            EQUAL,
                                            NOT_EQUAL,
                                            LOGICALNOT,
@@ -102,15 +104,14 @@ std::vector<std::string> splittable_op_ = {MATMUL,
                                            SQRT,
                                            GET_NEXT,
                                            CAST,
-                                           Neg,
+                                           NEG,
+                                           SQUARE,
                                            BATCH_MATMUL,
                                            EXPAND_DIMS,
                                            SQUEEZE};
 
-std::vector<std::string> elementwise_op_ = {ACTIVATION, GELU, TANH, SOFTMAX, LOG_SOFTMAX, RELU, SQRT,
-                                            CAST,       POW,  EXP,  LOG,     COS,         ACOS, LOGICALNOT};
-
-std::vector<std::string> ignore_manual_strategy_op_ = {BATCH_NORM};
+std::vector<std::string> elementwise_op_ = {ACTIVATION, GELU, TANH, SOFTMAX, LOG_SOFTMAX, RELU,       SQRT, CAST,
+                                            POW,        EXP,  LOG,  COS,     ACOS,        LOGICALNOT, NEG,  SQUARE};
 
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
   MS_EXCEPTION_IF_NULL(root);
@@ -229,7 +230,7 @@ size_t GetLengthOfDataType(const TypePtr &type) {
     case kNumberTypeInt:
       return sizeof(int);
     case kNumberTypeUInt:
-      return sizeof(uint);
+      return sizeof(unsigned int);
     case kNumberTypeFloat:
       return sizeof(float);
     default:
@@ -255,12 +256,9 @@ size_t GetInputsTypeLen(const AnfNodePtr &input) {
   return input_type_len;
 }
 
-// Given the node, return the element length of input and output
-std::vector<std::vector<size_t>> ExtractInputAndOutputTypeLengthByNode(const CNodePtr &node) {
+std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<size_t> inputs_type_len;
-  std::vector<size_t> outputs_type_len;
-  std::vector<std::vector<size_t>> all_types;
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
 
   // extract input element length
@@ -278,9 +276,13 @@ std::vector<std::vector<size_t>> ExtractInputAndOutputTypeLengthByNode(const CNo
       inputs_type_len.push_back(GetInputsTypeLen(input));
     }
   }
-  all_types.push_back(inputs_type_len);
+  return inputs_type_len;
+}
 
-  // extract output element length
+std::vector<TypePtr> ExtractOutputTypeByNode(const CNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<TypePtr> outputs_type;
+  // extract output element type
   auto primary_output_type = node->Type();
   MS_EXCEPTION_IF_NULL(primary_output_type);
   if (primary_output_type->isa<mindspore::Tuple>()) {
@@ -290,7 +292,7 @@ std::vector<std::vector<size_t>> ExtractInputAndOutputTypeLengthByNode(const CNo
     for (auto &ele : elements) {
       if (ele->isa<mindspore::TensorType>()) {
         auto ele_element_type = ele->cast<mindspore::TensorTypePtr>()->element();
-        outputs_type_len.push_back(GetLengthOfDataType(ele_element_type));
+        outputs_type.push_back(ele_element_type);
       } else {
         MS_LOG(EXCEPTION) << "Unknown type: " << primary_output_type->type_name();
       }
@@ -299,24 +301,12 @@ std::vector<std::vector<size_t>> ExtractInputAndOutputTypeLengthByNode(const CNo
     // in this case, the output is a single tensor
     if (primary_output_type->isa<mindspore::TensorType>()) {
       auto element_type = primary_output_type->cast<mindspore::TensorTypePtr>()->element();
-      outputs_type_len.push_back(GetLengthOfDataType(element_type));
+      outputs_type.push_back(element_type);
     } else {
       MS_LOG(EXCEPTION) << "Unknown type: " << primary_output_type->type_name();
     }
   }
-  all_types.push_back(outputs_type_len);
-
-  return all_types;
-}
-
-// Be careful the argument is cnode_full_name, not the op_name
-bool IsIgnoreStrategyOperator(const std::string &cnode_full_name) {
-  for (auto &ignore_op : ignore_manual_strategy_op_) {
-    if (cnode_full_name.find(ignore_op) != std::string::npos) {
-      return true;
-    }
-  }
-  return false;
+  return outputs_type;
 }
 
 bool IsElementWiseOperator(const std::string &op_name) {
@@ -367,9 +357,18 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
     return nullptr;
   }
   // Set the data type for inputs and outputs of this OperatorInfo
-  std::vector<std::vector<size_t>> type_lengths = ExtractInputAndOutputTypeLengthByNode(cnode);
-  if (operator_info->SetInputAndOutputTypeLength(type_lengths[0], type_lengths[1]) != SUCCESS) {
+  auto inputs_type_length = ExtractInputTypeLengthByNode(cnode);
+  auto outputs_type = ExtractOutputTypeByNode(cnode);
+  std::vector<size_t> outputs_type_length;
+  outputs_type_length.reserve(outputs_type.size());
+  std::transform(outputs_type.begin(), outputs_type.end(), std::back_inserter(outputs_type_length),
+                 GetLengthOfDataType);
+  if (operator_info->SetInputAndOutputTypeLength(inputs_type_length, outputs_type_length) != SUCCESS) {
     MS_LOG(ERROR) << "Setting the lengths of inputs and outputs failed for operator: " << operator_info->name();
+    return nullptr;
+  }
+  if (operator_info->set_outputs_type(outputs_type) != SUCCESS) {
+    MS_LOG(ERROR) << "Setting the types of outputs failed for operator: " << operator_info->name();
     return nullptr;
   }
   // When the 'inputs' contains numerical values for some operators, these values should be extracted from
@@ -406,18 +405,20 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
       // Set cost for this configured strategy
       if (operator_info->SetCostUnderStrategy(strategyPtr) != SUCCESS) {
         MS_LOG(EXCEPTION) << "Failure: operator " << prim->name() << " SetCostUnderStrategy failed";
-      } else if (!NOT_FULLY_USE_DEVICES) {
-        if (!IsIgnoreStrategyOperator(cnode->fullname_with_scope())) {
-          // If configured to fully use devices, then checking for the user-specified strategy
-          int32_t used_devices = operator_info->used_devices();
-          MS_EXCEPTION_IF_NULL(g_device_manager);
-          auto total_device_num = g_device_manager->GetDeviceListByStageId(0).size();
-          // 'used_devices == -1' means that 'used_devices_' is not set
-          if ((used_devices == -1) || IntToSize(used_devices) != total_device_num) {
-            MS_LOG(EXCEPTION) << "In configuration 'NOT_FULLY_USE_DEVICES' = False, "
-                              << "but the specified strategy uses device: " << used_devices
-                              << ", total devices: " << total_device_num;
-          }
+      } else if (FULLY_USE_DEVICES) {
+        // If configured to fully use devices, then checking for the user-specified strategy
+        int32_t used_devices = operator_info->used_devices();
+        MS_EXCEPTION_IF_NULL(g_device_manager);
+        auto total_device_num = g_device_manager->GetDeviceListByStageId(0).size();
+        // 'used_devices == 1' means that ALL-1 strategy, which is valid in auto-parallel
+        if (used_devices == 1) {
+          return operator_info;
+        }
+        // 'used_devices == -1' means that 'used_devices_' is not set
+        if ((used_devices == -1) || IntToSize(used_devices) != total_device_num) {
+          MS_LOG(EXCEPTION) << "In configuration 'FULLY_USE_DEVICES' = True, "
+                            << "but the specified strategy uses device: " << used_devices
+                            << ", total devices: " << total_device_num;
         }
       }
     }
@@ -479,7 +480,6 @@ Status ConstructCostGraphNodes(const std::vector<AnfNodePtr> &all_nodes, const F
         bool is_find_wrong = (current_op_ptr->name().find(VIRTUAL_DATA_SET_INFO) == std::string::npos) &&
                              (current_op_ptr->name().find(BATCH_PARALLEL) == std::string::npos) &&
                              (current_op_ptr->name().find(prim->name()) == std::string::npos);
-
         if (is_find_wrong) {
           MS_LOG(EXCEPTION) << "The OperatorInfo: " << current_op_ptr->name()
                             << " does not match the Prim: " << prim->name();
@@ -637,6 +637,15 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
       // Dealing with the RefKey case
       auto refkeys = cnode_with_refkeys.second;
       auto cnode = cnode_with_refkeys.first;
+
+      auto cnode_ptr = cnode->cast<CNodePtr>();
+      if (cnode_ptr == nullptr || !IsValueNode<Primitive>(cnode_ptr->input(0))) {
+        continue;
+      }
+      if (!IsAutoParallelCareNode(cnode_ptr)) {
+        continue;
+      }
+
       if (refkeys.size() > 1) {
         MS_LOG(EXCEPTION) << "CNode: " << cnode->fullname_with_scope() << " 's inputs have more than 1 RefKeys.";
       }
@@ -857,11 +866,15 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   if (entire_costgraph->ComputeOpsAndEdgesParameterInvolved() == SUCCESS) {
     // Calculate operators' memory usage
     if (entire_costgraph->CalculateOpsMemoryCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Correcting operators' cost for memory reuse failed.";
+      MS_LOG(EXCEPTION) << "Calculating operators' cost for memory cost failed.";
     }
     // Calculate edges' memory usage
     if (entire_costgraph->CalculateEdgesMemoryCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Correcting edges' cost for memory reuse failed.";
+      MS_LOG(EXCEPTION) << "Calculating edges' cost for memory cost failed.";
+    }
+    // Correct memory usage caused by TmpIdentity
+    if (entire_costgraph->CorrectOpsMemoryCost() != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Correcting operators' cost for memory cost failed.";
     }
   } else {
     MS_LOG(EXCEPTION) << "Computing operators' parameter_involved failed.";
@@ -926,7 +939,6 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
 
   graph = EliminateGraph(graph, eli_list, index_list);
   size_t num_device = g_device_manager->DeviceNum();
-
   if (PartitionForAllDevices(num_device, graph) == SUCCESS) {
     MS_LOG(INFO) << "Partition Success With " << num_device << " devices.";
   } else {

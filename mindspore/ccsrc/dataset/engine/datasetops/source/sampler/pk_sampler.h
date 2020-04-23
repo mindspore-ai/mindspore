@@ -45,7 +45,10 @@ class PKSampler : public Sampler {  // NOT YET FINISHED
   // first handshake between StorageOp and Sampler
   // @param op - StorageOp pointer, pass in so Sampler can call GetNumSamples() and get ClassIds()
   // @return
-  Status Init(const RandomAccessOp *op) override;
+  Status HandshakeRandomAccessOp(const RandomAccessOp *op) override;
+
+  // init sampler, to be called by python or Handshake
+  Status InitSampler() override;
 
   // for next epoch of sampleIds
   // @return - The error code return

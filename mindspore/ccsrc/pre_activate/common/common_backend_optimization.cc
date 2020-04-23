@@ -18,6 +18,7 @@
 #include <string>
 #include "pre_activate/common/optimizer.h"
 #include "pre_activate/pass/convert_const_input_to_attr.h"
+#include "pre_activate/pass/convert_tuple_output_to_maketuple.h"
 #include "pre_activate/pass/convert_const_input_to_tensor_input.h"
 #include "pre_activate/pass/convert_tuple_input_to_dynamic_input.h"
 #include "utils/context/ms_context.h"
@@ -42,6 +43,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToTensorInput>());
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
+  common_pm->AddPass(std::make_shared<ConvertTupleOutputToMaketuple>());
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

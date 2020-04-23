@@ -135,4 +135,5 @@ def test_LSTM():
     for epoch in range(num_epochs):
         loss = train_network(train_features, train_labels)
         losses.append(loss)
+        print("loss:", loss.asnumpy())
     assert(losses[-1].asnumpy() < 0.01)

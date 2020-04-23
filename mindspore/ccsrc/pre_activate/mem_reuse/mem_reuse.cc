@@ -273,30 +273,21 @@ void MemReuseUtil::SetReuseRefCount() {
 }
 
 void MemReuseUtil::SetGraphOutputRefCount() {
-  for (const auto &output : graph_->outputs()) {
-    MS_EXCEPTION_IF_NULL(output);
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(output); ++i) {
-      if (!(output->isa<CNode>())) {
-        continue;
-      }
-      auto cnode = output->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      auto input_node = cnode->input(i + 1);
-      MS_EXCEPTION_IF_NULL(input_node);
-      auto kernel_input = AnfAlgo::VisitKernel(input_node, 0);
-      MS_EXCEPTION_IF_NULL(kernel_input.first);
-      if (!(kernel_input.first->isa<CNode>())) {
-        continue;
-      }
-      auto ak_node = kernel_input.first->cast<CNodePtr>();
-      auto key = ak_node.get();
-      auto iter = kernel_output_refs_.find(key);
-      if ((iter != kernel_output_refs_.end()) && (kernel_input.second < iter->second.size())) {
-        auto kernel_ref_count_ptr = kernel_output_refs_[key][kernel_input.second];
-        MS_EXCEPTION_IF_NULL(kernel_ref_count_ptr);
-        kernel_ref_count_ptr->ref_count_ = kMaxRefCount;
-        kernel_ref_count_ptr->ref_count_dynamic_use_ = kMaxRefCount;
-      }
+  auto nodes = AnfAlgo::GetAllOutput(graph_->output(), {prim::kPrimTupleGetItem});
+  for (const auto &node : nodes) {
+    auto kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0);
+    MS_EXCEPTION_IF_NULL(kernel_input.first);
+    if (!kernel_input.first->isa<CNode>() || !AnfAlgo::IsRealKernel(kernel_input.first)) {
+      continue;
+    }
+    auto ak_node = kernel_input.first->cast<CNodePtr>();
+    auto key = ak_node.get();
+    auto iter = kernel_output_refs_.find(key);
+    if ((iter != kernel_output_refs_.end()) && (kernel_input.second < iter->second.size())) {
+      auto kernel_ref_count_ptr = kernel_output_refs_[key][kernel_input.second];
+      MS_EXCEPTION_IF_NULL(kernel_ref_count_ptr);
+      kernel_ref_count_ptr->ref_count_ = kMaxRefCount;
+      kernel_ref_count_ptr->ref_count_dynamic_use_ = kMaxRefCount;
     }
   }
 #ifdef MEM_REUSE_DEBUG

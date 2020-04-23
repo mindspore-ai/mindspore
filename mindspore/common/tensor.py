@@ -70,43 +70,58 @@ class Tensor(Tensor_):
         return str(self.__str__())
 
     def __add__(self, other):
-        if not isinstance(other, Tensor):
-            raise TypeError("input_data must be a tensor")
+        check_type('tensor input_data', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__add__')(self, other)
         return out
 
     def __mul__(self, other):
-        if not isinstance(other, Tensor):
-            raise TypeError("input_data must be a tensor")
+        check_type('tensor input_data', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__mul__')(self, other)
         return out
 
+    def __neg__(self):
+        return Tensor(-self.asnumpy())
+
     def __iadd__(self, other):
         out = self.__add__(other)
+        return out
+
+    def __radd__(self, other):
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = tensor_operator_registry.get('__add__')(other, self)
         return out
 
     def __imul__(self, other):
         out = self.__mul__(other)
         return out
 
+    def __rmul__(self, other):
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = tensor_operator_registry.get('__mul__')(other, self)
+        return out
+
     def __truediv__(self, other):
-        if isinstance(other, (int, float)):
-            other_tensor = Tensor(other, self.dtype())
-        elif isinstance(other, Tensor):
-            other_tensor = other
-        else:
-            raise TypeError("unsupported type for div operation")
-        out = tensor_operator_registry.get('__div__')(self, other_tensor)
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = tensor_operator_registry.get('__div__')(self, other)
+        return out
+
+    def __rtruediv__(self, other):
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = tensor_operator_registry.get('__div__')(other, self)
         return out
 
     def __sub__(self, other):
-        if not isinstance(other, Tensor):
-            raise TypeError("input_data must be a tensor")
-        out = self.__add__(Tensor(-other.asnumpy()))
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = self.__add__(-other)
         return out
 
     def __isub__(self, other):
         out = self.__sub__(other)
+        return out
+
+    def __rsub__(self, other):
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = tensor_operator_registry.get('__add__')(other, Tensor(-self.asnumpy()))
         return out
 
     def __str__(self):

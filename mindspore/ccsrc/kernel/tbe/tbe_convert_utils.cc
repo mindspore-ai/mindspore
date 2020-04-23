@@ -51,7 +51,7 @@ const std::map<TypeId, std::string> type_id_str_maps = {
 const std::map<std::string, std::string> type_str_maps = {
   {"Float32", "float32"}, {"Float16", "float16"}, {"Int8", "int8"},   {"Int16", "int16"},
   {"UInt16", "uint16"},   {"UInt8", "uint8"},     {"Int32", "int32"}, {"UInt32", "uint32"},
-  {"Int64", "int64"},     {"UInt64", "uint64"},   {"Bool_", "int8"},  {"Float64", "double"},
+  {"Int64", "int64"},     {"UInt64", "uint64"},   {"Bool_", "int8"},  {"Float64", "float64"},
 };
 
 const std::unordered_map<std::string, size_t> type_nbyte_maps = {

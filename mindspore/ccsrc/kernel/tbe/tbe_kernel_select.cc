@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <memory>
 #include <map>
+#include <set>
 
 #include "session/anf_runtime_algorithm.h"
 #include "kernel/oplib/oplib.h"
@@ -510,6 +511,64 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
   return true;
 }
 
+bool IsShapeMatchFormat(const std::vector<size_t> &shape, const std::string &format) {
+  const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT, kOpFormat_NC1KHKWHWC0, kOpFormat_ND,
+                                               kOpFormat_NCHW,    kOpFormat_NHWC,        kOpFormat_HWCN,
+                                               kOpFormat_NC1HWC0, kOpFormat_FRAC_Z,      kOpFormat_C1HWNCoC0,
+                                               kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04};
+
+  // if format is default, it remarkes support all format
+  if (kOpFormatList.find(format) == kOpFormatList.end()) {
+    MS_LOG(EXCEPTION) << "Got the unknown format " << format;
+  }
+  if (format == kOpFormat_DEFAULT) {
+    return true;
+  }
+  // if shape size is 0, the shape will be a scalar
+  if (shape.empty()) {
+    return true;
+  }
+  if (shape.size() > kShapeSupportFormatMap.size()) {
+    return false;
+  }
+  if (format == kOpFormat_FRAC_NZ && shape.size() >= 2) {
+    return true;
+  }
+  return !(kShapeSupportFormatMap[shape.size() - 1].find(format) == kShapeSupportFormatMap[shape.size() - 1].end());
+}
+
+bool IsValidKernelInfo(const std::shared_ptr<CNode> &kernel_node, const kernel::KernelBuildInfo &kernel_build_info) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  auto check_function = [](const std::vector<size_t> &shape, const std::string &format) -> bool {
+    if (!IsShapeMatchFormat(shape, format)) {
+      return false;
+    }
+    for (auto shape_value : shape) {
+      if (shape_value == 0) {
+        MS_LOG(EXCEPTION) << "Dimension size of the tensor shape should be a positive integer, but got " << shape_value;
+      }
+    }
+    return true;
+  };
+  for (size_t index = 0; index < kernel_build_info.GetOutputNum(); ++index) {
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, index);
+    if (!check_function(output_shape, kernel_build_info.GetOutputFormat(index))) {
+      return false;
+    }
+  }
+  for (size_t index = 0; index < kernel_build_info.GetInputNum(); ++index) {
+    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
+    if (!check_function(input_shape, kernel_build_info.GetInputFormat(index))) {
+      return false;
+    }
+  }
+  if (AnfAlgo::GetCNodeName(kernel_node) == prim::kPrimCast->name()) {
+    return AnfAlgo::GetOutputInferDataType(kernel_node, 0) == kernel_build_info.GetOutputDeviceType(0) &&
+           AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0) == kernel_build_info.GetInputDeviceType(0);
+  }
+  return true;
+}
+
 void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
@@ -534,7 +593,7 @@ void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<Ke
     if (context_ptr->execution_mode() == kPynativeMode) {
       kernel_info_list->push_back(parse_info);
     } else {
-      if (CheckSupported(kernel_node, parse_info)) {
+      if (IsValidKernelInfo(kernel_node, *(parse_info)) && CheckSupported(kernel_node, parse_info)) {
         kernel_info_list->push_back(parse_info);
       } else {
         MS_LOG(INFO) << "CheckSupported Failed for TBE op" << op_name << " kernel info.";
@@ -542,7 +601,7 @@ void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<Ke
     }
   }
   if (kernel_info_list->empty()) {
-    MS_LOG(DEBUG) << "Tbe dose not has metadata of op[" << op_name << "].";
+    MS_LOG(DEBUG) << "Tbe dose not have op [" << op_name << "].";
   }
 }
 }  // namespace kernel

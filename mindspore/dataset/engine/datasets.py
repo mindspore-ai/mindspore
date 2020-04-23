@@ -35,8 +35,8 @@ from mindspore._c_expression import typing
 from mindspore import log as logger
 from . import samplers
 from .iterators import DictIterator, TupleIterator
-from .validators import check, check_batch, check_shuffle, check_map, check_repeat, check_zip, check_rename, \
-    check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
+from .validators import check, check_batch, check_shuffle, check_map, check_repeat, check_skip, check_zip, check_rename, \
+    check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
     check_zip_dataset, check_add_column
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
@@ -394,6 +394,8 @@ class Dataset:
             The order of using repeat and batch reflects the number of batches. Recommend that
             repeat operation should be used after batch operation.
             If dataset_sink_mode is False, here repeat operation is invalid.
+            If dataset_sink_mode is True, repeat count should be euqal to the epoch of training. Otherwise,
+            errors could occur since the amount of data is not the amount training requires.
 
         Args:
             count (int): Number of times the dataset should be repeated (default=None).
@@ -417,7 +419,55 @@ class Dataset:
             >>> repeat_and_shuffle = data.repeat(50)
             >>> repeat_and_shuffle = repeat_and_shuffle.shuffle(10)
         """
+        if count == 1:
+            return self
         return RepeatDataset(self, count)
+
+    @check_skip
+    def skip(self, count):
+        """
+        Skip the first N elements of this dataset.
+
+        Args:
+            count (int): Number of elements the dataset should be skipped.
+
+        Returns:
+            SkipDataset, dataset skipped.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object.
+            >>> # creates a dataset which skips first 3 elements from data
+            >>> data = data.skip(3)
+        """
+        return SkipDataset(self, count)
+
+    @check_take
+    def take(self, count=-1):
+        """
+        Takes at most given numbers of elements from the dataset.
+
+        Note:
+            1. If count is greater than the number of element in dataset or equal to -1,
+            all the element in dataset will be taken.
+            2. The order of using take and batch effects. If take before batch operation,
+            then taken given number of rows, otherwise take given number of batches.
+
+        Args:
+            count (int, optional): Number of elements to be taken from the dataset (default=-1).
+
+        Returns:
+            TakeDataset, dataset taken.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object.
+            >>> # creates a dataset where the dataset including 50 elements.
+            >>> data = data.take(50)
+        """
+        if count == -1:
+            return self
+        return TakeDataset(self, count)
 
     @check_zip_dataset
     def zip(self, datasets):
@@ -497,13 +547,54 @@ class Dataset:
 
         return ProjectDataset(self, columns)
 
+    def apply(self, apply_func):
+        """
+        Apply a function in this dataset.
+
+        The specified apply_func is a function that must take one 'Dataset' as an argument
+        and return a preprogressing 'Dataset'.
+
+        Args:
+            apply_func (function): A function that must take one 'Dataset' as an argument and
+                                   return a preprogressing 'Dataset'.
+
+        Returns:
+            Dataset, applied by the function.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object
+            >>> # declare an apply_func function which returns a Dataset object
+            >>> def apply_func(ds):
+            >>>     ds = ds.batch(2)
+            >>>     return ds
+            >>> # use apply to call apply_func
+            >>> data = data.apply(apply_func)
+
+        Raises:
+            TypeError: If apply_func is not a function.
+            TypeError: If apply_func doesn't return a Dataset.
+        """
+
+        if not hasattr(apply_func, '__call__'):
+            raise TypeError("apply_func must be a function.")
+
+        dataset = apply_func(self)
+        if not isinstance(dataset, Dataset):
+            raise TypeError("apply_func must return a dataset.")
+        return dataset
+
     def device_que(self, prefetch_size=None):
         """
-        Returns a transferredDataset that transfer data through tdt.
+        Returns a transferredDataset that transfer data through device.
 
         Args:
             prefetch_size (int, optional): prefetch number of records ahead of the
                 user's request (default=None).
+
+        Note:
+            If device is Ascend, features of data will be transferred one by one. The limitation
+            of data transmission per time is 256M.
 
         Return:
             TransferDataset, dataset for transferring.
@@ -516,6 +607,10 @@ class Dataset:
 
         Args:
             num_batch (int, optional): limit the number of batch to be sent to device (default=None).
+
+        Note:
+            If device is Ascend, features of data will be transferred one by one. The limitation
+            of data transmission per time is 256M.
 
         Returns:
             TransferDataset, dataset for transferring.
@@ -550,9 +645,9 @@ class Dataset:
 
         def get_distribution(output_dataset):
             dev_id = 0
-            if isinstance(output_dataset, (StorageDataset, GeneratorDataset, MindDataset)):
+            if isinstance(output_dataset, (StorageDataset, MindDataset)):
                 return output_dataset.distribution, dev_id
-            if isinstance(output_dataset, (Cifar10Dataset, Cifar100Dataset, ImageFolderDatasetV2,
+            if isinstance(output_dataset, (Cifar10Dataset, Cifar100Dataset, GeneratorDataset, ImageFolderDatasetV2,
                                            ManifestDataset, MnistDataset, VOCDataset, CelebADataset)):
                 sampler = output_dataset.sampler
                 if isinstance(sampler, samplers.DistributedSampler):
@@ -780,7 +875,7 @@ class Dataset:
         """
         if self.input:
             return self.input[0].get_class_indexing()
-        return None
+        raise NotImplementedError("Dataset {} has not supported api get_class_indexing yet.".format(type(self)))
 
     def reset(self):
         """Reset the dataset for next epoch"""
@@ -1030,6 +1125,75 @@ class RepeatDataset(DatasetOp):
         Return:
             Number, the count of repeat.
         """
+        return self.count
+
+
+class SkipDataset(DatasetOp):
+    """
+    The result of applying Skip operator to the input Dataset.
+
+    Args:
+        datasets (tuple): A tuple of datasets to be skipped.
+        count (int): Number of rows the dataset should be skipped.
+    """
+
+    def __init__(self, input_dataset, count):
+        super().__init__()
+        self.count = count
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        self._input_indexs = input_dataset.input_indexs
+
+    def get_args(self):
+        args = super().get_args()
+        args["count"] = self.count
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        child_size = self.input[0].get_dataset_size()
+        output_size = 0
+        if self.count >= 0 and self.count < child_size:
+            output_size = child_size - self.count
+        return output_size
+
+
+class TakeDataset(DatasetOp):
+    """
+    The result of applying Take operator to the input Dataset.
+
+    Args:
+        input_dataset (Dataset): Input Dataset to be taken element from.
+        count (int): Number of elements to be taken from the dataset.
+    """
+
+    def __init__(self, input_dataset, count):
+        super().__init__()
+        self.count = count
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        self._input_indexs = input_dataset.input_indexs
+
+    def get_args(self):
+        args = super().get_args()
+        args["count"] = self.count
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        child_size = self.input[0].get_dataset_size()
+        if child_size < self.count:
+            return child_size
         return self.count
 
 
@@ -1363,7 +1527,6 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
     return samplers.SequentialSampler()
 
 
-
 class ImageFolderDatasetV2(SourceDataset):
     """
     A source dataset that reads images from a tree of directories.
@@ -1621,6 +1784,9 @@ class MindDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument should be specified only when num_shards is also specified.
         block_reader (bool, optional): Whether read data by block mode (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, sampler is exclusive
+            with shuffle and block_reader). Support list: SubsetRandomSampler.
 
     Raises:
         ValueError: If num_shards is specified but shard_id is None.
@@ -1630,14 +1796,16 @@ class MindDataset(SourceDataset):
 
     @check_minddataset
     def __init__(self, dataset_file, columns_list=None, num_parallel_workers=None,
-                 shuffle=None, num_shards=None, shard_id=None, block_reader=False):
+                 shuffle=None, num_shards=None, shard_id=None,
+                 block_reader=False, sampler=None):
         super().__init__(num_parallel_workers)
         self.dataset_file = dataset_file
         self.columns_list = columns_list
-        self.global_shuffle = not bool(shuffle is False)
+        self.global_shuffle = shuffle
         self.distribution = ""
+        self.sampler = sampler
 
-        if num_shards is None:
+        if num_shards is None or shard_id is None:
             self.partitions = None
         else:
             self.partitions = [num_shards, shard_id]
@@ -1645,8 +1813,24 @@ class MindDataset(SourceDataset):
         if block_reader is True and self.partitions is not None:
             raise ValueError("block reader not allowed true when use partitions")
 
+        if block_reader is True and shuffle is True:
+            raise ValueError("block reader not allowed true when use shuffle")
+
         if block_reader is True:
             logger.warning("WARN: global shuffle is not used.")
+
+        if sampler is not None and isinstance(sampler, samplers.SubsetRandomSampler) is False:
+            raise ValueError("the sampler is not supported yet.")
+
+        # sampler exclusive
+        if block_reader is True and sampler is not None:
+            raise ValueError("block reader not allowed true when use sampler")
+
+        if shuffle is True and sampler is not None:
+            raise ValueError("shuffle not allowed true when use sampler")
+
+        if block_reader is False and sampler is None:
+            self.global_shuffle = not bool(shuffle is False)
 
         self.num_shards = num_shards
         self.shard_id = shard_id
@@ -1661,6 +1845,7 @@ class MindDataset(SourceDataset):
         args["block_reader"] = self.block_reader
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["sampler"] = self.sampler
         return args
 
     def get_dataset_size(self):
@@ -1680,14 +1865,70 @@ class MindDataset(SourceDataset):
         return num_rows
 
 
-def ds_fn(dataset):
-    for val in dataset:
-        # convert output tensors to ndarrays
-        yield tuple([np.array(x) for x in val])
+def _iter_fn(dataset, num_samples):
+    """
+    Generator function wrapper for iterable dataset
+    """
+    if num_samples is not None:
+        ds_iter = iter(dataset)
+        for _ in range(num_samples):
+            try:
+                val = next(ds_iter)
+            except StopIteration:
+                return
+            # convert output tensors to ndarrays
+            yield tuple([np.array(x) for x in val])
+    else:
+        for val in dataset:
+            # convert output tensors to ndarrays
+            yield tuple([np.array(x) for x in val])
 
 
-def sampler_fn(sampler, dataset):
-    for i in sampler:
+def _generator_fn(generator, num_samples):
+    """
+    Generator function wrapper for generator function dataset
+    """
+    if num_samples is not None:
+        gen_iter = generator()
+        for _ in range(num_samples):
+            try:
+                val = next(gen_iter)
+            except StopIteration:
+                return
+            yield val
+    else:
+        gen_iter = generator()
+        for val in gen_iter:
+            yield val
+
+
+def _py_sampler_fn(sampler, num_samples, dataset):
+    """
+    Generator function wrapper for mappable dataset with python sampler
+    """
+    if num_samples is not None:
+        sampler_iter = iter(sampler)
+        for _ in range(num_samples):
+            try:
+                idx = next(sampler_iter)
+            except StopIteration:
+                return
+            val = dataset[idx]
+            # convert output tensors to ndarrays
+            yield tuple([np.array(x) for x in val])
+    else:
+        for i in sampler:
+            val = dataset[i]
+            # convert output tensors to ndarrays
+            yield tuple([np.array(x) for x in val])
+
+
+def _cpp_sampler_fn(sampler, dataset):
+    """
+    Generator function wrapper for mappable dataset with cpp sampler
+    """
+    indices = sampler.get_indices()
+    for i in indices:
         val = dataset[i]
         # convert output tensors to ndarrays
         yield tuple([np.array(x) for x in val])
@@ -1695,49 +1936,122 @@ def sampler_fn(sampler, dataset):
 
 class GeneratorDataset(SourceDataset):
     """
-    A source dataset that generate data from calling generator function each epoch.
+    A source dataset that generate data from python by invoking python data source each epoch.
+
+    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
+    below shows what input args are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
 
     Args:
-        generator_function (callable):
-            A callable object that returns an Generator object that supports the iter() protocol.
-            Generator object is required to return a tuple of numpy array as a row of the dataset on next().
+        source (Callable/Iterable/Random Accessible):
+            A generator callable object, an iterable python object or a random accessible python object.
+            Callable source is required to return a tuple of numpy array as a row of the dataset on source().next().
+            Iterable source is required to return a tuple of numpy array as a row of the dataset on iter(source).next().
+            Random accessible source is required to return a tuple of numpy array as a row of the dataset on
+            source[idx].
         column_names (list[str]): List of column names of the dataset.
         column_types (list[mindspore.dtype], optional): List of column data types of the dataset (default=None).
             If provided, sanity check will be performed on generator output.
-        prefetch_size (int, optional): Prefetch number of records ahead of the user's request (default=None).
-        sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
+        schema (Schema/String, optional): Path to the json schema file or schema object (default=None).
+            If the schema is not provided, the meta data from column_names and column_types is considered the schema.
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, all images).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler/Iterable, optional): Object used to choose samples from the dataset. Random accessible input is
+        required.
+            (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
+            This argument should be specified only when 'num_samples' is "None". Random accessible input is required.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
+            when num_shards is also specified. Random accessible input is required.
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>> # 1) generator function that generates multi-dimensional data
+        >>> import mindspore.dataengine as de
+        >>> # 1) Multidimensional generator function as callable input
         >>> def generator_md():
         >>>     for i in range(64):
         >>>         yield (np.array([[i, i + 1], [i + 2, i + 3]]),)
-        >>> # create multi_dimension_generator_dataset with GeneratorMD() and column name "multi_dimensional_data"
-        >>> multi_dimension_generator_dataset = ds.GeneratorDataset(generator_md, ["multi_dimensional_data"])
-        >>> # 2) generator function that generates multi-columns data
+        >>> # create multi_dimension_generator_dataset with GeneratorMD and column name "multi_dimensional_data"
+        >>> multi_dimension_generator_dataset = de.GeneratorDataset(generator_md, ["multi_dimensional_data"])
+        >>> # 2) Multi-column generator function as callable input
         >>> def generator_mc(maxid = 64):
         >>>     for i in range(maxid):
         >>>         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]]))
-        >>> # create multi_column_generator_dataset with GeneratorMC() and column names "col1" and "col2"
-        >>> multi_column_generator_dataset = ds.GeneratorDataset(generator_mc, ["col1, col2"])
+        >>> # create multi_column_generator_dataset with GeneratorMC and column names "col1" and "col2"
+        >>> multi_column_generator_dataset = de.GeneratorDataset(generator_mc, ["col1", "col2"])
+        >>> # 3) Iterable dataset as iterable input
+        >>> class MyIterable():
+        >>>     def __iter__(self):
+        >>>         return # User implementation
+        >>> # create iterable_generator_dataset with MyIterable object
+        >>> iterable_generator_dataset = de.GeneratorDataset(MyIterable(), ["col1"])
+        >>> # 4) Random accessible dataset as Random accessible input
+        >>> class MyRA():
+        >>>     def __getitem__(self, index):
+        >>>         return # User implementation
+        >>> # create ra_generator_dataset with MyRA object
+        >>> ra_generator_dataset = de.GeneratorDataset(MyRA(), ["col1"])
+        >>> # List/Dict/Tuple is also random accessible
+        >>> list_generator = de.GeneratorDataset([(np.array(0),), (np.array(1)), (np.array(2))], ["col1"])
+        >>> # 5) Built-in Sampler
+        >>> my_generator = de.GeneratorDataset(my_ds, ["img", "label"], sampler=samplers.RandomSampler())
+        >>>
     """
 
     @check_generatordataset
-    def __init__(self, generator_function, column_names, column_types=None, prefetch_size=None, sampler=None):
-        super().__init__(1)
-        if sampler is not None:
-            self.generator_function = (lambda: sampler_fn(sampler, generator_function))
+    def __init__(self, source, column_names, column_types=None, schema=None, num_samples=None, num_parallel_workers=1,
+                 shuffle=None, sampler=None, num_shards=None, shard_id=None):
+        super().__init__(num_parallel_workers)
+        self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
+        if self.sampler is not None and hasattr(source, "__getitem__"):
+            if isinstance(self.sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
+                                         samplers.RandomSampler, samplers.SubsetRandomSampler,
+                                         samplers.WeightedRandomSampler)):
+                if num_samples is None:
+                    num_samples = len(source)
+                sampler_instance = self.sampler.create()
+                sampler_instance.set_num_rows(len(source))
+                sampler_instance.set_num_samples(num_samples)
+                sampler_instance.initialize()
+                self.source = (lambda: _cpp_sampler_fn(sampler_instance, source))
+            else:
+                self.source = (lambda: _py_sampler_fn(self.sampler, num_samples, source))
         else:
             try:
-                # test to see if generator_function is iterable
-                iter(generator_function)
+                iter(source)
             except TypeError:
-                # generator_function was not iterable, assume it is a function
-                self.generator_function = generator_function
+                # Use generator function if input callable
+                self.source = (lambda: _generator_fn(source, num_samples))
             else:
-                # generator_function was iterable, build a function around it
-                self.generator_function = (lambda: ds_fn(generator_function))
+                # Use iterator function if input is iterable
+                # Random accessible input is also iterable
+                self.source = (lambda: _iter_fn(source, num_samples))
 
         self.column_names = column_names
 
@@ -1745,17 +2059,12 @@ class GeneratorDataset(SourceDataset):
             self.column_types = mstypelist_to_detypelist(column_types)
         else:
             self.column_types = column_types
-        self.distribution = ""
-        self.prefetch_size = prefetch_size
-        self.sampler = sampler
 
     def get_args(self):
         args = super().get_args()
-        args["generator_function"] = self.generator_function
+        args["source"] = self.source
         args["column_names"] = self.column_names
         args["column_types"] = self.column_types
-        args["prefetch_size"] = self.prefetch_size
-        args["sampler"] = self.sampler
         return args
 
     def get_dataset_size(self):
@@ -2394,47 +2703,58 @@ class Schema:
         Parse the columns and add it to self.
 
         Args:
-            columns (dict or list[str]): names of columns.
+            columns (dict or list[dict]): dataset attribution information, decoded from schema file.
+
+                - list[dict], 'name' and 'type' must be in keys, 'shape' optional.
+
+                - dict, columns.keys() as name, columns.values() is dict, and 'type' inside, 'shape' optional.
 
         Raises:
-            RuntimeError: If failed to parse schema file.
-            RuntimeError: If unknown items in schema file.
+            RuntimeError: If failed to parse columns.
+            RuntimeError: If unknown items in columns.
             RuntimeError: If column's name field is missing.
             RuntimeError: If column's type field is missing.
+
+        Example:
+            >>> schema = Schema()
+            >>> columns1 = [{'name': 'image', 'type': 'int8', 'shape': [3, 3]},
+            >>>             {'name': 'label', 'type': 'int8', 'shape': [1]}]
+            >>> schema.parse_columns(columns1)
+            >>> columns2 = {'image': {'shape': [3, 3], 'type': 'int8'}, 'label': {'shape': [1], 'type': 'int8'}}
+            >>> schema.parse_columns(columns2)
         """
-        if columns is None:
-            raise TypeError("Expected non-empty dict or string list.")
         self.columns = []
-        for col in columns:
-            name = None
-            shape = None
-            data_type = None
-            col_details = None
-            if isinstance(columns, list):
-                col_details = col
-                if "name" in col:
-                    name = col["name"]
-            elif isinstance(columns, dict):
-                col_details = columns[col]
-                name = col
-            else:
-                raise RuntimeError("Error parsing the schema file")
-
-            for k, v in col_details.items():
-                if k == "shape":
-                    shape = v
-                elif k == "type":
-                    data_type = v
-                elif k in ("t_impl", "rank"):
-                    pass
-                else:
-                    raise RuntimeError("Unknown field %s" % k)
-
-            if name is None:
-                raise RuntimeError("Column's name field is missing.")
-            if data_type is None:
-                raise RuntimeError("Column's type field is missing.")
-            self.add_column(name, data_type, shape)
+        if isinstance(columns, list):
+            for column in columns:
+                try:
+                    name = column.pop("name")
+                except KeyError:
+                    raise RuntimeError("Column's name is missing")
+                try:
+                    de_type = column.pop("type")
+                except KeyError:
+                    raise RuntimeError("Column' type is missing")
+                shape = column.pop("shape", None)
+                column.pop("t_impl", None)
+                column.pop("rank", None)
+                if column:
+                    raise RuntimeError("Unknown field {}".format(",".join(column.keys())))
+                self.add_column(name, de_type, shape)
+        elif isinstance(columns, dict):
+            for key, value in columns.items():
+                name = key
+                try:
+                    de_type = value.pop("type")
+                except KeyError:
+                    raise RuntimeError("Column' type is missing")
+                shape = value.pop("shape", None)
+                value.pop("t_impl", None)
+                value.pop("rank", None)
+                if value:
+                    raise RuntimeError("Unknown field {}".format(",".join(value.keys())))
+                self.add_column(name, de_type, shape)
+        else:
+            raise RuntimeError("columns must be dict or list, columns contain name, type, shape(optional).")
 
     def from_json(self, json_obj):
         """

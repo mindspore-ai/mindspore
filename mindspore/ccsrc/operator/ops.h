@@ -34,6 +34,7 @@ extern const PrimitivePtr kPrimScalarAdd;
 extern const PrimitivePtr kPrimScalarSub;
 extern const PrimitivePtr kPrimScalarMul;
 extern const PrimitivePtr kPrimScalarDiv;
+extern const PrimitivePtr kPrimScalarFloordiv;
 extern const PrimitivePtr kPrimScalarMod;
 extern const PrimitivePtr kPrimScalarPow;
 extern const PrimitivePtr kPrimScalarTrunc;
@@ -84,6 +85,7 @@ extern const PrimitivePtr kPrimCreateInstance;
 
 // Structure
 extern const PrimitivePtr kPrimStringEqual;
+extern const PrimitivePtr kPrimStringConcat;
 extern const PrimitivePtr kPrimMakeTuple;
 extern const PrimitivePtr kPrimMakeList;
 extern const PrimitivePtr kPrimMakeDict;
@@ -160,6 +162,9 @@ extern const PrimitivePtr kPrimMul;
 extern const PrimitivePtr kPrimMinimum;
 extern const PrimitivePtr kPrimMaximum;
 extern const PrimitivePtr kPrimSquare;
+extern const PrimitivePtr kPrimEqual;
+extern const PrimitivePtr kPrimLess;
+extern const PrimitivePtr kPrimLessEqual;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;
@@ -220,12 +225,13 @@ extern const PrimitivePtr kPrimStateSetItem;
 extern const PrimitivePtr kPrimScalarSummary;
 extern const PrimitivePtr kPrimImageSummary;
 extern const PrimitivePtr kPrimTensorSummary;
+extern const PrimitivePtr kPrimHistogramSummary;
 extern const PrimitivePtr kPrimBroadcastGradientArgs;
 extern const PrimitivePtr kPrimControlDepend;
 extern const PrimitivePtr kPrimIs_;
 extern const PrimitivePtr kPrimIsNot;
-extern const PrimitivePtr kPrimMinimumGrad;
-extern const PrimitivePtr kPrimMaximumGrad;
+extern const PrimitivePtr kPrimInDict;
+extern const PrimitivePtr kPrimNotInDict;
 
 // Comm ops
 extern const PrimitivePtr kPrimMirror;

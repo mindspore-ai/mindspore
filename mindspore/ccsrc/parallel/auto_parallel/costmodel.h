@@ -207,15 +207,13 @@ struct ContractEliminationDecision : public Decision {
  */
 struct TriangleEliminationDecision : public Decision {
   TriangleEliminationDecision(StrategyPtr elimi_stra, CostPtr elimi_op_cost, CostPtr l_edge_cost, CostPtr r_edge_cost,
-                              StrategyPtr left_stra, CostPtr l_node_cost, StrategyPtr right_stra, CostPtr r_node_cost)
+                              StrategyPtr left_stra, CostPtr l_node_cost)
       : eliminated_op_strategy_(std::move(elimi_stra)),
         eliminated_op_cost_(std::move(elimi_op_cost)),
         left_edge_cost_(std::move(l_edge_cost)),
         right_edge_cost_(std::move(r_edge_cost)),
         left_node_strategy_(std::move(left_stra)),
-        left_node_cost_(std::move(l_node_cost)),
-        right_node_strategy_(std::move(right_stra)),
-        right_node_cost_(std::move(r_node_cost)) {
+        left_node_cost_(std::move(l_node_cost)) {
     type_ = DecisionType::TRIANGLE_ELIMINATION;
   }
 
@@ -225,8 +223,6 @@ struct TriangleEliminationDecision : public Decision {
   CostPtr right_edge_cost_;
   StrategyPtr left_node_strategy_;
   CostPtr left_node_cost_;
-  StrategyPtr right_node_strategy_;
-  CostPtr right_node_cost_;
   MS_DECLARE_PARENT(TriangleEliminationDecision, Decision);
 };
 

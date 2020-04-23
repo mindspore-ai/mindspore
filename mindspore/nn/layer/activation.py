@@ -234,7 +234,7 @@ class Tanh(Cell):
 
 
 class GELU(Cell):
-    """
+    r"""
     Gaussian error linear unit activation function.
 
     Applies GELU function to each element of the input. The input is a Tensor with any valid shape.
@@ -332,15 +332,74 @@ class PReLU(Cell):
         return v
 
 
+class HSwish(Cell):
+    r"""
+    rHard swish activation function.
+
+    Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
+
+    Hard swish is defined as:
+
+    .. math::
+        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
+
+    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+
+    Inputs:
+        - **input_data** (Tensor) - The input of Hswish.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_data`.
+
+    """
+    def __init__(self):
+        super(HSwish, self).__init__()
+        self.hswish = P.HSwish()
+
+    def construct(self, x):
+        return self.hswish(x)
+
+
+class HSigmoid(Cell):
+    r"""
+    Hard sigmoid activation function.
+
+    Applies hard sigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    Hard sigmoid is defined as:
+
+    .. math::
+        \text{hsigmoid}(x_{i}) = max(0, min(1, \frac{2 * x_{i} + 5}{10})),
+
+    where :math:`x_{i}` is the :math:`i`-th slice along the given dim of the input Tensor.
+
+    Inputs:
+        - **input_data** (Tensor) - The input of HSigmoid.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_data`.
+
+    """
+    def __init__(self):
+        super(HSigmoid, self).__init__()
+        self.hsigmoid = P.HSigmoid()
+
+    def construct(self, x):
+        return self.hsigmoid(x)
+
+
 _activation = {
     'softmax': Softmax,
     'logsoftmax': LogSoftmax,
     'relu': ReLU,
+    'relu6': ReLU6,
     'tanh': Tanh,
     'gelu': GELU,
     'sigmoid': Sigmoid,
     'prelu': PReLU,
-    'leakyrelu': LeakyReLU
+    'leakyrelu': LeakyReLU,
+    'hswish': HSwish,
+    'hsigmoid': HSigmoid,
 }
 
 

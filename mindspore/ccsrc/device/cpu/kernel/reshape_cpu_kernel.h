@@ -35,6 +35,8 @@ class ReshapeCPUKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL(Reshape, ReshapeCPUKernel);
+MS_REG_CPU_KERNEL(Flatten, ReshapeCPUKernel);
+MS_REG_CPU_KERNEL(ExpandDims, ReshapeCPUKernel);
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

@@ -48,7 +48,7 @@ class KernelQuery {
 using KernelQueryPtr = std::shared_ptr<KernelQuery>;
 
 AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                 const KernelSelectPtr &kernel_select, size_t insert_index, bool padding_flag,
+                                 const KernelSelectPtr &kernel_select, size_t insert_index,
                                  const std::string &origin_format, const std::string &dest_format,
                                  const std::string &op_name, bool is_insert_input);
 
@@ -64,7 +64,7 @@ AnfNodePtr InsertTransOpForOutput(const FuncGraphPtr &func_graph, const AnfNodeP
 
 CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
-AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx);
+AnfNodePtr CreateMemcpyAsyncOp(const FuncGraphPtr &graph, const AnfNodePtr &node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ASCEND_HELPER_H_

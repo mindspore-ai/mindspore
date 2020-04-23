@@ -198,6 +198,19 @@ class ScalarSummaryNet(nn.Cell):
         return out
 
 
+class HistogramSummaryNet(nn.Cell):
+    """HistogramSummaryNet definition"""
+
+    def __init__(self):
+        super(HistogramSummaryNet, self).__init__()
+        self.summary = P.HistogramSummary()
+
+    def construct(self, tensor):
+        string_in = "wight_value"
+        out = self.summary(string_in, tensor)
+        return out
+
+
 class FusedBatchNormGrad(nn.Cell):
     """ FusedBatchNormGrad definition """
 
@@ -382,6 +395,46 @@ def test_max_pool_with_arg_max():
     print(ret)
 
 
+class GradWrapUnfold(nn.Cell):
+    """ GradWrapUnfold definition """
+
+    def __init__(self, network):
+        super(GradWrapUnfold, self).__init__()
+        self.network = network
+        self.sens = Tensor(np.ones([1, 4, 2, 2], np.float32))
+
+    def construct(self, x):
+        return C.grad_all_with_sens(self.network)(x, self.sens)
+
+
+class UnfoldNetValid(nn.Cell):
+    """ UnfoldNetValid definition """
+
+    def __init__(self):
+        super(UnfoldNetValid, self).__init__()
+        self.unfold = nn.Unfold(ksizes=[1, 2, 2, 1],
+                                strides=[1, 1, 1, 1],
+                                rates=[1, 1, 1, 1],
+                                padding='VALID')
+
+    def construct(self, x):
+        return self.unfold(x)
+
+
+class UnfoldNetSame(nn.Cell):
+    """ UnfoldNetSame definition """
+
+    def __init__(self):
+        super(UnfoldNetSame, self).__init__()
+        self.unfold = nn.Unfold(ksizes=[1, 2, 2, 1],
+                                strides=[1, 1, 1, 1],
+                                rates=[1, 1, 1, 1],
+                                padding='SAME')
+
+    def construct(self, x):
+        return self.unfold(x)
+
+
 test_cases = [
     ('SoftMaxGrad', {
         'block': SoftMaxGrad(VirtualNetWithLoss(P.Softmax())),
@@ -402,6 +455,10 @@ test_cases = [
     ('ScalarSummary', {
         'block': ScalarSummaryNet(),
         'desc_inputs': [2.2],
+    }),
+    ('HistogramSummary', {
+        'block': HistogramSummaryNet(),
+        'desc_inputs': [[1,2,3]],
     }),
     ('FusedBatchNormGrad', {
         'block': FusedBatchNormGrad(nn.BatchNorm2d(num_features=512, eps=1e-5, momentum=0.1)),
@@ -440,6 +497,21 @@ test_cases = [
         'block': ComparisonNet(),
         'desc_inputs': [Tensor(np.ones([6, 9, 10], np.int32)), Tensor(np.ones([6, 9, 10], np.int32))],
     }),
+    ('UnfoldValid', {
+        'block': UnfoldNetValid(),
+        'desc_inputs': [Tensor(np.ones([1, 1, 3, 3], np.float32))],
+        'desc_bprop': [Tensor(np.ones([1, 4, 2, 2], np.float32))],
+        'skip': ['backward']}),
+    ('UnfoldSame', {
+        'block': UnfoldNetSame(),
+        'desc_inputs': [Tensor(np.ones([1, 1, 3, 3], np.float32))],
+        'desc_bprop': [Tensor(np.ones([1, 4, 3, 3], np.float32))],
+        'skip': ['backward']}),
+    ('UnfoldGrad', {
+        'block': GradWrapUnfold(UnfoldNetValid()),
+        'desc_inputs': [Tensor(np.ones([1, 1, 3, 3], np.float32))],
+        'desc_bprop': [Tensor(np.ones([1, 4, 2, 2], np.float32))],
+        'skip': ['backward']}),
 ]
 
 test_cases_for_verify_exception = [

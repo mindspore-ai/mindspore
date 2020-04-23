@@ -1,4 +1,4 @@
-mindspore_add_pkg(dmlc_core
+mindspore_add_pkg(dmlc-core
         VER 0.3
         HEAD_ONLY ./
 	URL https://github.com/dmlc/dmlc-core/archive/808f485387f9a03f78fa9f1159f387d0d91b7a28.zip

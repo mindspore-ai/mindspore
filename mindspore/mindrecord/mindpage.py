@@ -133,15 +133,15 @@ class MindPage:
 
         Raises:
             ParamValueError: If any parameter is invalid.
-            MRMFetchDataError: If failed to read by category id.
+            MRMFetchDataError: If failed to fetch data by category.
             MRMUnsupportedSchemaError: If schema is invalid.
         """
-        if category_id < 0:
-            raise ParamValueError("Category id should be greater than 0.")
-        if page < 0:
-            raise ParamValueError("Page should be greater than 0.")
-        if num_row < 0:
-            raise ParamValueError("num_row should be greater than 0.")
+        if not isinstance(category_id, int) or category_id < 0:
+            raise ParamValueError("Category id should be int and greater than or equal to 0.")
+        if not isinstance(page, int) or page < 0:
+            raise ParamValueError("Page should be int and greater than or equal to 0.")
+        if not isinstance(num_row, int) or num_row <= 0:
+            raise ParamValueError("num_row should be int and greater than 0.")
         return self._segment.read_at_page_by_id(category_id, page, num_row)
 
     def read_at_page_by_name(self, category_name, page, num_row):
@@ -157,8 +157,10 @@ class MindPage:
         Returns:
             str, read at page.
         """
-        if page < 0:
-            raise ParamValueError("Page should be greater than 0.")
-        if num_row < 0:
-            raise ParamValueError("num_row should be greater than 0.")
+        if not isinstance(category_name, str):
+            raise ParamValueError("Category name should be str.")
+        if not isinstance(page, int) or page < 0:
+            raise ParamValueError("Page should be int and greater than or equal to 0.")
+        if not isinstance(num_row, int) or num_row <= 0:
+            raise ParamValueError("num_row should be int and greater than 0.")
         return self._segment.read_at_page_by_name(category_name, page, num_row)

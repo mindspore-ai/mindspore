@@ -88,6 +88,7 @@ FuncGraphPtr Renormalize(const ResourcePtr& res, const FuncGraphPtr& func_graph,
   double t2 = GetTime();
 #endif
   auto ret = ProgramSpecialize(res, func_graph, result.context);
+  res->set_func_graph(ret);
 #ifdef ENABLE_PROFILE
   double t3 = GetTime();
   MsProfile::StatTime("renormalize.infer", t2 - t1);
@@ -263,7 +264,7 @@ bool TaskEmitAction(const ResourcePtr& res) {
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
   std::vector<PrimitivePtr> cut_list = compile::nonlinear_ops;
   if (bc_ptr->name() == kMsConvert) {
-    cut_list = compile::ms_nonlinear_ops;
+    cut_list = compile::GetMsNonlinearOps();
   }
   std::shared_ptr<CompileGraphs> compile = std::make_shared<CompileGraphs>(bc_ptr, cut_list);
   res->results()[kOutput] = compile->CompileAndLink(func_graph);

@@ -136,7 +136,7 @@ void MsBackend::SetSwitchGraph() {
         MS_LOG(EXCEPTION) << "cond not a anf node:" << curr_switch_.ToString();
       }
       MS_LOG(DEBUG) << "switch compile:" << cond_g << ", " << true_g << ", " << false_g;
-      sess_->SwitchCompile(cond_g, true_g, false_g);
+      sess_->SwitchCompile(cond_g, true_g, false_g, utils::cast<AnfNodePtr>(curr_switch_));
     }
     is_switch_call_ = false;
     MS_LOG(DEBUG) << "end SetSwitchGraph:" << curr_cond << ", " << is_switch_call_;

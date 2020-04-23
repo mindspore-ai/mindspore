@@ -17,6 +17,7 @@
 """setup package."""
 import os
 import stat
+import platform
 
 from setuptools import setup, find_packages
 from setuptools.command.egg_info import egg_info
@@ -97,6 +98,8 @@ required_package = [
 package_data = {
     '': [
         '*.so*',
+        '*.pyd',
+        '*.dll',
         'lib/*.so*',
         'lib/*.a',
         '.commit_id',
@@ -111,6 +114,9 @@ def update_permissions(path):
     Args:
         path (str): Target directory path.
     """
+    if platform.system() == "Windows":
+        return
+
     for dirpath, dirnames, filenames in os.walk(path):
         for dirname in dirnames:
             dir_fullpath = os.path.join(dirpath, dirname)
@@ -137,7 +143,7 @@ class BuildPy(build_py):
         super().run()
         mindspore_dir = os.path.join(pkg_dir, 'build', 'lib', 'mindspore')
         update_permissions(mindspore_dir)
-        mindspore_dir = os.path.join(pkg_dir, 'build', 'lib', 'akg')
+        mindspore_dir = os.path.join(pkg_dir, 'build', 'lib', '_akg')
         update_permissions(mindspore_dir)
 
 

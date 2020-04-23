@@ -124,17 +124,17 @@ class BatchOp : public ParallelOp {
   // This struct is used for both internal control and python callback.
   // This struct is bound to python with read-only access.
   struct CBatchInfo {
-    CBatchInfo(int32_t ep, int32_t bat, int32_t cur, batchCtrl ctrl)
+    CBatchInfo(int64_t ep, int64_t bat, int64_t cur, batchCtrl ctrl)
         : epoch_num_(ep), batch_num_(bat), total_batch_num_(cur), ctrl_(ctrl) {}
-    CBatchInfo(int32_t ep, int32_t bat, int32_t cur) : CBatchInfo(ep, bat, cur, batchCtrl::kNoCtrl) {}
+    CBatchInfo(int64_t ep, int64_t bat, int64_t cur) : CBatchInfo(ep, bat, cur, batchCtrl::kNoCtrl) {}
     CBatchInfo() : CBatchInfo(0, 0, 0, batchCtrl::kNoCtrl) {}
     explicit CBatchInfo(batchCtrl ctrl) : CBatchInfo(0, 0, 0, ctrl) {}
-    int32_t epoch_num_;        // i-th epoch. i starts from 0
-    int32_t batch_num_;        // i-th batch since the start of current epoch. i starts from 0
-    int32_t total_batch_num_;  // i-th batch since the start of first epoch. i starts from 0
+    int64_t epoch_num_;        // i-th epoch. i starts from 0
+    int64_t batch_num_;        // i-th batch since the start of current epoch. i starts from 0
+    int64_t total_batch_num_;  // i-th batch since the start of first epoch. i starts from 0
     batchCtrl ctrl_;           // No control=0, EOE=1, EOF=2, Quit=3
-    const int32_t get_batch_num() const { return batch_num_; }
-    const int32_t get_epoch_num() const { return epoch_num_; }
+    const int64_t get_batch_num() const { return batch_num_; }
+    const int64_t get_epoch_num() const { return epoch_num_; }
   };
 
   // BatchOp constructor

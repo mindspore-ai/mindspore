@@ -191,7 +191,7 @@ def get_bprop_concat(self):
 
     def bprop(x, out, dout):
         dx = ()
-        out_offset = P.ConcatOffset(F.tuple_len(x), axis)(x)
+        out_offset = G.ConcatOffset(F.tuple_len(x), axis)(x)
         for i in range(F.tuple_len(x)):
             slice_out = P.Slice()(dout, out_offset[i], shape_op(x[i]))
             dx = dx + (slice_out,)

@@ -25,6 +25,15 @@ using mindspore::MsLogLevel::INFO;
 
 namespace mindspore {
 namespace mindrecord {
+template <class Type>
+// convert the string to exactly number type (int32_t/int64_t/float/double)
+Type StringToNum(const std::string &str) {
+  std::istringstream iss(str);
+  Type num;
+  iss >> num;
+  return num;
+}
+
 ShardReader::ShardReader() {
   task_id_ = 0;
   deliver_id_ = 0;
@@ -116,13 +125,10 @@ MSRStatus ShardReader::Open() {
 
   for (const auto &file : file_paths_) {
     std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-    fs->open(common::SafeCStr(file), std::ios::in | std::ios::out | std::ios::binary);
-    if (fs->fail()) {
-      fs->open(common::SafeCStr(file), std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
-      if (fs->fail()) {
-        MS_LOG(ERROR) << "File could not opened";
-        return FAILED;
-      }
+    fs->open(common::SafeCStr(file), std::ios::in | std::ios::binary);
+    if (!fs->good()) {
+      MS_LOG(ERROR) << "File could not opened";
+      return FAILED;
     }
     MS_LOG(INFO) << "Open shard file successfully.";
     file_streams_.push_back(fs);
@@ -137,13 +143,10 @@ MSRStatus ShardReader::Open(int n_consumer) {
   for (const auto &file : file_paths_) {
     for (int j = 0; j < n_consumer; ++j) {
       std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-      fs->open(common::SafeCStr(file), std::ios::in | std::ios::out | std::ios::binary);
-      if (fs->fail()) {
-        fs->open(common::SafeCStr(file), std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
-        if (fs->fail()) {
-          MS_LOG(ERROR) << "File could not opened";
-          return FAILED;
-        }
+      fs->open(common::SafeCStr(file), std::ios::in | std::ios::binary);
+      if (!fs->good()) {
+        MS_LOG(ERROR) << "File could not opened";
+        return FAILED;
       }
       file_streams_random_[j].push_back(fs);
     }
@@ -259,16 +262,25 @@ MSRStatus ShardReader::ConvertLabelToJson(const std::vector<std::vector<std::str
       }
       column_values[shard_id].emplace_back(tmp);
     } else {
-      string json_str = "{";
+      json construct_json;
       for (unsigned int j = 0; j < columns.size(); ++j) {
-        // construct the string json "f1": value
-        json_str = json_str + "\"" + columns[j] + "\":" + labels[i][j + 3];
-        if (j < columns.size() - 1) {
-          json_str += ",";
+        // construct json "f1": value
+        auto schema = shard_header_->get_schemas()[0]->GetSchema()["schema"];
+
+        // convert the string to base type by schema
+        if (schema[columns[j]]["type"] == "int32") {
+          construct_json[columns[j]] = StringToNum<int32_t>(labels[i][j + 3]);
+        } else if (schema[columns[j]]["type"] == "int64") {
+          construct_json[columns[j]] = StringToNum<int64_t>(labels[i][j + 3]);
+        } else if (schema[columns[j]]["type"] == "float32") {
+          construct_json[columns[j]] = StringToNum<float>(labels[i][j + 3]);
+        } else if (schema[columns[j]]["type"] == "float64") {
+          construct_json[columns[j]] = StringToNum<double>(labels[i][j + 3]);
+        } else {
+          construct_json[columns[j]] = std::string(labels[i][j + 3]);
         }
       }
-      json_str += "}";
-      column_values[shard_id].emplace_back(json::parse(json_str));
+      column_values[shard_id].emplace_back(construct_json);
     }
   }
 
@@ -293,12 +305,10 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
   std::string file_name = file_paths_[shard_id];
   std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
   if (!all_in_index_) {
-    fs->open(common::SafeCStr(file_name), std::ios::in | std::ios::out | std::ios::binary);
-    if (fs->fail()) {
-      fs->open(common::SafeCStr(file_name), std::ios::in | std::ios::out | std::ios::trunc | std::ios::binary);
-      if (fs->fail()) {
-        MS_LOG(ERROR) << "File could not opened";
-      }
+    fs->open(common::SafeCStr(file_name), std::ios::in | std::ios::binary);
+    if (!fs->good()) {
+      MS_LOG(ERROR) << "File could not opened";
+      return FAILED;
     }
   }
   sqlite3_free(errmsg);
@@ -402,7 +412,16 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
 
   // whether use index search
   if (!criteria.first.empty()) {
-    sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = " + criteria.second;
+    auto schema = shard_header_->get_schemas()[0]->GetSchema();
+
+    // not number field should add '' in sql
+    if (kNumberFieldTypeSet.find(schema["schema"][criteria.first]["type"]) != kNumberFieldTypeSet.end()) {
+      sql +=
+        " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = " + criteria.second;
+    } else {
+      sql += " AND " + criteria.first + "_" + std::to_string(column_schema_id_[criteria.first]) + " = '" +
+             criteria.second + "'";
+    }
   }
   sql += ";";
   std::vector<std::vector<std::string>> image_offsets;
@@ -493,8 +512,8 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabelsFromBinaryFile(
   std::string file_name = file_paths_[shard_id];
   std::vector<json> res;
   std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-  fs->open(common::SafeCStr(file_name), std::ios::in | std::ios::out | std::ios::binary);
-  if (fs->fail()) {
+  fs->open(common::SafeCStr(file_name), std::ios::in | std::ios::binary);
+  if (!fs->good()) {
     MS_LOG(ERROR) << "File could not opened";
     return {FAILED, {}};
   }
@@ -603,16 +622,25 @@ std::pair<MSRStatus, std::vector<json>> ShardReader::GetLabels(int page_id, int 
     std::vector<json> ret;
     for (unsigned int i = 0; i < labels.size(); ++i) ret.emplace_back(json{});
     for (unsigned int i = 0; i < labels.size(); ++i) {
-      string json_str = "{";
+      json construct_json;
       for (unsigned int j = 0; j < columns.size(); ++j) {
-        // construct string json "f1": value
-        json_str = json_str + "\"" + columns[j] + "\":" + labels[i][j];
-        if (j < columns.size() - 1) {
-          json_str += ",";
+        // construct json "f1": value
+        auto schema = shard_header_->get_schemas()[0]->GetSchema()["schema"];
+
+        // convert the string to base type by schema
+        if (schema[columns[j]]["type"] == "int32") {
+          construct_json[columns[j]] = StringToNum<int32_t>(labels[i][j]);
+        } else if (schema[columns[j]]["type"] == "int64") {
+          construct_json[columns[j]] = StringToNum<int64_t>(labels[i][j]);
+        } else if (schema[columns[j]]["type"] == "float32") {
+          construct_json[columns[j]] = StringToNum<float>(labels[i][j]);
+        } else if (schema[columns[j]]["type"] == "float64") {
+          construct_json[columns[j]] = StringToNum<double>(labels[i][j]);
+        } else {
+          construct_json[columns[j]] = std::string(labels[i][j]);
         }
       }
-      json_str += "}";
-      ret[i] = json::parse(json_str);
+      ret[i] = construct_json;
     }
     return {SUCCESS, ret};
   }
@@ -743,8 +771,12 @@ MSRStatus ShardReader::Launch(bool isSimpleReader) {
 
   // Sort row group by (group_id, shard_id), prepare for parallel reading
   std::sort(row_group_summary.begin(), row_group_summary.end(), ResortRowGroups);
-  CreateTasks(row_group_summary, operators_);
-  MS_LOG(INFO) << "Launching read threads";
+  if (CreateTasks(row_group_summary, operators_) != SUCCESS) {
+    MS_LOG(ERROR) << "Failed to launch read threads.";
+    interrupt_ = true;
+    return FAILED;
+  }
+  MS_LOG(INFO) << "Launching read threads.";
 
   if (isSimpleReader) return SUCCESS;
 
@@ -955,8 +987,10 @@ TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_
 
 MSRStatus ShardReader::ConsumerByRow(int consumer_id) {
   // Set thread name
+#if !defined(_WIN32) && !defined(_WIN64)
   auto thread_id = kThreadName + std::to_string(consumer_id);
   prctl(PR_SET_NAME, common::SafeCStr(thread_id), 0, 0, 0);
+#endif
 
   // Loop forever
   for (;;) {
@@ -1008,8 +1042,10 @@ MSRStatus ShardReader::ReadBlob(const int &shard_id, const uint64_t &page_offset
 
 MSRStatus ShardReader::ConsumerByBlock(int consumer_id) {
   // Set thread name
+#if !defined(_WIN32) && !defined(_WIN64)
   auto thread_id = kThreadName + std::to_string(consumer_id);
   prctl(PR_SET_NAME, common::SafeCStr(thread_id), 0, 0, 0);
+#endif
 
   // Loop forever
   for (;;) {
@@ -1116,6 +1152,9 @@ std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetBlockNext() 
 }
 
 std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNext() {
+  if (interrupt_) {
+    return std::vector<std::tuple<std::vector<uint8_t>, json>>();
+  }
   if (block_reader_) return GetBlockNext();
   if (deliver_id_ >= static_cast<int>(tasks_.Size())) {
     return std::vector<std::tuple<std::vector<uint8_t>, json>>();

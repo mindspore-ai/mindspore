@@ -26,6 +26,7 @@ namespace mindspore {
 namespace parallel {
 #define MAXIMUM_INPUT_NUMBER 100
 #define DEFAULT_DATA_TYPE_LENGTH 4
+#define DROPOUT_COST_RATE 1.125  // the DropoutGenMask need 12.5% memory
 
 class OperatorCost;
 using OperatorCostPtr = std::shared_ptr<OperatorCost>;
@@ -42,10 +43,20 @@ double ListProduct(std::vector<T> vec) {
 // entries timing the length of each entry's data type
 class OperatorCost {
  public:
-  OperatorCost() {
+  explicit OperatorCost(bool is_inputs_related) : inputs_related_(is_inputs_related) {
     // this is only for the case when set_is_parameter() and SetInputAndOutputTypeLength() are not invoked
     for (size_t i = 0; i < MAXIMUM_INPUT_NUMBER; ++i) {
       is_parameter_.push_back(false);
+      is_parameter_involve_.push_back(false);
+      inputs_type_lengths_.push_back(DEFAULT_DATA_TYPE_LENGTH);
+      outputs_type_lengths_.push_back(DEFAULT_DATA_TYPE_LENGTH);
+    }
+  }
+  OperatorCost() : inputs_related_(false) {
+    // this is only for the case when set_is_parameter() and SetInputAndOutputTypeLength() are not invoked
+    for (size_t i = 0; i < MAXIMUM_INPUT_NUMBER; ++i) {
+      is_parameter_.push_back(false);
+      is_parameter_involve_.push_back(false);
       inputs_type_lengths_.push_back(DEFAULT_DATA_TYPE_LENGTH);
       outputs_type_lengths_.push_back(DEFAULT_DATA_TYPE_LENGTH);
     }
@@ -53,26 +64,39 @@ class OperatorCost {
   virtual ~OperatorCost() = default;
 
   void set_is_parameter(const std::vector<bool>& is_parameter);
+  void set_is_parameter_involve(const std::vector<bool>&);
+  void set_output_parameter_involve(int);
   void SetInputAndOutputTypeLength(const std::vector<size_t>& input_lengths, const std::vector<size_t>& output_lengths);
   std::vector<size_t> inputs_type_lengths() const { return inputs_type_lengths_; }
   std::vector<size_t> outputs_type_lengths() const { return outputs_type_lengths_; }
 
   // per device communication cost
   virtual double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const = 0;
+                             int32_t stage_id) const = 0;
   virtual double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const = 0;
+                                    int32_t stage_id) const = 0;
   virtual double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                     const int32_t& stage_id) const = 0;
+                                     int32_t stage_id) const = 0;
   // per device computation cost
   virtual double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const = 0;
+                                    int32_t stage_id) const = 0;
   virtual double GetForwardComputationCost(const std::vector<TensorInfo>& inputs,
-                                           const std::vector<TensorInfo>& outputs, const int32_t& stage_id) const = 0;
+                                           const std::vector<TensorInfo>& outputs, int32_t stage_id) const = 0;
   virtual double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs,
-                                            const std::vector<TensorInfo>& outputs, const int32_t& stage_id) const = 0;
+                                            const std::vector<TensorInfo>& outputs, int32_t stage_id) const = 0;
+  // per device PEAK memory cost in a training iteration
+  // Typically, the PEAK memory cost contributed by an operator is its output (if the output is parameter-invovled),
+  // plus necessary inputs.
+  virtual double GetMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs) const;
 
  protected:
+  // For each input in 'inputs_', a bool variable is true if the corresponding one is a parameter or a output of
+  // pre-operator that has parameters as input.
+  std::vector<bool> is_parameter_involve_;
+  int output_parameter_involve_ = -1;  // -1: unset; 0: not parameter_involved; 1: parameter_involved
+  // Whether the inputs are related or not? For example, TensorAdd's two inputs are independent (not related), while
+  // Mul's two inputs are dependent (related).
+  bool inputs_related_;
   // for each input in 'inputs_', there is a bool variable indicating whether that the corresponding input is parameter
   std::vector<bool> is_parameter_;
   // for each input and output, the followings record the number of bytes of each element
@@ -80,165 +104,170 @@ class OperatorCost {
   std::vector<size_t> outputs_type_lengths_;
 };
 
+using OperatorCostPtr = std::shared_ptr<OperatorCost>;
+
 class MatMulCost : public OperatorCost {
  public:
-  MatMulCost() = default;
+  explicit MatMulCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  MatMulCost() : OperatorCost(true) {}
   ~MatMulCost() override = default;
 
   // per device communication cost
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
   double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override;
+                            int32_t stage_id) const override;
   double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const override;
+                             int32_t stage_id) const override;
 
   // per device computation cost
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const override;
+                                    int32_t stage_id) const override;
 };
-
 using MatMulCostPtr = std::shared_ptr<MatMulCost>;
 
 class ActivationCost : public OperatorCost {
  public:
-  ActivationCost() = default;
+  explicit ActivationCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  ActivationCost() : OperatorCost(false) {}
   ~ActivationCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
   double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override;
+                            int32_t stage_id) const override;
   double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const override;
+                             int32_t stage_id) const override;
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const override;
+                                    int32_t stage_id) const override;
 };
-
 using ActivationCostPtr = std::shared_ptr<ActivationCost>;
 using TransposeCost = ActivationCost;
 using TransposeCostPtr = std::shared_ptr<TransposeCost>;
 
 class SoftmaxCost : public OperatorCost {
  public:
-  SoftmaxCost() = default;
+  explicit SoftmaxCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  SoftmaxCost() : OperatorCost(false) {}
   ~SoftmaxCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
   double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override;
+                            int32_t stage_id) const override;
   double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const override;
+                             int32_t stage_id) const override;
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t&) const override;
+                                    int32_t) const override;
 };
-
 using SoftmaxCostPtr = std::shared_ptr<SoftmaxCost>;
 
 class TmpIdentityCost : public OperatorCost {
  public:
-  TmpIdentityCost() = default;
+  explicit TmpIdentityCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  TmpIdentityCost() : OperatorCost(false) {}
   ~TmpIdentityCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
   double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override;
+                            int32_t stage_id) const override;
   double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const override;
+                             int32_t stage_id) const override;
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const override;
+                                    int32_t stage_id) const override;
+  // per device PEAK memory cost in a training iteration
+  double GetMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs) const override;
 };
 using TmpIdentityCostPtr = std::shared_ptr<TmpIdentityCost>;
 
 class BatchParallelCost : public OperatorCost {
  public:
-  BatchParallelCost() = default;
+  explicit BatchParallelCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  BatchParallelCost() : OperatorCost(false) {}
   ~BatchParallelCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
-  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                            const int32_t&) const override {
+  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
     return 0.0;
   }
-  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                             const int32_t&) const override {
-    return 0.0;
-  }
+  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override;
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const override;
+                                    int32_t stage_id) const override;
 };
 using BatchParallelCostPtr = std::shared_ptr<BatchParallelCost>;
 
 class VirtualDatasetCost : public OperatorCost {
  public:
-  VirtualDatasetCost() = default;
+  explicit VirtualDatasetCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  VirtualDatasetCost() : OperatorCost(false) {}
   ~VirtualDatasetCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
-  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                            const int32_t&) const override {
+  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
     return 0.0;
   }
-  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                             const int32_t&) const override {
+  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
     return 0.0;
   }
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                                   const int32_t&) const override {
+                                   int32_t) const override {
     return 0.0;
   }
   double GetBackwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                                    const int32_t&) const override {
+                                    int32_t) const override {
+    return 0.0;
+  }
+  // per device PEAK memory cost in a training iteration
+  double GetMemoryCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs) const override {
     return 0.0;
   }
 };
@@ -246,33 +275,32 @@ using VirtualDatasetCostPtr = std::shared_ptr<VirtualDatasetCost>;
 
 class GeneratorBaseCost : public OperatorCost {
  public:
-  GeneratorBaseCost() = default;
+  explicit GeneratorBaseCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  GeneratorBaseCost() : OperatorCost(false) {}
   ~GeneratorBaseCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
-  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                            const int32_t&) const override {
+  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
     return 0.0;
   }
-  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                             const int32_t&) const override {
+  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
     return 0.0;
   }
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   // Inputs vector is empty for generator ops.
   double GetForwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                                   const int32_t&) const override {
+                                   int32_t) const override {
     return 0.0;
   }
   // Generator ops don't have backward steps.
   double GetBackwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                                    const int32_t&) const override {
+                                    int32_t) const override {
     return 0.0;
   }
 };
@@ -280,141 +308,144 @@ using GeneratorBaseCostPtr = std::shared_ptr<GeneratorBaseCost>;
 
 class PReLUCost : public OperatorCost {
  public:
-  PReLUCost() = default;
+  explicit PReLUCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  PReLUCost() : OperatorCost(true) {}
   ~PReLUCost() override = default;
 
   // per device communication cost
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
   double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override;
+                            int32_t stage_id) const override;
   double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const override;
+                             int32_t stage_id) const override;
 
   // per device computation cost
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const override;
+                                    int32_t stage_id) const override;
 };
 using PReLUCostPtr = std::shared_ptr<PReLUCost>;
 
 class OneHotCost : public OperatorCost {
  public:
-  OneHotCost() = default;
+  explicit OneHotCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  OneHotCost() : OperatorCost(true) {}
   ~OneHotCost() override = default;
 
   // per device communication cost
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
   double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override;
+                            int32_t stage_id) const override;
   double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const override;
+                             int32_t stage_id) const override;
 
   // per device computation cost
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const override;
+                                    int32_t stage_id) const override;
 };
 using OneHotCostPtr = std::shared_ptr<OneHotCost>;
 
 class SoftmaxCrossEntropyWithLogitsCost : public OperatorCost {
  public:
-  SoftmaxCrossEntropyWithLogitsCost() = default;
+  explicit SoftmaxCrossEntropyWithLogitsCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  SoftmaxCrossEntropyWithLogitsCost() : OperatorCost(false) {}
   ~SoftmaxCrossEntropyWithLogitsCost() override = default;
 
   // per device communication cost
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
   double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override;
+                            int32_t stage_id) const override;
   double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const override;
+                             int32_t stage_id) const override;
 
   // per device computation cost
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const override;
+                                    int32_t stage_id) const override;
 };
 using SoftmaxCrossEntropyWithLogitsCostPtr = std::shared_ptr<SoftmaxCrossEntropyWithLogitsCost>;
 
 class ReshapeCost : public OperatorCost {
  public:
-  ReshapeCost() = default;
+  explicit ReshapeCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  ReshapeCost() : OperatorCost(true) {}
 
   ~ReshapeCost() override = default;
 
   // per device communication cost
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
 
   double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override;
+                            int32_t stage_id) const override;
 
   double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const override;
+                             int32_t stage_id) const override;
 
   // per device computation cost
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
 
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
 
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const override;
+                                    int32_t stage_id) const override;
 };
 using ReshapeCostPtr = std::shared_ptr<ReshapeCost>;
 
 class ArithmeticCost : public OperatorCost {
  public:
-  ArithmeticCost() = default;
+  explicit ArithmeticCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  ArithmeticCost() : OperatorCost(false) {}
   ~ArithmeticCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
-  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                            const int32_t&) const override {
+  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
     return 0.0;
   }
-  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                             const int32_t&) const override;
+  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override;
 
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                    const int32_t& stage_id) const override;
+                                    int32_t stage_id) const override;
 };
 using ArithmeticCostPtr = std::shared_ptr<ArithmeticCost>;
 using BiasAddCost = ArithmeticCost;
@@ -422,25 +453,26 @@ using BiasAddCostPtr = std::shared_ptr<BiasAddCost>;
 
 class ReduceMethodCost : public OperatorCost {
  public:
-  ReduceMethodCost() = default;
+  explicit ReduceMethodCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  ReduceMethodCost() : OperatorCost(true) {}
   ~ReduceMethodCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
   double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                            const int32_t& stage_id) const override;
+                            int32_t stage_id) const override;
   double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                             const int32_t& stage_id) const override;
+                             int32_t stage_id) const override;
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                                    const int32_t&) const override {
+                                    int32_t) const override {
     return 0.0;
   }
   void set_cross_batch(bool cb) { cross_batch_ = cb; }
@@ -452,47 +484,131 @@ using ReduceMethodCostPtr = std::shared_ptr<ReduceMethodCost>;
 
 class ReduceMeanCost : public ReduceMethodCost {
  public:
-  ReduceMeanCost() = default;
+  explicit ReduceMeanCost(bool is_inputs_related) : ReduceMethodCost(is_inputs_related) {}
+  ReduceMeanCost() : ReduceMethodCost(true) {}
   ~ReduceMeanCost() override = default;
 
   double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                                   const int32_t& stage_id) const override;
+                                   int32_t stage_id) const override;
 };
 using ReduceMeanCostPtr = std::shared_ptr<ReduceMeanCost>;
 
 class GetNextCost : public OperatorCost {
  public:
-  GetNextCost() = default;
+  explicit GetNextCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  GetNextCost() : OperatorCost(false) {}
   ~GetNextCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                     const int32_t& stage_id) const override {
+                     int32_t stage_id) const override {
     return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
   }
-  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                            const int32_t&) const override {
+  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
     return 0.0;
   }
-  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                             const int32_t&) const override {
+  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
     return 0.0;
   }
   double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
-                            const int32_t& stage_id) const override {
+                            int32_t stage_id) const override {
     return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
   }
   // Inputs vector is empty for generator ops.
   double GetForwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                                   const int32_t&) const override {
+                                   int32_t) const override {
     return 0.0;
   }
   // Generator ops don't have backward steps.
   double GetBackwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
-                                    const int32_t&) const override {
+                                    int32_t) const override {
     return 0.0;
   }
 };
 using GetNextCostPtr = std::shared_ptr<GetNextCost>;
+
+class DropOutCost : public OperatorCost {
+ public:
+  explicit DropOutCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  DropOutCost() : OperatorCost(true) {}
+  ~DropOutCost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                     int32_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
+    return 0.0;
+  }
+  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
+    return 0.0;
+  }
+  double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                            int32_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                   int32_t) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                    int32_t) const override {
+    return 0.0;
+  }
+};
+
+using DropOutCostPtr = std::shared_ptr<DropOutCost>;
+
+class LayerNormCost : public OperatorCost {
+ public:
+  explicit LayerNormCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  LayerNormCost() : OperatorCost(true) {}
+  ~LayerNormCost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                     int32_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override {
+    return 0.0;
+  }
+  double GetBackwardCommCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&, int32_t) const override;
+  double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                            int32_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                   int32_t) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo>&, const std::vector<TensorInfo>&,
+                                    int32_t) const override {
+    return 0.0;
+  }
+};
+
+using DropOutCostPtr = std::shared_ptr<DropOutCost>;
+
+class GatherV2Cost : public OperatorCost {
+ public:
+  explicit GatherV2Cost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
+  GatherV2Cost() : OperatorCost(true) {}
+  ~GatherV2Cost() override = default;
+
+  double GetCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                     int32_t stage_id) const override {
+    return GetForwardCommCost(inputs, outputs, stage_id) + GetBackwardCommCost(inputs, outputs, stage_id);
+  }
+  double GetForwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                            int32_t stage_id) const override;
+  double GetBackwardCommCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                             int32_t stage_id) const override;
+  double GetComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                            int32_t stage_id) const override {
+    return GetForwardComputationCost(inputs, outputs, stage_id) + GetBackwardComputationCost(inputs, outputs, stage_id);
+  }
+  double GetForwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                                   int32_t stage_id) const override;
+  double GetBackwardComputationCost(const std::vector<TensorInfo>& inputs, const std::vector<TensorInfo>& outputs,
+                                    int32_t) const override;
+};
+
+using GatherV2CostPtr = std::shared_ptr<GatherV2Cost>;
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_

@@ -39,8 +39,10 @@ class GPUSession : public SessionBasic {
   GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
 
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
-  void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) override;
-  py::tuple RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info) override;
+  void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+               std::vector<tensor::TensorPtr> *input_tensors) override;
+  py::tuple RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                  const std::vector<tensor::TensorPtr> &input_tensors) override;
 
  private:
   void SelectKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
@@ -48,6 +50,8 @@ class GPUSession : public SessionBasic {
   void StartKernelRT() const;
 
   void Optimize(const std::shared_ptr<KernelGraph> &kernel_graph);
+
+  void AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph);
 
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 

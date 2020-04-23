@@ -30,6 +30,7 @@
 namespace mindspore {
 
 namespace {
+constexpr size_t TIME_INFO_PREFIX_NUM_LEN = 4;
 const char KEY_PROF_TOTAL[] = "__total__";
 
 void PrintProfile(std::ostringstream& oss, const TimeInfo& time_info, int indent = 0,
@@ -42,15 +43,16 @@ void PrintTimeInfoMap(std::ostringstream& oss, const TimeInfoMap& dict, int inde
       continue;
     }
     // indent by multiples of 4 spaces.
+    auto name = iter->first.substr(TIME_INFO_PREFIX_NUM_LEN);
     oss << std::setw(indent * 4) << ""
-        << "[" << iter->first << "]: " << iter->second->time_;
+        << "[" << name << "]: " << iter->second->time_;
     if (iter->second->dict_ != nullptr) {
       oss << ", [" << iter->second->dict_->size() << "]";
     }
     oss << "\n";
 
     std::string newPrefix = prefix;
-    if (iter->first.find("Cycle ") != 0) {
+    if (iter->first.find("Cycle ") == std::string::npos) {
       newPrefix = prefix.empty() ? iter->first : prefix + "." + iter->first;
     }
     PrintProfile(oss, *iter->second, indent + 1, sums, newPrefix);
@@ -94,7 +96,14 @@ void PrintProfile(std::ostringstream& oss, const TimeInfo& time_info, int indent
     oss << "Sums\n";
     if (total >= 0.0 + DBL_EPSILON) {
       for (auto& iter : *sums) {
-        oss << "    " << std::left << std::setw(36) << iter.first << " : " << std::right << std::setw(12) << std::fixed
+        std::string name = iter.first;
+        name.erase(0, TIME_INFO_PREFIX_NUM_LEN);
+        std::size_t pos = 0;
+        while ((pos = name.find('.', pos)) != std::string::npos) {
+          pos++;
+          name.erase(pos, TIME_INFO_PREFIX_NUM_LEN);
+        }
+        oss << "    " << std::left << std::setw(36) << name << " : " << std::right << std::setw(12) << std::fixed
             << std::setprecision(6) << iter.second << "s : " << std::right << std::setw(5) << std::fixed
             << std::setprecision(2) << iter.second / total * 100 << "%\n";
       }
@@ -241,14 +250,18 @@ void ProfContext::Insert(const std::string& name, const TimeInfo* time) noexcept
     }
   }
 
-  auto iter = time_info_->dict_->find(name);
+  std::stringstream ss;
+  ss << std::setw(TIME_INFO_PREFIX_NUM_LEN) << std::setfill('0') << time_info_->actionNum_;
+  std::string sorted_name(ss.str() + name);
+  time_info_->actionNum_++;
+  auto iter = time_info_->dict_->find(sorted_name);
   // if contains item with same name, delete it
   if (iter != time_info_->dict_->end()) {
     delete iter->second;
     iter->second = nullptr;
     (void)time_info_->dict_->erase(iter);
   }
-  (*time_info_->dict_)[name] = time;
+  (*time_info_->dict_)[sorted_name] = time;
 }
 
 bool ProfContext::IsTopContext() const noexcept { return (prof_ != nullptr) && (this == &prof_->context_); }
