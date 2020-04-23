@@ -164,8 +164,11 @@ Tensor::Tensor(const py::float_ &input, const TypePtr &data_type) { init(py::arr
 Tensor::Tensor(const py::int_ &input, const TypePtr &data_type) { init(py::array(input), data_type); }
 
 Tensor::Tensor(const Tensor &tensor, const TypePtr &data_type)
-    : MetaTensor(tensor), device_address_(tensor.device_address()) {
+    : MetaTensor(tensor), dirty_(tensor.dirty_), device_address_(tensor.device_address_) {
   init(tensor.data_, data_type);
+  if (device_address_ != nullptr) {
+    (void)data_sync();
+  }
 }
 
 Tensor &Tensor::operator=(const Tensor &tensor) {
