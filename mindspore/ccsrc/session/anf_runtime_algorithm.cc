@@ -851,17 +851,12 @@ void AnfRuntimeAlgorithm::SetNodeInput(const CNodePtr &node, const AnfNodePtr &i
 
 bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_name = AnfAlgo::GetCNodeName(node);
-  auto kernel_type = AnfAlgo::GetKernelType(node);
-  if (kernel_name == kAllReduceOpName || kernel_type == HCCL_KERNEL) {
-    return true;
+  if (!node->isa<CNode>()) {
+    return false;
   }
-  return false;
-}
-
-bool AnfRuntimeAlgorithm::IsAllReduceOp(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kAllReduceOpName) {
+  auto kernel_name = AnfAlgo::GetCNodeName(node);
+  if (kernel_name == kAllReduceOpName || kernel_name == kAllGatherOpName || kernel_name == kBroadcastOpName ||
+      kernel_name == kReduceScatterOpName) {
     return true;
   }
   return false;

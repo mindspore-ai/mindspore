@@ -251,9 +251,10 @@ void BestFitMemReuse::ReleaseNodeUnusedOutput(const KernelDef *kernel_def_ptr) {
 }
 
 size_t BestFitMemReuse::FindIndx(const std::vector<MembufPtr> &membuf_ptr_list, int fac_idx) const {
-  size_t membuf_index = 0;
+  size_t membuf_index = membuf_ptr_list.size();
   for (size_t n = 0; n < membuf_ptr_list.size(); ++n) {
     auto membuf = membuf_ptr_list[n];
+    MS_EXCEPTION_IF_NULL(membuf);
     if (membuf->index_ == fac_idx) {
       membuf_index = n;
       break;

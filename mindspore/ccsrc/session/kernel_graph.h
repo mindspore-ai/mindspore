@@ -22,7 +22,6 @@
 #include <utility>
 #include <string>
 #include <queue>
-#include <stack>
 #include <map>
 #include <unordered_set>
 #include "ir/func_graph.h"
@@ -94,8 +93,10 @@ class KernelGraph : public FuncGraph {
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
+  void VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
+                            std::unordered_set<AnfNodePtr> *visited_nodes);
   // update node edge list
-  void UpdateNodeEdgeList(std::stack<AnfNodePtr> *seed_nodes);
+  void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
   // add node depend edge by data edge or control depend
   void AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num);
   // handle control depend
