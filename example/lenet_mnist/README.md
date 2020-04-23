@@ -19,8 +19,8 @@ This is the simple and basic tutorial for constructing a network in MindSpore.
     │      t10k-labels.idx1-ubyte
     │
     └─train
-            train-images.idx3-ubyte
-            train-labels.idx1-ubyte
+           train-images.idx3-ubyte
+           train-labels.idx1-ubyte
 ```
 
 ## Running the example
@@ -30,7 +30,7 @@ This is the simple and basic tutorial for constructing a network in MindSpore.
 python train.py --data_path MNIST_Data
 ```
 
-You can get loss with each step similar to this:
+You will get the loss value of each step as following:
 
 ```bash
 epoch: 1 step: 1, loss is 2.3040335
@@ -41,17 +41,16 @@ epoch: 1 step: 1741, loss is 0.05018193
 ...
 ```
 
-Then, test LeNet according to network model
+Then, evaluate LeNet according to network model
 ```python
-# test LeNet, after 1 epoch training, the accuracy is up to 96.5%
+# evaluate LeNet, after 1 epoch training, the accuracy is up to 96.5%
 python eval.py --data_path MNIST_Data --mode test --ckpt_path checkpoint_lenet-1_1875.ckpt
 ```
 
 ## Note
-There are some optional arguments:
+Here are some optional parameters:
 
 ```bash
--h, --help           show this help message and exit
 --device_target {Ascend,GPU,CPU}
                      device where the code will be implemented (default: Ascend)
 --data_path DATA_PATH
