@@ -1486,4 +1486,4 @@ class UniformAugment:
         Returns:
             img (PIL Image), Transformed image.
         """
-        return util.uniform_augment(img, self.transforms, self.num_ops)
+        return util.uniform_augment(img, self.transforms.copy(), self.num_ops)
