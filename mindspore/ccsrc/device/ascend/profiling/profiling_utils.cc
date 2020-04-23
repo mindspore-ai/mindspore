@@ -33,7 +33,7 @@ constexpr char kIterEndNode[] = "PROFILING_ITER_END";
 std::unordered_map<uint32_t, std::vector<std::string>> ProfilingUtils::graph_kernel_name_;
 uint32_t ProfilingUtils::custom_node_index_ = 1;
 
-ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<session::KernelGraph *> graph_ptr) {
+ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(const NotNull<session::KernelGraph *> graph_ptr) {
   MS_LOG(INFO) << "get env start";
   custom_node_index_ = 1;
   auto &cnode_exec_order = graph_ptr->execution_order();
