@@ -28,6 +28,7 @@
 
 #include "ir/meta_tensor.h"
 #include "pipeline/parse/parse.h"
+#include "pipeline/parse/parse_base.h"
 #include "ir/value.h"
 
 namespace mindspore {
@@ -97,6 +98,13 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
       i++;
     }
     ret = rets;
+  } else if (value->isa<ValueSlice>()) {
+    auto slice = value->cast<ValueSlicePtr>();
+    auto start = ValuePtrToPyData(slice->start());
+    auto end = ValuePtrToPyData(slice->stop());
+    auto step = ValuePtrToPyData(slice->step());
+    ret = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_CLASS_SLICE, start, end,
+                                          step);
   } else if (value->isa<Type>()) {
     py::tuple v(1);
     v[0] = value->cast<TypePtr>();

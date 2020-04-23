@@ -94,10 +94,101 @@ class NetWorkReduceToScalar(Cell):
         return ret
 
 
+class TensorAssignWithSliceError1(Cell):
+    def __init__(self):
+        super(TensorAssignWithSliceError1, self).__init__()
+
+    def construct(self, a, b):
+        a[1:3:-1,::] = b
+        return a
+
+class TensorAssignWithSliceError2(Cell):
+    def __init__(self):
+        super(TensorAssignWithSliceError2, self).__init__()
+
+    def construct(self, a, b):
+        a[1:3:-1] = b
+        return a
+class TensorAssignWithSlice2(Cell):
+    def __init__(self):
+        super(TensorAssignWithSlice2, self).__init__()
+
+    def construct(self, a, b):
+        a[1:5] = b
+        a[3:4] = 5
+        a[-1:1:-1] = b
+        a[-1:3:-1] = 5
+        a[::] = b
+        a[::] = 9
+        return a
+class TensorAssignWithSlice(Cell):
+    def __init__(self):
+        super(TensorAssignWithSlice, self).__init__()
+        self.c = 2
+
+    def construct(self, a, b):
+        a[1:3,::] = b
+        a[2:3:,3:] = b
+        a[::] = b
+        a[::] = self.c
+        a[::,::] = b
+        a[::,::] = self.c
+        a[2:3:,0:, 4:1:-1] = b
+        a[2:3:,0:, 4:1:-1] = self.c
+        z = a
+        return z
+
+def test_tensor_assign_with_slice():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    net = TensorAssignWithSlice()
+    net2= TensorAssignWithSlice2()
+    net_e1 = TensorAssignWithSliceError1()
+    net_e2 = TensorAssignWithSliceError2()
+    a = np.arange(60).reshape(3,4,5)
+    b = Tensor([1])
+    Ta = Tensor(a)
+    Tb= Tensor([1,3])
+    Tc= Tensor([])
+    t = Tensor([1, 2, 3, 4, 5, 6, 7, 8])
+    net(Ta, b)
+    net2(t, b)
+    # Error for A[Slice] = Number
+    # 1. A[Slice] = Number,  Slice error
+    with pytest.raises(ValueError):
+        net_e2(t, 2)
+
+    # Error for A[Slice] = U, U is a Tensor
+    # 1. A[Slice] = U,  u.size is error
+    with pytest.raises(ValueError):
+        net2(t, Tb)
+    # 2. A[Slice] = U, U is empty
+    with pytest.raises(ValueError):
+        net2(t, Tc)
+    # 3. A[Slice] = U, U.size error
+    with pytest.raises(ValueError):
+        net2(t, Tb)
+
+    # Error for A[Tuple(Slice...)] = Tensor
+    # 1. A[Tuple(Slice...)] = U, U is empty
+    with pytest.raises(ValueError):
+        net(Ta, Tc)
+    # 2. A[Tuple(Slice...)] = U, U.size error
+    with pytest.raises(ValueError):
+        net(Ta, Tb)
+    # 3. A[Tuple(Slice...)] = U,  Slice error
+    with pytest.raises(ValueError):
+        net_e1(Ta, b)
+
+    # Error for A[Tuple(Slice...)] = Number
+    # 1. A[Tuple(Slice...)] = Number,  Slice error
+    with pytest.raises(ValueError):
+        net_e1(Ta, 2)
+
+
 class TensorAssignWithBoolTensorIndex(Cell):
     def __init__(self):
         super(TensorAssignWithBoolTensorIndex, self).__init__()
-        self.t = Tensor(np.arange(6).reshape([2, 3]), dtype=mstype.float64)
+        self.t = Tensor(np.arange(60).reshape([3,4,5]), dtype = mstype.float64)
 
     def construct(self, a, b, c, u_tensor, _scalar):
         a[c] = u_scalar
@@ -119,6 +210,7 @@ class TensorAssignWithBoolTensorIndex2(Cell):
     def __init__(self):
         super(TensorAssignWithBoolTensorIndex2, self).__init__()
         self.t = Tensor(np.arange(6).reshape([2, 3]), dtype=mstype.float64)
+        self.t = Tensor(np.arange(60).reshape([3,4,5]), dtype = mstype.float64)
 
     def construct(self, a, u_tensor, _scalar):
         a[a > 8] = u_tensor
@@ -139,7 +231,7 @@ class TensorAssignWithBoolTensorIndex2Error(Cell):
         return a
 
 
-a = np.random.uniform(1, 10, [2, 3])
+a = np.random.uniform(1,10,[3,4,5])
 b = a > 5
 c = a < 3
 Ta = Tensor(a)
@@ -148,13 +240,13 @@ Tc = Tensor(c)
 Td = Tensor([True, True])
 u_tensor = Tensor([1])
 u_tensor_error = Tensor([1, 2])
+t_1d = Tensor([1, 2, 3, 4, 5, 6, 7, 8])
 u_scalar = 5
-
 
 def test_tensor_assign_bool_index():
     net1 = TensorAssignWithBoolTensorIndex()
     net2 = TensorAssignWithBoolTensorIndex2()
-
+    net1(Ta, Tb, Tc, u_tensor, u_scalar)
     net1(Ta, Tb, Tc, u_tensor, u_scalar)
     with pytest.raises(ValueError):
         net1(Ta, Td, Tc, u_tensor, u_scalar)
@@ -180,8 +272,15 @@ def test_tensor_assign_bool_index():
     with pytest.raises(AttributeError):
         net4(Ta, u_scalar)
 
-
 test_cases = [
+    ('TensorAssignWithSlice', {
+        'block': TensorAssignWithSlice(),
+        'desc_inputs': [Ta,  u_tensor],
+    }),
+    ('TensorAssignWithSlice2', {
+        'block': TensorAssignWithSlice2(),
+        'desc_inputs': [t_1d,  u_tensor],
+    }),
     ('TensorAssignWithBoolTensorIndex', {
         'block': TensorAssignWithBoolTensorIndex(),
         'desc_inputs': [Ta, Tb, Tc, u_tensor, u_scalar],
