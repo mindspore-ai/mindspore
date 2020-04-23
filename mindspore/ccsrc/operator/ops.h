@@ -234,7 +234,6 @@ extern const PrimitivePtr kPrimInDict;
 extern const PrimitivePtr kPrimNotInDict;
 
 // Comm ops
-extern const PrimitivePtr kPrimAllReduce;
 extern const PrimitivePtr kPrimMirror;
 extern const PrimitivePtr kPrimVirtualDiv;
 extern const PrimitivePtr kPrimVirtualDataset;

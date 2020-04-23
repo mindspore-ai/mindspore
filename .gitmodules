@@ -12,4 +12,4 @@
 	url = https://github.com/protocolbuffers/protobuf.git
 [submodule "graphengine"]
 	path = graphengine
-	url = https://gitee.com/mindspore/graphengine.git
+	url = https://gitee.com/ms-incubator/graphengine.git

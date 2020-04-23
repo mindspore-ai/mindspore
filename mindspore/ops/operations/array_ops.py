@@ -1235,8 +1235,8 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
 
     Examples:
-        >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
-        >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
+        >>> input_x = [1, 2, 3, 4]
+        >>> segment_ids = [0, 0, 1, 2]
         >>> num_segments = 4
         >>> P.UnsortedSegmentSum()(input_x, segment_ids, num_segments)
         [3, 3, 4, 0]
