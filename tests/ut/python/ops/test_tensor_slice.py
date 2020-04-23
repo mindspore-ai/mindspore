@@ -138,7 +138,7 @@ class TensorAssignWithSlice(Cell):
         z = a
         return z
 
-def test_tensor_assign_with_slice():
+def test_tensor_assign():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     net = TensorAssignWithSlice()
     net2= TensorAssignWithSlice2()
@@ -147,6 +147,7 @@ def test_tensor_assign_with_slice():
     a = np.arange(60).reshape(3,4,5)
     b = Tensor([1])
     Ta = Tensor(a)
+    Ta4d = Tensor(a.reshape(1,3,4,5))
     Tb= Tensor([1,3])
     Tc= Tensor([])
     t = Tensor([1, 2, 3, 4, 5, 6, 7, 8])
@@ -184,6 +185,47 @@ def test_tensor_assign_with_slice():
     with pytest.raises(ValueError):
         net_e1(Ta, 2)
 
+    net = TensorAssignWithInteger()
+    # Error for A[Number] = scalar/Tensor
+    # 1. A[Number] = U, U is a Tensor, u.size not match
+    with pytest.raises(ValueError):
+        net(Ta, Tb)
+    with pytest.raises(ValueError):
+        net(Ta, Tc)
+    # 2. A[Number] = U, the number index error
+    with pytest.raises(IndexError):
+        net(Ta4d, b)
+
+    # Error for A[(n,m)] = scalar/Tensor
+    # 1. A[(n,m)] = U, U is a tensor. u.size not match
+    net = TensorAssignWithTupleInteger()
+    with pytest.raises(ValueError):
+        net(Ta, Tc)
+    with pytest.raises(ValueError):
+        net(Ta, Tb)
+    # 2. A[(n,m)] = U, the number index error
+    with pytest.raises(IndexError):
+        net(Ta4d, b)
+
+class TensorAssignWithInteger(Cell):
+    def __init__(self):
+        super(TensorAssignWithInteger, self).__init__()
+
+    def construct(self, a, b):
+        a[1] = 1
+        a[0] = b
+        return a
+
+class TensorAssignWithTupleInteger(Cell):
+    def __init__(self):
+        super(TensorAssignWithTupleInteger, self).__init__()
+
+    def construct(self, a, b):
+        a[(1)] = 1
+        a[(1)] = b
+        a[(1,1)] = b
+        a[(1,1)] = 1
+        return a
 
 class TensorAssignWithBoolTensorIndex(Cell):
     def __init__(self):
@@ -273,6 +315,14 @@ def test_tensor_assign_bool_index():
         net4(Ta, u_scalar)
 
 test_cases = [
+    ('TensorAssignWithTupleInteger', {
+        'block': TensorAssignWithTupleInteger(),
+        'desc_inputs': [Ta,  u_tensor],
+    }),
+    ('TensorAssignWithInteger', {
+        'block': TensorAssignWithInteger(),
+        'desc_inputs': [Ta,  u_tensor],
+    }),
     ('TensorAssignWithSlice', {
         'block': TensorAssignWithSlice(),
         'desc_inputs': [Ta,  u_tensor],
