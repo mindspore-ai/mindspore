@@ -206,8 +206,8 @@ class Validator:
         def _check_tensor_type(arg):
             arg_key, arg_val = arg
             elem_type = arg_val
-            type_names = []
             if not elem_type in valid_values:
+                type_names = []
                 for t in valid_values:
                     type_names.append(str(t))
                 types_info = '[' + ", ".join(type_names) + ']'
