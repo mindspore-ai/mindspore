@@ -376,7 +376,7 @@ class GlobalBatchNorm(_BatchNorm):
                                           use_batch_statistics,
                                           group)
         self.group = check_int_positive(group)
-        if self.group <=1:
+        if self.group <= 1:
             raise ValueError("the number of group must be greater than 1.")
     def _check_data_dim(self, x):
         if x.dim == 0:
