@@ -154,6 +154,7 @@ ATTR_MAP(BatchNorm) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::str
 OUTPUT_MAP(BatchNorm) = {{0, OUTPUT_DESC(y)},
                          {1, OUTPUT_DESC(batch_mean)},
                          {2, OUTPUT_DESC(batch_variance)},
+                         {3, OUTPUT_DESC(reserve_space_1)},
                          {4, OUTPUT_DESC(reserve_space_2)}};
 
 // BatchNormGrad
@@ -607,7 +608,7 @@ OUTPUT_MAP(ArgMinWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)
 // ReduceAllD
 INPUT_MAP(ReduceAllD) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(ReduceAllD) = {
-  {2, ATTR_DESC(axis, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(ReduceAllD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ReduceAllD) = {{0, OUTPUT_DESC(y)}};
 
