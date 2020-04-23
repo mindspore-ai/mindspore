@@ -26,5 +26,8 @@ MS_REG_GPU_KERNEL_ONE(
   TensorAdd,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   TensorAddGpuFwdKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  TensorAdd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  TensorAddGpuFwdKernel, int)
 }  // namespace kernel
 }  // namespace mindspore
