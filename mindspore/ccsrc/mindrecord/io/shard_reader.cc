@@ -316,6 +316,10 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
 }
 
 MSRStatus ShardReader::GetAllClasses(const std::string &category_field, std::set<std::string> &categories) {
+  if (column_schema_id_.find(category_field) == column_schema_id_.end()) {
+    MS_LOG(ERROR) << "Field " << category_field << " does not exist.";
+    return FAILED;
+  }
   auto ret = ShardIndexGenerator::GenerateFieldName(std::make_pair(column_schema_id_[category_field], category_field));
   if (SUCCESS != ret.first) {
     return FAILED;
@@ -718,6 +722,11 @@ int64_t ShardReader::GetNumClasses(const std::string &file_path, const std::stri
   std::map<std::string, int64_t> map_schema_id_fields;
   for (auto &field : index_fields) {
     map_schema_id_fields[field.second] = field.first;
+  }
+
+  if (map_schema_id_fields.find(category_field) == map_schema_id_fields.end()) {
+    MS_LOG(ERROR) << "Field " << category_field << " does not exist.";
+    return -1;
   }
   auto ret =
     ShardIndexGenerator::GenerateFieldName(std::make_pair(map_schema_id_fields[category_field], category_field));

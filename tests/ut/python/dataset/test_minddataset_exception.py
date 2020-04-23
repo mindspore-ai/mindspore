@@ -82,3 +82,18 @@ def test_minddataset_lack_db():
             num_iter += 1
         assert num_iter == 0
     os.remove(CV_FILE_NAME)
+
+
+def test_cv_minddataset_pk_sample_error_class_column():
+    create_cv_mindrecord(1)
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    sampler = ds.PKSampler(5, None, True, 'no_exsit_column')
+    with pytest.raises(Exception, match="MindRecordOp launch failed"):
+        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, sampler=sampler)
+        num_iter = 0
+        for item in data_set.create_dict_iterator():
+            num_iter += 1
+    os.remove(CV_FILE_NAME)
+    os.remove("{}.db".format(CV_FILE_NAME))
+

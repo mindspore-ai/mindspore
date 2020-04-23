@@ -435,12 +435,12 @@ void bindSamplerOps(py::module *m) {
     .def(py::init<std::vector<int64_t>, uint32_t>(), py::arg("indices"), py::arg("seed") = GetSeed());
   (void)py::class_<mindrecord::ShardPkSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardPkSample>>(
     *m, "MindrecordPkSampler")
-    .def(py::init([](int64_t kVal, bool shuffle) {
+    .def(py::init([](int64_t kVal, std::string kColumn, bool shuffle) {
       if (shuffle == true) {
-        return std::make_shared<mindrecord::ShardPkSample>("label", kVal, std::numeric_limits<int64_t>::max(),
+        return std::make_shared<mindrecord::ShardPkSample>(kColumn, kVal, std::numeric_limits<int64_t>::max(),
                                                            GetSeed());
       } else {
-        return std::make_shared<mindrecord::ShardPkSample>("label", kVal);
+        return std::make_shared<mindrecord::ShardPkSample>(kColumn, kVal);
       }
     }));
 
