@@ -450,7 +450,7 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         _executor.export(net, file_name, file_format)
     elif file_format == 'ONNX':  # file_format is 'ONNX'
         phase_name = 'export_onnx'
-        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name)
+        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(graph_id)
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)

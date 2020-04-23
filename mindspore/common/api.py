@@ -328,7 +328,7 @@ class _Executor:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
 
-    def compile(self, obj, *args, phase='predict', params=None):
+    def compile(self, obj, *args, phase='predict', params=None, do_convert=True):
         """
         Compiles graph.
 
@@ -337,6 +337,7 @@ class _Executor:
             args (tuple): Function or cell input arguments.
             phase (str): The name of compile phase. Default: 'predict'.
             params (OrderedDict): The parameters dictionary used for init data graph. Default: None.
+            do_convert (bool): When set to True, convert ME graph to GE graph after compiling graph.
 
         Return:
             Str, the full phase of the cell.
@@ -368,7 +369,8 @@ class _Executor:
 
         if graph is None:
             logger.error("%r graph compile failed.", phase)
-
+        if not do_convert:
+            return phase, True
         if not enable_debug_runtime or enable_ge:
             if _get_parallel_mode() in ["auto_parallel", "semi_auto_parallel"]:
                 obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
