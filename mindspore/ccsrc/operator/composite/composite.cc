@@ -1084,6 +1084,7 @@ int GenerateStridedSliceParametersFromTuple(const AbstractTuplePtr &slice_tuple,
   std::vector<unsigned int> shrink;
   auto slice_tuple_eles = slice_tuple->elements();
   size_t ellipsis_num = 0;
+
   for (size_t index = 0; index < slice_tuple_size; index++) {
     if (slice_tuple_eles[index]->isa<AbstractSlice>()) {
       AbstractSlicePtr slice = dyn_cast<AbstractSlice>(slice_tuple_eles[index]);
@@ -1118,12 +1119,13 @@ int GenerateStridedSliceParametersFromTuple(const AbstractTuplePtr &slice_tuple,
                       << slice_tuple_eles[index]->ToString();
   }
 
-  for (size_t index = slice_tuple_size; index < shape_size; index++) {
-    begin->push_back(0);
-    end->push_back(shape[index]);
-    strides->push_back(1);
+  if (ellipsis_num == 0) {
+    for (size_t index = slice_tuple_size; index < shape_size; index++) {
+      begin->push_back(0);
+      end->push_back(shape[index]);
+      strides->push_back(1);
+    }
   }
-
   return ConvertBinaryToDecimal(shrink);
 }
 
@@ -1199,6 +1201,7 @@ FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec
       if (scalar_ptr->BuildValue()->cast<BoolImmPtr>()->value()) {
         return ExpandADim(ret_graph, tensor_node);
       }
+      MS_LOG(EXCEPTION) << "TensorSlice not support the index is False.";
     }
     shrink_axis_mask = GenerateStridedSliceParametersFromNumber(scalar_ptr, shape, &begin, &end, &strides);
   } else if (args_spec_list[1]->isa<AbstractEllipsis>()) {

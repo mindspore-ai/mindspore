@@ -147,6 +147,21 @@ def _tensor_getitem_by_number(data, number_index):
     return _tensor_slice(data, number_index)
 
 
+@getitem.register("Tensor", "None")
+def _tensor_getitem_by_none(data, index):
+    """
+    Getting item of tensor by None.
+
+    Inputs:
+        data (Tensor): A tensor.
+        index (None): None.
+
+    Outputs:
+        Tensor, element type is as same as the element type of data.
+    """
+    return _tensor_slice(data, index)
+
+
 @getitem.register("Tensor", "Slice")
 def _tensor_getitem_by_slice(data, slice_index):
     """

@@ -52,8 +52,9 @@ class NetWorkSliceEllipsis(Cell):
     def construct(self, tensor):
         ret0 = tensor[0:4:2, ..., 1] + self.tensor_ret0
         ret1 = tensor[...] + self.tensor_ret1
-        ret2 = tensor[True] + self.tensor_ret2
-        return ret0, ret1, ret2
+        ret2 = tensor[None] + self.tensor_ret2
+        ret3 = tensor[True] + self.tensor_ret2
+        return ret0, ret1, ret2, ret3
 
 
 class NetWorkReduceDimension(Cell):
@@ -305,7 +306,7 @@ test_cases = [
         'block': NetWorkReduceToScalar(),
         'desc_inputs': [Tensor(np.ones([6, 8, 10], np.int32))],
     }),
-    ('NetWorkSliceEllipsis', {
+    ('TensorSliceEllipsis', {
         'block': NetWorkSliceEllipsis(),
         'desc_inputs': [Tensor(np.ones([6, 7, 8, 9], np.int32))],
     }),
