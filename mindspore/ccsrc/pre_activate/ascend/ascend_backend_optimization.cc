@@ -21,7 +21,7 @@
 #include "pre_activate/ascend/ir_fission/bn_grad_split.h"
 #include "pre_activate/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "pre_activate/ascend/ir_fission/layer_norm_grad_split.h"
-#include "pre_activate/pass/allreduce_fusion.h"
+#include "pre_activate/pass/communication_op_fusion.h"
 #include "pre_activate/ascend/ir_fusion/square_sum_fusion.h"
 #include "pre_activate/ascend/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "pre_activate/ascend/ir_fusion/lamb_update_with_lr_rule_fusion.h"
@@ -261,6 +261,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
+  other_pm->AddPass(std::make_shared<AllGatherFusion>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<BufferFusion>());
   other_pm->AddPass(std::make_shared<GetitemTuple>());
