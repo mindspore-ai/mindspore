@@ -315,7 +315,7 @@ class ParamValidator:
             type_names = [t.__name__ for t in valid_types]
             num_types = len(valid_types)
             raise TypeError(f'The type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
-                             f'{type_names if num_types > 1 else type_names[0]}, but got {type(arg_value).__name__}.')
+                            f'{type_names if num_types > 1 else type_names[0]}, but got {type(arg_value).__name__}.')
 
         if isinstance(arg_value, type(mstype.tensor)):
             arg_value = arg_value.element_type()
