@@ -24,7 +24,6 @@
 #endif
 #include "dataset/kernels/image/cut_out_op.h"
 #include "dataset/kernels/image/decode_op.h"
-#include "dataset/kernels/image/distort_bounding_box_crop_op.h"
 #include "dataset/kernels/image/hwc_to_chw_op.h"
 #include "dataset/kernels/image/image_utils.h"
 #include "dataset/kernels/image/normalize_op.h"
@@ -369,18 +368,6 @@ void bindTensorOps3(py::module *m) {
 }
 
 void bindTensorOps4(py::module *m) {
-  (void)py::class_<DistortBoundingBoxCropOp, TensorOp, std::shared_ptr<DistortBoundingBoxCropOp>>(
-    *m, "DistortBoundingBoxCropOp",
-    "Tensor operator to crop an image randomly as long as the cropped image has sufficient "
-    "overlap with any one bounding box associated with original image"
-    "Takes aspect ratio of the generated crop box, the intersection ratio of crop box and bounding box,"
-    "crop ratio lower and upper bounds"
-    "Optional parameters: number of attempts for crop, number of attempts of crop box generation")
-    .def(py::init<float, float, float, float, int32_t, int32_t>(), py::arg("aspect_ratio"), py::arg("intersect_ratio"),
-         py::arg("crop_ratio_lower_bound"), py::arg("crop_ratio_upper_bound"),
-         py::arg("max_attempts") = DistortBoundingBoxCropOp::kDefMaxAttempts,
-         py::arg("box_gen_attempts") = DistortBoundingBoxCropOp::kDefBoxGenAttempts);
-
   (void)py::class_<TypeCastOp, TensorOp, std::shared_ptr<TypeCastOp>>(
     *m, "TypeCastOp", "Tensor operator to type cast data to a specified type.")
     .def(py::init<DataType>(), py::arg("data_type"))

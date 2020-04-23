@@ -3,7 +3,6 @@ if (WIN32)
       center_crop_op.cc
       cut_out_op.cc
       decode_op.cc
-      distort_bounding_box_crop_op.cc
       hwc_to_chw_op.cc
       image_utils.cc
       normalize_op.cc
@@ -27,7 +26,6 @@ else()
       change_mode_op.cc
       cut_out_op.cc
       decode_op.cc
-      distort_bounding_box_crop_op.cc
       hwc_to_chw_op.cc
       image_utils.cc
       normalize_op.cc
