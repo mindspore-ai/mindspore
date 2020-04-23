@@ -183,6 +183,8 @@ class Lamb(Optimizer):
                  decay_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name):
 
         super(Lamb, self).__init__(start_learning_rate, params)
+        if self.is_group:
+            raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
         _check_param_value(decay_steps, warmup_steps, start_learning_rate, end_learning_rate,
                            power, beta1, beta2, eps, weight_decay, self.cls_name)
 

@@ -103,9 +103,9 @@ def _check_learning_rate_value(learning_rate, end_learning_rate, decay_steps, po
     validator.check_integer('decay_steps', decay_steps, 0, Rel.GT, prim_name)
 
 
-@adam_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
+@adam_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor", "Tensor",
                    "Tensor")
-def _run_opt_with_one_number(opt, lr, beta1_power, beta2_power, beta1, beta2, eps, gradient, params, moment1,
+def _run_opt_with_one_number(opt, beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, params, moment1,
                              moment2):
     """Apply adam optimizer to the weight parameter using Tensor."""
     success = True
@@ -136,9 +136,27 @@ class Adam(Optimizer):
     `beta1_power` and `beta2_power`, :math:`\alpha` represents `learning_rate`, :math:`w` represents `params`,
     :math:`\epsilon` represents `eps`.
 
+    Note:
+        The Adam optimizer supports separating parameter groups. Different parameter groups can set different
+        `learning_rate` and `weight_decay`.
+
+        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
+        value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
+        applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
+
     Args:
-        params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
-                                  should be class mindspore.Parameter.
+        params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
+            the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
+            "lr" and "weight_decay" are the keys can be parsed.
+
+            - params: Required. The value should be a list of `Parameter`.
+
+            - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
+              If not, the `learning_rate` in the API will be used.
+
+            - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
+              will be used. If not, the `weight_decay` in the API will be used.
+
         learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
                                                         Iterable or a Tensor and the dims of the Tensor is 1,
                                                         use dynamic learning rate, then the i-th step will
@@ -161,8 +179,6 @@ class Adam(Optimizer):
         weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. Should be equal to or greater than 1. Default:
                             1.0.
-        decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
-                                 lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -172,15 +188,26 @@ class Adam(Optimizer):
 
     Examples:
         >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Adam(params=net.trainable_params())
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
+        >>>
+        >>> #2) Use parameter groups and set different values
+        >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'lr': 0.01},
+        >>>                 {'params': no_conv_params}]
+        >>> opt = nn.Adam(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> # the conv_params's parameters will use a learning rate of 0.01 and a weight decay of 0.01
+        >>> # the no_cov_params's parameters don't set learning and weight decay. So they will use a
+        >>> # learning rate of 0.1 and a weight decay of 0.0.
+        >>>
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
 
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
-                 use_nesterov=False, weight_decay=0.0, loss_scale=1.0,
-                 decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
-        super(Adam, self).__init__(learning_rate, params, weight_decay, loss_scale, decay_filter)
+                 use_nesterov=False, weight_decay=0.0, loss_scale=1.0):
+        super(Adam, self).__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)
@@ -216,10 +243,14 @@ class Adam(Optimizer):
         self.beta1_power = beta1_power
         beta2_power = self.beta2_power * self.beta2
         self.beta2_power = beta2_power
-        success = self.hyper_map(F.partial(adam_opt, self.opt, lr, beta1_power, beta2_power, self.beta1,
-                                           self.beta2, self.eps),
-                                 gradients, params, moment1, moment2)
-
+        if self.is_group:
+            success = self.hyper_map(F.partial(adam_opt, self.opt, beta1_power, beta2_power, self.beta1,
+                                               self.beta2, self.eps),
+                                     lr, gradients, params, moment1, moment2)
+        else:
+            success = self.hyper_map(F.partial(adam_opt, self.opt, beta1_power, beta2_power, self.beta1,
+                                               self.beta2, self.eps, lr),
+                                     gradients, params, moment1, moment2)
         return success
 
 
@@ -262,6 +293,8 @@ class AdamWeightDecay(Optimizer):
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0,
                  decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
         super(AdamWeightDecay, self).__init__(learning_rate, params)
+        if self.is_group:
+            raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
         _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
         self.beta1 = Tensor(np.array([beta1]).astype(np.float32))
         self.beta2 = Tensor(np.array([beta2]).astype(np.float32))
@@ -329,6 +362,8 @@ class AdamWeightDecayDynamicLR(Optimizer):
                  weight_decay=0.0,
                  decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
         super(AdamWeightDecayDynamicLR, self).__init__(learning_rate, params)
+        if self.is_group:
+            raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
         _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
         _check_learning_rate_value(learning_rate, end_learning_rate, decay_steps, power, self.cls_name)
         # turn them to scalar when me support scalar/tensor mix operations

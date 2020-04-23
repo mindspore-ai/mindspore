@@ -24,7 +24,7 @@ sgd_opt = C.MultitypeFuncGraph("sgd_opt")
 
 
 @sgd_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt_ext(opt, learning_rate, momentum, gradient, weight, accum, stat):
+def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, accum, stat):
     """Apply sgd optimizer to the weight parameter using Tensor."""
     success = True
     success = F.depend(success, opt(weight, gradient, learning_rate, accum, momentum, stat))
@@ -39,9 +39,27 @@ class SGD(Optimizer):
     Nesterov momentum is based on the formula from paper `On the importance of initialization and
     momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>`_.
 
+    Note:
+        The SGD optimizer supports separating parameter groups. Different parameter groups can set different
+        `learning_rate` and `weight_decay`.
+
+        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
+        value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
+        applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
+
     Args:
-        params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
-                                  should be class mindspore.Parameter.
+        params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
+            the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
+            "lr" and "weight_decay" are the keys can be parsed.
+
+            - params: Required. The value should be a list of `Parameter`.
+
+            - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
+              If not, the `learning_rate` in the API will be used.
+
+            - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
+              will be used. If not, the `weight_decay` in the API will be used.
+
         learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
                                                         Iterable or a Tensor and the dims of the Tensor is 1,
                                                         use dynamic learning rate, then the i-th step will
@@ -67,9 +85,21 @@ class SGD(Optimizer):
 
     Examples:
         >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.SGD(params=net.trainable_params())
-        >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
+        >>>
+        >>> #2) Use parameter groups and set different values
+        >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'lr': 0.01},
+        >>>                 {'params': no_conv_params}]
+        >>> opt = nn.SGD(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> # the conv_params's parameters will use a learning rate of 0.01 and a weight decay of 0.01
+        >>> # the no_cov_params's parameters don't set learning and weight decay. So they will use a
+        >>> # learning rate of 0.1 and a weight decay of 0.0.
+        >>>
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
     def __init__(self, params, learning_rate=0.1, momentum=0.0, dampening=0.0, weight_decay=0.0, nesterov=False,
                  loss_scale=1.0):
@@ -109,5 +139,8 @@ class SGD(Optimizer):
         gradients = self.decay_weight(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
-        success = self.hyper_map(F.partial(sgd_opt, self.opt, lr, self.momentum), gradients, params, accum, stat)
+        if self.is_group:
+            success = self.hyper_map(F.partial(sgd_opt, self.opt, self.momentum), lr, gradients, params, accum, stat)
+        else:
+            success = self.hyper_map(F.partial(sgd_opt, self.opt, self.momentum, lr), gradients, params, accum, stat)
         return success
