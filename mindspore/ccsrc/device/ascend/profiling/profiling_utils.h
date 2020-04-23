@@ -65,6 +65,9 @@ class ProfilingUtils {
                                     NotNull<session::KernelGraph *> graph_ptr,
                                     NotNull<std::vector<CNodePtr> *> kernel_list);
 
+  static void ProfilingTraceJobId(const AnfNodePtr &anf_node, NotNull<session::KernelGraph *> graph_ptr,
+                                  NotNull<std::vector<CNodePtr> *> kernel_list);
+
   // Insert net output profiling node, which tells the device to stop profiling.
   // The notify in struct ProfilingContent should be 'true', which tells the device to send data to host.
   static void ProfilingTraceEnd(const AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
@@ -113,6 +116,8 @@ class ProfilingUtils {
   static std::string GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order);
   static void GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order,
                            NotNull<ProfilingTraceInfo *> profiling_trace);
+  static void GetCNodeOutputRealNode(const std::string &node_name, const std::vector<CNodePtr> &cnode_exec_order,
+                                     NotNull<std::set<std::string> *> getnext_outputs);
 
   // graph id --> (kernel name list)
   static std::unordered_map<uint32_t, std::vector<std::string>> graph_kernel_name_;

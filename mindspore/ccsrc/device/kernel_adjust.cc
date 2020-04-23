@@ -464,10 +464,13 @@ void KernelAdjust::InsertProfilingKernel(const ProfilingTraceInfo &profiling_tra
   }
   std::vector<CNodePtr> new_cnode_list;
   std::vector<CNodePtr> cnode_ptr_list = kernel_graph_ptr->execution_order();
+  if (cnode_ptr_list.empty()) {
+    MS_LOG(ERROR) << "No CNode in graph";
+    return;
+  }
   for (const auto &cnode_ptr : cnode_ptr_list) {
     ProfilingUtils::ProfilingTraceFpStart(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
     new_cnode_list.emplace_back(cnode_ptr);
-
     ProfilingUtils::ProfilingCustomOp(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
     ProfilingUtils::ProfilingTraceBpEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
     ProfilingUtils::ProfilingTraceEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr, NOT_NULL(&new_cnode_list));
