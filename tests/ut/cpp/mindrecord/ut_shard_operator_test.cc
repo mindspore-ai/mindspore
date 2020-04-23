@@ -40,6 +40,17 @@ namespace mindrecord {
 class TestShardOperator : public UT::Common {
  public:
   TestShardOperator() {}
+
+  void SetUp() override { ShardWriterImageNet(); }
+
+  void TearDown() override {
+    for (int i = 1; i <= 4; i++) {
+      string filename = std::string("./imagenet.shard0") + std::to_string(i);
+      string db_name = std::string("./imagenet.shard0") + std::to_string(i) + ".db";
+      remove(common::SafeCStr(filename));
+      remove(common::SafeCStr(db_name));
+    }
+  }
 };
 
 TEST_F(TestShardOperator, TestShardSampleBasic) {
@@ -165,7 +176,7 @@ TEST_F(TestShardOperator, TestShardPkSamplerBasic) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
     std::cout << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
-                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump()) << std::endl;
+              << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump()) << std::endl;
     i++;
   }
   dataset.Finish();
@@ -191,7 +202,7 @@ TEST_F(TestShardOperator, TestShardPkSamplerNumClass) {
     if (x.empty()) break;
 
     std::cout << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
-                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump()) << std::endl;
+              << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump()) << std::endl;
     i++;
   }
   dataset.Finish();

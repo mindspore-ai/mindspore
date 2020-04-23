@@ -29,7 +29,6 @@
 #include "mindrecord/include/shard_statistics.h"
 #include "securec.h"
 #include "ut_common.h"
-#include "ut_shard_writer_test.h"
 
 using mindspore::MsLogLevel::INFO;
 using mindspore::ExceptionType::NoExceptionType;
@@ -43,7 +42,7 @@ class TestShard : public UT::Common {
 };
 
 TEST_F(TestShard, TestShardSchemaPart) {
-  TestShardWriterImageNet();
+  ShardWriterImageNet();
 
   MS_LOG(INFO) << FormatInfo("Test schema");
 
@@ -55,6 +54,12 @@ TEST_F(TestShard, TestShardSchemaPart) {
   ASSERT_TRUE(schema != nullptr);
   MS_LOG(INFO) << "schema description: " << schema->get_desc() << ", schema:  " <<
     common::SafeCStr(schema->GetSchema().dump());
+  for (int i = 1; i <= 4; i++) {
+    string filename = std::string("./imagenet.shard0") + std::to_string(i);
+    string db_name = std::string("./imagenet.shard0") + std::to_string(i) + ".db";
+    remove(common::SafeCStr(filename));
+    remove(common::SafeCStr(db_name));
+  }
 }
 
 TEST_F(TestShard, TestStatisticPart) {
@@ -128,6 +133,5 @@ TEST_F(TestShard, TestShardHeaderPart) {
   ASSERT_EQ(resFields, fields);
 }
 
-TEST_F(TestShard, TestShardWriteImage) { MS_LOG(INFO) << FormatInfo("Test writer"); }
 }  // namespace mindrecord
 }  // namespace mindspore
