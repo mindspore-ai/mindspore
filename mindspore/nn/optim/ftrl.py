@@ -96,7 +96,8 @@ class FTRL(Optimizer):
     def __init__(self, params, initial_accum=0.1, learning_rate=0.001, lr_power=-0.5, l1=0.0, l2=0.0,
                  use_locking=False, loss_scale=1.0, weight_decay=0.0):
         super(FTRL, self).__init__(learning_rate, params)
-
+        if self.is_group:
+            raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
         _check_param(initial_accum, learning_rate, lr_power, l1, l2, use_locking, loss_scale, weight_decay,
                      self.cls_name)
         self.moments = self.parameters.clone(prefix="moments", init=initial_accum)

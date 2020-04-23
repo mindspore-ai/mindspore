@@ -50,7 +50,7 @@ class NetWithoutWeight(nn.Cell):
 def test_adamwithoutparam():
     net = NetWithoutWeight()
     net.set_train()
-    with pytest.raises(ValueError, match=r"optimizer got an empty parameter list"):
+    with pytest.raises(ValueError, match=r"Optimizer got an empty parameter list"):
         AdamWeightDecay(net.trainable_params(), learning_rate=0.1)
 
 
@@ -104,5 +104,5 @@ def test_AdamWeightDecayDynamicLR():
 
 def test_adam_mindspore_flatten():
     net = nn.Flatten()
-    with pytest.raises(ValueError, match=r"optimizer got an empty parameter list"):
+    with pytest.raises(ValueError, match=r"Optimizer got an empty parameter list"):
         AdamWeightDecay(net.get_parameters())

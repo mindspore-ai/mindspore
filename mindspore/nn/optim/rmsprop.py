@@ -22,17 +22,17 @@ rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
 centered_rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
 
 
-@rmsprop_opt.register("Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
-def _rmsprop_opt(opt, learning_rate, decay, epsilon, momentum, weight, ms, mom, grad):
+@rmsprop_opt.register("Function", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
+def _rmsprop_opt(opt, decay, epsilon, momentum, learning_rate, weight, ms, mom, grad):
     """Apply rmsprop optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, ms, mom, grad, learning_rate, decay, momentum, epsilon))
     return success
 
 
-@centered_rmsprop_opt.register("Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor",
+@centered_rmsprop_opt.register("Function", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor",
                                "Tensor", "Tensor")
-def _centered_rmsprop_opt(opt, learning_rate, decay, epsilon, momentum, weight, mg, ms, mom, grad):
+def _centered_rmsprop_opt(opt, decay, epsilon, momentum, learning_rate, weight, mg, ms, mom, grad):
     """Apply centered rmsprop optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, mg, ms, mom, grad, learning_rate, decay, momentum, epsilon))
@@ -44,6 +44,13 @@ class RMSProp(Optimizer):
     Implements Root Mean Squared Propagation (RMSProp) algorithm.
 
     Note:
+        The RMSProp optimizer supports separating parameter groups. Different parameter groups can set different
+        `learning_rate` and `weight_decay`.
+
+        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
+        value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
+        applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
+
         Update `params` according to the RMSProp algorithm.
 
         The equation is as follows:
@@ -84,8 +91,18 @@ class RMSProp(Optimizer):
         represents `gradients`.
 
     Args:
-        params (list[Parameter]): A list of parameter, which will be updated. The element in `parameters`
-                                  should be class mindspore.Parameter.
+        params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
+            the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
+            "lr" and "weight_decay" are the keys can be parsed.
+
+            - params: Required. The value should be a list of `Parameter`.
+
+            - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
+              If not, the `learning_rate` in the API will be used.
+
+            - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
+              will be used. If not, the `weight_decay` in the API will be used.
+
         learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
                                                         Iterable or a Tensor and the dims of the Tensor is 1,
                                                         use dynamic learning rate, then the i-th step will
@@ -95,15 +112,13 @@ class RMSProp(Optimizer):
                                                         Other cases are not supported. Default: 0.1.
         decay (float): Decay rate. Should be equal to or greater than 0. Default: 0.9.
         momentum (float): Hyperparameter of type float, means momentum for the moving average. Should be equal to or
-                          greater than 0.Default: 0.0.
+                          greater than 0. Default: 0.0.
         epsilon (float): Term added to the denominator to improve numerical stability. Should be greater than
                          0. Default: 1e-10.
         use_locking (bool): Enable a lock to protect the update of variable and accumlation tensors. Default: False.
         centered (bool): If True, gradients are normalized by the estimated variance of the gradient. Default: False.
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. Default: 1.0.
         weight_decay (float): Weight decay (L2 penalty). Should be equal to or greater than 0. Default: 0.0.
-        decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
-                                 lambda x: 'beta' not in x.name and 'gamma' not in x.name.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -113,14 +128,25 @@ class RMSProp(Optimizer):
 
     Examples:
         >>> net = Net()
+        >>> #1) All parameters use the same learning rate and weight decay
+        >>> optim = nn.RMSProp(params=net.trainable_params(), learning_rate=lr)
+        >>>
+        >>> #2) Use parameter groups and set different values
+        >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'lr': 0.01},
+        >>>                 {'params': no_conv_params}]
+        >>> opt = nn.RMSProp(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> # the conv_params's parameters will use a learning rate of 0.01 and a weight decay of 0.01
+        >>> # the no_cov_params's parameters don't set learning and weight decay. So they will use a
+        >>> # learning rate of 0.1 and a weight decay of 0.0.
+        >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> opt = nn.RMSProp(params=net.trainable_params(), learning_rate=lr)
-        >>> model = Model(net, loss, opt)
+        >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
     def __init__(self, params, learning_rate=0.1, decay=0.9, momentum=0.0, epsilon=1e-10,
-                 use_locking=False, centered=False, loss_scale=1.0, weight_decay=0.0,
-                 decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
-        super(RMSProp, self).__init__(learning_rate, params, weight_decay, loss_scale, decay_filter)
+                 use_locking=False, centered=False, loss_scale=1.0, weight_decay=0.0):
+        super(RMSProp, self).__init__(learning_rate, params, weight_decay, loss_scale)
         validator.check_value_type("decay", decay, [float], self.cls_name)
         validator.check_number_range("decay", decay, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
         validator.check_value_type("momentum", momentum, [float], self.cls_name)
@@ -150,9 +176,18 @@ class RMSProp(Optimizer):
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
         if self.centered:
-            success = self.hyper_map(F.partial(centered_rmsprop_opt, self.opt, lr, self.decay, self.epsilon,
-                                               self.momentum), params, self.mg, self.ms, self.moment, gradients)
+            if self.is_group:
+                success = self.hyper_map(F.partial(centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
+                                                   self.momentum), lr, params, self.mg, self.ms, self.moment, gradients)
+            else:
+                success = self.hyper_map(F.partial(centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
+                                                   self.momentum, lr), params, self.mg, self.ms, self.moment, gradients)
+
         else:
-            success = self.hyper_map(F.partial(rmsprop_opt, self.opt, lr, self.decay, self.epsilon,
-                                               self.momentum), params, self.ms, self.moment, gradients)
+            if self.is_group:
+                success = self.hyper_map(F.partial(rmsprop_opt, self.opt, self.decay, self.epsilon,
+                                                   self.momentum), lr, params, self.ms, self.moment, gradients)
+            else:
+                success = self.hyper_map(F.partial(rmsprop_opt, self.opt, self.decay, self.epsilon,
+                                                   self.momentum, lr), params, self.ms, self.moment, gradients)
         return success
