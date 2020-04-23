@@ -220,6 +220,7 @@ extern const PrimitivePtr kPrimInsertGradientOf;
 extern const PrimitivePtr kPrimPrintShapeType;
 extern const PrimitivePtr kPrimPrint;
 extern const PrimitivePtr kPrimSameTypeShape;
+extern const PrimitivePtr kPrimCheckBprop;
 extern const PrimitivePtr kPrimDepend;
 extern const PrimitivePtr kPrimStateSetItem;
 extern const PrimitivePtr kPrimScalarSummary;

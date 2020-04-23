@@ -505,7 +505,7 @@ def get_bprop_reducemax(self):
 
     def bprop(x, axis, out, dout):
         dx = _min_or_max_grad(x, axis, out, dout)
-        return (dx,)
+        return (dx, zeros_like(axis))
     return bprop
 
 
@@ -528,7 +528,7 @@ def get_bprop_reducemin(self):
 
     def bprop(x, axis, out, dout):
         dx = _min_or_max_grad(x, axis, out, dout)
-        return (dx,)
+        return (dx, zeros_like(axis))
     return bprop
 
 

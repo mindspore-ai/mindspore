@@ -309,14 +309,6 @@ FuncGraphPtr DFunctor::KUserDefined(const FuncGraphPtr &primal) {
   auto bprop = primal->transforms().find("bprop");
   if (bprop != primal->transforms().end()) {
     FuncGraphPtr bprop_graph = bprop->second.func_graph();
-    const size_t param_diff = 1;
-    if (bprop_graph->output()->isa<CNode>() &&
-        bprop_graph->output()->cast<CNodePtr>()->size() + param_diff != bprop_graph->parameters().size()) {
-      // It does not matter with the final tangents, just a tip for debugging
-      MS_LOG(DEBUG) << "User defined Cell bprop " << primal->ToString() << " in scope "
-                    << primal->output()->scope()->name()
-                    << " output must be a tuple and output number should be the same with inputs.";
-    }
     resources_->manager()->AddFuncGraph(bprop_graph);
 
     if (bprop_graph->free_variables_nodes().size() != 0 || primal->free_variables_nodes().size() != 0) {

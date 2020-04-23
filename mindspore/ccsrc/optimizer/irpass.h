@@ -45,6 +45,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr reduce_eliminate_;
   SubstitutionPtr partial_eliminate_;
   SubstitutionPtr same_eliminate_;
+  SubstitutionPtr check_bprop_eliminate_;
   SubstitutionPtr reset_defer_inline_;
 
   // Env Item Eliminate

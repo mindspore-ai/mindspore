@@ -67,7 +67,7 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl,
                      ApplyRMSProp, ApplyCenteredRMSProp)
-from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey
+from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey, CheckBprop
 from . import _quant_ops
 from ._quant_ops import *
 
@@ -179,6 +179,7 @@ __all__ = [
     'GeSwitch',
     'Merge',
     'SameTypeShape',
+    'CheckBprop',
     'CheckValid',
     'BoundingBoxEncode',
     'BoundingBoxDecode',
