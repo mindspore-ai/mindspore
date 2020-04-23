@@ -74,7 +74,6 @@ else ()
     add_library(_c_dataengine SHARED ${submodules})
 endif ()
 
-
 set_target_properties(_c_dataengine PROPERTIES
     PREFIX "${PYTHON_MODULE_PREFIX}"
     SUFFIX "${PYTHON_MODULE_EXTENSION}"
@@ -113,5 +112,10 @@ endif()
 
 if (USE_GLOG)
     target_link_libraries(_c_dataengine PRIVATE mindspore::glog)
+else()
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+        target_link_options(_c_dataengine PRIVATE -Wl,-init,mindspore_log_init)
+    elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        set_target_properties(_c_dataengine PROPERTIES MACOSX_RPATH ON)
+    endif ()
 endif()
-
