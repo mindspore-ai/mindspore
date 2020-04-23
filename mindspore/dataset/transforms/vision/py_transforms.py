@@ -225,8 +225,8 @@ class Normalize:
     The values of the array need to be in range [0.0, 1.0].
 
     Args:
-        mean (list): List of mean values for each channel, w.r.t channel order.
-        std (list): List of standard deviations for each channel, w.r.t. channel order.
+        mean (sequence): List or tuple of mean values for each channel, w.r.t channel order.
+        std (sequence): List or tuple of standard deviations for each channel, w.r.t. channel order.
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
@@ -262,6 +262,7 @@ class RandomCrop:
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         padding (int or sequence, optional): The number of pixels to pad the image (default=None).
+            If padding is not None, pad image firstly with padding values.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
