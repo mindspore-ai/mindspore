@@ -120,7 +120,7 @@ constexpr auto kStreamActiveOpName = "StreamActive";
 constexpr auto kAssignAddOpName = "AssignAdd";
 constexpr auto kSendOpName = "Send";
 constexpr auto kRecvOpName = "Recv";
-constexpr auto kReluV2OpName = "ReluV2";
+constexpr auto kReluV2OpName = "ReLUV2";
 constexpr auto kReluGradV2OpName = "ReluGradV2";
 
 // attr key name
