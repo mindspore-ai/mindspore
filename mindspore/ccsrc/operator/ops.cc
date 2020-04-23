@@ -223,7 +223,6 @@ const PrimitivePtr kPrimIsNot = std::make_shared<Primitive>("is_not");
 const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");
 const PrimitivePtr kPrimVirtualDiv = std::make_shared<Primitive>("_VirtualDiv");
 const PrimitivePtr kPrimVirtualDataset = std::make_shared<Primitive>("_VirtualDataset");
-const PrimitivePtr kPrimAllReduce = std::make_shared<Primitive>("AllReduce");
 
 // Debug ops
 const PrimitivePtr kPrimScalarSummary = std::make_shared<Primitive>("ScalarSummary");
