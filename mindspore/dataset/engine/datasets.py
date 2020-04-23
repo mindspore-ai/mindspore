@@ -2494,8 +2494,7 @@ class GeneratorDataset(SourceDataset):
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
             (default=None, expected order behavior shown in the table).
         sampler (Sampler/Iterable, optional): Object used to choose samples from the dataset. Random accessible input is
-        required.
-            (default=None, expected order behavior shown in the table).
+            required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
             This argument should be specified only when 'num_samples' is "None". Random accessible input is required.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
