@@ -745,7 +745,7 @@ class Fill(PrimitiveWithInfer):
         out = {
             'value': Tensor(ret),
             'shape': dims['value'],
-            'dtype': x_nptype,
+            'dtype': x_dtype,
         }
         return out
 

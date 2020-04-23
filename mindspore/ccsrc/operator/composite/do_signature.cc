@@ -137,6 +137,19 @@ void DoAutoCast(const std::vector<Signature> &signature, const abstract::Abstrac
     if (it == dst_type.end() || it->second == i || !arg_value->isa<abstract::AbstractScalar>()) {
       continue;
     }
+    // When scalar is of bool type, the type of tensor must also be of bool type,
+    // otherwise the cast operator will not be added.
+    auto scalar = arg_value->cast<abstract::AbstractScalarPtr>();
+    auto scalar_type = scalar->BuildType();
+    MS_EXCEPTION_IF_NULL(scalar_type);
+    if (scalar_type->type_id() == kNumberTypeBool) {
+      auto tensor = args_spec_list[it->second]->cast<abstract::AbstractTensorPtr>();
+      auto tensor_type = tensor->element()->BuildType();
+      MS_EXCEPTION_IF_NULL(tensor_type);
+      if (tensor_type->type_id() != kNumberTypeBool) {
+        continue;
+      }
+    }
     // get source node for cast
     AnfNodePtr source_node = (*op_inputs)[it->second + 1];
     (*op_inputs)[i + 1] = DoCast((*op_inputs)[i + 1], source_node, graph);
