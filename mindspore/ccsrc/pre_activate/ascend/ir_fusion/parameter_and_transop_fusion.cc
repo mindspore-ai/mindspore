@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
 const AnfNodePtr ParamTransRoad(const FuncGraphPtr &func_graph, const AnfNodePtr &node, bool first_flag,
                                 std::vector<CNodePtr> *trans_road) {
   if (node == nullptr) {
@@ -59,6 +60,24 @@ const AnfNodePtr ParamTransRoad(const FuncGraphPtr &func_graph, const AnfNodePtr
   return nullptr;
 }
 
+kernel::KernelBuildInfoPtr GetKernelBuildInfo(const CNodePtr &cast, const string &format, TypeId input_type,
+                                              TypeId output_type) {
+  MS_EXCEPTION_IF_NULL(cast);
+  auto kernel_info = cast->kernel_info();
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto cast_build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(cast_build_info);
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  builder.SetOutputsFormat({format});
+  builder.SetInputsFormat({format});
+  builder.SetInputsDeviceType({input_type});
+  builder.SetOutputsDeviceType({output_type});
+  builder.SetKernelType(cast_build_info->kernel_type());
+  builder.SetFusionType(cast_build_info->fusion_type());
+  builder.SetProcessor(cast_build_info->processor());
+  return builder.Build();
+}
+}  // namespace
 bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Func graph is nullptr";
@@ -95,17 +114,7 @@ bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
         auto param_dtype = AnfAlgo::GetOutputDeviceDataType(final_node, 0);
 
         auto cast = trans_road[1];
-        auto cast_format = AnfAlgo::GetOutputFormat(cast, 0);
-        auto cast_build_info = cast->kernel_info()->select_kernel_build_info();
-        kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-        builder.SetOutputsFormat({format});
-        builder.SetInputsFormat({format});
-        builder.SetInputsDeviceType({param_dtype});
-        builder.SetOutputsDeviceType({dtype});
-        builder.SetKernelType(cast_build_info->kernel_type());
-        builder.SetFusionType(cast_build_info->fusion_type());
-        builder.SetProcessor(cast_build_info->processor());
-        AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cast.get());
+        AnfAlgo::SetSelectKernelBuildInfo(GetKernelBuildInfo(cast, format, param_dtype, dtype), cast.get());
         if (param_format == format && param_dtype != dtype) {
           manager->Replace(trans_road[2], final_node);
           manager->Replace(cur_transop, cast);
