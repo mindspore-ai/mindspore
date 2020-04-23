@@ -156,9 +156,6 @@ class FusedBatchNormGpuKernel : public GpuKernel {
     output_size_list_.push_back(para_size);  // running variance
     output_size_list_.push_back(para_size);  // save mean
     output_size_list_.push_back(para_size);  // save variance
-    if (!is_train_) {
-      output_size_list_.push_back(para_size);  // reserve
-    }
     return;
   }
 

@@ -671,7 +671,7 @@ test_case_nn_ops = [
         'skip': []}),
     ('BatchNormGrad', {
         'block': G.BatchNormGrad(),
-        'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64], [64]],
+        'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64]],
         'desc_bprop': [[128, 64, 32, 32], [64], [64], [64], [64]],
         'skip': ['backward']}),
     ('ApplyMomentum', {

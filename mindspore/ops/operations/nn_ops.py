@@ -537,7 +537,6 @@ class BatchNorm(PrimitiveWithInfer):
         - **updated_bias** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_1** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_2** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **reserve_space_3** (Tensor) - Tensor of shape :math:`(C,)`.
     """
 
     @prim_attr_register
@@ -546,8 +545,7 @@ class BatchNorm(PrimitiveWithInfer):
         validator.check_number_range('epsilon', epsilon, 0, 1, Rel.INC_RIGHT, self.name)
         self.add_prim_attr('data_format', "NCHW")
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
-                                outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2',
-                                         'reserve_space_3'])
+                                outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
 
     def infer_shape(self, input_x, scale, bias, mean, variance):
         validator.check_integer("scale rank", len(scale), 1, Rel.EQ, self.name)
@@ -557,7 +555,7 @@ class BatchNorm(PrimitiveWithInfer):
             validator.check_integer("mean rank", len(mean), 1, Rel.EQ, self.name)
             validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
             validator.check("mean shape", mean, "scale shape", scale, Rel.EQ, self.name)
-        return (input_x, scale, scale, scale, scale, scale)
+        return (input_x, scale, scale, scale, scale)
 
     def infer_dtype(self, input_x, scale, bias, mean, variance):
         validator.check_tensor_type_same({"input_x": input_x}, [mstype.float16, mstype.float32], self.name)
@@ -570,7 +568,7 @@ class BatchNorm(PrimitiveWithInfer):
         else:
             args_moving = {"mean": mean, "variance": variance}
             validator.check_tensor_type_same(args_moving, [mstype.float16, mstype.float32], self.name)
-        return (input_x, scale, bias, input_x, input_x, input_x)
+        return (input_x, scale, bias, input_x, input_x)
 
 
 class Conv2D(PrimitiveWithInfer):

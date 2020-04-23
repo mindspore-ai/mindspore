@@ -356,12 +356,10 @@ def get_bprop_batch_norm(self):
         if is_training:
             saved_reserve_1 = out[3]
             saved_reserve_2 = out[4]
-            saved_reserve_3 = out[5]
         else:
             saved_reserve_1 = mean
             saved_reserve_2 = variance
-            saved_reserve_3 = variance
-        out = input_grad(dout[0], x, scale, saved_reserve_1, saved_reserve_2, saved_reserve_3)
+        out = input_grad(dout[0], x, scale, saved_reserve_1, saved_reserve_2)
         dx = out[0]
         dscale = out[1]
         dbias = out[2]
