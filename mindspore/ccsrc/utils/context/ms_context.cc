@@ -78,7 +78,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_dynamic_mem_pool_ = true;
   graph_memory_max_size_ = "0";
   variable_memory_max_size_ = "0";
-  MS_LOG(INFO) << "Create context with backend policy:" << policy << ", device target:" << target << ".";
+  MS_LOG(DEBUG) << "Create context with backend policy:" << policy << ", device target:" << target << ".";
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
