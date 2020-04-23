@@ -228,10 +228,10 @@ def test_exec():
 
 raise_set = [
     ('Squeeze_1_Error', {
-        'block': (lambda x: P.Squeeze(axis=1.2), {'exception': ValueError}),
+        'block': (lambda x: P.Squeeze(axis=1.2), {'exception': TypeError}),
         'desc_inputs': [Tensor(np.ones(shape=[3, 1, 5]))]}),
     ('Squeeze_2_Error', {
-        'block': (lambda x: P.Squeeze(axis=((1.2, 1.3))), {'exception': ValueError}),
+        'block': (lambda x: P.Squeeze(axis=((1.2, 1.3))), {'exception': TypeError}),
         'desc_inputs': [Tensor(np.ones(shape=[3, 1, 5]))]}),
     ('ReduceSum_Error', {
         'block': (lambda x: P.ReduceSum(keep_dims=1), {'exception': TypeError}),
