@@ -39,7 +39,7 @@ if __name__ == '__main__':
     context.set_context(device_id=args_opt.device_id)
     context.set_context(enable_mem_reuse=True, enable_hccl=False)
 
-    net = vgg16(batch_size=cfg.batch_size, num_classes=cfg.num_classes)
+    net = vgg16(num_classes=cfg.num_classes)
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), 0.01, cfg.momentum,
                    weight_decay=cfg.weight_decay)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)

@@ -64,7 +64,7 @@ if __name__ == '__main__':
     context.set_context(device_id=args_opt.device_id)
     context.set_context(enable_mem_reuse=True, enable_hccl=False)
 
-    net = vgg16(batch_size=cfg.batch_size, num_classes=cfg.num_classes)
+    net = vgg16(num_classes=cfg.num_classes)
     lr = lr_steps(0, lr_max=cfg.lr_init, total_epochs=cfg.epoch_size, steps_per_epoch=50000 // cfg.batch_size)
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), Tensor(lr), cfg.momentum, weight_decay=cfg.weight_decay)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean', is_grad=False)
