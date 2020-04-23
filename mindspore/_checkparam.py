@@ -304,10 +304,10 @@ class Validator:
         type_names = [get_typename(t) for t in valid_types]
         msg_prefix = f'For \'{prim_name}\' the' if prim_name else 'The'
         if len(valid_types) == 1:
-            raise ValueError(f'{msg_prefix} type of `{arg_name}` should be {type_names[0]},'
-                             f' but got {get_typename(arg_type)}.')
-        raise ValueError(f'{msg_prefix} type of `{arg_name}` should be one of {type_names},'
-                         f' but got {get_typename(arg_type)}.')
+            raise TypeError(f'{msg_prefix} type of `{arg_name}` should be {type_names[0]},'
+                            f' but got {get_typename(arg_type)}.')
+        raise TypeError(f'{msg_prefix} type of `{arg_name}` should be one of {type_names},'
+                        f' but got {get_typename(arg_type)}.')
 
     @staticmethod
     def check_float_legal_value(arg_name, arg_value, prim_name):
@@ -417,8 +417,8 @@ class ParamValidator:
             """func for raising error message when check failed"""
             type_names = [t.__name__ for t in valid_types]
             num_types = len(valid_types)
-            raise ValueError(f'The type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
-                             f'{type_names if num_types > 1 else type_names[0]}, but got {type(arg_value).__name__}.')
+            raise TypeError(f'The type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
+                            f'{type_names if num_types > 1 else type_names[0]}, but got {type(arg_value).__name__}.')
 
         if isinstance(arg_value, type(mstype.tensor)):
             arg_value = arg_value.element_type()
