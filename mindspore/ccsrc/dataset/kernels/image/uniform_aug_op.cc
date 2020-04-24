@@ -42,34 +42,28 @@ Status UniformAugOp::Compute(const std::vector<std::shared_ptr<Tensor>> &input,
                              std::vector<std::shared_ptr<Tensor>> *output) {
   IO_CHECK_VECTOR(input, output);
 
-  // variables to generate random number to select ops from the list
-  std::vector<int> random_indexes;
-
   // variables to copy the result to output if it is not already
   std::vector<std::shared_ptr<Tensor>> even_out;
   std::vector<std::shared_ptr<Tensor>> *even_out_ptr = &even_out;
   int count = 1;
 
-  // select random indexes for candidates to be applied
-  for (int i = 0; i < num_ops_; ++i) {
-    random_indexes.insert(random_indexes.end(),
-                          std::uniform_int_distribution<int>(0, tensor_op_list_.size() - 1)(rnd_));
-  }
+  // randomly select ops to be applied
+  std::vector<std::shared_ptr<TensorOp>> selected_tensor_ops;
+  std::sample(tensor_op_list_.begin(), tensor_op_list_.end(), std::back_inserter(selected_tensor_ops), num_ops_, rnd_);
 
-  for (auto it = random_indexes.begin(); it != random_indexes.end(); ++it) {
+  for (auto tensor_op = selected_tensor_ops.begin(); tensor_op != selected_tensor_ops.end(); ++tensor_op) {
     // Do NOT apply the op, if second random generator returned zero
     if (std::uniform_int_distribution<int>(0, 1)(rnd_)) {
       continue;
     }
-    std::shared_ptr<TensorOp> tensor_op = tensor_op_list_[*it];
 
     // apply python/C++ op
     if (count == 1) {
-      (*tensor_op).Compute(input, output);
+      (**tensor_op).Compute(input, output);
     } else if (count % 2 == 0) {
-      (*tensor_op).Compute(*output, even_out_ptr);
+      (**tensor_op).Compute(*output, even_out_ptr);
     } else {
-      (*tensor_op).Compute(even_out, output);
+      (**tensor_op).Compute(even_out, output);
     }
     count++;
   }
