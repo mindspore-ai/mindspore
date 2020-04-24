@@ -94,7 +94,7 @@ class ProfilingUtils {
   // And other cnode, like AllReduce, export PROFILING_CUSTOM_1='full name of AllReduce cnode'
   // GetNext, export PROFIFLING_CUSTOM_2='full name fo GetNext cnode'
   // The variable i in PROFILING_CUSTOM_i should start from 1 without interruption.
-  static ProfilingTraceInfo GetProfilingTraceFromEnv(const NotNull<session::KernelGraph *> graph_ptr);
+  static ProfilingTraceInfo GetProfilingTraceFromEnv(NotNull<const session::KernelGraph *> graph_ptr);
 
   // Insert two profiling trace points, one in front and one behind
   static void ProfilingCustomOp(const mindspore::AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
@@ -114,6 +114,7 @@ class ProfilingUtils {
   static std::string GetTraceBegin(const std::vector<CNodePtr> &cnode_exec_order);
   static std::string GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order);
   static std::string GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order);
+  static std::string GetGraphLastTbeKernelName(const std::vector<CNodePtr> &cnode_exec_order);
   static void GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order,
                            NotNull<ProfilingTraceInfo *> profiling_trace);
   static void GetCNodeOutputRealNode(const std::string &node_name, const std::vector<CNodePtr> &cnode_exec_order,
