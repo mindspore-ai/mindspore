@@ -453,25 +453,26 @@ bool AscendKernelRuntime::HcclInit() {
   }
 
   MS_LOG(INFO) << "do hcom init";
-  std::string path;
   const char *config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
   if (config_path_str == nullptr) {
     MS_LOG(ERROR) << "get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH";
     return false;
   }
-  path = config_path_str;
-  char fullPath[PATH_MAX] = {0};
-  if (path.size() > PATH_MAX || realpath(path.c_str(), fullPath) == nullptr) {
-    MS_LOG(ERROR) << "file " << path << " is not exist";
+  auto full_path = realpath(config_path_str, nullptr);
+  if (full_path == nullptr) {
+    MS_LOG(ERROR) << "file path " << config_path_str << " does not exist";
     return false;
   }
+
   const char *identify = std::getenv("RANK_ID");
   if (identify == nullptr) {
     MS_LOG(ERROR) << "get hccl rankid failed, please set env RANK_ID";
+    free(full_path);
     return false;
   }
-  MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << fullPath << ", RANK_ID: " << identify;
-  hcclResult_t res = hcom_init(fullPath, identify);
+  MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << identify;
+  hcclResult_t res = hcom_init(full_path, identify);
+  free(full_path);
   if (res != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "hcom init failed, res is " << static_cast<int>(res);
     return false;

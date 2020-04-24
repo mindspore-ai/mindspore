@@ -121,8 +121,10 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
     LaunchAddrCleanKernel(anf_node_ptr, &kernel_inputs);
   }
 
-  std::vector<TaskInfoPtr> task_info_ptrs = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod)
-                                              ->GenTask(kernel_inputs, kernel_workspaces, kernel_outputs, stream_id);
+  auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
+  MS_EXCEPTION_IF_NULL(ascend_kernel_mod);
+  std::vector<TaskInfoPtr> task_info_ptrs =
+    ascend_kernel_mod->GenTask(kernel_inputs, kernel_workspaces, kernel_outputs, stream_id);
   task_info_list->insert(task_info_list->end(), task_info_ptrs.begin(), task_info_ptrs.end());
   return true;
 }

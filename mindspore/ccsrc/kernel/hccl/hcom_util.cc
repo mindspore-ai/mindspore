@@ -136,7 +136,7 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<hcclDataTyp
     }
   }
 
-  if (total_size % type_size != 0) {
+  if (type_size == 0 || total_size % type_size != 0) {
     MS_LOG(ERROR) << "Total_size[" << total_size << "],Type_size[" << type_size << "] != 0, fail!";
     return false;
   }

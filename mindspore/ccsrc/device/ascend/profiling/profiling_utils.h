@@ -94,7 +94,7 @@ class ProfilingUtils {
   // And other cnode, like AllReduce, export PROFILING_CUSTOM_1='full name of AllReduce cnode'
   // GetNext, export PROFIFLING_CUSTOM_2='full name fo GetNext cnode'
   // The variable i in PROFILING_CUSTOM_i should start from 1 without interruption.
-  static ProfilingTraceInfo GetProfilingTraceFromEnv(NotNull<session::KernelGraph *> graph_ptr);
+  static ProfilingTraceInfo GetProfilingTraceFromEnv(const NotNull<session::KernelGraph *> graph_ptr);
 
   // Insert two profiling trace points, one in front and one behind
   static void ProfilingCustomOp(const mindspore::AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
