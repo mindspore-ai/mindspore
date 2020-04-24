@@ -87,6 +87,12 @@ const char *MetaIdLabel(const TypeId &v) {
       return "kMetaTypeExternal";
     case kMetaTypeNone:
       return "kMetaTypeNone";
+    case kMetaTypeNull:
+      return "kMetaTypeNull";
+    case kMetaTypeEllipsis:
+      return "kMetaTypeEllipsis";
+    case kMetaTypeEnd:
+      return "kMetaTypeEnd";
     default:
       return "[Unknown Type Id]";
   }

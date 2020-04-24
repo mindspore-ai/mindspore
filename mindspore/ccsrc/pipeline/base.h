@@ -28,13 +28,11 @@
 
 namespace mindspore {
 namespace pipeline {
-
 struct ExecutorInfo {
   FuncGraphPtr func_graph;
   ResourcePtr resource;
   std::size_t arg_list_size;
 };
-
 using ExecutorInfoPtr = std::shared_ptr<ExecutorInfo>;
 
 inline std::string GetPhasePrefix(const std::string &phase) {

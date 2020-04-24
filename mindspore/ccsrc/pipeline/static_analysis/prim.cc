@@ -295,7 +295,6 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic["shape"] = shape;
     dic["dtype"] = arg_slice->BuildType();
     dic["value"] = BuildValue(arg_slice->BuildValue());
-
   } else if (abs_base->isa<AbstractTuple>()) {
     auto arg_tuple = dyn_cast<AbstractTuple>(abs_base);
     size_t len = arg_tuple->size();

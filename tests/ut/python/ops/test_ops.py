@@ -372,7 +372,7 @@ test_case_math_ops = [
         'desc_bprop': [[3]]}),
     ('TruncatedNormal', {
         'block': P.TruncatedNormal(),
-        'desc_const': [[1, 2, 3]],
+        'desc_const': [(1, 2, 3)],
         'desc_inputs': [],
         'skip': ['backward'],
         'add_fake_input': True}),

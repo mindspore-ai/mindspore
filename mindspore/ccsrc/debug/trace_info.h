@@ -321,7 +321,7 @@ class TraceTransform : public TraceInfo {
 
   std::string full_name() override { return full_name_ + transform_name_; }
   MS_DECLARE_PARENT(TraceTransform, TraceInfo);
-  virtual std::string symbol() {
+  std::string symbol() override {
     if (transform_name_.empty()) {
       return "";
     }
