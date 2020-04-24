@@ -252,9 +252,13 @@ void mindspore_log_init(void) {
   if (mindspore::GetEnv("GLOG_logfile_mode").empty()) {
     FLAGS_logfile_mode = 0640;
   }
+  std::string logtostderr = mindspore::GetEnv("GLOG_logtostderr");
   // default print log to screen
-  if (mindspore::GetEnv("GLOG_logtostderr").empty()) {
+  if (logtostderr.empty()) {
     FLAGS_logtostderr = true;
+  } else if (logtostderr == "0" && mindspore::GetEnv("GLOG_log_dir").empty()) {
+    FLAGS_logtostderr = true;
+    MS_LOG(WARNING) << "`GLOG_log_dir` is not set, output log to screen.";
   }
 #else
   mindspore::InitMsLogLevel();
