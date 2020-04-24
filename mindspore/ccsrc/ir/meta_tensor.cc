@@ -185,14 +185,6 @@ bool Tensor::operator==(const Tensor &tensor) const {
   return (MetaTensor::operator==(tensor) && data_ == tensor.data_);
 }
 
-bool Tensor::ValueEqualPy(const py::object &other) const {
-  if (!py::isinstance<Tensor>(other)) {
-    MS_LOG(WARNING) << "compare other not a tensor";
-    return false;
-  }
-  return ValueEqual(py::cast<Tensor>(other));
-}
-
 bool Tensor::ValueEqual(const Tensor &other) const {
   auto equal = [&other, this]() -> bool {
     auto np = py::module::import("numpy");
@@ -542,7 +534,6 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                              )mydelimiter")
                            .def("__str__", &Tensor::ToString)
                            .def("__repr__", &Tensor::ToStringRepr)
-                           .def("__eq__", &Tensor::ValueEqualPy)
                            .def(py::pickle(
                              [](const Tensor &t) {  // __getstate__
                                /* Return a tuple that fully encodes the state of the object */
