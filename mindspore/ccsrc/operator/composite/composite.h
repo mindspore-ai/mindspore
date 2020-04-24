@@ -210,7 +210,6 @@ class TensorSlice : public MetaFuncGraph {
   FuncGraphPtr ExpandADim(const FuncGraphPtr &ret_graph, const AnfNodePtr &tensor_node) const;
 };
 using TensorSlicePtr = std::shared_ptr<TensorSlice>;
-
 }  // namespace prim
 }  // namespace mindspore
 

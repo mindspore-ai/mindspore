@@ -35,7 +35,7 @@ static std::string GetTime() {
             now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
 #else
   struct timeval cur_time;
-  (void)gettimeofday(&cur_time, NULL);
+  (void)gettimeofday(&cur_time, nullptr);
 
   struct tm now;
   (void)localtime_r(&cur_time.tv_sec, &now);

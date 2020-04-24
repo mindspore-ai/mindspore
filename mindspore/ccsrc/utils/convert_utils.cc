@@ -335,7 +335,7 @@ py::object VectorRefToPyData(const VectorRef &value_list) {
   py::object ret;
   MS_LOG(DEBUG) << "vector_ref";
   size_t value_size = value_list.size();
-  py::tuple ref_tuple = py::tuple(value_size);
+  auto ref_tuple = py::tuple(value_size);
   for (size_t i = 0; i < value_size; i++) {
     ref_tuple[i] = BaseRefToPyData(value_list[i]);
   }
