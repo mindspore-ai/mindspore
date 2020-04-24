@@ -189,7 +189,8 @@ TEST_F(TestConvert, TestConvertBatchNorm) {
 
 TEST_F(TestConvert, TestConvertConvBackpropInput) {
   auto prim = prim::kPrimConv2DBackpropInput;
-  prim->AddAttr("stride", MakeValue(1));
+  const std::vector<int> list{1,1};
+  prim->AddAttr("stride", MakeValue(list));
   prim->AddAttr("pad", MakeValue(0));
   prim->AddAttr("pad_mode", MakeValue(std::string("pad")));
   prim->AddAttr("dilation", MakeValue(1));
@@ -218,7 +219,8 @@ TEST_F(TestConvert, TestConvertConvBackpropInput) {
 
 TEST_F(TestConvert, TestConvertConvBackpropFilter) {
   auto prim = prim::kPrimConv2DBackpropFilter;
-  prim->AddAttr("stride", MakeValue(1));
+  const std::vector<int> list{1,1};
+  prim->AddAttr("stride", MakeValue(list));
   prim->AddAttr("pad", MakeValue(0));
   prim->AddAttr("pad_mode", MakeValue(std::string("pad")));
   prim->AddAttr("dilation", MakeValue(1));
