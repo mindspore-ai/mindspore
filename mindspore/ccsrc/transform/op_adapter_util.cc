@@ -36,7 +36,6 @@ GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<mindspore::tensor
 std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &name,
                                     const AnyTraits<std::vector<int64_t>>) {
   MS_EXCEPTION_IF_NULL(value);
-  int64_t data = GetValue<int>(value);
   std::vector<int64_t> list;
   if (name == "pad") {
     if (!value->isa<ValueSequeue>()) {
@@ -49,6 +48,7 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &na
     (void)std::transform(vec->value().begin(), vec->value().end(), list.begin()+2,
                          [](const ValuePtr &val) { return static_cast<int64_t>(GetValue<int>(val)); });
   } else {
+    int64_t data = GetValue<int>(value);
     int size = 2;  // 2 int in list
     list = TransformUtil::ConvertIntToList(data, size);
   }
