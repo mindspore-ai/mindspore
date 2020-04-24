@@ -346,7 +346,8 @@ void ShardReader::GetClassesInShard(sqlite3 *db, int shard_id, const std::string
     MS_LOG(ERROR) << "Error in select sql statement, sql:" << common::SafeCStr(sql) << ", error: " << errmsg;
     return;
   }
-  MS_LOG(INFO) << "Get" << static_cast<int>(columns.size()) << " records from shard " << shard_id << " index.";
+  MS_LOG(INFO) << "Get " << static_cast<int>(columns.size()) << " records from shard " << shard_id << " index.";
+  std::lock_guard<std::mutex> lck(shard_locker_);
   for (int i = 0; i < static_cast<int>(columns.size()); ++i) {
     categories.emplace(columns[i][0]);
   }
