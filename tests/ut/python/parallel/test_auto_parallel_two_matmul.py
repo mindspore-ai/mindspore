@@ -97,13 +97,8 @@ def test_two_matmul():
     assert costmodel_communi_bias == 1024.0
 
 
-    set_algo_parameters(simplify_cal=True,
-                                          tensor_slice_align_enable=False,
-                                          tensor_slice_align_size=32,
-                                          fully_use_devices=False,
-                                          elementwise_op_strategy_follow=False)
-    para_simplify_cal = get_algo_parameters("simplify_cal")
-    assert para_simplify_cal == True
+    set_algo_parameters(tensor_slice_align_enable=False, tensor_slice_align_size=32,
+                        fully_use_devices=False, elementwise_op_strategy_follow=False)
     para_slice_align_enable = get_algo_parameters("tensor_slice_align_enable")
     assert para_slice_align_enable == False
     para_slice_align_size = get_algo_parameters("tensor_slice_align_size")
@@ -114,8 +109,6 @@ def test_two_matmul():
     assert elementwise_op_strategy_follow == False
 
     reset_algo_parameters()
-    para_simplify_cal = get_algo_parameters("simplify_cal")
-    assert para_simplify_cal == True
     para_slice_align_enable = get_algo_parameters("tensor_slice_align_enable")
     assert para_slice_align_enable == False
     para_slice_align_size = get_algo_parameters("tensor_slice_align_size")
