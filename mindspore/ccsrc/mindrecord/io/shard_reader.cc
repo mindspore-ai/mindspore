@@ -914,7 +914,7 @@ vector<std::string> ShardReader::GetAllColumns() {
   } else {
     columns = selected_columns_;
   }
-  return std::move(columns);
+  return columns;
 }
 
 MSRStatus ShardReader::CreateTasksByBlock(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
