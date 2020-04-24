@@ -17,6 +17,7 @@
 #include "kernel/kernel_build_info.h"
 #include <algorithm>
 #include "utils/log_adapter.h"
+#include "debug/anf_ir_dump.h"
 namespace mindspore {
 namespace kernel {
 std::string KernelBuildInfo::GetInputFormat(size_t input_index) const {
@@ -82,14 +83,14 @@ std::string KernelBuildInfo::ToString() const {
     if (index != 0) {
       output_buffer << ", ";
     }
-    output_buffer << "<" << static_cast<int>(GetInputDeviceType(index)) << "x" << GetInputFormat(index) << ">";
+    output_buffer << "<" << ToShortString(GetInputDeviceType(index)) << "x" << GetInputFormat(index) << ">";
   }
   output_buffer << ") -> (";
   for (size_t index = 0; index < GetOutputNum(); ++index) {
     if (index != 0) {
       output_buffer << ", ";
     }
-    output_buffer << "<" << static_cast<int>(GetOutputDeviceType(index)) << "x" << GetOutputFormat(index) << ">";
+    output_buffer << "<" << ToShortString(GetOutputDeviceType(index)) << "x" << GetOutputFormat(index) << ">";
   }
   output_buffer << ")";
   return output_buffer.str();
