@@ -294,6 +294,30 @@ void ExecutorPy::SaveCompiledGraph(const std::string &phase_s) {
   MS_LOG(INFO) << "End save compiled func graph!";
 }
 
+void ExecutorPy::SaveCompiledGraphToPb(const std::string &phase_s) {
+#ifdef ENABLE_DUMP_IR
+  // save the graph to file in protobuf format
+  FuncGraphPtr func_graph = info_[phase_s]->resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::string name_prefix = phase_s.substr(0, phase_s.find("."));
+  std::string pb_filename = std::string("ms_output_") + name_prefix + ".pb";
+  std::string filename = GetFilePathName(pb_filename);
+
+  MS_LOG(INFO) << "Begin saving graph to file <<'" << filename << "' in protobuf formart.";
+  ChangeFileMode(filename, S_IRWXU);
+  std::ofstream ofs(filename);
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file '" << filename << "' failed!";
+    return;
+  }
+  ofs << GetFuncGraphProtoString(func_graph);
+  ofs.close();
+  // set file mode to read only by user
+  ChangeFileMode(filename, S_IRUSR);
+  MS_LOG(INFO) << "End saving graph to file in protobuf format";
+#endif
+}
+
 bool ExecutorPy::ChangeExportGeirUseVmFlag(bool use_vm, const std::string &phase_s) const {
   std::string phase_prefix = GetPhasePrefix(phase_s);
 
@@ -365,6 +389,8 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   info_[phase_s] = executor_info;
   pip->Run();
 
+  // save compile graph to file in protobuf format
+  SaveCompiledGraphToPb(phase_s);
   // save the run graph func to MsPipeLine
   SaveCompiledGraph(phase_s);
 
@@ -557,20 +583,6 @@ void Pipeline::Run() {
     std::string user_graph_file = GetFilePathName("ModelDigraph.dot");
     MS_LOG(DEBUG) << "Save user graph to: " << user_graph_file;
     draw::DrawUserFuncGraph(user_graph_file, user_graph);
-
-#ifdef ENABLE_DUMP_IR
-    std::string filename = GetFilePathName("ms_output.pb");
-    ChangeFileMode(filename, S_IRWXU);
-    std::ofstream ofs(filename);
-    if (!ofs.is_open()) {
-      MS_LOG(ERROR) << "Open file '" << filename << "' failed!";
-      return;
-    }
-    ofs << GetFuncGraphProtoString(user_graph);
-    ofs.close();
-    // set file mode to read only by user
-    ChangeFileMode(filename, S_IRUSR);
-#endif
   }
   MS_LOG(INFO) << "End";
 }

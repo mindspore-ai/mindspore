@@ -70,6 +70,7 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   ~ExecutorPy();
 
   void SaveCompiledGraph(const std::string &phase_s);
+  void SaveCompiledGraphToPb(const std::string &phase_s);
   bool CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm);
   bool Compile(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm);
 
