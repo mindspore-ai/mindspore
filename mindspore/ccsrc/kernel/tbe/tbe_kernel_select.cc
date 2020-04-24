@@ -543,11 +543,6 @@ bool IsValidKernelInfo(const std::shared_ptr<CNode> &kernel_node, const kernel::
     if (!IsShapeMatchFormat(shape, format)) {
       return false;
     }
-    for (auto shape_value : shape) {
-      if (shape_value == 0) {
-        MS_LOG(EXCEPTION) << "Dimension size of the tensor shape should be a positive integer, but got " << shape_value;
-      }
-    }
     return true;
   };
   for (size_t index = 0; index < kernel_build_info.GetOutputNum(); ++index) {
@@ -593,10 +588,12 @@ void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<Ke
     if (context_ptr->execution_mode() == kPynativeMode) {
       kernel_info_list->push_back(parse_info);
     } else {
-      if (IsValidKernelInfo(kernel_node, *(parse_info)) && CheckSupported(kernel_node, parse_info)) {
-        kernel_info_list->push_back(parse_info);
-      } else {
-        MS_LOG(INFO) << "CheckSupported Failed for TBE op" << op_name << " kernel info.";
+      if (IsValidKernelInfo(kernel_node, *(parse_info))) {
+        if (CheckSupported(kernel_node, parse_info)) {
+          kernel_info_list->push_back(parse_info);
+        } else {
+          MS_LOG(INFO) << "CheckSupported Failed for TBE op" << op_name << " kernel info.";
+        }
       }
     }
   }
