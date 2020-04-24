@@ -101,7 +101,7 @@ py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::str
     MS_LOG(INFO) << "Start new args and compile key:" << key;
     g_args_cache[args_spec] = key++;
   }
-  py::tuple argSpec = py::tuple(2);
+  auto argSpec = py::tuple(2);
   argSpec[0] = name;
   argSpec[1] = g_args_cache[args_spec];
   return argSpec;

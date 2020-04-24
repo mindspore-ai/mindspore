@@ -31,7 +31,6 @@
 
 namespace mindspore {
 namespace pipeline {
-
 namespace py = pybind11;
 
 void SetGeOption(const std::map<std::string, std::string> &options);
@@ -50,7 +49,6 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
                        const std::vector<int64_t> &input_indexes, const std::string &phase);
 
 void ExportDFGraph(const std::string &file_name, const std::string &phase);
-
 }  // namespace pipeline
 }  // namespace mindspore
 
