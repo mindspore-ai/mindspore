@@ -637,53 +637,28 @@ class Conv2D(PrimitiveWithInfer):
                  group=1):
         """init Conv2D"""
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
-        self.kernel_size = validator.check_type('kernel_size', kernel_size, (int, tuple))
-        if isinstance(kernel_size, int):
-            self.kernel_size = (kernel_size, kernel_size)
-        if len(self.kernel_size) != 2 or (not isinstance(self.kernel_size[0], int)) or \
-                (not isinstance(self.kernel_size[1], int)) or \
-                self.kernel_size[0] < 1 or self.kernel_size[1] < 1:
-            raise ValueError(f"The \'kernel_size\' of \'Conv2D\' should be an positive int number or "
-                             f"a tuple of two positive int numbers, but got {kernel_size}")
-        self.stride = validator.check_type('stride', stride, (int, tuple))
-        if isinstance(stride, int):
-            self.stride = (stride, stride)
-        if len(self.stride) != 2 or (not isinstance(self.stride[0], int)) or \
-                (not isinstance(self.stride[1], int)) or \
-                self.stride[0] < 1 or self.stride[1] < 1:
-            raise ValueError(f"The \'stride\' of \'Conv2D\' should be an positive int number or "
-                             f"a tuple of two positive int numbers, but got {stride}")
+        self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
+        self.stride = _check_positive_int_or_tuple('stride', stride, self.name)
         self.add_prim_attr('stride', (1, 1, self.stride[0], self.stride[1]))
-        self.dilation = validator.check_type('dilation', dilation, (tuple, int))
-        if isinstance(dilation, int):
-            self.dilation = (1, 1, dilation, dilation)
-        elif len(dilation) == 2:
-            self.dilation = (1, 1, dilation[0], dilation[1])
-        if len(self.dilation) != 4 or (not isinstance(self.dilation[0], int) or self.dilation[0] < 1) or \
-                (not isinstance(self.dilation[1], int) or self.dilation[1] < 1) or \
-                (not isinstance(self.dilation[2], int) or self.dilation[2] < 1) or \
-                (not isinstance(self.dilation[3], int) or self.dilation[3] < 1):
-            raise ValueError(f"The \'dilation\' of \'Conv2D\' should be an positive int number or "
-                             f"a tuple of two or four positive int numbers, but got {dilation}")
+        self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
         self.add_prim_attr('dilation', self.dilation)
-        validator.equal('type of pad', type(pad), 'not bool', not isinstance(pad, bool))
-        validator.equal('type of pad', type(pad), 'int', isinstance(pad, int))
-        self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'])
-        self.pad = validator.check_pad_value_by_mode(self.__class__.__name__, pad_mode, pad)
+        validator.check_value_type('pad', pad, (int,), self.name)
+        self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'], self.name)
+        self.pad = validator.check_pad_value_by_mode(pad_mode, pad, self.name)
         if self.pad_mode == 'pad':
-            validator.check_integer('pad', self.pad, 0, Rel.GE)
+            validator.check_integer('pad', self.pad, 0, Rel.GE, self.name)
 
-        self.mode = validator.check_integer('mode', mode, 1, Rel.EQ)
+        self.mode = validator.check_integer('mode', mode, 1, Rel.EQ, self.name)
         self.add_prim_attr('data_format', "NCHW")
-        self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT)
-        self.group = validator.check_integer('group', group, 0, Rel.GT)
+        self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT, self.name)
+        self.group = validator.check_integer('group', group, 0, Rel.GT, self.name)
 
     def infer_shape(self, x_shape, w_shape):
-        validator.check_integer("weight_shape", len(w_shape), 4, Rel.EQ)
-        validator.check_integer("x_shape", len(x_shape), 4, Rel.EQ)
-        validator.check_param_equal("x_shape[1]", x_shape[1] // self.group, "w_shape[1]", w_shape[1])
-        validator.check_param_equal('out_channel', self.out_channel, 'w_shape[0]', w_shape[0])
-        validator.check_param_equal('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape[2:4]))
+        validator.check_integer("weight rank", len(w_shape), 4, Rel.EQ, self.name)
+        validator.check_integer("x rank", len(x_shape), 4, Rel.EQ, self.name)
+        validator.check("x_shape[1] / group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
+        validator.check('out_channel', self.out_channel, 'w_shape[0]', w_shape[0], Rel.EQ, self.name)
+        validator.check('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape[2:4]), Rel.EQ, self.name)
 
         kernel_size_h = w_shape[2]
         kernel_size_w = w_shape[3]
@@ -725,10 +700,9 @@ class Conv2D(PrimitiveWithInfer):
         return out_shape
 
     def infer_dtype(self, x_dtype, w_dtype):
-        args = {'x_dtype': x_dtype, 'w_dtype': w_dtype}
-        validator.check_subclass('input', x_dtype, mstype.tensor)
-        validator.check_subclass('weight', w_dtype, mstype.tensor)
-        validator.check_type_same(args, [mstype.int8, mstype.int32, mstype.float16, mstype.float32])
+        args = {'x': x_dtype, 'w': w_dtype}
+        valid_types = [mstype.int8, mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensor_type_same(args, valid_types, self.name)
         return x_dtype
 
 
@@ -1108,56 +1082,33 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
                  group=1):
         """init Conv2DBackpropInput"""
         self.init_prim_io_names(inputs=['out_backprop', 'filter', 'input_sizes'], outputs=['output'])
-        self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT)
-        self.kernel_size = validator.check_type('kernel_size', kernel_size, (int, tuple))
-        if isinstance(kernel_size, int):
-            self.kernel_size = (kernel_size, kernel_size)
-        if len(self.kernel_size) != 2 or (not isinstance(self.kernel_size[0], int)) or \
-                (not isinstance(self.kernel_size[1], int)) or \
-                self.kernel_size[0] < 1 or self.kernel_size[1] < 1:
-            raise ValueError(f"The \'kernel_size\' of \'Conv2DBackpropInput\' should be an positive int number or "
-                             f"a tuple of two positive int numbers, but got {kernel_size}")
-        self.stride = validator.check_type('stride', stride, (int, tuple))
-        if isinstance(stride, int):
-            self.stride = (stride, stride)
-        elif isinstance(stride, tuple) and len(stride) == 4:
-            self.stride = (stride[2], stride[3])
-        if len(self.stride) != 2 or (not isinstance(self.stride[0], int)) or (not isinstance(self.stride[1], int)) or \
-                self.stride[0] < 1 or self.stride[1] < 1:
-            raise ValueError(f"The \'stride\' of \'Conv2DBackpropInput\' should be an positive int number or "
-                             f"a tuple of two or four positive int numbers, but got {stride}")
+        self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT, self.name)
+        self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
+        self.stride = _check_positive_int_or_tuple('stride', stride, self.name, allow_four=True, ret_four=False)
         self.add_prim_attr('stride', self.stride)
-        self.dilation = validator.check_type('dilation', dilation, (tuple, int))
-        if isinstance(dilation, int):
-            self.dilation = (1, 1, dilation, dilation)
-        elif len(dilation) == 2:
-            self.dilation = (1, 1, dilation[0], dilation[1])
-        if len(self.dilation) != 4 or (not isinstance(self.dilation[0], int) or self.dilation[0] < 1) or \
-                (not isinstance(self.dilation[1], int) or self.dilation[1] < 1) or \
-                (not isinstance(self.dilation[2], int) or self.dilation[2] < 1) or \
-                (not isinstance(self.dilation[3], int) or self.dilation[3] < 1):
-            raise ValueError(f"The \'dilation\' of \'Conv2DBackpropInput\' should be an positive int number or "
-                             f"a tuple of two or four positive int numbers, but got {dilation}")
+        self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
         self.add_prim_attr('dilation', self.dilation)
-        validator.equal('type of pad', type(pad), 'not bool', not isinstance(pad, bool))
-        validator.equal('type of pad', type(pad), 'int', isinstance(pad, int))
-        self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'])
-        self.pad = validator.check_pad_value_by_mode(self.__class__.__name__, pad_mode, pad)
-        self.mode = validator.check_integer('mode', mode, 1, Rel.EQ)
-        self.group = validator.check_integer('group', group, 0, Rel.GT)
+        validator.check_value_type('pad', pad, (int,), self.name)
+        self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'], self.name)
+        self.pad = validator.check_pad_value_by_mode(pad_mode, pad, self.name)
         pad_mode = pad_mode.upper()
         self.add_prim_attr('pad_mode', pad_mode)
+        self.mode = validator.check_integer('mode', mode, 1, Rel.EQ, self.name)
+        self.group = validator.check_integer('group', group, 0, Rel.GT, self.name)
         self.add_prim_attr('data_format', "NCHW")
         if pad_list:
-            self.pad_lsit = (validator.check_integer('pad_list', x, 0, Rel.GE) for x in pad_list)
+            for x in pad_list:
+                validator.check_integer('element of pad_list', x, 0, Rel.GE, self.name)
+            self.pad_list = pad_list
 
     def __infer__(self, doutput, w, x_size):
         x_size_v = x_size['value']
-        validator.check_type('x_size', x_size_v, [tuple])
+        validator.check_value_type('x_size', x_size_v, [tuple], self.name)
         for i, dim_len in enumerate(x_size_v):
-            validator.check_type("x_size[%d]" % i, dim_len, [int])
-        validator.check_typename('w_dtype', w['dtype'], [mstype.int8, mstype.int32, mstype.float16, mstype.float32])
-        validator.check_two_types_same('doutput_dtype', doutput['dtype'], 'w_dtype', w['dtype'])
+            validator.check_value_type("x_size[%d]" % i, dim_len, [int], self.name)
+        args = {'doutput': doutput['dtype'], 'w': w['dtype']}
+        valid_types = [mstype.int8, mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensor_type_same(args, valid_types, self.name)
 
         # infer shape
         dout_shape = doutput['shape']
@@ -1677,7 +1628,7 @@ class LayerNorm(Primitive):
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`_.
 
     .. math::
-        y = \frac{x - mean]}{\sqrt{variance + \epsilon}} * \gamma + \beta
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
 
     where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon.
 
