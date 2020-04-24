@@ -38,18 +38,18 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &na
   MS_EXCEPTION_IF_NULL(value);
   int64_t data = GetValue<int>(value);
   std::vector<int64_t> list;
-  int size = 2;  // 2 int in list
   if (name == "pad") {
     if (!value->isa<ValueSequeue>()) {
       MS_LOG(EXCEPTION) << "Value should be ValueTuple, but got" << value->type_name();
     }
     auto vec = value->cast<ValueSequeuePtr>();
-    list.push_back(1);
-    list.push_back(1);
-    for (auto &it : vec->value()) {
-      list.push_back(static_cast<int64_t>(GetValue<int>(it)));
-    }
+    list.resize(vec->value().size()+2);
+    list[0]=1;
+    list[1]=1;
+    (void)std::transform(vec->value().begin(), vec->value().end(), list.begin()+2,
+                         [](const ValuePtr &val) { return static_cast<int64_t>(GetValue<int>(val)); });
   } else {
+    int size = 2;  // 2 int in list
     list = TransformUtil::ConvertIntToList(data, size);
   }
 
