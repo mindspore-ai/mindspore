@@ -736,7 +736,7 @@ class OpAdapter : public BaseOpAdapter {
     return static_cast<int64_t>(GetValue<int>(value));
   }
 
-  // specialization for int to Vector
+  // specialization for int or tuple broadcast to Vector
   static std::vector<int64_t> ConvertAny(const ValuePtr &value, const std::string &name,
                                          const AnyTraits<std::vector<int64_t>> anyTraitsInt) {
     return ConvertAnyUtil(value, name, anyTraitsInt);

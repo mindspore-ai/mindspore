@@ -35,14 +35,20 @@ GeTensor ConvertAnyUtil(const ValuePtr &value, const AnyTraits<mindspore::tensor
 
 std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &name,
                                     const AnyTraits<std::vector<int64_t>>) {
+  MS_EXCEPTION_IF_NULL(value);
   int64_t data = GetValue<int>(value);
   std::vector<int64_t> list;
   int size = 2;  // 2 int in list
   if (name == "pad") {
-    size = 4;  // 4 int in list
-    list = TransformUtil::ConvertIntToList(data, size);
-    list[0] = 1;
-    list[1] = 1;
+    if (!value->isa<ValueSequeue>()) {
+      MS_LOG(EXCEPTION) << "Value should be ValueTuple, but got" << value->type_name();
+    }
+    auto vec = value->cast<ValueSequeuePtr>();
+    list.push_back(1);
+    list.push_back(1);
+    for (auto &it : vec->value()) {
+      list.push_back(static_cast<int64_t>(GetValue<int>(it)));
+    }
   } else {
     list = TransformUtil::ConvertIntToList(data, size);
   }
