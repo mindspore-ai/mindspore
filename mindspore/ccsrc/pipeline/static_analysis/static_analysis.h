@@ -194,6 +194,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   const PrimEvaluatorMap &PrimConstructors() const { return prim_constructors_; }
 
   AnalysisCache cache_;
+  std::unordered_map<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
  private:
   const PrimEvaluatorMap &prim_constructors_;

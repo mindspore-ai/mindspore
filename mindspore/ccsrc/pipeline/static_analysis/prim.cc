@@ -405,6 +405,10 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
 AbstractBasePtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
   MS_LOG(DEBUG) << "Eval for:" << prim_py_->ToString();
 
+  const auto &iter = cache_->find(args);
+  if (iter != cache_->end()) {
+    return iter->second;
+  }
   auto py_args = PreparePyInputs(prim_py_, args);
 
   auto pyobj = prim_py_->GetPyObj();
@@ -418,6 +422,7 @@ AbstractBasePtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const A
   auto res_spec = PyInferRes2Abstract(prim_py_, output);
 
   MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
+  (*cache_)[args] = res_spec;
   return res_spec;
 }
 
