@@ -21,7 +21,7 @@ from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
 from .._c_expression import init_hccl, finalize_hccl, init_gpu_collective
 
 
-__all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size", "get_group",
+__all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
            "get_local_rank_size", "get_world_rank_from_group_rank",
            "get_group_rank_from_world_rank", "create_group", "destroy_group",
            "HCCL_WORLD_COMM_GROUP", "NCCL_WORLD_COMM_GROUP"]
@@ -30,7 +30,7 @@ DEFAULT_WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
 DEFAULT_BACKEND = Backend("hccl")
 
 
-def get_group(group):
+def _get_group(group):
     """Get the global world group if the group is default world comm group."""
     if group == DEFAULT_WORLD_COMM_GROUP:
         return GlobalComm.WORLD_COMM_GROUP
@@ -100,7 +100,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If hccl/nccl is not available or nccl not supports.
     """
-    return _get_rank_helper(group=get_group(group), backend=GlobalComm.BACKEND)
+    return _get_rank_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
 def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
@@ -121,7 +121,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If hccl/nccl is not available or nccl not supports.
     """
-    return _get_local_rank_helper(group=get_group(group), backend=GlobalComm.BACKEND)
+    return _get_local_rank_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
 def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
@@ -139,7 +139,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If hccl/nccl is not available or nccl not supports.
     """
-    return _get_size_helper(group=get_group(group), backend=GlobalComm.BACKEND)
+    return _get_size_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
 def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
@@ -160,7 +160,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If hccl/nccl is not available or nccl not supports.
     """
-    return _get_local_size_helper(group=get_group(group), backend=GlobalComm.BACKEND)
+    return _get_local_size_helper(group=_get_group(group), backend=GlobalComm.BACKEND)
 
 
 def get_world_rank_from_group_rank(group, group_rank_id):
