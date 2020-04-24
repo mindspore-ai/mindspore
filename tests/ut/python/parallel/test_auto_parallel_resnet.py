@@ -303,7 +303,7 @@ def train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768):
     return allreduce_fusion_dict
 
 
-def test_train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768): #1048576 #131072 #32768 #8192
+def train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768): #1048576 #131072 #32768 #8192
     cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
@@ -475,7 +475,7 @@ def test_train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768): #
     cost_model_context.reset_cost_model_context()
 
 
-def test_train_32k_8p_fusion2(epoch_size=3, batch_size=32, num_classes=32768): #1048576 #131072 #32768 #8192
+def train_32k_8p_fusion2(epoch_size=3, batch_size=32, num_classes=32768): #1048576 #131072 #32768 #8192
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=2)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_time=0.1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_inherent_time=0.05)
