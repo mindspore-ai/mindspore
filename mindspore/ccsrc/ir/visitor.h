@@ -22,15 +22,15 @@
 #include "optimizer/opt.h"
 
 namespace mindspore {
-using VisitFuncType = std::function<void(const AnfNodePtr&)>;
+using VisitFuncType = std::function<void(const AnfNodePtr &)>;
 class AnfVisitor {
  public:
-  virtual AnfNodePtr operator()(const opt::OptimizerPtr&, const AnfNodePtr&);
-  virtual void Visit(const AnfNodePtr&);
-  virtual void Visit(const CNodePtr&);
-  virtual void Visit(const ValueNodePtr&);
-  virtual void Visit(const ParameterPtr&);
-  VisitFuncType Match(const PrimitivePtr&, const std::vector<opt::PredicateFuncType>& = {});
+  virtual AnfNodePtr operator()(const opt::OptimizerPtr &, const AnfNodePtr &);
+  virtual void Visit(const AnfNodePtr &);
+  virtual void Visit(const CNodePtr &);
+  virtual void Visit(const ValueNodePtr &);
+  virtual void Visit(const ParameterPtr &);
+  VisitFuncType Match(const PrimitivePtr &, const std::vector<opt::PredicateFuncType> & = {});
   virtual ~AnfVisitor() = default;
 };
 }  // namespace mindspore

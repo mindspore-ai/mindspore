@@ -22,12 +22,12 @@
 
 namespace mindspore {
 
-ConfigManager& ConfigManager::GetInstance() noexcept {
+ConfigManager &ConfigManager::GetInstance() noexcept {
   static ConfigManager instance;
   return instance;
 }
 
-void ConfigManager::SetDatasetModeConfig(const std::string& mode) {
+void ConfigManager::SetDatasetModeConfig(const std::string &mode) {
   static const std::map<std::string, DatasetMode> mode_map = {{"normal", DS_NORMAL_MODE}, {"sink", DS_SINK_MODE}};
   if (mode_map.find(mode) == mode_map.end()) {
     MS_LOG(ERROR) << "Invalid dataset mode:" << mode;

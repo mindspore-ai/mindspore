@@ -60,9 +60,6 @@ class GPUKernelRuntime : public KernelRuntime {
   void AllocCommunicationOpOutputDynamicRes(const mindspore::AnfNodePtr &kernel);
   void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel, const AddressPtrList &kernel_workspaces,
                             uint32_t graph_id);
-  void FreeCommunicationOpDynamicRes(const mindspore::AnfNodePtr &kernel, size_t input_idx, bool *is_communication_op);
-  size_t communication_op_input_ref_count_{0};
-  size_t communication_op_output_ref_count_{0};
   std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
 };
 MS_REG_KERNEL_RUNTIME(kGPUDevice, GPUKernelRuntime);

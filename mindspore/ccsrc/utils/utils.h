@@ -92,6 +92,7 @@ constexpr auto kClipByNormNoDivSumOpName = "ClipByNormNoDivSum";
 constexpr auto kGreaterOpName = "Greater";
 constexpr auto kSqrtOpName = "Sqrt";
 constexpr auto kRsqrtOpName = "Rsqrt";
+constexpr auto kErfOpName = "Erf";
 constexpr auto kRealDivOpName = "RealDiv";
 constexpr auto kLambUpdateWithLROpName = "LambUpdateWithLR";
 constexpr auto kLambNextMVWithDecayOpName = "LambNextMVWithDecay";
@@ -114,6 +115,9 @@ constexpr auto kFusedMulAddNOpName = "FusedMulAddN";
 constexpr auto kFusedMulApplyMomentumOpName = "FusedMulApplyMomentum";
 constexpr auto kBiasAddOpName = "BiasAdd";
 constexpr auto kConfusionMulGradOpName = "ConfusionMulGrad";
+constexpr auto kStreamSwitchOpName = "StreamSwitch";
+constexpr auto kStreamActiveOpName = "StreamActive";
+constexpr auto kAssignAddOpName = "AssignAdd";
 constexpr auto kSendOpName = "Send";
 constexpr auto kRecvOpName = "Recv";
 constexpr auto kReluV2OpName = "ReluV2";
@@ -149,7 +153,7 @@ constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrOutputUsedNum = "output_used_num";
 constexpr auto kAttrHasBias = "has_bias";
-constexpr auto kAttrN = "N";
+constexpr auto kAttrN = "n";
 constexpr auto kAttrLabelForInsertStreamActive = "label_for_insert_stream_active";
 
 // attr value
@@ -210,7 +214,7 @@ const std::set<std::string> kOptOperatorSet = {
 const std::set<std::string> kNeedTransFormatSet = {kOpFormat_FRAC_Z, kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
                                                    kOpFormat_FRAC_NZ, kOpFormat_C1HWNCoC0};
 
-static inline void ChangeFileMode(const std::string& file_name, mode_t mode) {
+static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   if (access(file_name.c_str(), F_OK) != 0) {
     MS_LOG(DEBUG) << "File `" << file_name << "` does not exist.";
     return;

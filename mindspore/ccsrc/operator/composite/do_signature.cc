@@ -34,7 +34,7 @@ namespace prim {
 namespace {
 using PatternListType = std::initializer_list<BaseRef>;
 
-const std::vector<Signature>& GetSignature(const ValuePtr& function) {
+const std::vector<Signature> &GetSignature(const ValuePtr &function) {
   static const auto empty = std::vector<Signature>();
   if (function->isa<Primitive>()) {
     return function->cast<PrimitivePtr>()->signatures();
@@ -44,8 +44,8 @@ const std::vector<Signature>& GetSignature(const ValuePtr& function) {
   return empty;
 }
 
-void ProcessDefault(const std::string& func_name, const AbstractBasePtrList& args_spec_list,
-                    const std::vector<Signature>& signature, bool has_var, std::vector<AnfNodePtr>* op_inputs) {
+void ProcessDefault(const std::string &func_name, const AbstractBasePtrList &args_spec_list,
+                    const std::vector<Signature> &signature, bool has_var, std::vector<AnfNodePtr> *op_inputs) {
   std::size_t sig_size = signature.size();
   auto positional_size = sig_size;
   if (has_var) {
@@ -64,8 +64,8 @@ void ProcessDefault(const std::string& func_name, const AbstractBasePtrList& arg
 }
 
 // Get the largest type of index in the same SignatureEnumDType of arguments.
-std::map<SignatureEnumDType, size_t> GetMaxDtypeIndex(const std::vector<SignatureEnumDType>& dtypes,
-                                                      const abstract::AbstractBasePtrList& args_spec_list) {
+std::map<SignatureEnumDType, size_t> GetMaxDtypeIndex(const std::vector<SignatureEnumDType> &dtypes,
+                                                      const abstract::AbstractBasePtrList &args_spec_list) {
   // record index for signature.dtypes of the same type
   // eg. [T, T1, T, T2, T, T1, T3] -> {{T:(0,2,4)}, {T1:(1,5)}, {T2:(3)}, {T3:(6)}}
   std::map<SignatureEnumDType, std::vector<size_t>> type_indexs;
@@ -89,7 +89,7 @@ std::map<SignatureEnumDType, size_t> GetMaxDtypeIndex(const std::vector<Signatur
       continue;
     }
 
-    for (const auto& index : indexs) {
+    for (const auto &index : indexs) {
       AbstractBasePtr arg_value = args_spec_list[index];
       if (arg_value->isa<abstract::AbstractRef>()) {
         arg_value = arg_value->cast<abstract::AbstractRefPtr>()->ref();
@@ -104,7 +104,7 @@ std::map<SignatureEnumDType, size_t> GetMaxDtypeIndex(const std::vector<Signatur
   return dst_type;
 }
 
-AnfNodePtr DoCast(const AnfNodePtr& param, const AnfNodePtr& source_param, const FuncGraphPtr& graph) {
+AnfNodePtr DoCast(const AnfNodePtr &param, const AnfNodePtr &source_param, const FuncGraphPtr &graph) {
   // op and module import path
   auto prim_dtype = prim::GetPythonOps("dtype", "mindspore.ops.functional");
   MS_EXCEPTION_IF_NULL(prim_dtype);
@@ -116,11 +116,11 @@ AnfNodePtr DoCast(const AnfNodePtr& param, const AnfNodePtr& source_param, const
   return NewCNode({cast_node, param, dtype_node}, graph);
 }
 
-void DoAutoCast(const std::vector<Signature>& signature, const abstract::AbstractBasePtrList& args_spec_list,
-                const FuncGraphPtr& graph, std::vector<AnfNodePtr>* op_inputs) {
+void DoAutoCast(const std::vector<Signature> &signature, const abstract::AbstractBasePtrList &args_spec_list,
+                const FuncGraphPtr &graph, std::vector<AnfNodePtr> *op_inputs) {
   std::vector<SignatureEnumDType> dtypes;
   (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
-                       [](const Signature& sig) { return sig.dtype; });
+                       [](const Signature &sig) { return sig.dtype; });
   int empty_dtype_count = std::count(dtypes.begin(), dtypes.end(), SignatureEnumDType::kDTypeEmptyDefaultValue);
   if (dtypes.empty() || static_cast<int>(dtypes.size()) == empty_dtype_count) {
     return;
@@ -137,16 +137,29 @@ void DoAutoCast(const std::vector<Signature>& signature, const abstract::Abstrac
     if (it == dst_type.end() || it->second == i || !arg_value->isa<abstract::AbstractScalar>()) {
       continue;
     }
+    // When scalar is of bool type, the type of tensor must also be of bool type,
+    // otherwise the cast operator will not be added.
+    auto scalar = arg_value->cast<abstract::AbstractScalarPtr>();
+    auto scalar_type = scalar->BuildType();
+    MS_EXCEPTION_IF_NULL(scalar_type);
+    if (scalar_type->type_id() == kNumberTypeBool) {
+      auto tensor = args_spec_list[it->second]->cast<abstract::AbstractTensorPtr>();
+      auto tensor_type = tensor->element()->BuildType();
+      MS_EXCEPTION_IF_NULL(tensor_type);
+      if (tensor_type->type_id() != kNumberTypeBool) {
+        continue;
+      }
+    }
     // get source node for cast
     AnfNodePtr source_node = (*op_inputs)[it->second + 1];
     (*op_inputs)[i + 1] = DoCast((*op_inputs)[i + 1], source_node, graph);
   }
 }
 
-AnfNodePtr BuildNewCNode(const FuncGraphPtr& func_graph, const std::string& func_name, const ValuePtr& function,
-                         const AbstractBasePtrList& args_spec_list, const std::vector<AnfNodePtr>& params_list) {
+AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
+                         const AbstractBasePtrList &args_spec_list, const std::vector<AnfNodePtr> &params_list) {
   // args: original inputs
-  auto& signature = GetSignature(function);
+  auto &signature = GetSignature(function);
   std::size_t sig_size = signature.size();
   auto has_var = (sig_size > 0 && signature[sig_size - 1].kind == SignatureEnumKind::kKindVarPositional);
   if (sig_size > 0) {
@@ -196,13 +209,13 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr& func_graph, const std::string& func
 }
 }  // namespace
 
-AnfNodePtr GenerateCNode(const FuncGraphPtr& func_graph, const std::string& func_name, const ValuePtr& function,
-                         const AbstractBasePtrList& args_spec_list, const AnfNodePtrList& old_node_inputs) {
+AnfNodePtr GenerateCNode(const FuncGraphPtr &func_graph, const std::string &func_name, const ValuePtr &function,
+                         const AbstractBasePtrList &args_spec_list, const AnfNodePtrList &old_node_inputs) {
   auto new_cnode = BuildNewCNode(func_graph, func_name, function, args_spec_list, old_node_inputs);
   return new_cnode;
 }
 
-FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
 
   for (size_t i = 0; i < args_spec_list.size(); ++i) {

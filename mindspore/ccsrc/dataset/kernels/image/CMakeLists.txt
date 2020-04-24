@@ -3,7 +3,6 @@ if (WIN32)
       center_crop_op.cc
       cut_out_op.cc
       decode_op.cc
-      distort_bounding_box_crop_op.cc
       hwc_to_chw_op.cc
       image_utils.cc
       normalize_op.cc
@@ -19,6 +18,7 @@ if (WIN32)
       rescale_op.cc
       resize_bilinear_op.cc
       resize_op.cc
+      uniform_aug_op.cc
       )
 else()
   add_library(kernels-image OBJECT
@@ -26,7 +26,6 @@ else()
       change_mode_op.cc
       cut_out_op.cc
       decode_op.cc
-      distort_bounding_box_crop_op.cc
       hwc_to_chw_op.cc
       image_utils.cc
       normalize_op.cc
@@ -42,5 +41,6 @@ else()
       rescale_op.cc
       resize_bilinear_op.cc
       resize_op.cc
+      uniform_aug_op.cc
       )
 endif()

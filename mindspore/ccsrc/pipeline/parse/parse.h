@@ -92,6 +92,8 @@ class Parser {
   AnfNodePtr ParseName(const FunctionBlockPtr &block, const py::object &node);
   // process NoneType
   AnfNodePtr ParseNone(const FunctionBlockPtr &block, const py::object &node);
+  // process Ellipsis
+  AnfNodePtr ParseEllipsis(const FunctionBlockPtr &block, const py::object &node);
   // process a integer or float number
   AnfNodePtr ParseNum(const FunctionBlockPtr &block, const py::object &node);
   // process a string variable

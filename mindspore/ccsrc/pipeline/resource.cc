@@ -32,7 +32,7 @@ namespace mindspore {
 // namespace to support opmap definition
 namespace pipeline {
 
-MethodMap& GetMethodMap() {
+MethodMap &GetMethodMap() {
   static MethodMap method_map = {{kObjectTypeString,
                                   {
                                     {"__bool__", std::string("str_bool")}  // C.str_bool
@@ -178,7 +178,7 @@ MethodMap& GetMethodMap() {
   return method_map;
 }
 
-Resource::Resource(const py::object& obj)
+Resource::Resource(const py::object &obj)
     : engine_(std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager_)),
       input_(obj),
       is_cleaned_(false) {}
@@ -197,7 +197,7 @@ Resource::~Resource() {
   if (!is_cleaned_) {
     try {
       Clean();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Exception when cleaning resource. Error info " << e.what();
     } catch (...) {
       MS_LOG(ERROR) << "Exception when cleaning resource.";
@@ -205,9 +205,9 @@ Resource::~Resource() {
   }
 }
 
-bool Resource::IsTypeInMethodMap(const TypeId& type) {
+bool Resource::IsTypeInMethodMap(const TypeId &type) {
   TypeId type_id = NormalizeTypeId(type);
-  const MethodMap& method_map = GetMethodMap();
+  const MethodMap &method_map = GetMethodMap();
   auto iter = method_map.find(static_cast<int>(type_id));
   if (iter != method_map.end()) {
     return true;
@@ -215,9 +215,9 @@ bool Resource::IsTypeInMethodMap(const TypeId& type) {
   return false;
 }
 
-Any Resource::GetMethodPtr(const TypeId& type, const std::string& name) {
+Any Resource::GetMethodPtr(const TypeId &type, const std::string &name) {
   TypeId type_id = NormalizeTypeId(type);
-  const MethodMap& method_map = GetMethodMap();
+  const MethodMap &method_map = GetMethodMap();
   auto iter = method_map.find(static_cast<int>(type_id));
   if (iter == method_map.end()) {
     MS_LOG(WARNING) << "Object type: " << type_id << " not in the method_map";

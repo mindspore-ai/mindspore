@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status SoftmaxCrossEntropyWithLogitsInfo::CheckStrategy(const mindspore::parallel::StrategyPtr& strategy) {
+Status SoftmaxCrossEntropyWithLogitsInfo::CheckStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
@@ -152,7 +152,7 @@ Status SoftmaxCrossEntropyWithLogitsInfo::InferAsLossDivisor() {
   return SUCCESS;
 }
 
-Status SoftmaxCrossEntropyWithLogitsInfo::Init(const StrategyPtr& strategy) {
+Status SoftmaxCrossEntropyWithLogitsInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed.";
     return FAILED;
@@ -162,7 +162,7 @@ Status SoftmaxCrossEntropyWithLogitsInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status SoftmaxCrossEntropyWithLogitsInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status SoftmaxCrossEntropyWithLogitsInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
@@ -205,7 +205,7 @@ Status SoftmaxCrossEntropyWithLogitsInfo::GenerateStrategies(int32_t stage_id) {
   }
 
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy.";
@@ -216,7 +216,7 @@ Status SoftmaxCrossEntropyWithLogitsInfo::GenerateStrategies(int32_t stage_id) {
   return SUCCESS;
 }
 
-Status SoftmaxCrossEntropyWithLogitsInfo::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status SoftmaxCrossEntropyWithLogitsInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   PrintStrategy(strategy);
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {

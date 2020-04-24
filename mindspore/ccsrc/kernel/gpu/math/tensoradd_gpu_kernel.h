@@ -71,6 +71,9 @@ class TensorAddGpuFwdKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) {
     InitResource();
     cudnn_data_type_ = kCudnnDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0))];
+    if (cudnn_data_type_ == CUDNN_DATA_INT32) {
+      cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    }
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but cudnnAddTensor needs 2 inputs.";

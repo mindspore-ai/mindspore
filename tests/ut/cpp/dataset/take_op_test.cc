@@ -69,7 +69,7 @@ TEST_F(MindDataTestTakeOp, TestTakeProject) {
   rc = my_tree->AssignRoot(my_take_op);
   ASSERT_TRUE(rc.IsOk());
 
-  MS_LOG(INFO) << "Launching tree and begin iteration.";
+  MS_LOG(DEBUG) << "Launching tree and begin iteration.";
   rc = my_tree->Prepare();
 
   ASSERT_TRUE(rc.IsOk());
@@ -85,13 +85,13 @@ TEST_F(MindDataTestTakeOp, TestTakeProject) {
 
   int row_count = 0;
   while (!tensor_list.empty()) {
-    MS_LOG(INFO) << "Row display for row #: " << row_count << ".";
+    MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
 
     // Display the tensor by calling the printer on it
     for (int i = 0; i < tensor_list.size(); i++) {
       std::ostringstream ss;
       ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
-      MS_LOG(INFO) << "Tensor print: " << ss.str() << ".";
+      MS_LOG(DEBUG) << "Tensor print: " << ss.str() << ".";
     }
 
     rc = di.FetchNextTensorRow(&tensor_list);

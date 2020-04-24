@@ -19,14 +19,16 @@ from __future__ import print_function
 
 import pytest
 import numpy as np
+import mindspore.context as context
 import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore import Tensor
 from mindspore.common.initializer import initializer
-import mindspore.context as context
+
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
 
 class AlexNet(nn.Cell):
     def __init__(self, num_classes=10):
@@ -66,6 +68,7 @@ class AlexNet(nn.Cell):
         x = self.fc3(x)
         return x
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -73,14 +76,14 @@ def test_trainTensor(num_classes=10, epoch=15, batch_size=32):
     net = AlexNet(num_classes)
     lr = 0.1
     momentum = 0.9
-    optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, momentum, weight_decay = 0.0001)
+    optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, momentum, weight_decay=0.0001)
     criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
     net_with_criterion = WithLossCell(net, criterion)
     train_network = TrainOneStepCell(net_with_criterion, optimizer)
     train_network.set_train()
-    losses=[]
+    losses = []
     for i in range(0, epoch):
-        data = Tensor(np.ones([batch_size, 3 ,227, 227]).astype(np.float32) * 0.01)
+        data = Tensor(np.ones([batch_size, 3, 227, 227]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         loss = train_network(data, label)
         losses.append(loss)

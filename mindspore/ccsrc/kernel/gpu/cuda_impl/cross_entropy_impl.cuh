@@ -28,11 +28,6 @@ void CrossEntropyGradWithSparse(const T *logits, const S *labels, const size_t b
                                 T *grad, cudaStream_t cuda_stream);
 
 template <typename T, typename S>
-void CrossEntropyWithoutSparse(const T *logits, const S *labels, const size_t batch_size, const size_t class_num,
-                               T *losses, cudaStream_t cuda_stream);
-
-template <typename T, typename S>
-void CrossEntropyGradWithoutSparse(const T *logits, const S *labels, const size_t batch_size, const size_t class_num,
-                                   T *grad, cudaStream_t cuda_stream);
-
+void CrossEntropy(const T *logits, const S *labels, const size_t batch_size, const size_t class_num, T *losses,
+                  T *dlogits, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_CROSSENTROPY_H_

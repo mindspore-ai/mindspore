@@ -99,7 +99,7 @@ def test_raise_error_funcs():
     assert has_raise_error(create_backend, 'nccl') is False
     assert has_raise_error(get_group_size_int, 123) is True
     assert has_raise_error(create_group0, (0,1)) is True
-    assert has_raise_error(create_group1, [0]) is True
+    assert has_raise_error(create_group1, [0]) is False
     assert has_raise_error(create_group2, [0,0,1]) is True
     assert has_raise_error(create_group3, [0,1]) is True
     assert has_raise_error(create_group4, [0,1]) is False

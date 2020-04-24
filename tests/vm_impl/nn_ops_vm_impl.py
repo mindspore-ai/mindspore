@@ -151,8 +151,6 @@ def vm_impl_max_pool_grad_with_argmax(self):
     """Generate vm_impl function for MaxPoolGradWithArgmax"""
 
     def vm_impl(x, dout, argmax):
-        print("buxue")
-        print(argmax)
         x = x.asnumpy()
         dout = dout.asnumpy()
         arg_max = argmax.asnumpy()
@@ -379,8 +377,8 @@ def vm_impl_momentum(self):
         accumulation = accumulation.asnumpy()
         variable = variable.asnumpy()
         shape = accumulation.shape
-        learning_rate = np.full(shape, learning_rate)
-        momentum = np.full(shape, momentum)
+        learning_rate = np.full(shape, learning_rate.asnumpy())
+        momentum = np.full(shape, momentum.asnumpy())
         accumulation = accumulation * momentum + gradient
         if use_nesterov is True:
             variable -= gradient * learning_rate + accumulation * momentum * learning_rate

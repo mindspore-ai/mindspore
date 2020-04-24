@@ -30,6 +30,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
+import pytest
 
 
 # pylint: disable=W0613
@@ -81,14 +82,29 @@ def test_sqrt():
     assert np.all(result.asnumpy() == expect)
 
 
+class PowNet(nn.Cell):
+    def __init__(self):
+        super(PowNet, self).__init__()
+        self.pow = P.Pow()
+
+    def construct(self, x, y):
+        return self.pow(x, y)
+
+
 def test_pow():
     """ test_pow """
     input_tensor = Tensor(np.array([[2, 2], [3, 3]]))
     power = Tensor(np.array(3.0, np.int64))
+    power2 = Tensor(np.array(True, np.bool))
     testpow = P.Pow()
     expect = np.array([[8, 8], [27, 27]])
     result = testpow(input_tensor, power)
     assert np.all(result.asnumpy() == expect)
+    net = PowNet()
+    with pytest.raises(TypeError):
+        net(input_tensor, True)
+    with pytest.raises(TypeError):
+        net(input_tensor, power2)
 
 
 def test_exp():

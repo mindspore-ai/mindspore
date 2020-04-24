@@ -61,7 +61,7 @@ class DynamicMemBlock {
   DynamicMemBlock() = default;
   DynamicMemBlock(DeviceMemPtr addr_base, size_t size) : device_addr_base_(addr_base), mem_block_size_(size) {}
   ~DynamicMemBlock() { block_all_mem_buf_map_.clear(); }
-  const DeviceMemPtr& device_addr() const { return device_addr_base_; }
+  const DeviceMemPtr &device_addr() const { return device_addr_base_; }
   size_t size() const { return mem_block_size_; }
   // The map of all memory buf in this memory block by device address.
   DeviceAddrMapMemBuf block_all_mem_buf_map_;
@@ -79,6 +79,8 @@ class DynamicMemPoolBestFit {
   virtual ~DynamicMemPoolBestFit();
   // The main program entry of memory alloc.
   DeviceMemPtr AllocTensorMem(size_t size);
+  // The main program entry of continuous memory alloc.
+  std::vector<DeviceMemPtr> AllocContinuousTensorMem(size_t total_size, std::vector<size_t> size_list);
   // The main program entry of memory free.
   void FreeTensorMem(const DeviceMemPtr device_addr);
   // Release the real device memory.
@@ -92,8 +94,8 @@ class DynamicMemPoolBestFit {
   size_t used_mem_peak_statistics() const { return used_mem_peak_statistics_; }
 
   // The related interface of device memory real operation, needs override by device type.
-  virtual size_t AllocDeviceMem(size_t size, DeviceMemPtr* addr) = 0;
-  virtual bool FreeDeviceMem(const DeviceMemPtr& addr) = 0;
+  virtual size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) = 0;
+  virtual bool FreeDeviceMem(const DeviceMemPtr &addr) = 0;
   virtual size_t free_mem_size() = 0;
   virtual size_t total_mem_size() = 0;
 
@@ -113,14 +115,14 @@ class DynamicMemPoolBestFit {
   // Judge whether need divide the memory buf by alloc size and memory buf size.
   bool IsDivide(size_t tensor_size, size_t mem_buf_size) const;
   // Divide the memory buf by alloc size.
-  void DivideMemBuf(size_t size, const DynamicMemBufPtr& mem_buf);
+  void DivideMemBuf(size_t size, const DynamicMemBufPtr &mem_buf);
   // Find the memory block by deivce address.
   DynamicMemBlockPtr FindMemBlock(const DeviceMemPtr device_addr);
   // The Comparator of memory block by device address, because memory blocks are arranged in order by device address.
   static bool CmpMemBlock(const DeviceMemPtr device_addr, const DynamicMemBlockPtr mem_block);
 
   // Combine the memory buf when memory free, to avoid the memory fragmentation.
-  void CombineMemBuf(const DynamicMemBlockPtr& mem_block, const DeviceMemPtr device_addr);
+  void CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr device_addr);
   // Erase the idle memory buf by size and device address when idle memory buf is combined.
   void EraseIdleMemBuf(size_t size, const DeviceMemPtr device_addr);
 

@@ -28,6 +28,7 @@ class ContractError : public std::logic_error {
  public:
   explicit ContractError(const std::string &msg) : std::logic_error(msg) {}
   explicit ContractError(const char *msg) : std::logic_error(msg) {}
+  ~ContractError() override = default;
 };
 
 struct Signatory {
@@ -60,6 +61,7 @@ class Ensures : public EnsuresAccess<T, R> {
   }
   template <class O, typename = std::enable_if_t<std::is_convertible_v<O, T>>>
   Ensures(const Ensures<O, R> &other) : value_(other.get()) {}
+  ~Ensures() = default;
 
   T get() const { return value_; }
   T &get() { return value_; }

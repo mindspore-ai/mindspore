@@ -17,6 +17,7 @@
 
 
 from functools import reduce
+import numpy as np
 from .. import functional as F
 from .. import operations as P
 from ..operations import _grad_ops as G
@@ -330,6 +331,23 @@ def get_bprop_log(self):
         g = reciprocal(x)
         dx = g * dout
         return dx, 0
+    return bprop
+
+
+@bprop_getters.register(P.Erf)
+def get_bprop_erf(self):
+    """Grad definition for `Erf` operation."""
+    exp = P.Exp()
+    square = P.Square()
+    sqrt = P.Sqrt()
+    cast = P.Cast()
+    dtype = P.DType()
+
+    def bprop(x, out, dout):
+        half_root_pi = cast(2 / sqrt(F.scalar_to_tensor(np.pi)), dtype(x))
+        x_square = square(x)
+        dx = dout * half_root_pi * exp(-x_square)
+        return (dx,)
     return bprop
 
 

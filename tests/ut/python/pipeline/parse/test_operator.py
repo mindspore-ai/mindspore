@@ -160,14 +160,17 @@ def test_ops():
             ret_floor = p // q + q // p
             ret = ret_pow + ret_mod + ret_floor
             if self.int > self.float:
-                if self.str_a + self.str_b == "helloworld":
-                    return ret
+                if [1, 2, 3] != None:
+                    if self.str_a + self.str_b == "helloworld":
+                        if q == 86:
+                            print("hello world")
+                            return ret
             return x
 
     net = OpsNet(9, 2)
     x = Tensor(np.random.randint(low=1, high=10, size=(2, 3, 4), dtype=np.int32))
     y = Tensor(np.random.randint(low=10, high=20, size=(2, 3, 4), dtype=np.int32))
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     net(x, y)
 
 

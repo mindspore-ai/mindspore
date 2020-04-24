@@ -283,18 +283,19 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
 
   AscendStreamAssign &assign_instance = AscendStreamAssign::GetInstance();
   // the streams' flag not HEAD_STREAM
-  std::vector<uint32_t> wait_active_stream_list = assign_instance.GetWaitStreams();
-  std::vector<uint32_t> force_copy_stream_list = assign_instance.GetHcomStreams();
+  std::vector<uint32_t> wait_active_stream_list;
+  assign_instance.GetWaitStreams(&wait_active_stream_list);
+  auto force_copy_stream_list = assign_instance.hcom_streams();
 
   MS_LOG(INFO) << "call DavinciModel total stream num:" << assign_instance.GetTotalStreamNum()
-               << ", total event num:" << assign_instance.GetTotalEventNum()
+               << ", total event num:" << assign_instance.total_event_num()
                << ", wait_active_stream_list size:" << wait_active_stream_list.size()
                << ", force_copy_stream_list size:" << force_copy_stream_list.size();
 
   std::vector<std::shared_ptr<ge::model_runner::OpInfo>> empty_list;
   std::shared_ptr<ge::model_runner::DavinciModel> model = std::make_shared<ge::model_runner::DavinciModel>(
     task_info_list, empty_list, empty_list, empty_list, empty_list, wait_active_stream_list, force_copy_stream_list, 0,
-    0, 0, 0, 0, 0, assign_instance.GetTotalStreamNum(), 1, assign_instance.GetTotalEventNum(), 0);
+    0, 0, 0, 0, 0, assign_instance.GetTotalStreamNum(), 1, assign_instance.total_event_num(), 0);
 
   auto ret = graph_model_map_.insert(std::make_pair(graph->graph_id(), model));
   if (!ret.second) {

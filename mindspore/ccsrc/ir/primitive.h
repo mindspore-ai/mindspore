@@ -48,25 +48,25 @@ enum PrimType {
 
 class Primitive : public Named {
  public:
-  explicit Primitive(const std::string& name, const PrimType prim_type = kPrimTypeBuiltIn)
+  explicit Primitive(const std::string &name, const PrimType prim_type = kPrimTypeBuiltIn)
       : Named(name), signatures_(), prim_type_(prim_type) {}
 
-  Primitive(const Primitive& prim)
+  Primitive(const Primitive &prim)
       : Named(prim), attrs_(prim.attrs_), signatures_(prim.signatures_), prim_type_(prim.prim_type_) {}
 
   MS_DECLARE_PARENT(Primitive, Named);
 
-  abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr& anf_node);
+  abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr &anf_node);
   std::string ToString() const override { return name(); }
   virtual py::function GetBpropFunction();
   virtual py::function GetComputeFunction();
-  Primitive& AddAttr(const std::string& name, const ValuePtr& attr) {
+  Primitive &AddAttr(const std::string &name, const ValuePtr &attr) {
     attrs_[name] = attr;
     return *this;
   }
 
-  Primitive& SetAttrs(const std::unordered_map<std::string, ValuePtr>& attrs) {
-    for (auto& attr : attrs) {
+  Primitive &SetAttrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
+    for (auto &attr : attrs) {
       attrs_[attr.first] = attr.second;
     }
     return *this;
@@ -76,21 +76,21 @@ class Primitive : public Named {
     std::vector<std::tuple<std::string, SignatureEnumRW, SignatureEnumKind, py::object, SignatureEnumDType>>
       signatures);
 
-  const std::vector<Signature>& signatures() const { return signatures_; }
+  const std::vector<Signature> &signatures() const { return signatures_; }
 
-  void set_attr(const std::string& attrName, const ValuePtr& attr) { attrs_[attrName] = attr; }
-  void EraseAttr(const std::string& attrName) { (void)attrs_.erase(attrName); }
+  void set_attr(const std::string &attrName, const ValuePtr &attr) { attrs_[attrName] = attr; }
+  void EraseAttr(const std::string &attrName) { (void)attrs_.erase(attrName); }
 
-  ValuePtr GetAttr(const std::string& attrName) const {
+  ValuePtr GetAttr(const std::string &attrName) const {
     auto iter = attrs_.find(attrName);
     return iter == attrs_.cend() ? nullptr : iter->second;
   }
 
-  const std::unordered_map<std::string, ValuePtr>& attrs() const { return attrs_; }
+  const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
 
   // if Primitive has any attribute, for Primitives like scalar_add, return, etc, don't have any attribute.
   bool HasAttr() const { return !attrs_.empty(); }
-  bool HasAttr(const std::string& attrName) const {
+  bool HasAttr(const std::string &attrName) const {
     auto iter = attrs_.find(attrName);
     return !(iter == attrs_.cend());
   }
@@ -103,8 +103,8 @@ class Primitive : public Named {
   PrimType prim_type() const { return prim_type_; }
   std::string instance_name() const { return instance_name_; }
   std::string GetAttrsText() const;
-  bool operator==(const Value& other) const override;
-  bool operator==(const Primitive& other) const;
+  bool operator==(const Value &other) const override;
+  bool operator==(const Primitive &other) const;
   ~Primitive() override = default;
 
  protected:
@@ -118,18 +118,18 @@ class Primitive : public Named {
 
 class PrimitivePy : public Primitive {
  public:
-  PrimitivePy(const py::str& name, const py::object& python_obj) : Primitive(name), python_obj_(python_obj) {}
+  PrimitivePy(const py::str &name, const py::object &python_obj) : Primitive(name), python_obj_(python_obj) {}
   ~PrimitivePy() override = default;
   MS_DECLARE_PARENT(PrimitivePy, Primitive);
   py::function GetBpropFunction() override;
   py::function GetComputeFunction() override;
 
-  void AddPyAttr(const py::str& name, const py::object& obj);
+  void AddPyAttr(const py::str &name, const py::object &obj);
 
   py::dict GetAttrDict();
 
   const bool parse_info_ = true;
-  const py::object& GetPyObj() const { return python_obj_; }
+  const py::object &GetPyObj() const { return python_obj_; }
   bool is_tuple_input_ = false;
 
  private:
@@ -138,13 +138,13 @@ class PrimitivePy : public Primitive {
 
 using PrimitivePyPtr = std::shared_ptr<PrimitivePy>;
 
-inline std::ostream& operator<<(std::ostream& os, const PrimitivePtr& p) {
+inline std::ostream &operator<<(std::ostream &os, const PrimitivePtr &p) {
   os << *p;
   return os;
 }
 
 struct PrimitiveEqual {
-  bool operator()(PrimitivePtr const& t1, PrimitivePtr const& t2) const {
+  bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
     MS_EXCEPTION_IF_NULL(t1);
     MS_EXCEPTION_IF_NULL(t2);
     return t1->name() == t2->name();
@@ -152,10 +152,7 @@ struct PrimitiveEqual {
 };
 
 struct PrimitiveHasher {
-  std::size_t operator()(PrimitivePtr const& prim) const {
-    std::size_t hash = std::hash<std::string>()(prim->name());
-    return hash;
-  }
+  std::size_t operator()(PrimitivePtr const &prim) const { return prim->Hash(); }
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_IR_PRIMITIVE_H_

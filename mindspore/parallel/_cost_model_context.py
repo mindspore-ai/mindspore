@@ -15,7 +15,7 @@
 """Context of cost_model in auto_parallel"""
 import threading
 from mindspore._c_expression import CostModelContext
-from mindspore._extends.pynative_helper import args_type_check
+from mindspore._checkparam import args_type_check
 
 
 class _CostModelContext:

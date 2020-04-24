@@ -24,7 +24,7 @@ from .conv import Conv2d, Conv2dTranspose
 from .lstm import LSTM
 from .basic import Dropout, Flatten, Dense, ClipByNorm, Norm, OneHot, Pad, Unfold
 from .embedding import Embedding
-from .pooling import AvgPool2d, MaxPool2d
+from .pooling import AvgPool2d, MaxPool2d, AvgPool1d
 from .image import ImageGradients, SSIM, PSNR
 
 __all__ = ['Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid',
@@ -35,6 +35,6 @@ __all__ = ['Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid',
            'LSTM',
            'Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot',
            'Embedding',
-           'AvgPool2d', 'MaxPool2d', 'Pad', 'Unfold',
+           'AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'Pad', 'Unfold',
            'ImageGradients', 'SSIM', 'PSNR',
            ]

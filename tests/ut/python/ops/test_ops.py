@@ -250,6 +250,10 @@ test_case_math_ops = [
         'block': P.Exp(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Erf', {
+        'block': P.Erf(),
+        'desc_inputs': [Tensor(np.array([-2, -1, 0, 1, 2]).astype(np.float16))],
+        'desc_bprop': [Tensor(np.array([-2, -1, 0, 1, 2]).astype(np.float16))]}),
     ('Floor', {
         'block': P.Floor(),
         'desc_inputs': [[2, 512, 56, 56]],
@@ -414,6 +418,11 @@ test_case_math_ops = [
         'block': P.NotEqual(),
         'desc_inputs': [[4, 1], [2, 3, 4, 5]],
         'desc_bprop': [Tensor(np.ones((2, 3, 4, 5), np.bool_))]}),
+    ('NotEqual_0', {
+        'block': P.NotEqual(),
+        'desc_inputs': [ 1, [2, 3, 4, 5]],
+        'desc_bprop': [Tensor(np.ones((2, 3, 4, 5), np.bool_))],
+        'skip': ['backward']}),
     ('Greater', {
         'block': P.Greater(),
         'desc_inputs': [[2, 3, 4, 1], [4, 5]],
@@ -573,6 +582,10 @@ test_case_nn_ops = [
         'block': P.ReLU6(),
         'desc_inputs': [[1, 3, 4, 4]],
         'desc_bprop': [[1, 3, 4, 4]]}),
+    ('ReLUV2', {
+        'block': P.ReLUV2(),
+        'desc_inputs': [[1, 3, 4, 4]],
+        'desc_bprop': [[1, 3, 4, 4], [1, 3, 4, 4]]}),
     ('ReLUGrad', {
         'block': G.ReluGrad(),
         'desc_inputs': [[1, 3, 4, 4], [1, 3, 4, 4]],
@@ -658,7 +671,7 @@ test_case_nn_ops = [
         'skip': []}),
     ('BatchNormGrad', {
         'block': G.BatchNormGrad(),
-        'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64], [64]],
+        'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64]],
         'desc_bprop': [[128, 64, 32, 32], [64], [64], [64], [64]],
         'skip': ['backward']}),
     ('ApplyMomentum', {
@@ -866,6 +879,14 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3], [3, 3]],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
+    ('L2Loss_1', {
+        'block': P.L2Loss(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3, 4]), mstype.float16)],
+        'desc_bprop': []}),
+    ('L2Loss_2', {
+        'block': P.L2Loss(),
+        'desc_inputs': [Tensor(np.array([[1, 1], [2, 2], [3, 3], [4, 4]]), mstype.float16)],
+        'desc_bprop': []}),
 ]
 
 test_case_array_ops = [
@@ -1116,6 +1137,21 @@ test_case_other_ops = [
         'block': SummaryNet(),
         'desc_inputs': [Tensor(np.array([1.1]).astype(np.float32)),
                         Tensor(np.array([1.2]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('ConfusionMulGrad_1', {
+        'block': P.ConfusionMulGrad(axis = [0], keep_dims = False),
+        'desc_inputs': [[3, 2], [3, 2], [3, 2]],
+        'desc_bprop': [[3, 2], [2]],
+        'skip': ['backward']}),
+    ('ConfusionMulGrad_2', {
+        'block': P.ConfusionMulGrad(axis = [0], keep_dims = True),
+        'desc_inputs': [[3, 2], [3, 2], [3, 2]],
+        'desc_bprop': [[3, 2], [1, 2]],
+        'skip': ['backward']}),
+    ('ConfusionMulGrad_3', {
+        'block':  P.ConfusionMulGrad(axis = (), keep_dims = True),
+        'desc_inputs': [[2, 3, 4], [2, 3, 4], [2, 3, 4]],
+        'desc_bprop': [[2, 3, 4], [1, 1, 1]],
         'skip': ['backward']}),
     ('HistogramSummary', {
         'block': HistogramSummaryNet(),

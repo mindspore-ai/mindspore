@@ -83,6 +83,7 @@ convert_object_map = {
     T.mul:          multitype_ops.mul,
     T.truediv:      multitype_ops.div,
     T.getitem:      multitype_ops.getitem,
+    T.setitem:      multitype_ops.setitem,
     T.floordiv:     multitype_ops.floordiv,
     T.mod:          multitype_ops.mod,
     T.pow:          multitype_ops.pow_,
@@ -113,12 +114,12 @@ convert_object_map = {
     T.map:          C.HyperMap(),
     T.partial:      F.partial,
     T.zip:          C.zip_operation,
+    T.print:        F.print_,
 
     # custom define operation
     T.iter:         M.ms_iter,
     T.next:         M.ms_next,
     T.hasnext:      M.hasnext,
-    T.setitem:      M.setitem,
 
     T.make_tuple:   F.make_tuple,
     T.make_dict:    F.make_dict,

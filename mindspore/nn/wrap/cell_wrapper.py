@@ -13,17 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """Cell_wrapper."""
-import copy
-
-import numpy as np
-
 from mindspore.parallel._utils import (_get_device_num, _get_mirror_mean,
                                        _get_parallel_mode)
 from mindspore.train.parallel_utils import ParallelMode
-
-from ...common import Tensor
 from ...common import dtype as mstype
-from ...common.initializer import initializer
 from ...common.parameter import Parameter, ParameterTuple
 from ...ops import composite as C
 from ...ops import functional as F
@@ -348,25 +341,8 @@ class ParameterUpdate(Cell):
         super(ParameterUpdate, self).__init__(auto_prefix=False)
         if not isinstance(param, Parameter):
             raise TypeError("`param` must be `Parameter`, but got {}".format(param))
-
-        default_input = param.default_input
-        if isinstance(default_input, Tensor):
-            shape = default_input.shape()
-            zero_dtype = default_input.dtype()
-        elif isinstance(default_input, float):
-            shape = [1]
-            zero_dtype = mstype.float32
-        elif isinstance(default_input, int):
-            shape = [1]
-            zero_dtype = mstype.int32
-        else:
-            raise TypeError("`default_input` in `param` must be Tensor, float or int, but got {}".format(default_input))
-
-        self._param = Parameter(initializer(copy.deepcopy(default_input), shape), param.name)
-        self._param.is_init = True
-        self._zero = Tensor(np.zeros(shape), zero_dtype)
+        self._param = param
 
     def construct(self, x):
-        zero = self._param + self._zero
-        F.control_depend(zero, F.assign(self._param, x))
-        return zero
+        F.assign(self._param, x)
+        return x

@@ -14,7 +14,8 @@
 # ============================================================================
 import pytest
 import numpy as np
-import time, math
+import time
+import math
 import mindspore.nn as nn
 from mindspore import context, Tensor, ParameterTuple
 from mindspore.ops import operations as P
@@ -27,6 +28,7 @@ from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore.nn.optim import Momentum
 
 np.random.seed(1)
+
 
 def weight_variable():
     """weight initial"""
@@ -58,6 +60,7 @@ class LeNet(nn.Cell):
     Examples:
         >>> LeNet(num_class=10)
     """
+
     def __init__(self, num_class=10):
         super(LeNet, self).__init__()
         self.num_class = num_class
@@ -91,6 +94,7 @@ class CrossEntropyLoss(nn.Cell):
     """
     Define loss for network
     """
+
     def __init__(self):
         super(CrossEntropyLoss, self).__init__()
         self.cross_entropy = P.SoftmaxCrossEntropyWithLogits()
@@ -111,6 +115,7 @@ class GradWrap(nn.Cell):
     """
     GradWrap definition
     """
+
     def __init__(self, network):
         super(GradWrap, self).__init__()
         self.network = network
@@ -154,4 +159,3 @@ def test_ascend_pynative_lenet():
 
         print("======epoch: ", epoch, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
     assert(loss_output.asnumpy() < 0.1)
-    

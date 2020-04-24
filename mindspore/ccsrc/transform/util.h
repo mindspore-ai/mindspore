@@ -47,7 +47,7 @@ class TransformUtil {
    * Return：
    *     [GeDataType] the data type for ge tensor
    * */
-  static GeDataType ConvertDataType(const MeDataType& type);
+  static GeDataType ConvertDataType(const MeDataType &type);
 
   /*
    * Parameters:
@@ -55,7 +55,7 @@ class TransformUtil {
    * Return：
    *     [GeFormat] the data format for ge tensor
    * */
-  static GeFormat ConvertFormat(const std::string& format);
+  static GeFormat ConvertFormat(const std::string &format);
 
   /*
    * Parameters:
@@ -63,7 +63,7 @@ class TransformUtil {
    * Return：
    *     [size_t] the buff size for the type in ME
    * */
-  static size_t GetDataTypeSize(const MeDataType& type);
+  static size_t GetDataTypeSize(const MeDataType &type);
 
   /*
    * Parameters:
@@ -73,8 +73,8 @@ class TransformUtil {
    * Return：
    *     [shared_ptr<GeTensorDesc>] the shared pointer of ge tensor description
    * */
-  static std::shared_ptr<GeTensorDesc> GetGeTensorDesc(const std::vector<int>& shape, const MeDataType& me_type,
-                                                       const std::string& format);
+  static std::shared_ptr<GeTensorDesc> GetGeTensorDesc(const std::vector<int> &shape, const MeDataType &me_type,
+                                                       const std::string &format);
 
   /*
    * Parameters:
@@ -84,7 +84,7 @@ class TransformUtil {
    * Return：
    *     [GeTensor] the data tensor in GE
    * */
-  static GeTensorPtr ConvertTensor(const MeTensorPtr& tensor, const std::string& format);
+  static GeTensorPtr ConvertTensor(const MeTensorPtr &tensor, const std::string &format);
 
   /*
    * Parameters:
@@ -93,8 +93,8 @@ class TransformUtil {
    * Return：
    *     [std::vector<GeTensorPtr>] the data tensors in GE
    * */
-  static std::vector<GeTensorPtr> ConvertInputTensors(const std::vector<MeTensorPtr>& me_tensors,
-                                                      const std::string& format);
+  static std::vector<GeTensorPtr> ConvertInputTensors(const std::vector<MeTensorPtr> &me_tensors,
+                                                      const std::string &format);
 
   /*
    * Parameters:
@@ -102,7 +102,7 @@ class TransformUtil {
    * Return：
    *     [MeTensor] the data tensor in ME
    * */
-  static MeTensorPtr ConvertGeTensor(const GeTensorPtr& tensor);
+  static MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor);
 
   /*
    * Parameters:
@@ -111,7 +111,7 @@ class TransformUtil {
    * Return：
    *     [MeTensor] the data tensor in ME
    * */
-  static MeTensorPtr ConvertGeTensor(GeTensorPtr ge_tensor, const std::vector<int>& request_dims);
+  static MeTensorPtr ConvertGeTensor(GeTensorPtr ge_tensor, const std::vector<int> &request_dims);
   /*
    * Parameters:
    *     ge_tensors: [std::vector<GeTensorPtr>] the data tensor in GE
@@ -119,15 +119,15 @@ class TransformUtil {
    * Return：
    *     [std::vector<MeTensorPtr>] the data tensor in ME
    * */
-  static std::vector<MeTensorPtr> ConvertGeTensors(const std::vector<GeTensorPtr>& ge_tensors,
-                                                   const std::vector<std::vector<int>>& request_dims);
+  static std::vector<MeTensorPtr> ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors,
+                                                   const std::vector<std::vector<int>> &request_dims);
   /*
    * Parameters:
    *     ge_tensors: [std::vector<GeTensorPtr>] the data tensor in GE
    * Return：
    *     [std::vector<MeTensorPtr>] the data tensor in ME
    * */
-  static std::vector<MeTensorPtr> ConvertGeTensors(const std::vector<GeTensorPtr>& ge_tensors);
+  static std::vector<MeTensorPtr> ConvertGeTensors(const std::vector<GeTensorPtr> &ge_tensors);
   /*
    * Parameters:
    *     ge_tensor: [GeTensor] the data tensor in GE
@@ -136,15 +136,15 @@ class TransformUtil {
    * Return：
    *     [MeTensor] the data tensor in ME
    * */
-  static MeTensorPtr GenerateMeTensor(const GeTensorPtr& ge_tensor, const std::vector<int>& me_dims,
-                                      const TypeId& me_type);
+  static MeTensorPtr GenerateMeTensor(const GeTensorPtr &ge_tensor, const std::vector<int> &me_dims,
+                                      const TypeId &me_type);
   /*
    * Parameters:
    *     type: [GeDataType] the ge tensor data type
    * Return：
    *     [MeDataType] the me tensor data type
    * */
-  static MeDataType ConvertGeDataType(const GeDataType& type);
+  static MeDataType ConvertGeDataType(const GeDataType &type);
 
   /*
    * Parameters:
@@ -152,7 +152,7 @@ class TransformUtil {
    * Return：
    *     [GeShape] the ge shape
    * */
-  static GeShape ConvertMeShape(const std::vector<int>& me_dims);
+  static GeShape ConvertMeShape(const std::vector<int> &me_dims);
 
   /*
    * Parameters:
@@ -160,7 +160,7 @@ class TransformUtil {
    * Return：
    *     [vector<int>] the me shape
    * */
-  static std::vector<int> ConvertGeShape(const GeShape& ge_shape);
+  static std::vector<int> ConvertGeShape(const GeShape &ge_shape);
 
   /* Function:
    *     Convert GeShape to Me request shape, Support pattern:
@@ -176,7 +176,7 @@ class TransformUtil {
    * Return：
    *     [vector<int>] the me shape
    * */
-  static std::vector<int> ConvertGeShape(const GeShape& ge_shape, const std::vector<int>& request_dims);
+  static std::vector<int> ConvertGeShape(const GeShape &ge_shape, const std::vector<int> &request_dims);
 
   /*
    * Parameters:
@@ -185,7 +185,7 @@ class TransformUtil {
    *     [string] value string
    * */
   template <typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value>::type>
-  static std::string PrintVector(const std::vector<T>& vec) {
+  static std::string PrintVector(const std::vector<T> &vec) {
     const int MAX_PRINT_NUM = 100;
     std::stringstream ss;
     ss << "{ ";
@@ -222,7 +222,7 @@ class TransformUtil {
    *     [shared_ptr<std::vector<T>]  vector pointer
    * */
   template <typename T, typename = typename std::enable_if<std::is_arithmetic<T>::value>::type>
-  static std::vector<T> MakeVector(const uint8_t* const data, size_t size) {
+  static std::vector<T> MakeVector(const uint8_t *const data, size_t size) {
     auto dest = std::vector<T>(size / sizeof(T));
     if (data == nullptr) {
       return dest;

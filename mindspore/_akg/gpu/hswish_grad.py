@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""HswishGrad"""
+"""HSwishGrad"""
 import _akg.topi as topi
 import _akg.tvm as tvm
 
 
-def HswishGrad(y_grad, x):
+def HSwishGrad(y_grad, x):
     """
-    HswishGrad
+    HSwishGrad
     Args:
         y_grad:
         x:
@@ -34,9 +34,9 @@ def HswishGrad(y_grad, x):
     return res6
 
 
-def gpu_schedule_HswishGrad(outs):
+def gpu_schedule_HSwishGrad(outs):
     """
-    gpu schedule HswishGrad
+    gpu schedule HSwishGrad
     Args:
         outs:
 

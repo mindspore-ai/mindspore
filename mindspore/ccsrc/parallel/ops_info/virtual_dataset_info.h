@@ -30,19 +30,19 @@ namespace mindspore {
 namespace parallel {
 class VirtualDatasetInfo : public OperatorInfo {
  public:
-  VirtualDatasetInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-                     const PrimitiveAttrs& attrs)
+  VirtualDatasetInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                     const PrimitiveAttrs &attrs)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<VirtualDatasetCost>(false)) {}
   ~VirtualDatasetInfo() override = default;
-  Status Init(const StrategyPtr& strategy) override;
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status Init(const StrategyPtr &strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
 
   Status GenerateStrategies(int32_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReComputeBatchSplitFlagList() override;
 
  protected:
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorInfo() override;

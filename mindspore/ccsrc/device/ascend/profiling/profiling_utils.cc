@@ -39,12 +39,8 @@ ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<session::Ker
   auto &cnode_exec_order = graph_ptr->execution_order();
   ProfilingTraceInfo profiling_trace;
   profiling_trace.trace_begin = GetTraceBegin(cnode_exec_order);
-  profiling_trace.trace_bp_end = GetTraceBpEnd();
+  profiling_trace.trace_bp_end = GetTraceBpEnd(cnode_exec_order);
   profiling_trace.trace_netoutput = GetTraceNetoutput(cnode_exec_order);
-
-  MS_LOG(INFO) << "[profiling] trace_begin:" << profiling_trace.trace_begin
-               << " trace_bp_end:" << profiling_trace.trace_bp_end
-               << " trace_netoutput:" << profiling_trace.trace_netoutput;
 
   for (uint32_t i = 1; i <= kMaxProfilingNodeNum; ++i) {
     std::string env_str = std::string(kCustomNode) + std::to_string(i);
@@ -56,7 +52,23 @@ ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<session::Ker
     profiling_trace.trace_custom_node.insert(node_full_name);
   }
   MS_LOG(INFO) << "get env end";
+  GetTraceHccl(cnode_exec_order, NOT_NULL(&profiling_trace));
+
+  MS_LOG(INFO) << "[profiling]trace_begin:" << profiling_trace.trace_begin
+               << " trace_bp_end:" << profiling_trace.trace_bp_end
+               << " trace_netoutput:" << profiling_trace.trace_netoutput;
   return profiling_trace;
+}
+
+void ProfilingUtils::GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order,
+                                  NotNull<ProfilingTraceInfo *> profiling_trace) {
+  for (const auto &node : cnode_exec_order) {
+    if (AnfAlgo::IsCommunicationOp(node)) {
+      MS_EXCEPTION_IF_NULL(node);
+      profiling_trace->trace_custom_node.insert(node->fullname_with_scope());
+      MS_LOG(INFO) << "[profiling]Get hccl node:" << node->fullname_with_scope();
+    }
+  }
 }
 
 std::string ProfilingUtils::GetTraceBegin(const std::vector<CNodePtr> &cnode_exec_order) {
@@ -66,9 +78,45 @@ std::string ProfilingUtils::GetTraceBegin(const std::vector<CNodePtr> &cnode_exe
   return trace_begin == nullptr ? first_cnode->fullname_with_scope() : std::string(trace_begin);
 }
 
-std::string ProfilingUtils::GetTraceBpEnd() {
+std::string ProfilingUtils::GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order) {
   const char *trace_bp_end = std::getenv(kBpEndNode);
-  return trace_bp_end == nullptr ? "" : std::string(trace_bp_end);
+
+  if (trace_bp_end != nullptr) {
+    return std::string(trace_bp_end);
+  }
+  std::string bp_end_str = "";
+  // Contain hccl kernel
+  auto iter = cnode_exec_order.rbegin();
+  while (iter != cnode_exec_order.rend()) {
+    if (AnfAlgo::IsCommunicationOp(*iter)) {
+      // store communication op input nodes' name
+      std::set<std::string> ar_input_node_names;
+      for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(*iter); ++i) {
+        auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(*iter, i);
+        auto input_node = input_node_with_index.first;
+        ar_input_node_names.insert(input_node->fullname_with_scope());
+      }
+      // start from previous node
+      ++iter;
+      // find input names in previous node
+      while (iter != cnode_exec_order.rend()) {
+        if (ar_input_node_names.find((*iter)->fullname_with_scope()) != ar_input_node_names.end()) {
+          bp_end_str = (*iter)->fullname_with_scope();
+          break;
+        }
+        ++iter;
+      }
+      break;
+    }
+    ++iter;
+  }
+
+  if (bp_end_str.empty()) {
+    auto last_cnode = cnode_exec_order.back();
+    MS_EXCEPTION_IF_NULL(last_cnode);
+    bp_end_str = last_cnode->fullname_with_scope();
+  }
+  return bp_end_str;
 }
 
 std::string ProfilingUtils::GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order) {
@@ -109,6 +157,7 @@ void ProfilingUtils::ProfilingTraceFpStart(const mindspore::AnfNodePtr &anf_node
                                            NotNull<session::KernelGraph *> graph_ptr,
                                            NotNull<std::vector<mindspore::CNodePtr> *> kernel_list) {
   if (profiling_trace_info.trace_begin == anf_node->fullname_with_scope()) {
+    MS_LOG(INFO) << "Profiling Match FpStart:" << profiling_trace_info.trace_begin;
     auto job_id = ProfilingManager::GetInstance().GetJobId();
     ProfilingContent job_profiling_context = {false, job_id, 0};
     auto job_profiling_node = CreateProfilingCNodeWithStream(anf_node, job_profiling_context, graph_ptr);
@@ -137,6 +186,7 @@ void ProfilingUtils::ProfilingCustomOp(const AnfNodePtr &anf_node, const Profili
   if (iter == profiling_trace_info.trace_custom_node.end()) {
     return;
   }
+  MS_LOG(INFO) << "Profiling Match CustomOp:" << anf_node->fullname_with_scope();
   // custom op profiling job start from 3.
   ProfilingContent front_profiling_content = {false, 2 * custom_node_index_ + 1, 0};
   CNodePtr front_node = CreateProfilingCNodeWithStream(anf_node, front_profiling_content, graph_ptr);
@@ -153,6 +203,7 @@ void ProfilingUtils::ProfilingTraceBpEnd(const AnfNodePtr &anf_node, const Profi
                                          NotNull<std::vector<CNodePtr> *> kernel_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (profiling_trace_info.trace_bp_end == anf_node->fullname_with_scope()) {
+    MS_LOG(INFO) << "Profiling Match BpEnd:" << profiling_trace_info.trace_bp_end;
     ProfilingContent bp_end_profiling_content = {false, kProfilingBpEndLogId, 0};
     CNodePtr bp_end_node = CreateProfilingCNodeWithStream(anf_node, bp_end_profiling_content, graph_ptr);
     kernel_list->emplace_back(bp_end_node);
@@ -165,6 +216,7 @@ void ProfilingUtils::ProfilingTraceEnd(const AnfNodePtr &anf_node, const Profili
   MS_EXCEPTION_IF_NULL(anf_node);
   auto full_scope_name = anf_node->fullname_with_scope();
   if (profiling_trace_info.trace_netoutput == full_scope_name) {
+    MS_LOG(INFO) << "Profiling Match IterEnd:" << profiling_trace_info.trace_netoutput;
     ProfilingContent bp_end_profiling_content = {true, kProfilingIterEndLogId, 0};
     CNodePtr bp_kernel_ptr = CreateProfilingCNodeWithStream(anf_node, bp_end_profiling_content, graph_ptr);
     kernel_list->emplace_back(bp_kernel_ptr);

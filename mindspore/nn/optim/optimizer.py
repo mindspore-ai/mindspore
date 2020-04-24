@@ -22,7 +22,8 @@ from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
-from mindspore._checkparam import ParamValidator as validator
+import mindspore.common.dtype as mstype
+from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.common.tensor import Tensor
 from mindspore import log as logger
@@ -45,8 +46,10 @@ class Optimizer(Cell):
         learning_rate (float): A floating point value for the learning rate. Should be greater than 0.
         parameters (list): A list of parameter, which will be updated. The element in `parameters`
             should be class mindspore.Parameter.
-        weight_decay (float): A floating point value for the weight decay. Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. Default: 1.0. Should be greater than 0.
+        weight_decay (float): A floating point value for the weight decay. If the type of `weight_decay`
+            input is int, it will be convertd to float. Default: 0.0.
+        loss_scale (float): A floating point value for the loss scale. It should be greater than 0. If the
+            type of `loss_scale` input is int, it will be convertd to float. Default: 1.0.
         decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default: lambda
             x: 'beta' not in x.name and 'gamma' not in x.name.
 
@@ -63,7 +66,8 @@ class Optimizer(Cell):
             self.gather = None
             self.assignadd = None
             self.global_step = None
-            validator.check_number_range("learning rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT)
+            validator.check_number_range("learning rate", learning_rate, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+            learning_rate = Tensor(learning_rate, mstype.float32)
         else:
             self.dynamic_lr = True
             self.gather = P.GatherV2()
@@ -84,14 +88,12 @@ class Optimizer(Cell):
         if isinstance(weight_decay, int):
             weight_decay = float(weight_decay)
 
-        if not isinstance(weight_decay, float):
-            raise TypeError("weight_decay should be a float number!")
+        validator.check_float_legal_value('weight_decay', weight_decay, None)
 
         if isinstance(loss_scale, int):
             loss_scale = float(loss_scale)
 
-        if not isinstance(loss_scale, float):
-            raise TypeError("loss_scale should be a float number!")
+        validator.check_float_legal_value('loss_scale', loss_scale, None)
 
         if loss_scale <= 0.0:
             raise ValueError("Loss scale should be greater than 0, but got {}".format(loss_scale))
@@ -175,7 +177,7 @@ apply_decay = C.MultitypeFuncGraph("apply_decay")
 def _tensor_apply_decay(weight_decay, if_apply, weight, gradient):
     """Get grad with weight_decay."""
     if if_apply:
-        return op_add((gradient, weight * weight_decay))
+        return op_add((weight * weight_decay, gradient))
     return gradient
 
 

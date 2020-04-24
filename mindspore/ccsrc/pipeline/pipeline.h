@@ -43,7 +43,7 @@ namespace py = pybind11;
 
 class Pipeline {
  public:
-  Pipeline(const ResourcePtr& res, const std::vector<ActionItem>& actions) : resource_(res), actions_(actions) {}
+  Pipeline(const ResourcePtr &res, const std::vector<ActionItem> &actions) : resource_(res), actions_(actions) {}
 
   ~Pipeline() = default;
 
@@ -69,35 +69,35 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
 
   ~ExecutorPy();
 
-  void SaveCompiledGraph(const std::string& phase_s);
-  bool CompileInner(const py::object& obj, const py::tuple& args, const py::object& phase, bool use_vm);
-  bool Compile(const py::object& obj, const py::tuple& args, const py::object& phase, bool use_vm);
+  void SaveCompiledGraph(const std::string &phase_s);
+  bool CompileInner(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm);
+  bool Compile(const py::object &obj, const py::tuple &args, const py::object &phase, bool use_vm);
 
-  void ProcessVmArg(const py::tuple& args, const std::string& phase, VectorRef* arg_list);
+  void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *arg_list);
 
   // for pynative mode when use_vm is on
-  py::object Run(const py::tuple& args, const py::object& phase);
-  ResourcePtr GetResource(const std::string& phase);
-  FuncGraphPtr GetFuncGraph(const std::string& phase);
-  py::bytes GetFuncGraphProto(const std::string& phase, const std::string& type);
-  std::size_t ArgListSize(const std::string& phase);
-  compile::VmEvalFuncPtr GetVmEvalFunc(const std::string& phase);
-  bool HasCompiled(const std::string& phase) const;
+  py::object Run(const py::tuple &args, const py::object &phase);
+  ResourcePtr GetResource(const std::string &phase);
+  FuncGraphPtr GetFuncGraph(const std::string &phase);
+  py::bytes GetFuncGraphProto(const std::string &phase, const std::string &type);
+  std::size_t ArgListSize(const std::string &phase);
+  compile::VmEvalFuncPtr GetVmEvalFunc(const std::string &phase);
+  bool HasCompiled(const std::string &phase) const;
 
-  FuncGraphPtr BuildGraph(const py::dict& init_params, const std::string& phase,
-                          const py::object& broadcast_params = {});
-  void RunInitGraph(const py::dict& init_params, const std::string& phase);
-  py::dict GetParameterLayout(const std::string& phase);
-  py::dict GetCNodeStrategy(const std::string& phase);
-  py::dict GetAllreduceFusion(const std::string& phase);
-  void DelNetRes(const std::string& id);
-  void ReleaseResource(const py::object& phase);
+  FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase,
+                          const py::object &broadcast_params = {});
+  void RunInitGraph(const py::dict &init_params, const std::string &phase);
+  py::dict GetParameterLayout(const std::string &phase);
+  py::dict GetCNodeStrategy(const std::string &phase);
+  py::dict GetAllreduceFusion(const std::string &phase);
+  void DelNetRes(const std::string &id);
+  void ReleaseResource(const py::object &phase);
   static void ClearRes();
 
  private:
   ExecutorPy();
-  void ConvertObjectToTensors(const py::dict& dict, std::map<std::string, tensor::TensorPtr>* tensors);
-  bool ChangeExportGeirUseVmFlag(bool use_vm, const std::string& phase_s) const;
+  void ConvertObjectToTensors(const py::dict &dict, std::map<std::string, tensor::TensorPtr> *tensors);
+  bool ChangeExportGeirUseVmFlag(bool use_vm, const std::string &phase_s) const;
   void GetGeBackendPolicy() const;
 
   std::map<std::string, ExecutorInfoPtr> info_;
@@ -107,10 +107,10 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
 using ExecutorPyPtr = std::shared_ptr<ExecutorPy>;
 
 // Generate a key for mapping function graph
-py::tuple GenerateKey(const std::string& name, const std::unordered_map<std::string, py::object>& defaults);
+py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::string, py::object> &defaults);
 py::bool_ VerifyInputSignature(const py::list input_signature, const py::tuple inputs);
 
-bool InitDistribute(const std::map<std::string, std::string>& options);
+bool InitDistribute(const std::map<std::string, std::string> &options);
 
 void ResetOpId();
 void InitHccl();
@@ -121,17 +121,17 @@ void FinalizeGe();
 void ClearResAtexit();
 void ReleaseGeTsd();
 
-void ExportGraph(const std::string& file_name, const std::string&, const std::string& phase);
+void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase);
 
 // init and exec dataset sub graph
-bool InitExecDataset(const std::string& queue_name, int64_t iter_num, int64_t batch_size,
-                     const std::vector<TypePtr>& types, const std::vector<std::vector<int64_t>>& shapes,
-                     const std::vector<int64_t>& input_indexes, const std::string& phase);
+bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
+                     const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
+                     const std::vector<int64_t> &input_indexes, const std::string &phase);
 
 // Build and run dataset subgraph for ms backend
-bool InitExecDatasetVm(const std::string& queue_name, int64_t size, int64_t batch_size,
-                       const std::vector<TypePtr>& types, const std::vector<std::vector<int64_t>>& shapes,
-                       const std::vector<int64_t>& input_indexes);
+bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
+                       const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
+                       const std::vector<int64_t> &input_indexes);
 
 }  // namespace pipeline
 }  // namespace mindspore

@@ -15,7 +15,7 @@
 
 """Operators for random."""
 
-from ..._checkparam import ParamValidator as validator
+from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register
@@ -52,16 +52,15 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, count=256, seed=0, seed2=0):
         """Init RandomChoiceWithMask"""
-        validator.check_type("count", count, [int])
-        validator.check_integer("count", count, 0, Rel.GT)
-        validator.check_type('seed', seed, [int])
-        validator.check_type('seed2', seed2, [int])
+        validator.check_value_type("count", count, [int], self.name)
+        validator.check_integer("count", count, 0, Rel.GT, self.name)
+        validator.check_value_type('seed', seed, [int], self.name)
+        validator.check_value_type('seed2', seed2, [int], self.name)
 
     def infer_shape(self, x_shape):
-        validator.check_shape_length("input_x shape", len(x_shape), 1, Rel.GE)
+        validator.check_integer("input_x rank", len(x_shape), 1, Rel.GE, self.name)
         return ([self.count, len(x_shape)], [self.count])
 
     def infer_dtype(self, x_dtype):
-        validator.check_subclass('x_dtype', x_dtype, mstype.tensor)
-        validator.check_typename('x_dtype', x_dtype, [mstype.bool_])
+        validator.check_tensor_type_same({'x': x_dtype}, [mstype.bool_], self.name)
         return (mstype.int32, mstype.bool_)

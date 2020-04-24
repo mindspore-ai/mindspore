@@ -27,18 +27,18 @@
 namespace mindspore {
 class Named : public Value {
  public:
-  explicit Named(const std::string& name) : name_(name) { hash_id_ = std::hash<std::string>{}(name); }
-  Named(const Named& other) : Value(other) {
+  explicit Named(const std::string &name) : name_(name) { hash_id_ = std::hash<std::string>{}(name); }
+  Named(const Named &other) : Value(other) {
     this->name_ = other.name_;
     hash_id_ = std::hash<std::string>{}(other.name_);
   }
   ~Named() override = default;
   MS_DECLARE_PARENT(Named, Value);
 
-  const std::string& name() const { return name_; }
-  virtual bool operator==(const Named& other) const { return name_ == other.name(); }
-  bool operator==(const Value& other) const override;
-  Named& operator=(const Named& other) {
+  const std::string &name() const { return name_; }
+  virtual bool operator==(const Named &other) const { return name_ == other.name(); }
+  bool operator==(const Value &other) const override;
+  Named &operator=(const Named &other) {
     if (&other != this) {
       this->type_ = other.type_;
       this->name_ = other.name_;
@@ -50,7 +50,7 @@ class Named : public Value {
   std::size_t Hash() const { return hash_id_; }
   std::size_t hash() const override { return hash_id_; }
 
-  friend std::ostream& operator<<(std::ostream& os, const Named& nmd) {
+  friend std::ostream &operator<<(std::ostream &os, const Named &nmd) {
     os << nmd.name();
     return os;
   }
@@ -61,7 +61,6 @@ class Named : public Value {
   std::string name_;
   std::size_t hash_id_;
 };
-
 using NamedPtr = std::shared_ptr<Named>;
 
 class None : public Named {
@@ -71,7 +70,6 @@ class None : public Named {
   MS_DECLARE_PARENT(None, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
-
 extern const NamedPtr kNone;
 
 class NullObj : public Named {
@@ -81,7 +79,15 @@ class NullObj : public Named {
   MS_DECLARE_PARENT(NullObj, Named);
   abstract::AbstractBasePtr ToAbstract() override;
 };
+extern const NamedPtr kNull;
 
-extern const NamedPtr kNullObj;
+class EllipsisObj : public Named {
+ public:
+  EllipsisObj() : Named("Ellipsis") {}
+  ~EllipsisObj() override = default;
+  MS_DECLARE_PARENT(EllipsisObj, Named);
+  abstract::AbstractBasePtr ToAbstract() override;
+};
+extern const NamedPtr kEllipsis;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_IR_NAMED_H_

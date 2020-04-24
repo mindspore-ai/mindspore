@@ -20,12 +20,12 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-PluginIntf* ProfilingEngineImpl::CreatePlugin() {
+PluginIntf *ProfilingEngineImpl::CreatePlugin() {
   MS_LOG(INFO) << "Create Plugin.";
   return new (std::nothrow) PluginImpl("Framework");
 }
 
-int ProfilingEngineImpl::ReleasePlugin(PluginIntf* plugin) {
+int ProfilingEngineImpl::ReleasePlugin(PluginIntf *plugin) {
   if (plugin != nullptr) {
     delete plugin;
   }

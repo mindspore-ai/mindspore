@@ -144,7 +144,7 @@ void CostGraph::SetDeviceMemoryAndCostParameter() {
   }
 }
 
-void CostGraph::RemoveOperator(const OperatorInfoPtr& op) {
+void CostGraph::RemoveOperator(const OperatorInfoPtr &op) {
   for (auto it = ops_.begin(); it != ops_.end();) {
     if ((*it) == op) {
       it = ops_.erase(it);
@@ -154,19 +154,19 @@ void CostGraph::RemoveOperator(const OperatorInfoPtr& op) {
   }
 }
 
-bool CostGraph::IsOperatorInCostGraph(const OperatorInfoPtr& op_test) {
+bool CostGraph::IsOperatorInCostGraph(const OperatorInfoPtr &op_test) {
   struct IsInGraph {
     const OperatorInfoPtr test_;
-    explicit IsInGraph(const OperatorInfoPtr& n) : test_(n) {}
-    bool operator()(const OperatorInfoPtr& in) const { return (test_ == in); }
+    explicit IsInGraph(const OperatorInfoPtr &n) : test_(n) {}
+    bool operator()(const OperatorInfoPtr &in) const { return (test_ == in); }
   };
   return std::any_of(ops_.begin(), ops_.end(), IsInGraph(op_test));
 }
 
-bool CostGraph::IsEdgeInCostGraph(const std::string& test_edge_name, size_t output_index, size_t input_index) {
-  for (auto& edge_pair : edges_) {
+bool CostGraph::IsEdgeInCostGraph(const std::string &test_edge_name, size_t output_index, size_t input_index) {
+  for (auto &edge_pair : edges_) {
     auto edges = edge_pair.second;
-    for (auto& edge : edges) {
+    for (auto &edge : edges) {
       MS_EXCEPTION_IF_NULL(edge);
       bool bool_result = (edge->edge_name() == test_edge_name) && (edge->prev_op_output_index() == output_index) &&
                          (edge->next_op_input_index() == input_index);
@@ -182,12 +182,12 @@ std::vector<std::shared_ptr<CostGraph>> CostGraph::ConstructConnectedComponents(
   std::vector<OperatorInfoPtr> alive_ops) {
   std::map<OperatorInfoPtr, bool> visited;
 
-  for (auto& op : alive_ops) {
+  for (auto &op : alive_ops) {
     visited[op] = false;
   }
 
   MS_LOG(INFO) << "visited: " << visited.size() << ".";
-  for (auto& op : alive_ops) {
+  for (auto &op : alive_ops) {
     if ((!visited[op]) && op->is_alive()) {
       std::shared_ptr<CostGraph> new_component = std::make_shared<CostGraph>();
       MS_EXCEPTION_IF_NULL(new_component);
@@ -199,14 +199,14 @@ std::vector<std::shared_ptr<CostGraph>> CostGraph::ConstructConnectedComponents(
   return connected_compoents_;
 }
 
-void CostGraph::DFS(const OperatorInfoPtr& current_op, std::map<OperatorInfoPtr, bool>* visited,
-                    const std::shared_ptr<CostGraph>& component) {
+void CostGraph::DFS(const OperatorInfoPtr &current_op, std::map<OperatorInfoPtr, bool> *visited,
+                    const std::shared_ptr<CostGraph> &component) {
   MS_EXCEPTION_IF_NULL(visited);
   MS_EXCEPTION_IF_NULL(component);
   visited->at(current_op) = true;
   component->AddOperator(current_op);
 
-  for (auto& edge : current_op->succ_edges()) {
+  for (auto &edge : current_op->succ_edges()) {
     bool bool_test = (visited->find(edge->next_operator()) != visited->end()) &&
                      (!visited->at(edge->next_operator())) && edge->next_operator()->is_alive();
     if (bool_test) {
@@ -215,7 +215,7 @@ void CostGraph::DFS(const OperatorInfoPtr& current_op, std::map<OperatorInfoPtr,
     }
   }
 
-  for (auto& edge : current_op->prev_edges()) {
+  for (auto &edge : current_op->prev_edges()) {
     bool bool_test = (visited->find(edge->prev_operator()) != visited->end()) &&
                      (!visited->at(edge->prev_operator())) && edge->prev_operator()->is_alive();
     if (bool_test) {
@@ -226,14 +226,14 @@ void CostGraph::DFS(const OperatorInfoPtr& current_op, std::map<OperatorInfoPtr,
 }
 
 // Create final cost list for the graph: u --> v
-CostPtrList CostGraph::CreateFinalCostList(const OperatorInfoPtr& u, const std::shared_ptr<Edge>& e,
-                                           const OperatorInfoPtr& v) {
+CostPtrList CostGraph::CreateFinalCostList(const OperatorInfoPtr &u, const std::shared_ptr<Edge> &e,
+                                           const OperatorInfoPtr &v) {
   MS_EXCEPTION_IF_NULL(u);
   MS_EXCEPTION_IF_NULL(v);
   MS_EXCEPTION_IF_NULL(e);
   CostPtrList ret;
-  for (const auto& u_strategy : u->GetStrategyCost()) {
-    for (const auto& v_strategy : v->GetStrategyCost()) {
+  for (const auto &u_strategy : u->GetStrategyCost()) {
+    for (const auto &v_strategy : v->GetStrategyCost()) {
       MS_EXCEPTION_IF_NULL(u_strategy);
       MS_EXCEPTION_IF_NULL(v_strategy);
       auto u_strategy_ptr = u_strategy->strategy_ptr;
@@ -241,9 +241,9 @@ CostPtrList CostGraph::CreateFinalCostList(const OperatorInfoPtr& u, const std::
       CostPtrList clist1 = u_strategy->cost_list;
       CostPtrList clist2 = e->GetCostList(u_strategy_ptr, v_strategy_ptr);
       CostPtrList clist3 = v_strategy->cost_list;
-      for (const auto& cost1 : clist1) {
-        for (const auto& cost2 : clist2) {
-          for (const auto& cost3 : clist3) {
+      for (const auto &cost1 : clist1) {
+        for (const auto &cost2 : clist2) {
+          for (const auto &cost3 : clist3) {
             MS_EXCEPTION_IF_NULL(cost1);
             MS_EXCEPTION_IF_NULL(cost2);
             MS_EXCEPTION_IF_NULL(cost3);
@@ -274,14 +274,14 @@ CostPtrList CostGraph::CreateFinalCostList(const OperatorInfoPtr& u, const std::
 }
 
 // Create final cost list for the graph containing a signle node: u
-CostPtrList CostGraph::CreateFinalSingleCostList(const OperatorInfoPtr& u) {
+CostPtrList CostGraph::CreateFinalSingleCostList(const OperatorInfoPtr &u) {
   MS_EXCEPTION_IF_NULL(u);
   CostPtrList ret;
-  for (const auto& u_strategy : u->GetStrategyCost()) {
+  for (const auto &u_strategy : u->GetStrategyCost()) {
     MS_EXCEPTION_IF_NULL(u_strategy);
     auto u_strategy_ptr = u_strategy->strategy_ptr;
     CostPtrList clist1 = u_strategy->cost_list;
-    for (const auto& cost1 : clist1) {
+    for (const auto &cost1 : clist1) {
       MS_EXCEPTION_IF_NULL(cost1);
       auto decision = std::make_shared<FinalSingleDecision>(u_strategy_ptr, cost1);
       auto new_cost = std::make_shared<Cost>(cost1->computation_cost_, cost1->communication_cost_, decision);
@@ -299,16 +299,16 @@ CostPtrList CostGraph::CreateFinalSingleCostList(const OperatorInfoPtr& u) {
   return ret;
 }
 
-CostPtr CostGraph::SelectCostWithMemoryConstraint(const CostPtrList& cost_list, double memory) {
+CostPtr CostGraph::SelectCostWithMemoryConstraint(const CostPtrList &cost_list, double memory) {
   CostPtrList after_mem_filter;
   // Filter out the valid costs
-  for (auto& a_cost : cost_list) {
+  for (auto &a_cost : cost_list) {
     if (a_cost->memory_with_reuse_ <= memory) {
       after_mem_filter.emplace_back(std::move(a_cost));
     }
   }
 
-  std::function<CostPtr(CostPtr, const CostPtr&)> LocalCompare = [&](CostPtr init, const CostPtr& cost_x) {
+  std::function<CostPtr(CostPtr, const CostPtr &)> LocalCompare = [&](CostPtr init, const CostPtr &cost_x) {
     MS_EXCEPTION_IF_NULL(cost_x);
     if (init == nullptr || cost_x->computation_cost_ < memory) {
       init = cost_x;
@@ -319,7 +319,7 @@ CostPtr CostGraph::SelectCostWithMemoryConstraint(const CostPtrList& cost_list, 
   return std::accumulate(after_mem_filter.begin(), after_mem_filter.end(), ret, LocalCompare);
 }
 
-CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList& cost_list, double memory) {
+CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList &cost_list, double memory) {
   // Select the cost with minimum training time. Currently, the training time is modeled as =
   // costmodel_alpha_ * computation_cost + costmodel_beta_ * communication_with_partial_para_
   if (cost_list.empty()) {
@@ -329,7 +329,7 @@ CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList& cost_list, d
   CostPtrList after_mem_filter;
   double minimum_memory = DBL_MAX;
   // Filter out the valid costs.
-  for (auto& a_cost : cost_list) {
+  for (auto &a_cost : cost_list) {
     if (a_cost->memory_with_reuse_ <= memory) {
       after_mem_filter.emplace_back(std::move(a_cost));
     } else if (a_cost->memory_with_reuse_ < minimum_memory) {
@@ -371,7 +371,7 @@ CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList& cost_list, d
   return ret;
 }
 
-CostPtrList CostGraph::SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList>& all_cost_list,
+CostPtrList CostGraph::SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList> &all_cost_list,
                                                                  double available_memory) {
   CostPtrList selected_cost_list(all_cost_list.size(), nullptr);
   double minimum = DBL_MAX, total_memory = 0.0;
@@ -418,7 +418,7 @@ CostPtrList CostGraph::SelectCostListWithMinTrainingTimeMultiple(const std::vect
     }
 
     MS_LOG(DEBUG) << "The value minimum: " << minimum << ", available_memory: " << available_memory << ".";
-    for (auto& c : all_cost_list[k]) {
+    for (auto &c : all_cost_list[k]) {
       selected_cost_list[k] = c;
       recursive(k + 1);
     }
@@ -427,7 +427,7 @@ CostPtrList CostGraph::SelectCostListWithMinTrainingTimeMultiple(const std::vect
   return ret;
 }
 
-Status CostGraph::SearchStrategyForMultiNodeFinalGraph(const std::vector<OperatorInfoPtr>& alive_ops) {
+Status CostGraph::SearchStrategyForMultiNodeFinalGraph(const std::vector<OperatorInfoPtr> &alive_ops) {
   MS_LOG(INFO) << "There are " << alive_ops.size() << " nodes in the final graph.";
   auto connected_components = ConstructConnectedComponents(alive_ops);
   MS_LOG(INFO) << "There are " << connected_components.size() << " components in the final graph.";
@@ -516,7 +516,7 @@ Status CostGraph::SearchStrategyForMultiNodeFinalGraph(const std::vector<Operato
 Status CostGraph::SearchStrategy() {
   MS_LOG(INFO) << "Searching the strategy for the eliminated final graph began.";
   std::vector<OperatorInfoPtr> alive_ops;
-  (void)std::for_each(ops_.begin(), ops_.end(), [&alive_ops](const OperatorInfoPtr& op) {
+  (void)std::for_each(ops_.begin(), ops_.end(), [&alive_ops](const OperatorInfoPtr &op) {
     MS_EXCEPTION_IF_NULL(op);
     if (op->is_alive()) {
       alive_ops.push_back(op);
@@ -620,7 +620,7 @@ Status CostGraph::SearchStrategy() {
 // Given a graph which contains the following subgraph: u --> v --> w, the node v can be eliminated
 // return the v and the edge u --> v
 OperatorInfoPtr CostGraph::CheckOpElimination() const {
-  for (auto& op : ops_) {
+  for (auto &op : ops_) {
     bool bool_test = op->is_alive() && op->GetAliveSuccEdges().size() == 1 && op->GetAlivePrevEdges().size() == 1;
     if (bool_test) {
       if ((op->GetAliveSuccEdges()[0]->next_operator() != op) && (op->GetAlivePrevEdges()[0]->prev_operator() != op)) {
@@ -633,21 +633,21 @@ OperatorInfoPtr CostGraph::CheckOpElimination() const {
 
 // Check the graph whether an EdgeElimination can be performed
 std::vector<std::shared_ptr<Edge>> CostGraph::CheckEdgeElimination() const {
-  for (auto& op : ops_) {
+  for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
     if (!op->is_alive()) continue;
-    std::map<void*, int> count;
-    for (auto& edge : op->GetAliveSuccEdges()) {
+    std::map<void *, int> count;
+    for (auto &edge : op->GetAliveSuccEdges()) {
       MS_EXCEPTION_IF_NULL(edge);
       auto v = edge->next_operator();
       count[v.get()]++;
     }
-    for (auto& pair : count) {
-      auto* op_ptr = pair.first;
+    for (auto &pair : count) {
+      auto *op_ptr = pair.first;
       int op_count = pair.second;
       if (op_count > 1) {
         std::vector<std::shared_ptr<Edge>> ret;
-        for (auto& edge : op->GetAliveSuccEdges()) {
+        for (auto &edge : op->GetAliveSuccEdges()) {
           MS_EXCEPTION_IF_NULL(edge);
           if (edge->next_operator().get() == op_ptr) {
             ret.push_back(edge);
@@ -662,7 +662,7 @@ std::vector<std::shared_ptr<Edge>> CostGraph::CheckEdgeElimination() const {
 
 // Check the graph whether a MergeElimination can be performed
 OperatorInfoPtr CostGraph::CheckMergeElimination() const {
-  for (auto& op : ops_) {
+  for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
     bool bool_test = op->is_alive() && op->GetAlivePrevEdges().empty() && op->GetAliveSuccEdges().size() == 1;
     if (bool_test) {
@@ -678,7 +678,7 @@ OperatorInfoPtr CostGraph::CheckMergeElimination() const {
 
 // Check the graph whether a ContractElimination can be performed
 OperatorInfoPtr CostGraph::CheckContractElimination() const {
-  for (auto& op : ops_) {
+  for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
     bool bool_test = op->is_alive() && op->GetAlivePrevEdges().size() == 1 && op->GetAliveSuccEdges().empty();
     if (bool_test) {
@@ -696,7 +696,7 @@ OperatorInfoPtr CostGraph::CheckContractElimination() const {
 
 // Check the graph whether a TriangleElimination can be performed
 std::pair<OperatorInfoPtr, std::shared_ptr<Edge>> CostGraph::CheckTriangleElimination() const {
-  for (auto& op : ops_) {
+  for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
     bool bool_test = (op->is_alive()) && (op->GetAlivePrevEdges().empty()) && (op->GetAliveSuccEdges().size() == 2);
     if (bool_test) {
@@ -707,13 +707,13 @@ std::pair<OperatorInfoPtr, std::shared_ptr<Edge>> CostGraph::CheckTriangleElimin
       auto first_op = edge1->next_operator();
       auto second_op = edge2->next_operator();
       MS_EXCEPTION_IF_NULL(first_op);
-      for (auto& first_op_succ_edge : first_op->GetAliveSuccEdges()) {
+      for (auto &first_op_succ_edge : first_op->GetAliveSuccEdges()) {
         if (first_op_succ_edge->next_operator() == second_op) {
           return {op, first_op_succ_edge};
         }
       }
       MS_EXCEPTION_IF_NULL(second_op);
-      for (auto& second_op_succ_edge : second_op->GetAliveSuccEdges()) {
+      for (auto &second_op_succ_edge : second_op->GetAliveSuccEdges()) {
         if (second_op_succ_edge->next_operator() == first_op) {
           return {op, second_op_succ_edge};
         }
@@ -726,7 +726,7 @@ std::pair<OperatorInfoPtr, std::shared_ptr<Edge>> CostGraph::CheckTriangleElimin
 // Check the graph whether a StarElimination can be performed.
 // NOTE: this elimination MUST be performed only when the above 5 operation cannot be applied.
 OperatorInfoPtr CostGraph::CheckStarElimination() const {
-  for (auto& op : ops_) {
+  for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
     bool bool_test = (op->is_alive()) && (op->GetAlivePrevEdges().empty()) && (op->GetAliveSuccEdges().size() > 1);
     if (bool_test) {
@@ -738,7 +738,7 @@ OperatorInfoPtr CostGraph::CheckStarElimination() const {
 
 // This method is for 'eliminating operator' operation in the DP algorithm. It creates a new edge to replace
 // 'lefe_edge', 'op' and 'right_edge'. As a consequence, it creates new costlist for the new edge.
-std::shared_ptr<Edge> CostGraph::EliminationOp(const OperatorInfoPtr& op) {
+std::shared_ptr<Edge> CostGraph::EliminationOp(const OperatorInfoPtr &op) {
   // in this case, the operators are organised in the form of u-->op-->v, and the goal
   // is to eliminate 'op'.
   MS_EXCEPTION_IF_NULL(op);
@@ -786,7 +786,7 @@ std::shared_ptr<Edge> CostGraph::EliminationOp(const OperatorInfoPtr& op) {
 
 // This method is for 'eliminating edges' operation in the DP algorithm. It creates a new edge to replace the 'edges',
 // and sets new costlist for the new edge.
-std::shared_ptr<Edge> CostGraph::EliminationEdges(const std::vector<std::shared_ptr<Edge>>& edges) {
+std::shared_ptr<Edge> CostGraph::EliminationEdges(const std::vector<std::shared_ptr<Edge>> &edges) {
   MS_LOG(INFO) << "Now eliminating " << edges.size() << " edges.";
   MS_EXCEPTION_IF_NULL(edges[0]);
   auto u = edges[0]->prev_operator();
@@ -796,7 +796,7 @@ std::shared_ptr<Edge> CostGraph::EliminationEdges(const std::vector<std::shared_
   std::string new_edge_name = u->name() + OPERATOR_TO_OPERATOR_CONNECTOR + v->name();
   std::vector<size_t> output_indexs, input_indexs;
 
-  for (auto& edge : edges) {
+  for (auto &edge : edges) {
     MS_EXCEPTION_IF_NULL(edge);
     if (edge->is_combined()) {
       auto from_output_indexs = edge->prev_op_output_indexs();
@@ -824,18 +824,18 @@ std::shared_ptr<Edge> CostGraph::EliminationEdges(const std::vector<std::shared_
 
 // Given 'op_cost_list', 'edge_cost_list', and 'tar_cost_list', this method is to create 'tar_cost_list_new'
 // for this contract under the strategy 'op_strategy'
-void CostGraph::CreateMergeEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList& op_cost_list,
-                                                  const CostPtrList& edge_cost_list, StrategyPtr tar_op_strategy,
-                                                  const CostPtrList& tar_cost_list,
-                                                  CostPtrList* const tar_cost_list_new) {
+void CostGraph::CreateMergeEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList &op_cost_list,
+                                                  const CostPtrList &edge_cost_list, StrategyPtr tar_op_strategy,
+                                                  const CostPtrList &tar_cost_list,
+                                                  CostPtrList *const tar_cost_list_new) {
   for (size_t i = 0; i < op_cost_list.size(); ++i) {
-    auto& op_cost = op_cost_list[i];
+    auto &op_cost = op_cost_list[i];
     MS_EXCEPTION_IF_NULL(op_cost);
     for (size_t j = 0; j < edge_cost_list.size(); ++j) {
-      auto& edge_cost = edge_cost_list[j];
+      auto &edge_cost = edge_cost_list[j];
       MS_EXCEPTION_IF_NULL(edge_cost);
       for (size_t k = 0; k < tar_cost_list.size(); ++k) {
-        auto& tar_cost = tar_cost_list[k];
+        auto &tar_cost = tar_cost_list[k];
         MS_EXCEPTION_IF_NULL(tar_cost);
         double computation = op_cost->computation_cost_ + edge_cost->computation_cost_ + tar_cost->computation_cost_;
         double memory = op_cost->memory_with_reuse_ + edge_cost->memory_with_reuse_ + tar_cost->memory_with_reuse_;
@@ -862,7 +862,7 @@ void CostGraph::CreateMergeEliminationSubCostList(StrategyPtr op_strategy, const
 
 // This method is for the 'Merge' operation in DP algorithm. It creates new costlist for each strategy in the
 // target_op
-OperatorInfoPtr CostGraph::EliminationMerge(const OperatorInfoPtr& op) {
+OperatorInfoPtr CostGraph::EliminationMerge(const OperatorInfoPtr &op) {
   MS_EXCEPTION_IF_NULL(op);
   auto target_op = op->GetAliveSuccEdges()[0]->next_operator();
   auto edge_ptr = op->GetAliveSuccEdges()[0];
@@ -871,13 +871,13 @@ OperatorInfoPtr CostGraph::EliminationMerge(const OperatorInfoPtr& op) {
   MS_LOG(INFO) << "Now merging " << op->name() << " into " << target_op->name() << ".";
   bool valid = false;
 
-  for (auto& tar_stra_cost : target_op->GetStrategyCost()) {
+  for (auto &tar_stra_cost : target_op->GetStrategyCost()) {
     MS_EXCEPTION_IF_NULL(tar_stra_cost);
     auto tar_stra = tar_stra_cost->strategy_ptr;
     auto tar_clist_origin = tar_stra_cost->cost_list;
     CostPtrList tar_clist_new;
 
-    for (auto& op_stra_cost : op->GetStrategyCost()) {
+    for (auto &op_stra_cost : op->GetStrategyCost()) {
       MS_EXCEPTION_IF_NULL(op_stra_cost);
       auto op_stra = op_stra_cost->strategy_ptr;
       auto op_clist = op_stra_cost->cost_list;
@@ -904,17 +904,17 @@ OperatorInfoPtr CostGraph::EliminationMerge(const OperatorInfoPtr& op) {
 // Given 'contract_op_cost_list', 'edge_cost_list', and 'tar_cost_list', this method is to create 'tar_cost_list_new'
 // for this contract under the strategy 'contract_op_stra'
 void CostGraph::CreateContractEliminationSubCostList(StrategyPtr contract_op_stra,
-                                                     const CostPtrList& contract_op_cost_list,
-                                                     const CostPtrList& edge_cost_list, StrategyPtr target_op_stra,
-                                                     const CostPtrList& tar_cost_list, CostPtrList* tar_cost_list_new) {
+                                                     const CostPtrList &contract_op_cost_list,
+                                                     const CostPtrList &edge_cost_list, StrategyPtr target_op_stra,
+                                                     const CostPtrList &tar_cost_list, CostPtrList *tar_cost_list_new) {
   for (size_t i = 0; i < contract_op_cost_list.size(); ++i) {
-    auto& contract_op_cost = contract_op_cost_list[i];
+    auto &contract_op_cost = contract_op_cost_list[i];
     MS_EXCEPTION_IF_NULL(contract_op_cost);
     for (size_t j = 0; j < edge_cost_list.size(); ++j) {
-      auto& edge_cost = edge_cost_list[j];
+      auto &edge_cost = edge_cost_list[j];
       MS_EXCEPTION_IF_NULL(edge_cost);
       for (size_t k = 0; k < tar_cost_list.size(); ++k) {
-        auto& tar_cost = tar_cost_list[k];
+        auto &tar_cost = tar_cost_list[k];
         MS_EXCEPTION_IF_NULL(tar_cost);
         double computation =
           contract_op_cost->computation_cost_ + edge_cost->computation_cost_ + tar_cost->computation_cost_;
@@ -941,20 +941,20 @@ void CostGraph::CreateContractEliminationSubCostList(StrategyPtr contract_op_str
 
 // This method is for the 'Contract' operation in DP algorithm. It creates new costlist for each strategy in the
 // target_op
-OperatorInfoPtr CostGraph::EliminationContract(const OperatorInfoPtr& op) {
+OperatorInfoPtr CostGraph::EliminationContract(const OperatorInfoPtr &op) {
   MS_EXCEPTION_IF_NULL(op);
   auto target_op = op->GetAlivePrevEdges()[0]->prev_operator();
   auto edge_ptr = op->GetAlivePrevEdges()[0];
   MS_LOG(INFO) << "Now contracting " << op->name() << " into " << target_op->name() << ".";
   bool valid = false;
 
-  for (auto& tar_stra_cost : target_op->GetStrategyCost()) {
+  for (auto &tar_stra_cost : target_op->GetStrategyCost()) {
     MS_EXCEPTION_IF_NULL(tar_stra_cost);
     auto tar_stra = tar_stra_cost->strategy_ptr;
     auto tar_clist_origin = tar_stra_cost->cost_list;
     CostPtrList tar_clist_new;
 
-    for (auto& op_stra_cost : op->GetStrategyCost()) {
+    for (auto &op_stra_cost : op->GetStrategyCost()) {
       MS_EXCEPTION_IF_NULL(op_stra_cost);
       auto op_stra = op_stra_cost->strategy_ptr;
       auto op_clist = op_stra_cost->cost_list;
@@ -978,19 +978,19 @@ OperatorInfoPtr CostGraph::EliminationContract(const OperatorInfoPtr& op) {
 }
 
 void CostGraph::CreateTriangleEliminationSubCostList(StrategyPtr elimi_op_stra, StrategyPtr left_op_stra,
-                                                     StrategyPtr right_op_stra, const CostPtr& right_op_cost,
-                                                     const CostPtrList& elimi_op_clist,
-                                                     const CostPtrList& left_edge_clist, const CostPtr& right_edge_cost,
-                                                     const CostPtrList& left_node_clist_origin,
-                                                     CostPtrList* left_node_clist_new) {
+                                                     StrategyPtr right_op_stra, const CostPtr &right_op_cost,
+                                                     const CostPtrList &elimi_op_clist,
+                                                     const CostPtrList &left_edge_clist, const CostPtr &right_edge_cost,
+                                                     const CostPtrList &left_node_clist_origin,
+                                                     CostPtrList *left_node_clist_new) {
   MS_EXCEPTION_IF_NULL(right_edge_cost);
   MS_EXCEPTION_IF_NULL(right_op_cost);
   MS_EXCEPTION_IF_NULL(left_node_clist_new);
-  for (auto& elimi_op_cost : elimi_op_clist) {
+  for (auto &elimi_op_cost : elimi_op_clist) {
     MS_EXCEPTION_IF_NULL(elimi_op_cost);
-    for (auto& left_edge_cost : left_edge_clist) {
+    for (auto &left_edge_cost : left_edge_clist) {
       MS_EXCEPTION_IF_NULL(left_edge_cost);
-      for (auto& left_node_cost : left_node_clist_origin) {
+      for (auto &left_node_cost : left_node_clist_origin) {
         MS_EXCEPTION_IF_NULL(left_node_cost);
         double new_computation = elimi_op_cost->computation_cost_ + left_edge_cost->computation_cost_ +
                                  left_node_cost->computation_cost_ + right_edge_cost->computation_cost_;
@@ -1015,16 +1015,16 @@ void CostGraph::CreateTriangleEliminationSubCostList(StrategyPtr elimi_op_stra, 
   }
 }
 
-void CostGraph::CreateTriangleEliminationCostList(const OperatorInfoPtr& elimi_op, const CostPtrList& right_node_clist,
-                                                  const CostPtrList& right_edge_clist, const StrategyPtr& elimi_op_stra,
-                                                  const StrategyPtr& left_node_stra, const StrategyPtr& right_node_stra,
-                                                  const CostPtrList& elimi_op_clist, const CostPtrList& left_edge_clist,
-                                                  const CostPtrList& left_node_clist_origin,
-                                                  CostPtrList* left_node_clist_new) {
+void CostGraph::CreateTriangleEliminationCostList(const OperatorInfoPtr &elimi_op, const CostPtrList &right_node_clist,
+                                                  const CostPtrList &right_edge_clist, const StrategyPtr &elimi_op_stra,
+                                                  const StrategyPtr &left_node_stra, const StrategyPtr &right_node_stra,
+                                                  const CostPtrList &elimi_op_clist, const CostPtrList &left_edge_clist,
+                                                  const CostPtrList &left_node_clist_origin,
+                                                  CostPtrList *left_node_clist_new) {
   MS_EXCEPTION_IF_NULL(elimi_op);
-  for (auto& right_node_cost : right_node_clist) {
+  for (auto &right_node_cost : right_node_clist) {
     MS_EXCEPTION_IF_NULL(right_node_cost);
-    for (auto& right_edge_cost : right_edge_clist) {
+    for (auto &right_edge_cost : right_edge_clist) {
       MS_EXCEPTION_IF_NULL(right_edge_cost);
       CreateTriangleEliminationSubCostList(elimi_op_stra, left_node_stra, right_node_stra, right_node_cost,
                                            elimi_op_clist, left_edge_clist, right_edge_cost, left_node_clist_origin,
@@ -1033,8 +1033,8 @@ void CostGraph::CreateTriangleEliminationCostList(const OperatorInfoPtr& elimi_o
   }
 }
 
-OperatorInfoPtr CostGraph::EliminationTriangle(const OperatorInfoPtr& elimi_op,
-                                               const std::shared_ptr<Edge>& edge_left_right) {
+OperatorInfoPtr CostGraph::EliminationTriangle(const OperatorInfoPtr &elimi_op,
+                                               const std::shared_ptr<Edge> &edge_left_right) {
   MS_EXCEPTION_IF_NULL(edge_left_right);
   MS_EXCEPTION_IF_NULL(elimi_op);
   MS_LOG(INFO) << "Now eliminating triangle: " << elimi_op->name() << ".";
@@ -1056,19 +1056,19 @@ OperatorInfoPtr CostGraph::EliminationTriangle(const OperatorInfoPtr& elimi_op,
   }
   bool valid = false;
 
-  for (auto& left_node_stra_cost : left_node->GetStrategyCost()) {
+  for (auto &left_node_stra_cost : left_node->GetStrategyCost()) {
     MS_EXCEPTION_IF_NULL(left_node_stra_cost);
     auto left_node_stra = left_node_stra_cost->strategy_ptr;
     auto left_node_clist_origin = left_node_stra_cost->cost_list;
     CostPtrList left_node_clist_new;
 
-    for (auto& elimi_op_stra_cost : elimi_op->GetStrategyCost()) {
+    for (auto &elimi_op_stra_cost : elimi_op->GetStrategyCost()) {
       MS_EXCEPTION_IF_NULL(elimi_op_stra_cost);
       auto elimi_op_stra = elimi_op_stra_cost->strategy_ptr;
       auto elimi_op_clist = elimi_op_stra_cost->cost_list;
       auto left_edge_clist = left_edge->GetCostList(elimi_op_stra, left_node_stra);
 
-      for (auto& right_node_stra_cost : right_node->GetStrategyCost()) {
+      for (auto &right_node_stra_cost : right_node->GetStrategyCost()) {
         MS_EXCEPTION_IF_NULL(right_node_stra_cost);
         auto right_node_stra = right_node_stra_cost->strategy_ptr;
         auto right_node_clist = right_node_stra_cost->cost_list;
@@ -1095,16 +1095,16 @@ OperatorInfoPtr CostGraph::EliminationTriangle(const OperatorInfoPtr& elimi_op,
   return left_node;
 }
 
-void CostGraph::CreateStarEliminationSubCostList(const StrategyPtr& first_succ_node_stra,
-                                                 const CostPtrList& first_succ_node_clist,
-                                                 const CostPtrList& first_succ_edge_clist,
-                                                 const StrategyPtr& merged_op_stra, const CostPtrList& merged_op_clist,
+void CostGraph::CreateStarEliminationSubCostList(const StrategyPtr &first_succ_node_stra,
+                                                 const CostPtrList &first_succ_node_clist,
+                                                 const CostPtrList &first_succ_edge_clist,
+                                                 const StrategyPtr &merged_op_stra, const CostPtrList &merged_op_clist,
                                                  std::vector<StrategyPtr> succ_nodes_stras,
-                                                 CostPtrList& succ_edges_costs, CostPtrList& succ_nodes_costs,
-                                                 CostPtrList* first_succ_node_clist_new) {
-  for (auto& first_succ_node_cost : first_succ_node_clist) {
-    for (auto& first_succ_edge_cost : first_succ_edge_clist) {
-      for (auto& merged_node_cost : merged_op_clist) {
+                                                 CostPtrList &succ_edges_costs, CostPtrList &succ_nodes_costs,
+                                                 CostPtrList *first_succ_node_clist_new) {
+  for (auto &first_succ_node_cost : first_succ_node_clist) {
+    for (auto &first_succ_edge_cost : first_succ_edge_clist) {
+      for (auto &merged_node_cost : merged_op_clist) {
         MS_EXCEPTION_IF_NULL(merged_node_cost);
         succ_nodes_stras[0] = first_succ_node_stra;
         succ_edges_costs[0] = first_succ_edge_cost;
@@ -1141,12 +1141,12 @@ void CostGraph::CreateStarEliminationSubCostList(const StrategyPtr& first_succ_n
   }
 }
 
-void CostGraph::CreateStarEliminationCostList(std::vector<std::shared_ptr<Edge>>& succ_edges,
-                                              const StrategyPtr& first_succ_node_stra,
-                                              const CostPtrList& first_succ_node_clist,
-                                              const CostPtrList& first_succ_edge_clist,
-                                              const StrategyPtr& merged_op_stra, const CostPtrList& merged_op_clist,
-                                              CostPtrList* first_succ_node_clist_new) {
+void CostGraph::CreateStarEliminationCostList(std::vector<std::shared_ptr<Edge>> &succ_edges,
+                                              const StrategyPtr &first_succ_node_stra,
+                                              const CostPtrList &first_succ_node_clist,
+                                              const CostPtrList &first_succ_edge_clist,
+                                              const StrategyPtr &merged_op_stra, const CostPtrList &merged_op_clist,
+                                              CostPtrList *first_succ_node_clist_new) {
   std::vector<StrategyPtr> succ_nodes_stras(succ_edges.size(), nullptr);
   CostPtrList succ_edges_costs(succ_edges.size(), nullptr), succ_nodes_costs(succ_edges.size(), nullptr);
   std::function<void(size_t)> recursive = [&first_succ_node_stra, &first_succ_node_clist, &first_succ_edge_clist,
@@ -1167,15 +1167,15 @@ void CostGraph::CreateStarEliminationCostList(std::vector<std::shared_ptr<Edge>>
     MS_EXCEPTION_IF_NULL(succ_edge);
     auto succ_node = succ_edge->next_operator();
     MS_EXCEPTION_IF_NULL(succ_node);
-    for (auto& succ_node_stra_cost : succ_node->GetStrategyCost()) {
+    for (auto &succ_node_stra_cost : succ_node->GetStrategyCost()) {
       MS_EXCEPTION_IF_NULL(succ_node_stra_cost);
       auto succ_node_stra = succ_node_stra_cost->strategy_ptr;
       auto succ_node_clist = succ_node_stra_cost->cost_list;
       auto succ_edge_clist = succ_edge->GetCostList(merged_op_stra, succ_node_stra);
 
-      for (auto& succ_node_cost : succ_node_clist) {
+      for (auto &succ_node_cost : succ_node_clist) {
         MS_EXCEPTION_IF_NULL(succ_node_cost);
-        for (auto& succ_edge_cost : succ_edge_clist) {
+        for (auto &succ_edge_cost : succ_edge_clist) {
           MS_EXCEPTION_IF_NULL(succ_edge_cost);
           succ_nodes_stras[k] = succ_node_stra;
           succ_edges_costs[k] = succ_edge_cost;
@@ -1189,11 +1189,11 @@ void CostGraph::CreateStarEliminationCostList(std::vector<std::shared_ptr<Edge>>
   recursive(1);
 }
 
-std::vector<std::shared_ptr<Edge>> CostGraph::EliminationStar(const OperatorInfoPtr& merged_op) {
+std::vector<std::shared_ptr<Edge>> CostGraph::EliminationStar(const OperatorInfoPtr &merged_op) {
   MS_EXCEPTION_IF_NULL(merged_op);
   auto succ_edges = merged_op->GetAliveSuccEdges();
   MS_LOG(INFO) << "Now eliminating star centered at: " << merged_op->name() << ".";
-  for (auto& succ_edge : succ_edges) {
+  for (auto &succ_edge : succ_edges) {
     MS_EXCEPTION_IF_NULL(succ_edge->next_operator());
     MS_LOG(INFO) << "The successive operator is: " << succ_edge->next_operator()->name() << ".";
   }
@@ -1205,13 +1205,13 @@ std::vector<std::shared_ptr<Edge>> CostGraph::EliminationStar(const OperatorInfo
 
   // 'merged_op' is merged into first_node
   MS_EXCEPTION_IF_NULL(first_succ_node);
-  for (auto& first_succ_node_stra_cost : first_succ_node->GetStrategyCost()) {
+  for (auto &first_succ_node_stra_cost : first_succ_node->GetStrategyCost()) {
     MS_EXCEPTION_IF_NULL(first_succ_node_stra_cost);
     auto first_succ_node_stra = first_succ_node_stra_cost->strategy_ptr;
     auto first_succ_node_clist = first_succ_node_stra_cost->cost_list;
     CostPtrList first_succ_node_clist_new;
 
-    for (auto& merged_op_stra_cost : merged_op->GetStrategyCost()) {
+    for (auto &merged_op_stra_cost : merged_op->GetStrategyCost()) {
       MS_EXCEPTION_IF_NULL(merged_op_stra_cost);
       auto merged_op_stra = merged_op_stra_cost->strategy_ptr;
       auto merged_op_clist = merged_op_stra_cost->cost_list;
@@ -1238,7 +1238,7 @@ std::vector<std::shared_ptr<Edge>> CostGraph::EliminationStar(const OperatorInfo
 }
 
 Status CostGraph::InitSelectedStrategy() {
-  for (auto& op : ops_) {
+  for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
     auto result = op->InitSelectedStrategy(op->selected_strategy());
     if (result != SUCCESS) {
@@ -1249,9 +1249,9 @@ Status CostGraph::InitSelectedStrategy() {
 }
 
 Status CostGraph::ComputeOpsAndEdgesParameterInvolved() {
-  for (auto& op : ops_) {
+  for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
-    const auto& output_parameter = op->ComputeOpAndPrevEdgeParameterInvolved();
+    const auto &output_parameter = op->ComputeOpAndPrevEdgeParameterInvolved();
     if ((output_parameter != 0) && (output_parameter != 1)) {
       MS_LOG(ERROR) << "Computing parameter_involved for " << op->name() << " failed.";
       return FAILED;
@@ -1261,7 +1261,7 @@ Status CostGraph::ComputeOpsAndEdgesParameterInvolved() {
 }
 
 Status CostGraph::CalculateOpsMemoryCost() {
-  for (auto& op : ops_) {
+  for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
     if (op->CalculateMemoryCost() != SUCCESS) {
       MS_LOG(ERROR) << "Calculate Operator: " << op->name() << " cost for memory usage failed.";
@@ -1272,9 +1272,9 @@ Status CostGraph::CalculateOpsMemoryCost() {
 }
 
 Status CostGraph::CalculateEdgesMemoryCost() {
-  for (auto& edge_pair : edges_) {
-    const auto& edges = edge_pair.second;
-    for (auto& one_edge : edges) {
+  for (auto &edge_pair : edges_) {
+    const auto &edges = edge_pair.second;
+    for (auto &one_edge : edges) {
       if (one_edge->CalculateMemoryCost() != SUCCESS) {
         MS_LOG(ERROR) << "Calculate Edge: " << one_edge->edge_name() << " cost for memory usage failed.";
         return FAILED;
@@ -1284,7 +1284,7 @@ Status CostGraph::CalculateEdgesMemoryCost() {
   return SUCCESS;
 }
 
-OperatorInfoPtr CostGraph::FindTmpIdentityByParameterName(std::string& p_name) const {
+OperatorInfoPtr CostGraph::FindTmpIdentityByParameterName(std::string &p_name) const {
   for (auto one_op : ops_) {
     if (one_op->name().find(IDENTITY_INFO) != std::string::npos) {
       if (one_op->refkey_parameter_name() == p_name) {
@@ -1295,7 +1295,7 @@ OperatorInfoPtr CostGraph::FindTmpIdentityByParameterName(std::string& p_name) c
   return nullptr;
 }
 Status CostGraph::CorrectOpsMemoryCost() {
-  for (auto& one_op : ops_) {
+  for (auto &one_op : ops_) {
     if ((one_op->name().find(IDENTITY_INFO) != std::string::npos) && (one_op->is_output_parameter_involve() == 1)) {
       if (one_op->GetAliveSuccEdges().size() > 1) {
         // Filter out the case when the TmpIdentity being used by multiple operators

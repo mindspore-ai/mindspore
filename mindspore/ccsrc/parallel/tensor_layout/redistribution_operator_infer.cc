@@ -22,8 +22,8 @@
 
 namespace mindspore {
 namespace parallel {
-Status RedistributionOperatorInfer::Init(const TensorLayout& tensor_layout, const Map& out_tensor_map,
-                                         RankList dev_list) {
+Status RedistributionOperatorInfer::Init(const TensorLayout &tensor_layout, const Map &out_tensor_map,
+                                         RankList dev_list, bool is_cost_model) {
   in_tensor_map_ = tensor_layout.tensor_map();
   dev_mat_ = tensor_layout.device_arrangement();
 
@@ -51,6 +51,8 @@ Status RedistributionOperatorInfer::Init(const TensorLayout& tensor_layout, cons
   for (int32_t item : map) {
     map_[key++] = item;
   }
+
+  is_cost_model_ = is_cost_model;
   return Status::SUCCESS;
 }
 
@@ -103,7 +105,7 @@ Status RedistributionOperatorInfer::InferSplitByAxis() {
     }
     if (in_dim == NONE &&
         !std::any_of(map_.begin(), map_.end(),
-                     [out_dim](const RedistributionOperatorMap::value_type& a) { return a.second == out_dim; })) {
+                     [out_dim](const RedistributionOperatorMap::value_type &a) { return a.second == out_dim; })) {
       Args args = {dev_mat_.GetDimByReverseIdx(IntToUint(out_dim)), UintToInt(index), out_dim};
       if (InsertOperator(SPLIT_BY_AXIS, args) == Status::FAILED) {
         MS_LOG(ERROR) << "Insert SplitByAxis Error!";
@@ -128,17 +130,28 @@ Status RedistributionOperatorInfer::InferPermuteByAxis() {
     }
     if (in_dim == NONE &&
         std::any_of(map_.begin(), map_.end(),
-                    [out_dim](const RedistributionOperatorMap::value_type& a) { return a.second == out_dim; })) {
+                    [out_dim](const RedistributionOperatorMap::value_type &a) { return a.second == out_dim; })) {
       int32_t cat_dim = in_tensor_map_.GetIndexByValue(out_dim);
-      Args args_allconcat = {cat_dim, out_dim, dev_mat_.GetDimByReverseIdx(IntToUint(out_dim))};
-      Args args_allsplit = {dev_mat_.GetDimByReverseIdx(IntToUint(out_dim)), UintToInt(index), out_dim};
-      if (InsertOperator(CONCAT_BY_AXIS, args_allconcat) == Status::FAILED) {
-        MS_LOG(ERROR) << "Insert ConcatByAxis Error!";
-        return Status::FAILED;
-      }
-      if (InsertOperator(SPLIT_BY_AXIS, args_allsplit) == Status::FAILED) {
-        MS_LOG(ERROR) << "Insert SplitByAxis Error!";
-        return Status::FAILED;
+      int32_t dev_num = dev_mat_.GetDimByReverseIdx(IntToUint(out_dim));
+      if (is_cost_model_) {
+        int32_t dev_dim = in_tensor_map_.GetDimByIdx(IntToUint(cat_dim));
+        Args args_alltoall = {dev_mat_.GetDimByReverseIdx(IntToUint(dev_dim)), UintToInt(index), cat_dim, dev_dim,
+                              dev_num};
+        if (InsertOperator(PERMUTE_BY_AXIS, args_alltoall) == Status::FAILED) {
+          MS_LOG(ERROR) << "Insert PermuteByAxis Error!";
+          return Status::FAILED;
+        }
+      } else {
+        Args args_allconcat = {cat_dim, out_dim, dev_num};
+        Args args_allsplit = {dev_num, UintToInt(index), out_dim};
+        if (InsertOperator(CONCAT_BY_AXIS, args_allconcat) == Status::FAILED) {
+          MS_LOG(ERROR) << "Insert ConcatByAxis Error!";
+          return Status::FAILED;
+        }
+        if (InsertOperator(SPLIT_BY_AXIS, args_allsplit) == Status::FAILED) {
+          MS_LOG(ERROR) << "Insert SplitByAxis Error!";
+          return Status::FAILED;
+        }
       }
       (void)map_.erase(iter++);
       map_[IntToSize(cat_dim)] = NONE;

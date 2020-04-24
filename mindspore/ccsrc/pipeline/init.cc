@@ -53,10 +53,10 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)py::class_<MetaFuncGraph, std::shared_ptr<MetaFuncGraph>>(*m, "MetaFuncGraph_")
     .def_readonly(mindspore::PYTHON_METAFUNCGRAPH_FLAG, &mindspore::MetaFuncGraph::parse_info_)
-    .def(py::init<std::string&>());
+    .def(py::init<std::string &>());
 
   auto fns = mindspore::PybindDefineRegister::AllFuncs();
-  for (auto& item : fns) {
+  for (auto &item : fns) {
     item.second(&m);
   }
 
@@ -288,7 +288,7 @@ PYBIND11_MODULE(_c_expression, m) {
   }});
 
   (void)py::class_<EventWriter, std::shared_ptr<EventWriter>>(m, "EventWriter_")
-    .def(py::init<const std::string&>())
+    .def(py::init<const std::string &>())
     .def("GetFileName", &EventWriter::GetFileName, "Get the file name.")
     .def("Open", &EventWriter::Open, "Open the write file.")
     .def("Write", &EventWriter::Write, "Write the serialize event.")

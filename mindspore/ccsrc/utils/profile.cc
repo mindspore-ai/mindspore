@@ -33,37 +33,43 @@ namespace {
 constexpr size_t TIME_INFO_PREFIX_NUM_LEN = 4;
 const char KEY_PROF_TOTAL[] = "__total__";
 
-void PrintProfile(std::ostringstream& oss, const TimeInfo& time_info, int indent = 0,
-                  std::map<std::string, double>* sums = nullptr, const std::string& prefix = "");
+void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent = 0,
+                  std::map<std::string, double> *sums = nullptr, const std::string &prefix = "");
 
-void PrintTimeInfoMap(std::ostringstream& oss, const TimeInfoMap& dict, int indent = 0,
-                      std::map<std::string, double>* sums = nullptr, const std::string& prefix = "") {
-  for (auto iter = dict.begin(); iter != dict.end(); ++iter) {
-    if (iter->second == nullptr) {
+void PrintTimeInfoMap(std::ostringstream &oss, const TimeInfoMap &dict, int indent = 0,
+                      std::map<std::string, double> *sums = nullptr, const std::string &prefix = "") {
+  size_t count = 0;
+  for (const auto &iter : dict) {
+    count++;
+    if (iter.second == nullptr) {
       continue;
     }
     // indent by multiples of 4 spaces.
-    auto name = iter->first.substr(TIME_INFO_PREFIX_NUM_LEN);
+    if (iter.first.size() < TIME_INFO_PREFIX_NUM_LEN) {
+      MS_LOG(EXCEPTION) << "In TimeInfoMap, the " << count << "th string key is " << iter.first
+                        << ", but the length is less than " << TIME_INFO_PREFIX_NUM_LEN;
+    }
+    auto name = iter.first.substr(TIME_INFO_PREFIX_NUM_LEN);
     oss << std::setw(indent * 4) << ""
-        << "[" << name << "]: " << iter->second->time_;
-    if (iter->second->dict_ != nullptr) {
-      oss << ", [" << iter->second->dict_->size() << "]";
+        << "[" << name << "]: " << iter.second->time_;
+    if (iter.second->dict_ != nullptr) {
+      oss << ", [" << iter.second->dict_->size() << "]";
     }
     oss << "\n";
 
     std::string newPrefix = prefix;
-    if (iter->first.find("Cycle ") == std::string::npos) {
-      newPrefix = prefix.empty() ? iter->first : prefix + "." + iter->first;
+    if (iter.first.find("Cycle ") == std::string::npos) {
+      newPrefix = prefix.empty() ? iter.first : prefix + "." + iter.first;
     }
-    PrintProfile(oss, *iter->second, indent + 1, sums, newPrefix);
-    if (iter->second->dict_ == nullptr) {
-      (*sums)[newPrefix] += iter->second->time_;
+    PrintProfile(oss, *iter.second, indent + 1, sums, newPrefix);
+    if (iter.second->dict_ == nullptr) {
+      (*sums)[newPrefix] += iter.second->time_;
     }
   }
 }
 
-void PrintProfile(std::ostringstream& oss, const TimeInfo& time_info, int indent, std::map<std::string, double>* sums,
-                  const std::string& prefix) {
+void PrintProfile(std::ostringstream &oss, const TimeInfo &time_info, int indent, std::map<std::string, double> *sums,
+                  const std::string &prefix) {
   bool need_free = false;
   if (sums == nullptr) {
     sums = new (std::nothrow) std::map<std::string, double>();
@@ -95,7 +101,7 @@ void PrintProfile(std::ostringstream& oss, const TimeInfo& time_info, int indent
     }
     oss << "Sums\n";
     if (total >= 0.0 + DBL_EPSILON) {
-      for (auto& iter : *sums) {
+      for (auto &iter : *sums) {
         std::string name = iter.first;
         name.erase(0, TIME_INFO_PREFIX_NUM_LEN);
         std::size_t pos = 0;
@@ -159,7 +165,7 @@ void Profile::Print(void) {
 
 // Start a step in the current context with the given name.
 // Nomes must be unique otherwise the previous record will be overwritten.
-ProfContext* Profile::Step(const std::string& name) {
+ProfContext *Profile::Step(const std::string &name) {
   ctx_ptr_ = new (std::nothrow) ProfContext(name, this);
   if (ctx_ptr_ == nullptr) {
     MS_LOG(ERROR) << "memory allocation failed";
@@ -170,7 +176,7 @@ ProfContext* Profile::Step(const std::string& name) {
 
 // Creates subcontext for a repeated action.
 // Count should be monotonically increasing.
-ProfContext* Profile::Lap(int count) {
+ProfContext *Profile::Lap(int count) {
   std::ostringstream oss;
   oss << "Cycle " << count;
   ctx_ptr_ = new (std::nothrow) ProfContext(oss.str(), this);
@@ -188,7 +194,7 @@ void Profile::Pop(void) noexcept {
   ctx_ptr_ = ctx_ptr_->parent_;
 }
 
-ProfContext::ProfContext(const std::string& name, ProfileBase* const prof) : name_(name), prof_(prof) {
+ProfContext::ProfContext(const std::string &name, ProfileBase *const prof) : name_(name), prof_(prof) {
   // Initialize a subcontext.
   time_info_ = nullptr;
   if (prof == nullptr || IsTopContext()) {
@@ -227,7 +233,7 @@ void ProfContext::SetTime(double time) noexcept {
   time_info_->time_ = time;
 }
 
-void ProfContext::Insert(const std::string& name, const TimeInfo* time) noexcept {
+void ProfContext::Insert(const std::string &name, const TimeInfo *time) noexcept {
   if (time_info_ == nullptr) {
     time_info_ = new (std::nothrow) TimeInfo();
     if (time_info_ == nullptr) {
@@ -266,7 +272,7 @@ void ProfContext::Insert(const std::string& name, const TimeInfo* time) noexcept
 
 bool ProfContext::IsTopContext() const noexcept { return (prof_ != nullptr) && (this == &prof_->context_); }
 
-ProfTransaction::ProfTransaction(const ProfileBase* prof) { ctx_ = (prof != nullptr ? prof->ctx_ptr_ : nullptr); }
+ProfTransaction::ProfTransaction(const ProfileBase *prof) { ctx_ = (prof != nullptr ? prof->ctx_ptr_ : nullptr); }
 
 ProfTransaction::~ProfTransaction() {
   if (ctx_ != nullptr && !ctx_->IsTopContext()) {
@@ -275,7 +281,7 @@ ProfTransaction::~ProfTransaction() {
   ctx_ = nullptr;
 }
 
-void DumpTime::Record(const std::string& step_name, const double time, const bool is_start) {
+void DumpTime::Record(const std::string &step_name, const double time, const bool is_start) {
   file_ss_ << "    {" << std::endl;
   file_ss_ << "        \"name\": "
            << "\"" << step_name << "\"," << std::endl;
@@ -298,7 +304,7 @@ void DumpTime::Record(const std::string& step_name, const double time, const boo
 void DumpTime::Save() {
   try {
     file_out_.open(file_path_, std::ios::trunc | std::ios::out);
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     MS_LOG(EXCEPTION) << "Cannot open file in " << (file_path_);
   }
   file_out_ << "{\n";
@@ -317,10 +323,10 @@ struct TimeInfoGroup {
   std::list<std::map<std::string, TimeStat>::const_iterator> items;
 };
 
-static void PrintTimeStat(std::ostringstream& oss, const TimeInfoGroup& group, const std::string& prefix) {
+static void PrintTimeStat(std::ostringstream &oss, const TimeInfoGroup &group, const std::string &prefix) {
   oss << "------[" << prefix << "] " << std::setw(10) << std::fixed << std::setprecision(6) << group.total_time
       << std::setw(6) << group.total_count << "\n";
-  for (const auto& iter : group.items) {
+  for (const auto &iter : group.items) {
     oss << std::setw(5) << std::fixed << std::setprecision(2) << iter->second.time_ / group.total_time * 100
         << "% : " << std::setw(12) << std::fixed << std::setprecision(6) << iter->second.time_ << "s : " << std::setw(6)
         << iter->second.count_ << ": " << iter->first << "\n";
@@ -332,7 +338,7 @@ void MsProfile::Print() {
   std::vector<std::string> items = {"substitution.",          "renormalize.", "replace.", "match.",
                                     "func_graph_cloner_run.", "meta_graph.",  "manager."};
   std::vector<TimeInfoGroup> groups(items.size() + 1);
-  const auto& stat = GetSingleton().time_stat_;
+  const auto &stat = GetSingleton().time_stat_;
   // group all time infos
   for (auto iter = stat.cbegin(); iter != stat.cend(); ++iter) {
     auto matched_idx = items.size();

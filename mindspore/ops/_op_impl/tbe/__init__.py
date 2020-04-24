@@ -33,6 +33,7 @@ from .cast import _cast_tbe
 from .conv2d import _conv2d_tbe
 from .conv2d_backprop_filter import _conv2d_backprop_filter_tbe
 from .conv2d_backprop_input import _conv2d_backprop_input_tbe
+from .confusion_mul_grad import _confusion_mul_grad_tbe
 from .dropout_do_mask import _dropout_do_mask_tbe
 from .gelu import _gelu_tbe
 from .gelu_grad import _gelu_grad_tbe
@@ -46,6 +47,8 @@ from .relu import _relu_tbe
 from .relu_grad import _relu_grad_tbe
 from .relu6 import _relu6_tbe
 from .relu6_grad import _relu6_grad_tbe
+from .relu_v2 import _relu_v2_tbe
+from .relu_grad_v2 import _relu_grad_v2_tbe
 from .softmax_cross_entropy_with_logits import _softmax_cross_entropy_with_logits_tbe
 from .sigmoid_cross_entropy_with_logits import _sigmoid_cross_entropy_with_logits_tbe
 from .sigmoid_cross_entropy_with_logits_grad import _sigmoid_cross_entropy_with_logits_grad_tbe
@@ -117,6 +120,7 @@ from .layer_norm_beta_gamma_backprop import _layer_norm_beta_gamma_backprop_tbe
 from .layer_norm import _layer_norm_tbe
 from .layer_norm_grad import _layer_norm_grad_tbe
 from .layer_norm_x_backprop import _layer_norm_x_backprop_tbe
+from .l2_loss import _l2_loss_tbe
 from .square_sum_v1 import _square_sum_v1_tbe
 from .square_sum_v2 import _square_sum_v2_tbe
 from .confusion_transpose_d import _confusion_transpose_d_tbe
@@ -138,6 +142,8 @@ from .smooth_l1_loss_grad import _smooth_l1_loss_grad_tbe
 from .fused_mul_add import _fused_mul_add_tbe
 from .fused_mul_add_n import _fused_mul_add_n_tbe
 from .fused_mul_apply_momentum import _fused_mul_apply_momentum_tbe
+from .fill_d import _fill_d_op_tbe
+from .erf import _erf_op_tbe
 from .depthwise_conv2d import _depthwise_conv2d_tbe
 from .depthwise_conv2d_backprop_filter import _depthwise_conv2d_backprop_filter_tbe
 from .depthwise_conv2d_backprop_input import _depthwise_conv2d_backprop_input_tbe

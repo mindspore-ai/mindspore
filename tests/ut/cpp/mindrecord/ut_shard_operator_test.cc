@@ -25,6 +25,7 @@
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 #include "mindrecord/include/shard_category.h"
+#include "mindrecord/include/shard_pk_sample.h"
 #include "mindrecord/include/shard_reader.h"
 #include "mindrecord/include/shard_sample.h"
 #include "mindrecord/include/shard_shuffle.h"
@@ -145,6 +146,57 @@ TEST_F(TestShardOperator, TestShardSamplePartition) {
   dataset.Finish();
   ASSERT_TRUE(i <= 10);
 }
+
+TEST_F(TestShardOperator, TestShardPkSamplerBasic) {
+  MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test pk sampler"));
+
+  std::string file_name = "./imagenet.shard01";
+  auto column_list = std::vector<std::string>{"file_name", "label"};
+
+  std::vector<std::shared_ptr<ShardOperator>> ops;
+  ops.push_back(std::make_shared<ShardPkSample>("label", 2));
+
+  ShardReader dataset;
+  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Launch();
+
+  int i = 0;
+  while (true) {
+    auto x = dataset.GetNext();
+    if (x.empty()) break;
+    std::cout << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump()) << std::endl;
+    i++;
+  }
+  dataset.Finish();
+  ASSERT_TRUE(i == 20);
+}  // namespace mindrecord
+
+TEST_F(TestShardOperator, TestShardPkSamplerNumClass) {
+  MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test pk sampler"));
+
+  std::string file_name = "./imagenet.shard01";
+  auto column_list = std::vector<std::string>{"file_name", "label"};
+
+  std::vector<std::shared_ptr<ShardOperator>> ops;
+  ops.push_back(std::make_shared<ShardPkSample>("label", 2, 3, 0));
+
+  ShardReader dataset;
+  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Launch();
+
+  int i = 0;
+  while (true) {
+    auto x = dataset.GetNext();
+    if (x.empty()) break;
+
+    std::cout << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump()) << std::endl;
+    i++;
+  }
+  dataset.Finish();
+  ASSERT_TRUE(i == 6);
+}  // namespace mindrecord
 
 TEST_F(TestShardOperator, TestShardCategory) {
   MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test read imageNet"));

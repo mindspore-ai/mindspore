@@ -227,6 +227,18 @@ def get_bprop_relu6(self):
     return bprop
 
 
+@bprop_getters.register(P.ReLUV2)
+def get_bprop_relu_v2(self):
+    """Grad definition for `ReLUV2` operation."""
+    input_grad = G.ReluGradV2()
+
+    def bprop(x, out, dout):
+        mask = out[1]
+        dx = input_grad(dout[0], mask)
+        return (dx,)
+    return bprop
+
+
 @bprop_getters.register(P.HSwish)
 def get_bprop_hswish(self):
     """Grad definition for `HSwish` operation."""
@@ -344,12 +356,10 @@ def get_bprop_batch_norm(self):
         if is_training:
             saved_reserve_1 = out[3]
             saved_reserve_2 = out[4]
-            saved_reserve_3 = out[5]
         else:
             saved_reserve_1 = mean
             saved_reserve_2 = variance
-            saved_reserve_3 = variance
-        out = input_grad(dout[0], x, scale, saved_reserve_1, saved_reserve_2, saved_reserve_3)
+        out = input_grad(dout[0], x, scale, saved_reserve_1, saved_reserve_2)
         dx = out[0]
         dscale = out[1]
         dbias = out[2]
@@ -452,6 +462,17 @@ def get_bprop_smooth_l1_loss(self):
     def bprop(prediction, target, out, dout):
         dx = grad(prediction, target, dout)
         return dx, zeros_like(target)
+
+    return bprop
+
+
+@bprop_getters.register(P.L2Loss)
+def get_bprop_l2_loss(self):
+    """Grad definition for `L2Loss` operation."""
+
+    def bprop(x, out, dout):
+        dx = x * dout
+        return (dx,)
 
     return bprop
 

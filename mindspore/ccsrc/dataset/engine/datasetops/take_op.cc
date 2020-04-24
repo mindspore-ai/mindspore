@@ -67,7 +67,7 @@ Status TakeOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t work
   bool last_repeat = !BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat);
   if (take_count_ == max_takes_) {
     if (state_ == OpState::kDeOpRunning) {
-      MS_LOG(INFO) << "meet max count and push-back eoe buffer.";
+      MS_LOG(DEBUG) << "Meet max count and push-back eoe buffer.";
       auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
       *p_buffer = std::move(eoe_buffer);
       state_ = OpState::kDeOpIdle;
@@ -80,11 +80,13 @@ Status TakeOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t work
           RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf, worker_id, true));
         }
       }
-    } else {
-      MS_LOG(INFO) << "meet max count and push-back eof buffer.";
+    } else if (state_ == OpState::kDeOpIdle) {
+      MS_LOG(DEBUG) << "Meet max count and push-back eof buffer.";
       auto eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
       *p_buffer = std::move(eof_buffer);
       take_count_ = 0;
+    } else {
+      MS_LOG(WARNING) << "Invalid OpState: " << state_;
     }
     return Status::OK();
   }
@@ -116,7 +118,7 @@ Status TakeOp::FillBuffer(std::unique_ptr<DataBuffer> *buffer, std::unique_ptr<D
     *data_buffer = std::move(*buffer);
     take_count_ = take_count_ + buffer_size;
   } else {
-    MS_LOG(INFO) << "In last buffer: Push one buffer.";
+    MS_LOG(DEBUG) << "In last buffer: Push one buffer.";
     std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
     while (take_count_ < max_takes_) {
       TensorRow new_row;

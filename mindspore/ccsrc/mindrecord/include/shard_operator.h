@@ -43,6 +43,8 @@ class ShardOperator {
   virtual MSRStatus execute(ShardTask &tasks) = 0;
 
   virtual MSRStatus suf_execute(ShardTask &tasks) { return SUCCESS; }
+
+  virtual int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) { return -1; }
 };
 }  // namespace mindrecord
 }  // namespace mindspore

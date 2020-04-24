@@ -21,7 +21,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 from .. import layer
@@ -109,23 +109,23 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
 
 
 def _check_param_value(decay_steps, warmup_steps, start_learning_rate,
-                       end_learning_rate, power, beta1, beta2, eps, weight_decay):
+                       end_learning_rate, power, beta1, beta2, eps, weight_decay, prim_name):
 
     """Check the type of inputs."""
-    validator.check_type("decay_steps", decay_steps, [int])
-    validator.check_type("warmup_steps", warmup_steps, [int])
-    validator.check_type("start_learning_rate", start_learning_rate, [float])
-    validator.check_type("end_learning_rate", end_learning_rate, [float])
-    validator.check_type("power", power, [float])
-    validator.check_type("beta1", beta1, [float])
-    validator.check_type("beta2", beta2, [float])
-    validator.check_type("eps", eps, [float])
-    validator.check_type("weight_dacay", weight_decay, [float])
-    validator.check_number_range("decay_steps", decay_steps, 1, float("inf"), Rel.INC_LEFT)
-    validator.check_number_range("beta1", beta1, 0.0, 1.0, Rel.INC_NEITHER)
-    validator.check_number_range("beta2", beta2, 0.0, 1.0, Rel.INC_NEITHER)
-    validator.check_number_range("eps", eps, 0.0, float("inf"), Rel.INC_NEITHER)
-    validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT)
+    validator.check_value_type("decay_steps", decay_steps, [int], prim_name)
+    validator.check_value_type("warmup_steps", warmup_steps, [int], prim_name)
+    validator.check_value_type("start_learning_rate", start_learning_rate, [float], prim_name)
+    validator.check_value_type("end_learning_rate", end_learning_rate, [float], prim_name)
+    validator.check_value_type("power", power, [float], prim_name)
+    validator.check_value_type("beta1", beta1, [float], prim_name)
+    validator.check_value_type("beta2", beta2, [float], prim_name)
+    validator.check_value_type("eps", eps, [float], prim_name)
+    validator.check_value_type("weight_dacay", weight_decay, [float], prim_name)
+    validator.check_number_range("decay_steps", decay_steps, 1, float("inf"), Rel.INC_LEFT, prim_name)
+    validator.check_number_range("beta1", beta1, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("beta2", beta2, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("eps", eps, 0.0, float("inf"), Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, prim_name)
 
 
 class Lamb(Optimizer):
@@ -182,7 +182,7 @@ class Lamb(Optimizer):
 
         super(Lamb, self).__init__(start_learning_rate, params)
         _check_param_value(decay_steps, warmup_steps, start_learning_rate, end_learning_rate,
-                           power, beta1, beta2, eps, weight_decay)
+                           power, beta1, beta2, eps, weight_decay, self.cls_name)
 
         # turn them to scalar when me support scalar/tensor mix operations
         self.global_step = Parameter(initializer(0, [1]), name="global_step")

@@ -1408,3 +1408,160 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
     if batch_size == 0:
         return hsv_to_rgb(np_hsv_imgs, is_hwc)
     return np.array([hsv_to_rgb(img, is_hwc) for img in np_hsv_imgs])
+
+
+def random_color(img, degrees):
+
+    """
+    Adjust the color of the input PIL image by a random degree.
+
+    Args:
+        img (PIL Image): Image to be color adjusted.
+        degrees (sequence): Range of random color adjustment degrees.
+            It should be in (min, max) format (default=(0.1,1.9)).
+
+    Returns:
+        img (PIL Image), Color adjusted image.
+    """
+
+    if not is_pil(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+
+    if isinstance(degrees, (list, tuple)):
+        if len(degrees) != 2:
+            raise ValueError("Degrees must be a sequence length 2.")
+        if degrees[0] < 0:
+            raise ValueError("Degree value must be non-negative.")
+        if degrees[0] > degrees[1]:
+            raise ValueError("Degrees should be in (min,max) format. Got (max,min).")
+
+    else:
+        raise TypeError("Degrees must be a sequence in (min,max) format.")
+
+    v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
+    return ImageEnhance.Color(img).enhance(v)
+
+
+def random_sharpness(img, degrees):
+
+    """
+    Adjust the sharpness of the input PIL image by a random degree.
+
+    Args:
+        img (PIL Image): Image to be sharpness adjusted.
+        degrees (sequence): Range of random sharpness adjustment degrees.
+            It should be in (min, max) format (default=(0.1,1.9)).
+
+    Returns:
+        img (PIL Image), Sharpness adjusted image.
+    """
+
+    if not is_pil(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+
+    if isinstance(degrees, (list, tuple)):
+        if len(degrees) != 2:
+            raise ValueError("Degrees must be a sequence length 2.")
+        if degrees[0] < 0:
+            raise ValueError("Degree value must be non-negative.")
+        if degrees[0] > degrees[1]:
+            raise ValueError("Degrees should be in (min,max) format. Got (max,min).")
+
+    else:
+        raise TypeError("Degrees must be a sequence in (min,max) format.")
+
+    v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
+    return ImageEnhance.Sharpness(img).enhance(v)
+
+
+def auto_contrast(img):
+
+    """
+    Automatically maximize the contrast of the input PIL image.
+
+    Args:
+        img (PIL Image): Image to be augmented with AutoContrast.
+
+    Returns:
+        img (PIL Image), Augmented image.
+
+    """
+
+    if not is_pil(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+
+    return ImageOps.autocontrast(img)
+
+
+def invert_color(img):
+
+    """
+    Invert colors of input PIL image.
+
+    Args:
+        img (PIL Image): Image to be color inverted.
+
+    Returns:
+        img (PIL Image), Color inverted image.
+
+    """
+
+    if not is_pil(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+
+    return ImageOps.invert(img)
+
+
+def equalize(img):
+
+    """
+    Equalize the histogram of input PIL image.
+
+    Args:
+        img (PIL Image): Image to be equalized
+
+    Returns:
+        img (PIL Image), Equalized image.
+
+    """
+
+    if not is_pil(img):
+        raise TypeError('img should be PIL Image. Got {}'.format(type(img)))
+
+    return ImageOps.equalize(img)
+
+
+def uniform_augment(img, transforms, num_ops):
+
+    """
+    Uniformly select and apply a number of transforms sequentially from
+    a list of transforms. Randomly assigns a probability to each transform for
+    each image to decide whether apply it or not.
+
+    Args:
+        img: Image to be applied transformation.
+        transforms (list): List of transformations to be chosen from to apply.
+        num_ops (int): number of transforms to sequentially aaply.
+
+    Returns:
+        img, Transformed image.
+    """
+
+    if transforms is None:
+        raise ValueError("transforms is not provided.")
+    if not isinstance(transforms, list):
+        raise ValueError("The transforms needs to be a list.")
+
+    if not isinstance(num_ops, int):
+        raise ValueError("Number of operations should be a positive integer.")
+    if num_ops < 1:
+        raise ValueError("Number of operators should equal or greater than one.")
+
+    for _ in range(num_ops):
+        AugmentOp = random.choice(transforms)
+        pr = random.random()
+        if random.random() < pr:
+            img = AugmentOp(img.copy())
+        transforms.remove(AugmentOp)
+
+    return img

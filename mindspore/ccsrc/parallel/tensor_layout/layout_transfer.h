@@ -28,7 +28,7 @@ class LayoutTransfer {
   LayoutTransfer() = default;
   virtual ~LayoutTransfer() = 0;
   std::string ToString() const;
-  Status Init(const TensorLayout& from_in, const TensorLayout& to_in);
+  Status Init(const TensorLayout &from_in, const TensorLayout &to_in);
   TensorLayout from_in() const { return from_in_; }
   TensorLayout to_in() const { return to_in_; }
 

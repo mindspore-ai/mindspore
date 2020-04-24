@@ -16,7 +16,7 @@
 
 import threading
 from mindspore._c_expression import CostModelContext
-from mindspore._extends.pynative_helper import args_type_check
+from mindspore._checkparam import args_type_check
 
 __all__ = ["get_algo_parameters", "reset_algo_parameters", "set_algo_parameters"]
 

@@ -41,21 +41,21 @@ class PrimToFunction;
 class PrimToFunction {
  public:
   // Return a thread-safe singleton instance
-  static PrimToFunction& GetInstance() {
+  static PrimToFunction &GetInstance() {
     static PrimToFunction instance;
     return instance;
   }
-  PrimToFunction(const PrimToFunction&) = delete;
-  PrimToFunction& operator=(const PrimToFunction&) = delete;
+  PrimToFunction(const PrimToFunction &) = delete;
+  PrimToFunction &operator=(const PrimToFunction &) = delete;
   ~PrimToFunction() = default;
 
   // Get the args and return value for a primitive instance.
-  bool GetFunction(const PrimitivePtr& prim, FunctionPtr* func) const;
+  bool GetFunction(const PrimitivePtr &prim, FunctionPtr *func) const;
 
  private:
   PrimToFunction();
   // Get the number of primitive arguments
-  int GetPrimType(const PrimitivePtr& prim) const;
+  int GetPrimType(const PrimitivePtr &prim) const;
   const std::unordered_map<std::string, int> prim_func_type_map_;
 };
 }  // namespace prim

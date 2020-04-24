@@ -391,6 +391,80 @@ def test_case_13():
         i = i + 1
 
 
+def test_case_14():
+    """
+    Test 1D Generator MP + CPP sampler
+    """
+    logger.info("Test 1D Generator MP : 0 - 63")
+
+    source = [(np.array([x]),) for x in range(256)]
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(), num_parallel_workers=4).repeat(2)
+    i = 0
+    for data in ds1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([i])
+        assert np.array_equal(data["data"], golden)
+        i = i + 1
+        if i == 256:
+            i = 0
+
+
+def test_case_15():
+    """
+    Test 1D Generator MP + Python sampler
+    """
+    logger.info("Test 1D Generator MP : 0 - 63")
+
+    sampler = [x for x in range(256)]
+    source = [(np.array([x]),) for x in range(256)]
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=sampler, num_parallel_workers=4).repeat(2)
+    i = 0
+    for data in ds1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([i])
+        assert np.array_equal(data["data"], golden)
+        i = i + 1
+        if i == 256:
+            i = 0
+
+
+def test_case_16():
+    """
+    Test multi column generator Mp + CPP sampler
+    """
+    logger.info("Test multi column generator")
+
+    source = [(np.array([x]), np.array([x + 1])) for x in range(256)]
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(source, ["col0", "col1"], sampler=ds.SequentialSampler())
+
+    i = 0
+    for item in data1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([i])
+        assert np.array_equal(item["col0"], golden)
+        golden = np.array([i + 1])
+        assert np.array_equal(item["col1"], golden)
+        i = i + 1
+
+
+def test_case_17():
+    """
+    Test multi column generator Mp + Python sampler
+    """
+    logger.info("Test multi column generator")
+
+    sampler = [x for x in range(256)]
+    source = [(np.array([x]), np.array([x + 1])) for x in range(256)]
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(source, ["col0", "col1"], sampler=sampler)
+
+    i = 0
+    for item in data1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([i])
+        assert np.array_equal(item["col0"], golden)
+        golden = np.array([i + 1])
+        assert np.array_equal(item["col1"], golden)
+        i = i + 1
+
+
 def test_case_error_1():
     def generator_np():
         for i in range(64):
@@ -506,6 +580,25 @@ def test_num_samples_underflow():
         count = count + 1
     assert count == 64
 
+def manual_test_keyborad_interrupt():
+    """
+    Test keyborad_interrupt
+    """
+    logger.info("Test 1D Generator MP : 0 - 63")
+
+    class MyDS():
+        def __getitem__(self, item):
+            while True:
+                pass
+
+        def __len__(self):
+            return 1024
+
+    ds1 = ds.GeneratorDataset(MyDS(), ["data"], num_parallel_workers=4).repeat(2)
+    i = 0
+    for data in ds1.create_dict_iterator():  # each data is a dictionary
+        pass
+
 
 if __name__ == "__main__":
     test_case_0()
@@ -522,6 +615,10 @@ if __name__ == "__main__":
     test_case_11()
     test_case_12()
     test_case_13()
+    test_case_14()
+    test_case_15()
+    test_case_16()
+    test_case_17()
     test_case_error_1()
     test_case_error_2()
     test_case_error_3()
@@ -529,3 +626,5 @@ if __name__ == "__main__":
     test_sequential_sampler()
     test_distributed_sampler()
     test_random_sampler()
+
+

@@ -17,7 +17,7 @@ import sys
 
 import numpy as np
 
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from .evaluation import EvaluationBase
 
 
@@ -136,7 +136,7 @@ class Recall(EvaluationBase):
         if self._class_num == 0:
             raise RuntimeError('Input number of samples can not be 0.')
 
-        validator.check_type("average", average, [bool])
+        validator.check_value_type("average", average, [bool], self.__class__.__name__)
         result = self._true_positives / (self._actual_positives + self.eps)
 
         if average:

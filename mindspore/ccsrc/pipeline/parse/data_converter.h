@@ -32,25 +32,25 @@ namespace mindspore {
 namespace parse {
 // data convert for parse
 namespace data_converter {
-void CacheObjectValue(const std::string& obj_key, const Any& data);
-bool GetObjectValue(const std::string& obj_key, Any* const data);
+void CacheObjectValue(const std::string &obj_key, const Any &data);
+bool GetObjectValue(const std::string &obj_key, Any *const data);
 
-void SetObjGraphValue(const std::string& obj_key, const FuncGraphPtr& data);
+void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data);
 
-const std::unordered_map<std::string, std::vector<FuncGraphPtr>>& GetObjGraphs();
+const std::unordered_map<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs();
 
-std::vector<std::string> GetObjKey(const py::object& obj);
-ResolveTypeDef GetObjType(const py::object& obj);
-ClassInstanceTypeDef GetClassInstanceType(const py::object& obj);
+std::vector<std::string> GetObjKey(const py::object &obj);
+ResolveTypeDef GetObjType(const py::object &obj);
+ClassInstanceTypeDef GetClassInstanceType(const py::object &obj);
 
-bool IsCellInstance(const py::object& obj);
-py::object CreatePythonObject(const py::object& type, const py::tuple& params);
-void MakeProperNameToFuncGraph(const FuncGraphPtr& func_graph, std::string name);
-ValuePtr PyDataToValue(const py::object& obj);
+bool IsCellInstance(const py::object &obj);
+py::object CreatePythonObject(const py::object &type, const py::tuple &params);
+void MakeProperNameToFuncGraph(const FuncGraphPtr &func_graph, std::string name);
+ValuePtr PyDataToValue(const py::object &obj);
 void ClearObjectCache();
 }  // namespace data_converter
 
-ClassPtr ParseDataClass(const py::object& cls_obj);
+ClassPtr ParseDataClass(const py::object &cls_obj);
 
 void CleanDataClassToClassMap();
 

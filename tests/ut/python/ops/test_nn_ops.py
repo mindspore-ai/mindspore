@@ -516,7 +516,7 @@ test_cases = [
 
 test_cases_for_verify_exception = [
     ('Conv2d_ValueError_1', {
-        'block': (lambda _: P.Conv2D(3, 4, mode=-2.0), {'exception': ValueError}),
+        'block': (lambda _: P.Conv2D(3, 4, mode=-2.0), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('Conv2d_ValueError_2', {
@@ -540,7 +540,7 @@ test_cases_for_verify_exception = [
         'desc_inputs': [0],
     }),
     ('FusedBatchNorm_ValueError_1', {
-        'block': (lambda _: P.FusedBatchNorm(mode="1", epsilon=1e-5, momentum=0.1), {'exception': ValueError}),
+        'block': (lambda _: P.FusedBatchNorm(mode="1", epsilon=1e-5, momentum=0.1), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('FusedBatchNorm_ValueError_2', {

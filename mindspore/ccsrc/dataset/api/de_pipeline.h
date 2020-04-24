@@ -40,6 +40,7 @@ enum OpName {
   kShuffle,
   kMindrecord,
   kBatch,
+  kBarrier,
   kCache,
   kRepeat,
   kSkip,
@@ -58,7 +59,8 @@ enum OpName {
   kVoc,
   kCifar10,
   kCifar100,
-  kCelebA
+  kCelebA,
+  kTextFile
 };
 
 // The C++ binder class that we expose to the python script.
@@ -106,11 +108,15 @@ class DEPipeline {
 
   Status ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
+  Status ParseFilterOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
   Status ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status ParseBarrierOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseGeneratorOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
@@ -119,8 +125,6 @@ class DEPipeline {
   Status ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
-
-  DsOpPtr ParseFilterOp(const py::dict &args) const;
 
   Status ParseDeviceQueueOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
@@ -147,6 +151,8 @@ class DEPipeline {
   Status SetBatchParameters(const py::dict &args);
 
   Status ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status ParseTextFileOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
  private:
   // Execution tree that links the dataset operators.

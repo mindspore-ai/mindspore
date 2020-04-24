@@ -45,25 +45,25 @@ class FileSystem {
   virtual ~FileSystem() = default;
 
   // Create a new read/write file
-  virtual WriteFilePtr CreateWriteFile(const string& file_name) = 0;
+  virtual WriteFilePtr CreateWriteFile(const string &file_name) = 0;
 
   // Check the file is exist?
-  virtual bool FileExist(const string& file_name) = 0;
+  virtual bool FileExist(const string &file_name) = 0;
 
   // Delete the file
-  virtual bool DeleteFile(const string& file_name) = 0;
+  virtual bool DeleteFile(const string &file_name) = 0;
 
   // Create a directory
-  virtual bool CreateDir(const string& dir_name) = 0;
+  virtual bool CreateDir(const string &dir_name) = 0;
 
   // Delete the specified directory
-  virtual bool DeleteDir(const string& dir_name) = 0;
+  virtual bool DeleteDir(const string &dir_name) = 0;
 };
 
 // A file that can be read and write
 class WriteFile {
  public:
-  explicit WriteFile(const string& file_name) : file_name_(file_name) {}
+  explicit WriteFile(const string &file_name) : file_name_(file_name) {}
 
   virtual ~WriteFile() = default;
 
@@ -71,7 +71,7 @@ class WriteFile {
   virtual bool Open() = 0;
 
   // append the content to file
-  virtual bool Write(const std::string& data) {
+  virtual bool Write(const std::string &data) {
     MS_LOG(WARNING) << "Attention: Maybe not call the function.";
     return true;
   }
@@ -101,27 +101,27 @@ class PosixFileSystem : public FileSystem {
   ~PosixFileSystem() override = default;
 
   // create a new write file
-  WriteFilePtr CreateWriteFile(const string& file_name) override;
+  WriteFilePtr CreateWriteFile(const string &file_name) override;
 
   // check the file is exist?
-  bool FileExist(const string& file_name) override;
+  bool FileExist(const string &file_name) override;
 
   // delete the file
-  bool DeleteFile(const string& file_name) override;
+  bool DeleteFile(const string &file_name) override;
 
   // Create a Directory
-  bool CreateDir(const string& dir_name) override;
+  bool CreateDir(const string &dir_name) override;
 
   // Delete the specified directory.
-  bool DeleteDir(const string& dir_name) override;
+  bool DeleteDir(const string &dir_name) override;
 };
 
 // A file that can be read and write for posix
 class PosixWriteFile : public WriteFile {
  public:
-  explicit PosixWriteFile(const string& file_name) : WriteFile(file_name), file_(nullptr) {}
-  PosixWriteFile(const PosixWriteFile&);
-  PosixWriteFile& operator=(const PosixWriteFile&);
+  explicit PosixWriteFile(const string &file_name) : WriteFile(file_name), file_(nullptr) {}
+  PosixWriteFile(const PosixWriteFile &);
+  PosixWriteFile &operator=(const PosixWriteFile &);
 
   ~PosixWriteFile() override {
     try {
@@ -129,7 +129,7 @@ class PosixWriteFile : public WriteFile {
         (void)fclose(file_);
         file_ = nullptr;
       }
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Exception when closing file.";
     } catch (...) {
       MS_LOG(ERROR) << "Non standard exception when closing file.";
@@ -159,7 +159,7 @@ class PosixWriteFile : public WriteFile {
     return true;
   }
 
-  bool Write(const std::string& data) override {
+  bool Write(const std::string &data) override {
     MS_LOG(DEBUG) << "Write data(" << data.size() << ") to file(" << this->file_name_ << ").";
     size_t r = fwrite(data.data(), 1, data.size(), file_);
     if (r != data.size()) {
@@ -194,7 +194,7 @@ class PosixWriteFile : public WriteFile {
   bool Sync() override { return Flush(); }
 
  private:
-  FILE* file_;
+  FILE *file_;
 };
 #endif
 

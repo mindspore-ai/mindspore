@@ -812,3 +812,36 @@ def check_rescale(method):
         return method(self, **kwargs)
 
     return new_method
+
+
+def check_uniform_augmentation(method):
+    """Wrapper method to check the parameters of UniformAugmentation."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        operations, num_ops = (list(args) + 2 * [None])[:2]
+        if "operations" in kwargs:
+            operations = kwargs.get("operations")
+        else:
+            raise ValueError("operations list required")
+        if "num_ops" in kwargs:
+            num_ops = kwargs.get("num_ops")
+        else:
+            num_ops = 2
+
+        if num_ops <= 0:
+            raise ValueError("num_ops should be greater than zero")
+        if num_ops > len(operations):
+            raise ValueError("num_ops is greater than operations list size")
+        if not isinstance(operations, list):
+            raise ValueError("operations is not a python list")
+        for op in operations:
+            if not callable(op):
+                raise ValueError("non-callable op in operations list")
+
+        kwargs["num_ops"] = num_ops
+        kwargs["operations"] = operations
+
+        return method(self, **kwargs)
+
+    return new_method

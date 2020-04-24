@@ -37,7 +37,7 @@ struct ExecutorInfo {
 
 using ExecutorInfoPtr = std::shared_ptr<ExecutorInfo>;
 
-inline std::string GetPhasePrefix(const std::string& phase) {
+inline std::string GetPhasePrefix(const std::string &phase) {
   auto pos = phase.find('.');
   if (pos == std::string::npos) {
     MS_LOG(EXCEPTION) << "Phase has no . for prefix" << phase;
@@ -45,7 +45,7 @@ inline std::string GetPhasePrefix(const std::string& phase) {
   return phase.substr(0, pos);
 }
 
-inline std::string GetFilePathName(const std::string& file_name) {
+inline std::string GetFilePathName(const std::string &file_name) {
   std::ostringstream oss;
   auto ms_context = MsContext::GetInstance();
   if (ms_context == nullptr) {

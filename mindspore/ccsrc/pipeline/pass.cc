@@ -48,7 +48,7 @@ using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 using mindspore::validator::Validate;
 
-bool SimplifyDataStructuresPass(const ResourcePtr& res) {
+bool SimplifyDataStructuresPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
 
   FuncGraphPtr func_graph = res->func_graph();
@@ -57,7 +57,7 @@ bool SimplifyDataStructuresPass(const ResourcePtr& res) {
   abstract::AbstractBasePtrList args_spec;
   auto parameters = func_graph->parameters();
   (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
-                       [](const AnfNodePtr& p) -> AbstractBasePtr { return p->abstract(); });
+                       [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
   FuncGraphPtr new_fg = Renormalize(res, func_graph, args_spec);
   res->set_func_graph(new_fg);
   res->set_args_spec(args_spec);
@@ -65,7 +65,7 @@ bool SimplifyDataStructuresPass(const ResourcePtr& res) {
 }
 
 namespace {
-OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
+OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = opt::OptPassConfig({
     irpass.switch_simplify_,
 
@@ -133,7 +133,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
   return map_a;
 }
 
-OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib& irpass) {
+OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig b_1 = opt::OptPassConfig({
     irpass.zero_like_fill_zero_,
     irpass.item_tuple_eliminate_,
@@ -157,7 +157,7 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib& irpass) {
   return map;
 }
 
-OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib& irpass) {
+OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig control_group = opt::OptPassConfig({irpass.convert_switch_replacement_});
   OptPassGroupMap map({
     {"control_group", control_group},
@@ -173,7 +173,7 @@ OptPassGroupMap GetInferenceOptPreparePhases() {
   return prepare_map;
 }
 
-OptPassGroupMap GetPreparePhases(const opt::irpass::OptimizeIRPassLib& irpass) {
+OptPassGroupMap GetPreparePhases(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig prepare_group = opt::OptPassConfig({irpass.print_tuple_wrapper_});
   OptPassGroupMap map({{"prepare_group", prepare_group}});
   return map;
@@ -181,7 +181,7 @@ OptPassGroupMap GetPreparePhases(const opt::irpass::OptimizeIRPassLib& irpass) {
 
 static std::unordered_map<std::string, std::shared_ptr<Optimizer>> g_pass_opts = {};
 
-void InitOpt(const ResourcePtr& res) {
+void InitOpt(const ResourcePtr &res) {
   if (g_pass_opts.size() == 0) {
     opt::irpass::OptimizeIRPassLib irpass;
     g_pass_opts["opt_a"] = Optimizer::MakeOptimizer("opt_a", res, GetOptPassesA(irpass));
@@ -193,13 +193,13 @@ void InitOpt(const ResourcePtr& res) {
 }  // namespace
 
 void ReclaimOptimizer() {
-  for (auto& opt : g_pass_opts) {
+  for (auto &opt : g_pass_opts) {
     opt.second = nullptr;
   }
   g_pass_opts.clear();
 }
 
-bool OptPassGroup(const ResourcePtr& res, const std::string& name) {
+bool OptPassGroup(const ResourcePtr &res, const std::string &name) {
   if (res->func_graph() == nullptr) {
     MS_LOG(ERROR) << "Opt passes int error";
     return false;
@@ -216,12 +216,12 @@ bool OptPassGroup(const ResourcePtr& res, const std::string& name) {
   return true;
 }
 
-bool OptPassAGroup(const ResourcePtr& res) { return OptPassGroup(res, "opt_a"); }
-bool OptPassBGroup(const ResourcePtr& res) { return OptPassGroup(res, "opt_b"); }
-bool ControlGroup(const ResourcePtr& res) { return OptPassGroup(res, "opt_control"); }
-bool PrepareGroup(const ResourcePtr& res) { return OptPassGroup(res, "opt_prepare"); }
+bool OptPassAGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_a"); }
+bool OptPassBGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_b"); }
+bool ControlGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_control"); }
+bool PrepareGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_prepare"); }
 
-bool AddControlDependPass(const ResourcePtr& res) {
+bool AddControlDependPass(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
 
@@ -237,7 +237,7 @@ bool AddControlDependPass(const ResourcePtr& res) {
   return true;
 }
 
-bool CconvPass(const ResourcePtr& res) {
+bool CconvPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
   FuncGraphPtr func_graph = res->func_graph();
   FuncGraphPtr new_fg = LiftingClone(func_graph);
@@ -245,14 +245,14 @@ bool CconvPass(const ResourcePtr& res) {
   return true;
 }
 
-bool ValidatePass(const ResourcePtr& res) {
+bool ValidatePass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
   FuncGraphPtr func_graph = res->func_graph();
   Validate(func_graph);
   return true;
 }
 
-bool InferenceOptPreparePass(const ResourcePtr& res) {
+bool InferenceOptPreparePass(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   abstract::AbstractBasePtrList args_spec = res->args_spec();

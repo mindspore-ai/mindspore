@@ -42,6 +42,7 @@ Status SequentialSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer)
 }
 
 Status SequentialSampler::InitSampler() {
+  num_samples_ = (num_samples_ <= 0) ? num_rows_ : num_samples_;  // if num_samples < 0, try if num_rows is set
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && samples_per_buffer_ > 0, "Fail to init Sequential Sampler");
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
   return Status::OK();

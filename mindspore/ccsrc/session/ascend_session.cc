@@ -610,7 +610,7 @@ void AscendSession::CopyOutputOfIf(GraphId false_graph_id) {
       if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() &&
           ConfigManager::GetInstance().iter_num() > 1) {
         // insert active in true graph, another active will be inserted in kernel adjust
-        InsertStreamActiveToGraph(true_last_id, kInvalidDistincLabel - 1);
+        InsertStreamActiveToGraph(true_last_id, kSecondStreamSwitchLabel);
       }
       break;
     }

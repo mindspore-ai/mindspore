@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status GetStrategy(const CostGraphPtr& graph) {
+Status GetStrategy(const CostGraphPtr &graph) {
   MS_LOG(INFO) << "Searching strategies begins.";
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<EliminationPtr> eliminations;
@@ -141,7 +141,7 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
       auto elimination = (*rit)->cast<EdgeEliminationPtr>();
       auto new_edge = elimination->new_edge_;
       MS_EXCEPTION_IF_NULL(new_edge);
-      auto& edges = elimination->edges_;
+      auto &edges = elimination->edges_;
       auto decision = new_edge->selected_cost()->decision_ptr_->cast<EdgeEliminationDecisionPtr>();
       for (size_t j = 0; j < edges.size(); ++j) {
         MS_EXCEPTION_IF_NULL(edges[j]);

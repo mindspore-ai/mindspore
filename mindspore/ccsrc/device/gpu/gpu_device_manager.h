@@ -37,17 +37,17 @@ class GPUDeviceManager {
   uint32_t cur_device_id() const;
   bool is_device_id_init() const;
 
-  bool CreateStream(DeviceStream* stream);
-  bool SyncStream(const DeviceStream& stream) const;
-  const DeviceStream& default_stream() const;
+  bool CreateStream(DeviceStream *stream);
+  bool SyncStream(const DeviceStream &stream) const;
+  const DeviceStream &default_stream() const;
 
-  const cudnnHandle_t& GetCudnnHandle() const;
-  const cublasHandle_t& GetCublasHandle() const;
+  const cudnnHandle_t &GetCudnnHandle() const;
+  const cublasHandle_t &GetCublasHandle() const;
 
-  bool CopyDeviceMemToHost(const HostMemPtr& dst, const DeviceMemPtr& src, size_t size) const;
-  bool CopyHostMemToDevice(const DeviceMemPtr& dst, const void* src, size_t size) const;
+  bool CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const;
+  bool CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size) const;
 
-  static GPUDeviceManager& GetInstance() {
+  static GPUDeviceManager &GetInstance() {
     static GPUDeviceManager instance;
     return instance;
   }
@@ -55,8 +55,8 @@ class GPUDeviceManager {
  private:
   GPUDeviceManager() : dev_id_init_(false), cur_dev_id_(0) {}
   ~GPUDeviceManager() = default;
-  GPUDeviceManager(const GPUDeviceManager&) = delete;
-  GPUDeviceManager& operator=(const GPUDeviceManager&) = delete;
+  GPUDeviceManager(const GPUDeviceManager &) = delete;
+  GPUDeviceManager &operator=(const GPUDeviceManager &) = delete;
 
   // default CUDA stream used for all the kernels.
   DeviceStream default_stream_{nullptr};

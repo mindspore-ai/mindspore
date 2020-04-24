@@ -38,7 +38,7 @@ using Tensor = mindspore::tensor::Tensor;
 using TensorPtr = mindspore::tensor::TensorPtr;
 
 namespace {
-bool ConvertTuple(const py::object& obj, ValuePtr* const data, bool use_signature) {
+bool ConvertTuple(const py::object &obj, ValuePtr *const data, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python tuple";
   py::tuple tuple = obj.cast<py::tuple>();
   std::vector<ValuePtr> value_list;
@@ -55,7 +55,7 @@ bool ConvertTuple(const py::object& obj, ValuePtr* const data, bool use_signatur
   return true;
 }
 
-bool ConvertList(const py::object& obj, ValuePtr* const data, bool use_signature) {
+bool ConvertList(const py::object &obj, ValuePtr *const data, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python list";
 
   py::list list = obj.cast<py::list>();
@@ -72,7 +72,7 @@ bool ConvertList(const py::object& obj, ValuePtr* const data, bool use_signature
   return true;
 }
 
-bool ConvertCellList(const py::object& obj, ValuePtr* const data, bool use_signature) {
+bool ConvertCellList(const py::object &obj, ValuePtr *const data, bool use_signature) {
   MS_LOG(DEBUG) << "Converting cell list";
   py::sequence list = obj;
   std::vector<ValuePtr> value_list;
@@ -88,7 +88,7 @@ bool ConvertCellList(const py::object& obj, ValuePtr* const data, bool use_signa
   return true;
 }
 
-bool ConvertDict(const py::object& obj, ValuePtr* data, bool use_signature) {
+bool ConvertDict(const py::object &obj, ValuePtr *data, bool use_signature) {
   MS_LOG(DEBUG) << "Converting python dict";
 
   py::dict dict_values = obj.cast<py::dict>();
@@ -109,14 +109,14 @@ bool ConvertDict(const py::object& obj, ValuePtr* data, bool use_signature) {
   return true;
 }
 
-void ConvertNameSpace(const py::object& obj, ValuePtr* const data) {
+void ConvertNameSpace(const py::object &obj, ValuePtr *const data) {
   MS_LOG(DEBUG) << "Converting python module";
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object module_namespace = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MODULE_NAMESPACE, obj);
   *data = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_MODULE, py::cast<py::module>(module_namespace));
 }
 
-void ConvertDataClass(py::object obj, ValuePtr* const data) {
+void ConvertDataClass(py::object obj, ValuePtr *const data) {
   MS_LOG(DEBUG) << "Converting dataclass";
   // Maybe the obj is dataclass define
   auto desc = py::cast<std::string>(python_adapter::CallPyObjMethod(obj, PYTHON_GET_OBJ_DESC, obj));
@@ -124,7 +124,7 @@ void ConvertDataClass(py::object obj, ValuePtr* const data) {
   *data = std::make_shared<ClassObject>(obj, std::string(desc.begin() + 1, desc.end() - 1));
 }
 
-bool ConvertPrimitive(py::object obj, ValuePtr* const data, bool use_signature = false) {
+bool ConvertPrimitive(py::object obj, ValuePtr *const data, bool use_signature = false) {
   MS_LOG(DEBUG) << "Converting primitive object";
 
   // need check the primitive is class type or instance
@@ -155,7 +155,7 @@ bool ConvertPrimitive(py::object obj, ValuePtr* const data, bool use_signature =
   return true;
 }
 
-bool ConvertMetaFuncGraph(const py::object& obj, ValuePtr* const data, bool use_signature = false) {
+bool ConvertMetaFuncGraph(const py::object &obj, ValuePtr *const data, bool use_signature = false) {
   MS_LOG(DEBUG) << "Converting MetaFuncGraph object";
   auto meta = obj.cast<MetaFuncGraphPtr>();
   if (meta == nullptr) {
@@ -170,7 +170,7 @@ bool ConvertMetaFuncGraph(const py::object& obj, ValuePtr* const data, bool use_
   return true;
 }
 
-bool ConvertDataType(const py::object& obj, ValuePtr* const data) {
+bool ConvertDataType(const py::object &obj, ValuePtr *const data) {
   MS_LOG(DEBUG) << "Converting type object";
   auto typeptr = obj.cast<TypePtr>();
   if (typeptr == nullptr) {
@@ -181,7 +181,7 @@ bool ConvertDataType(const py::object& obj, ValuePtr* const data) {
   return true;
 }
 
-bool ConvertTensor(const py::object& obj, ValuePtr* const data) {
+bool ConvertTensor(const py::object &obj, ValuePtr *const data) {
   MS_LOG(DEBUG) << "Converting tensor object";
 
   auto m_tensor = obj.cast<TensorPtr>();
@@ -193,7 +193,7 @@ bool ConvertTensor(const py::object& obj, ValuePtr* const data) {
   return true;
 }
 
-bool ConvertOtherObj(py::object obj, ValuePtr* const data) {
+bool ConvertOtherObj(py::object obj, ValuePtr *const data) {
   auto obj_type = data_converter::GetObjType(obj);
   MS_LOG(DEBUG) << "Converting the object(" << ((std::string)py::str(obj)) << ") detail type: " << obj_type << " ";
   if (obj_type == RESOLVE_TYPE_CLASS_TYPE) {
@@ -244,7 +244,7 @@ bool ConvertOtherObj(py::object obj, ValuePtr* const data) {
 }
 }  // namespace
 
-bool ConvertData(const py::object& obj, ValuePtr* const data, bool use_signature) {
+bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature) {
   // check parameter valid
   if (data == nullptr) {
     MS_LOG(ERROR) << "Data is null pointer";
@@ -295,7 +295,7 @@ bool ConvertData(const py::object& obj, ValuePtr* const data, bool use_signature
 }
 
 // convert data to graph
-FuncGraphPtr ConvertToFuncGraph(const py::object& obj, const std::string& python_mod_get_parse_method) {
+FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python_mod_get_parse_method) {
   std::vector<std::string> results = data_converter::GetObjKey(obj);
   std::string obj_id = results[0] + python_mod_get_parse_method;
   std::string obj_key = results[1];
@@ -331,25 +331,25 @@ static std::unordered_map<std::string, Any> object_map_ = std::unordered_map<std
 static std::unordered_map<std::string, std::vector<FuncGraphPtr>> object_graphs_map_ =
   std::unordered_map<std::string, std::vector<FuncGraphPtr>>();
 
-void SetObjGraphValue(const std::string& obj_key, const FuncGraphPtr& data) {
+void SetObjGraphValue(const std::string &obj_key, const FuncGraphPtr &data) {
   object_graphs_map_[obj_key].push_back(data);
   MS_LOG(DEBUG) << "Set func graph size:" << object_graphs_map_.size();
 }
 
-const std::unordered_map<std::string, std::vector<FuncGraphPtr>>& GetObjGraphs() {
+const std::unordered_map<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs() {
   MS_LOG(DEBUG) << "Obj size:" << object_graphs_map_.size();
   return object_graphs_map_;
 }
 
-void CacheObjectValue(const std::string& obj_key, const Any& data) { object_map_[obj_key] = data; }
-bool GetObjectValue(const std::string& obj_key, Any* const data) {
+void CacheObjectValue(const std::string &obj_key, const Any &data) { object_map_[obj_key] = data; }
+bool GetObjectValue(const std::string &obj_key, Any *const data) {
   if (object_map_.count(obj_key)) {
     *data = object_map_[obj_key];
     return true;
   }
   return false;
 }
-std::vector<std::string> GetObjKey(const py::object& obj) {
+std::vector<std::string> GetObjKey(const py::object &obj) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::tuple obj_tuple = python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_GET_OBJ_KEY, obj);
   if (obj_tuple.size() != 2) {
@@ -359,7 +359,7 @@ std::vector<std::string> GetObjKey(const py::object& obj) {
 }
 
 // get obj detail type
-ResolveTypeDef GetObjType(const py::object& obj) {
+ResolveTypeDef GetObjType(const py::object &obj) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   auto obj_type =
     ResolveTypeDef(python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_GET_OBJ_TYPE, obj).cast<int32_t>());
@@ -367,7 +367,7 @@ ResolveTypeDef GetObjType(const py::object& obj) {
 }
 
 // get class instance detail type
-ClassInstanceTypeDef GetClassInstanceType(const py::object& obj) {
+ClassInstanceTypeDef GetClassInstanceType(const py::object &obj) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   auto class_type =
     ClassInstanceTypeDef(python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_CLASS_INSTANCE_TYPE, obj).cast<int32_t>());
@@ -375,14 +375,14 @@ ClassInstanceTypeDef GetClassInstanceType(const py::object& obj) {
 }
 
 // check the object is Cell Instance
-bool IsCellInstance(const py::object& obj) {
+bool IsCellInstance(const py::object &obj) {
   auto class_type = GetClassInstanceType(obj);
   bool isCell = (class_type == CLASS_INSTANCE_TYPE_CELL);
   return isCell;
 }
 
 // create the python class instance
-py::object CreatePythonObject(const py::object& type, const py::tuple& params) {
+py::object CreatePythonObject(const py::object &type, const py::tuple &params) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object obj;
   if (params.size() == 0) {
@@ -395,7 +395,7 @@ py::object CreatePythonObject(const py::object& type, const py::tuple& params) {
 
 // Generate an appropriate name and set to graph debuginfo
 // character <> can not used in the dot file, so change to another symbol
-void MakeProperNameToFuncGraph(const FuncGraphPtr& func_graph, std::string name) {
+void MakeProperNameToFuncGraph(const FuncGraphPtr &func_graph, std::string name) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(func_graph->debug_info());
   // set detail name info of function
@@ -412,7 +412,7 @@ void MakeProperNameToFuncGraph(const FuncGraphPtr& func_graph, std::string name)
   func_graph->debug_info()->set_full_name(oss.str());
 }
 
-ValuePtr PyDataToValue(const py::object& obj) {
+ValuePtr PyDataToValue(const py::object &obj) {
   py::object to_convert = obj;
   if (py::hasattr(obj, "__parameter__")) {
     to_convert = py::cast<py::object>(python_adapter::GetPyObjAttr(obj, "default_input"));
@@ -431,7 +431,7 @@ void ClearObjectCache() {
 static std::unordered_map<std::string, ClassPtr> g_dataClassToClass = {};
 
 // parse dataclass to mindspore Class type
-ClassPtr ParseDataClass(const py::object& cls_obj) {
+ClassPtr ParseDataClass(const py::object &cls_obj) {
   std::string cls_name = py::cast<std::string>(python_adapter::GetPyObjAttr(cls_obj, "__name__"));
   std::string cls_module = py::cast<std::string>(python_adapter::GetPyObjAttr(cls_obj, "__module__"));
   std::string cls = cls_module + "." + cls_name;
@@ -443,7 +443,7 @@ ClassPtr ParseDataClass(const py::object& cls_obj) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   ClassAttrVector attributes;
   py::dict names = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_DATACLASS_ATTRS, cls_obj);
-  for (auto& item : names) {
+  for (auto &item : names) {
     TypePtr type_value = item.second.cast<TypePtr>();
     MS_EXCEPTION_IF_NULL(type_value);
     MS_LOG(DEBUG) << "(Name: " << py::cast<std::string>(item.first) << ", type: " << type_value->ToString() << ")";
@@ -452,7 +452,7 @@ ClassPtr ParseDataClass(const py::object& cls_obj) {
 
   std::unordered_map<std::string, ValuePtr> methods_map;
   py::dict methods = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_DATACLASS_METHODS, cls_obj);
-  for (auto& item : methods) {
+  for (auto &item : methods) {
     std::string fun_name = item.first.cast<std::string>();
     py::object obj = py::cast<py::object>(item.second);
     std::shared_ptr<PyObjectWrapper> method_obj = std::make_shared<PyObjectWrapper>(obj, fun_name);

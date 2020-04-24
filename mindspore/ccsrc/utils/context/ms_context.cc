@@ -45,7 +45,7 @@ std::map<std::string, MsBackendPolicy> MsContext::policy_map_ = {{"ge", kMsBacke
                                                                  {"ge_only", kMsBackendGeOnly},
                                                                  {"vm_prior", kMsBackendVmPrior}};
 
-MsContext::MsContext(const std::string& policy, const std::string& target) {
+MsContext::MsContext(const std::string &policy, const std::string &target) {
   save_graphs_flag_ = false;
   save_graphs_path_ = ".";
   save_ms_model_flag_ = false;
@@ -97,7 +97,7 @@ std::shared_ptr<MsContext> MsContext::GetInstance() {
   return inst_context_;
 }
 
-bool MsContext::set_backend_policy(const std::string& policy) {
+bool MsContext::set_backend_policy(const std::string &policy) {
   if (policy_map_.find(policy) == policy_map_.end()) {
     MS_LOG(ERROR) << "invalid backend policy name: " << policy;
     return false;
@@ -110,7 +110,7 @@ bool MsContext::set_backend_policy(const std::string& policy) {
 std::string MsContext::backend_policy() const {
   auto res = std::find_if(
     policy_map_.begin(), policy_map_.end(),
-    [&, this](const std::pair<std::string, MsBackendPolicy>& item) { return item.second == backend_policy_; });
+    [&, this](const std::pair<std::string, MsBackendPolicy> &item) { return item.second == backend_policy_; });
   if (res != policy_map_.end()) {
     return res->first;
   }
@@ -124,7 +124,7 @@ void MsContext::set_execution_mode(int execution_mode) {
   execution_mode_ = execution_mode;
 }
 
-bool MsContext::set_device_target(const std::string& target) {
+bool MsContext::set_device_target(const std::string &target) {
   if (kTargetSet.find(target) == kTargetSet.end()) {
     MS_LOG(ERROR) << "invalid device target name: " << target;
     return false;
@@ -218,7 +218,7 @@ bool MsContext::CloseTsd(bool force) {
         MS_LOG(INFO) << "join tdt host receive process";
         tdt_print_.join();
       }
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       MS_LOG(ERROR) << "tdt thread join failed: " << e.what();
     }
 #endif
@@ -241,7 +241,7 @@ bool MsContext::OpenTsd() { return true; }
 bool MsContext::CloseTsd(bool) { return true; }
 #endif
 
-void MsContext::SetHcclOptions(std::map<std::string, std::string>* ge_options) const {
+void MsContext::SetHcclOptions(std::map<std::string, std::string> *ge_options) const {
   auto env_table_file = common::GetEnv("RANK_TABLE_FILE");
   auto env_rank_id = common::GetEnv("RANK_ID");
   auto env_device_id = std::to_string(device_id_);
@@ -274,7 +274,7 @@ void MsContext::SetHcclOptions(std::map<std::string, std::string>* ge_options) c
   }
 }
 
-void MsContext::GetGeOptions(std::map<std::string, std::string>* ge_options) const {
+void MsContext::GetGeOptions(std::map<std::string, std::string> *ge_options) const {
 #ifdef ENABLE_GE
   (*ge_options)["device_id"] = "0";
   (*ge_options)["ge.exec.enableDump"] = std::to_string(enable_dump_);
@@ -365,7 +365,7 @@ void MsContext::GetGeOptions(std::map<std::string, std::string>* ge_options) con
 #endif
 }
 
-void MsContext::SetDisableReuseMemoryFlag(std::map<std::string, std::string>* ge_options) const {
+void MsContext::SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const {
   auto env_disable_reuse_memory = common::GetEnv("DISABLE_REUSE_MEMORY");
   if (!env_disable_reuse_memory.empty()) {
     (*ge_options)["ge.exec.disableReuseMemory"] = env_disable_reuse_memory;
@@ -412,7 +412,7 @@ bool MsContext::FinalizeGe(bool force) {
     try {
       DfGraphManager::GetInstance().DeleteGraphRunner();
       DfGraphManager::GetInstance().DeleteGeSession();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Error occurred when deleting GE graph runner and session fail. Error: " << e.what();
     } catch (...) {
       std::string exName(abi::__cxa_current_exception_type()->name());

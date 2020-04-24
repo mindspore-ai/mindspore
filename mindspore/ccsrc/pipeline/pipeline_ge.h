@@ -34,22 +34,22 @@ namespace pipeline {
 
 namespace py = pybind11;
 
-void SetGeOption(const std::map<std::string, std::string>& options);
+void SetGeOption(const std::map<std::string, std::string> &options);
 
-void RunGEInitGraph(const py::dict& init_params, const std::string& phase);
+void RunGEInitGraph(const py::dict &init_params, const std::string &phase);
 
-py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const py::tuple& args,
-                       const std::string& phase = "train");
+py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::tuple &args,
+                       const std::string &phase = "train");
 
-FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr>& info, const py::dict& init_params,
-                          const std::string& phase, const py::object& broadcast_params = {});
+FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::dict &init_params,
+                          const std::string &phase, const py::object &broadcast_params = {});
 
 // init and exec dataset sub graph for GE backend
-bool InitExecDatasetGe(const std::string& queue_name, int64_t size, int64_t batch_size,
-                       const std::vector<TypePtr>& types, const std::vector<std::vector<int64_t>>& shapes,
-                       const std::vector<int64_t>& input_indexes, const std::string& phase);
+bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batch_size,
+                       const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
+                       const std::vector<int64_t> &input_indexes, const std::string &phase);
 
-void ExportDFGraph(const std::string& file_name, const std::string& phase);
+void ExportDFGraph(const std::string &file_name, const std::string &phase);
 
 }  // namespace pipeline
 }  // namespace mindspore

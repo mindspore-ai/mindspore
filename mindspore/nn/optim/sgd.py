@@ -15,31 +15,17 @@
 """sgd"""
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.parameter import Parameter
-from mindspore._checkparam import ParamValidator as validator
+from mindspore.common.tensor import Tensor
+import mindspore.common.dtype as mstype
+from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
 
 sgd_opt = C.MultitypeFuncGraph("sgd_opt")
 
 
-@sgd_opt.register("Function", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt(opt, learning_rate, momentum, gradient, weight, accum, stat):
-    """Apply sgd optimizer to the weight parameter."""
-    success = True
-    success = F.depend(success, opt(weight, gradient, learning_rate, accum, momentum, stat))
-    return success
-
-
 @sgd_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
 def _tensor_run_opt_ext(opt, learning_rate, momentum, gradient, weight, accum, stat):
     """Apply sgd optimizer to the weight parameter using Tensor."""
-    success = True
-    success = F.depend(success, opt(weight, gradient, learning_rate, accum, momentum, stat))
-    return success
-
-
-@sgd_opt.register("Function", "Tensor", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt_dyn(opt, learning_rate, momentum, gradient, weight, accum, stat):
-    """Apply sgd optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, gradient, learning_rate, accum, momentum, stat))
     return success
@@ -100,12 +86,12 @@ class SGD(Optimizer):
             raise ValueError("dampening should be at least 0.0, but got dampening {}".format(dampening))
         self.dampening = dampening
 
-        validator.check_type("nesterov", nesterov, [bool])
+        validator.check_value_type("nesterov", nesterov, [bool], self.cls_name)
         self.nesterov = nesterov
 
         self.opt = P.SGD(dampening, weight_decay, nesterov)
 
-        self.momentum = Parameter(momentum, name="momentum")
+        self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.accum = self.parameters.clone(prefix="accum", init='zeros')
         self.stat = self.parameters.clone(prefix="stat", init='ones')
         self.hyper_map = C.HyperMap()

@@ -39,7 +39,7 @@ using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractType;
 
-void ValidateOperation(const AnfNodePtr& node) {
+void ValidateOperation(const AnfNodePtr &node) {
   if (!IsValueNode<Primitive>(node)) {
     return;
   }
@@ -60,7 +60,7 @@ void ValidateOperation(const AnfNodePtr& node) {
   MS_LOG(EXCEPTION) << "Illegal primitive: " << prim->name();
 }
 
-void ValidateAbstract(const AnfNodePtr& node) {
+void ValidateAbstract(const AnfNodePtr &node) {
   if (node == nullptr) {
     MS_LOG(WARNING) << "Node to validate is invalid";
     return;
@@ -105,11 +105,11 @@ void ValidateAbstract(const AnfNodePtr& node) {
   MS_LOG(EXCEPTION) << "Illegal type in the graph: " << ptrBase->ToString();
 }
 
-void Validate(const FuncGraphPtr& fg) {
+void Validate(const FuncGraphPtr &fg) {
   FuncGraphManagerPtr mgr = Manage(fg, false);
   MS_EXCEPTION_IF_NULL(mgr);
-  AnfNodeSet& all_nodes = mgr->all_nodes();
-  for (const auto& anf_node : all_nodes) {
+  AnfNodeSet &all_nodes = mgr->all_nodes();
+  for (const auto &anf_node : all_nodes) {
     ValidateOperation(anf_node);
     ValidateAbstract(anf_node);
   }

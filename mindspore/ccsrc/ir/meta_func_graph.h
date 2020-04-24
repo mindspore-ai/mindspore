@@ -42,25 +42,25 @@ namespace mindspore {
 // generate a graph corresponding to these types.
 class MetaFuncGraph : public FuncGraphBase {
  public:
-  explicit MetaFuncGraph(const std::string& name) : name_(name) { cache_.clear(); }
+  explicit MetaFuncGraph(const std::string &name) : name_(name) { cache_.clear(); }
 
   ~MetaFuncGraph() override = default;
 
   MS_DECLARE_PARENT(MetaFuncGraph, FuncGraphBase);
-  abstract::AbstractBasePtr MakeAbstractClosure(const AnfNodePtr& anf_node);
+  abstract::AbstractBasePtr MakeAbstractClosure(const AnfNodePtr &anf_node);
   // Return normalized versions of the arguments.
   // By default, this returns args unchanged.
-  virtual abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList& args_spec_list) const {
+  virtual abstract::AbstractBasePtrList NormalizeArgs(const abstract::AbstractBasePtrList &args_spec_list) const {
     return args_spec_list;
   }
 
-  const std::vector<Signature>& signatures() const { return signatures_; }
-  void set_signatures(const std::vector<Signature>& signatures) { signatures_ = signatures; }
+  const std::vector<Signature> &signatures() const { return signatures_; }
+  void set_signatures(const std::vector<Signature> &signatures) { signatures_ = signatures; }
   // Generate a Graph for the given abstract arguments.
-  virtual FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList& args_spec_list) {
+  virtual FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &args_spec_list) {
     TypePtrList types;
     (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(types),
-                         [](const AbstractBasePtr& arg) -> TypePtr {
+                         [](const AbstractBasePtr &arg) -> TypePtr {
                            MS_EXCEPTION_IF_NULL(arg);
                            return arg->BuildType();
                          });
@@ -81,7 +81,7 @@ class MetaFuncGraph : public FuncGraphBase {
   }
 
   // Generate a Graph for this type signature.
-  virtual FuncGraphPtr GenerateFromTypes(const TypePtrList&) {
+  virtual FuncGraphPtr GenerateFromTypes(const TypePtrList &) {
     MS_LOG(EXCEPTION) << "Undefine the method of generating graph from types.";
   }
 
@@ -89,8 +89,8 @@ class MetaFuncGraph : public FuncGraphBase {
   std::string ToString() const override { return name_; }
   std::size_t hash() const override { return tid(); }
 
-  virtual bool operator==(const MetaFuncGraph& other) const { return &other == this; }
-  bool operator==(const Value& other) const override {
+  virtual bool operator==(const MetaFuncGraph &other) const { return &other == this; }
+  bool operator==(const Value &other) const override {
     if (other.isa<MetaFuncGraph>()) {
       return &other == this;
     } else {

@@ -23,13 +23,13 @@
 
 namespace mindspore {
 namespace parallel {
-std::string ParameterName(const AnfNodePtr& node_ptr) {
+std::string ParameterName(const AnfNodePtr &node_ptr) {
   auto para_ptr = node_ptr->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(para_ptr);
   return para_ptr->name();
 }
 
-bool ParameterRequireGrad(const AnfNodePtr& node_ptr) {
+bool ParameterRequireGrad(const AnfNodePtr &node_ptr) {
   auto para_ptr = node_ptr->cast<ParameterPtr>();
   if (para_ptr == nullptr) {
     return false;

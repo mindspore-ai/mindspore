@@ -49,12 +49,12 @@ class Number : public Object {
   TypeId type_id() const override { return number_type_; }
   TypeId generic_type_id() const override { return kObjectTypeNumber; }
 
-  bool operator==(const Type& other) const override;
+  bool operator==(const Type &other) const override;
   TypePtr DeepCopy() const override { return std::make_shared<Number>(); }
   std::string ToString() const override { return "Number"; }
   std::string ToReprString() const override { return "number"; }
   std::string DumpText() const override { return "Number"; }
-  std::string GetTypeName(const std::string& type_name) const {
+  std::string GetTypeName(const std::string &type_name) const {
     std::ostringstream oss;
     oss << type_name;
     if (nbits() != 0) {

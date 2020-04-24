@@ -171,7 +171,8 @@ class MindRecordOp : public ParallelOp {
   int32_t num_rows() const { return num_rows_; }
 
   // Getter method
-  static Status CountTotalRows(const std::string dataset_path, int64_t *count);
+  static Status CountTotalRows(const std::string dataset_path, const std::shared_ptr<ShardOperator> &op,
+                               int64_t *count);
 
   // Getter method
   int32_t rows_per_buffer() const { return rows_per_buffer_; }

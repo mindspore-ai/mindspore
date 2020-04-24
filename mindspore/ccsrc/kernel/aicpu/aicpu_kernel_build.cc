@@ -162,18 +162,17 @@ void SetNodeAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *p
   ::google::protobuf::Map<::std::string, ::mindspore::AttrValue> *node_attr = proto->mutable_attrs();
   for (const auto &attr_ptr : attrs_ptr) {
     std::string attr_name = attr_ptr->name();
-    std::string real_name;
     auto value = primitive->GetAttr(attr_name);
     if (value != nullptr) {
       if (attr_name == kQueueName || attr_name == kSharedName) {
-        real_name = kChannelName;
+        attr_name = kChannelName;
       } else if (attr_name == kSeed) {
-        real_name = "seed";
+        attr_name = "seed";
       } else if (attr_name == kSeed2) {
-        real_name = "seed2";
+        attr_name = "seed2";
       }
       std::string type = attr_ptr->type();
-      ParseAttrValue(type, real_name, value, node_attr);
+      ParseAttrValue(type, attr_name, value, node_attr);
     }
   }
   MS_LOG(INFO) << "Set node attr end!";
@@ -182,7 +181,7 @@ void SetNodeAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *p
 void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
   size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
   if (input_num == 0) {
-    MS_LOG(INFO) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] does not have input. ";
+    MS_LOG(INFO) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] does not have input.";
     return;
   }
 

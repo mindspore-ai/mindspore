@@ -35,8 +35,6 @@ void ShardTask::InsertTask(int shard_id, int group_id, const std::vector<uint64_
   MS_LOG(DEBUG) << "Into insert task, shard_id: " << shard_id << ", group_id: " << group_id
                 << ", label: " << label.dump() << ", size of task_list_: " << task_list_.size() << ".";
   task_list_.emplace_back(std::make_tuple(shard_id, group_id), offset, label);
-  MS_LOG(DEBUG) << "Out of insert task, shard_id: " << shard_id << ", group_id: " << group_id
-                << ", label: " << label.dump() << ", size of task_list_: " << task_list_.size() << ".";
 }
 
 void ShardTask::InsertTask(std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> task) {
@@ -44,9 +42,6 @@ void ShardTask::InsertTask(std::tuple<std::tuple<int, int>, std::vector<uint64_t
                 << ", group_id: " << std::get<1>(std::get<0>(task)) << ", label: " << std::get<2>(task).dump()
                 << ", size of task_list_: " << task_list_.size() << ".";
   task_list_.push_back(std::move(task));
-  MS_LOG(DEBUG) << "Out of insert task, shard_id: " << std::get<0>(std::get<0>(task))
-                << ", group_id: " << std::get<1>(std::get<0>(task)) << ", label: " << std::get<2>(task).dump()
-                << ", size of task_list_: " << task_list_.size() << ".";
 }
 
 void ShardTask::PopBack() { task_list_.pop_back(); }
@@ -69,18 +64,39 @@ std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::get_ta
   return task_list_[id];
 }
 
-ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks) {
+std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::get_random_task() {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> dis(0, task_list_.size() - 1);
+  return task_list_[dis(gen)];
+}
+ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replacement, int64_t num_elements) {
   ShardTask res;
   if (category_tasks.empty()) return res;
   auto total_categories = category_tasks.size();
   res.categories = static_cast<uint32_t>(total_categories);
-  auto minTasks = category_tasks[0].Size();
-  for (uint32_t i = 1; i < total_categories; i++) {
-    minTasks = std::min(minTasks, category_tasks[i].Size());
-  }
-  for (uint32_t task_no = 0; task_no < minTasks; task_no++) {
+  if (replacement == false) {
+    auto minTasks = category_tasks[0].Size();
+    for (uint32_t i = 1; i < total_categories; i++) {
+      minTasks = std::min(minTasks, category_tasks[i].Size());
+    }
+    for (uint32_t task_no = 0; task_no < minTasks; task_no++) {
+      for (uint32_t i = 0; i < total_categories; i++) {
+        res.InsertTask(std::move(category_tasks[i].get_task_by_id(static_cast<int>(task_no))));
+      }
+    }
+  } else {
+    auto maxTasks = category_tasks[0].Size();
+    for (uint32_t i = 1; i < total_categories; i++) {
+      maxTasks = std::max(maxTasks, category_tasks[i].Size());
+    }
+    if (num_elements != std::numeric_limits<int64_t>::max()) {
+      maxTasks = static_cast<decltype(maxTasks)>(num_elements);
+    }
     for (uint32_t i = 0; i < total_categories; i++) {
-      res.InsertTask(std::move(category_tasks[i].get_task_by_id(static_cast<int>(task_no))));
+      for (uint32_t j = 0; j < maxTasks; j++) {
+        res.InsertTask(category_tasks[i].get_random_task());
+      }
     }
   }
   return res;

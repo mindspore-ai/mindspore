@@ -31,19 +31,19 @@
 
 namespace mindspore {
 namespace trace {
-std::string GetDebugInfo(const DebugInfoPtr& info, SourceLineTip tip = kSourceLineTipNextLine);
-std::string GetDebugInfo(const DebugInfoPtr& info, const std::string& prefix,
+std::string GetDebugInfo(const DebugInfoPtr &info, SourceLineTip tip = kSourceLineTipNextLine);
+std::string GetDebugInfo(const DebugInfoPtr &info, const std::string &prefix,
                          SourceLineTip tip = kSourceLineTipNextLine);
-DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr& info);
+DebugInfoPtr GetSourceCodeDebugInfo(const DebugInfoPtr &info);
 void TraceGraphInfer();
-void GetInferStackInfo(std::ostringstream& oss);
-void TraceGraphInferEnter(const abstract::EvaluatorPtr& eval, const abstract::AnfNodeConfigPtr& node);
-void TraceGraphInferLeave(const abstract::EvaluatorPtr& eval);
-void TraceInferCNodeEnter(const abstract::AnfNodeConfigPtr& node_cfg);
+void GetInferStackInfo(std::ostringstream &oss);
+void TraceGraphInferEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node);
+void TraceGraphInferLeave(const abstract::EvaluatorPtr &eval);
+void TraceInferCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg);
 void TraceInferCNodeLeave();
-std::vector<abstract::AnfNodeConfigPtr>& GetCNodeDebugStack();
-std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>>& GetCurrenGraphInferStack();
-std::string GetAbstractStr(const abstract::AbstractBasePtr& abs);
+std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack();
+std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> &GetCurrenGraphInferStack();
+std::string GetAbstractStr(const abstract::AbstractBasePtr &abs);
 void ClearTraceStack();
 }  // namespace trace
 }  // namespace mindspore

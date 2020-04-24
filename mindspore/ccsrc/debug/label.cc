@@ -31,7 +31,7 @@ struct NameWithTrace {
   std::string name;
   std::vector<std::string> trace_labels;
 };
-static std::string GetTraceName(const TraceInfoPtr& trace_info, TraceLabelType trace_label) {
+static std::string GetTraceName(const TraceInfoPtr &trace_info, TraceLabelType trace_label) {
   switch (trace_label) {
     case TraceLabelType::kShortSymbol:
       return trace_info->symbol();
@@ -42,7 +42,7 @@ static std::string GetTraceName(const TraceInfoPtr& trace_info, TraceLabelType t
   }
 }
 
-NameWithTrace RootName(const DebugInfoPtr& debug_info, TraceLabelType trace_label) {
+NameWithTrace RootName(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
   NameWithTrace trace_name;
   // find debug info after Resolve/ExpandJ/GenMetaFuncGraph, it is a new node
   auto temp_info = debug_info;
@@ -66,9 +66,9 @@ NameWithTrace RootName(const DebugInfoPtr& debug_info, TraceLabelType trace_labe
   return trace_name;
 }
 
-std::string CombineTraceTypes(const std::string& root_name, const std::vector<std::string>& trace_labels) {
+std::string CombineTraceTypes(const std::string &root_name, const std::vector<std::string> &trace_labels) {
   std::string tags = "";
-  for (auto& itr : trace_labels) {
+  for (auto &itr : trace_labels) {
     std::string symbol = itr;
     tags = tags + symbol;
   }
@@ -76,12 +76,12 @@ std::string CombineTraceTypes(const std::string& root_name, const std::vector<st
 }
 
 // get the label name of the node debug info
-std::string LabelString(const DebugInfoPtr& debug_info, TraceLabelType trace_label) {
+std::string LabelString(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
   NameWithTrace trace_name = RootName(debug_info, trace_label);
   return CombineTraceTypes(trace_name.name, trace_name.trace_labels);
 }
 
-std::string CombineUniqueID(const DebugInfoPtr& debug_info) {
+std::string CombineUniqueID(const DebugInfoPtr &debug_info) {
   auto temp_info = debug_info;
   std::string label = "";
   while (temp_info != nullptr) {
@@ -103,9 +103,9 @@ std::string CombineUniqueID(const DebugInfoPtr& debug_info) {
 }
 
 // get trace with unique id chain
-std::string LabelStringUnique(const DebugInfoPtr& debug_info) { return CombineUniqueID(debug_info); }
+std::string LabelStringUnique(const DebugInfoPtr &debug_info) { return CombineUniqueID(debug_info); }
 
-std::string Label(const DebugInfoPtr& debug_info, TraceLabelType trace_label) {
+std::string Label(const DebugInfoPtr &debug_info, TraceLabelType trace_label) {
   if (GetGlobalTraceLabelType() == TraceLabelType::kWithUniqueId) {
     return LabelStringUnique(debug_info);
   }

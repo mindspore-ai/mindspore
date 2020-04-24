@@ -25,7 +25,7 @@ from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 from .activation import get_activation
-from ..._checkparam import ParamValidator as validator
+from ..._checkparam import Validator as validator
 
 
 class Dropout(Cell):
@@ -73,7 +73,7 @@ class Dropout(Cell):
         super(Dropout, self).__init__()
         if keep_prob <= 0 or keep_prob > 1:
             raise ValueError("dropout probability should be a number in range (0, 1], but got {}".format(keep_prob))
-        validator.check_subclass("dtype", dtype, mstype.number_type)
+        validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         self.keep_prob = Tensor(keep_prob)
         self.seed0 = seed0
         self.seed1 = seed1
@@ -421,7 +421,7 @@ class Pad(Cell):
         super(Pad, self).__init__()
         self.mode = mode
         self.paddings = paddings
-        validator.check_string('mode', self.mode, ["CONSTANT", "REFLECT", "SYMMETRIC"])
+        validator.check_string('mode', self.mode, ["CONSTANT", "REFLECT", "SYMMETRIC"], self.cls_name)
         if not isinstance(paddings, tuple):
             raise TypeError('Paddings must be tuple type.')
         for item in paddings:

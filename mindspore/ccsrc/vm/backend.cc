@@ -189,6 +189,12 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args) {
     } else if (utils::isa<PyObjectRef>(arg)) {
       auto value = utils::cast<PyObjectRef>(arg).object_;
       inputs.push_back(py::cast<tensor::TensorPtr>(value));
+    } else if (utils::isa<VectorRefPtr>(arg)) {
+      auto args_new = utils::cast<VectorRef>(arg);
+      (void)std::transform(args_new.begin(), args_new.end(), std::back_inserter(inputs),
+                           [](const BaseRef &v) { return utils::cast<tensor::TensorPtr>(v); });
+    } else {
+      MS_LOG(WARNING) << "Invalid input type.";
     }
   }
 

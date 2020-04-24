@@ -61,32 +61,15 @@ def test_parameter_init_illegal():
     data_int = 3
     data_list = [1, "2", True]
     data_tuple = (1, 2, 3)
-    np_arr_int16 = np.ones([1,1], dtype=np.int16)
-    np_arr_int32 = np.ones([1,1], dtype=np.int32)
-    np_arr_float16 = np.ones([1,1], dtype=np.float16)
-    np_arr_float32 = np.ones([1,1], dtype=np.float32)
 
-#    with pytest.raises(ValueError):
-#        Parameter(np_arr_int16[0][0], name=data_str)
-    Parameter(np_arr_int32[0], name=data_str)
-    Parameter(np_arr_float16[0], name=data_str)
-    Parameter(np_arr_float32[0], name=data_str)
-    Parameter(np_arr_float32, name=data_str)
-
+    # test data
     Parameter(tensor, name=data_str)
     Parameter(data_int, name=data_str)
     Parameter(dat, name=data_str)
     with pytest.raises(ValueError):
-        Parameter(data_none, name=data_str)
-    with pytest.raises(ValueError):
         Parameter(data_bool, name=data_str)
-    with pytest.raises(ValueError):
-        Parameter(data_str, name=data_str)
-    Parameter(data_list, name=data_str)
-    with pytest.raises(ValueError):
-        Parameter(data_tuple, name=data_str)
 
-    Parameter(tensor, name=data_str)
+    # test name
     Parameter(tensor, name=data_none)
     with pytest.raises(ValueError):
         Parameter(tensor, name=dat)

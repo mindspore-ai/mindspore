@@ -243,7 +243,7 @@ def test_minddataset(add_and_remove_cv_file):
     assert ds1_json == ds2_json
 
     data = get_data(CV_DIR_NAME)
-    assert data_set.get_dataset_size() == 10
+    assert data_set.get_dataset_size() == 5
     num_iter = 0
     for item in data_set.create_dict_iterator():
         num_iter += 1

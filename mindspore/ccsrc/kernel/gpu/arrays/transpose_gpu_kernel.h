@@ -44,7 +44,7 @@ class TransposeGpuFwdKernel : public GpuKernel {
                                "cudaMemcpyAsync input_shape failed");
     CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(input_axis, &input_axis_[0], workspace_size_, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
-                               "cudaMemcphalfyAsync input_axis failed");
+                               "cudaMemcpyAsync input_axis failed");
     int size = SizeToInt(input_size_ / sizeof(T));
     CalTranspose(size, input, input_shape, input_axis, SizeToInt(shape_size_), output,
                  reinterpret_cast<cudaStream_t>(stream_ptr));

@@ -13,9 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.common.tensor import Tensor
 import mindspore.nn as nn
-import mindspore.ops.operations as P
+from mindspore import Tensor
+from mindspore.ops import operations as P
+
 
 def weight_variable(shape):
     ones = np.ones(shape).astype(np.float32)
@@ -37,7 +38,7 @@ def conv3x3(in_channels, out_channels, stride=1, padding=0):
     weight_shape = (out_channels, in_channels, 3, 3)
     weight = weight_variable(weight_shape)
     return nn.Conv2d(in_channels, out_channels,
-                  kernel_size=3, stride=stride, padding=padding, weight_init=weight, has_bias=False, pad_mode="same")
+                     kernel_size=3, stride=stride, padding=padding, weight_init=weight, has_bias=False, pad_mode="same")
 
 
 def conv1x1(in_channels, out_channels, stride=1, padding=0):
@@ -45,7 +46,7 @@ def conv1x1(in_channels, out_channels, stride=1, padding=0):
     weight_shape = (out_channels, in_channels, 1, 1)
     weight = weight_variable(weight_shape)
     return nn.Conv2d(in_channels, out_channels,
-                  kernel_size=1, stride=stride, padding=padding, weight_init=weight, has_bias=False, pad_mode="same")
+                     kernel_size=1, stride=stride, padding=padding, weight_init=weight, has_bias=False, pad_mode="same")
 
 
 def conv7x7(in_channels, out_channels, stride=1, padding=0):
@@ -53,7 +54,7 @@ def conv7x7(in_channels, out_channels, stride=1, padding=0):
     weight_shape = (out_channels, in_channels, 7, 7)
     weight = weight_variable(weight_shape)
     return nn.Conv2d(in_channels, out_channels,
-                  kernel_size=7, stride=stride, padding=padding, weight_init=weight, has_bias=False, pad_mode="same")
+                     kernel_size=7, stride=stride, padding=padding, weight_init=weight, has_bias=False, pad_mode="same")
 
 
 def bn_with_initialize(out_channels):
@@ -63,7 +64,7 @@ def bn_with_initialize(out_channels):
     beta = weight_variable_0(shape)
     gamma = weight_variable_1(shape)
     bn = nn.BatchNorm2d(out_channels, momentum=0.1, eps=0.0001, gamma_init=gamma,
-                     beta_init=beta, moving_mean_init=mean, moving_var_init=var)
+                        beta_init=beta, moving_mean_init=mean, moving_var_init=var)
     return bn
 
 
@@ -74,7 +75,7 @@ def bn_with_initialize_last(out_channels):
     beta = weight_variable_0(shape)
     gamma = weight_variable_0(shape)
     bn = nn.BatchNorm2d(out_channels, momentum=0.1, eps=0.0001, gamma_init=gamma,
-                     beta_init=beta, moving_mean_init=mean, moving_var_init=var)
+                        beta_init=beta, moving_mean_init=mean, moving_var_init=var)
     return bn
 
 
@@ -294,6 +295,6 @@ class ResNet(nn.Cell):
         x = self.fc(x)
         return x
 
+
 def resnet50(batch_size, num_classes):
     return ResNet(ResidualBlock, [3, 4, 6, 3], num_classes, batch_size)
-

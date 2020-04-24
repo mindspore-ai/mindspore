@@ -35,14 +35,14 @@ TypePtr AnfNode::Type() const { return (abstract_ == nullptr) ? nullptr : abstra
 BaseShapePtr AnfNode::Shape() const { return (abstract_ == nullptr) ? nullptr : abstract_->BuildShape(); }
 
 std::string AnfNode::ToString() const {
-  return mindspore::label_manage::Label(const_cast<AnfNode*>(this)->shared_from_base<AnfNode>()->debug_info());
+  return mindspore::label_manage::Label(const_cast<AnfNode *>(this)->shared_from_base<AnfNode>()->debug_info());
 }
 
-CNode::CNode(const std::vector<AnfNodePtr>& inputs, const FuncGraphPtr& func_graph)
+CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph)
     : AnfNode(func_graph), inputs_(inputs), stop_gradient_(false) {}
 
 // Check if CNode is an apply with the specific Primitive.
-bool CNode::IsApply(const PrimitivePtr& value) const {
+bool CNode::IsApply(const PrimitivePtr &value) const {
   if (value == nullptr) {
     return false;
   }
@@ -57,7 +57,7 @@ bool CNode::IsApply(const PrimitivePtr& value) const {
   return false;
 }
 
-void CNode::set_input(size_t i, const AnfNodePtr& new_input) { inputs_[i] = new_input; }
+void CNode::set_input(size_t i, const AnfNodePtr &new_input) { inputs_[i] = new_input; }
 
 std::string CNode::DebugString(int recursive_level) const {
   std::ostringstream buffer;
@@ -68,7 +68,7 @@ std::string CNode::DebugString(int recursive_level) const {
     buffer << ToString() << "{";
     bool is_first_node = true;
     int idx = 0;
-    for (auto& node : inputs_) {
+    for (auto &node : inputs_) {
       MS_EXCEPTION_IF_NULL(node);
       if (is_first_node) {
         is_first_node = false;
@@ -85,7 +85,7 @@ std::string CNode::DebugString(int recursive_level) const {
   return buffer.str();
 }
 
-OperatorInfoPtr CNode::set_operator_info(const OperatorInfoPtr& operator_info) {
+OperatorInfoPtr CNode::set_operator_info(const OperatorInfoPtr &operator_info) {
   if (operator_info_ != nullptr) {
     MS_LOG(WARNING) << "The CNode: " << ToString() << " has already been set OperatorInfo: " << operator_info_->name()
                     << ", using the new one: " << operator_info->name();
@@ -173,11 +173,11 @@ std::string ValueNode::fullname_with_scope() {
   return fullname_with_scope_;
 }
 
-void CNode::accept(AnfVisitor* v) { v->Visit(shared_from_base<CNode>()); }
-void ValueNode::accept(AnfVisitor* v) { v->Visit(shared_from_base<ValueNode>()); }
-void Parameter::accept(AnfVisitor* v) { v->Visit(shared_from_base<Parameter>()); }
+void CNode::accept(AnfVisitor *v) { v->Visit(shared_from_base<CNode>()); }
+void ValueNode::accept(AnfVisitor *v) { v->Visit(shared_from_base<ValueNode>()); }
+void Parameter::accept(AnfVisitor *v) { v->Visit(shared_from_base<Parameter>()); }
 
-bool IsPrimitiveCNode(const AnfNodePtr& node, const PrimitivePtr& value) {
+bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   if (cnode != nullptr) {
@@ -186,7 +186,7 @@ bool IsPrimitiveCNode(const AnfNodePtr& node, const PrimitivePtr& value) {
   return false;
 }
 
-PrimitivePtr GetCNodePrimitive(const AnfNodePtr& node) {
+PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node) {
   if (node == nullptr) {
     return nullptr;
   }
@@ -217,7 +217,7 @@ std::string GetCNodeFuncName(const CNodePtr cnode) {
   return "";
 }
 
-bool IsPrimitive(const AnfNodePtr& node, const PrimitivePtr& value) {
+bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value) {
   if (IsValueNode<Primitive>(node)) {
     PrimitivePtr fn_value = GetValueNode<PrimitivePtr>(node);
     MS_EXCEPTION_IF_NULL(value);
@@ -229,7 +229,7 @@ bool IsPrimitive(const AnfNodePtr& node, const PrimitivePtr& value) {
 }
 namespace id_generator {
 static std::unordered_map<std::string, int> node_ids;
-std::string get_id(const AnfNodePtr& node) {
+std::string get_id(const AnfNodePtr &node) {
   auto type_name = node->type_name();
   if (node_ids.find(type_name) == node_ids.end()) {
     node_ids[type_name] = 0;

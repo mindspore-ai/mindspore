@@ -304,7 +304,7 @@ def train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768):
 
 
 def test_train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768): #1048576 #131072 #32768 #8192
-    cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=260.0)
+    cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_percent=0.5)
@@ -651,7 +651,7 @@ def test_train_32k_8p_fusion2(epoch_size=3, batch_size=32, num_classes=32768): #
 def test_train_64k_8p(epoch_size=3, batch_size=32, num_classes=65536): #1048576 #131072 #32768 #8192
     dev_num = 8
     context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
-    cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=260.0)
+    cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)
     set_algo_parameters(elementwise_op_strategy_follow=True)
     resset_op_id()
     np.random.seed(6)

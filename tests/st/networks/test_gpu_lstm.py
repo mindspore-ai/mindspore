@@ -15,17 +15,19 @@
 
 import pytest
 import numpy as np
+import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn import Dense
-from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-import mindspore.context as context
-import mindspore.nn as nn
+
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
 
 def InitialLstmWeight(input_size, hidden_size, num_layers, bidirectional, has_bias=False):
     num_directions = 1
@@ -55,6 +57,7 @@ def InitialLstmWeight(input_size, hidden_size, num_layers, bidirectional, has_bi
         [num_layers * num_directions, batch_size, hidden_size]), name='c')
 
     return h, c, w
+
 
 class SentimentNet(nn.Cell):
     def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
@@ -99,6 +102,7 @@ class SentimentNet(nn.Cell):
         outputs = self.decoder(encoding)
         return outputs
 
+
 batch_size = 64
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -130,7 +134,7 @@ def test_LSTM():
     train_network.set_train()
 
     train_features = Tensor(np.ones([64, max_len]).astype(np.int32))
-    train_labels = Tensor(np.ones([64,]).astype(np.int32)[0:64])
+    train_labels = Tensor(np.ones([64, ]).astype(np.int32)[0:64])
     losses = []
     for epoch in range(num_epochs):
         loss = train_network(train_features, train_labels)

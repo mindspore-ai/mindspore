@@ -193,10 +193,6 @@ class MapOp : public ParallelOp {
   // cause additional blocking because pop calls to Connector from the threads are synchronized to enforce the order.
   bool perf_mode_;
 
-#if defined(_WIN32) || defined(_WIN64)
-  // EOF worker id is only work on Performance mode, to record the worker id of queue which gets EOF
-  int32_t eof_worker_id_;
-#endif
   // Private function for worker/thread to loop continuously. It comprises the main
   // logic of MapOp: getting the data from previous Op, validating user specified column names,
   // applying a list of TensorOps to each of the data, process the results and then

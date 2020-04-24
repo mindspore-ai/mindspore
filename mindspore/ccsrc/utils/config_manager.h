@@ -37,8 +37,8 @@ enum DatasetMode { DS_NORMAL_MODE = 0, DS_SINK_MODE };
 
 class DatasetGraphParam {
  public:
-  DatasetGraphParam(const std::string& name, int64_t size, int64_t batch_size, const std::vector<int64_t>& ge_types,
-                    const std::vector<std::vector<int64_t>>& shapes, const std::vector<int64_t>& input_indexes)
+  DatasetGraphParam(const std::string &name, int64_t size, int64_t batch_size, const std::vector<int64_t> &ge_types,
+                    const std::vector<std::vector<int64_t>> &shapes, const std::vector<int64_t> &input_indexes)
       : queue_name_(name),
         loop_size_(size),
         batch_size_(batch_size),
@@ -72,15 +72,15 @@ class DatasetGraphParam {
 
 class ConfigManager {
  public:
-  ConfigManager(const ConfigManager&) = delete;
-  ConfigManager& operator=(const ConfigManager&) = delete;
-  static ConfigManager& GetInstance() noexcept;
+  ConfigManager(const ConfigManager &) = delete;
+  ConfigManager &operator=(const ConfigManager &) = delete;
+  static ConfigManager &GetInstance() noexcept;
 
   ParallelStrategy parallel_strategy() const { return parallel_strategy_; }
   void set_parallel_strategy(ParallelStrategy strategy) { parallel_strategy_ = strategy; }
 
-  const std::map<std::string, std::string>& ge_initialize_options() const { return ge_initialize_options_; }
-  void set_ge_initialize_options(const std::map<std::string, std::string>& options) {
+  const std::map<std::string, std::string> &ge_initialize_options() const { return ge_initialize_options_; }
+  void set_ge_initialize_options(const std::map<std::string, std::string> &options) {
     ge_initialize_options_ = options;
   }
 
@@ -90,12 +90,12 @@ class ConfigManager {
   void set_iter_num(const int64_t num) { iter_num_ = num; }
 
   std::string dataset_phase() const { return dataset_phase_; }
-  void set_dataset_phase(const std::string& phase) { dataset_phase_ = phase; }
+  void set_dataset_phase(const std::string &phase) { dataset_phase_ = phase; }
 
   DatasetGraphParam dataset_param() const { return dataset_param_; }
-  void set_dataset_param(const DatasetGraphParam& param) { dataset_param_ = param; }
+  void set_dataset_param(const DatasetGraphParam &param) { dataset_param_ = param; }
 
-  static void SetDatasetModeConfig(const std::string& mode);
+  static void SetDatasetModeConfig(const std::string &mode);
 
   void ResetConfig() noexcept;
 

@@ -29,8 +29,8 @@ class ProfilingEngineImpl : public EngineIntf {
   ProfilingEngineImpl() = default;
   ~ProfilingEngineImpl() override = default;
 
-  PluginIntf* CreatePlugin() override;
-  int ReleasePlugin(PluginIntf* plugin) override;
+  PluginIntf *CreatePlugin() override;
+  int ReleasePlugin(PluginIntf *plugin) override;
 };
 }  // namespace ascend
 }  // namespace device

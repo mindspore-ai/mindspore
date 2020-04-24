@@ -45,6 +45,7 @@
 #include "pre_activate/ascend/ir_fusion/mul_add_fusion.h"
 #include "pre_activate/ascend/ir_fusion/mul_addn_fusion.h"
 #include "pre_activate/ascend/ir_fusion/matmul_biasadd_fusion.h"
+#include "pre_activate/ascend/ir_fusion/remove_reshape_pair.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/pass/getitem_tuple.h"
 #include "pre_activate/pass/optimize_dependence.h"
@@ -61,6 +62,7 @@
 #include "pre_activate/ascend/format_type/insert_transdata_for_runop.h"
 #include "pre_activate/ascend/enhancer/getnext_memcpy_elimination.h"
 #include "pre_activate/ascend/ir_fission/addn_fission.h"
+#include "pre_activate/ascend/enhancer/insert_memcpy_async_for_getnext.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -68,6 +70,35 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
+  MS_EXCEPTION_IF_NULL(ir_fusion_pm);
+  ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayV1Rule>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRule>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRule>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextRightRule>());
+  ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLrV2>());
+  ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRule>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<MomentumLossscaleFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<MatmulBiasaddFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
+  ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
+  ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
+}
+}  // namespace
+
 void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
@@ -113,6 +144,7 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<InsertTransOp>());
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
+  data_layout_pm->AddPass(std::make_shared<RemoveReshapePair>());
   data_layout_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   data_layout_pm->AddPass(std::make_shared<OptimizeDependence>());
   data_layout_pm->AddPass(std::make_shared<TransDataSplit>());
@@ -161,29 +193,13 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AddMemcpyAsync>());
   if (context_ptr->ir_fusion_flag()) {
-    ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
-    ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayV1Rule>());
-    ir_fusion_pm->AddPass(std::make_shared<LambNextMVRule>());
-    ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRule>());
-    ir_fusion_pm->AddPass(std::make_shared<LambNextRightRule>());
-    ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLrV2>());
-    ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
-    ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRule>());
-    ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<MomentumLossscaleFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<MulAddFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<MatmulBiasaddFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
+    AddAscendBackendOptionalIRFusion(ir_fusion_pm.get());
+  }
+
+  if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
+    ir_fusion_pm->AddPass(std::make_shared<InsertMemcpyAsyncForGetNext>());
     ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
-    ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
+    ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   }
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
@@ -213,6 +229,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
 
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);

@@ -29,22 +29,22 @@ namespace mindspore {
 namespace parallel {
 class BatchParallelInfo : public OperatorInfo {
  public:
-  BatchParallelInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-                    const PrimitiveAttrs& attrs, OperatorCostPtr cost)
+  BatchParallelInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                    const PrimitiveAttrs &attrs, OperatorCostPtr cost)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, cost), dev_num_(1) {}
-  BatchParallelInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-                    const PrimitiveAttrs& attrs)
+  BatchParallelInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                    const PrimitiveAttrs &attrs)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>(false)),
         dev_num_(1) {}
 
   ~BatchParallelInfo() override = default;
-  Status Init(const StrategyPtr& strategy) override;
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status Init(const StrategyPtr &strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
   Status GenerateStrategies(int32_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorInfo() override;
@@ -60,8 +60,8 @@ class BatchParallelInfo : public OperatorInfo {
 
 class SparseSoftmaxCrossEntropyWithLogitsInfo : public BatchParallelInfo {
  public:
-  SparseSoftmaxCrossEntropyWithLogitsInfo(const std::string& name, const Shapes& inputs_shape,
-                                          const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+  SparseSoftmaxCrossEntropyWithLogitsInfo(const std::string &name, const Shapes &inputs_shape,
+                                          const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : BatchParallelInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>(true)) {}
   ~SparseSoftmaxCrossEntropyWithLogitsInfo() override = default;
   void ReComputeBatchSplitFlagList() override;

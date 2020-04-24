@@ -19,6 +19,6 @@
 namespace mindspore {
 
 // cppcheck-suppress unusedFunction
-std::string set_version(const std::string& version) { return version; }
+std::string set_version(const std::string &version) { return version; }
 
 }  // namespace mindspore

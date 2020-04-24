@@ -15,30 +15,16 @@
 """momentum"""
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor
+import mindspore.common.dtype as mstype
 from .optimizer import Optimizer
 
 momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 
 
-@momentum_opt.register("Function", "Number", "Number", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt(opt, learning_rate, momentum, gradient, weight, moment):
-    """Apply momentum optimizer to the weight parameter."""
-    success = True
-    success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
-    return success
-
-
 @momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
 def _tensor_run_opt_ext(opt, learning_rate, momentum, gradient, weight, moment):
     """Apply momentum optimizer to the weight parameter using Tensor."""
-    success = True
-    success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
-    return success
-
-
-@momentum_opt.register("Function", "Tensor", "Number", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt_dyn(opt, learning_rate, momentum, gradient, weight, moment):
-    """Apply momentum optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
     return success
@@ -86,7 +72,7 @@ class Momentum(Optimizer):
         super(Momentum, self).__init__(learning_rate, params, weight_decay, loss_scale, decay_filter)
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
-        self.momentum = Parameter(momentum, name="momentum")
+        self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.params = self.parameters
         self.moments = self.params.clone(prefix="moments", init='zeros')
         self.hyper_map = C.HyperMap()

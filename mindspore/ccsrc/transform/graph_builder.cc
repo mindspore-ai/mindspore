@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace transform {
-DfGraphPtr BuildMDDatasetGraph(const DatasetGraphParam& param) {
+DfGraphPtr BuildMDDatasetGraph(const DatasetGraphParam &param) {
   MS_LOG(INFO) << "BuildMDDatasetGraph.";
 
   // InitData
@@ -37,7 +37,7 @@ DfGraphPtr BuildMDDatasetGraph(const DatasetGraphParam& param) {
   return dataset_graph;
 }
 
-Status BuildDatasetGraph(const DatasetGraphParam& param, const std::string& phase) {
+Status BuildDatasetGraph(const DatasetGraphParam &param, const std::string &phase) {
   Status ret;
   std::string graph_name = phase;
 

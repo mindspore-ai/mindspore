@@ -28,8 +28,8 @@ namespace parallel {
 class CostModelContext {
  public:
   ~CostModelContext() = default;
-  CostModelContext(const CostModelContext&) = delete;
-  CostModelContext& operator=(const CostModelContext&) = delete;
+  CostModelContext(const CostModelContext &) = delete;
+  CostModelContext &operator=(const CostModelContext &) = delete;
   void ResetCostModel();
   void ResetAlgoParameters();
 

@@ -20,17 +20,17 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-CollectiveInitializer& CollectiveInitializer::instance() {
+CollectiveInitializer &CollectiveInitializer::instance() {
   static CollectiveInitializer instance = {};
   return instance;
 }
 
 bool CollectiveInitializer::collective_inited() const { return collective_inited_; }
 
-const void* CollectiveInitializer::collective_handle() const { return collective_handle_; }
+const void *CollectiveInitializer::collective_handle() const { return collective_handle_; }
 
 void CollectiveInitializer::InitCollective() {
-  void* handle = dlopen("libgpu_collective.so", RTLD_LAZY);
+  void *handle = dlopen("libgpu_collective.so", RTLD_LAZY);
   if (handle == nullptr) {
     MS_LOG(EXCEPTION)
       << "Loading libgpu_collective.so failed. Many reasons could cause this:\n1.libgpu_collective.so is not "

@@ -24,12 +24,13 @@ import mindspore.nn as nn
 from mindspore import context
 
 from mindspore.train.serialization import save, load, save_checkpoint, load_checkpoint,\
-                                          load_param_into_net, _exec_save_checkpoint,\
-                                          _check_filedir_or_create, _chg_model_file_name_if_same_exist, \
-                                          _read_file_last_line, context, export
+    load_param_into_net, _exec_save_checkpoint,\
+    _check_filedir_or_create, _chg_model_file_name_if_same_exist, \
+    _read_file_last_line, context, export
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", 
-enable_task_sink=True,enable_loop_sink=True,enable_ir_fusion=True)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
+                    enable_task_sink=True, enable_loop_sink=True, enable_ir_fusion=True)
+
 
 def test_resnet50_export(batch_size=1, num_classes=5):
     context.set_context(enable_ir_fusion=False)

@@ -14,7 +14,7 @@
 # ============================================================================
 
 """debug_ops"""
-from ..._checkparam import ParamValidator as validator
+from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
 from ..primitive import Primitive, prim_attr_register, PrimitiveWithInfer
 
@@ -210,10 +210,14 @@ class Print(PrimitiveWithInfer):
     def __init__(self):
         pass
 
+    def __call__(self, *args):
+        for arg in args:
+            print(arg)
+
     def infer_shape(self, *inputs):
         return [1]
 
     def infer_dtype(self, *inputs):
         for dtype in inputs:
-            validator.check_subclass("input", dtype, (mstype.tensor, mstype.string))
+            validator.check_subclass("input", dtype, (mstype.tensor, mstype.string), self.name)
         return mstype.int32

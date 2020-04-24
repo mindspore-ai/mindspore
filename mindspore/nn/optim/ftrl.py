@@ -18,41 +18,42 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer, apply_decay, grad_scale
 
 ftrl_opt = C.MultitypeFuncGraph("ftrl_opt")
-@ftrl_opt.register("Function", "Number", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
+@ftrl_opt.register("Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
 def _tensor_run_opt(opt, learning_rate, l1, l2, lr_power, linear, gradient, weight, moment):
     """Apply ftrl optimizer to the weight parameter."""
     success = True
     success = F.depend(success, opt(weight, moment, linear, gradient, learning_rate, l1, l2, lr_power))
     return success
 
-def _check_param(initial_accum, learning_rate, lr_power, l1, l2, use_locking, loss_scale=1.0, weight_decay=0.0):
-    validator.check_type("initial_accum", initial_accum, [float])
-    validator.check("initial_accum", initial_accum, "", 0.0, Rel.GE)
+def _check_param(initial_accum, learning_rate, lr_power, l1, l2, use_locking, loss_scale=1.0, weight_decay=0.0,
+                 prim_name=None):
+    validator.check_value_type("initial_accum", initial_accum, [float], prim_name)
+    validator.check_number("initial_accum", initial_accum, 0.0, Rel.GE, prim_name)
 
-    validator.check_type("learning_rate", learning_rate, [float])
-    validator.check("learning_rate", learning_rate, "", 0.0, Rel.GT)
+    validator.check_value_type("learning_rate", learning_rate, [float], prim_name)
+    validator.check_number("learning_rate", learning_rate, 0.0, Rel.GT, prim_name)
 
-    validator.check_type("lr_power", lr_power, [float])
-    validator.check("lr_power", lr_power, "", 0.0, Rel.LE)
+    validator.check_value_type("lr_power", lr_power, [float], prim_name)
+    validator.check_number("lr_power", lr_power, 0.0, Rel.LE, prim_name)
 
-    validator.check_type("l1", l1, [float])
-    validator.check("l1", l1, "", 0.0, Rel.GE)
+    validator.check_value_type("l1", l1, [float], prim_name)
+    validator.check_number("l1", l1, 0.0, Rel.GE, prim_name)
 
-    validator.check_type("l2", l2, [float])
-    validator.check("l2", l2, "", 0.0, Rel.GE)
+    validator.check_value_type("l2", l2, [float], prim_name)
+    validator.check_number("l2", l2, 0.0, Rel.GE, prim_name)
 
-    validator.check_type("use_locking", use_locking, [bool])
+    validator.check_value_type("use_locking", use_locking, [bool], prim_name)
 
-    validator.check_type("loss_scale", loss_scale, [float])
-    validator.check("loss_scale", loss_scale, "", 1.0, Rel.GE)
+    validator.check_value_type("loss_scale", loss_scale, [float], prim_name)
+    validator.check_number("loss_scale", loss_scale, 1.0, Rel.GE, prim_name)
 
-    validator.check_type("weight_decay", weight_decay, [float])
-    validator.check("weight_decay", weight_decay, "", 0.0, Rel.GE)
+    validator.check_value_type("weight_decay", weight_decay, [float], prim_name)
+    validator.check_number("weight_decay", weight_decay, 0.0, Rel.GE, prim_name)
 
 
 class FTRL(Optimizer):
@@ -94,7 +95,8 @@ class FTRL(Optimizer):
                  use_locking=False, loss_scale=1.0, weight_decay=0.0):
         super(FTRL, self).__init__(learning_rate, params)
 
-        _check_param(initial_accum, learning_rate, lr_power, l1, l2, use_locking, loss_scale, weight_decay)
+        _check_param(initial_accum, learning_rate, lr_power, l1, l2, use_locking, loss_scale, weight_decay,
+                     self.cls_name)
         self.moments = self.parameters.clone(prefix="moments", init=initial_accum)
         self.linear = self.parameters.clone(prefix="linear", init='zeros')
         self.l1 = l1

@@ -26,12 +26,12 @@ namespace ascend {
 class AscendMemoryPool : public DynamicMemPoolBestFit {
  public:
   ~AscendMemoryPool() override = default;
-  AscendMemoryPool(const AscendMemoryPool&) = delete;
-  AscendMemoryPool& operator=(const AscendMemoryPool&) = delete;
+  AscendMemoryPool(const AscendMemoryPool &) = delete;
+  AscendMemoryPool &operator=(const AscendMemoryPool &) = delete;
 
-  size_t AllocDeviceMem(size_t size, DeviceMemPtr* addr) override;
-  bool FreeDeviceMem(const DeviceMemPtr& addr) override;
-  void set_device_mem_pool_base(uint8_t* device_mem_pool_base);
+  size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) override;
+  bool FreeDeviceMem(const DeviceMemPtr &addr) override;
+  void set_device_mem_pool_base(uint8_t *device_mem_pool_base);
   void set_device_mem_pool_size(uint64_t device_mem_pool_size) {
     device_mem_pool_size_ = device_mem_pool_size;
     free_mem_size_ = device_mem_pool_size_;
@@ -40,7 +40,7 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
   size_t free_mem_size() override;
   size_t total_mem_size() override;
 
-  static AscendMemoryPool& GetInstance() {
+  static AscendMemoryPool &GetInstance() {
     static AscendMemoryPool instance;
     return instance;
   }
@@ -54,7 +54,7 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
  private:
   AscendMemoryPool() = default;
   bool has_malloc_{false};
-  uint8_t* device_mem_pool_base_{nullptr};
+  uint8_t *device_mem_pool_base_{nullptr};
   uint64_t device_mem_pool_size_{0};
   size_t free_mem_size_{0};
   size_t total_mem_size_{0};

@@ -745,7 +745,7 @@ class Fill(PrimitiveWithInfer):
         out = {
             'value': Tensor(ret),
             'shape': dims['value'],
-            'dtype': x_nptype,
+            'dtype': x_dtype,
         }
         return out
 
@@ -1316,7 +1316,7 @@ class Concat(PrimitiveWithInfer):
         axis = self.axis
         x_shp = input_x['shape']
         x_type = input_x['dtype']
-        _, all_shp, _ = _get_concat_offset(x_shp, x_type, axis)
+        _, all_shp, _ = _get_concat_offset(x_shp, x_type, axis, self.name)
         self.add_prim_attr('T', x_type[0].element_type())
         self.add_prim_attr('inputNums', len(x_shp))
         ret_shp = x_shp[0].copy()
@@ -1329,7 +1329,7 @@ class Concat(PrimitiveWithInfer):
 
 def _get_pack_shape(x_shape, x_type, axis):
     """for pack output shape"""
-    validator.check_type("shape", x_shape, [tuple])
+    validator.check_type("shape", x_shape, [tuple, list])
     validator.check_integer("len of input_x shape", len(x_shape), 0, Rel.GT)
     validator.check_subclass("shape0", x_type[0], mstype.tensor)
     validator.check_integer("len of input_x0 shape", len(x_shape[0]), 0, Rel.GT)

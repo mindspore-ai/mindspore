@@ -39,7 +39,7 @@
 namespace mindspore {
 
 struct ParamPtrEqual {
-  bool operator()(AnfNodePtr const& t1, AnfNodePtr const& t2) const {
+  bool operator()(AnfNodePtr const &t1, AnfNodePtr const &t2) const {
     const ParameterPtr param1 = dyn_cast<Parameter>(t1);
     const ParameterPtr param2 = dyn_cast<Parameter>(t2);
 
@@ -52,7 +52,7 @@ struct ParamPtrEqual {
 };
 
 struct ParamPtrHasher {
-  std::size_t operator()(AnfNodePtr const& param) const {
+  std::size_t operator()(AnfNodePtr const &param) const {
     const ParameterPtr parameter = dyn_cast<Parameter>(param);
     if (parameter == nullptr) {
       return 0;
@@ -64,39 +64,39 @@ struct ParamPtrHasher {
 
 class AnfExporter {
  public:
-  explicit AnfExporter(const std::string& id, bool export_used = true, bool check_integrity = false)
+  explicit AnfExporter(const std::string &id, bool export_used = true, bool check_integrity = false)
       : param_index(-1), id_(id), export_used_(export_used), check_integrity_(check_integrity) {
     func_graph_set.clear();
     exported.clear();
   }
   virtual ~AnfExporter() {}
 
-  void ExportFuncGraph(const std::string& filename, const FuncGraphPtr& func_graph);
-  void ExportFuncGraph(const std::string& filename, const std::vector<TaggedGraph>& graphs);
+  void ExportFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph);
+  void ExportFuncGraph(const std::string &filename, const std::vector<TaggedGraph> &graphs);
 
  protected:
-  virtual std::string GetNodeType(const AnfNodePtr& nd);
-  int GetParamIndex(const FuncGraphPtr& func_graph, const AnfNodePtr& param, bool throw_excp = true);
-  int GetParamIndexFromExported(const AnfNodePtr& param);
-  std::string DumpObject(const py::object& obj, const std::string& category) const;
-  std::string GetValueNodeText(const FuncGraphPtr& func_graph, const ValueNodePtr& node);
-  std::string GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr& mt_func_graph);
-  std::string GetSymbolicKeyInstanceText(const FuncGraphPtr& func_graph, const SymbolicKeyInstancePtr& sym_inst);
-  std::string GetSequenceText(const FuncGraphPtr& func_graph, const ValuePtr& value);
-  std::string GetValueText(const FuncGraphPtr& func_graph, const ValuePtr& value);
-  std::string GetOtherValueText(const FuncGraphPtr& func_graph, const ValuePtr& value);
-  std::string GetPrimitiveText(const PrimitivePtr& prim);
-  std::string GetDictText(const FuncGraphPtr& func_graph, const ValuePtr& value);
-  std::string GetNameSpaceText(const parse::NameSpacePtr& ns);
-  std::string GetMetaFuncGraphText(const MetaFuncGraphPtr& meta_func_graph);
-  std::string GetAnfNodeText(const FuncGraphPtr& func_graph, const AnfNodePtr& node,
-                             const std::map<AnfNodePtr, int>& apply_map);
-  void ExportOneFuncGraph(std::ofstream& ofs, const FuncGraphPtr& func_graph);
-  void OutputParameters(std::ofstream& ofs, const std::vector<AnfNodePtr>& parameters,
-                        OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual>* param_map);
+  virtual std::string GetNodeType(const AnfNodePtr &nd);
+  int GetParamIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &param, bool throw_excp = true);
+  int GetParamIndexFromExported(const AnfNodePtr &param);
+  std::string DumpObject(const py::object &obj, const std::string &category) const;
+  std::string GetValueNodeText(const FuncGraphPtr &func_graph, const ValueNodePtr &node);
+  std::string GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr &mt_func_graph);
+  std::string GetSymbolicKeyInstanceText(const FuncGraphPtr &func_graph, const SymbolicKeyInstancePtr &sym_inst);
+  std::string GetSequenceText(const FuncGraphPtr &func_graph, const ValuePtr &value);
+  std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value);
+  std::string GetOtherValueText(const FuncGraphPtr &func_graph, const ValuePtr &value);
+  std::string GetPrimitiveText(const PrimitivePtr &prim);
+  std::string GetDictText(const FuncGraphPtr &func_graph, const ValuePtr &value);
+  std::string GetNameSpaceText(const parse::NameSpacePtr &ns);
+  std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph);
+  std::string GetAnfNodeText(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                             const std::map<AnfNodePtr, int> &apply_map);
+  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph);
+  void OutputParameters(std::ofstream &ofs, const std::vector<AnfNodePtr> &parameters,
+                        OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> *param_map);
 
-  void OutputStatementComment(std::ofstream& ofs, const CNodePtr& node);
-  void OutputCNodes(std::ofstream& ofs, const std::vector<AnfNodePtr>& nodes, const FuncGraphPtr& func_graph);
+  void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
+  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
 
   int param_index;
   OrderedSet<FuncGraphPtr> func_graph_set{};
@@ -108,16 +108,16 @@ class AnfExporter {
   abstract::AnfNodeConfigPtr node_cfg_ = nullptr;
 };
 
-void ExportIR(const std::string& filename, const std::string& id, const FuncGraphPtr& func_graph);
-void ExportIR(const std::string& filename, const std::vector<TaggedGraph>& graphs);
+void ExportIR(const std::string &filename, const std::string &id, const FuncGraphPtr &func_graph);
+void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graphs);
 
-std::vector<FuncGraphPtr> ImportIR(const std::string& filename);
+std::vector<FuncGraphPtr> ImportIR(const std::string &filename);
 
-std::string GetFuncGraphProtoString(const FuncGraphPtr& func_graph);
+std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);
 
-void DumpIRProto(const FuncGraphPtr& func_graph, const std::string& suffix);
+void DumpIRProto(const FuncGraphPtr &func_graph, const std::string &suffix);
 
-std::string GetOnnxProtoString(const FuncGraphPtr& func_graph);
+std::string GetOnnxProtoString(const FuncGraphPtr &func_graph);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_DEBUG_ANF_IR_UTILS_H_

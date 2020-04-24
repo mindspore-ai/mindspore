@@ -32,12 +32,12 @@ enum class DataType { kInt, kFloat, kDouble, kUnknown };
 
 // Whether has a T type data in AnyPtrList.
 template <class T>
-bool HasType(const AnyPtrList& list) {
-  bool ret = std::any_of(list.begin(), list.end(), [](const AnyPtr& ptr) { return ptr->is<T>(); });
+bool HasType(const AnyPtrList &list) {
+  bool ret = std::any_of(list.begin(), list.end(), [](const AnyPtr &ptr) { return ptr->is<T>(); });
   return ret;
 }
 
-DataType InferType(const AnyPtrList& list) {
+DataType InferType(const AnyPtrList &list) {
   if (HasType<double>(list)) {
     return DataType::kDouble;
   } else if (HasType<float>(list)) {
@@ -135,9 +135,9 @@ T InnerScalarMod(T x, T y) {
   if (std::is_integral<T>::value) {
     return static_cast<int>(x) % static_cast<int>(y);
   }
-  float x_int = std::floor(x);
-  float y_int = std::ceil(y);
-  float max = x_int / y_int;
+  int x_int = std::floor(x);
+  int y_int = std::ceil(y);
+  int max = x_int / y_int;
   float ret = x - y * max;
   return ret;
 }
@@ -180,7 +180,7 @@ bool InnerScalarGe(T x, U y) {
 }
 
 #define SCALAR_OP(op_t)                                                                        \
-  ValuePtr Scalar##op_t(const ValuePtrList& list) {                                            \
+  ValuePtr Scalar##op_t(const ValuePtrList &list) {                                            \
     do {                                                                                       \
       if (list.size() < 2) {                                                                   \
         MS_LOG(EXCEPTION) << "length of input list for Scalar" << #op_t << " is less than 2."; \
@@ -223,7 +223,7 @@ SCALAR_OP(Pow)
 SCALAR_OP(Floordiv)
 
 #define LOGIC_OP(op_t)                                                                       \
-  ValuePtr Scalar##op_t(const ValuePtrList& list) {                                          \
+  ValuePtr Scalar##op_t(const ValuePtrList &list) {                                          \
     if (list.size() < 2) {                                                                   \
       MS_LOG(EXCEPTION) << "length of input list for Scalar" << #op_t << " is less than 2."; \
     }                                                                                        \
@@ -274,7 +274,7 @@ LOGIC_OP(Ne)
 LOGIC_OP(Le)
 LOGIC_OP(Ge)
 
-ValuePtr ScalarUAdd(const ValuePtrList& list) {
+ValuePtr ScalarUAdd(const ValuePtrList &list) {
   if (list.size() != 1) {
     MS_LOG(EXCEPTION) << "Input number of ScalarUAdd should be 1, but got " << list.size();
   }
@@ -283,7 +283,7 @@ ValuePtr ScalarUAdd(const ValuePtrList& list) {
   return x;
 }
 
-ValuePtr ScalarUSub(const ValuePtrList& list) {
+ValuePtr ScalarUSub(const ValuePtrList &list) {
   if (list.size() != 1) {
     MS_LOG(EXCEPTION) << "Input number of ScalarUSub should be 1, but got " << list.size();
   }
@@ -302,7 +302,7 @@ ValuePtr ScalarUSub(const ValuePtrList& list) {
   MS_LOG(EXCEPTION) << "Unsported Value for ScalarUSub, x: " << x->ToString() << ".";
 }
 
-ValuePtr ScalarLog(const ValuePtrList& list) {
+ValuePtr ScalarLog(const ValuePtrList &list) {
   if (list.empty()) {
     MS_LOG(EXCEPTION) << "Input list of ScalarLog is empty.";
   }
@@ -321,7 +321,7 @@ ValuePtr ScalarLog(const ValuePtrList& list) {
   MS_LOG(EXCEPTION) << "Unsported Value for ScalarLog, x: " << x->ToString();
 }
 
-ValuePtr BoolNot(const ValuePtrList& list) {
+ValuePtr BoolNot(const ValuePtrList &list) {
   if (list.empty()) {
     MS_LOG(EXCEPTION) << "value list of BoolNot is empty";
   }
@@ -337,7 +337,7 @@ ValuePtr BoolNot(const ValuePtrList& list) {
   MS_LOG(EXCEPTION) << "Unsported Value for BoolNot, x: " << x->ToString();
 }
 
-ValuePtr BoolAnd(const ValuePtrList& list) {
+ValuePtr BoolAnd(const ValuePtrList &list) {
   if (list.size() < 2) {
     MS_LOG(EXCEPTION) << "Input number " << list.size() << " of BoolAnd is less then 2.";
   }
@@ -356,7 +356,7 @@ ValuePtr BoolAnd(const ValuePtrList& list) {
   MS_LOG(EXCEPTION) << "Unsported Value for BoolAnd, x: " << x->ToString() << ".";
 }
 
-ValuePtr BoolOr(const ValuePtrList& list) {
+ValuePtr BoolOr(const ValuePtrList &list) {
   if (list.size() < 2) {
     MS_LOG(EXCEPTION) << "Input number " << list.size() << " of BoolOr is less then 2.";
   }
@@ -375,7 +375,7 @@ ValuePtr BoolOr(const ValuePtrList& list) {
   MS_LOG(EXCEPTION) << "Unsported Value for BoolOr, x: " << x->ToString() << ".";
 }
 
-ValuePtr BoolEq(const ValuePtrList& list) {
+ValuePtr BoolEq(const ValuePtrList &list) {
   if (list.size() < 2) {
     MS_LOG(EXCEPTION) << "Input number " << list.size() << " of BoolEq is less than 2.";
   }

@@ -70,7 +70,7 @@ Status GatherV2Info::GetAttrs() {
   return SUCCESS;
 }
 
-Status GatherV2Info::CheckStrategy(const StrategyPtr& strategy) {
+Status GatherV2Info::CheckStrategy(const StrategyPtr &strategy) {
   if (inputs_shape_.size() != GATHER_V2_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": inputs shape size must be " << GATHER_V2_INPUTS_SIZE << ", but is "
                   << inputs_shape_.size();
@@ -256,7 +256,7 @@ Status GatherV2Info::InferTensorSubOps() {
   return SUCCESS;
 }
 
-Status GatherV2Info::Init(const StrategyPtr& strategy) {
+Status GatherV2Info::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
@@ -270,7 +270,7 @@ Status GatherV2Info::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status GatherV2Info::InitForCostModel(const StrategyPtr& strategy) {
+Status GatherV2Info::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
@@ -301,7 +301,7 @@ Status GatherV2Info::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy";
@@ -311,7 +311,7 @@ Status GatherV2Info::GenerateStrategies(int32_t stage_id) {
   return SUCCESS;
 }
 
-Status GatherV2Info::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status GatherV2Info::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";

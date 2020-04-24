@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-void SetKernelInfo(const CNodePtr& apply_kernel_ptr);
+void SetKernelInfo(const CNodePtr &apply_kernel_ptr);
 
 class KernelAttr {
  public:
@@ -35,24 +35,24 @@ class KernelAttr {
   KernelAttr() : all_same_(false) {}
   ~KernelAttr() = default;
 
-  KernelAttr& AddInputAttr(const TypeId& ms_type, const std::string& format = kOpFormat_DEFAULT) {
+  KernelAttr &AddInputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT) {
     input_type_.emplace_back(ms_type, format);
     return *this;
   }
 
-  KernelAttr& AddOutputAttr(const TypeId& ms_type, const std::string& format = kOpFormat_DEFAULT) {
+  KernelAttr &AddOutputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT) {
     output_type_.emplace_back(ms_type, format);
     return *this;
   }
 
-  KernelAttr& AddAllSameAttr(const bool& all_same) {
+  KernelAttr &AddAllSameAttr(const bool &all_same) {
     all_same_ = all_same;
     return *this;
   }
 
-  const DataType& GetInputAttr(const size_t index) const { return input_type_[index]; }
-  const DataType& GetOutputAttr(const size_t index) const { return output_type_[index]; }
-  const bool& GetAllSame() const { return all_same_; }
+  const DataType &GetInputAttr(const size_t index) const { return input_type_[index]; }
+  const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
+  const bool &GetAllSame() const { return all_same_; }
 
   size_t GetInputSize() const { return input_type_.size(); }
   size_t GetOutputSize() const { return output_type_.size(); }

@@ -32,9 +32,9 @@ using Shapes = std::vector<Shape>;
 
 class TensorInfo {
  public:
-  TensorInfo(const TensorLayout& tensor_layout, Shape shape, Shape slice_shape)
+  TensorInfo(const TensorLayout &tensor_layout, Shape shape, Shape slice_shape)
       : tensor_layout_(tensor_layout), shape_(std::move(shape)), slice_shape_(std::move(slice_shape)) {}
-  explicit TensorInfo(const TensorLayout& tensor_layout) : tensor_layout_(tensor_layout) {
+  explicit TensorInfo(const TensorLayout &tensor_layout) : tensor_layout_(tensor_layout) {
     shape_ = tensor_layout.tensor_shape().array();
     slice_shape_ = tensor_layout.slice_shape().array();
   }
@@ -44,7 +44,7 @@ class TensorInfo {
   TensorLayout tensor_layout() const { return tensor_layout_; }
   Shape slice_shape() const { return slice_shape_; }
   Shape shape() const { return shape_; }
-  void set_reduce_dim(const std::vector<int32_t>& dim) { reduce_dim_ = dim; }
+  void set_reduce_dim(const std::vector<int32_t> &dim) { reduce_dim_ = dim; }
   std::vector<int32_t> reduce_dim() const { return reduce_dim_; }
 
  private:

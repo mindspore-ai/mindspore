@@ -155,13 +155,14 @@ OUTPUT_MAP(BatchNorm) = {{0, OUTPUT_DESC(y)},
                          {1, OUTPUT_DESC(batch_mean)},
                          {2, OUTPUT_DESC(batch_variance)},
                          {3, OUTPUT_DESC(reserve_space_1)},
-                         {4, OUTPUT_DESC(reserve_space_2)},
-                         {5, OUTPUT_DESC(reserve_space_3)}};
+                         {4, OUTPUT_DESC(reserve_space_2)}};
 
 // BatchNormGrad
-INPUT_MAP(BatchNormGrad) = {{1, INPUT_DESC(y_backprop)},      {2, INPUT_DESC(x)},
-                            {3, INPUT_DESC(scale)},           {4, INPUT_DESC(reserve_space_1)},
-                            {5, INPUT_DESC(reserve_space_2)}, {6, INPUT_DESC(reserve_space_3)}};
+INPUT_MAP(BatchNormGrad) = {{1, INPUT_DESC(y_backprop)},
+                            {2, INPUT_DESC(x)},
+                            {3, INPUT_DESC(scale)},
+                            {4, INPUT_DESC(reserve_space_1)},
+                            {5, INPUT_DESC(reserve_space_2)}};
 ATTR_MAP(BatchNormGrad) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
                            {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
                            {"is_training", ATTR_DESC(is_training, AnyTraits<bool>())}};
@@ -265,11 +266,6 @@ OUTPUT_MAP(Add) = {{0, OUTPUT_DESC(y)}};
 INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(axis)}};
 ATTR_MAP(GatherV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
-
-// ReduceSum
-INPUT_MAP(ReduceSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
-ATTR_MAP(ReduceSum) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceSum) = {{0, OUTPUT_DESC(y)}};
 
 // ReduceSumD
 INPUT_MAP(ReduceSumD) = {{1, INPUT_DESC(x)}};
@@ -451,17 +447,17 @@ INPUT_MAP(Iou) = {{1, INPUT_DESC(bboxes)}, {2, INPUT_DESC(gtboxes)}};
 ATTR_MAP(Iou) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
 OUTPUT_MAP(Iou) = {{0, OUTPUT_DESC(overlap)}};
 
-// ResizeNearestNeighborD
-INPUT_MAP(ResizeNearestNeighborD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ResizeNearestNeighborD) = {
+// ResizeNearestNeighborV2D
+INPUT_MAP(ResizeNearestNeighborV2D) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ResizeNearestNeighborV2D) = {
   {"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeNearestNeighborD) = {{0, OUTPUT_DESC(y)}};
+OUTPUT_MAP(ResizeNearestNeighborV2D) = {{0, OUTPUT_DESC(y)}};
 
-// ResizeNearestNeighborGrad
-INPUT_MAP(ResizeNearestNeighborGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(size)}};
-ATTR_MAP(ResizeNearestNeighborGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeNearestNeighborGrad) = {{0, OUTPUT_DESC(y)}};
+// ResizeNearestNeighborV2Grad
+INPUT_MAP(ResizeNearestNeighborV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(size)}};
+ATTR_MAP(ResizeNearestNeighborV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(ResizeNearestNeighborV2Grad) = {{0, OUTPUT_DESC(y)}};
 
 // ApplyAdam
 INPUT_MAP(ApplyAdam) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},
@@ -486,17 +482,17 @@ INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(Relu6Grad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu6Grad) = {{0, OUTPUT_DESC(backprops)}};
 
-// ResizeBilinearGrad
-INPUT_MAP(ResizeBilinearGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
-ATTR_MAP(ResizeBilinearGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeBilinearGrad) = {{0, OUTPUT_DESC(y)}};
+// ResizeBilinearV2Grad
+INPUT_MAP(ResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
+ATTR_MAP(ResizeBilinearV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(ResizeBilinearV2Grad) = {{0, OUTPUT_DESC(y)}};
 
-// ResizeBilinearD
-INPUT_MAP(ResizeBilinearD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ResizeBilinearD) = {
+// ResizeBilinearV2D
+INPUT_MAP(ResizeBilinearV2D) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ResizeBilinearV2D) = {
   {"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeBilinearD) = {{0, OUTPUT_DESC(y)}};
+OUTPUT_MAP(ResizeBilinearV2D) = {{0, OUTPUT_DESC(y)}};
 
 // ZerosLike
 INPUT_MAP(ZerosLike) = {{1, INPUT_DESC(x)}};
@@ -609,10 +605,12 @@ ATTR_MAP(ArgMinWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int>())},
                              {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ArgMinWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 
-// ReduceAll
-INPUT_MAP(ReduceAll) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
-ATTR_MAP(ReduceAll) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceAll) = {{0, OUTPUT_DESC(y)}};
+// ReduceAllD
+INPUT_MAP(ReduceAllD) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(ReduceAllD) = {
+  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(ReduceAllD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceAllD) = {{0, OUTPUT_DESC(y)}};
 
 // ReduceMeanD
 INPUT_MAP(ReduceMeanD) = {{1, INPUT_DESC(x)}};
@@ -720,11 +718,13 @@ OUTPUT_MAP(MaxPoolGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2D
 INPUT_MAP(Conv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
-ATTR_MAP(Conv2D) = {{"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
-                    {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-                    {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
-                    {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-                    {"group", ATTR_DESC(groups, AnyTraits<int>())}};
+ATTR_MAP(Conv2D) = {
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
+  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"group", ATTR_DESC(groups, AnyTraits<int>())},
+};
 OUTPUT_MAP(Conv2D) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2DBackpropInputD
@@ -734,9 +734,10 @@ INPUT_ATTR_MAP(Conv2DBackpropInputD) = {
 ATTR_MAP(Conv2DBackpropInputD) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())}};
+  {"group", ATTR_DESC(groups, AnyTraits<int>())},
+};
 OUTPUT_MAP(Conv2DBackpropInputD) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2DBackpropFilterD
@@ -746,17 +747,18 @@ INPUT_ATTR_MAP(Conv2DBackpropFilterD) = {
 ATTR_MAP(Conv2DBackpropFilterD) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())}};
+  {"group", ATTR_DESC(groups, AnyTraits<int>())},
+};
 OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
 
 // DepthwiseConv2D
 INPUT_MAP(DepthwiseConv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
 ATTR_MAP(DepthwiseConv2D) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
 };
 OUTPUT_MAP(DepthwiseConv2D) = {{0, OUTPUT_DESC(y)}};
@@ -766,9 +768,9 @@ INPUT_MAP(DepthwiseConv2DBackpropInputD) = {{2, INPUT_DESC(filter)}, {3, INPUT_D
 INPUT_ATTR_MAP(DepthwiseConv2DBackpropInputD) = {
   {1, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(DepthwiseConv2DBackpropInputD) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
 OUTPUT_MAP(DepthwiseConv2DBackpropInputD) = {{0, OUTPUT_DESC(input_grad)}};
 
@@ -777,9 +779,9 @@ INPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{1, INPUT_DESC(input)}, {3, INPUT_D
 INPUT_ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
   {2, ATTR_DESC(filter_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
 OUTPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{0, OUTPUT_DESC(filter_grad)}};
 

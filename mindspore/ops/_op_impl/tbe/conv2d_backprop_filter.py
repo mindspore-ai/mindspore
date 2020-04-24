@@ -25,7 +25,7 @@ conv2d_backprop_filter_op_info = TBERegOp("Conv2DBackpropFilter") \
     .partial_flag(True) \
     .attr("filter_sizes", "required", "listInt", "all") \
     .attr("stride", "required", "listInt", "all") \
-    .attr("pad_mode", "required", "str", "all") \
+    .attr("pad_list", "required", "listInt", "all") \
     .attr("dilation", "required", "listInt", "all") \
     .input(0, "out_backprop", False, "required", "all") \
     .input(1, "x", False, "required", "all") \

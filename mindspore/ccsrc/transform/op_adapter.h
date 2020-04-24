@@ -26,17 +26,17 @@
 #include "utils/utils.h"
 namespace mindspore {
 namespace transform {
-static uint32_t CustomInferFunc(const Operator&) { return 0; }
+static uint32_t CustomInferFunc(const Operator &) { return 0; }
 
 template <typename T>
 class OpAdapter : public BaseOpAdapter {
  public:
   using OpType = T;
   OpAdapter() {}
-  explicit OpAdapter(const ExtraAttr& extra_attr) : extra_attr_(extra_attr) {}
+  explicit OpAdapter(const ExtraAttr &extra_attr) : extra_attr_(extra_attr) {}
   ~OpAdapter() override {}
 
-  bool IsCustomOp(const OperatorPtr& op) {
+  bool IsCustomOp(const OperatorPtr &op) {
     MS_EXCEPTION_IF_NULL(op);
     auto it = cus_input_map_.find(op->GetOpType());
     if (it == cus_input_map_.end()) {
@@ -45,7 +45,7 @@ class OpAdapter : public BaseOpAdapter {
     return true;
   }
 
-  Status GenerateCustomOpInputMap(const CusOperatorPtr& op, const PrimitivePtr& prim) {
+  Status GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) {
     MS_EXCEPTION_IF_NULL(op);
     MS_EXCEPTION_IF_NULL(prim);
     // Create the map of custom op from input index to input name.
@@ -69,7 +69,7 @@ class OpAdapter : public BaseOpAdapter {
     return SUCCESS;
   }
 
-  Status GenerateCustomOpOutputMap(const CusOperatorPtr& op, const PrimitivePtr& prim) {
+  Status GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim) {
     MS_EXCEPTION_IF_NULL(op);
     MS_EXCEPTION_IF_NULL(prim);
     // Create the map of custom op from output index to output name.
@@ -122,7 +122,7 @@ class OpAdapter : public BaseOpAdapter {
     return op;
   }
 
-  OperatorPtr GenerateNormalOp(const AnfNodePtr& anf) {
+  OperatorPtr GenerateNormalOp(const AnfNodePtr &anf) {
     OperatorPtr op = nullptr;
     // There are duplicate names in ANF graph, do not assign ANF node name to GE
     // GE will generate unique name automatically
@@ -148,7 +148,7 @@ class OpAdapter : public BaseOpAdapter {
     return op;
   }
 
-  OperatorPtr generate(const AnfNodePtr& anf) override {
+  OperatorPtr generate(const AnfNodePtr &anf) override {
     OperatorPtr op = nullptr;
     if (IsCustomCNode(anf)) {
       op = GenerateCustomOp(anf);
@@ -158,21 +158,21 @@ class OpAdapter : public BaseOpAdapter {
     return op;
   }
 
-  OperatorPtr generate(const std::string& op_name) override { return std::make_shared<T>(op_name); }
+  OperatorPtr generate(const std::string &op_name) override { return std::make_shared<T>(op_name); }
 
-  const std::unordered_map<int, InputDesc>& getInputMap() override { return input_map_; }
-  const std::unordered_map<unsigned int, AttrDesc>& getInputAttrMap() override { return input_attr_map_; }
-  const std::unordered_map<int, DynInputDesc>& getDynInputMap() override { return dyn_input_map_; }
-  const std::unordered_map<int, OutputDesc>& getOutputMap() override { return output_map_; }
+  const std::unordered_map<int, InputDesc> &getInputMap() override { return input_map_; }
+  const std::unordered_map<unsigned int, AttrDesc> &getInputAttrMap() override { return input_attr_map_; }
+  const std::unordered_map<int, DynInputDesc> &getDynInputMap() override { return dyn_input_map_; }
+  const std::unordered_map<int, OutputDesc> &getOutputMap() override { return output_map_; }
 
-  Status SetCustomOpInput(const CusOperatorPtr& op, int index, const OperatorPtr& input) {
+  Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OperatorPtr &input) {
     MS_EXCEPTION_IF_NULL(op);
     MS_EXCEPTION_IF_NULL(input);
     auto it = cus_input_map_.find(op->GetOpType());
     if (it == cus_input_map_.end()) {
       return NOT_FOUND;
     }
-    std::unordered_map<int, std::string>& input_map = it->second;
+    std::unordered_map<int, std::string> &input_map = it->second;
 
     if ((input_map.find(index) != input_map.end())) {
       MS_LOG(DEBUG) << "Link op " << input->GetName() << " to " << op->GetName() << ":" << input_map[index];
@@ -182,7 +182,7 @@ class OpAdapter : public BaseOpAdapter {
     return NOT_FOUND;
   }
 
-  Status SetNormalOpInput(const OperatorPtr& op, int index, const OperatorPtr& input) {
+  Status SetNormalOpInput(const OperatorPtr &op, int index, const OperatorPtr &input) {
     MS_EXCEPTION_IF_NULL(op);
     auto it = input_map_.find(index);
     if (it != input_map_.end()) {
@@ -194,7 +194,7 @@ class OpAdapter : public BaseOpAdapter {
     return NOT_FOUND;
   }
 
-  int setInput(const OperatorPtr& op, int index, const OperatorPtr& input) override {
+  int setInput(const OperatorPtr &op, int index, const OperatorPtr &input) override {
     if (IsCustomOp(op)) {
       auto cus_op = std::dynamic_pointer_cast<CustomOperator>(op);
       return static_cast<int>(SetCustomOpInput(cus_op, index, input));
@@ -203,14 +203,14 @@ class OpAdapter : public BaseOpAdapter {
     }
   }
 
-  Status SetCustomOpInput(const CusOperatorPtr& op, int index, const OutHandler& handle) {
+  Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OutHandler &handle) {
     MS_EXCEPTION_IF_NULL(op);
     auto it = cus_input_map_.find(op->GetOpType());
     if (it == cus_input_map_.end()) {
       return NOT_FOUND;
     }
 
-    std::unordered_map<int, std::string>& input_map = it->second;
+    std::unordered_map<int, std::string> &input_map = it->second;
     if ((handle.op != nullptr) && (input_map.find(index) != input_map.end())) {
       if (handle.out.empty()) {
         MS_LOG(DEBUG) << "Link op " << handle.op->GetName() << " to " << op->GetName() << ":" << input_map[index];
@@ -225,7 +225,7 @@ class OpAdapter : public BaseOpAdapter {
     return NOT_FOUND;
   }
 
-  Status SetNormalOpInput(const OperatorPtr& op, int index, const OutHandler& handle) {
+  Status SetNormalOpInput(const OperatorPtr &op, int index, const OutHandler &handle) {
     MS_EXCEPTION_IF_NULL(op);
     auto it = input_map_.find(index);
     if ((handle.op != nullptr) && (it != input_map_.end())) {
@@ -242,7 +242,7 @@ class OpAdapter : public BaseOpAdapter {
     return NOT_FOUND;
   }
 
-  int setInput(const OperatorPtr& op, int index, const OutHandler& handle) override {
+  int setInput(const OperatorPtr &op, int index, const OutHandler &handle) override {
     if (IsCustomOp(op)) {
       auto cus_op = std::dynamic_pointer_cast<CustomOperator>(op);
       return static_cast<int>(SetCustomOpInput(cus_op, index, handle));
@@ -251,7 +251,7 @@ class OpAdapter : public BaseOpAdapter {
     }
   }
 
-  int setInput(const OperatorPtr& op, int index, const std::shared_ptr<std::vector<OutHandler>>& handler_vec) override {
+  int setInput(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<OutHandler>> &handler_vec) override {
     MS_EXCEPTION_IF_NULL(handler_vec);
     if (IsCustomOp(op)) {
       MS_LOG(ERROR) << "Custom Op do not support dynamic input";
@@ -278,7 +278,7 @@ class OpAdapter : public BaseOpAdapter {
     return static_cast<int>(NOT_FOUND);
   }
 
-  OutHandler getOutput(const OperatorPtr& op, int index) override {
+  OutHandler getOutput(const OperatorPtr &op, int index) override {
     MS_EXCEPTION_IF_NULL(op);
     if (IsCustomOp(op)) {
       return getCustomOutput(op, index);
@@ -286,7 +286,7 @@ class OpAdapter : public BaseOpAdapter {
     return getNormalOutput(op, index);
   }
 
-  OutHandler getCustomOutput(const OperatorPtr& op, int index) {
+  OutHandler getCustomOutput(const OperatorPtr &op, int index) {
     MS_EXCEPTION_IF_NULL(op);
     auto it = cus_output_map_.find(op->GetOpType());
     if (it == cus_output_map_.end()) {
@@ -294,7 +294,7 @@ class OpAdapter : public BaseOpAdapter {
       return OutHandler();
     }
 
-    std::unordered_map<int, std::string>& output_map = it->second;
+    std::unordered_map<int, std::string> &output_map = it->second;
 
     if ((output_map.find(index) != output_map.end())) {
       return OutHandler(op, output_map[index]);
@@ -303,7 +303,7 @@ class OpAdapter : public BaseOpAdapter {
     return OutHandler();
   }
 
-  OutHandler getNormalOutput(const OperatorPtr& op, int index) {
+  OutHandler getNormalOutput(const OperatorPtr &op, int index) {
     MS_EXCEPTION_IF_NULL(op);
     if (!dyn_output_map_.empty() && !output_map_.empty()) {
       MS_LOG(ERROR) << "OpAdpator(" << op->GetName() << ") has both OUTPUT and DYN_OUTPUT is not supported!";
@@ -320,7 +320,7 @@ class OpAdapter : public BaseOpAdapter {
     }
   }
 
-  Status UpdateSingleOutputDesc(const OperatorPtr& op, const abstract::BaseShapePtr& shp, const TypePtr& type) {
+  Status UpdateSingleOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type) {
     MS_EXCEPTION_IF_NULL(type);
     std::string format = "NCHW";
     if (op->GetOpType() == kExtractImagePatchesOpName) {
@@ -353,7 +353,7 @@ class OpAdapter : public BaseOpAdapter {
     return SUCCESS;
   }
 
-  size_t GetCustomOpOutputSize(const CusOperatorPtr& cus_op) {
+  size_t GetCustomOpOutputSize(const CusOperatorPtr &cus_op) {
     MS_EXCEPTION_IF_NULL(cus_op);
     if (cus_output_map_.find(cus_op->GetOpType()) == cus_output_map_.end()) {
       MS_LOG(ERROR) << "This op does not create custom output map";
@@ -363,8 +363,8 @@ class OpAdapter : public BaseOpAdapter {
     return output_size;
   }
 
-  std::shared_ptr<GeTensorDesc> CreateOutputDesc(const abstract::ShapePtr& shape_ptr, const TypePtr& type,
-                                                 const std::string& format) {
+  std::shared_ptr<GeTensorDesc> CreateOutputDesc(const abstract::ShapePtr &shape_ptr, const TypePtr &type,
+                                                 const std::string &format) {
     if (shape_ptr == nullptr) {
       MS_LOG(ERROR) << "Shape ptr is nullptr";
       return nullptr;
@@ -383,7 +383,7 @@ class OpAdapter : public BaseOpAdapter {
     return desc;
   }
 
-  Status UpdateMultiOutputDesc(const OperatorPtr& op, const abstract::BaseShapePtr& shp, const TypePtr& type) {
+  Status UpdateMultiOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type) {
     auto tuple_shp = dyn_cast<abstract::TupleShape>(shp);
     MS_EXCEPTION_IF_NULL(tuple_shp);
 
@@ -432,7 +432,7 @@ class OpAdapter : public BaseOpAdapter {
     return SUCCESS;
   }
 
-  std::shared_ptr<GeTensorDesc> CreateNodeDesc(const AnfNodePtr& node) {
+  std::shared_ptr<GeTensorDesc> CreateNodeDesc(const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     TypeId me_type = node->Type()->type_id();
     if (kObjectTypeTensorType == me_type) {
@@ -456,7 +456,7 @@ class OpAdapter : public BaseOpAdapter {
     return desc;
   }
 
-  void UpdateNormalOpInputDesc(const OperatorPtr& op, const AnfNodePtr node) {
+  void UpdateNormalOpInputDesc(const OperatorPtr &op, const AnfNodePtr node) {
     if (op == nullptr) {
       MS_LOG(ERROR) << "op is nullptr";
       return;
@@ -479,7 +479,7 @@ class OpAdapter : public BaseOpAdapter {
     }
   }
 
-  void UpdateCustomOpInputDesc(const CusOperatorPtr& op, const AnfNodePtr& node) {
+  void UpdateCustomOpInputDesc(const CusOperatorPtr &op, const AnfNodePtr &node) {
     if (op == nullptr) {
       MS_LOG(ERROR) << "op is nullptr";
       return;
@@ -491,7 +491,7 @@ class OpAdapter : public BaseOpAdapter {
       return;
     }
 
-    std::unordered_map<int, std::string>& input_map = cus_input_map_[op->GetOpType()];
+    std::unordered_map<int, std::string> &input_map = cus_input_map_[op->GetOpType()];
     auto inputs = node->cast<CNodePtr>()->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
       if (input_map.find(i) != input_map.end()) {
@@ -504,7 +504,7 @@ class OpAdapter : public BaseOpAdapter {
     }
   }
 
-  void updateInputDesc(const OperatorPtr& op, const AnfNodePtr& node) {
+  void updateInputDesc(const OperatorPtr &op, const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(op);
     MS_EXCEPTION_IF_NULL(node);
     if (IsCustomOp(op)) {
@@ -515,8 +515,8 @@ class OpAdapter : public BaseOpAdapter {
     }
   }
 
-  void updateOutputDesc(const OperatorPtr& op, const abstract::BaseShapePtr& shp, const TypePtr& type,
-                        const AnfNodePtr& node) override {
+  void updateOutputDesc(const OperatorPtr &op, const abstract::BaseShapePtr &shp, const TypePtr &type,
+                        const AnfNodePtr &node) override {
     if (op == nullptr) {
       MS_LOG(ERROR) << "op is nullptr";
       return;
@@ -548,7 +548,7 @@ class OpAdapter : public BaseOpAdapter {
     updateInputDesc(op, node);
   }
 
-  int setAttr(const OperatorPtr& op, const std::string& attrKey, const ValuePtr& attrValue) override {
+  int setAttr(const OperatorPtr &op, const std::string &attrKey, const ValuePtr &attrValue) override {
     auto it = attr_map_.find(attrKey);
     if (it != attr_map_.end()) {
       // switch case for each avalilable attribute type
@@ -560,7 +560,7 @@ class OpAdapter : public BaseOpAdapter {
     return static_cast<int>(NOT_FOUND);
   }
 
-  int SetCustomOpAttr(const CusOperatorPtr& op, const PrimitivePtr& prim) {
+  int SetCustomOpAttr(const CusOperatorPtr &op, const PrimitivePtr &prim) {
     enum ValueType {
       SINGLE_VALUE = 0,
       SEQUEUE_VALUE,
@@ -611,11 +611,11 @@ class OpAdapter : public BaseOpAdapter {
     return 0;
   }
 
-  int SetNormalOpAttr(const OperatorPtr& op, const PrimitivePtr& prim) {
+  int SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &prim) {
     int ret = 0;
     MS_EXCEPTION_IF_NULL(prim);
     MS_EXCEPTION_IF_NULL(op);
-    for (auto& it : attr_map_) {
+    for (auto &it : attr_map_) {
       auto value = prim->GetAttr(it.first);
       if (value != nullptr) {
         // set attr from primitive
@@ -637,7 +637,7 @@ class OpAdapter : public BaseOpAdapter {
     return 0;
   }
 
-  int setAttr(const OperatorPtr& op, const PrimitivePtr& prim) override {
+  int setAttr(const OperatorPtr &op, const PrimitivePtr &prim) override {
     int ret = 0;
     if (IsCustomPrim(prim)) {
       auto cus_op = std::dynamic_pointer_cast<CustomOperator>(op);
@@ -648,7 +648,7 @@ class OpAdapter : public BaseOpAdapter {
     return ret;
   }
 
-  int setAttr(const OperatorPtr& op, const AnfNodePtr& node) override {
+  int setAttr(const OperatorPtr &op, const AnfNodePtr &node) override {
     // no attribute for lonely node
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
@@ -660,7 +660,7 @@ class OpAdapter : public BaseOpAdapter {
       return 0;
     }
 
-    auto& inputs = cnode->inputs();
+    auto &inputs = cnode->inputs();
     if (inputs.empty()) {
       return 0;
     }
@@ -691,7 +691,7 @@ class OpAdapter : public BaseOpAdapter {
     }
 
     // set attr from const input
-    for (auto& it : input_attr_map_) {
+    for (auto &it : input_attr_map_) {
       if (inputs.size() <= it.first || !inputs[it.first]->isa<ValueNode>()) {
         continue;
       }
@@ -711,38 +711,38 @@ class OpAdapter : public BaseOpAdapter {
 
  private:
   template <typename S>
-  static S ConvertAny(const ValuePtr& value, const AnyTraits<S>&) {
+  static S ConvertAny(const ValuePtr &value, const AnyTraits<S> &) {
     return GetValue<S>(value);
   }
 
   // specialization for reverse bool
-  static bool ConvertAny(const ValuePtr& value, const AnyTraits<bool>&, bool reverse) {
+  static bool ConvertAny(const ValuePtr &value, const AnyTraits<bool> &, bool reverse) {
     return reverse != GetValue<bool>(value);
   }
 
   template <typename P, typename Q>
-  static Q ConvertAny(const ValuePtr& value, const AnyTraits<P>& traits_from, const AnyTraits<Q>& traits_to) {
+  static Q ConvertAny(const ValuePtr &value, const AnyTraits<P> &traits_from, const AnyTraits<Q> &traits_to) {
     return ConvertAnyUtil(value, traits_from, traits_to);
   }
 
   // specialization for tensor
-  static GeTensor ConvertAny(const ValuePtr& value, const AnyTraits<mindspore::tensor::Tensor>& traits) {
+  static GeTensor ConvertAny(const ValuePtr &value, const AnyTraits<mindspore::tensor::Tensor> &traits) {
     // To-DO the format may read from ME tensor
     return ConvertAnyUtil(value, traits);
   }
 
   // specialization for int
-  static int64_t ConvertAny(const ValuePtr& value, const AnyTraits<int64_t>) {
+  static int64_t ConvertAny(const ValuePtr &value, const AnyTraits<int64_t>) {
     return static_cast<int64_t>(GetValue<int>(value));
   }
 
-  // specialization for int to Vector
-  static std::vector<int64_t> ConvertAny(const ValuePtr& value, const std::string& name,
+  // specialization for int or tuple broadcast to Vector
+  static std::vector<int64_t> ConvertAny(const ValuePtr &value, const std::string &name,
                                          const AnyTraits<std::vector<int64_t>> anyTraitsInt) {
     return ConvertAnyUtil(value, name, anyTraitsInt);
   }
 
-  static std::vector<std::vector<int64_t>> ConvertAny(const ValuePtr& value,
+  static std::vector<std::vector<int64_t>> ConvertAny(const ValuePtr &value,
                                                       const AnyTraits<std::vector<std::vector<int64_t>>>) {
     MS_EXCEPTION_IF_NULL(value);
     MS_LOG(INFO) << "Value: " << value->type_name();
@@ -752,14 +752,14 @@ class OpAdapter : public BaseOpAdapter {
     }
     auto vec = value->cast<ValueTuplePtr>();
     MS_EXCEPTION_IF_NULL(vec);
-    for (auto& it : vec->value()) {
+    for (auto &it : vec->value()) {
       MS_EXCEPTION_IF_NULL(it);
       if (!it->isa<ValueTuple>()) {
         MS_LOG(EXCEPTION) << "It should be ValueTuple, but got " << it->type_name();
       }
       auto sub_vector = it->cast<ValueTuplePtr>();
       std::vector<int64_t> sublist;
-      for (auto& item : sub_vector->value()) {
+      for (auto &item : sub_vector->value()) {
         sublist.push_back(static_cast<int64_t>(GetValue<int>(item)));
       }
       list.push_back(sublist);
@@ -767,7 +767,7 @@ class OpAdapter : public BaseOpAdapter {
     return list;
   }
 
-  static std::vector<int64_t> ConvertAny(const ValuePtr& value, const AnyTraits<std::vector<std::vector<int64_t>>>,
+  static std::vector<int64_t> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<std::vector<int64_t>>>,
                                          const AnyTraits<std::vector<int64_t>>) {
     MS_EXCEPTION_IF_NULL(value);
     MS_LOG(DEBUG) << "Value: " << value->type_name();
@@ -776,20 +776,20 @@ class OpAdapter : public BaseOpAdapter {
     }
     auto vec = value->cast<ValueListPtr>();
     std::vector<int64_t> list;
-    for (auto& it : vec->value()) {
+    for (auto &it : vec->value()) {
       MS_EXCEPTION_IF_NULL(it);
       if (!it->isa<ValueList>()) {
         MS_LOG(EXCEPTION) << "It should be ValueList, but got " << it->type_name();
       }
       auto sub_vector = it->cast<ValueListPtr>();
-      for (auto& item : sub_vector->value()) {
+      for (auto &item : sub_vector->value()) {
         list.push_back(static_cast<int64_t>(GetValue<int>(item)));
       }
     }
     return list;
   }
 
-  static std::vector<int64_t> ConvertAny(const ValuePtr& value, const AnyTraits<std::vector<int64_t>>,
+  static std::vector<int64_t> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<int64_t>>,
                                          const AnyTraits<std::vector<int64_t>>) {
     MS_EXCEPTION_IF_NULL(value);
     MS_LOG(INFO) << "Value: " << value->type_name();
@@ -797,7 +797,7 @@ class OpAdapter : public BaseOpAdapter {
     if (value->isa<ValueSequeue>()) {
       auto vec = value->cast<ValueSequeuePtr>();
       MS_EXCEPTION_IF_NULL(vec);
-      for (auto& it : vec->value()) {
+      for (auto &it : vec->value()) {
         list.push_back(static_cast<int64_t>(GetValue<int>(it)));
       }
       return list;
@@ -809,17 +809,17 @@ class OpAdapter : public BaseOpAdapter {
     MS_LOG(EXCEPTION) << "Value should be ValueTuple or Scalar, but got " << value->type_name();
   }
 
-  static std::string ConvertAny(const ValuePtr& value, const AnyTraits<std::vector<int64_t>> anyTraitsVec,
+  static std::string ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<int64_t>> anyTraitsVec,
                                 const AnyTraits<std::string> anyTraitsStr) {
     return ConvertAnyUtil(value, anyTraitsVec, anyTraitsStr);
   }
 
-  static std::vector<float> ConvertAny(const ValuePtr& value, const AnyTraits<std::vector<float>> anyTraitsVec,
+  static std::vector<float> ConvertAny(const ValuePtr &value, const AnyTraits<std::vector<float>> anyTraitsVec,
                                        const AnyTraits<float> anyTraitsFlo) {
     return ConvertAnyUtil(value, anyTraitsVec, anyTraitsFlo);
   }
 
-  static std::vector<int64_t> ConvertAny(const ValuePtr& value, const std::string& format,
+  static std::vector<int64_t> ConvertAny(const ValuePtr &value, const std::string &format,
                                          const AnyTraits<std::vector<int64_t>> anyTraitsVec,
                                          const AnyTraits<int64_t> anyTraitsInt) {
     return ConvertAnyUtil(value, format, anyTraitsVec, anyTraitsInt);
@@ -827,12 +827,12 @@ class OpAdapter : public BaseOpAdapter {
 
   // convert value list for value tuple to vector
   template <typename P, typename Q>
-  static std::vector<Q> ConvertAny(const ValuePtr& value, const AnyTraits<P>& anyTraitsP,
+  static std::vector<Q> ConvertAny(const ValuePtr &value, const AnyTraits<P> &anyTraitsP,
                                    const AnyTraits<std::vector<Q>> anyTraitsQ) {
     return ConvertAnyUtil(value, anyTraitsP, anyTraitsQ);
   }
 
-  static int64_t ConvertAny(const ValuePtr& value, const AnyTraits<GeEnum>) {
+  static int64_t ConvertAny(const ValuePtr &value, const AnyTraits<GeEnum>) {
     auto name = GetValue<std::string>(value);
     auto it = enum_map_.find(name);
     int v = 0;
@@ -842,12 +842,12 @@ class OpAdapter : public BaseOpAdapter {
     return v;
   }
 
-  static GeDataType ConvertAny(const ValuePtr& value, const AnyTraits<GEType> anyTraitsGE) {
+  static GeDataType ConvertAny(const ValuePtr &value, const AnyTraits<GEType> anyTraitsGE) {
     return ConvertAnyUtil(value, anyTraitsGE);
   }
 
   // convert any value to tensor
-  static GeTensor ConvertAny(const ValuePtr& value, const AnyTraits<AnyValue> anyTraitsValue) {
+  static GeTensor ConvertAny(const ValuePtr &value, const AnyTraits<AnyValue> anyTraitsValue) {
     return ConvertAnyUtil(value, anyTraitsValue);
   }
 

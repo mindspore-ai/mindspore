@@ -39,15 +39,15 @@ struct is_shared_ptr<std::shared_ptr<T>> : public std::true_type {};
 class Base : public std::enable_shared_from_this<Base> {
  public:
   constexpr Base() = default;
-  Base(const Base& other) : std::enable_shared_from_this<Base>(other) {}
-  virtual bool operator==(const Base& rhs) {
+  Base(const Base &other) : std::enable_shared_from_this<Base>(other) {}
+  virtual bool operator==(const Base &rhs) {
     if (this == &rhs) {
       return true;
     }
     return false;
   }
 
-  virtual Base& operator=(const Base&) { return *this; }
+  virtual Base &operator=(const Base &) { return *this; }
   virtual ~Base() = default;
   virtual std::size_t hash() const { return tid(); }
   virtual std::string ToString() const { return type_name(); }
@@ -57,14 +57,14 @@ class Base : public std::enable_shared_from_this<Base> {
 
   virtual const bool IsFromTypeId(uint32_t tid) const;
   virtual std::string type_name() const { return "Base"; }
-  static uint32_t GetTypeId(const char* const type_key);
+  static uint32_t GetTypeId(const char *const type_key);
   virtual uint32_t tid() const {
     static const uint32_t tid = GetTypeId(typeid(Base).name());
     return tid;
   }
 
   template <typename T,
-            typename std::enable_if<!is_shared_ptr<T>::value && std::is_base_of<Base, T>::value, T>::type* = nullptr>
+            typename std::enable_if<!is_shared_ptr<T>::value && std::is_base_of<Base, T>::value, T>::type * = nullptr>
   inline bool isa() const {
     static const uint32_t tid = GetTypeId(typeid(T).name());
     return this->IsFromTypeId(tid);
@@ -90,9 +90,9 @@ using BasePtr = std::shared_ptr<Base>;
 using BaseWeakPtr = std::weak_ptr<Base>;
 
 template <typename T, typename U>
-inline T* cast(U* source) {
+inline T *cast(U *source) {
   if (source != nullptr && source->template isa<T>()) {
-    return static_cast<T*>(source);
+    return static_cast<T *>(source);
   } else {
     return nullptr;
   }
@@ -100,7 +100,7 @@ inline T* cast(U* source) {
 
 template <
   typename T, typename U,
-  typename std::enable_if<std::is_base_of<Base, T>::value && std::is_base_of<Base, U>::value, T>::type* = nullptr>
+  typename std::enable_if<std::is_base_of<Base, T>::value && std::is_base_of<Base, U>::value, T>::type * = nullptr>
 inline std::shared_ptr<T> dyn_cast(const std::shared_ptr<U> r) {
   if (r != nullptr && r->template isa<T>()) {
     return std::static_pointer_cast<T>(r);
@@ -143,7 +143,7 @@ struct MS_EXPORT TypeIdManager {
   std::mutex mutex;
   std::atomic<uint32_t> type_counter{0};
   std::unordered_map<std::string, uint32_t> map;
-  static TypeIdManager* Get();
+  static TypeIdManager *Get();
   TypeIdManager() : mutex(), type_counter(0), map() {}
 };
 }  // namespace mindspore

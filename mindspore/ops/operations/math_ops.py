@@ -24,7 +24,7 @@ from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from .._utils import _get_broadcast_shape
-from ..primitive import PrimitiveWithInfer, prim_attr_register
+from ..primitive import PrimitiveWithInfer, prim_attr_register, _run_op
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):
@@ -224,6 +224,11 @@ class _Reduce(PrimitiveWithInfer):
         """init Reduce"""
         validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
         self.init_prim_io_names(inputs=['input_x', 'axis'], outputs=['y'])
+
+    def __call__(self, x, axis=()):
+        args = [x, axis]
+        output = _run_op(self, self.name, args)
+        return output
 
     def do_infer(self, input_x, axis, valid_dtype=mstype.number_type):
         axis_v = axis['value']
@@ -768,8 +773,8 @@ class Mul(_MathBinaryOp):
         Tensor, the shape is same as the shape after broadcasting, and the data type is same as 'input_x'.
 
     Examples:
-        >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
-        >>> input_y = Tensor(np.array([4, 5, 6]), mindspore.int32)
+        >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> input_y = Tensor(np.array([4.0, 5.0, 6.0]), mindspore.float32)
         >>> mul = P.Mul()
         >>> mul(input_x, input_y)
         [4, 10, 18]
@@ -1000,6 +1005,36 @@ class Log(PrimitiveWithInfer):
     def infer_dtype(self, x):
         validator.check_subclass("x", x, mstype.tensor, self.name)
         return x
+
+
+class Erf(PrimitiveWithInfer):
+    r"""
+    Computes the Gauss error function of `input_x` element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
+        >>> erf = P.Erf()
+        >>> erf(input_x)
+        [-0.8427168, 0., 0.8427168, 0.99530876, 0.99997765]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Erf"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_tensor_type_same({"x": x_type}, [mstype.float16, mstype.float32], self.name)
+        return x_type
 
 
 class Minimum(_MathBinaryOp):
@@ -1490,6 +1525,7 @@ class LogicalNot(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init LogicalNot"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
     def infer_shape(self, x_shape):
         return x_shape

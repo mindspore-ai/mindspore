@@ -61,9 +61,9 @@ struct Signature {
   SignatureEnumKind kind;
   ValuePtr default_value;  // nullptr for no default value
   SignatureEnumDType dtype;
-  Signature(const std::string& arg_name, const SignatureEnumRW& rw_tag, const SignatureEnumKind& arg_kind,
-            const py::object& arg_default, const SignatureEnumDType& arg_dtype);
-  Signature(const std::string& arg_name, const SignatureEnumRW& rw_tag, const SignatureEnumKind& arg_kind);
+  Signature(const std::string &arg_name, const SignatureEnumRW &rw_tag, const SignatureEnumKind &arg_kind,
+            const py::object &arg_default, const SignatureEnumDType &arg_dtype);
+  Signature(const std::string &arg_name, const SignatureEnumRW &rw_tag, const SignatureEnumKind &arg_kind);
 };
 }  // namespace mindspore
 

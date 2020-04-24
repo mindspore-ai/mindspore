@@ -43,39 +43,24 @@ const std::map<std::string, OperatorType> DictOpType{
 
 const TensorParam MakeTensor(int n, int c, int h, int w);
 
-bool IsInList(const std::string& name, const std::vector<std::string>& list);
-
 Graph::NodeType MakeNewOperator(std::vector<std::shared_ptr<OperatorInfo>> ops, size_t iter_ops);
 
-Graph::NodeType MakeNewTensor(std::vector<std::shared_ptr<OperatorInfo>> ops, const size_t iter_ops,
-                              const std::string& input, const size_t iter_input_tensors, std::shared_ptr<Graph> graph,
-                              size_t current_op_index);
-void Fill2DTensor(const std::vector<std::shared_ptr<OperatorInfo>>& ops, const size_t iter_ops,
-                  const std::shared_ptr<Graph> graph, const size_t iter_input_tensors, const size_t current_op_index,
-                  Graph::NodeType NewTensor);
-void CompleteOperatorInputs(std::vector<std::shared_ptr<OperatorInfo>> ops, size_t iter_ops, size_t iter_input_tensors,
-                            size_t current_op_index, std::shared_ptr<Graph> graph);
-void Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>>& ops, const size_t iter_ops,
-                      const std::shared_ptr<Graph> graph, const size_t iter_input_tensors,
-                      const size_t current_op_index);
-void MakeEdge(std::shared_ptr<Graph> graph, const size_t input_index, const size_t current_op_index);
+TensorParam Fill2DTensor(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                         Graph::NodeType NewTensor);
 
-void ModifyTensorToOperator(std::shared_ptr<Graph> graph, const size_t current_op_index, const size_t iter_ops,
-                            std::vector<std::shared_ptr<OperatorInfo>> ops);
+OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                                   Graph::NodeType NewTensor);
 
-std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>>& ops,
-                                  const std::vector<std::vector<std::string>>& input_tensor_names,
-                                  const std::shared_ptr<std::vector<size_t>>& ops_nodes_list);
+TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                             const size_t iter_input_tensor, Graph::NodeType NewTensor);
 
-void LinkOps(std::shared_ptr<Graph> graph, std::vector<std::shared_ptr<OperatorInfo>> ops,
-             const std::vector<std::vector<std::string>>& input_tensor_names, std::vector<std::string> current_graph,
-             const size_t iter_ops, const size_t current_op_index);
+std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                  const std::vector<std::vector<std::string>> &input_tensor_names);
 
-std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> graph,
-                                      std::shared_ptr<std::vector<std::vector<size_t>>> eli_list,
-                                      std::shared_ptr<std::vector<size_t>> index_list);
-void Eliminate_Aux(const size_t node_index, std::shared_ptr<Graph> graph,
-                   const std::shared_ptr<std::vector<std::vector<size_t>>> eli_list);
+void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, std::shared_ptr<Graph> graph);
+
+size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &input_tensor_names,
+                                  const std::string &input_name);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_PARSE_GRAPH_H_

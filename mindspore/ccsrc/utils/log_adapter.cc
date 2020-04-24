@@ -179,7 +179,7 @@ void LogWriter::operator^(const LogStream &stream) const {
 
   std::ostringstream oss;
   oss << location_.file_ << ":" << location_.line_ << " " << location_.func_ << "] ";
-  if (exception_type_ != NoExceptionType) {
+  if (exception_type_ != NoExceptionType && exception_type_ != TypeError && exception_type_ != ValueError) {
     oss << ExceptionTypeToString(exception_type_) << " ";
   }
   oss << msg.str();
@@ -229,18 +229,28 @@ static void InitMsLogLevel() {
 
 extern "C" {
 // shared lib init hook
+#if defined(_WIN32) || defined(_WIN64)
+__attribute__((constructor)) void mindspore_log_init(void) {
+#else
 void mindspore_log_init(void) {
+#endif
 #ifdef USE_GLOG
   // do not use glog predefined log prefix
   FLAGS_log_prefix = false;
   static bool is_glog_initialzed = false;
   if (!is_glog_initialzed) {
+#if !defined(_WIN32) && !defined(_WIN64)
     google::InitGoogleLogging("mindspore");
+#endif
     is_glog_initialzed = true;
   }
   // set default log level to WARNING
   if (mindspore::GetEnv("GLOG_v").empty()) {
     FLAGS_v = mindspore::WARNING;
+  }
+  // set default log file mode to 0640
+  if (mindspore::GetEnv("GLOG_logfile_mode").empty()) {
+    FLAGS_logfile_mode = 0640;
   }
   // default print log to screen
   if (mindspore::GetEnv("GLOG_logtostderr").empty()) {

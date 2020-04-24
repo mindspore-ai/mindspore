@@ -13,16 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """ test_backend """
-import numpy as np
+import os
 import pytest
 from mindspore.ops import operations as P
 import mindspore.nn as nn
-from mindspore import context
+from mindspore import context, ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-from mindspore._extends.pynative_helper import args_type_check
-from mindspore.common.tensor import Tensor
-from mindspore.common.api import ms_function
+from mindspore._checkparam import args_type_check
 
 
 def setup_module(module):
@@ -31,6 +29,7 @@ def setup_module(module):
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self):
         super(Net, self).__init__()
         self.add = P.TensorAdd()
@@ -49,13 +48,16 @@ def test_vm_backend():
     output = add()
     assert output.asnumpy().shape == (1, 3, 3, 4)
 
+
 def test_vm_set_context():
     """ test_vm_set_context """
-    context.set_context(save_graphs=True, save_graphs_path="/home/mindspore", mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True, save_graphs_path="mindspore_ir_path", mode=context.GRAPH_MODE)
     assert context.get_context("save_graphs")
     assert context.get_context("mode") == context.GRAPH_MODE
-    assert context.get_context("save_graphs_path") == "/home/mindspore"
+    assert os.path.exists("mindspore_ir_path")
+    assert context.get_context("save_graphs_path").find("mindspore_ir_path") > 0
     context.set_context(mode=context.PYNATIVE_MODE)
+
 
 @args_type_check(v_str=str, v_int=int, v_tuple=tuple)
 def check_input(v_str, v_int, v_tuple):
@@ -74,3 +76,15 @@ def test_args_type_check():
     with pytest.raises(TypeError):
         check_input("name", 100, "age")
     check_input("name", 100, (10, 10))
+
+
+def teardown_module():
+    dirs = ['mindspore_ir_path']
+    for item in dirs:
+        item_name = './' + item
+        if not os.path.exists(item_name):
+            continue
+        if os.path.isdir(item_name):
+            os.rmdir(item_name)
+        elif os.path.isfile(item_name):
+            os.remove(item_name)

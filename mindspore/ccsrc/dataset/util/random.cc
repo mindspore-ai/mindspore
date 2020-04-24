@@ -18,6 +18,9 @@
 
 #include "dataset/util/random.h"
 
+#if defined(_WIN32) || defined(_WIn64)
+#include <stdlib.h>
+#endif
 #include <limits>
 #include <memory>
 #include <random>
@@ -33,7 +36,9 @@ uint32_t GetSeed() {
   uint32_t seed = GlobalContext::config_manager()->seed();
   if (seed == std::mt19937::default_seed) {
 #if defined(_WIN32) || defined(_WIN64)
-    std::random_device random_device;
+    unsigned int number;
+    rand_s(&number);
+    std::mt19937 random_device{static_cast<uint32_t>(number)};
 #else
     std::random_device random_device("/dev/urandom");
 #endif

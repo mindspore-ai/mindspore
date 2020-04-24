@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ad {
-Adjoint::Adjoint(const AnfNodePtr& primal, const AnfNodePtr& k, const FuncGraphPtr& caller)
+Adjoint::Adjoint(const AnfNodePtr &primal, const AnfNodePtr &k, const FuncGraphPtr &caller)
     : primal_(primal), caller_(caller), dout_(nullptr) {
   if (k != nullptr) {
     k_ = k;
@@ -43,13 +43,13 @@ Adjoint::Adjoint(const AnfNodePtr& primal, const AnfNodePtr& k, const FuncGraphP
 
 AnfNodePtr Adjoint::k() { return k_; }
 
-void Adjoint::RegisterKUser(const CNodePtr& user, size_t index) { k_user_.emplace_back(std::make_pair(user, index)); }
+void Adjoint::RegisterKUser(const CNodePtr &user, size_t index) { k_user_.emplace_back(std::make_pair(user, index)); }
 
-void Adjoint::UpdateK(const AnfNodePtr& new_k) {
+void Adjoint::UpdateK(const AnfNodePtr &new_k) {
   MS_EXCEPTION_IF_NULL(new_k);
   MS_LOG(DEBUG) << "Replace k " << k_->ToString() << " with " << new_k->ToString();
   // In recursive case, it needs update.
-  for (auto& user : k_user_) {
+  for (auto &user : k_user_) {
     MS_LOG(DEBUG) << "Update k user " << user.first->ToString() << " " << user.second << " input with new_k"
                   << new_k->ToString();
     if (user.first->input(user.second) != k_) {
@@ -65,11 +65,11 @@ AnfNodePtr Adjoint::primal() { return primal_; }
 
 AnfNodePtr Adjoint::dout() { return dout_hole_; }
 
-void Adjoint::RegisterDoutUser(const CNodePtr& user, size_t index) {
+void Adjoint::RegisterDoutUser(const CNodePtr &user, size_t index) {
   dout_user_.emplace_back(std::make_pair(user, index));
 }
 
-void Adjoint::AccumulateDout(const AnfNodePtr& dout_factor) {
+void Adjoint::AccumulateDout(const AnfNodePtr &dout_factor) {
   if (dout_ != nullptr) {
     MS_LOG(DEBUG) << "Update dout " << dout_->ToString() << " with dout_factor " << dout_factor->ToString();
     auto add = prim::GetPythonOps("hyper_add");
@@ -81,7 +81,7 @@ void Adjoint::AccumulateDout(const AnfNodePtr& dout_factor) {
 
 void Adjoint::CallDoutHole() {
   if (dout_ != nullptr) {
-    for (auto& user : dout_user_) {
+    for (auto &user : dout_user_) {
       MS_LOG(DEBUG) << "Update dout user " << user.first->ToString() << " " << user.second << " input with dout "
                     << dout_->ToString();
       if (user.first->input(user.second) != dout_hole_) {

@@ -14,6 +14,7 @@
 # ==============================================================================
 import mindspore.dataset as ds
 from mindspore import log as logger
+import numpy as np
 
 
 # test5trainimgs.json contains 5 images whose un-decoded shape is [83554, 54214, 65512, 54214, 64631]
@@ -107,8 +108,64 @@ def test_sampler_py_api():
     sampler.get_indices()
 
 
+def test_python_sampler():
+    manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
+    map = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
+
+    class Sp1(ds.Sampler):
+        def __iter__(self):
+            return iter([i for i in range(self.dataset_size)])
+
+    class Sp2(ds.Sampler):
+        def __init__(self):
+            super(Sp2, self).__init__()
+            # at this stage, self.dataset_size and self.num_samples are not yet known
+            self.cnt = 0
+
+        def __iter__(self):  # first epoch, all 0, second epoch all 1, third all 2 etc.. ...
+            return iter([self.cnt for i in range(self.num_samples)])
+
+        def reset(self):
+            self.cnt = (self.cnt + 1) % self.dataset_size
+
+    def test_config(num_samples, num_repeats, sampler):
+        data1 = ds.ManifestDataset(manifest_file, num_samples=num_samples, sampler=sampler)
+        if num_repeats is not None:
+            data1 = data1.repeat(num_repeats)
+        res = []
+        for item in data1.create_dict_iterator():
+            logger.info("item[image].shape[0]: {}, item[label].item(): {}"
+                        .format(item["image"].shape[0], item["label"].item()))
+            res.append(map[(item["image"].shape[0], item["label"].item())])
+        # print(res)
+        return res
+
+    def test_generator():
+        class MySampler(ds.Sampler):
+            def __iter__(self):
+                for i in range(99, -1, -1):
+                    yield i
+
+        data1 = ds.GeneratorDataset([(np.array(i),) for i in range(100)], ["data"], sampler = MySampler())
+        i = 99
+        for data in data1:
+            assert data[0] == (np.array(i),)
+            i = i - 1
+
+    assert test_config(5, 2, Sp1()) == [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
+    assert test_config(2, 6, Sp2()) == [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0]
+    test_generator()
+
+    sp1 = Sp1().create()
+    sp1.set_num_rows(5)
+    sp1.set_num_samples(5)
+    sp1.initialize()
+    assert list(sp1.get_indices()) == [0, 1, 2, 3, 4]
+
+
 if __name__ == '__main__':
     test_sequential_sampler(True)
     test_random_sampler(True)
     test_random_sampler_multi_iter(True)
     test_sampler_py_api()
+    test_python_sampler()

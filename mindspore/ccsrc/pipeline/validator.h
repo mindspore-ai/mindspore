@@ -29,9 +29,9 @@
 
 namespace mindspore {
 namespace validator {
-void Validate(const FuncGraphPtr& func_graph);
-void ValidateAbstract(const AnfNodePtr& node);
-void ValidateOperation(const AnfNodePtr& node);
+void Validate(const FuncGraphPtr &func_graph);
+void ValidateAbstract(const AnfNodePtr &node);
+void ValidateOperation(const AnfNodePtr &node);
 }  // namespace validator
 }  // namespace mindspore
 

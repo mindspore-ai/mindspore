@@ -21,6 +21,7 @@
 #include <utility>
 #include <string>
 #include <memory>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -57,9 +58,9 @@ struct OpExecInfo {
   py::dict op_attrs;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
-OpExecInfoPtr GenerateOpExecInfo(const py::args& args);
+OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
 
-const std::unordered_set<std::string> ignore_infer_prim = {"partial"};
+const std::set<std::string> ignore_infer_prim = {"partial", "make_ref"};
 
 }  // namespace pynative
 }  // namespace mindspore

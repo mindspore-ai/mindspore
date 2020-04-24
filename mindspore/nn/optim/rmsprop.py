@@ -14,41 +14,24 @@
 # ============================================================================
 """rmsprop"""
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
 
 rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
 centered_rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
 
 
-@rmsprop_opt.register("Function", "Number", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
-def _rmsprop_opt(opt, learning_rate, decay, epsilon, momentum, weight, ms, mom, grad):
-    """Apply rmsprop optimizer to the weight parameter."""
-    success = True
-    success = F.depend(success, opt(weight, ms, mom, grad, learning_rate, decay, momentum, epsilon))
-    return success
-
-
 @rmsprop_opt.register("Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor", "Tensor")
-def _rmsprop_opt_dynamic_lr(opt, learning_rate, decay, epsilon, momentum, weight, ms, mom, grad):
+def _rmsprop_opt(opt, learning_rate, decay, epsilon, momentum, weight, ms, mom, grad):
     """Apply rmsprop optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, ms, mom, grad, learning_rate, decay, momentum, epsilon))
     return success
 
 
-@centered_rmsprop_opt.register("Function", "Number", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor",
-                               "Tensor", "Tensor")
-def _centered_rmsprop_opt(opt, learning_rate, decay, epsilon, momentum, weight, mg, ms, mom, grad):
-    """Apply centered rmsprop optimizer to the weight parameter."""
-    success = True
-    success = F.depend(success, opt(weight, mg, ms, mom, grad, learning_rate, decay, momentum, epsilon))
-    return success
-
-
 @centered_rmsprop_opt.register("Function", "Tensor", "Number", "Number", "Number", "Tensor", "Tensor", "Tensor",
                                "Tensor", "Tensor")
-def _centered_rmsprop_opt_dynamic_lr(opt, learning_rate, decay, epsilon, momentum, weight, mg, ms, mom, grad):
+def _centered_rmsprop_opt(opt, learning_rate, decay, epsilon, momentum, weight, mg, ms, mom, grad):
     """Apply centered rmsprop optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, mg, ms, mom, grad, learning_rate, decay, momentum, epsilon))
@@ -144,8 +127,8 @@ class RMSProp(Optimizer):
         self.decay = decay
         self.epsilon = epsilon
 
-        validator.check_type("use_locking", use_locking, [bool])
-        validator.check_type("centered", centered, [bool])
+        validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
+        validator.check_value_type("centered", centered, [bool], self.cls_name)
         self.centered = centered
         if centered:
             self.opt = P.ApplyCenteredRMSProp(use_locking)

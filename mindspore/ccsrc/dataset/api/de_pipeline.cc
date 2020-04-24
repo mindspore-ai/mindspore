@@ -28,10 +28,11 @@
 #include "dataset/engine/datasetops/source/manifest_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/celeba_op.h"
+#include "dataset/engine/datasetops/source/text_file_op.h"
+#include "dataset/engine/datasetops/filter_op.h"
 #include "mindrecord/include/shard_category.h"
 #include "mindrecord/include/shard_sample.h"
 #include "mindrecord/include/shard_shuffle.h"
-
 #include "dataset/util/random.h"
 #include "dataset/util/status.h"
 #include "utils/log_adapter.h"
@@ -45,7 +46,9 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kShuffle, &DEPipeline::ParseShuffleOp},
                                                                    {kMindrecord, &DEPipeline::ParseMindRecordOp},
                                                                    {kMap, &DEPipeline::ParseMapOp},
+                                                                   {kFilter, &DEPipeline::ParseFilterOp},
                                                                    {kBatch, &DEPipeline::ParseBatchOp},
+                                                                   {kBarrier, &DEPipeline::ParseBarrierOp},
                                                                    {kRepeat, &DEPipeline::ParseRepeatOp},
                                                                    {kSkip, &DEPipeline::ParseSkipOp},
                                                                    {kZip, &DEPipeline::ParseZipOp},
@@ -61,7 +64,8 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kVoc, &DEPipeline::ParseVOCOp},
                                                                    {kCifar10, &DEPipeline::ParseCifar10Op},
                                                                    {kCifar100, &DEPipeline::ParseCifar100Op},
-                                                                   {kCelebA, &DEPipeline::ParseCelebAOp}};
+                                                                   {kCelebA, &DEPipeline::ParseCelebAOp},
+                                                                   {kTextFile, &DEPipeline::ParseTextFileOp}};
 
 DEPipeline::DEPipeline() : iterator_(nullptr) {
   try {
@@ -501,6 +505,41 @@ Status DEPipeline::ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *
   return Status::OK();
 }
 
+Status DEPipeline::ParseFilterOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<FilterOp::Builder> builder = std::make_shared<FilterOp::Builder>();
+
+  if (args["predicate"].is_none()) {
+    RETURN_STATUS_UNEXPECTED("Error: 'predicate' is not set. \n");
+  }
+
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "predicate") {
+        py::handle op = args["predicate"];
+        if (!py::isinstance<py::function>(op)) {
+          RETURN_STATUS_UNEXPECTED("Error: predicate is not recognised (not pyfunc).");
+        }
+        py::function predicate_func = op.cast<py::function>();
+        (void)builder->SetPredicateFunc(std::move(predicate_func));
+      } else if (key == "input_columns") {
+        std::vector<std::string> in_col_names = ToStringVector(args["input_columns"]);
+        (void)builder->SetInColNames(in_col_names);
+      } else {
+        RETURN_STATUS_UNEXPECTED("Error: Unhandled key: " + key);
+      }
+    }
+  }
+
+  std::shared_ptr<FilterOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
 Status DEPipeline::ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   if (args["count"].is_none()) {
     std::string err_msg = "Error: count is invalid or not set.";
@@ -589,6 +628,30 @@ Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp>
   return Status::OK();
 }
 
+Status DEPipeline::ParseBarrierOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<BarrierOp::Builder> builder = std::make_shared<BarrierOp::Builder>();
+  // Right now barrier should only take num_rows_per_buffer = 1
+  // The reason for this is because having it otherwise can lead to blocking issues
+  // See barrier_op.h for more details
+  (void)builder->SetRowsPerBuffer(1);
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "condition_name") {
+        (void)builder->SetConditionName(ToString(value));
+      } else if (key == "condition_func") {
+        (void)builder->SetConditionFunc(value.cast<py::function>());
+      }
+    }
+  }
+
+  std::shared_ptr<BarrierOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
 Status DEPipeline::ParseDeviceQueueOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   int32_t prefetch_size = 0;
   if (args.contains("prefetch_size")) {
@@ -669,8 +732,6 @@ Status DEPipeline::ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *
   *ptr = op;
   return Status::OK();
 }
-
-DsOpPtr DEPipeline::ParseFilterOp(const py::dict &args) const { return DsOpPtr(); }
 
 Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   // Required arguments
@@ -981,6 +1042,38 @@ Status DEPipeline::ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp
   }
 
   std::shared_ptr<CelebAOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  // Required arguments
+  std::shared_ptr<TextFileOp::Builder> builder = std::make_shared<TextFileOp::Builder>();
+  if (!args["dataset_files"].is_none()) {
+    (void)builder->SetTextFilesList(ToStringVector(args["dataset_files"]));
+  } else {
+    RETURN_STATUS_UNEXPECTED("Error: dataset_files is missing");
+  }
+  // Optional arguments
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "shuffle_files") {
+        (void)builder->SetShuffleFiles(ToBool(value));
+      } else if (key == "num_samples") {
+        (void)builder->SetNumSamples(ToInt(value));
+      } else if (key == "num_shards") {
+        (void)builder->SetNumDevices(ToInt(value));
+      } else if (key == "shard_id") {
+        (void)builder->SetDeviceId(ToInt(value));
+      }
+    }
+  }
+  std::shared_ptr<TextFileOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
   return Status::OK();

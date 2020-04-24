@@ -28,28 +28,28 @@
 namespace mindspore {
 namespace parallel {
 #define REGISTER(className)                                                                                  \
-  OperatorInfoPtr objectCreator##className(std::string name, Shapes in, Shapes out, PrimitiveAttrs& attrs) { \
+  OperatorInfoPtr objectCreator##className(std::string name, Shapes in, Shapes out, PrimitiveAttrs &attrs) { \
     return std::make_shared<className>(name, in, out, attrs);                                                \
   }                                                                                                          \
   RegisterAction className##Register(#className, (CreatFn)objectCreator##className);
 
-typedef OperatorInfoPtr (*CreatFn)(const std::string& name, const Shapes& shape_in, const Shapes shape_out,
-                                   const PrimitiveAttrs& attrs);
+typedef OperatorInfoPtr (*CreatFn)(const std::string &name, const Shapes &shape_in, const Shapes shape_out,
+                                   const PrimitiveAttrs &attrs);
 
 class DynCreator {
  public:
   ~DynCreator() = default;
 
   // creat static singleton dyn_creator instance
-  static DynCreator& Instance() {
+  static DynCreator &Instance() {
     static DynCreator fac = DynCreator();
     return fac;
   }
   // register
   void Regist(std::string name, CreatFn func) { (void)Function_map_.insert(std::make_pair(name, func)); }
   // creator
-  OperatorInfoPtr Creat(const std::string& name, const Shapes& shape_in, const Shapes& shape_out,
-                        const PrimitiveAttrs& attrs, size_t count) {
+  OperatorInfoPtr Creat(const std::string &name, const Shapes &shape_in, const Shapes &shape_out,
+                        const PrimitiveAttrs &attrs, size_t count) {
     std::string op_name = name + std::to_string(count);
     auto iter = Function_map_.find(name);
     if (iter == Function_map_.end()) {
@@ -66,7 +66,7 @@ class DynCreator {
 
 class RegisterAction {
  public:
-  RegisterAction(const std::string& name, CreatFn creatfn) : name_(name) {
+  RegisterAction(const std::string &name, CreatFn creatfn) : name_(name) {
     DynCreator::Instance().Regist(name, creatfn);
   }
   ~RegisterAction() = default;

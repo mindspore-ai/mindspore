@@ -26,7 +26,12 @@ from .squeeze_grad import SqueezeGrad, gpu_schedule_SqueezeGrad
 from .mean import SimpleMean, gpu_schedule_SimpleMean
 from .mean_grad import SimpleMeanGrad, gpu_schedule_SimpleMeanGrad
 from .mul import Mul, gpu_schedule_Mul
-from .hsigmoid import Hsigmoid, gpu_schedule_Hsigmoid
-from .hsigmoid_grad import HsigmoidGrad, gpu_schedule_HsigmoidGrad
-from .hswish import Hswish, gpu_schedule_Hswish
-from .hswish_grad import HswishGrad, gpu_schedule_HswishGrad
+from .hsigmoid import HSigmoid, gpu_schedule_HSigmoid
+from .hsigmoid_grad import HSigmoidGrad, gpu_schedule_HSigmoidGrad
+from .hswish import HSwish, gpu_schedule_HSwish
+from .hswish_grad import HSwishGrad, gpu_schedule_HSwishGrad
+from .logical_or import LogicalOr, gpu_schedule_LogicalOr
+from .logical_not import LogicalNot, gpu_schedule_LogicalNot
+from .logical_and import LogicalAnd, gpu_schedule_LogicalAnd
+from .sub import Sub, gpu_schedule_Sub
+from .less_equal import LessEqual, gpu_schedule_LessEqual

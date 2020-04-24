@@ -33,7 +33,7 @@ class ReshapeLayoutTransfer : public LayoutTransfer {
   std::shared_ptr<ReshapeLayoutTransfer> ExtendFromTensorShapeByExpandedTensorShape() const;
   std::shared_ptr<ReshapeLayoutTransfer> ExtendToTensorShapeByExpandedTensorShape() const;
   std::shared_ptr<ReshapeLayoutTransfer> ExpandFromTensorShapeAndExpandToDeviceArrangement(
-    const Arrangement& expand_shape) const;
+    const Arrangement &expand_shape) const;
   std::shared_ptr<ReshapeLayoutTransfer> ExchangeFromAndTo() const;
 
  private:

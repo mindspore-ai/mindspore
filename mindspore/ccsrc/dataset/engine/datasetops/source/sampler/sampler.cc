@@ -48,9 +48,6 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
   std::unique_ptr<DataBuffer> db;
   std::shared_ptr<Tensor> sample_ids;
 
-  // check samples_per_buffer is properly set and doesn't overflow
-  CHECK_FAIL_RETURN_UNEXPECTED(samples_per_buffer_ + 1 > 1, "samples_per_buffer invalid");
-
   // A call to derived class to get sample ids wrapped inside a buffer
   RETURN_IF_NOT_OK(GetNextBuffer(&db));
   // Get the only tensor inside the buffer that contains the actual SampleIds for the entire epoch

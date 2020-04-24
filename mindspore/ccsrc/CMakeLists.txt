@@ -394,10 +394,6 @@ if(USE_GLOG)
     target_link_libraries(_c_expression PRIVATE mindspore::glog)
 endif()
 
-if(ENABLE_GPU)
-    target_link_libraries(_c_expression PRIVATE mindspore::tvm)
-endif()
-
 if(ENABLE_DUMP_PROTO)
     target_link_libraries(_c_expression PRIVATE mindspore::protobuf)
 endif()

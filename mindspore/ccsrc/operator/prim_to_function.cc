@@ -54,7 +54,7 @@ PrimToFunction::PrimToFunction()
                            {"scalar_sub", kPrimTypeTwoArgs},
                            {"scalar_floordiv", kPrimTypeTwoArgs}}) {}
 
-bool PrimToFunction::GetFunction(const PrimitivePtr& prim, FunctionPtr* const func) const {
+bool PrimToFunction::GetFunction(const PrimitivePtr &prim, FunctionPtr *const func) const {
   bool result = false;
 
   if (func != nullptr) {
@@ -79,7 +79,7 @@ bool PrimToFunction::GetFunction(const PrimitivePtr& prim, FunctionPtr* const fu
   return result;
 }
 
-int PrimToFunction::GetPrimType(const PrimitivePtr& prim) const {
+int PrimToFunction::GetPrimType(const PrimitivePtr &prim) const {
   MS_EXCEPTION_IF_NULL(prim);
   int prim_type = static_cast<int>(kPrimTypeUnknown);
 

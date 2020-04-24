@@ -60,7 +60,7 @@ def test_ssim_max_val_zero():
         net = SSIMNet(max_val)
 
 def test_ssim_filter_size_float():
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         net = SSIMNet(filter_size=1.1)
 
 def test_ssim_filter_size_zero():

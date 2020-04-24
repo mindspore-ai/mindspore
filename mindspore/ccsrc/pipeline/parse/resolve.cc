@@ -71,7 +71,7 @@ bool SymbolResolver::Resolve() {
 namespace {
 // argument obj should be python Parameter object
 // it will be converted to Parameter node here
-AnfNodePtr ResolveParameterObj(const FuncGraphPtr& func_graph, const py::object& obj) {
+AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object &obj) {
   MS_EXCEPTION_IF_NULL(func_graph);
 
   // parameter object should not be none
@@ -128,7 +128,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr& func_graph, const py::object&
   }
 }
 
-bool ResolveObjectToNode(const FuncGraphPtr& func_graph, const py::object& obj, AnfNodePtr* const node) {
+bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, AnfNodePtr *const node) {
   AnfNodePtr output = nullptr;
   if (py::hasattr(obj, "__parameter__")) {
     auto param = ResolveParameterObj(func_graph, obj);
@@ -171,12 +171,12 @@ bool ResolveObjectToNode(const FuncGraphPtr& func_graph, const py::object& obj, 
 }
 
 // transform the ValueTuple or ValueList of graph node to make tuple of const graph node
-bool TransformVectorGraphValueNode(const FuncGraphManagerPtr& manager, const AnfNodePtr& node,
-                                   const ValueNodePtr& value_node, AnfNodePtr* const transformed) {
+bool TransformVectorGraphValueNode(const FuncGraphManagerPtr &manager, const AnfNodePtr &node,
+                                   const ValueNodePtr &value_node, AnfNodePtr *const transformed) {
   MS_EXCEPTION_IF_NULL(value_node);
-  const auto& value_vec = GetValue<std::vector<ValuePtr>>(value_node->value());
+  const auto &value_vec = GetValue<std::vector<ValuePtr>>(value_node->value());
   bool has_graph_in_list = false;
-  for (auto& elemv : value_vec) {
+  for (auto &elemv : value_vec) {
     MS_EXCEPTION_IF_NULL(elemv);
     if (elemv->isa<FuncGraph>()) {
       FuncGraphPtr new_fg = elemv->cast<FuncGraphPtr>();
@@ -196,10 +196,10 @@ bool TransformVectorGraphValueNode(const FuncGraphManagerPtr& manager, const Anf
     auto make_list_op = NewValueNode(prim::kPrimMakeTuple);
     list_vec.emplace_back(make_list_op);
     (void)std::transform(std::begin(value_vec), std::end(value_vec), std::back_inserter(list_vec),
-                         [](const ValuePtr& value) { return NewValueNode(value); });
+                         [](const ValuePtr &value) { return NewValueNode(value); });
     FuncGraphPtr cnode_graph = nullptr;
     auto users = manager->node_users()[node];
-    for (auto& use : users) {
+    for (auto &use : users) {
       auto use_node = use.first;
       MS_EXCEPTION_IF_NULL(use_node);
       if (use_node->isa<CNode>()) {
@@ -220,8 +220,8 @@ bool TransformVectorGraphValueNode(const FuncGraphManagerPtr& manager, const Anf
 }
 }  // namespace
 
-AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr& manager, const NameSpacePtr& name_space, const SymbolPtr& symbol,
-                         const AnfNodePtr& node) {
+AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
+                         const AnfNodePtr &node) {
   if (node->func_graph() == nullptr || manager == nullptr) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph or manager is nullptr";
   }
@@ -253,7 +253,7 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr& manager, const NameSpacePtr&
 }
 
 namespace {
-opt::OptPassGroupMap GetOptResolvePasses(const opt::irpass::ResolveIRPassLib& irpass) {
+opt::OptPassGroupMap GetOptResolvePasses(const opt::irpass::ResolveIRPassLib &irpass) {
   opt::OptPassGroupMap map({
     {"resolve",
      {
@@ -266,7 +266,7 @@ opt::OptPassGroupMap GetOptResolvePasses(const opt::irpass::ResolveIRPassLib& ir
 }
 }  // namespace
 
-bool ResolveFuncGraph(const FuncGraphPtr& func_graph, const pipeline::ResourceBasePtr& res, bool use_profile) {
+bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePtr &res, bool use_profile) {
   if (func_graph == nullptr || res == nullptr) {
     MS_LOG(ERROR) << "func_graph or resource is null";
     return false;
@@ -282,7 +282,7 @@ bool ResolveFuncGraph(const FuncGraphPtr& func_graph, const pipeline::ResourceBa
   return true;
 }
 
-bool ResolveAll(const FuncGraphManagerPtr& manager) {
+bool ResolveAll(const FuncGraphManagerPtr &manager) {
   if (manager == nullptr) {
     MS_LOG(ERROR) << "func graph manager is null";
     return false;
@@ -301,7 +301,7 @@ bool ResolveAll(const FuncGraphManagerPtr& manager) {
   res->set_manager(manager);
 
   auto roots = manager->roots();
-  for (auto& fg : roots) {
+  for (auto &fg : roots) {
     bool ret = ResolveFuncGraph(fg, res, false);
     if (!ret) {
       MS_EXCEPTION_IF_NULL(fg);

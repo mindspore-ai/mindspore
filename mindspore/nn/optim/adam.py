@@ -22,7 +22,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 
@@ -78,32 +78,21 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, param, m, v, grad
     return next_v
 
 
-def _check_param_value(beta1, beta2, eps, weight_decay):
+def _check_param_value(beta1, beta2, eps, weight_decay, prim_name):
     """Check the type of inputs."""
-    validator.check_type("beta1", beta1, [float])
-    validator.check_type("beta2", beta2, [float])
-    validator.check_type("eps", eps, [float])
-    validator.check_type("weight_dacay", weight_decay, [float])
-    validator.check_number_range("beta1", beta1, 0.0, 1.0, Rel.INC_NEITHER)
-    validator.check_number_range("beta2", beta2, 0.0, 1.0, Rel.INC_NEITHER)
-    validator.check_number_range("eps", eps, 0.0, float("inf"), Rel.INC_NEITHER)
-    validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT)
+    validator.check_value_type("beta1", beta1, [float], prim_name)
+    validator.check_value_type("beta2", beta2, [float], prim_name)
+    validator.check_value_type("eps", eps, [float], prim_name)
+    validator.check_value_type("weight_dacay", weight_decay, [float], prim_name)
+    validator.check_number_range("beta1", beta1, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("beta2", beta2, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("eps", eps, 0.0, float("inf"), Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, prim_name)
 
 
 @adam_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
                    "Tensor")
 def _run_opt_with_one_number(opt, lr, beta1_power, beta2_power, beta1, beta2, eps, gradient, params, moment1,
-                             moment2):
-    """Apply adam optimizer to the weight parameter using Tensor."""
-    success = True
-    success = F.depend(success, opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
-                                    eps, gradient))
-    return success
-
-
-@adam_opt.register("Function", "Number", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
-                   "Tensor")
-def _run_opt_with_two_number(opt, lr, beta1_power, beta2_power, beta1, beta2, eps, gradient, params, moment1,
                              moment2):
     """Apply adam optimizer to the weight parameter using Tensor."""
     success = True
@@ -168,11 +157,11 @@ class Adam(Optimizer):
                  use_nesterov=False, weight_decay=0.0, loss_scale=1.0,
                  decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
         super(Adam, self).__init__(learning_rate, params, weight_decay, loss_scale, decay_filter)
-        _check_param_value(beta1, beta2, eps, weight_decay)
-        validator.check_type("use_locking", use_locking, [bool])
-        validator.check_type("use_nesterov", use_nesterov, [bool])
-        validator.check_type("loss_scale", loss_scale, [float])
-        validator.check_number_range("loss_scale", loss_scale, 1.0, float("inf"), Rel.INC_LEFT)
+        _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
+        validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
+        validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)
+        validator.check_value_type("loss_scale", loss_scale, [float], self.cls_name)
+        validator.check_number_range("loss_scale", loss_scale, 1.0, float("inf"), Rel.INC_LEFT, self.cls_name)
 
         self.beta1 = Tensor(beta1, mstype.float32)
         self.beta2 = Tensor(beta2, mstype.float32)
@@ -183,7 +172,6 @@ class Adam(Optimizer):
         self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
 
-        self.decay_tf = tuple(decay_filter(x) for x in self.parameters)
         self.hyper_map = C.HyperMap()
         self.opt = P.Adam(use_locking, use_nesterov)
 
@@ -241,7 +229,7 @@ class AdamWeightDecay(Optimizer):
    """
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
         super(AdamWeightDecay, self).__init__(learning_rate, params)
-        _check_param_value(beta1, beta2, eps, weight_decay)
+        _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
         self.lr = Tensor(np.array([learning_rate]).astype(np.float32))
         self.beta1 = Tensor(np.array([beta1]).astype(np.float32))
         self.beta2 = Tensor(np.array([beta2]).astype(np.float32))
@@ -304,7 +292,7 @@ class AdamWeightDecayDynamicLR(Optimizer):
                  eps=1e-6,
                  weight_decay=0.0):
         super(AdamWeightDecayDynamicLR, self).__init__(learning_rate, params)
-        _check_param_value(beta1, beta2, eps, weight_decay)
+        _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
 
         # turn them to scalar when me support scalar/tensor mix operations
         self.global_step = Parameter(initializer(0, [1]), name="global_step")

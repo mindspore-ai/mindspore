@@ -32,11 +32,11 @@ class StrategyCheckpoint {
   StrategyCheckpoint() : path_(DEFAULT_CHECKPOINT_PATH), current_train_time_(1) {
     train_times_ = 1;
     checkpoint_on_ = false;
-    const char* train_times_str = std::getenv("PARALLEL_TRAIN_TIMES");
+    const char *train_times_str = std::getenv("PARALLEL_TRAIN_TIMES");
     if (train_times_str != nullptr && std::stoi(train_times_str) > 0) {
       train_times_ = std::stoi(train_times_str);
     }
-    const char* checkpoint_on_str = std::getenv("PARALLEL_CHECKPOINT_ON");
+    const char *checkpoint_on_str = std::getenv("PARALLEL_CHECKPOINT_ON");
     if (checkpoint_on_str != nullptr) {
       checkpoint_on_ = (std::string(checkpoint_on_str) == "on");
     }
@@ -44,10 +44,10 @@ class StrategyCheckpoint {
   ~StrategyCheckpoint() = default;
   bool CheckPointExit() const;
   Status RemoveCheckPoint() const;
-  Status Load(StrategyMap* strategy_map);
-  Status Save(const StrategyMap& strategy_map);
+  Status Load(StrategyMap *strategy_map);
+  Status Save(const StrategyMap &strategy_map);
 
-  static StrategyCheckpoint& GetInstance();
+  static StrategyCheckpoint &GetInstance();
   int32_t GetTrainTimes() const { return train_times_; }
   int32_t GetCurrentTrainTime() const { return current_train_time_; }
   bool CheckPointOn() const { return checkpoint_on_; }

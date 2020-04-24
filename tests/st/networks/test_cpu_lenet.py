@@ -13,13 +13,15 @@
 # limitations under the License.
 # ============================================================================
 import pytest
-from mindspore.nn import TrainOneStepCell, WithLossCell
-import mindspore.context as context
-from mindspore.nn.optim import Momentum
 import numpy as np
+import mindspore.context as context
 import mindspore.nn as nn
-from mindspore.ops import operations as P
 from mindspore import Tensor
+from mindspore.nn import TrainOneStepCell, WithLossCell
+from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
+
+context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class LeNet(nn.Cell):
@@ -50,9 +52,6 @@ class LeNet(nn.Cell):
         output = self.relu(output)
         output = self.fc3(output)
         return output
-
-
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 def train(net, data, label):
