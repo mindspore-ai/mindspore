@@ -45,14 +45,6 @@ class _AlgoParameterConfig():
         if self._config_handle is None:
             raise ValueError("Config handle is none!!!")
 
-    def set_simplify_cal(self, simplify_cal):
-        self.check_config_handle()
-        self._config_handle.set_simplify_cal(simplify_cal)
-
-    def get_simplify_cal(self):
-        self.check_config_handle()
-        return self._config_handle.get_simplify_cal()
-
     def set_fully_use_devices(self, not_fully):
         self.check_config_handle()
         self._config_handle.set_fully_use_devices(not_fully)
@@ -118,7 +110,6 @@ def _algo_parameter_config():
 
 
 set_algo_parameters_config_func_map = {
-    "simplify_cal": _algo_parameter_config().set_simplify_cal,
     "fully_use_devices": _algo_parameter_config().set_fully_use_devices,
     "elementwise_op_strategy_follow": _algo_parameter_config().set_elementwise_op_strategy_follow,
     "tensor_slice_align_enable": _algo_parameter_config().set_tensor_slice_align_enable,
@@ -126,14 +117,13 @@ set_algo_parameters_config_func_map = {
 
 
 get_algo_parameters_config_func_map = {
-    "simplify_cal": _algo_parameter_config().get_simplify_cal,
     "fully_use_devices": _algo_parameter_config().get_fully_use_devices,
     "elementwise_op_strategy_follow": _algo_parameter_config().get_elementwise_op_strategy_follow,
     "tensor_slice_align_enable": _algo_parameter_config().get_tensor_slice_align_enable,
     "tensor_slice_align_size": _algo_parameter_config().get_tensor_slice_align_size}
 
 
-@args_type_check(simplify_cal=bool, tensor_slice_align_enable=bool, tensor_slice_align_size=int,
+@args_type_check(tensor_slice_align_enable=bool, tensor_slice_align_size=int,
                  fully_use_devices=bool, elementwise_op_strategy_follow=bool)
 def set_algo_parameters(**kwargs):
     """
@@ -143,10 +133,10 @@ def set_algo_parameters(**kwargs):
         Attribute name is needed.
 
     Args:
-        simplify_cal (bool): Whether simplifying calculations in strategy-searching algorithm. Default: True
-        tensor_slice_align_enable (bool): Whether checking tensor slice shape. Default: False
-        tensor_slice_align_size (int): The minimum tensor slice shape, the value must be in [1, 1024]. Default: 16
-        fully_use_devices (bool): Whether generating strategies that fully use all available devices. Default: True
+        tensor_slice_align_enable (bool): Whether checking tensor slice shape for MatMul. Default: False
+        tensor_slice_align_size (int): The minimum tensor slice shape of MatMul, the value must be in [1, 1024].
+            Default: 16
+        fully_use_devices (bool): Whether ONLY generating strategies that fully use all available devices. Default: True
         elementwise_op_strategy_follow (bool): Whether the elementwise operator have the same strategies as its
             subsequent operators. Default: False
 

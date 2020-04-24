@@ -206,10 +206,6 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the parameter cost_model_gamma of the DP algorithm")
     .def("get_costmodel_gamma", &CostModelContext::costmodel_gamma,
          "Get the parameter cost_model_gamma of the DP algorithm.")
-    .def("set_simplify_cal", &CostModelContext::set_costmodel_simplify_cal,
-         "Set the parameter cost_model_simplify_cal of the DP algorithm.")
-    .def("get_simplify_cal", &CostModelContext::costmodel_simplify_cal,
-         "Get the parameter cost_model_simplify_cal of the DP algorithm.")
     .def("set_costmodel_communi_threshold", &CostModelContext::set_costmodel_communi_threshold,
          "Set the parameter cost_model_communi_threshold of the DP algorithm.")
     .def("get_costmodel_communi_threshold", &CostModelContext::costmodel_communi_threshold,
