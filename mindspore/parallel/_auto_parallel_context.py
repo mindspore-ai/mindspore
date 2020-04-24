@@ -259,6 +259,23 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_all_reduce_fusion_split_sizes()
 
+    def set_enable_all_reduce_fusion(self, enable_all_reduce_fusion):
+        """
+        Set enable/disable all reduce fusion.
+
+        Args:
+            enable_all_reduce_fusion (bool): Enable/disable all reduce fusion.
+        """
+        self.check_context_handle()
+        if not isinstance(enable_all_reduce_fusion, bool):
+            raise TypeError('enable_all_reduce_fusion is invalid type')
+        self._context_handle.set_enable_all_reduce_fusion(enable_all_reduce_fusion)
+
+    def get_enable_all_reduce_fusion(self):
+        """Get all reduce fusion flag."""
+        self.check_context_handle()
+        return self._context_handle.get_enable_all_reduce_fusion()
+
     def get_device_num_is_set(self):
         """Get device number is set or not."""
         self.check_context_handle()

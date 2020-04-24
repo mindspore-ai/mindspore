@@ -55,6 +55,7 @@ void ParallelContext::Reset() {
   parallel_mode_ = STAND_ALONE;
   parameter_broadcast_ = false;
   parameter_broadcast_is_set_ = false;
+  enable_all_reduce_fusion_ = false;
 }
 
 void ParallelContext::set_device_num(int32_t device_num) {

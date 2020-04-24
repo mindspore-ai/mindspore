@@ -183,6 +183,10 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set all reduce fusion split sizes.")
     .def("get_all_reduce_fusion_split_sizes", &ParallelContext::all_reduce_fusion_split_sizes,
          "Get all reduce fusion split sizes.")
+    .def("set_enable_all_reduce_fusion", &ParallelContext::set_enable_all_reduce_fusion,
+         "Set enable/disable all reduce fusion.")
+    .def("get_enable_all_reduce_fusion", &ParallelContext::enable_all_reduce_fusion,
+         "Get enable/disable all reduce fusion.")
     .def("get_parameter_broadcast", &ParallelContext::parameter_broadcast, "Get parameter broadcast.")
     .def("get_parameter_broadcast_is_set", &ParallelContext::parameter_broadcast_is_set,
          "Get parameter broadcast is set.")
