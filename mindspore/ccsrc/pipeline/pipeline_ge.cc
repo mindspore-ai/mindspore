@@ -319,19 +319,24 @@ void RunGEInitGraph(const py::dict &init_params, const std::string &phase) {
 
 py::object ExtractGeneralCnodeRet(const AbstractBasePtr &cnode_data, const py::tuple &data, size_t *count) {
   MS_EXCEPTION_IF_NULL(cnode_data);
-  if (*count >= data.size()) {
-    MS_LOG(EXCEPTION) << "The number of elements in the outputs : " << data.size()
-                      << " less than the number of elements required. ";
-  }
 
   if (cnode_data->isa<AbstractTensor>()) {
-    BaseShapePtr shape = cnode_data->BuildShape();
-    auto shape_act = shape->cast<abstract::ShapePtr>()->shape();
-    Tensor tensor_exp = py::cast<Tensor>(data[*count]);
-    if (shape_act != tensor_exp.shape()) {
-      MS_LOG(EXCEPTION) << "The shape of the tensor returned from GE is not the same as "
-                           "the shape of the tensor derived from ME.";
+    if (*count >= data.size()) {
+      MS_LOG(EXCEPTION) << "The number of elements in the outputs : " << data.size()
+                        << " less than the number of elements required. ";
     }
+
+    BaseShapePtr shape = cnode_data->BuildShape();
+    if (!shape->isa<abstract::Shape>()) {
+      MS_LOG(EXCEPTION) << "The shape of the tensor derived is not Shape, is " << shape->ToString();
+    }
+    auto shape_me = shape->cast<abstract::ShapePtr>()->shape();
+    auto shape_ge = py::cast<Tensor>(data[*count]).shape();
+    if (shape_ge != shape_me) {
+      MS_LOG(EXCEPTION) << "The shape of the " << *count << "th tensor returned: " << shape_ge
+                        << " is not the same as the shape of the tensor derived: " << shape_me;
+    }
+
     return data[(*count)++];
   }
 
@@ -357,11 +362,11 @@ py::object StructureOutput(const AnfNodePtr &output_node, const py::tuple &data,
     return ValuePtrToPyData(GetValueNode(output_node));
   }
 
-  if (*count >= data.size()) {
-    MS_LOG(EXCEPTION) << "The number of elements in the outputs : " << data.size()
-                      << " less than the number of elements required. ";
-  }
   if (output_node->isa<Parameter>()) {
+    if (*count >= data.size()) {
+      MS_LOG(EXCEPTION) << "The number of elements in the outputs : " << data.size()
+                        << " less than the number of elements required. ";
+    }
     return data[(*count)++];
   }
 
