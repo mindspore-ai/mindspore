@@ -397,9 +397,8 @@ class LayerNorm(Cell):
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
     Args:
-        normalized_shape (Union(tuple[int], list[int]): The normalization is performed over axes
-            `begin_norm_axis ... R - 1` and centering and scaling parameters are calculated over
-            `begin_params_axis ... R - 1`.
+        normalized_shape (Union(tuple[int], list[int]): The normalization is performed over axis
+            `begin_norm_axis ... R - 1`.
         begin_norm_axis (int): It first normalization dimension: normalization will be performed along dimensions
             `begin_norm_axis: rank(inputs)`, the value should be in [-1, rank(input)). Default: -1.
         begin_params_axis (int): The first parameter(beta, gamma)dimension: scale and centering parameters

@@ -126,7 +126,8 @@ class Adam(Optimizer):
     Args:
         params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
                                   should be class mindspore.Parameter.
-        learning_rate (float): The Learning rate.
+        learning_rate (Union[float, Tensor, Iterable]): The Learning rate.
+            Iterable type is used for the dynamic learning rate.
         beta1 (float): The exponential decay rate for the 1st moment estimates. Should be in range (0.0, 1.0).
         beta2 (float): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0).
         eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0.
