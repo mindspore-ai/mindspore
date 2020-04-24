@@ -174,6 +174,8 @@ AbstractBasePtr InferImplDot(const AnalysisEnginePtr &, const PrimitivePtr &prim
                              const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
                                 const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitivePtr &,
+                                     const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &,
                              const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &,

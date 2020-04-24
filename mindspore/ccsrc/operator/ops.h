@@ -65,6 +65,7 @@ extern const PrimitivePtr kPrimHasType;
 
 // Statements
 extern const PrimitivePtr kPrimSwitch;
+extern const PrimitivePtr kPrimSwitchLayer;
 extern const PrimitivePtr kPrimReturn;
 extern const PrimitivePtr kPrimAssign;
 extern const PrimitivePtr kPrimAssignAdd;

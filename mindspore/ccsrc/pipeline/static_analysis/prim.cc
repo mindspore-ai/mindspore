@@ -50,6 +50,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimHasType, {InferImplHasType, false}},
     {prim::kPrimDot, {InferImplDot, true}},
     {prim::kPrimSwitch, {InferImplSwitch, true}},
+    {prim::kPrimSwitchLayer, {InferImplSwitchLayer, true}},
     {prim::kPrimIs_, {InferImplIs_, true}},
     {prim::kPrimIsNot, {InferImplIsNot, true}},
     {prim::kPrimInDict, {InferImplInDict, true}},

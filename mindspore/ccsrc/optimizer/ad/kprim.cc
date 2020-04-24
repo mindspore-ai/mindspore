@@ -62,6 +62,15 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
   return func_graph;
 }
 
+FuncGraphPtr KPrim::GetFprop(const PrimitivePtr &prim) {
+  static const std::string ad_module = "mindspore.ops._grad.grad_implementations";
+  std::string func_name = "_fprop_" + prim->name();
+  py::function fn = parse::python_adapter::GetPyFn(ad_module, func_name);
+  auto func_graph = parse::ParsePythonCode(fn);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  return BasicClone(func_graph);
+}
+
 MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
 
@@ -90,6 +99,13 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
   auto iter = bprop_registry_.find(prim);
   if (iter != bprop_registry_.end()) {
     return iter->second;
+  }
+
+  if (prim->Hash() == prim::kPrimSwitchLayer->Hash() && prim->name() == "switch_layer") {
+    auto fprop = GetFprop(prim);
+    fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
+    bprop_registry_[prim::kPrimSwitchLayer] = fprop;
+    return fprop;
   }
 
   if (prim->name() == "make_tuple") {
