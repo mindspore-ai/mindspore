@@ -32,7 +32,7 @@ power = 0.5
 class TestInputs:
     def test_milestone1(self):        
         milestone1 = 1
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.piecewise_constant_lr(milestone1, learning_rates)
 
     def test_milestone2(self):
@@ -46,12 +46,12 @@ class TestInputs:
 
     def test_learning_rates1(self):
         lr = True
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.piecewise_constant_lr(milestone, lr)
 
     def test_learning_rates2(self):
         lr = [1, 2, 1]
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.piecewise_constant_lr(milestone, lr)
 
     def test_learning_rate_type(self):
@@ -158,7 +158,7 @@ class TestInputs:
 
     def test_is_stair(self):
         is_stair = 1
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.exponential_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair)
 
     def test_min_lr_type(self):
@@ -183,12 +183,12 @@ class TestInputs:
 
     def test_power(self):
         power1 = True
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power1)
 
     def test_update_decay_epoch(self):
         update_decay_epoch = 1
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             dr.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch,
                                    power, update_decay_epoch)
 

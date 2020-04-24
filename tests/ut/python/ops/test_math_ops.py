@@ -385,16 +385,16 @@ def test_exec():
 
 raise_set = [
     ('StridedSlice_1_Error', {
-        'block': (lambda x: P.StridedSlice(begin_mask="1"), {'exception': ValueError}),
+        'block': (lambda x: P.StridedSlice(begin_mask="1"), {'exception': TypeError}),
         'desc_inputs': [0]}),
     ('StridedSlice_2_Error', {
-        'block': (lambda x: P.StridedSlice(end_mask="1"), {'exception': ValueError}),
+        'block': (lambda x: P.StridedSlice(end_mask="1"), {'exception': TypeError}),
         'desc_inputs': [0]}),
     ('StridedSlice_3_Error', {
-        'block': (lambda x: P.StridedSlice(ellipsis_mask=1.1), {'exception': ValueError}),
+        'block': (lambda x: P.StridedSlice(ellipsis_mask=1.1), {'exception': TypeError}),
         'desc_inputs': [0]}),
     ('StridedSlice_4_Error', {
-        'block': (lambda x: P.StridedSlice(new_axis_mask="1.1"), {'exception': ValueError}),
+        'block': (lambda x: P.StridedSlice(new_axis_mask="1.1"), {'exception': TypeError}),
         'desc_inputs': [0]}),
 ]
 
