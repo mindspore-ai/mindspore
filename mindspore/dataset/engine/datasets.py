@@ -428,11 +428,11 @@ class Dataset:
              If input_columns not provided or empty, all columns will be used.
 
         Args:
-            predicate: python callable which returns a boolean value.
-            input_columns: (list[str]): List of names of the input columns, when
-            default=None, the predicate will be applied on all columns in the dataset.
+            predicate(callable): python callable which returns a boolean value.
+            input_columns: (list[str], optional): List of names of the input columns, when
+                default=None, the predicate will be applied on all columns in the dataset.
             num_parallel_workers (int, optional): Number of workers to process the Dataset
-            in parallel (default=None).
+                in parallel (default=None).
 
         Returns:
             FilterDataset, dataset filter.
