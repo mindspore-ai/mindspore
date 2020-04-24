@@ -415,8 +415,11 @@ def set_auto_parallel_context(**kwargs):
     Args:
         device_num (int): Available device number, the value must be in [1, 4096]. Default: 1.
         global_rank (int): Global rank id, the value must be in [0, 4095]. Default: 0.
-        mirror_mean (bool): Whether to perform mean operator after all-reduce of mirror. Default: False.
-        cast_before_mirror (bool): Insert Mirror Op after the cast if this flag is True. Default: True.
+        mirror_mean (bool): Whether to perform mean operator after all-reduce of mirror.
+                     "stand_alone" do not support mirror_mean. Default: False.
+        cast_before_mirror (bool): Insert Mirror Op after the cast if this flag is True.
+                     "stand_alone", "data_parallel" and "hybrid_parallel" do not support
+                     cast_before_mirror. Default: True.
         parallel_mode (str): There are five kinds of parallel modes, "stand_alone", "data_parallel",
                      "hybrid_parallel", "semi_auto_parallel" and "auto_parallel". Default: "stand_alone".
 
