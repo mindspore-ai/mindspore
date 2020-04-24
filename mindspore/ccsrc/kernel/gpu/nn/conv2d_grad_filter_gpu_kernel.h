@@ -141,9 +141,13 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       }
       CHECK_CUDNN_RET_WITH_EXCEPT(
         cudnnSetConvolution2dDescriptor(conv_desc_, pad_height_, pad_width_, stride_, stride_, dilation_, dilation_,
-                                        CUDNN_CROSS_CORRELATION, cudnn_data_type_),
+                                        CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
         "GetConvolution2dDescriptor failed");
       x_desc_real = x_desc_;
+    }
+    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
+                                  "cudnnSetConvolutionMathType failed.")
     }
     SelectAlgorithm(x_desc_real);
     InitSizeLists();
@@ -239,7 +243,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
                                 "cudnnSetTensor4dDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
       cudnnSetConvolution2dDescriptor(conv_desc_, use_pad_ ? 0 : pad_top_, use_pad_ ? 0 : pad_left_, stride_, stride_,
-                                      dilation_, dilation_, CUDNN_CROSS_CORRELATION, cudnn_data_type_),
+                                      dilation_, dilation_, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
       "cudnnSetConvolution2dDescriptor failed");
   }
   void SelectAlgorithm(cudnnTensorDescriptor_t x_desc_real) {
@@ -257,6 +261,9 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
                                                       requested_algo_count, &returned_algo_count, &perf_results),
         "GetConvolutionBackwardFilterAlgorithm failed");
       algo_ = perf_results.algo;
+    }
+    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
+      algo_ = CUDNN_CONVOLUTION_BWD_FILTER_ALGO_1;
     }
   }
   void GetFilterShape(const CNodePtr &kernel_node, std::vector<int> *filter_shape) {

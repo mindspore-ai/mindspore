@@ -142,9 +142,13 @@ class Conv2dGpuFwdKernel : public GpuKernel {
       }
       CHECK_CUDNN_RET_WITH_EXCEPT(
         cudnnSetConvolution2dDescriptor(conv_desc_, pad_height_, pad_width_, stride_, stride_, dilation_, dilation_,
-                                        CUDNN_CROSS_CORRELATION, cudnn_data_type_),
+                                        CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
         "cudnnSetConvolution2dDescriptor failed");
       input_descriptor_real = input_desc_;
+    }
+    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetConvolutionMathType(conv_desc_, CUDNN_TENSOR_OP_MATH),
+                                  "cudnnSetConvolutionMathType failed.")
     }
     SelectAlgorithm(input_descriptor_real);
     InitSizeLists();
@@ -240,7 +244,7 @@ class Conv2dGpuFwdKernel : public GpuKernel {
                                 "cudnnSetTensor4dDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
       cudnnSetConvolution2dDescriptor(conv_desc_, use_pad_ ? 0 : pad_top_, use_pad_ ? 0 : pad_left_, stride_, stride_,
-                                      dilation_, dilation_, CUDNN_CROSS_CORRELATION, cudnn_data_type_),
+                                      dilation_, dilation_, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
       "cudnnSetConvolution2dDescriptor failed");
   }
 
@@ -275,6 +279,9 @@ class Conv2dGpuFwdKernel : public GpuKernel {
                                                output_desc_, requested_algo_count, &returned_algo_count, &perf_results),
         "cudnnGetConvolutionForwardAlgorithm_v7 failed");
       conv_algorithm_ = perf_results.algo;
+    }
+    if (cudnn_data_type_ == CUDNN_DATA_HALF) {
+      conv_algorithm_ = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
     }
   }
   cudnnHandle_t cudnn_handle_;
