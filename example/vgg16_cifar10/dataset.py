@@ -28,7 +28,11 @@ def create_dataset(data_home, repeat_num=1, training=True):
     data_dir = os.path.join(data_home, "cifar-10-batches-bin")
     if not training:
         data_dir = os.path.join(data_home, "cifar-10-verify-bin")
-    data_set = ds.Cifar10Dataset(data_dir)
+
+    rank_size = int(os.environ.get("RANK_SIZE")) if os.environ.get("RANK_SIZE") else None
+    rank_id = int(os.environ.get("RANK_ID")) if os.environ.get("RANK_ID") else None
+    data_set = ds.Cifar10Dataset(data_dir, num_shards=rank_size, shard_id=rank_id)
+
     resize_height = cfg.image_height
     resize_width = cfg.image_width
     rescale = 1.0 / 255.0
