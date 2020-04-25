@@ -44,4 +44,4 @@ class CheckExceptionsEC(IExectorComponent):
             raise Exception(f"Expect {e}, but got {sys.exc_info()[0]}")
         if error_kws and any(keyword not in str(exec_info.value) for keyword in error_kws):
             raise ValueError('Error message `{}` does not contain all keywords `{}`'.format(
-                             str(exec_info.value), error_kws))
+                str(exec_info.value), error_kws))

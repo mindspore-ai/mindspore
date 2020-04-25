@@ -122,7 +122,7 @@ class Model:
     def _check_kwargs(self, kwargs):
         for arg in kwargs:
             if arg not in ['loss_scale_manager', 'keep_batchnorm_fp32']:
-                raise  ValueError(f"Unsupport arg '{arg}'")
+                raise ValueError(f"Unsupport arg '{arg}'")
 
     def _build_train_network(self):
         """Build train network"""
@@ -130,17 +130,17 @@ class Model:
         if self._optimizer:
             if self._loss_scale_manager_set:
                 network = amp.build_train_network(network,
-                                                self._optimizer,
-                                                self._loss_fn,
-                                                level=self._amp_level,
-                                                loss_scale_manager=self._loss_scale_manager,
-                                                keep_batchnorm_fp32=self._keep_bn_fp32)
+                                                  self._optimizer,
+                                                  self._loss_fn,
+                                                  level=self._amp_level,
+                                                  loss_scale_manager=self._loss_scale_manager,
+                                                  keep_batchnorm_fp32=self._keep_bn_fp32)
             else:
                 network = amp.build_train_network(network,
-                                                self._optimizer,
-                                                self._loss_fn,
-                                                level=self._amp_level,
-                                                keep_batchnorm_fp32=self._keep_bn_fp32)
+                                                  self._optimizer,
+                                                  self._loss_fn,
+                                                  level=self._amp_level,
+                                                  keep_batchnorm_fp32=self._keep_bn_fp32)
         elif self._loss_fn:
             network = nn.WithLossCell(network, self._loss_fn)
         # If need to check if loss_fn is not None, but optimizer is None
@@ -273,14 +273,14 @@ class Model:
         # remove later to deal with loop sink
         need_wrap = False
         if not hasattr(train_dataset, '__ME_INITED__') and context.get_context("enable_loop_sink") \
-               and not context.get_context("enable_ge"):
+                and not context.get_context("enable_ge"):
             need_wrap = True
 
         dataset_helper = DatasetHelper(train_dataset)
         # remove later to deal with loop sink
         if need_wrap:
             self._train_network = nn.DataWrapper(self._train_network, *(dataset_helper.types_shapes()),
-                                              train_dataset.__ME_INITED__)
+                                                 train_dataset.__ME_INITED__)
             cb_params.train_network = self._train_network
             self._train_network.set_train()
 
@@ -440,7 +440,7 @@ class Model:
         # remove later to deal with loop sink
         need_wrap = False
         if not hasattr(valid_dataset, '__ME_INITED__') and context.get_context("enable_loop_sink") \
-               and not context.get_context("enable_ge"):
+                and not context.get_context("enable_ge"):
             need_wrap = True
 
         valid_dataset.__loop_size__ = 1
@@ -449,7 +449,7 @@ class Model:
         # remove later to deal with loop sink
         if need_wrap:
             self._eval_network = nn.DataWrapper(self._eval_network, *(dataset_helper.types_shapes()),
-                                             valid_dataset.__ME_INITED__)
+                                                valid_dataset.__ME_INITED__)
             self._eval_network.set_train(mode=False)
             self._eval_network.phase = 'eval'
 
