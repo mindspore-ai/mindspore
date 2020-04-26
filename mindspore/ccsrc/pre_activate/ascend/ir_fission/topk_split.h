@@ -16,15 +16,22 @@
 #ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_TOPK_SPLIT_H_
 #define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_TOPK_SPLIT_H_
 
+#include <memory>
 #include "pre_activate/common/optimizer.h"
+#include "pre_activate/ascend/ascend_helper.h"
+
 namespace mindspore {
 namespace opt {
 class TopKSplit : public PatternProcessPass {
  public:
-  explicit TopKSplit(bool multigraph = true) : PatternProcessPass("topk_split", multigraph) {}
+  explicit TopKSplit(bool multigraph = true)
+      : PatternProcessPass("topk_split", multigraph), supported_checker_(std::make_shared<SupportedChecker>()) {}
   ~TopKSplit() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  SupportedCheckerPtr supported_checker_;
 };
 }  // namespace opt
 }  // namespace mindspore
