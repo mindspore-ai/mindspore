@@ -769,8 +769,15 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
         self.stride = _check_positive_int_or_tuple('stride', stride, self.name)
+        if self.stride[0] != self.stride[1]:
+            raise ValueError("The height and width of stride should be equal,"
+                             f"but got height:{self.stride[0]},  width:{self.stride[1]}")
         self.add_prim_attr('stride', (1, 1, self.stride[0], self.stride[1]))
+
         self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name)
+        if self.dilation[0] != self.dilation[1]:
+            raise ValueError("The height and width of dilation should be equal,"
+                             f"but got height:{self.dilation[0]},  width:{self.dilation[1]}")
         self.add_prim_attr('dilation', (1, 1, self.dilation[0], self.dilation[1]))
         validator.check_value_type('pad', pad, (int,), self.name)
         self.pad_mode = validator.check_string('pad_mode', pad_mode, ['valid', 'same', 'pad'], self.name)
@@ -787,13 +794,11 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         validator.check("x_shape[1]", x_shape[1], "w_shape[1]", w_shape[1], Rel.EQ, self.name)
         validator.check('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape[2:4]), Rel.EQ, self.name)
 
-        kernel_size_h = w_shape[2]
-        kernel_size_w = w_shape[3]
-        stride_h = self.stride[2]
-        stride_w = self.stride[3]
-        dilation_h = self.dilation[2]
-        dilation_w = self.dilation[3]
-
+        kernel_size_n, _, kernel_size_h, kernel_size_w = w_shape
+        _, _, stride_h, stride_w = self.stride
+        _, _, dilation_h, dilation_w = self.dilation
+        if kernel_size_n != 1:
+            raise ValueError(f"The batch of input weight should be 1, but got {kernel_size_n}")
         if self.pad_mode == "valid":
             h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
             w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
@@ -1214,8 +1219,8 @@ class TopK(PrimitiveWithInfer):
         >>> input_x = Tensor([1, 2, 3, 4, 5], mindspore.float16)
         >>> k = 3
         >>> values, indices = topk(input_x, k)
-        >>> assert values == Tensor(np.array([5, 4, 3]))
-        >>> assert indices == Tensor(np.array([4, 3, 2]))
+        >>> assert values == Tensor(np.array([5, 4, 3]), mstype.float16)
+        >>> assert indices == Tensor(np.array([4, 3, 2]), mstype.int32)
     """
 
     @prim_attr_register

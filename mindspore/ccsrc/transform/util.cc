@@ -171,20 +171,17 @@ GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::s
     MS_LOG(ERROR) << "The Me Tensor data type size is wrong, type size is: " << type_size;
     return nullptr;
   }
-  // get tensor buff size
-  size_t data_buff_size = 0;
   size_t elements_num = IntToSize(tensor->ElementsNum());
-  if (elements_num > 0 && type_size > 0 && UINT_MAX / type_size >= elements_num) {
-    data_buff_size = elements_num * type_size;
-  }
-  if (data_buff_size == 0) {
-    if (elements_num > 0 && type_size > 0 && UINT_MAX / type_size < elements_num) {
-      MS_LOG(ERROR) << "The required Me Tensor data buff size " << elements_num << " x " << type_size
-                    << " overflowed UINT_MAX: " << UINT_MAX << ".";
-    } else {
-      MS_LOG(ERROR) << "The Me Tensor data buff size is 0.";
-    }
+  if (UINT_MAX / type_size < elements_num) {
+    MS_LOG(ERROR) << "The required Me Tensor data buff size " << elements_num << " x " << type_size
+                  << " overflowed UINT_MAX: " << UINT_MAX << ".";
     return nullptr;
+  }
+
+  // get tensor buff size
+  size_t data_buff_size = elements_num * type_size;
+  if (data_buff_size == 0) {
+    MS_LOG(INFO) << "The Me Tensor data buff size is 0.";
   }
   // create ge tensor
   auto desc = GetGeTensorDesc(tensor->shape_c(), tensor->data_type(), format);
