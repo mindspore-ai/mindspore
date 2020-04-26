@@ -1,0 +1,5 @@
+file(GLOB_RECURSE MS_GVAR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cc)
+add_library(mindspore_gvar SHARED ${MS_GVAR_SRC_LIST})
+if (APPLE)
+    set_target_properties(mindspore_gvar PROPERTIES MACOSX_RPATH ON)
+endif ()

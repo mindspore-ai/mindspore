@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 #include <map>
-#include "./example.pb.h"
+#include "proto/example.pb.h"
 #include "dataset/engine/datasetops/source/storage_client.h"
 #include "dataset/util/status.h"
 

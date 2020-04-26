@@ -23,7 +23,7 @@
 #include <utility>
 #include <unordered_map>
 
-#include "./example.pb.h"
+#include "proto/example.pb.h"
 #include "./securec.h"
 #include "common/utils.h"
 #include "dataset/core/config_manager.h"

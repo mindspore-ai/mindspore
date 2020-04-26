@@ -38,17 +38,17 @@ function(ms_protobuf_generate c_var h_var)
         get_filename_component(file_dir ${abs_file} PATH)
         file(RELATIVE_PATH rel_path ${CMAKE_CURRENT_SOURCE_DIR} ${file_dir})
 
-        list(APPEND ${c_var} "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.cc")
-        list(APPEND ${h_var} "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.h")
+        list(APPEND ${c_var} "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.cc")
+        list(APPEND ${h_var} "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.h")
 
         add_custom_command(
-                OUTPUT "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.cc"
-                "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.h"
+                OUTPUT "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.cc"
+                "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.h"
                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${rel_path}"
-                COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/proto"
+                COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/proto ${abs_file}
                 DEPENDS protobuf::protoc ${abs_file}
-                COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM )
+                COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM)
     endforeach()
 
     set_source_files_properties(${${c_var}} ${${h_var}} PROPERTIES GENERATED TRUE)
@@ -71,40 +71,38 @@ function(ms_protobuf_generate_py c_var h_var py_var)
         get_filename_component(abs_file ${file} ABSOLUTE)
         get_filename_component(file_name ${file} NAME_WE)
         get_filename_component(file_dir ${abs_file} PATH)
-        file(RELATIVE_PATH rel_path ${CMAKE_CURRENT_SOURCE_DIR} ${file_dir})
 
-
-        list(APPEND ${c_var} "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.cc")
-        list(APPEND ${h_var} "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.h")
-        list(APPEND ${py_var} "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py")
+        list(APPEND ${c_var} "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.cc")
+        list(APPEND ${h_var} "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.h")
+        list(APPEND ${py_var} "${CMAKE_BINARY_DIR}/proto/${file_name}_pb2.py")
         if (WIN32)
             add_custom_command(
-                    OUTPUT "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.cc"
-                    "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.h"
-                    "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
+                    OUTPUT "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.cc"
+                    "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.h"
+                    "${CMAKE_BINARY_DIR}/proto/${file_name}_pb2.py"
                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${rel_path}"
-                    COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
-                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
-                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
-                    COMMAND perl -pi.bak -e "s/import (.+_pb2.*)/from . import \\1/"  "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
-                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py" "${PROJECT_SOURCE_DIR}/mindspore/train/"
+                    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/proto"
+                    COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/proto ${abs_file}
+                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/proto ${abs_file}
+                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/proto ${abs_file}
+                    COMMAND perl -pi.bak -e "s/import (.+_pb2.*)/from . import \\1/"  "${CMAKE_BINARY_DIR}/proto/${file_name}_pb2.py"
+                    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/proto/${file_name}_pb2.py" "${PROJECT_SOURCE_DIR}/mindspore/train/"
                     DEPENDS protobuf::protoc ${abs_file}
                     COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM )
         else()
             add_custom_command(
-                    OUTPUT "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.cc"
-                    "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}.pb.h"
-                    "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
+                    OUTPUT "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.cc"
+                    "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.h"
+                    "${CMAKE_BINARY_DIR}/proto/${file_name}_pb2.py"
                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${rel_path}"
-                    COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
-                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
-                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
-                    COMMAND perl -pi -e "s/import (.+_pb2.*)/from . import \\1/"  "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
-                    COMMAND cp "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py" "${PROJECT_SOURCE_DIR}/mindspore/train/"
+                    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/proto"
+                    COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/proto ${abs_file}
+                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/proto ${abs_file}
+                    COMMAND protobuf::protoc -I${file_dir} --python_out=${CMAKE_BINARY_DIR}/proto ${abs_file}
+                    COMMAND perl -pi -e "s/import (.+_pb2.*)/from . import \\1/"  "${CMAKE_BINARY_DIR}/proto/${file_name}_pb2.py"
+                    COMMAND cp "${CMAKE_BINARY_DIR}/proto/${file_name}_pb2.py" "${PROJECT_SOURCE_DIR}/mindspore/train/"
                     DEPENDS protobuf::protoc ${abs_file}
-                    COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM )
+                    COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM)
         endif()
     endforeach()
     set_source_files_properties(${${c_var}} ${${h_var}} ${${py_var}} PROPERTIES GENERATED TRUE)

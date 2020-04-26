@@ -23,7 +23,7 @@
 #include <algorithm>
 
 #include "debug/anf_ir_utils.h"
-#include "utils/anf_ir.pb.h"
+#include "proto/anf_ir.pb.h"
 #include "utils/graph_utils.h"
 #include "utils/symbolic.h"
 

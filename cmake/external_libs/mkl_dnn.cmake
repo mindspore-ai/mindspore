@@ -4,7 +4,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     mindspore_add_pkg(onednn
         VER 1.1.1
         LIBS dnnl mkldnn
-        HEAD_ONLY ./
+        HEAD_ONLY ./include
         RELEASE on
         URL https://github.com/oneapi-src/oneDNN/releases/download/v1.1.1/dnnl_win_1.1.1_cpu_vcomp.zip
         MD5 ecaab9ed549643067699c80e5cea1c23)
