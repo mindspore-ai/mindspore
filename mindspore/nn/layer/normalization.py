@@ -41,7 +41,7 @@ class _BatchNorm(Cell):
                  moving_mean_init='zeros',
                  moving_var_init='ones',
                  use_batch_statistics=True,
-                 group=1):
+                 device_num_each_group=1):
         super(_BatchNorm, self).__init__()
         if num_features < 1:
             raise ValueError("num_features must be at least 1")
@@ -60,7 +60,7 @@ class _BatchNorm(Cell):
             gamma_init, num_features), name="gamma", requires_grad=affine)
         self.beta = Parameter(initializer(
             beta_init, num_features), name="beta", requires_grad=affine)
-        self.group = check_int_positive(group)
+        self.group = check_int_positive(device_num_each_group)
         if self.group != 1:
             self.rank_id = get_rank()
             self.rank_size = get_group_size()
@@ -324,7 +324,7 @@ class GlobalBatchNorm(_BatchNorm):
 
     Args:
         num_features (int): `C` from an expected input of size (N, C, H, W).
-        group (int): The number of device in each group.
+        device_num_each_group (int): The number of device in each group.
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
         momentum (float): A floating hyperparameter of the momentum for the
             running_mean and running_var computation. Default: 0.9.
@@ -364,7 +364,7 @@ class GlobalBatchNorm(_BatchNorm):
                  moving_mean_init='zeros',
                  moving_var_init='ones',
                  use_batch_statistics=True,
-                 group=1):
+                 device_num_each_group=1):
         super(GlobalBatchNorm, self).__init__(num_features,
                                               eps,
                                               momentum,
@@ -374,8 +374,8 @@ class GlobalBatchNorm(_BatchNorm):
                                               moving_mean_init,
                                               moving_var_init,
                                               use_batch_statistics,
-                                              group)
-        self.group = check_int_positive(group)
+                                              device_num_each_group)
+        self.group = check_int_positive(device_num_each_group)
         if self.group <= 1:
             raise ValueError("the number of group must be greater than 1.")
     def _check_data_dim(self, x):
@@ -482,17 +482,17 @@ class GroupNorm(Cell):
         >>> x = Tensor(np.ones([1, 64, 256, 256], np.float32))
         >>> goup_norm_op(x)
     """
-    def __init__(self, num_groups, num_channels, eps=1e-05, affine=True):
+    def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros'):
         super(GroupNorm, self).__init__()
         self.num_groups = check_int_positive(num_groups)
         self.num_channels = check_int_positive(num_channels)
         if num_channels % num_groups != 0:
             raise ValueError("num_channels should be divided by num_groups")
-        self.eps = Tensor(check_typename('eps', eps, (float,)), mstype.float32)
+        self.eps = check_typename('eps', eps, (float,))
         self.affine = check_bool(affine)
 
-        gamma = initializer('ones', [num_channels, 1, 1], mstype.float32)
-        beta = initializer('zeros', [num_channels, 1, 1], mstype.float32)
+        gamma = initializer(gamma_init, [num_channels, 1, 1])
+        beta = initializer(beta_init, [num_channels, 1, 1])
         if self.affine:
             self.gamma = Parameter(gamma, name='gamma')
             self.beta = Parameter(beta, name='beta')
