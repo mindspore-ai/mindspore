@@ -57,7 +57,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
     normalize_op = C.Normalize((0.475, 0.451, 0.392), (0.275, 0.267, 0.278))
     changeswap_op = C.HWC2CHW()
 
-    trans=[]
+    trans = []
     if do_train:
         trans = [decode_op,
                  random_resize_crop_op,

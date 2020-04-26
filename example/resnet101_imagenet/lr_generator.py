@@ -13,9 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """learning rate generator"""
-import numpy as np
 import math
- 
+import numpy as np
 
 def linear_warmup_lr(current_step, warmup_steps, base_lr, init_lr):
     lr_inc = (float(base_lr) - float(init_lr)) / float(warmup_steps)
@@ -50,7 +49,7 @@ def warmup_cosine_annealing_lr(lr, steps_per_epoch, warmup_epochs, max_epoch):
             decayed = linear_decay * cosine_decay + 0.00001
             lr = base_lr * decayed
         lr_each_step.append(lr)
-    return np.array(lr_each_step).astype(np.float32)  
+    return np.array(lr_each_step).astype(np.float32)
 
 def get_lr(global_step, lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch, lr_decay_mode):
     """
