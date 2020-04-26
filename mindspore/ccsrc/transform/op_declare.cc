@@ -893,8 +893,8 @@ ATTR_MAP(TransposeD) = EMPTY_ATTR_MAP;
 
 // DropOutGenMask
 INPUT_MAP(DropOutGenMask) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(prob)}};
-ATTR_MAP(DropOutGenMask) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
-                            {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+ATTR_MAP(DropOutGenMask) = {{"Seed0", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                            {"Seed1", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(DropOutGenMask) = {{0, OUTPUT_DESC(y)}};
 
 // Pack
