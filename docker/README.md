@@ -7,11 +7,11 @@ This folder hosts all the `Dockerfile` to build MindSpore container images with 
 * CPU
 
     ```
-    cd mindspore-cpu/0.2.0-alpha && docker build . -t mindspore/mindspore-cpu:0.2.0-alpha
+    cd mindspore-cpu/0.1.0-alpha && docker build . -t mindspore/mindspore-cpu:0.1.0-alpha
     ```
 
 * GPU
 
     ```
-    cd mindspore-gpu/0.2.0-alpha && docker build . -t mindspore/mindspore-gpu:0.2.0-alpha
+    cd mindspore-gpu/0.1.0-alpha && docker build . -t mindspore/mindspore-gpu:0.1.0-alpha
     ```
