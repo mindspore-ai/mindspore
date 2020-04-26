@@ -236,7 +236,7 @@ py::dict ExecutorPy::GetAllreduceFusion(const std::string &phase) {
 
 void ExecutorPy::DelNetRes(const std::string &id) {
 #ifdef ENABLE_GE
-  FinalizeGe();
+  FinalizeBackend();
 #endif
   if (executor_ != nullptr) {
     bool flag = false;
@@ -680,6 +680,13 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
                      const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                      const std::vector<int64_t> &input_indexes, const std::string &phase) {
   std::string name = MsContext::GetInstance()->backend_policy();
+#ifndef NO_DLIB
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->IsTsdOpened() || !ms_context->IsGeInited()) {
+    (void)InitBackend();
+  }
+#endif
   if (name == kMsConvert || name == kMsVm) {
     return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes);
   }
@@ -758,7 +765,7 @@ void ResetOpId() { mindspore::id_generator::reset_id(); }
 
 void InitHccl() {
 #ifdef ENABLE_GE
-  (void)InitGe();
+  (void)InitBackend();
 #else
   mindspore::parse::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
@@ -780,7 +787,7 @@ void InitHccl() {
 
 void FinalizeHccl() {
 #ifdef ENABLE_GE
-  (void)FinalizeGe();
+  (void)FinalizeBackend();
 #else
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 #endif
@@ -801,7 +808,7 @@ void ReleaseGeTsd() {
   }
 }
 
-void InitGe() {
+void InitBackend() {
   // set python env flag
   mindspore::parse::python_adapter::set_python_env_flag(true);
   // open tsd before ge initialize
@@ -813,7 +820,7 @@ void InitGe() {
   (void)ms_context->InitGe();
 }
 
-void FinalizeGe() {
+void FinalizeBackend() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   (void)context_ptr->FinalizeGe();

@@ -97,7 +97,7 @@ PYBIND11_MODULE(_c_expression, m) {
               py::arg("batch_size"), py::arg("types"), py::arg("shapes"), py::arg("input_indexs"),
               py::arg("phase") = py::str("dataset"), "Init and exec dataset.");
   (void)m.def("_set_dataset_mode_config", &mindspore::ConfigManager::SetDatasetModeConfig, "API for set dataset mode.");
-  (void)m.def("init_ge", &mindspore::pipeline::InitGe, "Init GE");
+  (void)m.def("init_backend", &mindspore::pipeline::InitBackend, "Init Backend.");
 
   (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, "Export Graph.");
 
