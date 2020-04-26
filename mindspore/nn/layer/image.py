@@ -95,6 +95,11 @@ def _gauss_kernel_helper(filter_size):
     g = Tensor(g)
     return filter_size, g
 
+@constexpr
+def _check_input_4d(input_shape, param_name, func_name):
+    if len(input_shape) != 4:
+        raise ValueError(f"{func_name} {param_name} should be 4d, but got shape {input_shape}")
+    return True
 
 class SSIM(Cell):
     r"""
@@ -146,6 +151,9 @@ class SSIM(Cell):
         self.mean = P.DepthwiseConv2dNative(channel_multiplier=1, kernel_size=filter_size)
 
     def construct(self, img1, img2):
+        _check_input_4d(F.shape(img1), "img1", "SSIM")
+        _check_input_4d(F.shape(img2), "img2", "SSIM")
+        P.SameTypeShape()(img1, img2)
         max_val = _convert_img_dtype_to_float32(self.max_val, self.max_val)
         img1 = _convert_img_dtype_to_float32(img1, self.max_val)
         img2 = _convert_img_dtype_to_float32(img2, self.max_val)
@@ -236,6 +244,9 @@ class PSNR(Cell):
         self.max_val = max_val
 
     def construct(self, img1, img2):
+        _check_input_4d(F.shape(img1), "img1", "PSNR")
+        _check_input_4d(F.shape(img2), "img2", "PSNR")
+        P.SameTypeShape()(img1, img2)
         max_val = _convert_img_dtype_to_float32(self.max_val, self.max_val)
         img1 = _convert_img_dtype_to_float32(img1, self.max_val)
         img2 = _convert_img_dtype_to_float32(img2, self.max_val)
