@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include "ir/func_graph.h"
 #include "session/kernel_graph.h"
 #include "common/utils.h"
@@ -86,6 +87,7 @@ constexpr size_t kAdamApplyOneOutputNum = 3;
 constexpr size_t kBackendTransDataInputNum = 2;
 constexpr size_t kApplyMomentumInputNum = 6;
 constexpr size_t kBiasAddInputNum = 3;
+constexpr size_t kTopkInputNum = 3;
 
 enum FusedBatchNormInput {
   kX = 1,
@@ -150,6 +152,8 @@ void RemoveNopNode(session::KernelGraph *const graph);
 AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx);
 
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
+
+void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &input_attrs);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_
