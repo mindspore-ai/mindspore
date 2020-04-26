@@ -26,12 +26,10 @@
 
 namespace mindspore {
 namespace callbacks {
-
 using mindspore::tensor::TensorPtr;
 
 uint32_t CheckpointSaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
 uint32_t SummarySaveCallback(uint32_t, const std::map<std::string, ge::Tensor> &);
-
 }  // namespace callbacks
 }  // namespace mindspore
 

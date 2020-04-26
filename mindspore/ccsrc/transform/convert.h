@@ -252,7 +252,6 @@ class DfGraphConvertor {
   bool training_ = false;
   bool distribute_ = false;
 };
-
 }  // namespace transform
 }  // namespace mindspore
 

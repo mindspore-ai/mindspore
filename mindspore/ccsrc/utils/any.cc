@@ -26,7 +26,7 @@ bool AnyIsLiteral(const Any &any) {
   static const std::type_index typeid_float = std::type_index(typeid(float));
   static const std::type_index typeid_bool = std::type_index(typeid(bool));
 
-  std::type_index typeid_any = std::type_index(any.type());
+  auto typeid_any = std::type_index(any.type());
   return typeid_int == typeid_any || typeid_float == typeid_any || typeid_bool == typeid_any;
 }
 
