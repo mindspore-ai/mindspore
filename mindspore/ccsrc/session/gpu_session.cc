@@ -133,10 +133,9 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
 }
 
 void GPUSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
-                         std::vector<tensor::TensorPtr> *input_tensors) {
+                         const std::vector<tensor::TensorPtr> &input_tensors, const std::vector<bool> &tensors_mask) {
   // Prepare the graph
-  MS_EXCEPTION_IF_NULL(input_tensors);
-  auto kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors);
+  auto kernel_graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   SelectKernel(kernel_graph);
   StartKernelRT();
