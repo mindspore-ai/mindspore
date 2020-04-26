@@ -261,8 +261,7 @@ void GPUKernelRuntime::AllocCommunicationOpDynamicRes(const session::KernelGraph
   auto &kernels = graph->execution_order();
   for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel);
-    if (kernel_name == kAllReduceOpName) {
+    if (AnfAlgo::IsCommunicationOp(kernel)) {
       AllocCommunicationOpInputDynamicRes(kernel);
       AllocCommunicationOpOutputDynamicRes(kernel);
     }
@@ -272,27 +271,31 @@ void GPUKernelRuntime::AllocCommunicationOpDynamicRes(const session::KernelGraph
 void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  bool is_need_alloc_memory = false;
+  bool is_need_free_memory = false;
   size_t total_size = 0;
   std::vector<size_t> size_list;
   DeviceAddressPtrList addr_list;
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
     auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(device_address);
-    // The inputs of communication kernel are not released.
-    if (device_address->ptr_ != nullptr) {
-      MS_LOG(INFO) << "The inputs of communication kernel are not released.";
-      mem_manager_->FreeMemFromMemPool(device_address);
+    if (device_address->ptr_ == nullptr) {
+      is_need_alloc_memory = true;
+    } else {
+      is_need_free_memory = true;
     }
     total_size += device_address->size_;
     size_list.emplace_back(device_address->size_);
     addr_list.emplace_back(device_address);
   }
-  mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+  AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);
 }
 
 void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::AnfNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  bool is_need_alloc_memory = false;
+  bool is_need_free_memory = false;
   size_t total_size = 0;
   std::vector<size_t> size_list;
   DeviceAddressPtrList addr_list;
@@ -302,14 +305,32 @@ void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::Anf
   for (size_t i = 0; i < output_sizes.size(); ++i) {
     auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(device_address);
-    // The outputs of communication kernel are not released.
-    if (device_address->ptr_ != nullptr) {
-      MS_LOG(INFO) << "The outputs of communication kernel are not released.";
-      mem_manager_->FreeMemFromMemPool(device_address);
+    if (device_address->ptr_ == nullptr) {
+      is_need_alloc_memory = true;
+    } else {
+      is_need_free_memory = true;
     }
     total_size += output_sizes[i];
     size_list.emplace_back(output_sizes[i]);
     addr_list.emplace_back(device_address);
+  }
+  AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);
+}
+
+void GPUKernelRuntime::AllocCommunicationOpMemory(bool is_need_alloc_memory, bool is_need_free_memory,
+                                                  const DeviceAddressPtrList addr_list, size_t total_size,
+                                                  std::vector<size_t> size_list) {
+  if (!is_need_alloc_memory) {
+    return;
+  }
+  if (is_need_free_memory) {
+    for (const auto &iter : addr_list) {
+      MS_EXCEPTION_IF_NULL(iter);
+      // Free the inputs/outputs of communication kernel which are not released.
+      if (iter->ptr_ != nullptr) {
+        mem_manager_->FreeMemFromMemPool(iter);
+      }
+    }
   }
   mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
 }
