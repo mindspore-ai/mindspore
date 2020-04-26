@@ -98,6 +98,8 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
       i++;
     }
     ret = rets;
+  } else if (value->isa<EllipsisObj>()) {
+    ret = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_CLASS_ELLIPSIS);
   } else if (value->isa<ValueSlice>()) {
     auto slice = value->cast<ValueSlicePtr>();
     auto start = ValuePtrToPyData(slice->start());

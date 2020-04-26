@@ -254,10 +254,10 @@ def _tensor_indices_tensor(data, data_shape, index, indices, value):
     data_dtype = F.dtype(data)
     indices_size = F.size(indices)
     indices_size = mult_util.check_indices(indices_size, index)
-    update = F.fill(data_dtype, (indices_size,), 1)
+    update = F.fill(mstype.int32, (indices_size,), 1)
     condition_1d = F.scatter_nd(indices, update, (data_size,))
-    condition_1d = F.cast(condition_1d, mstype.bool_)
     condition = F.reshape(condition_1d, data_shape)
+    condition = F.cast(condition, mstype.bool_)
     value_fill = None
     value_size = F.size(value)
 
@@ -336,10 +336,10 @@ def _tensor_indices_number(data, data_shape, index, indices, value):
     data_dtype = F.dtype(data)
     indices_size = F.size(indices)
     indices_size = mult_util.check_indices(indices_size, index)
-    update = F.fill(data_dtype, (indices_size,), 1)
+    update = F.fill(mstype.int32, (indices_size,), 1)
     condition_1d = F.scatter_nd(indices, update, (data_size,))
-    condition_1d = F.cast(condition_1d, mstype.bool_)
     condition = F.reshape(condition_1d, data_shape)
+    condition = F.cast(condition, mstype.bool_)
     value_fill = F.fill(data_dtype, (indices_size,), value)
     value_1d = F.scatter_nd(indices, value_fill, (data_size,))
     u = F.reshape(value_1d, data_shape)
@@ -360,3 +360,32 @@ def _tensor_setitem_with_int_v2(data, index, value):
     data_shape = F.shape(data)
     indices = mult_util.integer_to_indices(index, data_shape)
     return _tensor_indices_tensor(data, data_shape, index, indices, value)
+
+
+@setitem.register("Tensor", "Ellipsis", "Number")
+def _tensor_setitem_with_ellipsis_v1(data, index, value):
+    """Syntax: A[...] = number."""
+    data_shape = F.shape(data)
+    data_dtype = F.dtype(data)
+    return F.fill(data_dtype, data_shape, value)
+
+
+@setitem.register("Tensor", "Ellipsis", "Tensor")
+def _tensor_setitem_with_ellipsis_v2(data, index, value):
+    """Syntax: A[...] = Tensor."""
+    result = None
+    data_shape = F.shape(data)
+    data_dtype = F.dtype(data)
+    data_size = F.size(data)
+    value_shape = F.shape(value)
+    value_size = F.size(value)
+    check_result = mult_util.check_ellipsis_shape_size(data_shape, value_shape, data_size, value_size)
+    if check_result:
+        if data_size == value_size:
+            result = F.reshape(value, data_shape)
+            result = F.cast(result, data_dtype)
+        elif value_size == 1:
+            param1 = F.fill(data_dtype, data_shape, 1)
+            param2 = F.cast(value, data_dtype)
+            result = F.tensor_mul(param1, param2)
+    return result
