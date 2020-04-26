@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
 project (MindSpore)
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.3.0)
+    message(FATAL_ERROR "GCC vesion ${CMAKE_CXX_COMPILER_VERSION} must not be less than 7.3.0")
+endif ()
+
 include(${CMAKE_SOURCE_DIR}/cmake/options.cmake)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
@@ -18,7 +23,16 @@ set(PYBIND11_CPP_STANDARD -std=c++17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTION_CXX_FLAGS}")
 
 find_package(Threads)
-find_package(Patch)
+if (DEFINED ENV{MS_PATCH_PATH})
+    find_program(Patch_EXECUTABLE patch PATHS $ENV{MS_PATCH_PATH})
+    set(Patch_FOUND ${Patch_EXECUTABLE})
+else ()
+    find_package(Patch)
+endif ()
+if (NOT Patch_FOUND)
+    message(FATAL_ERROR "Patch not found, please set env variable MS_PATCH_PATH, "
+            "usually locate in GIT_PATH/usr/bin in windows")
+endif ()
 message(PATCH_EXECUTABLE = ${Patch_EXECUTABLE})
 
 include(${CMAKE_SOURCE_DIR}/cmake/mind_expression.cmake)

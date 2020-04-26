@@ -153,7 +153,10 @@ endif ()
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
     file(GLOB CXX_LIB_LIST ${CXX_DIR}/*.dll)
-    file(GLOB VC_LIB_LIST $ENV{SystemRoot}/System32/msvcp140.dll $ENV{SystemRoot}/System32/vcomp140.dll)
+
+    string(REPLACE "\\" "/" SystemRoot $ENV{SystemRoot})
+    file(GLOB VC_LIB_LIST ${SystemRoot}/System32/msvcp140.dll ${SystemRoot}/System32/vcomp140.dll)
+
     file(GLOB JPEG_LIB_LIST ${jpeg_turbo_LIBPATH}/*.dll)
     file(GLOB SQLITE_LIB_LIST ${sqlite_LIBPATH}/*.dll)
     install(
