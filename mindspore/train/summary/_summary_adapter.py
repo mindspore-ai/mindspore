@@ -32,36 +32,6 @@ EVENT_FILE_NAME_MARK = ".out.events.summary."
 # Set the init event of version and mark
 EVENT_FILE_INIT_VERSION_MARK = "Mindspore.Event:"
 EVENT_FILE_INIT_VERSION = 1
-# cache the summary data dict
-# {id: SummaryData}
-#           |---[{"name": tag_name, "data": numpy}, {"name": tag_name, "data": numpy},...]
-g_summary_data_dict = {}
-
-
-def save_summary_data(data_id, data):
-    """Save the global summary cache."""
-    global g_summary_data_dict
-    g_summary_data_dict[data_id] = data
-
-
-def del_summary_data(data_id):
-    """Save the global summary cache."""
-    global g_summary_data_dict
-    if data_id in g_summary_data_dict:
-        del g_summary_data_dict[data_id]
-    else:
-        logger.warning("Can't del the data because data_id(%r) " "does not have data in g_summary_data_dict", data_id)
-
-
-def get_summary_data(data_id):
-    """Save the global summary cache."""
-    ret = None
-    global g_summary_data_dict
-    if data_id in g_summary_data_dict:
-        ret = g_summary_data_dict.get(data_id)
-    else:
-        logger.warning("The data_id(%r) does not have data in g_summary_data_dict", data_id)
-    return ret
 
 
 def get_event_file_name(prefix, suffix):
@@ -119,7 +89,7 @@ def package_graph_event(data):
     return graph_event
 
 
-def package_summary_event(data_id, step):
+def package_summary_event(data_list, step):
     """
     Package the summary to event protobuffer.
 
@@ -130,10 +100,6 @@ def package_summary_event(data_id, step):
     Returns:
         Summary, the summary event.
     """
-    data_list = get_summary_data(data_id)
-    if data_list is None:
-        logger.error("The step(%r) does not have record data.", step)
-    del_summary_data(data_id)
     # create the event of summary
     summary_event = Event()
     summary = summary_event.summary
