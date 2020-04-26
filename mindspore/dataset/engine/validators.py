@@ -906,6 +906,8 @@ def check_textfiledataset(method):
 
         check_param_type(nreq_param_int, param_dict, int)
 
+        check_sampler_shuffle_shard_options(param_dict)
+
         return method(*args, **kwargs)
 
     return new_method
