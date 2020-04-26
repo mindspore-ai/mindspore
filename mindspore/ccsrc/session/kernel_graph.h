@@ -88,7 +88,7 @@ class KernelGraph : public FuncGraph {
   void set_executable(bool executable) { executable_ = executable; }
   // set invalid inputs for control sink
   std::vector<bool> *MutableValidInputs() { return &valid_inputs_; }
-  std::vector<bool> ValidInputs() { return valid_inputs_; }
+  const std::vector<bool> &ValidInputs() const { return valid_inputs_; }
 
  private:
   // remove value node form graph
