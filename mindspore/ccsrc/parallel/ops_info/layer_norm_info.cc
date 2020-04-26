@@ -69,7 +69,7 @@ Status LayerNormInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
   // check input strategy
   for (size_t i = begin_norm_axis_; i < input_strategy.size(); ++i) {
-    if (input_strategy[begin_norm_axis_] != NO_SPLIT_STRATEGY) {
+    if (input_strategy[i] != NO_SPLIT_STRATEGY) {
       MS_LOG(ERROR) << name_ << ": Invalid input strategy " << ShapeToString(input_strategy);
       return FAILED;
     }
