@@ -2063,7 +2063,7 @@ class LSTM(PrimitiveWithInfer):
         return (y_shape, h_shape, c_shape, reserved_shape, state_shape)
 
     def infer_dtype(self, x_dtype, h_dtype, c_dtype, w_dtype):
-        args =  {'x': x_dtype,  'h': h_dtype, 'c': c_dtype, 'w': w_dtype}
+        args = {'x': x_dtype, 'h': h_dtype, 'c': c_dtype, 'w': w_dtype}
         validator.check_tensor_type_same(args, (mstype.float32, mstype.float16), self.name)
         return (x_dtype, x_dtype, x_dtype, x_dtype, x_dtype)
 
@@ -2670,8 +2670,8 @@ class ConfusionMulGrad(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, axis = (), keep_dims = False):
-        self.init_prim_io_names(inputs = ["input0", "input1", "input2"], outputs = ["output0", "output1"])
+    def __init__(self, axis=(), keep_dims=False):
+        self.init_prim_io_names(inputs=["input0", "input1", "input2"], outputs=["output0", "output1"])
         self.axis_ = validator.check_value_type("axis", axis, [int, tuple, list], self.name)
         self.keep_dims_ = validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
 
