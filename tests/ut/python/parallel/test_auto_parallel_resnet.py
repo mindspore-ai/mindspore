@@ -273,7 +273,7 @@ class DatasetLenet():
         return 1
 
 
-def train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768):
+def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768):
     dev_num = 8
     context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
     set_algo_parameters(elementwise_op_strategy_follow=True)
@@ -308,7 +308,7 @@ def train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768): #10485
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_percent=0.5)
-    allreduce_fusion_dict = train_32k_8p(epoch_size, batch_size, num_classes)
+    allreduce_fusion_dict = test_train_32k_8p(epoch_size, batch_size, num_classes)
     expect_dict = {'end_point.bias': 2,
                    'end_point.weight': 2,
                    'layer4.2.bn3.beta': 2,
@@ -481,7 +481,7 @@ def train_32k_8p_fusion2(epoch_size=3, batch_size=32, num_classes=32768): #10485
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_inherent_time=0.05)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_bandwidth=0.000001)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_computation_time_parameter=0.0000015)
-    allreduce_fusion_dict = train_32k_8p(epoch_size, batch_size, num_classes)
+    allreduce_fusion_dict = test_train_32k_8p(epoch_size, batch_size, num_classes)
     expect_dict = {'end_point.bias': 2,
                    'end_point.weight': 2,
                    'layer4.2.bn3.beta': 2,
