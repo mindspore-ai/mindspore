@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_ADD_MEMCPY_ASYNC_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_ADD_MEMCPY_ASYNC_H_
+#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_MEMCPY_ASYNC_H_
+#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_MEMCPY_ASYNC_H_
 
 #include <memory>
 #include "pre_activate/common/optimizer.h"
@@ -28,4 +28,4 @@ class AddMemcpyAsync : public PatternProcessPass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_ADD_MEMCPY_ASYNC_H_
+#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_MEMCPY_ASYNC_H_

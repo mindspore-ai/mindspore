@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pre_activate/ascend/ir_fusion/transdata_split.h"
+#include "pre_activate/ascend/ir_fission/transdata_split.h"
 #include <set>
 #include "pre_activate/ascend/ascend_helper.h"
 #include "session/anf_runtime_algorithm.h"
