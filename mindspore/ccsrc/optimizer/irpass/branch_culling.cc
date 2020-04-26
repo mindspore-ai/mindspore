@@ -52,13 +52,17 @@ bool InConvertWhiteList(const AnfNodePtr &node, size_t index) {
   // Example : when convert CNode(kPrimReduceSum, x, axis), node of index 2 in CNode->inputs is axis which should not be
   // converted to switch guarded.
   std::vector<std::pair<PrimitivePtr, std::vector<size_t>>> white_list(
-    {{prim::kPrimApplyMomentum, {1, 2}}, {prim::kPrimMomentum, {2, 3}},     {prim::kPrimStateSetItem, {1}},
-     {prim::kPrimEnvGetItem, {1}},       {prim::kPrimEnvSetItem, {1}},      {prim::kPrimReduceSum, {2}},
-     {prim::kPrimReduceMean, {2}},       {prim::kPrimReduceAll, {2}},       {prim::kPrimCast, {2}},
-     {prim::kPrimTranspose, {2}},        {prim::kPrimOneHot, {2}},          {prim::kPrimGatherV2, {3}},
-     {prim::kPrimReshape, {2}},          {prim::kPrimAssign, {1}},          {prim::kPrimAssignAdd, {1}},
-     {prim::kPrimAssignSub, {1}},        {prim::kPrimTensorSummary, {1}},   {prim::kPrimImageSummary, {1}},
-     {prim::kPrimScalarSummary, {1}},    {prim::kPrimHistogramSummary, {1}}});
+    {{prim::kPrimApplyMomentum, {1, 2}}, {prim::kPrimMomentum, {2, 3}},
+     {prim::kPrimStateSetItem, {1}},     {prim::kPrimTupleGetItem, {2}},
+     {prim::kPrimEnvGetItem, {1}},       {prim::kPrimEnvSetItem, {1}},
+     {prim::kPrimReduceSum, {2}},        {prim::kPrimReduceMean, {2}},
+     {prim::kPrimReduceAll, {2}},        {prim::kPrimCast, {2}},
+     {prim::kPrimTranspose, {2}},        {prim::kPrimOneHot, {2}},
+     {prim::kPrimGatherV2, {3}},         {prim::kPrimReshape, {2}},
+     {prim::kPrimAssign, {1}},           {prim::kPrimAssignAdd, {1}},
+     {prim::kPrimAssignSub, {1}},        {prim::kPrimTensorSummary, {1}},
+     {prim::kPrimImageSummary, {1}},     {prim::kPrimScalarSummary, {1}},
+     {prim::kPrimHistogramSummary, {1}}});
   for (auto &item : white_list) {
     auto matched = std::any_of(item.second.begin(), item.second.end(), [&item, &node, &index](size_t idx) {
       return IsPrimitiveCNode(node, item.first) && idx == index;
@@ -80,7 +84,8 @@ bool InConvertWhiteList(const AnfNodePtr &node, size_t index) {
 using NodeInputReplMap = std::unordered_map<std::pair<AnfNodePtr, size_t>, AnfNodePtr, PairHasher>;
 // replace the nodes which should be changed
 void RunSwitchNodeReplace(const FuncGraphManagerPtr &manager, std::vector<std::pair<CNodePtr, CNodePtr>> nodes_changed,
-                          std::unordered_map<AnfNodePtr, AnfNodePtr> repl_node, NodeInputReplMap repl_node_inputs) {
+                          std::unordered_map<AnfNodePtr, AnfNodePtr> repl_node, NodeInputReplMap repl_node_inputs,
+                          const FuncGraphPtr &func_graph) {
   for (auto &node_pair : nodes_changed) {
     CNodePtr old_node = node_pair.first;
     CNodePtr new_node = node_pair.second;
@@ -99,9 +104,11 @@ void RunSwitchNodeReplace(const FuncGraphManagerPtr &manager, std::vector<std::p
   }
 
   for (auto &item : repl_node) {
-    if (!manager->Replace(item.first, item.second)) {
-      MS_LOG(EXCEPTION) << "TransformGraphDependNode replace node failed original:" << item.first->DebugString()
-                        << " to new: " << item.second->DebugString();
+    if (IsPrimitiveCNode(item.second, prim::kPrimReturn)) {
+      func_graph->set_output(item.second->cast<CNodePtr>()->input(1));
+    } else if (!manager->Replace(item.first, item.second)) {
+      MS_LOG(EXCEPTION) << "TransformGraphDependNode replace node failed original:" << item.first->DebugString(2)
+                        << " to new: " << item.second->DebugString(2);
     }
   }
 }
@@ -154,7 +161,7 @@ FuncGraphPtr TransformGraphCondBranchNodes(
       nodes_changed.emplace_back(node->cast<CNodePtr>(), new_node);
     }
   }
-  RunSwitchNodeReplace(manager, nodes_changed, repl_node, repl_node_inputs);
+  RunSwitchNodeReplace(manager, nodes_changed, repl_node, repl_node_inputs, graph);
   return graph;
 }
 
@@ -508,11 +515,12 @@ bool GraphOutputCompatible(const AbstractBasePtr &true_branch_abs, const Abstrac
 
 AnfNodePtr GenerateMergeNodes(const AnfNodePtr &true_output_node, const AnfNodePtr &false_output_node,
                               const AbstractBasePtr &true_graph_output_abs,
-                              const AbstractBasePtr &false_graph_output_abs, const AnfNodePtr &cond) {
+                              const AbstractBasePtr &false_graph_output_abs, const FuncGraphPtr &switch_graph,
+                              const AnfNodePtr &cond) {
   MS_EXCEPTION_IF_NULL(true_graph_output_abs);
   MS_EXCEPTION_IF_NULL(false_graph_output_abs);
   MS_EXCEPTION_IF_NULL(cond);
-  MS_EXCEPTION_IF_NULL(cond->func_graph());
+  MS_EXCEPTION_IF_NULL(switch_graph);
   auto PrimMerge = prim::GetPythonOps("merge", "mindspore.ops.functional")->cast<PrimitivePtr>();
   MS_EXCEPTION_IF_NULL(PrimMerge);
 
@@ -520,10 +528,10 @@ AnfNodePtr GenerateMergeNodes(const AnfNodePtr &true_output_node, const AnfNodeP
     std::vector<AnfNodePtr> merge_nodes;
     merge_nodes.push_back(NewValueNode(PrimMerge));
     std::vector<AnfNodePtr> make_tuple_nodes{NewValueNode(prim::kPrimMakeTuple), true_output_node, false_output_node};
-    merge_nodes.push_back(cond->func_graph()->NewCNode(make_tuple_nodes));
+    merge_nodes.push_back(switch_graph->NewCNode(make_tuple_nodes));
     std::vector<AnfNodePtr> tuple_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem),
-                                                cond->func_graph()->NewCNode(merge_nodes), NewValueNode(MakeValue(0))};
-    return cond->func_graph()->NewCNode(tuple_getitem_nodes);
+                                                switch_graph->NewCNode(merge_nodes), NewValueNode(MakeValue(0))};
+    return switch_graph->NewCNode(tuple_getitem_nodes);
   } else {
     abstract::AbstractTuplePtr true_branch_tuple = true_graph_output_abs->cast<abstract::AbstractTuplePtr>();
     abstract::AbstractTuplePtr false_branch_tuple = false_graph_output_abs->cast<abstract::AbstractTuplePtr>();
@@ -533,27 +541,29 @@ AnfNodePtr GenerateMergeNodes(const AnfNodePtr &true_output_node, const AnfNodeP
     for (size_t i = 0; i < true_branch_tuple->elements().size(); i++) {
       std::vector<AnfNodePtr> true_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem), true_output_node,
                                                  NewValueNode(MakeValue(SizeToInt(i)))};
-      auto true_node = cond->func_graph()->NewCNode(true_getitem_nodes);
+      auto true_node = switch_graph->NewCNode(true_getitem_nodes);
       std::vector<AnfNodePtr> false_getitem_nodes{NewValueNode(prim::kPrimTupleGetItem), false_output_node,
                                                   NewValueNode(MakeValue(SizeToInt(i)))};
-      auto false_node = cond->func_graph()->NewCNode(false_getitem_nodes);
+      auto false_node = switch_graph->NewCNode(false_getitem_nodes);
 
       auto merge_node = GenerateMergeNodes(true_node, false_node, true_branch_tuple->elements()[i],
-                                           false_branch_tuple->elements()[i], cond);
+                                           false_branch_tuple->elements()[i], switch_graph, cond);
       make_tuple_nodes.push_back(merge_node);
     }
-    return cond->func_graph()->NewCNode(make_tuple_nodes);
+    return switch_graph->NewCNode(make_tuple_nodes);
   }
 }
 
 AnfNodePtr TransformMergeBranches(const AnfNodePtr &true_output_node, const AnfNodePtr &false_output_node,
                                   const AbstractBasePtr &true_graph_output_abs,
-                                  const AbstractBasePtr &false_graph_output_abs, const AnfNodePtr &cond) {
+                                  const AbstractBasePtr &false_graph_output_abs, const AnfNodePtr &cond,
+                                  const FuncGraphPtr &switch_graph) {
   if (!GraphOutputCompatible(true_graph_output_abs, false_graph_output_abs)) {
     MS_LOG(EXCEPTION) << "Switch output branch not compatible, true:" << true_graph_output_abs->ToString()
                       << "， false:" << false_graph_output_abs->ToString();
   }
-  return GenerateMergeNodes(true_output_node, false_output_node, true_graph_output_abs, false_graph_output_abs, cond);
+  return GenerateMergeNodes(true_output_node, false_output_node, true_graph_output_abs, false_graph_output_abs,
+                            switch_graph, cond);
 }
 }  // namespace internal
 }  // namespace irpass

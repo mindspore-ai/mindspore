@@ -24,6 +24,8 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common import ms_function
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -371,7 +373,8 @@ def test_switch_layer():
     class Layer1(nn.Cell):
         def __init__(self):
             super(Layer1, self).__init__()
-            self.z1 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
+            self.z1 = Parameter(
+                Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
 
         def construct(self, x):
             return x * self.z1
@@ -379,7 +382,8 @@ def test_switch_layer():
     class Layer2(nn.Cell):
         def __init__(self):
             super(Layer2, self).__init__()
-            self.z2 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
+            self.z2 = Parameter(
+                Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
 
         def construct(self, x):
             return x * self.z2
@@ -388,7 +392,8 @@ def test_switch_layer():
         def __init__(self):
             super(SwitchLayerCell, self).__init__()
             self.layers = (Layer1(), Layer2())
-            self.z3 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
+            self.z3 = Parameter(
+                Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
 
         def construct(self, index, x):
             ret = F.switch_layer(index, self.layers)(x) * self.z3
@@ -406,7 +411,8 @@ def test_index_to_switch_layer():
     class Layer1(nn.Cell):
         def __init__(self):
             super(Layer1, self).__init__()
-            self.z1 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
+            self.z1 = Parameter(
+                Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
 
         def construct(self, x):
             return x * self.z1
@@ -414,7 +420,8 @@ def test_index_to_switch_layer():
     class Layer2(nn.Cell):
         def __init__(self):
             super(Layer2, self).__init__()
-            self.z2 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
+            self.z2 = Parameter(
+                Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
 
         def construct(self, x):
             return x * self.z2
@@ -423,7 +430,8 @@ def test_index_to_switch_layer():
         def __init__(self):
             super(SwitchLayerCell, self).__init__()
             self.layers = (Layer1(), Layer2())
-            self.z3 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
+            self.z3 = Parameter(
+                Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
 
         def construct(self, index, x):
             ret = self.layers[index](x) * self.z3
@@ -444,3 +452,69 @@ def test_control_depend_check():
         depend = P.ControlDepend(2)
     with pytest.raises(TypeError) as e:
         depend = P.ControlDepend((2,))
+
+
+def test_if_nested_compile():
+    class Net(nn.Cell):
+        def __init__(self, auto_prefix=True):
+            super().__init__(auto_prefix=auto_prefix)
+            self.squre = P.Square()
+            self.value = Tensor(3, dtype=ms.float32)
+
+        def construct(self, x, y):
+            res = self.value
+            if x <= y:
+                res = x + res
+                res = y + res
+            else:
+                if x == y:
+                    res = self.squre(self.value * y)
+                else:
+                    res = self.squre(self.value)
+            return res
+    x = Tensor(1.0, dtype=ms.float32)
+    y = Tensor(2.0, dtype=ms.float32)
+    net = Net()
+    net(x, y)
+
+
+def test_if_inside_for():
+    class Net(nn.Cell):
+        def __init__(self, auto_prefix=True):
+            super().__init__(auto_prefix=auto_prefix)
+            self.squre = P.Square()
+            self.value = Tensor(3, dtype=ms.float32)
+            self.count = 4
+
+        def construct(self, x, y):
+            res = 0
+            for i in range(self.count):
+                if i == x:
+                    res = res + x
+                else:
+                    res = res - y
+            return res
+    c1 = Tensor(1, dtype=ms.int32)
+    c2 = Tensor(1, dtype=ms.int32)
+    net = Net()
+    out = net(c1, c2)
+
+
+def test_while_in_while():
+    c1 = Tensor(1, dtype=ms.int32)
+    c2 = Tensor(2, dtype=ms.int32)
+    c3 = Tensor(3, dtype=ms.int32)
+    c4 = Tensor(4, dtype=ms.int32)
+    @ms_function
+    def while_in_while(x, y, z, u):
+        out = c4
+        while x < y:
+            z = c4 + c4
+            while z < y:
+                z = z + 1
+                out = out + 1
+            x = x + 1
+
+        out = out + 3
+        return out
+    while_in_while(c1, c2, c3, c4)
