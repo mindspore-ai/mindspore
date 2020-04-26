@@ -18,6 +18,7 @@ test ssim
 import numpy as np
 import pytest
 import mindspore.nn as nn
+import mindspore.common.dtype as mstype
 from mindspore.common.api import _executor
 from mindspore import Tensor
 
@@ -93,3 +94,38 @@ def test_ssim_k1_k2_wrong_value():
         net = SSIMNet(k2=0.0)
     with pytest.raises(ValueError):
         net = SSIMNet(k2=-1.0)
+
+def test_ssim_different_shape():
+    shape_1 = (8, 3, 16, 16)
+    shape_2 = (8, 3, 8, 8)
+    img1 = Tensor(np.random.random(shape_1))
+    img2 = Tensor(np.random.random(shape_2))
+    net = SSIMNet()
+    with pytest.raises(ValueError):
+        _executor.compile(net, img1, img2)
+
+def test_ssim_different_dtype():
+    dtype_1 = mstype.float32
+    dtype_2 = mstype.float16
+    img1 = Tensor(np.random.random((8, 3, 16, 16)), dtype=dtype_1)
+    img2 = Tensor(np.random.random((8, 3, 16, 16)), dtype=dtype_2)
+    net = SSIMNet()
+    with pytest.raises(TypeError):
+        _executor.compile(net, img1, img2)
+
+def test_ssim_invalid_5d_input():
+    shape_1 = (8, 3, 16, 16)
+    shape_2 = (8, 3, 8, 8)
+    invalid_shape = (8, 3, 16, 16, 1)
+    img1 = Tensor(np.random.random(shape_1))
+    invalid_img1 = Tensor(np.random.random(invalid_shape))
+    img2 = Tensor(np.random.random(shape_2))
+    invalid_img2 = Tensor(np.random.random(invalid_shape))
+
+    net = SSIMNet()
+    with pytest.raises(ValueError):
+        _executor.compile(net, invalid_img1, img2)
+    with pytest.raises(ValueError):
+        _executor.compile(net, img1, invalid_img2)
+    with pytest.raises(ValueError):
+        _executor.compile(net, invalid_img1, invalid_img2)
