@@ -514,10 +514,6 @@ const DeviceAddress *AnfRuntimeAlgorithm::GetOutputAddr(const AnfNodePtr &node, 
       MS_LOG(EXCEPTION) << node->DebugString() << "Invalid nop node";
     }
   }
-  if (output_idx > GetOutputTensorNum(node)) {
-    MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
-                      << GetOutputTensorNum(node) << "#node:[ " << node->DebugString() << "]";
-  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto addr = kernel_info->GetOutputAddr(output_idx);
@@ -538,10 +534,6 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
     } else {
       MS_LOG(EXCEPTION) << node->DebugString() << "Invalid nop node.";
     }
-  }
-  if (output_idx > GetOutputTensorNum(node)) {
-    MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
-                      << GetOutputTensorNum(node) << "#node:[ " << node->DebugString() << "]";
   }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
