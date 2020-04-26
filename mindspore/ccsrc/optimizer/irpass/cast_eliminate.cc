@@ -38,13 +38,11 @@ AnfNodePtr CastSameTypeEliminater::operator()(const OptimizerPtr &, const AnfNod
 
   // src type check
   auto src_type = src_->Type();
-  if (src_type == nullptr) {
+  if (src_type == nullptr || !src_type->isa<TensorType>()) {
     return nullptr;
   }
 
-  if (src_type->isa<TensorType>()) {
-    src_type = src_type->cast<TensorTypePtr>()->element();
-  }
+  src_type = src_type->cast<TensorTypePtr>()->element();
 
   // tgt type check
   auto tgt_type = GetValueNode<TypePtr>(tgt_);

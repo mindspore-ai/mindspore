@@ -52,14 +52,16 @@ bool SimplifyDataStructuresPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
 
   FuncGraphPtr func_graph = res->func_graph();
-  opt::SimplifyDataStructures(func_graph, res->manager());
+  bool changed = opt::SimplifyDataStructures(func_graph, res->manager());
 
   abstract::AbstractBasePtrList args_spec;
   auto parameters = func_graph->parameters();
   (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
                        [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
-  FuncGraphPtr new_fg = Renormalize(res, func_graph, args_spec);
-  res->set_func_graph(new_fg);
+  if (changed) {
+    FuncGraphPtr new_fg = Renormalize(res, func_graph, args_spec);
+    res->set_func_graph(new_fg);
+  }
   res->set_args_spec(args_spec);
   return true;
 }
