@@ -122,6 +122,9 @@ bool CSE::CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const {
           break;
         }
       }
+      if (IsPrimitiveCNode(c_main, prim::kPrimDropoutGenMask)) {
+        appsame = false;
+      }
       replace = appsame;
     }
   }
