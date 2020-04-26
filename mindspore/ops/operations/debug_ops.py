@@ -45,6 +45,9 @@ class ScalarSummary(Primitive):
     def __init__(self):
         """init"""
 
+    def __call__(self, *args, **kwargs):
+        pass
+
 
 class ImageSummary(Primitive):
     """
@@ -69,6 +72,9 @@ class ImageSummary(Primitive):
     @prim_attr_register
     def __init__(self):
         """init"""
+
+    def __call__(self, *args, **kwargs):
+        pass
 
 
 class TensorSummary(Primitive):
@@ -96,6 +102,9 @@ class TensorSummary(Primitive):
     @prim_attr_register
     def __init__(self):
         """init"""
+
+    def __call__(self, *args, **kwargs):
+        pass
 
 
 class HistogramSummary(Primitive):
