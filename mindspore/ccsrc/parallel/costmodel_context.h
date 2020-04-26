@@ -67,6 +67,9 @@ class CostModelContext {
   void set_costmodel_communi_bias(double);
   double costmodel_communi_bias() const { return costmodel_communi_bias_; }
 
+  void set_multi_subgraphs(bool);
+  bool is_multi_subgraphs() const { return is_multi_subgraphs_; }
+
   void set_costmodel_allreduce_fusion_algorithm(int32_t);
   int32_t costmodel_allreduce_fusion_algorithm() const { return costmodel_allreduce_fusion_algorithm_; }
 
@@ -137,6 +140,8 @@ class CostModelContext {
 
   // COST_MODEL_COMMUNI_BIAS
   double costmodel_communi_bias_;
+
+  bool is_multi_subgraphs_;
 
   int32_t costmodel_allreduce_fusion_algorithm_;
 

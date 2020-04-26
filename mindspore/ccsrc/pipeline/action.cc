@@ -24,6 +24,7 @@
 #include <functional>
 
 #include "ir/func_graph_cloner.h"
+#include "parallel/costmodel_context.h"
 #include "pipeline/pass.h"
 #include "pipeline/parse/parse_base.h"
 #include "pipeline/parse/data_converter.h"
@@ -341,7 +342,10 @@ static std::vector<ActionItem> CommonPipeline() {
 
   // Resolve the python func
   actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
-  actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
+  auto multi_graphs = parallel::CostModelContext::GetInstance()->is_multi_subgraphs();
+  if (!multi_graphs) {
+    actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
+  }
   actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
   // Evaluate type and shape, and specialize
   actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
