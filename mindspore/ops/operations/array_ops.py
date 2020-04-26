@@ -639,9 +639,9 @@ class TruncatedNormal(PrimitiveWithInfer):
         Tensor, type of output tensor is same as attribute `dtype`.
 
     Examples:
-        >>> input_shape = Tensor(np.array([1, 2, 3]))
+        >>> shape = (1, 2, 3)
         >>> truncated_normal = P.TruncatedNormal()
-        >>> output = truncated_normal(input_shape)
+        >>> output = truncated_normal(shape)
     """
 
     @prim_attr_register
@@ -652,6 +652,8 @@ class TruncatedNormal(PrimitiveWithInfer):
 
     def __infer__(self, shape):
         shape_value = shape['value']
+        validator.check_const_input("shape", shape_value)
+        validator.check_type("shape", shape_value, [tuple])
         for i, value in enumerate(shape_value):
             validator.check_integer(f'{i}th value of shape', value, 0, Rel.GT)
         out = {'shape': shape_value,
@@ -1642,15 +1644,16 @@ class StridedSlice(PrimitiveWithInfer):
         validator.check_type('shrink_axis_mask', shrink_axis_mask, [int])
 
     def __infer__(self, x, begin, end, strides):
-        x_shape = x['shape']
-        x_shp_len = len(x_shape)
         begin_v, end_v, strides_v = begin['value'], end['value'], strides['value']
         validator.check_const_input("begin", begin_v)
         validator.check_const_input("end", end_v)
         validator.check_const_input("strides", strides_v)
-        validator.check_type("begin", begin['value'], [tuple])
-        validator.check_type("end", end['value'], [tuple])
-        validator.check_type("strides", strides['value'], [tuple])
+        validator.check_type("begin", begin_v, [tuple])
+        validator.check_type("end", end_v, [tuple])
+        validator.check_type("strides", strides_v, [tuple])
+
+        x_shape = x['shape']
+        x_shp_len = len(x_shape)
         if len(begin_v) != x_shp_len or len(end_v) != x_shp_len or len(strides_v) != x_shp_len:
             raise ValueError(f"The length of begin index{begin_v}, end index{end_v} and strides{strides_v} "
                              f"must be equal to the dims({x_shp_len}) of input.")

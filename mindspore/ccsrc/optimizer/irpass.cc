@@ -133,7 +133,6 @@ ResolveIRPassLib::ResolveIRPassLib() {
 InferenceOptPrepareLib::InferenceOptPrepareLib() {
   grad_var_prepare_ = MakeSubstitution(GradVarPrepare(), "grad_var_prepare", IsCNode);
 }
-
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

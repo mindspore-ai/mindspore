@@ -134,7 +134,7 @@ class DebugInfo : public Base {
 
   explicit DebugInfo(const LocationPtr &loc);
 
-  virtual ~DebugInfo() = default;
+  ~DebugInfo() override = default;
   MS_DECLARE_PARENT(DebugInfo, Base);
   int64_t debug_id();
   int64_t unique_id() const { return unique_id_; }
