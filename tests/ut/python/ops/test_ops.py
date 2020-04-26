@@ -793,8 +793,8 @@ test_case_nn_ops = [
         'desc_bprop': [[5, 5]]}),
     ('DepthwiseConv2dNative_1', {
         'block': P.DepthwiseConv2dNative(3, (3, 3), pad_mode="pad", pad=1, stride=2),
-        'desc_inputs': [[10, 32, 32, 32], [3, 32, 3, 3]],
-        'desc_bprop': [[10, 30, 16, 16]]}),
+        'desc_inputs': [[10, 32, 32, 32], [1, 32, 3, 3]],
+        'desc_bprop': [[10, 32, 16, 16]]}),
     ('DepthwiseConv2dNative_2', {
         'block': P.DepthwiseConv2dNative(1, (3, 3), pad_mode="same", pad=0, stride=1),
         'desc_inputs': [[2592, 2048, 4, 4], [1, 2048, 3, 3]],

@@ -56,7 +56,7 @@ class Momentum(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
 
     Outputs:
-        Tensor[bool], the value is True.
+        tuple[bool], all elements are True.
 
     Raises:
         ValueError: If the momentum is less than 0.0.
