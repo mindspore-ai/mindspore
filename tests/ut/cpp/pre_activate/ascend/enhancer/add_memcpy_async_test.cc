@@ -22,7 +22,7 @@
 #include "utils/utils.h"
 #include "kernel/kernel_build_info.h"
 #include "pre_activate/common/optimizer.h"
-#include "pre_activate/ascend/ir_fission/add_memcpy_async.h"
+#include "pre_activate/ascend/enhancer/add_memcpy_async.h"
 
 namespace mindspore {
 namespace opt {

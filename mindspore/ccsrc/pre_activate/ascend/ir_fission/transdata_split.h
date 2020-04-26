@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FUSION_TRANSDATA_SPLIT_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FUSION_TRANSDATA_SPLIT_H_
+#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_TRANSDATA_SPLIT_H_
+#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_TRANSDATA_SPLIT_H_
 #include <vector>
 #include <string>
 #include <utility>
@@ -42,4 +42,4 @@ class TransDataSplit : public Pass {
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FUSION_TRANSDATA_SPLIT_H_
+#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_IR_FISSION_TRANSDATA_SPLIT_H_

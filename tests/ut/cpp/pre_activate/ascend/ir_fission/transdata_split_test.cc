@@ -23,7 +23,7 @@
 #define private public
 #define protected public
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
-#include "pre_activate/ascend/ir_fusion/transdata_split.h"
+#include "pre_activate/ascend/ir_fission/transdata_split.h"
 #undef private
 #undef protected
 

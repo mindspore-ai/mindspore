@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pre_activate/ascend/ir_fission/add_memcpy_async.h"
+#include "pre_activate/ascend/enhancer/add_memcpy_async.h"
 #include <vector>
 #include "utils/utils.h"
 #include "session/anf_runtime_algorithm.h"
