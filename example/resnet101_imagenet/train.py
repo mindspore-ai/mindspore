@@ -19,7 +19,7 @@ import argparse
 import random
 import numpy as np
 from dataset import create_dataset
-from lr_generator import get_lr, warmup_cosine_annealing_lr
+from lr_generator import warmup_cosine_annealing_lr
 from config import config
 from mindspore import context
 from mindspore import Tensor
@@ -32,9 +32,9 @@ from mindspore.train.loss_scale_manager import FixedLossScaleManager
 import mindspore.dataset.engine as de
 from mindspore.communication.management import init
 import mindspore.nn as nn
+import mindspore.common.initializer as weight_init
 from crossentropy import CrossEntropy
 from var_init import default_recurisive_init, KaimingNormal
-import mindspore.common.initializer as weight_init
 
 random.seed(1)
 np.random.seed(1)
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     net = resnet101(class_num=config.class_num)
     # weight init
     default_recurisive_init(net)
-    for name, cell in net.cells_and_names():
+    for _, cell in net.cells_and_names():
         if isinstance(cell, nn.Conv2d):
             cell.weight.default_input = weight_init.initializer(KaimingNormal(a=math.sqrt(5),
                                                                               mode='fan_out', nonlinearity='relu'),
@@ -83,17 +83,12 @@ if __name__ == '__main__':
     loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
     if args_opt.do_train:
         dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
-                repeat_num=epoch_size, batch_size=config.batch_size)
+                                 repeat_num=epoch_size, batch_size=config.batch_size)
         step_size = dataset.get_dataset_size()
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
 
-        # learning rate strategy
-        if config.lr_decay_mode == 'cosine':
-            lr = Tensor(warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size))
-        else:
-            lr = Tensor(get_lr(global_step=0, lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max,
-                               warmup_epochs=config.warmup_epochs, total_epochs=epoch_size, steps_per_epoch=step_size,
-                               lr_decay_mode='poly'))
+        # learning rate strategy with cosine
+        lr = Tensor(warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size))
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                        config.weight_decay, config.loss_scale)
         model = Model(net, loss_fn=loss, optimizer=opt, amp_level='O2', keep_batchnorm_fp32=False,

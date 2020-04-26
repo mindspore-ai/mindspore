@@ -18,10 +18,10 @@ import numpy as np
 from mindspore.common import initializer as init
 import mindspore.nn as nn
 from mindspore import Tensor
- 
+
 def calculate_gain(nonlinearity, param=None):
     r"""Return the recommended gain value for the given nonlinearity function.
-    The values are as follows: 
+    The values are as follows:
     ================= ====================================================
     nonlinearity      gain
     ================= ====================================================
@@ -37,12 +37,13 @@ def calculate_gain(nonlinearity, param=None):
         param: optional parameter for the non-linear function
     """
     linear_fns = ['linear', 'conv1d', 'conv2d', 'conv3d', 'conv_transpose1d', 'conv_transpose2d', 'conv_transpose3d']
+    gain = 0
     if nonlinearity in linear_fns or nonlinearity == 'sigmoid':
-        return 1
+        gain = 1
     elif nonlinearity == 'tanh':
-        return 5.0 / 3
+        gain = 5.0 / 3
     elif nonlinearity == 'relu':
-        return math.sqrt(2.0)
+        gain = math.sqrt(2.0)
     elif nonlinearity == 'leaky_relu':
         if param is None:
             negative_slope = 0.01
@@ -51,15 +52,16 @@ def calculate_gain(nonlinearity, param=None):
             negative_slope = param
         else:
             raise ValueError("negative_slope {} not a valid number".format(param))
-        return math.sqrt(2.0 / (1 + negative_slope ** 2))
+        gain = math.sqrt(2.0 / (1 + negative_slope ** 2))
     else:
         raise ValueError("Unsupported nonlinearity {}".format(nonlinearity))
-    
+    return gain
+
 def _calculate_correct_fan(array, mode):
     mode = mode.lower()
     valid_modes = ['fan_in', 'fan_out']
     if mode not in valid_modes:
-        raise ValueError("Mode {} not supported, please use one of {}".format(mode, valid_modes)) 
+        raise ValueError("Mode {} not supported, please use one of {}".format(mode, valid_modes))
     fan_in, fan_out = _calculate_fan_in_and_fan_out(array)
     return fan_in if mode == 'fan_in' else fan_out
 
@@ -83,13 +85,12 @@ def kaiming_uniform_(array, a=0, mode='fan_in', nonlinearity='leaky_relu'):
             backwards pass.
         nonlinearity: the non-linear function (`nn.functional` name),
             recommended to use only with ``'relu'`` or ``'leaky_relu'`` (default).
-    """ 
+    """
     fan = _calculate_correct_fan(array, mode)
     gain = calculate_gain(nonlinearity, a)
     std = gain / math.sqrt(fan)
     bound = math.sqrt(3.0) * std  # Calculate uniform bounds from standard deviation
     return np.random.uniform(-bound, bound, array.shape)
- 
 
 def kaiming_normal_(array, a=0, mode='fan_in', nonlinearity='leaky_relu'):
     r"""Fills the input `Tensor` with values according to the method
@@ -97,12 +98,10 @@ def kaiming_normal_(array, a=0, mode='fan_in', nonlinearity='leaky_relu'):
     performance on ImageNet classification` - He, K. et al. (2015), using a
     normal distribution. The resulting tensor will have values sampled from
     :math:`\mathcal{N}(0, \text{std}^2)` where
- 
     .. math::
         \text{std} = \frac{\text{gain}}{\sqrt{\text{fan\_mode}}}
-
     Also known as He initialization.
- 
+
     Args:
         array: an n-dimensional `tensor`
         a: the negative slope of the rectifier used after this layer (only
@@ -118,13 +117,12 @@ def kaiming_normal_(array, a=0, mode='fan_in', nonlinearity='leaky_relu'):
     gain = calculate_gain(nonlinearity, a)
     std = gain / math.sqrt(fan)
     return np.random.normal(0, std, array.shape)
- 
+
 def _calculate_fan_in_and_fan_out(array):
     """calculate the fan_in and fan_out for input array"""
     dimensions = len(array.shape)
     if dimensions < 2:
         raise ValueError("Fan in and fan out can not be computed for array with fewer than 2 dimensions")
- 
     num_input_fmaps = array.shape[1]
     num_output_fmaps = array.shape[0]
     receptive_field_size = 1
@@ -132,19 +130,30 @@ def _calculate_fan_in_and_fan_out(array):
         receptive_field_size = array[0][0].size
     fan_in = num_input_fmaps * receptive_field_size
     fan_out = num_output_fmaps * receptive_field_size
- 
     return fan_in, fan_out
- 
+
+def assignment(arr, num):
+    """Assign the value of num to arr"""
+    if arr.shape == ():
+        arr = arr.reshape((1))
+        arr[:] = num
+        arr = arr.reshape(())
+    else:
+        if isinstance(num, np.ndarray):
+            arr[:] = num[:]
+        else:
+            arr[:] = num
+    return arr
+
 class KaimingUniform(init.Initializer):
     def __init__(self, a=0, mode='fan_in', nonlinearity='leaky_relu'):
         super(KaimingUniform, self).__init__()
         self.a = a
         self.mode = mode
         self.nonlinearity = nonlinearity
- 
     def _initialize(self, arr):
         tmp = kaiming_uniform_(arr, self.a, self.mode, self.nonlinearity)
-        init._assignment(arr, tmp) 
+        assignment(arr, tmp)
 
 class KaimingNormal(init.Initializer):
     def __init__(self, a=0, mode='fan_in', nonlinearity='leaky_relu'):
@@ -152,33 +161,32 @@ class KaimingNormal(init.Initializer):
         self.a = a
         self.mode = mode
         self.nonlinearity = nonlinearity
- 
     def _initialize(self, arr):
         tmp = kaiming_normal_(arr, self.a, self.mode, self.nonlinearity)
-        init._assignment(arr, tmp)
+        assignment(arr, tmp)
 
 def default_recurisive_init(custom_cell):
     """weight init for conv2d and dense"""
-    for name, cell in custom_cell.cells_and_names():
+    for _, cell in custom_cell.cells_and_names():
         if isinstance(cell, nn.Conv2d):
-            cell.weight.default_input = init.initializer(KaimingUniform(a=math.sqrt(5)), 
-                    cell.weight.default_input.shape(), 
-                    cell.weight.default_input.dtype())
+            cell.weight.default_input = init.initializer(KaimingUniform(a=math.sqrt(5)),
+                                                         cell.weight.default_input.shape(),
+                                                         cell.weight.default_input.dtype())
             if cell.bias is not None:
                 fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight.default_input.asnumpy())
                 bound = 1 / math.sqrt(fan_in)
-                cell.bias.default_input = Tensor(np.random.uniform(-bound, bound, 
-                    cell.bias.default_input.shape()), 
-                    cell.bias.default_input.dtype())
+                cell.bias.default_input = Tensor(np.random.uniform(-bound, bound,
+                                                                   cell.bias.default_input.shape()),
+                                                 cell.bias.default_input.dtype())
         elif isinstance(cell, nn.Dense):
-            cell.weight.default_input = init.initializer(KaimingUniform(a=math.sqrt(5)), 
-                    cell.weight.default_input.shape(), 
-                    cell.weight.default_input.dtype())
+            cell.weight.default_input = init.initializer(KaimingUniform(a=math.sqrt(5)),
+                                                         cell.weight.default_input.shape(),
+                                                         cell.weight.default_input.dtype())
             if cell.bias is not None:
                 fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight.default_input.asnumpy())
                 bound = 1 / math.sqrt(fan_in)
-                cell.bias.default_input = Tensor(np.random.uniform(-bound, bound, 
-                    cell.bias.default_input.shape()), 
-                    cell.bias.default_input.dtype())
+                cell.bias.default_input = Tensor(np.random.uniform(-bound, bound,
+                                                                   cell.bias.default_input.shape()),
+                                                 cell.bias.default_input.dtype())
         elif isinstance(cell, (nn.BatchNorm2d, nn.BatchNorm1d)):
             pass

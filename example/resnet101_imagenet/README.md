@@ -54,9 +54,6 @@ Parameters for both training and evaluating can be set in config.py.
 "save_checkpoint_steps": 500,     # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
 "keep_checkpoint_max": 40,        # only keep the last keep_checkpoint_max checkpoint
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
-"lr_init": 0.01,                  # initial learning rate
-"lr_end": 0.00001,                # final learning rate
-"lr_max": 0.1,                    # maximum learning rate
 "warmup_epochs": 0,               # number of warmup epoch
 "lr_decay_mode": "cosine"         # decay mode for generating learning rate
 "label_smooth": 1,                # label_smooth
