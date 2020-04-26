@@ -29,7 +29,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 // Get the target node's weight for sorting.
 double GetWeights(const Graph::NodeType &node) {
   const OperatorRec &op = node.apply;
