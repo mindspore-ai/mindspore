@@ -490,7 +490,7 @@ def reset_auto_parallel_context():
                  variable_memory_max_size=str)
 def set_context(**kwargs):
     """
-    Set context for running environment.
+    Sets context for running environment.
 
     Context should be configured before running your program. If there is no configuration,
     the "Ascend" device target will be used by default. GRAPH_MODE or
@@ -527,10 +527,12 @@ def set_context(**kwargs):
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         enable_dump (bool): Whether to enable dump. Default: False.
-        save_dump_path (str): Set path to dump data. Default: ".".
+        save_dump_path (str): When the program is executed on Ascend, operators can dump data here.
+            The root dump path is configured in /home/HwHiAiUser/ide_daemon/ide_daemon.cfg.
+            So the real dump path is "{configured root dump path}/{`save_dump_path`}". Default: ".".
         enable_dynamic_memory (bool): Whether to enable dynamic memory. Default: False.
-        graph_memory_max_size (str): Set graph memory max size. Default: "26GB".
-        variable_memory_max_size (str): Set variable memory max size. Default: "5GB".
+        graph_memory_max_size (str): Sets graph memory max size. Default: "26GB".
+        variable_memory_max_size (str): Sets variable memory max size. Default: "5GB".
 
     Raises:
         ValueError: If input key is not an attribute in context.
