@@ -18,8 +18,8 @@ from __future__ import division
 
 import os
 import numpy as np
-from PIL import Image
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
+from PIL import Image
 import mindspore.dataset as de
 from mindspore.mindrecord import FileWriter
 import mindspore.dataset.transforms.vision.c_transforms as C

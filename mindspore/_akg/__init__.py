@@ -16,6 +16,9 @@
 from __future__ import absolute_import as _abs
 import sys
 import os
+from .op_build import op_build
+from .message import compilewithjson
+
 
 def AKGAddPath():
     """_akg add path."""
@@ -58,6 +61,3 @@ class AKGMetaPathLoader:
 
 
 sys.meta_path.insert(0, AKGMetaPathFinder())
-
-from .op_build import op_build
-from .message import compilewithjson
