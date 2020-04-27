@@ -214,6 +214,31 @@ class _CostModelContext:
             raise ValueError("Context handle is none in context!!!")
         return self._context_handle.get_costmodel_communi_bias()
 
+    def set_multi_subgraphs(self, multi_subgraph):
+        """
+        Set the flag of ANF graph containing multiple subgraphs.
+
+        Args:
+            multi_subgraph (bool): A parameter used in marking the multi-subgraphs flag.
+
+        Raises:
+            ValueError: If context handle is none.
+        """
+        if self._context_handle is None:
+            raise ValueError("Context handle is none in context!!!")
+        self._context_handle.set_multi_subgraphs(multi_subgraph)
+
+    def get_multi_subgraphs(self):
+        """
+        Get the flag of ANF graph containing multiple subgraphs.
+
+        Raises:
+            ValueError: If context handle is none.
+        """
+        if self._context_handle is None:
+            raise ValueError("Context handle is none in context!!!")
+        return self._context_handle.get_multi_subgraphs()
+
     def set_costmodel_allreduce_fusion_algorithm(self, algorithm):
         """
         Set costmodel allreduce fusion algorithm.
@@ -427,6 +452,7 @@ set_cost_model_context_func_map = {
     "costmodel_communi_threshold": cost_model_context().set_costmodel_communi_threshold,
     "costmodel_communi_const": cost_model_context().set_costmodel_communi_const,
     "costmodel_communi_bias": cost_model_context().set_costmodel_communi_bias,
+    "multi_subgraphs": cost_model_context().set_multi_subgraphs,
     "costmodel_allreduce_fusion_algorithm": cost_model_context().set_costmodel_allreduce_fusion_algorithm,
     "costmodel_allreduce_fusion_times": cost_model_context().set_costmodel_allreduce_fusion_times,
     "costmodel_allreduce_fusion_tail_percent": cost_model_context().set_costmodel_allreduce_fusion_tail_percent,
@@ -447,6 +473,7 @@ get_cost_model_context_func_map = {
     "costmodel_communi_threshold": cost_model_context().get_costmodel_communi_threshold,
     "costmodel_communi_const": cost_model_context().get_costmodel_communi_const,
     "costmodel_communi_bias": cost_model_context().get_costmodel_communi_bias,
+    "multi_subgraphs": cost_model_context().get_multi_subgraphs(),
     "costmodel_allreduce_fusion_algorithm": cost_model_context().get_costmodel_allreduce_fusion_algorithm,
     "costmodel_allreduce_fusion_times": cost_model_context().get_costmodel_allreduce_fusion_times,
     "costmodel_allreduce_fusion_tail_percent": cost_model_context().get_costmodel_allreduce_fusion_tail_percent,
@@ -461,6 +488,7 @@ get_cost_model_context_func_map = {
 
 @args_type_check(device_memory_capacity=float, costmodel_alpha=float, costmodel_beta=float, costmodel_gamma=float,
                  costmodel_communi_threshold=float, costmodel_communi_const=float, costmodel_communi_bias=float,
+                 multi_subgraphs=bool,
                  costmodel_allreduce_fusion_algorithm=int, costmodel_allreduce_fusion_times=int,
                  costmodel_allreduce_fusion_tail_percent=float, costmodel_allreduce_fusion_tail_time=float,
                  costmodel_allreduce_fusion_allreduce_inherent_time=float,
@@ -481,6 +509,7 @@ def set_cost_model_context(**kwargs):
         costmodel_communi_threshold (float): A parameter used in adjusting communication calculation for practice.
         costmodel_communi_const (float): A parameter used in adjusting communication calculation for practice.
         costmodel_communi_bias (float): A parameter used in adjusting communication calculation for practice.
+        multi_subgraphs (bool): A parameter used in marking the flag of ANF graph containing multiple subgraphs.
         costmodel_allreduce_fusion_algorithm (int): The allreduce fusion algorithm.
             0: bypass allreduce fusion;
             1: only use backward computation time to group allreduce;

@@ -46,6 +46,7 @@ void CostModelContext::ResetCostModel() {
   costmodel_communi_threshold_ = DEFAULT_COST_MODEL_COMMUNI_THRESHOLD;
   costmodel_communi_const_ = DEFAULT_COST_MODEL_COMMUNI_CONST;
   costmodel_communi_bias_ = DEFAULT_COST_MODEL_COMMUNI_BIAS;
+  is_multi_subgraphs_ = DEFAULT_IS_MULTI_SUBGRAPHS;
   costmodel_allreduce_fusion_algorithm_ = DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALGORITHM;
   costmodel_allreduce_fusion_times_ = DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TIMES;
   costmodel_allreduce_fusion_tail_percent_ = DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TAIL_PERCENT;
@@ -84,6 +85,7 @@ void CostModelContext::set_costmodel_communi_const(double cm_communi_const) {
 
 void CostModelContext::set_costmodel_communi_bias(double cm_communi_bias) { costmodel_communi_bias_ = cm_communi_bias; }
 
+void CostModelContext::set_multi_subgraphs(bool multi_graphs) { is_multi_subgraphs_ = multi_graphs; }
 void CostModelContext::set_costmodel_allreduce_fusion_algorithm(int32_t algorithm) {
   costmodel_allreduce_fusion_algorithm_ = algorithm;
 }
