@@ -170,7 +170,7 @@ class _BatchNorm(Cell):
 @constexpr
 def _channel_check(channel, num_channel):
     if channel != num_channel:
-        raise ValueError("the input channel is not equal with num_channels")
+        raise ValueError("the input channel is not equal with num_channel")
 
 class BatchNorm1d(_BatchNorm):
     r"""
