@@ -16,7 +16,7 @@
 """FillD op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-fill_d_op_info = TBERegOp("FillD") \
+fill_d_op_info = TBERegOp("Fill") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
     .binfile_name("fill_d.so") \
@@ -50,6 +50,6 @@ fill_d_op_info = TBERegOp("FillD") \
 
 
 @op_info_register(fill_d_op_info)
-def _fill_d_op_tbe():
+def _fill_op_tbe():
     """FillD TBE register"""
     return
