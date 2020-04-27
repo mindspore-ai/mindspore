@@ -20,7 +20,7 @@ DATA_DIR = "../data/dataset/testCelebAData/"
 
 
 def test_celeba_dataset_label():
-    data = ds.CelebADataset(DATA_DIR, decode=True)
+    data = ds.CelebADataset(DATA_DIR, decode=True, shuffle=False)
     expect_labels = [
         [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1,
          0, 0, 1],
