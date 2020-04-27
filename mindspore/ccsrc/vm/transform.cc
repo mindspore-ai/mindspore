@@ -486,7 +486,8 @@ void CompileGraph::AddExternal(const LinConvertResult &result) {
 }
 
 void TraverseGraphMap(
-  const FuncGraphManagerPtr &manager_ptr, FuncGraphTransaction *const tr, const FuncGraphToAnfNodeCounterMap &cts,
+  const FuncGraphManagerPtr &manager_ptr, FuncGraphTransaction *const tr,
+  const FuncGraphToAnfNodeCounterMap<AnfNodePtr> &cts,
   const std::function<std::shared_ptr<FuncGraph>(const PrimitivePtr, const AbstractFunctionPtr)> &get_prim_graph) {
   MS_EXCEPTION_IF_NULL(manager_ptr);
   MS_EXCEPTION_IF_NULL(tr);

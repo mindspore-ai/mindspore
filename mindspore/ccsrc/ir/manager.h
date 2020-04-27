@@ -100,8 +100,12 @@ struct Signals {
 
 enum EdgeProcessDirection { kDecEdge = -1, kIncEdge = 1 };
 
+using CNodeIndexPair = std::pair<AnfNodePtr, int>;
+using CNodeIndexPairPtr = std::shared_ptr<CNodeIndexPair>;
+
 using FuncGraphToFuncGraphCounterMap = OrderedMap<FuncGraphPtr, OrderedMap<FuncGraphPtr, int>>;
-using FuncGraphToAnfNodeCounterMap = OrderedMap<FuncGraphPtr, OrderedMap<AnfNodePtr, int>>;
+template <typename ValueT, class CollectorHash = std::hash<ValueT>, class CollectorEqual = std::equal_to<ValueT>>
+using FuncGraphToAnfNodeCounterMap = OrderedMap<FuncGraphPtr, OrderedMap<ValueT, int, CollectorHash, CollectorEqual>>;
 
 // analysis base class
 class FuncGraphAnalysis {
@@ -174,6 +178,87 @@ class NodesCollector final : public DepCollector {
   void OnDropNode(AnfNodePtr n) override;
 };
 
+struct CNodeIndexHasher {
+  std::size_t operator()(const CNodeIndexPairPtr pair) const {
+    MS_EXCEPTION_IF_NULL(pair);
+    MS_EXCEPTION_IF_NULL(pair->first);
+    return hash_combine(pair->first->hash(), std::hash<int>()(pair->second));
+  }
+};
+
+struct CNodeIndexEqual {
+  bool operator()(const CNodeIndexPairPtr lhs, const CNodeIndexPairPtr rhs) const {
+    if (lhs == nullptr || rhs == nullptr) {
+      return false;
+    }
+    if (lhs == rhs) {
+      return true;
+    }
+    if (lhs->first != rhs->first) {
+      return false;
+    }
+    if (lhs->second != rhs->second) {
+      return false;
+    }
+    return true;
+  }
+};
+
+template <typename ValueT, class CollectorHash = std::hash<ValueT>, class CollectorEqual = std::equal_to<ValueT>>
+class CounterAnfNodeCollector : public DepCollector {
+ public:
+  explicit CounterAnfNodeCollector(const FuncGraphManager *m) : DepCollector(m) {}
+  ~CounterAnfNodeCollector() override = default;
+  FuncGraphToAnfNodeCounterMap<ValueT, CollectorHash, CollectorEqual> &count_nodes_map() { return count_nodes_map_; }
+
+  size_t size() const override { return count_nodes_map_.size(); }
+  void OnAddFuncGraph(FuncGraphPtr fg) final {
+    count_nodes_map_[fg] = OrderedMap<ValueT, int, CollectorHash, CollectorEqual>();
+  }
+  void OnDropFuncGraph(FuncGraphPtr fg) final { (void)count_nodes_map_.erase(fg); }
+
+  bool Inc(const FuncGraphPtr &func_graph, const ValueT &key, int count);
+  bool Dec(const FuncGraphPtr &func_graph, const ValueT &key, int count);
+  bool Mod(const FuncGraphPtr &func_graph, const ValueT &key, int count);
+
+  FuncGraphToAnfNodeCounterMap<ValueT, CollectorHash, CollectorEqual> count_nodes_map_;
+
+ protected:
+  void ExtraReset() override { count_nodes_map_.clear(); }
+};
+
+class ValueNodesCollector final : public CounterAnfNodeCollector<AnfNodePtr> {
+ public:
+  explicit ValueNodesCollector(const FuncGraphManager *m) : CounterAnfNodeCollector(m) {}
+  ~ValueNodesCollector() override = default;
+  void OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) override;
+
+ protected:
+  void OnModEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction) override;
+};
+
+// Record the CNode and its input index, who points to the function graph.
+class FuncGraphUsersCNodeIndexCollector final
+    : public CounterAnfNodeCollector<CNodeIndexPairPtr, CNodeIndexHasher, CNodeIndexEqual> {
+ public:
+  explicit FuncGraphUsersCNodeIndexCollector(const FuncGraphManager *m) : CounterAnfNodeCollector(m) {}
+  ~FuncGraphUsersCNodeIndexCollector() override = default;
+  void OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) override;
+
+ protected:
+  void OnModEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction) override;
+};
+
+class FVDirectCollector final : public CounterAnfNodeCollector<AnfNodePtr> {
+ public:
+  explicit FVDirectCollector(const FuncGraphManager *m) : CounterAnfNodeCollector(m) {}
+  ~FVDirectCollector() override = default;
+  void OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) override;
+
+ protected:
+  void OnModEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction) override;
+};
+
 class CounterFuncGraphCollector : public DepCollector {
  public:
   explicit CounterFuncGraphCollector(const FuncGraphManager *m) : DepCollector(m) {}
@@ -191,56 +276,6 @@ class CounterFuncGraphCollector : public DepCollector {
 
  protected:
   void ExtraReset() override { count_func_graphs_map_.clear(); }
-};
-
-class CounterAnfNodeCollector : public DepCollector {
- public:
-  explicit CounterAnfNodeCollector(const FuncGraphManager *m) : DepCollector(m) {}
-  ~CounterAnfNodeCollector() override = default;
-  FuncGraphToAnfNodeCounterMap &count_nodes_map() { return count_nodes_map_; }
-
-  size_t size() const override { return count_nodes_map_.size(); }
-  void OnAddFuncGraph(FuncGraphPtr fg) final { count_nodes_map_[fg] = OrderedMap<AnfNodePtr, int>(); }
-  void OnDropFuncGraph(FuncGraphPtr fg) final { (void)count_nodes_map_.erase(fg); }
-
-  bool Inc(const FuncGraphPtr &func_graph, const AnfNodePtr &key, int count);
-  bool Dec(const FuncGraphPtr &func_graph, const AnfNodePtr &key, int count);
-  bool Mod(const FuncGraphPtr &func_graph, const AnfNodePtr &key, int count);
-
-  FuncGraphToAnfNodeCounterMap count_nodes_map_;
-
- protected:
-  void ExtraReset() override { count_nodes_map_.clear(); }
-};
-
-class ValueNodesCollector final : public CounterAnfNodeCollector {
- public:
-  explicit ValueNodesCollector(const FuncGraphManager *m) : CounterAnfNodeCollector(m) {}
-  ~ValueNodesCollector() override = default;
-  void OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) override;
-
- protected:
-  void OnModEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction) override;
-};
-
-class FuncGraphValueNodesCollector final : public CounterAnfNodeCollector {
- public:
-  explicit FuncGraphValueNodesCollector(const FuncGraphManager *m) : CounterAnfNodeCollector(m) {}
-  ~FuncGraphValueNodesCollector() override = default;
-  void OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) override;
-
- protected:
-  void OnModEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction) override;
-};
-
-class FVDirectCollector final : public CounterAnfNodeCollector {
- public:
-  explicit FVDirectCollector(const FuncGraphManager *m) : CounterAnfNodeCollector(m) {}
-  ~FVDirectCollector() override = default;
-  void OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) override;
-
- protected:
-  void OnModEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction) override;
 };
 
 class FuncGraphChildDirect final : public CounterFuncGraphCollector {
@@ -274,28 +309,6 @@ class FuncGraphsUsedCollector final : public CounterFuncGraphCollector {
   explicit FuncGraphsUsedCollector(const FuncGraphManager *m) : CounterFuncGraphCollector(m) {}
   void OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) override;
   ~FuncGraphsUsedCollector() override = default;
-
- protected:
-  void OnModEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction) override;
-};
-
-// graph's all user graphs: key is g, value is graphs who used g
-class FuncGraphUsersCollector final : public CounterFuncGraphCollector {
- public:
-  explicit FuncGraphUsersCollector(const FuncGraphManager *m) : CounterFuncGraphCollector(m) {}
-  void OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) override;
-  ~FuncGraphUsersCollector() override = default;
-
- protected:
-  void OnModEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction) override;
-};
-
-// graph's all user cnodes: key is g, value is cnodes who used g
-class FuncGraphUserNodesCollector final : public CounterAnfNodeCollector {
- public:
-  explicit FuncGraphUserNodesCollector(const FuncGraphManager *m) : CounterAnfNodeCollector(m) {}
-  void OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) override;
-  ~FuncGraphUserNodesCollector() override = default;
 
  protected:
   void OnModEdge(AnfNodePtr node, int index, AnfNodePtr inp, EdgeProcessDirection direction) override;
@@ -433,7 +446,9 @@ class ScopeComputer final : public DepComputer {
 
 using FVTotalMap = OrderedMap<FuncGraphPtr, OrderedMap<BaseRef, int, BaseRefHash>>;
 
-class FVTotalComputer final : public DepComputer, public CounterAnfNodeCollector, public CounterFuncGraphCollector {
+class FVTotalComputer final : public DepComputer,
+                              public CounterAnfNodeCollector<AnfNodePtr>,
+                              public CounterFuncGraphCollector {
  public:
   explicit FVTotalComputer(const FuncGraphManager *m)
       : DepComputer(m), CounterAnfNodeCollector(m), CounterFuncGraphCollector(m) {}
@@ -549,17 +564,17 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
 
   FuncGraphToAnfNodeMap &nodes() const { return nodes_->nodes_analysis_; }
 
-  FuncGraphToAnfNodeCounterMap &valuenodes() const { return valuenodes_->count_nodes_map_; }
+  FuncGraphToAnfNodeCounterMap<AnfNodePtr> &valuenodes() const { return valuenodes_->count_nodes_map_; }
 
-  FuncGraphToAnfNodeCounterMap &free_variables_direct() const { return free_variables_direct_->count_nodes_map_; }
+  FuncGraphToAnfNodeCounterMap<AnfNodePtr> &free_variables_direct() const {
+    return free_variables_direct_->count_nodes_map_;
+  }
 
-  FuncGraphToAnfNodeCounterMap &func_graph_valuenodes() const { return func_graph_valuenodes_->count_nodes_map_; }
+  FuncGraphToAnfNodeCounterMap<CNodeIndexPairPtr, CNodeIndexHasher, CNodeIndexEqual> &func_graph_cnodes_index() const {
+    return func_graph_cnodes_index_->count_nodes_map_;
+  }
 
   FuncGraphToFuncGraphCounterMap &func_graphs_used() const { return func_graphs_used_->count_func_graphs_map_; }
-
-  FuncGraphToFuncGraphCounterMap &func_graph_users() const { return func_graph_users_->count_func_graphs_map_; }
-
-  FuncGraphToAnfNodeCounterMap &func_graph_user_cnodes() const { return func_graph_user_cnodes_->count_nodes_map_; }
 
   FuncGraphToFuncGraphCounterMap &func_graph_child_direct() const {
     return func_graph_child_direct_->count_func_graphs_map_;
@@ -598,10 +613,8 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   std::shared_ptr<NodesCollector> nodes_;
   std::shared_ptr<ValueNodesCollector> valuenodes_;
   std::shared_ptr<FVDirectCollector> free_variables_direct_;
-  std::shared_ptr<FuncGraphValueNodesCollector> func_graph_valuenodes_;
+  std::shared_ptr<FuncGraphUsersCNodeIndexCollector> func_graph_cnodes_index_;
   std::shared_ptr<FuncGraphsUsedCollector> func_graphs_used_;
-  std::shared_ptr<FuncGraphUsersCollector> func_graph_users_;
-  std::shared_ptr<FuncGraphUserNodesCollector> func_graph_user_cnodes_;
   std::shared_ptr<FuncGraphChildDirect> func_graph_child_direct_;
   std::shared_ptr<FuncGraphParentsDirectCollector> func_graph_parents_direct_;
   std::shared_ptr<FuncGraphJDirectCollector> func_graph_j_direct_;
