@@ -118,5 +118,8 @@ def mindrecord_dict_data(task_id):
         image_file = open(file_name, "rb")
         image_bytes = image_file.read()
         image_file.close()
+        if not image_bytes:
+            print("The image file: {} is invalid.".format(file_name))
+            continue
         data["data"] = image_bytes
         yield data
