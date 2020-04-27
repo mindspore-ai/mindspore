@@ -148,18 +148,29 @@ std::string ProfilingUtils::GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exe
   }
 
   if (bp_end_str.empty()) {
-    auto last_cnode = cnode_exec_order.back();
-    MS_EXCEPTION_IF_NULL(last_cnode);
-    bp_end_str = last_cnode->fullname_with_scope();
+    bp_end_str = GetGraphLastTbeKernelName(cnode_exec_order);
   }
   return bp_end_str;
 }
 
+std::string ProfilingUtils::GetGraphLastTbeKernelName(const std::vector<CNodePtr> &cnode_exec_order) {
+  std::string last_tbe_kernel_name = "";
+  // find last tbe_kernel
+  for (auto iter = cnode_exec_order.rbegin(); iter != cnode_exec_order.rend(); ++iter) {
+    if (AnfAlgo::GetKernelType(*iter) == TBE_KERNEL) {
+      last_tbe_kernel_name = (*iter)->fullname_with_scope();
+      break;
+    }
+  }
+  if (last_tbe_kernel_name.empty()) {
+    MS_LOG(WARNING) << "tbe kernel not found in graph";
+  }
+  return last_tbe_kernel_name;
+}
+
 std::string ProfilingUtils::GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order) {
   const char *trace_netoutput = std::getenv(kIterEndNode);
-  auto &last_cnode = cnode_exec_order.back();
-  MS_EXCEPTION_IF_NULL(last_cnode);
-  return trace_netoutput == nullptr ? last_cnode->fullname_with_scope() : std::string(trace_netoutput);
+  return trace_netoutput == nullptr ? GetGraphLastTbeKernelName(cnode_exec_order) : std::string(trace_netoutput);
 }
 
 NotNull<CNodePtr> ProfilingUtils::CreateProfilingCNode(const ProfilingContent &profiling_content,
