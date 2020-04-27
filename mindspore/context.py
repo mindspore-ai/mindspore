@@ -516,7 +516,7 @@ def set_context(**kwargs):
         enable_ir_fusion (bool): Whether to enable ir fusion. Default: True.
         save_graphs (bool): Whether to save graphs. Default: False.
         enable_hccl (bool): Whether to enable hccl. Default: False.
-        enable_loop_sink (bool): Whether to enable loop sink. Default: False.
+        enable_loop_sink (bool): Whether to enable loop sink. Default: True.
         enable_task_sink (bool): Whether to enable task sink. Default: True.
         enable_mem_reuse (bool): Whether to enable memory reuse. Default: True.
         save_ms_model (bool): Whether to save lite model converted by graph. Default: False.

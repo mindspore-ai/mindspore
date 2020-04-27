@@ -69,7 +69,6 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_task_sink_ = true;
   ir_fusion_flag_ = true;
   enable_hccl_ = false;
-  enable_loop_sink_ = false;
   enable_mem_reuse_ = true;
   enable_gpu_summary_ = true;
   precompile_only_ = false;
@@ -78,6 +77,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_dynamic_mem_pool_ = true;
   graph_memory_max_size_ = "0";
   variable_memory_max_size_ = "0";
+  enable_loop_sink_ = target == kAscendDevice || target == kDavinciDevice;
   MS_LOG(DEBUG) << "Create context with backend policy:" << policy << ", device target:" << target << ".";
 }
 
@@ -134,6 +134,7 @@ bool MsContext::set_device_target(const std::string &target) {
   } else {
     device_target_ = target;
   }
+  enable_loop_sink_ = device_target_ == kAscendDevice;
   MS_LOG(INFO) << "ms set context device target:" << target;
   return true;
 }
