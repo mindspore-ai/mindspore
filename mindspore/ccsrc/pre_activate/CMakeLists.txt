@@ -10,4 +10,5 @@ if (ENABLE_D)
 	list(APPEND _PREACTIVATE_SRC_LIST ${_D_SRC_LIST})
 endif ()
 
+set_property(SOURCE ${_PREACTIVATE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PRE_ACT)
 add_library(_mindspore_pre_activate_obj OBJECT ${_PREACTIVATE_SRC_LIST})

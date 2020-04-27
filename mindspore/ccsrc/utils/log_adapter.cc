@@ -17,8 +17,8 @@
 #include "utils/log_adapter.h"
 
 #include <unistd.h>
+#include <map>
 #include "pybind11/pybind11.h"
-
 #include "debug/trace.h"
 
 // namespace to support utils module definition
@@ -155,14 +155,44 @@ static std::string ExceptionTypeToString(ExceptionType type) {
   return std::string(type_names[type]);
 }
 
+static const char *GetSubModuleName(SubModuleId module_id) {
+  static const char *sub_module_names[NUM_SUBMODUES] = {
+    "UNKNOWN",    // SM_UNKNOWN
+    "ANALYZER",   // SM_ANALYZER
+    "COMMON",     // SM_COMMON
+    "DEBUG",      // SM_DEBUG
+    "DEVICE",     // SM_DEVICE
+    "GE_ADPT",    // SM_GE_ADPT
+    "IR",         // SM_IR
+    "KERNEL",     // SM_KERNEL
+    "MD",         // SM_MD
+    "ME",         // SM_ME
+    "ONNX",       // SM_ONNX
+    "OPTIMIZER",  // SM_OPTIMIZER
+    "PARALLEL",   // SM_PARALLEL
+    "PARSER",     // SM_PARSER
+    "PIPELINE",   // SM_PIPELINE
+    "PRE_ACT",    // SM_PRE_ACT
+    "PYNATIVE",   // SM_PYNATIVE
+    "SESSION",    // SM_SESSION
+    "UTILS",      // SM_UTILS
+    "VM"          // SM_VM
+  };
+
+  return sub_module_names[module_id % NUM_SUBMODUES];
+}
+
 void LogWriter::OutputLog(const std::ostringstream &msg) const {
 #ifdef USE_GLOG
+  auto submodule_name = GetSubModuleName(submodule_);
   google::LogMessage("", 0, GetGlogLevel(log_level_)).stream()
-    << "[" << GetLogLevel(log_level_) << "] ME(" << getpid() << "," << GetProcName() << "):" << GetTime() << " "
+    << "[" << GetLogLevel(log_level_) << "] " << submodule_name << "(" << getpid() << "," << GetProcName()
+    << "):" << GetTime() << " "
     << "[" << location_.file_ << ":" << location_.line_ << "] " << location_.func_ << "] " << msg.str() << std::endl;
 #else
   auto str_msg = msg.str();
-  Dlog(static_cast<int>(ME), GetSlogLevel(log_level_), "[%s:%d] %s] %s", location_.file_, location_.line_,
+  auto slog_module_id = (submodule_ == SM_MD ? MD : ME);
+  Dlog(static_cast<int>(slog_module_id), GetSlogLevel(log_level_), "[%s:%d] %s] %s", location_.file_, location_.line_,
        location_.func_, str_msg.c_str());
 #endif
 }
@@ -230,6 +260,231 @@ static void InitMsLogLevel() {
 
 #endif
 
+// set default log level to WARNING for all sub modules
+int g_ms_submodule_log_levels[NUM_SUBMODUES] = {WARNING};
+
+enum LogConfigToken {
+  INVALID,      // indicate invalid token
+  LEFT_BRACE,   // '{'
+  RIGHT_BRACE,  // '}'
+  VARIABLE,     // '[A-Za-z][A-Za-z0-9_]*'
+  NUMBER,       // [0-9]+
+  COMMA,        // ','
+  COLON,        // ';'
+  EOS,          // End Of String, '\0'
+};
+
+static inline bool IsAlpha(char ch) { return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'); }
+
+static inline bool IsDigit(char ch) { return ch >= '0' && ch <= '9'; }
+
+class LogConfigLexer {
+ public:
+  explicit LogConfigLexer(const std::string &text) : buffer_(text) {
+    cur_idx_ = 0;
+    cur_token_ = LogConfigToken::INVALID;
+  }
+  ~LogConfigLexer() = default;
+
+  // skip white space, and return the first char after white space
+  char SkipWhiteSpace() {
+    while (cur_idx_ < buffer_.size()) {
+      char ch = buffer_[cur_idx_];
+      if (ch == ' ' || ch == '\t') {
+        ++cur_idx_;
+        continue;
+      }
+      return ch;
+    }
+    return '\0';
+  }
+
+  LogConfigToken GetNext(std::string *ptr) {
+#ifdef DEBUG
+    std::string text;
+    auto tok = GetNextInner(&text);
+    MS_LOG(DEBUG) << "Got token " << tok << " with value [" << text << "]";
+    if (ptr != nullptr) {
+      *ptr = text;
+    }
+    return tok;
+  }
+
+  LogConfigToken GetNextInner(std::string *ptr) {
+#endif
+    char ch = SkipWhiteSpace();
+    // clang-format off
+    static const std::map<char, LogConfigToken> single_char_map = {
+      {'{', LogConfigToken::LEFT_BRACE},
+      {'}', LogConfigToken::RIGHT_BRACE},
+      {',', LogConfigToken::COMMA},
+      {':', LogConfigToken::COLON},
+      {'\0', LogConfigToken::EOS},
+    };
+    // clang-format on
+
+    auto iter = single_char_map.find(ch);
+    if (iter != single_char_map.end()) {
+      if (ptr != nullptr) {
+        *ptr = std::string() + ch;
+      }
+      ++cur_idx_;
+      return iter->second;
+    } else if (IsAlpha(ch)) {
+      std::ostringstream oss;
+      do {
+        oss << ch;
+        ch = buffer_[++cur_idx_];
+      } while (cur_idx_ < buffer_.size() && (IsAlpha(ch) || IsDigit(ch) || ch == '_'));
+      if (ptr != nullptr) {
+        *ptr = std::string(oss.str());
+      }
+      return LogConfigToken::VARIABLE;
+    } else if (IsDigit(ch)) {
+      std::ostringstream oss;
+      do {
+        oss << ch;
+        ch = buffer_[++cur_idx_];
+      } while (cur_idx_ < buffer_.size() && IsDigit(ch));
+      if (ptr != nullptr) {
+        *ptr = std::string(oss.str());
+      }
+      return LogConfigToken::NUMBER;
+    }
+    return LogConfigToken::INVALID;
+  }
+
+ private:
+  std::string buffer_;
+  size_t cur_idx_;
+
+  LogConfigToken cur_token_;
+  std::string cur_text_;
+};
+
+class LogConfigParser {
+ public:
+  explicit LogConfigParser(const std::string &cfg) : lexer(cfg) {}
+
+  bool Expect(LogConfigToken expected, LogConfigToken tok) {
+    if (expected != tok) {
+      MS_LOG(ERROR) << "Expect " << expected << ", but got " << tok;
+      return false;
+    }
+    return true;
+  }
+
+  // The text of config MS_SUBMODULE_LOG_v is in the form {submodule1:log_level1,submodule2:log_level2,...}.
+  // Valid values of log levels are: 0 - debug, 1 - info, 2 - warning, 3 - error
+  // e.g. MS_SUBMODULE_LOG_v={PARSER:0, ANALYZER:2, PIPELINE:1}
+  std::map<std::string, std::string> Parse() {
+    std::map<std::string, std::string> log_levels;
+
+    bool flag_error = false;
+    std::string text;
+    auto tok = lexer.GetNext(&text);
+
+    // empty string
+    if (tok == LogConfigToken::EOS) {
+      return log_levels;
+    }
+
+    if (!Expect(LogConfigToken::LEFT_BRACE, tok)) {
+      return log_levels;
+    }
+
+    do {
+      std::string key, val;
+      tok = lexer.GetNext(&key);
+      if (!Expect(LogConfigToken::VARIABLE, tok)) {
+        flag_error = true;
+        break;
+      }
+
+      tok = lexer.GetNext(&text);
+      if (!Expect(LogConfigToken::COLON, tok)) {
+        flag_error = true;
+        break;
+      }
+
+      tok = lexer.GetNext(&val);
+      if (!Expect(LogConfigToken::NUMBER, tok)) {
+        flag_error = true;
+        break;
+      }
+
+      log_levels[key] = val;
+      tok = lexer.GetNext(&text);
+    } while (tok == LogConfigToken::COMMA);
+
+    if (!flag_error && !Expect(LogConfigToken::RIGHT_BRACE, tok)) {
+      flag_error = true;
+    }
+
+    if (flag_error) {
+      log_levels.clear();
+    }
+    return log_levels;
+  }
+
+ private:
+  LogConfigLexer lexer;
+};
+
+bool ParseLogLevel(const std::string &str_level, MsLogLevel *ptr_level) {
+  if (str_level.size() == 1) {
+    int ch = str_level.c_str()[0];
+    ch = ch - '0';  // substract ASCII code of '0', which is 48
+    if (ch >= DEBUG && ch <= ERROR) {
+      if (ptr_level != nullptr) {
+        *ptr_level = static_cast<MsLogLevel>(ch);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+static MsLogLevel GetGlobalLogLevel() {
+#ifdef USE_GLOG
+  return static_cast<MsLogLevel>(FLAGS_v);
+#else
+  return static_cast<MsLogLevel>(g_mslog_level);
+#endif
+}
+
+void InitSubModulesLogLevel() {
+  // initialize submodule's log level using global
+  auto global_log_level = GetGlobalLogLevel();
+  for (int i = 0; i < NUM_SUBMODUES; ++i) {
+    g_ms_submodule_log_levels[i] = global_log_level;
+  }
+
+  // set submodule's log level
+  auto submodule = GetEnv("MS_SUBMODULE_LOG_v");
+  MS_LOG(INFO) << "MS_SUBMODULE_LOG_v=`" << submodule << "`";
+  LogConfigParser parser(submodule);
+  auto configs = parser.Parse();
+  for (const auto &cfg : configs) {
+    int mod_idx = -1;
+    for (int i = 0; i < NUM_SUBMODUES; ++i) {
+      if (cfg.first == GetSubModuleName(static_cast<SubModuleId>(i))) {
+        mod_idx = i;
+        break;
+      }
+    }
+    if (mod_idx < 0) {
+      MS_LOG(WARNING) << "Undefined module name " << cfg.first << ", ignore it";
+      continue;
+    }
+    MsLogLevel submodule_log_level;
+    if (!ParseLogLevel(cfg.second, &submodule_log_level)) {
+      MS_LOG(WARNING) << "Illegal log level value " << cfg.second << " for " << cfg.first << ", ignore it.";
+      continue;
+    }
+    g_ms_submodule_log_levels[mod_idx] = submodule_log_level;
+  }
+}
 }  // namespace mindspore
 
 extern "C" {
@@ -253,6 +508,7 @@ void mindspore_log_init(void) {
   if (mindspore::GetEnv("GLOG_v").empty()) {
     FLAGS_v = mindspore::WARNING;
   }
+
   // set default log file mode to 0640
   if (mindspore::GetEnv("GLOG_logfile_mode").empty()) {
     FLAGS_logfile_mode = 0640;
@@ -265,6 +521,8 @@ void mindspore_log_init(void) {
     FLAGS_logtostderr = true;
     MS_LOG(WARNING) << "`GLOG_log_dir` is not set, output log to screen.";
   }
+
+  mindspore::InitSubModulesLogLevel();
 #else
   mindspore::InitMsLogLevel();
 #endif

@@ -18,6 +18,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
 
 # add shared link library
+set_property(SOURCE ${DIR_LIB_SRCS} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 add_library(_c_mindrecord SHARED ${DIR_LIB_SRCS})
 
 set_target_properties(_c_mindrecord PROPERTIES

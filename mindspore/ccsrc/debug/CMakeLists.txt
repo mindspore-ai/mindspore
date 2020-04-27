@@ -13,4 +13,5 @@ if (ENABLE_DUMP_E2E)
     list(APPEND _DEBUG_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/e2e_dump.cc")
 endif (ENABLE_DUMP_E2E)
 
+set_property(SOURCE ${_DEBUG_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEBUG)
 add_library(_mindspore_debug_obj OBJECT ${_DEBUG_SRC_LIST})

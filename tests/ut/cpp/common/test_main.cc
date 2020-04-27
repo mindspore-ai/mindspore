@@ -19,7 +19,12 @@
 #include "pipeline/pipeline.h"
 #include "pipeline/resource.h"
 
+namespace mindspore {
+  extern void InitSubModulesLogLevel();
+}
+
 GTEST_API_ int main(int argc, char** argv) {
+  mindspore::InitSubModulesLogLevel();
   testing::InitGoogleTest(&argc, argv);
   int ret = RUN_ALL_TESTS();
   mindspore::pipeline::ClearResAtexit();

@@ -26,4 +26,5 @@ if (ENABLE_D)
     list(APPEND _SESSION_SRC_LIST ${_D_SRC_LIST})
 endif ()
 
+set_property(SOURCE ${_SESSION_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_SESSION)
 add_library(_mindspore_session_obj OBJECT ${_SESSION_SRC_LIST})
