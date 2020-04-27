@@ -357,6 +357,11 @@ INPUT_MAP(Acosh) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Acosh) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Acosh) = {{0, OUTPUT_DESC(y)}};
 
+// AcoshGrad
+INPUT_MAP(AcoshGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(AcoshGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AcoshGrad) = {{0, OUTPUT_DESC(z)}};
+
 // Floor
 INPUT_MAP(Floor) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Floor) = EMPTY_ATTR_MAP;

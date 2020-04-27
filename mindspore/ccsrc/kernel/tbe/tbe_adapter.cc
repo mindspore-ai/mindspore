@@ -38,6 +38,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"reduce_mean", "reduce_mean_d"},
   {"reduce_max", "reduce_max_d"},
   {"reduce_min", "reduce_min_d"},
+  {"avg_pool_grad", "avg_pool_grad_d"},
   {"conv2d_backprop_filter", "conv2d_backprop_filter_d"},
   {"conv2d_backprop_input", "conv2d_backprop_input_d"},
   {"depthwise_conv2d_native", "depthwise_conv2d"},
