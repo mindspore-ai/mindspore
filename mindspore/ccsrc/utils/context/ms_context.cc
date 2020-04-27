@@ -438,4 +438,18 @@ bool MsContext::PynativeInitGe() {
   is_pynative_ge_init_ = true;
   return true;
 }
+
+bool MsContext::IsTsdOpened() {
+  if (tsd_ref_ > 0) {
+    return true;
+  }
+  return false;
+}
+
+bool MsContext::IsGeInited() {
+  if (ge_ref_ > 0) {
+    return true;
+  }
+  return false;
+}
 }  // namespace mindspore

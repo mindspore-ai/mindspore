@@ -22,7 +22,7 @@ from ..common import dtype as mstype
 from ..common.api import _executor
 from .._checkparam import _check_str_by_regular
 from ..common.parameter import Parameter, ParameterTuple
-from .._c_expression import init_ge
+from .._c_expression import init_backend
 from ..ops.primitive import Primitive
 from ..parallel._tensor import _load_tensor_by_layout
 from ..parallel._utils import _get_parallel_mode
@@ -66,7 +66,7 @@ class Cell:
         self._phase = 'train'
         self._parameter_layout_dict = {}
         self._create_time = int(time.time() * 1e9)
-        init_ge()
+        init_backend()
         # call gc to release GE session resources used by non-used cell objects
         gc.collect()
         self._construct_inputs_num = 0
