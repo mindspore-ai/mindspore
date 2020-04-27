@@ -78,7 +78,6 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   graph_memory_max_size_ = "0";
   variable_memory_max_size_ = "0";
   enable_loop_sink_ = target == kAscendDevice || target == kDavinciDevice;
-  MS_LOG(DEBUG) << "Create context with backend policy:" << policy << ", device target:" << target << ".";
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
