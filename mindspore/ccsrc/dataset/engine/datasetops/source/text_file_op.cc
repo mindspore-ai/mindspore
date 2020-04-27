@@ -143,6 +143,9 @@ Status TextFileOp::LoadFile(const std::string &file, const int64_t start_offset,
   std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
 
   while (getline(handle, line)) {
+    if (line.empty()) {
+      continue;
+    }
     // If read to the end offset of this file, break.
     if (rows_total >= end_offset) {
       break;
@@ -425,7 +428,9 @@ int64_t TextFileOp::CountTotalRows(const std::string &file) {
   std::string line;
   int64_t count = 0;
   while (getline(handle, line)) {
-    count++;
+    if (!line.empty()) {
+      count++;
+    }
   }
 
   return count;
