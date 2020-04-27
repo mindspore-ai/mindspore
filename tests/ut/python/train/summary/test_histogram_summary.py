@@ -22,6 +22,7 @@ import numpy as np
 
 from mindspore.common.tensor import Tensor
 from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
+from mindspore.train.summary._summary_adapter import _calc_histogram_bins
 from .summary_reader import SummaryReader
 
 CUR_DIR = os.getcwd()
@@ -139,7 +140,7 @@ def test_histogram_summary_same_value():
         event = reader.read_event()
         LOG.debug(event)
 
-        assert len(event.summary.value[0].histogram.buckets) == 1
+        assert len(event.summary.value[0].histogram.buckets) == _calc_histogram_bins(dim1 * dim2)
 
 
 def test_histogram_summary_high_dims():
