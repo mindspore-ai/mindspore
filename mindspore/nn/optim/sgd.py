@@ -42,7 +42,13 @@ class SGD(Optimizer):
     Args:
         params (list[Parameter]): A list of parameter, which will be updated. The element in `params`
                                   should be class mindspore.Parameter.
-        learning_rate (float): A floating point value for the learning rate. Default: 0.1.
+        learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
+                                                        Iterable or a Tensor and the dims of the Tensor is 1,
+                                                        use dynamic learning rate, then the i-th step will
+                                                        take the i-th value as the learning rate.
+                                                        When the learning_rate is float or learning_rate is a Tensor
+                                                        but the dims of the Tensor is 0, use fixed learning rate.
+                                                        Other cases are not supported. Default: 0.1.
         momentum (float): A floating point value the momentum. Default: 0.
         dampening (float): A floating point value of dampening for momentum. Default: 0.
         weight_decay (float): Weight decay (L2 penalty). Default: 0.
