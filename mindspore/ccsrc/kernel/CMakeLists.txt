@@ -17,6 +17,12 @@ if (ENABLE_D)
 	add_compile_definitions(ENABLE_D)
 endif ()
 
+if (ENABLE_CPU)
+    file(GLOB_RECURSE CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "cpu/*.cc"
+    )
+endif ()
+
 if (ENABLE_GPU)
     file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "gpu/*.cu"
@@ -37,4 +43,4 @@ if (ENABLE_GPU)
 	# add_library(_mindspore_kernel_cuda_obj OBJECT ${CUDA_SRC_LIST})
 endif()
 
-add_library(_mindspore_kernel_obj OBJECT ${KERNEL_SRC_LIST} ${GPU_SRC_LIST} ${D_SRC_LIST})
+add_library(_mindspore_kernel_obj OBJECT ${KERNEL_SRC_LIST} ${CPU_SRC_LIST} ${GPU_SRC_LIST} ${D_SRC_LIST})

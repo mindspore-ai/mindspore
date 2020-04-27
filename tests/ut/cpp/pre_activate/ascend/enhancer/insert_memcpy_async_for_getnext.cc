@@ -16,6 +16,7 @@
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "session/ascend_session.h"
+#include "session/anf_runtime_algorithm.h"
 #include "pipeline/resource.h"
 #include "operator/ops.h"
 #include "ir/manager.h"
