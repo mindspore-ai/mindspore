@@ -4,20 +4,26 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 
 ## Requirements
 - Install [MindSpore](https://www.mindspore.cn/install/en).
-- Download the zhwiki dataset from <https://dumps.wikimedia.org/zhwiki> for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wiliextractor). Convert the dataset to TFRecord format and move the files to a specified path.
+- Download the zhwiki dataset from <https://dumps.wikimedia.org/zhwiki> for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wil
+kiextractor). Convert the dataset to TFRecord format and move the files to a specified path.
 - Download the CLUE dataset from <https://www.cluebenchmarks.com> for fine-tuning and evaluation.
 >  Notes:
    If you are running a fine-tuning or evaluation task, prepare the corresponding checkpoint file.
 
 ## Running the Example
 ### Pre-Training
-- Set options in `config.py`. Make sure the 'DATA_DIR'(path to the dataset) and 'SCHEMA_DIR'(path to the json schema file) are set to your own path. Click [here](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#tfrecord) for more information about dataset and the json schema file.
+- Set options in `config.py`, including lossscale, optimizer and network. Click [here](https://www.mindspore.cn/tutorial/zh-CN/master/use/data_preparation/loading_the_datasets.html#tfrecord) for more information about dataset and the json schema file.
 
-- Run `run_pretrain.py` for pre-training of BERT-base and BERT-NEZHA model.
+- Run `run_standalone_pretrain.sh` for non-distributed pre-training of BERT-base and BERT-NEZHA model.
 
-    ``` bash
-    python run_pretrain.py --backend=ms
+    ``` bash   
+    sh run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_PATH
     ```
+- Run `run_distribute_pretrain.sh` for distributed pre-training of BERT-base and BERT-NEZHA model.
+
+    ``` bash   
+    sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH MINDSPORE_PATH
+    ```  
 
 ### Fine-Tuning
 - Set options in `finetune_config.py`. Make sure the 'data_file', 'schema_file' and 'ckpt_file' are set to your own path, set the 'pre_training_ckpt' to save the checkpoint files generated.
@@ -40,30 +46,42 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 ## Usage
 ### Pre-Training
 ``` 
-usage: run_pretrain.py [--backend BACKEND]
+usage: run_pretrain.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [--device_id N] 
+                        [--enable_task_sink ENABLE_TASK_SINK] [--enable_loop_sink ENABLE_LOOP_SINK]
+                        [--enable_mem_reuse ENABLE_MEM_REUSE] [--enable_save_ckpt ENABLE_SAVE_CKPT]
+                        [--enable_lossscale ENABLE_LOSSSCALE] [--do_shuffle DO_SHUFFLE]
+                        [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N] [--checkpoint_path CHECKPOINT_PATH]
+                        [--save_checkpoint_steps N] [--save_checkpoint_num N] 
+                        [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR]
 
-optional parameters:
-    --backend, BACKEND            MindSpore backend: ms
+options:
+    --distribute               pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
+    --epoch_size               epoch size: N, default is 1
+    --device_num               number of used devices: N, default is 1
+    --device_id                device id: N, default is 0
+    --enable_task_sink         enable task sink: "true" | "false", default is "true"
+    --enable_loop_sink         enable loop sink: "true" | "false", default is "true"
+    --enable_mem_reuse         enable memory reuse: "true" | "false", default is "true"
+    --enable_save_ckpt         enable save checkpoint: "true" | "false", default is "true"
+    --enable_lossscale         enable lossscale: "true" | "false", default is "true"
+    --do_shuffle               enable shuffle: "true" | "false", default is "true"
+    --enable_data_sink         enable data sink: "true" | "false", default is "true"
+    --data_sink_steps          set data sink steps: N, default is 1
+    --checkpoint_path          path to save checkpoint files: PATH, default is ""
+    --save_checkpoint_steps    steps for saving checkpoint files: N, default is 1000
+    --save_checkpoint_num      number for saving checkpoint files: N, default is 1
+    --data_dir                 path to dataset directory: PATH, default is ""
+    --schema_dir               path to schema.json file, PATH, default is ""
 ```
-
 ## Options and Parameters
 It contains of parameters of BERT model and options for training, which is set in file `config.py`, `finetune_config.py` and `evaluation_config.py` respectively.
 ### Options:
 ```
 Pre-Training:
     bert_network                    version of BERT model: base | large, default is base
-    epoch_size                      repeat counts of training: N, default is 40
-    dataset_sink_mode               use dataset sink mode or not: True | False, default is True
-    do_shuffle                      shuffle the dataset or not: True | False, default is True
-    do_train_with_lossscale         use lossscale or not: True | False, default is True
     loss_scale_value                initial value of loss scale: N, default is 2^32
     scale_factor                    factor used to update loss scale: N, default is 2
-    scale_window                    steps for once updatation of loss scale: N, default is 1000
-    save_checkpoint_steps           steps to save a checkpoint: N, default is 2000
-    keep_checkpoint_max             numbers to save checkpoint: N, default is 1
-    init_ckpt                       checkpoint file to load: PATH, default is ""
-    data_dir                        dataset file to load: PATH, default is "/your/path/cn-wiki-128"
-    schema_dir                      dataset schema file to load: PATH, default is "your/path/datasetSchema.json"
+    scale_window                    steps for once updatation of loss scale: N, default is 1000   
     optimizer                       optimizer used in the network: AdamWerigtDecayDynamicLR | Lamb | Momentum, default is "Lamb"
 
 Fine-Tuning:
