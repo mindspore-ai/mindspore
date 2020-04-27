@@ -248,7 +248,7 @@ class Iterator:
         return self.depipeline.GetNumClasses()
 
     def __deepcopy__(self, memo):
-        return Iterator(copy.deepcopy(self.dataset, memo))
+        return self
 
 
 class DictIterator(Iterator):
