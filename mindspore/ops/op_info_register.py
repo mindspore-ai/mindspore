@@ -599,4 +599,13 @@ class DataType:
     F32_NCHW = ("float32", "NCHW")
     F32_NHWC = ("float32", "NHWC")
     F32_HWCN = ("float32", "HWCN")
- 
+
+    F64_None = ("float64", "")
+    F64_Default = ("float64", "DefaultFormat")
+    F64_5HD = ("float64", "NC1HWC0")
+    F64_FracZ = ("float64", "FracZ")
+    F64_FracNZ = ("float64", "FRACTAL_NZ")
+    F64_C1HWNCoC0 = ("float64", "C1HWNCoC0")
+    F64_NCHW = ("float64", "NCHW")
+    F64_NHWC = ("float64", "NHWC")
+    F64_HWCN = ("float64", "HWCN")

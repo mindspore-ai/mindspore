@@ -340,8 +340,23 @@ bool IsNopNode(const AnfNodePtr &node) {
   return true;
 }
 
+bool IsAllNopNode(session::KernelGraph *const graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto execution_order = graph->execution_order();
+  for (auto &cnode : execution_order) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!IsNopNode(cnode)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void HideNopNode(session::KernelGraph *const graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  if (IsAllNopNode(graph) == true) {
+    return;
+  }
   auto execution_order = graph->execution_order();
   MS_LOG(INFO) << "nop node info (Before Remove) size: " << execution_order.size();
   std::vector<CNodePtr> new_nodes;
@@ -357,6 +372,9 @@ void HideNopNode(session::KernelGraph *const graph) {
 
 void RemoveNopNode(session::KernelGraph *const graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  if (IsAllNopNode(graph) == true) {
+    return;
+  }
   bool changed = true;
   while (changed) {
     changed = false;
