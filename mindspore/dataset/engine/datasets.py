@@ -922,7 +922,7 @@ class Dataset:
     def sync_update(self, condition_name, num_batch=None, data=None):
         """
         condition_name (str): The condition name that is used to toggle sending next row
-        step_size (int or None): The number of steps(rows) that are released
+        num_batch (int or None): The number of batches(rows) that are released
                          when pass_rows is None, will update the same number as sync_wait specified
         data (dict or None): The data passed to the callback
         """
