@@ -226,14 +226,6 @@ class _Context:
             raise RuntimeError("Device id set failed!!!")
 
     @property
-    def enable_hccl(self):
-        return self._context_handle.get_hccl_flag()
-
-    @enable_hccl.setter
-    def enable_hccl(self, hccl):
-        self._context_handle.set_hccl_flag(hccl)
-
-    @property
     def enable_ir_fusion(self):
         return self._context_handle.get_ir_fusion_flag()
 
@@ -482,7 +474,7 @@ def reset_auto_parallel_context():
 
 
 @args_type_check(mode=int, precompile_only=bool, device_target=str,
-                 device_id=int, enable_ir_fusion=bool, save_graphs=bool, enable_hccl=bool,
+                 device_id=int, enable_ir_fusion=bool, save_graphs=bool,
                  enable_task_sink=bool, save_graphs_path=str, enable_loop_sink=bool,
                  enable_mem_reuse=bool, save_ms_model=bool, save_ms_model_path=str, enable_gpu_summary=bool,
                  enable_auto_mixed_precision=bool, enable_dump=bool, save_dump_path=str,
@@ -515,7 +507,6 @@ def set_context(**kwargs):
                     while device_num_per_host should no more than 4096. Default: 0.
         enable_ir_fusion (bool): Whether to enable ir fusion. Default: True.
         save_graphs (bool): Whether to save graphs. Default: False.
-        enable_hccl (bool): Whether to enable hccl. Default: False.
         enable_loop_sink (bool): Whether to enable loop sink. Default: True.
         enable_task_sink (bool): Whether to enable task sink. Default: True.
         enable_mem_reuse (bool): Whether to enable memory reuse. Default: True.

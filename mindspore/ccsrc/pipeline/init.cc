@@ -115,8 +115,6 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_device_id", &mindspore::MsContext::set_device_id, "Set device id.")
     .def("open_tsd", &mindspore::MsContext::OpenTsd, "Open tdt dataset client.")
     .def("close_tsd", &mindspore::MsContext::CloseTsd, "Close tdt dataset client.")
-    .def("set_hccl_flag", &mindspore::MsContext::set_enable_hccl, "Set enable hccl.")
-    .def("get_hccl_flag", &mindspore::MsContext::enable_hccl, "Get whether to enable hccl.")
     .def("set_task_sink_flag", &mindspore::MsContext::set_enable_task_sink, "Set enable task sink.")
     .def("get_task_sink_flag", &mindspore::MsContext::enable_task_sink, "Get whether to enable task sink.")
     .def("get_save_graphs_flag", &mindspore::MsContext::save_graphs_flag, "Get whether to save graphs.")

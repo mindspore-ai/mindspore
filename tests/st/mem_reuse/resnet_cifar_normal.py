@@ -123,16 +123,10 @@ class CrossEntropyLoss(nn.Cell):
 
 
 if __name__ == '__main__':
-    if args_opt.do_eval:
-        context.set_context(enable_hccl=False)
-    else:
-        if args_opt.run_distribute:
-            context.set_context(enable_hccl=True)
-            context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL)
-            context.set_auto_parallel_context(all_reduce_fusion_split_indices=[140])
-            init()
-        else:
-            context.set_context(enable_hccl=False)
+    if not args_opt.do_eval and args_opt.run_distribute:
+        context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL)
+        context.set_auto_parallel_context(all_reduce_fusion_split_indices=[140])
+        init()
 
     context.set_context(mode=context.GRAPH_MODE)
     epoch_size = args_opt.epoch_size

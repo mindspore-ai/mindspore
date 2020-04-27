@@ -773,7 +773,7 @@ void InitHccl() {
   (void)ms_context->OpenTsd();
   uint32_t device_id = ms_context->device_id();
   std::string device_name = ms_context->device_target();
-
+  ms_context->set_enable_hccl(true);
   if (ms_context->backend_policy() == "ms" && ms_context->device_target() == kAscendDevice) {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(device_name, device_id);
     MS_EXCEPTION_IF_NULL(runtime_instance);

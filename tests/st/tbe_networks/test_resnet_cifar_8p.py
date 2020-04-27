@@ -153,7 +153,6 @@ def train_process(q, device_id, epoch_size, num_classes, device_num, batch_size,
     context.set_context(enable_task_sink=True, device_id=device_id)
     context.set_context(enable_loop_sink=True)
     context.set_context(enable_mem_reuse=True)
-    context.set_context(enable_hccl=enable_hccl)
     os.environ['MINDSPORE_HCCL_CONFIG_PATH'] = MINDSPORE_HCCL_CONFIG_PATH
     os.environ['RANK_ID'] = str(device_id)
     os.environ['RANK_SIZE'] = str(device_num)
