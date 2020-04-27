@@ -23,7 +23,7 @@
 #include "common/utils.h"
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
-#include "utils/node_strategy.pb.h"
+#include "proto/node_strategy.pb.h"
 
 namespace mindspore {
 namespace parallel {

@@ -125,6 +125,7 @@ const char kNameSplitD[] = "Split";
 const char kNameBatchToSpaceNd[] = "BatchToSpaceNd";
 const char kNameFloor[] = "Floor";
 const char kNameNPUGetFloatStatus[] = "NPUGetFloatStatus";
+const char kNameAssign[] = "Assign";
 const char kNameAssignAdd[] = "AssignAdd";
 const char kNameAssignSub[] = "AssignSub";
 const char kNameNPUAllocFloatStatus[] = "NPUAllocFloatStatus";
@@ -1155,8 +1156,7 @@ void DfGraphConvertor::SetOpControlInput(const AnfNodePtr node) {
   }
 }
 
-const std::vector<std::string> trans_var_list = {prim::kPrimAssign->name(), string(kNameAssignAdd),
-                                                 string(kNameAssignSub)};
+const std::vector<std::string> trans_var_list = {string(kNameAssign), string(kNameAssignAdd), string(kNameAssignSub)};
 
 void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node) {
   OperatorPtr src = Convert(node);

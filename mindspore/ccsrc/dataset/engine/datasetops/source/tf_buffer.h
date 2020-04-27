@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include "dataset/engine/data_buffer.h"
-#include "./example.pb.h"
+#include "proto/example.pb.h"
 #include "dataset/engine/datasetops/source/tf_client.h"
 
 namespace mindspore {

@@ -1,5 +1,2 @@
-file(GLOB_RECURSE _PYNATIVE_ALL_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "*.cc"
-        )
-
-add_library(_mindspore_pynative_obj OBJECT ${_PYNATIVE_ALL_SRC_FILES})
+file(GLOB_RECURSE _PYBIND_API_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
+add_library(_mindspore_pybind_api_obj OBJECT ${_PYBIND_API_SRC_LIST})

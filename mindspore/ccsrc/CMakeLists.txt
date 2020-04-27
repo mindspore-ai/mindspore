@@ -1,14 +1,11 @@
+## common setting
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-if(ENABLE_CPU)
-    include(ExternalProject)
-    add_compile_definitions(CPUSESSION)
-    file(GLOB_RECURSE CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    "device/cpu/*.cc"
-    )
-    if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -DHAVE_SNPRINTF")
-        add_compile_definitions(BUILDING_DLL)
-    endif()
+include_directories(${CMAKE_BINARY_DIR})
+link_directories(${CMAKE_SOURCE_DIR}/build/mindspore/graphengine)
+
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -DHAVE_SNPRINTF")
+    add_compile_definitions(BUILDING_DLL)
 endif()
 
 if(ENABLE_GPU)
@@ -20,7 +17,7 @@ if(ENABLE_GPU)
     enable_language(CUDA)
     if(NOT CUDA_PATH OR CUDA_PATH STREQUAL "")
         if(DEFINED ENV{CUDA_HOME})
-            set(CUDA_PATH $ENV{CUDA_HOME})                
+            set(CUDA_PATH $ENV{CUDA_HOME})
         else()
             set(CUDA_PATH ${CUDA_TOOLKIT_ROOT_DIR})
         endif()
@@ -41,261 +38,101 @@ if(ENABLE_GPU)
             "kernel/akg/akgkernelbuild.cc"
             "kernel/akg/akg_kernel_attrs_process.cc"
             )
-    file(GLOB_RECURSE GPU_KERNEL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "kernel/gpu/*.cc"
-            )
+
     list(APPEND CUDA_NVCC_FLAGS -arch=sm_53)
     list(REMOVE_ITEM GPU_SRC_LIST "device/gpu/blocking_queue.cc" "device/gpu/gpu_buffer_mgr.cc")
-    add_library(gpu_queue SHARED "device/gpu/blocking_queue.cc" "device/gpu/gpu_buffer_mgr.cc")
-    target_link_libraries(gpu_queue ${CMAKE_THREAD_LIBS_INIT} ${CUDA_PATH}/lib64/libcudart.so)
-
-
-    file(GLOB_RECURSE MS_STEPS_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "session/gpu_session.cc"
-        )
     list(REMOVE_ITEM GPU_SRC_LIST "device/gpu/mpi/mpi_initializer.cc"
                                   "device/gpu/distribution/collective_wrapper.cc"
                                   "device/gpu/distribution/mpi_wrapper.cc"
                                   "device/gpu/distribution/nccl_wrapper.cc"
                                   )
-    list(REMOVE_ITEM GPU_KERNEL_SRC_LIST "device/gpu/mpi/mpi_initializer.cc"
-            "kernel/gpu/nccl/nccl_gpu_kernel.cc"
-            )
 
     set(NVCC_TMP_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     string(REPLACE "-std=c++17" "-std=c++11" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     cuda_add_library(gpu_cuda_lib STATIC ${GPU_SRC_LIST})
     set(CMAKE_CXX_FLAGS ${NVCC_TMP_CMAKE_CXX_FLAGS})
+endif ()
 
-    if(ENABLE_MPI)
-      include(ExternalProject)
-
-      file(GLOB_RECURSE GPU_NCCL_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-              "kernel/gpu/nccl/*.cc"
-              )
-      file(GLOB_RECURSE GPU_MPI_PYTHON_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-              "device/gpu/mpi/mpi_initializer.cc"
-              )
-      add_library(gpu_collective SHARED "device/gpu/distribution/collective_wrapper.cc"
-                                        "device/gpu/distribution/mpi_wrapper.cc"
-                                        "device/gpu/distribution/nccl_wrapper.cc"
-                                        )
-    endif()
-endif()
-
+## make flatuffer files
 include_directories("${CMAKE_BINARY_DIR}/predict/schema/inner")
 file(GLOB_RECURSE FLATBUFFER_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "predict/schema/*.fbs")
 set(FLATBUFFER_OU "${CMAKE_BINARY_DIR}/predict/schema/inner")
-ms_build_flatbuffers("${FLATBUFFER_IN}" "${FLATBUFFER_IN}" GENERATED_OUTPUT_DIR "${FLATBUFFER_OU}")
+ms_build_flatbuffers("${FLATBUFFER_IN}" "${FLATBUFFER_IN}" flat_input "${FLATBUFFER_OU}")
 
-file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "ir/*.cc"
-        "ir/dtype/*.cc"
-        "utils/context/ms_context.cc"
-        "utils/symbolic.cc"
-        "utils/tensorprint_utils.cc"
-        "utils/convert_utils.cc"
-        "utils/graph_utils.cc"
-        "utils/misc.cc"
-        "utils/callbacks.cc"
-        "utils/profile.cc"
-        "utils/base_ref.cc"
-        "utils/summary/event_writer.cc"
-        "utils/log_adapter.cc"
-        "utils/comm_manager.cc"
-        "utils/any.cc"
-        "utils/config_manager.cc"
-        "utils/system/file_system.cc"
-        "utils/system/crc32c.cc"
-        "common/*.cc"
-        "parallel/*.cc"
-        "pipeline/pipeline.cc"
-        "pipeline/resource.cc"
-        "pipeline/pass.cc"
-        "pipeline/action.cc"
-        "pipeline/validator.cc"
-        "pipeline/remove_value_node_dup.cc"
-        "pipeline/parse/*.cc"
-        "pipeline/static_analysis/*.cc"
-        "optimizer/*.cc"
-        "debug/*.cc"
-        "onnx/onnx_exporter.cc"
-        "operator/*.cc"
-        "session/kernel_graph.cc"
-        "utils/node_utils.cc"
-        "session/session_basic.cc"
-        "session/session_factory.cc"
-        "session/anf_runtime_algorithm.cc"
-        "vm/*.cc"
-        "pynative/base.cc"
-        "pynative/pynative_execute.cc"
-        "pybind_api/*.cc"
-        "device/common/*.cc"
-        "kernel/kernel_query.cc"
-        "kernel/kernel_build_info.cc"
-        "kernel/kash/*.cc"
-        "device/kernel_info.cc"
-        "device/kernel_runtime.cc"
-        "device/memory_manager.cc"
-        "device/kernel_runtime_manager.cc"
-        "device/convert_tensor_utils.cc"
-        "pre_activate/common/*.cc"
-        "pre_activate/pass/*.cc"
-        "pre_activate/gpu/*.cc"
-        "pre_activate/mem_reuse/*.cc"
-        "predict/predict.cc"
-        "predict/generator/utils/ir_model_util.cc"
-        "predict/converter/*.cc"
-        "predict/converter/attr_utils/*.cc"
-        "predict/converter/lite_model/*.cc"
-        "predict/converter/lite_model/operations/*.cc"
-        "kernel/common_utils.cc"
-        "kernel/oplib/*.cc"
-        "kernel/kash/*.cc"
-        "device/gpu/distribution/collective_init.cc"
-        )
-if (ENABLE_CPU)
-    list(REMOVE_ITEM MINDSPORE_SRC_LIST "device/gpu/distribution/collective_init.cc")
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        list(REMOVE_ITEM MINDSPORE_SRC_LIST "kernel/kernel_query.cc")
-    endif()
-endif()
-if (NOT ENABLE_GPU)
-    list(APPEND MINDSPORE_SRC_LIST "device/gpu/distribution/collective_fake_init.cc")
-endif()
-file(GLOB_RECURSE MEM_REUSE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "pre_activate/mem_reuse/*.cc"
-        )
-if(NOT ENABLE_DUMP_E2E)
-    list(REMOVE_ITEM MINDSPORE_SRC_LIST "debug/e2e_dump.cc")
-endif()
-file(COPY "${ms_onnx_INC}/onnx/onnx.proto" DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
-file(GLOB_RECURSE ONNX_PROTO RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/onnx.proto")
-message("onnx proto path is : ${ONNX_PROTO}")
+## make protobuf files
+file(COPY "${ms_onnx_INC}/onnx/onnx.proto" DESTINATION ${CMAKE_BINARY_DIR}/proto)
+file(GLOB ONNX_PROTO "" ${CMAKE_BINARY_DIR}/proto/onnx.proto)
+message("onnx proto path is :" ${ONNX_PROTO})
 ms_protobuf_generate(ONNX_PROTO_SRCS ONNX_PROTO_HDRS ${ONNX_PROTO})
 list(APPEND MINDSPORE_PROTO_LIST ${ONNX_PROTO_SRCS})
 
-if(ENABLE_DUMP_PROTO)
+if (ENABLE_DUMP_PROTO)
     include_directories(${CMAKE_BINARY_DIR})
-    file(GLOB_RECURSE PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "utils/node_strategy.proto"
-            )
+    file(GLOB_RECURSE PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "utils/node_strategy.proto")
     ms_protobuf_generate(PROTO_SRCS PROTO_HDRS ${PROTO_LIST})
 
     file(GLOB_RECURSE PROTO_PY RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "utils/anf_ir.proto"
-            "utils/summary.proto"
-            "utils/checkpoint.proto"
-            )
+        "utils/anf_ir.proto"
+        "utils/summary.proto"
+        "utils/checkpoint.proto"
+    )
     ms_protobuf_generate_py(PY_SRCS PY_HDRS PY_PYS ${PROTO_PY})
 
-    list(APPEND MINDSPORE_PROTO_DUMP_LIST ${PROTO_SRCS})
-    list(APPEND MINDSPORE_PROTO_DUMP_LIST ${PY_SRCS})
-    list(APPEND MINDSPORE_SRC_LIST "debug/dump_proto.cc")
-    list(APPEND MINDSPORE_SRC_LIST "parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
-    add_compile_definitions(ENABLE_DUMP_PROTO)
-endif()
+    list(APPEND MINDSPORE_PROTO_LIST ${PROTO_SRCS})
+    list(APPEND MINDSPORE_PROTO_LIST ${PY_SRCS})
+endif ()
 
-if(ENABLE_GE)
-    file(GLOB_RECURSE GE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "transform/*.cc"
-            "pynative/pynative_execute_ge.cc"
-            "utils/callbacks_ge.cc"
-            "pipeline/pipeline_ge.cc"
-            )
-    list(APPEND MINDSPORE_SRC_LIST ${GE_SRC_LIST})
-endif()
-
-if(ENABLE_D)
+if (ENABLE_D)
     include_directories("${CMAKE_BINARY_DIR}/kernel/aicpu")
-    file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "kernel/aicpu/proto/*.proto"
-            )
-    ms_protobuf_generate(PROTOSRCS PROTOHDRS ${PROTO_IN})
-
     include_directories("${CMAKE_BINARY_DIR}/predict/generator/ir")
-    file(GLOB_RECURSE PROTO_INNER RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "predict/proto/*.proto"
-            )
+    file(GLOB_RECURSE PROTO_IN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "kernel/aicpu/proto/*.proto")
+    ms_protobuf_generate(PROTOSRCS PROTOHDRS ${PROTO_IN})
+    
+    file(GLOB_RECURSE PROTO_INNER RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "predict/proto/*.proto")
     ms_protobuf_generate(PREDICT_PROTOSRCS PREDICT_PROTOHDRS ${PROTO_INNER})
 
-    file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "device/ascend/*.cc"
-            "device/ascend/profiling/*.cc"
-            "device/ascend/tasksink/*.cc"
-            "device/kernel_adjust.cc"
-            "kernel/kernel_fusion.cc"
-            "kernel/tbe/*.cc"
-            "pre_activate/ascend/*.cc"
-            "transform/*.cc"
-            "pipeline/pipeline_ge.cc"
-            )
-    list(APPEND MINDSPORE_SRC_LIST ${D_SRC_LIST})
-    list(APPEND MINDSPORE_PROTO_AICPU_LIST ${PROTOSRCS})
-    list(APPEND MINDSPORE_PROTO_PREDICT_LIST ${PREDICT_PROTOSRCS})
+    list(APPEND MINDSPORE_PROTO_LIST ${PROTOSRCS})
+    list(APPEND MINDSPORE_PROTO_LIST ${PREDICT_PROTOSRCS})
 
-    file(GLOB_RECURSE MS_STEPS_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "session/ascend_session.cc"
-        )
-    file(GLOB_RECURSE MS_TASKINFO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "device/ascend/tasksink/taskinfo/*.cc")
-    file(GLOB_RECURSE MS_AICPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "kernel/aicpu/*.cc"
-        )
-    file(GLOB_RECURSE MS_RT_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "kernel/mng/*.cc"
-        )
-    file(GLOB_RECURSE MS_HCCL_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "kernel/hccl/*.cc"
-        )
-    file(GLOB_RECURSE MS_PREDICT_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "predict/generator/ir/*.cc"
-        )
     add_compile_definitions(ENABLE_D)
-endif()
+endif ()
 
-file(GLOB_RECURSE MS_GVAR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "gvar/*.cc"
-        )
-
-add_library(mindspore_gvar SHARED ${MS_GVAR_SRC_LIST})
-add_library(mindspore STATIC ${MINDSPORE_SRC_LIST})
-add_dependencies(mindspore GENERATED_OUTPUT_DIR)
-
-if(ENABLE_D)
-    list(APPEND MINDSPORE_PROTO_LIST ${MINDSPORE_PROTO_AICPU_LIST})
-endif()
-if(ENABLE_DUMP_PROTO)
-    list(APPEND MINDSPORE_PROTO_LIST ${MINDSPORE_PROTO_DUMP_LIST})
-endif()
-list(APPEND MINDSPORE_PROTO_LIST ${MINDSPORE_PROTO_PREDICT_LIST})
-if(MINDSPORE_PROTO_LIST)
+if (MINDSPORE_PROTO_LIST)
     add_library(proto_input STATIC ${MINDSPORE_PROTO_LIST})
     set_target_properties(proto_input PROPERTIES COMPILE_FLAGS "-Wno-unused-variable")
-    target_link_libraries(mindspore proto_input)
 endif()
 
-if(APPLE)
-    set_target_properties(mindspore_gvar PROPERTIES MACOSX_RPATH ON)
-endif()
+## make sub objects
+set(SUB_COMP 
+    transform pre_activate parallel pipeline device kernel common debug gvar ir onnx operator optimizer predict
+    pybind_api pynative session utils vm
+)
 
-link_directories(${CMAKE_SOURCE_DIR}/build/mindspore/graphengine)
+foreach (_comp ${SUB_COMP})
+    add_subdirectory(${_comp})
+    if (TARGET _mindspore_${_comp}_obj)
+        list(APPEND SUB_OBJECTS_SRC $<TARGET_OBJECTS:_mindspore_${_comp}_obj>)
+        add_dependencies(_mindspore_${_comp}_obj proto_input flat_input)
+    endif ()
+endforeach ()
+
+add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
+target_link_libraries(mindspore proto_input)
+target_link_libraries(mindspore securec mindspore::flatbuffers)
+if (NOT WIN32)
+  target_link_libraries(mindspore dl)
+endif()
 
 if (ENABLE_GE)
     if(ENABLE_TRAIN)
-        target_link_libraries(mindspore graph ge_client_train)
-    else()
-        target_link_libraries(mindspore graph ge_client)
-    endif()
-    target_link_libraries(mindspore tsdclient)
-elseif(ENABLE_D)
-    add_compile_definitions(NO_GE_CLIENT)
-    target_link_libraries(mindspore graph)
-else()
-    add_compile_definitions(NO_GE_CLIENT)
+        target_link_libraries(mindspore ge_client_train)
+    else ()
+        target_link_libraries(mindspore ge_client)
+    endif ()
+    target_link_libraries(mindspore graph tsdclient)
 endif()
 
-if(ENABLE_D)
+if (ENABLE_D)
     if (DEFINED ENV{D_LINK_PATH})
         if (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "aarch64")
             MESSAGE("system processor matches aarch64")
@@ -306,13 +143,13 @@ if(ENABLE_D)
         else ()
             MESSAGE("system ${CMAKE_HOST_SYSTEM_PROCESSOR} not support")
         endif()
-    else()
+    else ()
         MESSAGE("use system default lib")
-        if(DEFINED ENV{ASCEND_CUSTOM_PATH})
+        if (DEFINED ENV{ASCEND_CUSTOM_PATH})
             set(ASCEND_PATH $ENV{ASCEND_CUSTOM_PATH})
-        else()
+        else ()
             set(ASCEND_PATH /usr/local/Ascend)
-        endif()
+        endif ()
         set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
         set(ASCEND_DRIVER_BACK_PATH ${ASCEND_PATH}/driver/lib64/driver)
         set(ASCEND_RUNTIME_PATH ${ASCEND_PATH}/fwkacllib/lib64)
@@ -327,37 +164,14 @@ if(ENABLE_D)
     target_link_libraries(mindspore ge_runtime ${CCE_LIB} ${RUNTIME_LIB} ${TSDCLIENT} ${PROFILING} ${HCCL} ${TSDCLIENT})
 endif()
 
-target_link_libraries(mindspore securec)
-if (NOT WIN32)
-  target_link_libraries(mindspore dl)
-endif()
-target_link_libraries(mindspore mindspore::flatbuffers)
 # link protobuf
 if (ENABLE_D)
     target_link_libraries(mindspore mindspore::protobuf)
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(mindspore ${PYTHON_LIBRARIES} mindspore_gvar)
-endif()
-
 # set c_expression building
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(PYTHON_MODULE_SOURCE ${MS_GVAR_SRC_LIST}
-        pipeline/init.cc
-        kernel/oplib/oplib.cc
-        ${MINDSPORE_SRC_LIST} ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
-        ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
-else()
-    set(PYTHON_MODULE_SOURCE
-        pipeline/init.cc
-        kernel/oplib/oplib.cc
-        ${MS_STEPS_SRC_LIST} ${MS_CCE_SRC_LIST} ${MS_AICPU_SRC_LIST} ${MS_TASKINFO_LIST} ${MS_RT_SRC_LIST}
-        ${GPU_NCCL_LIST} ${MS_HCCL_SRC_LIST} ${MS_PREDICT_SRC_LIST} ${CPU_SRC_LIST} ${MEM_REUSE_SRC_LIST} ${GPU_KERNEL_SRC_LIST})
-endif()
-
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-pybind11_add_module(_c_expression ${PYTHON_MODULE_SOURCE})
+pybind11_add_module(_c_expression "pipeline/init.cc")
 
 MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -372,55 +186,41 @@ else ()
     MESSAGE(FATAL_ERROR "other platform: ${CMAKE_SYSTEM_NAME}")
 endif ()
 
-
 set(ORIGIN_PATH ${ORIGIN_PATH}/lib)
 set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${ORIGIN_PATH})
-if (WIN32)
-    target_link_libraries(_c_expression PRIVATE
-            mindspore::pybind11_module
-            securec
-            proto_input
-            mindspore::flatbuffers
-            )
-else()
-    target_link_libraries(_c_expression PRIVATE
-            mindspore::pybind11_module
-            mindspore
-            mindspore_gvar
-            )
-endif()
 
-if(USE_GLOG)
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    target_link_libraries(mindspore mindspore::pybind11_module)
+    target_link_libraries(mindspore mindspore_gvar)
+else ()
+    target_link_libraries(_c_expression PRIVATE mindspore::pybind11_module)
+    target_link_libraries(_c_expression PRIVATE mindspore_gvar)
+endif ()
+
+target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive)
+
+if (USE_GLOG)
     target_link_libraries(_c_expression PRIVATE mindspore::glog)
-endif()
+endif ()
 
-if(ENABLE_DUMP_PROTO)
+if (ENABLE_DUMP_PROTO)
     target_link_libraries(_c_expression PRIVATE mindspore::protobuf)
-endif()
+endif ()
 
-if(ENABLE_GPU)
+if (ENABLE_GPU)
     message("add gpu lib to c_expression")
-    target_link_libraries(_c_expression PRIVATE
-                          gpu_cuda_lib
-                          gpu_queue
-                          cublas
+    target_link_libraries(_c_expression PRIVATE gpu_cuda_lib gpu_queue cublas
                           ${CUDA_PATH}/lib64/libcurand.so
                           ${CUDNN_PATH}/lib64/libcudnn.so
                           ${CUDA_PATH}/lib64/libcudart.so
                           ${CUDA_PATH}/lib64/stubs/libcuda.so)
-    if(ENABLE_MPI)
-        pybind11_add_module(_ms_mpi ${GPU_MPI_PYTHON_LIST})
-        target_link_libraries(_ms_mpi PRIVATE mindspore::pybind11_module mindspore::ompi)
-        target_link_libraries(gpu_collective PRIVATE mindspore::ompi mindspore::nccl)
-    endif()
-endif()
+endif ()
 
-
-if(ENABLE_CPU)
+if (ENABLE_CPU)
     target_link_libraries(_c_expression PRIVATE mindspore::dnnl mindspore::mkldnn)
-endif()
+endif ()
 
-if(ENABLE_MINDDATA)
+if (ENABLE_MINDDATA)
     add_subdirectory(mindrecord)
     add_subdirectory(dataset)
-endif()
+endif ()

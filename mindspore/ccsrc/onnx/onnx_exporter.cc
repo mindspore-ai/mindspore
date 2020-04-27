@@ -24,7 +24,7 @@
 #include <functional>
 
 #include "debug/anf_ir_utils.h"
-#include "./onnx.pb.h"
+#include "proto/onnx.pb.h"
 #include "operator/ops.h"
 
 namespace mindspore {
