@@ -35,7 +35,7 @@ def test_topk_split(tag):
 
     @fns
     def before(input):
-        topk = TopK(input)
+        topk = TopK(input, 2)
         output = tuple_getitem(topk, 0)
         return output
 

@@ -16,6 +16,9 @@
 #include "pre_activate/ascend/ir_fission/topk_split.h"
 #include <vector>
 #include <memory>
+#include <unordered_set>
+#include "pre_activate/common/helper.h"
+#include "kernel/kernel_build_info.h"
 #include "utils/utils.h"
 #include "session/kernel_graph.h"
 #include "session/anf_runtime_algorithm.h"
@@ -25,6 +28,7 @@
 namespace mindspore {
 namespace opt {
 constexpr size_t kFloat16Len = 2;  // size of float16;
+constexpr size_t kTopkIndexK = 1;
 namespace {
 tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   // 1 create tensor
@@ -70,37 +74,68 @@ ValueNodePtr CreateValueNode(const AnfNodePtr &node) {
   AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), indices_const.get());
   return indices_const;
 }
+
+kernel::KernelBuildInfoPtr CreateKernelBuildInfo() {
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
+  builder.SetOutputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
+  builder.SetInputsDeviceType({kNumberTypeFloat16, kNumberTypeFloat16});
+  builder.SetOutputsDeviceType({kNumberTypeFloat16, kNumberTypeInt32});
+  return builder.Build();
+}
 }  // namespace
 
 const BaseRef TopKSplit::DefinePattern() const {
-  VarPtr X = std::make_shared<Var>();
-  MS_EXCEPTION_IF_NULL(X);
+  VarPtr X1 = std::make_shared<Var>();
+  VarPtr X2 = std::make_shared<Var>();
   auto prim = std::make_shared<Primitive>(kTopKOpName);
-  MS_EXCEPTION_IF_NULL(prim);
-  return VectorRef({prim, X});
+  return VectorRef({prim, X1, X2});
 }
 
 const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  auto indices_const = CreateValueNode(node);
   // set value node as topk's input
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(INFO) << "already has input size: " << cnode->inputs().size();
-  cnode->add_input(indices_const);
+  // Copy a new node to check supported.
+  std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kTopKOpName))};
+  new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  CNodePtr new_cnode = func_graph->NewCNode(new_inputs);
+  MS_EXCEPTION_IF_NULL(new_cnode);
+  new_cnode->set_abstract(cnode->abstract());
+  new_cnode->set_scope(cnode->scope());
+  AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
+  CheckCNodeInputSize(new_cnode, kTopkInputNum);
+  // Convert the tensor input to scalar and convert it to attr
+  auto input_k = new_cnode->input(kTopkIndexK + 1);
+  MS_EXCEPTION_IF_NULL(input_k);
+  if (!IsValueNode<tensor::Tensor>(input_k)) {
+    return nullptr;
+  }
+  ValuePtr value = GetValueNode(input_k);
+  MS_EXCEPTION_IF_NULL(value);
+  auto tensor = value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor);
+  int32_t *data = reinterpret_cast<int32_t *>(tensor->data_c());
+  MS_EXCEPTION_IF_NULL(data);
+  auto new_value_node = std::make_shared<ValueNode>(MakeValue(*data));
+  new_cnode->set_input(kTopkIndexK + 1, new_value_node);
+
+  std::unordered_set<size_t> attr_index{kTopkIndexK};
+  ConstInputToAttr(new_cnode, attr_index);
+  auto indices_const = CreateValueNode(new_cnode);
+  new_cnode->add_input(indices_const);
+  MS_EXCEPTION_IF_NULL(supported_checker_);
+  if (!supported_checker_->CheckSupported(new_cnode, CreateKernelBuildInfo())) {
+    return nullptr;
+  }
+
   if (kernel_graph != nullptr) {
     kernel_graph->AddValueNodeToGraph(indices_const);
   }
 
-  CNodePtr new_cnode = nullptr;
-  if (kernel_graph == nullptr) {
-    new_cnode = std::make_shared<CNode>(*cnode);
-  } else {
-    new_cnode = kernel_graph->NewCNode(cnode);
-  }
-  MS_EXCEPTION_IF_NULL(new_cnode);
   return new_cnode;
 }
 }  // namespace opt

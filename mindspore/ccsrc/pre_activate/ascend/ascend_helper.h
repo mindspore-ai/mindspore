@@ -21,6 +21,7 @@
 #include <vector>
 #include "device/ascend/kernel_select_ascend.h"
 #include "kernel/kernel_query.h"
+#include "kernel/tbe/tbe_kernel_select.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,6 +36,16 @@ class KernelSelect {
   }
 };
 using KernelSelectPtr = std::shared_ptr<KernelSelect>;
+
+class SupportedChecker {
+ public:
+  SupportedChecker() = default;
+  virtual ~SupportedChecker() = default;
+  virtual bool CheckSupported(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info) {
+    return kernel::CheckSupported(anf_node, select_kernel_build_info);
+  }
+};
+using SupportedCheckerPtr = std::shared_ptr<SupportedChecker>;
 
 class KernelQuery {
  public:
