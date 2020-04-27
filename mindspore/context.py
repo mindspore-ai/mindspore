@@ -404,7 +404,7 @@ def _context():
 
 
 @args_type_check(device_num=int, global_rank=int, mirror_mean=bool, cast_before_mirror=bool, parallel_mode=str,
-                 parameter_broadcast=bool)
+                 parameter_broadcast=bool, strategy_ckpt_load_file=str, strategy_ckpt_save_file=str)
 def set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -436,6 +436,8 @@ def set_auto_parallel_context(**kwargs):
         parameter_broadcast (bool): Indicating whether to broadcast parameters before training.
                        "stand_alone", "semi_auto_parallel" and "auto_parallel" do not support parameter
                        broadcast. Default: False.
+        strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
+        strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -447,6 +449,8 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(cast_before_mirror=False)
         >>> context.set_auto_parallel_context(parallel_mode="auto_parallel")
         >>> context.set_auto_parallel_context(parameter_broadcast=False)
+        >>> context.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
+        >>> context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
     """
     _set_auto_parallel_context(**kwargs)
 
@@ -477,6 +481,8 @@ def reset_auto_parallel_context():
     - cast_before_mirror: True.
     - parallel_mode: "stand_alone".
     - parameter_broadcast: False.
+    - strategy_ckpt_load_file: "".
+    - strategy_ckpt_save_file: "".
     """
     _reset_auto_parallel_context()
 

@@ -21,43 +21,37 @@
 #include <unordered_map>
 #include "parallel/ops_info/ops_utils.h"
 #include "parallel/strategy.h"
+#include "parallel/context.h"
 
 namespace mindspore {
 namespace parallel {
-constexpr char DEFAULT_CHECKPOINT_PATH[] = "./strategys.ckpt";
 
 using StrategyMap = std::unordered_map<std::string, StrategyPtr>;
 class StrategyCheckpoint {
  public:
-  StrategyCheckpoint() : path_(DEFAULT_CHECKPOINT_PATH), current_train_time_(1) {
-    train_times_ = 1;
-    checkpoint_on_ = false;
-    const char *train_times_str = std::getenv("PARALLEL_TRAIN_TIMES");
-    if (train_times_str != nullptr && std::stoi(train_times_str) > 0) {
-      train_times_ = std::stoi(train_times_str);
-    }
-    const char *checkpoint_on_str = std::getenv("PARALLEL_CHECKPOINT_ON");
-    if (checkpoint_on_str != nullptr) {
-      checkpoint_on_ = (std::string(checkpoint_on_str) == "on");
-    }
+  StrategyCheckpoint() {
+    current_stage_ = 0;
+    load_file_ = "";
+    load_checkpoint_on_ = false;
+    save_file_ = "";
+    save_checkpoint_on_ = false;
   }
   ~StrategyCheckpoint() = default;
-  bool CheckPointExit() const;
-  Status RemoveCheckPoint() const;
+
   Status Load(StrategyMap *strategy_map);
   Status Save(const StrategyMap &strategy_map);
 
   static StrategyCheckpoint &GetInstance();
-  int32_t GetTrainTimes() const { return train_times_; }
-  int32_t GetCurrentTrainTime() const { return current_train_time_; }
-  bool CheckPointOn() const { return checkpoint_on_; }
+  bool LoadCheckPointOn() const { return load_checkpoint_on_; }
+  bool SaveCheckPointOn() const { return save_checkpoint_on_; }
 
  private:
-  std::string path_;
-  bool checkpoint_on_;
-  // total train times for a train, get from Environmental variable:TRAIN_TIME, please export it
-  int32_t train_times_;
-  int32_t current_train_time_;
+  std::string load_file_;
+  std::string save_file_;
+  bool load_checkpoint_on_;
+  bool save_checkpoint_on_;
+  bool CheckPointExit(const std::string path) const;
+  int32_t current_stage_;
 };
 }  // namespace parallel
 }  // namespace mindspore

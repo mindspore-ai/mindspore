@@ -191,6 +191,12 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("get_parameter_broadcast_is_set", &ParallelContext::parameter_broadcast_is_set,
          "Get parameter broadcast is set.")
     .def("set_parameter_broadcast", &ParallelContext::set_parameter_broadcast, "Set parameter broadcast.")
+    .def("set_strategy_ckpt_load_file", &ParallelContext::set_strategy_ckpt_load_file,
+         "Set strategy checkpoint load file.")
+    .def("set_strategy_ckpt_save_file", &ParallelContext::set_strategy_ckpt_save_file,
+         "Set strategy checkpoint save file.")
+    .def("get_strategy_ckpt_load_file", &ParallelContext::strategy_ckpt_load_file, "Get strategy checkpoint load file.")
+    .def("get_strategy_ckpt_save_file", &ParallelContext::strategy_ckpt_save_file, "Get strategy checkpoint save file.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")

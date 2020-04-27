@@ -40,6 +40,7 @@
 #include "parallel/context.h"
 #include "parallel/ops_info/tmp_identity_info.h"
 #include "parallel/step_parallel.h"
+#include "parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "pipeline/parse/python_adapter.h"
 #include "pipeline/pipeline.h"
 
@@ -339,7 +340,7 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
   return IsParallelCareNode(cnode) && IsSplittableOperator(prim->name());
 }
 
-OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode) {
+OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode, StrategyMap *stra_map) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(cnode);
   auto attrs = prim->attrs();
@@ -385,9 +386,15 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   operator_info->set_input_value(input_value);
   operator_info->set_outputs_dtype(cnode->Type());
   operator_info->set_cnode(cnode);
+  // key of strategy map
+  std::string instance_name = prim->instance_name();
+  std::string strategy_key_name = cnode->scope()->name() + std::string(CONNSYMBOL) + instance_name;
+  bool load_strategy_from_ckpt =
+    StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map->find(strategy_key_name) != stra_map->end();
   // If no strategy has been configured for this operator, then candidate strategies are generated for
-  // auto-strategy searching; if this primitive is CAST, we ignore the user-specified strategy
-  if (!StrategyFound(attrs) || prim->name() == CAST) {
+  // auto-strategy searching; if this primitive is CAST, we ignore the user-specified strategy.
+  // if strategy is set to load from checkpoint, it is prefer to load strategy from checkpoint .
+  if ((!StrategyFound(attrs) || prim->name() == CAST) && !load_strategy_from_ckpt) {
     // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
     // BatchParallelInfo operator
     operator_info->ComputeBatchSplitFlagList();
@@ -397,7 +404,12 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
     }
   } else {
     // In this case, the configured strategy should be extracted to help setting cost
-    StrategyPtr strategyPtr = parallel::ExtractStrategy(attrs);
+    StrategyPtr strategyPtr;
+    if (load_strategy_from_ckpt) {
+      strategyPtr = (*stra_map)[strategy_key_name];
+    } else {
+      strategyPtr = parallel::ExtractStrategy(attrs);
+    }
     if (strategyPtr != nullptr) {
       if (prim->name() == RESHAPE) {
         MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
@@ -433,7 +445,13 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
   entire_costgraph->SetDeviceMemoryAndCostParameter();
   // The map from CNode's UniqueId to its operatorInfo
   std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
-
+  // extract strategy from checkpoint for multi-train
+  StrategyMap stra_map;
+  if (StrategyCheckpoint::GetInstance().LoadCheckPointOn()) {
+    if (StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
+    }
+  }
   // Step 1
   for (auto &node : all_nodes) {
     // NOTE: we only care about splittable Primitive operators
@@ -451,7 +469,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
 
     auto search_cnode = from_cnode_to_info.find(cnode->UniqueId());
     if (search_cnode == from_cnode_to_info.end()) {
-      auto operator_info = CreateTheOperatorInfo(prim, cnode);
+      auto operator_info = CreateTheOperatorInfo(prim, cnode, &stra_map);
       if (operator_info == nullptr) {
         return FAILED;
       }
@@ -486,7 +504,13 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
   entire_costgraph->SetDeviceMemoryAndCostParameter();
   // The map from CNode's UniqueIdThroughCopy to its operatorInfo
   std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
-
+  // extract strategy from checkpoint for multi-train
+  StrategyMap stra_map;
+  if (StrategyCheckpoint::GetInstance().LoadCheckPointOn()) {
+    if (StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
+    }
+  }
   for (auto &node : all_nodes) {
     // NOTE: we only care about splittable Primitive operators
     auto cnode = node->cast<CNodePtr>();
@@ -504,7 +528,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
     auto search_cnode = from_cnode_to_info.find(cnode->UniqueIdThroughCopy());
     if (search_cnode == from_cnode_to_info.end()) {
       // In this case, the corresponding OperatorInfo is not created, create the new one.
-      auto operator_info = CreateTheOperatorInfo(prim, cnode);
+      auto operator_info = CreateTheOperatorInfo(prim, cnode, &stra_map);
       if (operator_info == nullptr) {
         return FAILED;
       }
