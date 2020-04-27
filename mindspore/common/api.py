@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_parallel_mode
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor
-from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_ge
+from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
 
 # store ms_function class compiled pipeline cache
@@ -184,7 +184,7 @@ class _MindSporeFunction:
 
     @_wrap_func
     def __call__(self, *args):
-        init_ge()
+        init_backend()
         converted, arguments_dict, parse_method = _convert_function_arguments(self.fn, *args)
         if not converted:
             raise RuntimeError('Process function parameter is failure')

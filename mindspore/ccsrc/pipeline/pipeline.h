@@ -115,8 +115,8 @@ bool InitDistribute(const std::map<std::string, std::string> &options);
 void ResetOpId();
 void InitHccl();
 void FinalizeHccl();
-void InitGe();
-void FinalizeGe();
+void InitBackend();
+void FinalizeBackend();
 
 void ClearResAtexit();
 void ReleaseGeTsd();

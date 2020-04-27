@@ -82,8 +82,10 @@ class MsContext {
 
   bool OpenTsd();
   bool CloseTsd(bool force = false);
+  bool IsTsdOpened();
   bool InitGe();
   bool FinalizeGe(bool force = false);
+  bool IsGeInited();
   void set_enable_hccl(bool enable_hccl) { enable_hccl_ = enable_hccl; }
   bool enable_hccl() const { return enable_hccl_; }
   bool PynativeInitGe();
