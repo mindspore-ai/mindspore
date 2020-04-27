@@ -260,3 +260,23 @@ def resnet50(class_num=10):
                   [256, 512, 1024, 2048],
                   [1, 2, 2, 2],
                   class_num)
+
+def resnet101(class_num=1001):
+    """
+    Get ResNet101 neural network.
+
+    Args:
+        class_num (int): Class number.
+
+    Returns:
+        Cell, cell instance of ResNet101 neural network.
+
+    Examples:
+        >>> net = resnet101(1001)
+    """
+    return ResNet(ResidualBlock,
+                  [3, 4, 23, 3],
+                  [64, 256, 512, 1024],
+                  [256, 512, 1024, 2048],
+                  [1, 2, 2, 2],
+                  class_num)
