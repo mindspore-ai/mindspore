@@ -32,6 +32,7 @@
 #include "pipeline/static_analysis/static_analysis.h"
 #include "pipeline/static_analysis/program_specialize.h"
 #include "pipeline/resource.h"
+#include "utils/context/ms_context.h"
 #include "pipeline/remove_value_node_dup.h"
 #include "optimizer/optimizer.h"
 #include "vm/transform.h"
@@ -240,13 +241,23 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
 }
 
 bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes) {
+  size_t counter = 0;
   for (auto &pass : passes) {
-    WITH(MsProfile::GetProfile()->Step(pass.first))[&pass, &res]() {
+    WITH(MsProfile::GetProfile()->Step(pass.first))[&pass, &res, &counter]() {
       MS_LOG(DEBUG) << "Pass " << pass.first << " start ...";
       auto result = pass.second(res);
       if (!result) {
         MS_LOG(EXCEPTION) << "Pass running to end, failed in pass:" << pass.first;
       }
+      if (MsContext::GetInstance()->save_graphs_flag() && res->func_graph() != nullptr) {
+        auto fg_name = "opt_pass_" + std::to_string(counter) + "_" + pass.first;
+        auto func_graph = res->func_graph();
+        MS_EXCEPTION_IF_NULL(func_graph);
+        func_graph->DumpFuncGraph(fg_name);
+        DumpIR(fg_name + ".ir", func_graph);
+        MS_LOG(DEBUG) << "Dump " << fg_name << " func graph.";
+      }
+      counter++;
       MS_LOG(DEBUG) << "Pass " << pass.first << " end.";
     };
   }

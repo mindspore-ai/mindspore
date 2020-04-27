@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <vector>
 #include <utility>
+#include <map>
 
 #ifdef DEBUG
 #include <stack>
@@ -206,6 +207,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   AnfNodeConfigMap anfnode_config_map_;
   // Use a list to trace multiple evaluators.
   std::list<std::pair<EvaluatorPtr, AbstractBasePtrList>> eval_trace_;
+  std::map<EvaluatorPtr, EvaluatorPtr> multi_poss_;
 
   AnalysisContextPtr Run(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
                          const ConfigPtrList &args_conf_list);

@@ -27,14 +27,13 @@
 #include <utility>
 #include <initializer_list>
 
-#ifdef DEBUG
 #include "debug/draw.h"
 #include "debug/anf_ir_dump.h"
-#endif
+#include "debug/trace.h"
 #include "optimizer/opt.h"
 #include "pipeline/resource.h"
 #include "pipeline/action.h"
-#include "debug/trace.h"
+#include "utils/context/ms_context.h"
 
 namespace mindspore {
 namespace opt {
@@ -133,7 +132,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
 
   FuncGraphPtr step(FuncGraphPtr func_graph, bool use_profile = true) {
     // Optimizer step counter;
-    int counter = 1;
+    int counter = -1;
     bool changes = true;
 
     while (changes) {
@@ -170,13 +169,14 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
             }
           };
           use_profile ? (WITH(MsProfile::GetProfile()->Step(pass_names_[i])) opt_func) : opt_func();
-#ifdef DEBUG
-          MS_LOG(DEBUG) << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
-          auto fg_name = name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];
-          func_graph->DumpFuncGraph(fg_name);
-          DumpIR(fg_name + ".ir", func_graph);
-          MS_LOG(DEBUG) << "Dump " << pass_names_[i] << " func graph.";
-#endif
+          if (IS_OUTPUT_ON(mindspore::DEBUG) && MsContext::GetInstance()->save_graphs_flag()) {
+            MS_LOG(DEBUG) << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
+            auto fg_name =
+              "opt_substep_" + name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];
+            func_graph->DumpFuncGraph(fg_name);
+            DumpIR(fg_name + ".ir", func_graph);
+            MS_LOG(DEBUG) << "Dump " << pass_names_[i] << " func graph.";
+          }
         }
       };
       use_profile ? (WITH(MsProfile::GetProfile()->Lap(counter++)) run_runc) : run_runc();

@@ -19,6 +19,7 @@
 #include "pipeline/static_analysis/static_analysis.h"
 
 #include <algorithm>
+#include <set>
 
 #include "pipeline/static_analysis/utils.h"
 #include "pipeline/static_analysis/prim.h"
@@ -239,7 +240,6 @@ AbstractBasePtr AnalysisEngine::InferCNode(const CNodePtr &cnode, const AnfNodeC
   for (std::size_t i = 1; i < inputs.size(); i++) {
     const AnfNodePtr &node = inputs[i];
     args_conf_list.push_back(MakeConfig(node, context));
-    MS_LOG(DEBUG) << "Current CNode args_conf_list[" << i << "] node: " << node->DebugString();
   }
   std::vector<EvaluatorPtr> infs;
 
@@ -469,6 +469,10 @@ AbstractBasePtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Eval
                                                           const AnfNodeConfigPtr &out_conf,
                                                           const ConfigPtrList &args_conf_list) {
   AbstractBasePtrList out_specs;
+  if (!multi_poss_.count(evaluators[0])) {
+    multi_poss_[evaluators[0]] = evaluators[1];
+    multi_poss_[evaluators[1]] = evaluators[0];
+  }
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
@@ -478,28 +482,81 @@ AbstractBasePtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Eval
   for (auto eval : evaluators) {
     auto fg_eval = eval->cast<FuncGraphEvaluatorPtr>();
     if (fg_eval) {
-      auto undetermined_fgs = fg_eval->func_graph()->recursive_graphs();
+      auto fg = fg_eval->func_graph();
+      MS_EXCEPTION_IF_NULL(fg);
+      auto undetermined_fgs = fg->recursive_graphs();
       if (undetermined_fgs) {
-        for (auto undetermined_fg : *undetermined_fgs) {
-          MS_LOG(DEBUG) << "Set graph undetermined: " << undetermined_fg->ToString();
-          // As the current evaluator has multiple possibles, all the func_graphs which
-          // are recursive with the current func_graph are undetermined in control flow.
-          undetermined_fg->set_flags(kFuncGraphFlagUndetermined, true);
-        }
+        auto fg_parent = fg->parent();
+        MS_EXCEPTION_IF_NULL(fg_parent);
+        fg_parent->set_flags(kFuncGraphFlagUndetermined, true);
+        MS_LOG(DEBUG) << "Set graph undetermined: " << fg_parent->ToString();
       }
     }
 
     auto current_inf = std::make_pair(eval, args_spec_list);
+    MS_LOG(DEBUG) << "Check Evaluator " << eval->ToString();
+
     // If current evaluator is under tracing, then skip current evaluator to avoid recursively inferring.
-    auto it = std::find(eval_trace_.begin(), eval_trace_.end(), current_inf);
-    if (it == eval_trace_.end()) {
+    auto it = std::find(eval_trace_.rbegin(), eval_trace_.rend(), current_inf);
+    if (it == eval_trace_.rend()) {
       eval_trace_.push_back(current_inf);
+      MS_LOG(DEBUG) << "Trace Evaluator " << eval->ToString() << " ptr: " << eval.get();
       MS_EXCEPTION_IF_NULL(eval);
       auto out_spec = eval->Run(shared_from_this(), args_conf_list, out_conf);
       MS_EXCEPTION_IF_NULL(out_spec);
       MS_LOG(DEBUG) << "Evaluator " << eval->ToString() << " return out_spec: " << out_spec->ToString();
       out_specs.push_back(out_spec);
+      MS_LOG(DEBUG) << "Pop Evaluator " << eval->ToString();
       eval_trace_.pop_back();
+      if (eval_trace_.empty()) {
+        multi_poss_.clear();
+      }
+    } else if (it != eval_trace_.rbegin()) {
+      // Find latest entry function to handle nested recursion.
+      EvaluatorPtr latest_entry = eval;
+      auto latest_entry_iter = eval_trace_.rbegin();
+      for (auto r_it = eval_trace_.rbegin(); *r_it != *it;) {
+        auto it_temp = std::find(evaluators.begin(), evaluators.end(), r_it->first);
+        if (it_temp != evaluators.end()) {
+          latest_entry = *it_temp;
+          latest_entry_iter = r_it;
+          break;
+        }
+        latest_entry_iter = ++r_it;
+      }
+      if (latest_entry != eval) {
+        MS_LOG(DEBUG) << "Continue Evaluator " << eval->ToString();
+        continue;
+      }
+
+      bool has_undetermined = false;
+      // Check whether sub loop has untraced undetermined evaluator.
+      std::set<std::pair<EvaluatorPtr, AbstractBasePtrList>> undetermined_evals;
+      for (auto r_it = eval_trace_.rbegin(); r_it != latest_entry_iter; r_it++) {
+        undetermined_evals.insert(*r_it);
+      }
+      MS_LOG(DEBUG) << "undetermined_evals size(): " << undetermined_evals.size();
+      for (auto u_eval : undetermined_evals) {
+        MS_LOG(DEBUG) << u_eval.first->ToString() << " check undetermined.";
+        if (!undetermined_evals.count(std::make_pair(multi_poss_[u_eval.first], args_spec_list))) {
+          MS_LOG(DEBUG) << u_eval.first->ToString() << " has undetermined.";
+          has_undetermined = true;
+          break;
+        }
+      }
+      if (has_undetermined == false) {
+        MS_LOG(DEBUG) << eval->ToString() << " has no undetermined.";
+        continue;
+      }
+
+      // Try to travel the latest undetermined.
+      if (latest_entry != eval_trace_.rbegin()->first) {
+        MS_LOG(DEBUG) << "Direct Run Evaluator " << eval->ToString();
+        auto out_spec = latest_entry->Run(shared_from_this(), args_conf_list, out_conf);
+        MS_EXCEPTION_IF_NULL(out_spec);
+        MS_LOG(DEBUG) << "Evaluator " << latest_entry->ToString() << " return out_spec: " << out_spec->ToString();
+        return out_spec;
+      }
     }
   }
   if (out_specs.size() == 0) {

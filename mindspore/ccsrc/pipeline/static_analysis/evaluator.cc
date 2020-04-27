@@ -55,6 +55,7 @@ void InferFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &
 AnalysisContextPtr BaseFuncGraphEvaluator::MakeContext(const AnalysisEnginePtr &engine,
                                                        const AbstractBasePtrList &args_spec_list) {
   AbstractBasePtrList normalized_args_spec_list = NormalizeArgs(args_spec_list);
+  normalized_args_spec_list = BroadenUndeterminedArgs(normalized_args_spec_list);
   FuncGraphPtr fg = GetFuncGraph(engine, normalized_args_spec_list);
   MS_EXCEPTION_IF_NULL(parent_context_);
   AnalysisContextPtr context = parent_context_->NewFuncGraphContext(fg, normalized_args_spec_list);
@@ -140,7 +141,14 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
                   << ", broaded: " << mindspore::ToString(broaded_list);
     return broaded_list;
   }
+  return args_spec_list;
+}
 
+AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUES)) {
+    return args_spec_list;
+  }
   if (func_graph_->has_flag(kFuncGraphFlagUndetermined)) {
     if (parent_context_) {
       MS_LOG(DEBUG) << "Undeterminate FuncGraphEvaluator " << ToString()
@@ -159,6 +167,21 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
         }
         return joined_args_spec_list;
       }
+    }
+    if (trace_.size() != 0) {
+      MS_LOG(DEBUG) << "Current eval args: " << ::mindspore::ToString(args_spec_list);
+      MS_LOG(DEBUG) << "Last eval args: " << ::mindspore::ToString(trace_.back());
+      // Join the last eval arguments and current arguments to check if there are loop variant.
+      auto joined_args_spec_list = AbstractJoin(args_spec_list, trace_.back());
+      // If there is loop variant, all arguments need to be broaden to avoid wrong constant propagation.
+      if (!(joined_args_spec_list == args_spec_list)) {
+        trace_.push_back(joined_args_spec_list);
+        func_graph_->set_flags(FUNC_GRAPH_FLAG_IGNORE_VALUES, true);
+      }
+      MS_LOG(DEBUG) << "Joined eval args: " << ::mindspore::ToString(joined_args_spec_list);
+      return joined_args_spec_list;
+    } else {
+      trace_.push_back(args_spec_list);
     }
   }
   return args_spec_list;
@@ -224,6 +247,7 @@ AbstractBasePtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &ar
                          return conf->GetEvaluatedValue();
                        });
   args_spec_list = NormalizeArgs(args_spec_list);
+  args_spec_list = BroadenUndeterminedArgs(args_spec_list);
   trace::TraceGraphInferEnter(shared_from_base<Evaluator>(), out_conf);
   InferEntryLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
   MS_EXCEPTION_IF_NULL(cache_);
