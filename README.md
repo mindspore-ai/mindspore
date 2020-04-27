@@ -1,7 +1,7 @@
 ![MindSpore Logo](docs/MindSpore-logo.png "MindSpore logo")
 ============================================================
 
-- [What is MindSpore?](#what-is-mindspore)
+- [What Is MindSpore?](#what-is-mindspore)
     - [Automatic Differentiation](#automatic-differentiation)
     - [Automatic Parallel](#automatic-parallel)
 - [Installation](#installation)
@@ -96,17 +96,19 @@ currently the containerized build options are supported as follows:
 
 | Hardware Platform | Docker Image Repository | Tag | Description |
 | :---------------- | :---------------------- | :-- | :---------- |
-| CPU | `mindspore/mindspore-cpu` | `0.2.0-alpha` | Production environment with pre-installed MindSpore `0.2.0-alpha` CPU release. |
+| CPU | `mindspore/mindspore-cpu` | `x.y.z` | Production environment with pre-installed MindSpore `x.y.z` CPU release. |
 |  |  | `devel` | Development environment provided to build MindSpore (with `CPU` backend) from the source, refer to https://www.mindspore.cn/install/en for installation details. |
 |  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `CPU` backend. |
-| GPU | `mindspore/mindspore-gpu` | `0.2.0-alpha` | Production environment with pre-installed MindSpore `0.2.0-alpha` GPU release. |
+| GPU | `mindspore/mindspore-gpu` | `x.y.z` | Production environment with pre-installed MindSpore `x.y.z` GPU release. |
 |  |  | `devel` | Development environment provided to build MindSpore (with `GPU CUDA10.1` backend) from the source, refer to https://www.mindspore.cn/install/en for installation details. |
-|  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `GPU` backend. |
+|  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `GPU CUDA10.1` backend. |
 | Ascend | <center>&mdash;</center> | <center>&mdash;</center> | Coming soon. |
+
+> **NOTICE:** For GPU `devel` docker image, it's NOT suggested to directly install the whl package after building from the source, instead we strongly RECOMMEND you transfer and install the whl package inside GPU `runtime` docker image.
 
 * CPU
 
-    For `CPU` backend, you can directly pull and run the image using the below command:
+    For `CPU` backend, you can directly pull and run the latest stable image using the below command:
     ```
     docker pull mindspore/mindspore-cpu:0.2.0-alpha
     docker run -it mindspore/mindspore-cpu:0.2.0-alpha python -c 'import mindspore'
@@ -124,7 +126,7 @@ currently the containerized build options are supported as follows:
     sudo systemctl restart docker
     ```
 
-    Then you can pull and run the image using the below command:
+    Then you can pull and run the latest stable image using the below command:
     ```
     docker pull mindspore/mindspore-gpu:0.2.0-alpha
     docker run -it --runtime=nvidia --privileged=true mindspore/mindspore-gpu:0.2.0-alpha /bin/bash
@@ -133,11 +135,12 @@ currently the containerized build options are supported as follows:
     To test if the docker image works, please execute the python code below and check the output:
     ```python
     import numpy as np
+    import mindspore.context as context
     from mindspore import Tensor
     from mindspore.ops import functional as F
-    import mindspore.context as context
 
     context.set_context(device_target="GPU")
+
     x = Tensor(np.ones([1,3,3,4]).astype(np.float32))
     y = Tensor(np.ones([1,3,3,4]).astype(np.float32))
     print(F.tensor_add(x, y))
