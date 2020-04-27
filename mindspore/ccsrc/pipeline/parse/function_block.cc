@@ -37,7 +37,7 @@ void FunctionBlock::AddPrevBlock(const FunctionBlockPtr &block) { prev_blocks_.p
 
 // write variable records the variable name to corresponding node
 void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr &node) {
-  MS_LOG(DEBUG) << "" << func_graph_->ToString() << " write var " << var_name << " with node " << node->DebugString();
+  MS_LOG(DEBUG) << func_graph_->ToString() << " write var " << var_name << " with node " << node->DebugString();
   vars_[var_name] = node;
 }
 
@@ -71,7 +71,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
   TraceManager::DebugTrace(std::make_shared<TracePhi>(debug_info));
   ParameterPtr phi_param = std::make_shared<Parameter>(func_graph());
   TraceManager::EndTrace();
-  MS_LOG(DEBUG) << "" << func_graph_->ToString() << " generate phi node " << phi_param->ToString() << " for " << var;
+  MS_LOG(DEBUG) << func_graph_->ToString() << " generate phi node " << phi_param->ToString() << " for " << var;
   func_graph()->add_parameter(phi_param);
   phi_nodes_[phi_param] = var;
   WriteVariable(var, phi_param);

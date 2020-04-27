@@ -246,7 +246,7 @@ AbstractBasePtr InferImplBiasAddGrad(const AnalysisEnginePtr &, const PrimitiveP
   // Inputs: at least one tensor(y_backprop)
   // Outputs: dbias
   if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "" << primitive->name() << " evaluator at least has 1 parameters, while the input size is "
+    MS_LOG(EXCEPTION) << primitive->name() << " evaluator at least has 1 parameters, while the input size is "
                       << args_spec_list.size() << ".";
   }
 
@@ -255,8 +255,7 @@ AbstractBasePtr InferImplBiasAddGrad(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(shape_y);
   std::vector<int> y_dims = shape_y->shape();
   if (y_dims.size() < 2) {
-    MS_LOG(EXCEPTION) << "" << primitive->name() << " input y backprop, dim should >= 2, while " << y_dims.size()
-                      << ".";
+    MS_LOG(EXCEPTION) << primitive->name() << " input y backprop, dim should >= 2, while " << y_dims.size() << ".";
   }
   std::vector<int> bias_dims = {y_dims[1]};
   ShapePtr ret_shape = std::make_shared<Shape>(bias_dims);

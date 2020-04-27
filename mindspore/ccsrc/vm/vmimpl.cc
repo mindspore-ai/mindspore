@@ -445,7 +445,7 @@ BaseRef RunOperation(const PrimitivePtr &prim, const VectorRef &args) {
   MS_LOG(DEBUG) << "operation start " << prim->name();
   auto func = operation != nullptr ? operation->GetComputeFunction() : prim->GetComputeFunction();
   if (py::isinstance<py::none>(func)) {
-    MS_LOG(EXCEPTION) << "" << prim->name() << " 's compute function is not implemented";
+    MS_LOG(EXCEPTION) << prim->name() << " 's compute function is not implemented";
   }
 
   py::tuple py_args = py::tuple(args.size());

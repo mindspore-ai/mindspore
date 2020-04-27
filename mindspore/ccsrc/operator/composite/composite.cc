@@ -676,7 +676,7 @@ void MultitypeFuncGraph::Register(const std::vector<std::string> &types_name, co
   for (auto &type_name : types_name) {
     auto type_ptr = StringToType(type_name);
     if (type_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "" << type_name << " convert from string error ";
+      MS_LOG(EXCEPTION) << type_name << " convert from string error ";
     }
     types.push_back(type_ptr);
   }
@@ -955,8 +955,7 @@ int CheckSliceMember(const AbstractBasePtr &member, int default_value, const std
     return default_value;
   }
 
-  MS_LOG(EXCEPTION) << "" << member_name << " should be a AbstractScalar or AbstractNone, but got "
-                    << member->ToString();
+  MS_LOG(EXCEPTION) << member_name << " should be a AbstractScalar or AbstractNone, but got " << member->ToString();
 }
 
 void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSlicePtr &slice, int *start_index,

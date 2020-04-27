@@ -888,7 +888,7 @@ void FuncGraphUserNodesCollector::OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr 
 void FuncGraphJDirectCollector::OnModEdge(AnfNodePtr node, int, AnfNodePtr inp, EdgeProcessDirection direction) {
   if (IsValueNode<FuncGraph>(inp) && IsPrimitiveCNode(node, prim::kPrimJ)) {
     (void)Mod(node->func_graph(), GetValueNode<FuncGraphPtr>(inp), direction);
-    MS_LOG(DEBUG) << "" << node->func_graph()->ToString() << " users func graph "
+    MS_LOG(DEBUG) << node->func_graph()->ToString() << " users func graph "
                   << GetValueNode<FuncGraphPtr>(inp)->ToString() << " which contains J(func_graph), dir: " << direction;
   }
 }
@@ -945,7 +945,7 @@ FuncGraphSetPtr FuncGraphParentsTotalComputer::SeekParents(const FuncGraphPtr &f
 void FuncGraphParentsTotalComputer::RealRecompute(FuncGraphPtr fg) {
   MS_EXCEPTION_IF_NULL(fg);
   all_parents_direct_ = &(manager_->func_graph_parents_direct());
-  MS_LOG(DEBUG) << "" << fg->ToString() << " total func graph dep size:" << (*all_parents_direct_)[fg].size();
+  MS_LOG(DEBUG) << fg->ToString() << " total func graph dep size:" << (*all_parents_direct_)[fg].size();
   func_graph_parents_total_analysis_[fg].update(SeekParents(fg));
   MS_LOG(DEBUG) << "FuncGraphParentsTotalComputer end: " << func_graph_parents_total_analysis_[fg].size();
 }
@@ -1074,7 +1074,7 @@ void FuncGraphsUsedTotalComputer::RealRecompute(FuncGraphPtr fg) {
         if (func_graph_used_total_analysis_[fg].count(used_fg) == 0) {
           todo_new.push_back(used_fg);
         }
-        MS_LOG(DEBUG) << "" << fg->ToString() << " add func graph " << used_fg->ToString();
+        MS_LOG(DEBUG) << fg->ToString() << " add func graph " << used_fg->ToString();
         func_graph_used_total_analysis_[fg].add(used_fg);
       }
     }
@@ -1138,7 +1138,7 @@ void RecursiveComputer::CheckRecursiveGraphs(const FuncGraphPtr &fg, std::list<F
 bool FuncGraphJTotalComputer::SeekJ(const FuncGraphPtr &fg, const FuncGraphSetPtr &path) {
   MS_EXCEPTION_IF_NULL(path);
   if (path->contains(fg)) {
-    MS_LOG(DEBUG) << "" << fg->ToString() << " had been checked";
+    MS_LOG(DEBUG) << fg->ToString() << " had been checked";
     return false;
   }
   MS_EXCEPTION_IF_NULL(manager_);
@@ -1149,7 +1149,7 @@ bool FuncGraphJTotalComputer::SeekJ(const FuncGraphPtr &fg, const FuncGraphSetPt
       std::find_if(func_graph_counter_map[fg].begin(), func_graph_counter_map[fg].end(),
                    [path](const std::pair<FuncGraphPtr, int> iter) { return !path->contains(iter.first); });
     if (contains_j != func_graph_counter_map[fg].end()) {
-      MS_LOG(DEBUG) << "" << fg->ToString() << " contains J(" << contains_j->first->ToString() << ")";
+      MS_LOG(DEBUG) << fg->ToString() << " contains J(" << contains_j->first->ToString() << ")";
       return true;
     }
   }
@@ -1160,12 +1160,11 @@ bool FuncGraphJTotalComputer::SeekJ(const FuncGraphPtr &fg, const FuncGraphSetPt
   for (auto &item : used[fg]) {
     auto used_g = item.first;
     if (SeekJ(used_g, path)) {
-      MS_LOG(DEBUG) << "" << fg->ToString() << " users func graph " << used_g->ToString()
-                    << " which contains J(func_graph)";
+      MS_LOG(DEBUG) << fg->ToString() << " users func graph " << used_g->ToString() << " which contains J(func_graph)";
       return true;
     }
   }
-  MS_LOG(DEBUG) << "" << fg->ToString() << " doesn't contain J(func_graph)";
+  MS_LOG(DEBUG) << fg->ToString() << " doesn't contain J(func_graph)";
   return false;
 }
 
