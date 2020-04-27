@@ -1251,7 +1251,8 @@ class Acosh(PrimitiveWithInfer):
     Compute inverse hyperbolic cosine of x element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`,
+          and the data type of 'input_x' is number, the element in 'input_x' should be greater than or equal to 1.
 
     Outputs:
         Tensor, has the same shape as `input_x`.

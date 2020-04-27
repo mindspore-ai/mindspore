@@ -52,11 +52,11 @@ void DoExecNonInputGraph(const std::string &phase) {
   transform::RunOptions run_options;
   run_options.name = phase;
   auto graph_runner = DfGraphManager::GetInstance().GetGraphRunner();
-
   if (graph_runner == nullptr) {
     MS_LOG(ERROR) << "Can not found GraphRunner";
     return;
   }
+
   {
     // Release GIL before calling into (potentially long-running) C++ code
     py::gil_scoped_release release;
@@ -181,7 +181,6 @@ bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::di
   size_t pos = phase.find('.');
   std::string net_id = ((pos == std::string::npos || pos == phase.size() - 1) ? phase : phase.substr(pos + 1));
   std::string phase_prefix = phase.substr(0, pos);
-
   if (phase_prefix == "export") {
     MS_LOG(INFO) << "Set DfGraphConvertor training : false";
     convertor.set_training(false);
@@ -319,19 +318,24 @@ void RunGEInitGraph(const py::dict &init_params, const std::string &phase) {
 
 py::object ExtractGeneralCnodeRet(const AbstractBasePtr &cnode_data, const py::tuple &data, size_t *count) {
   MS_EXCEPTION_IF_NULL(cnode_data);
-  if (*count >= data.size()) {
-    MS_LOG(EXCEPTION) << "The number of elements in the outputs : " << data.size()
-                      << " less than the number of elements required. ";
-  }
 
   if (cnode_data->isa<AbstractTensor>()) {
-    BaseShapePtr shape = cnode_data->BuildShape();
-    auto shape_act = shape->cast<abstract::ShapePtr>()->shape();
-    Tensor tensor_exp = py::cast<Tensor>(data[*count]);
-    if (shape_act != tensor_exp.shape()) {
-      MS_LOG(EXCEPTION) << "The shape of the tensor returned from GE is not the same as "
-                           "the shape of the tensor derived from ME.";
+    if (*count >= data.size()) {
+      MS_LOG(EXCEPTION) << "The number of elements in the outputs : " << data.size()
+                        << " less than the number of elements required. ";
     }
+
+    BaseShapePtr shape = cnode_data->BuildShape();
+    if (!shape->isa<abstract::Shape>()) {
+      MS_LOG(EXCEPTION) << "The shape of the tensor derived is not Shape, is " << shape->ToString();
+    }
+    auto shape_me = shape->cast<abstract::ShapePtr>()->shape();
+    auto shape_ge = py::cast<Tensor>(data[*count]).shape();
+    if (shape_ge != shape_me) {
+      MS_LOG(EXCEPTION) << "The shape of the " << *count << "th tensor returned: " << shape_ge
+                        << " is not the same as the shape of the tensor derived: " << shape_me;
+    }
+
     return data[(*count)++];
   }
 
@@ -343,7 +347,7 @@ py::object ExtractGeneralCnodeRet(const AbstractBasePtr &cnode_data, const py::t
   auto data_tp = cnode_data->cast<AbstractTuplePtr>();
   auto elements = data_tp->elements();
   size_t size = data_tp->size();
-  py::tuple tp = py::tuple(size);
+  auto tp = py::tuple(size);
   for (size_t i = 0; i < size; i++) {
     tp[i] = ExtractGeneralCnodeRet(elements[i], data, count);
   }
@@ -357,11 +361,11 @@ py::object StructureOutput(const AnfNodePtr &output_node, const py::tuple &data,
     return ValuePtrToPyData(GetValueNode(output_node));
   }
 
-  if (*count >= data.size()) {
-    MS_LOG(EXCEPTION) << "The number of elements in the outputs : " << data.size()
-                      << " less than the number of elements required. ";
-  }
   if (output_node->isa<Parameter>()) {
+    if (*count >= data.size()) {
+      MS_LOG(EXCEPTION) << "The number of elements in the outputs : " << data.size()
+                        << " less than the number of elements required. ";
+    }
     return data[(*count)++];
   }
 
@@ -374,7 +378,7 @@ py::object StructureOutput(const AnfNodePtr &output_node, const py::tuple &data,
   if (output_c->IsApply(prim::kPrimMakeTuple)) {
     auto input_list = output_c->inputs();
     size_t size = input_list.size();
-    py::tuple tp = py::tuple(size - 1);
+    auto tp = py::tuple(size - 1);
     for (size_t i = 1; i < size; i++) {
       tp[i - 1] = StructureOutput(input_list[i], data, count);
     }
@@ -396,11 +400,8 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr &graph, const std::ve
 
   std::vector<GeTensorPtr> ge_outputs;
   transform::RunOptions run_options;
-
   run_options.name = phase;
-
   auto graph_runner = DfGraphManager::GetInstance().GetGraphRunner();
-
   if (graph_runner == nullptr) {
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
   }
@@ -473,7 +474,6 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr> &info, const py::
 py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::tuple &args,
                        const std::string &phase) {
   std::string phase_prefix = GetPhasePrefix(phase);
-
   if (phase_prefix == "save") {
     DoExecNonInputGraph(phase);
     ConfigManager::GetInstance().ResetConfig();
@@ -483,7 +483,6 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const
   if (info.count(phase) == 0) {
     MS_LOG(EXCEPTION) << "There is no phase:" << phase;
   }
-
   FuncGraphPtr anf_graph = info.at(phase)->func_graph;
 
 #ifdef ENABLE_INFER

@@ -31,7 +31,6 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-
 static AnfNodePtr GenerateUnpackGraphNode(std::vector<AnfNodePtr> inputs_y, FuncGraphPtr func_graph,
                                           AnfNodePtr func_node, bool is_unpack, bool sens_param) {
   MS_EXCEPTION_IF_NULL(func_graph);

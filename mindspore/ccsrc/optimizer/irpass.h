@@ -159,7 +159,6 @@ inline bool IsCNodeDup(const AnfNodePtr &node) {
   }
   return false;
 }
-
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

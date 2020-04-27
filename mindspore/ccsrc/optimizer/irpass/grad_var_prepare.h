@@ -33,7 +33,6 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-
 // {{GradOperation, g, w}, Ys}
 // {UnPackCall, {GradOperation, g, w}, Ys}
 class GradVarPrepare : public AnfVisitor {
