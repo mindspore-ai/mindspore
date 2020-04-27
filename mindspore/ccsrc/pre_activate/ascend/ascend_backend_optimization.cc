@@ -46,7 +46,6 @@
 #include "pre_activate/ascend/ir_fusion/mul_addn_fusion.h"
 #include "pre_activate/ascend/ir_fusion/matmul_biasadd_fusion.h"
 #include "pre_activate/ascend/ir_fusion/remove_reshape_pair.h"
-#include "pre_activate/ascend/ir_fusion/confusion_mul_grad_fusion.h"
 #include "pre_activate/ascend/ir_fusion/derelu_fusion.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/pass/getitem_tuple.h"
@@ -97,7 +96,6 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<MatmulBiasaddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<DereluFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
 }
