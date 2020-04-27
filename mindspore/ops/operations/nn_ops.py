@@ -634,6 +634,12 @@ class Conv2D(PrimitiveWithInfer):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Examples:
+        >>> input = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
+        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
+        >>> conv2d = P.Conv2D(out_channel=32, kernel_size=3)
+        >>> conv2d(input, weight)
     """
 
     @prim_attr_register
@@ -1090,6 +1096,13 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
 
     Returns:
         Tensor, the gradients of convolution.
+
+    Examples:
+        >>> dout = Tensor(np.ones([10, 32, 30, 30]), mindspore.float32)
+        >>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
+        >>> x = Tensor(np.ones([10, 32, 32, 32]))
+        >>> conv2d_backprop_input = P.Conv2DBackpropInput(out_channel=32, kernel_size=3)
+        >>> conv2d_backprop_input(dout, weight, F.shape(x))
     """
 
     @prim_attr_register
@@ -1262,6 +1275,9 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
 
     Outputs:
         Tuple of 2 Tensor, the loss shape is `(N,)`, and the dlogits with the same shape as `logits`.
+
+    Examples:
+        Please refer to the usage in nn.SoftmaxCrossEntropyWithLogits source code.
     """
 
     @prim_attr_register
@@ -1306,6 +1322,9 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
     Outputs:
         Tensor, if `is_grad` is False, the output tensor is the value of loss which is a scalar tensor;
         if `is_grad` is True, the output tensor is the gradient of input with the same shape as `logits`.
+
+    Examples:
+        Please refer to the usage in nn.SoftmaxCrossEntropyWithLogits source code.
     """
 
     @prim_attr_register
@@ -2117,6 +2136,12 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same shape and type as input `logits`.
+
+    Examples:
+        >>> logits = Tensor(np.random.randn(2, 3).astype(np.float16))
+        >>> labels = Tensor(np.random.randn(2, 3).astype(np.float16))
+        >>> sigmoid = P.SigmoidCrossEntropyWithLogits()
+        >>> sigmoid(logits, labels)
     """
 
     @prim_attr_register
@@ -2471,6 +2496,14 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and type as `var`.
+
+    Examples:
+        var = Tensor(np.random.random((3, 3)), mindspore.float32)
+        accum = Tensor(np.random.random((3, 3)), mindspore.float32)
+        grad = Tensor(np.random.random((3, 3)), mindspore.float32)
+        indices = Tensor(np.ones((3,), np.int32))
+        sparse_apply_ada_grad = P.SparseApplyAdagrad(0.5)
+        sparse_apply_ada_grad(var, accum, grad, indices)
     """
 
     @prim_attr_register
