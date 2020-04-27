@@ -94,11 +94,9 @@ AbstractBasePtr BaseFuncGraphEvaluator::Infer(AnalysisEnginePtr engine, const Ab
   MS_EXCEPTION_IF_NULL(fg);
   std::size_t nargs = fg->parameters().size();
   if (args_spec_list.size() != nargs) {
-    MS_LOG(EXCEPTION) << "Function " << fg->ToString() << ", The number of parameters of this function is "
-                      << fg->parameters().size()
-                      << ","
-                         " but the number of provided arguments is "
-                      << args_spec_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
+    MS_EXCEPTION(ValueError) << "Function " << fg->ToString() << ", The number of parameters of this function is "
+                             << fg->parameters().size() << ", but the number of provided arguments is "
+                             << args_spec_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
   }
   MS_EXCEPTION_IF_NULL(parent_context_);
   MS_EXCEPTION_IF_NULL(engine);
