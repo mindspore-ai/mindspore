@@ -465,7 +465,7 @@ void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr> &info, const py::
       if (converted->isa<tensor::Tensor>()) {
         inputs->push_back(converted->cast<tensor::TensorPtr>());
       } else {
-        MS_LOG(EXCEPTION) << "Args " << converted->ToString() << " is not tensor";
+        MS_EXCEPTION(TypeError) << "Args " << converted->ToString() << " is not tensor";
       }
     }
   }
