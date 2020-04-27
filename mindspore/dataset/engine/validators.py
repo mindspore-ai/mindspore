@@ -700,9 +700,11 @@ def check_map(method):
         nreq_param_list = ['columns_order']
         nreq_param_int = ['num_parallel_workers']
         nreq_param_columns = ['input_columns', 'output_columns']
+        nreq_param_bool = ['python_multiprocessing']
 
         check_param_type(nreq_param_list, param_dict, list)
         check_param_type(nreq_param_int, param_dict, int)
+        check_param_type(nreq_param_bool, param_dict, bool)
         for param_name in nreq_param_columns:
             param = param_dict.get(param_name)
             if param is not None:
