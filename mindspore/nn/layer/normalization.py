@@ -350,7 +350,7 @@ class GlobalBatchNorm(_BatchNorm):
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> global_bn_op = nn.GlobalBatchNorm(num_features=3, group=4)
+        >>> global_bn_op = nn.GlobalBatchNorm(num_features=3, device_num_each_group=4)
         >>> input = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
         >>> global_bn_op(input)
     """
