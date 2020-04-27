@@ -55,7 +55,7 @@ class BroadCastNet(nn.Cell):
         self.broadcast = Broadcast(0)
 
     def construct(self, x):
-        x = self.broadcast((x))
+        x, = self.broadcast((x,))
         x = self.dense(x)
         return x
 
