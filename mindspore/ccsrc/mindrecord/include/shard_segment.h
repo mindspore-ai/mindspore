@@ -90,8 +90,6 @@ class ShardSegment : public ShardReader {
 
   std::string CleanUp(std::string fieldName);
 
-  std::tuple<std::vector<uint8_t>, json> GetImageLabel(std::vector<uint8_t> images, json label);
-
   std::pair<MSRStatus, std::vector<uint8_t>> PackImages(int group_id, int shard_id, std::vector<uint64_t> offset);
 
   std::vector<std::string> candidate_category_fields_;
