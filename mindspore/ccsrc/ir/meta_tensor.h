@@ -329,9 +329,6 @@ class Tensor : public MetaTensor {
   // It is different from 'operator==' which just compare shape/type/address, it do real value comparison.
   bool ValueEqual(const Tensor &other) const;
 
-  // It is different from 'operator==' which just compare shape/type/address, it do real value comparison.
-  bool ValueEqualPy(const py::object &other) const;
-
   bool operator==(const Value &other) const override {
     if (other.isa<Tensor>()) {
       auto other_ = static_cast<const Tensor &>(other);
