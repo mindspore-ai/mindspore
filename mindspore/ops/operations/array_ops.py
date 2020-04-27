@@ -1910,11 +1910,11 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, size, align_corners=False):
         """Init ResizeNearestNeighbor"""
-        validator.check_value_type("size", size, [tuple, list], self.name)
-        validator.check_value_type("align_corners", align_corners, [bool], self.name)
-        validator.check_integer("length of size", len(size), 2, Rel.EQ, self.name)
+        validator.check_type("size", size, [tuple, list])
+        validator.check_type("align_corners", align_corners, [bool])
+        validator.check_integer("length of size", len(size), 2, Rel.EQ)
         for i, value in enumerate(size):
-            validator.check_integer(f'{i}th value of size', value, 0, Rel.GE, self.name)
+            validator.check_integer(f'{i}th value of size', value, 0, Rel.GE)
         self.init_prim_io_names(inputs=['image_in'], outputs=['image_out'])
 
     def infer_shape(self, x):

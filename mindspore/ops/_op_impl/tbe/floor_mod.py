@@ -13,29 +13,26 @@
 # limitations under the License.
 # ============================================================================
 
-"""ScatterNd op"""
+"""FloorMod op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-scatter_nd_op_info = TBERegOp("ScatterNd") \
+floor_mod_op_info = TBERegOp("FloorMod") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("scatter_nd_d.so") \
+    .binfile_name("floor_mod.so") \
     .compute_cost(10) \
-    .kernel_name("scatter_nd_d") \
+    .kernel_name("floor_mod") \
     .partial_flag(True) \
-    .attr("shape", "optional", "listInt", "all") \
-    .input(0, "indices", False, "required", "all") \
-    .input(1, "x", False, "required", "all") \
+    .input(0, "x1", False, "required", "all") \
+    .input(1, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.I32_Default, DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.I32_Default, DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
 
 
-@op_info_register(scatter_nd_op_info)
-def _scatter_nd_tbe():
-    """ScatterNd TBE register"""
+@op_info_register(floor_mod_op_info)
+def _floor_mod_tbe():
+    """FloorMod TBE register"""
     return
