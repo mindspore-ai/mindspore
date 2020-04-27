@@ -816,6 +816,8 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
   MS_EXCEPTION_IF_NULL(anf_node);
   static std::map<std::string, std::map<size_t, size_t>> spec_node_list = {
     {prim::kPrimConv2DBackpropInput->name(), {{0, 1}, {1, 0}}},
+    {kFusionOpConv2DBackpropInputReluGradV2Name, {{0, 1}, {1, 0}, {2, 2}}},
+    {kFusionOpConv2DBackpropInputAddNReluGradV2Name, {{0, 1}, {1, 0}, {2, 2}, {3, 3}}},
     {prim::kPrimConv2DBackpropFilter->name(), {{0, 1}, {1, 0}}},
     {prim::kPrimLogSoftmaxGrad->name(), {{0, 1}, {1, 0}}},
     {prim::kPrimLayerNormGrad->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
