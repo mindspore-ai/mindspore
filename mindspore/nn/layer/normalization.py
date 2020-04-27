@@ -17,6 +17,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
+from mindspore.ops.primitive import constexpr
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 import mindspore.context as context
@@ -166,6 +167,10 @@ class _BatchNorm(Cell):
         return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
             self.num_features, self.eps, self.momentum, self.gamma, self.beta, self.moving_mean, self.moving_variance)
 
+@constexpr
+def _channel_check(channel, num_channel):
+    if channel != num_channel:
+        raise ValueError("the input channel is not equal with num_channel")
 
 class BatchNorm1d(_BatchNorm):
     r"""
@@ -324,7 +329,7 @@ class GlobalBatchNorm(_BatchNorm):
 
     Args:
         num_features (int): `C` from an expected input of size (N, C, H, W).
-        device_num_each_group (int): The number of device in each group.
+        device_num_each_group (int): The number of devices in each group.
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
         momentum (float): A floating hyperparameter of the momentum for the
             running_mean and running_var computation. Default: 0.9.
@@ -350,7 +355,7 @@ class GlobalBatchNorm(_BatchNorm):
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Examples:
-        >>> global_bn_op = nn.GlobalBatchNorm(num_features=3, group=4)
+        >>> global_bn_op = nn.GlobalBatchNorm(num_features=3, device_num_each_group=4)
         >>> input = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
         >>> global_bn_op(input)
     """
@@ -507,6 +512,7 @@ class GroupNorm(Cell):
 
     def construct(self, x):
         batch, channel, height, width = self.shape(x)
+        _channel_check(channel, self.num_channels)
         x = self.reshape(x, (batch, self.num_groups, channel*height*width/self.num_groups))
         mean = self.reduce_mean(x, 2)
         var = self.reduce_sum(self.square(x - mean), 2) / (channel * height * width / self.num_groups - 1)
