@@ -30,8 +30,8 @@ class SendKernel : public RtKernel {
   bool Init(const AnfNodePtr &anf_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
-  vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                              const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
  private:
   uint32_t event_id_;

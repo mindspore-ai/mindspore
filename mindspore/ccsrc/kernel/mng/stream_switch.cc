@@ -76,6 +76,7 @@ std::vector<TaskInfoPtr> StreamSwitchKernel::GenTask(const std::vector<AddressPt
   if (inputs.size() != 2) {
     MS_LOG(ERROR) << "stream switch inputs size is " << inputs.size() << ", is not two";
   }
+  stream_id_ = stream_id;
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(inputs[1]);
   auto loop_cnt = inputs[0]->addr;

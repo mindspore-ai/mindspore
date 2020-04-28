@@ -127,10 +127,12 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   return true;
 }
 
-vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                                              const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
+std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr> &inputs,
+                                                   const std::vector<AddressPtr> &,
+                                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   MS_LOG(INFO) << "AicpuOpKernelMod GenTask start";
 
+  stream_id_ = stream_id;
   node_so_ = AICPU_OPS_SO_NAME;
   std::vector<void *> input_data_addrs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),

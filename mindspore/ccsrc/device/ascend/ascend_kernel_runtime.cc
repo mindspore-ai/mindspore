@@ -337,8 +337,8 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
     return false;
   }
   if (ProfilingManager::GetInstance().IsProfiling()) {
-    std::vector<uint32_t> task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(model_iter->first);
-    ProfilingUtils::ReportProfilingData(graph->graph_id(), task_ids);
+    auto task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(model_iter->first);
+    ProfilingUtils::ReportProfilingData(task_ids, NOT_NULL(graph));
   }
   return true;
 }
