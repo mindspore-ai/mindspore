@@ -85,6 +85,11 @@ class ParallelContext {
   }
   bool enable_all_reduce_fusion() const { return enable_all_reduce_fusion_; }
 
+  void set_strategy_ckpt_load_file(const std::string &strategy_ckpt_load_file);
+  std::string strategy_ckpt_load_file() const { return strategy_ckpt_load_file_; }
+  void set_strategy_ckpt_save_file(const std::string &strategy_ckpt_save_file);
+  std::string strategy_ckpt_save_file() const { return strategy_ckpt_save_file_; }
+
   void Reset();
 
  private:
@@ -105,6 +110,8 @@ class ParallelContext {
   bool enable_all_reduce_fusion_;
   std::vector<uint32_t> all_reduce_fusion_split_indices_;
   std::vector<uint32_t> all_reduce_fusion_split_sizes_;
+  std::string strategy_ckpt_load_file_;
+  std::string strategy_ckpt_save_file_;
 };
 }  // namespace parallel
 }  // namespace mindspore

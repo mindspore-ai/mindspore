@@ -52,7 +52,11 @@ class Primitive : public Named {
       : Named(name), signatures_(), prim_type_(prim_type) {}
 
   Primitive(const Primitive &prim)
-      : Named(prim), attrs_(prim.attrs_), signatures_(prim.signatures_), prim_type_(prim.prim_type_) {}
+      : Named(prim),
+        attrs_(prim.attrs_),
+        signatures_(prim.signatures_),
+        instance_name_(prim.instance_name_),
+        prim_type_(prim.prim_type_) {}
 
   MS_DECLARE_PARENT(Primitive, Named);
 
