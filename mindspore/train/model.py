@@ -162,7 +162,7 @@ class Model:
         else:
             if self._loss_fn is None:
                 raise ValueError("loss_fn can not be None.")
-            self._eval_network = nn.WithEvalCell(self._network, self._loss_fn)
+            self._eval_network = nn.WithEvalCell(self._network, self._loss_fn, self._amp_level == "O2")
             self._eval_indexes = [0, 1, 2]
 
     def _build_predict_network(self):
