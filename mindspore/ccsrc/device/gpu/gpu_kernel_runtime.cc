@@ -27,6 +27,7 @@
 #include "device/gpu/gpu_common.h"
 #include "common/utils.h"
 #include "device/gpu/gpu_memory_manager.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -104,6 +105,7 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
   if (mem_manager_ != nullptr) {
     mem_manager_->FreeDeviceMemory();
   }
+  kernel::KernelMeta::GetInstance()->RemoveKernelCache();
 }
 
 void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
