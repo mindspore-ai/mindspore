@@ -76,6 +76,10 @@ class _BatchNorm(Cell):
         self.shape = P.Shape()
         self.reduce_mean = P.ReduceMean()
         self.square = P.Square()
+        self.sqrt = P.Sqrt()
+        self.cast = P.Cast()
+        self.dtype = P.DType()
+        self.reshape = P.Reshape()
 
         if context.get_context("enable_ge"):
             self.is_ge_backend = True
@@ -112,29 +116,52 @@ class _BatchNorm(Cell):
         group_list = [list(i) for i in world_rank_list]
         return group_list
 
+    def _global_sync(self, x):
+        if len(self.shape(x)) == 4:
+            axes = (0, 2, 3)
+            re_shape = (1, self.num_features, 1, 1)
+            x_mean = self.reduce_mean(x, axes)
+            x_mean_square = self.reduce_mean(self.square(x), axes)
+            global_batch_mean = self.all_reduce(x_mean) / self.group
+            global_batch_mean_square = self.all_reduce(x_mean_square) / self.group
+            global_mean = global_batch_mean
+            global_var = global_batch_mean_square - self.square(global_mean)
+            var_sqrt = self.sqrt(global_var + self.eps)
+            mean_first = (x - global_mean) / var_sqrt
+            y = mean_first * self.reshape(self.gamma, re_shape) + self.reshape(self.beta, re_shape)
+
+            mean_sub = self.sub_mean(self.reshape(self.moving_mean, re_shape), global_mean)
+            tmp_mean = self.mul_mean(mean_sub, self.cast(self.momentum, self.dtype(mean_sub)))
+            mean_sub2 = self.sub_var(self.reshape(self.moving_mean, re_shape), global_var)
+            tmp_variance = self.mul_var(mean_sub2, self.cast(self.momentum, self.dtype(mean_sub2)))
+            y = F.depend(y, self.assign_sub_mean(self.reshape(self.moving_mean, re_shape), tmp_mean))
+            y = F.depend(y, self.assign_sub_var(self.reshape(self.moving_variance, re_shape), tmp_variance))
+        else:
+            axes = (0,)
+            re_shape = (1, self.num_features)
+            x_mean = self.reduce_mean(x, axes)
+            x_mean_square = self.reduce_mean(self.square(x), axes)
+            global_batch_mean = self.all_reduce(x_mean) / self.group
+            global_batch_mean_square = self.all_reduce(x_mean_square) / self.group
+            global_mean = global_batch_mean
+            global_var = global_batch_mean_square - self.square(global_mean)
+            var_sqrt = self.sqrt(global_var + self.eps)
+            mean_first = (x - global_mean) / var_sqrt
+            y = mean_first * self.gamma + self.beta
+
+            mean_sub = self.sub_mean(self.moving_mean, global_mean)
+            temp_mean = self.mul_mean(mean_sub, self.cast(self.momentum, self.dtype(mean_sub)))
+            mean_sub2 = self.sub_var(self.moving_variance, global_var)
+            temp_variance = self.mul_var(mean_sub2, self.cast(self.momentum, self.dtype(mean_sub2)))
+            y = F.depend(y, self.assign_sub_mean(self.reshape(self.moving_mean, re_shape), temp_mean))
+            y = F.depend(y, self.assign_sub_var(self.reshape(self.moving_variance, re_shape), temp_variance))
+        return y
+
     def construct(self, x):
         if self.training and self.use_batch_statistics:
             if self.is_ge_backend:
                 if self.is_global:
-                    x_mean = self.reduce_mean(x)
-                    x_mean_square = self.reduce_mean(self.square(x))
-                    global_batch_mean = self.all_reduce(x_mean) / self.group
-                    global_batch_mean_square = self.all_reduce(x_mean_square) / self.group
-                    global_mean = global_batch_mean
-                    global_var = global_batch_mean_square - self.square(global_batch_mean)
-                    y, batch_mean, batch_var, _, _ = \
-                        self.bn_train(x,
-                                      self.gamma,
-                                      self.beta,
-                                      None,
-                                      None)
-
-                    mean_sub = self.sub_mean(self.moving_mean, global_mean)
-                    temp_mean = self.mul_mean(mean_sub, self.momentum)
-                    mean_sub2 = self.sub_var(self.moving_variance, global_var)
-                    temp_variance = self.mul_var(mean_sub2, self.momentum)
-                    y = F.depend(y, self.assign_sub_mean(self.moving_mean, temp_mean))
-                    y = F.depend(y, self.assign_sub_var(self.moving_variance, temp_variance))
+                    y = self._global_sync(x)
                 else:
                     y, batch_mean, batch_var, _, _ = \
                         self.bn_train(x,
@@ -474,6 +501,12 @@ class GroupNorm(Cell):
         num_channels (int): The number of channels per group.
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
         affine (bool): A bool value, this layer will has learnable affine parameters when set to true. Default: True.
+        gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
+            'he_uniform', etc. Default: 'ones'.
+        beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
+            'he_uniform', etc. Default: 'zeros'.
 
     Inputs:
         - **input_x** (Tensor) - The input feature with shape [N, C, H, W].
