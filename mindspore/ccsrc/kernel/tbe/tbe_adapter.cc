@@ -154,6 +154,52 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
   }
 }
 
+void TbeAdapter::FusionInputOrderPass(const std::string &op_name, const std::vector<nlohmann::json> &inputs_list,
+                                      std::vector<nlohmann::json> *inputs_json) {
+  MS_EXCEPTION_IF_NULL(inputs_json);
+  if (input_order_adjusted_ops.find(op_name) == input_order_adjusted_ops.end()) {
+    (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
+  } else {
+    if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
+      inputs_json->emplace_back(inputs_list[2]);
+      inputs_json->emplace_back(inputs_list[0]);
+      inputs_json->emplace_back(inputs_list[1]);
+      for (size_t i = 3; i < inputs_list.size(); ++i) {
+        inputs_json->emplace_back(inputs_list[i]);
+      }
+    } else {
+      inputs_json->emplace_back(inputs_list[1]);
+      inputs_json->emplace_back(inputs_list[0]);
+      for (size_t i = 2; i < inputs_list.size(); ++i) {
+        inputs_json->emplace_back(inputs_list[i]);
+      }
+    }
+  }
+}
+
+void TbeAdapter::FusionDataOrderPass(const std::string &op_name, const std::vector<AnfNodePtr> &data_layer,
+                                     std::vector<AnfNodePtr> *reorder_data_layer) {
+  MS_EXCEPTION_IF_NULL(reorder_data_layer);
+  if (input_order_adjusted_ops.find(op_name) == input_order_adjusted_ops.end()) {
+    (void)std::copy(data_layer.begin(), data_layer.end(), std::back_inserter((*reorder_data_layer)));
+  } else {
+    if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
+      reorder_data_layer->emplace_back(data_layer[2]);
+      reorder_data_layer->emplace_back(data_layer[0]);
+      reorder_data_layer->emplace_back(data_layer[1]);
+      for (size_t i = 3; i < data_layer.size(); ++i) {
+        reorder_data_layer->emplace_back(data_layer[i]);
+      }
+    } else {
+      reorder_data_layer->emplace_back(data_layer[1]);
+      reorder_data_layer->emplace_back(data_layer[0]);
+      for (size_t i = 2; i < data_layer.size(); ++i) {
+        reorder_data_layer->emplace_back(data_layer[i]);
+      }
+    }
+  }
+}
+
 std::map<std::string, FAttrsPass> TbeAdapter::build_json_attr_pass_map_ = {
   {"MaximumGrad", TbeAdapter::MaximumGradAttrJsonPass},
   {"MinimumGrad", TbeAdapter::MinimumGradAttrJsonPass},

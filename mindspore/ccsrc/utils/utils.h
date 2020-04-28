@@ -122,6 +122,8 @@ constexpr auto kSendOpName = "Send";
 constexpr auto kRecvOpName = "Recv";
 constexpr auto kReluV2OpName = "ReLUV2";
 constexpr auto kReluGradV2OpName = "ReluGradV2";
+constexpr auto kAddNOpName = "AddN";
+constexpr auto kConv2DBackpropInputOpName = "Conv2DBackpropInput";
 constexpr auto kFusionOpConv2DBackpropInputReluGradV2Name = "FusionOp_Conv2DBackpropInput_ReluGradV2";
 constexpr auto kFusionOpConv2DBackpropInputAddNReluGradV2Name = "FusionOp_Conv2DBackpropInput_AddN_ReluGradV2";
 
