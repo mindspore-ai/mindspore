@@ -362,6 +362,31 @@ def test_lenet5_onnx_export():
     net = LeNet5()
     export(net, input, file_name='lenet5.onnx', file_format='ONNX')
 
+class DefinedNet(nn.Cell):
+    """simple Net definition with maxpoolwithargmax."""
+    def __init__(self, num_classes=10):
+        super(DefinedNet, self).__init__()
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, weight_init="zeros")
+        self.bn1 = nn.BatchNorm2d(64)
+        self.relu = nn.ReLU()
+        self.maxpool = P.MaxPoolWithArgmax(padding="same", ksize=2, strides=2)
+        self.flatten = nn.Flatten()
+        self.fc = nn.Dense(int(56*56*64), num_classes)
+
+    def construct(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x, argmax = self.maxpool(x)
+        x = self.flatten(x)
+        x = self.fc(x)
+        return x
+
+def test_net_onnx_maxpoolwithargmax_export():
+    input = Tensor(np.ones([1, 3, 224, 224]).astype(np.float32) * 0.01)
+    net = DefinedNet()
+    export(net, input, file_name='definedNet.onnx', file_format='ONNX')
+
 
 @run_on_onnxruntime
 def test_lenet5_onnx_load_run():
