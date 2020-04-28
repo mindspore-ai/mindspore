@@ -164,8 +164,9 @@ Tensor::Tensor(const py::float_ &input, const TypePtr &data_type) { init(py::arr
 Tensor::Tensor(const py::int_ &input, const TypePtr &data_type) { init(py::array(input), data_type); }
 
 Tensor::Tensor(const Tensor &tensor, const TypePtr &data_type)
-    : MetaTensor(tensor), dirty_(tensor.dirty_), device_address_(tensor.device_address_) {
+    : MetaTensor(tensor), device_address_(tensor.device_address_) {
   init(tensor.data_, data_type);
+  dirty_ = tensor.is_dirty();
 }
 
 Tensor &Tensor::operator=(const Tensor &tensor) {
@@ -291,6 +292,7 @@ void Tensor::init(const py::array &input, const TypeId &data_type) {
   } else {
     data_ = input;
   }
+  dirty_ = true;
 }
 
 void Tensor::init(TypeId data_type, const std::vector<int> &shape, py::array *const data) {

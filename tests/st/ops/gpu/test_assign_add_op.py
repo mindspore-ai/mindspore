@@ -51,19 +51,22 @@ def test_assign_add():
                          [[54, 57, 60],
                           [63, 66, 69],
                           [72, 75, 78]]]])
-    x = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
-    y = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    x1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    y1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+
+    x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     add = AssignAdd()
-    output1 = add(x, y)
+    output1 = add(x1, y1)
     assert (output1.asnumpy() == expect1).all()
-    output2 = add(output1, y)
+    output2 = add(output1, y1)
     assert (output2.asnumpy() == expect2).all()
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     add = AssignAdd()
-    output1 = add(x, y)
+    output1 = add(x2, y2)
     assert (output1.asnumpy() == expect1).all()
-    output2 = add(output1, y)
+    output2 = add(output1, y2)
     assert (output2.asnumpy() == expect2).all()
