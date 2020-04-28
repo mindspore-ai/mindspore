@@ -170,6 +170,7 @@ const PrimitivePtr kPrimPooling = std::make_shared<Primitive>("Pooling");
 const PrimitivePtr kPrimPoolingGrad = std::make_shared<Primitive>("PoolingGrad");
 const PrimitivePtr kPrimMaxPool = std::make_shared<Primitive>("MaxPool");
 const PrimitivePtr kPrimMaxPoolGrad = std::make_shared<Primitive>("MaxPoolGrad");
+const PrimitivePtr kPrimAvgPoolGrad = std::make_shared<Primitive>("AvgPoolGrad");
 const PrimitivePtr kPrimFusedBatchNorm = std::make_shared<Primitive>("FusedBatchNorm");
 const PrimitivePtr kPrimConv2D = std::make_shared<Primitive>("Conv2D");
 const PrimitivePtr kPrimFusedBatchNormGrad = std::make_shared<Primitive>("FusedBatchNormGrad");

@@ -178,6 +178,7 @@ extern const PrimitivePtr kPrimFusedBatchNorm;
 extern const PrimitivePtr kPrimConv2D;
 extern const PrimitivePtr kPrimMaxPool;
 extern const PrimitivePtr kPrimMaxPoolGrad;
+extern const PrimitivePtr kPrimAvgPoolGrad;
 extern const PrimitivePtr kPrimFusedBatchNormGrad;
 extern const PrimitivePtr kPrimReluGrad;
 extern const PrimitivePtr kPrimConv2DBackpropInput;

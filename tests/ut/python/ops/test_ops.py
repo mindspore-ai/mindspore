@@ -265,8 +265,8 @@ test_case_math_ops = [
         'desc_bprop': [[2, 3]]}),
     ('Acosh', {
         'block': P.Acosh(),
-        'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16))],
-        'skip': ['backward']}),
+        'desc_inputs': [[3, 4, 5]],
+        'desc_bprop': [[3, 4, 5]]}),
     ('Sin', {
         'block': P.Sin(),
         'desc_inputs': [[2, 3]],
