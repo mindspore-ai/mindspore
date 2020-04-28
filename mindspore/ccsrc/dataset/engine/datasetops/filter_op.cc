@@ -16,6 +16,7 @@
 #include "dataset/engine/datasetops/filter_op.h"
 #include <algorithm>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -88,14 +89,22 @@ Status FilterOp::ValidateInColumns(const std::unordered_map<std::string, int32_t
 
 // A print method typically used for debugging.
 void FilterOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first.
-  ParallelOp::Print(out, show_all);
-
-  // Then display our own stuff.
-  out << "\nFilterOp:";
-  out << "\n  Input column names:";
-  for (size_t i = 0; i < in_columns_.size(); i++) {
-    out << " " << in_columns_[i];
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <FilterOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nInput column names:";
+    for (size_t i = 0; i < in_columns_.size(); i++) {
+      out << " " << in_columns_[i];
+    }
+    out << "\n\n";
   }
 }
 

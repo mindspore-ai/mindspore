@@ -16,7 +16,7 @@
 #include "dataset/engine/datasetops/source/voc_op.h"
 
 #include <fstream>
-
+#include <iomanip>
 #include "common/utils.h"
 #include "dataset/core/config_manager.h"
 #include "dataset/core/tensor_shape.h"
@@ -133,9 +133,19 @@ Status VOCOp::operator()() {
 }
 
 void VOCOp::Print(std::ostream &out, bool show_all) const {
-  DatasetOp::Print(out, show_all);
-  out << "\nnumber of parallel workers:" << num_workers_ << "\nNumber of rows:" << num_rows_
-      << "\nVOC Directory: " << folder_path_ << "\n-------------------\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <VOCOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nNumber of rows: " << num_rows_ << "\nVOC Directory: " << folder_path_ << "\n\n";
+  }
 }
 
 Status VOCOp::Reset() {

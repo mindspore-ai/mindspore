@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <iomanip>
 #include <utility>
 
 #include "common/utils.h"
@@ -47,12 +47,19 @@ TakeOp::TakeOp(int32_t count) : PipelineOp(0), max_takes_(count), take_count_(0)
 
 // A print method typically used for debugging
 void TakeOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  PipelineOp::Print(out, show_all);
-
-  // Then display our own stuff
-  out << "TakeOp:"
-      << "\nCurrent take count: " << take_count_ << "\nMax take count: " << max_takes_;
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <TakeOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << " [takes: " << max_takes_ << "]\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nTake count: " << take_count_ << "\nMax takes: " << max_takes_ << "\n\n";
+  }
 }
 
 // This function will be call muti times to returns the buffer, when meet required max take count or meet

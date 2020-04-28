@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <iomanip>
 #include <iostream>
 #include <utility>
 
@@ -51,12 +52,19 @@ SkipOp::~SkipOp() {}
 
 // A print method typically used for debugging
 void SkipOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  PipelineOp::Print(out, show_all);
-
-  // Then display our own stuff
-  out << "SkipOp:"
-      << "\nCurrent skip count: " << skip_count_ << "\nMax skip count: " << max_skips_;
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <SkipOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << " [skips: " << max_skips_ << "]\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nSkip count: " << skip_count_ << "\nMax skips: " << max_skips_ << "\n\n";
+  }
 }
 
 // Since the buffer may contain multi rows, this function will drop the rows

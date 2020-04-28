@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "dataset/engine/datasetops/device_queue_op.h"
-
+#include <iomanip>
 #include <iostream>
 #include <memory>
 
@@ -246,9 +246,19 @@ Status DeviceQueueOp::SendDataToCPU() {
 }
 
 void DeviceQueueOp::Print(std::ostream &out, bool show_all) const {
-  PipelineOp::Print(out, show_all);
-
-  out << "DeviceQueueOp: channelName: " << channel_name_ << ", prefetchSize: " << prefetch_size_ << '\n';
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <DeviceQueueOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nChannel name: " << channel_name_ << "\nPrefetch size: " << prefetch_size_ << "\n\n";
+  }
 }
 }  // namespace dataset
 }  // namespace mindspore
