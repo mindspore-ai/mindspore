@@ -14,16 +14,15 @@
 # ============================================================================
 """ test array ops """
 import functools
+import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.ops import composite as C
 from mindspore.ops import prim_attr_register
+from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer
-from mindspore.common.dtype import get_py_obj_dtype
 from mindspore._c_expression import signature_dtype as sig_dtype
 from mindspore._c_expression import signature_rw as sig_rw
 from mindspore._c_expression import signature_kind as sig_kind
@@ -96,6 +95,17 @@ def test_select():
     expect = np.array([[1, 8, 9], [10, 5, 6]])
     assert np.all(output.asnumpy() == expect)
 
+def test_argmin_invalid_output_type():
+    P.Argmin(-1, mstype.int64)
+    P.Argmin(-1, mstype.int32)
+    with pytest.raises(TypeError):
+        P.Argmin(-1, mstype.float32)
+    with pytest.raises(TypeError):
+        P.Argmin(-1, mstype.float64)
+    with pytest.raises(TypeError):
+        P.Argmin(-1, mstype.uint8)
+    with pytest.raises(TypeError):
+        P.Argmin(-1, mstype.bool_)
 
 class CustomOP(PrimitiveWithInfer):
     __mindspore_signature__ = (sig_dtype.T, sig_dtype.T, sig_dtype.T1,

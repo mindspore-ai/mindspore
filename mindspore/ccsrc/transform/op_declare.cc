@@ -703,28 +703,6 @@ INPUT_MAP(ReluGrad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(ReluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ReluGrad) = {{0, OUTPUT_DESC(backprops)}};
 
-// FusedBatchNorm
-INPUT_MAP(FusedBatchNorm) = {
-  {1, INPUT_DESC(x)}, {2, INPUT_DESC(scale)}, {3, INPUT_DESC(b)}, {4, INPUT_DESC(mean)}, {5, INPUT_DESC(variance)}};
-ATTR_MAP(FusedBatchNorm) = {{"mode", ATTR_DESC(mode, AnyTraits<int64_t>())},
-                            {"momentum", ATTR_DESC(moving_average_fraction, AnyTraits<float>())},
-                            {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
-OUTPUT_MAP(FusedBatchNorm) = {{0, OUTPUT_DESC(y)},
-                              {1, OUTPUT_DESC(running_mean)},
-                              {2, OUTPUT_DESC(running_variance)},
-                              {3, OUTPUT_DESC(save_mean)},
-                              {4, OUTPUT_DESC(save_inv_variance)}};
-
-// FusedBatchNromGrad
-INPUT_MAP(FusedBatchNormGrad) = {{1, INPUT_DESC(dy)},
-                                 {2, INPUT_DESC(x)},
-                                 {3, INPUT_DESC(scale)},
-                                 {4, INPUT_DESC(save_mean)},
-                                 {5, INPUT_DESC(save_inv_variance)}};
-ATTR_MAP(FusedBatchNormGrad) = {{"momentum", ATTR_DESC(momentum, AnyTraits<float>())},
-                                {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
-OUTPUT_MAP(FusedBatchNormGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(bn_scale)}, {2, OUTPUT_DESC(bn_bias)}};
-
 // BiasAddGrad
 INPUT_MAP(BiasAddGrad) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(BiasAddGrad) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};

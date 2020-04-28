@@ -175,6 +175,8 @@ extern const PrimitivePtr kPrimTanhGrad;
 extern const PrimitivePtr kPrimPooling;
 extern const PrimitivePtr kPrimPoolingGrad;
 extern const PrimitivePtr kPrimFusedBatchNorm;
+extern const PrimitivePtr kPrimBatchNorm;
+extern const PrimitivePtr kPrimBatchNormGrad;
 extern const PrimitivePtr kPrimConv2D;
 extern const PrimitivePtr kPrimMaxPool;
 extern const PrimitivePtr kPrimMaxPoolGrad;

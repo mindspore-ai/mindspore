@@ -1016,6 +1016,7 @@ class Argmin(PrimitiveWithInfer):
         """init Argmin"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
         validator.check_value_type("axis", axis, [int], self.name)
+        validator.check_type_name("output_type", output_type, [mstype.int32, mstype.int64], self.name)
         self.axis = axis
         self.add_prim_attr('output_type', output_type)
 
@@ -1726,7 +1727,9 @@ class Diag(PrimitiveWithInfer):
     def infer_value(self, x):
         if x is None:
             return None
-        validator.check_integer("input x rank", len(x.shape()), 1, Rel.EQ, self.name)
+        # do constant-folding only when x rank is 1
+        if len(x.shape()) != 1:
+            return None
         ret = np.diag(x.asnumpy())
         return Tensor(ret)
 
@@ -1752,7 +1755,7 @@ class DiagPart(PrimitiveWithInfer):
         >>>                   [0, 0, 3, 0],
         >>>                   [0, 0, 0, 4]])
         >>> diag_part = P.DiagPart()
-        >>> diag_part(x)
+        >>> diag_part(input_x)
         [1, 2, 3, 4]
     """
 
@@ -1776,7 +1779,9 @@ class DiagPart(PrimitiveWithInfer):
     def infer_value(self, x):
         if x is None:
             return None
-        validator.check("x rank", len(x.shape()), "", 2, Rel.EQ, self.name)
+        # do constant-folding only when x rank is 2
+        if len(x.shape()) != 2:
+            return None
         ret = np.diag(x.asnumpy())
         return Tensor(ret)
 
