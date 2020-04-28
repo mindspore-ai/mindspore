@@ -261,7 +261,9 @@ Status ManifestOp::InitSampler() {
 // Derived from RandomAccessOp
 Status ManifestOp::GetNumSamples(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
+      "validation first.");
   }
   (*num) = num_samples_;
   return Status::OK();
@@ -270,7 +272,9 @@ Status ManifestOp::GetNumSamples(int64_t *num) const {
 // Derived from RandomAccessOp
 Status ManifestOp::GetNumRowsInDataset(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
+      "validation first.");
   }
   (*num) = num_rows_;
   return Status::OK();
@@ -279,7 +283,7 @@ Status ManifestOp::GetNumRowsInDataset(int64_t *num) const {
 // Derived from RandomAccessOp
 Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_labelname_.empty()) {
-    RETURN_STATUS_UNEXPECTED("Number rows is 0");
+    RETURN_STATUS_UNEXPECTED("Class indexing is invalid.");
   }
 
   for (size_t i = 0; i < image_labelname_.size(); i++) {
@@ -395,7 +399,9 @@ Status ManifestOp::CountDatasetInfo() {
   num_rows_ = static_cast<int64_t>(image_labelname_.size());
   num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   if (num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Number of rows is 0");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
+      "validation first.");
   }
   return Status::OK();
 }

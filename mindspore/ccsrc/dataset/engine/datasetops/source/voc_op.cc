@@ -147,7 +147,9 @@ Status VOCOp::Reset() {
 
 Status VOCOp::GetNumSamples(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API VOCDataset.Please check file path or dataset API "
+      "validation first.");
   }
   (*num) = num_samples_;
   return Status::OK();
@@ -261,7 +263,9 @@ Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &co
 // Derived from RandomAccessOp
 Status VOCOp::GetNumRowsInDataset(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API VOCDataset.Please check file path or dataset API "
+      "validation first.");
   }
   (*num) = num_rows_;
   return Status::OK();
