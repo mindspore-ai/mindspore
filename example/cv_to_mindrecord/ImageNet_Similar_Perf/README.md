@@ -35,11 +35,20 @@ This example provides an efficient way to generate MindRecord. Users only need t
     n02110185 3 mouse
     n02096294 4 orange
     ```
+
 2. Edit run_imagenet.sh and modify the parameters
-3. Run the bash script  
+    ```
+    --mindrecord_file: output MindRecord file.
+    --mindrecord_partitions: the partitions for MindRecord.
+    --label_file: ImageNet label map file.
+    --image_dir: ImageNet dir which contain sub dir.
+    ```
+
+3. Run the bash script
     ```bash  
     bash run_imagenet.sh
     ```  
+
 4. Performance result
 
     |  Training Data |  General API | Current Example |  Env  |
@@ -47,29 +56,30 @@ This example provides an efficient way to generate MindRecord. Users only need t
     |ImageNet(140G)|  2h40m |  50m  |  CPU: Intel Xeon Gold 6130 x 64, Memory: 256G, Storage: HDD |
 
 ## How to use the example for other dataset
+
 ### Create work space
 
 Assume the dataset name is 'xyz'
 * Create work space from template
     ```shell
-    cd ${your_mindspore_home}/example/convert_to_mindrecord
+    cd ${your_mindspore_home}/example/cv_to_mindrecord/ImageNet_Similar_Perf
     cp -r template xyz
     ```
 
 ### Implement data generator
 
-Edit dictionary data generator  
+Edit dictionary data generator.
 * Edit file 
     ```shell
-    cd ${your_mindspore_home}/example/convert_to_mindrecord
+    cd ${your_mindspore_home}/example/cv_to_mindrecord/ImageNet_Similar_Perf
     vi xyz/mr_api.py
     ```
 
-Two API, 'mindrecord_task_number' and 'mindrecord_dict_data', must be implemented
+Two API, 'mindrecord_task_number' and 'mindrecord_dict_data', must be implemented.
 - 'mindrecord_task_number()' returns number of tasks. Return 1 if data row is generated serially. Return N if generator can be split into N parallel-run tasks.
 - 'mindrecord_dict_data(task_id)' yields dictionary data row by row. 'task_id' is 0..N-1, if N is return value of mindrecord_task_number()
 
-Tricky for parallel run
+Tricky for parallel run.
 - For ImageNet, one directory can be a task.
 - For TFRecord with multiple files, each file can be a task.
 - For TFRecord with 1 file only, it could also be split into N tasks. Task_id=K means: data row is picked only if (count % N == K) 
@@ -78,7 +88,7 @@ Tricky for parallel run
 
 * run python script 
     ```shell
-    cd ${your_mindspore_home}/example/convert_to_mindrecord
+    cd ${your_mindspore_home}/example/cv_to_mindrecord/ImageNet_Similar_Perf
     python writer.py --mindrecord_script xyz [...]
     ```
     > You can put this command in script **run_xyz.sh** for easy execution
