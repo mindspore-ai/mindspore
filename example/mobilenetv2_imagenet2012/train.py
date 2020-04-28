@@ -135,8 +135,7 @@ if __name__ == '__main__':
     opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                    config.weight_decay, config.loss_scale)
 
-    model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, amp_level='O0',
-                  keep_batchnorm_fp32=False)
+    model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale)
 
     cb = None
     if rank_id == 0:
