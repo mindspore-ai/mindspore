@@ -122,7 +122,7 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
   MS_EXCEPTION_IF_NULL(root_context->func_graph());
   AnfNodeConfigPtr output_conf = MakeConfig(root_context->func_graph()->get_return(), root_context);
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_LOG(INFO) << "" << func_graph->ToString() << ": Run finished.";
+  MS_LOG(INFO) << func_graph->ToString() << ": Run finished.";
 
   AnalysisResult result;
   MS_EXCEPTION_IF_NULL(output_conf);
@@ -167,7 +167,7 @@ AbstractBasePtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
   for (auto iter : compute_conf_stack_) {
     buffer << " -> " << iter->DebugString();
   }
-  MS_LOG(DEBUG) << "" << buffer.str();
+  MS_LOG(DEBUG) << buffer.str();
 #endif
   MS_LOG(DEBUG) << "Begin Eval NodeConfig " << conf->ToString();
   MS_EXCEPTION_IF_NULL(node);

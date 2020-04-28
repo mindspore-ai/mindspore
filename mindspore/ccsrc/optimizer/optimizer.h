@@ -171,7 +171,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
           };
           use_profile ? (WITH(MsProfile::GetProfile()->Step(pass_names_[i])) opt_func) : opt_func();
 #ifdef DEBUG
-          MS_LOG(DEBUG) << "" << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
+          MS_LOG(DEBUG) << name_ << " round " << counter << " OptPass " << pass_names_[i] << " end.";
           auto fg_name = name_ + "_r" + std::to_string(counter) + "_" + std::to_string(i) + "_" + pass_names_[i];
           func_graph->DumpFuncGraph(fg_name);
           DumpIR(fg_name + ".ir", func_graph);

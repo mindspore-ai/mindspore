@@ -70,7 +70,7 @@ ABSTRACT_REPORT_NAME_TRAITS(Class)
 template <typename T>
 std::shared_ptr<T> CheckArg(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t index) {
   if (index >= args_spec_list.size()) {
-    MS_EXCEPTION(ValueError) << "" << op << " evaluator args list index out of bound, size " << args_spec_list.size()
+    MS_EXCEPTION(ValueError) << op << " evaluator args list index out of bound, size " << args_spec_list.size()
                              << ", index " << index;
   }
   auto arg = dyn_cast<T>(args_spec_list[index]);

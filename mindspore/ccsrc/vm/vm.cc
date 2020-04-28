@@ -216,8 +216,8 @@ void FinalVM::InstCall(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 1;
   if (args.size() != args_size) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " parameter, while the input size is "
-                  << args.size() << ".";
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " parameter, while the input size is " << args.size()
+                  << ".";
     return;
   }
 
@@ -232,8 +232,8 @@ void FinalVM::InstTailCall(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 3;
   if (args.size() != args_size) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is "
-                  << args.size() << ".";
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is " << args.size()
+                  << ".";
     return;
   }
 
@@ -261,7 +261,7 @@ void FinalVM::InstTailCall(const VectorRef &args) {
 void FinalVM::InstSwitchReturn(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   if (args.size() != 1) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires one parameter, while the input size is " << args.size() << ".";
+    MS_LOG(ERROR) << __FUNCTION__ << " requires one parameter, while the input size is " << args.size() << ".";
     return;
   }
   Pop(1);
@@ -272,8 +272,8 @@ void FinalVM::InstReturn(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 2;
   if (args.size() != args_size) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is "
-                  << args.size() << ".";
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is " << args.size()
+                  << ".";
     return;
   }
 
@@ -295,7 +295,7 @@ void FinalVM::InstPartial(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 1;
   if (args.size() < args_size) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " or more parameters, while the input size is "
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " or more parameters, while the input size is "
                   << args.size() << ".";
     return;
   }
@@ -314,8 +314,8 @@ void FinalVM::InstPartial(const VectorRef &args) {
 void FinalVM::InstSimuSwitch(const VectorRef &args) {
   const size_t args_size = 4;
   if (args.size() != args_size) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is "
-                  << args.size() << ".";
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is " << args.size()
+                  << ".";
     return;
   }
   bool cond = utils::cast<bool>(args[0]);
@@ -368,8 +368,8 @@ void FinalVM::InstSimuSwitch(const VectorRef &args) {
 void FinalVM::InstRealSwitch(const VectorRef &args) {
   const size_t args_size = 3;
   if (args.size() != args_size) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is "
-                  << args.size() << ".";
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " parameters, while the input size is " << args.size()
+                  << ".";
     return;
   }
 
@@ -378,7 +378,7 @@ void FinalVM::InstRealSwitch(const VectorRef &args) {
   int vfalse = utils::cast<int>(args[2]);
 
   BaseRef c = Ref(cond);
-  MS_LOG(DEBUG) << "" << vtrue << " false:" << vfalse << " InstSwitch: " << c.ToString();
+  MS_LOG(DEBUG) << vtrue << " false:" << vfalse << " InstSwitch: " << c.ToString();
   bool bool_value = false;
   if (backend_->GetCond(c, &bool_value)) {
     MS_LOG(DEBUG) << "Cond:" << bool_value;
@@ -417,8 +417,8 @@ void FinalVM::InstPush(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 1;
   if (args.size() != args_size) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " parameter, while the input size is "
-                  << args.size() << ".";
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " parameter, while the input size is " << args.size()
+                  << ".";
     return;
   }
 
@@ -431,8 +431,8 @@ void FinalVM::InstInput(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 1;
   if (args.size() != args_size) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " parameter, while the input size is "
-                  << args.size() << ".";
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " parameter, while the input size is " << args.size()
+                  << ".";
     return;
   }
 
@@ -445,13 +445,13 @@ void FinalVM::InstPadStack(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start";
   const size_t args_size = 1;
   if (args.size() != args_size) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " parameter, while the input size is "
-                  << args.size() << ".";
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " parameter, while the input size is " << args.size()
+                  << ".";
     return;
   }
 
   int sz = utils::cast<int>(args[0]);
-  MS_LOG(DEBUG) << "" << insts_stack_.size() << " need padstack " << sz << " sp_ " << sp_;
+  MS_LOG(DEBUG) << insts_stack_.size() << " need padstack " << sz << " sp_ " << sp_;
   size_t stack_size = insts_stack_.size();
   int need = sz - (static_cast<int>(stack_size) - sp_);
   if (need > 0) {
@@ -501,7 +501,7 @@ void FinalVM::InstPushPrim(const VectorRef &args) {
   MS_LOG(DEBUG) << "Start: " << args.size();
   const size_t args_size = 2;
   if (args.size() < args_size) {
-    MS_LOG(ERROR) << "" << __FUNCTION__ << " requires " << args_size << " or more parameters, while the input size is "
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " or more parameters, while the input size is "
                   << args.size() << ".";
     return;
   }

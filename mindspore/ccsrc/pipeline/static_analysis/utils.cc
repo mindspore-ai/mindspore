@@ -175,7 +175,7 @@ std::vector<int> RealBroadcast(const std::string &op, std::vector<int> x_shape, 
       output_i = x_i;
     } else {
       MS_LOG(EXCEPTION)
-        << "" << op
+        << op
         << " evaluator the shape of first tensor and the shape of second tensor do not meet the broadcasting "
            "requirements";
     }

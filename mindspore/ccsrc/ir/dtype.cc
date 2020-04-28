@@ -345,7 +345,7 @@ TypePtr StringToNumberType(const std::string &type_name, const std::string &num_
       auto bits = std::stoi(type_name.substr(num_type_name.size()));
       type = std::make_shared<T>(bits);
     } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << "" << num_type_name << " convert from string error " << e.what();
+      MS_LOG(EXCEPTION) << num_type_name << " convert from string error " << e.what();
     }
   }
   return type;
@@ -389,7 +389,7 @@ TypePtr TensorStrToType(const std::string &type_name) {
       }
       type = std::make_shared<TensorType>(element_type);
     } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << "" << type_name << " convert from string error " << e.what();
+      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
     }
   }
 
@@ -416,7 +416,7 @@ TypePtr ListStrToType(const std::string &type_name) {
       }
       type = std::make_shared<List>(element_types);
     } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << "" << type_name << " convert from string error " << e.what();
+      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
     }
   }
 
@@ -443,7 +443,7 @@ TypePtr TupleStrToType(const std::string &type_name) {
       }
       type = std::make_shared<Tuple>(element_types);
     } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << "" << type_name << " convert from string error " << e.what();
+      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
     }
   }
   return type;
@@ -484,7 +484,7 @@ TypePtr FunctionStrToType(const std::string &type_name) {
       }
       type = std::make_shared<Function>(args_type, retval);
     } catch (const std::exception &e) {
-      MS_LOG(EXCEPTION) << "" << type_name << " convert from string error " << e.what();
+      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
     }
   }
   return type;

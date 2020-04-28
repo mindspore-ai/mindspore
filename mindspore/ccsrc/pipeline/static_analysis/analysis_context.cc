@@ -78,7 +78,7 @@ AnalysisContextPtr AnalysisContext::Filter(const FuncGraphPtr &func_graph) {
       oss << ", context: " << iter.second.lock()->ToString() << "]";
     }
     oss << "}";
-    MS_LOG(EXCEPTION) << "" << oss.str() << " NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
+    MS_LOG(EXCEPTION) << oss.str() << " NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
   }
   return parent_context;
 }

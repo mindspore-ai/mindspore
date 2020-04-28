@@ -333,7 +333,7 @@ void ExecutorPy::GetGeBackendPolicy() const {
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
   if (backend != "ge") {
-    MS_LOG(EXCEPTION) << "" << backend << " backend policy is not supported under ge backend!";
+    MS_LOG(EXCEPTION) << backend << " backend policy is not supported under ge backend!";
   }
 }
 
@@ -491,10 +491,10 @@ void RunPipelineAction(const ActionItem &action, pipeline::ResourcePtr resource,
 
   // load MindSpore IR from file
   if (action.first == "symbol_resolve") {
-    MS_LOG(DEBUG) << "" << action.first << " read ir file: " << ir_file;
+    MS_LOG(DEBUG) << action.first << " read ir file: " << ir_file;
     std::vector<FuncGraphPtr> graphs = ImportIR(ir_file);
     if (graphs.size() == 0) {
-      MS_LOG(EXCEPTION) << "" << action.first << " read ir file " << ir_file << " failed as no graph found";
+      MS_LOG(EXCEPTION) << action.first << " read ir file " << ir_file << " failed as no graph found";
     }
     auto manager = resource->manager();
     MS_EXCEPTION_IF_NULL(manager);
