@@ -20,7 +20,6 @@
 #include "dataset/util/intrp_service.h"
 #include "dataset/util/task_manager.h"
 #include "dataset/util/queue.h"
-#include "dataset/util/semaphore.h"
 
 using namespace mindspore::dataset;
 using mindspore::MsLogLevel::INFO;
@@ -55,11 +54,12 @@ TEST_F(MindDataTestIntrpService, Test1) {
 TEST_F(MindDataTestIntrpService, Test2) {
   MS_LOG(INFO) << "Test Semaphore";
   Status rc;
-  Semaphore sem(0);
-  sem.Register(&vg_);
+  WaitPost wp;
+  rc = wp.Register(&vg_);
+  EXPECT_TRUE(rc.IsOk());
   vg_.CreateAsyncTask("Test1", [&]() -> Status {
     TaskManager::FindMe()->Post();
-      Status rc = sem.P();
+      Status rc = wp.Wait();
       EXPECT_TRUE(rc.IsInterrupted());
       return rc;
   });

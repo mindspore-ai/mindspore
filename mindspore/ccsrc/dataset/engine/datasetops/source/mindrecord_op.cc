@@ -644,7 +644,7 @@ Status MindRecordOp::LaunchThreadAndInitOp() {
   }
 
   RETURN_IF_NOT_OK(io_blk_queues_.Register(tree_->AllTasks()));
-  shard_reader_wait_post_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(shard_reader_wait_post_.Register(tree_->AllTasks()));
   if (shard_reader_->Launch(!block_reader_) == MSRStatus::FAILED) {
     RETURN_STATUS_UNEXPECTED("MindRecordOp launch failed.");
   }

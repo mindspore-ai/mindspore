@@ -222,7 +222,7 @@ Status TFReaderOp::operator()() {
   // so workers have to be kept alive until the end of the program
   TaskManager::FindMe()->Post();
 
-  io_block_queue_wait_post_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
 
   NotifyToFillIOBlockQueue();
   while (!finished_reading_dataset_) {

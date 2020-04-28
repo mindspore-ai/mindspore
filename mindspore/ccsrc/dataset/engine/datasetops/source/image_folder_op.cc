@@ -386,7 +386,7 @@ Status ImageFolderOp::LaunchThreadsAndInitOp() {
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(folder_name_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(image_name_queue_->Register(tree_->AllTasks()));
-  wp_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
   // The following code launch 3 threads group
   // 1) A thread that walks all folders and push the folder names to a util:Queue mFoldernameQueue.
   // 2) Workers that pull foldername from mFoldernameQueue, walk it and return the sorted images to mImagenameQueue
