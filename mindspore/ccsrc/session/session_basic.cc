@@ -127,6 +127,7 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->enable_pynative_infer()) {
     tensor->set_device_address(AnfAlgo::GetMutableOutputAddr(node, output_index));
+    tensor->set_dirty(false);
   } else if (!address->SyncDeviceToHost(trans::GetRuntimePaddingShape(node, output_index),
                                         LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                         tensor->data_c(true))) {
@@ -491,7 +492,7 @@ void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_grap
           need_sync = true;
         }
       } else {
-        if (tensor->is_dirty() || !AnfAlgo::IsParameterWeight(pk_node)) {
+        if (tensor->is_dirty()) {
           need_sync = true;
         } else if (tensor->device_address() != device_address) {
           (void)tensor->data_sync();
