@@ -14,7 +14,6 @@
 # ============================================================================
 """FTRL"""
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore.common.parameter import Parameter
 from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
 from mindspore._checkparam import Validator as validator
