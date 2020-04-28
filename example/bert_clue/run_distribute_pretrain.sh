@@ -16,17 +16,15 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH MINDSPORE_PATH"
-echo "for example: sh run_distribute_pretrain.sh 8 40 /path/zh-wiki/ /path/Schema.json /path/hccl.json /path/mindspore"
+echo "sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH"
+echo "for example: sh run_distribute_pretrain.sh 8 40 /path/zh-wiki/ /path/Schema.json /path/hccl.json"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
 EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
-MINDSPORE_PATH=$6
 
-export PYTHONPATH=$MINDSPORE_PATH/build/package:$PYTHONPATH
 export MINDSPORE_HCCL_CONFIG_PATH=$5
 export RANK_SIZE=$1
 

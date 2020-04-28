@@ -78,7 +78,7 @@ It contains of parameters of BERT model and options for training, which is set i
 ### Options:
 ```
 Pre-Training:
-    bert_network                    version of BERT model: base | large, default is base
+    bert_network                    version of BERT model: base | nezha, default is base
     loss_scale_value                initial value of loss scale: N, default is 2^32
     scale_factor                    factor used to update loss scale: N, default is 2
     scale_window                    steps for once updatation of loss scale: N, default is 1000   

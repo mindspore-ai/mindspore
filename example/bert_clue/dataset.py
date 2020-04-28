@@ -31,7 +31,7 @@ def create_bert_dataset(epoch_size=1, device_num=1, rank=0, do_shuffle="true", e
     files = os.listdir(data_dir)
     data_files = []
     for file_name in files:
-        data_files.append(data_dir+file_name)
+        data_files.append(os.path.join(data_dir, file_name))
     ds = de.TFRecordDataset(data_files, schema_dir,
                             columns_list=["input_ids", "input_mask", "segment_ids", "next_sentence_labels",
                                           "masked_lm_positions", "masked_lm_ids", "masked_lm_weights"],
