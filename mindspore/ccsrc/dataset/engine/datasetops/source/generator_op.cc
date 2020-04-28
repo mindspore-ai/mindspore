@@ -168,7 +168,7 @@ Status GeneratorOp::FillBuffer(TensorQTable *tt) {
 Status GeneratorOp::operator()() {
   // Handshake with TaskManager to synchronize thread creation
   TaskManager::FindMe()->Post();
-  wp_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
   std::unique_ptr<DataBuffer> fetched_buffer;
   bool eof = false;
   while (!eof) {

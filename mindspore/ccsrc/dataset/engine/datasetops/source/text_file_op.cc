@@ -370,7 +370,7 @@ Status TextFileOp::operator()() {
   // must be called after launching workers.
   TaskManager::FindMe()->Post();
 
-  io_block_queue_wait_post_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
   NotifyToFillIOBlockQueue();
   while (!finished_reading_dataset_) {
     int64_t buffer_id = 0;

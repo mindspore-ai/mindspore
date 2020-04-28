@@ -36,7 +36,7 @@ class WaitPost {
 
   void Clear();
 
-  void Register(TaskGroup *vg);
+  Status Register(TaskGroup *vg);
 
   Status Deregister();
 
