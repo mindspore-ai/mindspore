@@ -32,7 +32,8 @@ namespace compile {
 // Arguments:
 //   fn_: Callable function.
 //   args_: Sequence of function args.
-StructPartial::StructPartial(int fn, const VectorRef &args) : fn_(fn), args_(args) {}
+//   fg_: Graph of function.
+StructPartial::StructPartial(int fn, const VectorRef &args, const FuncGraphPtr &fg) : fn_(fn), args_(args), fg_(fg) {}
 
 std::ostream &operator<<(std::ostream &os, const StructPartial &other) {
   os << "partial(" << other.fn_ << ", " << other.args_.ToString() << ")";
@@ -40,7 +41,7 @@ std::ostream &operator<<(std::ostream &os, const StructPartial &other) {
 }
 
 bool operator==(const StructPartial &lhs, const StructPartial &rhs) {
-  return (lhs.fn_ == rhs.fn_ && lhs.args_ == rhs.args_);
+  return (lhs.fn_ == rhs.fn_ && lhs.args_ == rhs.args_ && lhs.fg_ == rhs.fg_);
 }
 
 StructSimuSwitch::StructSimuSwitch(const BaseRef &fn, const BaseRef &value) : fn_(fn), value_(value) {}
@@ -242,16 +243,6 @@ void FinalVM::InstTailCall(const VectorRef &args) {
   int nargs = utils::cast<int>(args[2]);
 
   auto new_jmp = Ref(jmp);
-
-  if (backend_->simu_flag()) {
-    if (backend_->GetSimuCondFlag(BaseRef()) == 2) {
-      MS_LOG(DEBUG) << "invoke while call tail first";
-      Pop(height);
-      Push(1);
-      Popp();
-      return;
-    }
-  }
   MoveStack(nargs, height);
   MS_LOG(DEBUG) << "TailCall pushp:" << pc_ << ", jmp:" << jmp;
   DoJmp(new_jmp);
@@ -291,8 +282,30 @@ void FinalVM::InstReturn(const VectorRef &args) {
   MS_LOG(DEBUG) << "End";
 }
 
-void FinalVM::InstPartial(const VectorRef &args) {
-  MS_LOG(DEBUG) << "Start";
+void FinalVM::InstSimuPartial(const VectorRef &args) {
+  const size_t args_size = 2;
+  if (args.size() < args_size) {
+    MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " or more parameters, while the input size is "
+                  << args.size() << ".";
+    return;
+  }
+
+  auto &node = args[0];
+  if (!utils::isa<FuncGraphPtr>(node)) {
+    MS_LOG(ERROR) << "The type of 1st input of node must be FuncGraph";
+    return;
+  }
+  auto fg = utils::cast<FuncGraphPtr>(node);
+  int fn_ = utils::cast<int>(args[1]);
+  auto fn = utils::cast<int>(Ref(fn_));
+  MS_LOG(DEBUG) << "Partial argssize:" << args.size();
+  std::vector<BaseRef> outs(args.size() - 2);
+  (void)std::transform(args.begin() + 2, args.end(), outs.begin(),
+                       [&, this](const BaseRef &a) { return Ref(utils::cast<int>(a)); });
+  Push(std::make_shared<StructPartial>(fn, VectorRef(outs), fg));
+}
+
+void FinalVM::InstRealPartial(const VectorRef &args) {
   const size_t args_size = 1;
   if (args.size() < args_size) {
     MS_LOG(ERROR) << __FUNCTION__ << " requires " << args_size << " or more parameters, while the input size is "
@@ -304,10 +317,18 @@ void FinalVM::InstPartial(const VectorRef &args) {
   auto fn = utils::cast<int>(Ref(fn_));
   MS_LOG(DEBUG) << "Partial argssize:" << args.size();
   std::vector<BaseRef> outs(args.size() - 1);
-
   (void)std::transform(args.begin() + 1, args.end(), outs.begin(),
                        [&, this](const BaseRef &a) { return Ref(utils::cast<int>(a)); });
   Push(std::make_shared<StructPartial>(fn, VectorRef(outs)));
+}
+
+void FinalVM::InstPartial(const VectorRef &args) {
+  MS_LOG(DEBUG) << "Start";
+  if (backend_->is_multi_graph_sink()) {
+    InstSimuPartial(args);
+  } else {
+    InstRealPartial(args);
+  }
   MS_LOG(DEBUG) << "End";
 }
 
@@ -328,40 +349,54 @@ void FinalVM::InstSimuSwitch(const VectorRef &args) {
   bool bool_value = cond;
   SwitchCondStatus cond_stat = backend_->SetSimuCond(c, bool_value);
 
-  int cond_flag = backend_->GetSimuCondFlag(c);
-  MS_LOG(DEBUG) << "Simu switch cond:" << cond << ", " << cond_flag << ", " << c.cast<AnfNodePtr>()->DebugString();
-  if (cond_flag == 2) {
-    Popp();
-    Popp();
-    backend_->SetSimuCondFlag(c, 0);
-    return;
-  }
-
   if (cond_stat == kCondAlreadyRun) {
     MS_LOG(DEBUG) << "switch alreay run bool while true jmp";
-    if (cond_flag == 0) {
-      MS_LOG(DEBUG) << "switch second run bool while true jmp";
-      backend_->SetSwitchActive(c, true);
-      Push(std::make_shared<StructSimuSwitch>(Ref(vtrue), c));
-      Pushsp();
-      backend_->SetSimuCondFlag(c, 1);
-      return;
-    } else if (cond_flag == 1) {
-      MS_LOG(DEBUG) << "switch first run bool while if jmp";
-      Push(std::make_shared<StructSimuSwitch>(Ref(vfalse), c));
-      (void)backend_->SetSimuCond(c, false);
-      backend_->SetSimuCondFlag(c, 2);
-      return;
-    } else {
-      MS_LOG(EXCEPTION) << "error cond not find";
-      return;
+    BaseRef jmp = Ref(vtrue);
+    if (utils::isa<StructPartial>(jmp)) {
+      auto new_jmp = utils::cast<std::shared_ptr<StructPartial>>(jmp);
+      backend_->RecallGraphInput(new_jmp->fg_, new_jmp->args_, c);
     }
+    cond_jmp_[c] = Ref(vfalse);
+    Push(static_cast<int>(cond_stat));
+    Popp();
+    backend_->SetSwitchActive(c, bool_value);
+    return;
   }
   if (bool_value) {
     Push(std::make_shared<StructSimuSwitch>(Ref(vtrue), c));
     Pushsp();
   } else {
+    MergeJmpArgs(Ref(vfalse), c);
     Push(std::make_shared<StructSimuSwitch>(Ref(vfalse), c));
+  }
+}
+
+void FinalVM::MergeJmpArgs(const BaseRef &jmp, const BaseRef &c) {
+  auto iter = cond_jmp_.find(c);
+  if (iter == cond_jmp_.end()) {
+    return;
+  }
+  auto old_jmp = utils::cast<std::shared_ptr<StructPartial>>(iter->second);
+  auto new_jmp = utils::cast<std::shared_ptr<StructPartial>>(jmp);
+  auto &old_args = old_jmp->args_;
+  auto &new_args = new_jmp->args_;
+  for (size_t i = 0; i < new_args.size(); ++i) {
+    auto &old_arg = old_args[i];
+    auto &new_arg = new_args[i];
+    if (utils::isa<VectorRef>(old_arg)) {
+      auto old_vec_ref = utils::cast<VectorRef>(old_arg);
+      if (utils::isa<VectorRef>(new_arg)) {
+        auto new_vec_ref = utils::cast<VectorRef>(new_arg);
+        std::copy(new_vec_ref.begin(), new_vec_ref.end(), std::back_inserter(old_vec_ref));
+      }
+      new_arg = old_vec_ref;
+    } else if (utils::isa<VectorRef>(new_arg)) {
+      auto new_vec_ref = utils::cast<VectorRef>(new_arg);
+      new_vec_ref.push_back(old_arg);
+      new_arg = new_vec_ref;
+    } else {
+      new_arg = VectorRef({new_arg, old_arg});
+    }
   }
 }
 
@@ -399,6 +434,7 @@ void FinalVM::InstSwitch(const VectorRef &args) {
   } else {
     InstRealSwitch(args);
   }
+  MS_LOG(DEBUG) << "End";
 }
 
 void FinalVM::InstTuple(const VectorRef &args) {

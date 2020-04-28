@@ -79,6 +79,10 @@ class AscendSession : public SessionBasic {
   void RunOpHardwareOptimize(const std::shared_ptr<session::KernelGraph> &kernel_graph) const;
   void RunOpExecTask(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
+  size_t SetChildGraphInput(const KernelGraphPtr &graph, const AnfNodePtr &node, size_t input_index);
+  size_t SetChildGraphInput(const KernelGraphPtr &graph, const ValuePtr &value, size_t input_index);
+  size_t SetChildGraphInput(const KernelGraphPtr &graph, const VectorRef &vec_args, size_t input_index);
+
   // merge execution order list of child graphs
   void MergeGraphExecOrder();
   // insert assion op to sync data bettween different graphs

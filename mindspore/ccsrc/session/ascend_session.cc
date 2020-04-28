@@ -800,45 +800,77 @@ void AscendSession::UpdateGraphOrder(GraphId to_graph_id) {
   }
 }
 
+size_t AscendSession::SetChildGraphInput(const KernelGraphPtr &graph, const AnfNodePtr &node, size_t input_index) {
+  auto output_num = AnfAlgo::GetOutputTensorNum(node);
+  if (output_num > 1 && !AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
+    return input_index + output_num;
+  }
+  auto &graph_inputs = graph->inputs();
+  auto &valid_inputs = graph->ValidInputs();
+  if (valid_inputs[input_index]) {
+    SetChildGraphParameter(node, graph_inputs[input_index]);
+  } else {
+    MS_LOG(DEBUG) << "Invalid input arg: " << node->DebugString();
+  }
+  return ++input_index;
+}
+
+size_t AscendSession::SetChildGraphInput(const KernelGraphPtr &graph, const ValuePtr &value, size_t input_index) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (!value->isa<Tensor>()) {
+    MS_LOG(EXCEPTION) << "Value Node should be a tensor, unexpected value: " << value->ToString();
+  }
+  auto &graph_inputs = graph->inputs();
+  SetChildGraphParameter(value->cast<TensorPtr>(), graph_inputs[input_index]);
+  return ++input_index;
+}
+
+size_t AscendSession::SetChildGraphInput(const KernelGraphPtr &graph, const VectorRef &vec_args, size_t input_index) {
+  auto index = input_index;
+  for (auto &arg : vec_args) {
+    if (utils::isa<AnfNodePtr>(arg)) {
+      // arg is a anf node
+      auto node = utils::cast<AnfNodePtr>(arg);
+      index = SetChildGraphInput(graph, node, input_index);
+    } else if (utils::isa<ValuePtr>(arg)) {
+      // arg is a tensor
+      auto value = utils::cast<ValuePtr>(arg);
+      index = SetChildGraphInput(graph, value, input_index);
+    } else {
+      MS_LOG(EXCEPTION) << "Unexpected arg type " << arg.ToString();
+    }
+  }
+  return index;
+}
+
 void AscendSession::SetChildGraphInput(GraphId g, const VectorRef &args) {
   MS_LOG(INFO) << "Set input of graph " << g;
   auto to_graph = GetGraph(g);
   MS_EXCEPTION_IF_NULL(to_graph);
   DumpGraphInputArgs(args);
   UpdateGraphOrder(g);
-  std::vector<AnfNodePtr> graph_inputs = to_graph->inputs();
-  auto valid_inputs = to_graph->ValidInputs();
+  auto &graph_inputs = to_graph->inputs();
   auto real_args = GetRealArgs(to_graph, args);
   size_t input_index = 0;
   for (size_t i = 0; i < real_args.size(); i++) {
     if (input_index >= graph_inputs.size()) {
       MS_LOG(EXCEPTION) << "input_index " << input_index << " out of range size " << graph_inputs.size();
     }
-    if (utils::isa<AnfNodePtr>(real_args[i])) {
+    auto &real_arg = real_args[i];
+    if (utils::isa<AnfNodePtr>(real_arg)) {
       // arg is a anf node
-      auto real_arg = utils::cast<AnfNodePtr>(real_args[i]);
-      auto real_arg_output_num = AnfAlgo::GetOutputTensorNum(real_arg);
-      if (!AnfAlgo::CheckPrimitiveType(real_arg, prim::kPrimTupleGetItem) && real_arg_output_num > 1) {
-        input_index += real_arg_output_num;
-        continue;
-      }
-      if (valid_inputs[input_index]) {
-        SetChildGraphParameter(real_arg, graph_inputs[input_index]);
-      } else {
-        MS_LOG(DEBUG) << "Invalid input arg" << real_arg->DebugString();
-      }
-      input_index++;
-    } else if (utils::isa<ValuePtr>(args[i])) {
-      auto value = utils::cast<ValuePtr>(args[i]);
-      MS_EXCEPTION_IF_NULL(value);
+      auto node = utils::cast<AnfNodePtr>(real_arg);
+      input_index = SetChildGraphInput(to_graph, node, input_index);
+    } else if (utils::isa<ValuePtr>(real_arg)) {
       // arg is a tensor
-      if (!value->isa<Tensor>()) {
-        MS_LOG(EXCEPTION) << "Value Node should be a tensor, unexpected value: " << value->ToString();
-      }
-      SetChildGraphParameter(value->cast<TensorPtr>(), graph_inputs[input_index]);
-      input_index++;
+      auto value = utils::cast<ValuePtr>(real_arg);
+      input_index = SetChildGraphInput(to_graph, value, input_index);
+    } else if (utils::isa<VectorRef>(real_arg)) {
+      // arg is a VectorRef
+      auto vec_args = utils::cast<VectorRef>(real_arg);
+      input_index = SetChildGraphInput(to_graph, vec_args, input_index);
     } else {
-      MS_LOG(EXCEPTION) << "Unexpected arg type " << args[i].ToString();
+      MS_LOG(EXCEPTION) << "Unexpected arg type " << real_arg.ToString();
     }
   }
   MS_LOG(INFO) << "Finish!";
