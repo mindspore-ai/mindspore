@@ -482,8 +482,8 @@ void SelectKernelInfo(const CNodePtr &kernel_node) {
     if (selected_kernel_info == nullptr) {
       std::ostringstream buffer;
       PrintInputAndOutputInferType(buffer, kernel_node);
-      MS_LOG(EXCEPTION) << "The node [" << kernel_node->DebugString()
-                        << "] cannot find valid kernel info, not supported the type" << buffer.str();
+      MS_EXCEPTION(TypeError) << "The node [" << kernel_node->DebugString()
+                              << "] cannot find valid kernel info, not supported the type" << buffer.str();
     } else {
       PrintRaiseOrReducePrecisionSelectedInfo(kernel_node, selected_kernel_info, precision_reduce);
     }
