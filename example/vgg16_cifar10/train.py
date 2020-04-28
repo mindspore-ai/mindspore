@@ -66,7 +66,7 @@ if __name__ == '__main__':
     context.set_context(device_id=args_opt.device_id)
     context.set_context(enable_task_sink=True)
     context.set_context(enable_loop_sink=True)
-    context.set_context(enable_mem_reuse=True, enable_hccl=False)
+    context.set_context(enable_mem_reuse=True)
 
     device_num = int(os.environ.get("DEVICE_NUM", 1))
     if device_num > 1:

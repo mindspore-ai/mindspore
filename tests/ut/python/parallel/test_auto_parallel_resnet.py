@@ -19,6 +19,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.common.initializer import TruncatedNormal
+from mindspore.communication.management import init
 from mindspore.train.model import Model, ParallelMode
 from mindspore import context
 import os
@@ -31,10 +32,10 @@ from mindspore.parallel import set_algo_parameters
 from mindspore.parallel import _cost_model_context as cost_model_context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(enable_hccl=True)
 context.set_context(enable_task_sink=True, device_id= 0)
 context.set_context(enable_ir_fusion=True)
 context.set_context(enable_loop_sink=False)
+init()
 
 def weight_variable(shape, factor=0.1):
     return TruncatedNormal(0.02)
