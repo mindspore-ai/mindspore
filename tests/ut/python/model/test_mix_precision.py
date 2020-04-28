@@ -175,7 +175,7 @@ class GetParamGrad(nn.Cell):
 
 def test_grad_conv_prelu():
     shapes = [[64, 64, 112, 112]]
-    outshape = [[64, 64, 56, 56]]
+    outshape = [[64, 64, 112, 112]]
     net = IRBlockZ(inplanes=64, planes=64).add_flags_recursive(fp16=True)
     inputs = [convert(shp, dtype=np.float16) for shp in shapes]
     sens_shape = outshape[0]

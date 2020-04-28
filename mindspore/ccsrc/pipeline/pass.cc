@@ -108,6 +108,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   });
   opt::OptPassConfig a_3 = opt::OptPassConfig({
     irpass.same_eliminate_,
+    irpass.check_bprop_eliminate_,
     irpass.replace_applicator_,
   });
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});

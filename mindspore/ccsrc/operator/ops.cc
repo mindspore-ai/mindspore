@@ -213,6 +213,7 @@ const PrimitivePtr kPrimGetRefOrigin = std::make_shared<Primitive>("get_ref_orig
 const PrimitivePtr kPrimInsertGradientOf = std::make_shared<Primitive>("InsertGradientOf");
 const PrimitivePtr kPrimPrintShapeType = std::make_shared<Primitive>("PrintShapeType");
 const PrimitivePtr kPrimSameTypeShape = std::make_shared<Primitive>("SameTypeShape");
+const PrimitivePtr kPrimCheckBprop = std::make_shared<Primitive>("CheckBprop");
 const PrimitivePtr kPrimPrint = std::make_shared<Primitive>("Print");
 
 const PrimitivePtr kPrimMakeRef = std::make_shared<Primitive>("make_ref");

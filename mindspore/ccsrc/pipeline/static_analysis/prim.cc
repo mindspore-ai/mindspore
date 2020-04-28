@@ -295,6 +295,9 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic["shape"] = shape;
     dic["dtype"] = arg_slice->BuildType();
     dic["value"] = BuildValue(arg_slice->BuildValue());
+  } else if (abs_base->isa<AbstractRef>()) {
+    auto value = abs_base->cast<AbstractRefPtr>()->ref();
+    dic = ConvertAbstractToPython(value);
   } else if (abs_base->isa<AbstractTuple>()) {
     auto arg_tuple = dyn_cast<AbstractTuple>(abs_base);
     size_t len = arg_tuple->size();
@@ -326,6 +329,10 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
   } else if (abs_base->isa<AbstractNone>()) {
     dic["shape"] = py::none();
     dic["dtype"] = py::none();
+    dic["value"] = py::none();
+  } else if (abs_base->isa<AbstractFunction>()) {
+    dic["shape"] = py::none();
+    dic["dtype"] = abs_base->BuildType();
     dic["value"] = py::none();
   } else {
     auto value = abs_base->BuildValue();

@@ -585,7 +585,7 @@ test_case_nn_ops = [
     ('ReLUV2', {
         'block': P.ReLUV2(),
         'desc_inputs': [[1, 3, 4, 4]],
-        'desc_bprop': [[1, 3, 4, 4], [1, 3, 4, 4]]}),
+        'desc_bprop': [[1, 3, 4, 4], ([1, 1, 4, 4, 2], {'dtype': np.uint8})]}),
     ('ReLUGrad', {
         'block': G.ReluGrad(),
         'desc_inputs': [[1, 3, 4, 4], [1, 3, 4, 4]],
@@ -626,7 +626,7 @@ test_case_nn_ops = [
     ('MaxPoolWithArgmax', {
         'block': P.MaxPoolWithArgmax(ksize=2, strides=2),
         'desc_inputs': [[128, 32, 32, 64]],
-        'desc_bprop': [[128, 32, 8, 16], [128, 32, 8, 16]]}),
+        'desc_bprop': [[128, 32, 16, 32], ([128, 32, 4, 33], {'dtype': np.uint16})]}),
     ('SoftmaxCrossEntropyWithLogits', {
         'block': P.SoftmaxCrossEntropyWithLogits(),
         'desc_inputs': [[1, 10], [1, 10]],
@@ -639,7 +639,7 @@ test_case_nn_ops = [
     ('LogSoftmax', {
         'block': P.LogSoftmax(),
         'desc_inputs': [[64, 2]],
-        'desc_bprop': [[160, 30522]]}),
+        'desc_bprop': [[64, 2]]}),
     ('LogSoftmaxGrad', {
         'block': G.LogSoftmaxGrad(),
         'desc_inputs': [[16, 1234], [16, 1234]],
@@ -648,7 +648,7 @@ test_case_nn_ops = [
     ('LayerNorm', {
         'block': P.LayerNorm(),
         'desc_inputs': [[2, 16], [16], [16]],
-        'desc_bprop': [[2, 16], [2, 16], [2, 16]]}),
+        'desc_bprop': [[2, 16], [2, 1], [2, 1]]}),
     ('LayerNormGrad', {
         'block': G.LayerNormGrad(),
         'desc_inputs': [[2, 16], [2, 16], [2, 16], [2, 16], [16]],
@@ -845,7 +845,7 @@ test_case_nn_ops = [
         'block': P.OneHot(),
         'desc_const': [3, Tensor(1.0, mstype.float32), Tensor(0.0, mstype.float32)],
         'desc_inputs': [Tensor(np.array([64]).astype(np.int32))],
-        'desc_bprop': [[64, 2]]}),
+        'desc_bprop': [[1, 3]]}),
     ('ReduceProd_0', {
         'block': P.ReduceProd(),
         'desc_const': [0],
@@ -950,7 +950,7 @@ test_case_array_ops = [
         'block': P.Cast(),
         'desc_const': [mstype.int32],
         'desc_inputs': [[2, 3, 4, 5]],
-        'desc_bprop': [Tensor(np.ones((2, 3, 3, 5)).astype(np.int32))]}),
+        'desc_bprop': [Tensor(np.ones((2, 3, 4, 5)).astype(np.int32))]}),
     ('ExpandDims', {
         'block': P.ExpandDims(),
         'desc_const': [0],
@@ -1002,12 +1002,12 @@ test_case_array_ops = [
         'desc_inputs': [
             (Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32)),
              Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32)))],
-        'desc_bprop': [[4, 2]]}),
+        'desc_bprop': [([4, 2], {'dtype': np.int32})]}),
     ('ConcatV2_1', {
         'block': P.Concat(axis=2),
         'desc_inputs': [(Tensor(np.array([[[0, 1, 2]], [[2, 1, 2]]]).astype(np.int32)),
                          Tensor(np.array([[[0, 1]], [[2, 1]]]).astype(np.int32)))],
-        'desc_bprop': [[2, 1, 5]]}),
+        'desc_bprop': [([2, 1, 5], {'dtype': np.int32})]}),
     ('ConcatV2_2', {
         'block': NetForConcat(),
         'desc_inputs': [[2, 2]],
@@ -1042,7 +1042,7 @@ test_case_array_ops = [
     ('Pack_2', {
         'block': NetForPackInput(P.Pack()),
         'desc_inputs':[[2, 2]],
-        'desc_bprop':[[2, 2, 2]],
+        'desc_bprop':[[1, 2, 2]],
     }),
     ('Pack_3', {
         'block': NetForPackInput(P.Pack()),
@@ -1077,7 +1077,7 @@ test_case_array_ops = [
     ('SpaceToBatch_2', {
         'block': P.SpaceToBatch(2, [[1, 1], [0, 4]]),
         'desc_inputs': [[1, 3, 2, 2]],
-        'desc_bprop': [[4, 3, 2, 4]],
+        'desc_bprop': [[4, 3, 2, 3]],
     }),
     ('BatchToSpace_1', {
         'block': P.BatchToSpace(2, [[0, 0], [0, 0]]),
@@ -1124,7 +1124,7 @@ test_case_other_ops = [
         'desc_const': [(3, 3)],
         'desc_inputs': (Tensor(np.ones((2, 2), np.int32)),
                         Tensor(np.ones((2,), np.int32))),
-        'desc_bprop': [[3, 3]]}),
+        'desc_bprop': [([3, 3], {'dtype': np.int32})]}),
     ('SmoothL1Loss', {
         'block': P.SmoothL1Loss(),
         'desc_inputs': [[256, 4], [256, 4]],

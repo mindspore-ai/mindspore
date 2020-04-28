@@ -211,11 +211,11 @@ def get_bprop_slice(self):
 
     def bprop(x, begin, size, out, dout):
         dx = P.Pad(_slice_grad_pad(begin, size, shape_op(x)))(dout)
-        return (dx,)
+        return (dx, zeros_like(begin), zeros_like(size))
 
     def bprop_gpu(x, begin, size, out, dout):
         dx = dx = G.SliceGrad()(dout, x, begin, size)
-        return (dx,)
+        return (dx, zeros_like(begin), zeros_like(size))
 
     if context.get_context('device_target') == "GPU":
         return bprop_gpu
@@ -262,7 +262,7 @@ def get_bprop_gather_v2(self):
         # Example: out_shape:(3,2,3) axis 2 -> (1,2,0)
         perm_2 = _generate_inverse_index(x_shp, axis)
         params_grad = transpose(params_grad, perm_2)
-        return params_grad, zeros_like(indices)
+        return params_grad, zeros_like(indices), zeros_like(axis)
     return bprop
 
 

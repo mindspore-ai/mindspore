@@ -436,7 +436,7 @@ def get_bprop_onehot(self):
     """Grad definition for `OneHot` operation."""
 
     def bprop(indices, depth, on_value, off_value, out, dout):
-        return zeros_like(indices), zeros_like(depth)
+        return zeros_like(indices), zeros_like(depth), zeros_like(on_value), zeros_like(off_value)
     return bprop
 
 
