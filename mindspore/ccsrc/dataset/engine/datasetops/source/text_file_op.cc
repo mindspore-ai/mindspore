@@ -438,7 +438,9 @@ Status TextFileOp::CalculateNumRowsPerShard() {
     all_num_rows_ += count;
   }
   if (all_num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Number of rows can not be zero");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API TextFileDataset.Please check file path or dataset API "
+      "validation first.");
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(all_num_rows_ * 1.0 / num_devices_));

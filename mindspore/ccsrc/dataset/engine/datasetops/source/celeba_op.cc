@@ -33,8 +33,8 @@ CelebAOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr)
 }
 
 Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
-  MS_LOG(INFO) << "Celeba dataset directory is " << builder_dir_.c_str() << ".";
-  MS_LOG(INFO) << "Celeba dataset type is " << builder_dataset_type_.c_str() << ".";
+  MS_LOG(DEBUG) << "Celeba dataset directory is " << builder_dir_.c_str() << ".";
+  MS_LOG(DEBUG) << "Celeba dataset type is " << builder_dataset_type_.c_str() << ".";
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
     builder_sampler_ = std::make_shared<SequentialSampler>();
@@ -240,9 +240,11 @@ Status CelebAOp::ParseImageAttrInfo() {
   num_rows_exact_ = image_labels_vec_.size();
   num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_exact_) ? num_rows_exact_ : num_samples_;
   if (num_rows_exact_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Number of rows in celeba dataset is zero");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API CelebADataset.Please check file path or dataset API "
+      "validation first.");
   }
-  MS_LOG(INFO) << "Celeba dataset rows number is " << num_rows_exact_ << ".";
+  MS_LOG(DEBUG) << "Celeba dataset rows number is " << num_rows_exact_ << ".";
   return Status::OK();
 }
 
@@ -267,7 +269,9 @@ std::vector<std::string> CelebAOp::Split(const std::string &line) {
 // Derived from RandomAccessOp
 Status CelebAOp::GetNumSamples(int64_t *num) const {
   if (num == nullptr || num_samples_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumSample not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API CelebADataset.Please check file path or dataset API "
+      "validation first.");
   }
   (*num) = num_samples_;
   return Status::OK();
@@ -275,7 +279,9 @@ Status CelebAOp::GetNumSamples(int64_t *num) const {
 
 Status CelebAOp::GetNumRowsInDataset(int64_t *num) const {
   if (num == nullptr || num_rows_exact_ == 0) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "NumRow not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API CelebADataset.Please check file path or dataset API "
+      "validation first.");
   }
 
   *num = num_rows_exact_;

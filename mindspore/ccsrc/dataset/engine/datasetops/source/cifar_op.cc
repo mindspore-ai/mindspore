@@ -247,7 +247,10 @@ Status CifarOp::InitSampler() {
 // Derived from RandomAccessOp
 Status CifarOp::GetNumSamples(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
+    std::string err_msg = "There is no valid data matching the dataset API " + api +
+                          ".Please check file path or dataset API validation first.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
   (*num) = num_samples_;
   return Status::OK();
@@ -256,7 +259,10 @@ Status CifarOp::GetNumSamples(int64_t *num) const {
 // Derived from RandomAccessOp
 Status CifarOp::GetNumRowsInDataset(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
+    std::string err_msg = "There is no valid data matching the dataset API " + api +
+                          ".Please check file path or dataset API validation first.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
   (*num) = num_rows_;
   return Status::OK();
@@ -389,7 +395,10 @@ Status CifarOp::ParseCifarData() {
   num_rows_ = cifar_image_label_pairs_.size();
   num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   if (num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Init Cifar failed, not a single row read from dataset!");
+    std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
+    std::string err_msg = "There is no valid data matching the dataset API " + api +
+                          ".Please check file path or dataset API validation first.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
   cifar_raw_data_block_->Reset();
   return Status::OK();
