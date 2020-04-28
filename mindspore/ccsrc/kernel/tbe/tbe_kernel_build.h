@@ -35,6 +35,8 @@ namespace kernel {
 // kernel operate type used for generate json
 
 class TbeKernelBuild {
+  enum FusionDataType { kFusionNormal = 0, kFusionAddN, kFusionReLUGradV2 };
+
  public:
   static bool GetIOSize(const nlohmann::json &kernel_json, std::vector<size_t> *input_size_list,
                         std::vector<size_t> *output_size_list);
@@ -48,8 +50,9 @@ class TbeKernelBuild {
  private:
   TbeKernelBuild() = default;
   ~TbeKernelBuild() = default;
-  static bool GenFusionDataInputJson(const std::shared_ptr<mindspore::AnfNode> &data_input, nlohmann::json *data_str,
-                                     size_t *index);
+  static bool GenFusionDataInputJson(const std::shared_ptr<mindspore::AnfNode> &data_input,
+                                     const std::map<const AnfNodePtr, FusionDataType> &spec_data_input,
+                                     nlohmann::json *data_str, size_t *index);
   static bool GenFusionComputeJson(const mindspore::AnfNodePtr &compute_node,
                                    std::vector<std::vector<mindspore::AnfNodePtr>>::iterator *layer_iter,
                                    nlohmann::json *compute_op_str, std::string *fusion_kernel_name, size_t *index);
@@ -60,13 +63,17 @@ class TbeKernelBuild {
   static bool GenFusionComputeOutputJson(const mindspore::CNodePtr &cnode,
                                          std::vector<nlohmann::json> *output_desc_list);
   static void GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t node_out_idx,
-                          size_t desc_output_idx, nlohmann::json *output_desc);
+                          size_t desc_output_idx, nlohmann::json *output_desc,
+                          FusionDataType fusion_data_type = kFusionNormal);
   static void GenReusedOutputDesc(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t index,
                                   size_t output_index, nlohmann::json *output_desc);
   static size_t GetIOSizeImpl(const nlohmann::json &desc);
+  static bool GetSpecInputLayers(const std::string &op_name, const std::vector<mindspore::AnfNodePtr> &reorder_layer,
+                                 std::map<const AnfNodePtr, FusionDataType> *spec_data_input);
   static bool GetInputLayers(const std::vector<mindspore::AnfNodePtr> &input_nodes,
                              const std::vector<mindspore::AnfNodePtr> &compute_nodes,
-                             std::vector<std::vector<mindspore::AnfNodePtr>> *input_layers);
+                             std::vector<std::vector<mindspore::AnfNodePtr>> *input_layers,
+                             std::map<const AnfNodePtr, FusionDataType> *spec_data_input);
   static bool IsDynamicInput(const CNodePtr &cnode);
   static size_t GetOptionalInput(const CNodePtr &cnode, bool is_dynamic_input);
 };
