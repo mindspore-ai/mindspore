@@ -91,8 +91,7 @@ if __name__ == '__main__':
         lr = Tensor(warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size))
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                        config.weight_decay, config.loss_scale)
-        model = Model(net, loss_fn=loss, optimizer=opt, amp_level='O2', keep_batchnorm_fp32=False,
-                      loss_scale_manager=loss_scale, metrics={'acc'})
+        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'})
         time_cb = TimeMonitor(data_size=step_size)
         loss_cb = LossMonitor()
         cb = [time_cb, loss_cb]

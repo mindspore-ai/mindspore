@@ -22,7 +22,7 @@ fi
 
 if [ ! -f $1 ]
 then 
-    echo "error: DMINDSPORE_HCCL_CONFIG_PATH=$1 is not a file"
+    echo "error: MINDSPORE_HCCL_CONFIG_PATH=$1 is not a file"
 exit 1
 fi 
 
