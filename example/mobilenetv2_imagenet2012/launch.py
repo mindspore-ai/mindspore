@@ -15,7 +15,6 @@
 """launch train script"""
 import os
 import sys
-import subprocess
 import json
 from argparse import ArgumentParser
 
@@ -125,25 +124,19 @@ def main():
     sys.stdout.flush()
 
     # spawn the processes
-    current_env = os.environ.copy()
-    current_env["RANK_SIZE"] = str(args.nproc_per_node)
-    if args.nproc_per_node > 1:
-        current_env["MINDSPORE_HCCL_CONFIG_PATH"] = table_fn
-    processes = []
-    cmds = []
     for rank_id in range(0, args.nproc_per_node):
-        current_env["RANK_ID"] = str(rank_id)
-        current_env["DEVICE_ID"] = visible_devices[rank_id]
-        cmd = [sys.executable, "-u"]
-        cmd.append(args.training_script)
-        cmd.extend(args.training_script_args)
-        process = subprocess.Popen(cmd, env=current_env)
-        processes.append(process)
-        cmds.append(cmd)
-    for process, cmd in zip(processes, cmds):
-        process.wait()
-        if process.returncode != 0:
-            raise subprocess.CalledProcessError(returncode=process.returncode, cmd=cmd)
+        device_id = visible_devices[rank_id]
+        device_dir = os.path.join(os.getcwd(), 'device{}'.format(rank_id))
+        rank_process = 'export RANK_SIZE={} && export RANK_ID={} && export DEVICE_ID={} && '.format(args.nproc_per_node,
+                                                                                                    rank_id, device_id)
+        if args.nproc_per_node > 1:
+            rank_process += 'export MINDSPORE_HCCL_CONFIG_PATH={} && '.format(table_fn)
+            rank_process += 'export RANK_TABLE_FILE={} && '.format(table_fn)
+        rank_process += 'rm -rf {dir} && mkdir {dir} && cd {dir} && python {script} '.format(dir=device_dir,
+                                                                                             script=args.training_script
+                                                                                             )
+        rank_process += ' '.join(args.training_script_args) + ' > log{}.log 2>&1 &'.format(rank_id)
+        os.system(rank_process)
 
 
 if __name__ == "__main__":
