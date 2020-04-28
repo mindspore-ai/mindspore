@@ -20,7 +20,6 @@ on the evaluation dataset. It's used to choose the best model.
 """
 from .accuracy import Accuracy
 from .error import MAE, MSE
-from .evaluation import EvaluationBase
 from .metric import Metric
 from .precision import Precision
 from .recall import Recall
@@ -32,7 +31,6 @@ __all__ = [
     "names", "get_metric_fn",
     "Accuracy",
     "MAE", "MSE",
-    "EvaluationBase",
     "Metric",
     "Precision",
     "Recall",
