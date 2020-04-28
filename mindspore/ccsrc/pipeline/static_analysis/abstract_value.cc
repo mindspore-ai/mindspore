@@ -997,6 +997,9 @@ bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, const Abstract
   for (std::size_t i = 0; i < size; i++) {
     MS_EXCEPTION_IF_NULL(lhs[i]);
     MS_EXCEPTION_IF_NULL(rhs[i]);
+    if (lhs[i] == rhs[i]) {
+      continue;
+    }
     if (!(*lhs[i] == *rhs[i])) {
       return false;
     }
