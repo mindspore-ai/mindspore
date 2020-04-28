@@ -111,6 +111,12 @@ class Softmax(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the logits.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> softmax = P.Softmax()
+        >>> softmax(input_x)
+        [0.01165623, 0.03168492, 0.08612854, 0.23412167, 0.6364086]
     """
 
     @prim_attr_register
@@ -155,6 +161,12 @@ class LogSoftmax(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the logits.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> log_softmax = P.LogSoftmax()
+        >>> log_softmax(input_x)
+        [-4.4519143, -3.4519143, -2.4519143, -1.4519144, -0.4519144]
     """
 
     @prim_attr_register
@@ -375,6 +387,11 @@ class Sigmoid(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the input_x.
 
+    Examples:
+        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> sigmoid = P.Sigmoid()
+        >>> sigmoid(input_x)
+        [0.73105866, 0.880797, 0.9525742, 0.98201376, 0.9933071]
     """
 
     @prim_attr_register
@@ -438,6 +455,12 @@ class Tanh(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> tanh = P.Tanh()
+        >>> tanh(input_x)
+        [0.7615941, 0.9640276, 0.9950548, 0.9993293, 0.99990916]
     """
 
     @prim_attr_register
@@ -547,6 +570,15 @@ class BatchNorm(PrimitiveWithInfer):
         - **reserve_space_1** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_2** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_3** (Tensor) - Tensor of shape :math:`(C,)`.
+
+    Examples:
+        >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)
+        >>> scale = Tensor(np.ones([64]), mindspore.float32)
+        >>> bias = Tensor(np.ones([64]), mindspore.float32)
+        >>> mean = Tensor(np.ones([64]), mindspore.float32)
+        >>> variance = Tensor(np.ones([64]), mindspore.float32)
+        >>> batch_norm = P.BatchNorm()
+        >>> output = batch_norm(input_x, scale, bias, mean, variance)
     """
 
     @prim_attr_register
@@ -1189,6 +1221,12 @@ class BiasAdd(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same shape and type as `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
+        >>> bias = Tensor(np.random.random(3).reshape((3,)), mindspore.float32)
+        >>> bias_add = P.BiasAdd()
+        >>> bias_add(input_x, bias)
     """
 
     @prim_attr_register
@@ -1277,7 +1315,12 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
         Tuple of 2 Tensor, the loss shape is `(N,)`, and the dlogits with the same shape as `logits`.
 
     Examples:
-        Please refer to the usage in nn.SoftmaxCrossEntropyWithLogits source code.
+        >>> logits = Tensor([[2, 4, 1, 4, 5], [2, 1, 2, 4, 3]], mindspore.float32)
+        >>> labels = Tensor([[0, 0, 0, 0, 1], [0, 0, 0, 1, 0]], mindspore.float32)
+        >>> softmax_cross = P.SoftmaxCrossEntropyWithLogits()
+        >>> loss, backprop = softmax_cross(logits, labels)
+        ([0.5899297, 0.52374405], [[0.02760027, 0.20393994, 0.01015357, 0.20393994, -0.44563377],
+        [0.08015892, 0.02948882, 0.08015892, -0.4077012, 0.21789455]])
     """
 
     @prim_attr_register
@@ -1421,6 +1464,13 @@ class SmoothL1Loss(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as `prediction`.
+
+    Examples:
+        >>> loss = P.SmoothL1Loss()
+        >>> input_data = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> target_data = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> loss(input_data, target_data)
+        [0, 0, 0.5]
     """
 
     @prim_attr_register
