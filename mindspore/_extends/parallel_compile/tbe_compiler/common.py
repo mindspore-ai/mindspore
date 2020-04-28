@@ -122,10 +122,12 @@ def get_args(op_info, arg_type):
 
     elif arg_type == 'attrs':
         for item in op_info[arg_type]:
-            if 'value' not in item:
-                raise ValueError("Json string Errors, attr key:value not found.")
-            if item["name"] != "isRef":
-                args.append(item['value'])
+            if item["valid"]:
+                if 'value' not in item:
+                    raise ValueError("Json string Errors, attr key:value not found.")
+                if item["name"] != "isRef":
+                    args.append(item['value'])
+
     return args
 
 
