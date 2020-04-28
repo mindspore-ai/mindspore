@@ -49,6 +49,24 @@ You will get the accuracy as following:
 result: {'acc': 0.92}
 ```
 
+### Distribute Training
+```
+sh run_distribute_train.sh rank_table.json your_data_path
+```
+The above shell script will run distribute training in the background, you can view the results through the file `train_parallel[X]/log`.
+
+You will get the loss value as following:
+```
+# grep "result: " train_parallel*/log
+train_parallel0/log:epoch: 1 step: 97, loss is 1.9060308
+train_parallel0/log:epcoh: 2 step: 97, loss is 1.6003821
+...
+train_parallel1/log:epoch: 1 step: 97, loss is 1.7095519
+train_parallel1/log:epcoh: 2 step: 97, loss is 1.7133579
+...
+...
+```
+> About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html).
 
 ## Usage:
 
@@ -75,4 +93,14 @@ parameters/options:
   --data_path           the storage path of datasetd 
   --device_id           the device which used to evaluate model.
   --checkpoint_path     the checkpoint file path used to evaluate model.
+```
+
+### Distribute Training
+
+```
+Usage: sh run_distribute_train.sh [MINDSPORE_HCCL_CONFIG_PATH] [DATA_PATH]
+
+parameters/options:
+  MINDSPORE_HCCL_CONFIG_PATH   HCCL configuration file path.
+  DATA_PATH                    the storage path of dataset.
 ```
