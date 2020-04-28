@@ -96,6 +96,7 @@ const char kNameConfusionMatrix[] = "ConfusionMatrix";
 const char kNameResizeNearestNeighborD[] = "ResizeNearestNeighbor";
 const char kNameResizeNearestNeighborGrad[] = "ResizeNearestNeighborGrad";
 const char kNameApplyAdam[] = "Adam";
+const char kNameExtractImagePatches[] = "ExtractImagePatches";
 const char kNameReLU6[] = "ReLU6";
 const char kNameReLU6Grad[] = "ReLU6Grad";
 const char kNameElu[] = "Elu";
@@ -110,6 +111,8 @@ const char kNameSigmoidCrossEntropyWithLogits[] = "SigmoidCrossEntropyWithLogits
 const char kNameSigmoidCrossEntropyWithLogitsGrad[] = "SigmoidCrossEntropyWithLogitsGrad";
 const char kNameScatterNdD[] = "ScatterNd";
 const char kNamePadD[] = "Pad";
+const char kNameMirrorPad[] = "MirrorPad";
+const char kNameMirrorPadGrad[] = "MirrorPadGrad";
 const char kNameGatherNd[] = "GatherNd";
 const char kNameArgmax[] = "Argmax";
 const char kNameArgmin[] = "Argmin";
@@ -213,6 +216,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameMaxPoolGrad), ADPT_DESC(MaxPoolGrad)},
     {string(kNameAvgPoolGrad), ADPT_DESC(AvgPoolGrad)},
     {string(kNameMaxPoolGradWithArgmax), ADPT_DESC(MaxPoolGradWithArgmax)},
+    {string(kNameExtractImagePatches), ADPT_DESC(ExtractImagePatches)},
     {prim::kPrimAssign->name(), ADPT_DESC(Assign)},
     {prim::kPrimStateSetItem->name(), ADPT_DESC(Assign)},
     {prim::kPrimReluGrad->name(), ADPT_DESC(ReluGrad)},
@@ -257,6 +261,8 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameSigmoidCrossEntropyWithLogitsGrad), ADPT_DESC(SigmoidCrossEntropyWithLogitsGrad)},
     {string(kNameScatterNdD), ADPT_DESC(ScatterNdD)},
     {string(kNamePadD), ADPT_DESC(PadD)},
+    {string(kNameMirrorPad), ADPT_DESC(MirrorPad)},
+    {string(kNameMirrorPadGrad), ADPT_DESC(MirrorPadGrad)},
     {string(kNameGatherNd), ADPT_DESC(GatherNd)},
     {string(kNameArgmax), ADPT_DESC(ArgMaxD)},
     {string(kNameArgmin), ADPT_DESC(ArgMinD)},
