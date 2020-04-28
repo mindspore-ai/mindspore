@@ -36,6 +36,7 @@ ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
 export MINDSPORE_HCCL_CONFIG_PATH=$1
+export RANK_TABLE_FILE=$1
 
 for((i=0; i<${DEVICE_NUM}; i++))
 do
