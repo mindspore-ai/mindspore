@@ -16,16 +16,14 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_PATH"
-echo "for example: sh run_standalone_pretrain.sh 0 40 /path/zh-wiki/ /path/Schema.json /path/mindspore"
+echo "sh run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR"
+echo "for example: sh run_standalone_pretrain.sh 0 40 /path/zh-wiki/ /path/Schema.json"
 echo "=============================================================================================================="
 
 DEVICE_ID=$1
 EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
-MINDSPORE_PATH=$5
-export PYTHONPATH=$MINDSPORE_PATH/build/package:$PYTHONPATH
 
 python run_pretrain.py  \
     --distribute="false" \

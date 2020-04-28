@@ -135,9 +135,10 @@ class ModelCallback(Callback):
 
     def step_end(self, run_context):
         cb_params = run_context.original_args()
-        self.loss_list.append(cb_params.net_outputs[0])
+        self.loss_list.append(cb_params.net_outputs[0].asnumpy()[0])
         self.overflow_list.append(cb_params.net_outputs[1])
         self.lossscale_list.append(cb_params.net_outputs[2])
+        print("epoch: {}, outputs are: {}".format(cb_params.cur_epoch_num, str(cb_params.net_outputs)))
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -192,7 +193,11 @@ def test_bert_tdt():
             if count == scale_window:
                 count = 0
                 assert callback.lossscale_list[i] == callback.lossscale_list[i - 1] * Tensor(2.0, mstype.float32)
-
+    # assertion occurs while the loss value is wrong
+    loss_value = np.array(callback.loss_list)
+    expect_value = [12.1918125, 11.966035, 11.972114, 11.982671, 11.976399, 12.616986, 12.180658, 12.850562, 12.415608, 12.640145]
+    print("loss value: {}".format(loss_value))
+    assert np.allclose(loss_value, expect_value, 0.00001, 0.00001)
 
 if __name__ == '__main__':
     test_bert_tdt()

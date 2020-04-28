@@ -26,30 +26,36 @@ cfg = edict({
     'optimizer': 'Lamb',
     'AdamWeightDecayDynamicLR': edict({
         'learning_rate': 3e-5,
-        'end_learning_rate': 0.0,
+        'end_learning_rate': 1e-7,
         'power': 5.0,
         'weight_decay': 1e-5,
         'eps': 1e-6,
     }),
     'Lamb': edict({
         'start_learning_rate': 3e-5,
-        'end_learning_rate': 0.0,
+        'end_learning_rate': 1e-7,
         'power': 10.0,
         'warmup_steps': 10000,
         'weight_decay': 0.01,
         'eps': 1e-6,
-        'decay_filter': lambda x: False,
     }),
     'Momentum': edict({
         'learning_rate': 2e-5,
         'momentum': 0.9,
     }),
 })
+
+'''
+Including two kinds of network: \
+base: Goole BERT-base(the base version of BERT model).
+large: BERT-NEZHA(a Chinese pretrained language model developed by Huawei, which introduced a improvement of \
+       Functional Relative Posetional Encoding as an effective positional encoding scheme).
+'''
 if cfg.bert_network == 'base':
     bert_net_cfg = BertConfig(
-        batch_size=16,
+        batch_size=32,
         seq_length=128,
-        vocab_size=21136,
+        vocab_size=21128,
         hidden_size=768,
         num_hidden_layers=12,
         num_attention_heads=12,
@@ -66,13 +72,13 @@ if cfg.bert_network == 'base':
         dtype=mstype.float32,
         compute_type=mstype.float16,
     )
-else:
+if cfg.bert_network == 'nezha':
     bert_net_cfg = BertConfig(
-        batch_size=16,
+        batch_size=32,
         seq_length=128,
-        vocab_size=21136,
+        vocab_size=21128,
         hidden_size=1024,
-        num_hidden_layers=12,
+        num_hidden_layers=24,
         num_attention_heads=16,
         intermediate_size=4096,
         hidden_act="gelu",
