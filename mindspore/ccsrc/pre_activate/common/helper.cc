@@ -299,6 +299,10 @@ tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_pt
 tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
   MS_EXCEPTION_IF_NULL(value_tuple);
   tensor::TensorPtr tensor = nullptr;
+  if (value_tuple->value().empty()) {
+    MS_LOG(WARNING) << "The value tuple is empty.";
+    return nullptr;
+  }
   ValuePtr v = *(value_tuple->value().begin());
   MS_EXCEPTION_IF_NULL(v);
   // Currently we only deal with the scalar tuple
