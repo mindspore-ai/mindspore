@@ -111,6 +111,8 @@ class AscendSession : public SessionBasic {
   std::vector<GraphType> &GetGraphOrderType(GraphId final_graph_id);
   // copy output of if and else
   void CopyOutputOfIf(GraphId false_graph_id);
+  // check if graph cache exist
+  bool GraphCacheExist(const GraphInfo &graph_info) const;
 
   // member variables
   // key is final_graph_id,value is child graph execute order of final graph

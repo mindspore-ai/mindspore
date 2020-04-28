@@ -125,7 +125,7 @@ BaseRef CreateOneTensor(const AnfNodePtr &node, size_t output_index, const Kerne
   // if in paynative mode,data only copyed to host when user want to print data
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->enable_pynative_infer()) {
+  if (ms_context->execution_mode() == kPynativeMode) {
     tensor->set_device_address(AnfAlgo::GetMutableOutputAddr(node, output_index));
   } else if (!address->SyncDeviceToHost(trans::GetRuntimePaddingShape(node, output_index),
                                         LongToSize(tensor->data().nbytes()), tensor->data_type(),

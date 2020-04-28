@@ -249,10 +249,23 @@ void AscendSession::RunOpExecTask(const std::shared_ptr<KernelGraph> &kernel_gra
   MS_LOG(INFO) << "Finish!";
 }
 
+bool AscendSession::GraphCacheExist(const GraphInfo &graph_info) const {
+  if (run_op_graphs_.find(graph_info) != run_op_graphs_.end()) {
+    return true;
+  }
+
+  return false;
+}
+
 void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                             const std::vector<tensor::TensorPtr> &input_tensors,
                             const std::vector<bool> &tensors_mask) {
   MS_LOG(INFO) << "Build op " << op_run_info.op_name << " start !";
+  if (GraphCacheExist(graph_info)) {
+    MS_LOG(INFO) << "Build op " << op_run_info.op_name << " finish !";
+    return;
+  }
+
   // construct graph include one op
   auto graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
   MS_EXCEPTION_IF_NULL(graph);
@@ -267,6 +280,7 @@ void AscendSession::BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph
   RunOpAdjustKernel(graph);
   BuildKernel(graph);
   run_op_graphs_[graph_info] = graph;
+  MS_LOG(INFO) << "Build op " << op_run_info.op_name << " finish !";
 }
 
 py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
@@ -291,7 +305,6 @@ py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &gr
   }
   py::object tuple_obj = utils::cast<PyObjectRef>(output_tensors).object_;
   py::tuple tuple_tensors = py::cast<py::tuple>(tuple_obj);
-  run_op_graphs_.clear();
   MS_LOG(INFO) << "Run op " << op_run_info.op_name << " finish!";
   return tuple_tensors;
 }

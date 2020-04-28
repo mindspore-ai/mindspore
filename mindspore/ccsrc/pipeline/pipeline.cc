@@ -38,6 +38,7 @@
 #include "parallel/graph_util/get_parallel_info.h"
 #include "device/kernel_runtime_manager.h"
 #include "debug/trace.h"
+#include "pynative/pynative_execute.h"
 
 #if (ENABLE_GE || ENABLE_D)
 #include "pipeline/pipeline_ge.h"
@@ -829,6 +830,7 @@ void FinalizeBackend() {
 
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
+  pynative::ClearPyNativeSession();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 
   ad::g_k_prims.clear();
