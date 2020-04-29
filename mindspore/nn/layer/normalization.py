@@ -119,7 +119,7 @@ class _BatchNorm(Cell):
     def _shape_infer(self, x):
         """global batch normalization shape and axes infer"""
         if len(self.shape(x)) == 4:
-            axes = (0,2,3)
+            axes = (0, 2, 3)
             re_shape = (1, self.num_features, 1, 1)
         else:
             axes = (0,)
