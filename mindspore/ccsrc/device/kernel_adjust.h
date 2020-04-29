@@ -63,6 +63,7 @@ class KernelAdjust {
   KernelAdjust() = default;
   ~KernelAdjust() = default;
 
+  void ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
   CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
   uint32_t FindFirstStreamSwitchLabel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
