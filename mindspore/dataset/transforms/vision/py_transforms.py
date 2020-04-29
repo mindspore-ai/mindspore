@@ -1355,7 +1355,7 @@ class RandomSharpness:
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomColor(0.5,1.5),
+        >>>                          py_transforms.RandomSharpness(0.5,1.5),
         >>>                          py_transforms.ToTensor()])
 
     """
