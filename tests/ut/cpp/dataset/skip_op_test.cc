@@ -47,7 +47,7 @@ TEST_F(MindDataTestSkipOp, TestSkipOpFuntions) {
   ASSERT_TRUE(rc.IsOk());
 
   // SkipOp
-  std::shared_ptr<SkipOp> skip_op = std::make_shared<SkipOp>(5);
+  std::shared_ptr<SkipOp> skip_op = std::make_shared<SkipOp>(5, 2);
   rc = my_tree->AssociateNode(skip_op);
   ASSERT_TRUE(rc.IsOk());
 
