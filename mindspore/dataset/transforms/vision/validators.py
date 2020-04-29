@@ -837,8 +837,8 @@ def check_uniform_augmentation(method):
         if not isinstance(operations, list):
             raise ValueError("operations is not a python list")
         for op in operations:
-            if not callable(op) and not isinstance(op, TensorOp):
-                raise ValueError("non-callable op in operations list")
+            if not isinstance(op, TensorOp):
+                raise ValueError("operations list only accepts C++ operations.")
 
         kwargs["num_ops"] = num_ops
         kwargs["operations"] = operations

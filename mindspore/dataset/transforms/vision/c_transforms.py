@@ -455,8 +455,19 @@ class UniformAugment(cde.UniformAugOp):
     Tensor operation to perform randomly selected augmentation
 
     Args:
-        operations: list of python operations.
+        operations: list of C++ operations (python OPs are not accepted).
         NumOps (int): number of OPs to be selected and applied.
+
+    Examples:
+        >>> transforms_list = [c_transforms.RandomHorizontalFlip(),
+        >>>                    c_transforms.RandomVerticalFlip(),
+        >>>                    c_transforms.RandomColorAdjust(),
+        >>>                    c_transforms.RandomRotation(degrees=45)]
+        >>> uni_aug = c_transforms.UniformAugment(operations=transforms_list, num_ops=2)
+        >>> transforms_all = [c_transforms.Decode(), c_transforms.Resize(size=[224, 224]),
+        >>>                   uni_aug, F.ToTensor()]
+        >>> ds_ua = ds.map(input_columns="image",
+        >>>                operations=transforms_all, num_parallel_workers=1)
     """
 
     @check_uniform_augmentation

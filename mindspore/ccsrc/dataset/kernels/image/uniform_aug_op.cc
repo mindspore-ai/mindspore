@@ -25,18 +25,14 @@ UniformAugOp::UniformAugOp(py::list op_list, int32_t num_ops) : num_ops_(num_ops
   std::shared_ptr<TensorOp> tensor_op;
   // iterate over the op list, cast them to TensorOp and add them to tensor_op_list_
   for (auto op : op_list) {
-    if (py::isinstance<py::function>(op)) {
-      // python op
-      tensor_op = std::make_shared<PyFuncOp>(op.cast<py::function>());
-    } else if (py::isinstance<TensorOp>(op)) {
-      // C++ op
-      tensor_op = op.cast<std::shared_ptr<TensorOp>>();
-    }
+    // only C++ op is accepted
+    tensor_op = op.cast<std::shared_ptr<TensorOp>>();
     tensor_op_list_.insert(tensor_op_list_.begin(), tensor_op);
   }
 
   rnd_.seed(GetSeed());
 }
+
 // compute method to apply uniformly random selected augmentations from a list
 Status UniformAugOp::Compute(const std::vector<std::shared_ptr<Tensor>> &input,
                              std::vector<std::shared_ptr<Tensor>> *output) {
@@ -57,7 +53,7 @@ Status UniformAugOp::Compute(const std::vector<std::shared_ptr<Tensor>> &input,
       continue;
     }
 
-    // apply python/C++ op
+    // apply C++ ops (note: python OPs are not accepted)
     if (count == 1) {
       (**tensor_op).Compute(input, output);
     } else if (count % 2 == 0) {
