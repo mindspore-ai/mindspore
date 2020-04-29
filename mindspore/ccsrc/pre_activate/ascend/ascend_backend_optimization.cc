@@ -19,6 +19,7 @@
 #include "pre_activate/common/optimizer.h"
 #include "pre_activate/ascend/ir_fission/bn_split.h"
 #include "pre_activate/ascend/ir_fission/bn_grad_split.h"
+#include "pre_activate/ascend/ir_fission/batch_norm_grad_split.h"
 #include "pre_activate/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "pre_activate/ascend/ir_fission/layer_norm_grad_split.h"
 #include "pre_activate/pass/communication_op_fusion.h"
@@ -87,7 +88,6 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRule>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneFusion>());
@@ -193,8 +193,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
-  ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AddMemcpyAsync>());
   if (context_ptr->ir_fusion_flag()) {
     AddAscendBackendOptionalIRFusion(ir_fusion_pm.get());

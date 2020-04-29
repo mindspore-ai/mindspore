@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include "pre_activate/common/optimizer.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -26,29 +27,37 @@ class FusedBatchNormFusion : public PatternProcessPass {
  public:
   explicit FusedBatchNormFusion(bool multigraph = true)
       : PatternProcessPass("fused_batch_norm_fusion", multigraph),
-        data_input_var0_(std::make_shared<Var>()),
-        data_input_var1_(std::make_shared<Var>()),
-        data_input_var2_(std::make_shared<Var>()),
-        variable_input_var0_(std::make_shared<Var>()),
-        variable_input_var1_(std::make_shared<Var>()),
-        constant_input_var0_(std::make_shared<Var>()),
-        constant_input_var1_(std::make_shared<Var>()) {}
+        data_input0_var_(std::make_shared<Var>()),
+        data_input1_var_(std::make_shared<Var>()),
+        data_input2_var_(std::make_shared<Var>()),
+        variable_input0_var_(std::make_shared<Var>()),
+        variable_input1_var_(std::make_shared<Var>()),
+        constant_input0_var_(std::make_shared<Var>()),
+        constant_input1_var_(std::make_shared<Var>()),
+        batch_norm_var_(std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimBatchNorm->name()))) {}
   ~FusedBatchNormFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  abstract::AbstractTuplePtr CreateAbstractOfFusedBatchNorm(const EquivPtr &equiv, const AnfNodePtr &bn) const;
-
+  AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                    const EquivPtr &equiv) const;
+  void GetBNTrainingUpdateInputs(const EquivPtr &equiv, const std::vector<AnfNodePtr> &bn_training_reduce_outputs,
+                                 std::vector<AnfNodePtr> *bn_training_update_inputs) const;
+  void GetBNTrainingUpdateAbstractList(const EquivPtr &equiv, const AnfNodePtr &bn,
+                                       std::vector<AbstractBasePtr> *abstract_list) const;
+  AnfNodePtr CreateBNTrainingUpdate(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv,
+                                    const std::vector<AnfNodePtr> &bn_training_reduce_outputs) const;
   ValuePtr GetFactor(const EquivPtr &equiv) const;
 
-  VarPtr data_input_var0_;
-  VarPtr data_input_var1_;
-  VarPtr data_input_var2_;
-  VarPtr variable_input_var0_;
-  VarPtr variable_input_var1_;
-  VarPtr constant_input_var0_;
-  VarPtr constant_input_var1_;
+  VarPtr data_input0_var_;
+  VarPtr data_input1_var_;
+  VarPtr data_input2_var_;
+  VarPtr variable_input0_var_;
+  VarPtr variable_input1_var_;
+  VarPtr constant_input0_var_;
+  VarPtr constant_input1_var_;
+  VarPtr batch_norm_var_;
 };
 }  // namespace opt
 }  // namespace mindspore
