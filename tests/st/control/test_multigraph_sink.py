@@ -24,9 +24,7 @@ from mindspore.ops import operations as P
 
 
 def setup_module(module):
-    context.set_context(mode = context.PYNATIVE_MODE, save_graphs = True, device_target = "Ascend")
-    context.set_context(enable_task_sink = True, device_id = 0)
-
+    context.set_context(mode = context.PYNATIVE_MODE, device_target = "Ascend")
 
 c1 = Tensor([2], mstype.int32)
 c2 = Tensor([14], mstype.int32)
@@ -135,6 +133,10 @@ def while_in_while_in_while(x, y, z):
     return out
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
 def test_simple_if():
     output = simple_if(c1, c2, c3)
     expect = Tensor([6], mstype.int32)
@@ -153,30 +155,49 @@ def test_if_in_if():
     assert output == expect
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
 def test_simple_while():
     output = simple_while(c1, c2, c3)
     expect = Tensor([21], mstype.int32)
     assert output == expect
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
 def test_while_by_while():
     output = while_by_while(c1, c2, c3)
     expect = Tensor([28], mstype.int32)
     assert output == expect
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
 def test_while_in_while():
     output = while_in_while(c1, c2, c3)
     expect = Tensor([1274], mstype.int32)
     assert output == expect
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
 def test_while_by_while_in_while():
     output = while_by_while_in_while(c1, c2, c3)
     expect = Tensor([350], mstype.int32)
     assert output == expect
 
-
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
 def test_while_in_while_in_while():
     output = while_in_while_in_while(c1, c2, c3)
     expect = Tensor([2534], mstype.int32)
