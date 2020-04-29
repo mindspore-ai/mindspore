@@ -1423,11 +1423,9 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
       }
       // load strategy checkpoint
       // key of strategy map
-      std::string instance_name = prim->instance_name();
-      std::string strategy_key_name = cnode->scope()->name() + std::string(CONNSYMBOL) + instance_name;
+      std::string strategy_key_name = NodeParameterName(cnode);
       bool load_strategy_from_ckpt =
         StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
-
       if (!StrategyFound(attrs) && !load_strategy_from_ckpt) {
         MS_LOG(INFO) << "ExtractInformation: the strategy of node " << node->ToString() << " prim " << prim->name()
                      << " is empty, using batch parallel";
@@ -2038,17 +2036,20 @@ void HandleSymbolicKeyInstance(const FuncGraphPtr &root, const std::vector<AnfNo
   }
 }
 
-bool NodeWithParameter(const CNodePtr &node) {
+std::string NodeParameterName(const CNodePtr &node) {
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
   for (auto input : node_inputs) {
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default()) {
-        return py::cast<bool>(parse::python_adapter::GetPyObjAttr(input_parameter->default_param(), "requires_grad"));
+        if (py::cast<bool>(parse::python_adapter::GetPyObjAttr(input_parameter->default_param(), REQUIRES_GRAD))) {
+          return py::cast<std::string>(
+            parse::python_adapter::GetPyObjAttr(input_parameter->default_param(), PARAM_NAME));
+        }
       }
     }
   }
-  return false;
+  return "";
 }
 
 void CheckpointStrategy(const FuncGraphPtr &func_graph) {
@@ -2060,21 +2061,20 @@ void CheckpointStrategy(const FuncGraphPtr &func_graph) {
   for (auto &node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
-    if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0)) || !NodeWithParameter(cnode)) {
+    if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
+      continue;
+    }
+    std::string param_name = NodeParameterName(cnode);
+    if (param_name.empty()) {
       continue;
     }
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     MS_EXCEPTION_IF_NULL(prim);
     OperatorInfoPtr operator_info = cnode->operator_info();
     if (operator_info) {
-      if (prim->instance_name().empty()) {
-        MS_LOG(EXCEPTION) << "Node with parameter to checkpoint strategy needs instance name";
-      }
-      std::string instance_name = prim->instance_name();
       StrategyPtr strategyPtr = operator_info->strategy();
       MS_EXCEPTION_IF_NULL(node->scope());
-      std::string node_name = node->scope()->name() + std::string(CONNSYMBOL) + instance_name;
-      stra_map[node_name] = strategyPtr;
+      stra_map[param_name] = strategyPtr;
     }
   }
   if (StrategyCheckpoint::GetInstance().Save(stra_map) != SUCCESS) {

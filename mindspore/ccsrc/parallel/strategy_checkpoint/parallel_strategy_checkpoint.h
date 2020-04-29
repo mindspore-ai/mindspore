@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 using StrategyMap = std::unordered_map<std::string, StrategyPtr>;
 class StrategyCheckpoint {
  public:
