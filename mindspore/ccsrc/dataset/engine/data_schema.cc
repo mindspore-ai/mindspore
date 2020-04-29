@@ -471,8 +471,7 @@ Status DataSchema::PreLoadExceptionCheck(const nlohmann::json &js) {
 // name to column index number.
 Status DataSchema::GetColumnNameMap(std::unordered_map<std::string, int32_t> *out_column_name_map) {
   if (out_column_name_map == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
-                  "unexpected null output column name map.");
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "unexpected null output column name map.");
   }
 
   for (int32_t i = 0; i < col_descs_.size(); ++i) {
