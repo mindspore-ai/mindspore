@@ -208,7 +208,6 @@ class Dataset:
         Add a blocking condition to the input Dataset
 
         Args:
-            input_dataset (Dataset): Input dataset to apply flow control
             num_batch (int): the number of batches without blocking at the start of each epoch
             condition_name (str): The condition name that is used to toggle sending next row
             callback (function): The callback funciton that will be invoked when sync_update is called
@@ -921,10 +920,13 @@ class Dataset:
 
     def sync_update(self, condition_name, num_batch=None, data=None):
         """
-        condition_name (str): The condition name that is used to toggle sending next row
-        num_batch (int or None): The number of batches(rows) that are released
-                         when pass_rows is None, will update the same number as sync_wait specified
-        data (dict or None): The data passed to the callback
+        Release a blocking condition and triger callback with given data
+
+        Args:
+            condition_name (str): The condition name that is used to toggle sending next row
+            num_batch (int or None): The number of batches(rows) that are released
+                When num_batch is None, it will default to the number specified by the sync_wait operator
+            data (dict or None): The data passed to the callback
         """
         notifiers_dict = self.get_sync_notifiers()
         if condition_name not in notifiers_dict:
