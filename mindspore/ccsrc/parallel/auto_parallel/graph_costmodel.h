@@ -45,6 +45,9 @@ namespace parallel {
 #define DEFAULT_FULLY_USE_DEVICES true
 #define DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW false
 #define DEFAULT_IS_MULTI_SUBGRAPHS false
+#define DEFAULT_RUN_PHASE 0
+#define TRAINING_PHASE 0
+#define INFERENCE_PHASE 1
 
 class CostGraph;
 using CostGraphPtr = std::shared_ptr<CostGraph>;
@@ -60,6 +63,8 @@ extern bool TENSOR_SLICE_ALIGNMENT_ENABLE;
 extern size_t TENSOR_SLICE_ALIGNMENT_SIZE;
 extern bool FULLY_USE_DEVICES;
 extern bool ELEMENTWISE_OP_STRA_FOLLOW;
+extern bool MULTI_SUBGRAPHS;
+extern int32_t RUN_PHASE;
 
 class CostGraph {
   // 'CostGraph' consists of Operators and edges between them. An edge is created between two Operators if they have
@@ -98,7 +103,7 @@ class CostGraph {
 
   CostPtrList CreateFinalCostList(const OperatorInfoPtr &u, const EdgePtr &e, const OperatorInfoPtr &v);
   CostPtrList CreateFinalSingleCostList(const OperatorInfoPtr &u);
-  CostPtr SelectCostWithMemoryConstraint(const CostPtrList &cost_list, double memory);
+  CostPtr SelectCostWithMinInferenceTime(const CostPtrList &cost_list, double memory);
   CostPtr SelectCostWithMinTrainingTime(const CostPtrList &cost_list, double memory);
   CostPtrList SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList> &all_costlist, double memory);
   Status SearchStrategyForMultiNodeFinalGraph(const std::vector<OperatorInfoPtr> &);

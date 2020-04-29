@@ -610,6 +610,7 @@ Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &
                 << ", communication_with_partial_para_: " << result->communication_with_partial_para_;
   // refine communication cost calculation for practice
   RefineForPracticalCost(result, false);
+  result->communication_forward_ = result->communication_without_parameter_;
 
   std::shared_ptr<StrategyWithCost> swc =
     std::make_shared<StrategyWithCost>(strategy, inputs_tensor_info_, outputs_tensor_info_);
