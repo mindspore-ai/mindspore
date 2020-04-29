@@ -580,6 +580,41 @@ def test_num_samples_underflow():
         count = count + 1
     assert count == 64
 
+
+def type_tester_with_type_check_2c_schema(t, c):
+    logger.info("Test with Type {}".format(t.__name__))
+
+    schema = ds.Schema()
+    schema.add_column("data0", c[0])
+    schema.add_column("data1", c[1])
+
+    # apply dataset operations
+    data1 = ds.GeneratorDataset((lambda: generator_with_type_2c(t)), schema=schema)
+
+    data1 = data1.batch(4)
+
+    i = 0
+    for item in data1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
+        assert np.array_equal(item["data0"], golden)
+        i = i + 4
+
+
+def test_schema():
+    """
+    Test 2 column Generator on different data type with type check with schema input
+    """
+    logger.info("Test 2 column Generator on all data types with type check")
+
+    np_types = [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32,
+                np.float64]
+    de_types = [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16, mstype.uint32,
+                mstype.uint64, mstype.float32, mstype.float64]
+
+    for i in range(len(np_types)):
+        type_tester_with_type_check_2c_schema(np_types[i], [de_types[i], de_types[i]])
+
+
 def manual_test_keyborad_interrupt():
     """
     Test keyborad_interrupt
@@ -626,5 +661,6 @@ if __name__ == "__main__":
     test_sequential_sampler()
     test_distributed_sampler()
     test_random_sampler()
+    test_schema()
 
 
