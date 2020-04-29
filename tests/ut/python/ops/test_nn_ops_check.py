@@ -123,7 +123,7 @@ raise_set = [
         'skip': ['backward']}),
     # input is Tensor(int32)
     ('Elu1', {
-        'block': (P.Elu(alpha=0.9), {'exception': TypeError, 'error_keywords': ['Elu']}),
+        'block': (P.Elu(), {'exception': TypeError, 'error_keywords': ['Elu']}),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32))],
         'skip': ['backward']}),
 

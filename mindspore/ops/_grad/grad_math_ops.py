@@ -727,7 +727,7 @@ def get_bprop_acosh(self):
     input_grad = G.AcoshGrad()
 
     def bprop(x, out, dout):
-        dx = input_grad(x, dout)
+        dx = input_grad(out, dout)
         return (dx,)
     return bprop
 

@@ -281,7 +281,7 @@ def get_bprop_elu(self):
     input_grad = G.EluGrad()
 
     def bprop(x, out, dout):
-        dx = input_grad(dout, x)
+        dx = input_grad(dout, out)
         return (dx,)
 
     return bprop

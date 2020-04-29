@@ -128,7 +128,7 @@ class Validator:
 
     @staticmethod
     def check_number(arg_name, arg_value, value, rel, prim_name):
-        """Integer value judgment."""
+        """Number value judgment."""
         rel_fn = Rel.get_fns(rel)
         if not rel_fn(arg_value, value):
             rel_str = Rel.get_strs(rel).format(value)
