@@ -186,7 +186,10 @@ constexpr auto kControlDependBehindIndex = 2;
 // index define of depend
 constexpr auto kRealInputIndexInDepend = 1;
 constexpr auto kDependAttachNodeIndex = 2;
-
+// status of kernel select result
+const int kStatusReducePrecision = -1;
+const int kStatusRaisePrecision = 1;
+const int kStatusAllMatched = 0;
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
 constexpr auto kOpFormat_NC1KHKWHWC0 = "NC1KHKWHWC0";
