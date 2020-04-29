@@ -17,6 +17,7 @@ import functools
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
+from mindspore.common.api import _executor
 from mindspore.common import dtype as mstype
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore import Tensor

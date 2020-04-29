@@ -2037,7 +2037,7 @@ class Atan2(_MathBinaryOp):
     r"""
     Returns arctangent of input_x/input_y element-wise.
 
-    It returns :math:`\theta\ \in\ (-\frac{\pi}{2}, \frac{\pi}{2})`
+    It returns :math:`\theta\ \in\ [-\pi, \pi]`
     such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
 
     Inputs:
