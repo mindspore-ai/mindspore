@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 from mindspore import log as logger
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.py_transforms as F
+import mindspore.dataset.transforms.vision.c_transforms as C
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
@@ -101,7 +102,68 @@ def test_uniform_augment(plot=False, num_ops=2):
     if plot:
         visualize(images_original, images_ua)
         
+def test_cpp_uniform_augment(plot=False, num_ops=2):
+    """
+    Test UniformAugment
+    """
+    logger.info("Test CPP UniformAugment")
+
+    # Original Images
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+
+    transforms_original = [C.Decode(), C.Resize(size=[224, 224]),
+                           F.ToTensor()]
+
+    ds_original = ds.map(input_columns="image",
+                         operations=transforms_original)
+
+    ds_original = ds_original.batch(512)
+
+    for idx, (image,label) in enumerate(ds_original):
+        if idx == 0:
+            images_original = np.transpose(image, (0, 2, 3, 1))
+        else:
+            images_original = np.append(images_original,
+                                        np.transpose(image, (0, 2, 3, 1)),
+                                        axis=0)
+
+
+    # UniformAugment Images
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+    transforms_ua = [C.RandomCrop(size=[224, 224], padding=[32, 32, 32, 32]),
+                     C.RandomHorizontalFlip(),
+                     C.RandomVerticalFlip(),
+                     C.RandomColorAdjust(),
+                     C.RandomRotation(degrees=45)]
+
+    uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+
+    transforms_all = [C.Decode(), C.Resize(size=[224, 224]),
+                      uni_aug,
+                      F.ToTensor()]
+
+    ds_ua = ds.map(input_columns="image",
+                   operations=transforms_all, num_parallel_workers=1)
+
+    ds_ua = ds_ua.batch(512)
+
+    for idx, (image,label) in enumerate(ds_ua):
+        if idx == 0:
+            images_ua = np.transpose(image, (0, 2, 3, 1))
+        else:
+            images_ua = np.append(images_ua,
+                                  np.transpose(image, (0, 2, 3, 1)),
+                                  axis=0)
+    if plot:
+        visualize(images_original, images_ua)
+
+    num_samples = images_original.shape[0]
+    mse = np.zeros(num_samples)
+    for i in range(num_samples):
+        mse[i] = np.mean((images_ua[i] - images_original[i]) ** 2)
+    logger.info("MSE= {}".format(str(np.mean(mse))))
 
 if __name__ == "__main__":
     test_uniform_augment(num_ops=1)
+    test_cpp_uniform_augment(num_ops=1)
     

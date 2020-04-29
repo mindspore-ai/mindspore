@@ -39,7 +39,7 @@ std::vector<std::string> StringSplit(const std::string &field, char separator) {
     }
     s_pos = e_pos + 1;
   }
-  return std::move(res);
+  return res;
 }
 
 bool ValidateFieldName(const std::string &str) {
