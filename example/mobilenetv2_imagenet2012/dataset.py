@@ -53,8 +53,8 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
 
     # define map operations
     decode_op = C.Decode()
-    resize_crop_op = C.RandomResizedCrop(resize_height, scale=(0.2, 1.0))
-    horizontal_flip_op = C.RandomHorizontalFlip()
+    resize_crop_op = C.RandomResizedCrop(resize_height, scale=(0.08, 1.0), ratio=(0.75, 1.333))
+    horizontal_flip_op = C.RandomHorizontalFlip(prob=0.5)
 
     resize_op = C.Resize((256, 256))
     center_crop = C.CenterCrop(resize_width)

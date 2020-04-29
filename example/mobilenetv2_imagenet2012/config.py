@@ -27,6 +27,7 @@ config = ed({
     "lr": 0.4,
     "momentum": 0.9,
     "weight_decay": 4e-5,
+    "label_smooth": 0.1,
     "loss_scale": 1024,
     "save_checkpoint": True,
     "save_checkpoint_epochs": 1,

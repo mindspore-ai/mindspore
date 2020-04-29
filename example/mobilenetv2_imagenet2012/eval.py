@@ -38,8 +38,6 @@ context.set_context(enable_loop_sink=True)
 context.set_context(enable_mem_reuse=True)
 
 if __name__ == '__main__':
-    context.set_context(enable_hccl=False)
-
     loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
     net = mobilenet_v2()
 
