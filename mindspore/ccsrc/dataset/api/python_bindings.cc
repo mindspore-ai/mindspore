@@ -47,6 +47,7 @@
 #include "dataset/engine/datasetops/source/mnist_op.h"
 #include "dataset/engine/datasetops/source/manifest_op.h"
 #include "dataset/engine/datasetops/source/mindrecord_op.h"
+#include "dataset/engine/datasetops/source/random_data_op.h"
 #include "dataset/engine/datasetops/source/sampler/distributed_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/pk_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/random_sampler.h"
@@ -489,6 +490,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("VOC", OpName::kVoc)
     .value("CIFAR10", OpName::kCifar10)
     .value("CIFAR100", OpName::kCifar100)
+    .value("RANDOMDATA", OpName::kRandomData)
     .value("CELEBA", OpName::kCelebA)
     .value("TEXTFILE", OpName::kTextFile);
 
