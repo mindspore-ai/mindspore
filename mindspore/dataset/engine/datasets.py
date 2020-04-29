@@ -455,7 +455,7 @@ class Dataset:
             The order of using repeat and batch reflects the number of batches. Recommend that
             repeat operation should be used after batch operation.
             If dataset_sink_mode is False, here repeat operation is invalid.
-            If dataset_sink_mode is True, repeat count should be euqal to the epoch of training. Otherwise,
+            If dataset_sink_mode is True, repeat count should be equal to the epoch of training. Otherwise,
             errors could occur since the amount of data is not the amount training requires.
 
         Args:
