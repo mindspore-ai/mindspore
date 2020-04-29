@@ -554,6 +554,16 @@ INPUT_MAP(PadD) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(PadD) = {{"paddings", ATTR_DESC(paddings, AnyTraits<std::vector<std::vector<int64_t>>>())}};
 OUTPUT_MAP(PadD) = {{0, OUTPUT_DESC(y)}};
 
+// MirrorPad
+INPUT_MAP(MirrorPad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}};
+ATTR_MAP(MirrorPad) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
+OUTPUT_MAP(MirrorPad) = {{0, OUTPUT_DESC(y)}};
+
+// MirrorPadGrad
+INPUT_MAP(MirrorPadGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}};
+ATTR_MAP(MirrorPadGrad) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
+OUTPUT_MAP(MirrorPadGrad) = {{0, OUTPUT_DESC(y)}};
+
 // GatherNd
 INPUT_MAP(GatherNd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}};
 ATTR_MAP(GatherNd) = EMPTY_ATTR_MAP;
@@ -702,15 +712,19 @@ ATTR_MAP(MaxPoolWithArgmax) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyT
 OUTPUT_MAP(MaxPoolWithArgmax) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
 
 // MaxPoolGradWithArgmax
-INPUT_MAP(MaxPoolGradWithArgmax) = {
-  {1, INPUT_DESC(x)},
-  {2, INPUT_DESC(grad)},
-  {3, INPUT_DESC(argmax)},
-};
+INPUT_MAP(MaxPoolGradWithArgmax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grad)}, {3, INPUT_DESC(argmax)}};
 ATTR_MAP(MaxPoolGradWithArgmax) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
                                    {"strides", ATTR_DESC(strides, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
                                    {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
 OUTPUT_MAP(MaxPoolGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
+
+// ExtractImagePatches
+INPUT_MAP(ExtractImagePatches) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ExtractImagePatches) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                 {"strides", ATTR_DESC(strides, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                 {"rates", ATTR_DESC(rates, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                 {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+OUTPUT_MAP(ExtractImagePatches) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2D
 INPUT_MAP(Conv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
