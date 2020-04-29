@@ -173,8 +173,8 @@ test_sets = [
                                                   embedding_size=768,
                                                   embedding_shape=[1, 128, 768],
                                                   use_one_hot_embeddings=True,
-                                                  initializer_range=0.02), 1, 1), {
-                      'init_param_with': lambda shp: np.ones(shp).astype(np.float32)}),
+                                                  initializer_range=0.02), 1, 1),
+                  {'init_param_with': lambda shp: np.ones(shp).astype(np.float32)}),
         'desc_inputs': [input_ids],
         'desc_bprop': [[128]]}),
     ('EmbeddingLookup_multi_outputs_init_param', {
@@ -182,8 +182,8 @@ test_sets = [
                                   embedding_size=768,
                                   embedding_shape=[1, 128, 768],
                                   use_one_hot_embeddings=False,
-                                  initializer_range=0.02), {
-                      'init_param_with': lambda shp: np.ones(shp).astype(np.float32)}),
+                                  initializer_range=0.02),
+                  {'init_param_with': lambda shp: np.ones(shp).astype(np.float32)}),
         'desc_inputs': [input_ids],
         'desc_bprop': [[1, 128, 768], [128]]}),
     ('EmbeddingLookup_multi_outputs_grad_with_no_sens', {
@@ -191,8 +191,8 @@ test_sets = [
                                   embedding_size=768,
                                   embedding_shape=[1, 128, 768],
                                   use_one_hot_embeddings=False,
-                                  initializer_range=0.02), {
-                      'init_param_with': lambda shp: np.ones(shp).astype(np.float32)}),
+                                  initializer_range=0.02),
+                  {'init_param_with': lambda shp: np.ones(shp).astype(np.float32)}),
         'desc_inputs': [input_ids]}),
     ('GetMaskedLMOutput_grad_with_no_sens', {
         'block': GetMaskedLMOutput(BertConfig(batch_size=1)),

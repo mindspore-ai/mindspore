@@ -110,8 +110,8 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
 
 def _check_param_value(decay_steps, warmup_steps, start_learning_rate,
                        end_learning_rate, power, beta1, beta2, eps, weight_decay, prim_name):
-
     """Check the type of inputs."""
+    _ = warmup_steps
     validator.check_float_positive('start_learning_rate', start_learning_rate, prim_name)
     validator.check_float_legal_value('start_learning_rate', start_learning_rate, prim_name)
     validator.check_float_positive('end_learning_rate', end_learning_rate, prim_name)

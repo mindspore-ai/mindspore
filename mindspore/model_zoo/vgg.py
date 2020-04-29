@@ -61,6 +61,7 @@ class Vgg(nn.Cell):
 
     def __init__(self, base, num_classes=1000, batch_norm=False, batch_size=1):
         super(Vgg, self).__init__()
+        _ = batch_size
         self.layers = _make_layer(base, batch_norm=batch_norm)
         self.flatten = nn.Flatten()
         self.classifier = nn.SequentialCell([

@@ -69,6 +69,7 @@ class IthOutputCell(nn.Cell):
         return predict
 
 def get_output_cell(network, num_input, output_index, training=True):
+    _ = num_input
     net = IthOutputCell(network, output_index)
     set_block_training(net, training)
     return net
