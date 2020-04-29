@@ -101,6 +101,8 @@ class ProfilingUtils {
                                 NotNull<session::KernelGraph *> graph_ptr,
                                 NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
 
+  static std::unordered_map<uint32_t, std::vector<std::string>> graph_kernel_name() { return graph_kernel_name_; }
+
   inline static constexpr char kProfiling[] = "Profiling";
   inline static constexpr char kNotify[] = "notify";
   inline static constexpr char kProfilerTraceId[] = "profiler_trace_id";

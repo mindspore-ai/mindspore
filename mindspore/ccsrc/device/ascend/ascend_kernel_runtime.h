@@ -57,6 +57,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void ReleaseDeviceRes() override;
   bool GraphWithEmptyTaskList(const session::KernelGraph *graph) const;
   bool CheckGraphIdValid(GraphId graph_id) const;
+  static void DebugTaskIdName(GraphId graph_id) ;
 
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};

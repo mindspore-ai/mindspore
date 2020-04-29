@@ -343,6 +343,22 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   return true;
 }
 
+void AscendKernelRuntime::DebugTaskIdName(GraphId graph_id) {
+  auto task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(graph_id);
+  auto graph_task_names = ProfilingUtils::graph_kernel_name();
+  auto iter = graph_task_names.find(graph_id);
+  if (iter != graph_task_names.end()) {
+    const auto &task_names = iter->second;
+    if (task_ids.size() != task_names.size()) {
+      MS_LOG(WARNING) << "Task_ids and task_names size not match";
+      return;
+    }
+    for (size_t i = 0; i < task_ids.size(); ++i) {
+      MS_LOG(INFO) << "Task_id:" << task_ids[i] << " task_name:" << task_names[i];
+    }
+  }
+}
+
 bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "RunTask start. GraphId:" << graph->graph_id();
@@ -363,7 +379,8 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 
   bool status = ge::model_runner::ModelRunner::Instance().RunModel(graph->graph_id(), input_tensors, output_tensors);
   if (!status) {
-    MS_LOG(INFO) << "run task failed";
+    MS_LOG(ERROR) << "run task failed";
+    DebugTaskIdName(graph->graph_id());
     return false;
   }
   return true;

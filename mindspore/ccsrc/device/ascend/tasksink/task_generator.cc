@@ -147,9 +147,7 @@ bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
     }
     current_op_index++;
   }
-  if (ProfilingManager::GetInstance().IsProfiling()) {
-    ProfilingUtils::SetGraphKernelName(graph_id, kernel_name_list);
-  }
+  ProfilingUtils::SetGraphKernelName(graph_id, kernel_name_list);
   return true;
 }
 }  // namespace tasksink
