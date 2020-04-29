@@ -16,8 +16,8 @@
 import os
 import sys
 import json
+import subprocess
 from argparse import ArgumentParser
-
 
 def parse_args():
     """
@@ -124,6 +124,8 @@ def main():
     sys.stdout.flush()
 
     # spawn the processes
+    processes = []
+    cmds = []
     for rank_id in range(0, args.nproc_per_node):
         device_id = visible_devices[rank_id]
         device_dir = os.path.join(os.getcwd(), 'device{}'.format(rank_id))
@@ -136,7 +138,13 @@ def main():
                                                                                              script=args.training_script
                                                                                              )
         rank_process += ' '.join(args.training_script_args) + ' > log{}.log 2>&1 &'.format(rank_id)
-        os.system(rank_process)
+        process = subprocess.Popen(rank_process, shell=True)
+        processes.append(process)
+        cmds.append(rank_process)
+    for process, cmd in zip(processes, cmds):
+        process.wait()
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(returncode=process, cmd=cmd)
 
 
 if __name__ == "__main__":
