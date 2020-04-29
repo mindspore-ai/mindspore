@@ -2087,6 +2087,9 @@ class PReLU(PrimitiveWithInfer):
 
     where :math:`x_i` is an element of an channel of the input.
 
+    Note:
+        1-dimensional input_x is not supported.
+
     Inputs:
         - **input_x** (Tensor) - Float tensor, representing the output of the preview layer.
         - **weight** (Tensor) -  Float Tensor, w > 0, there is only two shapes are legitimate,
@@ -2106,14 +2109,13 @@ class PReLU(PrimitiveWithInfer):
         input_x_dim = len(input_x_shape)
         weight_dim = len(weight_shape)
 
+        if input_x_dim == 1:
+            raise ValueError(f'For \'{self.name}\' input_x rank 1 is not supported.')
+
         if weight_dim != 1:
             raise ValueError(f'For \'{self.name}\' weight_dim must be 1, while weight_dim is {weight_dim}.')
 
-        if input_x_dim == 1 and weight_shape[0] != 1:
-            raise ValueError(f'For \'{self.name}\' when input_x_dim is 1, weight_shape[0] must be 1, '
-                             f'while weight_shape[0] is {weight_shape[0]}.')
-
-        if input_x_dim != 1 and weight_shape[0] != input_x_shape[1] and weight_shape[0] != 1:
+        if weight_shape[0] != input_x_shape[1] and weight_shape[0] != 1:
             raise ValueError(f'For \'{self.name}\' channel of input_x and weight must be matched,'
                              f' while channel of input_x is {input_x_shape[1]},'
                              f' weight_shape[0] is {weight_shape[0]}.')
@@ -2556,12 +2558,12 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         Tensor, has the same shape and type as `var`.
 
     Examples:
-        var = Tensor(np.random.random((3, 3)), mindspore.float32)
-        accum = Tensor(np.random.random((3, 3)), mindspore.float32)
-        grad = Tensor(np.random.random((3, 3)), mindspore.float32)
-        indices = Tensor(np.ones((3,), np.int32))
-        sparse_apply_ada_grad = P.SparseApplyAdagrad(0.5)
-        sparse_apply_ada_grad(var, accum, grad, indices)
+        >>> var = Tensor(np.random.random((3, 3)), mindspore.float32)
+        >>> accum = Tensor(np.random.random((3, 3)), mindspore.float32)
+        >>> grad = Tensor(np.random.random((3, 3)), mindspore.float32)
+        >>> indices = Tensor(np.ones((3,), np.int32))
+        >>> sparse_apply_ada_grad = P.SparseApplyAdagrad(0.5)
+        >>> sparse_apply_ada_grad(var, accum, grad, indices)
     """
 
     @prim_attr_register

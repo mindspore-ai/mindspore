@@ -788,7 +788,7 @@ def get_bprop_atan2(self):
 
     def bprop(x, y, out, dout):
         tmp = dout / (square(x) + square(y))
-        dx = tmp * y
-        dy = tmp * (-x)
-        return (dx, dy)
+        bc_dx = tmp * y
+        bc_dy = tmp * (-x)
+        return binop_grad_common(x, y, bc_dx, bc_dy)
     return bprop
