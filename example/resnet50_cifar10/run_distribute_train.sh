@@ -20,22 +20,33 @@ then
 exit 1
 fi
 
-if [ ! -f $1 ]
+get_real_path(){
+  if [ "${1:0:1}" == "/" ]; then
+    echo "$1"
+  else
+    echo "$(realpath -m $PWD/$1)"
+  fi
+}
+
+PATH1=$(get_real_path $1)
+PATH2=$(get_real_path $2)
+
+if [ ! -f "$PATH1" ]
 then 
-    echo "error: DMINDSPORE_HCCL_CONFIG_PATH=$1 is not a file"
+    echo "error: MINDSPORE_HCCL_CONFIG_PATH=$PATH1 is not a file"
 exit 1
 fi 
 
-if [ ! -d $2 ]
+if [ ! -d "$PATH2" ]
 then 
-    echo "error: DATASET_PATH=$2 is not a directory"
+    echo "error: DATASET_PATH=$PATH2 is not a directory"
 exit 1
 fi 
 
 ulimit -u unlimited
 export DEVICE_NUM=8
 export RANK_SIZE=8
-export MINDSPORE_HCCL_CONFIG_PATH=$1
+export MINDSPORE_HCCL_CONFIG_PATH=$PATH1
 
 for((i=0; i<${DEVICE_NUM}; i++))
 do
@@ -48,6 +59,6 @@ do
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    python train.py --do_train=True --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$2 &> log &
+    python train.py --do_train=True --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log &
     cd ..
 done
