@@ -192,6 +192,8 @@ class Iterator:
             op_type = OpName.CIFAR100
         elif isinstance(dataset, de.CelebADataset):
             op_type = OpName.CELEBA
+        elif isinstance(dataset, de.RandomDataset):
+            op_type = OpName.RANDOMDATA
         elif isinstance(dataset, de.TextFileDataset):
             op_type = OpName.TEXTFILE
         else:

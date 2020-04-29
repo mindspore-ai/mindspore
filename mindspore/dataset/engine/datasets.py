@@ -3148,6 +3148,57 @@ class Cifar100Dataset(SourceDataset):
         return get_num_rows(num_rows, self.num_shards)
 
 
+class RandomDataset(SourceDataset):
+    """
+    A source dataset that generates random data.
+
+    Args:
+        num_samples (int): number of samples to generate.
+        schema (str or Schema, optional): Path to the json schema file or schema object (default=None).
+            If the schema is not provided, the meta data from the TFRecord file is considered the schema.
+        columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
+        num_parallel_workers (int, optional): number of workers to read the data
+            (default=None, number set in the config).
+    """
+
+    def __init__(self, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None):
+        super().__init__(num_parallel_workers)
+        schema_obj = None
+        if (schema is not None) and (not isinstance(schema, Schema)):
+            schema_obj = Schema(schema)  # read the schema file and convert to schema object to validate it
+        self.schema = schema
+        self.columns_list = columns_list
+        self.num_samples = num_samples
+        if schema_obj is not None and num_samples is None:
+            self.num_samples = schema_obj.num_rows
+
+    def get_args(self):
+        args = super().get_args()
+        if self.schema is not None:
+            if isinstance(self.schema, Schema):
+                self.schema.datasetType = 'Random'
+                if self.num_samples is not None:
+                    self.schema.num_rows = self.num_samples
+                args["schema_json_string"] = self.schema.to_json()
+            else:
+                args["schema_file_path"] = self.schema
+        args["schema"] = self.schema
+        if self.columns_list is not None:
+            args["columns_list"] = self.columns_list
+        if self.num_samples is not None:
+            args["num_samples"] = self.num_samples
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        return num_samples
+
+
 class Schema:
     """
     Class to represent a schema of dataset.

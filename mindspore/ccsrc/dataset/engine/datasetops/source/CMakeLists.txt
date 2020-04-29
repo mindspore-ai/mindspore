@@ -17,6 +17,7 @@ add_library(engine-datasetops-source OBJECT
     ${FEATURE_SRCS}
     manifest_op.cc
     cifar_op.cc
+    random_data_op.cc
     celeba_op.cc
     text_file_op.cc
     )

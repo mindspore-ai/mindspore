@@ -20,6 +20,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <nlohmann/json.hpp>
 #include "dataset/core/constants.h"
@@ -179,6 +180,12 @@ class DataSchema {
   int64_t num_rows() const { return num_rows_; }
 
   static const char DEFAULT_DATA_SCHEMA_FILENAME[];
+
+  // Loops through all columns in the schema and returns a map with the column
+  // name to column index number.
+  // @param out_column_name_map - The output map of columns names to column index
+  // @return Status - The error code return
+  Status GetColumnNameMap(std::unordered_map<std::string, int32_t> *out_column_name_map);
 
  private:
   // Internal helper function. Parses the json schema file in any order and produces a schema that
