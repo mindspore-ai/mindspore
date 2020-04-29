@@ -46,8 +46,8 @@ class Optimizer(Cell):
         learning_rate (float): A floating point value for the learning rate. Should be greater than 0.
         parameters (list): A list of parameter, which will be updated. The element in `parameters`
             should be class mindspore.Parameter.
-        weight_decay (float): A floating point value for the weight decay. If the type of `weight_decay`
-            input is int, it will be convertd to float. Default: 0.0.
+        weight_decay (float): A floating point value for the weight decay. It should be equal to or greater than 0.
+            If the type of `weight_decay` input is int, it will be convertd to float. Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. It should be greater than 0. If the
             type of `loss_scale` input is int, it will be convertd to float. Default: 1.0.
         decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default: lambda
@@ -87,21 +87,15 @@ class Optimizer(Cell):
 
         if isinstance(weight_decay, int):
             weight_decay = float(weight_decay)
-
-        validator.check_float_legal_value('weight_decay', weight_decay, None)
+        validator.check_value_type("weight_decay", weight_decay, [float], None)
+        validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, None)
 
         if isinstance(loss_scale, int):
             loss_scale = float(loss_scale)
+        validator.check_value_type("loss_scale", loss_scale, [float], None)
+        validator.check_number_range("loss_scale", loss_scale, 0.0, float("inf"), Rel.INC_NEITHER, None)
 
-        validator.check_float_legal_value('loss_scale', loss_scale, None)
-
-        if loss_scale <= 0.0:
-            raise ValueError("Loss scale should be greater than 0, but got {}".format(loss_scale))
         self.loss_scale = loss_scale
-
-        if weight_decay < 0.0:
-            raise ValueError("Weight decay should be equal or greater than 0, but got {}".format(weight_decay))
-
         self.learning_rate = Parameter(learning_rate, name="learning_rate")
         self.parameters = ParameterTuple(parameters)
         self.reciprocal_scale = 1.0 / loss_scale

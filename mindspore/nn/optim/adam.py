@@ -145,9 +145,12 @@ class Adam(Optimizer):
                                                         When the learning_rate is float or learning_rate is a Tensor
                                                         but the dims of the Tensor is 0, use fixed learning rate.
                                                         Other cases are not supported. Default: 1e-3.
-        beta1 (float): The exponential decay rate for the 1st moment estimates. Should be in range (0.0, 1.0).
-        beta2 (float): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0).
-        eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0.
+        beta1 (float): The exponential decay rate for the 1st moment estimates. Should be in range (0.0, 1.0). Default:
+                       0.9.
+        beta2 (float): The exponential decay rate for the 2nd moment estimates. Should be in range (0.0, 1.0). Default:
+                       0.999.
+        eps (float): Term added to the denominator to improve numerical stability. Should be greater than 0. Default:
+                     1e-8.
         use_locking (bool): Whether to enable a lock to protect updating variable tensors.
             If True, updating of the var, m, and v tensors will be protected by a lock.
             If False, the result is unpredictable. Default: False.
@@ -155,8 +158,8 @@ class Adam(Optimizer):
             If True, updates the gradients using NAG.
             If False, updates the gradients without using NAG. Default: False.
         weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
-        loss_scale (float): A floating point value for the loss scale. Default: 1.0.
-            Should be equal to or greater than 1.
+        loss_scale (float): A floating point value for the loss scale. Should be equal to or greater than 1. Default:
+                            1.0.
         decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
                                  lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name.
 

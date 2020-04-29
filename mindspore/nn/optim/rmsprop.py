@@ -15,6 +15,7 @@
 """rmsprop"""
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 
 rmsprop_opt = C.MultitypeFuncGraph("rmsprop_opt")
@@ -91,14 +92,16 @@ class RMSProp(Optimizer):
                                                         take the i-th value as the learning rate.
                                                         When the learning_rate is float or learning_rate is a Tensor
                                                         but the dims of the Tensor is 0, use fixed learning rate.
-                                                        Other cases are not supported.
-        decay (float): Decay rate.
-        momentum (float): Hyperparameter of type float, means momentum for the moving average.
-        epsilon (float): Term added to the denominator to improve numerical stability. Should be greater than 0.
+                                                        Other cases are not supported. Default: 0.1.
+        decay (float): Decay rate. Should be equal to or greater than 0. Default: 0.9.
+        momentum (float): Hyperparameter of type float, means momentum for the moving average. Should be equal to or
+                          greater than 0.Default: 0.0.
+        epsilon (float): Term added to the denominator to improve numerical stability. Should be greater than
+                         0. Default: 1e-10.
         use_locking (bool): Enable a lock to protect the update of variable and accumlation tensors. Default: False.
-        centered (bool): If True, gradients are normalized by the estimated variance of the gradient. Default: False
-        loss_scale (float): A floating point value for the loss scale. Default: 1.0.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
+        centered (bool): If True, gradients are normalized by the estimated variance of the gradient. Default: False.
+        loss_scale (float): A floating point value for the loss scale. Should be greater than 0. Default: 1.0.
+        weight_decay (float): Weight decay (L2 penalty). Should be equal to or greater than 0. Default: 0.0.
         decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
                                  lambda x: 'beta' not in x.name and 'gamma' not in x.name.
 
@@ -118,17 +121,15 @@ class RMSProp(Optimizer):
                  use_locking=False, centered=False, loss_scale=1.0, weight_decay=0.0,
                  decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
         super(RMSProp, self).__init__(learning_rate, params, weight_decay, loss_scale, decay_filter)
-
-        if isinstance(momentum, float) and momentum < 0.0:
-            raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
-
-        if decay < 0.0:
-            raise ValueError("decay should be at least 0.0, but got dampening {}".format(decay))
-        self.decay = decay
-        self.epsilon = epsilon
-
+        validator.check_value_type("decay", decay, [float], self.cls_name)
+        validator.check_number_range("decay", decay, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+        validator.check_value_type("momentum", momentum, [float], self.cls_name)
+        validator.check_number_range("momentum", momentum, 0.0, float("inf"), Rel.INC_LEFT, self.cls_name)
+        validator.check_value_type("epsilon", epsilon, [float], self.cls_name)
+        validator.check_number_range("epsilon", epsilon, 0.0, float("inf"), Rel.INC_NEITHER, self.cls_name)
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("centered", centered, [bool], self.cls_name)
+
         self.centered = centered
         if centered:
             self.opt = P.ApplyCenteredRMSProp(use_locking)
@@ -137,11 +138,10 @@ class RMSProp(Optimizer):
             self.opt = P.ApplyRMSProp(use_locking)
 
         self.momentum = momentum
-
         self.ms = self.parameters.clone(prefix="mean_square", init='zeros')
         self.moment = self.parameters.clone(prefix="moment", init='zeros')
         self.hyper_map = C.HyperMap()
-
+        self.epsilon = epsilon
         self.decay = decay
 
     def construct(self, gradients):
