@@ -131,18 +131,18 @@ void KernelMeta::Initialize() {
 }
 
 void KernelMeta::RemoveKernelCache() {
-  if (access(kernel_meta_path_.c_str(), 0) == 0) {
-    DIR *dir = opendir(kernel_meta_path_.c_str());
-    MS_EXCEPTION_IF_NULL(dir);
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != nullptr) {
-      std::string kernel_file = entry->d_name;
-      std::string kernel_file_realpath = kernel_meta_path_ + kernel_file;
-      (void)remove(kernel_file_realpath.c_str());
-    }
-    (void)closedir(dir);
-    (void)rmdir(kernel_meta_path_.c_str());
+  DIR *dir = opendir(kernel_meta_path_.c_str());
+  if (dir == nullptr) {
+    return;
   }
+  struct dirent *entry;
+  while ((entry = readdir(dir)) != nullptr) {
+    std::string kernel_file = entry->d_name;
+    std::string kernel_file_realpath = kernel_meta_path_ + kernel_file;
+    (void)remove(kernel_file_realpath.c_str());
+  }
+  (void)closedir(dir);
+  (void)rmdir(kernel_meta_path_.c_str());
 }
 
 std::string KernelMeta::Search(const std::string &kernel_name) const {

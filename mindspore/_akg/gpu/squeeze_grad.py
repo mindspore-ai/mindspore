@@ -15,14 +15,14 @@
 """squeeze grad"""
 import _akg.topi as topi
 
-def SqueezeGrad(y_grad, x_shape, axis=None):
+
+def SqueezeGrad(y_grad, x_shape):
     """
     Computes gradients for squeeze op.
 
     Args:
         y_grad (tvm.tensor.Tensor): the gradient needed to be propagation.
         x_shape (Union[list, tuple]): output Tensor shape.
-        axis (Union[list, tuple, int, None], optional): eliminated axis by squeeze.
 
     Returns:
         tvm.tensor.Tensor: output gradient.

@@ -20,7 +20,6 @@ squeeze_grad_op_info = AkgRegOp("SqueezeGrad") \
     .input(0, "y_grad") \
     .output(0, "output") \
     .attr("x_shape", "required", "listInt") \
-    .attr("axis", "optional", "listInt") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
