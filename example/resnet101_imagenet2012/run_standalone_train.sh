@@ -20,9 +20,19 @@ then
 exit 1
 fi
 
-if [ ! -d $1 ]
+get_real_path(){
+  if [ "${1:0:1}" == "/" ]; then
+    echo "$1"
+  else
+    echo "$(realpath -m $PWD/$1)"
+  fi
+}
+PATH1=$(get_real_path $1)
+echo $PATH1
+
+if [ ! -d $PATH1 ]
 then 
-    echo "error: DATASET_PATH=$1 is not a directory"
+    echo "error: DATASET_PATH=$PATH1 is not a directory"
 exit 1
 fi 
 
@@ -42,5 +52,5 @@ cp *.sh ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py --do_train=True --dataset_path=$1 &> log &
+python train.py --do_train=True --dataset_path=$PATH1 &> log &
 cd ..
