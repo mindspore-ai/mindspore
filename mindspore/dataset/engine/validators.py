@@ -587,6 +587,11 @@ def check_generatordataset(method):
                 except TypeError:
                     raise TypeError("sampler should be either iterable or from mindspore.dataset.samplers")
 
+        if sampler is not None and not hasattr(source, "__getitem__"):
+            raise ValueError("sampler is not supported if source does not have attribute '__getitem__'")
+        if num_shards is not None and not hasattr(source, "__getitem__"):
+            raise ValueError("num_shards is not supported if source does not have attribute '__getitem__'")
+
         return method(*args, **kwargs)
 
     return new_method
