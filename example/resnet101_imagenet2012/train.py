@@ -14,7 +14,6 @@
 # ============================================================================
 """train_imagenet."""
 import os
-import math
 import argparse
 import random
 import numpy as np
@@ -34,7 +33,6 @@ from mindspore.communication.management import init
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 from crossentropy import CrossEntropy
-from var_init import default_recurisive_init, KaimingNormal
 
 random.seed(1)
 np.random.seed(1)
@@ -71,11 +69,13 @@ if __name__ == '__main__':
     epoch_size = config.epoch_size
     net = resnet101(class_num=config.class_num)
     # weight init
-    default_recurisive_init(net)
     for _, cell in net.cells_and_names():
         if isinstance(cell, nn.Conv2d):
-            cell.weight.default_input = weight_init.initializer(KaimingNormal(a=math.sqrt(5),
-                                                                              mode='fan_out', nonlinearity='relu'),
+            cell.weight.default_input = weight_init.initializer(weight_init.XavierUniform(),
+                                                                cell.weight.default_input.shape(),
+                                                                cell.weight.default_input.dtype())
+        if isinstance(cell, nn.Dense):
+            cell.weight.default_input = weight_init.initializer(weight_init.TruncatedNormal(),
                                                                 cell.weight.default_input.shape(),
                                                                 cell.weight.default_input.dtype())
     if not config.label_smooth:
