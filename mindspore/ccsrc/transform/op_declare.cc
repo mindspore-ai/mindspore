@@ -466,11 +466,7 @@ INPUT_MAP(ApplyAdam) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},       
                         {10, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyAdam) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
-#ifdef ENABLE_GE
-OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
-#else
 OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}};
-#endif
 
 // Relu6
 INPUT_MAP(Relu6) = {{1, INPUT_DESC(x)}};
