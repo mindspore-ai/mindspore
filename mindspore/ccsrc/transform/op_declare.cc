@@ -468,6 +468,15 @@ ATTR_MAP(ApplyAdam) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())
                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}};
 
+// ApplyAdamD
+INPUT_MAP(ApplyAdamD) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},
+                         {4, INPUT_DESC(beta1_power)}, {5, INPUT_DESC(beta2_power)}, {6, INPUT_DESC(lr)},
+                         {7, INPUT_DESC(beta1)},       {8, INPUT_DESC(beta2)},       {9, INPUT_DESC(epsilon)},
+                         {10, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyAdamD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
+                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdamD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
+
 // Relu6
 INPUT_MAP(Relu6) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Relu6) = EMPTY_ATTR_MAP;
