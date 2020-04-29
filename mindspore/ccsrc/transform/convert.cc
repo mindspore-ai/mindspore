@@ -391,6 +391,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);
+  adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdamD);
 #endif
   return adpt_map;
 }
