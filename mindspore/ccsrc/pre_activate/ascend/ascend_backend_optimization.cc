@@ -186,7 +186,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     save_graphs_path = ".";
   }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_before.ir";
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_before" + "_graph_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
     DumpIRProto(kernel_graph, "before_hwopt");
   }
@@ -208,7 +209,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_after.ir";
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_after" + "_graph_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir ";
     DumpIR(file_path, kernel_graph);
   }
 }
@@ -252,7 +254,8 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     save_graphs_path = ".";
   }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_before.ir";
+    std::string file_path =
+      save_graphs_path + "/" + "hwopt_d_before" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
   }
   // data layout optimization
@@ -278,7 +281,8 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_end.ir";
+    std::string file_path =
+      save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph, true);
     DumpIRProto(kernel_graph, "after_hwopt");
   }

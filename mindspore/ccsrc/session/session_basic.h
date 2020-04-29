@@ -104,6 +104,8 @@ class SessionBasic {
                                                       const std::vector<bool> &tensors_mask);
   // trans BaseRef list to py::tuple
   BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref);
+  // create a new kernel graph and update the graph sum
+  KernelGraphPtr NewKernelGraph();
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;

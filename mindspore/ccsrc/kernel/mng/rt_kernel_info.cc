@@ -46,24 +46,40 @@ RtKerDescFactory &RtKerDescFactory::Get() {
 
 void GetRtKelInfo(const CNodePtr &kernel_node,
                   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
-  MS_LOG(INFO) << "Mng kernel Info.";
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string opNameLower = AnfAlgo::GetCNodeName(kernel_node);
   (void)std::transform(opNameLower.begin(), opNameLower.end(), opNameLower.begin(), ::tolower);
 
   auto ker_desc_ptr = RtKerDescFactory::Create(opNameLower);
-  if (ker_desc_ptr == nullptr) {
-    MS_LOG(DEBUG) << "Mng can't find op [" << opNameLower << "].";
+  if (ker_desc_ptr != nullptr && !ker_desc_ptr->GetKernelInfo().empty()) {
+    *kernel_info_list = ker_desc_ptr->GetKernelInfo();
     return;
   }
-  MS_EXCEPTION_IF_NULL(ker_desc_ptr);
-  auto kernel_info = ker_desc_ptr->GetKernelInfo();
-  if (kernel_info.empty()) {
-    MS_LOG(DEBUG) << "Rt dose not have op [" << opNameLower << "].";
+  // if can't find kernel info in kernel info database, use the default kernel info
+  auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+  if (node_name == "StreamSwitch" || node_name == "StreamActive") {
+    auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+    // set input infos
+    auto input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    kernel_build_info_builder->SetInputsFormat(std::vector<std::string>(input_num, kOpFormat_DEFAULT));
+    std::vector<TypeId> input_types = {};
+    for (size_t i = 0; i < input_num; i++) {
+      input_types.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, i));
+    }
+    kernel_build_info_builder->SetInputsDeviceType(input_types);
+    // set output info
+    auto output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>(output_num, kOpFormat_DEFAULT));
+    kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>(output_num, TypeId::kTypeUnknown));
+    // set ohter info
+    kernel_build_info_builder->SetFusionType(kernel::FusionType::OPAQUE);
+    kernel_build_info_builder->SetProcessor(kernel::Processor::AICORE);
+    kernel_build_info_builder->SetKernelType(KernelType::RT_KERNEL);
+    kernel_info_list->push_back(kernel_build_info_builder->Build());
     return;
   }
-  *kernel_info_list = kernel_info;
+  MS_LOG(DEBUG) << "Rt dose not have op [" << opNameLower << "].";
 }
 }  // namespace kernel
 }  // namespace mindspore

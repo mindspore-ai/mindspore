@@ -300,7 +300,12 @@ std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t 
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  return build_info->GetOutputFormat(output_idx);
+  auto format = build_info->GetOutputFormat(output_idx);
+  if (format == kernel::KernelBuildInfo::kInvalidFormat) {
+    MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
+                      << " has a invalid output format";
+  }
+  return format;
 }
 
 std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t input_idx) {
@@ -314,7 +319,12 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  return build_info->GetInputFormat(input_idx);
+  auto format = build_info->GetInputFormat(input_idx);
+  if (format == kernel::KernelBuildInfo::kInvalidFormat) {
+    MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
+                      << " has a invalid input format";
+  }
+  return format;
 }
 
 KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx) {
@@ -481,7 +491,12 @@ TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  return build_info->GetOutputDeviceType(output_idx);
+  auto dtype = build_info->GetOutputDeviceType(output_idx);
+  if (dtype == TypeId::kNumberTypeEnd) {
+    MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
+                      << " has a invalid dtype";
+  }
+  return dtype;
 }
 
 TypeId AnfRuntimeAlgorithm::GetInputDeviceDataType(const AnfNodePtr &node, size_t input_idx) {
@@ -494,7 +509,12 @@ TypeId AnfRuntimeAlgorithm::GetInputDeviceDataType(const AnfNodePtr &node, size_
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  return build_info->GetInputDeviceType(input_idx);
+  auto dtype = build_info->GetInputDeviceType(input_idx);
+  if (dtype == TypeId::kNumberTypeEnd) {
+    MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
+                      << " has a invalid dtype";
+  }
+  return dtype;
 }
 
 TypeId AnfRuntimeAlgorithm::GetPrevNodeOutputDeviceDataType(const AnfNodePtr &anf_node, size_t input_idx) {

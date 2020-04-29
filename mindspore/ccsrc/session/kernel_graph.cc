@@ -295,10 +295,7 @@ ValueNodePtr KernelGraph::NewValueNode(const ValueNodePtr &value_node) {
   // set the format of value_node to DEFAULT_FORMAT
   kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
   // set value node initial device data type = infer data type
-  std::vector<TypeId> types;
-  for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(value_node); ++index) {
-    types.push_back(kTypeUnknown);
-  }
+  std::vector<TypeId> types = std::vector<TypeId>(AnfAlgo::GetOutputTensorNum(value_node), kTypeUnknown);
   kernel_build_info_builder->SetOutputsDeviceType(types);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
   AnfAlgo::SetGraphId(graph_id_, new_value_node.get());
@@ -330,10 +327,11 @@ void KernelGraph::FrontBackendlMapUpdate(const AnfNodePtr &old_backend_anf, cons
     MS_LOG(EXCEPTION) << "old can't be same with new";
   }
   if (backend_front_anf_map_.find(old_backend_anf) == backend_front_anf_map_.end()) {
-    MS_LOG(EXCEPTION) << "old_backend_anf " << old_backend_anf->DebugString() << " is not exist in the map";
+    MS_LOG(DEBUG) << "old_backend_anf " << old_backend_anf->DebugString() << " is not exist in the map";
+    return;
   }
   if (front_backend_anf_map_.find(backend_front_anf_map_[old_backend_anf]) == front_backend_anf_map_.end()) {
-    MS_LOG(EXCEPTION) << "anf is not exist in the mape ,old " << old_backend_anf->DebugString();
+    MS_LOG(EXCEPTION) << "anf is not exist in the map ,old " << old_backend_anf->DebugString();
   }
   front_backend_anf_map_[backend_front_anf_map_[old_backend_anf]] = new_backend_anf;
   backend_front_anf_map_[new_backend_anf] = backend_front_anf_map_[old_backend_anf];
@@ -527,6 +525,45 @@ bool KernelGraph::RemoveValueNodeFromGraph(const ValueNodePtr &value_node) {
     return true;
   }
   return false;
+}
+
+void KernelGraph::ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf_node) {
+  MS_EXCEPTION_IF_NULL(old_anf_node);
+  MS_EXCEPTION_IF_NULL(new_anf_node);
+  MS_EXCEPTION_IF_NULL(inputs_);
+  auto it = node_output_edges_.find(old_anf_node);
+  if (it == node_output_edges_.end()) {
+    MS_LOG(EXCEPTION) << "Can't find anf node in node_output_edges map";
+  }
+  auto &outputs = it->second;
+  for (auto &output_node : outputs) {
+    auto output_cnode = output_node.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(output_cnode);
+    auto &output_node_inputs = output_cnode->inputs();
+    for (size_t i = 1; i < output_node_inputs.size(); i++) {
+      if (output_node_inputs[i] == old_anf_node) {
+        output_cnode->set_input(i, new_anf_node);
+      }
+    }
+    // update graph inputs
+    for (size_t i = 0; i < inputs_->size(); i++) {
+      if ((*inputs_)[i] == old_anf_node) {
+        (*inputs_)[i] = new_anf_node;
+        break;
+      }
+    }
+  }
+  // update front to backend map
+  FrontBackendlMapUpdate(old_anf_node, new_anf_node);
+  // update output depend relations
+  node_output_edges_[new_anf_node] = it->second;
+  (void)node_output_edges_.erase(old_anf_node);
+}
+
+void KernelGraph::UpdateExecuteKernelStreamLabel() {
+  for (auto &kernel : execution_order_) {
+    AnfAlgo::SetStreamDistinctionLabel(stream_distinction_label_, kernel.get());
+  }
 }
 }  // namespace session
 }  // namespace mindspore
