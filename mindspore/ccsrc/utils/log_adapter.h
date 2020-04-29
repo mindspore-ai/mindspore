@@ -54,6 +54,7 @@ enum ExceptionType {
   TimeOutError,
   ResourceUnavailable,
   NoPermissionError,
+  IndexError,
   ValueError,
   TypeError,
 };
