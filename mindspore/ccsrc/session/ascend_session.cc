@@ -312,9 +312,24 @@ py::tuple AscendSession::RunOp(const OpRunInfo &op_run_info, const GraphInfo &gr
 // compile graph steps
 void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
+  size_t raise_precision_count = 0;
+  size_t reduce_precision_count = 0;
   for (const auto &cnode : kernel_graph.execution_order()) {
-    device::ascend::SelectKernelInfo(cnode);
+    auto status = device::ascend::SelectKernelInfo(cnode);
+    if (status == kStatusRaisePrecision) {
+      raise_precision_count++;
+    } else if (status == kStatusReducePrecision) {
+      reduce_precision_count++;
+    }
     MS_LOG(INFO) << "Select ApplyKernel: " << cnode->DebugString();
+  }
+  if (raise_precision_count > 0) {
+    MS_LOG(WARNING) << "There has " << raise_precision_count
+                    << " node/nodes used raise precision to selected the kernel!";
+  }
+  if (reduce_precision_count > 0) {
+    MS_LOG(WARNING) << "There has " << reduce_precision_count
+                    << " node/nodes used reduce precision to selected the kernel!";
   }
   MS_LOG(INFO) << "Finish!";
 }
