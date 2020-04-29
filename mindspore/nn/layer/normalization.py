@@ -117,6 +117,7 @@ class _BatchNorm(Cell):
         return group_list
 
     def _global_sync(self, x):
+        """calculate global batch normalization output"""
         if len(self.shape(x)) == 4:
             axes = (0, 2, 3)
             re_shape = (1, self.num_features, 1, 1)
