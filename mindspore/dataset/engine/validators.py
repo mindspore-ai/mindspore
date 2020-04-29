@@ -555,10 +555,15 @@ def check_generatordataset(method):
             except TypeError:
                 raise TypeError("source should be callable, iterable or random accessible")
 
-        # check column_names; required argument
+        # check column_names or schema; required argument
         column_names = param_dict.get('column_names')
-        if column_names is None:
-            raise ValueError("column_names is not provided.")
+        schema = param_dict.get('schema')
+        if column_names is None and schema is None:
+            raise ValueError("Neither columns_names not schema are provided.")
+
+        if schema is not None:
+            if not isinstance(schema, datasets.Schema) and not isinstance(schema, str):
+                raise ValueError("schema should be a path to schema file or a schema object.")
 
         # check optional argument
         nreq_param_int = ["num_samples", "num_parallel_workers", "num_shards", "shard_id"]
