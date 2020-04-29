@@ -87,7 +87,10 @@ AbstractBasePtr AnalysisCache::GetValue(const AnfNodeConfigPtr &conf) {
 std::size_t AnfNodeConfigHasher::operator()(const AnfNodeConfigPtr conf) const {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(conf->node());
-  std::size_t hash_value = hash_combine(conf->node()->hash(), conf->context()->hash());
+  std::size_t hash_value = conf->node()->hash();
+  if (!conf->context()->IsDummyContext()) {
+    hash_value = hash_combine(hash_value, std::hash<AnalysisContext *>{}(conf->context().get()));
+  }
   if (conf->context() != nullptr && conf->context()->func_graph() != nullptr) {
     MS_LOG(DEBUG) << "NodeConfigHasher Node: " << conf->node()->DebugString()
                   << ", Graph: " << conf->context()->func_graph()->ToString() << " ### , hash value: " << hash_value;
