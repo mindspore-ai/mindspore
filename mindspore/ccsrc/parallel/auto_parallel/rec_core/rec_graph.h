@@ -27,17 +27,26 @@
 namespace mindspore {
 namespace parallel {
 enum OperatorType {
+  kRecUnkownType,
   kRecMatMul,
   kRecConvolution,
   kRecPooling,
-  kRecAdd,
-  kRecSoftmax,
-  kRecReshape,
-  kRecBiasAdd,
+  kRecTensorAdd,
   kRecReLU,
   kRecBatchNorm,
+  kRecReshape,
+  kRecBiasAdd,
+  kRecSoftmax,
   kRecSparseSoftmaxCrossEntropyWithLogits,
-  kRecUnkownType
+  kRecOneHot,
+  kRecLog,
+  kRecExp,
+  kRecAdd,
+  kRecSub,
+  kRecMul,
+  kRecDiv,
+  kRecSqueeze,
+  kRecCast
 };
 
 enum InfoType { kApplication, kConstant };

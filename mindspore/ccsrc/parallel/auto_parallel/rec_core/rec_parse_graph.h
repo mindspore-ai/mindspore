@@ -31,15 +31,23 @@ namespace parallel {
 const std::map<std::string, OperatorType> DictOpType{
   {MATMUL, OperatorType::kRecMatMul},
   {CONV2D, OperatorType::kRecConvolution},
+  {MAXPOOL, OperatorType::kRecPooling},
   {MAXPOOLV2, OperatorType::kRecPooling},
   {SIMPLE_MEAN, OperatorType::kRecPooling},
-  {TENSOR_ADD, OperatorType::kRecAdd},
+  {TENSOR_ADD, OperatorType::kRecTensorAdd},
   {RESHAPE, OperatorType::kRecReshape},
   {BIAS_ADD, OperatorType::kRecBiasAdd},
   {RELU, OperatorType::kRecReLU},
   {BATCH_NORM, OperatorType::kRecBatchNorm},
   {SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits},
-};
+  {ONEHOT, OperatorType::kRecOneHot},
+  {LOG, OperatorType::kRecLog},
+  {EXP, OperatorType::kRecExp},
+  {SUB, OperatorType::kRecSub},
+  {MUL, OperatorType::kRecMul},
+  {DIV, OperatorType::kRecDiv},
+  {SQUEEZE, OperatorType::kRecSqueeze},
+  {CAST, OperatorType::kRecCast}};
 
 const TensorParam MakeTensor(int n, int c, int h, int w);
 
