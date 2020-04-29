@@ -654,6 +654,7 @@ class Conv2D(PrimitiveWithInfer):
         self.add_prim_attr('data_format', "NCHW")
         self.out_channel = validator.check_integer('out_channel', out_channel, 0, Rel.GT, self.name)
         self.group = validator.check_integer('group', group, 0, Rel.GT, self.name)
+        self.add_prim_attr('offset_a', 0)
 
     def infer_shape(self, x_shape, w_shape):
         validator.check_integer("weight rank", len(w_shape), 4, Rel.EQ, self.name)

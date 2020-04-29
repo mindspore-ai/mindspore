@@ -30,7 +30,6 @@ namespace opt {
 struct BufferFusionInfo_t {
   std::vector<AnfNodePtr> anf_nodes;
   std::vector<AnfNodePtr> inputs_list;
-  std::vector<AnfNodePtr> inputs_list_in;
   std::vector<AnfNodePtr> outputs_list;
   kernel::KernelBuildInfoPtr kernel_build_info;
 };

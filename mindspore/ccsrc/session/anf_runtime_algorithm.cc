@@ -825,6 +825,8 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
   static std::map<std::string, std::map<size_t, size_t>> spec_node_list = {
     {prim::kPrimConv2DBackpropInput->name(), {{0, 1}, {1, 0}}},
     {prim::kPrimConv2DBackpropFilter->name(), {{0, 1}, {1, 0}}},
+    {kFusionOpConv2DBackpropInputReluGradV2Name, {{0, 1}, {1, 0}}},
+    {kFusionOpConv2DBackpropInputAddNReluGradV2Name, {{0, 1}, {1, 0}}},
     {prim::kPrimLogSoftmaxGrad->name(), {{0, 1}, {1, 0}}},
     {prim::kPrimLayerNormGrad->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
     {prim::kPrimLayerNormBetaGammaBackprop->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}}},
@@ -835,7 +837,7 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
   auto node_name = AnfAlgo::GetCNodeName(anf_node);
   if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
     auto find = spec_node_list.find(node_name);
-    if (find != spec_node_list.end()) {
+    if (find != spec_node_list.end() && cur_index < find->second.size()) {
       ret = find->second[cur_index];
       MS_LOG(INFO) << "Real input index change to" << ret << ", node name:" << node_name;
     }
