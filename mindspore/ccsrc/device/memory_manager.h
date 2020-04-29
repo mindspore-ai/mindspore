@@ -46,11 +46,11 @@ class MemoryManager {
   uint8_t *MallocWorkSpaceMem(const AnfNodePtr &node, size_t index, int flag, size_t size);
   virtual uint8_t *MallocMem(int flag, size_t size);
 
-  virtual void MallocMemFromMemPool(const DeviceAddressPtr address, size_t size);
+  virtual bool MallocMemFromMemPool(const DeviceAddressPtr address, size_t size);
   virtual void *MallocMemFromMemPool(size_t size);
   virtual void FreeMemFromMemPool(const DeviceAddressPtr address);
   virtual void FreeMemFromMemPool(void *device_ptr);
-  virtual void MallocContinuousMemFromMemPool(const DeviceAddressPtrList addr_list, size_t total_size,
+  virtual bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList addr_list, size_t total_size,
                                               std::vector<size_t> size_list);
   virtual std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list);
 
