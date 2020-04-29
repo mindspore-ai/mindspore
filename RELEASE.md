@@ -60,8 +60,8 @@
     * Fix support for fp16 kernels on nvidia 1080Ti([!571](https://gitee.com/mindspore/mindspore/pulls/571)).
     * Fix parsing of tuple type parameters ([!316](https://gitee.com/mindspore/mindspore/pulls/316)).
 * Data processing
-    * Fix TypeErrors about can't pickle mindspore._c_dataengine.DEPipeline objects([!434](https://gitee.com/mindspore/mindspore/pulls/434))
-    * Add TFRecord file verification([!406](https://gitee.com/mindspore/mindspore/pulls/406))
+    * Fix TypeErrors about can't pickle mindspore._c_dataengine.DEPipeline objects([!434](https://gitee.com/mindspore/mindspore/pulls/434)).
+    * Add TFRecord file verification([!406](https://gitee.com/mindspore/mindspore/pulls/406)).
 
 ## Contributors
 Thanks goes to these wonderful people:
