@@ -24,6 +24,8 @@ import itertools
 import numbers
 import numpy as np
 
+from ..._c_expression import signature_rw as sig_rw
+from ..._c_expression import signature_kind as sig_kind
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
@@ -1965,6 +1967,11 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         >>> op = P.ScatterNdUpdate()
         >>> output = op(input_x, indices, update)
     """
+    __mindspore_signature__ = (
+        ('input_x', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD),
+        ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD),
+        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD)
+    )
 
     @prim_attr_register
     def __init__(self, use_locking=True):

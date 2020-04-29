@@ -70,12 +70,11 @@ def _wrap_func(fn):
         def _convert_data(data):
             if isinstance(data, Tensor) and not isinstance(data, MsTensor):
                 return MsTensor(data)
+            if isinstance(data, tuple):
+                return tuple(_convert_data(x) for x in data)
+            if isinstance(data, list):
+                return list(_convert_data(x) for x in data)
             return data
-
-        if isinstance(results, tuple):
-            return tuple(_convert_data(x) for x in results)
-        if isinstance(results, list):
-            return list(_convert_data(x) for x in results)
         return _convert_data(results)
 
     return wrapper

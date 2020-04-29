@@ -14,19 +14,20 @@
 # ============================================================================
 
 import pytest
-from mindspore import Tensor
+from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
 import mindspore.nn as nn
 import numpy as np
 import mindspore.context as context
 
 class AssignAdd(nn.Cell):
-    def __init__( self):
+    def __init__(self, value):
         super(AssignAdd, self).__init__()
+        self.var = Parameter(value, name="var")
         self.add = P.AssignAdd()
 
-    def construct(self, x, y):
-        res = self.add(x, y)
+    def construct(self, y):
+        res = self.add(self.var, y)
         return res
 
 @pytest.mark.level0
@@ -58,15 +59,17 @@ def test_assign_add():
     y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
-    add = AssignAdd()
-    output1 = add(x1, y1)
+    add = AssignAdd(x1)
+    output1 = add(y1)
     assert (output1.asnumpy() == expect1).all()
-    output2 = add(output1, y1)
+    add = AssignAdd(output1)
+    output2 = add(y1)
     assert (output2.asnumpy() == expect2).all()
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    add = AssignAdd()
-    output1 = add(x2, y2)
+    add = AssignAdd(x2)
+    output1 = add(y2)
     assert (output1.asnumpy() == expect1).all()
-    output2 = add(output1, y2)
+    add = AssignAdd(output1)
+    output2 = add(y2)
     assert (output2.asnumpy() == expect2).all()

@@ -14,7 +14,6 @@
 # ============================================================================
 """train_imagenet."""
 import os
-import math
 import argparse
 import random
 import numpy as np
