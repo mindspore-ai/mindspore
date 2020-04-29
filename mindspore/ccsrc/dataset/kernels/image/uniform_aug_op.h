@@ -36,7 +36,7 @@ class UniformAugOp : public TensorOp {
   static const int kDefNumOps;
 
   // Constructor for UniformAugOp
-  // @param list op_list: list of candidate python operations
+  // @param list op_list: list of candidate C++ operations
   // @param list num_ops: number of augemtation operations to applied
   UniformAugOp(py::list op_list, int32_t num_ops);
 

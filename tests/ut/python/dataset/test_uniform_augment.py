@@ -163,7 +163,68 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
         mse[i] = np.mean((images_ua[i] - images_original[i]) ** 2)
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
+def test_cpp_uniform_augment_exception_pyops(num_ops=2):
+    """
+    Test UniformAugment invalid op in operations
+    """
+    logger.info("Test CPP UniformAugment invalid OP exception")
+
+    transforms_ua = [C.RandomCrop(size=[224, 224], padding=[32, 32, 32, 32]),
+                     C.RandomHorizontalFlip(),
+                     C.RandomVerticalFlip(),
+                     C.RandomColorAdjust(),
+                     C.RandomRotation(degrees=45),
+                     F.Invert()]
+
+    try:
+        uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+
+    except BaseException as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "operations" in str(e)
+
+def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
+    """
+    Test UniformAugment invalid large number of ops
+    """
+    logger.info("Test CPP UniformAugment invalid large num_ops exception")
+
+    transforms_ua = [C.RandomCrop(size=[224, 224], padding=[32, 32, 32, 32]),
+                     C.RandomHorizontalFlip(),
+                     C.RandomVerticalFlip(),
+                     C.RandomColorAdjust(),
+                     C.RandomRotation(degrees=45)]
+
+    try:
+        uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+
+    except BaseException as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "num_ops" in str(e)
+
+def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
+    """
+    Test UniformAugment invalid non-positive number of ops
+    """
+    logger.info("Test CPP UniformAugment invalid non-positive num_ops exception")
+
+    transforms_ua = [C.RandomCrop(size=[224, 224], padding=[32, 32, 32, 32]),
+                     C.RandomHorizontalFlip(),
+                     C.RandomVerticalFlip(),
+                     C.RandomColorAdjust(),
+                     C.RandomRotation(degrees=45)]
+
+    try:
+        uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+
+    except BaseException as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "num_ops" in str(e)
+
 if __name__ == "__main__":
     test_uniform_augment(num_ops=1)
     test_cpp_uniform_augment(num_ops=1)
-    
+    test_cpp_uniform_augment_exception_pyops(num_ops=1)
+    test_cpp_uniform_augment_exception_large_numops(num_ops=6)
+    test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0)
+
