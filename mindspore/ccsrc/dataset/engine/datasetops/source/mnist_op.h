@@ -152,6 +152,12 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   // @return
   static Status CountTotalRows(const std::string &dir, int64_t *count);
 
+  /// \brief Base-class override for NodePass visitor acceptor
+  /// \param[in] p Pointer to the NodePass to be accepted
+  /// \param[out] modified Indicator if the node was changed at all
+  /// \return Status of the node visit
+  Status Accept(NodePass *p, bool *modified) override;
+
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "MnistOp"; }

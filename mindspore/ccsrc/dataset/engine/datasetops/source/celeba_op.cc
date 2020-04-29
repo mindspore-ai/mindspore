@@ -22,6 +22,7 @@
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/data_schema.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 #include "dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
@@ -406,6 +407,12 @@ Status CelebAOp::Reset() {
   RETURN_IF_NOT_OK(sampler_->ResetSampler());
   wp_.Set();  // wake up master thread after reset is done
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status CelebAOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(shared_from_base<CelebAOp>(), modified);
 }
 
 Status CelebAOp::ComputeColMap() {

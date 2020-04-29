@@ -153,14 +153,36 @@ Status DatasetOp::Remove() {
     }
   }
 
+  // Finally, clear "this" op's parent and child pointers since we have just
+  // disconnected it from the tree and invalidate it's fields.
+  child_.clear();
+  parent_.clear();
+  operator_id_ = kInvalidOperatorId;
+  tree_ = nullptr;
+
   return Status::OK();
 }
 
-// Getter function to get a shared pointer to our childAdds a operator to become our child.
+// Getter function to get a shared pointer to our child
 std::shared_ptr<DatasetOp> DatasetOp::child(int32_t child_index) const {
+  std::shared_ptr<DatasetOp> return_op = nullptr;
+  if (child_.empty()) {
+    return return_op;
+  }
   MS_ASSERT(child_index < static_cast<int>(child_.size()));
   // Return a shared pointer
   return child_[child_index];
+}
+
+// Getter function to get the parent pointer
+void DatasetOp::Parent(DatasetOp **parent, int32_t parent_index) const {
+  if (parent_.empty()) {
+    // common case if this is a root node
+    *parent = nullptr;
+  } else {
+    MS_ASSERT(parent_index < static_cast<int>(parent_.size()));
+    *parent = parent_[parent_index];
+  }
 }
 
 // Creates the connector within this operator
@@ -264,19 +286,11 @@ Status DatasetOp::EofReceived(int32_t worker_id) {
 
 // During tree prepare phase, operators may have specific pre-operations to perform depending on
 // their role.
-Status DatasetOp::PrepareNodePreAction() {
-  if (BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepRepeat)) set_control_flag(kDeOpRepeated);
-  return Status::OK();
-}
+Status DatasetOp::PrepareNodePreAction() { return Status::OK(); }
+
 // During tree prepare phase, operators may have specific post-operations to perform depending on
 // their role.
 Status DatasetOp::PrepareNodePostAction() {
-  // If this op does not have any children and it is in a repeat path of the tree...
-  if (child_.empty() && BitTest(op_ctrl_flags_, kDeOpRepeated)) {
-    // push ourselves onto the eoe operator stack.  Later, a repeat/epoch ctrl operator
-    // above us will consume them.
-    tree_->AddToEOEOpStack(shared_from_this());
-  }
   // Creating Connector object for each op.
   // The consumer of the root node is assumed to be one thread.
   // If multiple threads are consuming from the root node, they will get the ordered data in round robin fashion.
@@ -346,34 +360,13 @@ Status DatasetOp::Accept(NodePass *p, bool *modified) {
   return p->RunOnNode(shared_from_this(), modified);
 }
 
-// A helper function with some common code that leaf nodes can use during
-// prepare phase for checking if they need to assign a sampler to the cache.
-Status DatasetOp::SaveSamplerForCache(bool random_access_op) {
-  // If we are a descendant under a cache op and we have a sampler, then save this sampler
-  // to a stack so that the cache can pick it up during it's processing above us.
-  if (sampler_) {
-    if (BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepCache)) {
-      // use move semantic to set our sampler_ to null after the move.  This is okay because a sampler is
-      // useless to a random data op.  It was only being used as a temporary holding until the cache can
-      // be created
-      tree_->AddToSamplerStack(sampler_);
-      MS_LOG(INFO) << "Preparing a leaf op: passing sampler up the tree for Cache handling.";
-    } else if (!random_access_op) {
-      // A sampler exists, but we are not in a caching tree and we are not a random access mappable leaf.
-      // This is an error because that type of leaf does not use sampling unless there's a cache to hook it into.
-      RETURN_STATUS_UNEXPECTED(
-        "Non-mappable leaf op has a sampler, but it only supports sampling if there is a cache after it in the tree");
-    }
-  }
-
-  if (!random_access_op) {
-    // Since we don't truly need the sampler for this non-mappable dataset and it's been saved for the cache
-    // we can remove it now from the base.
-    sampler_.reset();
-  }
-
+// Getter for the sampler, and it also removes the sampler from the op
+Status DatasetOp::FetchRemoveSampler(std::shared_ptr<Sampler> *sampler) {
+  *sampler = sampler_;  // It's okay if it sampler_ points to nullptr
+  sampler_.reset();     // clear our member-copy of this pointer.  We no longer have this sampler
   return Status::OK();
 }
+
 uint32_t DatasetOp::GenerateCRC(const std::shared_ptr<DatasetOp> &op) {
   std::stringstream ss;
   op->tree_->Print(ss, op);

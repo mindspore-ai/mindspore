@@ -22,6 +22,7 @@
 #include "dataset/util/random.h"
 #include "dataset/util/wait_post.h"
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
+#include "dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -406,6 +407,12 @@ Status RandomDataOp::Reset() {
   return Status::OK();
 }
 
+// Visitor accept method for NodePass
+Status RandomDataOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(shared_from_base<RandomDataOp>(), modified);
+}
+
 Status RandomDataOp::ComputeColMap() {
   // Extract the column name mapping from the schema and save it in the class.
   if (column_name_id_map_.empty()) {
@@ -413,16 +420,6 @@ Status RandomDataOp::ComputeColMap() {
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
-  return Status::OK();
-}
-
-// During tree prepare phase, operators may have specific post-operations to perform depending on
-// their role.
-Status RandomDataOp::PrepareNodePostAction() {
-  // Run common code from super class before adding RandomDataOp specific handling
-  RETURN_IF_NOT_OK(ParallelOp::PrepareNodePostAction());
-  // Specific handling for this op, we need to do cache op work to assign the sampler to the cache.
-  RETURN_IF_NOT_OK(DatasetOp::SaveSamplerForCache(false));
   return Status::OK();
 }
 }  // namespace dataset

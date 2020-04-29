@@ -98,11 +98,6 @@ Status CachePool::Insert(const std::vector<ReadableSlice> &buf, CachePool::key_t
   } catch (std::bad_alloc &e) {
     if (sm_ != nullptr) {
       RETURN_IF_NOT_OK(sm_->Write(&bl.storage_key, buf));
-      // We have an assumption 0 is not a valid key from the design of AutoIndexObj.
-      // Make sure it is not 0.
-      if (bl.storage_key == 0) {
-        RETURN_STATUS_UNEXPECTED("Key 0 is returned which is unexpected");
-      }
     } else {
       return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
     }

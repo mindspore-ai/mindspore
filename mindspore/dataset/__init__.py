@@ -24,6 +24,7 @@ from .engine.datasets import TFRecordDataset, ImageFolderDatasetV2, MnistDataset
     TextFileDataset, CLUEDataset, Schema, Shuffle, zip, RandomDataset
 from .engine.samplers import DistributedSampler, PKSampler, RandomSampler, SequentialSampler, SubsetRandomSampler, \
     WeightedRandomSampler, Sampler
+from .engine.cache_client import DatasetCache
 from .engine.serializer_deserializer import serialize, deserialize, show
 from .engine.graphdata import GraphData
 

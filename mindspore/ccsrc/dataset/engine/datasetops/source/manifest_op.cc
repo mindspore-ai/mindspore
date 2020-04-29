@@ -26,6 +26,7 @@
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -414,6 +415,12 @@ Status ManifestOp::GetClassIndexing(const std::string &file, const py::dict &dic
   }
 
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status ManifestOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(shared_from_base<ManifestOp>(), modified);
 }
 
 Status ManifestOp::ComputeColMap() {

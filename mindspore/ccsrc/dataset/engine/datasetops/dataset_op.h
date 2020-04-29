@@ -45,10 +45,10 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
  public:
   static constexpr int32_t kInvalidOperatorId = -1;
 
-  // Flags that control operator runtime behaviours
+  // Operator control flags
   enum OpControlFlags {
     kDeOpNone = 0,
-    kDeOpRepeated = 1,        // Operator is a leaf node in a repeat path
+    kDeOpRepeated = 1,        // Operator is a node in a repeat path
     kDeOpLastRepeat = 1 << 1  // We are in the last repeat loop
   };
 
@@ -71,17 +71,23 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \param child - shared pointer to the child to remove.
   Status RemoveChild(std::shared_ptr<DatasetOp> child);
 
-  /// \brief Removes this node from the tree and connects it's parent/child together.
+  /// \brief Removes this node from the tree and connects it's parent/child together
   /// \return Status eerror code returned
   Status Remove();
 
   /// \brief Getter function to get a shared pointer to our child
-  /// \param child_index - An operator can have n children. Indicates choose which child to return.
+  /// \param[in] child_index An operator can have n children. Indicates which child to return.
+  /// \return The shared pointer to the child.  If there are no children, it returns null regardless of the given index
   std::shared_ptr<DatasetOp> child(int32_t child_index) const;
 
-  /// \brief Inserts a operator as the parent current op.
-  /// Inserted op will become the sole parent of the current op.
-  /// The existing parent of the current op will be transferred to the inserted op.
+  /// \brief Getter function to get the pointer to our parent
+  ///     If there are no parents, it returns null regardless of the given index
+  /// \param[in] parent_index An operator can have n parents. Indicates which parent to return.
+  void Parent(DatasetOp **parent, int32_t parent_index) const;
+
+  // Inserts a operator as the parent current op.
+  // Inserted op will become the sole parent of the current op.
+  // The existing parent of the current op will be transferred to the inserted op.
   Status InsertAsParent(std::shared_ptr<DatasetOp> to_add);
 
   /// \brief Creates the connector within this operator
@@ -160,16 +166,6 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// specific reset handling that is not contained in this common code version of the reset
   /// \return Status - The error code return
   virtual Status Reset();
-
-  /// \brief This calls the reset function on this subtree in pre-order
-  /// \return Status - The error code return
-  virtual Status ResetSubtree() {
-    RETURN_IF_NOT_OK(Reset());
-    for (const auto &c : child_) {
-      RETURN_IF_NOT_OK(c->ResetSubtree());
-    }
-    return Status::OK();
-  }
 
   /// \brief During tree prepare phase, operators may have specific pre-operations to perform depending on
   /// their role.
@@ -296,7 +292,12 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return Shared pointer to the sampler (may return nullptr)
   std::shared_ptr<Sampler> sampler() { return sampler_; }
 
-  /// Computes a CRC value for the operator
+  /// \brief Getter for the sampler, and it also removes the sampler from the op
+  /// \param[out] sampler A pointer to the output sampler that was removed
+  /// \return Status error code
+  Status FetchRemoveSampler(std::shared_ptr<Sampler> *sampler);
+
+  // Computes a CRC value for the operator
   static uint32_t GenerateCRC(const std::shared_ptr<DatasetOp> &op);
 
   /// \brief A helper templated function for casting "this" pointer to shared_ptr<derived>
@@ -307,16 +308,23 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
     return std::static_pointer_cast<Derived>(shared_from_this());
   }
 
- protected:
-  /// Adds a parent operator to this operator
-  /// \notes External callers do not have access to this function.
-  /// \param parent - The parent node to add
-  void AddParent(DatasetOp *parent);
+  /// \brief Setter for the sampler.  Allows you to overwrite a previous sampler with a new one.
+  void SetSampler(std::shared_ptr<Sampler> sampler) { sampler_ = sampler; }
 
-  /// Removes a parent operator from this operator
-  /// \notes External callers do not have access to this function.
-  /// \param parent - The parent node to remove
+  /// \brief Checks if this is a leaf node (0 children)
+  /// \return boolean returns true if it's a leaf
+  bool IsLeaf() { return (child_.empty()); }
+
+ protected:
+  /// \brief Removes a parent operator from this operator
+  /// \notes External callers do not have access to this function
+  /// \param[in] parent The parent node to remove
   void RemoveParent(const DatasetOp *parent);
+
+  /// \brief Adds a parent operator to this operator
+  /// \notes External callers do not have access to this function
+  /// \param[in] parent The parent node to add
+  void AddParent(DatasetOp *parent);
 
   /// Compute the current op's column map using its child's column map.
   /// Get called during the tree post-prepare phase in PrepareNodePostAction.
@@ -324,12 +332,6 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// Operations changing the column map it inherits from the child must overwrite this function.
   /// \return - Status
   virtual Status ComputeColMap();
-
-  /// A helper function with some common code that leaf nodes can use during
-  /// pre/pare phase for checking if they need to assign a sampler to the cache.
-  /// \param random_access_op - indicate if this is a mappable random access leaf or not
-  /// \return - Status
-  Status SaveSamplerForCache(bool random_access_op);
 
   std::vector<std::shared_ptr<DatasetOp>> child_;                // Child nodes
   std::vector<DatasetOp *> parent_;                              // Parent nodes. No ownership

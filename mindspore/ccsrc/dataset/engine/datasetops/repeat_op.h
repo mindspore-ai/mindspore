@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #include "dataset/engine/datasetops/pipeline_op.h"
 
@@ -82,14 +83,6 @@ class RepeatOp : public PipelineOp {
   // @return Status - The error code return
   Status operator()() override;
 
-  // Base-class override for setting specific RepeatOp configurations. This code will be called
-  // during the execution tree prepare phase BEFORE traversing down to child operators.
-  uint32_t PrepareFlags() const override;
-
-  // Base-class override for executing specific RepeatOp configurations. This code will be called
-  // during the execution tree post-prepare phase when it is visiting this operator.
-  Status PrepareNodePostAction() override;
-
   // This function returns the buffer that is at the top of our output connector. The caller is
   // typically our parent node, when the parent is asking us to provide the next buffer of data.
   // Since RepeatOp is an inlined op, getting a buffer from us will simply bounce you to get
@@ -110,6 +103,10 @@ class RepeatOp : public PipelineOp {
   // @param worker_id - The worker id
   Status EofReceived(int32_t worker_id) override;
 
+  /// \brief reset Op
+  /// \@return Status - The error code return
+  Status Reset() override;
+
   // Base-class override. Return the number of workers in the first parent.
   // @param workerId - The worker id
   int32_t num_consumers() const override;
@@ -118,15 +115,25 @@ class RepeatOp : public PipelineOp {
   // @param workerId - The worker id
   int32_t num_producers() const override;
 
-  // Base-class override for NodePass visitor acceptor.
-  // @param p - Pointer to the NodePass to be accepted.
-  // @param modified - Whether this node visit modified the pipeline.
-  // @return - Status of the node visit.
+  /// \brief Base-class override for NodePass pre-visit acceptor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status PreAccept(NodePass *p, bool *modified) override;
+
+  /// \brief Base-class override for NodePass visitor acceptor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
   Status Accept(NodePass *p, bool *modified) override;
 
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "RepeatOp"; }
+
+  /// \brief Adds an operator to the repeat ops list of tracked leaf/eoe nodes
+  /// \param[in] eoe_op The input leaf/eoe operator to add to the list
+  void AddToEoeList(std::shared_ptr<DatasetOp> eoe_op) { eoe_ops_.push_back(std::move(eoe_op)); }
 
  private:
   int32_t max_repeats_;                              // The number of repeats that the user requested

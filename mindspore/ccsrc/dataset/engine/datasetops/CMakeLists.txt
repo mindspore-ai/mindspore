@@ -17,7 +17,11 @@ set(DATASET_ENGINE_DATASETOPS_SRC_FILES
     take_op.cc
     shuffle_op.cc
     zip_op.cc
-    concat_op.cc 
+    concat_op.cc
+    cache_base_op.cc
+    cache_lookup_op.cc
+    cache_op.cc
+    cache_merge_op.cc
     )
 
 if (ENABLE_PYTHON)

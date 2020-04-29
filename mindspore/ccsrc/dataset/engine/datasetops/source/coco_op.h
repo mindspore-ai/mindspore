@@ -200,6 +200,12 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   static Status GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
                                  std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing);
 
+  /// \brief Base-class override for NodePass visitor acceptor
+  /// \param[in] p Pointer to the NodePass to be accepted
+  /// \param[out] modified Indicator if the node was changed at all
+  /// \return Status of the node visit
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

@@ -87,8 +87,9 @@ class Allocator {
   std::shared_ptr<MemoryPool> pool_;
 };
 /// \brief It is a wrapper of unique_ptr with a custom allocator and acts like std::lock_guard such that the memory will
-/// be released when the object goes out of scope \tparam T The type of object to be allocated \tparam C Allocator.
-/// Default to std::allocator
+/// be released when the object goes out of scope
+/// \tparam T The type of object to be allocated
+/// \tparam C Allocator. Default to std::allocator
 template <typename T, typename C = std::allocator<T>>
 class MemGuard {
  public:
@@ -168,7 +169,7 @@ class MemGuard {
 
  private:
   allocator alloc_;
-  std::unique_ptr<T[], std::function<void(T *)>> ptr_;
+  std::unique_ptr<T[]> ptr_;
   size_t n_;
 };
 }  // namespace dataset

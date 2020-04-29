@@ -24,6 +24,7 @@
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -622,6 +623,12 @@ Status CocoOp::GetClassIndexing(const std::string &dir, const std::string &file,
   RETURN_IF_NOT_OK(op->ParseAnnotationIds());
   *output_class_indexing = op->label_index_;
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status CocoOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(shared_from_base<CocoOp>(), modified);
 }
 
 Status CocoOp::ComputeColMap() {

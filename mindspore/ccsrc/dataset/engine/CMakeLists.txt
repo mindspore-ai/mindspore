@@ -2,6 +2,7 @@ add_subdirectory(datasetops)
 add_subdirectory(opt)
 add_subdirectory(gnn)
 add_subdirectory(perf)
+add_subdirectory(cache)
 if (ENABLE_TDTQUE)
   add_subdirectory(tdt)
 endif ()
@@ -17,7 +18,9 @@ add_library(engine OBJECT
 target_include_directories(engine PRIVATE ${pybind11_INCLUDE_DIRS})
 
 if (ENABLE_TDTQUE)
-  add_dependencies(engine engine-datasetops engine-datasetops-source engine-tdt engine-opt engine-gnn engine-perf)
-else()
-  add_dependencies(engine engine-datasetops engine-datasetops-source engine-opt engine-gnn engine-perf)
+  add_dependencies(engine engine-datasetops engine-datasetops-source engine-tdt engine-opt engine-gnn engine-perf
+                   engine-cache-client engine-cache-server)
+else ()
+  add_dependencies(engine engine-datasetops engine-datasetops-source engine-opt engine-gnn engine-perf
+                   engine-cache-client engine-cache-server)
 endif ()

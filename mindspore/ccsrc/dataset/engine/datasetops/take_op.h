@@ -78,12 +78,6 @@ class TakeOp : public PipelineOp {
   // @return Status - The error code return
   Status operator()() override;
 
-  // During tree prepare phase, operators may have specific post-operations to perform depending on
-  // their role.
-  // @notes Derived versions of this function should always call it's superclass version first
-  // before providing their own implementations.
-  Status PrepareNodePostAction() override;
-
   // Base-class override for NodePass visitor acceptor.
   // @param p - Pointer to the NodePass to be accepted.
   // @param modified - Whether this node visit modified the pipeline.

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace dataset {
 class TaskManager;
-
+class CacheServer;
 class Services {
  public:
   static Status CreateInstance() {
@@ -61,6 +61,8 @@ class Services {
 
   static TaskManager &getTaskMgrInstance();
 
+  static CacheServer &getCacheServer();
+
   std::shared_ptr<MemoryPool> GetServiceMemPool() { return pool_; }
 
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -87,7 +89,9 @@ class Services {
   // We use pointers here instead of unique_ptr because we
   // want to have ultimate control on the order of
   // construction and destruction.
-  static constexpr int kNumServices_ = 1;
+  static constexpr int kSlotTaskMgr_ = 0;
+  static constexpr int kSlotCacheMgr_ = 1;
+  static constexpr int kNumServices_ = 2;
   Service *sa_[kNumServices_];
 
   Services();

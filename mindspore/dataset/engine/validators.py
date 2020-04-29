@@ -29,10 +29,11 @@ from ..core.validator_helpers import parse_user_args, type_check, type_check_lis
 
 from . import datasets
 from . import samplers
+from . import cache_client
 
 
 def check_imagefolderdatasetv2(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(ImageFolderDatasetV2)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(ImageFolderDatasetV2)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -58,7 +59,7 @@ def check_imagefolderdatasetv2(method):
 
 
 def check_mnist_cifar_dataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(ManifestDataset, Cifar10/100Dataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(ManifestDataset, Cifar10/100Dataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -81,7 +82,7 @@ def check_mnist_cifar_dataset(method):
 
 
 def check_manifestdataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(ManifestDataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(ManifestDataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -108,7 +109,7 @@ def check_manifestdataset(method):
 
 
 def check_tfrecorddataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(TFRecordDataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(TFRecordDataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -134,7 +135,7 @@ def check_tfrecorddataset(method):
 
 
 def check_vocdataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(VOCDataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(VOCDataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -175,7 +176,7 @@ def check_vocdataset(method):
 
 
 def check_cocodataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(CocoDataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(CocoDataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -211,7 +212,7 @@ def check_cocodataset(method):
 
 
 def check_celebadataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(CelebADataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(CelebADataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -247,7 +248,7 @@ def check_celebadataset(method):
 
 
 def check_minddataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(MindDataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(MindDataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -279,7 +280,7 @@ def check_minddataset(method):
 
 
 def check_generatordataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(GeneratorDataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(GeneratorDataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -339,6 +340,27 @@ def check_generatordataset(method):
             raise ValueError("sampler is not supported if source does not have attribute '__getitem__'")
         if num_shards is not None and not hasattr(source, "__getitem__"):
             raise ValueError("num_shards is not supported if source does not have attribute '__getitem__'")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+def check_random_dataset(method):
+    """A wrapper that wraps a parameter checker to the original Dataset(RandomDataset)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        _, param_dict = parse_user_args(method, *args, **kwargs)
+
+        nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id', 'total_rows']
+        nreq_param_bool = ['shuffle']
+        nreq_param_list = ['columns_list']
+
+        validate_dataset_param_value(nreq_param_int, param_dict, int)
+        validate_dataset_param_value(nreq_param_bool, param_dict, bool)
+        validate_dataset_param_value(nreq_param_list, param_dict, list)
+
+        check_sampler_shuffle_shard_options(param_dict)
 
         return method(self, *args, **kwargs)
 
@@ -506,7 +528,7 @@ def check_map(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [input_columns, _, output_columns, columns_order, num_parallel_workers, python_multiprocessing], _ = \
+        [input_columns, _, output_columns, columns_order, num_parallel_workers, python_multiprocessing, cache], _ = \
             parse_user_args(method, *args, **kwargs)
 
         nreq_param_columns = ['input_columns', 'output_columns']
@@ -516,6 +538,8 @@ def check_map(method):
         if num_parallel_workers is not None:
             check_num_parallel_workers(num_parallel_workers)
         type_check(python_multiprocessing, (bool,), "python_multiprocessing")
+        if cache is not None:
+            type_check(cache, (cache_client.DatasetCache,), "cache")
 
         for param_name, param in zip(nreq_param_columns, [input_columns, output_columns]):
             if param is not None:
@@ -720,7 +744,7 @@ def check_add_column(method):
 
 
 def check_cluedataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(CLUEDataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(CLUEDataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -750,7 +774,7 @@ def check_cluedataset(method):
 
 
 def check_textfiledataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(TextFileDataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(TextFileDataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -823,7 +847,7 @@ def check_gnn_graphdata(method):
 
 
 def check_gnn_get_all_nodes(method):
-    """A wrapper that wrap a parameter checker to the GNN `get_all_nodes` function."""
+    """A wrapper that wraps a parameter checker to the GNN `get_all_nodes` function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -836,7 +860,7 @@ def check_gnn_get_all_nodes(method):
 
 
 def check_gnn_get_all_edges(method):
-    """A wrapper that wrap a parameter checker to the GNN `get_all_edges` function."""
+    """A wrapper that wraps a parameter checker to the GNN `get_all_edges` function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -849,7 +873,7 @@ def check_gnn_get_all_edges(method):
 
 
 def check_gnn_get_nodes_from_edges(method):
-    """A wrapper that wrap a parameter checker to the GNN `get_nodes_from_edges` function."""
+    """A wrapper that wraps a parameter checker to the GNN `get_nodes_from_edges` function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -862,7 +886,7 @@ def check_gnn_get_nodes_from_edges(method):
 
 
 def check_gnn_get_all_neighbors(method):
-    """A wrapper that wrap a parameter checker to the GNN `get_all_neighbors` function."""
+    """A wrapper that wraps a parameter checker to the GNN `get_all_neighbors` function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -877,7 +901,7 @@ def check_gnn_get_all_neighbors(method):
 
 
 def check_gnn_get_sampled_neighbors(method):
-    """A wrapper that wrap a parameter checker to the GNN `get_sampled_neighbors` function."""
+    """A wrapper that wraps a parameter checker to the GNN `get_sampled_neighbors` function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -905,7 +929,7 @@ def check_gnn_get_sampled_neighbors(method):
 
 
 def check_gnn_get_neg_sampled_neighbors(method):
-    """A wrapper that wrap a parameter checker to the GNN `get_neg_sampled_neighbors` function."""
+    """A wrapper that wraps a parameter checker to the GNN `get_neg_sampled_neighbors` function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -921,7 +945,7 @@ def check_gnn_get_neg_sampled_neighbors(method):
 
 
 def check_gnn_random_walk(method):
-    """A wrapper that wrap a parameter checker to the GNN `random_walk` function."""
+    """A wrapper that wraps a parameter checker to the GNN `random_walk` function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -968,7 +992,7 @@ def check_aligned_list(param, param_name, member_type):
 
 
 def check_gnn_get_node_feature(method):
-    """A wrapper that wrap a parameter checker to the GNN `get_node_feature` function."""
+    """A wrapper that wraps a parameter checker to the GNN `get_node_feature` function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
@@ -1012,7 +1036,7 @@ def check_gnn_get_edge_feature(method):
 
 
 def check_numpyslicesdataset(method):
-    """A wrapper that wrap a parameter checker to the original Dataset(NumpySlicesDataset)."""
+    """A wrapper that wraps a parameter checker to the original Dataset(NumpySlicesDataset)."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):

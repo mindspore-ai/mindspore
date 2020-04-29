@@ -28,6 +28,7 @@ RemovalPass::RemovalPass() {}
 
 // Runs a removal_nodes pass first to find out which nodes to remove, then removes them.
 Status RemovalPass::RunOnTree(ExecutionTree *tree, bool *modified) {
+  MS_LOG(INFO) << "Pre pass: removal pass started.";
   // Create the removal node pass which can identify which nodes need to be removed.
   std::unique_ptr<Pass> removal_nodes = std::make_unique<RemovalNodes>(this);
   RETURN_IF_NOT_OK(removal_nodes->Run(tree, modified));
@@ -36,6 +37,7 @@ Status RemovalPass::RunOnTree(ExecutionTree *tree, bool *modified) {
   for (auto node : removal_nodes_) {
     node->Remove();
   }
+  MS_LOG(INFO) << "Pre pass: removal pass complete.";
   return Status::OK();
 }
 
