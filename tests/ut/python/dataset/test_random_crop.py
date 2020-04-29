@@ -17,8 +17,8 @@ Testing RandomCropAndResize op in DE
 """
 import matplotlib.pyplot as plt
 import mindspore.dataset.transforms.vision.c_transforms as vision
-from mindspore import log as logger
 
+from mindspore import log as logger
 import mindspore.dataset as ds
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -45,9 +45,9 @@ def visualize(a, mse, original):
 
 def test_random_crop_op():
     """
-    Test RandomCropAndResize op
+    Test RandomCrop Op
     """
-    logger.info("test_random_crop_and_resize_op")
+    logger.info("test_random_crop_op")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -67,3 +67,4 @@ def test_random_crop_op():
 
 if __name__ == "__main__":
     test_random_crop_op()
+

@@ -36,6 +36,7 @@ def test_textline_dataset_all_file():
     assert(count == 5)
 
 def test_textline_dataset_totext():
+    ds.config.set_num_parallel_workers(4)
     data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=False)
     count = 0
     line = ["This is a text file.", "Another file.", "Be happy every day.", "End of file.", "Good luck to everyone."]
