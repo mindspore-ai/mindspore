@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
 import numpy as np
 
 import mindspore.dataset.transforms.vision.c_transforms as vision
@@ -51,7 +50,7 @@ def generator_md():
 
 
 def test_generator_skip():
-    ds1 = ds.GeneratorDataset(generator_md, ["data"])
+    ds1 = ds.GeneratorDataset(generator_md, ["data"], num_parallel_workers=4)
 
     # Here ds1 should be [3, 4]
     ds1 = ds1.skip(3)
@@ -60,6 +59,7 @@ def test_generator_skip():
     for data in ds1:
         buf.append(data[0][0])
     assert len(buf) == 2
+    assert buf == [3, 4]
 
 
 def test_skip_1():
@@ -72,6 +72,7 @@ def test_skip_1():
     for data in ds1:
         buf.append(data[0][0])
     assert len(buf) == 0
+    assert buf == []
 
 
 def test_skip_2():
@@ -84,6 +85,7 @@ def test_skip_2():
     for data in ds1:
         buf.append(data[0][0])
     assert len(buf) == 5
+    assert buf == [0, 1, 2, 3, 4]
 
 
 def test_skip_repeat_1():
@@ -99,6 +101,7 @@ def test_skip_repeat_1():
     for data in ds1:
         buf.append(data[0][0])
     assert len(buf) == 7
+    assert buf == [3, 4, 0, 1, 2, 3, 4]
 
 
 def test_skip_repeat_2():
@@ -114,6 +117,7 @@ def test_skip_repeat_2():
     for data in ds1:
         buf.append(data[0][0])
     assert len(buf) == 4
+    assert buf == [3, 4, 3, 4]
 
 
 def test_skip_repeat_3():
@@ -132,6 +136,62 @@ def test_skip_repeat_3():
     for data in ds1:
         buf.append(data[0][0])
     assert len(buf) == 6
+    assert buf == [3, 4, 3, 4, 3, 4]
+
+def test_skip_take_1():
+    ds1 = ds.GeneratorDataset(generator_md, ["data"])
+
+    # Here ds1 should be [0, 1, 2, 3]
+    ds1 = ds1.take(4)
+
+    # Here ds1 should be [2, 3]
+    ds1 = ds1.skip(2)
+
+    buf = []
+    for data in ds1:
+        buf.append(data[0][0])
+    assert len(buf) == 2
+    assert buf == [2, 3]
+
+def test_skip_take_2():
+    ds1 = ds.GeneratorDataset(generator_md, ["data"])
+
+    # Here ds1 should be [2, 3, 4]
+    ds1 = ds1.skip(2)
+
+    # Here ds1 should be [2, 3]
+    ds1 = ds1.take(2)
+
+    buf = []
+    for data in ds1:
+        buf.append(data[0][0])
+    assert len(buf) == 2
+    assert buf == [2, 3]
+
+
+def generator_1d():
+    for i in range(64):
+        yield (np.array([i]), )
+
+def test_skip_filter_1():
+    dataset = ds.GeneratorDataset(generator_1d, ['data'])
+    dataset = dataset.skip(5)
+    dataset = dataset.filter(predicate=lambda data: data < 11, num_parallel_workers=4)
+
+    buf = []
+    for item in dataset:
+        buf.append(item[0][0])
+    assert buf == [5, 6, 7, 8, 9, 10]
+
+def test_skip_filter_2():
+    dataset = ds.GeneratorDataset(generator_1d, ['data'])
+    dataset = dataset.filter(predicate=lambda data: data < 11, num_parallel_workers=4)
+    dataset = dataset.skip(5)
+
+    buf = []
+    for item in dataset:
+        buf.append(item[0][0])
+    assert buf == [5, 6, 7, 8, 9, 10]
 
 
 if __name__ == "__main__":
@@ -142,3 +202,7 @@ if __name__ == "__main__":
     test_skip_repeat_1()
     test_skip_repeat_2()
     test_skip_repeat_3()
+    test_skip_take_1()
+    test_skip_take_2()
+    test_skip_filter_1()
+    test_skip_filter_2()
