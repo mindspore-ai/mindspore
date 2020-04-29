@@ -35,7 +35,6 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
-
 // Expand the tuple and dict parameters generated when parsing the function call,
 // and generate positional parameters and key-value pairs for function.
 class UnpackCall : public MetaFuncGraph {
@@ -47,7 +46,6 @@ class UnpackCall : public MetaFuncGraph {
   friend bool operator==(const UnpackCall &lhs, const UnpackCall &rhs) { return lhs.name_ == rhs.name_; }
 };
 using UnpackCallPtr = std::shared_ptr<UnpackCall>;
-
 }  // namespace prim
 }  // namespace mindspore
 

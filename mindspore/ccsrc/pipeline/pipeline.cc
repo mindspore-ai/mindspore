@@ -300,6 +300,10 @@ void ExecutorPy::SaveCompiledGraphToPb(const std::string &phase_s) {
   // save the graph to file in protobuf format
   FuncGraphPtr func_graph = info_[phase_s]->resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
+  if (phase_s.empty()) {
+    MS_LOG(ERROR) << "`phase` is empty '" << phase_s << "'!";
+    return;
+  }
   std::string name_prefix = phase_s.substr(0, phase_s.find("."));
   std::string pb_filename = std::string("ms_output_") + name_prefix + ".pb";
   std::string filename = GetFilePathName(pb_filename);
