@@ -107,6 +107,7 @@ constexpr auto kLambNextMVOpName = "LambNextMV";
 constexpr auto kConfusionTransposeDOpName = "ConfusionTransposeD";
 constexpr auto kAdamApplyOneWithDecayOpName = "AdamApplyOneWithDecay";
 constexpr auto kBatchNormOpName = "BatchNorm";
+constexpr auto kBatchNormGradOpName = "BatchNormGrad";
 constexpr auto kAdamApplyOneOpName = "AdamApplyOne";
 constexpr auto kDropoutGenMask = "DropoutGenMask";
 constexpr auto kResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
@@ -162,6 +163,7 @@ constexpr auto kAttrLabelForInsertStreamActive = "label_for_insert_stream_active
 constexpr auto kAttrFusion = "fusion";
 constexpr auto kAttrGroup = "group";
 constexpr auto kAttrOp = "op";
+constexpr auto kAttrIsTraining = "is_training";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
