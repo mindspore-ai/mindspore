@@ -51,8 +51,8 @@ Parameters for both training and evaluating can be set in config.py.
 "image_height": 224,              # image height
 "image_width": 224,               # image width
 "save_checkpoint": True,          # whether save checkpoint or not
-"save_checkpoint_steps": 500,     # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
-"keep_checkpoint_max": 40,        # only keep the last keep_checkpoint_max checkpoint
+"save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
+"keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
 "save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
 "warmup_epochs": 0,               # number of warmup epoch
 "lr_decay_mode": "cosine"         # decay mode for generating learning rate
