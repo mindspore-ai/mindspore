@@ -1427,7 +1427,6 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes) {
       std::string strategy_key_name = cnode->scope()->name() + std::string(CONNSYMBOL) + instance_name;
       bool load_strategy_from_ckpt =
         StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map.find(strategy_key_name) != stra_map.end();
-
       if (!StrategyFound(attrs) && !load_strategy_from_ckpt) {
         MS_LOG(INFO) << "ExtractInformation: the strategy of node " << node->ToString() << " prim " << prim->name()
                      << " is empty, using batch parallel";
