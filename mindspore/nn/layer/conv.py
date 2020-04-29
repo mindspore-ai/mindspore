@@ -37,7 +37,8 @@ class _Conv(Cell):
                  group,
                  has_bias,
                  weight_init,
-                 bias_init):
+                 bias_init,
+                 transposed=False):
         super(_Conv, self).__init__()
         self.in_channels = check_int_positive(in_channels)
         self.out_channels = check_int_positive(out_channels)
@@ -65,9 +66,11 @@ class _Conv(Cell):
         if out_channels % group != 0:
             raise ValueError("Attr 'out_channels' of 'Conv2D' Op must be divisible by "
                              "attr 'group' of 'Conv2D' Op.")
-
-        self.weight = Parameter(initializer(weight_init, [out_channels, in_channels // group, *kernel_size]),
-                                name='weight')
+        if transposed:
+            shape = [in_channels, out_channels // group, *kernel_size]
+        else:
+            shape = [out_channels, in_channels // group, *kernel_size]
+        self.weight = Parameter(initializer(weight_init, shape), name='weight')
 
         if check_bool(has_bias):
             self.bias = Parameter(initializer(bias_init, [out_channels]), name='bias')
@@ -312,8 +315,8 @@ class Conv2dTranspose(_Conv):
         # cause Conv2DBackpropInput's out_channel refers to Conv2D's out_channel,
         # then Conv2dTranspose's out_channel refers to Conv2DBackpropInput's in_channel.
         super(Conv2dTranspose, self).__init__(
-            out_channels,
             in_channels,
+            out_channels,
             kernel_size,
             stride,
             pad_mode,
@@ -322,10 +325,11 @@ class Conv2dTranspose(_Conv):
             group,
             has_bias,
             weight_init,
-            bias_init)
+            bias_init,
+            transposed=True)
 
-        self.out_channels = out_channels
         self.in_channels = in_channels
+        self.out_channels = out_channels
         self.shape = P.Shape()
         if pad_mode not in ('valid', 'same', 'pad'):
             raise ValueError('Attr \'pad_mode\' of \'Conv2dTranspose\' Op passed '

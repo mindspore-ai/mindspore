@@ -20,7 +20,6 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from ..ut_filter import non_graph_engine
 
-
 weight = Tensor(np.ones([2, 2]))
 in_channels = 3
 out_channels = 64
@@ -28,6 +27,7 @@ out_channels = 64
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self,
                  cin,
                  cout,
@@ -93,11 +93,13 @@ def test_compile_pad_pad():
     input_data = Tensor(np.ones([1, 3, 16, 50], dtype=np.float32))
     net(input_data)
 
+
 def test_conv_group_error():
     with pytest.raises(ValueError):
         nn.Conv2d(6, 8, 3, group=3)
     with pytest.raises(ValueError):
         nn.Conv2d(6, 9, 3, group=2)
+
 
 def test_conv_check():
     """ test_conv_check """
@@ -139,15 +141,15 @@ class NetConv2dTranspose(nn.Cell):
         super(NetConv2dTranspose, self).__init__()
         self.conv = nn.Conv2dTranspose(cin,
                                        cout,
-                              kernel_size,
-                              stride,
-                              pad_mode,
-                              padding,
-                              dilation,
-                              group,
-                              has_bias,
-                              weight_init,
-                              bias_init)
+                                       kernel_size,
+                                       stride,
+                                       pad_mode,
+                                       padding,
+                                       dilation,
+                                       group,
+                                       has_bias,
+                                       weight_init,
+                                       bias_init)
 
     def construct(self, input_x):
         return self.conv(input_x)
@@ -161,6 +163,13 @@ def test_compile_transpose():
 
 def test_compile_transpose_bias():
     net = NetConv2dTranspose(3, 64, 4, has_bias=True, weight_init='normal')
+    input_data = Tensor(np.ones([1, 3, 16, 50], dtype=np.float32))
+    net(input_data)
+
+
+def test_compile_transpose_bias_init():
+    bias = Tensor(np.random.randn(64).astype(np.float32))
+    net = NetConv2dTranspose(3, 64, 4, has_bias=True, weight_init='normal', bias_init=bias)
     input_data = Tensor(np.ones([1, 3, 16, 50], dtype=np.float32))
     net(input_data)
 
