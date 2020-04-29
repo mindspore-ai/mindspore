@@ -16,6 +16,7 @@
 #include "dataset/engine/datasetops/source/celeba_op.h"
 
 #include <fstream>
+#include <iomanip>
 #include "dataset/core/config_manager.h"
 #include "dataset/util/path.h"
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -434,9 +435,19 @@ Status CelebAOp::LoadTensorRow(const std::pair<std::string, std::vector<int32_t>
 }
 
 void CelebAOp::Print(std::ostream &out, bool show_all) const {
-  DatasetOp::Print(out, show_all);
-  out << "\nnumber of parallel workers:" << num_workers_ << "\nNumber of rows:" << num_rows_exact_
-      << "\nceleba dir: " << folder_path_ << "\n-------------------------\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <CelebAOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nNumber of rows:" << num_rows_exact_ << "\nceleba dir: " << folder_path_ << "\n\n";
+  }
 }
 
 // Reset Sampler and wakeup Master thread (functor)

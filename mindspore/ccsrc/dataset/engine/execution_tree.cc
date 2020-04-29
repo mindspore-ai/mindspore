@@ -81,13 +81,29 @@ Status ExecutionTree::AssignRoot(const std::shared_ptr<DatasetOp> &op) {
 }
 
 // A print method typically used for debugging
-void ExecutionTree::Print(std::ostream &out, bool show_all) const {
-  out << "Total number of nodes in the ExecutionTree (may or may not be connected nodes): " << id_count_
-      << "\nTree state: " << static_cast<int>(tree_state_) << "\n";
-  if (root_ != nullptr) {
-    // Just call the printer on the root node.  Each node descends to it's children to print them if
-    // showAll is true.
-    root_->Print(out, show_all);
+void ExecutionTree::Print(std::ostream &out) const {
+  out << "Execution tree summary:\n"
+      << "-----------------------\n";
+  this->PrintNode(out, root_, "", true, false);
+  out << "\nExecution tree operator details:\n"
+      << "--------------------------------\n";
+  this->PrintNode(out, root_, "", true, true);
+}
+
+// A helper functions for doing the recursive printing
+void ExecutionTree::PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp> &dataset_op, std::string indent,
+                              bool last, bool detailed) const {
+  // Decide which printer to use based on detailed arg.
+  if (!detailed) {
+    out << indent << "+- " << *dataset_op;
+    indent += (last ? "    " : "|   ");
+  } else {
+    dataset_op->Print(out, detailed);
+  }
+
+  // Descend to children
+  for (int32_t i = 0; i < dataset_op->child_.size(); ++i) {
+    this->PrintNode(out, dataset_op->child_[i], indent, (i == (dataset_op->child_.size() - 1)), detailed);
   }
 }
 
@@ -100,6 +116,9 @@ Status ExecutionTree::Launch() {
       " Expected state: " + std::to_string(static_cast<int>(kDeTStateReady));
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+  std::ostringstream ss;
+  ss << *this;
+  MS_LOG(INFO) << "Printing the tree before launch tasks:\n" << ss.str();
   for (auto itr = this->begin(); itr != this->end(); ++itr) {
     // An inlined operator is one that has an output connector size of 0, and it does not
     // require a thread to execute.  Instead, the work of this operator is executed inlined

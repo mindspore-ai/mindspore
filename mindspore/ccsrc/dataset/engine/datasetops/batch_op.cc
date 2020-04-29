@@ -15,6 +15,7 @@
  */
 #include "dataset/engine/datasetops/batch_op.h"
 #include <utility>
+#include <iomanip>
 #include "common/utils.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
@@ -102,10 +103,19 @@ Status BatchOp::operator()() {
 }
 
 void BatchOp::Print(std::ostream &out, bool show_all) const {
-  ParallelOp::Print(out, show_all);
-  out << "\nBatchOp:\n"
-      << "number of parallel workers: " << num_workers_ << "\nBatch size: " << start_batch_size_
-      << "\nDrop remainder: " << (drop_ ? "yes" : "no") << "\n\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <BatchOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << " [batch size: " << start_batch_size_ << "]\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nStart batch size: " << start_batch_size_ << "\nDrop remainder: " << (drop_ ? "yes" : "no") << "\n\n";
+  }
 }
 
 Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *source_table,

@@ -18,6 +18,7 @@
 #include <cmath>
 #include <condition_variable>
 #include <future>
+#include <iomanip>
 #include <memory>
 #include <mutex>
 #include <utility>
@@ -153,6 +154,36 @@ TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64
       num_rows_per_shard_(0),
       equal_rows_per_shard_(equal_rows_per_shard) {
   worker_connector_size_ = worker_connector_size;
+}
+
+// A print method typically used for debugging
+void TFReaderOp::Print(std::ostream &out, bool show_all) const {
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <TFReaderOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nRows per buffer: " << rows_per_buffer_ << "\nTotal rows: " << total_rows_ << "\nDevice id: " << device_id_
+        << "\nNumber of devices: " << num_devices_ << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no")
+        << "\nDataset files list:\n";
+    for (int i = 0; i < dataset_files_list_.size(); ++i) {
+      out << " " << dataset_files_list_[i];
+    }
+    if (!columns_to_load_.empty()) {
+      out << "\nColumns to load:\n";
+      for (int i = 0; i < columns_to_load_.size(); ++i) {
+        out << " " << columns_to_load_[i];
+      }
+    }
+    out << "\nData Schema:\n";
+    out << *data_schema_ << "\n\n";
+  }
 }
 
 Status TFReaderOp::Init() {

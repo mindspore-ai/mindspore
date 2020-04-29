@@ -23,6 +23,7 @@
 #include <chrono>
 #include <cstdint>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -319,31 +320,18 @@ StorageOp::~StorageOp() {}
 
 // A print method typically used for debugging
 void StorageOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  ParallelOp::Print(out, show_all);
-
-  // Then display our own stuff
-  out << "\nStorageOp:";
-  out << "\n  Dataset files dir : " << dataset_files_dir_ << "\n  Dataset schema file    : " << schema_file_;
-  if (!dataset_file_list_.empty()) {
-    out << "\n  Dataset Files List:\n";
-    for (auto filename : dataset_file_list_) {
-      out << "      " << filename << "\n";
-    }
-  }
-  out << "\n\n";
-  if (!data_buffers_.empty()) {
-    out << std::boolalpha << "  Number of DataBuffers inside StorageOp: " << data_buffers_.size()
-        << "\n  Number of rows: " << num_rows_ << "\n  Rows per buffer: " << rows_per_buffer_ << "\n\n  DataBuffers:\n";
-
-    // Iterate over each DataBuffer and display the buffer id and the buffer
-    int32_t i = 0;
-    for (i = 0; i < data_buffers_.size(); i++) {
-      out << "  " << i << ")\n";
-      data_buffers_[i]->Print(out, show_all);
-    }
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <StorageOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
   } else {
-    out << "DataCache is empty!\n";
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nDetailed operator printing has not been implemented for this op.\n\n";
   }
 }
 

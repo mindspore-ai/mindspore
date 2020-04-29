@@ -19,6 +19,7 @@
 #include <securec.h>
 #include <algorithm>
 #include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <random>
@@ -108,13 +109,20 @@ Status ShuffleOp::SelfReset() {
 
 // A print method typically used for debugging
 void ShuffleOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  PipelineOp::Print(out, show_all);
-
-  // Then display our own stuff
-  out << "ShuffleOp:\n  Shuffle size: " << shuffle_size_ << "\n  rows_per_buffer_: " << rows_per_buffer_
-      << "\n  shuffle_buffer_state_: " << shuffle_buffer_state_ << "\n  shuffle_seed_: " << shuffle_seed_;
-  out << "\n-------------------------\n\n";  // End the display with this line
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <ShuffleOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << " [shuffle size: " << shuffle_size_ << "]\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nShuffle size: " << shuffle_size_ << "\nRows per buffer: " << rows_per_buffer_
+        << "\nShuffle buffer state: " << shuffle_buffer_state_ << "\nShuffle seed: " << shuffle_seed_ << "\n\n";
+  }
 }
 
 // Private function to add a new row to the shuffle buffer.

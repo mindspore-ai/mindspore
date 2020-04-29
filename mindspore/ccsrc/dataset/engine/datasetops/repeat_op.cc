@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <iomanip>
 #include <iostream>
 #include <utility>
 
@@ -51,22 +52,28 @@ RepeatOp::~RepeatOp() {}
 
 // A print method typically used for debugging
 void RepeatOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  PipelineOp::Print(out, show_all);
-
-  // Then display our own stuff
-  out << "RepeatOp:"
-      << "\nCurrent repeat count: " << repeat_count_ << "\nMax repeat count: " << max_repeats_
-      << "\nLeaf Nodes in my execution path:";
-  if (!eoe_ops_.empty()) {
-    out << "\n";
-    for (size_t i = 0; i < eoe_ops_.size(); i++) {
-      out << "  Operator: " << eoe_ops_[i]->id() << "\n";
-    }
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <RepeatOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << " [repeats: " << max_repeats_ << "]\n";
   } else {
-    out << " kNone.";
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nCurrent repeat count: " << repeat_count_ << "\nMax repeat count: " << max_repeats_
+        << "\nLeaf Nodes in execution path:";
+    if (!eoe_ops_.empty()) {
+      for (size_t i = 0; i < eoe_ops_.size(); i++) {
+        out << "\n  Operator: " << eoe_ops_[i]->id();
+      }
+    } else {
+      out << " None.";
+    }
+    out << "\n\n";
   }
-  out << "\n-------------------------\n\n";  // End the display with this line
 }
 
 // Base-class override for executing specific RepeatOp configurations. This code will be called

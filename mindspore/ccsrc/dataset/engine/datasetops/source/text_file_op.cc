@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <memory>
 #include <string>
 #include <utility>
@@ -88,6 +89,30 @@ TextFileOp::TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num
       load_io_block_queue_(true),
       load_jagged_connector_(true) {
   worker_connector_size_ = worker_connector_size;
+}
+
+// A print method typically used for debugging
+void TextFileOp::Print(std::ostream &out, bool show_all) const {
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <TextFileOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nRows per buffer: " << rows_per_buffer_ << "\nSample count: " << num_samples_
+        << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
+        << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no") << "\nText files list:\n";
+    for (int i = 0; i < text_files_list_.size(); ++i) {
+      out << " " << text_files_list_[i];
+    }
+    out << "\nData Schema:\n";
+    out << *data_schema_ << "\n\n";
+  }
 }
 
 Status TextFileOp::Init() {

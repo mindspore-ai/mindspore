@@ -144,6 +144,11 @@ class TextFileOp : public ParallelOp {
   // Default destructor
   ~TextFileOp() = default;
 
+  // A print method typically used for debugging
+  // @param out - The output stream to write output to
+  // @param show_all - A bool to control if you want to show all info or just a summary
+  void Print(std::ostream &out, bool show_all) const override;
+
   // Instantiates the internal queues and connectors
   // @return Status - the error code returned
   Status Init();

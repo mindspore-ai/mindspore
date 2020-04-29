@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <utility>
 
 #include "common/utils.h"
@@ -225,9 +226,19 @@ Status CifarOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Dat
 }
 
 void CifarOp::Print(std::ostream &out, bool show_all) const {
-  DatasetOp::Print(out, show_all);
-  out << "\nnumber of parallel workers:" << num_workers_ << "\nNumber of rows:" << num_rows_
-      << "\nCifar Directory: " << folder_path_ << "\n-------------------------\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <CifarOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nNumber of rows:" << num_rows_ << "\nCifar directory: " << folder_path_ << "\n\n";
+  }
 }
 
 // Reset Sampler and wakeup Master thread (functor)

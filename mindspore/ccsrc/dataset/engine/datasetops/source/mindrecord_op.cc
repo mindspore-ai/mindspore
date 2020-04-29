@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iomanip>
 #include <limits>
 #include <utility>
 
@@ -179,18 +180,21 @@ MindRecordOp::~MindRecordOp() {}
 
 // A print method typically used for debugging
 void MindRecordOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  ParallelOp::Print(out, show_all);
-
-  // Then display our own stuff
-  out << "\nMindRecordOp:";
-  out << "\n  1 Dataset file                : " << dataset_file_;
-  out << "\n  Number of rows                : " << num_rows_;
-  out << "\n  Rows per buffer               : " << rows_per_buffer_;
-  out << "\n  Number of buffers             : " << buffers_needed_;
-  out << "\n  Number of ShardReader workers : " << num_mind_record_workers_;
-
-  out << "\n\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <MindRecordOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\n1 Dataset file : " << dataset_file_ << "\nNumber of rows : " << num_rows_
+        << "\nRows per buffer : " << rows_per_buffer_ << "\nNumber of buffers : " << buffers_needed_
+        << "\nNumber of ShardReader workers : " << num_mind_record_workers_ << "\n\n";
+  }
 }
 
 template <typename T>

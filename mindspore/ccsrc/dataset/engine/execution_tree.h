@@ -19,6 +19,7 @@
 #include <functional>
 #include <memory>
 #include <stack>
+#include <string>
 #include <vector>
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/util/status.h"
@@ -114,8 +115,7 @@ class ExecutionTree {
 
   // A print method typically used for debugging
   // @param out - The output stream to write output to
-  // @param show_all - A bool to control if you want to show all info or just a summary
-  void Print(std::ostream &out, bool show_all) const;
+  void Print(std::ostream &out) const;
 
   // Returns an iterator positioned at the start
   // @return Iterator - The iterator
@@ -133,7 +133,7 @@ class ExecutionTree {
   // @param exe_tree - reference to the execution tree to display
   // @return - the output stream must be returned
   friend std::ostream &operator<<(std::ostream &out, ExecutionTree &exe_tree) {
-    exe_tree.Print(out, false);
+    exe_tree.Print(out);
     return out;
   }
 
@@ -178,6 +178,14 @@ class ExecutionTree {
   TaskGroup *AllTasks() const { return tg_.get(); }
 
  private:
+  // A helper functions for doing the recursive printing
+  // @param dataset_op - The dataset op to print
+  // @param indent - an indent string for aligning child levels in output
+  // @param last - an indicator if it's the last child or not
+  // @param detailed - should it display the detailed node output or the summary line
+  void PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp> &dataset_op, std::string indent, bool last,
+                 bool detailed) const;
+
   std::unique_ptr<TaskGroup> tg_;                        // Class for worker management
   std::shared_ptr<DatasetOp> root_;                      // The root node of the tree
   int32_t id_count_;                                     // Counter for generating operator id's
