@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
     epoch_size = config.epoch_size
     net = resnet50(class_num=config.class_num)
-    loss = SoftmaxCrossEntropyWithLogits(sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
 
 
     if args_opt.do_train:
