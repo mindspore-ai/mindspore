@@ -143,6 +143,7 @@ static std::string ExceptionTypeToString(ExceptionType type) {
       _TO_STRING(TimeOutError),
       _TO_STRING(ResourceUnavailable),
       _TO_STRING(NoPermissionError),
+      _TO_STRING(IndexError),
       _TO_STRING(ValueError),
       _TO_STRING(TypeError),
   };
@@ -179,7 +180,8 @@ void LogWriter::operator^(const LogStream &stream) const {
 
   std::ostringstream oss;
   oss << location_.file_ << ":" << location_.line_ << " " << location_.func_ << "] ";
-  if (exception_type_ != NoExceptionType && exception_type_ != TypeError && exception_type_ != ValueError) {
+  if (exception_type_ != NoExceptionType && exception_type_ != IndexError && exception_type_ != TypeError &&
+      exception_type_ != ValueError) {
     oss << ExceptionTypeToString(exception_type_) << " ";
   }
   oss << msg.str();
@@ -187,6 +189,9 @@ void LogWriter::operator^(const LogStream &stream) const {
   trace::TraceGraphInfer();
   trace::GetInferStackInfo(oss);
 
+  if (exception_type_ == IndexError) {
+    throw pybind11::index_error(oss.str());
+  }
   if (exception_type_ == ValueError) {
     throw pybind11::value_error(oss.str());
   }
