@@ -33,7 +33,15 @@ class ApplyMomentumCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(ApplyMomentum, ApplyMomentumCPUKernel);
+MS_REG_CPU_KERNEL(ApplyMomentum,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat32),
+                  ApplyMomentumCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

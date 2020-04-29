@@ -33,7 +33,9 @@ class MulCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(Mul, MulCPUKernel);
+MS_REG_CPU_KERNEL(
+  Mul, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  MulCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

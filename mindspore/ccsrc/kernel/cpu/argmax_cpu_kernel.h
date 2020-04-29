@@ -37,7 +37,8 @@ class ArgmaxCPUKernel : public CPUKernel {
   size_t batch_size_{0};
 };
 
-MS_REG_CPU_KERNEL(Argmax, ArgmaxCPUKernel);
+MS_REG_CPU_KERNEL(Argmax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  ArgmaxCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

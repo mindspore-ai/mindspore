@@ -33,7 +33,10 @@ class Conv2dCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(Conv2D, Conv2dCPUKernel);
+MS_REG_CPU_KERNEL(
+  Conv2D,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  Conv2dCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

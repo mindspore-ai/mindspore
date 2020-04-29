@@ -33,9 +33,12 @@ class ReshapeCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(Reshape, ReshapeCPUKernel);
-MS_REG_CPU_KERNEL(Flatten, ReshapeCPUKernel);
-MS_REG_CPU_KERNEL(ExpandDims, ReshapeCPUKernel);
+MS_REG_CPU_KERNEL(Reshape, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  ReshapeCPUKernel);
+MS_REG_CPU_KERNEL(Flatten, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  ReshapeCPUKernel);
+MS_REG_CPU_KERNEL(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  ReshapeCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
