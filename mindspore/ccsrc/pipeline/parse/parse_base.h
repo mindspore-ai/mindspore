@@ -80,6 +80,7 @@ const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
 
 const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
+const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
 
 // define the common name
 const char NAMED_PRIMITIVE_ITER[] = "iter";

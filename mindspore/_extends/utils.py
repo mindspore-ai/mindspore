@@ -110,3 +110,10 @@ class Slice:
     start: int
     end: int
     step: int
+
+
+@dataclass
+class Ellipsis_:
+    """
+    Ellipsis class
+    """

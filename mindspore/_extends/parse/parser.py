@@ -29,7 +29,7 @@ from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.api import _MindSporeFunction
 from .namespace import CellNamespace, ClosureNamespace, ClassMemberNamespace
 from .resources import parse_object_map, convert_object_map, trope_ns, SYMBOL_UNDEFINE, NO_IMPLEMENT
-from ..utils import Slice
+from ..utils import Slice, Ellipsis_
 
 # define return value
 RET_SUCCESS = 0
@@ -69,6 +69,11 @@ AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 parse_expr_statement_white_list = (
     "append",
 )
+
+def create_ellipsis_obj():
+    """Create Slice object"""
+    return Ellipsis_()
+
 
 def create_slice_obj(start, end, step):
     """Create Slice object"""
