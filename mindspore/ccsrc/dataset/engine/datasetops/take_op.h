@@ -45,6 +45,7 @@ class TakeOp : public PipelineOp {
 
    private:
     int32_t build_max_takes_;
+    int32_t builder_op_connector_size_;
 
     Status SanityCheck() const;
   };
@@ -52,7 +53,7 @@ class TakeOp : public PipelineOp {
   // Constructor of the TakeOp.
   // @note The builder class should be used to call it
   // @param count - The number of takes to do
-  explicit TakeOp(int32_t count);
+  explicit TakeOp(int32_t count, int32_t op_connector_size);
 
   // Destructor
   ~TakeOp() = default;
@@ -72,22 +73,10 @@ class TakeOp : public PipelineOp {
     return out;
   }
 
-  // Class functor operator () override.
-  // Most dataset ops operate by launching a thread (see ExecutionTree).
-  // However, the TakeOp is defined as a inlined operator, so it is invalid to launch the
-  // functor since this op runs inlined inside another operator.  The function is overloaded to
-  // ensure that it is not called by mistake (it will generate an error).
+  // All dataset ops operate by launching a thread (see ExecutionTree). This class functor will
+  // provide the master loop that drives the logic for performing the work
   // @return Status - The error code return
   Status operator()() override;
-
-  // Gets a buffer from the child node. The caller is typically our parent node.
-  // @note This function sets the `retryIfEoe` flag when popping from the child connector. This way,
-  // this function will retry to pop the connector again and will get the non-EOE buffer if any.
-  // @param p_buffer - output pointer to the buffer that it will fetch.
-  // @param worker_id - The worker id
-  // @param retry_if_eoe Set this flag to true to allow calling pop() again after the first pop() returns EOE.
-  // @return Status - The error code return
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) override;
 
   // During tree prepare phase, operators may have specific post-operations to perform depending on
   // their role.
