@@ -47,6 +47,8 @@ constexpr size_t kBn2ReluOutputNum = 4;
 
 constexpr size_t kBnInputNum = 6;
 constexpr size_t kBnOutputNum = 5;
+constexpr size_t kBatchNormInputNum = 5;
+constexpr size_t kBatchNormOutputNum = 5;
 
 constexpr size_t kBN1OutputNum = 2;
 constexpr size_t kBN2OutputNum = 3;
@@ -61,6 +63,7 @@ constexpr size_t kBNGrad3OutputNum = 1;
 
 constexpr size_t kBNTrainingReduceOutputNum = 2;
 constexpr size_t kBNTrainingUpdateOutputNum = 5;
+constexpr size_t kBNTrainingUpdateV2OutputNum = 3;
 constexpr size_t kBNTrainingUpdateGradOutputNum = 2;
 
 constexpr size_t kSingleOutputNum = 1;

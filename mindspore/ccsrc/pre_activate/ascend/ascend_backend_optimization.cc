@@ -20,6 +20,7 @@
 #include "pre_activate/ascend/ir_fission/bn_split.h"
 #include "pre_activate/ascend/ir_fission/bn_grad_split.h"
 #include "pre_activate/ascend/ir_fission/batch_norm_grad_split.h"
+#include "pre_activate/ascend/ir_fission/batch_norm_bert_fission.h"
 #include "pre_activate/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "pre_activate/ascend/ir_fission/layer_norm_grad_split.h"
 #include "pre_activate/pass/communication_op_fusion.h"
@@ -76,6 +77,7 @@ namespace opt {
 namespace {
 void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   MS_EXCEPTION_IF_NULL(ir_fusion_pm);
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormBertFission>());
   ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
