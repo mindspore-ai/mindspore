@@ -990,7 +990,7 @@ void AscendSession::MergeGraphExecOrder() {
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     if (!context_ptr->enable_task_sink()) {
-      MS_LOG(INFO) << "Control sink network should run with task-sink mode!";
+      MS_LOG(EXCEPTION) << "Control sink network should run with task-sink mode!";
     }
   }
   // if first graph is common,the final graph has no label,then set the stream of final graph same with the first graph
