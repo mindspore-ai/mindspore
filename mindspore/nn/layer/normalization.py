@@ -62,6 +62,7 @@ class _BatchNorm(Cell):
         self.beta = Parameter(initializer(
             beta_init, num_features), name="beta", requires_grad=affine)
         self.group = check_int_positive(device_num_each_group)
+        self.is_global = False
         if self.group != 1:
             self.rank_id = get_rank()
             self.rank_size = get_group_size()
@@ -80,15 +81,18 @@ class _BatchNorm(Cell):
         self.cast = P.Cast()
         self.dtype = P.DType()
         self.reshape = P.Reshape()
+        self.is_ascend = context.get_context("device_target") == "Ascend"
 
         if context.get_context("enable_ge"):
             self.is_ge_backend = True
             self.momentum = Tensor(1.0 - momentum, mstype.float32)
-            self.bn_train = P.BatchNorm(is_training=True,
-                                        epsilon=self.eps)
         else:
             self.is_ge_backend = False
             self.momentum = 1.0 - momentum
+        if self.is_ge_backend or self.is_ascend:
+            self.bn_train = P.BatchNorm(is_training=True,
+                                        epsilon=self.eps)
+        else:
             self.bn_train = P.FusedBatchNorm(mode=1,
                                              epsilon=self.eps,
                                              momentum=self.momentum)
@@ -140,24 +144,23 @@ class _BatchNorm(Cell):
 
     def construct(self, x):
         if self.training and self.use_batch_statistics:
-            if self.is_ge_backend:
-                if self.is_global:
-                    axes, re_shape = _shape_infer(F.shape(x), self.num_features)
-                    y = self._global_sync(x, axes, re_shape)
-                else:
-                    y, batch_mean, batch_var, _, _ = \
-                        self.bn_train(x,
-                                      self.gamma,
-                                      self.beta,
-                                      None,
-                                      None)
+            if self.is_ge_backend and self.is_global:
+                axes, re_shape = _shape_infer(F.shape(x), self.num_features)
+                y = self._global_sync(x, axes, re_shape)
+            elif self.is_ge_backend or self.is_ascend:
+                y, batch_mean, batch_var, _, _ = \
+                    self.bn_train(x,
+                                  self.gamma,
+                                  self.beta,
+                                  None,
+                                  None)
 
-                    mean_sub = self.sub_mean(self.moving_mean, batch_mean)
-                    temp_mean = self.mul_mean(mean_sub, self.momentum)
-                    mean_sub2 = self.sub_var(self.moving_variance, batch_var)
-                    temp_variance = self.mul_var(mean_sub2, self.momentum)
-                    y = F.depend(y, self.assign_sub_mean(self.moving_mean, temp_mean))
-                    y = F.depend(y, self.assign_sub_var(self.moving_variance, temp_variance))
+                mean_sub = self.sub_mean(self.moving_mean, batch_mean)
+                temp_mean = self.mul_mean(mean_sub, self.momentum)
+                mean_sub2 = self.sub_var(self.moving_variance, batch_var)
+                temp_variance = self.mul_var(mean_sub2, self.momentum)
+                y = F.depend(y, self.assign_sub_mean(self.moving_mean, temp_mean))
+                y = F.depend(y, self.assign_sub_var(self.moving_variance, temp_variance))
             else:
                 y = self.bn_train(x,
                                   self.gamma,
