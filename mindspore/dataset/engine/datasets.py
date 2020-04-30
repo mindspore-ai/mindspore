@@ -925,7 +925,7 @@ class Dataset:
         Args:
             condition_name (str): The condition name that is used to toggle sending next row
             num_batch (int or None): The number of batches(rows) that are released
-                When num_batch is None, it will default to the number specified by the sync_wait operator
+            When num_batch is None, it will default to the number specified by the sync_wait operator
             data (dict or None): The data passed to the callback
         """
         notifiers_dict = self.get_sync_notifiers()
