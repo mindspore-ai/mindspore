@@ -215,9 +215,9 @@ Status OneHotInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   OperatorAttrs attrs_onehot = {attr_onehot_axis};
   auto onehot = gen_g.PushBack({gen_g.NewOpInst(ONEHOT, attrs_onehot), sub2, CreatInt32Imm(classes_each_device_),
                                 cnode->input(3), cnode->input(4)});
-  std::vector<AnfNodePtr> input_nodes = {floor_div, sub1};
-  replace_graph_ =
-    std::make_shared<std::pair<std::vector<AnfNodePtr>, AnfNodePtr>>(std::make_pair(input_nodes, onehot));
+  std::vector<std::pair<AnfNodePtr, int>> input_nodes = {std::make_pair(floor_div, 1), std::make_pair(sub1, 1)};
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, onehot));
 
   return SUCCESS;
 }

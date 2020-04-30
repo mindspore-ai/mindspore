@@ -36,5 +36,6 @@
 #include "parallel/ops_info/reshape_info.h"
 #include "parallel/ops_info/transpose_info.h"
 #include "parallel/ops_info/virtual_dataset_info.h"
+#include "parallel/ops_info/gather_v2_p_info.h"
 
 #endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_HEAD_FILES_H_

@@ -48,7 +48,7 @@ using TensorLayouts = std::vector<TensorLayout>;
 using different_type = std::vector<int32_t>::difference_type;
 using PrimitiveAttrs = std::unordered_map<std::string, ValuePtr>;
 using Strategys = std::vector<Dimensions>;
-using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<AnfNodePtr>, AnfNodePtr>>;
+using ReplaceGraphPtr = std::shared_ptr<std::pair<std::vector<std::pair<AnfNodePtr, int>>, AnfNodePtr>>;
 
 class Edge;
 
