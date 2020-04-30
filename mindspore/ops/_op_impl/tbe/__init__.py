@@ -153,3 +153,4 @@ from .floor_mod import _floor_mod_tbe
 from .scatter_nd_update import _scatter_nd_update_tbe
 from .avg_pool import _avg_pool_tbe
 from .avg_pool_grad import _avg_pool_grad_tbe
+from .ones_like import _ones_like_tbe
