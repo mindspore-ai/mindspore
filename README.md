@@ -193,13 +193,13 @@ to implement the image classification.
 ## Docs
 
 More details about installation guide, tutorials and APIs, please see the
-[User Documentation](https://gitee.com/mindspore/docs).
+[User Documentation](https://github.com/mindspore-ai/docs).
 
 ## Community
 
 ### Governance
 
-Check out how MindSpore Open Governance [works](https://gitee.com/mindspore/community/blob/master/governance.md).
+Check out how MindSpore Open Governance [works](https://github.com/mindspore-ai/community/blob/master/governance.md).
 
 ### Communication
 
