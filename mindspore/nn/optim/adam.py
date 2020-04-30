@@ -57,21 +57,22 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, param, m, v, grad
     op_reshape = P.Reshape()
     op_shape = P.Shape()
 
-    param = op_cast(param, mstype.float32)
-    m = op_cast(m, mstype.float32)
-    v = op_cast(v, mstype.float32)
-    gradient = op_cast(gradient, mstype.float32)
+    param_fp32 = op_cast(param, mstype.float32)
+    m_fp32 = op_cast(m, mstype.float32)
+    v_fp32 = op_cast(v, mstype.float32)
+    gradient_fp32 = op_cast(gradient, mstype.float32)
 
-    next_m = op_mul(beta1, m) + op_mul(op_cast(F.tuple_to_array((1.0,)), mstype.float32) - beta1, gradient)
+    next_m = op_mul(beta1, m_fp32) + op_mul(op_cast(F.tuple_to_array((1.0,)), mstype.float32) - beta1, gradient_fp32)
 
-    next_v = op_mul(beta2, v) + op_mul(op_cast(F.tuple_to_array((1.0,)), mstype.float32) - beta2, op_square(gradient))
+    next_v = op_mul(beta2, v_fp32) + op_mul(op_cast(F.tuple_to_array((1.0,)), mstype.float32)
+                                            - beta2, op_square(gradient_fp32))
 
     update = next_m / (op_sqrt(next_v) + eps)
     if decay_flag:
-        update = update + op_mul(weight_decay_tensor, param)
+        update = update + op_mul(weight_decay_tensor, param_fp32)
 
     update_with_lr = op_mul(lr, update)
-    next_param = param - op_reshape(update_with_lr, op_shape(param))
+    next_param = param_fp32 - op_reshape(update_with_lr, op_shape(param_fp32))
 
     next_v = F.depend(next_v, F.assign(param, next_param))
     next_v = F.depend(next_v, F.assign(m, next_m))

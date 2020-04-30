@@ -446,12 +446,6 @@ test_cases = [
         'desc_inputs': [[128, 32, 32, 64]],
         'desc_bprop': [[128, 32, 32, 64]],
     }),
-    ('ApplyMomentum', {
-        'block': P.ApplyMomentum(),
-        'desc_inputs': [[2], [128, 32, 32, 64], [128, 32, 32, 64], [128, 32, 32, 64], [128, 32, 32, 64]],
-        'desc_bprop': [[128, 32, 32, 64]],
-        'skip': ['backward']
-    }),
     ('ScalarSummary', {
         'block': ScalarSummaryNet(),
         'desc_inputs': [2.2],
@@ -515,6 +509,12 @@ test_cases = [
 ]
 
 test_cases_for_verify_exception = [
+    ('ApplyMomentum_Error', {
+        'block': (P.ApplyMomentum(), {'exception': TypeError}),
+        'desc_inputs': [[2], [128, 32, 32, 64], [128, 32, 32, 64], [128, 32, 32, 64], [128, 32, 32, 64]],
+        'desc_bprop': [[128, 32, 32, 64]],
+        'skip': ['backward']
+    }),
     ('Conv2d_ValueError_1', {
         'block': (lambda _: P.Conv2D(3, 4, mode=-2.0), {'exception': TypeError}),
         'desc_inputs': [0],
