@@ -243,7 +243,7 @@ void CompileGraph::AddSinkSwitch(const CNodePtr &node) {
     AddInst(Instruction::kCall, args);
 
     args.clear();
-    args.emplace_back(true);
+    args.emplace_back(node->input(1));
     AddInst(Instruction::kSwitchReturn, args);
 
     args.clear();

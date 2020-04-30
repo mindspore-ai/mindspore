@@ -88,6 +88,10 @@ class AscendSession : public SessionBasic {
   size_t SetChildGraphInput(const KernelGraphPtr &graph, const ValuePtr &value, size_t input_index);
   size_t SetChildGraphInput(const KernelGraphPtr &graph, const VectorRef &vec_args, size_t input_index);
 
+  void SetFinalGraphOutput(const AnfNodePtr &node);
+  void SetFinalGraphOutput(const ValuePtr &value);
+  void SetFinalGraphOutput(const VectorRef &vec_output);
+
   // merge execution order list of child graphs
   void MergeGraphExecOrder();
   // insert assion op to sync data bettween different graphs

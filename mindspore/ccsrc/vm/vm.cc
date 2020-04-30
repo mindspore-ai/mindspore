@@ -141,17 +141,31 @@ void FinalVM::Popsp() {
   }
 }
 
+void FinalVM::PushStatus(bool is_switch_call) { ret_status_.push(is_switch_call); }
+
+bool FinalVM::PopStatus() {
+  if (ret_status_.empty()) {
+    return false;
+  }
+  bool status = ret_status_.top();
+  ret_status_.pop();
+  return status;
+}
+
 void FinalVM::DoJmp(const BaseRef &jmp_orig) {
   MS_LOG(DEBUG) << "Start";
 
   BaseRef jmp = jmp_orig;
   if (backend_->simu_flag()) {
+    bool is_switch_call = false;
     if (utils::isa<StructSimuSwitch>(jmp)) {  // need to inherit from Base
       MS_LOG(DEBUG) << "Start jump StructSwitch";
       auto simu_value = utils::cast<std::shared_ptr<StructSimuSwitch>>(jmp);
       jmp = simu_value->fn_;
       backend_->set_curr_switch(simu_value->value_);
+      is_switch_call = true;
     }
+    PushStatus(is_switch_call);
   }
 
   if (utils::isa<StructPartial>(jmp)) {  // need to inherit from Base
@@ -255,6 +269,13 @@ void FinalVM::InstSwitchReturn(const VectorRef &args) {
     MS_LOG(ERROR) << __FUNCTION__ << " requires one parameter, while the input size is " << args.size() << ".";
     return;
   }
+
+  auto rv = Ref(-1);
+  if (utils::isa<AnfNodePtr>(rv) || utils::isa<VectorRef>(rv)) {
+    auto &c = args[0];
+    cond_out_[c] = rv;
+  }
+
   Pop(1);
   Popsp();
 }
@@ -272,8 +293,20 @@ void FinalVM::InstReturn(const VectorRef &args) {
   int height = utils::cast<int>(args[1]);
 
   auto rv = Ref(rpos);
-  if (backend_->simu_flag() && backend_->is_switch_call()) {
-    backend_->SetSwitchGraph();
+  if (backend_->simu_flag()) {
+    auto c = backend_->curr_switch();
+    auto status = PopStatus();
+    if (status) {
+      auto iter = cond_out_.find(c);
+      if (iter != cond_out_.end()) {
+        rv = MergeArgs(rv, iter->second);
+        cond_out_.erase(iter);
+      }
+    }
+
+    if (backend_->is_switch_call()) {
+      backend_->SetSwitchGraph();
+    }
   }
 
   Pop(height);
@@ -383,21 +416,30 @@ void FinalVM::MergeJmpArgs(const BaseRef &jmp, const BaseRef &c) {
   for (size_t i = 0; i < new_args.size(); ++i) {
     auto &old_arg = old_args[i];
     auto &new_arg = new_args[i];
-    if (utils::isa<VectorRef>(old_arg)) {
-      auto old_vec_ref = utils::cast<VectorRef>(old_arg);
-      if (utils::isa<VectorRef>(new_arg)) {
-        auto new_vec_ref = utils::cast<VectorRef>(new_arg);
-        std::copy(new_vec_ref.begin(), new_vec_ref.end(), std::back_inserter(old_vec_ref));
-      }
-      new_arg = old_vec_ref;
-    } else if (utils::isa<VectorRef>(new_arg)) {
-      auto new_vec_ref = utils::cast<VectorRef>(new_arg);
-      new_vec_ref.push_back(old_arg);
-      new_arg = new_vec_ref;
-    } else {
-      new_arg = VectorRef({new_arg, old_arg});
-    }
+    new_arg = MergeArgs(old_arg, new_arg);
   }
+}
+
+BaseRef FinalVM::MergeArgs(const BaseRef &first, const BaseRef &second) {
+  MS_LOG(DEBUG) << __FUNCTION__ << ": " << first.ToString() << ", " << second.ToString();
+  if (utils::isa<VectorRef>(first)) {
+    auto old_vec_ref = utils::cast<VectorRef>(first);
+    if (utils::isa<VectorRef>(second)) {
+      auto new_vec_ref = utils::cast<VectorRef>(second);
+      std::copy(new_vec_ref.begin(), new_vec_ref.end(), std::back_inserter(old_vec_ref));
+    } else {
+      old_vec_ref.push_back(second);
+    }
+    return old_vec_ref;
+  }
+
+  if (utils::isa<VectorRef>(second)) {
+    auto new_vec_ref = utils::cast<VectorRef>(second);
+    new_vec_ref.push_back(first);
+    return new_vec_ref;
+  }
+
+  return VectorRef({first, second});
 }
 
 void FinalVM::InstRealSwitch(const VectorRef &args) {
