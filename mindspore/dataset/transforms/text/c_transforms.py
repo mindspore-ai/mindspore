@@ -33,9 +33,13 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
     Tokenize Chinese string into words based on dictionary.
 
     Args:
-        mode (Enum):  [Default "MIX"], "MP" model will tokenize with MPSegment algorithm, "HMM" mode will
-            tokenize with Hiddel Markov Model Segment algorithm, "MIX" model will tokenize with a mix of MPSegment and
-            HMMSegment algorithm.
+        hmm_path (str): the dictionary file is used by  HMMSegment algorithm,
+            the dictionary can be obtained on the official website of cppjieba.
+        mp_path(str): the dictionary file is used by MPSegment algorithm,
+            the dictionary can be obtained on the official website of cppjieba.
+        mode (Enum):  [Default "MIX"], "MP" model will tokenize with MPSegment algorithm,
+            "HMM" mode will tokenize with Hiddel Markov Model Segment algorithm,
+            "MIX" model will tokenize with a mix of MPSegment and HMMSegment algorithm.
     """
     @check_jieba_init
     def __init__(self, hmm_path, mp_path, mode=JiebaMode.MIX):
@@ -52,9 +56,8 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         Args:
             word(required, string): The word to be added to the JiebaTokenizer instance.
                 The added word will not be written into the built-in dictionary on disk.
-            freq(optional, int): The frequency of the word to be added,
-                The higher the frequency, the better change the word will be tokenized(default None,
-                use default frequency)
+            freq(optional, int): The frequency of the word to be added, The higher the frequency,
+                the better change the word will be tokenized(default None, use default frequency).
         """
         if freq is None:
             super().add_word(word, 0)
@@ -67,7 +70,7 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         Add user defined word to JiebaTokenizer's dictionary
         Args:
             user_dict(path/dict):Dictionary to be added, file path or Python dictionary,
-            Python Dict format is {word1:freq1, word2:freq2,...}
+            Python Dict format: {word1:freq1, word2:freq2,...}
             Jieba dictionary format : word(required), freq(optional), such as:
                 word1 freq1
                 word2
