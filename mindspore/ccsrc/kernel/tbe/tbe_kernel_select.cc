@@ -568,6 +568,12 @@ void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<Ke
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> parse_info_list;
+
+  if (AnfAlgo::GetCNodeName(kernel_node) == kTopKOpName && AnfAlgo::GetNodeAttr<bool>(kernel_node, "sorted") == false) {
+    MS_LOG(INFO) << "will select aicpu topk.";
+    return;
+  }
+
   std::string op_name = AnfAlgo::GetCNodeName(kernel_node);
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kTBE);
   if (op_info_ptr == nullptr) {
