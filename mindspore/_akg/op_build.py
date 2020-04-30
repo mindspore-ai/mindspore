@@ -25,8 +25,8 @@ from _akg import save_gpu_param as gpu_utils
 from _akg.utils import validation_check as vc_util
 
 
-@vc_util.check_input_type(list, (list, tuple), (list, tuple), (types.FunctionType, type(None)), str, str, dict)
-def op_build(opnames, computes, args, custom_schedule, device, kernel_name, attrs):
+@vc_util.check_input_type(list, (list, tuple), (list, tuple), str, str)
+def op_build(opnames, computes, args, device, kernel_name):
     """op_build"""
     kernel_meta_path = "./cuda_meta_" + str(os.getpid()) + "/"
     if device == "cuda":
@@ -60,7 +60,7 @@ def op_build(opnames, computes, args, custom_schedule, device, kernel_name, attr
                     kernel_info = (ptx_code, json_file, kernel_name)
                     gpu_utils.save_gpu_params(s, args, kernel_info)
             os.chmod(ptx_file, 0o400)
-        except Exception:
+        except IOError:
             logging.error(traceback.format_exc())
             return None
         return True
