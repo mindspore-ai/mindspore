@@ -198,7 +198,11 @@ class Print(PrimitiveWithInfer):
     Output tensor or string to stdout.
 
     Note:
-        The print operation cannot support float64 and bool types currently.
+        The print operation cannot support the following cases currently.
+
+        1. The type of tensor is float64 or bool.
+
+        2. The data of tensor is a scalar type.
 
     Inputs:
         - **input_x** (Union[Tensor, str]) - The graph node to attach to. The input supports
