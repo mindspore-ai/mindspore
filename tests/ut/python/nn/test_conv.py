@@ -181,3 +181,15 @@ def test_compile_transpose_stride2():
     net = NetConv2dTranspose(3, 64, 4, stride=2, weight_init='normal')
     input_data = Tensor(np.ones([1, 3, 16, 50], dtype=np.float32))
     net(input_data)
+
+
+def test_compile_transpose_dilation_2():
+    net = NetConv2dTranspose(3, 64, 4, stride=2, dilation=2, pad_mode='same', weight_init='normal')
+    input_data = Tensor(np.ones([1, 3, 16, 50], dtype=np.float32))
+    net(input_data)
+
+
+def test_compile_transpose_dilation_2_pad_mode_pad():
+    net = NetConv2dTranspose(3, 64, 4, stride=2, dilation=2, pad_mode='pad', weight_init='normal')
+    input_data = Tensor(np.ones([1, 3, 16, 50], dtype=np.float32))
+    net(input_data)

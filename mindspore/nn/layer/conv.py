@@ -354,6 +354,7 @@ class Conv2dTranspose(_Conv):
     def _deconv_output_length(self, input_length, filter_size, stride_size, dilation_size):
         """Calculate the width and height of output."""
         length = 0
+        filter_size = filter_size + (filter_size - 1) * (dilation_size - 1)
         if self.is_valid:
             if filter_size - stride_size > 0:
                 length = input_length * stride_size + filter_size - stride_size
@@ -362,8 +363,7 @@ class Conv2dTranspose(_Conv):
         elif self.is_same:
             length = input_length * stride_size
         elif self.is_pad:
-            length = input_length * stride_size - 2 * self.padding + filter_size + \
-                     (filter_size - 1) * (dilation_size - 1) - stride_size
+            length = input_length * stride_size - 2 * self.padding + filter_size - stride_size
 
         return length
 
