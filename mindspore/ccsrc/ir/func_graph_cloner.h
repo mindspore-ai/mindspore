@@ -59,7 +59,7 @@ class Cloner {
 
   // Map of replicate nodes and graphs
   std::unordered_map<AnfNodePtr, AnfNodePtr> *cloned_node() { return &repl_node_; }
-  std::unordered_map<FuncGraphPtr, FuncGraphPtr> cloned_func_graph() { return repl_func_graph_; }
+  std::unordered_map<FuncGraphPtr, FuncGraphPtr> &cloned_func_graph() { return repl_func_graph_; }
 
   // Scope of cloned graphs
   void set_scope(const ScopePtr &scope) { scope_ = scope; }
