@@ -1034,11 +1034,6 @@ test_case_array_ops = [
     }),
     ('Pack_2', {
         'block': NetForPackInput(P.Pack()),
-        'desc_inputs':[[2, 2]],
-        'desc_bprop':[[1, 2, 2]],
-    }),
-    ('Pack_3', {
-        'block': NetForPackInput(P.Pack()),
         'desc_inputs':[[128, 128], [128, 128]],
         'desc_bprop':[[2, 128, 128]],
     }),
@@ -1052,15 +1047,25 @@ test_case_array_ops = [
         'desc_inputs':[Tensor(np.array([[1, 1, 1]], np.float32))],
         'desc_bprop':[[1], [1], [1]],
     }),
-    ('Diag', {
+    ('Diag_1', {
         'block': P.Diag(),
         'desc_inputs': [[4]],
         'desc_bprop': [[4, 4]],
     }),
-    ('DiagPart', {
+    ('Diag_2', {
+        'block': P.Diag(),
+        'desc_inputs': [[4, 4]],
+        'desc_bprop': [[4, 4, 4, 4]],
+    }),
+    ('DiagPart_1', {
         'block': P.DiagPart(),
         'desc_inputs': [[4, 4]],
         'desc_bprop': [[4]],
+    }),
+    ('DiagPart_2', {
+        'block': P.DiagPart(),
+        'desc_inputs': [[4, 4, 4, 4]],
+        'desc_bprop': [[4, 4]],
     }),
     ('SpaceToBatch_1', {
         'block': P.SpaceToBatch(2, [[0, 0], [0, 0]]),
@@ -1200,6 +1205,15 @@ raise_set = [
                         Tensor(np.ones((2, 2), np.int32)),
                         Tensor(np.ones((2,), np.float32))),
         'desc_bprop': [[2, 3]]}),
+    ('Pack', {
+        'block': (NetForPackInput(P.Pack()), {'exception': ValueError}),
+        'desc_inputs':[[2, 2]],
+        'desc_bprop':[[1, 2, 2]]}),
+    ('PReLU', {
+        'block': (P.PReLU(), {'exception': ValueError}),
+        'desc_inputs':[[2], [1]],
+        'desc_bprop':[[1]]}),
+
 ]
 
 

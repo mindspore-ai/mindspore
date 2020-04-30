@@ -1308,8 +1308,8 @@ class Concat(PrimitiveWithInfer):
 def _get_pack_shape(x_shape, x_type, axis, prim_name):
     """for pack output shape"""
     validator.check_value_type("shape", x_shape, [tuple, list], prim_name)
-    validator.check_integer("len of input_x shape", len(x_shape), 0, Rel.GT, prim_name)
-    validator.check_subclass("shape0", x_type[0], mstype.tensor, prim_name)
+    validator.check_integer("len of input_x", len(x_shape), 1, Rel.GT, prim_name)
+    validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, prim_name)
     validator.check_integer("len of input_x0 shape", len(x_shape[0]), 0, Rel.GT, prim_name)
     rank_base = len(x_shape[0])
     N = len(x_shape)
@@ -1320,7 +1320,7 @@ def _get_pack_shape(x_shape, x_type, axis, prim_name):
     for i in range(1, N):
         v = x_shape[i]
         validator.check('len of x_shape[%d]' % i, len(v), 'len of rank_base', rank_base, Rel.EQ, prim_name)
-        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, prim_name)
+        validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, prim_name, TypeError)
         for j in range(rank_base):
             if v[j] != x_shape[0][j]:
                 raise ValueError(f"For \'{prim_name}\' element {i} shape in input can not pack with first element")
@@ -1345,6 +1345,12 @@ class Pack(PrimitiveWithInfer):
 
     Outputs:
         Tensor. A packed Tensor with the same type as `input_x`.
+
+    Raises:
+        TypeError: If the data types of elements in input_x are not the same.
+        ValueError: If length of input_x is not greater than 1;
+                    or if axis is out of the range [-(R+1), R+1);
+                    or if the shapes of elements in input_x are not the same.
 
     Examples:
         >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
@@ -1386,8 +1392,6 @@ class Unpack(PrimitiveWithInfer):
     Args:
         axis (int): Dimension along which to pack. Default: 0.
                     Negative values wrap around. The range is [-R, R).
-        num (int): The number of tensors to be unpacked to. Default : "None".
-                   If `num` is not specified, it is inferred from the shape of `input_x`.
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
@@ -1397,8 +1401,7 @@ class Unpack(PrimitiveWithInfer):
         A tuple of Tensors, the shape of each objects is same.
 
     Raises:
-        ValueError: If axis is out of the range [-len(input_x.shape()), len(input_x.shape())),
-                    or if len(input_x.shape[axis]) not equal to num.
+        ValueError: If axis is out of the range [-len(input_x.shape()), len(input_x.shape())).
 
     Examples:
         >>> unpack = P.Unpack()

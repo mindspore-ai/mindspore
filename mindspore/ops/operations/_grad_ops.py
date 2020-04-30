@@ -669,6 +669,9 @@ class PReLUGrad(PrimitiveWithInfer):
     r"""
     Gradients of PReLU operation.
 
+    Note:
+        1-dimensional input_x is not supported.
+
     Inputs:
         - **y_backprop** (Tensor) - Representing the backprop of the next layer.
         - **input_x** (Tensor) - Should be the input `input_x` of forward operator PRelu.
@@ -683,6 +686,8 @@ class PReLUGrad(PrimitiveWithInfer):
         pass
 
     def infer_shape(self, y_backprop_shape, A_shape, w_shape):
+        if len(A_shape) == 1:
+            raise ValueError(f'For \'{self.name}\' input_x rank 1 is not supported.')
         return y_backprop_shape, w_shape
 
     def infer_dtype(self, y_backprop_dtype, A_dtype, w_dtype):
