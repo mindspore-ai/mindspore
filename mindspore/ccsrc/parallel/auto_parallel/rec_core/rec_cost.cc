@@ -296,10 +296,10 @@ double CostConvolution::GetMinCostIn(const Graph::NodeType &node) {
                       static_cast<int>(op.arguments[1].tensor_shape.shape_n * op.arguments[1].tensor_str.str_n) *
                       static_cast<int>(op.arguments[1].tensor_shape.shape_w * op.arguments[1].tensor_str.str_w) *
                       static_cast<int>(op.arguments[1].tensor_shape.shape_c * op.arguments[1].tensor_str.str_c);
-  int tensor_out = static_cast<int>(node.tensor_parm.tensor_shape.shape_h * node.tensor_parm.tensor_shape.shape_w) *
-                   static_cast<int>(node.tensor_parm.tensor_shape.shape_n * node.tensor_parm.tensor_shape.shape_c) *
-                   static_cast<int>(node.tensor_parm.tensor_str.str_h * node.tensor_parm.tensor_str.str_w) *
-                   static_cast<int>(node.tensor_parm.tensor_str.str_n * node.tensor_parm.tensor_str.str_c);
+  int tensor_out = static_cast<int>(node.tensor_parm.tensor_shape.shape_h * node.tensor_parm.tensor_str.str_h) *
+                   static_cast<int>(node.tensor_parm.tensor_shape.shape_n * node.tensor_parm.tensor_str.str_n) *
+                   static_cast<int>(node.tensor_parm.tensor_shape.shape_w * node.tensor_parm.tensor_str.str_w) *
+                   static_cast<int>(node.tensor_parm.tensor_shape.shape_c * node.tensor_parm.tensor_str.str_c);
 
   std::vector<double> cost_in;
   cost_in.push_back(StrDimB(tensor_filter));
@@ -626,6 +626,22 @@ StrategyRec CostCommon::ChoseStr(const std::vector<double> &cost_op, StrategyRec
       MS_LOG(EXCEPTION) << "Failure: CostBiasAdd failed.";
   }
   return str;
+}
+
+// Get weight for BN
+double CostBatchNorm::GetMinCostIn(const OperatorRec &op) {
+  int tensor = static_cast<int>(op.arguments[0].tensor_shape.shape_h * op.arguments[0].tensor_str.str_h) *
+               static_cast<int>(op.arguments[0].tensor_shape.shape_n * op.arguments[0].tensor_str.str_n) *
+               static_cast<int>(op.arguments[0].tensor_shape.shape_w * op.arguments[0].tensor_str.str_w) *
+               static_cast<int>(op.arguments[0].tensor_shape.shape_c * op.arguments[0].tensor_str.str_c);
+
+  std::vector<double> cost_in;
+  cost_in.push_back(StrDimB(tensor) * 1.2);
+  cost_in.push_back(DOUBLE_MAX);
+  cost_in.push_back(StrDimH(tensor) * 1.2);
+  cost_in.push_back(StrDimW(tensor) * 1.2);
+
+  return *min_element(cost_in.begin(), cost_in.end());
 }
 
 // Get optimal strategy for BN

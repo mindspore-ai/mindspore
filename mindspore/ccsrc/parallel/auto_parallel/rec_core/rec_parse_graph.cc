@@ -58,7 +58,8 @@ Graph::NodeType MakeNewOperator(std::vector<std::shared_ptr<OperatorInfo>> ops, 
       ops[iter_ops]->outputs_tensor_info()[0].shape()[0], ops[iter_ops]->outputs_tensor_info()[0].shape()[1],
       ops[iter_ops]->outputs_tensor_info()[0].shape()[2], ops[iter_ops]->outputs_tensor_info()[0].shape()[3]);
   } else if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 2) {
-    NewOp.tensor_parm = Fill2DTensor(ops, iter_ops, NewOp);
+    NewOp.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[0],
+                                   ops[iter_ops]->outputs_tensor_info()[0].shape()[1]);
   } else if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 1) {
     NewOp.tensor_parm = MakeTensor(1, 1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[0]);
   } else if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 0) {
@@ -69,29 +70,6 @@ Graph::NodeType MakeNewOperator(std::vector<std::shared_ptr<OperatorInfo>> ops, 
 
   NewOp.apply = CompleteOperatorInputs(ops, iter_ops, NewOp);
   return NewOp;
-}
-
-TensorParam Fill2DTensor(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                         Graph::NodeType NewTensor) {
-  if (NewTensor.apply.op_type == OperatorType::kRecMatMul) {
-    auto attrs = ops[iter_ops]->attrs();
-    bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
-    bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
-    if (transpose_a) {
-      NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[1],
-                                         ops[iter_ops]->outputs_tensor_info()[0].shape()[0]);
-    } else if (transpose_b) {
-      NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[1],
-                                         ops[iter_ops]->outputs_tensor_info()[0].shape()[0]);
-    } else {
-      NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[0],
-                                         ops[iter_ops]->outputs_tensor_info()[0].shape()[1]);
-    }
-  } else {
-    NewTensor.tensor_parm = MakeTensor(1, 1, ops[iter_ops]->outputs_tensor_info()[0].shape()[0],
-                                       ops[iter_ops]->outputs_tensor_info()[0].shape()[1]);
-  }
-  return NewTensor.tensor_parm;
 }
 
 OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,

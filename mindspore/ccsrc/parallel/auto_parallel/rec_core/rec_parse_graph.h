@@ -53,9 +53,6 @@ const TensorParam MakeTensor(int n, int c, int h, int w);
 
 Graph::NodeType MakeNewOperator(std::vector<std::shared_ptr<OperatorInfo>> ops, size_t iter_ops);
 
-TensorParam Fill2DTensor(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                         Graph::NodeType NewTensor);
-
 OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                    Graph::NodeType NewTensor);
 

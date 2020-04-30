@@ -213,7 +213,7 @@ class CostBatchNorm {
                             const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                             const Graph &graph);
 
-  double GetMinCostIn() const { return 0.0; }
+  double GetMinCostIn(const OperatorRec &op);
 
  private:
   double StrDimB(int32_t Tensor) {

@@ -44,12 +44,6 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
 
 Graph::NodeType ApplyStrToTensor(Graph::NodeType Node);
 
-void InferUndecideStrategy(std::shared_ptr<Graph> graph);
-
-void ApplyLastStrategy(const uint64_t node_index, std::shared_ptr<Graph> graph);
-
-void ApplyNextStrategy(const uint64_t node_index, std::shared_ptr<Graph> graph);
-
 Status DevicesMemoryControl(const double device_memory, std::shared_ptr<Graph> graph);
 
 size_t GetDataTypeSize(const TensorType &type);
