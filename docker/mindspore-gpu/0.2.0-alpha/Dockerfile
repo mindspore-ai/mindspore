@@ -80,4 +80,4 @@ RUN cd /tmp \
     && rm -f /tmp/openmpi-3.1.5.tar.gz
 
 # Install MindSpore cuda-10.1 whl package
-RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.2.0-alpha/MindSpore/gpu/cuda-10.1/mindspore-0.2.0-cp37-cp37m-linux_x86_64.whl
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.2.0-alpha/MindSpore/gpu/cuda-10.1/mindspore_gpu-0.2.0-cp37-cp37m-linux_x86_64.whl
