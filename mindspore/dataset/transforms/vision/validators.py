@@ -120,7 +120,7 @@ def check_degrees(degrees):
         degrees = (-degrees, degrees)
     elif isinstance(degrees, (list, tuple)):
         if len(degrees) != 2:
-            raise ValueError("If degrees is a sequence, the length must be 2.")
+            raise TypeError("If degrees is a sequence, the length must be 2.")
     else:
         raise TypeError("Degrees must be a single non-negative number or a sequence")
     return degrees
