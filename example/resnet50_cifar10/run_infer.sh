@@ -20,13 +20,25 @@ then
 exit 1
 fi
 
-if [ ! -d $1 ]
+get_real_path(){
+  if [ "${1:0:1}" == "/" ]; then
+    echo "$1"
+  else
+    echo "$(realpath -m $PWD/$1)"
+  fi
+}
+
+PATH1=$(get_real_path $1)
+PATH2=$(get_real_path $2)
+
+
+if [ ! -d $PATH1 ]
 then 
     echo "error: DATASET_PATH=$1 is not a directory"
 exit 1
 fi 
 
-if [ ! -f $2 ]
+if [ ! -f $PATH2 ]
 then 
     echo "error: CHECKPOINT_PATH=$2 is not a file"
 exit 1
@@ -48,5 +60,5 @@ cp *.sh ./infer
 cd ./infer || exit
 env > env.log
 echo "start infering for device $DEVICE_ID"
-python eval.py --do_eval=True --dataset_path=$1 --checkpoint_path=$2 &> log &
+python eval.py --do_eval=True --dataset_path=$PATH1 --checkpoint_path=$PATH2 &> log &
 cd ..
