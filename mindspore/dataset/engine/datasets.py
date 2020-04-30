@@ -1431,6 +1431,10 @@ class MapDataset(DatasetOp):
                         iter_specific_operations.append(op)
                 self.operations = iter_specific_operations
 
+    def __del__(self):
+        if hasattr(self, 'process_pool') and self.process_pool is not None:
+            self.process_pool.terminate()
+
 
 class FilterDataset(DatasetOp):
     """
@@ -2462,6 +2466,9 @@ class _GeneratorWorker(multiprocessing.Process):
         Get function for worker result queue. Block with timeout.
         """
         return self.res_queue.get(timeout=5)
+
+    def __del__(self):
+        self.terminate()
 
 
 class GeneratorDataset(SourceDataset):
