@@ -40,18 +40,17 @@ def _cache_summary_tensor_data(summary):
          summary (list): [{"name": tag_name, "data": tensor}, {"name": tag_name, "data": tensor},...].
     """
     with _summary_lock:
-        if "SummaryRecord" in _summary_tensor_cache:
-            _summary_tensor_cache["SummaryRecord"].extend(summary)
-        else:
-            _summary_tensor_cache["SummaryRecord"] = summary
+        for item in summary:
+            _summary_tensor_cache[item['name']] = item['data']
         return True
 
 
 def _get_summary_tensor_data():
-    if 'SummaryRecord' not in _summary_tensor_cache:
-        return None
+    global _summary_tensor_cache
     with _summary_lock:
-        return _summary_tensor_cache.pop('SummaryRecord')
+        data = _summary_tensor_cache
+        _summary_tensor_cache = {}
+        return data
 
 
 class SummaryRecord:
@@ -158,11 +157,11 @@ class SummaryRecord:
             else:
                 self.event_writer.write(package_graph_event(graph_proto).SerializeToString())
                 self.has_graph = True
-                if _summary_tensor_cache.get('SummaryRecord') is None:
+                if not _summary_tensor_cache:
                     return True
 
         data = _get_summary_tensor_data()
-        if data is None:
+        if not data:
             logger.error("The step(%r) does not have record data.", step)
             return False
         if self.queue_max_size > 0 and len(data) > self.queue_max_size:
@@ -225,15 +224,9 @@ class SummaryRecord:
 
     def _data_convert(self, summary):
         """Convert the data."""
-        if summary is None:
-            logger.warning("The step does not have record data.")
-            return None
-
         # convert the summary to numpy
         result = []
-        for v_dict in summary:
-            name = v_dict["name"]
-            data = v_dict["data"]
+        for name, data in summary.items():
             # confirm the data is valid
             summary_tag, summary_type = SummaryRecord._parse_from(name)
             if summary_tag is None:
