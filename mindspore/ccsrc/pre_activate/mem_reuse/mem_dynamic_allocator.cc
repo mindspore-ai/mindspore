@@ -38,9 +38,12 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size) {
 
 std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(size_t total_size,
                                                                           std::vector<size_t> size_list) {
+  std::vector<DeviceMemPtr> device_addr_list;
   // Pre-alloc the one whole piece memory.
   auto device_addr = AllocTensorMem(total_size);
-  MS_EXCEPTION_IF_NULL(device_addr);
+  if (!device_addr) {
+    return device_addr_list;
+  }
   // Remove the pre-alloc memory.
   auto mem_block = FindMemBlock(device_addr);
   MS_EXCEPTION_IF_NULL(mem_block);
@@ -54,7 +57,6 @@ std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(size_t
   (void)mem_block->block_all_mem_buf_map_.erase(iter);
   // Split the pre-alloc memory into continuous memory by the size list.
   DynamicMemBufPtr continuous_mem_buf;
-  std::vector<DeviceMemPtr> device_addr_list;
   auto buf_addr = device_addr;
   for (size_t i = 0; i < size_list.size(); i++) {
     continuous_mem_buf = std::make_shared<DynamicMemBuf>(buf_addr, kMemBufUsed, size_list[i]);
@@ -102,13 +104,16 @@ DeviceMemPtr DynamicMemPoolBestFit::FindIdleMemBuf(size_t size) {
 
 DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size) {
   size_t alloc_mem_size = CalMemBlockAllocSize(size);
-
+  if (alloc_mem_size == 0) {
+    return nullptr;
+  }
   // Add new memory block
   DeviceMemPtr device_addr = nullptr;
   auto real_alloc_size = AllocDeviceMem(alloc_mem_size, &device_addr);
   if (real_alloc_size < size) {
-    MS_LOG(EXCEPTION) << "Memory not enough: alloc size[" << real_alloc_size << "] is smaller than required size["
-                      << size << "].";
+    MS_LOG(WARNING) << "Memory not enough: alloc size[" << real_alloc_size << "] is smaller than required size[" << size
+                    << "].";
+    return nullptr;
   }
   auto mem_block = std::make_shared<DynamicMemBlock>(device_addr, real_alloc_size);
   MS_EXCEPTION_IF_NULL(mem_block);
@@ -135,10 +140,10 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size) {
 size_t DynamicMemPoolBestFit::CalMemBlockAllocSize(size_t size) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size) {
-    MS_LOG(EXCEPTION) << "Memory not enough: current free memory size[" << device_free_mem_size
-                      << "] is smaller than required size[" << size << "].";
+    MS_LOG(WARNING) << "Memory not enough: current free memory size[" << device_free_mem_size
+                    << "] is smaller than required size[" << size << "].";
+    return 0;
   }
-
   auto alloc_mem_size = mem_alloc_unit_size();
   // Growing at twice of alloc size
   while (alloc_mem_size < size) {
@@ -156,7 +161,6 @@ void DynamicMemPoolBestFit::DivideMemBuf(size_t size, const DynamicMemBufPtr &me
   MS_EXCEPTION_IF_NULL(mem_buf);
   auto mem_block = FindMemBlock(mem_buf->device_addr_);
   MS_EXCEPTION_IF_NULL(mem_block);
-
   // Divide new memory buf
   size_t newbuf_size = mem_buf->size_ - size;
   mem_buf->size_ = size;

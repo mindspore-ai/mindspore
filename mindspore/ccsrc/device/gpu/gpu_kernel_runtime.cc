@@ -225,23 +225,24 @@ void GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod 
     MS_EXCEPTION_IF_NULL(input);
     input->addr = device_address->ptr_;
     input->size = device_address->size_;
-    kernel_inputs->push_back(input);
+    kernel_inputs->emplace_back(input);
   }
-
   auto output_sizes = kernel_mod.GetOutputSizeList();
   for (size_t i = 0; i < output_sizes.size(); ++i) {
     auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->ptr_ == nullptr) {
-      mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
+      auto ret = mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
+      if (!ret) {
+        MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+      }
     }
     kernel::AddressPtr output = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(output);
     output->addr = device_address->ptr_;
     output->size = output_sizes[i];
-    kernel_outputs->push_back(output);
+    kernel_outputs->emplace_back(output);
   }
-
   auto workspace_sizes = kernel_mod.GetWorkspaceSizeList();
   for (size_t i = 0; i < workspace_sizes.size(); ++i) {
     if (workspace_sizes[i] == 0) {
@@ -249,12 +250,14 @@ void GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod 
       continue;
     }
     auto device_ptr = mem_manager_->MallocMemFromMemPool(workspace_sizes[i]);
-    MS_EXCEPTION_IF_NULL(device_ptr);
+    if (!device_ptr) {
+      MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+    }
     kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(workspace);
     workspace->addr = device_ptr;
     workspace->size = workspace_sizes[i];
-    kernel_workspaces->push_back(workspace);
+    kernel_workspaces->emplace_back(workspace);
   }
 }
 
@@ -334,7 +337,10 @@ void GPUKernelRuntime::AllocCommunicationOpMemory(bool is_need_alloc_memory, boo
       }
     }
   }
-  mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+  auto ret = mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+  }
 }
 
 void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,

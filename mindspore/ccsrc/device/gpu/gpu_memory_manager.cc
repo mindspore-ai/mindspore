@@ -40,7 +40,7 @@ void GPUMemoryManager::MallocDeviceMemory() {
   if (context_ptr->enable_dynamic_mem_pool()) {
     auto device_addr = MallocMemFromMemPool(1);
     if (!device_addr) {
-      MS_LOG(ERROR) << "Dynamic memory pool init error.";
+      MS_LOG(EXCEPTION) << "Dynamic memory pool init error.";
     }
   } else {
     // Need to reserve 20% space for dynamic memory
