@@ -182,9 +182,11 @@ void Cloner::CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const Func
   }
   target_func_graph->set_return(return_node);
 
-  auto &value_nodes = manager_->func_graph_valuenodes()[func_graph];
-  for (auto &value_node : value_nodes) {
-    CloneValueNode(value_node.first, target_func_graph);
+  auto &cnodes = manager_->func_graph_cnodes_index()[func_graph];
+  for (auto &cnode : cnodes) {
+    auto parent = cnode.first->first->cast<CNodePtr>();
+    auto valuenode = parent->input(cnode.first->second);
+    CloneValueNode(valuenode, target_func_graph);
   }
 }
 
@@ -386,8 +388,8 @@ void Cloner::LiftParameters(const FuncGraphPtr &func_graph_user, const FuncGraph
   if (lift_params.empty()) {
     return;
   }
-  for (auto &user : func_graph_user->func_graph_users()) {
-    LiftParameters(user.first, func_graph_user, lift_params);
+  for (auto &cnode : func_graph_user->func_graph_cnodes_index()) {
+    LiftParameters(cnode.first->first->func_graph(), func_graph_user, lift_params);
   }
 }
 
@@ -395,8 +397,8 @@ void Cloner::Lift() {
   for (auto &func_graph_params : repl_func_graph_params_) {
     auto &func_graph = func_graph_params.first;
     auto &params = func_graph_params.second;
-    for (auto &user : func_graph->func_graph_users()) {
-      LiftParameters(user.first, func_graph, params);
+    for (auto &cnode : func_graph->func_graph_cnodes_index()) {
+      LiftParameters(cnode.first->first->func_graph(), func_graph, params);
     }
   }
 }

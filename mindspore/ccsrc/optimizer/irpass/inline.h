@@ -81,10 +81,10 @@ bool IsTrivial(const FuncGraphPtr &fg, AnfNodePtr) {
 }
 
 bool IsUniqueUse(const FuncGraphPtr &fg, AnfNodePtr) {
-  auto &users = fg->func_graph_users();
+  auto &cnodes = fg->func_graph_cnodes_index();
   int n_use =
-    std::accumulate(users.begin(), users.end(), 0,
-                    [](int sum, const std::pair<const FuncGraphPtr, int> &item) { return sum + item.second; });
+    std::accumulate(cnodes.begin(), cnodes.end(), 0,
+                    [](int sum, const std::pair<const CNodeIndexPairPtr, int> &item) { return sum + item.second; });
   return n_use == 1;
 }
 

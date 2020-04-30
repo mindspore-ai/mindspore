@@ -263,18 +263,15 @@ const FuncGraphSet &FuncGraph::func_graphs_used_total() {
   return used;
 }
 
-const FuncGraphCounterMap &FuncGraph::func_graph_users() {
+const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() {
   auto mng = manager_.lock();
+  if (mng == nullptr) {
+    MS_LOG(EXCEPTION) << "BUG: no manager for this func graph: " << ToString()
+                      << " NodeInfo: " << trace::GetDebugInfo(debug_info());
+  }
   MS_EXCEPTION_IF_NULL(mng);
-  auto &users = mng->func_graph_users();
-  return users[shared_from_base<FuncGraph>()];
-}
-
-const AnfNodeCounterMap &FuncGraph::func_graph_user_cnodes() {
-  auto mng = manager_.lock();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto &users = mng->func_graph_user_cnodes();
-  return users[shared_from_base<FuncGraph>()];
+  auto &cnode = mng->func_graph_cnodes_index();
+  return cnode[shared_from_base<FuncGraph>()];
 }
 
 FuncGraphPtr FuncGraph::parent() {

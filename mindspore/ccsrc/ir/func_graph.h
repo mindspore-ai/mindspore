@@ -37,6 +37,7 @@ namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
 using FuncGraphCounterMap = OrderedMap<FuncGraphPtr, int>;
 using AnfNodeCounterMap = OrderedMap<AnfNodePtr, int>;
+using CNodeIndexCounterMap = OrderedMap<CNodeIndexPairPtr, int, CNodeIndexHasher, CNodeIndexEqual>;
 
 const char FUNC_GRAPH_FLAG_IGNORE_VALUES[] = "ignore_values";
 const char FUNC_GRAPH_FLAG_DEFER_INLINE[] = "defer_inline";
@@ -203,11 +204,8 @@ class FuncGraph : public FuncGraphBase {
   // get all func graphs nested used by this func graph
   const FuncGraphSet &func_graphs_used_total();
 
-  // get all users of this func graph
-  const FuncGraphCounterMap &func_graph_users();
-
-  // get all user cnodes of this func graph
-  const AnfNodeCounterMap &func_graph_user_cnodes();
+  // get all user value nodes of this func graph
+  const CNodeIndexCounterMap &func_graph_cnodes_index();
 
   // Return the parent of this graph.
   FuncGraphPtr parent();
