@@ -365,7 +365,7 @@ class Callback:
         >>>         print(cb_params.cur_step_num)
         >>>
         >>> print_cb = Print_info()
-        >>> model.train(epoch, dataset, callback=print_cb)
+        >>> model.train(epoch, dataset, callbacks=print_cb)
     """
     def __init__(self):
         pass
@@ -695,10 +695,3 @@ class TimeMonitor(Callback):
         epoch_mseconds = (time.time() - self.epoch_time) * 1000
         per_step_mseconds = epoch_mseconds / self.data_size
         print("epoch time: {0}, per step time: {1}".format(epoch_mseconds, per_step_mseconds), flush=True)
-
-    def step_begin(self, run_context):
-        self.step_time = time.time()
-
-    def step_end(self, run_context):
-        step_mseconds = (time.time() - self.step_time) * 1000
-        print('step time', step_mseconds, flush=True)
