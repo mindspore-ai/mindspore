@@ -24,7 +24,7 @@ def test_flat_map_1():
     '''
     DATA_FILE records the path of image folders, load the images from them.
     '''
-    import mindspore.dataset.transforms.nlp.utils as nlp
+    import mindspore.dataset.transforms.text.utils as nlp
 
     def flat_map_func(x):
         data_dir = x[0].item().decode('utf8')
@@ -45,7 +45,7 @@ def test_flat_map_2():
     '''
     Flatten 3D structure data
     '''
-    import mindspore.dataset.transforms.nlp.utils as nlp
+    import mindspore.dataset.transforms.text.utils as nlp
 
     def flat_map_func_1(x):
         data_dir = x[0].item().decode('utf8')

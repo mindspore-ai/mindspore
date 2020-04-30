@@ -61,6 +61,7 @@ set(submodules
     $<TARGET_OBJECTS:kernels>
     $<TARGET_OBJECTS:kernels-image>
     $<TARGET_OBJECTS:kernels-data>
+    $<TARGET_OBJECTS:kernels-nlp>
     $<TARGET_OBJECTS:APItoPython>
     $<TARGET_OBJECTS:engine-datasetops-source>
     $<TARGET_OBJECTS:engine-datasetops-source-sampler>

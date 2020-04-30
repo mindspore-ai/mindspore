@@ -38,6 +38,7 @@
 #include "dataset/kernels/image/resize_op.h"
 #include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
+#include "dataset/kernels/text/jieba_tokenizer_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/io_block.h"
@@ -406,6 +407,14 @@ void bindTensorOps4(py::module *m) {
          py::arg("fillR") = PadOp::kDefFillR, py::arg("fillG") = PadOp::kDefFillG, py::arg("fillB") = PadOp::kDefFillB);
 }
 
+void bindTensorOps6(py::module *m) {
+  (void)py::class_<JiebaTokenizerOp, TensorOp, std::shared_ptr<JiebaTokenizerOp>>(*m, "JiebaTokenizerOp", "")
+    .def(py::init<const std::string, std::string, JiebaMode>(), py::arg("hmm_path"), py::arg("mp_path"),
+         py::arg("mode") = JiebaMode::kMix)
+    .def("add_word",
+         [](JiebaTokenizerOp &self, const std::string word, int freq) { THROW_IF_ERROR(self.AddWord(word, freq)); });
+}
+
 void bindSamplerOps(py::module *m) {
   (void)py::class_<Sampler, std::shared_ptr<Sampler>>(*m, "Sampler")
     .def("set_num_rows", [](Sampler &self, int64_t rows) { THROW_IF_ERROR(self.SetNumRowsInDataset(rows)); })
@@ -500,6 +509,12 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("CELEBA", OpName::kCelebA)
     .value("TEXTFILE", OpName::kTextFile);
 
+  (void)py::enum_<JiebaMode>(m, "JiebaMode", py::arithmetic())
+    .value("DE_INTER_JIEBA_MIX", JiebaMode::kMix)
+    .value("DE_INTER_JIEBA_MP", JiebaMode::kMp)
+    .value("DE_INTER_JIEBA_HMM", JiebaMode::kHmm)
+    .export_values();
+
   (void)py::enum_<InterpolationMode>(m, "InterpolationMode", py::arithmetic())
     .value("DE_INTER_LINEAR", InterpolationMode::kLinear)
     .value("DE_INTER_CUBIC", InterpolationMode::kCubic)
@@ -519,6 +534,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
   bindTensorOps2(&m);
   bindTensorOps3(&m);
   bindTensorOps4(&m);
+  bindTensorOps6(&m);
   bindSamplerOps(&m);
   bindDatasetOps(&m);
   bindInfoObjects(&m);

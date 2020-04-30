@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.nlp.utils as nlp
+import mindspore.dataset.transforms.text.utils as nlp
 from mindspore import log as logger
 
 DATA_FILE = "../data/dataset/testTextFileDataset/1.txt"
@@ -42,7 +42,8 @@ def test_textline_dataset_totext():
     ds.config.set_num_parallel_workers(4)
     data = ds.TextFileDataset(DATA_ALL_FILE, shuffle=False)
     count = 0
-    line = ["This is a text file.", "Another file.", "Be happy every day.", "End of file.", "Good luck to everyone."]
+    line = ["This is a text file.", "Another file.",
+            "Be happy every day.", "End of file.", "Good luck to everyone."]
     for i in data.create_dict_iterator():
         str = i["text"].item().decode("utf8")
         assert (str == line[count])
