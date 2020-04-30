@@ -294,73 +294,45 @@ def _calc_histogram_bins(count):
     return max_bins
 
 
-def _fill_histogram_summary(tag: str, np_value: np.array, summary_histogram) -> None:
+def _fill_histogram_summary(tag: str, np_value: np.ndarray, summary) -> None:
     """
     Package the histogram summary.
 
     Args:
         tag (str): Summary tag describe.
-        np_value (np.array): Summary data.
-        summary_histogram (summary_pb2.Summary.Histogram): Summary histogram data.
+        np_value (np.ndarray): Summary data.
+        summary (summary_pb2.Summary.Histogram): Summary histogram data.
     """
     logger.debug("Set(%r) the histogram summary value", tag)
     # Default bucket for tensor with no valid data.
-    default_bucket_left = -0.5
-    default_bucket_width = 1.0
+    ma_value = np.ma.masked_invalid(np_value)
+    total, valid = np_value.size, ma_value.count()
+    invalids = []
+    for isfn in np.isnan, np.isposinf, np.isneginf:
+        if total - valid > sum(invalids):
+            count = np.count_nonzero(isfn(np_value))
+            invalids.append(count)
+        else:
+            invalids.append(0)
 
-    if np_value.size == 0:
-        bucket = summary_histogram.buckets.add()
-        bucket.left = default_bucket_left
-        bucket.width = default_bucket_width
-        bucket.count = 0
+    summary.count = total
+    summary.nan_count, summary.pos_inf_count, summary.neg_inf_count = invalids
+    if not valid:
+        logger.warning('There are no valid values in the ndarray(size=%d, shape=%d)', total, np_value.shape)
+        # summary.{min, max, sum} are 0s by default, no need to explicitly set
+    else:
+        summary.min = ma_value.min()
+        summary.max = ma_value.max()
+        summary.sum = ma_value.sum()
+        bins = _calc_histogram_bins(valid)
+        range_ = summary.min, summary.max
+        hists, edges = np.histogram(np_value, bins=bins, range=range_)
 
-        summary_histogram.nan_count = 0
-        summary_histogram.pos_inf_count = 0
-        summary_histogram.neg_inf_count = 0
-
-        summary_histogram.max = 0
-        summary_histogram.min = 0
-        summary_histogram.sum = 0
-
-        summary_histogram.count = 0
-
-        return
-
-    summary_histogram.nan_count = np.count_nonzero(np.isnan(np_value))
-    summary_histogram.pos_inf_count = np.count_nonzero(np.isposinf(np_value))
-    summary_histogram.neg_inf_count = np.count_nonzero(np.isneginf(np_value))
-    summary_histogram.count = np_value.size
-
-    masked_value = np.ma.masked_invalid(np_value)
-    tensor_max = masked_value.max()
-    tensor_min = masked_value.min()
-    tensor_sum = masked_value.sum()
-
-    # No valid value in tensor.
-    if tensor_max is np.ma.masked:
-        bucket = summary_histogram.buckets.add()
-        bucket.left = default_bucket_left
-        bucket.width = default_bucket_width
-        bucket.count = 0
-
-        summary_histogram.max = np.nan
-        summary_histogram.min = np.nan
-        summary_histogram.sum = 0
-
-        return
-
-    bin_number = _calc_histogram_bins(masked_value.count())
-    counts, edges = np.histogram(np_value, bins=bin_number, range=(tensor_min, tensor_max))
-
-    for ind, count in enumerate(counts):
-        bucket = summary_histogram.buckets.add()
-        bucket.left = edges[ind]
-        bucket.width = edges[ind + 1] - edges[ind]
-        bucket.count = count
-
-    summary_histogram.max = tensor_max
-    summary_histogram.min = tensor_min
-    summary_histogram.sum = tensor_sum
+        for hist, edge1, edge2 in zip(hists, edges, edges[1:]):
+            bucket = summary.buckets.add()
+            bucket.width = edge2 - edge1
+            bucket.count = hist
+            bucket.left = edge1
 
 
 def _get_image_summary(tag: str, np_value, summary_image, input_format='NCHW'):
