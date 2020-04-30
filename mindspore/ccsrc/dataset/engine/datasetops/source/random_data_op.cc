@@ -102,9 +102,8 @@ void RandomDataOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\nTotal_rows: " << total_rows_
-        << "\nRows per buffer: " << rows_per_buffer_
-        << "\nSchema:\n" << *data_schema_ << "\n\n";
+    out << "\nTotal_rows: " << total_rows_ << "\nRows per buffer: " << rows_per_buffer_ << "\nSchema:\n"
+        << *data_schema_ << "\n\n";
   }
 }
 
@@ -143,8 +142,7 @@ Status RandomDataOp::GenerateSchema() {
 
     // Create the column descriptor
     std::string colName = "c" + std::to_string(i);
-    newCol = std::make_unique<ColDescriptor>(colName, DataType(newType), TensorImpl::kFlexible, rank,
-                                                   newShape.get());
+    newCol = std::make_unique<ColDescriptor>(colName, DataType(newType), TensorImpl::kFlexible, rank, newShape.get());
 
     data_schema_->AddColumn(*newCol);
   }
@@ -411,4 +409,3 @@ Status RandomDataOp::Reset() {
 }
 }  // namespace dataset
 }  // namespace mindspore
-
