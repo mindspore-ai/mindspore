@@ -570,6 +570,8 @@ def check_generatordataset(method):
         check_param_type(nreq_param_int, param_dict, int)
         nreq_param_list = ["column_types"]
         check_param_type(nreq_param_list, param_dict, list)
+        nreq_param_bool = ["shuffle"]
+        check_param_type(nreq_param_bool, param_dict, bool)
 
         num_shards = param_dict.get("num_shards")
         shard_id = param_dict.get("shard_id")
