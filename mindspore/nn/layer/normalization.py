@@ -182,6 +182,10 @@ def _channel_check(channel, num_channel):
         raise ValueError("the input channel is not equal with num_channel")
 
 @constexpr
+def _shape_check(in_shape):
+    if len(in_shape) != 4:
+        raise ValueError("The input must has 4 dims")
+@constexpr
 def _shape_infer(x_shape, num_feature):
     """global batch normalization shape and axes infer"""
     if len(x_shape) == 4:
@@ -536,7 +540,8 @@ class GroupNorm(Cell):
         self.reduce_sum = P.ReduceSum(keep_dims=True)
         self.sqrt = P.Sqrt()
 
-    def construct(self, x):
+    def _cal_output(self, x):
+        """calculate groupnorm output"""
         batch, channel, height, width = self.shape(x)
         _channel_check(channel, self.num_channels)
         x = self.reshape(x, (batch, self.num_groups, channel*height*width/self.num_groups))
@@ -546,6 +551,11 @@ class GroupNorm(Cell):
         x = (x - mean) / std
         x = self.reshape(x, (batch, channel, height, width))
         output = x * self.gamma + self.beta
+        return output
+
+    def construct(self, x):
+        _shape_check(self.shape(x))
+        output = self._cal_output(x)
         return output
 
     def extend_repr(self):

@@ -69,6 +69,6 @@ class Avg1dNet(nn.Cell):
         return self.avg1d(x)
 
 def test_avg1d():
-    net = Avg1dNet(3, 1)
-    input = Tensor(np.random.randint(0, 255, [1, 3, 6, 6]).astype(np.float32))
+    net = Avg1dNet(6, 1)
+    input = Tensor(np.random.randint(0, 255, [1, 3, 6]).astype(np.float32))
     _executor.compile(net, input)
