@@ -185,13 +185,6 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
         break;
       }
     }
-
-    auto keep_root = [&func_graph, this]() {
-      std::vector<FuncGraphPtr> func_graphs;
-      func_graphs.push_back(func_graph);
-      resource_->manager()->KeepRoots(func_graphs);
-    };
-    use_profile ? WITH(MsProfile::GetProfile()->Step("keep_roots")) keep_root : keep_root();
     return func_graph;
   }
 
