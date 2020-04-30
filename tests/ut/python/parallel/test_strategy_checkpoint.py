@@ -59,6 +59,7 @@ def test_six_matmul_save():
             self.weight3 = Parameter(Tensor(np.ones([64, 128]), dtype=ms.float32), name="weight3")
             self.weight4 = Parameter(Tensor(np.ones([128, 64]), dtype=ms.float32), name="weight4")
             self.weight5 = Parameter(Tensor(np.ones([64, 128]), dtype=ms.float32), name="weight5")
+            self.weight6 = Parameter(Tensor(np.ones([32, 128]), dtype=ms.float32), name="weight6")
 
         def construct(self, x1, x6):
             out = self.matmul1(x1, self.weight1)
@@ -66,6 +67,7 @@ def test_six_matmul_save():
             out = self.matmul3(out, self.weight3)
             out = self.matmul4(out, self.weight4)
             out = self.matmul5(out, self.weight5)
+            out = out + self.weight6
             out = self.matmul6(out, x6)
             return out
 
@@ -118,12 +120,14 @@ def test_six_matmul_load():
             self.weight3 = Parameter(Tensor(np.ones([64, 128]), dtype=ms.float32), name="weight3")
             self.weight4 = Parameter(Tensor(np.ones([128, 64]), dtype=ms.float32), name="weight4")
             self.weight5 = Parameter(Tensor(np.ones([64, 128]), dtype=ms.float32), name="weight5")
+            self.weight6 = Parameter(Tensor(np.ones([32, 128]), dtype=ms.float32), name="weight6")
 
         def construct(self, x1, x6, x7):
             out = self.matmul1(x1, self.weight1)
             out = self.matmul3(out, self.weight3)
             out = self.matmul4(out, self.weight4)
             out = self.matmul5(out, self.weight5)
+            out = out + self.weight6
             out = self.matmul6(out, x6)
             out = self.matmul7(out, x7)
             return out
@@ -179,6 +183,7 @@ def test_six_matmul_save_auto():
             self.weight3 = Parameter(Tensor(np.ones([64, 128]), dtype=ms.float32), name="weight3")
             self.weight4 = Parameter(Tensor(np.ones([128, 64]), dtype=ms.float32), name="weight4")
             self.weight5 = Parameter(Tensor(np.ones([64, 128]), dtype=ms.float32), name="weight5")
+            self.weight6 = Parameter(Tensor(np.ones([32, 128]), dtype=ms.float32), name="weight6")
 
         def construct(self, x1, x6):
             out = self.matmul1(x1, self.weight1)
@@ -186,6 +191,7 @@ def test_six_matmul_save_auto():
             out = self.matmul3(out, self.weight3)
             out = self.matmul4(out, self.weight4)
             out = self.matmul5(out, self.weight5)
+            out = out + self.weight6
             out = self.matmul6(out, x6)
             return out
 
@@ -232,12 +238,14 @@ def test_six_matmul_load_auto():
             self.weight3 = Parameter(Tensor(np.ones([64, 128]), dtype=ms.float32), name="weight3")
             self.weight4 = Parameter(Tensor(np.ones([128, 64]), dtype=ms.float32), name="weight4")
             self.weight5 = Parameter(Tensor(np.ones([64, 128]), dtype=ms.float32), name="weight5")
+            self.weight6 = Parameter(Tensor(np.ones([32, 128]), dtype=ms.float32), name="weight6")
 
         def construct(self, x1, x6, x7):
             out = self.matmul1(x1, self.weight1)
             out = self.matmul3(out, self.weight3)
             out = self.matmul4(out, self.weight4)
             out = self.matmul5(out, self.weight5)
+            out = out + self.weight6
             out = self.matmul6(out, x6)
             out = self.matmul7(out, x7)
             return out
