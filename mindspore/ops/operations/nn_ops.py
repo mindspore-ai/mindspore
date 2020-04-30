@@ -580,7 +580,7 @@ class BatchNorm(PrimitiveWithInfer):
         >>> mean = Tensor(np.ones([64]), mindspore.float32)
         >>> variance = Tensor(np.ones([64]), mindspore.float32)
         >>> batch_norm = P.BatchNorm()
-        >>> output = batch_norm(input_x, scale, bias, mean, variance)
+        >>> output = batch_norm(input_x, scale, bias, mean, variance
     """
 
     @prim_attr_register
@@ -589,8 +589,7 @@ class BatchNorm(PrimitiveWithInfer):
         validator.check_number_range('epsilon', epsilon, 0, 1, Rel.INC_RIGHT, self.name)
         self.add_prim_attr('data_format', "NCHW")
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
-                                outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2',
-                                         'reserve_space_3'])
+                                outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
 
     def infer_shape(self, input_x, scale, bias, mean, variance):
         validator.check_integer("scale rank", len(scale), 1, Rel.EQ, self.name)
@@ -600,7 +599,7 @@ class BatchNorm(PrimitiveWithInfer):
             validator.check_integer("mean rank", len(mean), 1, Rel.EQ, self.name)
             validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
             validator.check("mean shape", mean, "scale shape", scale, Rel.EQ, self.name)
-        return (input_x, scale, scale, scale, scale, scale)
+        return (input_x, scale, scale, scale, scale)
 
     def infer_dtype(self, input_x, scale, bias, mean, variance):
         validator.check_tensor_type_same({"input_x": input_x}, [mstype.float16, mstype.float32], self.name)
@@ -613,7 +612,7 @@ class BatchNorm(PrimitiveWithInfer):
         else:
             args_moving = {"mean": mean, "variance": variance}
             validator.check_tensor_type_same(args_moving, [mstype.float16, mstype.float32], self.name)
-        return (input_x, scale, bias, input_x, input_x, input_x)
+        return (input_x, scale, bias, input_x, input_x)
 
 
 class Conv2D(PrimitiveWithInfer):
@@ -2578,13 +2577,13 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
             validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
         validator.check_integer("indices rank", len(indices_shape), 1, Rel.EQ, self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
-        return var_shape
+        return var_shape, accum_shape
 
     def infer_dtype(self, var_type, accum_type, grad_type, indices_type):
         args = {'var': var_type, 'accum': accum_type, 'grad': grad_type}
         validator.check_tensor_type_same(args, (mstype.float32,), self.name)
         validator.check_tensor_type_same({'indices': indices_type}, [mstype.int32], self.name)
-        return var_type
+        return var_type, accum_type
 
 
 class LARSUpdate(PrimitiveWithInfer):

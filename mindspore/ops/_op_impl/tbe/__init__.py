@@ -61,9 +61,6 @@ from .reduce_mean_d import _reduce_mean_d_tbe
 from .scatter_nd import _scatter_nd_tbe
 from .scatter_nd_d import _scatter_nd_d_tbe
 from .reduce_mean import _reduce_mean_tbe
-from .reshape import _reshape_tbe
-from .expand_dims import _expand_dims_tbe
-from .squeeze import _squeeze_tbe
 from .tile import _tile_tbe
 from .atomic_addr_clean import _atomic_addr_clean_tbe
 from .gather_v2 import _gather_v2_tbe
