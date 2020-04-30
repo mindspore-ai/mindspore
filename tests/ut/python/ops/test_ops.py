@@ -351,9 +351,8 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('FloorMod', {
         'block': P.FloorMod(),
-        'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16)),
-                        Tensor(np.random.rand(4).astype(np.float16))],
-        'skip': ['backward']}),
+        'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
+        'desc_bprop': [[2, 3, 4, 5]]}),
     ('identity', {
         'block': ops.functional.identity,
         'desc_inputs': [[2, 2]],
