@@ -76,13 +76,36 @@ For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an ex
 1. Download whl from [MindSpore download page](https://www.mindspore.cn/versions/en), and install the package.
 
     ```
-    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.2.0-alpha/MindSpore/cpu/ubuntu-x86/mindspore-0.2.0-cp37-cp37m-linux_x86_64.whl
+    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.2.0-alpha/MindSpore/cpu/x86_ubuntu/mindspore-0.2.0-cp37-cp37m-linux_x86_64.whl
     ```
 
 2. Run the following command to verify the install.
 
+    ```python
+    import numpy as np
+    import mindspore.context as context
+    import mindspore.nn as nn
+    from mindspore import Tensor
+    from mindspore.ops import operations as P
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    class Mul(nn.Cell):
+        def __init__(self):
+            super(Mul, self).__init__()
+            self.mul = P.Mul()
+
+        def construct(self, x, y):
+            return self.mul(x, y)
+
+    x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
+    y = Tensor(np.array([4.0, 5.0, 6.0]).astype(np.float32))
+
+    mul = Mul()
+    print(mul(x, y))
     ```
-    python -c 'import mindspore'
+    ```
+    [ 4. 10. 18.]
     ```
 
 ### From Source
@@ -111,7 +134,7 @@ currently the containerized build options are supported as follows:
     For `CPU` backend, you can directly pull and run the latest stable image using the below command:
     ```
     docker pull mindspore/mindspore-cpu:0.2.0-alpha
-    docker run -it mindspore/mindspore-cpu:0.2.0-alpha python -c 'import mindspore'
+    docker run -it mindspore/mindspore-cpu:0.2.0-alpha /bin/bash
     ```
 
 * GPU
@@ -160,7 +183,7 @@ currently the containerized build options are supported as follows:
     ```
 
 If you want to learn more about the building process of MindSpore docker images,
-please check out `docker` folder for the details.
+please check out [docker](docker/README.md) repo for the details.
 
 ## Quickstart
 
