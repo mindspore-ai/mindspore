@@ -1023,8 +1023,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     return FAILED;
   }
 
-  bool mask_special_ops = true;
-  GenerateStrategy(graph, mask_special_ops, ops);
+  GenerateStrategy(graph, ops);
 
   if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
     MS_LOG(INFO) << "Init selected strategy succeeded.";
