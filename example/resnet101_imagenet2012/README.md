@@ -25,7 +25,6 @@ This is an example of training ResNet101 with ImageNet dataset in MindSpore.
 ```shell
 .
 ├── crossentropy.py                 # CrossEntropy loss function
-├── var_init.py                     # weight initial
 ├── config.py                       # parameter configuration
 ├── dataset.py                      # data preprocessing
 ├── eval.py                         # eval net
