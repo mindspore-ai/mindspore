@@ -37,7 +37,7 @@ def visualize(first, mse, second):
 
     plt.subplot(142)
     plt.imshow(second)
-    plt.title("py random_color_jitter image")
+    plt.title("py random_color_adjust image")
 
     plt.subplot(143)
     plt.imshow(first - second)
@@ -50,20 +50,20 @@ def diff_mse(in1, in2):
     return mse * 100
 
 
-def test_random_color_jitter_op_brightness():
+def test_random_color_adjust_op_brightness():
     """
     Test RandomColorAdjust op
     """
-    logger.info("test_random_color_jitter_op")
+    logger.info("test_random_color_adjust_op")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
 
-    random_jitter_op = c_vision.RandomColorAdjust((0.8, 0.8), (1, 1), (1, 1), (0, 0))
+    random_adjust_op = c_vision.RandomColorAdjust((0.8, 0.8), (1, 1), (1, 1), (0, 0))
 
     ctrans = [decode_op,
-              random_jitter_op,
+              random_adjust_op,
               ]
 
     data1 = data1.map(input_columns=["image"], operations=ctrans)
@@ -100,20 +100,20 @@ def test_random_color_jitter_op_brightness():
         # visualize(c_image, mse, py_image)
 
 
-def test_random_color_jitter_op_contrast():
+def test_random_color_adjust_op_contrast():
     """
     Test RandomColorAdjust op
     """
-    logger.info("test_random_color_jitter_op")
+    logger.info("test_random_color_adjust_op")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
 
-    random_jitter_op = c_vision.RandomColorAdjust((1, 1), (0.5, 0.5), (1, 1), (0, 0))
+    random_adjust_op = c_vision.RandomColorAdjust((1, 1), (0.5, 0.5), (1, 1), (0, 0))
 
     ctrans = [decode_op,
-              random_jitter_op
+              random_adjust_op
               ]
 
     data1 = data1.map(input_columns=["image"], operations=ctrans)
@@ -156,20 +156,20 @@ def test_random_color_jitter_op_contrast():
         # visualize(c_image, mse, py_image)
 
 
-def test_random_color_jitter_op_saturation():
+def test_random_color_adjust_op_saturation():
     """
     Test RandomColorAdjust op
     """
-    logger.info("test_random_color_jitter_op")
+    logger.info("test_random_color_adjust_op")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
 
-    random_jitter_op = c_vision.RandomColorAdjust((1, 1), (1, 1), (0.5, 0.5), (0, 0))
+    random_adjust_op = c_vision.RandomColorAdjust((1, 1), (1, 1), (0.5, 0.5), (0, 0))
 
     ctrans = [decode_op,
-              random_jitter_op
+              random_adjust_op
               ]
 
     data1 = data1.map(input_columns=["image"], operations=ctrans)
@@ -209,20 +209,20 @@ def test_random_color_jitter_op_saturation():
         # visualize(c_image, mse, py_image)
 
 
-def test_random_color_jitter_op_hue():
+def test_random_color_adjust_op_hue():
     """
     Test RandomColorAdjust op
     """
-    logger.info("test_random_color_jitter_op")
+    logger.info("test_random_color_adjust_op")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
 
-    random_jitter_op = c_vision.RandomColorAdjust((1, 1), (1, 1), (1, 1), (0.2, 0.2))
+    random_adjust_op = c_vision.RandomColorAdjust((1, 1), (1, 1), (1, 1), (0.2, 0.2))
 
     ctrans = [decode_op,
-              random_jitter_op,
+              random_adjust_op,
               ]
 
     data1 = data1.map(input_columns=["image"], operations=ctrans)
@@ -264,7 +264,7 @@ def test_random_color_jitter_op_hue():
 
 
 if __name__ == "__main__":
-    test_random_color_jitter_op_brightness()
-    test_random_color_jitter_op_contrast()
-    test_random_color_jitter_op_saturation()
-    test_random_color_jitter_op_hue()
+    test_random_color_adjust_op_brightness()
+    test_random_color_adjust_op_contrast()
+    test_random_color_adjust_op_saturation()
+    test_random_color_adjust_op_hue()
