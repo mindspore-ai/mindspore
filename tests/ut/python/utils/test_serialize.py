@@ -323,6 +323,22 @@ class BatchNormTester(nn.Cell):
         return self.bn(x)
 
 
+class DepthwiseConv2dAndReLU6(nn.Cell):
+    "Net for testing DepthwiseConv2d and ReLU6"
+
+    def __init__(self, input_channel, kernel_size):
+        super(DepthwiseConv2dAndReLU6, self).__init__()
+        weight_shape = [1, input_channel, kernel_size, kernel_size]
+        from mindspore.common.initializer import initializer
+        self.weight = Parameter(initializer('ones', weight_shape), name='weight')
+        self.depthwise_conv = P.DepthwiseConv2dNative(channel_multiplier=1, kernel_size=(kernel_size, kernel_size))
+        self.relu6 = nn.ReLU6()
+
+    def construct(self, x):
+        x = self.depthwise_conv(x, self.weight)
+        x = self.relu6(x)
+        return x
+
 def test_batchnorm_train_onnx_export():
     input = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
     net = BatchNormTester(3)
@@ -420,6 +436,38 @@ def test_lenet5_onnx_load_run():
     outputs = ort_session.run(None, input_map)
     print(outputs[0])
 
+
+@run_on_onnxruntime
+def test_depthwiseconv_relu6_onnx_load_run():
+    onnx_file = 'depthwiseconv_relu6.onnx'
+    input_channel = 3
+    input = Tensor(np.ones([1, input_channel, 32, 32]).astype(np.float32) * 0.01)
+    net = DepthwiseConv2dAndReLU6(input_channel, kernel_size=3)
+    export(net, input, file_name=onnx_file, file_format='ONNX')
+
+    import onnx
+    import onnxruntime as ort
+
+    print('--------------------- onnx load ---------------------')
+    # Load the ONNX model
+    model = onnx.load(onnx_file)
+    # Check that the IR is well formed
+    onnx.checker.check_model(model)
+    # Print a human readable representation of the graph
+    g = onnx.helper.printable_graph(model.graph)
+    print(g)
+
+    print('------------------ onnxruntime run ------------------')
+    ort_session = ort.InferenceSession(onnx_file)
+    input_map = {'x' : input.asnumpy()}
+    # provide only input x to run model
+    outputs = ort_session.run(None, input_map)
+    print(outputs[0])
+    # overwrite default weight to run model
+    for item in net.trainable_params():
+        input_map[item.name] = np.ones(item.default_input.asnumpy().shape, dtype=np.float32)
+    outputs = ort_session.run(None, input_map)
+    print(outputs[0])
 
 def teardown_module():
     files = ['parameters.ckpt', 'new_ckpt.ckpt', 'lenet5.onnx', 'batch_norm.onnx', 'empty.ckpt']

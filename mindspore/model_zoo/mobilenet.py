@@ -89,7 +89,8 @@ class DepthwiseConv(nn.Cell):
         self.channel_multiplier = channel_multiplier
         self.out_channels = in_planes * channel_multiplier
         self.kernel_size = (kernel_size, kernel_size)
-        self.depthwise_conv = P.DepthwiseConv2dNative(channel_multiplier=channel_multiplier, kernel_size=kernel_size,
+        self.depthwise_conv = P.DepthwiseConv2dNative(channel_multiplier=channel_multiplier,
+                                                      kernel_size=self.kernel_size,
                                                       stride=stride, pad_mode=pad_mode, pad=pad)
         self.bias_add = P.BiasAdd()
         weight_shape = [channel_multiplier, in_planes, *self.kernel_size]
