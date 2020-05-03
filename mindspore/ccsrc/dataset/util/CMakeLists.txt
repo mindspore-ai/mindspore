@@ -12,5 +12,4 @@ add_library(utils OBJECT
     status.cc
     path.cc
     wait_post.cc
-    sig_handler.cc
-    random.cc)
+    sig_handler.cc)
