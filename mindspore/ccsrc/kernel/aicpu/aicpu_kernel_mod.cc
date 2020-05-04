@@ -111,6 +111,9 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
 
   CreateCpuKernelInfo(inputs, outputs);
   auto *stream = reinterpret_cast<rtStream_t *>(stream_ptr);
+  if (node_name_ == "TopK") {
+    node_name_ = "TopKV2";
+  }
   MS_LOG(INFO) << "Aicpu launch, node_so_:" << node_so_ << ", node name:" << node_name_
                << ", args_size:" << args_.length();
   if (rtCpuKernelLaunch(reinterpret_cast<const void *>(node_so_.c_str()),
@@ -137,6 +140,9 @@ vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr> &inp
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_data_addrs),
                        [](const AddressPtr &output) -> void * { return output->addr; });
 
+  if (node_name_ == "TopK") {
+    node_name_ = "TopKV2";
+  }
   AicpuTaskInfoPtr task_info_ptr = make_shared<ge::model_runner::AicpuTaskInfo>(
     stream_id, node_so_, node_name_, node_def_str_, input_data_addrs, output_data_addrs);
 
