@@ -89,6 +89,8 @@ def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
     num_iter = 0
     for item in data_set.create_dict_iterator():
         logger.info("-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info("-------------- item[data]: \
+                {}------------------------".format(item["data"][:10]))
         logger.info("-------------- item[file_name]: \
                 {}------------------------".format("".join([chr(x) for x in item["file_name"]])))
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))

@@ -114,7 +114,7 @@ class ShardReader {
 
   /// \brief aim to get columns context
   /// \return the columns
-  std::shared_ptr<ShardColumn> get_shard_column() const;
+  std::shared_ptr<ShardColumn> GetShardColumn() const;
 
   /// \brief get the number of shards
   /// \return # of shards

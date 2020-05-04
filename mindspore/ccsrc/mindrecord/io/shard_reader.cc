@@ -232,7 +232,7 @@ void ShardReader::Close() {
 
 std::shared_ptr<ShardHeader> ShardReader::GetShardHeader() const { return shard_header_; }
 
-std::shared_ptr<ShardColumn> ShardReader::get_shard_column() const { return shard_column_; }
+std::shared_ptr<ShardColumn> ShardReader::GetShardColumn() const { return shard_column_; }
 
 int ShardReader::GetShardCount() const { return shard_header_->GetShardCount(); }
 

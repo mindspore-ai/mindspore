@@ -61,6 +61,7 @@
 #include "dataset/engine/jagged_connector.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
 #include "dataset/engine/datasetops/source/voc_op.h"
+#include "dataset/engine/gnn/graph.h"
 #include "dataset/kernels/data/to_float16_op.h"
 #include "dataset/util/random.h"
 #include "mindrecord/include/shard_operator.h"
@@ -513,6 +514,33 @@ void bindVocabObjects(py::module *m) {
     });
 }
 
+void bindGraphData(py::module *m) {
+  (void)py::class_<gnn::Graph, std::shared_ptr<gnn::Graph>>(*m, "Graph")
+    .def(py::init([](std::string dataset_file, int32_t num_workers) {
+      std::shared_ptr<gnn::Graph> g_out = std::make_shared<gnn::Graph>(dataset_file, num_workers);
+      THROW_IF_ERROR(g_out->Init());
+      return g_out;
+    }))
+    .def("get_nodes",
+         [](gnn::Graph &g, gnn::NodeType node_type, gnn::NodeIdType node_num) {
+           std::shared_ptr<Tensor> out;
+           THROW_IF_ERROR(g.GetNodes(node_type, node_num, &out));
+           return out;
+         })
+    .def("get_all_neighbors",
+         [](gnn::Graph &g, std::vector<gnn::NodeIdType> node_list, gnn::NodeType neighbor_type) {
+           std::shared_ptr<Tensor> out;
+           THROW_IF_ERROR(g.GetAllNeighbors(node_list, neighbor_type, &out));
+           return out;
+         })
+    .def("get_node_feature",
+         [](gnn::Graph &g, std::shared_ptr<Tensor> node_list, std::vector<gnn::FeatureType> feature_types) {
+           TensorRow out;
+           THROW_IF_ERROR(g.GetNodeFeature(node_list, feature_types, &out));
+           return out;
+         });
+}
+
 // This is where we externalize the C logic as python modules
 PYBIND11_MODULE(_c_dataengine, m) {
   m.doc() = "pybind11 for _c_dataengine";
@@ -578,6 +606,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
   bindDatasetOps(&m);
   bindInfoObjects(&m);
   bindVocabObjects(&m);
+  bindGraphData(&m);
 }
 }  // namespace dataset
 }  // namespace mindspore
