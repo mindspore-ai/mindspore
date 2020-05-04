@@ -151,7 +151,7 @@ if __name__ == '__main__':
 
     epoch_size = config.epoch_size
     net = mobilenet_v2(num_classes=config.num_classes)
-    net.add_flags_recursive(fp16=True)
+    net.to_float(mstype.float16)
     for _, cell in net.cells_and_names():
         if isinstance(cell, nn.Dense):
             cell.add_flags_recursive(fp32=True)

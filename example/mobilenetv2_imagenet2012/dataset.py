@@ -63,7 +63,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
     if do_train:
         trans = [resize_crop_op, horizontal_flip_op, rescale_op, normalize_op, change_swap_op]
     else:
-        trans = [decode_op, resize_op, center_crop, rescale_op, normalize_op, change_swap_op]
+        trans = [decode_op, resize_op, center_crop, normalize_op, change_swap_op]
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
