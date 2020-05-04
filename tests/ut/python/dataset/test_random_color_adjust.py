@@ -256,9 +256,6 @@ def test_random_color_adjust_op_hue():
         mse = diff_mse(c_image, py_image)
         logger.info("mse is {}".format(mse))
         assert mse < 0.01
-        # logger.info("random_rotation_op_{}, mse: {}".format(num_iter + 1, mse))
-        # if mse != 0:
-        #     logger.info("mse is: {}".format(mse))
         # Uncomment below line if you want to visualize images
         # visualize(c_image, mse, py_image)
 
