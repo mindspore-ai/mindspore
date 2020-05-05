@@ -28,7 +28,7 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_center_crop_op(height=375, width=375, plot=False):
     """
-    Test random_vertical
+    Test CenterCrop
     """
     logger.info("Test CenterCrop")
 
@@ -55,7 +55,7 @@ def test_center_crop_op(height=375, width=375, plot=False):
 
 def test_center_crop_md5(height=375, width=375):
     """
-    Test random_vertical
+    Test CenterCrop
     """
     logger.info("Test CenterCrop")
 
@@ -69,13 +69,12 @@ def test_center_crop_md5(height=375, width=375):
     # expected md5 from images 
 
     filename = "test_center_crop_01_result.npz"
-    parameters = {"params": {}}
-    save_and_check_md5(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_center_crop_comp(height=375, width=375, plot=False):
     """
-    Test random_vertical between python and c image augmentation
+    Test CenterCrop between python and c image augmentation
     """
     logger.info("Test CenterCrop")
 
