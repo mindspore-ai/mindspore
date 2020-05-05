@@ -18,3 +18,8 @@ from .dropout_genmask import _dropout_genmask_aicpu
 from .get_next import _get_next_aicpu
 from .print_tensor import _print_aicpu
 from .topk import _top_k_aicpu
+from .is_finite import _is_finite_aicpu
+from .reshape import _reshape_aicpu
+from .flatten import _flatten_aicpu
+from .squeeze import _squeeze_aicpu
+from .expand_dims import _expand_dims_aicpu
