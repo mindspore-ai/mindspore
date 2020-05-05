@@ -17,7 +17,7 @@ import _akg.topi
 import _akg.tvm
 from _akg.utils import format_transform as ft_util
 from _akg.utils import validation_check as vc_util
-from _akg.ops.math import sum
+from _akg.ops.math import sum_value
 
 
 @vc_util.check_input_type(_akg.tvm.tensor.Tensor, (list, tuple, int, type(None)), (bool, type(None)))
@@ -41,7 +41,7 @@ def mean(data, axis=None, keepdims=False):
     count = 1
     for i in axis:
         count *= shape[i]
-    output, _ = sum.sum_value(data, axis, keepdims)
+    output, _ = sum_value.sum_value(data, axis, keepdims)
     res = _akg.topi.divide(output, count)
 
     return res

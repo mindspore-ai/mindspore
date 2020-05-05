@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dataset/core/global_context.h"
 #include "dataset/engine/datasetops/source/generator_op.h"
+#include <iomanip>
+#include "dataset/core/global_context.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/execution_tree.h"
@@ -57,6 +58,26 @@ GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::strin
       buffer_id_(0) {}
 
 GeneratorOp::~GeneratorOp() { this->Dealloc(); }
+
+void GeneratorOp::Print(std::ostream &out, bool show_all) const {
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <GeneratorOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nColumn names:\n";
+    for (int i = 0; i < column_names_.size(); ++i) {
+      out << "\n  " << column_names_[i];
+    }
+    out << "\n\n";
+  }
+}
 
 void GeneratorOp::Dealloc() noexcept {
   // Setup GIL state
@@ -168,7 +189,7 @@ Status GeneratorOp::FillBuffer(TensorQTable *tt) {
 Status GeneratorOp::operator()() {
   // Handshake with TaskManager to synchronize thread creation
   TaskManager::FindMe()->Post();
-  wp_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
   std::unique_ptr<DataBuffer> fetched_buffer;
   bool eof = false;
   while (!eof) {

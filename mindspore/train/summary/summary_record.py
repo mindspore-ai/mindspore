@@ -158,6 +158,9 @@ class SummaryRecord:
                     package_graph_event(graph_proto).SerializeToString())
                 self.event_writer.flush()
                 self.has_graph = True
+                data = _summary_tensor_cache.get("SummaryRecord")
+                if data is None:
+                    return True
 
         data = _summary_tensor_cache.get("SummaryRecord")
         if data is None:

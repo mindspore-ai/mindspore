@@ -14,7 +14,7 @@
 # ============================================================================
 
 import pytest
-from mindspore import Tensor
+from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
 import mindspore.nn as nn
 import numpy as np
@@ -22,12 +22,13 @@ import mindspore.context as context
 
 
 class Net(nn.Cell):
-    def __init__(self):
+    def __init__(self, value):
         super(Net, self).__init__()
+        self.var = Parameter(value, name="var")
         self.assign = P.Assign()
 
-    def construct(self, var, value):
-        return self.assign(var, value)
+    def construct(self, value):
+        return self.assign(self.var, value)
 
 x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
 value = np.array([[1, 2], [3, 4.0]]).astype(np.float32)
@@ -37,13 +38,13 @@ value = np.array([[1, 2], [3, 4.0]]).astype(np.float32)
 @pytest.mark.env_onecard
 def test_assign():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    assign = Net()
     var = Tensor(x)
-    output = assign(var, Tensor(value))
+    assign = Net(var)
+    output = assign(Tensor(value))
 
     error = np.ones(shape=[2, 2]) * 1.0e-6
     diff1 = output.asnumpy() - value
-    diff2 = var.asnumpy() - value
+    diff2 = assign.var.default_input.asnumpy() - value
     assert np.all(diff1 < error)
     assert np.all(-diff1 < error)
     assert np.all(diff2 < error)

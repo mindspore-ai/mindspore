@@ -25,9 +25,7 @@ StrategyCheckpoint& StrategyCheckpoint::GetInstance() {
   return instance;
 }
 
-bool StrategyCheckpoint::CheckPointExit() const { return false; }
-
-Status StrategyCheckpoint::RemoveCheckPoint() const { return SUCCESS; }
+bool StrategyCheckpoint::CheckPointExit(const std::string path) const { return false; }
 
 Status StrategyCheckpoint::Load(StrategyMap* strategy_map) { return SUCCESS; }
 

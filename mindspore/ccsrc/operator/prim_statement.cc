@@ -80,8 +80,7 @@ AbstractBasePtr InferImplDot(const AnalysisEnginePtr &, const PrimitivePtr &prim
   auto y_shp_value = y_shp->shape();
   // Should be matrix which shape size is 2.
   if (x_shp_value.size() != 2 || y_shp_value.size() != 2) {
-    MS_LOG(EXCEPTION) << "" << op_name
-                      << " evaluator requires input two 2D tensors, while the dimensions of two tensors are "
+    MS_LOG(EXCEPTION) << op_name << " evaluator requires input two 2D tensors, while the dimensions of two tensors are "
                       << x_shp_value.size() << ", " << y_shp_value.size() << " ";
   }
   if (x_shp_value[1] != y_shp_value[0] && x_shp_value[1] != Shape::SHP_ANY && y_shp_value[0] != Shape::SHP_ANY) {

@@ -57,7 +57,7 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      Gelu, Elu,
                      GetNext, L2Normalize, LayerNorm, L2Loss,
                      LogSoftmax,
-                     MaxPool, ExtractImagePatches,
+                     MaxPool,
                      AvgPool, Conv2DBackpropInput, ConfusionMulGrad,
                      MaxPoolWithArgmax, OneHot, Pad, MirrorPad, PReLU, ReLU, ReLU6, ReLUV2, HSwish, HSigmoid,
                      ResizeBilinear, Sigmoid,
@@ -67,7 +67,7 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl,
                      ApplyRMSProp, ApplyCenteredRMSProp)
-from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey
+from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey, CheckBprop
 from . import _quant_ops
 from ._quant_ops import *
 
@@ -89,7 +89,6 @@ __all__ = [
     'Sqrt',
     'Square',
     'Conv2D',
-    'ExtractImagePatches',
     'Flatten',
     'MaxPoolWithArgmax',
     'FusedBatchNorm',
@@ -179,6 +178,7 @@ __all__ = [
     'GeSwitch',
     'Merge',
     'SameTypeShape',
+    'CheckBprop',
     'CheckValid',
     'BoundingBoxEncode',
     'BoundingBoxDecode',

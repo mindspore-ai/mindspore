@@ -130,7 +130,7 @@ class DistributedGradReducer(Cell):
         >>>
         >>> device_id = int(os.environ["DEVICE_ID"])
         >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True,
-        >>>                     device_id=int(device_id), enable_hccl=True)
+        >>>                     device_id=int(device_id))
         >>> init()
         >>> context.reset_auto_parallel_context()
         >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)

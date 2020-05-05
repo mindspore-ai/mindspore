@@ -30,6 +30,9 @@ namespace mindspore {
 namespace kernel {
 namespace tbe {
 static std::map<string, string> tbe_func_adapter_map = {
+  {"softmax", "softmax_v2"},
+  {"log_softmax", "log_softmax_v2"},
+  {"apply_momentum", "apply_momentum_d"},
   {"re_lu6", "relu6"},
   {"re_lu6_grad", "relu6_grad"},
   {"re_lu", "relu"},
@@ -38,6 +41,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"reduce_mean", "reduce_mean_d"},
   {"reduce_max", "reduce_max_d"},
   {"reduce_min", "reduce_min_d"},
+  {"avg_pool_grad", "avg_pool_grad_d"},
   {"conv2d_backprop_filter", "conv2d_backprop_filter_d"},
   {"conv2d_backprop_input", "conv2d_backprop_input_d"},
   {"depthwise_conv2d_native", "depthwise_conv2d"},
@@ -148,6 +152,52 @@ void TbeAdapter::InputOrderPass(const std::string &op_name, std::vector<std::vec
       inputs_json->push_back(inputs_list[0]);
       for (size_t i = 2; i < inputs_list.size(); ++i) {
         inputs_json->push_back(inputs_list[i]);
+      }
+    }
+  }
+}
+
+void TbeAdapter::FusionInputOrderPass(const std::string &op_name, const std::vector<nlohmann::json> &inputs_list,
+                                      std::vector<nlohmann::json> *inputs_json) {
+  MS_EXCEPTION_IF_NULL(inputs_json);
+  if (input_order_adjusted_ops.find(op_name) == input_order_adjusted_ops.end()) {
+    (void)std::copy(inputs_list.begin(), inputs_list.end(), std::back_inserter((*inputs_json)));
+  } else {
+    if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
+      inputs_json->emplace_back(inputs_list[2]);
+      inputs_json->emplace_back(inputs_list[0]);
+      inputs_json->emplace_back(inputs_list[1]);
+      for (size_t i = 3; i < inputs_list.size(); ++i) {
+        inputs_json->emplace_back(inputs_list[i]);
+      }
+    } else {
+      inputs_json->emplace_back(inputs_list[1]);
+      inputs_json->emplace_back(inputs_list[0]);
+      for (size_t i = 2; i < inputs_list.size(); ++i) {
+        inputs_json->emplace_back(inputs_list[i]);
+      }
+    }
+  }
+}
+
+void TbeAdapter::FusionDataOrderPass(const std::string &op_name, const std::vector<AnfNodePtr> &data_layer,
+                                     std::vector<AnfNodePtr> *reorder_data_layer) {
+  MS_EXCEPTION_IF_NULL(reorder_data_layer);
+  if (input_order_adjusted_ops.find(op_name) == input_order_adjusted_ops.end()) {
+    (void)std::copy(data_layer.begin(), data_layer.end(), std::back_inserter((*reorder_data_layer)));
+  } else {
+    if (op_name == "MinimumGrad" || op_name == "MaximumGrad") {
+      reorder_data_layer->emplace_back(data_layer[2]);
+      reorder_data_layer->emplace_back(data_layer[0]);
+      reorder_data_layer->emplace_back(data_layer[1]);
+      for (size_t i = 3; i < data_layer.size(); ++i) {
+        reorder_data_layer->emplace_back(data_layer[i]);
+      }
+    } else {
+      reorder_data_layer->emplace_back(data_layer[1]);
+      reorder_data_layer->emplace_back(data_layer[0]);
+      for (size_t i = 2; i < data_layer.size(); ++i) {
+        reorder_data_layer->emplace_back(data_layer[i]);
       }
     }
   }

@@ -229,12 +229,6 @@ class TwoInputBprop(nn.Cell):
     def bprop(self, x, y, out, dout):
         return 5 * x, 8 * y
 
-class TwoInput(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.op = P.Mul()
-    def construct(self, x, y):
-        return  self.op(x, y)
 
 class TwoInputWithParameter(nn.Cell):
     def __init__(self):
@@ -301,8 +295,37 @@ class MulAddWithWrongOutputNum(nn.Cell):
     def construct(self, x, y):
         return 2 * x + y
     def bprop(self, x, y, out, dout):
-        return 2 * dout, 2 * y, out
+        return 2 * dout,
 
 def test_grad_mul_add_with_wrong_output_num():
     mul_add = MulAddWithWrongOutputNum()
-    C.grad_all(mul_add)(1, 2)
+    with pytest.raises(TypeError):
+        C.grad_all(mul_add)(1, 2)
+
+class MulAddWithWrongOutputType(nn.Cell):
+    def __init__(self):
+        super(MulAddWithWrongOutputType, self).__init__()
+    def construct(self, x, y):
+        return 2 * x + y
+    def bprop(self, x, y, out, dout):
+        return 2 * dout, 2
+
+def test_grad_mul_add_with_wrong_output_type():
+    mul_add = MulAddWithWrongOutputType()
+    with pytest.raises(TypeError):
+        C.grad_all(mul_add)(1, Tensor(np.ones([2, 2])))
+
+
+class MulAddWithWrongOutputShape(nn.Cell):
+    def __init__(self):
+        super(MulAddWithWrongOutputShape, self).__init__()
+        self.ones = Tensor(np.ones([2,]))
+    def construct(self, x, y):
+        return 2 * x + y
+    def bprop(self, x, y, out, dout):
+        return 2, self.ones
+
+def test_grad_mul_add_with_wrong_output_shape():
+    mul_add = MulAddWithWrongOutputShape()
+    with pytest.raises(TypeError):
+        C.grad_all(mul_add)(1, Tensor(np.ones([2, 2])))

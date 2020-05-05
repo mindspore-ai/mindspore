@@ -21,7 +21,7 @@ can also create samplers with this module to sample data.
 from .core.configuration import config
 from .engine.datasets import StorageDataset, TFRecordDataset, ImageFolderDatasetV2, MnistDataset, MindDataset, \
     GeneratorDataset, ManifestDataset, Cifar10Dataset, Cifar100Dataset, VOCDataset, CelebADataset, TextFileDataset, \
-    Schema, Shuffle, zip
+    Schema, Shuffle, zip, RandomDataset
 from .engine.samplers import DistributedSampler, PKSampler, RandomSampler, SequentialSampler, SubsetRandomSampler, \
     WeightedRandomSampler, Sampler
 from .engine.serializer_deserializer import serialize, deserialize, show

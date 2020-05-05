@@ -82,7 +82,8 @@ std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &
 
 void InsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node);
 
-void BackwardCommunication(const OperatorInfoPtr &distribute_operator, const CNodePtr &node, bool is_loss_node);
+void BackwardCommunication(const OperatorInfoPtr &distribute_operator, const CNodePtr &node,
+                           const std::vector<std::pair<CNodePtr, CNodePtr>> &sens_loss_pairs);
 
 // Generate and init parallel operator
 OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
@@ -134,7 +135,7 @@ void ReshapeInit(const std::vector<AnfNodePtr> &all_nodes);
 void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                            const FuncGraphManagerPtr &manager);
 
-void RestoreStrategy(const FuncGraphPtr &func_graph);
+std::string NodeParameterName(const CNodePtr &node);
 
 void CheckpointStrategy(const FuncGraphPtr &func_graph);
 

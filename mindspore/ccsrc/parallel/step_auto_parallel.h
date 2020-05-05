@@ -43,7 +43,9 @@ std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node);
 
 std::vector<TypePtr> ExtractOutputTypeByNode(const CNodePtr &node);
 
-Status ConstructCostGraphNodes(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
+Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
+
+Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
 
 void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes);
 

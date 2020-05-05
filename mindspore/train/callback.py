@@ -150,8 +150,8 @@ class CheckpointConfig:
         keep_checkpoint_max (int): Maximum step to save checkpoint. Default: 5.
         keep_checkpoint_per_n_minutes (int): Keep one checkpoint every n minutes. Default: 0.
             Can't be used with keep_checkpoint_max at the same time.
-        integrated_save (bool): Whether to intergrated save in automatic model parall scene. Default: True.
-            Integrated save function is only supported in automatic parall scene, not supported in manual parallel.
+        integrated_save (bool): Whether to intergrated save in automatic model parallel scene. Default: True.
+            Integrated save function is only supported in automatic parallel scene, not supported in manual parallel.
 
     Raises:
         ValueError: If the input_param is None or 0.
@@ -365,7 +365,7 @@ class Callback:
         >>>         print(cb_params.cur_step_num)
         >>>
         >>> print_cb = Print_info()
-        >>> model.train(epoch, dataset, callback=print_cb)
+        >>> model.train(epoch, dataset, callbacks=print_cb)
     """
     def __init__(self):
         pass
@@ -683,22 +683,15 @@ class LossMonitor(Callback):
 
 
 class TimeMonitor(Callback):
+    """Time Monitor."""
     def __init__(self, data_size):
         super(TimeMonitor, self).__init__()
         self.data_size = data_size
 
     def epoch_begin(self, run_context):
         self.epoch_time = time.time()
-   
+
     def epoch_end(self, run_context):
         epoch_mseconds = (time.time() - self.epoch_time) * 1000
         per_step_mseconds = epoch_mseconds / self.data_size
         print("epoch time: {0}, per step time: {1}".format(epoch_mseconds, per_step_mseconds), flush=True)
-
-    def step_begin(self, run_context):
-        self.step_time = time.time()
-
-    def step_end(self, run_context):
-        step_mseconds = (time.time() - self.step_time) * 1000
-        print('step time', step_mseconds, flush=True)
-

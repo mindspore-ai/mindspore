@@ -17,7 +17,7 @@
 
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
-from ...communication.management import get_rank, get_group_size, GlobalComm, get_group
+from ...communication.management import get_rank, get_group_size, GlobalComm, _get_group
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register
 
@@ -45,7 +45,6 @@ class AllReduce(PrimitiveWithInfer):
 
     Note:
         The operation of AllReduce does not support "prod" currently.
-        The input of AllReduce does not support dtype "Bool".
         Tensor must have same shape and format in all processes participating in the collective.
 
     Args:
@@ -88,10 +87,10 @@ class AllReduce(PrimitiveWithInfer):
             raise TypeError("The operation of AllReduce should be str.")
         if op == ReduceOp.PROD:
             raise RuntimeError("The operation of AllReduce 'prod' is not supported yet.")
-        if not isinstance(get_group(group), str):
+        if not isinstance(_get_group(group), str):
             raise TypeError("The group of AllReduce should be str.")
         self.op = op
-        self.add_prim_attr('group', get_group(group))
+        self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
 
     def vm_impl(self, x):
@@ -103,7 +102,7 @@ class AllReduce(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        if x_dtype == mstype.bool_:
+        if x_dtype.element_type() == mstype.bool_:
             raise TypeError("AllReduce does not support 'Bool' as the dtype of input!")
         return x_dtype
 
@@ -149,19 +148,19 @@ class AllGather(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
-        validator.check_value_type('group', get_group(group), (str,), self.name)
-        self.rank = get_rank(get_group(group))
-        self.rank_size = get_group_size(get_group(group))
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.rank = get_rank(_get_group(group))
+        self.rank_size = get_group_size(_get_group(group))
         validator.check('rank', self.rank, 'rank_size', self.rank_size, Rel.LT, self.name)
         self.add_prim_attr('rank_size', self.rank_size)
-        self.add_prim_attr('group', get_group(group))
+        self.add_prim_attr('group', _get_group(group))
 
     def infer_shape(self, x_shape):
         x_shape[0] = x_shape[0] * self.rank_size
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        if x_dtype == mstype.bool_:
+        if x_dtype.element_type() == mstype.bool_:
             raise TypeError(f"{self.name} does not support 'Bool' as the dtype of input!")
         return x_dtype
 
@@ -176,6 +175,7 @@ class ReduceScatter(PrimitiveWithInfer):
     Note:
         The back propagation of the op is not surported yet. Stay tuned for more.
         Tensor must have the same shape and format in all processes participating in the collective.
+
     Args:
         op (str): Specifies an operation used for element-wise reductions,
                   like sum, max, avg. Default: ReduceOp.SUM.
@@ -205,11 +205,11 @@ class ReduceScatter(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
         validator.check_value_type('op', op, (type(ReduceOp.SUM),), self.name)
-        validator.check_value_type('group', get_group(group), (str,), self.name)
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.op = op
-        self.rank_size = get_group_size(get_group(group))
+        self.rank_size = get_group_size(_get_group(group))
         self.add_prim_attr('rank_size', self.rank_size)
-        self.add_prim_attr('group', get_group(group))
+        self.add_prim_attr('group', _get_group(group))
 
     def infer_shape(self, x_shape):
         if x_shape[0] % self.rank_size != 0:
@@ -218,7 +218,7 @@ class ReduceScatter(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        if x_dtype == mstype.bool_:
+        if x_dtype.element_type() == mstype.bool_:
             raise TypeError(f"{self.name} does not support 'Bool' as the dtype of input!")
         return x_dtype
 
@@ -268,15 +268,18 @@ class Broadcast(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, root_rank, group=GlobalComm.WORLD_COMM_GROUP):
         validator.check_value_type('root_rank', root_rank, (int,), self.name)
-        validator.check_value_type('group', get_group(group), (str,), self.name)
-        self.add_prim_attr('group', get_group(group))
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.add_prim_attr('group', _get_group(group))
 
     def infer_shape(self, x_shape):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        if x_dtype == mstype.bool_:
-            raise TypeError(f"{self.name} does not support 'Bool' as the dtype of input!")
+        if not isinstance(x_dtype, tuple):
+            raise TypeError(f"{self.name}'s input should be a tuple!")
+        for _ele in x_dtype:
+            if _ele.element_type() == mstype.bool_:
+                raise TypeError(f"{self.name} does not support 'Bool' as the dtype of input!")
         return x_dtype
 
 
@@ -306,11 +309,11 @@ class _AlltoAll(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, split_count, split_dim, concat_dim, group=GlobalComm.WORLD_COMM_GROUP):
         """init AlltoAll"""
-        validator.check_value_type('group', get_group(group), (str,), self.name)
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.split_count = split_count
         self.split_dim = split_dim
         self.concat_dim = concat_dim
-        self.add_prim_attr('group', get_group(group))
+        self.add_prim_attr('group', _get_group(group))
 
     def infer_shape(self, x_shape):
         x_shape[self.concat_dim] = x_shape[self.concat_dim] * self.split_count
@@ -318,7 +321,7 @@ class _AlltoAll(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        if x_dtype == mstype.bool_:
+        if x_dtype.element_type() == mstype.bool_:
             raise TypeError(f"{self.name} does not support 'Bool' as the dtype of input!")
         return x_dtype
 

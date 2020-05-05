@@ -67,10 +67,28 @@ def get_bprop_broad_cast(self):
 @bprop_getters.register(AllGather)
 def get_bprop_all_gather(self):
     """Generate bprop for AllGather"""
-    reduce_scatter_grad = ReduceScatter(ReduceOp.SUM, self.group)
+    all_gather_grad = ReduceScatter(ReduceOp.SUM, self.group)
+    if self.instance_name:
+        instance_name = "grad" + self.instance_name
+        all_gather_grad.set_prim_instance_name(instance_name)
+
+    def bprop(x, out, dout):
+        dx = all_gather_grad(dout)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(ReduceScatter)
+def get_bprop_reduce_scatter(self):
+    """Generate bprop for ReduceScatter"""
+    reduce_scatter_grad = AllGather(self.group)
     if self.instance_name:
         instance_name = "grad" + self.instance_name
         reduce_scatter_grad.set_prim_instance_name(instance_name)
+
+    if self.op != ReduceOp.SUM:
+        raise RuntimeError("The reducescatter bprop only support ReduceOp.SUM until now.")
 
     def bprop(x, out, dout):
         dx = reduce_scatter_grad(dout)

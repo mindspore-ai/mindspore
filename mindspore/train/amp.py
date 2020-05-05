@@ -41,6 +41,7 @@ class OutputTo16(nn.Cell):
 
 
 def _do_keep_batchnorm_fp32(network):
+    """Do keep batchnorm fp32."""
     cells = network.name_cells()
     change = False
     for name in cells:
@@ -68,6 +69,7 @@ _config_level = {
 
 
 def _check_kwargs(key_words):
+    """Check kwargs."""
     for arg in key_words:
         if arg not in ['cast_model_type', 'keep_batchnorm_fp32', 'loss_scale_manager']:
             raise  ValueError(f"Unsupported arg '{arg}'")
@@ -84,6 +86,7 @@ def _check_kwargs(key_words):
 
 
 def _add_loss_network(network, loss_fn, cast_model_type):
+    """Add loss network."""
     class WithLossCell(nn.Cell):
         "Wrap loss for amp. Cast network output back to float32"
 

@@ -25,6 +25,7 @@ namespace mindspore {
 namespace opt {
 ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(prim::kPrimCast->name(), {1});
+  Register(prim::kPrimAvgPoolGrad->name(), {0});
   Register(prim::kPrimConv2DBackpropInput->name(), {2});
   Register(prim::kPrimConv2DBackpropFilter->name(), {2});
   Register(prim::kPrimDepthwiseConv2dNativeBackpropFilter->name(), {1});
@@ -52,7 +53,6 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(kFlattenGradOpName, {1});
   Register(kExpandDimsOpName, {1});
   Register(kSplitOpName, {0});
-  Register(kTopKOpName, {1});
   Register(kErfOpName, {1});
   Register(kSparseApplyAdagradOpName, {2});
   Register(kResizeNearestNeighborGrad, {1});

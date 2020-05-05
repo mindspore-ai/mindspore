@@ -230,15 +230,6 @@ def load_param_into_net(net, parameter_dict):
         raise TypeError(msg)
 
     logger.info("Execute load parameter into net process.")
-    for name in parameter_dict:
-        for _, param in net.parameters_and_names():
-            if name == param.name and param.layerwise_parallel:
-                # layerwise parallel parameter data loaded from checkpoint file,
-                # was a complete(merged) data, need to be splited
-                new_param = parameter_dict[param.name]
-                _load_tensor_for_layerwise(new_param, param)
-                break
-
     param_not_load = []
     for _, param in net.parameters_and_names():
         if param.name in parameter_dict:
@@ -267,16 +258,17 @@ def _load_dismatch_prefix_params(net, parameter_dict, param_not_load):
     longest_name = param_not_load[0]
     while prefix_name != longest_name and param_not_load:
         logger.debug("Count: {} parameters has not been loaded, try to load continue.".format(len(param_not_load)))
-        longest_name = sorted(param_not_load, key=len, reverse=True)[0]
         prefix_name = longest_name
         for net_param_name in param_not_load:
             for dict_name in parameter_dict:
                 if dict_name.endswith(net_param_name):
-                    tmp_name = dict_name[:-len(net_param_name)]
-                    prefix_name = prefix_name if len(prefix_name) < len(tmp_name) else tmp_name
+                    prefix_name = dict_name[:-len(net_param_name)]
+                    break
+            if prefix_name != longest_name:
+                break
 
         if prefix_name != longest_name:
-            logger.info("Remove parameter prefix name: {}, continue to load.".format(prefix_name))
+            logger.warning("Remove parameter prefix name: {}, continue to load.".format(prefix_name))
             for _, param in net.parameters_and_names():
                 new_param_name = prefix_name + param.name
                 if param.name in param_not_load and new_param_name in parameter_dict:
@@ -368,34 +360,6 @@ def _get_merged_param_data(net, param_name, param_data):
     return param_data
 
 
-def _load_tensor_for_layerwise(new_param, old_param):
-    """
-    Replaces parameters with sliced tensors by layerwise parallel strategies.
-
-    Args:
-        new_param (Parameter): The new layerwise parallel parameter, will be loaded into net.
-        old_param(Parameter): The current parameter in the net.
-    """
-    if not isinstance(new_param.data, Tensor) or not isinstance(old_param.data, Tensor):
-        logger.error("Failed to combine the net and the parameters.")
-        msg = ("layerwise parallel parameter should be a Tensor, but got {}.".format(type(new_param.data)))
-        raise TypeError(msg)
-
-    if old_param.data.shape() == new_param.data.shape():
-        return
-
-    from mindspore.parallel._tensor import _load_tensor
-    from mindspore.communication.management import get_group_size
-    dev_mat = [get_group_size()]
-    shape = new_param.data.shape()
-    for x in range(len(shape)):  # dim 0 set 0, others set -1
-        if x:
-            tensor_map.append(-1)
-
-    new_tensor = _load_tensor(new_param.data, dev_mat, tensor_map)
-    new_param.set_parameter_data(new_tensor)
-
-
 def _fill_param_into_net(net, parameter_list):
     """
     Fills parameter_list into net.
@@ -450,7 +414,7 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         _executor.export(net, file_name, file_format)
     elif file_format == 'ONNX':  # file_format is 'ONNX'
         phase_name = 'export_onnx'
-        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name)
+        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(graph_id)
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)

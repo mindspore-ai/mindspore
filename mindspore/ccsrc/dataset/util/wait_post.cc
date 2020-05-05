@@ -36,7 +36,7 @@ void WaitPost::Clear() {
   value_ = 0;
 }
 
-void WaitPost::Register(TaskGroup *vg) { (void)wait_cond_.Register(vg->GetIntrpService()); }
+Status WaitPost::Register(TaskGroup *vg) { return wait_cond_.Register(vg->GetIntrpService()); }
 
 void WaitPost::ResetIntrpState() { wait_cond_.ResetIntrpState(); }
 

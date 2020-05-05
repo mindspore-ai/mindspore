@@ -88,6 +88,8 @@ class Primitive(Primitive_):
         for name in self.attrs:
             value = self.attrs[name]
             cloned.add_prim_attr(name, value)
+        if hasattr(self, 'instance_name'):
+            cloned.set_prim_instance_name(self.instance_name)
         return cloned
 
     def add_prim_attr(self, name, value):
@@ -327,6 +329,10 @@ def _run_op(obj, op_name, args):
         if hasattr(arg, '__parameter__'):
             op_inputs.append(arg.default_input)
             op_mask[i] = 1
+        elif isinstance(arg, tuple):
+            convert = lambda x: x.default_input if hasattr(x, '__parameter__') else x
+            args_ = tuple(convert(x) for x in arg)
+            op_inputs.append(args_)
         else:
             op_inputs.append(arg)
     output = real_run_op(obj, op_name, tuple(op_inputs), tuple(op_mask))

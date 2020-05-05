@@ -55,6 +55,9 @@ void ParallelContext::Reset() {
   parallel_mode_ = STAND_ALONE;
   parameter_broadcast_ = false;
   parameter_broadcast_is_set_ = false;
+  enable_all_reduce_fusion_ = false;
+  strategy_ckpt_load_file_ = "";
+  strategy_ckpt_save_file_ = "";
 }
 
 void ParallelContext::set_device_num(int32_t device_num) {
@@ -100,6 +103,14 @@ bool ParallelContext::set_strategy_search_mode(const std::string &strategy_searc
 void ParallelContext::set_parameter_broadcast(bool parameter_broadcast) {
   parameter_broadcast_ = parameter_broadcast;
   parameter_broadcast_is_set_ = true;
+}
+
+void ParallelContext::set_strategy_ckpt_load_file(const std::string &strategy_ckpt_load_file) {
+  strategy_ckpt_load_file_ = strategy_ckpt_load_file;
+}
+
+void ParallelContext::set_strategy_ckpt_save_file(const std::string &strategy_ckpt_save_file) {
+  strategy_ckpt_save_file_ = strategy_ckpt_save_file;
 }
 
 void ParallelContext::set_all_reduce_fusion_split_indices(const std::vector<uint32_t> indices) {

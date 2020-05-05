@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-void FilterInvaildKernelInfo(const CNodePtr &kernel_node,
+void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
                              std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> filtered_list;
@@ -63,9 +63,9 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
     HcclMetadataInfo(kernel_node, kernel_info_list);
   }
   if (kernel_info_list->empty()) {
-    MS_LOG(EXCEPTION) << "op" << kernel_node->DebugString() << "kernel query fail!";
+    MS_LOG(EXCEPTION) << "Op " << kernel_node->DebugString() << "kernel query fail!";
   }
-  FilterInvaildKernelInfo(kernel_node, kernel_info_list);
+  FilterInvalidKernelInfo(kernel_node, kernel_info_list);
 }
 }  // namespace kernel
 }  // namespace mindspore

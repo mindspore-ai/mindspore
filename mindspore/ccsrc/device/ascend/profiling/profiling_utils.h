@@ -65,6 +65,9 @@ class ProfilingUtils {
                                     NotNull<session::KernelGraph *> graph_ptr,
                                     NotNull<std::vector<CNodePtr> *> kernel_list);
 
+  static void ProfilingTraceJobId(const AnfNodePtr &anf_node, NotNull<session::KernelGraph *> graph_ptr,
+                                  NotNull<std::vector<CNodePtr> *> kernel_list);
+
   // Insert net output profiling node, which tells the device to stop profiling.
   // The notify in struct ProfilingContent should be 'true', which tells the device to send data to host.
   static void ProfilingTraceEnd(const AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
@@ -91,12 +94,14 @@ class ProfilingUtils {
   // And other cnode, like AllReduce, export PROFILING_CUSTOM_1='full name of AllReduce cnode'
   // GetNext, export PROFIFLING_CUSTOM_2='full name fo GetNext cnode'
   // The variable i in PROFILING_CUSTOM_i should start from 1 without interruption.
-  static ProfilingTraceInfo GetProfilingTraceFromEnv(NotNull<session::KernelGraph *> graph_ptr);
+  static ProfilingTraceInfo GetProfilingTraceFromEnv(NotNull<const session::KernelGraph *> graph_ptr);
 
   // Insert two profiling trace points, one in front and one behind
   static void ProfilingCustomOp(const mindspore::AnfNodePtr &anf_node, const ProfilingTraceInfo &profiling_trace_info,
                                 NotNull<session::KernelGraph *> graph_ptr,
                                 NotNull<std::vector<mindspore::CNodePtr> *> kernel_list);
+
+  static std::unordered_map<uint32_t, std::vector<std::string>> graph_kernel_name() { return graph_kernel_name_; }
 
   inline static constexpr char kProfiling[] = "Profiling";
   inline static constexpr char kNotify[] = "notify";
@@ -111,8 +116,11 @@ class ProfilingUtils {
   static std::string GetTraceBegin(const std::vector<CNodePtr> &cnode_exec_order);
   static std::string GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order);
   static std::string GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order);
+  static std::string GetGraphLastTbeKernelName(const std::vector<CNodePtr> &cnode_exec_order);
   static void GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order,
                            NotNull<ProfilingTraceInfo *> profiling_trace);
+  static void GetCNodeOutputRealNode(const std::string &node_name, const std::vector<CNodePtr> &cnode_exec_order,
+                                     NotNull<std::set<std::string> *> getnext_outputs);
 
   // graph id --> (kernel name list)
   static std::unordered_map<uint32_t, std::vector<std::string>> graph_kernel_name_;

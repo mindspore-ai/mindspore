@@ -1,8 +1,14 @@
-file(GLOB_RECURSE _PRE_ACTIVE_ALL_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "ascend/*.cc"
-        "common/*.cc"
-        "pass/*.cc"
-        "gpu/*.cc"
-        )
+file(GLOB_RECURSE _PREDICT_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    "predict.cc"
+    "generator/utils/ir_model_util.cc"
+    "converter/*.cc"
+    "converter/attr_utils/*.cc"
+    "converter/lite_model/*.cc"
+    "converter/lite_model/operations/*.cc"
+)
 
-add_library(_mindspore_pre_active_obj OBJECT ${_PRE_ACTIVE_ALL_SRC_FILES})
+if (ENABLE_D)
+    file(GLOB_RECURSE _D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "generator/ir/*.cc")
+    list(APPEND _PREDICT_SRC_LIST ${_D_SRC_LIST})
+endif ()
+add_library(_mindspore_predict_obj OBJECT ${_PREDICT_SRC_LIST})

@@ -356,6 +356,11 @@ INPUT_MAP(Acosh) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Acosh) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Acosh) = {{0, OUTPUT_DESC(y)}};
 
+// AcoshGrad
+INPUT_MAP(AcoshGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(AcoshGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AcoshGrad) = {{0, OUTPUT_DESC(z)}};
+
 // Floor
 INPUT_MAP(Floor) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Floor) = EMPTY_ATTR_MAP;
@@ -670,28 +675,6 @@ INPUT_MAP(ReluGrad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(ReluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ReluGrad) = {{0, OUTPUT_DESC(backprops)}};
 
-// FusedBatchNorm
-INPUT_MAP(FusedBatchNorm) = {
-  {1, INPUT_DESC(x)}, {2, INPUT_DESC(scale)}, {3, INPUT_DESC(b)}, {4, INPUT_DESC(mean)}, {5, INPUT_DESC(variance)}};
-ATTR_MAP(FusedBatchNorm) = {{"mode", ATTR_DESC(mode, AnyTraits<int64_t>())},
-                            {"momentum", ATTR_DESC(moving_average_fraction, AnyTraits<float>())},
-                            {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
-OUTPUT_MAP(FusedBatchNorm) = {{0, OUTPUT_DESC(y)},
-                              {1, OUTPUT_DESC(running_mean)},
-                              {2, OUTPUT_DESC(running_variance)},
-                              {3, OUTPUT_DESC(save_mean)},
-                              {4, OUTPUT_DESC(save_inv_variance)}};
-
-// FusedBatchNromGrad
-INPUT_MAP(FusedBatchNormGrad) = {{1, INPUT_DESC(dy)},
-                                 {2, INPUT_DESC(x)},
-                                 {3, INPUT_DESC(scale)},
-                                 {4, INPUT_DESC(save_mean)},
-                                 {5, INPUT_DESC(save_inv_variance)}};
-ATTR_MAP(FusedBatchNormGrad) = {{"momentum", ATTR_DESC(momentum, AnyTraits<float>())},
-                                {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
-OUTPUT_MAP(FusedBatchNormGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(bn_scale)}, {2, OUTPUT_DESC(bn_bias)}};
-
 // BiasAddGrad
 INPUT_MAP(BiasAddGrad) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(BiasAddGrad) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
@@ -872,8 +855,8 @@ ATTR_MAP(TransposeD) = EMPTY_ATTR_MAP;
 
 // DropOutGenMask
 INPUT_MAP(DropOutGenMask) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(prob)}};
-ATTR_MAP(DropOutGenMask) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
-                            {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+ATTR_MAP(DropOutGenMask) = {{"Seed0", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                            {"Seed1", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(DropOutGenMask) = {{0, OUTPUT_DESC(y)}};
 
 // Pack

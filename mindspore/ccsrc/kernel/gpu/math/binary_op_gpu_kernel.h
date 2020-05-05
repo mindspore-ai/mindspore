@@ -218,7 +218,7 @@ class BinaryOpGpuKernel : public GpuKernel {
       }
     }
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetOpTensorDescriptor(opTensor_descriptor_, tensor_op_, cudnn_data_type_, CUDNN_NOT_PROPAGATE_NAN),
+      cudnnSetOpTensorDescriptor(opTensor_descriptor_, tensor_op_, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN),
       "cudnnSetOpTensorDescriptor failed");
     return;
   }

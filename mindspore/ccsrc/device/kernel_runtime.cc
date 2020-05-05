@@ -180,7 +180,10 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
       auto device_address =
         CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
       MS_EXCEPTION_IF_NULL(device_address);
-      mem_manager_->MallocMemFromMemPool(device_address, tensor_size);
+      auto ret = mem_manager_->MallocMemFromMemPool(device_address, tensor_size);
+      if (!ret) {
+        MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+      }
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }
   }
@@ -198,6 +201,7 @@ void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel) {
   if (AnfAlgo::GetCNodeName(kernel) == "ApplyMomentum") {
     auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, 0);
     AnfAlgo::SetOutputAddr(device_address, 0, kernel.get());
+    AnfAlgo::SetOutputAddr(device_address, 1, kernel.get());
     return;
   }
 
@@ -209,7 +213,10 @@ void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel) {
     auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
     auto device_address = CreateDeviceAddress(nullptr, output_sizes[i], output_format, output_type);
     MS_EXCEPTION_IF_NULL(device_address);
-    mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
+    auto ret = mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
+    if (!ret) {
+      MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+    }
     AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
   }
 }
@@ -224,7 +231,10 @@ void KernelRuntime::RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel) {
     for (size_t i = 0; i < workspace_lists.size(); ++i) {
       auto device_address = CreateDeviceAddress(nullptr, workspace_lists[i], "", kTypeUnknown);
       MS_EXCEPTION_IF_NULL(device_address);
-      mem_manager_->MallocMemFromMemPool(device_address, workspace_lists[i]);
+      auto ret = mem_manager_->MallocMemFromMemPool(device_address, workspace_lists[i]);
+      if (!ret) {
+        MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+      }
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());
     }
   }

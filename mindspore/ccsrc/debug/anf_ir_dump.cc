@@ -91,6 +91,14 @@ void PrintNodeInputType(std::ostringstream &buffer, const AnfNodePtr &nd) {
   }
 }
 
+void PrintInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &nd) {
+  buffer << "      : (";
+  PrintNodeInputType(buffer, nd);
+  buffer << ") -> (";
+  PrintNodeOutputType(buffer, nd);
+  buffer << ")";
+}
+
 struct SubGraphIRInfo {
   int32_t local_var;
   std::ostringstream buffer;

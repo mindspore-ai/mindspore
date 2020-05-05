@@ -60,6 +60,7 @@ enum OpName {
   kCifar10,
   kCifar100,
   kCelebA,
+  kRandomData,
   kTextFile
 };
 
@@ -141,6 +142,8 @@ class DEPipeline {
   Status ParseCifar10Op(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseCifar100Op(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status ParseRandomDataOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   void PrintTree();
 

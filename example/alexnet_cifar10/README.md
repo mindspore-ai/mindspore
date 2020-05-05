@@ -25,7 +25,7 @@ This is the simple tutorial for training AlexNet in MindSpore.
 python train.py --data_path cifar-10-batches-bin
 ```
 
-You can get loss with each step similar to this:
+You will get the loss value of each step as following:
 
 ```bash
 epoch: 1 step: 1, loss is 2.2791853
@@ -36,17 +36,16 @@ epoch: 1 step: 1538, loss is 1.0221305
 ...
 ```
 
-Then, test AlexNet according to network model
+Then, evaluate AlexNet according to network model
 ```python
-# test AlexNet, 1 epoch training accuracy is up to 51.1%; 10 epoch training accuracy is up to 81.2%
+# evaluate AlexNet, 1 epoch training accuracy is up to 51.1%; 10 epoch training accuracy is up to 81.2%
 python eval.py --data_path cifar-10-verify-bin --mode test --ckpt_path checkpoint_alexnet-1_1562.ckpt
 ```
 
 ## Note
-There are some optional arguments:
+Here are some optional parameters:
 
 ```bash
--h, --help           show this help message and exit
 --device_target {Ascend,GPU}
                      device where the code will be implemented (default: Ascend)
 --data_path DATA_PATH

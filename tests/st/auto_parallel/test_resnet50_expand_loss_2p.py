@@ -31,7 +31,6 @@ from mindspore.train.callback import Callback
 from mindspore.parallel import set_algo_parameters
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(enable_hccl=True)
 context.set_context(enable_task_sink=True, device_id=int(os.getenv('DEVICE_ID')))
 context.set_context(enable_ir_fusion=True)
 context.set_context(enable_loop_sink=False)

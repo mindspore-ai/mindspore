@@ -61,7 +61,8 @@ class SessionBasic {
 
   virtual void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) = 0;
 
-  virtual void BuildOp(const OpRunInfo &, const GraphInfo &, std::vector<tensor::TensorPtr> *input_tensors) {}
+  virtual void BuildOp(const OpRunInfo &, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
+                       const std::vector<bool> &tensors_mask) {}
 
   virtual py::tuple RunOp(const OpRunInfo &, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors) {
     return py::tuple();
@@ -99,9 +100,12 @@ class SessionBasic {
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
   // create a single run op graph
   std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
-                                                      std::vector<tensor::TensorPtr> *input_tensor);
+                                                      const std::vector<tensor::TensorPtr> &input_tensors,
+                                                      const std::vector<bool> &tensors_mask);
   // trans BaseRef list to py::tuple
   BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref);
+  // create a new kernel graph and update the graph sum
+  KernelGraphPtr NewKernelGraph();
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;

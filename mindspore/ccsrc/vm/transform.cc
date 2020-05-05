@@ -390,6 +390,16 @@ void CompileGraph::AddTailCall(const AnfNodePtr &fn, size_t size) {
 void CompileGraph::AddPartial(const CNodePtr &node) {
   auto inputs = node->inputs();
   VectorRef args;
+  auto fn = inputs[1];
+  if (!IsValueNode<FuncGraph>(fn)) {
+    MS_LOG(EXCEPTION) << "The type of 1st input of node must be FuncGraph";
+  }
+  if (backend_->is_multi_graph_sink()) {
+    auto func_graph = GetValueNode<FuncGraphPtr>(fn);
+    args.emplace_back(func_graph);
+    AnfNodePtrList outs(inputs.begin() + 2, inputs.end());
+    backend_->SetGraphUserInputs(func_graph, node->func_graph(), outs);
+  }
   for (size_t i = 1; i < inputs.size(); i++) {
     args.emplace_back(Ref(inputs[i]));
   }
@@ -442,12 +452,17 @@ void CompileGraph::AddPrimitive(const CNodePtr &node, const PrimitivePtr &prim) 
 }
 
 int CompileGraph::AddCall(const FuncGraphPtr &graph, const CNodePtr &node) {
-  auto node_inputs = node->inputs();
-  AnfNodePtr fn = node_inputs[0];
+  auto inputs = node->inputs();
+  AnfNodePtr fn = inputs[0];
+  if (backend_->is_multi_graph_sink() && IsValueNode<FuncGraph>(fn)) {
+    auto func_graph = GetValueNode<FuncGraphPtr>(fn);
+    AnfNodePtrList outs(inputs.begin() + 1, inputs.end());
+    backend_->SetGraphUserInputs(func_graph, node->func_graph(), outs);
+  }
   (void)Ref(fn);
-  size_t size = node_inputs.size();
+  size_t size = inputs.size();
   for (size_t i = size - 1; i > 0; i--) {
-    AddInput(node_inputs[i]);
+    AddInput(inputs[i]);
   }
   if (node == graph->output()) {
     AddTailCall(fn, size);
@@ -471,7 +486,8 @@ void CompileGraph::AddExternal(const LinConvertResult &result) {
 }
 
 void TraverseGraphMap(
-  const FuncGraphManagerPtr &manager_ptr, FuncGraphTransaction *const tr, const FuncGraphToAnfNodeCounterMap &cts,
+  const FuncGraphManagerPtr &manager_ptr, FuncGraphTransaction *const tr,
+  const FuncGraphToAnfNodeCounterMap<AnfNodePtr> &cts,
   const std::function<std::shared_ptr<FuncGraph>(const PrimitivePtr, const AbstractFunctionPtr)> &get_prim_graph) {
   MS_EXCEPTION_IF_NULL(manager_ptr);
   MS_EXCEPTION_IF_NULL(tr);

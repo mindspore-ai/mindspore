@@ -31,7 +31,6 @@
 
 namespace mindspore {
 namespace pynative {
-
 namespace py = pybind11;
 
 enum PynativeStatusCode {
@@ -61,7 +60,6 @@ using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
 OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
 
 const std::set<std::string> ignore_infer_prim = {"partial", "make_ref"};
-
 }  // namespace pynative
 }  // namespace mindspore
 

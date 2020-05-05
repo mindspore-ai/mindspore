@@ -46,6 +46,7 @@ class CSE {
   bool Cse(const FuncGraphPtr root, const FuncGraphManagerPtr manager) const;
 
  private:
+  bool BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) const;
   bool DoReplace(const FuncGraphManagerPtr manager, const std::vector<std::size_t> &order_group,
                  std::unordered_map<std::size_t, std::vector<AnfNodePtr>> *groups) const;
   bool report_changes_;

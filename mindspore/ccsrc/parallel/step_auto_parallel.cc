@@ -40,6 +40,7 @@
 #include "parallel/context.h"
 #include "parallel/ops_info/tmp_identity_info.h"
 #include "parallel/step_parallel.h"
+#include "parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "pipeline/parse/python_adapter.h"
 #include "pipeline/pipeline.h"
 
@@ -339,7 +340,7 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
   return IsParallelCareNode(cnode) && IsSplittableOperator(prim->name());
 }
 
-OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode) {
+OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &cnode, StrategyMap *stra_map) {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(cnode);
   auto attrs = prim->attrs();
@@ -385,9 +386,14 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   operator_info->set_input_value(input_value);
   operator_info->set_outputs_dtype(cnode->Type());
   operator_info->set_cnode(cnode);
+  // key of strategy map
+  std::string strategy_key_name = NodeParameterName(cnode);
+  bool load_strategy_from_ckpt =
+    StrategyCheckpoint::GetInstance().LoadCheckPointOn() && stra_map->find(strategy_key_name) != stra_map->end();
   // If no strategy has been configured for this operator, then candidate strategies are generated for
-  // auto-strategy searching; if this primitive is CAST, we ignore the user-specified strategy
-  if (!StrategyFound(attrs) || prim->name() == CAST) {
+  // auto-strategy searching; if this primitive is CAST, we ignore the user-specified strategy.
+  // if strategy is set to load from checkpoint, it is prefer to load strategy from checkpoint .
+  if ((!StrategyFound(attrs) || prim->name() == CAST) && !load_strategy_from_ckpt) {
     // Compute split_flag_list_, indicating which input has batch dimension. This is ONLY used for preparation for
     // BatchParallelInfo operator
     operator_info->ComputeBatchSplitFlagList();
@@ -397,7 +403,12 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
     }
   } else {
     // In this case, the configured strategy should be extracted to help setting cost
-    StrategyPtr strategyPtr = parallel::ExtractStrategy(attrs);
+    StrategyPtr strategyPtr;
+    if (load_strategy_from_ckpt) {
+      strategyPtr = (*stra_map)[strategy_key_name];
+    } else {
+      strategyPtr = parallel::ExtractStrategy(attrs);
+    }
     if (strategyPtr != nullptr) {
       if (prim->name() == RESHAPE) {
         MS_LOG(EXCEPTION) << "Setting strategy for Reshape goes for nothing!";
@@ -426,14 +437,20 @@ OperatorInfoPtr CreateTheOperatorInfo(const PrimitivePtr &prim, const CNodePtr &
   return operator_info;
 }
 
-Status ConstructCostGraphNodes(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &) {
+// Using CNode's UniqueIds to construct nodes
+Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &) {
   MS_LOG(INFO) << "Constructing nodes for cost graph begins.";
   entire_costgraph = std::make_shared<CostGraph>();
   entire_costgraph->SetDeviceMemoryAndCostParameter();
-  bool new_operator = true, first_operator = true;
-  std::string first_operator_cnode;
-  size_t current_op_index = 0;
-
+  // The map from CNode's UniqueId to its operatorInfo
+  std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
+  // extract strategy from checkpoint for multi-train
+  StrategyMap stra_map;
+  if (StrategyCheckpoint::GetInstance().LoadCheckPointOn()) {
+    if (StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
+    }
+  }
   // Step 1
   for (auto &node : all_nodes) {
     // NOTE: we only care about splittable Primitive operators
@@ -449,13 +466,9 @@ Status ConstructCostGraphNodes(const std::vector<AnfNodePtr> &all_nodes, const F
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
     MS_EXCEPTION_IF_NULL(prim);
 
-    // When visiting the second subgraph, use the corresponding operatorInfo which already created
-    bool modify_new_operator = (new_operator) && (!first_operator) && (cnode->UniqueId() == first_operator_cnode);
-    if (modify_new_operator) {
-      new_operator = false;
-    }
-    if (new_operator) {
-      auto operator_info = CreateTheOperatorInfo(prim, cnode);
+    auto search_cnode = from_cnode_to_info.find(cnode->UniqueId());
+    if (search_cnode == from_cnode_to_info.end()) {
+      auto operator_info = CreateTheOperatorInfo(prim, cnode, &stra_map);
       if (operator_info == nullptr) {
         return FAILED;
       }
@@ -465,14 +478,73 @@ Status ConstructCostGraphNodes(const std::vector<AnfNodePtr> &all_nodes, const F
 
       entire_costgraph->AddOperator(operator_info);
       (void)cnode->set_operator_info(operator_info);
-      if (first_operator) {
-        first_operator_cnode = cnode->UniqueId();
-        first_operator = false;
-      }
+      MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
+                   << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
+                   << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
+      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), operator_info));
       // Needed by rec_parser
       entire_costgraph->add_inputs_tensor_name(inputs_tensor_name);
     } else {
-      auto current_op_ptr = entire_costgraph->FindOperatorByIndex(current_op_index);
+      // Two CNODEs' UniqueIds should not be equal
+      MS_LOG(EXCEPTION) << "The CNode with UniqueId: " << cnode->UniqueId()
+                        << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
+                        << " is set OperatorInfo: " << search_cnode->second->name() << ", Primitive: " << prim->name();
+    }
+  }
+
+  MS_LOG(INFO) << "Constructing nodes for cost graph ends.";
+  return SUCCESS;
+}
+
+// Using CNode's UniqueIdThroughCopys to construct nodes
+Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &) {
+  MS_LOG(INFO) << "Constructing nodes for cost graph begins.";
+  entire_costgraph = std::make_shared<CostGraph>();
+  entire_costgraph->SetDeviceMemoryAndCostParameter();
+  // The map from CNode's UniqueIdThroughCopy to its operatorInfo
+  std::map<std::string, OperatorInfoPtr> from_cnode_to_info;
+  // extract strategy from checkpoint for multi-train
+  StrategyMap stra_map;
+  if (StrategyCheckpoint::GetInstance().LoadCheckPointOn()) {
+    if (StrategyCheckpoint::GetInstance().Load(&stra_map) != SUCCESS) {
+      MS_LOG(EXCEPTION) << "Load strategy checkpoint failed";
+    }
+  }
+  for (auto &node : all_nodes) {
+    // NOTE: we only care about splittable Primitive operators
+    auto cnode = node->cast<CNodePtr>();
+    bool bool_result = (cnode == nullptr) || (!IsValueNode<Primitive>(cnode->input(0)));
+    if (bool_result) {
+      continue;
+    }
+    ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
+    if (!IsAutoParallelCareNode(cnode)) {
+      continue;
+    }
+    PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+
+    // Find the operatorInfo if it exists
+    auto search_cnode = from_cnode_to_info.find(cnode->UniqueIdThroughCopy());
+    if (search_cnode == from_cnode_to_info.end()) {
+      // In this case, the corresponding OperatorInfo is not created, create the new one.
+      auto operator_info = CreateTheOperatorInfo(prim, cnode, &stra_map);
+      if (operator_info == nullptr) {
+        return FAILED;
+      }
+      // Needed by rec_parser
+      operator_info->set_type(prim->name());
+      std::vector<std::string> inputs_tensor_name = ExtractInputsTensorName(cnode);
+
+      entire_costgraph->AddOperator(operator_info);
+      (void)cnode->set_operator_info(operator_info);
+      MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
+                   << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
+                   << " is set OperatorInfo: " << operator_info->name() << ", Primitive: " << prim->name();
+      (void)from_cnode_to_info.emplace(std::make_pair(cnode->UniqueIdThroughCopy(), operator_info));
+      // Needed by rec_parser
+      entire_costgraph->add_inputs_tensor_name(inputs_tensor_name);
+    } else {
+      auto current_op_ptr = search_cnode->second;
       if (current_op_ptr == nullptr) {
         MS_LOG(EXCEPTION) << "Find " << prim->name() << " from CostGraph failed.";
       } else {
@@ -484,13 +556,11 @@ Status ConstructCostGraphNodes(const std::vector<AnfNodePtr> &all_nodes, const F
                             << " does not match the Prim: " << prim->name();
         }
         (void)cnode->set_operator_info(current_op_ptr);
-        current_op_index++;
+        MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
+                     << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
+                     << " is set OperatorInfo: " << current_op_ptr->name() << ", Primitive: " << prim->name();
       }
     }
-  }
-  if ((!new_operator) && (current_op_index != entire_costgraph->GetOperators().size())) {
-    MS_LOG(EXCEPTION) << "The second subgraph's operator number: " << current_op_index
-                      << " does not match the first ones: " << entire_costgraph->GetOperators().size();
   }
 
   MS_LOG(INFO) << "Constructing nodes for cost graph ends.";
@@ -844,11 +914,20 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   // OUTPUT: the determined strategy for each operator.
 
   // Step 1
-  if (ConstructCostGraphNodes(all_nodes, root) == SUCCESS) {
-    MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are " << entire_costgraph->GetOperators().size()
-                 << " operators.";
+  if (CostModelContext::GetInstance()->is_multi_subgraphs()) {
+    if (ConstructCostGraphNodesByUniqueIdTC(all_nodes, root) == SUCCESS) {
+      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
+                   << entire_costgraph->GetOperators().size() << " operators.";
+    } else {
+      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    }
   } else {
-    MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    if (ConstructCostGraphNodesByUniqueId(all_nodes, root) == SUCCESS) {
+      MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are "
+                   << entire_costgraph->GetOperators().size() << " operators.";
+    } else {
+      MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
+    }
   }
 
   // Step 2
@@ -916,7 +995,7 @@ std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::st
 }
 
 Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root) {
-  if (ConstructCostGraphNodes(all_nodes, root) == SUCCESS) {
+  if (ConstructCostGraphNodesByUniqueId(all_nodes, root) == SUCCESS) {
     MS_LOG(INFO) << "Constructing nodes for cost graph succeeded. There are " << entire_costgraph->GetOperators().size()
                  << " operators.";
   } else {
@@ -935,7 +1014,8 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names);
 
   size_t num_device = g_device_manager->DeviceNum();
-  if (PartitionForAllDevices(num_device, graph) == SUCCESS) {
+  double device_memory = entire_costgraph->GetDeviceMemory();
+  if (PartitionForAllDevices(num_device, device_memory, graph) == SUCCESS) {
     MS_LOG(INFO) << "Partition Success With " << num_device << " devices.";
   } else {
     MS_LOG(ERROR) << "PartitionForAllDevices failed.";

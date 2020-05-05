@@ -30,6 +30,12 @@ def generator_10():
         yield np.array([i]),
 
 
+def filter_func_ge(data):
+    if data > 3:
+        return False
+    return True
+
+
 def test_take_01():
     """
     Test take: origin there are 3 row, and take 1 row, in this case: will not meet eoe and eof
@@ -297,6 +303,44 @@ def test_take_16():
     assert sum([1 for _ in data1]) == 5
 
 
+def test_take_17():
+    """
+    Test take: take first, then do fiter operation
+    """
+    logger.info("test_take_17")
+    data1 = ds.GeneratorDataset(generator_10, ["data"])
+
+    data1 = data1.take(8)
+    data1 = data1.filter(predicate=filter_func_ge, num_parallel_workers=4)
+
+    # Here i refers to index, d refers to data element 
+    for i, d in enumerate(data1):
+        assert i == d[0][0]
+
+    assert sum([1 for _ in data1]) == 4
+
+
+def test_take_18():
+    """
+    Test take: take first, then do fiter, skip, batch and repeat operation
+    """
+    logger.info("test_take_18")
+    data1 = ds.GeneratorDataset(generator_10, ["data"])
+
+    data1 = data1.take(8)
+    data1 = data1.filter(predicate=filter_func_ge, num_parallel_workers=4)
+    data1 = data1.skip(2)
+
+    data1 = data1.batch(2)
+    data1 = data1.repeat(2)
+
+    # Here i refers to index, d refers to data element 
+    for i, d in enumerate(data1):
+        assert 2 == d[0][0]
+
+    assert sum([1 for _ in data1]) == 2
+
+
 if __name__ == '__main__':
     test_take_01()
     test_take_02()
@@ -314,4 +358,6 @@ if __name__ == '__main__':
     test_take_14()
     test_take_15()
     test_take_16()
+    test_take_17()
+    test_take_18()
     logger.info('== test take operation finished ==')

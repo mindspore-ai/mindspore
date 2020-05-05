@@ -1,0 +1,18 @@
+{
+  "datasetType": "TF",
+  "numRows": 930059,
+  "columns": {
+    "file_name": {
+      "type": "uint8",
+      "rank": 0
+    },
+    "label": {
+      "type": "int64",
+      "rank": 0
+    },
+    "data": {
+      "type": "uint8",
+      "rank": 0
+    }
+  }
+}

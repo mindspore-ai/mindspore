@@ -31,10 +31,11 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   MS_EXCEPTION_IF_NULL(optimizer);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  bool enable_all_reduce_fusion = ParallelContext::GetInstance()->enable_all_reduce_fusion();
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
-  if (((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) ||
+  if (((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) || (!enable_all_reduce_fusion) ||
       (root->has_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY))) {
     return changes;
   }

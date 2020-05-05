@@ -21,8 +21,10 @@ from mindspore._checkparam import check_int_positive, check_bool
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import identity
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
+from mindspore.common.api import ms_function
 from ..cell import Cell
 from .activation import get_activation
 from ..._checkparam import Validator as validator
@@ -261,7 +263,9 @@ class ClipByNorm(Cell):
         self.expand_dims = P.ExpandDims()
         self.dtype = P.DType()
 
+    @ms_function
     def construct(self, x, clip_norm):
+        """add ms_function decorator for pynative mode"""
         mul_x = F.square(x)
         l2sum = self.cast(self.reduce_sum(mul_x, self.axis), mstype.float32)
         cond = self.greater_(l2sum, self.zero)
@@ -477,7 +481,7 @@ class Unfold(Cell):
     """
     def __init__(self, ksizes, strides, rates, padding="valid"):
         super(Unfold, self).__init__()
-        self.extract_image_patches = P.ExtractImagePatches(ksizes, strides, rates, padding)
+        self.extract_image_patches = inner.ExtractImagePatches(ksizes, strides, rates, padding)
         self.transpose = P.Transpose()
         self.format_NHWC = (0, 2, 3, 1)
         self.format_NCHW = (0, 3, 1, 2)

@@ -18,12 +18,14 @@
 
 #include <string>
 #include <vector>
+#include "ir/dtype/type.h"
 #include "ir/anf.h"
 
 namespace mindspore {
 constexpr char PARALLEL_STRATEGY[] = "strategy";
 void DumpIR(const std::string &filename, const FuncGraphPtr &func_graph, bool dump_full_name = false);
-
+void PrintInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &nd);
+const std::string ToShortString(const TypeId &typeId);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_DEBUG_ANF_IR_DUMP_H_

@@ -27,6 +27,9 @@
 #include <utility>
 #include <vector>
 #include <deque>
+#include <unordered_map>
+
+#include "ir/anf.h"
 #include "utils/base_ref.h"
 
 namespace mindspore {
@@ -60,13 +63,14 @@ const std::vector<std::string> inst_str{"call",  "tail_call", "return", "partial
 class StructPartial : public Base {
  public:
   // Initialize StructPartial.
-  StructPartial(int fn, const VectorRef &args);
+  StructPartial(int fn, const VectorRef &args, const FuncGraphPtr &fg = nullptr);
 
   virtual ~StructPartial() = default;
   MS_DECLARE_PARENT(StructPartial, Base)
 
   int fn_;
   VectorRef args_;
+  FuncGraphPtr fg_;
 };
 
 std::ostream &operator<<(std::ostream &os, const StructPartial &other);
@@ -98,6 +102,8 @@ class FinalVM {
   void InstTailCall(const VectorRef &args);
   void InstReturn(const VectorRef &args);
   void InstPartial(const VectorRef &args);
+  void InstSimuPartial(const VectorRef &args);
+  void InstRealPartial(const VectorRef &args);
   void InstSwitch(const VectorRef &args);
   void InstSimuSwitch(const VectorRef &args);
   void InstRealSwitch(const VectorRef &args);
@@ -120,6 +126,7 @@ class FinalVM {
   void Pushsp();
   void Popsp();
   void DoJmp(const BaseRef &jmp);
+  void MergeJmpArgs(const BaseRef &jmp, const BaseRef &c);
 
  private:
   InstSet insts_;
@@ -128,6 +135,7 @@ class FinalVM {
   std::stack<int> retsp_;
   int pc_;
   int sp_;
+  std::unordered_map<BaseRef, BaseRef, BaseRefHash> cond_jmp_;
   BackendPtr backend_;
   const InstFunctionMap inst_function_map = {
     {Instruction::kCall, [this](const VectorRef &args) { InstCall(args); }},

@@ -18,12 +18,13 @@
 #include <cmath>
 #include <condition_variable>
 #include <future>
+#include <iomanip>
 #include <memory>
 #include <mutex>
 #include <utility>
 #include <unordered_map>
 
-#include "./example.pb.h"
+#include "proto/example.pb.h"
 #include "./securec.h"
 #include "common/utils.h"
 #include "dataset/core/config_manager.h"
@@ -155,6 +156,36 @@ TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64
   worker_connector_size_ = worker_connector_size;
 }
 
+// A print method typically used for debugging
+void TFReaderOp::Print(std::ostream &out, bool show_all) const {
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <TFReaderOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nRows per buffer: " << rows_per_buffer_ << "\nTotal rows: " << total_rows_ << "\nDevice id: " << device_id_
+        << "\nNumber of devices: " << num_devices_ << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no")
+        << "\nDataset files list:\n";
+    for (int i = 0; i < dataset_files_list_.size(); ++i) {
+      out << " " << dataset_files_list_[i];
+    }
+    if (!columns_to_load_.empty()) {
+      out << "\nColumns to load:\n";
+      for (int i = 0; i < columns_to_load_.size(); ++i) {
+        out << " " << columns_to_load_[i];
+      }
+    }
+    out << "\nData Schema:\n";
+    out << *data_schema_ << "\n\n";
+  }
+}
+
 Status TFReaderOp::Init() {
   if (data_schema_->Empty()) {
     RETURN_IF_NOT_OK(CreateSchema(dataset_files_list_[0], columns_to_load_));
@@ -198,7 +229,9 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
   }
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));
   if (num_rows_per_shard_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Number of rows can not be zero");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API TFRecordDataset.Please check file path or dataset API "
+      "validation first.");
   }
   return Status::OK();
 }
@@ -220,7 +253,7 @@ Status TFReaderOp::operator()() {
   // so workers have to be kept alive until the end of the program
   TaskManager::FindMe()->Post();
 
-  io_block_queue_wait_post_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
 
   NotifyToFillIOBlockQueue();
   while (!finished_reading_dataset_) {

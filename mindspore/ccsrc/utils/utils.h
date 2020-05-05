@@ -107,6 +107,7 @@ constexpr auto kLambNextMVOpName = "LambNextMV";
 constexpr auto kConfusionTransposeDOpName = "ConfusionTransposeD";
 constexpr auto kAdamApplyOneWithDecayOpName = "AdamApplyOneWithDecay";
 constexpr auto kBatchNormOpName = "BatchNorm";
+constexpr auto kBatchNormGradOpName = "BatchNormGrad";
 constexpr auto kAdamApplyOneOpName = "AdamApplyOne";
 constexpr auto kDropoutGenMask = "DropoutGenMask";
 constexpr auto kResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
@@ -120,8 +121,12 @@ constexpr auto kStreamActiveOpName = "StreamActive";
 constexpr auto kAssignAddOpName = "AssignAdd";
 constexpr auto kSendOpName = "Send";
 constexpr auto kRecvOpName = "Recv";
-constexpr auto kReluV2OpName = "ReluV2";
+constexpr auto kReluV2OpName = "ReLUV2";
 constexpr auto kReluGradV2OpName = "ReluGradV2";
+constexpr auto kAddNOpName = "AddN";
+constexpr auto kConv2DBackpropInputOpName = "Conv2DBackpropInput";
+constexpr auto kFusionOpConv2DBackpropInputReluGradV2Name = "FusionOp_Conv2DBackpropInput_ReluGradV2";
+constexpr auto kFusionOpConv2DBackpropInputAddNReluGradV2Name = "FusionOp_Conv2DBackpropInput_AddN_ReluGradV2";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -155,6 +160,10 @@ constexpr auto kAttrOutputUsedNum = "output_used_num";
 constexpr auto kAttrHasBias = "has_bias";
 constexpr auto kAttrN = "n";
 constexpr auto kAttrLabelForInsertStreamActive = "label_for_insert_stream_active";
+constexpr auto kAttrFusion = "fusion";
+constexpr auto kAttrGroup = "group";
+constexpr auto kAttrOp = "op";
+constexpr auto kAttrIsTraining = "is_training";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
@@ -177,7 +186,10 @@ constexpr auto kControlDependBehindIndex = 2;
 // index define of depend
 constexpr auto kRealInputIndexInDepend = 1;
 constexpr auto kDependAttachNodeIndex = 2;
-
+// status of kernel select result
+const int kStatusReducePrecision = -1;
+const int kStatusRaisePrecision = 1;
+const int kStatusAllMatched = 0;
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
 constexpr auto kOpFormat_NC1KHKWHWC0 = "NC1KHKWHWC0";

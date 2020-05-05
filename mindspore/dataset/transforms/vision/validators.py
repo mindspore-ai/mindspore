@@ -17,10 +17,11 @@
 import numbers
 from functools import wraps
 
+from mindspore._c_dataengine import TensorOp
+
 from .utils import Inter, Border
 from ...transforms.validators import check_pos_int32, check_pos_float32, check_value, check_uint8, FLOAT_MAX_INTEGER, \
     check_bool, check_2tuple, check_range, check_list, check_type, check_positive, INT32_MAX
-
 
 def check_inter_mode(mode):
     if not isinstance(mode, Inter):
@@ -119,7 +120,7 @@ def check_degrees(degrees):
         degrees = (-degrees, degrees)
     elif isinstance(degrees, (list, tuple)):
         if len(degrees) != 2:
-            raise ValueError("If degrees is a sequence, the length must be 2.")
+            raise TypeError("If degrees is a sequence, the length must be 2.")
     else:
         raise TypeError("Degrees must be a single non-negative number or a sequence")
     return degrees
@@ -836,8 +837,8 @@ def check_uniform_augmentation(method):
         if not isinstance(operations, list):
             raise ValueError("operations is not a python list")
         for op in operations:
-            if not callable(op):
-                raise ValueError("non-callable op in operations list")
+            if not isinstance(op, TensorOp):
+                raise ValueError("operations list only accepts C++ operations.")
 
         kwargs["num_ops"] = num_ops
         kwargs["operations"] = operations

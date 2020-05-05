@@ -42,10 +42,10 @@ std::vector<int64_t> ConvertAnyUtil(const ValuePtr &value, const std::string &na
       MS_LOG(EXCEPTION) << "Value should be ValueTuple, but got" << value->type_name();
     }
     auto vec = value->cast<ValueSequeuePtr>();
-    list.resize(vec->value().size()+2);
+    list.resize(vec->value().size() + 2);
     list[0] = 1;
     list[1] = 1;
-    (void)std::transform(vec->value().begin(), vec->value().end(), list.begin()+2,
+    (void)std::transform(vec->value().begin(), vec->value().end(), list.begin() + 2,
                          [](const ValuePtr &val) { return static_cast<int64_t>(GetValue<int>(val)); });
   } else {
     int64_t data = GetValue<int>(value);

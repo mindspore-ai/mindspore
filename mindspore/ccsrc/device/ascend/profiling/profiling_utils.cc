@@ -33,7 +33,7 @@ constexpr char kIterEndNode[] = "PROFILING_ITER_END";
 std::unordered_map<uint32_t, std::vector<std::string>> ProfilingUtils::graph_kernel_name_;
 uint32_t ProfilingUtils::custom_node_index_ = 1;
 
-ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<session::KernelGraph *> graph_ptr) {
+ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const session::KernelGraph *> graph_ptr) {
   MS_LOG(INFO) << "get env start";
   custom_node_index_ = 1;
   auto &cnode_exec_order = graph_ptr->execution_order();
@@ -73,9 +73,45 @@ void ProfilingUtils::GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order,
 
 std::string ProfilingUtils::GetTraceBegin(const std::vector<CNodePtr> &cnode_exec_order) {
   const char *trace_begin = std::getenv(kFpStartNode);
-  auto &first_cnode = cnode_exec_order.front();
-  MS_EXCEPTION_IF_NULL(first_cnode);
-  return trace_begin == nullptr ? first_cnode->fullname_with_scope() : std::string(trace_begin);
+  if (trace_begin != nullptr) {
+    return std::string(trace_begin);
+  }
+
+  std::string fp_start_str = "";
+  std::set<std::string> getnext_outputs;
+  GetCNodeOutputRealNode(kGetNextOpName, cnode_exec_order, NOT_NULL(&getnext_outputs));
+  if (getnext_outputs.empty()) {
+    auto first_node = cnode_exec_order.front();
+    MS_EXCEPTION_IF_NULL(first_node);
+    fp_start_str = first_node->fullname_with_scope();
+  } else {
+    for (auto &cnode : cnode_exec_order) {
+      if (getnext_outputs.count(cnode->fullname_with_scope()) != 0) {
+        fp_start_str = cnode->fullname_with_scope();
+        break;
+      }
+    }
+  }
+  return fp_start_str;
+}
+
+void ProfilingUtils::GetCNodeOutputRealNode(const std::string &node_name, const std::vector<CNodePtr> &cnode_exec_order,
+                                            NotNull<std::set<std::string> *> getnext_outputs) {
+  for (auto cnode : cnode_exec_order) {
+    for (auto input : cnode->inputs()) {
+      auto prev_cnode = AnfAlgo::VisitKernel(input, 0);
+      if (!prev_cnode.first->isa<CNode>()) {
+        continue;
+      }
+      if (AnfAlgo::GetCNodeName(prev_cnode.first) == node_name) {
+        getnext_outputs->insert(cnode->fullname_with_scope());
+        MS_LOG(INFO) << "Find GetNext Output CNode:" << cnode->fullname_with_scope();
+      }
+    }
+  }
+  if (getnext_outputs->empty()) {
+    MS_LOG(WARNING) << "GetNext not found";
+  }
 }
 
 std::string ProfilingUtils::GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order) {
@@ -112,18 +148,29 @@ std::string ProfilingUtils::GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exe
   }
 
   if (bp_end_str.empty()) {
-    auto last_cnode = cnode_exec_order.back();
-    MS_EXCEPTION_IF_NULL(last_cnode);
-    bp_end_str = last_cnode->fullname_with_scope();
+    bp_end_str = GetGraphLastTbeKernelName(cnode_exec_order);
   }
   return bp_end_str;
 }
 
+std::string ProfilingUtils::GetGraphLastTbeKernelName(const std::vector<CNodePtr> &cnode_exec_order) {
+  std::string last_tbe_kernel_name = "";
+  // find last tbe_kernel
+  for (auto iter = cnode_exec_order.rbegin(); iter != cnode_exec_order.rend(); ++iter) {
+    if (AnfAlgo::GetKernelType(*iter) == TBE_KERNEL) {
+      last_tbe_kernel_name = (*iter)->fullname_with_scope();
+      break;
+    }
+  }
+  if (last_tbe_kernel_name.empty()) {
+    MS_LOG(WARNING) << "tbe kernel not found in graph";
+  }
+  return last_tbe_kernel_name;
+}
+
 std::string ProfilingUtils::GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order) {
   const char *trace_netoutput = std::getenv(kIterEndNode);
-  auto &last_cnode = cnode_exec_order.back();
-  MS_EXCEPTION_IF_NULL(last_cnode);
-  return trace_netoutput == nullptr ? last_cnode->fullname_with_scope() : std::string(trace_netoutput);
+  return trace_netoutput == nullptr ? GetGraphLastTbeKernelName(cnode_exec_order) : std::string(trace_netoutput);
 }
 
 NotNull<CNodePtr> ProfilingUtils::CreateProfilingCNode(const ProfilingContent &profiling_content,
@@ -158,15 +205,20 @@ void ProfilingUtils::ProfilingTraceFpStart(const mindspore::AnfNodePtr &anf_node
                                            NotNull<std::vector<mindspore::CNodePtr> *> kernel_list) {
   if (profiling_trace_info.trace_begin == anf_node->fullname_with_scope()) {
     MS_LOG(INFO) << "Profiling Match FpStart:" << profiling_trace_info.trace_begin;
-    auto job_id = ProfilingManager::GetInstance().GetJobId();
-    ProfilingContent job_profiling_context = {false, job_id, 0};
-    auto job_profiling_node = CreateProfilingCNodeWithStream(anf_node, job_profiling_context, graph_ptr);
-    kernel_list->emplace_back(job_profiling_node);
-
+    ProfilingTraceJobId(anf_node, graph_ptr, kernel_list);
     ProfilingContent fp_profiling_content = {false, kProfilingFpStartLogId, 0};
     auto fp_profiling_node = CreateProfilingCNodeWithStream(anf_node, fp_profiling_content, graph_ptr);
     kernel_list->emplace_back(fp_profiling_node);
   }
+}
+
+void ProfilingUtils::ProfilingTraceJobId(const AnfNodePtr &anf_node, NotNull<session::KernelGraph *> graph_ptr,
+                                         NotNull<std::vector<CNodePtr> *> kernel_list) {
+  MS_LOG(INFO) << "Profiling Match start";
+  auto job_id = ProfilingManager::GetInstance().GetJobId();
+  ProfilingContent job_profiling_context = {false, job_id, 0};
+  auto job_profiling_node = CreateProfilingCNodeWithStream(anf_node, job_profiling_context, graph_ptr);
+  kernel_list->emplace_back(job_profiling_node);
 }
 
 CNodePtr ProfilingUtils::CreateProfilingCNodeWithStream(const mindspore::AnfNodePtr &anf_node,

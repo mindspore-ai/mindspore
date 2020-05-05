@@ -79,7 +79,7 @@ def test_InsertGradientOf_2():
 summary = P.ScalarSummary()
 def debug_gradient(dx):
     """ debug_gradient """
-    dx = summary("dx: ", dx)
+    summary("dx: ", dx)
     return dx
 
 debug = P.InsertGradientOf(debug_gradient)

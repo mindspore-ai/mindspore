@@ -18,15 +18,15 @@ Interfaces for parser module in c++.
 
 from .parser import (Parser, create_obj_instance, generate_scope,
                      get_bprop_method_of_class, get_class_instance_type,
-                     get_class_member_namespace_symbol,
+                     get_class_member_namespace_symbol, create_slice_obj,
                      get_dataclass_attributes, get_dataclass_methods,
                      get_module_namespace, get_obj_type, get_object_key,
                      get_parse_method_of_class, get_scope_name,
-                     is_class_member, parse_cb, resolve_symbol)
+                     is_class_member, parse_cb, resolve_symbol, create_ellipsis_obj)
 from .serialize import *
 
 __all__ = ['parse_cb', 'get_parse_method_of_class', 'get_bprop_method_of_class', 'resolve_symbol',
            'get_object_key', 'get_class_instance_type', 'is_class_member', 'get_obj_type',
            'create_obj_instance', 'get_module_namespace', 'get_class_member_namespace_symbol',
            'Parser', 'get_dataclass_attributes', 'get_dataclass_methods', 'dump_obj', 'load_obj',
-           'get_dataclass_methods', 'get_scope_name']
+           'get_dataclass_methods', 'get_scope_name', 'create_slice_obj', 'create_ellipsis_obj']

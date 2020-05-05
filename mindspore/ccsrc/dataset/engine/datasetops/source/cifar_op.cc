@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <utility>
 
 #include "common/utils.h"
@@ -149,7 +150,7 @@ Status CifarOp::LaunchThreadsAndInitOp() {
     RETURN_STATUS_UNEXPECTED("tree_ not set");
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  wp_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(
     tree_->AllTasks()->CreateAsyncTask("Get cifar data block", std::bind(&CifarOp::ReadCifarBlockDataAsync, this)));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&CifarOp::WorkerEntry, this, std::placeholders::_1)));
@@ -225,9 +226,19 @@ Status CifarOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Dat
 }
 
 void CifarOp::Print(std::ostream &out, bool show_all) const {
-  DatasetOp::Print(out, show_all);
-  out << "\nnumber of parallel workers:" << num_workers_ << "\nNumber of rows:" << num_rows_
-      << "\nCifar Directory: " << folder_path_ << "\n-------------------------\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <CifarOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nNumber of rows:" << num_rows_ << "\nCifar directory: " << folder_path_ << "\n\n";
+  }
 }
 
 // Reset Sampler and wakeup Master thread (functor)
@@ -247,7 +258,10 @@ Status CifarOp::InitSampler() {
 // Derived from RandomAccessOp
 Status CifarOp::GetNumSamples(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
+    std::string err_msg = "There is no valid data matching the dataset API " + api +
+                          ".Please check file path or dataset API validation first.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
   (*num) = num_samples_;
   return Status::OK();
@@ -256,7 +270,10 @@ Status CifarOp::GetNumSamples(int64_t *num) const {
 // Derived from RandomAccessOp
 Status CifarOp::GetNumRowsInDataset(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
+    std::string err_msg = "There is no valid data matching the dataset API " + api +
+                          ".Please check file path or dataset API validation first.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
   (*num) = num_rows_;
   return Status::OK();
@@ -389,7 +406,10 @@ Status CifarOp::ParseCifarData() {
   num_rows_ = cifar_image_label_pairs_.size();
   num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   if (num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Init Cifar failed, not a single row read from dataset!");
+    std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
+    std::string err_msg = "There is no valid data matching the dataset API " + api +
+                          ".Please check file path or dataset API validation first.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
   cifar_raw_data_block_->Reset();
   return Status::OK();

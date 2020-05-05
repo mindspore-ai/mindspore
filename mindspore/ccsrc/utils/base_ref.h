@@ -228,6 +228,8 @@ T cast(const BaseRef &handle) {
 
 class VectorRef : public BaseRef {
  public:
+  using value_type = BaseRef;
+
   VectorRef() {}
   explicit VectorRef(const std::vector<BaseRef> &elements) : elements_(elements) {}
   VectorRef(const const_iterator &begin, const const_iterator &end) : elements_(begin, end) {}
@@ -245,6 +247,13 @@ class VectorRef : public BaseRef {
   MS_DECLARE_PARENT(VectorRef, BaseRef)
 
   const BaseRef &operator[](const std::size_t &dim) const {
+    if (dim >= size()) {
+      MS_LOG(EXCEPTION) << "Out of the size of the tuple.";
+    }
+    return elements_[dim];
+  }
+
+  BaseRef &operator[](const std::size_t &dim) {
     if (dim >= size()) {
       MS_LOG(EXCEPTION) << "Out of the size of the tuple.";
     }

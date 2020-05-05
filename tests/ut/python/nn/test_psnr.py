@@ -18,8 +18,10 @@ test psnr
 import numpy as np
 import pytest
 import mindspore.nn as nn
+from mindspore.common import dtype as mstype
 from mindspore.common.api import _executor
 from mindspore import Tensor
+
 
 
 class PSNRNet(nn.Cell):
@@ -59,3 +61,38 @@ def test_psnr_max_val_zero():
     max_val = 0
     with pytest.raises(ValueError):
         net = PSNRNet(max_val)
+
+def test_psnr_different_shape():
+    shape_1 = (8, 3, 16, 16)
+    shape_2 = (8, 3, 8, 8)
+    img1 = Tensor(np.random.random(shape_1))
+    img2 = Tensor(np.random.random(shape_2))
+    net = PSNRNet()
+    with pytest.raises(ValueError):
+        _executor.compile(net, img1, img2)
+
+def test_psnr_different_dtype():
+    dtype_1 = mstype.float32
+    dtype_2 = mstype.float16
+    img1 = Tensor(np.random.random((8, 3, 16, 16)), dtype=dtype_1)
+    img2 = Tensor(np.random.random((8, 3, 16, 16)), dtype=dtype_2)
+    net = PSNRNet()
+    with pytest.raises(TypeError):
+        _executor.compile(net, img1, img2)
+
+def test_psnr_invalid_5d_input():
+    shape_1 = (8, 3, 16, 16)
+    shape_2 = (8, 3, 8, 8)
+    invalid_shape = (8, 3, 16, 16, 1)
+    img1 = Tensor(np.random.random(shape_1))
+    invalid_img1 = Tensor(np.random.random(invalid_shape))
+    img2 = Tensor(np.random.random(shape_2))
+    invalid_img2 = Tensor(np.random.random(invalid_shape))
+
+    net = PSNRNet()
+    with pytest.raises(ValueError):
+        _executor.compile(net, invalid_img1, img2)
+    with pytest.raises(ValueError):
+        _executor.compile(net, img1, invalid_img2)
+    with pytest.raises(ValueError):
+        _executor.compile(net, invalid_img1, invalid_img2)

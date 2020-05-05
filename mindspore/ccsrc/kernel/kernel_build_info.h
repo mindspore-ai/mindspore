@@ -82,6 +82,9 @@ class KernelBuildInfo {
 
   bool operator==(const KernelBuildInfo &other) const;
 
+ public:
+  static auto constexpr kInvalidFormat = "InvalidFormat";
+
  private:
   KernelType kernel_type_;
   std::vector<std::string> inputs_format_;

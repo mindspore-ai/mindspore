@@ -55,12 +55,16 @@ Status ParallelOp::CreateWorkerConnector(int32_t worker_connector_size) {
 
 // A print method typically used for debugging
 void ParallelOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  DatasetOp::Print(out, show_all);
-
-  // Then show our own stuff
-  out << "ParallelOp:";
-  out << "\n  Num workers                   : " << num_workers_ << "\n";
+  // Summary 1-liner print
+  if (!show_all) {
+    out << " [workers: " << num_workers_ << "]";
+    // Call super class printer
+    DatasetOp::Print(out, show_all);
+  } else {
+    // Detailed print
+    DatasetOp::Print(out, show_all);
+    out << "\nNum workers: " << num_workers_;
+  }
 }
 
 // Override base class reset to provide reset actions specific to the ParallelOp class.

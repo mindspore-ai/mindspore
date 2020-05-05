@@ -27,6 +27,7 @@
 namespace mindspore {
 namespace opt {
 void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  MS_LOG(INFO) << "start common opt graph:" << kernel_graph->graph_id();
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->save_graphs_flag();

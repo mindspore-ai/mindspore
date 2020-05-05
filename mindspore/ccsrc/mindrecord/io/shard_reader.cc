@@ -316,6 +316,10 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
 }
 
 MSRStatus ShardReader::GetAllClasses(const std::string &category_field, std::set<std::string> &categories) {
+  if (column_schema_id_.find(category_field) == column_schema_id_.end()) {
+    MS_LOG(ERROR) << "Field " << category_field << " does not exist.";
+    return FAILED;
+  }
   auto ret = ShardIndexGenerator::GenerateFieldName(std::make_pair(column_schema_id_[category_field], category_field));
   if (SUCCESS != ret.first) {
     return FAILED;
@@ -346,7 +350,8 @@ void ShardReader::GetClassesInShard(sqlite3 *db, int shard_id, const std::string
     MS_LOG(ERROR) << "Error in select sql statement, sql:" << common::SafeCStr(sql) << ", error: " << errmsg;
     return;
   }
-  MS_LOG(INFO) << "Get" << static_cast<int>(columns.size()) << " records from shard " << shard_id << " index.";
+  MS_LOG(INFO) << "Get " << static_cast<int>(columns.size()) << " records from shard " << shard_id << " index.";
+  std::lock_guard<std::mutex> lck(shard_locker_);
   for (int i = 0; i < static_cast<int>(columns.size()); ++i) {
     categories.emplace(columns[i][0]);
   }
@@ -718,6 +723,11 @@ int64_t ShardReader::GetNumClasses(const std::string &file_path, const std::stri
   for (auto &field : index_fields) {
     map_schema_id_fields[field.second] = field.first;
   }
+
+  if (map_schema_id_fields.find(category_field) == map_schema_id_fields.end()) {
+    MS_LOG(ERROR) << "Field " << category_field << " does not exist.";
+    return -1;
+  }
   auto ret =
     ShardIndexGenerator::GenerateFieldName(std::make_pair(map_schema_id_fields[category_field], category_field));
   if (SUCCESS != ret.first) {
@@ -904,7 +914,7 @@ vector<std::string> ShardReader::GetAllColumns() {
   } else {
     columns = selected_columns_;
   }
-  return std::move(columns);
+  return columns;
 }
 
 MSRStatus ShardReader::CreateTasksByBlock(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,

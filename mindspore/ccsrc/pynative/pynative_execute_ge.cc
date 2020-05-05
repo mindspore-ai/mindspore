@@ -33,7 +33,6 @@ const char SINGLE_OP_GRAPH[] = "single_op_graph";
 
 namespace mindspore {
 namespace pynative {
-
 using MeTensor = mindspore::tensor::Tensor;
 using MeTensorPtr = mindspore::tensor::TensorPtr;
 using GeOperator = ge::Operator;
@@ -307,5 +306,4 @@ py::object RunOpInGE(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   return std::move(result);
 }
 }  // namespace pynative
-
 }  // namespace mindspore

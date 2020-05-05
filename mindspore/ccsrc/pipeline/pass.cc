@@ -108,6 +108,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   });
   opt::OptPassConfig a_3 = opt::OptPassConfig({
     irpass.same_eliminate_,
+    irpass.check_bprop_eliminate_,
     irpass.replace_applicator_,
   });
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
@@ -205,14 +206,15 @@ bool OptPassGroup(const ResourcePtr &res, const std::string &name) {
     return false;
   }
 
-  abstract::AbstractBasePtrList args = res->args_spec();
   FuncGraphPtr func_graph = res->func_graph();
   MS_LOG(DEBUG) << "Start " << name << " func graph:" << func_graph->ToString() << ", "
                 << func_graph->get_return()->DebugString(true);
   InitOpt(res);
   if (g_pass_opts.find(name) != g_pass_opts.end()) {
-    res->set_func_graph(g_pass_opts[name]->step(func_graph, args));
+    res->set_func_graph(g_pass_opts[name]->step(func_graph));
   }
+  // Note: StepParallel may modify the AbstractValue of the parameters of func_graph, but they are not updated to
+  // res->args_spec_ yet. So if any later pass or action want to use that variable, it should be set here.
   return true;
 }
 
@@ -255,10 +257,9 @@ bool ValidatePass(const ResourcePtr &res) {
 bool InferenceOptPreparePass(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  abstract::AbstractBasePtrList args_spec = res->args_spec();
   auto prepare_map = GetInferenceOptPreparePhases();
   auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("inference_prepare", res, prepare_map);
-  (void)infer_opt_prepare->step(func_graph, args_spec, false);
+  (void)infer_opt_prepare->step(func_graph, false);
   return true;
 }
 

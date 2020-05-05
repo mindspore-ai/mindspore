@@ -16,7 +16,7 @@
 
 import numpy as np
 from mindspore._checkparam import Rel
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 
 
 def avg_pooling(x, pool_h, pool_w, stride):
@@ -32,7 +32,7 @@ def avg_pooling(x, pool_h, pool_w, stride):
     Returns:
         numpy.ndarray, an output array after applying average pooling on input array.
     """
-    validator.check_integer("stride", stride, 0, Rel.GT)
+    validator.check_integer("stride", stride, 0, Rel.GT, None)
     num, channel, height, width = x.shape
     out_h = (height - pool_h)//stride + 1
     out_w = (width - pool_w)//stride + 1
@@ -217,7 +217,7 @@ def conv2d(x, weight, bias=None, stride=1, pad=0,
            dilation=1, groups=1, padding_mode='zeros'):
     """Convolution 2D."""
     # pylint: disable=unused-argument
-    validator.check_type('stride', stride, (int, tuple))
+    validator.check_value_type('stride', stride, (int, tuple), None)
     if isinstance(stride, int):
         stride = (stride, stride)
     elif len(stride) == 4:
@@ -229,7 +229,7 @@ def conv2d(x, weight, bias=None, stride=1, pad=0,
                          f"a tuple of two positive int numbers, but got {stride}")
     stride_h = stride[0]
     stride_w = stride[1]
-    validator.check_type('dilation', dilation, (int, tuple))
+    validator.check_value_type('dilation', dilation, (int, tuple), None)
     if isinstance(dilation, int):
         dilation = (dilation, dilation)
     elif len(dilation) == 4:
@@ -384,7 +384,7 @@ def matmul(x, w, b=None):
 
 def max_pooling(x, pool_h, pool_w, stride):
     """Max pooling."""
-    validator.check_integer("stride", stride, 0, Rel.GT)
+    validator.check_integer("stride", stride, 0, Rel.GT, None)
     num, channel, height, width = x.shape
     out_h = (height - pool_h)//stride + 1
     out_w = (width - pool_w)//stride + 1
@@ -427,7 +427,7 @@ def max_pool_grad_with_argmax(x, dout, arg_max, pool_h, pool_w, stride):
 
 def max_pool_with_argmax(x, pool_h, pool_w, stride):
     """Max pooling with argmax."""
-    validator.check_integer("stride", stride, 0, Rel.GT)
+    validator.check_integer("stride", stride, 0, Rel.GT, None)
     num, channel, height, width = x.shape
     out_h = (height - pool_h)//stride + 1
     out_w = (width - pool_w)//stride + 1

@@ -195,6 +195,8 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
         param = func_graph->NewCNode({NewValueNode(prim::kPrimGetRefKey), param});
       }
       // If sig is SignatureEnumRW::kRWRef, not do anything.
+    } else if (sig == SignatureEnumRW::kRWWrite && type->type_id() != kObjectTypeRefKey) {
+      MS_EXCEPTION(TypeError) << "Function " << func_name << "'s input " << i << " should be a Parameter.";
     }
     // add cast op here
     if (assign_source != nullptr && sig != SignatureEnumRW::kRWWrite) {

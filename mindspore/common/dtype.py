@@ -85,13 +85,16 @@ list_ = typing.List()
 tuple_ = typing.Tuple()
 tensor = typing.TensorType()
 function = typing.Function()
+function_type = typing.Function
 symbolic_key = typing.SymbolicKeyType()
 env_type = typing.EnvType()
+env_type_type = typing.EnvType
 type_type = typing.TypeType()
 type_none = typing.TypeNone()
 string = typing.String()
 type_refkey = typing.RefKeyType()
 tensor_type = typing.TensorType
+anything_type = typing.TypeAnything
 
 number_type = (int8,
                int16,

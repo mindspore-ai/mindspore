@@ -97,7 +97,7 @@ PYBIND11_MODULE(_c_expression, m) {
               py::arg("batch_size"), py::arg("types"), py::arg("shapes"), py::arg("input_indexs"),
               py::arg("phase") = py::str("dataset"), "Init and exec dataset.");
   (void)m.def("_set_dataset_mode_config", &mindspore::ConfigManager::SetDatasetModeConfig, "API for set dataset mode.");
-  (void)m.def("init_ge", &mindspore::pipeline::InitGe, "Init GE");
+  (void)m.def("init_backend", &mindspore::pipeline::InitBackend, "Init Backend.");
 
   (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, "Export Graph.");
 
@@ -115,8 +115,6 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_device_id", &mindspore::MsContext::set_device_id, "Set device id.")
     .def("open_tsd", &mindspore::MsContext::OpenTsd, "Open tdt dataset client.")
     .def("close_tsd", &mindspore::MsContext::CloseTsd, "Close tdt dataset client.")
-    .def("set_hccl_flag", &mindspore::MsContext::set_enable_hccl, "Set enable hccl.")
-    .def("get_hccl_flag", &mindspore::MsContext::enable_hccl, "Get whether to enable hccl.")
     .def("set_task_sink_flag", &mindspore::MsContext::set_enable_task_sink, "Set enable task sink.")
     .def("get_task_sink_flag", &mindspore::MsContext::enable_task_sink, "Get whether to enable task sink.")
     .def("get_save_graphs_flag", &mindspore::MsContext::save_graphs_flag, "Get whether to save graphs.")
@@ -183,10 +181,20 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set all reduce fusion split sizes.")
     .def("get_all_reduce_fusion_split_sizes", &ParallelContext::all_reduce_fusion_split_sizes,
          "Get all reduce fusion split sizes.")
+    .def("set_enable_all_reduce_fusion", &ParallelContext::set_enable_all_reduce_fusion,
+         "Set enable/disable all reduce fusion.")
+    .def("get_enable_all_reduce_fusion", &ParallelContext::enable_all_reduce_fusion,
+         "Get enable/disable all reduce fusion.")
     .def("get_parameter_broadcast", &ParallelContext::parameter_broadcast, "Get parameter broadcast.")
     .def("get_parameter_broadcast_is_set", &ParallelContext::parameter_broadcast_is_set,
          "Get parameter broadcast is set.")
     .def("set_parameter_broadcast", &ParallelContext::set_parameter_broadcast, "Set parameter broadcast.")
+    .def("set_strategy_ckpt_load_file", &ParallelContext::set_strategy_ckpt_load_file,
+         "Set strategy checkpoint load file.")
+    .def("set_strategy_ckpt_save_file", &ParallelContext::set_strategy_ckpt_save_file,
+         "Set strategy checkpoint save file.")
+    .def("get_strategy_ckpt_load_file", &ParallelContext::strategy_ckpt_load_file, "Get strategy checkpoint load file.")
+    .def("get_strategy_ckpt_save_file", &ParallelContext::strategy_ckpt_save_file, "Get strategy checkpoint save file.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")
@@ -206,10 +214,6 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the parameter cost_model_gamma of the DP algorithm")
     .def("get_costmodel_gamma", &CostModelContext::costmodel_gamma,
          "Get the parameter cost_model_gamma of the DP algorithm.")
-    .def("set_simplify_cal", &CostModelContext::set_costmodel_simplify_cal,
-         "Set the parameter cost_model_simplify_cal of the DP algorithm.")
-    .def("get_simplify_cal", &CostModelContext::costmodel_simplify_cal,
-         "Get the parameter cost_model_simplify_cal of the DP algorithm.")
     .def("set_costmodel_communi_threshold", &CostModelContext::set_costmodel_communi_threshold,
          "Set the parameter cost_model_communi_threshold of the DP algorithm.")
     .def("get_costmodel_communi_threshold", &CostModelContext::costmodel_communi_threshold,
@@ -222,6 +226,8 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the parameter cost_model_communi_bias of the DP algorithm.")
     .def("get_costmodel_communi_bias", &CostModelContext::costmodel_communi_bias,
          "Get the parameter cost_model_communi_bias of the DP algorithm.")
+    .def("set_multi_subgraphs", &CostModelContext::set_multi_subgraphs, "Set the parameter is_multi_subgraphs.")
+    .def("get_multi_subgraphs", &CostModelContext::is_multi_subgraphs, "Get the parameter is_multi_subgraphs.")
     .def("set_costmodel_allreduce_fusion_algorithm", &CostModelContext::set_costmodel_allreduce_fusion_algorithm,
          "Set the parameter gradient AllReduce fusion algorithm.")
     .def("get_costmodel_allreduce_fusion_algorithm", &CostModelContext::costmodel_allreduce_fusion_algorithm,

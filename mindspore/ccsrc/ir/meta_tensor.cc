@@ -164,11 +164,9 @@ Tensor::Tensor(const py::float_ &input, const TypePtr &data_type) { init(py::arr
 Tensor::Tensor(const py::int_ &input, const TypePtr &data_type) { init(py::array(input), data_type); }
 
 Tensor::Tensor(const Tensor &tensor, const TypePtr &data_type)
-    : MetaTensor(tensor), dirty_(tensor.dirty_), device_address_(tensor.device_address_) {
+    : MetaTensor(tensor), device_address_(tensor.device_address_) {
   init(tensor.data_, data_type);
-  if (device_address_ != nullptr) {
-    (void)data_sync();
-  }
+  dirty_ = tensor.is_dirty();
 }
 
 Tensor &Tensor::operator=(const Tensor &tensor) {
@@ -183,14 +181,6 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
 
 bool Tensor::operator==(const Tensor &tensor) const {
   return (MetaTensor::operator==(tensor) && data_ == tensor.data_);
-}
-
-bool Tensor::ValueEqualPy(const py::object &other) const {
-  if (!py::isinstance<Tensor>(other)) {
-    MS_LOG(WARNING) << "compare other not a tensor";
-    return false;
-  }
-  return ValueEqual(py::cast<Tensor>(other));
 }
 
 bool Tensor::ValueEqual(const Tensor &other) const {
@@ -302,6 +292,7 @@ void Tensor::init(const py::array &input, const TypeId &data_type) {
   } else {
     data_ = input;
   }
+  dirty_ = true;
 }
 
 void Tensor::init(TypeId data_type, const std::vector<int> &shape, py::array *const data) {
@@ -542,7 +533,6 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                              )mydelimiter")
                            .def("__str__", &Tensor::ToString)
                            .def("__repr__", &Tensor::ToStringRepr)
-                           .def("__eq__", &Tensor::ValueEqualPy)
                            .def(py::pickle(
                              [](const Tensor &t) {  // __getstate__
                                /* Return a tuple that fully encodes the state of the object */

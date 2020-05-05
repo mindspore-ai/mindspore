@@ -466,5 +466,23 @@ Status DataSchema::PreLoadExceptionCheck(const nlohmann::json &js) {
                   "\"columns\" node is required in the schema json file.");
   return Status::OK();
 }
+
+// Loops through all columns in the schema and returns a map with the column
+// name to column index number.
+Status DataSchema::GetColumnNameMap(std::unordered_map<std::string, int32_t> *out_column_name_map) {
+  if (out_column_name_map == nullptr) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "unexpected null output column name map.");
+  }
+
+  for (int32_t i = 0; i < col_descs_.size(); ++i) {
+    if (col_descs_[i].name().empty()) {
+      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+                    "Constructing column name map from schema, but found empty column name.");
+    }
+    (*out_column_name_map)[col_descs_[i].name()] = i;
+  }
+
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

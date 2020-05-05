@@ -46,7 +46,8 @@ def compilewithjson(json_str):
         impl_path = os.path.realpath(kernel_info['impl_path'])
         if os.path.isfile(impl_path):
             custom_mod_name = Path(impl_path).resolve().stem
-            mod_spec = importlib.util.spec_from_file_location(custom_mod_name, impl_path)
+            mod_spec = importlib.util.spec_from_file_location(
+                custom_mod_name, impl_path)
             custom_mod = importlib.util.module_from_spec(mod_spec)
             mod_spec.loader.exec_module(custom_mod)
             op_func = getattr(custom_mod, op_name, None)
@@ -57,7 +58,8 @@ def compilewithjson(json_str):
             op_func = getattr(gpu, op_name, None)
 
     if op_func is None:
-        logging.error("this op not supported, please check op name %s", str(op_name))
+        logging.error(
+            "this op not supported, please check op name %s", str(op_name))
         return False
 
     args = {}
@@ -87,25 +89,16 @@ def compilewithjson(json_str):
 
     output = op_func(**args)
 
-    schedule_func = None
-    attrs = {}
     if isinstance(output, (list, tuple)):
         from inspect import isfunction
         tmp_outputs = []
         for elem in output:
-            if isfunction(elem):
-                schedule_func = elem
-            elif isinstance(elem, dict):
-                for key, value in elem.items():
-                    if key not in attrs or not attrs[key]:
-                        attrs[key] = value
-            else:
+            if not isfunction(elem) or isinstance(elem, dict):
                 tmp_outputs.append(elem)
 
         output = tmp_outputs
     else:
         output = [output]
 
-
     tsr = tsr + [i for i in output if TensorUtils.is_output_value(i)]
-    return op_build([op_name], output, tsr, schedule_func, processor, kernel_info['op'], attrs)
+    return op_build([op_name], output, tsr, processor, kernel_info['op'])

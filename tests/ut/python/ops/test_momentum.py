@@ -38,8 +38,7 @@ def tensor_run_opt(opt, iters, learning_rate, momentum,
                    gradient, variable, moment):
     """ tensor_run_opt """
     success = True
-    new_weight = opt(gradient, moment, variable,
-                     learning_rate, momentum)
+    new_weight = opt(variable, moment, learning_rate, gradient, momentum)[0]
     success = F.depend(success, F.assign(variable, new_weight))
     return success
 

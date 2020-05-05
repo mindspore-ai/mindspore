@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "dataset/engine/datasetops/barrier_op.h"
+#include <iomanip>
 #include <utility>
 #include "dataset/core/constants.h"
 #include "dataset/engine/data_buffer.h"
@@ -65,8 +66,8 @@ Status BarrierOp::operator()() {
   TaskManager::FindMe()->Post();
 
   // create child iterator, right now this barrier is a pipeline operator
-  int32_t worker_id = 0;
-  int32_t child_idx = 0;
+  const int32_t worker_id = 0;
+  const int32_t child_idx = 0;
   child_iterator_ = std::make_unique<ChildIterator>(this, worker_id, child_idx);
 
   // Loop until eof is true
@@ -214,10 +215,19 @@ Status BarrierOp::getNextTensorRow(TensorRow *new_row) {
 
 // A function that prints info about the Operator
 void BarrierOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  PipelineOp::Print(out, show_all);
-  out << "\nBarrierOp:\n"
-      << "\nCondition " << condition_name_ << "\n\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <BarrierOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nCondition: " << condition_name_ << "\n\n";
+  }
 }
 
 // overwrite function and handle eof

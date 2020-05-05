@@ -16,7 +16,7 @@
 #include "dataset/engine/datasetops/source/mnist_op.h"
 
 #include <fstream>
-
+#include <iomanip>
 #include "common/utils.h"
 #include "dataset/core/config_manager.h"
 #include "dataset/core/tensor_shape.h"
@@ -190,9 +190,19 @@ Status MnistOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Dat
 }
 
 void MnistOp::Print(std::ostream &out, bool show_all) const {
-  DatasetOp::Print(out, show_all);
-  out << "\nnumber of parallel workers:" << num_workers_ << "\nNumber of rows:" << num_rows_
-      << "\nMNIST Directory: " << folder_path_ << "\n-------------------------\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <MnistOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nNumber of rows:" << num_rows_ << "\nMNIST Directory: " << folder_path_ << "\n\n";
+  }
 }
 
 // Reset Sampler and wakeup Master thread (functor)
@@ -212,7 +222,9 @@ Status MnistOp::InitSampler() {
 // Derived from RandomAccessOp
 Status MnistOp::GetNumSamples(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API MnistDataset.Please check file path or dataset API "
+      "validation first.");
   }
   (*num) = num_samples_;
   return Status::OK();
@@ -393,7 +405,7 @@ Status MnistOp::LaunchThreadsAndInitOp() {
     RETURN_STATUS_UNEXPECTED("tree_ not set");
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  wp_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&MnistOp::WorkerEntry, this, std::placeholders::_1)));
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(this->WalkAllFiles());
@@ -436,7 +448,9 @@ Status MnistOp::CountTotalRows(const std::string &dir, int64_t numSamples, int64
 // Derived from RandomAccessOp
 Status MnistOp::GetNumRowsInDataset(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API MnistDataset.Please check file path or dataset API "
+      "validation first.");
   }
   (*num) = num_rows_;
   return Status::OK();

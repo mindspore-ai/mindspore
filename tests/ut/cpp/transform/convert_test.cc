@@ -147,13 +147,13 @@ TEST_F(TestConvert, TestReluOps) {
 }
 
 TEST_F(TestConvert, TestConvertBatchNorm) {
-  PrimitivePtr fused_batch_norm = prim::kPrimFusedBatchNorm;
-  fused_batch_norm->AddAttr("epsilon", MakeValue(0.001f));
-  fused_batch_norm->AddAttr("momentum", MakeValue(0.1f));
+  PrimitivePtr batch_norm = prim::kPrimBatchNorm;
+  batch_norm->AddAttr("epsilon", MakeValue(0.001f));
+  batch_norm->AddAttr("momentum", MakeValue(0.1f));
 
   FuncGraphPtr anf_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(fused_batch_norm));
+  inputs.push_back(NewValueNode(batch_norm));
   for (unsigned int i = 0; i < 5; i++) {
     inputs.push_back(anf_graph->add_parameter());
   }

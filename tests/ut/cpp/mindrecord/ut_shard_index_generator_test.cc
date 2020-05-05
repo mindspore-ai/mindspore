@@ -53,38 +53,6 @@ class TestShardIndexGenerator : public UT::Common {
   TestShardIndexGenerator() {}
 };
 
-/*
-TEST_F(TestShardIndexGenerator, GetField) {
-  MS_LOG(INFO) << FormatInfo("Test ShardIndex: get field");
-
-  int max_num = 1;
-  string input_path1 = install_root + "/test/testCBGData/data/annotation.data";
-  std::vector<json> json_buffer1;  // store the image_raw_meta.data
-  Common::LoadData(input_path1, json_buffer1, max_num);
-
-  MS_LOG(INFO) << "Fetch fields: ";
-  for (auto &j : json_buffer1) {
-    auto v_name = ShardIndexGenerator::GetField("anno_tool", j);
-    auto v_attr_name = ShardIndexGenerator::GetField("entity_instances.attributes.attr_name", j);
-    auto v_entity_name = ShardIndexGenerator::GetField("entity_instances.entity_name", j);
-    vector<string> names = {"\"CVAT\""};
-    for (unsigned int i = 0; i != names.size(); i++) {
-      ASSERT_EQ(names[i], v_name[i]);
-    }
-    vector<string> attr_names = {"\"脸部评分\"", "\"特征点\"", "\"points_example\"", "\"polyline_example\"",
-                                 "\"polyline_example\""};
-    for (unsigned int i = 0; i != attr_names.size(); i++) {
-      ASSERT_EQ(attr_names[i], v_attr_name[i]);
-    }
-    vector<string> entity_names = {"\"276点人脸\"", "\"points_example\"", "\"polyline_example\"",
-                                   "\"polyline_example\""};
-    for (unsigned int i = 0; i != entity_names.size(); i++) {
-      ASSERT_EQ(entity_names[i], v_entity_name[i]);
-    }
-  }
-}
-*/
-
 TEST_F(TestShardIndexGenerator, TakeFieldType) {
   MS_LOG(INFO) << FormatInfo("Test ShardSchema: take field Type");
 

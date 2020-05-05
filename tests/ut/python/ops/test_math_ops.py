@@ -17,6 +17,7 @@ import functools
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
+from mindspore.common.api import _executor
 from mindspore.common import dtype as mstype
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore import Tensor
@@ -340,6 +341,15 @@ class SignNet(nn.Cell):
     def construct(self, x):
         return self.sign(x)
 
+class AssignAdd(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.op = P.AssignAdd()
+        self.inputdata = Parameter(initializer(1, [1], ms.float32), name="global_step")
+
+    def construct(self, input_):
+        self.inputdata = input_
+        return self.op(self.inputdata, input_)
 
 test_case_math_ops = [
     ('MatMulGrad', {
@@ -412,6 +422,9 @@ raise_set = [
     ('StridedSlice_4_Error', {
         'block': (lambda x: P.StridedSlice(new_axis_mask="1.1"), {'exception': TypeError}),
         'desc_inputs': [0]}),
+    ('AssignAdd_Error', {
+        'block': (P.AssignAdd(), {'exception': TypeError}),
+        'desc_inputs': [[1]]}),
 ]
 
 

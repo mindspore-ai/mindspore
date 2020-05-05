@@ -111,6 +111,9 @@ class ImageNetToMR:
                 image_file = open(file_name, "rb")
                 image_bytes = image_file.read()
                 image_file.close()
+                if not image_bytes:
+                    logger.warning("The image file: {} is invalid.".format(file_name))
+                    continue
                 data["data"] = image_bytes
                 yield data
 

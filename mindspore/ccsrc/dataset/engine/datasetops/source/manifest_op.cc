@@ -17,6 +17,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <nlohmann/json.hpp>
 
 #include "common/utils.h"
@@ -140,7 +141,7 @@ Status ManifestOp::LaunchThreadsAndInitOp() {
     RETURN_STATUS_UNEXPECTED("tree_ not set");
   }
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
-  wp_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
 
   RETURN_IF_NOT_OK(
     tree_->LaunchWorkers(num_workers_, std::bind(&ManifestOp::WorkerEntry, this, std::placeholders::_1)));
@@ -239,9 +240,19 @@ Status ManifestOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<
 }
 
 void ManifestOp::Print(std::ostream &out, bool show_all) const {
-  DatasetOp::Print(out, show_all);
-  out << "\nnumber of parallel workers:" << num_workers_ << "\nNumber of rows:" << num_rows_
-      << "\nManifest file: " << file_ << "\n-------------------------\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <ManifestOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nNumber of rows:" << num_rows_ << "\nManifest file: " << file_ << "\n\n";
+  }
 }
 
 // Reset Sampler and wakeup Master thread (functor)
@@ -261,7 +272,9 @@ Status ManifestOp::InitSampler() {
 // Derived from RandomAccessOp
 Status ManifestOp::GetNumSamples(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
+      "validation first.");
   }
   (*num) = num_samples_;
   return Status::OK();
@@ -270,7 +283,9 @@ Status ManifestOp::GetNumSamples(int64_t *num) const {
 // Derived from RandomAccessOp
 Status ManifestOp::GetNumRowsInDataset(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumRow not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
+      "validation first.");
   }
   (*num) = num_rows_;
   return Status::OK();
@@ -279,7 +294,7 @@ Status ManifestOp::GetNumRowsInDataset(int64_t *num) const {
 // Derived from RandomAccessOp
 Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_labelname_.empty()) {
-    RETURN_STATUS_UNEXPECTED("Number rows is 0");
+    RETURN_STATUS_UNEXPECTED("Class indexing is invalid.");
   }
 
   for (size_t i = 0; i < image_labelname_.size(); i++) {
@@ -395,7 +410,9 @@ Status ManifestOp::CountDatasetInfo() {
   num_rows_ = static_cast<int64_t>(image_labelname_.size());
   num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   if (num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Number of rows is 0");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
+      "validation first.");
   }
   return Status::OK();
 }

@@ -125,6 +125,7 @@ const char kNameSplitD[] = "Split";
 const char kNameBatchToSpaceNd[] = "BatchToSpaceNd";
 const char kNameFloor[] = "Floor";
 const char kNameNPUGetFloatStatus[] = "NPUGetFloatStatus";
+const char kNameAssign[] = "Assign";
 const char kNameAssignAdd[] = "AssignAdd";
 const char kNameAssignSub[] = "AssignSub";
 const char kNameNPUAllocFloatStatus[] = "NPUAllocFloatStatus";
@@ -178,6 +179,7 @@ const char kNameBinaryCrossEntropyGrad[] = "BinaryCrossEntropyGrad";
 const char kNameSparseApplyAdagrad[] = "SparseApplyAdagrad";
 const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
 const char kNameAcosh[] = "Acosh";
+const char kNameAcoshGrad[] = "AcoshGrad";
 const char kNameFloorMod[] = "FloorMod";
 const char kNameSpaceToDepth[] = "SpaceToDepth";
 const char kNameDepthToSpace[] = "DepthToSpace";
@@ -220,7 +222,6 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimAssign->name(), ADPT_DESC(Assign)},
     {prim::kPrimStateSetItem->name(), ADPT_DESC(Assign)},
     {prim::kPrimReluGrad->name(), ADPT_DESC(ReluGrad)},
-    {prim::kPrimFusedBatchNormGrad->name(), ADPT_DESC(FusedBatchNormGrad)},
     {prim::kPrimBiasAddGrad->name(), ADPT_DESC(BiasAddGrad)},
     {prim::kPrimConv2D->name(), ADPT_DESC(Conv2D)},
     {prim::kPrimConv2DBackpropInput->name(), ADPT_DESC(Conv2DBackpropInputD)},
@@ -228,7 +229,6 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimDepthwiseConv2dNative->name(), ADPT_DESC(DepthwiseConv2D)},
     {prim::kPrimDepthwiseConv2dNativeBackpropFilter->name(), ADPT_DESC(DepthwiseConv2DBackpropFilterD)},
     {prim::kPrimDepthwiseConv2dNativeBackpropInput->name(), ADPT_DESC(DepthwiseConv2DBackpropInputD)},
-    {prim::kPrimFusedBatchNorm->name(), ADPT_DESC(FusedBatchNorm, BatchNorm)},
     {string(kNameBatchNorm), ADPT_DESC(BatchNorm)},
     {string(kNameBatchNormGrad), ADPT_DESC(BatchNormGrad)},
     {string(kNameReshape), ADPT_DESC(Reshape)},
@@ -376,6 +376,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameSparseApplyAdagrad), ADPT_DESC(SparseApplyAdagradD)},
     {string(kNameSparseApplyFtrlD), ADPT_DESC(SparseApplyFtrlD)},
     {string(kNameAcosh), ADPT_DESC(Acosh)},
+    {string(kNameAcoshGrad), ADPT_DESC(AcoshGrad)},
     {string(kNameFloorMod), ADPT_DESC(FloorMod)},
     {string(kNameSpaceToDepth), ADPT_DESC(SpaceToDepth)},
     {string(kNameDepthToSpace), ADPT_DESC(DepthToSpace)},
@@ -625,7 +626,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     auto node_itor = params_.find(name);
     // if name not in params_, create a node in graph
     if (node_itor == params_.end()) {
-      MS_LOG(WARNING) << "" << name << " is not in params, and create a new node.";
+      MS_LOG(WARNING) << name << " is not in params, and create a new node.";
       ParameterPtr param = anf_graph_->add_parameter();
       name = name + "_temp";
       param->set_name(name);
@@ -1158,6 +1159,8 @@ void DfGraphConvertor::SetOpControlInput(const AnfNodePtr node) {
   }
 }
 
+const std::vector<std::string> trans_var_list = {string(kNameAssign), string(kNameAssignAdd), string(kNameAssignSub)};
+
 void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node) {
   OperatorPtr src = Convert(node);
   auto &inputs = node->inputs();
@@ -1169,6 +1172,26 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     // skip the None input
     if (IsValueNode<None>(pred)) {
       continue;
+    }
+    // transform "Const" op to "Variable" op when the next node is "Assign" op.
+    std::string c_name = GetCNodeFuncName(node);
+    auto pos = std::find(trans_var_list.begin(), trans_var_list.end(), c_name);
+    if (!training_ && pos != trans_var_list.end() && pred->isa<Parameter>()) {
+      std::string name = std::static_pointer_cast<Parameter>(pred)->name();
+      auto op_itor = op_cache_.find(pred.get());
+      if (op_itor == op_cache_.end()) {
+        MS_LOG(EXCEPTION) << "Can not find op for node " << pred->ToString() << ".";
+      }
+      if (op_itor->second != nullptr &&
+          (op_itor->second->GetOpType() == "Constant" || op_itor->second->GetOpType() == "Const") &&
+          vars_.find(name) != vars_.end()) {
+        auto variable = std::make_shared<Variable>(name);
+        auto desc = vars_[name]->GetOutputDesc("y");
+        (void)variable->update_output_desc_y(desc);
+        MS_LOG(DEBUG) << "Trans to variable, var = " << variable->GetName() << ".";
+        op_itor->second = variable;  // replace parameter with variable
+        vars_[name] = variable;
+      }
     }
     // find in out_hadnle_cache_ first
     auto it = out_handle_cache_.find(pred.get());

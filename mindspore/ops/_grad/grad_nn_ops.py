@@ -18,6 +18,7 @@ from mindspore.common import dtype as mstype
 from .. import functional as F
 from .. import operations as P
 from ..operations import _grad_ops as G
+from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from .grad_base import bprop_getters
 
@@ -29,6 +30,7 @@ def get_bprop_bias_add(self):
 
     def bprop(x, w, out, dout):
         return dout, bias_grad(dout)
+
     return bprop
 
 
@@ -49,18 +51,19 @@ def get_bprop_conv2d(self):
         dx = input_grad(dout, w, get_shape(x))
         dw = filter_grad(dout, x, get_shape(w))
         return dx, dw
+
     return bprop
 
 
-@bprop_getters.register(P.ExtractImagePatches)
+@bprop_getters.register(inner.ExtractImagePatches)
 def get_bprop_extract_image_patches(self):
     """Grad definition for `ExtractImagePatches` operation."""
     get_shape = P.Shape()
     reshape = P.Reshape()
-    extract_image_patches = P.ExtractImagePatches(ksizes=self.ksizes,
-                                                  strides=self.strides,
-                                                  rates=self.rates,
-                                                  padding=self.padding)
+    extract_image_patches = inner.ExtractImagePatches(ksizes=self.ksizes,
+                                                      strides=self.strides,
+                                                      rates=self.rates,
+                                                      padding=self.padding)
     concat = P.Concat(axis=-1)
     expand_dims = P.ExpandDims()
     scatter_nd = P.ScatterNd()
@@ -104,6 +107,7 @@ def get_bprop_extract_image_patches(self):
         dx = transpose(dx, (2, 0, 1, 3))
 
         return (dx,)
+
     return bprop
 
 
@@ -124,6 +128,7 @@ def get_bprop_depthwise_conv2d_native(self):
         dx = input_grad(get_shape(x), w, dout)
         dw = filter_grad(x, get_shape(w), dout)
         return dx, dw
+
     return bprop
 
 
@@ -133,11 +138,12 @@ def get_bprop_max_pool_with_argmax(self):
     maxpool_grad = G.MaxPoolGradWithArgmax(
         ksize=self.ksize,
         strides=self.strides,
-        padding=self.padding,)
+        padding=self.padding)
 
     def bprop(x, out, dout):
         dx = maxpool_grad(x, dout[0], out[1])
         return (dx,)
+
     return bprop
 
 
@@ -152,6 +158,7 @@ def get_bprop_max_pool_grad(self):
     def bprop(x, out, dout):
         dx = maxpool_grad(x, out, dout)
         return (dx,)
+
     return bprop
 
 
@@ -192,6 +199,7 @@ def get_bprop_dropout_gen_mask(self):
 
     def bprop(shape, keep_prob, out, dout):
         return (zeros_like(shape), zeros_like(keep_prob))
+
     return bprop
 
 
@@ -202,6 +210,7 @@ def get_bprop_dropout_do_mask(self):
 
     def bprop(x, y, keep_prob, out, dout):
         return (do_mask(dout, y, keep_prob), zeros_like(y), zeros_like(keep_prob))
+
     return bprop
 
 
@@ -213,6 +222,7 @@ def get_bprop_relu(self):
     def bprop(x, out, dout):
         dx = input_grad(dout, out)
         return (dx,)
+
     return bprop
 
 
@@ -224,6 +234,7 @@ def get_bprop_relu6(self):
     def bprop(x, out, dout):
         dx = input_grad(dout, x)
         return (dx,)
+
     return bprop
 
 
@@ -236,6 +247,7 @@ def get_bprop_relu_v2(self):
         mask = out[1]
         dx = input_grad(dout[0], mask)
         return (dx,)
+
     return bprop
 
 
@@ -247,6 +259,7 @@ def get_bprop_hswish(self):
     def bprop(x, out, dout):
         dx = input_grad(dout, x)
         return (dx,)
+
     return bprop
 
 
@@ -258,6 +271,7 @@ def get_bprop_hsigmoid(self):
     def bprop(x, out, dout):
         dx = input_grad(dout, x)
         return (dx,)
+
     return bprop
 
 
@@ -267,8 +281,9 @@ def get_bprop_elu(self):
     input_grad = G.EluGrad()
 
     def bprop(x, out, dout):
-        dx = input_grad(dout, x)
+        dx = input_grad(dout, out)
         return (dx,)
+
     return bprop
 
 
@@ -280,6 +295,7 @@ def get_bprop_sigmoid(self):
     def bprop(x, out, dout):
         dx = input_grad(out, dout)
         return (dx,)
+
     return bprop
 
 
@@ -294,6 +310,7 @@ def get_bprop_softmax(self):
     def bprop(x, out, dout):
         dx = mul(sub(dout, sum_func(mul(dout, out), axis)), out)
         return (dx,)
+
     return bprop
 
 
@@ -305,6 +322,7 @@ def get_bprop_log_softmax(self):
     def bprop(x, out, dout):
         dx = logsoftmax_grad(out, dout)
         return (dx,)
+
     return bprop
 
 
@@ -316,6 +334,7 @@ def get_bprop_tanh(self):
     def bprop(x, out, dout):
         dx = logsoftmax_grad(out, dout)
         return (dx,)
+
     return bprop
 
 
@@ -327,6 +346,7 @@ def get_bprop_gelu(self):
     def bprop(x, out, dout):
         dx = input_grad(dout, x, out)
         return (dx,)
+
     return bprop
 
 
@@ -343,6 +363,7 @@ def get_bprop_fused_batch_norm(self):
         dscale = out[1]
         dbias = out[2]
         return dx, dscale, dbias, zeros_like(mean), zeros_like(variance)
+
     return bprop
 
 
@@ -364,6 +385,7 @@ def get_bprop_batch_norm(self):
         dscale = out[1]
         dbias = out[2]
         return dx, dscale, dbias, zeros_like(mean), zeros_like(variance)
+
     return bprop
 
 
@@ -375,6 +397,7 @@ def get_bprop_layer_norm(self):
     def bprop(x, gamma, beta, out, dout):
         dx, d_gamma, d_beta = layer_norm_grad(x, dout[0], out[2], out[1], gamma)
         return dx, d_gamma, d_beta
+
     return bprop
 
 
@@ -386,6 +409,7 @@ def get_bprop_l2normalize(self):
     def bprop(x, out, dout):
         dx = input_grad(x, out, dout)
         return (dx,)
+
     return bprop
 
 
@@ -398,6 +422,7 @@ def get_bprop_softmax_cross_entropy_with_logits(self):
         grad = out[1]
         grad = grad * expand(dout[0], -1)
         return grad, zeros_like(labels)
+
     return bprop
 
 
@@ -415,6 +440,7 @@ def get_bprop_sparse_softmax_cross_entropy_with_logits(self):
             grad = F.depend(grad, out)
             grad = grad * dout
         return grad, zeros_like(labels)
+
     return bprop
 
 
@@ -426,6 +452,7 @@ def get_bprop_resize_bilinear(self):
     def bprop(x, out, dout):
         dx = resize_grad(dout, x)
         return (dx,)
+
     return bprop
 
 
@@ -434,7 +461,8 @@ def get_bprop_onehot(self):
     """Grad definition for `OneHot` operation."""
 
     def bprop(indices, depth, on_value, off_value, out, dout):
-        return zeros_like(indices), zeros_like(depth)
+        return zeros_like(indices), zeros_like(depth), zeros_like(on_value), zeros_like(off_value)
+
     return bprop
 
 
@@ -451,6 +479,7 @@ def get_bprop_top_kv2(self):
         updates = dout[0]
         shapes = shape_op(input_x)
         return scatter(indices, updates, shapes), zeros_like(k)
+
     return bprop
 
 
@@ -516,6 +545,7 @@ def get_bprop_lstm(self):
         dx, dhx, dcx = lstm_grad_data(y, dy, dhy, dcy, w, hx, cx, reserve, state)
         dw = lstm_grad_weight(F.depend(x, dx), hx, y, reserve, state)
         return dx, dhx, dcx, dw
+
     return bprop
 
 
@@ -527,6 +557,7 @@ def get_bprop_sigmoid_crossentropy_with_logits(self):
     def bprop(x, y, out, dout):
         dx = op(x, y, dout)
         return (dx, zeros_like(y))
+
     return bprop
 
 
@@ -543,6 +574,7 @@ def get_bprop_pad(self):
         shp = shape_op(x)
         dx = P.Slice()(dout, begin, shp)
         return (dx,)
+
     return bprop
 
 
@@ -554,6 +586,7 @@ def get_bprop_mirror_pad(self):
     def bprop(x, paddings, out, dout):
         dx = mirror_pad_grad(dout, paddings, x)
         return (dx, zeros_like(paddings))
+
     return bprop
 
 

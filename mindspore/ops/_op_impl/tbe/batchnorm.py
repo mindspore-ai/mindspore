@@ -36,19 +36,18 @@ batch_norm_op_info = TBERegOp("BatchNorm") \
     .output(2, "batch_variance", False, "required", "all") \
     .output(3, "reserve_space_1", False, "optional", "all") \
     .output(4, "reserve_space_2", False, "optional", "all") \
-    .output(5, "reserve_space_3", False, "optional", "all") \
     .dtype_format(DataType.F16_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.F32_Default, DataType.F16_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+                  DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD,
-                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+                  DataType.F32_5HD, DataType.F32_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+                  DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
-                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+                  DataType.F32_5HD, DataType.F32_5HD) \
     .get_op_info()
 
 

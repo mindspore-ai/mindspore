@@ -27,6 +27,7 @@ assign_op_info = TBERegOp("Assign") \
     .input(1, "value", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.I8_5HD, DataType.I8_5HD, DataType.I8_5HD) \
     .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
     .dtype_format(DataType.U8_5HD, DataType.U8_5HD, DataType.U8_5HD) \

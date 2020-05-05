@@ -289,6 +289,21 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic["shape"] = shape;
     dic["dtype"] = abs_base->BuildType();
     dic["value"] = BuildValue(abs_base->BuildValue());
+  } else if (abs_base->isa<AbstractSlice>()) {
+    auto arg_slice = dyn_cast<AbstractSlice>(abs_base);
+    std::vector<int> shape;
+    dic["shape"] = shape;
+    dic["dtype"] = arg_slice->BuildType();
+    dic["value"] = BuildValue(arg_slice->BuildValue());
+  } else if (abs_base->isa<AbstractRef>()) {
+    auto value = abs_base->cast<AbstractRefPtr>()->ref();
+    dic = ConvertAbstractToPython(value);
+  } else if (abs_base->isa<AbstractEllipsis>()) {
+    auto arg_slice = dyn_cast<AbstractEllipsis>(abs_base);
+    std::vector<int> shape;
+    dic["shape"] = shape;
+    dic["dtype"] = arg_slice->BuildType();
+    dic["value"] = BuildValue(arg_slice->BuildValue());
   } else if (abs_base->isa<AbstractTuple>()) {
     auto arg_tuple = dyn_cast<AbstractTuple>(abs_base);
     size_t len = arg_tuple->size();
@@ -320,6 +335,10 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
   } else if (abs_base->isa<AbstractNone>()) {
     dic["shape"] = py::none();
     dic["dtype"] = py::none();
+    dic["value"] = py::none();
+  } else if (abs_base->isa<AbstractFunction>()) {
+    dic["shape"] = py::none();
+    dic["dtype"] = abs_base->BuildType();
     dic["value"] = py::none();
   } else {
     auto value = abs_base->BuildValue();
@@ -398,6 +417,10 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
 AbstractBasePtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
   MS_LOG(DEBUG) << "Eval for:" << prim_py_->ToString();
 
+  const auto &iter = cache_->find(args);
+  if (iter != cache_->end()) {
+    return iter->second;
+  }
   auto py_args = PreparePyInputs(prim_py_, args);
 
   auto pyobj = prim_py_->GetPyObj();
@@ -411,6 +434,7 @@ AbstractBasePtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const A
   auto res_spec = PyInferRes2Abstract(prim_py_, output);
 
   MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
+  (*cache_)[args] = res_spec;
   return res_spec;
 }
 

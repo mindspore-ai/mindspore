@@ -44,6 +44,7 @@ namespace parallel {
 #define DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE 16
 #define DEFAULT_FULLY_USE_DEVICES true
 #define DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW false
+#define DEFAULT_IS_MULTI_SUBGRAPHS false
 
 class CostGraph;
 using CostGraphPtr = std::shared_ptr<CostGraph>;

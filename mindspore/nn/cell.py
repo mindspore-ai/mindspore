@@ -22,7 +22,7 @@ from ..common import dtype as mstype
 from ..common.api import _executor
 from .._checkparam import _check_str_by_regular
 from ..common.parameter import Parameter, ParameterTuple
-from .._c_expression import init_ge
+from .._c_expression import init_backend
 from ..ops.primitive import Primitive
 from ..parallel._tensor import _load_tensor_by_layout
 from ..parallel._utils import _get_parallel_mode
@@ -56,7 +56,7 @@ class Cell:
         >>>    def construct(self, x):
         >>>        return self.relu(x)
     """
-    def __init__(self, auto_prefix=True):
+    def __init__(self, auto_prefix=True, flags=None):
         self._params = OrderedDict()
         self._cells = OrderedDict()
         self.training = False
@@ -66,7 +66,7 @@ class Cell:
         self._phase = 'train'
         self._parameter_layout_dict = {}
         self._create_time = int(time.time() * 1e9)
-        init_ge()
+        init_backend()
         # call gc to release GE session resources used by non-used cell objects
         gc.collect()
         self._construct_inputs_num = 0
@@ -74,6 +74,8 @@ class Cell:
         if _get_parallel_mode() in ["auto_parallel", "semi_auto_parallel"]:
             self._get_construct_inputs_number_and_name()
         self._parallel_inputs_run = None
+        if flags:
+            self.add_flags(**flags)
 
     @property
     def create_time(self):
@@ -606,6 +608,11 @@ class Cell:
         for cell in self.cells():
             cell.add_flags_recursive(**flags)
         return self
+
+    def get_flags(self):
+        if not hasattr(self, "_mindspore_flags"):
+            self._mindspore_flags = {}
+        return self._mindspore_flags
 
     def to_float(self, dst_type):
         """

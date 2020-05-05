@@ -168,7 +168,7 @@ class ResNet(nn.Cell):
         self.conv1 = _conv7x7(3, 64, stride=2)
         self.bn1 = _bn(64)
         self.relu = P.ReLU()
-        self.maxpool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
 
         self.layer1 = self._make_layer(block,
                                        layer_nums[0],
@@ -227,7 +227,7 @@ class ResNet(nn.Cell):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        c1, argmax = self.maxpool(x)
+        c1 = self.maxpool(x)
 
         c2 = self.layer1(c1)
         c3 = self.layer2(c2)
@@ -256,6 +256,26 @@ def resnet50(class_num=10):
     """
     return ResNet(ResidualBlock,
                   [3, 4, 6, 3],
+                  [64, 256, 512, 1024],
+                  [256, 512, 1024, 2048],
+                  [1, 2, 2, 2],
+                  class_num)
+
+def resnet101(class_num=1001):
+    """
+    Get ResNet101 neural network.
+
+    Args:
+        class_num (int): Class number.
+
+    Returns:
+        Cell, cell instance of ResNet101 neural network.
+
+    Examples:
+        >>> net = resnet101(1001)
+    """
+    return ResNet(ResidualBlock,
+                  [3, 4, 23, 3],
                   [64, 256, 512, 1024],
                   [256, 512, 1024, 2048],
                   [1, 2, 2, 2],

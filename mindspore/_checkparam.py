@@ -128,7 +128,7 @@ class Validator:
 
     @staticmethod
     def check_number(arg_name, arg_value, value, rel, prim_name):
-        """Integer value judgment."""
+        """Number value judgment."""
         rel_fn = Rel.get_fns(rel)
         if not rel_fn(arg_value, value):
             rel_str = Rel.get_strs(rel).format(value)
@@ -210,7 +210,7 @@ class Validator:
                 type_names = []
                 for t in valid_values:
                     type_names.append(str(t))
-                types_info = '[' + ", ".join(type_names) + ']'
+                types_info = '[' + ', '.join(type_names) + ']'
                 raise TypeError(f'For \'{prim_name}\' type of `{arg_key}` should be in {types_info},'
                                 f' but got {elem_type}.')
             return (arg_key, elem_type)
@@ -651,30 +651,6 @@ def check_output_data(data):
     """Output data check."""
     if not data:
         raise RuntimeError('Executor return data ' + str(data) + ', please check your net or input data.')
-
-
-def check_axis_type_int(axis):
-    """Check axis type."""
-    if not isinstance(axis, int):
-        raise TypeError('Wrong type for axis, should be int.')
-
-
-def check_axis_range(axis, rank):
-    """Check axis range."""
-    if not -rank <= axis < rank:
-        raise ValueError('The axis should be in range [{}, {}),'' but got {}.'.format(-rank, rank, axis))
-
-
-def check_attr_int(attr_name, attr):
-    """Check int type."""
-    if not isinstance(attr, int):
-        raise TypeError("The attr {} should be int, but got {}.".format(attr_name, type(attr)))
-
-
-def check_t_in_range(t):
-    """Check input range."""
-    if t not in (mstype.float16, mstype.float32, mstype.float64, mstype.int32, mstype.int64):
-        raise ValueError("The param T should be (float16, float32, float64, int32, int64).")
 
 
 once = _expand_tuple(1)

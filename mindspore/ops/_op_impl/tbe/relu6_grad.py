@@ -17,7 +17,7 @@
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 relu6_grad_op_info = TBERegOp("ReLU6Grad") \
-    .fusion_type("ELEMWISE") \
+    .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("relu6_grad.so") \
     .compute_cost(10) \

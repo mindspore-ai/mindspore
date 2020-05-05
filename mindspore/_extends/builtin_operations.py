@@ -86,7 +86,7 @@ def identity(x):
 def zeros_like_tensor(x):
     """Implement `zeros_like_tensor`."""
     x = x.asnumpy()
-    value = Tensor(np.zeros(x.shape))
+    value = Tensor(np.zeros(x.shape).astype(np.float32))
     return value
 
 

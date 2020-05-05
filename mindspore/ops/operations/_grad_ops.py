@@ -59,6 +59,23 @@ class ACosGrad(PrimitiveWithInfer):
         return x
 
 
+class AcoshGrad(PrimitiveWithInfer):
+    """Performs grad of Acosh operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init AcoshGrad"""
+
+    def infer_shape(self, x, dout):
+        validator.check("x shape", x, "dout shape", dout, Rel.EQ, self.name)
+        return x
+
+    def infer_dtype(self, x, dout):
+        args = {"x": x, "dout": dout}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        return x
+
+
 class BatchNormGrad(PrimitiveWithInfer):
     """Performs grad of BatchNorm operation."""
 
@@ -652,6 +669,9 @@ class PReLUGrad(PrimitiveWithInfer):
     r"""
     Gradients of PReLU operation.
 
+    Note:
+        1-dimensional input_x is not supported.
+
     Inputs:
         - **y_backprop** (Tensor) - Representing the backprop of the next layer.
         - **input_x** (Tensor) - Should be the input `input_x` of forward operator PRelu.
@@ -666,6 +686,8 @@ class PReLUGrad(PrimitiveWithInfer):
         pass
 
     def infer_shape(self, y_backprop_shape, A_shape, w_shape):
+        if len(A_shape) == 1:
+            raise ValueError(f'For \'{self.name}\' input_x rank 1 is not supported.')
         return y_backprop_shape, w_shape
 
     def infer_dtype(self, y_backprop_dtype, A_dtype, w_dtype):

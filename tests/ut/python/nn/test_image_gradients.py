@@ -14,6 +14,7 @@
 # ============================================================================
 """ test image gradients """
 import numpy as np
+import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 import mindspore.common.dtype as mstype
@@ -47,3 +48,10 @@ def test_compile_multi_channel():
                              [[[10,20],[30,40]], [[50,60],[70,80]]]]), dtype=dtype)
     net = Net()
     _executor.compile(net, image)
+
+def test_invalid_5d_input():
+    dtype = mstype.float32
+    image = Tensor(np.random.random([4, 1, 16, 16, 1]), dtype=dtype)
+    net = Net()
+    with pytest.raises(ValueError):
+        _executor.compile(net, image)

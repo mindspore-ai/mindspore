@@ -226,14 +226,6 @@ class _Context:
             raise RuntimeError("Device id set failed!!!")
 
     @property
-    def enable_hccl(self):
-        return self._context_handle.get_hccl_flag()
-
-    @enable_hccl.setter
-    def enable_hccl(self, hccl):
-        self._context_handle.set_hccl_flag(hccl)
-
-    @property
     def enable_ir_fusion(self):
         return self._context_handle.get_ir_fusion_flag()
 
@@ -404,7 +396,7 @@ def _context():
 
 
 @args_type_check(device_num=int, global_rank=int, mirror_mean=bool, cast_before_mirror=bool, parallel_mode=str,
-                 parameter_broadcast=bool)
+                 parameter_broadcast=bool, strategy_ckpt_load_file=str, strategy_ckpt_save_file=str)
 def set_auto_parallel_context(**kwargs):
     """
     Set auto parallel context.
@@ -415,8 +407,11 @@ def set_auto_parallel_context(**kwargs):
     Args:
         device_num (int): Available device number, the value must be in [1, 4096]. Default: 1.
         global_rank (int): Global rank id, the value must be in [0, 4095]. Default: 0.
-        mirror_mean (bool): Whether to perform mean operator after all-reduce of mirror. Default: False.
-        cast_before_mirror (bool): Insert Mirror Op after the cast if this flag is True. Default: True.
+        mirror_mean (bool): Whether to perform mean operator after all-reduce of mirror.
+                     "stand_alone" do not support mirror_mean. Default: False.
+        cast_before_mirror (bool): Insert Mirror Op after the cast if this flag is True.
+                     "stand_alone", "data_parallel" and "hybrid_parallel" do not support
+                     cast_before_mirror. Default: True.
         parallel_mode (str): There are five kinds of parallel modes, "stand_alone", "data_parallel",
                      "hybrid_parallel", "semi_auto_parallel" and "auto_parallel". Default: "stand_alone".
 
@@ -433,6 +428,8 @@ def set_auto_parallel_context(**kwargs):
         parameter_broadcast (bool): Indicating whether to broadcast parameters before training.
                        "stand_alone", "semi_auto_parallel" and "auto_parallel" do not support parameter
                        broadcast. Default: False.
+        strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
+        strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
 
     Raises:
         ValueError: If input key is not attribute in auto parallel context.
@@ -444,6 +441,8 @@ def set_auto_parallel_context(**kwargs):
         >>> context.set_auto_parallel_context(cast_before_mirror=False)
         >>> context.set_auto_parallel_context(parallel_mode="auto_parallel")
         >>> context.set_auto_parallel_context(parameter_broadcast=False)
+        >>> context.set_auto_parallel_context(strategy_ckpt_load_file="./strategy_stage1.ckpt")
+        >>> context.set_auto_parallel_context(strategy_ckpt_save_file="./strategy_stage1.ckpt")
     """
     _set_auto_parallel_context(**kwargs)
 
@@ -474,12 +473,14 @@ def reset_auto_parallel_context():
     - cast_before_mirror: True.
     - parallel_mode: "stand_alone".
     - parameter_broadcast: False.
+    - strategy_ckpt_load_file: "".
+    - strategy_ckpt_save_file: "".
     """
     _reset_auto_parallel_context()
 
 
 @args_type_check(mode=int, precompile_only=bool, device_target=str,
-                 device_id=int, enable_ir_fusion=bool, save_graphs=bool, enable_hccl=bool,
+                 device_id=int, enable_ir_fusion=bool, save_graphs=bool,
                  enable_task_sink=bool, save_graphs_path=str, enable_loop_sink=bool,
                  enable_mem_reuse=bool, save_ms_model=bool, save_ms_model_path=str, enable_gpu_summary=bool,
                  enable_auto_mixed_precision=bool, enable_dump=bool, save_dump_path=str,
@@ -487,7 +488,7 @@ def reset_auto_parallel_context():
                  variable_memory_max_size=str)
 def set_context(**kwargs):
     """
-    Set context for running environment.
+    Sets context for running environment.
 
     Context should be configured before running your program. If there is no configuration,
     the "Ascend" device target will be used by default. GRAPH_MODE or
@@ -512,8 +513,7 @@ def set_context(**kwargs):
                     while device_num_per_host should no more than 4096. Default: 0.
         enable_ir_fusion (bool): Whether to enable ir fusion. Default: True.
         save_graphs (bool): Whether to save graphs. Default: False.
-        enable_hccl (bool): Whether to enable hccl. Default: False.
-        enable_loop_sink (bool): Whether to enable loop sink. Default: False.
+        enable_loop_sink (bool): Whether to enable loop sink. Default: True.
         enable_task_sink (bool): Whether to enable task sink. Default: True.
         enable_mem_reuse (bool): Whether to enable memory reuse. Default: True.
         save_ms_model (bool): Whether to save lite model converted by graph. Default: False.
@@ -524,10 +524,12 @@ def set_context(**kwargs):
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         enable_dump (bool): Whether to enable dump. Default: False.
-        save_dump_path (str): Set path to dump data. Default: ".".
+        save_dump_path (str): When the program is executed on Ascend, operators can dump data here.
+            The root dump path is configured in /home/HwHiAiUser/ide_daemon/ide_daemon.cfg.
+            So the real dump path is "{configured root dump path}/{`save_dump_path`}". Default: ".".
         enable_dynamic_memory (bool): Whether to enable dynamic memory. Default: False.
-        graph_memory_max_size (str): Set graph memory max size. Default: "26GB".
-        variable_memory_max_size (str): Set variable memory max size. Default: "5GB".
+        graph_memory_max_size (str): Sets graph memory max size. Default: "26GB".
+        variable_memory_max_size (str): Sets variable memory max size. Default: "5GB".
 
     Raises:
         ValueError: If input key is not an attribute in context.

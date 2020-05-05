@@ -15,6 +15,7 @@
  */
 #include "dataset/engine/datasetops/zip_op.h"
 #include <utility>
+#include <iomanip>
 #include "dataset/core/constants.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
@@ -224,10 +225,19 @@ Status ZipOp::drainPipeline() {
 // A function that prints info about the Operator
 void ZipOp::Print(std::ostream &out,      // In: The output stream to print to
                   bool show_all) const {  // In: T/F if it should print everything
-  // Call base class printer first
-  PipelineOp::Print(out, show_all);
-  out << "\nZipOp:\n"
-      << "\nDatasets: " << children_num_ << "\n\n";
+  // Always show the id and name as first line regardless if this is summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <ZipOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nDatasets: " << children_num_ << "\n\n";
+  }
 }
 
 // overwrite function and handle eof

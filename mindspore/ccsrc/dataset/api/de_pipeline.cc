@@ -28,6 +28,7 @@
 #include "dataset/engine/datasetops/source/manifest_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/celeba_op.h"
+#include "dataset/engine/datasetops/source/random_data_op.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
 #include "dataset/engine/datasetops/filter_op.h"
 #include "mindrecord/include/shard_category.h"
@@ -65,6 +66,7 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kCifar10, &DEPipeline::ParseCifar10Op},
                                                                    {kCifar100, &DEPipeline::ParseCifar100Op},
                                                                    {kCelebA, &DEPipeline::ParseCelebAOp},
+                                                                   {kRandomData, &DEPipeline::ParseRandomDataOp},
                                                                    {kTextFile, &DEPipeline::ParseTextFileOp}};
 
 DEPipeline::DEPipeline() : iterator_(nullptr) {
@@ -968,6 +970,45 @@ Status DEPipeline::ParseCifar100Op(const py::dict &args, std::shared_ptr<Dataset
 
   std::shared_ptr<CifarOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseRandomDataOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  // Required arguments
+  RandomDataOp::Builder builder;
+
+  if (args["num_samples"].is_none()) {
+    std::string err_msg = "Error: num_samples is a required argument";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::vector<std::string> columns_to_load;
+  bool schema_exists = false;
+  // Optional arguments
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (key == "num_parallel_workers") {
+      (void)builder.SetNumWorkers(ToInt(value));
+    } else if (key == "schema_file_path" || key == "schema_json_string") {
+      schema_exists = true;
+    } else if (key == "num_samples") {
+      (void)builder.SetTotalRows(ToInt(value));
+    } else if (key == "columns_list") {
+      columns_to_load = ToStringVector(value);
+    }
+  }
+  if (schema_exists) {
+    std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+    if (args.contains("schema_file_path")) {
+      RETURN_IF_NOT_OK(schema->LoadSchemaFile(ToString(args["schema_file_path"]), columns_to_load));
+    } else {
+      RETURN_IF_NOT_OK(schema->LoadSchemaString(ToString(args["schema_json_string"]), columns_to_load));
+    }
+    (void)builder.SetDataSchema(std::move(schema));
+  }
+  std::shared_ptr<RandomDataOp> op;
+  RETURN_IF_NOT_OK(builder.Build(&op));
   *ptr = op;
   return Status::OK();
 }

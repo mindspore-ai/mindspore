@@ -19,9 +19,10 @@
 #include "pre_activate/common/optimizer.h"
 #include "pre_activate/ascend/ir_fission/bn_split.h"
 #include "pre_activate/ascend/ir_fission/bn_grad_split.h"
+#include "pre_activate/ascend/ir_fission/batch_norm_grad_split.h"
 #include "pre_activate/ascend/ir_fusion/fused_batch_norm_fusion.h"
 #include "pre_activate/ascend/ir_fission/layer_norm_grad_split.h"
-#include "pre_activate/pass/allreduce_fusion.h"
+#include "pre_activate/pass/communication_op_fusion.h"
 #include "pre_activate/ascend/ir_fusion/square_sum_fusion.h"
 #include "pre_activate/ascend/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "pre_activate/ascend/ir_fusion/lamb_update_with_lr_rule_fusion.h"
@@ -38,14 +39,16 @@
 #include "pre_activate/ascend/ir_fusion/adam_apply_one_fusion.h"
 #include "pre_activate/ascend/ir_fusion/adam_apply_one_with_decay_rule.h"
 #include "pre_activate/ascend/ir_fusion/parameter_and_transop_fusion.h"
+#include "pre_activate/ascend/ir_fusion/refresh_parameter_format.h"
 #include "pre_activate/ascend/ir_fusion/transpose_transdata_fusion.h"
-#include "pre_activate/ascend/ir_fusion/transdata_split.h"
+#include "pre_activate/ascend/ir_fission/transdata_split.h"
 #include "pre_activate/ascend/ir_fission/topk_split.h"
 #include "pre_activate/ascend/ir_fusion/momentum_lossscale_fusion.h"
 #include "pre_activate/ascend/ir_fusion/mul_add_fusion.h"
 #include "pre_activate/ascend/ir_fusion/mul_addn_fusion.h"
 #include "pre_activate/ascend/ir_fusion/matmul_biasadd_fusion.h"
 #include "pre_activate/ascend/ir_fusion/remove_reshape_pair.h"
+#include "pre_activate/ascend/ir_fusion/derelu_fusion.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/pass/getitem_tuple.h"
 #include "pre_activate/pass/optimize_dependence.h"
@@ -57,7 +60,7 @@
 #include "pre_activate/ascend/format_type/check_consistency.h"
 #include "pre_activate/ascend/buffer_fusion/buffer_fusion.h"
 #include "pre_activate/ascend/format_type/deal_ref_trans_and_cast.h"
-#include "pre_activate/ascend/ir_fission/add_memcpy_async.h"
+#include "pre_activate/ascend/enhancer/add_memcpy_async.h"
 #include "pre_activate/ascend/format_type/insert_cast_for_runop.h"
 #include "pre_activate/ascend/format_type/insert_transdata_for_runop.h"
 #include "pre_activate/ascend/enhancer/getnext_memcpy_elimination.h"
@@ -85,7 +88,6 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRule>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneFusion>());
@@ -94,8 +96,9 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<MulAddNFusion>());
   ir_fusion_pm->AddPass(std::make_shared<MatmulBiasaddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
-  ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
+  ir_fusion_pm->AddPass(std::make_shared<DereluFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
 }
 }  // namespace
 
@@ -183,14 +186,15 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     save_graphs_path = ".";
   }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_before.ir";
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_before" + "_graph_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
     DumpIRProto(kernel_graph, "before_hwopt");
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
-  ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AddMemcpyAsync>());
   if (context_ptr->ir_fusion_flag()) {
     AddAscendBackendOptionalIRFusion(ir_fusion_pm.get());
@@ -205,7 +209,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_after.ir";
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_after" + "_graph_" +
+                            std::to_string(kernel_graph->graph_id()) + ".ir ";
     DumpIR(file_path, kernel_graph);
   }
 }
@@ -249,7 +254,8 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     save_graphs_path = ".";
   }
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_before.ir";
+    std::string file_path =
+      save_graphs_path + "/" + "hwopt_d_before" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
   }
   // data layout optimization
@@ -261,7 +267,9 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
+  other_pm->AddPass(std::make_shared<AllGatherFusion>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
+  other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   other_pm->AddPass(std::make_shared<BufferFusion>());
   other_pm->AddPass(std::make_shared<GetitemTuple>());
   other_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
@@ -273,7 +281,8 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
   if (save_graphs) {
-    std::string file_path = save_graphs_path + "/" + "hwopt_d_end.ir";
+    std::string file_path =
+      save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph, true);
     DumpIRProto(kernel_graph, "after_hwopt");
   }

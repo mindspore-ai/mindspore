@@ -51,7 +51,7 @@ AbstractBasePtr InferImplScalarSummary(const AnalysisEnginePtr &, const Primitiv
   // Reomve the force check to support batch set summary use 'for' loop
   auto item_v = descriptions->BuildValue();
   if (!item_v->isa<StringImm>()) {
-    MS_LOG(ERROR) << "First parameter shoule be string";
+    MS_EXCEPTION(TypeError) << "Summary first parameter should be string";
   }
 
   return std::make_shared<AbstractScalar>(kAnyValue, kBool);
@@ -75,7 +75,7 @@ AbstractBasePtr InferImplTensorSummary(const AnalysisEnginePtr &, const Primitiv
   // Reomve the force check to support batch set summary use 'for' loop
   auto item_v = descriptions->BuildValue();
   if (!item_v->isa<StringImm>()) {
-    MS_LOG(WARNING) << "Summary first parameter must be string";
+    MS_EXCEPTION(TypeError) << "Summary first parameter should be string";
   }
 
   return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<Bool>());

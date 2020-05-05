@@ -37,5 +37,5 @@ scatter_nd_op_info = TBERegOp("ScatterNd") \
 
 @op_info_register(scatter_nd_op_info)
 def _scatter_nd_tbe():
-    """Conv2D TBE register"""
+    """ScatterNd TBE register"""
     return

@@ -24,7 +24,7 @@
 #include <algorithm>
 
 #include "common/utils.h"
-#include "./example.pb.h"
+#include "proto/example.pb.h"
 #include "dataset/engine/datasetops/source/storage_client.h"
 #include "dataset/util/path.h"
 #include "dataset/util/status.h"

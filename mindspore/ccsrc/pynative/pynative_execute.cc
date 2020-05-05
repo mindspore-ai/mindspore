@@ -30,7 +30,8 @@
 #include "pipeline/parse/data_converter.h"
 #include "pipeline/static_analysis/prim.h"
 #include "session/session_factory.h"
-
+#include "pre_activate/pass/const_input_to_attr_registry.h"
+#include "pre_activate/common/helper.h"
 #include "pynative/base.h"
 
 #ifdef ENABLE_GE
@@ -39,10 +40,11 @@
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
 // primitive unable to infer value for constant input in PyNative mode
-const std::unordered_set<std::string> vm_operators = {"partial", "depend", "make_ref"};
+const std::set<std::string> vm_operators = {"partial", "depend", "make_ref", "zeros_like_tensor"};
 
 namespace mindspore {
 namespace pynative {
+static std::shared_ptr<session::SessionBasic> session = nullptr;
 inline ValuePtr PyAttrValue(const py::object &obj) {
   ValuePtr converted_ret = nullptr;
   bool converted = parse::ConvertData(obj, &converted_ret);
@@ -188,6 +190,117 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   return std::move(result);
 }
 
+bool RunOpConvertConstInputToAttr(const py::object &input_object, size_t input_index, const PrimitivePtr &op_prim,
+                                  const std::unordered_set<size_t> &input_attrs) {
+  MS_EXCEPTION_IF_NULL(op_prim);
+  auto input_names_value = op_prim->GetAttr(kAttrInputNames);
+  if (input_names_value == nullptr) {
+    return false;
+  }
+  auto input_names_vec = GetValue<std::vector<std::string>>(input_names_value);
+  if (input_index >= input_names_vec.size()) {
+    MS_LOG(EXCEPTION) << "The input index: " << input_index << " is large than the input names vector size!";
+  }
+
+  if (input_attrs.find(input_index) != input_attrs.end()) {
+    ValuePtr value = parse::data_converter::PyDataToValue(input_object);
+    MS_EXCEPTION_IF_NULL(value);
+    auto input_name = input_names_vec[input_index];
+    op_prim->set_attr(input_name, value);
+    return true;
+  }
+  return false;
+}
+
+void PlantTensorTupleToVector(const py::tuple &tuple_inputs, const PrimitivePtr &op_prim,
+                              std::vector<tensor::TensorPtr> *input_tensor) {
+  MS_EXCEPTION_IF_NULL(op_prim);
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  for (const auto &input_object : tuple_inputs) {
+    if (!py::isinstance<tensor::Tensor>(input_object)) {
+      MS_LOG(EXCEPTION) << "The input object is not a tensor!";
+    }
+    auto tensor = py::cast<tensor::TensorPtr>(input_object);
+    MS_EXCEPTION_IF_NULL(tensor);
+    input_tensor->push_back(tensor);
+  }
+  op_prim->set_attr(kAttrDynInputSizes, MakeValue(std::vector<int>{SizeToInt(tuple_inputs.size())}));
+}
+
+void ConvertValueTupleToTensor(const py::object &input_object, std::vector<tensor::TensorPtr> *input_tensor) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  ValuePtr input_value = parse::data_converter::PyDataToValue(input_object);
+  MS_EXCEPTION_IF_NULL(input_value);
+  if (!input_value->isa<ValueTuple>()) {
+    MS_LOG(EXCEPTION) << "The input object is not a value tuple!";
+  }
+  auto value_tuple = input_value->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(value_tuple);
+  tensor::TensorPtr tensor_ptr = opt::CreateTupleTensor(value_tuple);
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  input_tensor->push_back(tensor_ptr);
+}
+
+void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr &op_prim,
+                             std::vector<tensor::TensorPtr> *input_tensor) {
+  MS_EXCEPTION_IF_NULL(op_prim);
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  tensor::TensorPtr tensor_ptr = nullptr;
+  if (py::isinstance<tensor::Tensor>(input_object)) {
+    tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
+  } else if (py::isinstance<py::float_>(input_object)) {
+    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::float_>(input_object), kFloat32);
+  } else if (py::isinstance<py::int_>(input_object)) {
+    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::int_>(input_object), nullptr);
+  } else if (py::isinstance<py::list>(input_object)) {
+    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::list>(input_object), nullptr);
+  } else if (py::isinstance<py::array>(input_object)) {
+    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::array>(input_object), nullptr);
+  } else if (py::isinstance<py::tuple>(input_object)) {
+    auto tuple_inputs = py::cast<py::tuple>(input_object);
+    if (py::isinstance<tensor::Tensor>(tuple_inputs[0])) {
+      PlantTensorTupleToVector(tuple_inputs, op_prim, input_tensor);
+    } else {
+      ConvertValueTupleToTensor(input_object, input_tensor);
+    }
+    return;
+  } else {
+    MS_LOG(EXCEPTION) << "Run op inputs type is invalid!";
+  }
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  input_tensor->push_back(tensor_ptr);
+}
+
+void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<bool> *tensors_mask,
+                          std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(tensors_mask);
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  PrimitivePtr op_prim = op_run_info->py_primitive;
+  MS_EXCEPTION_IF_NULL(op_prim);
+
+  if (op_run_info->op_inputs.size() != op_run_info->inputs_mask.size()) {
+    MS_LOG(EXCEPTION) << "Op input size " << op_run_info->op_inputs.size() << " should be equal to op input mask size "
+                      << op_run_info->inputs_mask.size();
+  }
+  opt::ConstInputToAttrInfoRegister reg;
+  bool reg_exist = opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(op_run_info->op_name, &reg);
+  size_t input_num = op_run_info->op_inputs.size();
+  MS_LOG(INFO) << "py input size: " << input_num;
+  for (size_t index = 0; index < input_num; ++index) {
+    // convert const input to attr
+    if (reg_exist &&
+        RunOpConvertConstInputToAttr(op_run_info->op_inputs[index], index, op_prim, reg.GetConstInputAttrInfo())) {
+      continue;
+    }
+    // convert const and tuple input to tensor
+    ConvertPyObjectToTensor(op_run_info->op_inputs[index], op_prim, input_tensors);
+    // make tensors, weight : 1, data : 0
+    std::vector<bool> new_mask(input_tensors->size() - tensors_mask->size(),
+                               py::cast<bool>(op_run_info->inputs_mask[index]));
+    tensors_mask->insert(tensors_mask->end(), new_mask.begin(), new_mask.end());
+  }
+}
+
 py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_LOG(INFO) << "Start run op[" << op_exec_info->op_name << "] with backend policy ms";
@@ -198,13 +311,19 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   if (device_target != kAscendDevice && device_target != kGPUDevice) {
     MS_EXCEPTION(ArgumentError) << "Device target [" << device_target << "] is not supported in Pynative mode";
   }
-  std::shared_ptr<session::SessionBasic> session = session::SessionFactory::Get().Create(device_target);
+
+  if (session == nullptr) {
+    session = session::SessionFactory::Get().Create(device_target);
+  }
+
   MS_EXCEPTION_IF_NULL(session);
   session->Init(ms_context->device_id());
 
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info);
   std::vector<tensor::TensorPtr> input_tensors;
-  session->BuildOp(*op_exec_info, graph_info, &input_tensors);
+  std::vector<bool> tensors_mask;
+  ConstructInputTensor(op_exec_info, &tensors_mask, &input_tensors);
+  session->BuildOp(*op_exec_info, graph_info, input_tensors, tensors_mask);
   py::tuple result = session->RunOp(*op_exec_info, graph_info, input_tensors);
   ms_context->set_enable_pynative_infer(false);
   *status = PYNATIVE_SUCCESS;
@@ -293,5 +412,7 @@ py::tuple RunOp(const py::args &args) {
   MS_LOG(INFO) << "RunOp end";
   return result;
 }
+
+void ClearPyNativeSession() { session = nullptr; }
 }  // namespace pynative
 }  // namespace mindspore

@@ -33,7 +33,6 @@ def setup_module():
     global rank_id
     np.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_hccl=True)
     context.set_context(enable_task_sink=True,
                         device_id=device_id)
     context.set_context(enable_ir_fusion=True)

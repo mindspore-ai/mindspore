@@ -38,6 +38,7 @@
 #include "parallel/graph_util/get_parallel_info.h"
 #include "device/kernel_runtime_manager.h"
 #include "debug/trace.h"
+#include "pynative/pynative_execute.h"
 
 #if (ENABLE_GE || ENABLE_D)
 #include "pipeline/pipeline_ge.h"
@@ -101,7 +102,7 @@ py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::str
     MS_LOG(INFO) << "Start new args and compile key:" << key;
     g_args_cache[args_spec] = key++;
   }
-  py::tuple argSpec = py::tuple(2);
+  auto argSpec = py::tuple(2);
   argSpec[0] = name;
   argSpec[1] = g_args_cache[args_spec];
   return argSpec;
@@ -236,7 +237,7 @@ py::dict ExecutorPy::GetAllreduceFusion(const std::string &phase) {
 
 void ExecutorPy::DelNetRes(const std::string &id) {
 #ifdef ENABLE_GE
-  FinalizeGe();
+  FinalizeBackend();
 #endif
   if (executor_ != nullptr) {
     bool flag = false;
@@ -294,6 +295,34 @@ void ExecutorPy::SaveCompiledGraph(const std::string &phase_s) {
   MS_LOG(INFO) << "End save compiled func graph!";
 }
 
+void ExecutorPy::SaveCompiledGraphToPb(const std::string &phase_s) {
+#ifdef ENABLE_DUMP_IR
+  // save the graph to file in protobuf format
+  FuncGraphPtr func_graph = info_[phase_s]->resource->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (phase_s.empty()) {
+    MS_LOG(ERROR) << "`phase` is empty '" << phase_s << "'!";
+    return;
+  }
+  std::string name_prefix = phase_s.substr(0, phase_s.find("."));
+  std::string pb_filename = std::string("ms_output_") + name_prefix + ".pb";
+  std::string filename = GetFilePathName(pb_filename);
+
+  MS_LOG(INFO) << "Begin saving graph to file <<'" << filename << "' in protobuf formart.";
+  ChangeFileMode(filename, S_IRWXU);
+  std::ofstream ofs(filename);
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file '" << filename << "' failed!";
+    return;
+  }
+  ofs << GetFuncGraphProtoString(func_graph);
+  ofs.close();
+  // set file mode to read only by user
+  ChangeFileMode(filename, S_IRUSR);
+  MS_LOG(INFO) << "End saving graph to file in protobuf format";
+#endif
+}
+
 bool ExecutorPy::ChangeExportGeirUseVmFlag(bool use_vm, const std::string &phase_s) const {
   std::string phase_prefix = GetPhasePrefix(phase_s);
 
@@ -309,7 +338,7 @@ void ExecutorPy::GetGeBackendPolicy() const {
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->backend_policy();
   if (backend != "ge") {
-    MS_LOG(EXCEPTION) << "" << backend << " backend policy is not supported under ge backend!";
+    MS_LOG(EXCEPTION) << backend << " backend policy is not supported under ge backend!";
   }
 }
 
@@ -365,6 +394,8 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   info_[phase_s] = executor_info;
   pip->Run();
 
+  // save compile graph to file in protobuf format
+  SaveCompiledGraphToPb(phase_s);
   // save the run graph func to MsPipeLine
   SaveCompiledGraph(phase_s);
 
@@ -465,10 +496,10 @@ void RunPipelineAction(const ActionItem &action, pipeline::ResourcePtr resource,
 
   // load MindSpore IR from file
   if (action.first == "symbol_resolve") {
-    MS_LOG(DEBUG) << "" << action.first << " read ir file: " << ir_file;
+    MS_LOG(DEBUG) << action.first << " read ir file: " << ir_file;
     std::vector<FuncGraphPtr> graphs = ImportIR(ir_file);
     if (graphs.size() == 0) {
-      MS_LOG(EXCEPTION) << "" << action.first << " read ir file " << ir_file << " failed as no graph found";
+      MS_LOG(EXCEPTION) << action.first << " read ir file " << ir_file << " failed as no graph found";
     }
     auto manager = resource->manager();
     MS_EXCEPTION_IF_NULL(manager);
@@ -557,20 +588,6 @@ void Pipeline::Run() {
     std::string user_graph_file = GetFilePathName("ModelDigraph.dot");
     MS_LOG(DEBUG) << "Save user graph to: " << user_graph_file;
     draw::DrawUserFuncGraph(user_graph_file, user_graph);
-
-#ifdef ENABLE_DUMP_IR
-    std::string filename = GetFilePathName("ms_output.pb");
-    ChangeFileMode(filename, S_IRWXU);
-    std::ofstream ofs(filename);
-    if (!ofs.is_open()) {
-      MS_LOG(ERROR) << "Open file '" << filename << "' failed!";
-      return;
-    }
-    ofs << GetFuncGraphProtoString(user_graph);
-    ofs.close();
-    // set file mode to read only by user
-    ChangeFileMode(filename, S_IRUSR);
-#endif
   }
   MS_LOG(INFO) << "End";
 }
@@ -668,6 +685,13 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
                      const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                      const std::vector<int64_t> &input_indexes, const std::string &phase) {
   std::string name = MsContext::GetInstance()->backend_policy();
+#ifndef NO_DLIB
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->IsTsdOpened() || !ms_context->IsGeInited()) {
+    (void)InitBackend();
+  }
+#endif
   if (name == kMsConvert || name == kMsVm) {
     return InitExecDatasetVm(queue_name, iter_num, batch_size, types, shapes, input_indexes);
   }
@@ -746,7 +770,7 @@ void ResetOpId() { mindspore::id_generator::reset_id(); }
 
 void InitHccl() {
 #ifdef ENABLE_GE
-  (void)InitGe();
+  (void)InitBackend();
 #else
   mindspore::parse::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
@@ -754,7 +778,7 @@ void InitHccl() {
   (void)ms_context->OpenTsd();
   uint32_t device_id = ms_context->device_id();
   std::string device_name = ms_context->device_target();
-
+  ms_context->set_enable_hccl(true);
   if (ms_context->backend_policy() == "ms" && ms_context->device_target() == kAscendDevice) {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(device_name, device_id);
     MS_EXCEPTION_IF_NULL(runtime_instance);
@@ -768,7 +792,7 @@ void InitHccl() {
 
 void FinalizeHccl() {
 #ifdef ENABLE_GE
-  (void)FinalizeGe();
+  (void)FinalizeBackend();
 #else
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 #endif
@@ -789,7 +813,7 @@ void ReleaseGeTsd() {
   }
 }
 
-void InitGe() {
+void InitBackend() {
   // set python env flag
   mindspore::parse::python_adapter::set_python_env_flag(true);
   // open tsd before ge initialize
@@ -801,7 +825,7 @@ void InitGe() {
   (void)ms_context->InitGe();
 }
 
-void FinalizeGe() {
+void FinalizeBackend() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   (void)context_ptr->FinalizeGe();
@@ -810,6 +834,7 @@ void FinalizeGe() {
 
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
+  pynative::ClearPyNativeSession();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 
   ad::g_k_prims.clear();

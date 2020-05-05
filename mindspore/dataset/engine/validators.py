@@ -555,16 +555,23 @@ def check_generatordataset(method):
             except TypeError:
                 raise TypeError("source should be callable, iterable or random accessible")
 
-        # check column_names; required argument
+        # check column_names or schema; required argument
         column_names = param_dict.get('column_names')
-        if column_names is None:
-            raise ValueError("column_names is not provided.")
+        schema = param_dict.get('schema')
+        if column_names is None and schema is None:
+            raise ValueError("Neither columns_names not schema are provided.")
+
+        if schema is not None:
+            if not isinstance(schema, datasets.Schema) and not isinstance(schema, str):
+                raise ValueError("schema should be a path to schema file or a schema object.")
 
         # check optional argument
         nreq_param_int = ["num_samples", "num_parallel_workers", "num_shards", "shard_id"]
         check_param_type(nreq_param_int, param_dict, int)
         nreq_param_list = ["column_types"]
         check_param_type(nreq_param_list, param_dict, list)
+        nreq_param_bool = ["shuffle"]
+        check_param_type(nreq_param_bool, param_dict, bool)
 
         num_shards = param_dict.get("num_shards")
         shard_id = param_dict.get("shard_id")
@@ -586,6 +593,11 @@ def check_generatordataset(method):
                     iter(sampler)
                 except TypeError:
                     raise TypeError("sampler should be either iterable or from mindspore.dataset.samplers")
+
+        if sampler is not None and not hasattr(source, "__getitem__"):
+            raise ValueError("sampler is not supported if source does not have attribute '__getitem__'")
+        if num_shards is not None and not hasattr(source, "__getitem__"):
+            raise ValueError("num_shards is not supported if source does not have attribute '__getitem__'")
 
         return method(*args, **kwargs)
 
@@ -700,9 +712,11 @@ def check_map(method):
         nreq_param_list = ['columns_order']
         nreq_param_int = ['num_parallel_workers']
         nreq_param_columns = ['input_columns', 'output_columns']
+        nreq_param_bool = ['python_multiprocessing']
 
         check_param_type(nreq_param_list, param_dict, list)
         check_param_type(nreq_param_int, param_dict, int)
+        check_param_type(nreq_param_bool, param_dict, bool)
         for param_name in nreq_param_columns:
             param = param_dict.get(param_name)
             if param is not None:
@@ -905,6 +919,8 @@ def check_textfiledataset(method):
             raise TypeError("dataset_files should be of type str or a list of strings.")
 
         check_param_type(nreq_param_int, param_dict, int)
+
+        check_sampler_shuffle_shard_options(param_dict)
 
         return method(*args, **kwargs)
 

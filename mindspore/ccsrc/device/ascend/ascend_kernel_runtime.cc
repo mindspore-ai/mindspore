@@ -343,6 +343,22 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
   return true;
 }
 
+void AscendKernelRuntime::DebugTaskIdName(GraphId graph_id) {
+  auto task_ids = ge::model_runner::ModelRunner::Instance().GetTaskIdList(graph_id);
+  auto graph_task_names = ProfilingUtils::graph_kernel_name();
+  auto iter = graph_task_names.find(graph_id);
+  if (iter != graph_task_names.end()) {
+    const auto &task_names = iter->second;
+    if (task_ids.size() != task_names.size()) {
+      MS_LOG(WARNING) << "Task_ids and task_names size not match";
+      return;
+    }
+    for (size_t i = 0; i < task_ids.size(); ++i) {
+      MS_LOG(INFO) << "Task_id:" << task_ids[i] << " task_name:" << task_names[i];
+    }
+  }
+}
+
 bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "RunTask start. GraphId:" << graph->graph_id();
@@ -363,7 +379,8 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 
   bool status = ge::model_runner::ModelRunner::Instance().RunModel(graph->graph_id(), input_tensors, output_tensors);
   if (!status) {
-    MS_LOG(INFO) << "run task failed";
+    MS_LOG(ERROR) << "run task failed";
+    DebugTaskIdName(graph->graph_id());
     return false;
   }
   return true;
@@ -453,25 +470,26 @@ bool AscendKernelRuntime::HcclInit() {
   }
 
   MS_LOG(INFO) << "do hcom init";
-  std::string path;
   const char *config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
   if (config_path_str == nullptr) {
     MS_LOG(ERROR) << "get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH";
     return false;
   }
-  path = config_path_str;
-  char fullPath[PATH_MAX] = {0};
-  if (path.size() > PATH_MAX || realpath(path.c_str(), fullPath) == nullptr) {
-    MS_LOG(ERROR) << "file " << path << " is not exist";
+  auto full_path = realpath(config_path_str, nullptr);
+  if (full_path == nullptr) {
+    MS_LOG(ERROR) << "file path " << config_path_str << " does not exist";
     return false;
   }
+
   const char *identify = std::getenv("RANK_ID");
   if (identify == nullptr) {
     MS_LOG(ERROR) << "get hccl rankid failed, please set env RANK_ID";
+    free(full_path);
     return false;
   }
-  MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << fullPath << ", RANK_ID: " << identify;
-  hcclResult_t res = hcom_init(fullPath, identify);
+  MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << identify;
+  hcclResult_t res = hcom_init(full_path, identify);
+  free(full_path);
   if (res != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "hcom init failed, res is " << static_cast<int>(res);
     return false;

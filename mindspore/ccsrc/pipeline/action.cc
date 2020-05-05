@@ -24,6 +24,7 @@
 #include <functional>
 
 #include "ir/func_graph_cloner.h"
+#include "parallel/costmodel_context.h"
 #include "pipeline/pass.h"
 #include "pipeline/parse/parse_base.h"
 #include "pipeline/parse/data_converter.h"
@@ -129,7 +130,7 @@ bool ParseAction(const ResourcePtr &res) {
 // This step do this optimize: graph1(x){xx(fv1),xxx(fv2)}, graph2(x){xxx(fv3),xxx(fv4)}->
 // graph1(x){base_graph(x, fv1, fv2)}, graph1(x){base_graph(x, fv3, fv4)}, base_graph(x, fv...){xxx,xxx}
 // all obj_map's graph shared base_graph
-bool CombineLikeGraphs(const ResourcePtr &) {
+bool CombineLikeGraphs(const ResourcePtr &res) {
   auto &obj_map = parse::data_converter::GetObjGraphs();
 
   for (auto it : obj_map) {
@@ -146,13 +147,15 @@ bool CombineLikeGraphs(const ResourcePtr &) {
     if (fg->paramter_obj_nodes().size() == 0 || graphs.size() <= 1) {
       continue;
     }
-    auto mng = Manage(base_graph, false);
     for (auto &fv : fg->paramter_obj_nodes()) {
       TraceManager::DebugTrace(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
       auto param = base_graph->add_parameter();
       TraceManager::EndTrace();
-      auto repl_node = (*cloner->cloned_node())[fv];
-      (void)mng->Replace(repl_node, param);
+      auto &node_users = res->manager()->node_users()[fv];
+      for (auto &n : node_users) {
+        auto repl_n = (*cloner->cloned_node())[n.first]->cast<CNodePtr>();
+        repl_n->set_input(n.second, param);
+      }
     }
     MS_LOG(DEBUG) << "Fg0 paramter_obj_nodes size :" << fg->paramter_obj_nodes().size();
 
@@ -341,7 +344,10 @@ static std::vector<ActionItem> CommonPipeline() {
 
   // Resolve the python func
   actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
-  actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
+  auto multi_graphs = parallel::CostModelContext::GetInstance()->is_multi_subgraphs();
+  if (!multi_graphs) {
+    actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
+  }
   actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
   // Evaluate type and shape, and specialize
   actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));

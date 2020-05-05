@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "predict/proto/ge_runtime_taskinfo.pb.h"
+#include "proto/ge_runtime_taskinfo.pb.h"
 
 namespace mindspore {
 namespace generator {

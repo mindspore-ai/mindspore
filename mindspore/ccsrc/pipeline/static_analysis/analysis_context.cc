@@ -23,6 +23,24 @@
 
 namespace mindspore {
 namespace abstract {
+AnalysisContextPtr AnalysisContext::NewContext(AnalysisContextPtr parent, FuncGraphPtr fg,
+                                               const AbstractBasePtrList &args_spec_list) {
+  auto children_context_map_iter = parent->children_cache_.find(fg);
+  if (children_context_map_iter != parent->children_cache_.end()) {
+    auto children_context_map = children_context_map_iter->second;
+    auto children_context_iter = children_context_map.find(args_spec_list);
+    if (children_context_iter != children_context_map.end()) {
+      return children_context_iter->second.lock();
+    }
+  }
+  AnalysisContextPtr context_new = std::make_shared<AnalysisContext>(parent, fg, args_spec_list);
+  // Reference to myself, so use weak_ptr to break reference cycle.
+  auto weak_context = std::weak_ptr<AnalysisContext>(context_new);
+  context_new->parent_cache_[fg] = weak_context;
+  parent->children_cache_[fg][args_spec_list] = weak_context;
+  return context_new;
+}
+
 AnalysisContextPtr AnalysisContext::NewFuncGraphContext(const FuncGraphPtr &func_graph,
                                                         const AbstractBasePtrList &args_spec_list) {
   FuncGraphPtr graph_parent = func_graph->parent();
@@ -78,7 +96,7 @@ AnalysisContextPtr AnalysisContext::Filter(const FuncGraphPtr &func_graph) {
       oss << ", context: " << iter.second.lock()->ToString() << "]";
     }
     oss << "}";
-    MS_LOG(EXCEPTION) << "" << oss.str() << " NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
+    MS_LOG(EXCEPTION) << oss.str() << " NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
   }
   return parent_context;
 }
@@ -87,6 +105,13 @@ AnalysisContextPtr AnalysisContext::DummyContext() {
   AnalysisContextPtr dummy_context = std::make_shared<AnalysisContext>(nullptr, nullptr, AbstractBasePtrList());
   dummy_context->parent_cache_[nullptr] = std::weak_ptr<AnalysisContext>(dummy_context);
   return dummy_context;
+}
+
+bool AnalysisContext::IsDummyContext() {
+  if (parent_ == nullptr && func_graph_ == nullptr && args_spec_list_.empty()) {
+    return true;
+  }
+  return false;
 }
 
 const AnalysisContextPtr kDummyAnalysisContext =

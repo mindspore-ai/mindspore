@@ -87,7 +87,10 @@ AbstractBasePtr AnalysisCache::GetValue(const AnfNodeConfigPtr &conf) {
 std::size_t AnfNodeConfigHasher::operator()(const AnfNodeConfigPtr conf) const {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(conf->node());
-  std::size_t hash_value = hash_combine(conf->node()->hash(), conf->context()->hash());
+  std::size_t hash_value = conf->node()->hash();
+  if (!conf->context()->IsDummyContext()) {
+    hash_value = hash_combine(hash_value, std::hash<AnalysisContext *>{}(conf->context().get()));
+  }
   if (conf->context() != nullptr && conf->context()->func_graph() != nullptr) {
     MS_LOG(DEBUG) << "NodeConfigHasher Node: " << conf->node()->DebugString()
                   << ", Graph: " << conf->context()->func_graph()->ToString() << " ### , hash value: " << hash_value;
@@ -122,7 +125,7 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
   MS_EXCEPTION_IF_NULL(root_context->func_graph());
   AnfNodeConfigPtr output_conf = MakeConfig(root_context->func_graph()->get_return(), root_context);
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_LOG(INFO) << "" << func_graph->ToString() << ": Run finished.";
+  MS_LOG(INFO) << func_graph->ToString() << ": Run finished.";
 
   AnalysisResult result;
   MS_EXCEPTION_IF_NULL(output_conf);
@@ -167,7 +170,7 @@ AbstractBasePtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
   for (auto iter : compute_conf_stack_) {
     buffer << " -> " << iter->DebugString();
   }
-  MS_LOG(DEBUG) << "" << buffer.str();
+  MS_LOG(DEBUG) << buffer.str();
 #endif
   MS_LOG(DEBUG) << "Begin Eval NodeConfig " << conf->ToString();
   MS_EXCEPTION_IF_NULL(node);
@@ -271,6 +274,18 @@ void AnalysisEngine::ClearEvaluatorCache() {
     MS_EXCEPTION_IF_NULL(evaluator->cache());
     evaluator->cache()->clear();
   }
+  for (auto &element : prim_constructors_) {
+    EvaluatorPtr evaluator = element.second;
+    MS_EXCEPTION_IF_NULL(evaluator);
+    MS_EXCEPTION_IF_NULL(evaluator->cache());
+    evaluator->cache()->clear();
+  }
+  for (auto &element : prim_py_evaluators_) {
+    EvaluatorPtr evaluator = element.second;
+    MS_EXCEPTION_IF_NULL(evaluator);
+    MS_EXCEPTION_IF_NULL(evaluator->cache());
+    evaluator->cache()->clear();
+  }
 }
 
 void AnalysisEngine::Clear() {
@@ -296,7 +311,17 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
     if (prim_py != nullptr) {
-      return std::make_shared<PythonPrimEvaluator>(prim_py);
+      if (engine == nullptr) {
+        return std::make_shared<PythonPrimEvaluator>(prim_py);
+      }
+
+      const auto &iter = engine->prim_py_evaluators_.find(prim_py);
+      if (iter != engine->prim_py_evaluators_.end()) {
+        return iter->second;
+      }
+      evaluator = std::make_shared<PythonPrimEvaluator>(prim_py);
+      engine->prim_py_evaluators_[prim_py] = evaluator;
+      return evaluator;
     }
     MS_LOG(EXCEPTION) << "The primitive with python evaluator should be a python primitive.";
   }

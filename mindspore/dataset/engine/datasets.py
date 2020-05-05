@@ -30,7 +30,9 @@ from enum import Enum
 from importlib import import_module
 import threading
 
+import copy
 import numpy as np
+
 from mindspore._c_dataengine import DataType, TFReaderOp, ImageFolderOp, CifarOp, MnistOp, ManifestOp, \
     MindRecordOp, TextFileOp, CBatchInfo
 from mindspore._c_expression import typing
@@ -206,7 +208,6 @@ class Dataset:
         Add a blocking condition to the input Dataset
 
         Args:
-            input_dataset (Dataset): Input dataset to apply flow control
             num_batch (int): the number of batches without blocking at the start of each epoch
             condition_name (str): The condition name that is used to toggle sending next row
             callback (function): The callback funciton that will be invoked when sync_update is called
@@ -428,11 +429,11 @@ class Dataset:
              If input_columns not provided or empty, all columns will be used.
 
         Args:
-            predicate: python callable which returns a boolean value.
-            input_columns: (list[str]): List of names of the input columns, when
-            default=None, the predicate will be applied on all columns in the dataset.
+            predicate(callable): python callable which returns a boolean value.
+            input_columns: (list[str], optional): List of names of the input columns, when
+                default=None, the predicate will be applied on all columns in the dataset.
             num_parallel_workers (int, optional): Number of workers to process the Dataset
-            in parallel (default=None).
+                in parallel (default=None).
 
         Returns:
             FilterDataset, dataset filter.
@@ -454,7 +455,7 @@ class Dataset:
             The order of using repeat and batch reflects the number of batches. Recommend that
             repeat operation should be used after batch operation.
             If dataset_sink_mode is False, here repeat operation is invalid.
-            If dataset_sink_mode is True, repeat count should be euqal to the epoch of training. Otherwise,
+            If dataset_sink_mode is True, repeat count should be equal to the epoch of training. Otherwise,
             errors could occur since the amount of data is not the amount training requires.
 
         Args:
@@ -919,10 +920,13 @@ class Dataset:
 
     def sync_update(self, condition_name, num_batch=None, data=None):
         """
-        condition_name (str): The condition name that is used to toggle sending next row
-        step_size (int or None): The number of steps(rows) that are released
-                         when pass_rows is None, will update the same number as sync_wait specified
-        data (dict or None): The data passed to the callback
+        Release a blocking condition and triger callback with given data
+
+        Args:
+            condition_name (str): The condition name that is used to toggle sending next row
+            num_batch (int or None): The number of batches(rows) that are released
+                When num_batch is None, it will default to the number specified by the sync_wait operator
+            data (dict or None): The data passed to the callback
         """
         notifiers_dict = self.get_sync_notifiers()
         if condition_name not in notifiers_dict:
@@ -1375,6 +1379,23 @@ class MapDataset(DatasetOp):
             Number, number of batches.
         """
         return self.input[0].get_dataset_size()
+
+    def __deepcopy__(self, memodict):
+        if id(self) in memodict:
+            return memodict[id(self)]
+        cls = self.__class__
+        new_op = cls.__new__(cls)
+        memodict[id(self)] = new_op
+        new_op.input = copy.deepcopy(self.input, memodict)
+        new_op.input_columns = copy.deepcopy(self.input_columns, memodict)
+        new_op.output_columns = copy.deepcopy(self.output_columns, memodict)
+        new_op.columns_order = copy.deepcopy(self.columns_order, memodict)
+        new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
+        new_op.output = copy.deepcopy(self.output, memodict)
+        new_op.input_indexs = copy.deepcopy(self._input_indexs, memodict)
+        new_op.python_multiprocessing = copy.deepcopy(self.python_multiprocessing, memodict)
+        new_op.operations = self.operations
+        return new_op
 
     # Iterator bootstrap will be called on iterator construction.
     # A deep copy of Dataset object is created prior of iterator_bootstrap.
@@ -2483,19 +2504,19 @@ class GeneratorDataset(SourceDataset):
             Iterable source is required to return a tuple of numpy array as a row of the dataset on iter(source).next().
             Random accessible source is required to return a tuple of numpy array as a row of the dataset on
             source[idx].
-        column_names (list[str]): List of column names of the dataset.
+        column_names (list[str], optional): List of column names of the dataset (default=None). Users are required to
+            provide either column_names or schema.
         column_types (list[mindspore.dtype], optional): List of column data types of the dataset (default=None).
             If provided, sanity check will be performed on generator output.
-        schema (Schema/String, optional): Path to the json schema file or schema object (default=None).
-            If the schema is not provided, the meta data from column_names and column_types is considered the schema.
+        schema (Schema/String, optional): Path to the json schema file or schema object (default=None). Users are
+            required to provide either column_names or schema. If both are provided, schema will be used.
         num_samples (int, optional): The number of samples to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
             (default=None, expected order behavior shown in the table).
         sampler (Sampler/Iterable, optional): Object used to choose samples from the dataset. Random accessible input is
-        required.
-            (default=None, expected order behavior shown in the table).
+            required (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
             This argument should be specified only when 'num_samples' is "None". Random accessible input is required.
         shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
@@ -2535,8 +2556,8 @@ class GeneratorDataset(SourceDataset):
     """
 
     @check_generatordataset
-    def __init__(self, source, column_names, column_types=None, schema=None, num_samples=None, num_parallel_workers=1,
-                 shuffle=None, sampler=None, num_shards=None, shard_id=None):
+    def __init__(self, source, column_names=None, column_types=None, schema=None, num_samples=None,
+                 num_parallel_workers=1, shuffle=None, sampler=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers)
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         if self.sampler is not None and hasattr(source, "__getitem__"):
@@ -2569,12 +2590,24 @@ class GeneratorDataset(SourceDataset):
                 # Random accessible input is also iterable
                 self.source = (lambda: _iter_fn(source, num_samples))
 
+        if column_names is not None and not isinstance(column_names, list):
+            column_names = [column_names]
         self.column_names = column_names
 
         if column_types is not None:
             self.column_types = mstypelist_to_detypelist(column_types)
         else:
             self.column_types = column_types
+
+        if schema is not None:
+            self.schema = schema
+            if not isinstance(schema, Schema):
+                self.schema = Schema(schema)
+            self.column_names = []
+            self.column_types = []
+            for col in self.schema.columns:
+                self.column_names.append(col["name"])
+                self.column_types.append(DataType(col["type"]))
 
     def get_args(self):
         args = super().get_args()
@@ -2598,6 +2631,23 @@ class GeneratorDataset(SourceDataset):
             self._dataset_size = value
         else:
             raise ValueError('set dataset_size with negative value {}'.format(value))
+
+    def __deepcopy__(self, memodict):
+        if id(self) in memodict:
+            return memodict[id(self)]
+        cls = self.__class__
+        new_op = cls.__new__(cls)
+        memodict[id(self)] = new_op
+        new_op.input = copy.deepcopy(self.input, memodict)
+        new_op.output = copy.deepcopy(self.output, memodict)
+        new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
+        new_op.column_types = copy.deepcopy(self.column_types, memodict)
+        new_op.column_names = copy.deepcopy(self.column_names, memodict)
+
+        new_op.source = self.source
+        new_op.sampler = self.sampler
+
+        return new_op
 
 
 class TFRecordDataset(SourceDataset):
@@ -3107,6 +3157,57 @@ class Cifar100Dataset(SourceDataset):
         num_rows = CifarOp.get_num_rows(self.dataset_dir, num_samples, False)
 
         return get_num_rows(num_rows, self.num_shards)
+
+
+class RandomDataset(SourceDataset):
+    """
+    A source dataset that generates random data.
+
+    Args:
+        num_samples (int): number of samples to generate.
+        schema (str or Schema, optional): Path to the json schema file or schema object (default=None).
+            If the schema is not provided, the meta data from the TFRecord file is considered the schema.
+        columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
+        num_parallel_workers (int, optional): number of workers to read the data
+            (default=None, number set in the config).
+    """
+
+    def __init__(self, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None):
+        super().__init__(num_parallel_workers)
+        schema_obj = None
+        if (schema is not None) and (not isinstance(schema, Schema)):
+            schema_obj = Schema(schema)  # read the schema file and convert to schema object to validate it
+        self.schema = schema
+        self.columns_list = columns_list
+        self.num_samples = num_samples
+        if schema_obj is not None and num_samples is None:
+            self.num_samples = schema_obj.num_rows
+
+    def get_args(self):
+        args = super().get_args()
+        if self.schema is not None:
+            if isinstance(self.schema, Schema):
+                self.schema.datasetType = 'Random'
+                if self.num_samples is not None:
+                    self.schema.num_rows = self.num_samples
+                args["schema_json_string"] = self.schema.to_json()
+            else:
+                args["schema_file_path"] = self.schema
+        args["schema"] = self.schema
+        if self.columns_list is not None:
+            args["columns_list"] = self.columns_list
+        if self.num_samples is not None:
+            args["num_samples"] = self.num_samples
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        return num_samples
 
 
 class Schema:

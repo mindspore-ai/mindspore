@@ -33,8 +33,7 @@ void InferEntryLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList 
     MS_LOG(DEBUG) << "Evaluator " << evaluator->ToString() << " run for " << out_conf->node()->scope()->name();
   }
   for (size_t i = 0; i < arg_spec_list.size(); i++) {
-    MS_LOG(DEBUG) << "" << evaluator->ToString() << " input[" << i
-                  << "] abstract value: " << arg_spec_list[i]->ToString();
+    MS_LOG(DEBUG) << evaluator->ToString() << " input[" << i << "] abstract value: " << arg_spec_list[i]->ToString();
   }
 }
 
@@ -94,11 +93,9 @@ AbstractBasePtr BaseFuncGraphEvaluator::Infer(AnalysisEnginePtr engine, const Ab
   MS_EXCEPTION_IF_NULL(fg);
   std::size_t nargs = fg->parameters().size();
   if (args_spec_list.size() != nargs) {
-    MS_LOG(EXCEPTION) << "Function " << fg->ToString() << ", The number of parameters of this function is "
-                      << fg->parameters().size()
-                      << ","
-                         " but the number of provided arguments is "
-                      << args_spec_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
+    MS_EXCEPTION(TypeError) << "Function " << fg->ToString() << ", The number of parameters of this function is "
+                            << fg->parameters().size() << ", but the number of provided arguments is "
+                            << args_spec_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
   }
   MS_EXCEPTION_IF_NULL(parent_context_);
   MS_EXCEPTION_IF_NULL(engine);
@@ -139,7 +136,7 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
                            MS_EXCEPTION_IF_NULL(arg);
                            return arg->Broaden();
                          });
-    MS_LOG(DEBUG) << "" << func_graph_->ToString() << " original: " << mindspore::ToString(args_spec_list)
+    MS_LOG(DEBUG) << func_graph_->ToString() << " original: " << mindspore::ToString(args_spec_list)
                   << ", broaded: " << mindspore::ToString(broaded_list);
     return broaded_list;
   }
@@ -232,20 +229,20 @@ AbstractBasePtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &ar
   MS_EXCEPTION_IF_NULL(cache_);
   auto iter = cache_->find(args_spec_list);
   if (iter == cache_->end()) {
-    MS_LOG(DEBUG) << "" << evaluator_name << " cache miss, call Infer().";
+    MS_LOG(DEBUG) << evaluator_name << " cache miss, call Infer().";
     AbstractBasePtr ret = Infer(engine, args_spec_list);
     if (ret == nullptr) {
       InferFailLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
       MS_LOG(EXCEPTION) << "Evaluator " << evaluator_name << " result is nullptr.";
     }
     MS_EXCEPTION_IF_NULL(ret);
-    MS_LOG(DEBUG) << "" << evaluator_name << " set cache. return: " << ret->ToString() << ".";
+    MS_LOG(DEBUG) << evaluator_name << " set cache. return: " << ret->ToString() << ".";
     (*cache_)[args_spec_list] = ret;
     trace::TraceGraphInferLeave(shared_from_base<Evaluator>());
     return ret;
   } else {
     MS_EXCEPTION_IF_NULL(iter->second);
-    MS_LOG(DEBUG) << "" << evaluator_name << " cache hit. return: " << iter->second->ToString() << ".";
+    MS_LOG(DEBUG) << evaluator_name << " cache hit. return: " << iter->second->ToString() << ".";
     trace::TraceGraphInferLeave(shared_from_base<Evaluator>());
     return iter->second;
   }
@@ -260,7 +257,6 @@ AbstractBasePtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const Config
                          return conf->GetEvaluatedValue();
                        });
   AbstractBasePtr ret = EvalPrim(engine, args_spec_list);
-  (*cache_)[args_spec_list] = ret;
   return ret;
 }
 

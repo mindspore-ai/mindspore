@@ -69,7 +69,6 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_task_sink_ = true;
   ir_fusion_flag_ = true;
   enable_hccl_ = false;
-  enable_loop_sink_ = false;
   enable_mem_reuse_ = true;
   enable_gpu_summary_ = true;
   precompile_only_ = false;
@@ -78,7 +77,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_dynamic_mem_pool_ = true;
   graph_memory_max_size_ = "0";
   variable_memory_max_size_ = "0";
-  MS_LOG(INFO) << "Create context with backend policy:" << policy << ", device target:" << target << ".";
+  enable_loop_sink_ = target == kAscendDevice || target == kDavinciDevice;
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
@@ -134,6 +133,7 @@ bool MsContext::set_device_target(const std::string &target) {
   } else {
     device_target_ = target;
   }
+  enable_loop_sink_ = device_target_ == kAscendDevice;
   MS_LOG(INFO) << "ms set context device target:" << target;
   return true;
 }
@@ -437,5 +437,19 @@ bool MsContext::PynativeInitGe() {
   (void)InitGe();
   is_pynative_ge_init_ = true;
   return true;
+}
+
+bool MsContext::IsTsdOpened() {
+  if (tsd_ref_ > 0) {
+    return true;
+  }
+  return false;
+}
+
+bool MsContext::IsGeInited() {
+  if (ge_ref_ > 0) {
+    return true;
+  }
+  return false;
 }
 }  // namespace mindspore

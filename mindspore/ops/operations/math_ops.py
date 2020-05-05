@@ -1251,7 +1251,8 @@ class Acosh(PrimitiveWithInfer):
     Compute inverse hyperbolic cosine of x element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`,
+          and the data type of 'input_x' is number, the element in 'input_x' should be greater than or equal to 1.
 
     Outputs:
         Tensor, has the same shape as `input_x`.
@@ -2038,7 +2039,7 @@ class Atan2(_MathBinaryOp):
     r"""
     Returns arctangent of input_x/input_y element-wise.
 
-    It returns :math:`\theta\ \in\ (-\frac{\pi}{2}, \frac{\pi}{2})`
+    It returns :math:`\theta\ \in\ [-\pi, \pi]`
     such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
 
     Inputs:

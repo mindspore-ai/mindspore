@@ -104,10 +104,10 @@ bool AscendDeviceAddress::SyncDeviceToHost(const std::vector<int> &shape, size_t
     } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
       sync_ok = SyncDeviceToHostAndFloatToFloat64(host_ptr, size, ptr_, size_);
     } else {
-      auto host_size = trans::ShapeSize(host_shape);
+      auto shape_size = trans::ShapeSize(host_shape);
       auto host = std::vector<uint8_t>(size_);
       SyncMemory(host.data(), ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
-      const trans::TypeIdArgs type_args{host.data(), size_, size, type_id_, type, host_size, host_size};
+      const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
       sync_ok = trans::TransDataType(type_args, host_ptr);
       if (!sync_ok) {
         MS_LOG(ERROR) << "trans data type failed.";
@@ -156,9 +156,8 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const std::vector<int
       MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
-    auto host_size = trans::ShapeSize(host_shape);
-    auto device_size = trans::ShapeSize(device_shape);
-    const trans::TypeIdArgs type_args{host.data(), size_, size, type_id_, type, device_size, host_size};
+    auto shape_size = trans::ShapeSize(host_shape);
+    const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
     sync_ok = trans::TransDataType(type_args, host_ptr);
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans format failed.";
@@ -193,8 +192,8 @@ bool AscendDeviceAddress::SyncHostToDevice(const std::vector<int> &shape, size_t
     } else if (type_id_ == kNumberTypeFloat32 && type == kNumberTypeFloat64) {
       sync_ok = Float64ToFloatAndSyncHostToDevice(ptr_, size_, host_ptr, size);
     } else {
-      auto host_size = trans::ShapeSize(host_shape);
-      const trans::TypeIdArgs type_args{host_ptr, size, size_, type, type_id_, host_size, host_size};
+      auto shape_size = trans::ShapeSize(host_shape);
+      const trans::TypeIdArgs type_args{host_ptr, shape_size, type, type_id_, size};
       auto host_tmp = std::vector<uint8_t>(size_);
       sync_ok = trans::TransDataType(type_args, host_tmp.data());
       if (!sync_ok) {
@@ -235,9 +234,8 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const std::vector<int
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   }
   if (type_id_ != type) {
-    auto host_size = trans::ShapeSize(host_shape);
-    auto device_size = trans::ShapeSize(device_shape);
-    const trans::TypeIdArgs type_args{host_ptr, size, size_, type, type_id_, host_size, device_size};
+    auto shape_size = trans::ShapeSize(host_shape);
+    const trans::TypeIdArgs type_args{host_ptr, shape_size, type, type_id_, size};
     auto host_tmp = std::vector<uint8_t>(size_);
     sync_ok = trans::TransDataType(type_args, host_tmp.data());
     if (!sync_ok) {

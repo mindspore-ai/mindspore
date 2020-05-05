@@ -28,6 +28,11 @@
 
 namespace mindspore {
 namespace abstract {
+class AnalysisContext;
+using AnalysisContextWeakPtr = std::weak_ptr<AnalysisContext>;
+using ArgsSpecToAnalysisContextMap =
+  std::unordered_map<AbstractBasePtrList, AnalysisContextWeakPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>;
+
 // AnalysisContext will be stored in Config in AnalysisCache.
 class AnalysisContext {
  public:
@@ -41,12 +46,7 @@ class AnalysisContext {
   ~AnalysisContext() = default;
 
   // Helper function to wrapper constructor to save shared_ptr in parent_cache.
-  AnalysisContextPtr NewContext(AnalysisContextPtr parent, FuncGraphPtr fg, const AbstractBasePtrList &args_spec_list) {
-    AnalysisContextPtr context_new = std::make_shared<AnalysisContext>(parent, fg, args_spec_list);
-    // Reference to myself, so use weak_ptr to break reference cycle.
-    context_new->parent_cache_[fg] = std::weak_ptr<AnalysisContext>(context_new);
-    return context_new;
-  }
+  AnalysisContextPtr NewContext(AnalysisContextPtr parent, FuncGraphPtr fg, const AbstractBasePtrList &args_spec_list);
 
   // Extend this context with values for another graph.
   AnalysisContextPtr NewFuncGraphContext(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
@@ -56,6 +56,7 @@ class AnalysisContext {
   bool operator==(const AnalysisContext &other) const;
   std::size_t hash();
   static AnalysisContextPtr DummyContext();
+  bool IsDummyContext();
   FuncGraphPtr func_graph() const { return func_graph_; }
   AnalysisContextPtr parent() const { return parent_; }
   std::string ToString() const;
@@ -66,7 +67,8 @@ class AnalysisContext {
   AnalysisContextPtr parent_;
   FuncGraphPtr func_graph_;
   AbstractBasePtrList args_spec_list_;
-  std::unordered_map<FuncGraphPtr, std::weak_ptr<AnalysisContext>> parent_cache_;
+  std::unordered_map<FuncGraphPtr, AnalysisContextWeakPtr> parent_cache_;
+  std::unordered_map<FuncGraphPtr, ArgsSpecToAnalysisContextMap> children_cache_;
 };
 
 struct ContextHasher {

@@ -22,6 +22,7 @@ import os
 import logging
 import random
 import numpy as np
+import pytest
 from mindspore.train.summary.summary_record import SummaryRecord
 from mindspore.common.tensor import Tensor
 import mindspore.nn as nn
@@ -180,7 +181,8 @@ def test_summary_use_invalid_tag_None():
 def test_summary_use_invalid_tag_Bool():
     log.debug("begin test_summary_use_invalid_tag_Bool")
     net = SummaryDemoTag(True, True, True)
-    run_case(net)
+    with pytest.raises(TypeError):
+        run_case(net)
     log.debug("finished test_summary_use_invalid_tag_Bool")
 
 
@@ -196,7 +198,8 @@ def test_summary_use_invalid_tag_null():
 def test_summary_use_invalid_tag_Int():
     log.debug("begin test_summary_use_invalid_tag_Int")
     net = SummaryDemoTag(1, 2, 3)
-    run_case(net)
+    with pytest.raises(TypeError):
+        run_case(net)
     log.debug("finished test_summary_use_invalid_tag_Int")
 
 

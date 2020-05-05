@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_parallel_mode
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor
-from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_ge
+from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
 
 # store ms_function class compiled pipeline cache
@@ -70,12 +70,11 @@ def _wrap_func(fn):
         def _convert_data(data):
             if isinstance(data, Tensor) and not isinstance(data, MsTensor):
                 return MsTensor(data)
+            if isinstance(data, tuple):
+                return tuple(_convert_data(x) for x in data)
+            if isinstance(data, list):
+                return list(_convert_data(x) for x in data)
             return data
-
-        if isinstance(results, tuple):
-            return tuple(_convert_data(x) for x in results)
-        if isinstance(results, list):
-            return list(_convert_data(x) for x in results)
         return _convert_data(results)
 
     return wrapper
@@ -184,7 +183,7 @@ class _MindSporeFunction:
 
     @_wrap_func
     def __call__(self, *args):
-        init_ge()
+        init_backend()
         converted, arguments_dict, parse_method = _convert_function_arguments(self.fn, *args)
         if not converted:
             raise RuntimeError('Process function parameter is failure')
@@ -328,7 +327,7 @@ class _Executor:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
 
-    def compile(self, obj, *args, phase='predict', params=None):
+    def compile(self, obj, *args, phase='predict', params=None, do_convert=True):
         """
         Compiles graph.
 
@@ -337,6 +336,7 @@ class _Executor:
             args (tuple): Function or cell input arguments.
             phase (str): The name of compile phase. Default: 'predict'.
             params (OrderedDict): The parameters dictionary used for init data graph. Default: None.
+            do_convert (bool): When set to True, convert ME graph to GE graph after compiling graph.
 
         Return:
             Str, the full phase of the cell.
@@ -368,7 +368,8 @@ class _Executor:
 
         if graph is None:
             logger.error("%r graph compile failed.", phase)
-
+        if not do_convert:
+            return phase, True
         if not enable_debug_runtime or enable_ge:
             if _get_parallel_mode() in ["auto_parallel", "semi_auto_parallel"]:
                 obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)

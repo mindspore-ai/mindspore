@@ -445,5 +445,5 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
             succ = False
         else:
             succ = self.optimizer(grads)
-        ret = (loss, cond)
+        ret = (loss, cond, scaling_sens)
         return F.depend(ret, succ)

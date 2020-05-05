@@ -296,10 +296,10 @@ double CostConvolution::GetMinCostIn(const Graph::NodeType &node) {
                       static_cast<int>(op.arguments[1].tensor_shape.shape_n * op.arguments[1].tensor_str.str_n) *
                       static_cast<int>(op.arguments[1].tensor_shape.shape_w * op.arguments[1].tensor_str.str_w) *
                       static_cast<int>(op.arguments[1].tensor_shape.shape_c * op.arguments[1].tensor_str.str_c);
-  int tensor_out = static_cast<int>(node.tensor_parm.tensor_shape.shape_h * node.tensor_parm.tensor_shape.shape_w) *
-                   static_cast<int>(node.tensor_parm.tensor_shape.shape_n * node.tensor_parm.tensor_shape.shape_c) *
-                   static_cast<int>(node.tensor_parm.tensor_str.str_h * node.tensor_parm.tensor_str.str_w) *
-                   static_cast<int>(node.tensor_parm.tensor_str.str_n * node.tensor_parm.tensor_str.str_c);
+  int tensor_out = static_cast<int>(node.tensor_parm.tensor_shape.shape_h * node.tensor_parm.tensor_str.str_h) *
+                   static_cast<int>(node.tensor_parm.tensor_shape.shape_n * node.tensor_parm.tensor_str.str_n) *
+                   static_cast<int>(node.tensor_parm.tensor_shape.shape_w * node.tensor_parm.tensor_str.str_w) *
+                   static_cast<int>(node.tensor_parm.tensor_shape.shape_c * node.tensor_parm.tensor_str.str_c);
 
   std::vector<double> cost_in;
   cost_in.push_back(StrDimB(tensor_filter));
@@ -446,51 +446,8 @@ StrategyRec CostPooling::ChoseStr(const std::vector<double> &cost_op, StrategyRe
   return str;
 }
 
-// Get optimal strategy for Add
-StrategyRec CostAdd::GetOptimalStr(const Graph::NodeType &node,
-                                   const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                                   const Graph &graph) {
-  int tensor_n = static_cast<int>(node.tensor_parm.tensor_shape.shape_n * node.tensor_parm.tensor_str.str_n);
-  int tensor_c = static_cast<int>(node.tensor_parm.tensor_shape.shape_c * node.tensor_parm.tensor_str.str_c);
-  int tensor_h = static_cast<int>(node.tensor_parm.tensor_shape.shape_h * node.tensor_parm.tensor_str.str_h);
-  int tensor_w = static_cast<int>(node.tensor_parm.tensor_shape.shape_w * node.tensor_parm.tensor_str.str_w);
-
-  std::vector<double> cost_op;
-  std::vector<std::vector<float>> mode;
-
-  if (tensor_n < 2) {
-    cost_op.push_back(DOUBLE_MAX);
-  } else {
-    cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
-                                           mode = {{0.5, 1, 1, 1}, {0.5, 1, 1, 1}, {0.5, 1, 1, 1}}, graph));
-  }
-
-  if (tensor_c < 2) {
-    cost_op.push_back(DOUBLE_MAX);
-  } else {
-    cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
-                                           mode = {{1, 0.5, 1, 1}, {1, 0.5, 1, 1}, {1, 0.5, 1, 1}}, graph));
-  }
-
-  if (tensor_h < 2) {
-    cost_op.push_back(DOUBLE_MAX);
-  } else {
-    cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
-                                           mode = {{1, 1, 0.5, 1}, {1, 1, 0.5, 1}, {1, 1, 0.5, 1}}, graph));
-  }
-
-  if (tensor_w < 2) {
-    cost_op.push_back(DOUBLE_MAX);
-  } else {
-    cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
-                                           mode = {{1, 1, 1, 0.5}, {1, 1, 1, 0.5}, {1, 1, 1, 0.5}}, graph));
-  }
-
-  return ChoseStr(cost_op, node.apply.str);
-}
-
 // Chose strategy for Add
-StrategyRec CostAdd::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
+StrategyRec CostTensorAdd::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
   uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
@@ -540,49 +497,6 @@ StrategyRec CostReshape::GetOptimalStr(const Graph::NodeType &node) const { retu
 
 StrategyRec CostReshape::ChoseStr(StrategyRec str) const { return str; }
 
-// Get optimal strategy for Biasadd
-StrategyRec CostBiasAdd::GetOptimalStr(const Graph::NodeType &node,
-                                       const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                                       const Graph &graph) {
-  int tensor_n = static_cast<int>(node.tensor_parm.tensor_shape.shape_n * node.tensor_parm.tensor_str.str_n);
-  int tensor_c = static_cast<int>(node.tensor_parm.tensor_shape.shape_c * node.tensor_parm.tensor_str.str_c);
-  int tensor_h = static_cast<int>(node.tensor_parm.tensor_shape.shape_h * node.tensor_parm.tensor_str.str_h);
-  int tensor_w = static_cast<int>(node.tensor_parm.tensor_shape.shape_w * node.tensor_parm.tensor_str.str_w);
-
-  std::vector<double> cost_op;
-  std::vector<std::vector<float>> mode;
-
-  if (tensor_n < 2) {
-    cost_op.push_back(DOUBLE_MAX);
-  } else {
-    cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
-                                           mode = {{0.5, 1, 1, 1}, {0.5, 1, 1, 1}, {0.5, 1, 1, 1}}, graph));
-  }
-
-  if (tensor_c < 2) {
-    cost_op.push_back(DOUBLE_MAX);
-  } else {
-    cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
-                                           mode = {{1, 0.5, 1, 1}, {1, 0.5, 1, 1}, {1, 0.5, 1, 1}}, graph));
-  }
-
-  if (tensor_h < 2) {
-    cost_op.push_back(DOUBLE_MAX);
-  } else {
-    cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
-                                           mode = {{1, 1, 0.5, 1}, {1, 1, 0.5, 1}, {1, 1, 0.5, 1}}, graph));
-  }
-
-  if (tensor_w < 2) {
-    cost_op.push_back(DOUBLE_MAX);
-  } else {
-    cost_op.push_back(cost_in_ + CostRedis(node, node_name_to_strategy,
-                                           mode = {{1, 1, 1, 0.5}, {1, 1, 1, 0.5}, {1, 1, 1, 0.5}}, graph));
-  }
-
-  return ChoseStr(cost_op, node.apply.str);
-}
-
 // Chose strategy for BiasAdd
 StrategyRec CostBiasAdd::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
   uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
@@ -629,7 +543,7 @@ StrategyRec CostBiasAdd::ChoseStr(const std::vector<double> &cost_op, StrategyRe
   return str;
 }
 
-// Get optimal strategy for Common OPs: ReLU and Softmax
+// Get optimal strategy for Common OPs
 StrategyRec CostCommon::GetOptimalStr(const Graph::NodeType &node,
                                       const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                                       const Graph &graph) {
@@ -712,6 +626,22 @@ StrategyRec CostCommon::ChoseStr(const std::vector<double> &cost_op, StrategyRec
       MS_LOG(EXCEPTION) << "Failure: CostBiasAdd failed.";
   }
   return str;
+}
+
+// Get weight for BN
+double CostBatchNorm::GetMinCostIn(const OperatorRec &op) {
+  int tensor = static_cast<int>(op.arguments[0].tensor_shape.shape_h * op.arguments[0].tensor_str.str_h) *
+               static_cast<int>(op.arguments[0].tensor_shape.shape_n * op.arguments[0].tensor_str.str_n) *
+               static_cast<int>(op.arguments[0].tensor_shape.shape_w * op.arguments[0].tensor_str.str_w) *
+               static_cast<int>(op.arguments[0].tensor_shape.shape_c * op.arguments[0].tensor_str.str_c);
+
+  std::vector<double> cost_in;
+  cost_in.push_back(StrDimB(tensor) * 1.2);
+  cost_in.push_back(DOUBLE_MAX);
+  cost_in.push_back(StrDimH(tensor) * 1.2);
+  cost_in.push_back(StrDimW(tensor) * 1.2);
+
+  return *min_element(cost_in.begin(), cost_in.end());
 }
 
 // Get optimal strategy for BN

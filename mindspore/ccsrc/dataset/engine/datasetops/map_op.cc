@@ -15,6 +15,7 @@
  */
 #include "dataset/engine/datasetops/map_op.h"
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -81,20 +82,27 @@ int32_t MapOp::num_consumers() const {
 
 // A print method typically used for debugging
 void MapOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  ParallelOp::Print(out, show_all);
-
-  // Then display our own stuff
-  out << "\nMapOp:";
-  out << "\n  Input column names:";
-  for (size_t i = 0; i < in_columns_.size(); i++) {
-    out << " " << in_columns_[i];
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <MapOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nInput column names:";
+    for (size_t i = 0; i < in_columns_.size(); i++) {
+      out << " " << in_columns_[i];
+    }
+    out << "\n  TensorOps:";
+    for (size_t i = 0; i < tfuncs_.size(); i++) {
+      out << " " << tfuncs_[i];
+    }
+    out << "\n\n";
   }
-  out << "\n  TensorOps:";
-  for (size_t i = 0; i < tfuncs_.size(); i++) {
-    out << " " << tfuncs_[i];
-  }
-  out << "\n";
 }
 
 // This class functor will provide the master loop that drives the logic for performing the work

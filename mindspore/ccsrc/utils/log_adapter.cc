@@ -35,7 +35,7 @@ static std::string GetTime() {
             now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
 #else
   struct timeval cur_time;
-  (void)gettimeofday(&cur_time, NULL);
+  (void)gettimeofday(&cur_time, nullptr);
 
   struct tm now;
   (void)localtime_r(&cur_time.tv_sec, &now);
@@ -143,6 +143,7 @@ static std::string ExceptionTypeToString(ExceptionType type) {
       _TO_STRING(TimeOutError),
       _TO_STRING(ResourceUnavailable),
       _TO_STRING(NoPermissionError),
+      _TO_STRING(IndexError),
       _TO_STRING(ValueError),
       _TO_STRING(TypeError),
   };
@@ -179,7 +180,8 @@ void LogWriter::operator^(const LogStream &stream) const {
 
   std::ostringstream oss;
   oss << location_.file_ << ":" << location_.line_ << " " << location_.func_ << "] ";
-  if (exception_type_ != NoExceptionType && exception_type_ != TypeError && exception_type_ != ValueError) {
+  if (exception_type_ != NoExceptionType && exception_type_ != IndexError && exception_type_ != TypeError &&
+      exception_type_ != ValueError) {
     oss << ExceptionTypeToString(exception_type_) << " ";
   }
   oss << msg.str();
@@ -187,6 +189,9 @@ void LogWriter::operator^(const LogStream &stream) const {
   trace::TraceGraphInfer();
   trace::GetInferStackInfo(oss);
 
+  if (exception_type_ == IndexError) {
+    throw pybind11::index_error(oss.str());
+  }
   if (exception_type_ == ValueError) {
     throw pybind11::value_error(oss.str());
   }
@@ -252,9 +257,13 @@ void mindspore_log_init(void) {
   if (mindspore::GetEnv("GLOG_logfile_mode").empty()) {
     FLAGS_logfile_mode = 0640;
   }
+  std::string logtostderr = mindspore::GetEnv("GLOG_logtostderr");
   // default print log to screen
-  if (mindspore::GetEnv("GLOG_logtostderr").empty()) {
+  if (logtostderr.empty()) {
     FLAGS_logtostderr = true;
+  } else if (logtostderr == "0" && mindspore::GetEnv("GLOG_log_dir").empty()) {
+    FLAGS_logtostderr = true;
+    MS_LOG(WARNING) << "`GLOG_log_dir` is not set, output log to screen.";
   }
 #else
   mindspore::InitMsLogLevel();

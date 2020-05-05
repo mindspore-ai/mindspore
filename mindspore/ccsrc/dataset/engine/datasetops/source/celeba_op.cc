@@ -16,6 +16,7 @@
 #include "dataset/engine/datasetops/source/celeba_op.h"
 
 #include <fstream>
+#include <iomanip>
 #include "dataset/core/config_manager.h"
 #include "dataset/util/path.h"
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -33,8 +34,8 @@ CelebAOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr)
 }
 
 Status CelebAOp::Builder::Build(std::shared_ptr<CelebAOp> *op) {
-  MS_LOG(INFO) << "Celeba dataset directory is " << builder_dir_.c_str() << ".";
-  MS_LOG(INFO) << "Celeba dataset type is " << builder_dataset_type_.c_str() << ".";
+  MS_LOG(DEBUG) << "Celeba dataset directory is " << builder_dir_.c_str() << ".";
+  MS_LOG(DEBUG) << "Celeba dataset type is " << builder_dataset_type_.c_str() << ".";
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
     builder_sampler_ = std::make_shared<SequentialSampler>();
@@ -94,7 +95,7 @@ Status CelebAOp::LaunchThreadsAndInitOp() {
 
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(attr_info_queue_->Register(tree_->AllTasks()));
-  wp_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
 
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Walking attr file", std::bind(&CelebAOp::ParseAttrFile, this)));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&CelebAOp::WorkerEntry, this, std::placeholders::_1)));
@@ -240,9 +241,11 @@ Status CelebAOp::ParseImageAttrInfo() {
   num_rows_exact_ = image_labels_vec_.size();
   num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_exact_) ? num_rows_exact_ : num_samples_;
   if (num_rows_exact_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Number of rows in celeba dataset is zero");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API CelebADataset.Please check file path or dataset API "
+      "validation first.");
   }
-  MS_LOG(INFO) << "Celeba dataset rows number is " << num_rows_exact_ << ".";
+  MS_LOG(DEBUG) << "Celeba dataset rows number is " << num_rows_exact_ << ".";
   return Status::OK();
 }
 
@@ -267,7 +270,9 @@ std::vector<std::string> CelebAOp::Split(const std::string &line) {
 // Derived from RandomAccessOp
 Status CelebAOp::GetNumSamples(int64_t *num) const {
   if (num == nullptr || num_samples_ == 0) {
-    RETURN_STATUS_UNEXPECTED("NumSample not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API CelebADataset.Please check file path or dataset API "
+      "validation first.");
   }
   (*num) = num_samples_;
   return Status::OK();
@@ -275,7 +280,9 @@ Status CelebAOp::GetNumSamples(int64_t *num) const {
 
 Status CelebAOp::GetNumRowsInDataset(int64_t *num) const {
   if (num == nullptr || num_rows_exact_ == 0) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "NumRow not set");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API CelebADataset.Please check file path or dataset API "
+      "validation first.");
   }
 
   *num = num_rows_exact_;
@@ -428,9 +435,19 @@ Status CelebAOp::LoadTensorRow(const std::pair<std::string, std::vector<int32_t>
 }
 
 void CelebAOp::Print(std::ostream &out, bool show_all) const {
-  DatasetOp::Print(out, show_all);
-  out << "\nnumber of parallel workers:" << num_workers_ << "\nNumber of rows:" << num_rows_exact_
-      << "\nceleba dir: " << folder_path_ << "\n-------------------------\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <CelebAOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nNumber of rows:" << num_rows_exact_ << "\nceleba dir: " << folder_path_ << "\n\n";
+  }
 }
 
 // Reset Sampler and wakeup Master thread (functor)

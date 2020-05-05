@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <memory>
 #include <string>
 #include <utility>
@@ -90,6 +91,30 @@ TextFileOp::TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num
   worker_connector_size_ = worker_connector_size;
 }
 
+// A print method typically used for debugging
+void TextFileOp::Print(std::ostream &out, bool show_all) const {
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <TextFileOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nRows per buffer: " << rows_per_buffer_ << "\nSample count: " << num_samples_
+        << "\nDevice id: " << device_id_ << "\nNumber of devices: " << num_devices_
+        << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no") << "\nText files list:\n";
+    for (int i = 0; i < text_files_list_.size(); ++i) {
+      out << " " << text_files_list_[i];
+    }
+    out << "\nData Schema:\n";
+    out << *data_schema_ << "\n\n";
+  }
+}
+
 Status TextFileOp::Init() {
   RETURN_IF_NOT_OK(filename_index_->insert(text_files_list_));
 
@@ -143,6 +168,9 @@ Status TextFileOp::LoadFile(const std::string &file, const int64_t start_offset,
   std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
 
   while (getline(handle, line)) {
+    if (line.empty()) {
+      continue;
+    }
     // If read to the end offset of this file, break.
     if (rows_total >= end_offset) {
       break;
@@ -367,7 +395,7 @@ Status TextFileOp::operator()() {
   // must be called after launching workers.
   TaskManager::FindMe()->Post();
 
-  io_block_queue_wait_post_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
   NotifyToFillIOBlockQueue();
   while (!finished_reading_dataset_) {
     int64_t buffer_id = 0;
@@ -425,7 +453,9 @@ int64_t TextFileOp::CountTotalRows(const std::string &file) {
   std::string line;
   int64_t count = 0;
   while (getline(handle, line)) {
-    count++;
+    if (!line.empty()) {
+      count++;
+    }
   }
 
   return count;
@@ -438,7 +468,9 @@ Status TextFileOp::CalculateNumRowsPerShard() {
     all_num_rows_ += count;
   }
   if (all_num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Number of rows can not be zero");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API TextFileDataset.Please check file path or dataset API "
+      "validation first.");
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(all_num_rows_ * 1.0 / num_devices_));

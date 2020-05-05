@@ -38,6 +38,12 @@ void GenerateStrategy(std::shared_ptr<Graph> graph, bool mask_special_ops,
     for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
       stra.push_back(PrepareStrategy(graph, ops, iter_ops, iter_op_inputs));
     }
+    // OneHot's scalar parameters were removed by entire_costgraph, we had to complete them.
+    if (ops[iter_ops]->type() == ONEHOT) {
+      std::vector<int32_t> s_Onehot = {};
+      stra.push_back(s_Onehot);
+      stra.push_back(s_Onehot);
+    }
     StrategyPtr sp = std::make_shared<Strategy>(0, stra);
     ops[iter_ops]->SetSelectedStrategyAndCost(sp, ops[iter_ops]->selected_cost());
   }
@@ -126,8 +132,9 @@ std::vector<int32_t> MakeOriginalStrategy(const std::vector<std::shared_ptr<Oper
   if (iter_ops >= ops.size()) {
     MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
   }
-  if (iter_op_inputs >= ops[iter_ops]->strategy()->GetInputDim().size())
+  if (iter_op_inputs >= ops[iter_ops]->strategy()->GetInputDim().size()) {
     MS_LOG(EXCEPTION) << "Failure: Strategy's InputDim out of range.";
+  }
   size_t input_size = ops[iter_ops]->strategy()->GetInputDim()[iter_op_inputs].size();
   for (size_t dim = 0; dim < input_size; dim++) {
     s.push_back(1);
@@ -155,8 +162,9 @@ std::vector<int32_t> MakeDataParallelStrategy(const std::vector<std::shared_ptr<
     MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
   }
   StrategyPtr origin_strategy = ops[iter_ops]->strategy();
-  if (iter_op_inputs >= origin_strategy->GetInputDim().size())
+  if (iter_op_inputs >= origin_strategy->GetInputDim().size()) {
     MS_LOG(EXCEPTION) << "Failure: Strategy's InputDim out of range.";
+  }
   size_t input_size = origin_strategy->GetInputDim()[iter_op_inputs].size();
   for (size_t dim = 0; dim < input_size; dim++) {
     if (dim == 0 && input_size == 4) {
@@ -192,21 +200,22 @@ std::vector<int32_t> PrepareStrategy(const std::shared_ptr<Graph> &graph,
     return MakeOriginalStrategy(ops, iter_ops, iter_op_inputs);
   } else if (type == RELU) {
     return MakeRecSearchStrategy(graph, iter_ops, iter_op_inputs);
-  } else if (type == BATCH_NORM || (type == FUSE_BATCH_NORM)) {
+  } else if ((type == BATCH_NORM) || (type == FUSE_BATCH_NORM)) {
     return PrepareBN(graph, iter_ops, iter_op_inputs);
-  } else if (type == SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
+  } else if (type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
     return PrepareSparse(iter_op_inputs);
   } else {
     return MakeDataParallelStrategy(ops, iter_ops, iter_op_inputs);
   }
 }
 
+// use to respect strategy checks of auto parallel
 void MaskSpecialOps(std::shared_ptr<Graph> graph) {
   size_t iter_nodes = graph->nodes.size();
   for (size_t i = 0; i < iter_nodes; i++) {
     Graph::NodeType &node = graph->nodes[i];
 
-    if (node.apply.op_type == 1) {  // For Convolution
+    if (node.apply.op_type == kRecConvolution) {  // For convolution
       // cover input tensor strategy
       node.apply.arguments[0].tensor_str.str_n = 1.0 / static_cast<float>(g_device_manager->DeviceNum());
       node.apply.arguments[0].tensor_str.str_c = 1;
@@ -217,19 +226,6 @@ void MaskSpecialOps(std::shared_ptr<Graph> graph) {
       node.apply.arguments[1].tensor_str.str_c = 1;
       node.apply.arguments[1].tensor_str.str_h = 1;
       node.apply.arguments[1].tensor_str.str_w = 1;
-    } else if (node.apply.op_type == 8) {  // For BN
-      node.apply.arguments[0].tensor_str.str_n = 1.0 / static_cast<float>(g_device_manager->DeviceNum());
-      node.apply.arguments[0].tensor_str.str_c = 1;
-      node.apply.arguments[0].tensor_str.str_h = 1;
-      node.apply.arguments[0].tensor_str.str_w = 1;
-      // cover 1-d argument blobs
-      node.apply.arguments[1].tensor_str.str_n = 1;
-      node.apply.arguments[2].tensor_str.str_c = 1;
-      node.apply.arguments[3].tensor_str.str_h = 1;
-      node.apply.arguments[4].tensor_str.str_w = 1;
-    } else if (node.apply.op_type == 4 || node.apply.op_type == 9) {  // For SparseSoftmaxCrossEntropyWithLogits
-      node.tensor_parm.tensor_str.str_h = 1.0 / static_cast<float>(g_device_manager->DeviceNum());
-      node.tensor_parm.tensor_str.str_w = 1;
     }
   }
 }

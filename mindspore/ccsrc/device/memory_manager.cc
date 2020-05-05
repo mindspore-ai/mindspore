@@ -141,11 +141,14 @@ uint8_t *MemoryManager::MallocDynamicMem(size_t size, bool communication_mem) {
   }
 }
 
-void MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr address, size_t size) {
+bool MemoryManager::MallocMemFromMemPool(const DeviceAddressPtr address, size_t size) {
   auto device_ptr = MallocMemFromMemPool(size);
-  MS_EXCEPTION_IF_NULL(device_ptr);
+  if (!device_ptr) {
+    return false;
+  }
   address->ptr_ = device_ptr;
   address->from_mem_pool_ = true;
+  return true;
 }
 
 void *MemoryManager::MallocMemFromMemPool(size_t size) {
@@ -168,11 +171,14 @@ void MemoryManager::FreeMemFromMemPool(void *device_ptr) {
   }
 }
 
-void MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList addr_list, size_t total_size,
+bool MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList addr_list, size_t total_size,
                                                    std::vector<size_t> size_list) {
   auto device_ptr_list = MallocContinuousMemFromMemPool(total_size, size_list);
+  if (device_ptr_list.size() == 0) {
+    return false;
+  }
   if (addr_list.size() != device_ptr_list.size()) {
-    MS_LOG(EXCEPTION) << "The size of device list is not equal  to the size of address list.";
+    MS_LOG(EXCEPTION) << "The size of device list is not equal to the size of address list.";
   }
   for (size_t i = 0; i < addr_list.size(); i++) {
     MS_EXCEPTION_IF_NULL(device_ptr_list[i]);
@@ -180,6 +186,7 @@ void MemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList ad
     addr_list[i]->ptr_ = device_ptr_list[i];
     addr_list[i]->from_mem_pool_ = true;
   }
+  return true;
 }
 
 std::vector<void *> MemoryManager::MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list) {

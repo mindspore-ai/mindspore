@@ -30,7 +30,6 @@ namespace opt {
 struct BufferFusionInfo_t {
   std::vector<AnfNodePtr> anf_nodes;
   std::vector<AnfNodePtr> inputs_list;
-  std::vector<AnfNodePtr> inputs_list_in;
   std::vector<AnfNodePtr> outputs_list;
   kernel::KernelBuildInfoPtr kernel_build_info;
 };
@@ -44,10 +43,10 @@ class BufferFusion : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  void GetBufferFusionInfo(const session::KernelGraph &kernel_graph,
+  void GetBufferFusionInfo(session::KernelGraph *kernel_graph,
                            std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos) const;
-  bool ReplaceFusionOp(const BufferFusionInfo_t &buffer_fusion_info, const kernel::KernelModPtr &kernel_ptr,
-                       session::KernelGraph *kernel_graph) const;
+  bool ReplaceFusionOp(std::unordered_map<int32_t, BufferFusionInfo_t> *buffer_fusion_infos, int32_t fusion_id,
+                       const kernel::KernelModPtr &kernel_ptr, session::KernelGraph *kernel_graph) const;
   bool MatchBufferFusionPattern(const session::KernelGraph &kernel_graph) const;
   bool FuseBufferFusionPattern(session::KernelGraph *kernel_graph) const;
 };

@@ -74,6 +74,17 @@ class Tensor(Tensor_):
         out = tensor_operator_registry.get('__add__')(self, other)
         return out
 
+    def __eq__(self, other):
+        if not isinstance(other, Tensor):
+            return False
+        x = self.asnumpy()
+        y = other.asnumpy()
+        out = np.equal(x, y)
+        return Tensor(np.array(out))
+
+    def __hash__(self):
+        return hash(id(self))
+
     def __mul__(self, other):
         check_type('tensor input_data', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__mul__')(self, other)

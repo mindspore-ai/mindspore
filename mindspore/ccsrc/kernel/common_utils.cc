@@ -114,53 +114,35 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   return atomic_flag;
 }
 
-bool KernelMeta::ReadIndex(const std::string &bin_dir) {
-  DIR *dir = opendir(bin_dir.c_str());
-  if (dir == nullptr) {
-#if defined(_WIN32) || defined(_WIN64)
-    auto ret = mkdir(bin_dir.c_str());
-#else
-    auto ret = mkdir(bin_dir.c_str(), S_IRWXG | S_IRWXU);
-#endif
-    if (ret != 0) {
-      MS_LOG(INFO) << "kernel dir not exist[" << bin_dir << "].";
-      return false;
-    }
-    dir = opendir(bin_dir.c_str());
-  }
+void KernelMeta::Initialize() {
+  kernel_meta_path_ = std::string(kGpuKernelMeta) + "_" + std::to_string(getpid()) + "/";
+  // remove old kernel cache
+  RemoveKernelCache();
 
+#if defined(_WIN32) || defined(_WIN64)
+  auto ret = mkdir(kernel_meta_path_.c_str());
+#else
+  auto ret = mkdir(kernel_meta_path_.c_str(), S_IRWXG | S_IRWXU);
+#endif
+  if (ret != 0) {
+    MS_LOG(INFO) << "kernel dir [" << kernel_meta_path_ << "], will be created later";
+  }
+  initialized_ = true;
+}
+
+void KernelMeta::RemoveKernelCache() {
+  DIR *dir = opendir(kernel_meta_path_.c_str());
+  if (dir == nullptr) {
+    return;
+  }
   struct dirent *entry;
   while ((entry = readdir(dir)) != nullptr) {
-    string bin_dir_tmp = bin_dir;
-    std::string cce_json = entry->d_name;
-    if (cce_json.length() <= 5) {
-      continue;
-    }
-
-    std::string suffix = cce_json.substr(cce_json.length() - 5);
-    if (suffix != kJsonSuffix) {
-      continue;
-    }
-
-    auto sp = cce_json.rfind('/');
-    if (sp != std::string::npos) {
-      continue;
-    }
-
-    sp = cce_json.rfind('.');
-    if (sp == std::string::npos) {
-      continue;
-    }
-    auto kernel_name = cce_json.substr(0, sp);
-    (void)bin_dir_tmp.append("/");
-    (void)bin_dir_tmp.append(cce_json);
-    kernel_meta_map_[kernel_name] = bin_dir_tmp;
+    std::string kernel_file = entry->d_name;
+    std::string kernel_file_realpath = kernel_meta_path_ + kernel_file;
+    (void)remove(kernel_file_realpath.c_str());
   }
   (void)closedir(dir);
-
-  MS_LOG(INFO) << "Cache kernel initialized, kernel size[" << kernel_meta_map_.size() << "].";
-  initialized_ = true;
-  return true;
+  (void)rmdir(kernel_meta_path_.c_str());
 }
 
 std::string KernelMeta::Search(const std::string &kernel_name) const {
@@ -176,11 +158,11 @@ std::string KernelMeta::Search(const std::string &kernel_name) const {
   }
 }
 
-bool KernelMeta::Insert(const std::string &kernel_name, const std::string &cce_json) {
+bool KernelMeta::Insert(const std::string &kernel_name, const std::string &kernel_json) {
   if (!initialized_) {
     return false;
   }
-  kernel_meta_map_[kernel_name] = cce_json;
+  kernel_meta_map_[kernel_name] = kernel_json;
   return true;
 }
 
@@ -191,8 +173,8 @@ bool CheckCache(const std::string &kernel_name) {
     MS_LOG(DEBUG) << "kernel cache is invalid.";
     return false;
   }
-  std::string cce_json = bin_map->Search(kernel_name);
-  bool ret = (!cce_json.empty());
+  std::string kernel_json = bin_map->Search(kernel_name);
+  bool ret = (!kernel_json.empty());
   if (ret) {
     MS_LOG(INFO) << "Kernel name:" << kernel_name << " has registed.";
   } else {
@@ -209,12 +191,12 @@ KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &pro
     return nullptr;
   }
 
-  std::string cce_json = bin_map->Search(kernel_name);
-  if (!cce_json.empty()) {
+  std::string kernel_json = bin_map->Search(kernel_name);
+  if (!kernel_json.empty()) {
     KernelPackPtr kernel_pack = std::make_shared<KernelPack>();
     // just a tmp solution.
-    if (!kernel_pack->ReadFromJsonFile(cce_json, processor)) {
-      MS_LOG(DEBUG) << "Read cache json and bin file failed[" << cce_json << "].";
+    if (!kernel_pack->ReadFromJsonFile(kernel_json, processor)) {
+      MS_LOG(DEBUG) << "Read cache json and bin file failed[" << kernel_json << "].";
       return nullptr;
     } else {
       return kernel_pack;
@@ -227,26 +209,26 @@ KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &pro
 
 KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor) {
   MS_LOG(INFO) << "kernel name:" << kernel_name << ", processr:" << processor;
-  std::string cce_json;
+  KernelMeta *bin_map = KernelMeta::GetInstance();
+  std::string kernel_json;
   if (processor == kProcessorAiCore || processor == kProcessorAiCpu) {
-    cce_json = kCceKernelMeta;
+    kernel_json = kCceKernelMeta;
   } else {
-    cce_json = kGpuKernelMeta;
+    kernel_json = bin_map->GetKernelMetaPath();
   }
-  (void)cce_json.append(kernel_name).append(kJsonSuffix);
+  (void)kernel_json.append(kernel_name).append(kJsonSuffix);
   KernelPackPtr kernel_pack = std::make_shared<KernelPack>();
-  if (!kernel_pack->ReadFromJsonFile(cce_json, processor)) {
-    MS_LOG(DEBUG) << "Read json and bin file failed[" << cce_json << "].";
+  if (!kernel_pack->ReadFromJsonFile(kernel_json, processor)) {
+    MS_LOG(DEBUG) << "Read json and bin file failed[" << kernel_json << "].";
     return nullptr;
   }
 
-  KernelMeta *bin_map = KernelMeta::GetInstance();
   if (bin_map == nullptr) {
     MS_LOG(DEBUG) << "kernel cache is invalid.";
     return nullptr;
   }
-  if (bin_map->Insert(kernel_name, cce_json)) {
-    MS_LOG(INFO) << "Insert to cache success[" << cce_json << "], kernelname[" << kernel_name << "].";
+  if (bin_map->Insert(kernel_name, kernel_json)) {
+    MS_LOG(INFO) << "Insert to cache success[" << kernel_json << "], kernelname[" << kernel_name << "].";
   }
   return kernel_pack;
 }

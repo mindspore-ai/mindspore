@@ -300,7 +300,12 @@ std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t 
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  return build_info->GetOutputFormat(output_idx);
+  auto format = build_info->GetOutputFormat(output_idx);
+  if (format == kernel::KernelBuildInfo::kInvalidFormat) {
+    MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
+                      << " has a invalid output format";
+  }
+  return format;
 }
 
 std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t input_idx) {
@@ -314,7 +319,12 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  return build_info->GetInputFormat(input_idx);
+  auto format = build_info->GetInputFormat(input_idx);
+  if (format == kernel::KernelBuildInfo::kInvalidFormat) {
+    MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
+                      << " has a invalid input format";
+  }
+  return format;
 }
 
 KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx) {
@@ -481,7 +491,12 @@ TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  return build_info->GetOutputDeviceType(output_idx);
+  auto dtype = build_info->GetOutputDeviceType(output_idx);
+  if (dtype == TypeId::kNumberTypeEnd) {
+    MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
+                      << " has a invalid dtype";
+  }
+  return dtype;
 }
 
 TypeId AnfRuntimeAlgorithm::GetInputDeviceDataType(const AnfNodePtr &node, size_t input_idx) {
@@ -494,7 +509,12 @@ TypeId AnfRuntimeAlgorithm::GetInputDeviceDataType(const AnfNodePtr &node, size_
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(build_info);
-  return build_info->GetInputDeviceType(input_idx);
+  auto dtype = build_info->GetInputDeviceType(input_idx);
+  if (dtype == TypeId::kNumberTypeEnd) {
+    MS_LOG(EXCEPTION) << "Node [" << node->DebugString() << "]"
+                      << " has a invalid dtype";
+  }
+  return dtype;
 }
 
 TypeId AnfRuntimeAlgorithm::GetPrevNodeOutputDeviceDataType(const AnfNodePtr &anf_node, size_t input_idx) {
@@ -513,10 +533,6 @@ const DeviceAddress *AnfRuntimeAlgorithm::GetOutputAddr(const AnfNodePtr &node, 
     } else {
       MS_LOG(EXCEPTION) << node->DebugString() << "Invalid nop node";
     }
-  }
-  if (output_idx > GetOutputTensorNum(node)) {
-    MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
-                      << GetOutputTensorNum(node) << "#node:[ " << node->DebugString() << "]";
   }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -538,10 +554,6 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
     } else {
       MS_LOG(EXCEPTION) << node->DebugString() << "Invalid nop node.";
     }
-  }
-  if (output_idx > GetOutputTensorNum(node)) {
-    MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
-                      << GetOutputTensorNum(node) << "#node:[ " << node->DebugString() << "]";
   }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -824,6 +836,8 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
   MS_EXCEPTION_IF_NULL(anf_node);
   static std::map<std::string, std::map<size_t, size_t>> spec_node_list = {
     {prim::kPrimConv2DBackpropInput->name(), {{0, 1}, {1, 0}}},
+    {kFusionOpConv2DBackpropInputReluGradV2Name, {{0, 1}, {1, 0}, {2, 2}}},
+    {kFusionOpConv2DBackpropInputAddNReluGradV2Name, {{0, 1}, {1, 0}, {2, 2}, {3, 3}}},
     {prim::kPrimConv2DBackpropFilter->name(), {{0, 1}, {1, 0}}},
     {prim::kPrimLogSoftmaxGrad->name(), {{0, 1}, {1, 0}}},
     {prim::kPrimLayerNormGrad->name(), {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}},
@@ -851,17 +865,12 @@ void AnfRuntimeAlgorithm::SetNodeInput(const CNodePtr &node, const AnfNodePtr &i
 
 bool AnfRuntimeAlgorithm::IsCommunicationOp(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_name = AnfAlgo::GetCNodeName(node);
-  auto kernel_type = AnfAlgo::GetKernelType(node);
-  if (kernel_name == kAllReduceOpName || kernel_type == HCCL_KERNEL) {
-    return true;
+  if (!node->isa<CNode>()) {
+    return false;
   }
-  return false;
-}
-
-bool AnfRuntimeAlgorithm::IsAllReduceOp(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kAllReduceOpName) {
+  auto kernel_name = AnfAlgo::GetCNodeName(node);
+  if (kernel_name == kAllReduceOpName || kernel_name == kAllGatherOpName || kernel_name == kBroadcastOpName ||
+      kernel_name == kReduceScatterOpName) {
     return true;
   }
   return false;
