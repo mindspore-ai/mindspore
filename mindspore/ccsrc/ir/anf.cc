@@ -227,6 +227,12 @@ bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value) {
   }
   return false;
 }
+
+size_t NewSeenGeneration() {
+  static size_t seen_generation = 0;
+  return ++seen_generation;
+}
+
 namespace id_generator {
 static std::unordered_map<std::string, int> node_ids;
 std::string get_id(const AnfNodePtr &node) {

@@ -48,8 +48,8 @@ class Substitution {
   PredicateFuncType predicate_{nullptr};
   // an enum to mark this Substitution relation to renormalize pass
   RenormAction renorm_action_;
-  explicit Substitution(const TransformFuncType &transform, const std::string &name, const PredicateFuncType &predicate,
-                        const RenormAction &renorm_action)
+  Substitution(const TransformFuncType &transform, const std::string &name, const PredicateFuncType &predicate,
+               const RenormAction &renorm_action)
       : transform_(transform), name_(name), predicate_(predicate), renorm_action_(renorm_action) {}
   ~Substitution() = default;
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) const;

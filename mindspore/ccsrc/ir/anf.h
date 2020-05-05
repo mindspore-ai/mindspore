@@ -155,6 +155,7 @@ class AnfNode : public Base {
     os << node.ToString();
     return os;
   }
+  size_t seen_{0};
 
  protected:
   // Hold a weak ref to Graph as Graph also hold ref to AnfNode.
@@ -429,6 +430,9 @@ inline S GetValueNode(const AnfNodePtr &node) {
   auto s = value->cast<S>();
   return s;
 }
+
+size_t NewSeenGeneration();
+
 namespace id_generator {
 std::string get_id(const AnfNodePtr &node);
 void reset_id();

@@ -46,17 +46,18 @@ class DeepFirstSearcher : public AnfVisitor {
     if (root == nullptr) {
       return res_;
     }
+    seen_ = NewSeenGeneration();
     Visit(root);
     return res_;
   }
 
   void Visit(const AnfNodePtr &node) override {
     MS_EXCEPTION_IF_NULL(node);
-    if (seen_.count(node) != 0) {
+    if (node->seen_ == seen_) {
       return;
     }
 
-    (void)seen_.insert(node);
+    node->seen_ = seen_;
 
     auto incl = include_(node);
     if (incl == EXCLUDE) {
@@ -70,9 +71,9 @@ class DeepFirstSearcher : public AnfVisitor {
   }
 
  private:
+  size_t seen_{0};
   IncludeFunc include_;
   std::vector<AnfNodePtr> res_{};
-  std::set<AnfNodePtr> seen_{};
 };
 
 class DeepScopedGraphSearcher : public DeepFirstSearcher {
@@ -174,14 +175,14 @@ std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const Incl
 }
 
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
-  std::unordered_set<AnfNodePtr> done;
+  size_t seen = NewSeenGeneration();
   std::list<AnfNodePtr> todo(1, root);
   std::unordered_map<AnfNodePtr, size_t> rank;
   std::vector<AnfNodePtr> res;
 
   while (!todo.empty()) {
     AnfNodePtr node = todo.back();
-    if (done.find(node) != done.end()) {
+    if (node == nullptr || node->seen_ == seen) {
       todo.pop_back();
       continue;
     }
@@ -194,7 +195,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
     if (incl == FOLLOW) {
       auto succs = succ(node);
       for (const auto i : succs) {
-        if ((done.find(i) == done.end())
+        if ((i != nullptr && i->seen_ != seen)
             // Handle the case for 2 subgraphs calls each other.
             // If the ValueNodeGraph's return is already in the todo list, do not follow it.
             && !((std::find(todo.begin(), todo.end(), i) != todo.end()) && (i->func_graph() != nullptr) &&
@@ -206,7 +207,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
     } else if (incl == NOFOLLOW) {
       // do nothing
     } else if (incl == EXCLUDE) {
-      (void)done.insert(node);
+      node->seen_ = seen;
       todo.pop_back();
       continue;
     } else {
@@ -215,7 +216,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
     if (cont) {
       continue;
     }
-    (void)done.insert(node);
+    node->seen_ = seen;
     res.push_back(node);
     todo.pop_back();
   }

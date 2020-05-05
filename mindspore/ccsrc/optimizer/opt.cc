@@ -90,20 +90,26 @@ AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNode
 
 bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNodePtr &root_node,
                                       const SubstitutionPtr &transform) const {
+#ifdef ENABLE_PROFILE
+  double start = GetTime();
+#endif
   FuncGraphManagerPtr manager = optimizer->manager();
-  std::unordered_set<AnfNodePtr> seen_node;
-  std::deque<AnfNodePtr> todo{root_node};
+  auto seen = NewSeenGeneration();
+  // 1024 is for the initial capacity of deque
+  std::deque<AnfNodePtr> todo(1024);
+  todo.push_back(root_node);
   bool changes = false;
 
+  auto &all_nodes = manager->all_nodes();
   while (!todo.empty()) {
     AnfNodePtr node = todo.front();
     todo.pop_front();
 
     // check whether this node has been matched.
-    if (seen_node.find(node) != seen_node.end() || !manager->all_nodes().contains(node)) {
+    if (node == nullptr || node->seen_ == seen || !all_nodes.contains(node)) {
       continue;
     }
-    (void)seen_node.insert(node);
+    node->seen_ = seen;
 
     // select nodes that this transform can be applied.
     bool is_match = transform->predicate_(node);
@@ -114,6 +120,7 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNo
       auto ret = (*transform)(optimizer, node);
       if (ret != nullptr && ret != node) {
         change = true;
+        changes = true;
 #ifdef ENABLE_PROFILE
         double t = GetTime();
 #endif
@@ -139,16 +146,20 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNo
     if (change && node_users.find(node) != node_users.end()) {
       for (auto &use : node_users[node]) {
         auto use_node = use.first;
+        if (use_node == nullptr) {
+          continue;
+        }
         todo.push_back(use_node);
-        if (seen_node.find(use_node) != seen_node.end()) {
-          (void)seen_node.erase(use_node);
+        if (use_node->seen_ == seen) {
+          use_node->seen_--;
         }
       }
     }
-
-    changes = changes || change;
   }
 
+#ifdef ENABLE_PROFILE
+  MsProfile::StatTime("opt.transform", GetTime() - start);
+#endif
   return changes;
 }
 
