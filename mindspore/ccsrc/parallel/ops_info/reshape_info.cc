@@ -22,6 +22,7 @@
 #include "parallel/device_manager.h"
 #include "parallel/device_matrix.h"
 #include "parallel/step_parallel.h"
+#include "parallel/auto_parallel/graph_costmodel.h"
 #include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
 
@@ -45,26 +46,6 @@ Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) {
       MS_LOG(ERROR) << name_ << ": Invalid strategy size " << strategy_size;
     }
     return FAILED;
-  }
-  std::vector<Dimensions> stra = strategy->GetInputDim();
-  for (size_t i = 0; i < strategy_size; ++i) {
-    Shape sub_strategy = stra.at(i);
-    size_t strategy_len = sub_strategy.size();
-    bool flag = false;
-    for (size_t j = 0; j < strategy_len; ++j) {
-      int32_t strategy_value = sub_strategy.at(j);
-      if (strategy_value > 1) {
-        if (flag) {
-          if (is_auto_parallel_) {
-            MS_LOG(DEBUG) << name_ << ": Only support batch parallel strategy.";
-          } else {
-            MS_LOG(ERROR) << name_ << ": Only support batch parallel strategy.";
-          }
-          return FAILED;
-        }
-        flag = true;
-      }
-    }
   }
   return SUCCESS;
 }
@@ -402,6 +383,41 @@ Status ReshapeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr 
   return SUCCESS;
 }
 
+void ReshapeInfo::SetCostForReshapeWithParameter() {
+  size_t success = 0;
+  for (auto &sp : sp_vector_) {
+    if (SetCostUnderStrategy(sp) == SUCCESS) {
+      success++;
+      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
+      PrintStrategy(sp);
+    }
+  }
+}
+
+void ReshapeInfo::SetCostForReshape(const mindspore::parallel::StrategyPtr &strategy) {
+  MS_EXCEPTION_IF_NULL(strategy);
+  int32_t stage_id = strategy->GetInputStage();
+  double computation_cost =
+    operator_cost()->GetForwardComputationCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+  double communication_cost = operator_cost()->GetCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+  std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
+  result->communication_without_parameter_ =
+    operator_cost()->GetForwardCommCost(inputs_tensor_info_, outputs_tensor_info_, stage_id);
+  result->communication_with_partial_para_ =
+    result->communication_without_parameter_ +
+    COST_MODEL_GAMMA * (communication_cost - result->communication_without_parameter_);
+
+  // Breaking ties for preferring data parallelization
+  BreakingTiesForPerferringDataParallel(strategy, result);
+  // refine communication cost calculation for practice
+  RefineForPracticalCost(result, false);
+
+  std::shared_ptr<StrategyWithCost> swc =
+    std::make_shared<StrategyWithCost>(strategy, inputs_tensor_info_, outputs_tensor_info_);
+  swc->cost_list.push_back(result);
+  strategy_cost_.emplace_back(swc);
+}
+
 Status ReshapeInfo::GenerateStrategies(int32_t stage_id) {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": GetAttrs failed.";
@@ -414,21 +430,13 @@ Status ReshapeInfo::GenerateStrategies(int32_t stage_id) {
   }
   is_auto_parallel_ = true;
   Shape input0_split;
-  input0_split.emplace_back(1);
-  (void)input0_split.insert(input0_split.end(), inputs_shape_[0].size() - 1, 0);
+  (void)input0_split.insert(input0_split.end(), inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
-  std::vector<StrategyPtr> sp_vector;
-  if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
+  // strategy used only in the input node is parameter,
+  // in other case, use the input node's output_layout as input_layout.
+  if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": GenerateStrategiesForIndependentInputs failed.";
     return FAILED;
-  }
-  size_t success = 0;
-  for (auto &sp : sp_vector) {
-    if (SetCostUnderStrategy(sp) == SUCCESS) {
-      success++;
-      MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
-      PrintStrategy(sp);
-    }
   }
   return SUCCESS;
 }
