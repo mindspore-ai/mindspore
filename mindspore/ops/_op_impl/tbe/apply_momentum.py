@@ -29,7 +29,7 @@ apply_momentum_op_info = TBERegOp("ApplyMomentum") \
     .input(2, "lr", False, "required", "all") \
     .input(3, "grad", False, "required", "all") \
     .input(4, "momentum", False, "required", "all") \
-    .output(0, "var", False, "required", "all") \
+    .output(0, "out", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
                   DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_Default, DataType.F16_5HD,
