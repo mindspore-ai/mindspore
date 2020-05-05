@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing RandomRotation op in DE
+Testing RandomColorAdjust op in DE
 """
 import matplotlib.pyplot as plt
 import mindspore.dataset.transforms.vision.c_transforms as c_vision

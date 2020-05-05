@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing RandomRotation op in DE
+Testing TypeCast op in DE
 """
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
@@ -31,9 +31,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_type_cast():
     """
-    Test type_cast_op
+    Test TypeCast op
     """
-    logger.info("test_type_cast_op")
+    logger.info("test_type_cast")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -71,9 +71,9 @@ def test_type_cast():
 
 def test_type_cast_string():
     """
-    Test type_cast_op
+    Test TypeCast op
     """
-    logger.info("test_type_cast_op")
+    logger.info("test_type_cast_string")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
