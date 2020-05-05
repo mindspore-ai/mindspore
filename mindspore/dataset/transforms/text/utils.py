@@ -33,9 +33,7 @@ def as_text(array, encoding='utf8'):
     if not isinstance(array, np.ndarray):
         raise ValueError('input should be a numpy array')
 
-    def decode(x):
-        return x.decode(encoding)
-    decode = np.vectorize(decode)
+    decode = np.vectorize(lambda x: x.decode(encoding))
     return decode(array)
 
 

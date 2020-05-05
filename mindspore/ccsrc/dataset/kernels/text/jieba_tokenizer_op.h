@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_NLP_JIEBA_OP_H_
-#define DATASET_ENGINE_NLP_JIEBA_OP_H_
+#ifndef DATASET_ENGINE_TEXT_JIEBA_OP_H_
+#define DATASET_ENGINE_TEXT_JIEBA_OP_H_
 
 #include <string>
 #include <memory>
@@ -61,4 +61,4 @@ class JiebaTokenizerOp : public TensorOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_ENGINE_NLP_JIEBA_OP_H_
+#endif  // DATASET_ENGINE_TEXT_JIEBA_OP_H_
