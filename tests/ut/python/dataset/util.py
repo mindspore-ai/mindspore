@@ -16,6 +16,9 @@
 import json
 import os
 import numpy as np
+import matplotlib.pyplot as plt
+import hashlib
+
 #import jsbeautifier
 from mindspore import log as logger
 
@@ -41,6 +44,15 @@ def save_golden_dict(cur_dir, golden_ref_dir, result_dict):
     np.savez(golden_ref_dir, np.array(list(result_dict.items())))
 
 
+def save_golden_md5(cur_dir, golden_ref_dir, result_dict):
+    """
+    Save the dictionary (both keys and values) as the golden result in .npz file
+    """
+    logger.info("cur_dir is {}".format(cur_dir))
+    logger.info("golden_ref_dir is {}".format(golden_ref_dir))
+    np.savez(golden_ref_dir, np.array(list(result_dict.items())))
+
+
 def compare_to_golden(golden_ref_dir, result_dict):
     """
     Compare as numpy arrays the test result to the golden result
@@ -55,7 +67,8 @@ def compare_to_golden_dict(golden_ref_dir, result_dict):
     Compare as dictionaries the test result to the golden result
     """
     golden_array = np.load(golden_ref_dir, allow_pickle=True)['arr_0']
-    assert result_dict == dict(golden_array)
+    np.testing.assert_equal (result_dict, dict(golden_array))
+    # assert result_dict == dict(golden_array)
 
 
 def save_json(filename, parameters, result_dict):
@@ -131,6 +144,33 @@ def save_and_check_dict(data, parameters, filename, generate_golden=False):
     # save_json(filename, parameters, result_dict)
 
 
+def save_and_check_md5(data, parameters, filename, generate_golden=False):
+    """
+    Save the dataset dictionary and compare (as dictionary) with golden file (md5).
+    Use create_dict_iterator to access the dataset.
+    """
+    num_iter = 0
+    result_dict = {}
+
+    for item in data.create_dict_iterator():  # each data is a dictionary
+        for data_key in list(item.keys()):
+            if data_key not in result_dict:
+                result_dict[data_key] = []
+            # save the md5 as numpy array
+            result_dict[data_key].append(np.frombuffer(hashlib.md5(item[data_key]).digest(), dtype='<f4'))
+        num_iter += 1
+
+    logger.info("Number of data in ds1: {}".format(num_iter))
+
+    cur_dir = os.path.dirname(os.path.realpath(__file__))
+    golden_ref_dir = os.path.join(cur_dir, "../../data/dataset", 'golden', filename)
+    if generate_golden:
+        # Save as the golden result
+        save_golden_dict(cur_dir, golden_ref_dir, result_dict)
+
+    compare_to_golden_dict(golden_ref_dir, result_dict)
+
+
 def ordered_save_and_check(data, parameters, filename, generate_golden=False):
     """
     Save the dataset dictionary and compare (as numpy array) with golden file.
@@ -175,3 +215,20 @@ def diff_ssim(in1, in2):
     from skimage.measure import compare_ssim as ssim
     val = ssim(in1, in2, multichannel=True)
     return (1 - val) * 100
+
+
+def visualize(image_original, image_transformed):
+    """
+    visualizes the image using DE op and Numpy op
+    """
+    num = len(image_cropped)
+    for i in range(num):
+        plt.subplot(2, num, i + 1)
+        plt.imshow(image_original[i])
+        plt.title("Original image")
+
+        plt.subplot(2, num, i + num + 1)
+        plt.imshow(image_cropped[i])
+        plt.title("Transformed image")
+
+    plt.show()
