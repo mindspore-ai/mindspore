@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
-#define DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#ifndef DATASET_TEXT_KERNELS_CASE_FOLD_OP_H_
+#define DATASET_TEXT_KERNELS_CASE_FOLD_OP_H_
 #include <memory>
 
 #include "dataset/core/tensor.h"
@@ -24,17 +24,16 @@
 namespace mindspore {
 namespace dataset {
 
-class UnicodeCharTokenizerOp : public TensorOp {
+class CaseFoldOp : public TensorOp {
  public:
-  UnicodeCharTokenizerOp() {}
+  CaseFoldOp() {}
 
-  ~UnicodeCharTokenizerOp() override = default;
+  ~CaseFoldOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "UnicodeCharTokenizerOp"; }
+  void Print(std::ostream &out) const override { out << "CaseFoldOp"; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 };
-
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#endif  // DATASET_TEXT_KERNELS_CASE_FOLD_OP_H_

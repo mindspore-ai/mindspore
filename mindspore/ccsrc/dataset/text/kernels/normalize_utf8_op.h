@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
-#define DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#ifndef DATASET_TEXT_KERNELS_NORMALIZE_UTF8_OP_H_
+#define DATASET_TEXT_KERNELS_NORMALIZE_UTF8_OP_H_
 #include <memory>
 
 #include "dataset/core/tensor.h"
@@ -23,18 +23,28 @@
 
 namespace mindspore {
 namespace dataset {
-
-class UnicodeCharTokenizerOp : public TensorOp {
- public:
-  UnicodeCharTokenizerOp() {}
-
-  ~UnicodeCharTokenizerOp() override = default;
-
-  void Print(std::ostream &out) const override { out << "UnicodeCharTokenizerOp"; }
-
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+enum class NormalizeForm {
+  kNone = 0,
+  kNfc,
+  kNfkc,
+  kNfd,
+  kNfkd,
 };
 
+class NormalizeUTF8Op : public TensorOp {
+ public:
+  static const NormalizeForm kDefNormalizeForm;
+  explicit NormalizeUTF8Op(NormalizeForm normalize_form = kDefNormalizeForm) : normalize_form_(normalize_form) {}
+
+  ~NormalizeUTF8Op() override = default;
+
+  void Print(std::ostream &out) const override { out << "NormalizeUTF8Op"; }
+
+  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
+ private:
+  NormalizeForm normalize_form_;
+};
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#endif  // DATASET_TEXT_KERNELS_NORMALIZE_UTF8_OP_H_

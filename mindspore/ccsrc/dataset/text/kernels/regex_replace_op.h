@@ -13,9 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
-#define DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#ifndef DATASET_TEXT_KERNELS_REGEX_REPLACE_OP_H_
+#define DATASET_TEXT_KERNELS_REGEX_REPLACE_OP_H_
 #include <memory>
+#include <string>
+
+#include "unicode/regex.h"
+#include "unicode/errorcode.h"
+#include "unicode/utypes.h"
 
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
@@ -24,17 +29,27 @@
 namespace mindspore {
 namespace dataset {
 
-class UnicodeCharTokenizerOp : public TensorOp {
+class RegexReplaceOp : public TensorOp {
  public:
-  UnicodeCharTokenizerOp() {}
+  RegexReplaceOp(const std::string &pattern, const std::string &replace, bool replace_all = true)
+      : pattern_(icu::UnicodeString::fromUTF8(pattern)),
+        replace_(icu::UnicodeString::fromUTF8(replace)),
+        replace_all_(replace_all) {}
 
-  ~UnicodeCharTokenizerOp() override = default;
+  ~RegexReplaceOp() override = default;
 
-  void Print(std::ostream &out) const override { out << "UnicodeCharTokenizerOp"; }
+  void Print(std::ostream &out) const override { out << "RegexReplaceOp"; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
-};
 
+ protected:
+  Status RegexReplace(icu::RegexMatcher *const matcher, const std::string_view &text, std::string *out) const;
+
+ private:
+  const icu::UnicodeString pattern_;
+  const icu::UnicodeString replace_;
+  const bool replace_all_;
+};
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#endif  // DATASET_TEXT_KERNELS_REGEX_REPLACE_OP_H_

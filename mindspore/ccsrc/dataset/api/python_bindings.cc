@@ -65,8 +65,21 @@
 #include "dataset/text/kernels/jieba_tokenizer_op.h"
 #include "dataset/text/kernels/ngram_op.h"
 #include "dataset/text/kernels/unicode_char_tokenizer_op.h"
+#include "dataset/text/kernels/wordpiece_tokenizer_op.h"
 #include "dataset/text/vocab.h"
 #include "dataset/text/kernels/lookup_op.h"
+
+#ifdef ENABLE_ICU4C
+#include "dataset/text/kernels/basic_tokenizer_op.h"
+#include "dataset/text/kernels/bert_tokenizer_op.h"
+#include "dataset/text/kernels/case_fold_op.h"
+#include "dataset/text/kernels/normalize_utf8_op.h"
+#include "dataset/text/kernels/regex_replace_op.h"
+#include "dataset/text/kernels/regex_tokenizer_op.h"
+#include "dataset/text/kernels/unicode_script_tokenizer_op.h"
+#include "dataset/text/kernels/whitespace_tokenizer_op.h"
+#endif
+
 #include "dataset/util/random.h"
 #include "mindrecord/include/shard_operator.h"
 #include "mindrecord/include/shard_pk_sample.h"
@@ -485,7 +498,7 @@ void bindTensorOps4(py::module *m) {
          py::arg("fillR") = PadOp::kDefFillR, py::arg("fillG") = PadOp::kDefFillG, py::arg("fillB") = PadOp::kDefFillB);
 }
 
-void bindTensorOps5(py::module *m) {
+void bindTokenizerOps(py::module *m) {
   (void)py::class_<JiebaTokenizerOp, TensorOp, std::shared_ptr<JiebaTokenizerOp>>(*m, "JiebaTokenizerOp", "")
     .def(py::init<const std::string, std::string, JiebaMode>(), py::arg("hmm_path"), py::arg("mp_path"),
          py::arg("mode") = JiebaMode::kMix)
@@ -503,6 +516,55 @@ void bindTensorOps5(py::module *m) {
                   const std::string &>(),
          py::arg("ngrams"), py::arg("l_pad_len"), py::arg("r_pad_len"), py::arg("l_pad_token"), py::arg("r_pad_token"),
          py::arg("separator"));
+  (void)py::class_<WordpieceTokenizerOp, TensorOp, std::shared_ptr<WordpieceTokenizerOp>>(
+    *m, "WordpieceTokenizerOp", "Tokenize scalar token or 1-D tokens to subword tokens.")
+    .def(py::init<const std::shared_ptr<Vocab> &, const std::string &, const int &, const std::string &>(),
+         py::arg("vocab"), py::arg("suffix_indicator") = std::string(WordpieceTokenizerOp::kDefSuffixIndicator),
+         py::arg("max_bytes_per_token") = WordpieceTokenizerOp::kDefMaxBytesPerToken,
+         py::arg("unknown_token") = std::string(WordpieceTokenizerOp::kDefUnknownToken));
+}
+
+void bindDependIcuTokenizerOps(py::module *m) {
+#ifdef ENABLE_ICU4C
+  (void)py::class_<WhitespaceTokenizerOp, TensorOp, std::shared_ptr<WhitespaceTokenizerOp>>(
+    *m, "WhitespaceTokenizerOp", "Tokenize a scalar tensor of UTF-8 string on ICU defined whitespaces.")
+    .def(py::init<>());
+  (void)py::class_<UnicodeScriptTokenizerOp, TensorOp, std::shared_ptr<UnicodeScriptTokenizerOp>>(
+    *m, "UnicodeScriptTokenizerOp", "Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.")
+    .def(py::init<>())
+    .def(py::init<bool>(), py::arg("keep_whitespace") = UnicodeScriptTokenizerOp::kDefKeepWhitespace);
+  (void)py::class_<CaseFoldOp, TensorOp, std::shared_ptr<CaseFoldOp>>(
+    *m, "CaseFoldOp", "Apply case fold operation on utf-8 string tensor")
+    .def(py::init<>());
+  (void)py::class_<NormalizeUTF8Op, TensorOp, std::shared_ptr<NormalizeUTF8Op>>(
+    *m, "NormalizeUTF8Op", "Apply normalize operation on utf-8 string tensor.")
+    .def(py::init<>())
+    .def(py::init<NormalizeForm>(), py::arg("normalize_form") = NormalizeUTF8Op::kDefNormalizeForm);
+  (void)py::class_<RegexReplaceOp, TensorOp, std::shared_ptr<RegexReplaceOp>>(
+    *m, "RegexReplaceOp", "Replace utf-8 string tensor with 'replace' according to regular expression 'pattern'.")
+    .def(py::init<const std::string &, const std::string &, bool>(), py::arg("pattern"), py::arg("replace"),
+         py::arg("replace_all"));
+  (void)py::class_<RegexTokenizerOp, TensorOp, std::shared_ptr<RegexTokenizerOp>>(
+    *m, "RegexTokenizerOp", "Tokenize a scalar tensor of UTF-8 string by regex expression pattern.")
+    .def(py::init<const std::string &, const std::string &>(), py::arg("delim_pattern"), py::arg("keep_delim_pattern"));
+  (void)py::class_<BasicTokenizerOp, TensorOp, std::shared_ptr<BasicTokenizerOp>>(
+    *m, "BasicTokenizerOp", "Tokenize a scalar tensor of UTF-8 string by specific rules.")
+    .def(py::init<bool, bool, NormalizeForm, bool>(), py::arg("lower_case") = BasicTokenizerOp::kDefLowerCase,
+         py::arg("keep_whitespace") = BasicTokenizerOp::kDefKeepWhitespace,
+         py::arg("normalization_form") = BasicTokenizerOp::kDefNormalizationForm,
+         py::arg("preserve_unused_token") = BasicTokenizerOp::kDefPreserveUnusedToken);
+  (void)py::class_<BertTokenizerOp, TensorOp, std::shared_ptr<BertTokenizerOp>>(*m, "BertTokenizerOp",
+                                                                                "Tokenizer used for Bert text process.")
+    .def(py::init<const std::shared_ptr<Vocab> &, const std::string &, const int &, const std::string &, bool, bool,
+                  NormalizeForm, bool>(),
+         py::arg("vocab"), py::arg("suffix_indicator") = std::string(WordpieceTokenizerOp::kDefSuffixIndicator),
+         py::arg("max_bytes_per_token") = WordpieceTokenizerOp::kDefMaxBytesPerToken,
+         py::arg("unknown_token") = std::string(WordpieceTokenizerOp::kDefUnknownToken),
+         py::arg("lower_case") = BasicTokenizerOp::kDefLowerCase,
+         py::arg("keep_whitespace") = BasicTokenizerOp::kDefKeepWhitespace,
+         py::arg("normalization_form") = BasicTokenizerOp::kDefNormalizationForm,
+         py::arg("preserve_unused_token") = BasicTokenizerOp::kDefPreserveUnusedToken);
+#endif
 }
 
 void bindSamplerOps(py::module *m) {
@@ -715,6 +777,16 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("DE_JIEBA_HMM", JiebaMode::kHmm)
     .export_values();
 
+#ifdef ENABLE_ICU4C
+  (void)py::enum_<NormalizeForm>(m, "NormalizeForm", py::arithmetic())
+    .value("DE_NORMALIZE_NONE", NormalizeForm::kNone)
+    .value("DE_NORMALIZE_NFC", NormalizeForm::kNfc)
+    .value("DE_NORMALIZE_NFKC", NormalizeForm::kNfkc)
+    .value("DE_NORMALIZE_NFD", NormalizeForm::kNfd)
+    .value("DE_NORMALIZE_NFKD", NormalizeForm::kNfkd)
+    .export_values();
+#endif
+
   (void)py::enum_<InterpolationMode>(m, "InterpolationMode", py::arithmetic())
     .value("DE_INTER_LINEAR", InterpolationMode::kLinear)
     .value("DE_INTER_CUBIC", InterpolationMode::kCubic)
@@ -734,12 +806,13 @@ PYBIND11_MODULE(_c_dataengine, m) {
   bindTensorOps2(&m);
   bindTensorOps3(&m);
   bindTensorOps4(&m);
-  bindTensorOps5(&m);
+  bindTokenizerOps(&m);
   bindSamplerOps(&m);
   bindDatasetOps(&m);
   bindInfoObjects(&m);
   bindVocabObjects(&m);
   bindGraphData(&m);
+  bindDependIcuTokenizerOps(&m);
 }
 }  // namespace dataset
 }  // namespace mindspore

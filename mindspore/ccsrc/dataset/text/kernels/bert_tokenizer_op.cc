@@ -13,28 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
-#define DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
-#include <memory>
-
-#include "dataset/core/tensor.h"
-#include "dataset/kernels/tensor_op.h"
-#include "dataset/util/status.h"
-
+#include "dataset/text/kernels/bert_tokenizer_op.h"
 namespace mindspore {
 namespace dataset {
-
-class UnicodeCharTokenizerOp : public TensorOp {
- public:
-  UnicodeCharTokenizerOp() {}
-
-  ~UnicodeCharTokenizerOp() override = default;
-
-  void Print(std::ostream &out) const override { out << "UnicodeCharTokenizerOp"; }
-
-  Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
-};
-
+Status BertTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  IO_CHECK(input, output);
+  std::shared_ptr<Tensor> basic_tensor;
+  RETURN_IF_NOT_OK(basic_tokenizer_.Compute(input, &basic_tensor));
+  RETURN_IF_NOT_OK(wordpiece_tokenizer_.Compute(basic_tensor, output));
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_

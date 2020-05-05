@@ -127,3 +127,11 @@ class JiebaMode(IntEnum):
     MIX = 0
     MP = 1
     HMM = 2
+
+
+class NormalizeForm(IntEnum):
+    NONE = 0
+    NFC = 1
+    NFKC = 2
+    NFD = 3
+    NFKD = 4

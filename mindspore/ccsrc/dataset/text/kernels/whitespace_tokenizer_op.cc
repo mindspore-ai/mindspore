@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dataset/text/kernels/unicode_char_tokenizer_op.h"
+#include "dataset/text/kernels/whitespace_tokenizer_op.h"
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "cppjieba/Unicode.hpp"
+#include "unicode/errorcode.h"
+#include "unicode/uchar.h"
+#include "unicode/uscript.h"
 
 using cppjieba::DecodeRunesInString;
 using cppjieba::RuneStrArray;
 
 namespace mindspore {
 namespace dataset {
-
-Status UnicodeCharTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+Status WhitespaceTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   if (input->Rank() != 0 || input->type() != DataType::DE_STRING) {
     RETURN_STATUS_UNEXPECTED("The input tensor should be scalar string tensor");
@@ -39,9 +42,26 @@ Status UnicodeCharTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std
   if (!DecodeRunesInString(str.data(), str.size(), runes)) {
     RETURN_STATUS_UNEXPECTED("Decode utf8 string failed.");
   }
-  std::vector<std::string> splits(runes.size());
+  std::vector<std::string> splits;
+  int start = 0;
+  int len = 0;
   for (size_t i = 0; i < runes.size(); i++) {
-    splits[i] = str.substr(runes[i].offset, runes[i].len);
+    if (u_isUWhiteSpace(runes[i].rune)) {
+      if (len > 0) {
+        std::string temp(str.substr(start, len));
+        splits.emplace_back(std::move(temp));
+        len = 0;
+      }
+    } else {
+      if (len == 0) {
+        start = runes[i].offset;
+      }
+      len += runes[i].len;
+    }
+  }
+  if (len > 0) {
+    std::string temp(str.substr(start, len));
+    splits.emplace_back(std::move(temp));
   }
   if (splits.empty()) {
     splits.emplace_back("");

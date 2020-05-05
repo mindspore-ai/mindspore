@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
-#define DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#ifndef DATASET_TEXT_KERNELS_UNICODE_SCRIPT_TOKENIZER_OP_H_
+#define DATASET_TEXT_KERNELS_UNICODE_SCRIPT_TOKENIZER_OP_H_
 #include <memory>
 
 #include "dataset/core/tensor.h"
@@ -24,17 +24,21 @@
 namespace mindspore {
 namespace dataset {
 
-class UnicodeCharTokenizerOp : public TensorOp {
+class UnicodeScriptTokenizerOp : public TensorOp {
  public:
-  UnicodeCharTokenizerOp() {}
+  static const bool kDefKeepWhitespace;
 
-  ~UnicodeCharTokenizerOp() override = default;
+  explicit UnicodeScriptTokenizerOp(bool keep_whitespace = kDefKeepWhitespace) : keep_whitespace_(keep_whitespace) {}
 
-  void Print(std::ostream &out) const override { out << "UnicodeCharTokenizerOp"; }
+  ~UnicodeScriptTokenizerOp() override = default;
+
+  void Print(std::ostream &out) const override { out << "UnicodeScriptTokenizerOp"; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
-};
 
+ private:
+  bool keep_whitespace_;  // If or not keep whitespace tokens
+};
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // DATASET_TEXT_KERNELS_UNICODE_CHAR_TOKENIZER_OP_H_
+#endif  // DATASET_TEXT_KERNELS_UNICODE_SCRIPT_TOKENIZER_OP_H_

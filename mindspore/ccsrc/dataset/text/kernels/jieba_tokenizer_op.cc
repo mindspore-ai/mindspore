@@ -29,6 +29,7 @@ JiebaTokenizerOp::JiebaTokenizerOp(const std::string &hmm_path, const std::strin
 }
 
 Status JiebaTokenizerOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  IO_CHECK(input, output);
   RETURN_UNEXPECTED_IF_NULL(jieba_parser_);
 
   if (input->Rank() != 0 || input->type() != DataType::DE_STRING) {

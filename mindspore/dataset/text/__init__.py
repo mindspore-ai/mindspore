@@ -15,5 +15,18 @@
 """
 mindspore.dataset.text
 """
-from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram
-from .utils import to_str, to_bytes, JiebaMode, Vocab
+import platform
+from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer
+from .utils import to_str, to_bytes, JiebaMode, Vocab, NormalizeForm
+
+__all__ = [
+    "Lookup", "JiebaTokenizer", "UnicodeCharTokenizer", "Ngram",
+    "to_str", "to_bytes", "JiebaMode", "Vocab", "WordpieceTokenizer"
+]
+
+if platform.system().lower() != 'windows':
+    from .transforms import UnicodeScriptTokenizer, WhitespaceTokenizer, CaseFold, NormalizeUTF8, \
+        RegexReplace, RegexTokenizer, BasicTokenizer, BertTokenizer
+
+    __all__.append(["UnicodeScriptTokenizer", "WhitespaceTokenizer", "CaseFold", "NormalizeUTF8",
+                    "RegexReplace", "RegexTokenizer", "BasicTokenizer", "BertTokenizer", "NormalizeForm"])
