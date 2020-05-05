@@ -201,6 +201,7 @@ void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel) {
   if (AnfAlgo::GetCNodeName(kernel) == "ApplyMomentum") {
     auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, 0);
     AnfAlgo::SetOutputAddr(device_address, 0, kernel.get());
+    AnfAlgo::SetOutputAddr(device_address, 1, kernel.get());
     return;
   }
 
