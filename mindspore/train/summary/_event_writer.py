@@ -14,9 +14,11 @@
 # ============================================================================
 """Writes events to disk in a logdir."""
 import os
-import time
 import stat
+import time
+
 from mindspore import log as logger
+
 from ..._c_expression import EventWriter_
 from ._summary_adapter import package_init_event
 
@@ -28,6 +30,7 @@ class _WrapEventWriter(EventWriter_):
     Args:
         full_file_name (str): Include directory and file name.
     """
+
     def __init__(self, full_file_name):
         if full_file_name is not None:
             EventWriter_.__init__(self, full_file_name)
@@ -41,6 +44,7 @@ class EventRecord:
         full_file_name (str): Summary event file path and file name.
         flush_time (int): The flush seconds to flush the pending events to disk. Default: 120.
     """
+
     def __init__(self, full_file_name: str, flush_time: int = 120):
         self.full_file_name = full_file_name
 

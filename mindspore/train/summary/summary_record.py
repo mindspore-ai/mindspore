@@ -15,16 +15,20 @@
 """Record the summary event."""
 import os
 import threading
-from mindspore import log as logger
-from ._summary_scheduler import WorkerScheduler, SummaryDataManager
-from ._summary_adapter import get_event_file_name, package_graph_event
-from ._event_writer import EventRecord
-from .._utils import _make_directory
-from ..._checkparam import _check_str_by_regular
 
+from mindspore import log as logger
+
+from ..._checkparam import _check_str_by_regular
+from .._utils import _make_directory
+from ._event_writer import EventRecord
+from ._summary_adapter import get_event_file_name, package_graph_event
+from ._summary_scheduler import SummaryDataManager, WorkerScheduler
+
+# for the moment, this lock is for caution's sake,
+# there are actually no any concurrencies happening.
+_summary_lock = threading.Lock()
 # cache the summary data
 _summary_tensor_cache = {}
-_summary_lock = threading.Lock()
 
 
 def _cache_summary_tensor_data(summary):
@@ -34,14 +38,12 @@ def _cache_summary_tensor_data(summary):
     Args:
          summary (list): [{"name": tag_name, "data": tensor}, {"name": tag_name, "data": tensor},...].
     """
-    _summary_lock.acquire()
-    if "SummaryRecord" in _summary_tensor_cache:
-        for record in summary:
-            _summary_tensor_cache["SummaryRecord"].append(record)
-    else:
-        _summary_tensor_cache["SummaryRecord"] = summary
-    _summary_lock.release()
-    return True
+    with _summary_lock:
+        if "SummaryRecord" in _summary_tensor_cache:
+            _summary_tensor_cache["SummaryRecord"].extend(summary)
+        else:
+            _summary_tensor_cache["SummaryRecord"] = summary
+        return True
 
 
 class SummaryRecord:
@@ -71,6 +73,7 @@ class SummaryRecord:
         >>> summary_record = SummaryRecord(log_dir="/opt/log", queue_max_size=50, flush_time=6,
         >>>                                file_prefix="xxx_", file_suffix="_yyy")
     """
+
     def __init__(self,
                  log_dir,
                  queue_max_size=0,
@@ -101,26 +104,20 @@ class SummaryRecord:
 
         self.prefix = file_prefix
         self.suffix = file_suffix
+        self.network = network
+        self.has_graph = False
+        self._closed = False
+        self.step = 0
 
         # create the summary writer file
         self.event_file_name = get_event_file_name(self.prefix, self.suffix)
-        if self.log_path[-1:] == '/':
-            self.full_file_name = self.log_path + self.event_file_name
-        else:
-            self.full_file_name = self.log_path + '/' + self.event_file_name
-
         try:
-            self.full_file_name = os.path.realpath(self.full_file_name)
+            self.full_file_name = os.path.join(self.log_path, self.event_file_name)
         except Exception as ex:
             raise RuntimeError(ex)
         self.event_writer = EventRecord(self.full_file_name, self.flush_time)
         self.writer_id = SummaryDataManager.summary_file_set(self.event_writer)
         self.worker_scheduler = WorkerScheduler(self.writer_id)
-
-        self.step = 0
-        self._closed = False
-        self.network = network
-        self.has_graph = False
 
     def record(self, step, train_network=None):
         """
@@ -147,15 +144,14 @@ class SummaryRecord:
         # Set the current summary of train step
         self.step = step
 
-        if self.network is not None and self.has_graph is False:
+        if self.network is not None and not self.has_graph:
             graph_proto = self.network.get_func_graph_proto()
             if graph_proto is None and train_network is not None:
                 graph_proto = train_network.get_func_graph_proto()
             if graph_proto is None:
                 logger.error("Failed to get proto for graph")
             else:
-                self.event_writer.write_event_to_file(
-                    package_graph_event(graph_proto).SerializeToString())
+                self.event_writer.write_event_to_file(package_graph_event(graph_proto).SerializeToString())
                 self.event_writer.flush()
                 self.has_graph = True
                 data = _summary_tensor_cache.get("SummaryRecord")
