@@ -110,13 +110,18 @@ Status MapOp::operator()() {
   if (perf_mode_) {
     // Create and register the local queues.
     local_queues_.Init(num_workers_, oc_queue_size_);
-    RETURN_IF_NOT_OK(local_queues_.Register(tree_->AllTasks()));
+    Status rc = local_queues_.Register(tree_->AllTasks());
+    if (rc.IsError()) {
+      TaskManager::FindMe()->Post();
+      return rc;
+    }
   }
 
   // The operator class just starts off threads by calling the tree_ function
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&MapOp::WorkerEntry, this, std::placeholders::_1)));
+  Status rc = tree_->LaunchWorkers(num_workers_, std::bind(&MapOp::WorkerEntry, this, std::placeholders::_1));
   // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
+  RETURN_IF_NOT_OK(rc);
 
   if (perf_mode_) {
     int64_t que_id = 0;
