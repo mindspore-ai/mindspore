@@ -131,6 +131,10 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
       // current one docker only use one device`
       Json p_device;
 
+      // JOBID
+      auto job_id = GetJobId();
+      p_device["jobID"] = std::to_string(job_id);
+
       // device_id
       p_device["deviceID"] = std::to_string(device_id);
 
