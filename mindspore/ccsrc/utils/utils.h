@@ -52,6 +52,7 @@ constexpr auto kTopKOpName = "TopK";
 constexpr auto kExtractImagePatchesOpName = "ExtractImagePatches";
 constexpr auto kBNTrainingReduceOpName = "BNTrainingReduce";
 constexpr auto kBNTrainingUpdateOpName = "BNTrainingUpdate";
+constexpr auto kBNTrainingUpdateV2OpName = "BNTrainingUpdateV2";
 constexpr auto kSimpleMeanGradOpName = "SimpleMeanGrad";
 constexpr auto kMeanGradOpName = "MeanGrad";
 constexpr auto kSliceOpName = "Slice";
