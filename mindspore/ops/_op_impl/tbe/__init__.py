@@ -19,8 +19,10 @@ from .abs_grad import _abs_grad_tbe
 from .adam_apply_one_with_decay import _adam_apply_one_with_decay_tbe
 from .add import _add_tbe
 from .add_n import _add_n_tbe
+from .apply_ftrl import _apply_ftrl_tbe
 from .apply_momentum import _apply_momentum_tbe
 from .apply_adam import _apply_adam_tbe
+from .adam_apply_one import _adam_apply_one_tbe
 from .assign import _assign_tbe
 from .assign_add import _assign_add_tbe
 from .assign_sub import _assign_sub_tbe
@@ -64,13 +66,14 @@ from .reduce_mean import _reduce_mean_tbe
 from .tile import _tile_tbe
 from .atomic_addr_clean import _atomic_addr_clean_tbe
 from .gather_v2 import _gather_v2_tbe
+from .gather_nd import _gather_nd_tbe
 from .bn_training_reduce import _bn_training_reduce_tbe
 from .bn_training_reduce_grad import _bn_training_reduce_grad_tbe
 from .bn_training_update import _bn_training_update_tbe
 from .bn_training_update_grad import _bn_training_update_grad_tbe
 from .reciprocal import _reciprocal_tbe
-from .strideslice_d import _strided_slice_d_tbe
-from .strideslicegrad_d import _strided_slice_grad_d_tbe
+from .strided_slice_d import _strided_slice_d_tbe
+from .strided_slice_grad_d import _strided_slice_grad_d_tbe
 from .split_d import _split_d_tbe
 from .exp import _exp_tbe
 from .div import _div_tbe
