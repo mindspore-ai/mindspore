@@ -256,6 +256,8 @@ void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr 
     tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::list>(input_object), nullptr);
   } else if (py::isinstance<py::array>(input_object)) {
     tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::array>(input_object), nullptr);
+  } else if (py::isinstance<py::none>(input_object)) {
+    return;
   } else if (py::isinstance<py::tuple>(input_object)) {
     auto tuple_inputs = py::cast<py::tuple>(input_object);
     if (py::isinstance<tensor::Tensor>(tuple_inputs[0])) {
