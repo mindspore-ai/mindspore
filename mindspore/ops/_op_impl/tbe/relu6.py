@@ -23,8 +23,8 @@ relu6_op_info = TBERegOp("ReLU6") \
     .compute_cost(10) \
     .kernel_name("relu6") \
     .partial_flag(True) \
-    .input(0, "features", False, "required", "all") \
-    .output(0, "activations", False, "required", "all") \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
