@@ -73,6 +73,8 @@ from .strideslice_d import _strided_slice_d_tbe
 from .strideslicegrad_d import _strided_slice_grad_d_tbe
 from .split_d import _split_d_tbe
 from .exp import _exp_tbe
+from .elu import _elu_tbe
+from .elu_grad import _elu_grad_tbe
 from .div import _div_tbe
 from .log import _log_tbe
 from .floor_div import _floor_div_tbe
