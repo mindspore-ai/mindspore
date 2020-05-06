@@ -64,6 +64,8 @@ class MemReuseUtil {
   void SetReuseRefCount();
   // Set the reference count of graph output specially.
   void SetGraphOutputRefCount();
+  // Reset the dynamic used reference count by ref_count_.
+  void ResetDynamicUsedRefCount();
 
   KernelRefCountPtr GetRef(const AnfNodePtr &node, int output_idx);
   KernelRefCountPtr GetKernelInputRef(const CNodePtr &kernel, size_t input_idx);

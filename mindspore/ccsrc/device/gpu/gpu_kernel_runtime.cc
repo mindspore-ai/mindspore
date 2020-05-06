@@ -184,6 +184,10 @@ void GPUKernelRuntime::InitKernelOutputAddress(const session::KernelGraph *graph
 bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_id = graph->graph_id();
+  auto mem_reuse_util_ptr = mem_reuse_util_map_[graph_id];
+  MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
+  // Reset the reference count.
+  mem_reuse_util_ptr->ResetDynamicUsedRefCount();
   // The inputs and outputs memory of communication kernel need be continuous, so separate processing.
   AllocCommunicationOpDynamicRes(graph);
 
@@ -360,16 +364,13 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
     if (kernel_ref_count_ptr == nullptr) {
       continue;
     }
-    // Can't free the output of graph.
-    if (kernel_ref_count_ptr->ref_count_dynamic_use_ == memreuse::kMaxRefCount) {
-      continue;
-    }
     kernel_ref_count_ptr->ref_count_dynamic_use_--;
+    if (kernel_ref_count_ptr->ref_count_dynamic_use_ < 0) {
+      MS_LOG(EXCEPTION) << "Check dynamic reference count failed.";
+    }
     if (kernel_ref_count_ptr->ref_count_dynamic_use_ == 0) {
       auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
       mem_manager_->FreeMemFromMemPool(device_address);
-      // Reset the reference count.
-      kernel_ref_count_ptr->ref_count_dynamic_use_ = kernel_ref_count_ptr->ref_count_;
     }
   }
   // Free the output of kernel, if output has no reference.

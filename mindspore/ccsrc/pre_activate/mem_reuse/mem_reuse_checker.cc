@@ -161,7 +161,8 @@ void MemReuseChecker::CheckMemReuseIR(const KernelRefCountPtrList &total_refs_li
   total_ori_value_size_ = CalculOriValue(graph);
   total_ori_dy_size_ = CalculOriDy(graph);
   total_ori_wkspace_size_ = CalculOriWk(graph);
-  std::string filename = "./memreuse.ir";
+  std::string graph_id = std::to_string(graph->graph_id());
+  std::string filename = "./memreuse_" + graph_id + ".ir";
   std::ofstream ofs(filename);
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open file [" << filename << "] failed!";

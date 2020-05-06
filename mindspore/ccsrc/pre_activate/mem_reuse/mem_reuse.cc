@@ -288,6 +288,14 @@ void MemReuseUtil::SetGraphOutputRefCount() {
 #endif
 }
 
+void MemReuseUtil::ResetDynamicUsedRefCount() {
+  for (auto iter = kernel_output_refs_.begin(); iter != kernel_output_refs_.end(); ++iter) {
+    for (auto &ref_count : iter->second) {
+      ref_count->ref_count_dynamic_use_ = ref_count->ref_count_;
+    }
+  }
+}
+
 void MemReuseUtil::SetAllInfo(KernelGraph *graph) {
   if (!InitDynamicKernelRef(graph)) {
     MS_LOG(EXCEPTION) << "Init ReuseAssignDynamicMemory Fault";
