@@ -27,8 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-
-Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
@@ -172,7 +171,7 @@ Status VirtualDatasetInfo::InferTensorInfo() {
 
 Status VirtualDatasetInfo::GetAttrs() { return SUCCESS; }
 
-Status VirtualDatasetInfo::Init(const StrategyPtr& strategy) {
+Status VirtualDatasetInfo::Init(const StrategyPtr &strategy) {
   if (InitWithManualRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
@@ -180,7 +179,7 @@ Status VirtualDatasetInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status VirtualDatasetInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status VirtualDatasetInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithManualRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
@@ -200,7 +199,7 @@ void VirtualDatasetInfo::ReComputeBatchSplitFlagList() {
   }
 }
 
-Status VirtualDatasetInfo::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status VirtualDatasetInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";
@@ -224,9 +223,10 @@ Status VirtualDatasetInfo::GenerateStrategies(int32_t stage_id) {
   size_t total_dev_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
   StrategyPtr sp;
   std::vector<Dimensions> strategy;
-  for (auto& shape : inputs_shape_) {
-    Shape temp(shape.size(), 1);
-    temp[0] = SizeToInt(total_dev_num);
+  for (auto &shape : inputs_shape_) {
+    Shape temp;
+    temp.emplace_back(SizeToInt(total_dev_num));
+    (void)temp.insert(temp.end(), shape.size() - 1, 1);
     strategy.push_back(temp);
   }
   sp = std::make_shared<Strategy>(stage_id, strategy);

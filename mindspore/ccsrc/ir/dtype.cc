@@ -48,11 +48,11 @@ std::string Keyword::ToString() const {
   return buffer.str();
 }
 
-bool Keyword::operator==(const Type& other) const {
+bool Keyword::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  const auto& other_keyword = static_cast<const Keyword&>(other);
+  const auto &other_keyword = static_cast<const Keyword &>(other);
   return (other_keyword.key_ == key_ && *other_keyword.value_ == *value_);
 }
 
@@ -87,11 +87,11 @@ std::string Slice::ToString() const {
   return buffer.str();
 }
 
-bool Slice::operator==(const Type& other) const {
+bool Slice::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_slice = static_cast<const Slice&>(other);
+  auto other_slice = static_cast<const Slice &>(other);
   return (*start_ == *other_slice.start_ && *stop_ == *other_slice.stop_ && *step_ == *other_slice.step_);
 }
 
@@ -122,11 +122,11 @@ std::string TensorType::DumpText() const {
   }
 }
 
-bool TensorType::operator==(const Type& other) const {
+bool TensorType::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_elem_type = static_cast<const TensorType&>(other).element_type_;
+  auto other_elem_type = static_cast<const TensorType &>(other).element_type_;
   // When element_type_ = nullptr, which means any type of Array.
   if (element_type_ == nullptr && other_elem_type == nullptr) {
     return true;
@@ -141,7 +141,7 @@ Function::Function() : Object(kObjectTypeFunction) {
   retval_ = nullptr;
 }
 
-Function::Function(const std::vector<TypePtr>& args, const TypePtr retval)
+Function::Function(const std::vector<TypePtr> &args, const TypePtr retval)
     : Object(kObjectTypeFunction, false), args_(args), retval_(retval) {}
 
 TypePtr Function::DeepCopy() const {
@@ -151,7 +151,7 @@ TypePtr Function::DeepCopy() const {
     TypePtrList args;
     TypePtr retval = nullptr;
     (void)std::transform(args_.begin(), args_.end(), std::back_inserter(args),
-                         [](const TypePtr& arg) { return arg->DeepCopy(); });
+                         [](const TypePtr &arg) { return arg->DeepCopy(); });
     if (retval_ != nullptr) {
       retval = retval_->DeepCopy();
     }
@@ -159,12 +159,12 @@ TypePtr Function::DeepCopy() const {
   }
 }
 
-bool Function::operator==(const Type& other) const {
+bool Function::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
 
-  const auto& other_function = static_cast<const Function&>(other);
+  const auto &other_function = static_cast<const Function &>(other);
   if ((retval_ != nullptr) && (other_function.retval_ != nullptr)) {
     if (*retval_ != *other_function.retval_) {
       return false;
@@ -188,7 +188,7 @@ std::string Function::ToString() const {
   } else {
     buffer << "Func[(";
     bool begin = true;
-    for (auto& attr : args_) {
+    for (auto &attr : args_) {
       if (!begin) {
         buffer << ", ";
       } else {
@@ -242,34 +242,34 @@ std::string JTagged::DumpText() const {
   return buffer.str();
 }
 
-std::ostream& operator<<(std::ostream& os, const std::shared_ptr<Problem> problem) {
+std::ostream &operator<<(std::ostream &os, const std::shared_ptr<Problem> problem) {
   MS_EXCEPTION_IF_NULL(problem);
   os << problem->ToString();
   return os;
 }
 
-std::size_t TypeHasher::operator()(TypePtr const& type) const {
+std::size_t TypeHasher::operator()(TypePtr const &type) const {
   MS_EXCEPTION_IF_NULL(type);
   std::size_t hash = std::hash<size_t>()(type->type_id());
   return hash;
 }
 
-std::size_t TypeListHasher::operator()(const TypePtrList& type_list) const {
+std::size_t TypeListHasher::operator()(const TypePtrList &type_list) const {
   std::size_t hash_sum = 0;
-  for (auto& type : type_list) {
+  for (auto &type : type_list) {
     auto type_id = static_cast<std::size_t>(type->type_id());
     hash_sum = hash_combine(hash_sum, type_id);
   }
   return hash_sum;
 }
 
-bool TypeEqual::operator()(TypePtr const& t1, TypePtr const& t2) const {
+bool TypeEqual::operator()(TypePtr const &t1, TypePtr const &t2) const {
   MS_EXCEPTION_IF_NULL(t1);
   MS_EXCEPTION_IF_NULL(t2);
   return t1->type_id() == t2->type_id();
 }
 
-bool TypeListEqual::operator()(TypePtrList const& lhs, TypePtrList const& rhs) const {
+bool TypeListEqual::operator()(TypePtrList const &lhs, TypePtrList const &rhs) const {
   if (lhs.size() != rhs.size()) {
     return false;
   }
@@ -332,7 +332,7 @@ TypePtr TypeIdToType(TypeId id) {
 
 namespace {
 template <typename T>
-TypePtr StringToNumberType(const std::string& type_name, const std::string& num_type_name) {
+TypePtr StringToNumberType(const std::string &type_name, const std::string &num_type_name) {
   TypePtr type = nullptr;
   if (type_name == num_type_name) {
     type = std::make_shared<T>();
@@ -344,14 +344,14 @@ TypePtr StringToNumberType(const std::string& type_name, const std::string& num_
       }
       auto bits = std::stoi(type_name.substr(num_type_name.size()));
       type = std::make_shared<T>(bits);
-    } catch (const std::exception& e) {
-      MS_LOG(EXCEPTION) << "" << num_type_name << " convert from string error " << e.what();
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << num_type_name << " convert from string error " << e.what();
     }
   }
   return type;
 }
 
-std::vector<TypePtr> StringToVectorOfType(const std::string& type_names) {
+std::vector<TypePtr> StringToVectorOfType(const std::string &type_names) {
   std::vector<TypePtr> types;
   if (type_names.length() == 0) {
     return types;
@@ -371,7 +371,7 @@ std::vector<TypePtr> StringToVectorOfType(const std::string& type_names) {
   return types;
 }
 
-TypePtr TensorStrToType(const std::string& type_name) {
+TypePtr TensorStrToType(const std::string &type_name) {
   TypePtr type = nullptr;
   if (type_name == "Tensor") {
     type = std::make_shared<TensorType>();
@@ -388,15 +388,15 @@ TypePtr TensorStrToType(const std::string& type_name) {
         return nullptr;
       }
       type = std::make_shared<TensorType>(element_type);
-    } catch (const std::exception& e) {
-      MS_LOG(EXCEPTION) << "" << type_name << " convert from string error " << e.what();
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
     }
   }
 
   return type;
 }
 
-TypePtr ListStrToType(const std::string& type_name) {
+TypePtr ListStrToType(const std::string &type_name) {
   TypePtr type = nullptr;
   if (type_name == "List") {
     type = std::make_shared<List>();
@@ -410,20 +410,20 @@ TypePtr ListStrToType(const std::string& type_name) {
       std::string element_strs = type_name.substr(start, end - start);
       std::vector<TypePtr> element_types = StringToVectorOfType(element_strs);
       bool wrong =
-        std::any_of(element_types.begin(), element_types.end(), [](const TypePtr& x) { return x == nullptr; });
+        std::any_of(element_types.begin(), element_types.end(), [](const TypePtr &x) { return x == nullptr; });
       if (wrong) {
         return nullptr;
       }
       type = std::make_shared<List>(element_types);
-    } catch (const std::exception& e) {
-      MS_LOG(EXCEPTION) << "" << type_name << " convert from string error " << e.what();
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
     }
   }
 
   return type;
 }
 
-TypePtr TupleStrToType(const std::string& type_name) {
+TypePtr TupleStrToType(const std::string &type_name) {
   TypePtr type = nullptr;
   if (type_name == "Tuple") {
     type = std::make_shared<Tuple>();
@@ -437,19 +437,19 @@ TypePtr TupleStrToType(const std::string& type_name) {
       std::string element_strs = type_name.substr(start, end - start);
       std::vector<TypePtr> element_types = StringToVectorOfType(element_strs);
       bool wrong =
-        std::any_of(element_types.begin(), element_types.end(), [](const TypePtr& x) { return x == nullptr; });
+        std::any_of(element_types.begin(), element_types.end(), [](const TypePtr &x) { return x == nullptr; });
       if (wrong) {
         return nullptr;
       }
       type = std::make_shared<Tuple>(element_types);
-    } catch (const std::exception& e) {
-      MS_LOG(EXCEPTION) << "" << type_name << " convert from string error " << e.what();
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
     }
   }
   return type;
 }
 
-TypePtr FunctionStrToType(const std::string& type_name) {
+TypePtr FunctionStrToType(const std::string &type_name) {
   TypePtr type = nullptr;
 
   if (type_name == "Function") {
@@ -478,23 +478,25 @@ TypePtr FunctionStrToType(const std::string& type_name) {
 
       std::vector<TypePtr> args_type = StringToVectorOfType(str_args);
       TypePtr retval = StringToType(str_retval);
-      bool wrong = std::any_of(args_type.begin(), args_type.end(), [](const TypePtr& x) { return x == nullptr; });
+      bool wrong = std::any_of(args_type.begin(), args_type.end(), [](const TypePtr &x) { return x == nullptr; });
       if (retval == nullptr || wrong) {
         return nullptr;
       }
       type = std::make_shared<Function>(args_type, retval);
-    } catch (const std::exception& e) {
-      MS_LOG(EXCEPTION) << "" << type_name << " convert from string error " << e.what();
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << type_name << " convert from string error " << e.what();
     }
   }
   return type;
 }
 }  // namespace
 
-TypePtr StringToType(const std::string& type_name) {
+TypePtr StringToType(const std::string &type_name) {
   TypePtr type = nullptr;
   if (type_name.compare("None") == 0) {
     type = std::make_shared<TypeNone>();
+  } else if (type_name.compare("Ellipsis") == 0) {
+    type = std::make_shared<Ellipsis>();
   } else if (type_name.compare("TypeType") == 0) {
     type = std::make_shared<TypeType>();
   } else if (type_name.compare("SymbolicKeyType") == 0) {
@@ -542,7 +544,7 @@ TypePtr StringToType(const std::string& type_name) {
   return type;
 }
 
-bool IsIdentidityOrSubclass(TypePtr const& x, TypePtr const& base_type) {
+bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type) {
   if (x == nullptr || base_type == nullptr) {
     MS_LOG(ERROR) << "Type is nullptr.";
     return false;
@@ -564,7 +566,7 @@ bool IsIdentidityOrSubclass(TypePtr const& x, TypePtr const& base_type) {
   }
 }
 
-bool IsSubType(TypePtr const& t1, TypePtr const& t2) {
+bool IsSubType(TypePtr const &t1, TypePtr const &t2) {
   MS_EXCEPTION_IF_NULL(t1);
   if (t1->type_id() == kTypeUnknown) {
     return false;
@@ -576,17 +578,17 @@ bool IsSubType(TypePtr const& t1, TypePtr const& t2) {
 }
 
 REGISTER_PYBIND_DEFINE(
-  typing, ([](py::module* const m) {
+  typing, ([](py::module *const m) {
     auto m_sub = m->def_submodule("typing", "submodule for dtype");
     py::enum_<TypeId>(m_sub, "TypeId");
     (void)m_sub.def("is_subclass", &IsIdentidityOrSubclass, "is equal or subclass");
     (void)m_sub.def("load_type", &TypeIdToType, "load type");
     (void)m_sub.def(
-      "dump_type", [](const TypePtr& t) { return t->type_id(); }, "dump type");
+      "dump_type", [](const TypePtr &t) { return t->type_id(); }, "dump type");
     (void)py::class_<Type, std::shared_ptr<Type>>(m_sub, "Type")
       .def_readonly(PYTHON_DTYPE_FLAG, &mindspore::Type::parse_info_)
       .def("__eq__",
-           [](const TypePtr& t1, const TypePtr& t2) {
+           [](const TypePtr &t1, const TypePtr &t2) {
              if (t1 != nullptr && t2 != nullptr) {
                return *t1 == *t2;
              }
@@ -595,7 +597,7 @@ REGISTER_PYBIND_DEFINE(
       .def("__hash__", &Type::hash)
       .def("__str__", &Type::ToString)
       .def("__repr__", &Type::ReprString)
-      .def("__deepcopy__", [](const TypePtr& t, py::dict) {
+      .def("__deepcopy__", [](const TypePtr &t, py::dict) {
         if (t == nullptr) {
           return static_cast<TypePtr>(nullptr);
         }
@@ -605,21 +607,21 @@ REGISTER_PYBIND_DEFINE(
     (void)py::class_<Bool, Type, std::shared_ptr<Bool>>(m_sub, "Bool")
       .def(py::init())
       .def(py::pickle(
-        [](const Bool&) {  // __getstate__
+        [](const Bool &) {  // __getstate__
           return py::make_tuple();
         },
-        [](const py::tuple&) {  // __setstate__
+        [](const py::tuple &) {  // __setstate__
           return std::make_shared<Bool>();
         }));
     (void)py::class_<Int, Type, std::shared_ptr<Int>>(m_sub, "Int")
       .def(py::init())
       .def(py::init<int>(), py::arg("nbits"))
       .def(py::pickle(
-        [](const Int& t) {  // __getstate__
+        [](const Int &t) {  // __getstate__
           /* Return a tuple that fully encodes the state of the object */
           return py::make_tuple(py::int_(t.nbits()));
         },
-        [](const py::tuple& t) {  // __setstate__
+        [](const py::tuple &t) {  // __setstate__
           if (t.size() != 1) {
             throw std::runtime_error("Invalid state!");
           }
@@ -631,11 +633,11 @@ REGISTER_PYBIND_DEFINE(
       .def(py::init())
       .def(py::init<int>(), py::arg("nbits"))
       .def(py::pickle(
-        [](const UInt& t) {  // __getstate__
+        [](const UInt &t) {  // __getstate__
           /* Return a tuple that fully encodes the state of the object */
           return py::make_tuple(py::int_(t.nbits()));
         },
-        [](const py::tuple& t) {  // __setstate__
+        [](const py::tuple &t) {  // __setstate__
           if (t.size() != 1) {
             throw std::runtime_error("Invalid state!");
           }
@@ -647,11 +649,11 @@ REGISTER_PYBIND_DEFINE(
       .def(py::init())
       .def(py::init<int>(), py::arg("nbits"))
       .def(py::pickle(
-        [](const Float& t) {  // __getstate__
+        [](const Float &t) {  // __getstate__
           /* Return a tuple that fully encodes the state of the object */
           return py::make_tuple(py::int_(t.nbits()));
         },
-        [](const py::tuple& t) {  // __setstate__
+        [](const py::tuple &t) {  // __setstate__
           if (t.size() != 1) {
             throw std::runtime_error("Invalid state!");
           }
@@ -670,11 +672,11 @@ REGISTER_PYBIND_DEFINE(
       .def(py::init<TypePtr>(), py::arg("element"))
       .def("element_type", &TensorType::element)
       .def(py::pickle(
-        [](const TensorType& t) {  // __getstate__
+        [](const TensorType &t) {  // __getstate__
           /* Return a tuple that fully encodes the state of the object */
           return py::make_tuple(py::int_(static_cast<int>(t.element()->type_id())));
         },
-        [](const py::tuple& t) {  // __setstate__
+        [](const py::tuple &t) {  // __setstate__
           if (t.size() != 1) {
             throw std::runtime_error("Invalid state!");
           }
@@ -693,6 +695,7 @@ REGISTER_PYBIND_DEFINE(
     (void)py::class_<String, Type, std::shared_ptr<String>>(m_sub, "String").def(py::init());
     (void)py::class_<RefKeyType, Type, std::shared_ptr<RefKeyType>>(m_sub, "RefKeyType").def(py::init());
     (void)py::class_<RefType, Type, std::shared_ptr<RefType>>(m_sub, "RefType").def(py::init());
+    (void)py::class_<TypeAnything, Type, std::shared_ptr<TypeAnything>>(m_sub, "TypeAnything").def(py::init());
   }));
 
 const TypePtr kTypeExternal = std::make_shared<External>();

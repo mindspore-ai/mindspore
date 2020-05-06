@@ -33,7 +33,7 @@ extern const int RET_CONTINUE;
 extern const int RET_BREAK;
 
 // demangle the name to make it human reablable.
-extern std::string demangle(const char* name);
+extern std::string demangle(const char *name);
 
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_MISC_H_

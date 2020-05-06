@@ -14,7 +14,10 @@
 # ============================================================================
 """Operators info register."""
 
-from .akg.gpu import *
-from .tbe import *
+import platform
+from .aicpu import *
+if "Windows" not in platform.system():
+    from .akg.gpu import *
+    from .tbe import *
 
 __all__ = []

@@ -68,8 +68,7 @@ def _scalar_div_tensor(x, y):
     Returns:
         Tensor, has the same dtype as x.
     """
-    z = F.scalar_to_tensor(x, F.dtype(y))
-    return F.tensor_div(z, y)
+    return F.tensor_div(x, y)
 
 
 @div.register("Tensor", "Number")
@@ -84,5 +83,4 @@ def _tensor_div_scalar(x, y):
     Returns:
         Tensor, has the same dtype as x.
     """
-    z = F.scalar_to_tensor(y, F.dtype(x))
-    return F.tensor_div(x, z)
+    return F.tensor_div(x, y)

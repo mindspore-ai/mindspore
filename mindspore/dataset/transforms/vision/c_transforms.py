@@ -45,7 +45,7 @@ import mindspore._c_dataengine as cde
 from .utils import Inter, Border
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
     check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
-    check_resize, check_rescale, check_pad, check_cutout
+    check_resize, check_rescale, check_pad, check_cutout, check_uniform_augmentation
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -89,8 +89,8 @@ class Normalize(cde.NormalizeOp):
     Normalize the input image with respect to mean and standard deviation.
 
     Args:
-        mean (list): List of mean values for each channel, w.r.t channel order.
-        std (list): List of standard deviations for each channel, w.r.t. channel order.
+        mean (sequence): List or tuple of mean values for each channel, w.r.t channel order.
+        std (sequence): List or tuple of standard deviations for each channel, w.r.t. channel order.
     """
 
     @check_normalize_c
@@ -109,6 +109,7 @@ class RandomCrop(cde.RandomCropOp):
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         padding (int or sequence, optional): The number of pixels to pad the image (default=None).
+            If padding is not None, pad image firstly with padding values.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
@@ -447,3 +448,30 @@ class Pad(cde.PadOp):
             fill_value = tuple([fill_value] * 3)
         padding_mode = DE_C_BORDER_TYPE[padding_mode]
         super().__init__(*padding, padding_mode, *fill_value)
+
+
+class UniformAugment(cde.UniformAugOp):
+    """
+    Tensor operation to perform randomly selected augmentation
+
+    Args:
+        operations: list of C++ operations (python OPs are not accepted).
+        NumOps (int): number of OPs to be selected and applied.
+
+    Examples:
+        >>> transforms_list = [c_transforms.RandomHorizontalFlip(),
+        >>>                    c_transforms.RandomVerticalFlip(),
+        >>>                    c_transforms.RandomColorAdjust(),
+        >>>                    c_transforms.RandomRotation(degrees=45)]
+        >>> uni_aug = c_transforms.UniformAugment(operations=transforms_list, num_ops=2)
+        >>> transforms_all = [c_transforms.Decode(), c_transforms.Resize(size=[224, 224]),
+        >>>                   uni_aug, F.ToTensor()]
+        >>> ds_ua = ds.map(input_columns="image",
+        >>>                operations=transforms_all, num_parallel_workers=1)
+    """
+
+    @check_uniform_augmentation
+    def __init__(self, operations, num_ops=2):
+        self.operations = operations
+        self.num_ops = num_ops
+        super().__init__(operations, num_ops)

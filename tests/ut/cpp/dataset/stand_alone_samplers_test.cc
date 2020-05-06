@@ -74,11 +74,11 @@ TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
   std::unique_ptr<DataBuffer> db;
   std::shared_ptr<Tensor> tensor;
   for (int i = 0; i < 6; i++) {
-    std::unique_ptr<Sampler> sampler = mindspore::make_unique<DistributedSampler>(3, i % 3, (i < 3 ? false : true));
-    sampler->Init(&mock);
+    std::unique_ptr<Sampler> sampler = std::make_unique<DistributedSampler>(3, i % 3, (i < 3 ? false : true));
+    sampler->HandshakeRandomAccessOp(&mock);
     sampler->GetNextBuffer(&db);
     db->GetTensor(&tensor, 0, 0);
-    std::cout << (*tensor);
+    MS_LOG(DEBUG) << (*tensor);
     if(i < 3) {  // This is added due to std::shuffle()
       EXPECT_TRUE((*tensor) == (*row[i]));
     }
@@ -95,7 +95,7 @@ TEST_F(MindDataTestStandAloneSampler, TestStandAoneSequentialSampler) {
   std::shared_ptr<Sampler> sampler = std::make_shared<SequentialSampler>(3);
   std::unique_ptr<DataBuffer> db;
   std::shared_ptr<Tensor> tensor;
-  sampler->Init(&mock);
+  sampler->HandshakeRandomAccessOp(&mock);
   sampler->GetNextBuffer(&db);
   db->GetTensor(&tensor, 0, 0);
   EXPECT_TRUE((*tensor) == (*label1));

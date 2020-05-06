@@ -26,6 +26,7 @@ constexpr auto kTbeProcessModule = "mindspore._extends.parallel_compile.tbe_comp
 constexpr auto kCreateTbeParallelCompilerFunc = "create_tbe_parallel_compiler";
 constexpr auto kOpSelectFormatFunc = "op_select_format";
 constexpr auto kCheckSupportedFunc = "check_supported";
+constexpr auto kTBEException = "TBEException";
 
 PyObject *TbePythonFuncs::pCreateTbeParallelCompilerFunc_ = nullptr;
 PyObject *TbePythonFuncs::pTbeCompiler_ = nullptr;
@@ -133,6 +134,10 @@ std::string TbePythonFuncs::OpSelectFormat(const nlohmann::json &kernel_json) {
   char *pstr = nullptr;
   (void)PyArg_Parse(pRet, "s", &pstr);
   res_json_str = pstr;
+  if (res_json_str.compare(0, strlen(kTBEException), kTBEException) == 0) {
+    MS_EXCEPTION(ArgumentError) << "Failed to call function [" << kOpSelectFormatFunc << "], " << res_json_str
+                                << " ,function args:" << PyObjectToStr(pArg);
+  }
   return res_json_str;
 }
 
@@ -167,7 +172,18 @@ bool TbePythonFuncs::CheckSupported(const nlohmann::json &kernel_json) {
     MS_EXCEPTION(ArgumentError) << "Failed to call function [" << kCheckSupportedFunc
                                 << "], function args: " << PyObjectToStr(pArg);
   }
-  ret = PyObject_IsTrue(pRes) != 0;
+  if (PyBool_Check(pRes)) {
+    ret = PyObject_IsTrue(pRes) != 0;
+  } else {
+    char *pstr = nullptr;
+    (void)PyArg_Parse(pRes, "s", &pstr);
+    std::string res_str = pstr;
+    if (res_str.compare(0, strlen(kTBEException), kTBEException) == 0) {
+      MS_EXCEPTION(ArgumentError) << "Failed to call function [" << kCheckSupportedFunc << "], " << res_str
+                                  << ", function args: " << PyObjectToStr(pArg);
+    }
+  }
+
   return ret;
 }
 

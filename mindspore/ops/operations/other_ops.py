@@ -16,7 +16,7 @@
 """Other operators."""
 from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import signature_kind as sig_kind
-from ..._checkparam import ParamValidator as validator, Rel
+from ..._checkparam import Validator as validator, Rel
 from ...common import dtype as mstype
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 
@@ -39,7 +39,7 @@ class Assign(PrimitiveWithInfer):
         >>>         self.y = mindspore.Parameter(Tensor([1.0], mindspore.float32), name="y")
         >>>
         >>>     def construct(self, x):
-        >>>         Assign()(self.y, x)
+        >>>         P.Assign()(self.y, x)
         >>>         return x
         >>> x = Tensor([2.0], mindspore.float32)
         >>> net = Net()
@@ -76,28 +76,32 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         Tensor, encoded bounding boxes.
 
     Examples:
-        >>> boundingbox_encode = BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0))
-        >>> delta_box = boundingbox_encode(anchor_box, groundtruth_box)
+        >>> anchor_box = Tensor([[4,1,2,1],[2,2,2,3]],mindspore.float32)
+        >>> groundtruth_box = Tensor([[3,1,2,2],[1,2,1,4]],mindspore.float32)
+        >>> boundingbox_encode = P.BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0))
+        >>> boundingbox_encode(anchor_box, groundtruth_box)
+        [[5.0000000e-01  5.0000000e-01  -6.5504000e+04  6.9335938e-01]
+         [-1.0000000e+00  2.5000000e-01  0.0000000e+00  4.0551758e-01]]
+
     """
 
     @prim_attr_register
     def __init__(self, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0)):
-        validator.check_type('means', means, [tuple])
-        validator.check_type('stds', stds, [tuple])
-        validator.check("means len", len(means), '', 4)
-        validator.check("stds len", len(stds), '', 4)
+        validator.check_value_type('means', means, [tuple], self.name)
+        validator.check_value_type('stds', stds, [tuple], self.name)
+        validator.check_integer("means len", len(means), 4, Rel.EQ, self.name)
+        validator.check_integer("stds len", len(stds), 4, Rel.EQ, self.name)
 
     def infer_shape(self, anchor_box, groundtruth_box):
-        validator.check('anchor_box shape[0]', anchor_box[0], 'groundtruth_box shape[0]', groundtruth_box[0])
-        validator.check('anchor_box shape[1]', anchor_box[1], '', 4)
-        validator.check('groundtruth_box shape[1]', groundtruth_box[1], '', 4)
+        validator.check('anchor_box shape[0]', anchor_box[0], 'groundtruth_box shape[0]', groundtruth_box[0], Rel.EQ,
+                        self.name)
+        validator.check_integer('anchor_box shape[1]', anchor_box[1], 4, Rel.EQ, self.name)
+        validator.check_integer('groundtruth_box shape[1]', groundtruth_box[1], 4, Rel.EQ, self.name)
         return anchor_box
 
     def infer_dtype(self, anchor_box, groundtruth_box):
-        args = {"anchor_box": anchor_box,
-                "groundtruth_box": groundtruth_box
-                }
-        validator.check_type_same(args, mstype.number_type)
+        args = {"anchor_box": anchor_box, "groundtruth_box": groundtruth_box}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
         return anchor_box
 
 
@@ -119,33 +123,36 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         Tensor, decoded boxes.
 
     Examples:
-        >>> boundingbox_decode = BoundingBoxDecode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
-                                                   max_shape=(768, 1280), wh_ratio_clip=0.016)
-        >>> bbox = boundingbox_decode(anchor_box, deltas)
+        >>> anchor_box = Tensor([[4,1,2,1],[2,2,2,3]],mindspore.float32)
+        >>> deltas = Tensor([[3,1,2,2],[1,2,1,4]],mindspore.float32)
+        >>> boundingbox_decode = P.BoundingBoxDecode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
+        >>>                                          max_shape=(768, 1280), wh_ratio_clip=0.016)
+        >>> boundingbox_decode(anchor_box, deltas)
+        [[4.1953125  0.  0.  5.1953125]
+         [2.140625  0.  3.859375  60.59375]]
+
     """
 
     @prim_attr_register
     def __init__(self, max_shape, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0), wh_ratio_clip=0.016):
-        validator.check_type('means', means, [tuple])
-        validator.check_type('stds', stds, [tuple])
-        validator.check_type('wh_ratio_clip', wh_ratio_clip, [float])
-        validator.check("means", len(means), '', 4)
-        validator.check("stds", len(stds), '', 4)
+        validator.check_value_type('means', means, [tuple], self.name)
+        validator.check_value_type('stds', stds, [tuple], self.name)
+        validator.check_value_type('wh_ratio_clip', wh_ratio_clip, [float], self.name)
+        validator.check_integer("means len", len(means), 4, Rel.EQ, self.name)
+        validator.check_integer("stds len", len(stds), 4, Rel.EQ, self.name)
         if max_shape is not None:
-            validator.check_type('max_shape', max_shape, [tuple])
-            validator.check("max_shape", len(max_shape), '', 2)
+            validator.check_value_type('max_shape', max_shape, [tuple], self.name)
+            validator.check_integer("max_shape len", len(max_shape), 2, Rel.EQ, self.name)
 
     def infer_shape(self, anchor_box, deltas):
-        validator.check('anchor_box shape[0]', anchor_box[0], 'deltas shape[0]', deltas[0])
-        validator.check('anchor_box shape[1]', anchor_box[1], '', 4)
-        validator.check('deltas shape[1]', deltas[1], '', 4)
+        validator.check('anchor_box shape[0]', anchor_box[0], 'deltas shape[0]', deltas[0], Rel.EQ, self.name)
+        validator.check_integer('anchor_box shape[1]', anchor_box[1], 4, Rel.EQ, self.name)
+        validator.check_integer('deltas shape[1]', deltas[1], 4, Rel.EQ, self.name)
         return anchor_box
 
     def infer_dtype(self, anchor_box, deltas):
-        args = {"anchor_box": anchor_box,
-                "deltas": deltas
-                }
-        validator.check_type_same(args, mstype.number_type)
+        args = {"anchor_box": anchor_box, "deltas": deltas}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
         return anchor_box
 
 
@@ -168,10 +175,10 @@ class CheckValid(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['bboxes', 'img_metas'], outputs=['output'])
 
     def infer_shape(self, bboxes_shape, metas_shape):
-        validator.check_shape_length("bboxes shape length", len(bboxes_shape), 2, Rel.EQ)
-        validator.check("bboxes_shape[-1]", bboxes_shape[-1], "", 4, Rel.EQ)
-        validator.check_shape_length("img_metas shape length", len(metas_shape), 1, Rel.EQ)
-        validator.check("img_metas shape[0]", metas_shape[0], "", 3, Rel.EQ)
+        validator.check_integer("bboxes rank", len(bboxes_shape), 2, Rel.EQ, self.name)
+        validator.check_integer("bboxes_shape[-1]", bboxes_shape[-1], 4, Rel.EQ, self.name)
+        validator.check_integer("img_metas rank", len(metas_shape), 1, Rel.EQ, self.name)
+        validator.check_integer("img_metas shape[0]", metas_shape[0], 3, Rel.EQ, self.name)
         return bboxes_shape[:-1]
 
     def infer_dtype(self, bboxes_type, metas_type):
@@ -208,9 +215,9 @@ class IOU(PrimitiveWithInfer):
         KeyError: When `mode` is not 'iou' or 'iof'.
 
     Examples:
-        >>> iou = IOU()
-        >>> anchor_boxes = Tensor(np.random.randint(1,5, [10, 4]))
-        >>> gt_boxes = Tensor(np.random.randint(1,5, [3, 4]))
+        >>> iou = P.IOU()
+        >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float32)
+        >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float32)
         >>> iou(anchor_boxes, gt_boxes)
     """
 
@@ -221,18 +228,16 @@ class IOU(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['anchor_boxes', 'gt_boxes'], outputs=['overlap'])
 
     def infer_shape(self, anchor_boxes, gt_boxes):
-        validator.check('gt_boxes shape[1]', gt_boxes[1], '', 4)
-        validator.check('anchor_boxes shape[1]', anchor_boxes[1], '', 4)
-        validator.check('anchor_boxes rank', len(anchor_boxes), '', 2)
-        validator.check('gt_boxes rank', len(gt_boxes), '', 2)
+        validator.check_integer('gt_boxes shape[1]', gt_boxes[1], 4, Rel.EQ, self.name)
+        validator.check_integer('anchor_boxes shape[1]', anchor_boxes[1], 4, Rel.EQ, self.name)
+        validator.check_integer('anchor_boxes rank', len(anchor_boxes), 2, Rel.EQ, self.name)
+        validator.check_integer('gt_boxes rank', len(gt_boxes), 2, Rel.EQ, self.name)
         iou = [gt_boxes[0], anchor_boxes[0]]
         return iou
 
     def infer_dtype(self, anchor_boxes, gt_boxes):
-        validator.check_subclass("anchor_boxes", anchor_boxes, mstype.tensor)
-        validator.check_subclass("gt_boxes", gt_boxes, mstype.tensor)
         args = {"anchor_boxes": anchor_boxes, "gt_boxes": gt_boxes}
-        validator.check_type_same(args, (mstype.float16,))
+        validator.check_tensor_type_same(args, (mstype.float16,), self.name)
         return anchor_boxes
 
 
@@ -255,19 +260,85 @@ class MakeRefKey(Primitive):
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
-        >>>         self.y = Parameter(Tensor(np.ones([6, 8, 10], np.int32)), name="y")
-        >>>         self.make_ref_key = MakeRefKey("y")
+        >>>         self.y = mindspore.Parameter(Tensor(np.ones([6, 8, 10]), mindspore.int32), name="y")
+        >>>         self.make_ref_key = P.MakeRefKey("y")
         >>>
         >>>     def construct(self, x):
         >>>         key = self.make_ref_key()
         >>>         ref = F.make_ref(key, x, self.y)
         >>>         return ref * x
         >>>
-        >>> x = Tensor(np.ones([3, 4, 5], np.int32))
+        >>> x = Tensor(np.ones([3, 4, 5]), mindspore.int32)
         >>> net = Net()
         >>> net(x)
     """
 
     @prim_attr_register
     def __init__(self, tag):
-        validator.check_type('tag', tag, (str,))
+        validator.check_value_type('tag', tag, (str,), self.name)
+
+    def __call__(self):
+        pass
+
+
+class CheckBprop(PrimitiveWithInfer):
+    """
+    Checks whether data type and shape of corresponding element from tuple x and y are the same.
+
+    Raises:
+        TypeError: If not the same.
+
+    Inputs:
+        - **input_x** (tuple[Tensor]) - The input_x contains the outputs of bprop to be checked.
+        - **input_y** (tuple[Tensor]) - The input_y contains the inputs of bprop to check against.
+
+    Outputs:
+        (tuple[Tensor]), the input_x,
+        if data type and shape of corresponding elements from `input_x` and `input_y` are the same.
+
+    Examples:
+        >>> input_x = (Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32),)
+        >>> input_y = (Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32),)
+        >>> out = P.CheckBprop()(input_x, input_y)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init CheckBprop"""
+
+    def infer_shape(self, xshapes, yshapes):
+        tips = f'Bprop of {self.prim_to_check}'
+        if len(xshapes) < len(yshapes):
+            raise TypeError(f"{tips}, the size of output should be {len(yshapes)},"
+                            f" but got {len(xshapes)}.")
+        checking_range = len(yshapes)
+        for i in range(checking_range):
+            xshape = xshapes[i]
+            yshape = yshapes[i]
+            if not xshape or not yshape:
+                continue
+            if xshape != yshape:
+                raise TypeError(f"{tips}, the shape of {i}th output should be {yshape},"
+                                f" but got {xshape}.")
+        return xshapes
+
+    def infer_dtype(self, xdtypes, ydtypes):
+        tips = f'Bprop of {self.prim_to_check}'
+        if len(xdtypes) < len(ydtypes):
+            raise TypeError(f"{tips}, the size of output should be {len(ydtypes)},"
+                            f" but got {len(xdtypes)}.")
+        checking_range = len(ydtypes)
+        for i in range(checking_range):
+            xdtype = xdtypes[i]
+            ydtype = ydtypes[i]
+            if isinstance(xdtype, mstype.anything_type) or isinstance(ydtype, mstype.anything_type):
+                continue
+            if isinstance(ydtype, mstype.function_type):
+                if not isinstance(xdtype, mstype.env_type_type):
+                    raise TypeError(f"{tips}, the dtype of {i}th output should be {mstype.env_type_type},"
+                                    f" but got {xdtype}.")
+                continue
+            if xdtype != ydtype:
+                raise TypeError(f"{tips}, the dtype of {i}th output should be {ydtype},"
+                                f" but got {xdtype}.")
+        return xdtypes

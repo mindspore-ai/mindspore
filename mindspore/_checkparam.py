@@ -14,9 +14,12 @@
 # ============================================================================
 """Check parameters."""
 import re
+import inspect
+import math
 from enum import Enum
+from functools import reduce, wraps
 from itertools import repeat
-from collections import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 from mindspore import log as logger
@@ -93,8 +96,232 @@ rel_strs = {
 }
 
 
+class Validator:
+    """validator for checking input parameters"""
+
+    @staticmethod
+    def check(arg_name, arg_value, value_name, value, rel=Rel.EQ, prim_name=None, excp_cls=ValueError):
+        """
+        Method for judging relation between two int values or list/tuple made up of ints.
+
+        This method is not suitable for judging relation between floats, since it does not consider float error.
+        """
+
+        rel_fn = Rel.get_fns(rel)
+        if not rel_fn(arg_value, value):
+            rel_str = Rel.get_strs(rel).format(f'{value_name}: {value}')
+            msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
+            raise excp_cls(f'{msg_prefix} `{arg_name}` should be {rel_str}, but got {arg_value}.')
+
+    @staticmethod
+    def check_integer(arg_name, arg_value, value, rel, prim_name):
+        """Integer value judgment."""
+        rel_fn = Rel.get_fns(rel)
+        type_mismatch = not isinstance(arg_value, int) or isinstance(arg_value, bool)
+        excp_cls = TypeError if type_mismatch else ValueError
+        if type_mismatch or not rel_fn(arg_value, value):
+            rel_str = Rel.get_strs(rel).format(value)
+            msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
+            raise excp_cls(f'{msg_prefix} `{arg_name}` should be an int and must {rel_str}, but got `{arg_value}`'
+                           f' with type `{type(arg_value).__name__}`.')
+        return arg_value
+
+    @staticmethod
+    def check_number(arg_name, arg_value, value, rel, prim_name):
+        """Number value judgment."""
+        rel_fn = Rel.get_fns(rel)
+        if not rel_fn(arg_value, value):
+            rel_str = Rel.get_strs(rel).format(value)
+            raise ValueError(f'For \'{prim_name}\' the `{arg_name}` must {rel_str}, but got {arg_value}.')
+        return arg_value
+
+    @staticmethod
+    def check_int_range(arg_name, arg_value, lower_limit, upper_limit, rel, prim_name):
+        """Method for checking whether an int value is in some range."""
+        rel_fn = Rel.get_fns(rel)
+        type_mismatch = not isinstance(arg_value, int)
+        excp_cls = TypeError if type_mismatch else ValueError
+        if type_mismatch or not rel_fn(arg_value, lower_limit, upper_limit):
+            rel_str = Rel.get_strs(rel).format(lower_limit, upper_limit)
+            raise excp_cls(f'For \'{prim_name}\' the `{arg_name}` should be an int in range {rel_str},'
+                           f' but got `{arg_value}` with type `{type(arg_value).__name__}`.')
+        return arg_value
+
+    @staticmethod
+    def check_number_range(arg_name, arg_value, lower_limit, upper_limit, rel, prim_name):
+        """Method for checking whether a numeric value is in some range."""
+        rel_fn = Rel.get_fns(rel)
+        if not rel_fn(arg_value, lower_limit, upper_limit):
+            rel_str = Rel.get_strs(rel).format(lower_limit, upper_limit)
+            raise ValueError(f'For \'{prim_name}\' the `{arg_name}` should be in range {rel_str}, but got {arg_value}.')
+        return arg_value
+
+    @staticmethod
+    def check_string(arg_name, arg_value, valid_values, prim_name):
+        """Checks whether a string is in some value list"""
+        if isinstance(arg_value, str) and arg_value in valid_values:
+            return arg_value
+        if len(valid_values) == 1:
+            raise ValueError(f'For \'{prim_name}\' the `{arg_name}` should be str and must be {valid_values[0]},'
+                             f' but got {arg_value}.')
+        raise ValueError(f'For \'{prim_name}\' the `{arg_name}` should be str and must be one of {valid_values},'
+                         f' but got {arg_value}.')
+
+    @staticmethod
+    def check_pad_value_by_mode(pad_mode, padding, prim_name):
+        """Validates value of padding according to pad_mode"""
+        if pad_mode != 'pad' and padding != 0:
+            raise ValueError(f"For '{prim_name}', padding must be zero when pad_mode is '{pad_mode}'.")
+        return padding
+
+    @staticmethod
+    def check_float_positive(arg_name, arg_value, prim_name):
+        """Float type judgment."""
+        msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
+        if isinstance(arg_value, float):
+            if arg_value > 0:
+                return arg_value
+            raise ValueError(f"{msg_prefix} `{arg_name}` must be positive, but got {arg_value}.")
+        raise TypeError(f"{msg_prefix} `{arg_name}` must be float.")
+
+    @staticmethod
+    def check_subclass(arg_name, type_, template_type, prim_name):
+        """Checks whether some type is subclass of another type"""
+        if not isinstance(template_type, Iterable):
+            template_type = (template_type,)
+        if not any([mstype.issubclass_(type_, x) for x in template_type]):
+            type_str = (type(type_).__name__ if isinstance(type_, (tuple, list)) else "") + str(type_)
+            raise TypeError(f'For \'{prim_name}\' the type of `{arg_name}` should be subclass'
+                            f' of {",".join((str(x) for x in template_type))}, but got {type_str}.')
+
+    @staticmethod
+    def check_const_input(arg_name, arg_value, prim_name):
+        """Checks valid value."""
+        if arg_value is None:
+            raise ValueError(f'For \'{prim_name}\' the `{arg_name}` must be a const input, but got {arg_value}.')
+
+    @staticmethod
+    def check_type_same(args, valid_values, prim_name):
+        """Checks whether the types of inputs are the same."""
+        def _check_tensor_type(arg):
+            arg_key, arg_val = arg
+            elem_type = arg_val
+            if not elem_type in valid_values:
+                type_names = []
+                for t in valid_values:
+                    type_names.append(str(t))
+                types_info = '[' + ', '.join(type_names) + ']'
+                raise TypeError(f'For \'{prim_name}\' type of `{arg_key}` should be in {types_info},'
+                                f' but got {elem_type}.')
+            return (arg_key, elem_type)
+
+        def _check_types_same(arg1, arg2):
+            arg1_name, arg1_type = arg1
+            arg2_name, arg2_type = arg2
+            if arg1_type != arg2_type:
+                raise TypeError(f'For \'{prim_name}\' type of `{arg2_name}` should be same as `{arg1_name}`,'
+                                f' but `{arg1_name}` with type {arg1_type} and `{arg2_name}` with type {arg2_type}.')
+            return arg1
+
+        elem_types = map(_check_tensor_type, args.items())
+        reduce(_check_types_same, elem_types)
+
+    @staticmethod
+    def check_tensor_type_same(args, valid_values, prim_name):
+        """Checks whether the element types of input tensors are the same."""
+        tensor_types = [mstype.tensor_type(t) for t in valid_values]
+        Validator.check_type_same(args, tensor_types, prim_name)
+
+    @staticmethod
+    def check_scalar_or_tensor_type_same(args, valid_values, prim_name, allow_mix=False):
+        """
+        Checks whether the types of inputs are the same. If the input args are tensors, checks their element types.
+
+        If `allow_mix` is True, Tensor(float32) and float32 are type compatible, otherwise an exception will be raised.
+        """
+
+        def _check_argument_type(arg):
+            arg_key, arg_val = arg
+            if isinstance(arg_val, type(mstype.tensor)):
+                arg_val = arg_val.element_type()
+            if not arg_val in valid_values:
+                raise TypeError(f'For \'{prim_name}\' the `{arg_key}` should be in {valid_values},'
+                                f' but `{arg_key}` is {arg_val}.')
+            return arg
+
+        def _check_types_same(arg1, arg2):
+            arg1_name, arg1_type = arg1
+            arg2_name, arg2_type = arg2
+            except_flag = False
+            if isinstance(arg1_type, type(mstype.tensor)) and isinstance(arg2_type, type(mstype.tensor)):
+                arg1_type = arg1_type.element_type()
+                arg2_type = arg2_type.element_type()
+            elif not (isinstance(arg1_type, type(mstype.tensor)) or isinstance(arg2_type, type(mstype.tensor))):
+                pass
+            elif allow_mix:
+                arg1_type = arg1_type.element_type() if isinstance(arg1_type, type(mstype.tensor)) else arg1_type
+                arg2_type = arg2_type.element_type() if isinstance(arg2_type, type(mstype.tensor)) else arg2_type
+            else:
+                except_flag = True
+
+            if except_flag or arg1_type != arg2_type:
+                raise TypeError(f'For \'{prim_name}\' type of `{arg2_name}` should be same as `{arg1_name}`,'
+                                f' but `{arg1_name}` is {arg1_type} and `{arg2_name}` is {arg2_type}.')
+            return arg1
+        reduce(_check_types_same, map(_check_argument_type, args.items()))
+
+    @staticmethod
+    def check_value_type(arg_name, arg_value, valid_types, prim_name):
+        """Checks whether a value is instance of some types."""
+        valid_types = valid_types if isinstance(valid_types, Iterable) else (valid_types,)
+
+        def raise_error_msg():
+            """func for raising error message when check failed"""
+            type_names = [t.__name__ for t in valid_types]
+            num_types = len(valid_types)
+            msg_prefix = f'For \'{prim_name}\' the' if prim_name else 'The'
+            raise TypeError(f'{msg_prefix} type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
+                            f'{type_names if num_types > 1 else type_names[0]}, but got {type(arg_value).__name__}.')
+
+        # Notice: bool is subclass of int, so `check_value_type('x', True, [int])` will check fail, and
+        #         `check_value_type('x', True, [bool, int])` will check pass
+        if isinstance(arg_value, bool) and bool not in tuple(valid_types):
+            raise_error_msg()
+        if isinstance(arg_value, tuple(valid_types)):
+            return arg_value
+        raise_error_msg()
+
+    @staticmethod
+    def check_type_name(arg_name, arg_type, valid_types, prim_name):
+        """Checks whether a type in some specified types"""
+        valid_types = valid_types if isinstance(valid_types, Iterable) else (valid_types,)
+
+        def get_typename(t):
+            return t.__name__ if hasattr(t, '__name__') else str(t)
+
+        if arg_type in valid_types:
+            return arg_type
+        type_names = [get_typename(t) for t in valid_types]
+        msg_prefix = f'For \'{prim_name}\' the' if prim_name else 'The'
+        if len(valid_types) == 1:
+            raise TypeError(f'{msg_prefix} type of `{arg_name}` should be {type_names[0]},'
+                            f' but got {get_typename(arg_type)}.')
+        raise TypeError(f'{msg_prefix} type of `{arg_name}` should be one of {type_names},'
+                        f' but got {get_typename(arg_type)}.')
+
+    @staticmethod
+    def check_float_legal_value(arg_name, arg_value, prim_name):
+        """Checks whether a legal value of float type"""
+        msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
+        if isinstance(arg_value, float):
+            if math.isinf(arg_value) or math.isnan(arg_value):
+                raise ValueError(f"{msg_prefix} `{arg_name}` must be legal value, but got {arg_value}.")
+            return arg_value
+        raise TypeError(f"{msg_prefix} `{arg_name}` must be float.")
+
+
 class ParamValidator:
-    """Parameter validator."""
+    """Parameter validator. NOTICE: this class will be replaced by `class Validator`"""
 
     @staticmethod
     def equal(arg_name, arg_value, cond_str, cond):
@@ -144,9 +371,9 @@ class ParamValidator:
 
     @staticmethod
     def check_isinstance(arg_name, arg_value, classes):
-        """Check arg isintance of classes"""
+        """Check arg isinstance of classes"""
         if not isinstance(arg_value, classes):
-            raise ValueError(f'The `{arg_name}` should be isintance of {classes}, but got {arg_value}.')
+            raise ValueError(f'The `{arg_name}` should be isinstance of {classes}, but got {arg_value}.')
         return arg_value
 
     @staticmethod
@@ -160,7 +387,7 @@ class ParamValidator:
 
     @staticmethod
     def check_subclass(arg_name, type_, template_type, with_type_of=True):
-        """Check whether some type is sublcass of another type"""
+        """Check whether some type is subclass of another type"""
         if not isinstance(template_type, Iterable):
             template_type = (template_type,)
         if not any([mstype.issubclass_(type_, x) for x in template_type]):
@@ -177,14 +404,21 @@ class ParamValidator:
             ParamValidator.check_subclass(arg, value, mstype.tensor)
 
     @staticmethod
+    def check_bool(arg_name, arg_value):
+        """Check arg isinstance of bool"""
+        if not isinstance(arg_value, bool):
+            raise ValueError(f'The `{arg_name}` should be isinstance of bool, but got {arg_value}.')
+        return arg_value
+
+    @staticmethod
     def check_type(arg_name, arg_value, valid_types):
         """Type checking."""
         def raise_error_msg():
             """func for raising error message when check failed"""
             type_names = [t.__name__ for t in valid_types]
             num_types = len(valid_types)
-            raise ValueError(f'The type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
-                             f'{type_names if num_types > 1 else type_names[0]}, but got {type(arg_value).__name__}.')
+            raise TypeError(f'The type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
+                            f'{type_names if num_types > 1 else type_names[0]}, but got {type(arg_value).__name__}.')
 
         if isinstance(arg_value, type(mstype.tensor)):
             arg_value = arg_value.element_type()
@@ -419,30 +653,6 @@ def check_output_data(data):
         raise RuntimeError('Executor return data ' + str(data) + ', please check your net or input data.')
 
 
-def check_axis_type_int(axis):
-    """Check axis type."""
-    if not isinstance(axis, int):
-        raise TypeError('Wrong type for axis, should be int.')
-
-
-def check_axis_range(axis, rank):
-    """Check axis range."""
-    if not -rank <= axis < rank:
-        raise ValueError('The axis should be in range [{}, {}),'' but got {}.'.format(-rank, rank, axis))
-
-
-def check_attr_int(attr_name, attr):
-    """Check int type."""
-    if not isinstance(attr, int):
-        raise TypeError("The attr {} should be int, but got {}.".format(attr_name, type(attr)))
-
-
-def check_t_in_range(t):
-    """Check input range."""
-    if t not in (mstype.float16, mstype.float32, mstype.float64, mstype.int32, mstype.int64):
-        raise ValueError("The param T should be (float16, float32, float64, int32, int64).")
-
-
 once = _expand_tuple(1)
 twice = _expand_tuple(2)
 triple = _expand_tuple(3)
@@ -540,3 +750,30 @@ def _check_str_by_regular(target, reg=None, flag=re.ASCII):
     if re.match(reg, target, flag) is None:
         raise ValueError("'{}' is illegal, it should be match regular'{}' by flags'{}'".format(target, reg, flag))
     return True
+
+
+def args_type_check(*type_args, **type_kwargs):
+    """Check whether input data type is correct."""
+
+    def type_check(func):
+        sig = inspect.signature(func)
+        bound_types = sig.bind_partial(*type_args, **type_kwargs).arguments
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            nonlocal bound_types
+            bound_values = sig.bind(*args, **kwargs)
+            argument_dict = bound_values.arguments
+            if "kwargs" in bound_types:
+                bound_types = bound_types["kwargs"]
+            if "kwargs" in argument_dict:
+                argument_dict = argument_dict["kwargs"]
+            for name, value in argument_dict.items():
+                if name in bound_types:
+                    if value is not None and not isinstance(value, bound_types[name]):
+                        raise TypeError('Argument {} must be {}'.format(name, bound_types[name]))
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return type_check

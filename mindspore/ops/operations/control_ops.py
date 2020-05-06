@@ -16,7 +16,8 @@
 """control_ops"""
 
 from ...common import dtype as mstype
-from ..._checkparam import ParamValidator as validator
+from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 
 
@@ -50,17 +51,19 @@ class ControlDepend(Primitive):
         >>> # step should be increased, so the add operation should depend on the data calculation operation.
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
-        >>>        super(Net, self).__init__()
-        >>>         self.global_step = Parameter(initializer(0, [1]), name="global_step")
-        >>>         self.rate = 0.2
-        >>>         self.control_depend = ControlDepend()
+        >>>         super(Net, self).__init__()
+        >>>         self.control_depend = P.ControlDepend()
+        >>>         self.softmax = P.Softmax()
         >>>
-        >>>     def construct(self, x):
-        >>>         data = self.rate * self.global_step + x
-        >>>         added_global_step = self.global_step + 1
-        >>>         self.global_step = added_global_step
-        >>>         self.control_depend(data, added_global_step)
-        >>>         return data
+        >>>     def construct(self, x, y):
+        >>>         mul = x * y
+        >>>         softmax = self.softmax(x)
+        >>>         ret = self.control_depend(mul, softmax)
+        >>>         return ret
+        >>> x = Tensor(np.ones([4, 5]), dtype=mindspore.float32)
+        >>> y = Tensor(np.ones([4, 5]), dtype=mindspore.float32)
+        >>> net = Net()
+        >>> output = net(x, y)
     """
 
     @prim_attr_register
@@ -89,10 +92,10 @@ class GeSwitch(PrimitiveWithInfer):
     Examples:
         >>> class Net(nn.Cell):
         >>> 	def __init__(self):
-        >>>	    super(Net, self).__init__()
+        >>>         super(Net, self).__init__()
         >>>         self.square = P.Square()
         >>>         self.add = P.TensorAdd()
-        >>>         self.value = Tensor(np.full((1), 3, dtype=np.float32))
+        >>>         self.value = Tensor(np.full((1), 3), mindspore.float32)
         >>>         self.switch = P.GeSwitch()
         >>>         self.merge = P.Merge()
         >>>         self.less = P.Less()
@@ -107,8 +110,8 @@ class GeSwitch(PrimitiveWithInfer):
         >>>         ret = self.merge((add_ret, sq_ret))
         >>>         return ret[0]
         >>>
-        >>> x = Tensor(x_init, dtype=mindspore.float32)
-        >>> y = Tensor(y_init, dtype=mindspore.float32)
+        >>> x = Tensor(10.0, dtype=mindspore.float32)
+        >>> y = Tensor(5.0, dtype=mindspore.float32)
         >>> net = Net()
         >>> output = net(x, y)
     """
@@ -121,11 +124,11 @@ class GeSwitch(PrimitiveWithInfer):
         raise NotImplementedError
 
     def infer_shape(self, data, pred):
-        validator.check_scalar_shape_input("pred", pred)
+        validator.check_integer("pred rank", len(pred), 0, Rel.EQ, self.name)
         return (data, data)
 
     def infer_dtype(self, data_type, pred_type):
-        validator.check_type("pred", pred_type, [type(mstype.bool_)])
+        validator.check_tensor_type_same({"pred": pred_type}, [mstype.bool_], self.name)
         return (data_type, data_type)
 
 
@@ -150,7 +153,6 @@ class Merge(PrimitiveWithInfer):
         raise NotImplementedError
 
     def infer_shape(self, inputs):
-        """merge select one input as its output"""
         return (inputs[0], [1])
 
     def infer_dtype(self, inputs):

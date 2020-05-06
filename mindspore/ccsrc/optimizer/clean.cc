@@ -36,7 +36,7 @@ using mindspore::abstract::AbstractList;
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTuple;
 
-static AbstractBasePtr Reabs(const AbstractBasePtr& t) {
+static AbstractBasePtr Reabs(const AbstractBasePtr &t) {
   if (t == nullptr) {
     return nullptr;
   }
@@ -47,14 +47,14 @@ static AbstractBasePtr Reabs(const AbstractBasePtr& t) {
     AbstractBasePtrList baselist;
     auto attributes = abs_class->attributes();
     (void)std::transform(attributes.begin(), attributes.end(), std::back_inserter(baselist),
-                         [](const AbstractAttribute& item) { return item.second; });
+                         [](const AbstractAttribute &item) { return item.second; });
     res = std::make_shared<AbstractTuple>(baselist);
   } else if (t->isa<AbstractDictionary>()) {
     auto abs_dict = dyn_cast<AbstractDictionary>(t);
     AbstractBasePtrList baselist;
     auto elements = abs_dict->elements();
     (void)std::transform(elements.begin(), elements.end(), std::back_inserter(baselist),
-                         [](const AbstractAttribute& item) { return item.second; });
+                         [](const AbstractAttribute &item) { return item.second; });
     res = std::make_shared<AbstractTuple>(baselist);
   } else if (t->isa<AbstractList>()) {
     auto abs_dict = dyn_cast<AbstractList>(t);
@@ -63,11 +63,11 @@ static AbstractBasePtr Reabs(const AbstractBasePtr& t) {
   return res;
 }
 
-AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr& node) {
+AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->func_graph());
 
-  const auto& inputs = node->inputs();
+  const auto &inputs = node->inputs();
   // Inputs should be [getattr, data, attribute]
   MS_ASSERT(inputs.size() == 3 && "GetAttr should have three inputs.");
 
@@ -86,9 +86,9 @@ AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr& node) {
   auto cons_str = cons_is_str ? GetValue<std::string>(GetValueNode(cons)) : "";
 
   auto ct = dyn_cast<AbstractClass>(dt);
-  const auto& cmap = ct->attributes();
+  const auto &cmap = ct->attributes();
   int count = 0;
-  for (auto& item : cmap) {
+  for (auto &item : cmap) {
     if (cons_is_str && item.first == cons_str) {
       break;
     }
@@ -102,12 +102,12 @@ AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr& node) {
   return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, idx_c});
 }
 
-AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr& node) {
+AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->func_graph());
 
   // Inputs should be [dict_getitem, dict, item]
-  const auto& inputs = node->inputs();
+  const auto &inputs = node->inputs();
   MS_ASSERT(inputs.size() == 3 && "DictGetItem should have three inputs.");
 
   AnfNodePtr data = inputs[1];
@@ -124,9 +124,9 @@ AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr& node) {
   auto cons_str = cons_is_str ? GetValue<std::string>(GetValueNode(cons)) : "";
 
   auto ct = dyn_cast<abstract::AbstractDictionary>(dt);
-  const auto& cmap = ct->elements();
+  const auto &cmap = ct->elements();
   int count = 0;
-  for (auto& item : cmap) {
+  for (auto &item : cmap) {
     if (cons_is_str && item.first == cons_str) {
       break;
     }
@@ -139,7 +139,7 @@ AnfNodePtr ConvertDictGetItemToTupleGetItem(const CNodePtr& node) {
   return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, idx_c});
 }
 
-AnfNodePtr ConvertMakeRecordToMakeTuple(const CNodePtr& node) {
+AnfNodePtr ConvertMakeRecordToMakeTuple(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->func_graph());
 
@@ -150,11 +150,11 @@ AnfNodePtr ConvertMakeRecordToMakeTuple(const CNodePtr& node) {
   return node->func_graph()->NewCNode(inputs);
 }
 
-AnfNodePtr ErasePartialNode(const CNodePtr& node) {
+AnfNodePtr ErasePartialNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->func_graph());
 
-  const auto& inputs = node->inputs();
+  const auto &inputs = node->inputs();
   // Inputs should be [partial, fn, arg1, ...], so offset by 2 to get arg;
   MS_ASSERT(inputs.size() >= 2 && "Partial should have more than two inputs.");
 
@@ -178,7 +178,7 @@ AnfNodePtr ErasePartialNode(const CNodePtr& node) {
   return nullptr;
 }
 
-AnfNodePtr ConvertMakeListToMakeTuple(const CNodePtr& node) {
+AnfNodePtr ConvertMakeListToMakeTuple(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->func_graph());
 
@@ -189,11 +189,11 @@ AnfNodePtr ConvertMakeListToMakeTuple(const CNodePtr& node) {
   return node->func_graph()->NewCNode(inputs);
 }
 
-AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr& node) {
+AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->func_graph());
 
-  const auto& inputs = node->inputs();
+  const auto &inputs = node->inputs();
   // Inputs should be [list_getitem, list, item]
   if (inputs.size() < 3) {
     MS_LOG(EXCEPTION) << "Node's input number < 3.";
@@ -208,11 +208,11 @@ AnfNodePtr ConvertListGetItemToTupleGetItem(const CNodePtr& node) {
   return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, cons_node});
 }
 
-AnfNodePtr ConvertListSetItemToTupleSetItem(const CNodePtr& node) {
+AnfNodePtr ConvertListSetItemToTupleSetItem(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node->func_graph());
 
-  const auto& inputs = node->inputs();
+  const auto &inputs = node->inputs();
   // Inputs should be [list_setitem, list, index, item]
   if (inputs.size() < 4) {
     MS_LOG(EXCEPTION) << "Node's input number < 4.";
@@ -225,36 +225,36 @@ AnfNodePtr ConvertListSetItemToTupleSetItem(const CNodePtr& node) {
   return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, cons, value});
 }
 
-AnfNodePtr EraseMakeDictNode(const CNodePtr& node) {
+AnfNodePtr EraseMakeDictNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  const auto& inputs = node->inputs();
+  const auto &inputs = node->inputs();
   MS_ASSERT(inputs.size() >= 3 && "MakeDict should have three inputs");
   return inputs[2];
 }
 
-AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr& node) {
+AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  const auto& inputs = node->inputs();
+  const auto &inputs = node->inputs();
   // Inputs should be [make_keyword_arg, key, value]
   MS_ASSERT(inputs.size() == 3 && "MakeKeyword should have three inputs");
   return inputs[2];
 }
 
-AnfNodePtr EraseExtractKeywordArg(const CNodePtr& node) {
+AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  const auto& inputs = node->inputs();
+  const auto &inputs = node->inputs();
   // Inputs should be [extract_keyword_arg, arg, key]
   MS_ASSERT(inputs.size() == 3 && "ExtractKeyword should have three inputs");
   return inputs[2];
 }
 
-ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr& value_list, int depth) {
+ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr &value_list, int depth) {
   const int DEPTH_MAX = 5;
   if (depth > DEPTH_MAX) {
     MS_LOG(EXCEPTION) << "List nesting is not allowed more than 5 levels.";
   }
   std::vector<ValuePtr> elements;
-  for (const auto& it : value_list->value()) {
+  for (const auto &it : value_list->value()) {
     ValuePtr value = nullptr;
     if (it->isa<ValueList>()) {
       value = ConvertValueListToValueTuple(it->cast<ValueListPtr>(), depth + 1);
@@ -266,7 +266,7 @@ ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr& value_list, int d
   return std::make_shared<ValueTuple>(elements);
 }
 
-AnfNodePtr ConvertValueListNodeToValueTupleNode(const ValueNodePtr& node) {
+AnfNodePtr ConvertValueListNodeToValueTupleNode(const ValueNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   ValuePtr value = node->value();
   auto value_list = value->cast<ValueListPtr>();
@@ -278,13 +278,13 @@ AnfNodePtr ConvertValueListNodeToValueTupleNode(const ValueNodePtr& node) {
 // Convert class to Tuple
 // Convert getattr to getitem
 // Convert make_record to make_tuple
-void SimplifyDataStructures(const FuncGraphPtr& root, const FuncGraphManagerPtr& manager) {
+void SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(root);
 
   // Since `manager->Replace(...);` will modify member `all_nodes_`, so `all_node` can't be a ref var
   AnfNodeSet all_node = manager->all_nodes();
-  for (auto& node : all_node) {
+  for (auto &node : all_node) {
     MS_EXCEPTION_IF_NULL(node);
     auto cnode = node->cast<CNodePtr>();
     AnfNodePtr new_node = nullptr;
@@ -320,20 +320,20 @@ void SimplifyDataStructures(const FuncGraphPtr& root, const FuncGraphManagerPtr&
     }
   }
 
-  for (auto& node : manager->all_nodes()) {
+  for (auto &node : manager->all_nodes()) {
     auto ret = Reabs(node->abstract());
     node->set_abstract(ret);
   }
 }
 
 // expand tuples in graph parameters
-static std::vector<AnfNodePtr> ExpandTuplesP(const FuncGraphManagerPtr& mng, const FuncGraphPtr& func_graph,
-                                             const std::vector<AnfNodePtr>& params) {
+static std::vector<AnfNodePtr> ExpandTuplesP(const FuncGraphManagerPtr &mng, const FuncGraphPtr &func_graph,
+                                             const std::vector<AnfNodePtr> &params) {
   MS_EXCEPTION_IF_NULL(mng);
   MS_EXCEPTION_IF_NULL(func_graph);
 
   std::vector<AnfNodePtr> new_params;
-  for (const auto& param : params) {
+  for (const auto &param : params) {
     MS_EXCEPTION_IF_NULL(param);
     auto param_abs = param->abstract();
     MS_EXCEPTION_IF_NULL(param_abs);
@@ -350,7 +350,7 @@ static std::vector<AnfNodePtr> ExpandTuplesP(const FuncGraphManagerPtr& mng, con
     std::vector<AnfNodePtr> new_param;
     std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimMakeTuple)};
     auto abs_tuple = dyn_cast<AbstractTuple>(param_abs);
-    for (auto& elem : abs_tuple->elements()) {
+    for (auto &elem : abs_tuple->elements()) {
       auto np = std::make_shared<Parameter>(func_graph);
       np->set_abstract(elem);
       new_param.emplace_back(np);
@@ -366,11 +366,11 @@ static std::vector<AnfNodePtr> ExpandTuplesP(const FuncGraphManagerPtr& mng, con
 }
 
 // expand tuples in graph applies
-static std::vector<AnfNodePtr> ExpandTuplesC(const FuncGraphPtr& graph, const std::vector<AnfNodePtr>& inputs) {
+static std::vector<AnfNodePtr> ExpandTuplesC(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &inputs) {
   MS_EXCEPTION_IF_NULL(graph);
 
   std::vector<AnfNodePtr> new_inputs;
-  for (const auto& input : inputs) {
+  for (const auto &input : inputs) {
     MS_EXCEPTION_IF_NULL(input);
 
     auto input_abs = input->abstract();
@@ -391,7 +391,7 @@ static std::vector<AnfNodePtr> ExpandTuplesC(const FuncGraphPtr& graph, const st
     int idx = 0;
     std::vector<AnfNodePtr> new_input;
     auto abs_tuple = dyn_cast<AbstractTuple>(input_abs);
-    for (auto& elem : abs_tuple->elements()) {
+    for (auto &elem : abs_tuple->elements()) {
       auto c_node = graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), input, NewValueNode(idx)});
       AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(idx));
       c_node->input(2)->set_abstract(aptr);
@@ -416,19 +416,19 @@ static std::vector<AnfNodePtr> ExpandTuplesC(const FuncGraphPtr& graph, const st
 // tuples in Graph's parameters: AbstractTuple (a, b, c) -->
 //         CNode("make_tuple", Parameter(a), Parameter(b), Parameter(c))
 // cppcheck-suppress unusedFunction
-void EraseTuple(const FuncGraphPtr& root, const FuncGraphManagerPtr& manager) {
+void EraseTuple(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(root);
 
   // NOTICE: since `manager->Replace(...);` will modify member `all_nodes_`, so `all_node` can't be a ref var
   AnfNodeSet all_node = manager->all_nodes();
-  for (auto& node : all_node) {
+  for (auto &node : all_node) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode == nullptr) {
       continue;
     }
 
-    const auto& inputs = cnode->inputs();
+    const auto &inputs = cnode->inputs();
 
     // Bypass the first input in inputs as it's fn.
     if (!IsValueNode<Primitive>(inputs[0])) {
@@ -466,7 +466,7 @@ void EraseTuple(const FuncGraphPtr& root, const FuncGraphManagerPtr& manager) {
   }
 
   FuncGraphSet all_graph = manager->func_graphs();
-  for (auto& func_graph : all_graph) {
+  for (auto &func_graph : all_graph) {
     MS_EXCEPTION_IF_NULL(func_graph);
     auto expand_p = ExpandTuplesP(manager, func_graph, func_graph->parameters());
     manager->SetParameters(func_graph, expand_p);

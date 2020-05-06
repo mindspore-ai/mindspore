@@ -19,8 +19,8 @@ Primitive operator classes.
 A collection of operators to build nerual networks or computing functions.
 """
 
-from .array_ops import (Argmax, Argmin, Cast, ConcatOffset, Concat,
-                        Diag, DType, ExpandDims, Eye,
+from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
+                        Diag, DiagPart, DType, ExpandDims, Eye,
                         Fill, GatherNd, GatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
                         Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue,
@@ -29,22 +29,22 @@ from .array_ops import (Argmax, Argmin, Cast, ConcatOffset, Concat,
                         Shape, Size, Slice, Split,
                         Squeeze, StridedSlice, Tile,
                         Transpose, TruncatedNormal, TupleToArray,
-                        UnsortedSegmentSum, SpaceToDepth, DepthToSpace)
+                        UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice)
 from .debug_ops import (ImageSummary, InsertGradientOf, ScalarSummary,
-                        TensorSummary, Print)
+                        TensorSummary, HistogramSummary, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
-from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, BatchMatMul,
+from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
-                       Cos, Div, Equal, EqualCount, Exp, Floor, FloorDiv,
+                       Cos, Div, Equal, EqualCount, Exp, Erf, Floor, FloorDiv, FloorMod, Acosh,
                        Greater, GreaterEqual, Less, LessEqual, Log, LogicalAnd,
                        LogicalNot, LogicalOr, MatMul, Maximum,
                        Minimum, Mul, Neg, NMSWithMask, NotEqual,
                        NPUAllocFloatStatus, NPUClearFloatStatus,
-                       NPUGetFloatStatus, Pow, RealDiv,
+                       NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum,
                        Sin, Sqrt, Rsqrt,
                        Square, Sub, TensorAdd, Sign, Round)
@@ -55,19 +55,21 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      DropoutDoMask,
                      DropoutGenMask, Flatten, FusedBatchNorm,
                      Gelu, Elu,
-                     GetNext, L2Normalize, LayerNorm,
+                     GetNext, L2Normalize, LayerNorm, L2Loss,
                      LogSoftmax,
                      MaxPool,
-                     AvgPool, Conv2DBackpropInput,
-                     MaxPoolWithArgmax, OneHot, Pad, PReLU, ReLU, ReLU6,
+                     AvgPool, Conv2DBackpropInput, ConfusionMulGrad,
+                     MaxPoolWithArgmax, OneHot, Pad, MirrorPad, PReLU, ReLU, ReLU6, ReLUV2, HSwish, HSigmoid,
                      ResizeBilinear, Sigmoid,
                      SigmoidCrossEntropyWithLogits,
                      SmoothL1Loss, Softmax,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
-                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrlD)
-from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey
-
+                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl,
+                     ApplyRMSProp, ApplyCenteredRMSProp)
+from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey, CheckBprop
+from . import _quant_ops
+from ._quant_ops import *
 
 __all__ = [
     'TensorAdd',
@@ -98,6 +100,7 @@ __all__ = [
     'LogSoftmax',
     'SoftmaxCrossEntropyWithLogits',
     'ROIAlign',
+    'ConfusionMulGrad',
     'SparseSoftmaxCrossEntropyWithLogits',
     'SGD',
     'ApplyMomentum',
@@ -111,6 +114,8 @@ __all__ = [
     'OneHot',
     'GatherV2',
     'Concat',
+    'Pack',
+    'Unpack',
     'Tile',
     'BiasAdd',
     'Gelu',
@@ -133,14 +138,19 @@ __all__ = [
     'Split',
     'ReLU',
     'ReLU6',
+    'ReLUV2',
     'Elu',
+    'Erf',
     'Sigmoid',
+    'HSwish',
+    'HSigmoid',
     'Tanh',
     'RandomChoiceWithMask',
     'ResizeBilinear',
     'ScalarSummary',
     'ImageSummary',
     'TensorSummary',
+    'HistogramSummary',
     "Print",
     'InsertGradientOf',
     'InvertPermutation',
@@ -153,8 +163,13 @@ __all__ = [
     'NPUAllocFloatStatus',
     'NPUGetFloatStatus',
     'NPUClearFloatStatus',
+    'IsNan',
+    'IsFinite',
+    'IsInf',
+    'FloatStatus',
     'Reciprocal',
     'SmoothL1Loss',
+    'L2Loss',
     'ReduceAll',
     'ScalarToArray',
     'ScalarToTensor',
@@ -163,6 +178,7 @@ __all__ = [
     'GeSwitch',
     'Merge',
     'SameTypeShape',
+    'CheckBprop',
     'CheckValid',
     'BoundingBoxEncode',
     'BoundingBoxDecode',
@@ -170,6 +186,7 @@ __all__ = [
     'ScatterNd',
     'ResizeNearestNeighbor',
     'Pad',
+    'MirrorPad',
     'GatherNd',
     'ScatterNdUpdate',
     'Floor',
@@ -188,7 +205,6 @@ __all__ = [
     'LogicalOr',
     'Size',
     'DepthwiseConv2dNative',
-    'ConcatOffset',
     'UnsortedSegmentSum',
     "AllGather",
     "AllReduce",
@@ -204,10 +220,13 @@ __all__ = [
     'Log',
     'SigmoidCrossEntropyWithLogits',
     'FloorDiv',
+    'FloorMod',
+    'Acosh',
     "PReLU",
     "Cos",
     "ACos",
     "Diag",
+    "DiagPart",
     'Eye',
     'Assign',
     'AssignAdd',
@@ -217,7 +236,6 @@ __all__ = [
     "Abs",
     "BinaryCrossEntropy",
     "SparseApplyAdagrad",
-    "SparseApplyFtrlD",
     "SpaceToDepth",
     "DepthToSpace",
     "Conv2DBackpropInput",
@@ -225,6 +243,12 @@ __all__ = [
     "LARSUpdate",
     "Round",
     "ApplyFtrl",
+    "SpaceToBatch",
+    "BatchToSpace",
+    "Atan2",
+    "ApplyRMSProp",
+    "ApplyCenteredRMSProp"
 ]
 
+__all__.extend(_quant_ops.__all__)
 __all__.sort()

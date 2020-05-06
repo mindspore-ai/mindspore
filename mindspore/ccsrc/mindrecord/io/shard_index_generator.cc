@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <thread>
 
 #include "mindrecord/include/shard_index_generator.h"
 #include "common/utils.h"
@@ -26,12 +27,18 @@ using mindspore::MsLogLevel::INFO;
 namespace mindspore {
 namespace mindrecord {
 ShardIndexGenerator::ShardIndexGenerator(const std::string &file_path, bool append)
-    : file_path_(file_path), append_(append), page_size_(0), header_size_(0), schema_count_(0) {}
+    : file_path_(file_path),
+      append_(append),
+      page_size_(0),
+      header_size_(0),
+      schema_count_(0),
+      task_(0),
+      write_success_(true) {}
 
 MSRStatus ShardIndexGenerator::Build() {
   ShardHeader header = ShardHeader();
   if (header.Build(file_path_) != SUCCESS) {
-    MS_LOG(ERROR) << "Build shard schema failed";
+    MS_LOG(ERROR) << "Build shard schema failed.";
     return FAILED;
   }
   shard_header_ = header;
@@ -39,35 +46,49 @@ MSRStatus ShardIndexGenerator::Build() {
   return SUCCESS;
 }
 
-std::vector<std::string> ShardIndexGenerator::GetField(const string &field_path, json schema) {
-  std::vector<std::string> field_name = StringSplit(field_path, kPoint);
-  std::vector<std::string> res;
-  if (schema.empty()) {
-    res.emplace_back("null");
-    return res;
-  }
-  for (uint64_t i = 0; i < field_name.size(); i++) {
-    // Check if field is part of an array of objects
-    auto &child = schema.at(field_name[i]);
-    if (child.is_array() && !child.empty() && child[0].is_object()) {
-      schema = schema[field_name[i]];
-      std::string new_field_path;
-      for (uint64_t j = i + 1; j < field_name.size(); j++) {
-        if (j > i + 1) new_field_path += '.';
-        new_field_path += field_name[j];
-      }
-      // Return multiple field data since multiple objects in array
-      for (auto &single_schema : schema) {
-        auto child_res = GetField(new_field_path, single_schema);
-        res.insert(res.end(), child_res.begin(), child_res.end());
-      }
-      return res;
-    }
-    schema = schema.at(field_name[i]);
+std::pair<MSRStatus, std::string> ShardIndexGenerator::GetValueByField(const string &field, json input) {
+  if (field.empty()) {
+    MS_LOG(ERROR) << "The input field is None.";
+    return {FAILED, ""};
   }
 
-  // Return vector of one field data (not array of objects)
-  return std::vector<std::string>{schema.dump()};
+  if (input.empty()) {
+    MS_LOG(ERROR) << "The input json is None.";
+    return {FAILED, ""};
+  }
+
+  // parameter input does not contain the field
+  if (input.find(field) == input.end()) {
+    MS_LOG(ERROR) << "The field " << field << " is not found in parameter " << input;
+    return {FAILED, ""};
+  }
+
+  // schema does not contain the field
+  auto schema = shard_header_.get_schemas()[0]->GetSchema()["schema"];
+  if (schema.find(field) == schema.end()) {
+    MS_LOG(ERROR) << "The field " << field << " is not found in schema " << schema;
+    return {FAILED, ""};
+  }
+
+  // field should be scalar type
+  if (kScalarFieldTypeSet.find(schema[field]["type"]) == kScalarFieldTypeSet.end()) {
+    MS_LOG(ERROR) << "The field " << field << " type is " << schema[field]["type"] << ", it is not retrievable";
+    return {FAILED, ""};
+  }
+
+  if (kNumberFieldTypeSet.find(schema[field]["type"]) != kNumberFieldTypeSet.end()) {
+    auto schema_field_options = schema[field];
+    if (schema_field_options.find("shape") == schema_field_options.end()) {
+      return {SUCCESS, input[field].dump()};
+    } else {
+      // field with shape option
+      MS_LOG(ERROR) << "The field " << field << " shape is " << schema[field]["shape"] << " which is not retrievable";
+      return {FAILED, ""};
+    }
+  }
+
+  // the field type is string in here
+  return {SUCCESS, input[field].get<std::string>()};
 }
 
 std::string ShardIndexGenerator::TakeFieldType(const string &field_path, json schema) {
@@ -284,7 +305,7 @@ std::pair<MSRStatus, std::string> ShardIndexGenerator::GenerateRawSQL(
   return {SUCCESS, sql};
 }
 
-MSRStatus ShardIndexGenerator::BindParamaterExecuteSQL(
+MSRStatus ShardIndexGenerator::BindParameterExecuteSQL(
   sqlite3 *db, const std::string &sql,
   const std::vector<std::vector<std::tuple<std::string, std::string, std::string>>> &data) {
   sqlite3_stmt *stmt = nullptr;
@@ -297,6 +318,7 @@ MSRStatus ShardIndexGenerator::BindParamaterExecuteSQL(
       const auto &place_holder = std::get<0>(field);
       const auto &field_type = std::get<1>(field);
       const auto &field_value = std::get<2>(field);
+
       int index = sqlite3_bind_parameter_index(stmt, common::SafeCStr(place_holder));
       if (field_type == "INTEGER") {
         if (sqlite3_bind_int(stmt, index, std::stoi(field_value)) != SQLITE_OK) {
@@ -456,24 +478,31 @@ INDEX_FIELDS ShardIndexGenerator::GenerateIndexFields(const std::vector<json> &s
     if (field.first >= schema_detail.size()) {
       return {FAILED, {}};
     }
-    auto field_value = GetField(field.second, schema_detail[field.first]);
+    auto field_value = GetValueByField(field.second, schema_detail[field.first]);
+    if (field_value.first != SUCCESS) {
+      MS_LOG(ERROR) << "Get value from json by field name failed";
+      return {FAILED, {}};
+    }
+
     auto result = shard_header_.GetSchemaByID(field.first);
     if (result.second != SUCCESS) {
       return {FAILED, {}};
     }
+
     std::string field_type = ConvertJsonToSQL(TakeFieldType(field.second, result.first->GetSchema()["schema"]));
     auto ret = GenerateFieldName(field);
     if (ret.first != SUCCESS) {
       return {FAILED, {}};
     }
-    fields.emplace_back(ret.second, field_type, field_value[0]);
+
+    fields.emplace_back(ret.second, field_type, field_value.second);
   }
   return {SUCCESS, std::move(fields)};
 }
 
-MSRStatus ShardIndexGenerator::ExcuteTransaction(const int &shard_no, const std::pair<MSRStatus, sqlite3 *> &db,
-                                                 const std::vector<int> &raw_page_ids,
-                                                 const std::map<int, int> &blob_id_to_page_id) {
+MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, const std::pair<MSRStatus, sqlite3 *> &db,
+                                                  const std::vector<int> &raw_page_ids,
+                                                  const std::map<int, int> &blob_id_to_page_id) {
   // Add index data to database
   std::string shard_address = shard_header_.get_shard_address_by_id(shard_no);
   if (shard_address.empty()) {
@@ -483,17 +512,24 @@ MSRStatus ShardIndexGenerator::ExcuteTransaction(const int &shard_no, const std:
 
   std::fstream in;
   in.open(common::SafeCStr(shard_address), std::ios::in | std::ios::binary);
+  if (!in.good()) {
+    MS_LOG(ERROR) << "File could not opened";
+    return FAILED;
+  }
   (void)sqlite3_exec(db.second, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
   for (int raw_page_id : raw_page_ids) {
     auto sql = GenerateRawSQL(fields_);
     if (sql.first != SUCCESS) {
+      MS_LOG(ERROR) << "Generate raw SQL failed";
       return FAILED;
     }
     auto data = GenerateRowData(shard_no, blob_id_to_page_id, raw_page_id, in);
     if (data.first != SUCCESS) {
+      MS_LOG(ERROR) << "Generate raw data failed";
       return FAILED;
     }
-    if (BindParamaterExecuteSQL(db.second, sql.second, data.second) == FAILED) {
+    if (BindParameterExecuteSQL(db.second, sql.second, data.second) == FAILED) {
+      MS_LOG(ERROR) << "Execute SQL failed";
       return FAILED;
     }
     MS_LOG(INFO) << "Insert " << data.second.size() << " rows to index db.";
@@ -514,37 +550,62 @@ MSRStatus ShardIndexGenerator::WriteToDatabase() {
   page_size_ = shard_header_.get_page_size();
   header_size_ = shard_header_.get_header_size();
   schema_count_ = shard_header_.get_schema_count();
-  if (shard_header_.get_shard_count() <= kMaxShardCount) {
-    // Create one database per shard
-    for (int shard_no = 0; shard_no < shard_header_.get_shard_count(); ++shard_no) {
-      // Create database
-      auto db = CreateDatabase(shard_no);
-      if (db.first != SUCCESS || db.second == nullptr) {
-        return FAILED;
-      }
-      MS_LOG(INFO) << "Init index db for shard: " << shard_no << " successfully.";
-
-      // Pre-processing page information
-      auto total_pages = shard_header_.GetLastPageId(shard_no) + 1;
-
-      std::map<int, int> blob_id_to_page_id;
-      std::vector<int> raw_page_ids;
-      for (uint64_t i = 0; i < total_pages; ++i) {
-        std::shared_ptr<Page> cur_page = shard_header_.GetPage(shard_no, i).first;
-        if (cur_page->get_page_type() == "RAW_DATA") {
-          raw_page_ids.push_back(i);
-        } else if (cur_page->get_page_type() == "BLOB_DATA") {
-          blob_id_to_page_id[cur_page->get_page_type_id()] = i;
-        }
-      }
-
-      if (ExcuteTransaction(shard_no, db, raw_page_ids, blob_id_to_page_id) != SUCCESS) {
-        return FAILED;
-      }
-      MS_LOG(INFO) << "Generate index db for shard: " << shard_no << " successfully.";
-    }
+  if (shard_header_.get_shard_count() > kMaxShardCount) {
+    MS_LOG(ERROR) << "num shards: " << shard_header_.get_shard_count() << " exceeds max count:" << kMaxSchemaCount;
+    return FAILED;
   }
-  return SUCCESS;
+  task_ = 0;  // set two atomic vars to initial value
+  write_success_ = true;
+
+  // spawn half the physical threads or total number of shards whichever is smaller
+  const unsigned int num_workers =
+    std::min(std::thread::hardware_concurrency() / 2 + 1, static_cast<unsigned int>(shard_header_.get_shard_count()));
+
+  std::vector<std::thread> threads;
+  threads.reserve(num_workers);
+
+  for (size_t t = 0; t < threads.capacity(); t++) {
+    threads.emplace_back(std::thread(&ShardIndexGenerator::DatabaseWriter, this));
+  }
+
+  for (size_t t = 0; t < threads.capacity(); t++) {
+    threads[t].join();
+  }
+  return write_success_ ? SUCCESS : FAILED;
+}
+
+void ShardIndexGenerator::DatabaseWriter() {
+  int shard_no = task_++;
+  while (shard_no < shard_header_.get_shard_count()) {
+    auto db = CreateDatabase(shard_no);
+    if (db.first != SUCCESS || db.second == nullptr || write_success_ == false) {
+      write_success_ = false;
+      return;
+    }
+
+    MS_LOG(INFO) << "Init index db for shard: " << shard_no << " successfully.";
+
+    // Pre-processing page information
+    auto total_pages = shard_header_.GetLastPageId(shard_no) + 1;
+
+    std::map<int, int> blob_id_to_page_id;
+    std::vector<int> raw_page_ids;
+    for (uint64_t i = 0; i < total_pages; ++i) {
+      std::shared_ptr<Page> cur_page = shard_header_.GetPage(shard_no, i).first;
+      if (cur_page->get_page_type() == "RAW_DATA") {
+        raw_page_ids.push_back(i);
+      } else if (cur_page->get_page_type() == "BLOB_DATA") {
+        blob_id_to_page_id[cur_page->get_page_type_id()] = i;
+      }
+    }
+
+    if (ExecuteTransaction(shard_no, db, raw_page_ids, blob_id_to_page_id) != SUCCESS) {
+      write_success_ = false;
+      return;
+    }
+    MS_LOG(INFO) << "Generate index db for shard: " << shard_no << " successfully.";
+    shard_no = task_++;
+  }
 }
 }  // namespace mindrecord
 }  // namespace mindspore

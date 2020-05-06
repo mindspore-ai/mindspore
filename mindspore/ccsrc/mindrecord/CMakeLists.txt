@@ -26,8 +26,18 @@ set_target_properties(_c_mindrecord PROPERTIES
     )
 
 # add link library
-target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY} mindspore mindspore_gvar protobuf::libprotobuf)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite mindspore mindspore::protobuf)
+else()
+    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY} mindspore mindspore_gvar mindspore::protobuf)
+endif()
 
 if (USE_GLOG)
     target_link_libraries(_c_mindrecord PRIVATE mindspore::glog)
+else()
+    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+        target_link_options(_c_mindrecord PRIVATE -Wl,-init,mindspore_log_init)
+    elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        set_target_properties(_c_mindrecord PROPERTIES MACOSX_RPATH ON)
+    endif ()
 endif()

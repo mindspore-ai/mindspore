@@ -26,12 +26,12 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-void FilterInvaildKernelInfo(const CNodePtr& kernel_node,
-                             std::vector<std::shared_ptr<kernel::KernelBuildInfo>>* kernel_info_list) {
+void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
+                             std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> filtered_list;
   (void)std::copy_if(kernel_info_list->begin(), kernel_info_list->end(), std::back_inserter(filtered_list),
-                     [&](const std::shared_ptr<kernel::KernelBuildInfo>& kernel_build_info) {
+                     [&](const std::shared_ptr<kernel::KernelBuildInfo> &kernel_build_info) {
                        return AnfAlgo::GetOutputTensorNum(kernel_node) == kernel_build_info->GetOutputNum() &&
                               AnfAlgo::GetInputTensorNum(kernel_node) == kernel_build_info->GetInputNum();
                      });
@@ -46,7 +46,7 @@ void FilterInvaildKernelInfo(const CNodePtr& kernel_node,
   }
 }
 }  // namespace
-void KernelQuery(const CNodePtr& kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>>* kernel_info_list) {
+void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   TbeMetadataInfo(kernel_node, kernel_info_list);
@@ -63,9 +63,9 @@ void KernelQuery(const CNodePtr& kernel_node, std::vector<std::shared_ptr<kernel
     HcclMetadataInfo(kernel_node, kernel_info_list);
   }
   if (kernel_info_list->empty()) {
-    MS_LOG(EXCEPTION) << "op" << kernel_node->DebugString() << "kernel query fail!";
+    MS_LOG(EXCEPTION) << "Op " << kernel_node->DebugString() << "kernel query fail!";
   }
-  FilterInvaildKernelInfo(kernel_node, kernel_info_list);
+  FilterInvalidKernelInfo(kernel_node, kernel_info_list);
 }
 }  // namespace kernel
 }  // namespace mindspore

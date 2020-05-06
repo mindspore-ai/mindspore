@@ -48,7 +48,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderBasic1) {
   builder.SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(16)
       .SetNumWorkers(16);
-  std::unique_ptr<DataSchema> schema = mindspore::make_unique<DataSchema>();
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   builder.SetDataSchema(std::move(schema));
   Status rc = builder.Build(&my_tfreader_op);
@@ -102,7 +102,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderLargeRowsPerBuffer) {
   builder.SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(500)
       .SetNumWorkers(16);
-   std::unique_ptr<DataSchema> schema = mindspore::make_unique<DataSchema>();
+   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   builder.SetDataSchema(std::move(schema));
   Status rc = builder.Build(&my_tfreader_op);
@@ -156,7 +156,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderSmallRowsPerBuffer) {
   builder.SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(1)
       .SetNumWorkers(16);
-   std::unique_ptr<DataSchema> schema = mindspore::make_unique<DataSchema>();
+   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   builder.SetDataSchema(std::move(schema));
   Status rc = builder.Build(&my_tfreader_op);
@@ -211,7 +211,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderLargeQueueSize) {
       .SetWorkerConnectorSize(1)
       .SetRowsPerBuffer(16)
       .SetNumWorkers(16);
-   std::unique_ptr<DataSchema> schema = mindspore::make_unique<DataSchema>();
+   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   builder.SetDataSchema(std::move(schema));
   Status rc = builder.Build(&my_tfreader_op);
@@ -265,7 +265,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderOneThread) {
   builder.SetDatasetFilesList({dataset_path})
       .SetRowsPerBuffer(16)
       .SetNumWorkers(1);
-   std::unique_ptr<DataSchema> schema = mindspore::make_unique<DataSchema>();
+   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   builder.SetDataSchema(std::move(schema));
   Status rc = builder.Build(&my_tfreader_op);
@@ -321,7 +321,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderRepeat) {
     .SetRowsPerBuffer(16)
     .SetWorkerConnectorSize(16)
     .SetNumWorkers(16);
-  std::unique_ptr<DataSchema> schema = mindspore::make_unique<DataSchema>();
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   builder.SetDataSchema(std::move(schema));
   Status rc= builder.Build(&my_tfreader_op);
@@ -379,7 +379,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderSchemaConstructor) {
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testTFTestAllTypes";
 
-  std::unique_ptr<DataSchema> data_schema = mindspore::make_unique<DataSchema>();
+  std::unique_ptr<DataSchema> data_schema = std::make_unique<DataSchema>();
   std::vector<std::string> columns_to_load;
   columns_to_load.push_back("col_sint32");
   columns_to_load.push_back("col_binary");
@@ -445,7 +445,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderTake1Row) {
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   TFReaderOp::Builder builder;
   builder.SetDatasetFilesList({dataset_path + "/test.data"}).SetRowsPerBuffer(5).SetNumWorkers(16);
-  std::unique_ptr<DataSchema> schema = mindspore::make_unique<DataSchema>();
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema1Row.json", {});
   builder.SetDataSchema(std::move(schema));
 
@@ -503,7 +503,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderTake1Buffer) {
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   TFReaderOp::Builder builder;
   builder.SetDatasetFilesList({dataset_path + "/test.data"}).SetRowsPerBuffer(5).SetNumWorkers(16);
-  std::unique_ptr<DataSchema> schema = mindspore::make_unique<DataSchema>();
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema5Rows.json", {});
   builder.SetDataSchema(std::move(schema));
 
@@ -561,7 +561,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderTake7Rows) {
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   TFReaderOp::Builder builder;
   builder.SetDatasetFilesList({dataset_path + "/test.data"}).SetRowsPerBuffer(5).SetNumWorkers(16);
-  std::unique_ptr<DataSchema> schema = mindspore::make_unique<DataSchema>();
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema7Rows.json", {});
   builder.SetDataSchema(std::move(schema));
 
@@ -696,4 +696,38 @@ TEST_F(MindDataTestTFReaderOp, TestTotalRowsBasic) {
   ASSERT_EQ(total_rows, 60);
   TFReaderOp::CountTotalRows(&total_rows, filenames, 729, true);
   ASSERT_EQ(total_rows, 60);
+}
+
+TEST_F(MindDataTestTFReaderOp, TestTFReaderInvalidFiles) {
+  // Start with an empty execution tree
+  auto my_tree = std::make_shared<ExecutionTree>();
+
+  std::string valid_file = datasets_root_path_ + "/testTFTestAllTypes/test.data";
+  std::string schema_file = datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json";
+  std::string invalid_file = datasets_root_path_ + "/testTFTestAllTypes/invalidFile.txt";
+  std::string nonexistent_file = "this/file/doesnt/exist";
+
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  TFReaderOp::Builder builder;
+  builder.SetDatasetFilesList({invalid_file, valid_file, schema_file})
+      .SetRowsPerBuffer(16)
+      .SetNumWorkers(16);
+
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  schema->LoadSchemaFile(schema_file, {});
+  builder.SetDataSchema(std::move(schema));
+
+  Status rc = builder.Build(&my_tfreader_op);
+  ASSERT_TRUE(!rc.IsOk());
+
+  builder.SetDatasetFilesList({invalid_file, valid_file, schema_file, nonexistent_file})
+      .SetRowsPerBuffer(16)
+      .SetNumWorkers(16);
+
+  schema = std::make_unique<DataSchema>();
+  schema->LoadSchemaFile(schema_file, {});
+  builder.SetDataSchema(std::move(schema));
+
+  rc = builder.Build(&my_tfreader_op);
+  ASSERT_TRUE(!rc.IsOk());
 }

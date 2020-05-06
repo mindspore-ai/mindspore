@@ -14,21 +14,36 @@
 # limitations under the License.
 # ============================================================================
 
+echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE IMAGE_DIR ANNO_PATH MINDSPORE_HCCL_CONFIG_PATH"
-echo "for example: sh run_distribute_train.sh 8 100 ./dataset/coco/train2017 ./dataset/train.txt　./hccl.json"
+echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE MINDRECORD_DIR IMAGE_DIR ANNO_PATH MINDSPORE_HCCL_CONFIG_PATH"
+echo "for example: sh run_distribute_train.sh 8 100 /data/Mindrecord_train /data /data/train.txt /data/hccl.json"
+echo "It is better to use absolute path."
+echo "The learning rate is 0.005 as default, if you want other lr, please change the value in this script."
+echo "=============================================================================================================="
+
+EPOCH_SIZE=$2
+MINDRECORD_DIR=$3
+IMAGE_DIR=$4
+ANNO_PATH=$5
+
+# Before start distribute train, first create mindrecord files.
+python train.py --only_create_dataset=1 --mindrecord_dir=$MINDRECORD_DIR --image_dir=$IMAGE_DIR  \
+--anno_path=$ANNO_PATH
+
 echo "After running the scipt, the network runs in the background. The log will be generated in LOGx/log.txt"
 
+export MINDSPORE_HCCL_CONFIG_PATH=$6
 export RANK_SIZE=$1
-EPOCH_SIZE=$2
-IMAGE_DIR=$3
-ANNO_PATH=$4
-export MINDSPORE_HCCL_CONFIG_PATH=$5
-
 
 for((i=0;i<RANK_SIZE;i++))
 do
     export DEVICE_ID=$i
+
+    start=`expr $i \* 12`
+    end=`expr $start \+ 11`
+    cmdopt=$start"-"$end
+
     rm -rf LOG$i
     mkdir ./LOG$i
     cp  *.py ./LOG$i
@@ -36,10 +51,12 @@ do
     export RANK_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
     env > env.log
-    python ../train.py  \
+    taskset -c $cmdopt python ../train.py  \
     --distribute=1  \
+    --lr=0.005 \
     --device_num=$RANK_SIZE  \
     --device_id=$DEVICE_ID  \
+    --mindrecord_dir=$MINDRECORD_DIR  \
     --image_dir=$IMAGE_DIR  \
     --epoch_size=$EPOCH_SIZE  \
     --anno_path=$ANNO_PATH > log.txt 2>&1 &

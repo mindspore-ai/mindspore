@@ -48,7 +48,7 @@ using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 using mindspore::validator::Validate;
 
-bool SimplifyDataStructuresPass(const ResourcePtr& res) {
+bool SimplifyDataStructuresPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
 
   FuncGraphPtr func_graph = res->func_graph();
@@ -57,7 +57,7 @@ bool SimplifyDataStructuresPass(const ResourcePtr& res) {
   abstract::AbstractBasePtrList args_spec;
   auto parameters = func_graph->parameters();
   (void)std::transform(parameters.begin(), parameters.end(), std::back_inserter(args_spec),
-                       [](const AnfNodePtr& p) -> AbstractBasePtr { return p->abstract(); });
+                       [](const AnfNodePtr &p) -> AbstractBasePtr { return p->abstract(); });
   FuncGraphPtr new_fg = Renormalize(res, func_graph, args_spec);
   res->set_func_graph(new_fg);
   res->set_args_spec(args_spec);
@@ -65,7 +65,7 @@ bool SimplifyDataStructuresPass(const ResourcePtr& res) {
 }
 
 namespace {
-OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
+OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = opt::OptPassConfig({
     irpass.switch_simplify_,
 
@@ -108,10 +108,16 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
   });
   opt::OptPassConfig a_3 = opt::OptPassConfig({
     irpass.same_eliminate_,
+    irpass.check_bprop_eliminate_,
     irpass.replace_applicator_,
   });
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
-  opt::OptPassConfig grad = opt::OptPassConfig({irpass.inline_, irpass.expand_jprim_}, true);
+  opt::OptPassConfig grad = opt::OptPassConfig({irpass.expand_jprim_}, true);
+  opt::irpass::ResolveIRPassLib resolve_irpass;
+
+  opt::OptPassConfig resolve_pass =
+    opt::OptPassConfig({resolve_irpass.resolver_resolve_, resolve_irpass.resolver_getattr_,
+                        irpass.get_make_ref_eliminate_, irpass.replace_old_param_});
 
   OptPassGroupMap map_a({{"a_1", a_1},
                          {"a_2", a_2},
@@ -120,6 +126,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
                          {"grad", grad},
+                         {"resolve", resolve_pass},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
                          {"cse", opt::OptPassConfig(opt::CSE(false))},
                          {"a_3", a_3}});
@@ -127,7 +134,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib& irpass) {
   return map_a;
 }
 
-OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib& irpass) {
+OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig b_1 = opt::OptPassConfig({
     irpass.zero_like_fill_zero_,
     irpass.item_tuple_eliminate_,
@@ -151,7 +158,7 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib& irpass) {
   return map;
 }
 
-OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib& irpass) {
+OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig control_group = opt::OptPassConfig({irpass.convert_switch_replacement_});
   OptPassGroupMap map({
     {"control_group", control_group},
@@ -160,7 +167,14 @@ OptPassGroupMap GetControlPhases(const opt::irpass::OptimizeIRPassLib& irpass) {
   return map;
 }
 
-OptPassGroupMap GetPreparePhases(const opt::irpass::OptimizeIRPassLib& irpass) {
+OptPassGroupMap GetInferenceOptPreparePhases() {
+  opt::irpass::InferenceOptPrepareLib irpass;
+  auto grad_var_prepare = opt::OptPassConfig({irpass.grad_var_prepare_});
+  opt::OptPassGroupMap prepare_map({{"inference_opt_prep", grad_var_prepare}});
+  return prepare_map;
+}
+
+OptPassGroupMap GetPreparePhases(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig prepare_group = opt::OptPassConfig({irpass.print_tuple_wrapper_});
   OptPassGroupMap map({{"prepare_group", prepare_group}});
   return map;
@@ -168,47 +182,48 @@ OptPassGroupMap GetPreparePhases(const opt::irpass::OptimizeIRPassLib& irpass) {
 
 static std::unordered_map<std::string, std::shared_ptr<Optimizer>> g_pass_opts = {};
 
-void InitOpt(const ResourcePtr& res) {
+void InitOpt(const ResourcePtr &res) {
   if (g_pass_opts.size() == 0) {
     opt::irpass::OptimizeIRPassLib irpass;
     g_pass_opts["opt_a"] = Optimizer::MakeOptimizer("opt_a", res, GetOptPassesA(irpass));
-    g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", res, GetOptPassesB(irpass));
-    g_pass_opts["opt_control"] = Optimizer::MakeOptimizer("opt_control", res, GetControlPhases(irpass));
+    g_pass_opts["opt_b"] = Optimizer::MakeOptimizer("opt_b", res, GetOptPassesB(irpass), false, true);
+    g_pass_opts["opt_control"] = Optimizer::MakeOptimizer("opt_control", res, GetControlPhases(irpass), false, true);
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", res, GetPreparePhases(irpass));
   }
 }
 }  // namespace
 
 void ReclaimOptimizer() {
-  for (auto& opt : g_pass_opts) {
+  for (auto &opt : g_pass_opts) {
     opt.second = nullptr;
   }
   g_pass_opts.clear();
 }
 
-bool OptPassGroup(const ResourcePtr& res, const std::string& name) {
+bool OptPassGroup(const ResourcePtr &res, const std::string &name) {
   if (res->func_graph() == nullptr) {
-    MS_LOG(ERROR) << "opt passes int error";
+    MS_LOG(ERROR) << "Opt passes int error";
     return false;
   }
 
-  abstract::AbstractBasePtrList args = res->args_spec();
   FuncGraphPtr func_graph = res->func_graph();
-  MS_LOG(DEBUG) << "start " << name << " func graph:" << func_graph->ToString() << ", "
+  MS_LOG(DEBUG) << "Start " << name << " func graph:" << func_graph->ToString() << ", "
                 << func_graph->get_return()->DebugString(true);
   InitOpt(res);
   if (g_pass_opts.find(name) != g_pass_opts.end()) {
-    res->set_func_graph(g_pass_opts[name]->step(func_graph, args));
+    res->set_func_graph(g_pass_opts[name]->step(func_graph));
   }
+  // Note: StepParallel may modify the AbstractValue of the parameters of func_graph, but they are not updated to
+  // res->args_spec_ yet. So if any later pass or action want to use that variable, it should be set here.
   return true;
 }
 
-bool OptPassAGroup(const ResourcePtr& res) { return OptPassGroup(res, "opt_a"); }
-bool OptPassBGroup(const ResourcePtr& res) { return OptPassGroup(res, "opt_b"); }
-bool ControlGroup(const ResourcePtr& res) { return OptPassGroup(res, "opt_control"); }
-bool PrepareGroup(const ResourcePtr& res) { return OptPassGroup(res, "opt_prepare"); }
+bool OptPassAGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_a"); }
+bool OptPassBGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_b"); }
+bool ControlGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_control"); }
+bool PrepareGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_prepare"); }
 
-bool AddControlDependPass(const ResourcePtr& res) {
+bool AddControlDependPass(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
 
@@ -224,7 +239,7 @@ bool AddControlDependPass(const ResourcePtr& res) {
   return true;
 }
 
-bool CconvPass(const ResourcePtr& res) {
+bool CconvPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
   FuncGraphPtr func_graph = res->func_graph();
   FuncGraphPtr new_fg = LiftingClone(func_graph);
@@ -232,10 +247,19 @@ bool CconvPass(const ResourcePtr& res) {
   return true;
 }
 
-bool ValidatePass(const ResourcePtr& res) {
+bool ValidatePass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
   FuncGraphPtr func_graph = res->func_graph();
   Validate(func_graph);
+  return true;
+}
+
+bool InferenceOptPreparePass(const ResourcePtr &res) {
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto prepare_map = GetInferenceOptPreparePhases();
+  auto infer_opt_prepare = opt::Optimizer::MakeOptimizer("inference_prepare", res, prepare_map);
+  (void)infer_opt_prepare->step(func_graph, false);
   return true;
 }
 

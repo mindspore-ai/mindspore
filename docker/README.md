@@ -4,20 +4,13 @@ This folder hosts all the `Dockerfile` to build MindSpore container images with 
 
 ### MindSpore docker build command
 
-* CPU
+| Hardware Platform | Version | Build Command |
+| :---------------- | :------ | :------------ |
+| CPU | `x.y.z` | cd mindspore-cpu/x.y.z && docker build . -t mindspore/mindspore-cpu:x.y.z |
+|  | `devel` | cd mindspore-cpu/devel && docker build . -t mindspore/mindspore-cpu:devel |
+|  | `runtime` | cd mindspore-cpu/runtime && docker build . -t mindspore/mindspore-cpu:runtime |
+| GPU | `x.y.z` | cd mindspore-gpu/x.y.z  && docker build . -t mindspore/mindspore-gpu:x.y.z  |
+|  | `devel` | cd mindspore-gpu/devel && docker build . -t mindspore/mindspore-gpu:devel |
+|  | `runtime` | cd mindspore-gpu/runtime && docker build . -t mindspore/mindspore-gpu:runtime |
 
-    ```
-    cd mindspore-cpu && docker build . -t mindspore/mindspore-cpu:0.1.0-alpha
-    ```
-
-* GPU (CUDA 9.2)
-
-    ```
-    cd mindspore-cuda9.2 && docker build . -t mindspore/mindspore-cuda9.2:0.1.0-alpha
-    ```
-
-* GPU (CUDA 10.1)
-
-    ```
-    cd mindspore-cuda10.1 && docker build . -t mindspore/mindspore-cuda10.1:0.1.0-alpha
-    ```
+> **NOTICE:** The `x.y.z` version shown above should be replaced with the real version number.

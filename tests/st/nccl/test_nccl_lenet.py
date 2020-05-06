@@ -12,24 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-from mindspore.nn import Dense
-import mindspore.nn as nn
 import datetime
+import numpy as np
 import mindspore.context as context
-from mindspore.communication.management import init, NCCL_WORLD_COMM_GROUP, get_rank, get_group_size
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.nn.optim import Momentum
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
-from mindspore.common.tensor import Tensor
+from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 init('nccl')
 
-epoch = 2
-total = 50000
+epoch = 5
+total = 5000
 batch_size = 32
 mini_batch = total // batch_size
+
 
 class LeNet(nn.Cell):
     def __init__(self):
@@ -43,15 +44,15 @@ class LeNet(nn.Cell):
         self.conv2 = nn.Conv2d(6, 16, (5, 5), weight_init=weight2, pad_mode='valid', stride=1, padding=0)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2, pad_mode="valid")
         self.reshape = P.Reshape()
-        
+
         weight1 = Tensor(np.ones([120, 400]).astype(np.float32) * 0.01)
-        self.fc1 = Dense(400, 120, weight_init=weight1)
-        
+        self.fc1 = nn.Dense(400, 120, weight_init=weight1)
+
         weight2 = Tensor(np.ones([84, 120]).astype(np.float32) * 0.01)
-        self.fc2 = Dense(120, 84, weight_init=weight2)
-        
+        self.fc2 = nn.Dense(120, 84, weight_init=weight2)
+
         weight3 = Tensor(np.ones([10, 84]).astype(np.float32) * 0.01)
-        self.fc3 = Dense(84, 10, weight_init=weight3)
+        self.fc3 = nn.Dense(84, 10, weight_init=weight3)
 
     def construct(self, input_x):
         output = self.conv1(input_x)
@@ -66,12 +67,21 @@ class LeNet(nn.Cell):
         output = self.fc3(output)
         return output
 
+
+def multisteplr(total_steps, gap, base_lr=0.9, gamma=0.1, dtype=mstype.float32):
+    lr = []
+    for step in range(total_steps):
+        lr_ = base_lr * gamma ** (step//gap)
+        lr.append(lr_)
+    return Tensor(np.array(lr), dtype)
+
+
 def test_lenet_nccl():
     net = LeNet()
     net.set_train()
 
-    learning_rate = 0.01
-    momentum = 0.9
+    learning_rate = multisteplr(epoch, 2)
+    momentum = Tensor(np.array([0.9]).astype(np.float32))
     mom_optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
     criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
     net_with_criterion = WithLossCell(net, criterion)
@@ -94,3 +104,4 @@ def test_lenet_nccl():
     with open("ms_loss.txt", "w") as fo2:
         fo2.write("loss:")
         fo2.write(str(losses[-5:]))
+    assert(losses[-1] < 0.01)

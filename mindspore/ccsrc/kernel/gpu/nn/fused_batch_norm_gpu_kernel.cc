@@ -55,7 +55,6 @@ MS_REG_GPU_KERNEL_ONE(BatchNorm,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
-                        .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       FusedBatchNormGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(BatchNorm,
@@ -65,7 +64,6 @@ MS_REG_GPU_KERNEL_ONE(BatchNorm,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
-                        .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16)

@@ -15,12 +15,13 @@
  */
 
 #include "parallel/allreduce_fusion/allreduce_node.h"
+#include <queue>
 #include "parallel/tensor_layout/tensor_layout.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {
-Status AllreduceNode::AddNext(const AllreduceNodePtr& next_node) {
+Status AllreduceNode::AddNext(const AllreduceNodePtr &next_node) {
   if (next_node == nullptr) {
     MS_LOG(ERROR) << "next_node is nullptr!";
     return FAILED;
@@ -29,7 +30,7 @@ Status AllreduceNode::AddNext(const AllreduceNodePtr& next_node) {
   return SUCCESS;
 }
 
-Status AllreduceNode::AddPrev(const AllreduceNodePtr& prev_node, double dist) {
+Status AllreduceNode::AddPrev(const AllreduceNodePtr &prev_node, double dist, double *max) {
   if (prev_node == nullptr) {
     MS_LOG(ERROR) << "next_node is nullptr!";
     return FAILED;
@@ -39,11 +40,30 @@ Status AllreduceNode::AddPrev(const AllreduceNodePtr& prev_node, double dist) {
     return FAILED;
   }
   prev_.emplace_back(prev_node);
-  depend_feat_size_ += prev_node->depend_feat_size() + dist;
+  double add_dist = prev_node->depend_feat_size() + dist;
+  depend_feat_size_ += add_dist;
+  if (depend_feat_size_ > *max) {
+    *max = depend_feat_size_;
+  }
+  std::queue<AllreduceNodePtr> next_queue;
+  for (auto &next : next_) {
+    next_queue.push(next);
+  }
+  while (!next_queue.empty()) {
+    auto ele = next_queue.front();
+    ele->AddDependFeatSize(add_dist);
+    if (ele->depend_feat_size() > *max) {
+      *max = ele->depend_feat_size();
+    }
+    for (auto &next : ele->next()) {
+      next_queue.push(next);
+    }
+    next_queue.pop();
+  }
   return SUCCESS;
 }
 
-Status AllreduceNode::Init(const CNodePtr& cnode_ptr) {
+Status AllreduceNode::Init(const CNodePtr &cnode_ptr) {
   if (cnode_ptr == nullptr) {
     MS_LOG(ERROR) << "cnode_ptr is nullptr!";
     return FAILED;
@@ -52,7 +72,7 @@ Status AllreduceNode::Init(const CNodePtr& cnode_ptr) {
   return SUCCESS;
 }
 
-Status AllreduceNode::AddPara(const AnfNodePtr& node_ptr) {
+Status AllreduceNode::AddPara(const AnfNodePtr &node_ptr) {
   if (node_ptr == nullptr) {
     MS_LOG(ERROR) << "node_ptr is nullptr!";
     return FAILED;
@@ -79,7 +99,7 @@ Status AllreduceNode::AddPara(const AnfNodePtr& node_ptr) {
   return SUCCESS;
 }
 
-Status AllreduceNode::RemovePara(const AnfNodePtr& node_ptr) {
+Status AllreduceNode::RemovePara(const AnfNodePtr &node_ptr) {
   if (node_ptr == nullptr) {
     MS_LOG(ERROR) << "node_ptr is nullptr!";
     return FAILED;
@@ -95,7 +115,7 @@ Status AllreduceNode::RemovePara(const AnfNodePtr& node_ptr) {
 
 void AllreduceNode::ToString() const {
   MS_LOG(INFO) << "cnode: " << cnode_ptr_->DebugString() << "para size: " << paras_.size();
-  for (auto& para : paras_) {
+  for (auto &para : paras_) {
     MS_LOG(INFO) << "para name: " << para->fullname_with_scope() << " size: " << para_size_map_.at(para);
   }
   MS_LOG(INFO) << "depend_feat_size: " << depend_feat_size_ << " curr_para_size: " << curr_para_size_;

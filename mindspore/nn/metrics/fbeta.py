@@ -15,7 +15,7 @@
 """Fbeta."""
 import sys
 import numpy as np
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from .metric import Metric
 
 
@@ -26,19 +26,18 @@ class Fbeta(Metric):
     Fbeta score is a weighted mean of precison and recall.
 
     .. math::
-        F_\beta=\frac{(1+\beta^2) \cdot true positive}
-                {(1+\beta^2) \cdot true positive +\beta^2 \cdot false negative + false positive}
+        F_\beta=\frac{(1+\beta^2) \cdot true\_positive}
+                {(1+\beta^2) \cdot true\_positive +\beta^2 \cdot false\_negative + false\_positive}
 
     Args:
         beta (float): The weight of precision.
 
     Examples:
-        >>> x = mindspore.Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
-        >>> y = mindspore.Tensor(np.array([1, 0, 1]))
+        >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
+        >>> y = Tensor(np.array([1, 0, 1]))
         >>> metric = nn.Fbeta(1)
         >>> metric.update(x, y)
         >>> fbeta = metric.eval()
-        [0.66666667 0.66666667]
     """
     def __init__(self, beta):
         super(Fbeta, self).__init__()
@@ -64,7 +63,7 @@ class Fbeta(Metric):
                 `y_pred` is in most cases (not strictly) a list of floating numbers in range :math:`[0, 1]`
                 and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
                 is the number of categories. y contains values of integers. The shape is :math:`(N, C)`
-                if one-hot encoding is used. Shape can also be :math:`(N, 1)` if category index is used.
+                if one-hot encoding is used. Shape can also be :math:`(N,)` if category index is used.
         """
         if len(inputs) != 2:
             raise ValueError('Fbeta need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
@@ -105,7 +104,7 @@ class Fbeta(Metric):
         Returns:
             Float, computed result.
         """
-        validator.check_type("average", average, [bool])
+        validator.check_value_type("average", average, [bool], self.__class__.__name__)
         if self._class_num == 0:
             raise RuntimeError('Input number of samples can not be 0.')
 
@@ -123,11 +122,11 @@ class F1(Fbeta):
     Refer to class `Fbeta` for more details.
 
     .. math::
-        F_\beta=\frac{2\cdot true positive}{2\cdot true positive + false negative + false positive}
+        F_\beta=\frac{2\cdot true\_positive}{2\cdot true\_positive + false\_negative + false\_positive}
 
     Examples:
-        >>> x = mindspore.Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
-        >>> y = mindspore.Tensor(np.array([1, 0, 1]))
+        >>> x = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]))
+        >>> y = Tensor(np.array([1, 0, 1]))
         >>> metric = nn.F1()
         >>> metric.update(x, y)
         >>> fbeta = metric.eval()

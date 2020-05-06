@@ -28,6 +28,7 @@
 
 #include "ir/meta_tensor.h"
 #include "pipeline/parse/parse.h"
+#include "pipeline/parse/parse_base.h"
 #include "ir/value.h"
 
 namespace mindspore {
@@ -97,6 +98,15 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
       i++;
     }
     ret = rets;
+  } else if (value->isa<EllipsisObj>()) {
+    ret = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_CLASS_ELLIPSIS);
+  } else if (value->isa<ValueSlice>()) {
+    auto slice = value->cast<ValueSlicePtr>();
+    auto start = ValuePtrToPyData(slice->start());
+    auto end = ValuePtrToPyData(slice->stop());
+    auto step = ValuePtrToPyData(slice->step());
+    ret = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_PARSE_CLASS_SLICE, start, end,
+                                          step);
   } else if (value->isa<Type>()) {
     py::tuple v(1);
     v[0] = value->cast<TypePtr>();
@@ -327,7 +337,7 @@ py::object VectorRefToPyData(const VectorRef &value_list) {
   py::object ret;
   MS_LOG(DEBUG) << "vector_ref";
   size_t value_size = value_list.size();
-  py::tuple ref_tuple = py::tuple(value_size);
+  auto ref_tuple = py::tuple(value_size);
   for (size_t i = 0; i < value_size; i++) {
     ref_tuple[i] = BaseRefToPyData(value_list[i]);
   }
@@ -372,5 +382,46 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
   } else {
     MS_LOG(EXCEPTION) << "Python evaluator return invalid shape or type. " << (std::string)py::str(type_obj);
   }
+}
+bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
+                                       const std::shared_ptr<py::object> &ret_val) {
+  if (output->isa<ValueNode>()) {
+    MS_LOG(INFO) << "Graph's output is a constant. No need to execute.";
+    ValuePtr value = GetValueNode(output);
+    *ret_val = ValuePtrToPyData(value);
+    return true;
+  }
+
+  // Adapter will transform values in __init__() and construct() to parameters, this could cause
+  // inputs (a.k.a args in current function) size less than parameters'.
+  if (output->isa<Parameter>()) {
+    MS_LOG(INFO) << "Graph's output is a parameter. If all params are inputs, no need to execute.";
+    if (args.empty()) {
+      MS_LOG(EXCEPTION) << "Inputs size is 0, let graph to be executed.";
+    }
+    // Find the right parameter as ret_val.
+    auto func_graph = output->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto params = func_graph->parameters();
+    if (params.empty()) {
+      MS_EXCEPTION(UnknownError) << "Graph's parameters size is 0";
+    }
+    if (args.size() != params.size()) {
+      MS_LOG(EXCEPTION) << "Input size " << args.size() << " not equal to params size " << params.size()
+                        << ", let graph to be executed.";
+    }
+
+    auto it = std::find(params.begin(), params.end(), output);
+    if (it == params.end()) {
+      MS_EXCEPTION(UnknownError) << "When graph output is Parameter,  it should be found in graph parameters";
+    }
+    size_t index = it - params.cbegin();
+    if (index >= args.size()) {
+      MS_EXCEPTION(UnknownError) << "Index " << index << " equal or larger than args size " << args.size() << ".";
+    }
+    *ret_val = args[index];
+    return true;
+  }
+  return false;
 }
 }  // namespace mindspore

@@ -17,11 +17,12 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_TMP_IDENTITY_INFO_H_
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_TMP_IDENTITY_INFO_H_
 
-#include <vector>
 #include <memory>
 #include <string>
-#include "parallel/ops_info/operator_info.h"
+#include <vector>
+
 #include "parallel/auto_parallel/operator_costmodel.h"
+#include "parallel/ops_info/operator_info.h"
 #include "parallel/strategy.h"
 
 namespace mindspore {
@@ -31,31 +32,25 @@ class TmpIdentityInfo : public OperatorInfo {
   // consider this parameter tensor as TmpIdentityInfo operator. TmpIdentityInfo operator tasks as input a tensor,
   // and outputs the same tensor. After the transformation, subsequent operators can share the output tensor.
  public:
-  TmpIdentityInfo(const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs,
-                  const std::string& name = IDENTITY_INFO)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs) {
-    id_cost_ptr_ = std::make_shared<TmpIdentityCost>();
-  }
+  TmpIdentityInfo(const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs,
+                  const std::string &name = IDENTITY_INFO)
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<TmpIdentityCost>(false)) {}
   ~TmpIdentityInfo() override = default;
 
-  Status Init(const StrategyPtr& strategy) override;
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status Init(const StrategyPtr &strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
 
   Status GenerateStrategies(int32_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return id_cost_ptr_; }
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
   Status GetAttrs() override { return SUCCESS; }
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-
- private:
-  TmpIdentityCostPtr id_cost_ptr_;
 };
 }  // namespace parallel
 }  // namespace mindspore

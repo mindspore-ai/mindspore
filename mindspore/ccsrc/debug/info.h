@@ -37,9 +37,9 @@ enum SourceLineTip { kSourceLineTipDiscard = 0, kSourceLineTipNextLine = 1, kSou
 // Location class record the location in source code.
 class Location {
  public:
-  Location(const std::string& file_name, int line, int column, int line_end, int column_end)
+  Location(const std::string &file_name, int line, int column, int line_end, int column_end)
       : file_name_(file_name), line_(line), column_(column), line_end_(line_end), column_end_(column_end) {}
-  Location(const Location& loc)
+  Location(const Location &loc)
       : file_name_(loc.file_name_),
         line_(loc.line_),
         column_(loc.column_),
@@ -77,21 +77,21 @@ class TraceManager {
   TraceManager() = default;
   ~TraceManager() = default;
   static TraceContextPtr CurrentContextInfo();
-  static void DebugTrace(const std::string& func_name, const LocationPtr& location);
-  static void DebugTrace(const LocationPtr& location);
-  static void DebugTrace(const TraceInfoPtr& trace_info);
+  static void DebugTrace(const std::string &func_name, const LocationPtr &location);
+  static void DebugTrace(const LocationPtr &location);
+  static void DebugTrace(const TraceInfoPtr &trace_info);
   // debug trace with a cloned trace info with debug_info
-  static void DebugTrace(const DebugInfoPtr& debug_info, const TraceInfoPtr& trace_info);
+  static void DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr &trace_info);
   static void EndTrace();
   static std::stack<TraceContextPtr> trace_context_stack_;
 };
 
 class TraceGuard {
  public:
-  explicit TraceGuard(const std::string func_name, const LocationPtr& location) {
+  explicit TraceGuard(const std::string func_name, const LocationPtr &location) {
     TraceManager::DebugTrace(func_name, location);
   }
-  explicit TraceGuard(const LocationPtr& location) { TraceManager::DebugTrace(location); }
+  explicit TraceGuard(const LocationPtr &location) { TraceManager::DebugTrace(location); }
   ~TraceGuard() { TraceManager::EndTrace(); }
 };
 
@@ -106,23 +106,23 @@ class TraceContext {
 
  public:
   ~TraceContext() = default;
-  explicit TraceContext(const LocationPtr& loc) {
+  explicit TraceContext(const LocationPtr &loc) {
     ProcessAttributeFromContext();
     location_ = loc;
   }
-  explicit TraceContext(const std::string& func_name) {
+  explicit TraceContext(const std::string &func_name) {
     ProcessAttributeFromContext();
     func_name_ = func_name;
   }
-  explicit TraceContext(const TraceInfoPtr& trace_info) {
+  explicit TraceContext(const TraceInfoPtr &trace_info) {
     ProcessAttributeFromContext();
     trace_info_ = trace_info;
   }
-  void set_location(const LocationPtr& loc) { location_ = loc; }
+  void set_location(const LocationPtr &loc) { location_ = loc; }
   LocationPtr location() { return location_; }
-  void set_trace_info(const TraceInfoPtr& trace_info) { trace_info_ = trace_info; }
+  void set_trace_info(const TraceInfoPtr &trace_info) { trace_info_ = trace_info; }
   TraceInfoPtr trace_info() { return trace_info_; }
-  void set_func_name(const std::string& func_name) { func_name_ = func_name; }
+  void set_func_name(const std::string &func_name) { func_name_ = func_name; }
   std::string func_name() { return func_name_; }
 };
 
@@ -130,23 +130,23 @@ class DebugInfo : public Base {
  public:
   DebugInfo();
 
-  explicit DebugInfo(const std::string& name);
+  explicit DebugInfo(const std::string &name);
 
-  explicit DebugInfo(const LocationPtr& loc);
+  explicit DebugInfo(const LocationPtr &loc);
 
-  virtual ~DebugInfo() = default;
+  ~DebugInfo() override = default;
   MS_DECLARE_PARENT(DebugInfo, Base);
   int64_t debug_id();
   int64_t unique_id() const { return unique_id_; }
   int64_t unique_id_through_copy() const;
   std::string get_id() { return std::to_string(debug_id()); }
 
-  void set_trace_info(const TraceInfoPtr& trace_info) { trace_info_ = trace_info; }
+  void set_trace_info(const TraceInfoPtr &trace_info) { trace_info_ = trace_info; }
   TraceInfoPtr trace_info() { return trace_info_; }
-  void set_location(const LocationPtr& loc) { location_ = loc; }
+  void set_location(const LocationPtr &loc) { location_ = loc; }
   virtual LocationPtr location() { return location_; }
   std::string name() { return name_; }
-  void set_name(const std::string& name) { name_ = name; }
+  void set_name(const std::string &name) { name_ = name; }
   virtual std::string debug_name();
 
   virtual std::string get_python_func_belonged() { return ""; }
@@ -186,7 +186,7 @@ class NodeDebugInfo : public DebugInfo {
       py_func_belonged_ = context_info->func_name();
     }
   }
-  explicit NodeDebugInfo(const std::string& name) : DebugInfo(name) {
+  explicit NodeDebugInfo(const std::string &name) : DebugInfo(name) {
     if (TraceManager::CurrentContextInfo() != nullptr) {
       auto context_info = TraceManager::CurrentContextInfo();
       py_func_belonged_ = context_info->func_name();
@@ -195,9 +195,9 @@ class NodeDebugInfo : public DebugInfo {
   ~NodeDebugInfo() override = default;
 
   std::string debug_name() override;
-  void set_node(const std::shared_ptr<AnfNode>& node) { node_ = AnfNodeWeakPtr(node); }
+  void set_node(const std::shared_ptr<AnfNode> &node) { node_ = AnfNodeWeakPtr(node); }
   std::shared_ptr<AnfNode> get_node() const { return node_.lock(); }
-  void set_py_func_belonged(const std::string& name) { py_func_belonged_ = name; }
+  void set_py_func_belonged(const std::string &name) { py_func_belonged_ = name; }
   std::string get_python_func_belonged() override { return py_func_belonged_; }
   AnfNodeWeakPtr node_;
   std::string py_func_belonged_;
@@ -214,7 +214,7 @@ class GraphDebugInfo : public DebugInfo {
     }
   }
 
-  explicit GraphDebugInfo(const std::string& name) : DebugInfo(name) {
+  explicit GraphDebugInfo(const std::string &name) : DebugInfo(name) {
     if (TraceManager::CurrentContextInfo() != nullptr) {
       auto context_info = TraceManager::CurrentContextInfo();
       py_func_name_ = context_info->func_name();
@@ -225,11 +225,11 @@ class GraphDebugInfo : public DebugInfo {
   std::string debug_name() override;
   LocationPtr location() override;
   LocationPtr deco_location() { return deco_loc_; }
-  void set_graph(const FuncGraphPtr& func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
+  void set_graph(const FuncGraphPtr &func_graph) { func_graph_ = FuncGraphWeakPtr(func_graph); }
   FuncGraphPtr get_graph() const { return func_graph_.lock(); }
-  void set_full_name(const std::string& name) { full_name_ = name; }
+  void set_full_name(const std::string &name) { full_name_ = name; }
   std::string get_full_name() { return full_name_; }
-  void set_deco_location(const LocationPtr& deco_list_loc);
+  void set_deco_location(const LocationPtr &deco_list_loc);
   std::string get_python_func_belonged() override { return py_func_name_; }
   FuncGraphWeakPtr func_graph_;
   LocationPtr deco_loc_;

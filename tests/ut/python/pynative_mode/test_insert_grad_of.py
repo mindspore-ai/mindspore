@@ -17,13 +17,14 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.common.api import ms_function
 from ....mindspore_test_framework.utils.bprop_util import bprop
 from ....mindspore_test_framework.utils.debug_util import PrintShapeTypeCell, PrintGradShapeTypeCell
 from mindspore import Tensor
 
 from mindspore import context
-
+import mindspore
 
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -78,7 +79,7 @@ def test_InsertGradientOf_2():
 summary = P.ScalarSummary()
 def debug_gradient(dx):
     """ debug_gradient """
-    dx = summary("dx: ", dx)
+    summary("dx: ", dx)
     return dx
 
 debug = P.InsertGradientOf(debug_gradient)
@@ -107,3 +108,36 @@ def test_print_shape_type():
             return z
     bprop(Mul(), Tensor(np.ones([2, 2]).astype(np.float32)),
           Tensor(np.ones([2, 2]).astype(np.float32)))
+
+def test_cell_assign():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    class GradNetWrap(nn.Cell):
+        """ GradNetWrap definition """
+        def __init__(self, net):
+            super(GradNetWrap, self).__init__()
+            self.net = net
+            self.weights = mindspore.ParameterTuple(net.get_parameters())
+
+        def construct(self, x, y):
+            return C.grad_by_list(self.net, self.weights)(x, y)
+
+    class Mul(nn.Cell):
+        def __init__(self):
+            super(Mul, self).__init__()
+            self.get_g = P.InsertGradientOf(self.save_gradient)
+            self.matrix_w = mindspore.Parameter(Tensor(np.ones([2, 2], np.float32)), name="matrix_w")
+            self.matrix_g = mindspore.Parameter(Tensor(np.ones([2, 2], np.float32)), name="matrix_g")
+
+        def save_gradient(self, dout):
+            self.matrix_g = dout + self.matrix_g
+            return dout
+
+        def construct(self, x, y):
+            z = x * self.matrix_w
+            z = self.get_g(z)
+            z = z * y
+            return z
+
+    input_x = Tensor(np.ones([2, 2], np.float32))
+    input_y = Tensor(np.ones([2, 2], np.float32))
+    GradNetWrap(Mul())(input_x, input_y)

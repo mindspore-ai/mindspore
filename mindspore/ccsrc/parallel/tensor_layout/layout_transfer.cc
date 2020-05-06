@@ -15,12 +15,11 @@
  */
 
 #include "parallel/tensor_layout/layout_transfer.h"
-#include "parallel/status.h"
 #include "common/utils.h"
+#include "parallel/status.h"
 
 namespace mindspore {
 namespace parallel {
-
 std::string LayoutTransfer::ToString() const {
   std::ostringstream buffer;
   buffer << std::endl << std::string("from_in_ tensor layout:" + from_in_.ToString());
@@ -30,13 +29,12 @@ std::string LayoutTransfer::ToString() const {
 
 LayoutTransfer::~LayoutTransfer() = default;
 
-Status LayoutTransfer::Init(const TensorLayout& from_in, const TensorLayout& to_in) {
+Status LayoutTransfer::Init(const TensorLayout &from_in, const TensorLayout &to_in) {
   from_in_ = from_in;
   to_in_ = to_in;
   MS_LOG(DEBUG) << "LayoutTransfer " << this->ToString();
   Status status = CheckValidTransfer();
   return status;
 }
-
 }  // namespace parallel
 }  // namespace mindspore

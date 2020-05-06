@@ -20,39 +20,41 @@
 #include <memory>
 #include <vector>
 
-#include "utils/log_adapter.h"
-#include "utils/node_strategy.pb.h"
-#include "utils/convert_utils.h"
 #include "common/utils.h"
+#include "utils/convert_utils.h"
+#include "utils/log_adapter.h"
+#include "proto/node_strategy.pb.h"
 
 namespace mindspore {
 namespace parallel {
-StrategyCheckpoint& StrategyCheckpoint::GetInstance() {
+StrategyCheckpoint &StrategyCheckpoint::GetInstance() {
   static StrategyCheckpoint instance = StrategyCheckpoint();
+  if (ParallelContext::GetInstance() != nullptr) {
+    instance.load_file_ = ParallelContext::GetInstance()->strategy_ckpt_load_file();
+    instance.load_checkpoint_on_ = !ParallelContext::GetInstance()->strategy_ckpt_load_file().empty();
+    instance.save_file_ = ParallelContext::GetInstance()->strategy_ckpt_save_file();
+    instance.save_checkpoint_on_ = !ParallelContext::GetInstance()->strategy_ckpt_save_file().empty();
+  }
   return instance;
 }
 
-bool StrategyCheckpoint::CheckPointExit() const {
-  std::ifstream fin(path_);
+bool StrategyCheckpoint::CheckPointExit(const std::string path) const {
+  std::ifstream fin(path);
   if (fin) {
     return true;
   }
   return false;
 }
 
-Status StrategyCheckpoint::RemoveCheckPoint() const {
-  if (std::remove(common::SafeCStr(path_)) == 0) {
-    return SUCCESS;
-  }
-  return FAILED;
-}
-
-Status StrategyCheckpoint::Load(StrategyMap* strategy_map) {
+Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
   if (strategy_map == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:strategy_map is nullptr";
   }
+  if (!CheckPointExit(load_file_)) {
+    MS_LOG(EXCEPTION) << "CheckPoint file is not found";
+  }
   straspb::ParallelStrategyMap parallel_strategy_map;
-  std::fstream input(path_, std::ios::in | std::ios::binary);
+  std::fstream input(load_file_, std::ios::in | std::ios::binary);
   if (!parallel_strategy_map.ParseFromIstream(&input)) {
     MS_LOG(ERROR) << "Load strategy file failed";
     return FAILED;
@@ -77,30 +79,30 @@ Status StrategyCheckpoint::Load(StrategyMap* strategy_map) {
 
     StrategyPtr strategy = NewStrategy(stage, strategy_inputs);
     (*strategy_map)[node_name] = strategy;
-    current_train_time_ = (int32_t)parallel_strategy_map.train_time();
+    current_stage_ = (int32_t)parallel_strategy_map.current_stage();
   }
   return SUCCESS;
 }
 
-Status StrategyCheckpoint::Save(const StrategyMap& strategy_map) {
+Status StrategyCheckpoint::Save(const StrategyMap &strategy_map) {
   straspb::ParallelStrategyMap parallel_strategy_map;
-  parallel_strategy_map.set_train_time(IntToUint(++current_train_time_));
-  for (auto& node_stra : strategy_map) {
-    straspb::ParallelStrategyItem* parallel_strategy_item = parallel_strategy_map.add_parallel_strategy_item();
+  parallel_strategy_map.set_current_stage(IntToUint(++current_stage_));
+  for (auto &node_stra : strategy_map) {
+    straspb::ParallelStrategyItem *parallel_strategy_item = parallel_strategy_map.add_parallel_strategy_item();
     MS_EXCEPTION_IF_NULL(parallel_strategy_item);
     parallel_strategy_item->set_node_name(node_stra.first);
-    straspb::ParallelStrategys* parallel_strategys = parallel_strategy_item->mutable_parallel_strategys();
+    straspb::ParallelStrategys *parallel_strategys = parallel_strategy_item->mutable_parallel_strategys();
     MS_EXCEPTION_IF_NULL(parallel_strategys);
     parallel_strategys->set_stage(IntToUint(node_stra.second->GetInputStage()));
-    for (auto& dims : node_stra.second->GetInputDim()) {
-      straspb::ParallelStrategy* parallel_strategy = parallel_strategys->add_parallel_strategy();
+    for (auto &dims : node_stra.second->GetInputDim()) {
+      straspb::ParallelStrategy *parallel_strategy = parallel_strategys->add_parallel_strategy();
       MS_EXCEPTION_IF_NULL(parallel_strategy);
       for (auto dim : dims) {
         parallel_strategy->add_dim(IntToUint(dim));
       }
     }
   }
-  std::fstream output(path_, std::ios::out | std::ios::trunc | std::ios::binary);
+  std::fstream output(save_file_, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!parallel_strategy_map.SerializeToOstream(&output)) {
     MS_LOG(ERROR) << "Save strategy file failed";
     return FAILED;

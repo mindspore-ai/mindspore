@@ -16,6 +16,7 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.nn import Dense
 
+
 class AlexNet(nn.Cell):
     def __init__(self, num_classes=10):
         super(AlexNet, self).__init__()

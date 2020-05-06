@@ -127,9 +127,15 @@ class NestingSpecs {
       return;
     }
 
-    auto counter_p = dynamic_pointer_cast<CounterAnfNodeCollector>(results);
+    auto counter_p = dynamic_pointer_cast<CounterAnfNodeCollector<AnfNodePtr>>(results);
     if (counter_p != nullptr) {
       CheckAnfNodeCounter(counter_p);
+      return;
+    }
+
+    auto counter_pair = dynamic_pointer_cast<CounterAnfNodeCollector<CNodeIndexPairPtr>>(results);
+    if (counter_pair != nullptr) {
+      CheckCNodeIndexPairCounter(counter_pair);
       return;
     }
 
@@ -226,7 +232,7 @@ class NestingSpecs {
 
   // Add CheckNesting function
 
-  void CheckAnfNodeCounter(std::shared_ptr<CounterAnfNodeCollector> results) {
+  void CheckAnfNodeCounter(std::shared_ptr<CounterAnfNodeCollector<AnfNodePtr>> results) {
     std::map<std::string, std::set<std::string>> clean_results;
     for (auto& iter : results->count_nodes_map()) {
       auto key = iter.first;
@@ -239,6 +245,32 @@ class NestingSpecs {
       std::set<std::string> v;
       for (auto& node : value) {
         auto fg = node.first;
+        if (!Name(fg).empty()) {
+          v.insert(Name(fg));
+        }
+      }
+
+      if (!v.empty()) {
+        clean_results[k] = v;
+      }
+    }
+
+    ASSERT_EQ(clean_results, expected_);
+  }
+
+  void CheckCNodeIndexPairCounter(std::shared_ptr<CounterAnfNodeCollector<CNodeIndexPairPtr>> results) {
+    std::map<std::string, std::set<std::string>> clean_results;
+    for (auto& iter : results->count_nodes_map()) {
+      auto key = iter.first;
+      auto value = iter.second;
+      if (key == nullptr) {
+        continue;
+      }
+      std::string k = Name(key);
+
+      std::set<std::string> v;
+      for (auto& node : value) {
+        auto fg = node.first->first;
         if (!Name(fg).empty()) {
           v.insert(Name(fg));
         }
@@ -447,9 +479,8 @@ void TestManager::CheckAnalysisSize(std::shared_ptr<FuncGraphManager> mng) {
   ASSERT_EQ(size, mng->free_variables_total().size());
   ASSERT_EQ(size, mng->valuenodes().size());
   ASSERT_EQ(size, mng->free_variables_direct().size());
-  ASSERT_EQ(size, mng->func_graph_valuenodes().size());
+  ASSERT_EQ(size, mng->func_graph_cnodes_index().size());
   ASSERT_EQ(size, mng->func_graph_parents_direct().size());
-  ASSERT_EQ(size, mng->func_graph_users().size());
   ASSERT_EQ(size, mng->func_graphs_used().size());
 }
 
@@ -508,10 +539,6 @@ TEST_F(TestManager, test_nested_manual) {
   ASSERT_EQ(1, graphs_used[f].size());
   ASSERT_EQ(0, graphs_used[g].size());
 
-  auto graph_users = mng->func_graph_users();
-  ASSERT_EQ(0, graph_users[f].size());
-  ASSERT_EQ(1, graph_users[g].size());
-
   auto fv_direct = mng->free_variables_direct();
   ASSERT_EQ(0, fv_direct[f].size());
   ASSERT_EQ(1, fv_direct[g].size());
@@ -520,9 +547,9 @@ TEST_F(TestManager, test_nested_manual) {
   ASSERT_EQ(0, fv_total[f].size());
   ASSERT_EQ(1, fv_total[g].size());
 
-  auto graph_valuenodes = mng->func_graph_valuenodes();
-  ASSERT_EQ(0, graph_valuenodes[f].size());
-  ASSERT_EQ(1, graph_valuenodes[g].size());
+  auto cnodes = mng->func_graph_cnodes_index();
+  ASSERT_EQ(0, cnodes[f].size());
+  ASSERT_EQ(1, cnodes[g].size());
 }
 
 TEST_F(TestManager, test_deep_nested2_manual) {

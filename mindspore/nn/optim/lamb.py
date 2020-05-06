@@ -21,7 +21,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 from .. import layer
@@ -67,23 +67,23 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
     op_fill = P.Fill()
     op_dtype = P.DType()
 
-    param = op_cast(param, mstype.float32)
-    m = op_cast(m, mstype.float32)
-    v = op_cast(v, mstype.float32)
-    gradient = op_cast(gradient, mstype.float32)
+    param_fp32 = op_cast(param, mstype.float32)
+    m_fp32 = op_cast(m, mstype.float32)
+    v_fp32 = op_cast(v, mstype.float32)
+    gradient_fp32 = op_cast(gradient, mstype.float32)
 
-    next_m = op_mul(beta1, m) + op_mul(op_cast(num_one, mstype.float32) - beta1, gradient)
+    next_m = op_mul(beta1, m_fp32) + op_mul(op_cast(num_one, mstype.float32) - beta1, gradient_fp32)
 
-    next_v = op_mul(beta2, v) + op_mul(op_cast(num_one, mstype.float32) - beta2, op_square(gradient))
+    next_v = op_mul(beta2, v_fp32) + op_mul(op_cast(num_one, mstype.float32) - beta2, op_square(gradient_fp32))
 
     next_mm = next_m / (op_cast(num_one, mstype.float32)
                         - op_pow(beta1, op_cast(global_step + num_one, mstype.float32)))
     next_vv = next_v / (op_cast(num_one, mstype.float32) -
                         op_pow(beta2, op_cast(global_step + num_one, mstype.float32)))
-    w_norm = op_norm(param)
-    g_norm = op_norm(gradient)
+    w_norm = op_norm(param_fp32)
+    g_norm = op_norm(gradient_fp32)
 
-    g_norm_hat = op_norm(op_mul(next_mm, op_rsqrt(next_vv + eps)) + weight_decay_tensor * param)
+    g_norm_hat = op_norm(op_mul(next_mm, op_rsqrt(next_vv + eps)) + weight_decay_tensor * param_fp32)
     zeros = F.zeros_like_tensor(w_norm)
     ones = op_fill(op_dtype(w_norm), op_shape(w_norm), 1.0)
     trust_ratio = op_select(
@@ -95,11 +95,11 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
     update = next_mm / (op_sqrt(next_vv) + eps)
 
     if decay_flag:
-        update = update + op_mul(weight_decay_tensor, param)
+        update = update + op_mul(weight_decay_tensor, param_fp32)
 
     update_with_lr = op_mul(op_mul(trust_ratio, lr), update)
 
-    next_param = param - op_reshape(update_with_lr, op_shape(param))
+    next_param = param_fp32 - op_reshape(update_with_lr, op_shape(param_fp32))
 
     next_v = F.depend(next_v, F.assign(param, next_param))
     next_v = F.depend(next_v, F.assign(m, next_m))
@@ -109,23 +109,25 @@ def _update_run_op(beta1, beta2, eps, lr, weight_decay_tensor, global_step, para
 
 
 def _check_param_value(decay_steps, warmup_steps, start_learning_rate,
-                       end_learning_rate, power, beta1, beta2, eps, weight_decay):
-
+                       end_learning_rate, power, beta1, beta2, eps, weight_decay, prim_name):
     """Check the type of inputs."""
-    validator.check_type("decay_steps", decay_steps, [int])
-    validator.check_type("warmup_steps", warmup_steps, [int])
-    validator.check_type("start_learning_rate", start_learning_rate, [float])
-    validator.check_type("end_learning_rate", end_learning_rate, [float])
-    validator.check_type("power", power, [float])
-    validator.check_type("beta1", beta1, [float])
-    validator.check_type("beta2", beta2, [float])
-    validator.check_type("eps", eps, [float])
-    validator.check_type("weight_dacay", weight_decay, [float])
-    validator.check_number_range("decay_steps", decay_steps, 1, float("inf"), Rel.INC_LEFT)
-    validator.check_number_range("beta1", beta1, 0.0, 1.0, Rel.INC_NEITHER)
-    validator.check_number_range("beta2", beta2, 0.0, 1.0, Rel.INC_NEITHER)
-    validator.check_number_range("eps", eps, 0.0, float("inf"), Rel.INC_NEITHER)
-    validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT)
+    _ = warmup_steps
+    validator.check_float_positive('start_learning_rate', start_learning_rate, prim_name)
+    validator.check_float_legal_value('start_learning_rate', start_learning_rate, prim_name)
+    validator.check_float_positive('end_learning_rate', end_learning_rate, prim_name)
+    validator.check_float_legal_value('end_learning_rate', end_learning_rate, prim_name)
+    validator.check_float_positive('power', power, prim_name)
+    validator.check_float_legal_value('power', power, prim_name)
+    validator.check_integer('decay_steps', decay_steps, 0, Rel.GT, prim_name)
+    validator.check_integer('warmup_steps', decay_steps, 0, Rel.GT, prim_name)
+    validator.check_value_type("beta1", beta1, [float], prim_name)
+    validator.check_value_type("beta2", beta2, [float], prim_name)
+    validator.check_value_type("eps", eps, [float], prim_name)
+    validator.check_value_type("weight_dacay", weight_decay, [float], prim_name)
+    validator.check_number_range("beta1", beta1, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("beta2", beta2, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("eps", eps, 0.0, float("inf"), Rel.INC_NEITHER, prim_name)
+    validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, prim_name)
 
 
 class Lamb(Optimizer):
@@ -163,7 +165,7 @@ class Lamb(Optimizer):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> optim = Lamb(params=net.trainable_params(), decay_steps=10)
+        >>> optim = nn.Lamb(params=net.trainable_params(), decay_steps=10)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
 
@@ -182,7 +184,7 @@ class Lamb(Optimizer):
 
         super(Lamb, self).__init__(start_learning_rate, params)
         _check_param_value(decay_steps, warmup_steps, start_learning_rate, end_learning_rate,
-                           power, beta1, beta2, eps, weight_decay)
+                           power, beta1, beta2, eps, weight_decay, self.cls_name)
 
         # turn them to scalar when me support scalar/tensor mix operations
         self.global_step = Parameter(initializer(0, [1]), name="global_step")

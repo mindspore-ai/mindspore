@@ -22,13 +22,13 @@
 
 namespace mindspore {
 
-ConfigManager& ConfigManager::GetInstance() noexcept {
+ConfigManager &ConfigManager::GetInstance() noexcept {
   static ConfigManager instance;
   return instance;
 }
 
-void ConfigManager::SetDatasetModeConfig(const std::string& mode) {
-  static const std::map<std::string, DatasetMode> mode_map = {{"feed", DS_FEED_MODE}, {"graph", DS_GRAPH_MODE}};
+void ConfigManager::SetDatasetModeConfig(const std::string &mode) {
+  static const std::map<std::string, DatasetMode> mode_map = {{"normal", DS_NORMAL_MODE}, {"sink", DS_SINK_MODE}};
   if (mode_map.find(mode) == mode_map.end()) {
     MS_LOG(ERROR) << "Invalid dataset mode:" << mode;
     return;
@@ -38,7 +38,7 @@ void ConfigManager::SetDatasetModeConfig(const std::string& mode) {
 
 void ConfigManager::ResetConfig() noexcept {
   parallel_strategy_ = ONE_DEVICE;
-  dataset_mode_ = DS_FEED_MODE;
+  dataset_mode_ = DS_NORMAL_MODE;
   dataset_param_ = DatasetGraphParam("", 0, 0, {}, {}, {});
   iter_num_ = 1;
 }

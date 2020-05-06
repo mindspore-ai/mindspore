@@ -42,15 +42,15 @@ using AbstractTuplePtr = abstract::AbstractTuplePtr;
 
 class ZipOperation : public MetaFuncGraph {
  public:
-  explicit ZipOperation(const std::string& name) : MetaFuncGraph(name) {}
+  explicit ZipOperation(const std::string &name) : MetaFuncGraph(name) {}
   ~ZipOperation() override = default;
   MS_DECLARE_PARENT(ZipOperation, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) override;
-  friend std::ostream& operator<<(std::ostream& os, const ZipOperation& op) {
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend std::ostream &operator<<(std::ostream &os, const ZipOperation &op) {
     os << op.name_;
     return os;
   }
-  friend bool operator==(const ZipOperation& lhs, const ZipOperation& rhs) { return lhs.name_ == rhs.name_; }
+  friend bool operator==(const ZipOperation &lhs, const ZipOperation &rhs) { return lhs.name_ == rhs.name_; }
 };
 using ZipOperationPtr = std::shared_ptr<ZipOperation>;
 }  // namespace prim

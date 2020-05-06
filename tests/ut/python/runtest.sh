@@ -39,15 +39,27 @@ if [ "x${ENABLE_GE}" == "xON" -o "x${ENABLE_GE}" == "xOn" -o "x${ENABLE_GE}" == 
 fi
 
 if [ $# -gt 0 ]; then
-    pytest -s --ignore=$1/pynative_mode $IGNORE_EXEC $1
+    pytest -s --ignore=$1/pynative_mode --ignore=$1/parallel  --ignore=$1/train  $IGNORE_EXEC $1
 else
-    pytest --ignore=$CURRPATH/pynative_mode $IGNORE_EXEC $CURRPATH
+    pytest --ignore=$CURRPATH/pynative_mode --ignore=$CURRPATH/parallel --ignore=$CURRPATH/train $IGNORE_EXEC $CURRPATH
 fi
 
 RET=$?
 if [ "x${IGNORE_EXEC}" != "x" ]; then
     exit ${RET}
 fi
+
+if [ ${RET} -ne 0 ]; then
+    exit ${RET}
+fi
+
+if [ $# -gt 0 ]; then
+    pytest -n 4 --dist=loadfile -v $1/parallel $1/train
+else
+    pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train
+fi
+
+RET=$?
 
 if [ ${RET} -ne 0 ]; then
     exit ${RET}

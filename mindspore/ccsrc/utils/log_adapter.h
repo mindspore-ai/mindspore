@@ -22,6 +22,7 @@
 #include <string>
 #include <sstream>
 #include <memory>
+#include "./overload.h"
 #include "./securec.h"
 #ifdef USE_GLOG
 #include "glog/logging.h"
@@ -53,6 +54,7 @@ enum ExceptionType {
   TimeOutError,
   ResourceUnavailable,
   NoPermissionError,
+  IndexError,
   ValueError,
   TypeError,
 };

@@ -1,0 +1,14 @@
+{
+  "columns": {
+    "image": {
+      "type": "uint8",
+      "rank": 2,  
+      "shape": [28,28]
+    },
+    "label": {
+      "type": "uint8",
+      "rank": 1,
+      "shape": [1]
+    }
+  }
+}

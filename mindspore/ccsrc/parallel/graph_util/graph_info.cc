@@ -15,21 +15,21 @@
  */
 
 #include "parallel/graph_util/graph_info.h"
-#include "ir/func_graph.h"
-#include "utils/graph_utils.h"
-#include "utils/context/ms_context.h"
-#include "debug/draw.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
+#include "debug/draw.h"
+#include "ir/func_graph.h"
+#include "utils/context/ms_context.h"
+#include "utils/graph_utils.h"
 
 namespace mindspore {
 namespace parallel {
-std::vector<PrimitivePtr> FindPrimtive(const FuncGraphPtr& graph, const std::string& name) {
+std::vector<PrimitivePtr> FindPrimtive(const FuncGraphPtr &graph, const std::string &name) {
   AnfNodePtr ret = graph->get_return();
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   std::vector<PrimitivePtr> prim_list;
-  for (auto& node : all_nodes) {
+  for (auto &node : all_nodes) {
     if (!IsValueNode<Primitive>(node)) {
       continue;
     }
@@ -44,7 +44,7 @@ std::vector<PrimitivePtr> FindPrimtive(const FuncGraphPtr& graph, const std::str
   return prim_list;
 }
 
-void DumpGraph(const FuncGraphPtr& root, const std::string& name) {
+void DumpGraph(const FuncGraphPtr &root, const std::string &name) {
   if (MsContext::GetInstance()->save_graphs_flag()) {
     draw::Draw(name + ".dot", root);
     DumpIR(name + ".ir", root);

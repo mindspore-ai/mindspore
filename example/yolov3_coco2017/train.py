@@ -16,26 +16,30 @@
 """
 ######################## train YOLOv3 example ########################
 train YOLOv3 and get network model files(.ckpt) :
-python train.py --image_dir dataset/coco/coco/train2017 --anno_path dataset/coco/train_coco.txt
+python train.py --image_dir /data --anno_path /data/coco/train_coco.txt --mindrecord_dir=/data/Mindrecord_train
+
+If the mindrecord_dir is empty, it wil generate mindrecord file by image_dir and anno_path.
+Note if mindrecord_dir isn't empty, it will use mindrecord_dir rather than image_dir and anno_path.
 """
 
+import os
 import argparse
 import numpy as np
 import mindspore.nn as nn
 from mindspore import context, Tensor
-from mindspore.common.initializer import initializer
 from mindspore.communication.management import init
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, LossMonitor, TimeMonitor
 from mindspore.train import Model, ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.common.initializer import initializer
 
 from mindspore.model_zoo.yolov3 import yolov3_resnet18, YoloWithLossCell, TrainingWrapper
-from dataset import create_yolo_dataset
+from dataset import create_yolo_dataset, data_to_mindrecord_byte_image
 from config import ConfigYOLOV3ResNet18
 
 
 def get_lr(learning_rate, start_step, global_step, decay_step, decay_rate, steps=False):
-    """Set learning rate"""
+    """Set learning rate."""
     lr_each_step = []
     lr = learning_rate
     for i in range(global_step):
@@ -57,59 +61,96 @@ def init_net_param(net, init='ones'):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="YOLOv3")
+    parser = argparse.ArgumentParser(description="YOLOv3 train")
+    parser.add_argument("--only_create_dataset", type=bool, default=False, help="If set it true, only create "
+                                                                                "Mindrecord, default is false.")
     parser.add_argument("--distribute", type=bool, default=False, help="Run distribute, default is false.")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
-    parser.add_argument("--mode", type=str, default="graph", help="Run graph mode or feed mode, default is graph")
+    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate, default is 0.001.")
+    parser.add_argument("--mode", type=str, default="sink", help="Run sink mode or not, default is sink")
     parser.add_argument("--epoch_size", type=int, default=10, help="Epoch size, default is 10")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size, default is 32.")
     parser.add_argument("--checkpoint_path", type=str, default="", help="Checkpoint file path")
     parser.add_argument("--save_checkpoint_epochs", type=int, default=5, help="Save checkpoint epochs, default is 5.")
     parser.add_argument("--loss_scale", type=int, default=1024, help="Loss scale, default is 1024.")
-    parser.add_argument("--image_dir", type=str, required=True, help="Dataset image dir.")
-    parser.add_argument("--anno_path", type=str, required=True, help="Dataset anno path.")
+    parser.add_argument("--mindrecord_dir", type=str, default="./Mindrecord_train",
+                        help="Mindrecord directory. If the mindrecord_dir is empty, it wil generate mindrecord file by"
+                             "image_dir and anno_path. Note if mindrecord_dir isn't empty, it will use mindrecord_dir "
+                             "rather than image_dir and anno_path. Default is ./Mindrecord_train")
+    parser.add_argument("--image_dir", type=str, default="", help="Dataset directory, "
+                                                                  "the absolute image path is joined by the image_dir "
+                                                                  "and the relative path in anno_path")
+    parser.add_argument("--anno_path", type=str, default="", help="Annotation path.")
     args_opt = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
-    context.set_context(enable_task_sink=True, enable_loop_sink=True, enable_mem_reuse=True)
+    context.set_context(enable_task_sink=True, enable_loop_sink=True, enable_mem_reuse=True,
+                        enable_auto_mixed_precision=False)
     if args_opt.distribute:
         device_num = args_opt.device_num
         context.reset_auto_parallel_context()
-        context.set_context(enable_hccl=True)
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
                                           device_num=device_num)
         init()
-        rank = args_opt.device_id
+        rank = args_opt.device_id % device_num
     else:
-        context.set_context(enable_hccl=False)
         rank = 0
         device_num = 1
 
-    loss_scale = float(args_opt.loss_scale)
-    dataset = create_yolo_dataset(args_opt.image_dir, args_opt.anno_path, repeat_num=args_opt.epoch_size,
-                                  batch_size=args_opt.batch_size, device_num=device_num, rank=rank)
-    dataset_size = dataset.get_dataset_size()
-    net = yolov3_resnet18(ConfigYOLOV3ResNet18())
-    net = YoloWithLossCell(net, ConfigYOLOV3ResNet18())
-    init_net_param(net, "XavierUniform")
+    print("Start create dataset!")
 
-    # checkpoint
-    ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset_size * args_opt.save_checkpoint_epochs)
-    ckpoint_cb = ModelCheckpoint(prefix="yolov3", directory=None, config=ckpt_config)
-    if args_opt.checkpoint_path != "":
-        param_dict = load_checkpoint(args_opt.checkpoint_path)
-        load_param_into_net(net, param_dict)
+    # It will generate mindrecord file in args_opt.mindrecord_dir,
+    # and the file name is yolo.mindrecord0, 1, ... file_num.
+    if not os.path.isdir(args_opt.mindrecord_dir):
+        os.makedirs(args_opt.mindrecord_dir)
 
-    lr = Tensor(get_lr(learning_rate=0.001, start_step=0, global_step=args_opt.epoch_size * dataset_size,
-                       decay_step=1000, decay_rate=0.95))
-    opt = nn.Adam(filter(lambda x: x.requires_grad, net.get_parameters()), lr, loss_scale=loss_scale)
-    net = TrainingWrapper(net, opt, loss_scale)
-    callback = [TimeMonitor(data_size=dataset_size), LossMonitor(), ckpoint_cb]
+    prefix = "yolo.mindrecord"
+    mindrecord_file = os.path.join(args_opt.mindrecord_dir, prefix + "0")
+    if not os.path.exists(mindrecord_file):
+        if os.path.isdir(args_opt.image_dir) and os.path.exists(args_opt.anno_path):
+            print("Create Mindrecord.")
+            data_to_mindrecord_byte_image(args_opt.image_dir,
+                                          args_opt.anno_path,
+                                          args_opt.mindrecord_dir,
+                                          prefix=prefix,
+                                          file_num=8)
+            print("Create Mindrecord Done, at {}".format(args_opt.mindrecord_dir))
+        else:
+            print("image_dir or anno_path not exits.")
 
-    model = Model(net)
-    dataset_sink_mode = False
-    if args_opt.mode == "graph":
-        dataset_sink_mode = True
-    print("Start train YOLOv3.")
-    model.train(args_opt.epoch_size, dataset, callbacks=callback, dataset_sink_mode=dataset_sink_mode)
+    if not args_opt.only_create_dataset:
+        loss_scale = float(args_opt.loss_scale)
+
+        # When create MindDataset, using the fitst mindrecord file, such as yolo.mindrecord0.
+        dataset = create_yolo_dataset(mindrecord_file, repeat_num=args_opt.epoch_size,
+                                      batch_size=args_opt.batch_size, device_num=device_num, rank=rank)
+        dataset_size = dataset.get_dataset_size()
+        print("Create dataset done!")
+
+        net = yolov3_resnet18(ConfigYOLOV3ResNet18())
+        net = YoloWithLossCell(net, ConfigYOLOV3ResNet18())
+        init_net_param(net, "XavierUniform")
+
+        # checkpoint
+        ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset_size * args_opt.save_checkpoint_epochs)
+        ckpoint_cb = ModelCheckpoint(prefix="yolov3", directory=None, config=ckpt_config)
+
+        lr = Tensor(get_lr(learning_rate=args_opt.lr, start_step=0, global_step=args_opt.epoch_size * dataset_size,
+                           decay_step=1000, decay_rate=0.95, steps=True))
+        opt = nn.Adam(filter(lambda x: x.requires_grad, net.get_parameters()), lr, loss_scale=loss_scale)
+        net = TrainingWrapper(net, opt, loss_scale)
+
+        if args_opt.checkpoint_path != "":
+            param_dict = load_checkpoint(args_opt.checkpoint_path)
+            load_param_into_net(net, param_dict)
+
+        callback = [TimeMonitor(data_size=dataset_size), LossMonitor(), ckpoint_cb]
+
+        model = Model(net)
+        dataset_sink_mode = False
+        if args_opt.mode == "sink":
+            print("In sink mode, one epoch return a loss.")
+            dataset_sink_mode = True
+        print("Start train YOLOv3, the first epoch will be slower because of the graph compilation.")
+        model.train(args_opt.epoch_size, dataset, callbacks=callback, dataset_sink_mode=dataset_sink_mode)

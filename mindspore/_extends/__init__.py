@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Extension  functions.
+Extension functions.
 
 Python functions that will be called in the c++ parts of MindSpore.
 """

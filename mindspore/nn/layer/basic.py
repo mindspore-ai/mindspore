@@ -21,24 +21,26 @@ from mindspore._checkparam import check_int_positive, check_bool
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import identity
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
+from mindspore.common.api import ms_function
 from ..cell import Cell
 from .activation import get_activation
-from ..._checkparam import ParamValidator as validator
+from ..._checkparam import Validator as validator
 
 
 class Dropout(Cell):
     r"""
     Dropout layer for the input.
 
-    Randomly set some elements of the input tensor to zero with probability :math:`1 - keep_prob` during training
+    Randomly set some elements of the input tensor to zero with probability :math:`1 - keep\_prob` during training
     using samples from a Bernoulli distribution.
 
     Note:
         Each channel will be zeroed out independently on every construct call.
 
-        The outputs are scaled by a factor of :math:`\frac{1}{keep_prob}` during training so
+        The outputs are scaled by a factor of :math:`\frac{1}{keep\_prob}` during training so
         that the output layer remains at a similar scale. During inference, this
         layer returns the same tensor as the input.
 
@@ -65,7 +67,7 @@ class Dropout(Cell):
         Tensor, output tensor with the same shape as the input.
 
     Examples:
-        >>> x = mindspore.Tensor(np.ones([20, 16, 50]), mindspore.float32)
+        >>> x = Tensor(np.ones([20, 16, 50]), mindspore.float32)
         >>> net = nn.Dropout(keep_prob=0.8)
         >>> net(x)
     """
@@ -73,7 +75,7 @@ class Dropout(Cell):
         super(Dropout, self).__init__()
         if keep_prob <= 0 or keep_prob > 1:
             raise ValueError("dropout probability should be a number in range (0, 1], but got {}".format(keep_prob))
-        validator.check_subclass("dtype", dtype, mstype.number_type)
+        validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         self.keep_prob = Tensor(keep_prob)
         self.seed0 = seed0
         self.seed1 = seed1
@@ -111,7 +113,7 @@ class Flatten(Cell):
 
     Examples:
         >>> net = nn.Flatten()
-        >>> input = mindspore.Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
+        >>> input = Tensor(np.array([[[1.2, 1.2], [2.1, 2.1]], [[2.2, 2.2], [3.2, 3.2]]]), mindspore.float32)
         >>> input.shape()
         (2, 2, 2)
         >>> net(input)
@@ -149,21 +151,18 @@ class Dense(Cell):
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (str): Regularizer function applied to the output of the layer, eg. 'relu'. Default: None.
 
-    Returns:
-        Tensor, output tensor.
-
     Raises:
         ValueError: If weight_init or bias_init shape is incorrect.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, in_channels)`.
+        - **input** (Tensor) - Tensor of shape :math:`(N, in\_channels)`.
 
     Outputs:
-        Tensor of shape :math:`(N, out_channels)`.
+        Tensor of shape :math:`(N, out\_channels)`.
 
     Examples:
         >>> net = nn.Dense(3, 4)
-        >>> input = mindspore.Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
+        >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
         >>> net(input)
         [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]
          [ 1.0739875   4.0155234   0.94188046 -5.459526  ]]
@@ -243,8 +242,8 @@ class ClipByNorm(Cell):
 
     Examples:
         >>> net = nn.ClipByNorm()
-        >>> input = mindspore.Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
-        >>> clip_norm = mindspore.Tensor(np.array([100]).astype(np.float32))
+        >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
+        >>> clip_norm = Tensor(np.array([100]).astype(np.float32))
         >>> net(input, clip_norm)
 
     """
@@ -264,7 +263,9 @@ class ClipByNorm(Cell):
         self.expand_dims = P.ExpandDims()
         self.dtype = P.DType()
 
+    @ms_function
     def construct(self, x, clip_norm):
+        """add ms_function decorator for pynative mode"""
         mul_x = F.square(x)
         l2sum = self.cast(self.reduce_sum(mul_x, self.axis), mstype.float32)
         cond = self.greater_(l2sum, self.zero)
@@ -290,9 +291,6 @@ class Norm(Cell):
         keep_dims (bool): If True, the axis indicated in `axis` are kept with size 1. Otherwise,
                    the dimensions in `axis` are removed from the output shape. Default: False.
 
-    Returns:
-        Tensor, a Tensor of the same type as input, containing the vector or matrix norms.
-
     Inputs:
         - **input** (Tensor) - Tensor which is not empty.
 
@@ -302,7 +300,7 @@ class Norm(Cell):
 
     Examples:
         >>> net = nn.Norm(axis=0)
-        >>> input = mindspore.Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
+        >>> input = Tensor(np.random.randint(0, 10, [4, 16]), mindspore.float32)
         >>> net(input)
     """
     def __init__(self, axis=(), keep_dims=False):
@@ -344,7 +342,8 @@ class OneHot(Cell):
                           when indices[j] = i. Default: 1.0.
         off_value (float): A scalar defining the value to fill in output[i][j]
                            when indices[j] != i. Default: 0.0.
-        dtype (:class:`mindspore.dtype`): Default: mindspore.float32.
+        dtype (:class:`mindspore.dtype`): Data type of 'on_value' and 'off_value', not the
+                                          data type of indices. Default: mindspore.float32.
 
     Inputs:
         - **indices** (Tensor) - A tensor of indices of data type mindspore.int32 and arbitrary shape.
@@ -355,7 +354,7 @@ class OneHot(Cell):
 
     Examples:
         >>> net = nn.OneHot(depth=4, axis=1)
-        >>> indices = mindspore.Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
+        >>> indices = Tensor([[1, 3], [0, 2]], dtype=mindspore.int32)
         >>> net(indices)
         [[[0. 0.]
           [1. 0.]
@@ -375,3 +374,120 @@ class OneHot(Cell):
 
     def construct(self, indices):
         return self.onehot(indices, self.depth, self.on_value, self.off_value)
+
+
+class Pad(Cell):
+    """
+    Pads the input tensor according to the paddings and mode.
+
+    Args:
+        paddings (tuple): The shape of parameter `paddings` is (N, 2). N is the rank of input data. All elements of
+            paddings are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
+            extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates how many sizes to
+            be extended behind of the `D` th dimension of the input tensor.
+        mode (string): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
+            Default: "CONSTANT".
+
+    Inputs:
+        - ** input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, the tensor after padding.
+
+        - If `mode` is "CONSTANT", it fill the edge with 0, regardless of the values of the `input_x`.
+          If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
+          Outputs is [[0,0,0,0,0,0,0],[0,0,1,2,3,0,0],[0,0,4,5,6,0,0],[0,0,7,8,9,0,0],[0,0,0,0,0,0,0]].
+        - If 'mode` is "REFLECT", it uses a way of symmetrical copying throught the axis of symmetry to fill in,
+          symmetry. If the `input_x` is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the
+          Outputs is [[6,5,4,5,6,5,4],[3,2,1,2,3,2,1],[6,5,4,5,6,5,4],[9,8,7,8,9,8,7],[6,5,4,5,6,5,4]].
+        - If 'mode' is "SYMMETRIC", the filling method is similar to the "REFLECT". It is also copied
+          according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
+          is [[1,2,3],[4,5,6],[7,8,9]] and `paddings` is [[1,1],[2,2]], then the Outputs is
+          [[2,1,1,2,3,3,2],[2,1,1,2,3,3,2],[5,4,4,5,6,6,5],[8,7,7,8,9,9,8],[8,7,7,8,9,9,8]].
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.pad = nn.Pad(paddings=((1,1),(2,2)), mode="CONSTANT")
+        >>>     def construct(self, x):
+        >>>         return self.pad(x)
+        >>> x = np.random.random(size=(2, 3)).astype(np.float32)
+        >>> pad = Net()
+        >>> ms_output = pad(Tensor(x))
+    """
+
+    def __init__(self, paddings, mode="CONSTANT"):
+        super(Pad, self).__init__()
+        self.mode = mode
+        self.paddings = paddings
+        validator.check_string('mode', self.mode, ["CONSTANT", "REFLECT", "SYMMETRIC"], self.cls_name)
+        if not isinstance(paddings, tuple):
+            raise TypeError('Paddings must be tuple type.')
+        for item in paddings:
+            if len(item) != 2:
+                raise ValueError('The shape of paddings must be (n, 2).')
+        if mode == "CONSTANT":
+            self.pad = P.Pad(self.paddings)
+        else:
+            self.paddings = Tensor(np.array(self.paddings))
+            self.pad = P.MirrorPad(mode=mode)
+
+    def construct(self, x):
+        if self.mode == "CONSTANT":
+            x = self.pad(x)
+        else:
+            x = self.pad(x, self.paddings)
+        return x
+
+
+class Unfold(Cell):
+    """
+    Extract patches from images.
+    The input tensor must be a 4-D tensor and the data format is NCHW.
+
+    Args:
+        ksizes (Union[tuple[int], list[int]]): The size of sliding window, should be a tuple or list of int,
+            and the format is [1, ksize_row, ksize_col, 1].
+        strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
+            should be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
+        rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dim
+            pixel positions, should be a tuple or list of int, and the format is [1, rate_row, rate_col, 1].
+        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
+            not case sensitive. Default: "valid".
+
+            - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
+
+            - valid: Means that the patch area taken must be completely contained in the original image.
+
+    Inputs:
+        - **input_x** (Tensor) - A 4-D tensor whose shape is [in_batch, in_depth, in_row, in_col] and
+          data type is int8, float16, uint8.
+
+    Outputs:
+        Tensor, a 4-D tensor whose data type is same as 'input_x',
+        and the shape is [out_batch, out_depth, out_row, out_col], the out_batch is same as the in_batch.
+
+    Examples:
+        >>> net = Unfold(ksizes=[1, 2, 2, 1], strides=[1, 1, 1, 1], rates=[1, 1, 1, 1])
+        >>> image = Tensor(np.ones([1, 1, 3, 3]), dtype=mstype.float16)
+        >>> net(image)
+        Tensor ([[[[1, 1] [1, 1]] [[1, 1], [1, 1]] [[1, 1] [1, 1]], [[1, 1], [1, 1]]]],
+                shape=(1, 4, 2, 2), dtype=mstype.float16)
+    """
+    def __init__(self, ksizes, strides, rates, padding="valid"):
+        super(Unfold, self).__init__()
+        self.extract_image_patches = inner.ExtractImagePatches(ksizes, strides, rates, padding)
+        self.transpose = P.Transpose()
+        self.format_NHWC = (0, 2, 3, 1)
+        self.format_NCHW = (0, 3, 1, 2)
+
+    def construct(self, input_x):
+        x_transpose = self.transpose(input_x, self.format_NHWC)
+        ret = self.extract_image_patches(x_transpose)
+        ret_transpose = self.transpose(ret, self.format_NCHW)
+        return ret_transpose

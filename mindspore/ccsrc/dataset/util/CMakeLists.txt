@@ -3,7 +3,6 @@ add_library(utils OBJECT
     circular_pool.cc
     memory_pool.cc
     cond_var.cc
-    semaphore.cc
     intrp_service.cc
     task.cc
     task_manager.cc

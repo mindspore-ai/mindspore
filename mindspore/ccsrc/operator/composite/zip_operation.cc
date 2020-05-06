@@ -36,7 +36,7 @@ namespace prim {
 using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractTuple;
 
-FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // zip operation:
   // input: tuple arguments
   // output: tuple of items of input iterated on every input
@@ -44,7 +44,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList& args_spe
     MS_LOG(EXCEPTION) << "zip arguments input should not be empty";
   }
 
-  auto is_all_tuple = std::all_of(args_spec_list.begin(), args_spec_list.end(), [](const AbstractBasePtr& abs) -> bool {
+  auto is_all_tuple = std::all_of(args_spec_list.begin(), args_spec_list.end(), [](const AbstractBasePtr &abs) -> bool {
     MS_EXCEPTION_IF_NULL(abs);
     return abs->isa<AbstractTuple>();
   });
@@ -53,7 +53,7 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList& args_spe
   }
 
   auto min_abs = std::min_element(args_spec_list.begin(), args_spec_list.end(),
-                                  [](const AbstractBasePtr& x, const AbstractBasePtr& y) {
+                                  [](const AbstractBasePtr &x, const AbstractBasePtr &y) {
                                     return (x->cast<AbstractTuplePtr>()->size() < y->cast<AbstractTuplePtr>()->size());
                                   });
   FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
@@ -81,10 +81,10 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList& args_spe
   return ret_graph;
 }
 
-REGISTER_PYBIND_DEFINE(ZipOperation_, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(ZipOperation_, ([](const py::module *m) {
                          (void)py::class_<ZipOperation, MetaFuncGraph, std::shared_ptr<ZipOperation>>(*m,
                                                                                                       "ZipOperation_")
-                           .def(py::init<std::string&>());
+                           .def(py::init<std::string &>());
                        }));
 }  // namespace prim
 }  // namespace mindspore

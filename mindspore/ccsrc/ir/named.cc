@@ -18,9 +18,9 @@
 #include "pipeline/static_analysis/abstract_value.h"
 
 namespace mindspore {
-bool Named::operator==(const Value& other) const {
+bool Named::operator==(const Value &other) const {
   if (other.isa<Named>()) {
-    auto other_named = static_cast<const Named&>(other);
+    auto other_named = static_cast<const Named &>(other);
     return *this == other_named;
   } else {
     return false;
@@ -31,5 +31,8 @@ abstract::AbstractBasePtr None::ToAbstract() { return std::make_shared<abstract:
 const NamedPtr kNone = std::make_shared<None>();
 
 abstract::AbstractBasePtr NullObj::ToAbstract() { return std::make_shared<abstract::AbstractNull>(); }
-const NamedPtr kNullObj = std::make_shared<NullObj>();
+const NamedPtr kNull = std::make_shared<NullObj>();
+
+abstract::AbstractBasePtr EllipsisObj::ToAbstract() { return std::make_shared<abstract::AbstractEllipsis>(); }
+const NamedPtr kEllipsis = std::make_shared<EllipsisObj>();
 }  // namespace mindspore

@@ -158,6 +158,16 @@ TEST_F(MindDataTestTensorDE, InsertTensor) {
   ASSERT_EQ(*t == *t6, true);
 }
 
+// Test the bug of Tensor::ToString will exec failed for Tensor which store bool values
+TEST_F(MindDataTestTensorDE, BoolTensor) {
+  std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2}),
+                                                       DataType(DataType::DE_BOOL));
+  t->SetItemAt<bool>({0}, true);
+  t->SetItemAt<bool>({1}, true);
+  std::string out = t->ToString();
+  ASSERT_TRUE(out.find("Template type and Tensor type are not compatible") == std::string::npos);
+}
+
 TEST_F(MindDataTestTensorDE, GetItemAt) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 2}), DataType(DataType::DE_UINT8));
   t->Fill<uint8_t>(254);
@@ -311,7 +321,7 @@ TEST_F(MindDataTestTensorDE, CVTensorAs) {
   m = 2 * m;
   ASSERT_EQ(ctv->StartAddr(), addr);
   ASSERT_TRUE(*t2 == *ctv);
-  std::cout << *t2 << std::endl << *ctv;
+  MS_LOG(DEBUG) << *t2 << std::endl << *ctv;
 }
 
 TEST_F(MindDataTestTensorDE, CVTensorMatSlice) {

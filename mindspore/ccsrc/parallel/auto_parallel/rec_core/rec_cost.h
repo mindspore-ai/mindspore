@@ -18,13 +18,13 @@
 #define PARALLEL_AUTO_PARALLEL_REC_COST_H_
 
 #include <iostream>
-#include <vector>
+#include <memory>
 #include <string>
 #include <utility>
-#include <memory>
+#include <vector>
 
-#include "parallel/auto_parallel/rec_core/rec_strategy.h"
 #include "parallel/auto_parallel/rec_core/rec_graph.h"
+#include "parallel/auto_parallel/rec_core/rec_strategy.h"
 
 namespace mindspore {
 namespace parallel {
@@ -157,21 +157,6 @@ class CostPooling {
   double cost_in_ = 0;
 };  // class CostPooling is used to compute the cost of Pooling operator.
 
-// class CostAdd is used to compute the cost of Add operator.
-class CostAdd {
- public:
-  StrategyRec GetOptimalStr(const Graph::NodeType &node,
-                            const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                            const Graph &graph);
-
-  double GetMinCostIn() const { return cost_in_; }
-
- private:
-  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
-
-  double cost_in_ = 0;
-};  // class CostAdd is used to compute the cost of Add operator.
-
 // class CostReshape is used to compute the cost of Reshape operator.
 class CostReshape {
  public:
@@ -185,35 +170,41 @@ class CostReshape {
   double cost_in_ = 0;
 };  // class CostReshape is used to compute the cost of Reshape operator.
 
-// class CostBiasAdd is used to compute the cost of BiasAdd operator.
-class CostBiasAdd {
- public:
-  StrategyRec GetOptimalStr(const Graph::NodeType &node,
-                            const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                            const Graph &graph);
-
-  double GetMinCostIn() const { return cost_in_; }
-
- private:
-  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
-
-  double cost_in_ = 0;
-};  // class CostBiasAdd is used to compute the cost of BiasAdd operator.
-
-// class CostCommon is used to compute the cost of the element independent operator.
+// class CostCommon is used to compute the cost of an element-wise operator
 class CostCommon {
  public:
-  StrategyRec GetOptimalStr(const Graph::NodeType &node,
-                            const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                            const Graph &graph);
+  virtual StrategyRec GetOptimalStr(const Graph::NodeType &node,
+                                    const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
+                                    const Graph &graph);
 
-  double GetMinCostIn() const { return cost_in_; }
+  virtual double GetMinCostIn() const { return cost_in_; }
 
- private:
-  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
+ protected:
+  virtual StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
 
   double cost_in_ = 0;
-};  // class CostCommon is used to compute the cost of Softmax & || Activation operator.
+};  // class CostCommon is used to compute the cost of an element-wise operator
+
+// class CostBiasAdd is used to compute the cost of the addition between a tensor and a bias
+class CostBiasAdd : public CostCommon {
+  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
+};
+// class CostAdd is used to compute the cost of Add operator.
+class CostTensorAdd : public CostCommon {
+  StrategyRec ChoseStr(const std::vector<double> &cost_op, StrategyRec str);
+};
+
+// all the following operation are element-wise and have the same cost
+class CostOneHot : public CostCommon {};
+class CostReLU : public CostCommon {};
+class CostLog : public CostCommon {};
+class CostExp : public CostCommon {};
+class CostAdd : public CostCommon {};
+class CostSub : public CostCommon {};
+class CostMul : public CostCommon {};
+class CostDiv : public CostCommon {};
+class CostSqueeze : public CostCommon {};
+class CostCast : public CostCommon {};
 
 // class BatchNorm is used to compute the cost of BatchNorm operator.
 class CostBatchNorm {
@@ -222,7 +213,7 @@ class CostBatchNorm {
                             const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
                             const Graph &graph);
 
-  double GetMinCostIn() const { return 0.0; }
+  double GetMinCostIn(const OperatorRec &op);
 
  private:
   double StrDimB(int32_t Tensor) {

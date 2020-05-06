@@ -1,5 +1,8 @@
-file(GLOB_RECURSE _TRANSFORM_ALL_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "*.cc"
-        )
+if (ENABLE_GE OR ENABLE_D)
+    file(GLOB_RECURSE _TRANSFORM_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
+    add_library(_mindspore_transform_obj OBJECT ${_TRANSFORM_SRC_LIST})
 
-add_library(_mindspore_transform_obj OBJECT ${_TRANSFORM_ALL_SRC_FILES})
+    if (NOT ENABLE_GE)
+        target_compile_definitions(_mindspore_transform_obj PRIVATE NO_GE_CLIENT)
+    endif()
+endif ()

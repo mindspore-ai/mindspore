@@ -147,13 +147,13 @@ TEST_F(TestConvert, TestReluOps) {
 }
 
 TEST_F(TestConvert, TestConvertBatchNorm) {
-  PrimitivePtr fused_batch_norm = prim::kPrimFusedBatchNorm;
-  fused_batch_norm->AddAttr("epsilon", MakeValue(0.001f));
-  fused_batch_norm->AddAttr("momentum", MakeValue(0.1f));
+  PrimitivePtr batch_norm = prim::kPrimBatchNorm;
+  batch_norm->AddAttr("epsilon", MakeValue(0.001f));
+  batch_norm->AddAttr("momentum", MakeValue(0.1f));
 
   FuncGraphPtr anf_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(fused_batch_norm));
+  inputs.push_back(NewValueNode(batch_norm));
   for (unsigned int i = 0; i < 5; i++) {
     inputs.push_back(anf_graph->add_parameter());
   }
@@ -189,7 +189,8 @@ TEST_F(TestConvert, TestConvertBatchNorm) {
 
 TEST_F(TestConvert, TestConvertConvBackpropInput) {
   auto prim = prim::kPrimConv2DBackpropInput;
-  prim->AddAttr("stride", MakeValue(1));
+  const std::vector<int> list{1,1};
+  prim->AddAttr("stride", MakeValue(list));
   prim->AddAttr("pad", MakeValue(0));
   prim->AddAttr("pad_mode", MakeValue(std::string("pad")));
   prim->AddAttr("dilation", MakeValue(1));
@@ -218,7 +219,8 @@ TEST_F(TestConvert, TestConvertConvBackpropInput) {
 
 TEST_F(TestConvert, TestConvertConvBackpropFilter) {
   auto prim = prim::kPrimConv2DBackpropFilter;
-  prim->AddAttr("stride", MakeValue(1));
+  const std::vector<int> list{1,1};
+  prim->AddAttr("stride", MakeValue(list));
   prim->AddAttr("pad", MakeValue(0));
   prim->AddAttr("pad_mode", MakeValue(std::string("pad")));
   prim->AddAttr("dilation", MakeValue(1));
@@ -617,6 +619,12 @@ TEST_F(TestConvert, TestScalarSummaryOps) {
 
 TEST_F(TestConvert, TestTensorSummaryOps) {
   auto prim = prim::kPrimTensorSummary;
+  bool ret = MakeDfGraph(prim, 2);
+  ASSERT_TRUE(ret);
+}
+
+TEST_F(TestConvert, TestHistogramSummaryOps) {
+  auto prim = prim::kPrimHistogramSummary;
   bool ret = MakeDfGraph(prim, 2);
   ASSERT_TRUE(ret);
 }

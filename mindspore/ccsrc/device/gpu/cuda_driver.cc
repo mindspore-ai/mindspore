@@ -96,7 +96,7 @@ size_t CudaDriver::free_mem_size() {
 }
 
 bool CudaDriver::CreateStream(DeviceStream *stream) {
-  auto ret = cudaStreamCreate(reinterpret_cast<CUstream_st **>(stream));
+  auto ret = cudaStreamCreateWithFlags(reinterpret_cast<CUstream_st **>(stream), cudaStreamNonBlocking);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaStreamCreate failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
     return false;

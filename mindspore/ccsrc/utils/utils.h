@@ -42,12 +42,14 @@ constexpr auto kBNGrad2OpName = "BNGrad2";
 constexpr auto kBNGrad3OpName = "BNGrad3";
 constexpr auto kClearZeroOpName = "ClearZero";
 constexpr auto kAtomicAddrCleanOpName = "AtomicAddrClean";
+constexpr auto kGetNextOpName = "GetNext";
 constexpr auto kAllReduceOpName = "AllReduce";
 constexpr auto kAllGatherOpName = "AllGather";
 constexpr auto kBroadcastOpName = "Broadcast";
 constexpr auto kReduceScatterOpName = "ReduceScatter";
 constexpr auto kMemCpyAsyncOpName = "memcpy_async";
 constexpr auto kTopKOpName = "TopK";
+constexpr auto kExtractImagePatchesOpName = "ExtractImagePatches";
 constexpr auto kBNTrainingReduceOpName = "BNTrainingReduce";
 constexpr auto kBNTrainingUpdateOpName = "BNTrainingUpdate";
 constexpr auto kSimpleMeanGradOpName = "SimpleMeanGrad";
@@ -90,6 +92,7 @@ constexpr auto kClipByNormNoDivSumOpName = "ClipByNormNoDivSum";
 constexpr auto kGreaterOpName = "Greater";
 constexpr auto kSqrtOpName = "Sqrt";
 constexpr auto kRsqrtOpName = "Rsqrt";
+constexpr auto kErfOpName = "Erf";
 constexpr auto kRealDivOpName = "RealDiv";
 constexpr auto kLambUpdateWithLROpName = "LambUpdateWithLR";
 constexpr auto kLambNextMVWithDecayOpName = "LambNextMVWithDecay";
@@ -104,12 +107,26 @@ constexpr auto kLambNextMVOpName = "LambNextMV";
 constexpr auto kConfusionTransposeDOpName = "ConfusionTransposeD";
 constexpr auto kAdamApplyOneWithDecayOpName = "AdamApplyOneWithDecay";
 constexpr auto kBatchNormOpName = "BatchNorm";
+constexpr auto kBatchNormGradOpName = "BatchNormGrad";
 constexpr auto kAdamApplyOneOpName = "AdamApplyOne";
 constexpr auto kDropoutGenMask = "DropoutGenMask";
 constexpr auto kResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
 constexpr auto kFusedMulAddOpName = "FusedMulAdd";
 constexpr auto kFusedMulAddNOpName = "FusedMulAddN";
 constexpr auto kFusedMulApplyMomentumOpName = "FusedMulApplyMomentum";
+constexpr auto kBiasAddOpName = "BiasAdd";
+constexpr auto kConfusionMulGradOpName = "ConfusionMulGrad";
+constexpr auto kStreamSwitchOpName = "StreamSwitch";
+constexpr auto kStreamActiveOpName = "StreamActive";
+constexpr auto kAssignAddOpName = "AssignAdd";
+constexpr auto kSendOpName = "Send";
+constexpr auto kRecvOpName = "Recv";
+constexpr auto kReluV2OpName = "ReLUV2";
+constexpr auto kReluGradV2OpName = "ReluGradV2";
+constexpr auto kAddNOpName = "AddN";
+constexpr auto kConv2DBackpropInputOpName = "Conv2DBackpropInput";
+constexpr auto kFusionOpConv2DBackpropInputReluGradV2Name = "FusionOp_Conv2DBackpropInput_ReluGradV2";
+constexpr auto kFusionOpConv2DBackpropInputAddNReluGradV2Name = "FusionOp_Conv2DBackpropInput_AddN_ReluGradV2";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -140,6 +157,13 @@ constexpr auto kAttrDynInput = "dynamic";
 constexpr auto kAttrDynInputSizes = "dyn_input_sizes";
 constexpr auto kAttrSrcFormat = "src_format";
 constexpr auto kAttrOutputUsedNum = "output_used_num";
+constexpr auto kAttrHasBias = "has_bias";
+constexpr auto kAttrN = "n";
+constexpr auto kAttrLabelForInsertStreamActive = "label_for_insert_stream_active";
+constexpr auto kAttrFusion = "fusion";
+constexpr auto kAttrGroup = "group";
+constexpr auto kAttrOp = "op";
+constexpr auto kAttrIsTraining = "is_training";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
@@ -162,7 +186,10 @@ constexpr auto kControlDependBehindIndex = 2;
 // index define of depend
 constexpr auto kRealInputIndexInDepend = 1;
 constexpr auto kDependAttachNodeIndex = 2;
-
+// status of kernel select result
+const int kStatusReducePrecision = -1;
+const int kStatusRaisePrecision = 1;
+const int kStatusAllMatched = 0;
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
 constexpr auto kOpFormat_NC1KHKWHWC0 = "NC1KHKWHWC0";
@@ -174,8 +201,11 @@ constexpr auto kOpFormat_NC1HWC0 = "NC1HWC0";
 constexpr auto kOpFormat_FRAC_Z = "FracZ";
 constexpr auto kOpFormat_FRAC_NZ = "FRACTAL_NZ";
 constexpr auto kOpFormat_C1HWNCoC0 = "C1HWNCoC0";
-const std::set<std::string> k1DSupportFormat = {kOpFormat_DEFAULT, kOpFormat_NCHW,        kOpFormat_NHWC,
-                                                kOpFormat_FRAC_Z,  kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0};
+constexpr auto kOpFormat_NC1HWC0_C04 = "NC1HWC0_C04";
+const std::set<std::string> k1DSupportFormat = {kOpFormat_DEFAULT,  kOpFormat_NCHW,        kOpFormat_NHWC,
+                                                kOpFormat_FRAC_Z,   kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
+                                                kOpFormat_C1HWNCoC0};
+
 const std::set<std::string> k2DSupportFormat = {kOpFormat_DEFAULT, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_FRAC_Z,
                                                 kOpFormat_NC1KHKWHWC0};
 const std::set<std::string> k3DSupportFormat = {kOpFormat_DEFAULT, kOpFormat_NC1KHKWHWC0};
@@ -184,7 +214,7 @@ const std::vector<std::set<std::string>> kShapeSupportFormatMap = {k1DSupportFor
                                                                    k4DSupportFormat};
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
 
-const std::set<std::string> kOptOpeatorSet = {
+const std::set<std::string> kOptOperatorSet = {
   kMomentumOpName,       kApplyMomentumOpName,        kApplyAdadeltaOpName,
   kApplyAdagradOpName,   kApplyAdagradDAName,         kApplyAdamOpName,
   kApplyAdaMaxOpName,    kApplyAddSignOpName,         kApplyCenteredRMSPOpName,
@@ -193,7 +223,10 @@ const std::set<std::string> kOptOpeatorSet = {
   kApplyRMSPropOpName,
 };
 
-static inline void ChangeFileMode(const std::string& file_name, mode_t mode) {
+const std::set<std::string> kNeedTransFormatSet = {kOpFormat_FRAC_Z, kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
+                                                   kOpFormat_FRAC_NZ, kOpFormat_C1HWNCoC0};
+
+static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   if (access(file_name.c_str(), F_OK) != 0) {
     MS_LOG(DEBUG) << "File `" << file_name << "` does not exist.";
     return;

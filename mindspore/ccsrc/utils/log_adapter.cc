@@ -26,12 +26,19 @@ namespace mindspore {
 #ifdef USE_GLOG
 static std::string GetTime() {
 #define BUFLEN 80
+  static char buf[BUFLEN];
+#if defined(_WIN32) || defined(_WIN64)
+  time_t time_seconds = time(0);
+  struct tm now_time;
+  localtime_s(&now_time, &time_seconds);
+  sprintf_s(buf, BUFLEN, "%d-%d-%d %d:%d:%d", now_time.tm_year + 1900, now_time.tm_mon + 1, now_time.tm_mday,
+            now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
+#else
   struct timeval cur_time;
-  (void)gettimeofday(&cur_time, NULL);
+  (void)gettimeofday(&cur_time, nullptr);
 
   struct tm now;
   (void)localtime_r(&cur_time.tv_sec, &now);
-  static char buf[BUFLEN];
   (void)strftime(buf, BUFLEN, "%Y-%m-%d-%H:%M:%S", &now);  // format date and time
   // set micro-second
   buf[27] = '\0';
@@ -44,6 +51,7 @@ static std::string GetTime() {
       buf[idx--] = '.';
     }
   }
+#endif
   return std::string(buf);
 }
 
@@ -96,6 +104,13 @@ static int GetGlogLevel(MsLogLevel level) {
   }
 }
 #else
+
+#undef Dlog
+#define Dlog(module_id, level, format, ...)                   \
+  do {                                                        \
+    DlogInner((module_id), (level), (format), ##__VA_ARGS__); \
+  } while (0)
+
 // convert MsLogLevel to corresponding slog level
 static int GetSlogLevel(MsLogLevel level) {
   switch (level) {
@@ -128,6 +143,7 @@ static std::string ExceptionTypeToString(ExceptionType type) {
       _TO_STRING(TimeOutError),
       _TO_STRING(ResourceUnavailable),
       _TO_STRING(NoPermissionError),
+      _TO_STRING(IndexError),
       _TO_STRING(ValueError),
       _TO_STRING(TypeError),
   };
@@ -164,7 +180,8 @@ void LogWriter::operator^(const LogStream &stream) const {
 
   std::ostringstream oss;
   oss << location_.file_ << ":" << location_.line_ << " " << location_.func_ << "] ";
-  if (exception_type_ != NoExceptionType) {
+  if (exception_type_ != NoExceptionType && exception_type_ != IndexError && exception_type_ != TypeError &&
+      exception_type_ != ValueError) {
     oss << ExceptionTypeToString(exception_type_) << " ";
   }
   oss << msg.str();
@@ -172,6 +189,9 @@ void LogWriter::operator^(const LogStream &stream) const {
   trace::TraceGraphInfer();
   trace::GetInferStackInfo(oss);
 
+  if (exception_type_ == IndexError) {
+    throw pybind11::index_error(oss.str());
+  }
   if (exception_type_ == ValueError) {
     throw pybind11::value_error(oss.str());
   }
@@ -214,22 +234,36 @@ static void InitMsLogLevel() {
 
 extern "C" {
 // shared lib init hook
+#if defined(_WIN32) || defined(_WIN64)
+__attribute__((constructor)) void mindspore_log_init(void) {
+#else
 void mindspore_log_init(void) {
+#endif
 #ifdef USE_GLOG
   // do not use glog predefined log prefix
   FLAGS_log_prefix = false;
   static bool is_glog_initialzed = false;
   if (!is_glog_initialzed) {
+#if !defined(_WIN32) && !defined(_WIN64)
     google::InitGoogleLogging("mindspore");
+#endif
     is_glog_initialzed = true;
   }
   // set default log level to WARNING
   if (mindspore::GetEnv("GLOG_v").empty()) {
     FLAGS_v = mindspore::WARNING;
   }
+  // set default log file mode to 0640
+  if (mindspore::GetEnv("GLOG_logfile_mode").empty()) {
+    FLAGS_logfile_mode = 0640;
+  }
+  std::string logtostderr = mindspore::GetEnv("GLOG_logtostderr");
   // default print log to screen
-  if (mindspore::GetEnv("GLOG_logtostderr").empty()) {
+  if (logtostderr.empty()) {
     FLAGS_logtostderr = true;
+  } else if (logtostderr == "0" && mindspore::GetEnv("GLOG_log_dir").empty()) {
+    FLAGS_logtostderr = true;
+    MS_LOG(WARNING) << "`GLOG_log_dir` is not set, output log to screen.";
   }
 #else
   mindspore::InitMsLogLevel();

@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 class ReshapeLayoutTransfer : public LayoutTransfer {
  public:
   ReshapeLayoutTransfer() = default;
@@ -34,7 +33,7 @@ class ReshapeLayoutTransfer : public LayoutTransfer {
   std::shared_ptr<ReshapeLayoutTransfer> ExtendFromTensorShapeByExpandedTensorShape() const;
   std::shared_ptr<ReshapeLayoutTransfer> ExtendToTensorShapeByExpandedTensorShape() const;
   std::shared_ptr<ReshapeLayoutTransfer> ExpandFromTensorShapeAndExpandToDeviceArrangement(
-    const Arrangement& expand_shape) const;
+    const Arrangement &expand_shape) const;
   std::shared_ptr<ReshapeLayoutTransfer> ExchangeFromAndTo() const;
 
  private:
@@ -43,7 +42,6 @@ class ReshapeLayoutTransfer : public LayoutTransfer {
   bool FromTensorShapeCanBeExpandByTo() const;
   bool ToTensorShapeCanBeExpandByFrom() const;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -42,14 +42,14 @@ class Tensor(Tensor_):
 
     Examples:
         >>> # init a tensor with input data
-        >>> t1 = mindspore.Tensor(np.zeros([1, 2, 3]), mindspore.float32)
-        >>> assert isinstance(t1, mindspore.Tensor)
+        >>> t1 = Tensor(np.zeros([1, 2, 3]), mindspore.float32)
+        >>> assert isinstance(t1, Tensor)
         >>> assert t1.shape() == (1, 2, 3)
         >>> assert t1.dtype() == mindspore.float32
         >>>
         >>> # init a tensor with a float scalar
-        >>> t2 = mindspore.Tensor(0.1)
-        >>> assert isinstance(t2, mindspore.Tensor)
+        >>> t2 = Tensor(0.1)
+        >>> assert isinstance(t2, Tensor)
         >>> assert t2.dtype() == mindspore.float64
     """
 
@@ -70,33 +70,69 @@ class Tensor(Tensor_):
         return str(self.__str__())
 
     def __add__(self, other):
-        if not isinstance(other, Tensor):
-            raise TypeError("input_data must be a tensor")
+        check_type('tensor input_data', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__add__')(self, other)
         return out
 
-    def __mul__(self, other):
+    def __eq__(self, other):
         if not isinstance(other, Tensor):
-            raise TypeError("input_data must be a tensor")
+            return False
+        x = self.asnumpy()
+        y = other.asnumpy()
+        out = np.equal(x, y)
+        return Tensor(np.array(out))
+
+    def __hash__(self):
+        return hash(id(self))
+
+    def __mul__(self, other):
+        check_type('tensor input_data', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__mul__')(self, other)
         return out
 
+    def __neg__(self):
+        return Tensor(-self.asnumpy())
+
     def __iadd__(self, other):
         out = self.__add__(other)
+        return out
+
+    def __radd__(self, other):
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = tensor_operator_registry.get('__add__')(other, self)
         return out
 
     def __imul__(self, other):
         out = self.__mul__(other)
         return out
 
+    def __rmul__(self, other):
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = tensor_operator_registry.get('__mul__')(other, self)
+        return out
+
+    def __truediv__(self, other):
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = tensor_operator_registry.get('__div__')(self, other)
+        return out
+
+    def __rtruediv__(self, other):
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = tensor_operator_registry.get('__div__')(other, self)
+        return out
+
     def __sub__(self, other):
-        if not isinstance(other, Tensor):
-            raise TypeError("input_data must be a tensor")
-        out = self.__add__(Tensor(-other.asnumpy()))
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = self.__add__(-other)
         return out
 
     def __isub__(self, other):
         out = self.__sub__(other)
+        return out
+
+    def __rsub__(self, other):
+        check_type('tensor operation input', other, (Tensor, float, int))
+        out = tensor_operator_registry.get('__add__')(other, Tensor(-self.asnumpy()))
         return out
 
     def __str__(self):

@@ -120,25 +120,36 @@ class DistributedGradReducer(Cell):
         ValueError: If degree is not a int or less than 0.
 
     Examples:
-        >>> from mindspore.communication import get_group_size
+        >>> from mindspore.communication import init, get_group_size
         >>> from mindspore.ops import composite as C
         >>> from mindspore.ops import operations as P
         >>> from mindspore.ops import functional as F
         >>> from mindspore import context
+        >>> from mindspore import nn
+        >>> from mindspore import ParallelMode, ParameterTuple
+        >>>
+        >>> device_id = int(os.environ["DEVICE_ID"])
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True,
+        >>>                     device_id=int(device_id))
+        >>> init()
+        >>> context.reset_auto_parallel_context()
+        >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
+        >>>
         >>>
         >>> class TrainingWrapper(nn.Cell):
         >>>     def __init__(self, network, optimizer, sens=1.0):
         >>>         super(TrainingWrapper, self).__init__(auto_prefix=False)
         >>>         self.network = network
-        >>>         self.weights = mindspore.ParameterTuple(network.trainable_params())
+        >>>         self.network.add_flags(defer_inline=True)
+        >>>         self.weights = ParameterTuple(network.trainable_params())
         >>>         self.optimizer = optimizer
         >>>         self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
         >>>         self.sens = sens
         >>>         self.reducer_flag = False
         >>>         self.grad_reducer = None
         >>>         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        >>>         if self.parallel_mode in [mindspore.ParallelMode.DATA_PARALLEL,
-        >>>                                            mindspore.ParallelMode.HYBRID_PARALLEL]:
+        >>>         if self.parallel_mode in [ParallelMode.DATA_PARALLEL,
+        >>>                                            ParallelMode.HYBRID_PARALLEL]:
         >>>             self.reducer_flag = True
         >>>         if self.reducer_flag:
         >>>             mean = context.get_auto_parallel_context("mirror_mean")
@@ -161,8 +172,8 @@ class DistributedGradReducer(Cell):
         >>> network = Net()
         >>> optimizer = nn.Momentum(network.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> train_cell = TrainingWrapper(network, optimizer)
-        >>> inputs = mindspore.Tensor(np.ones([16, 16]).astype(np.float32))
-        >>> label = mindspore.Tensor(np.zeros([16, 16]).astype(np.float32))
+        >>> inputs = Tensor(np.ones([16, 16]).astype(np.float32))
+        >>> label = Tensor(np.zeros([16, 16]).astype(np.float32))
         >>> grads = train_cell(inputs, label)
     """
 

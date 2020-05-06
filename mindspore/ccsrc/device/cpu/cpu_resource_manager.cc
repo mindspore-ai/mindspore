@@ -44,7 +44,7 @@ void CPUResourceManager::MemPlan(const session::KernelGraph *graph) {
       mem_size_ = graph_mem_size;
       dynamic_malloc_ = false;
     } else {
-      MS_LOG(INFO) << "switch to dynamic malloc";
+      MS_LOG(INFO) << "Switch to dynamic malloc";
       dynamic_malloc_ = true;
     }
   }
@@ -60,10 +60,11 @@ void CPUResourceManager::MemMalloc(const session::KernelGraph *graph) {
 void *CPUResourceManager::MemMalloc(size_t mem_size) {
   void *ptr = malloc(mem_size);
   if (ptr != nullptr) {
+    memset_s(ptr, mem_size, 0, mem_size);
     dynamic_mem_[ptr] = mem_size;
     return ptr;
   } else {
-    MS_LOG(EXCEPTION) << "malloc memory failed: size " << mem_size;
+    MS_LOG(EXCEPTION) << "Malloc memory failed: size " << mem_size;
   }
 }
 

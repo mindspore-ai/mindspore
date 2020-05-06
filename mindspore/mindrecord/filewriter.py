@@ -26,8 +26,7 @@ from .shardheader import ShardHeader
 from .shardindexgenerator import ShardIndexGenerator
 from .shardutils import MIN_SHARD_COUNT, MAX_SHARD_COUNT, VALID_ATTRIBUTES, VALID_ARRAY_ATTRIBUTES, \
     check_filename, VALUE_TYPE_MAP
-from .common.exceptions import ParamValueError, ParamTypeError, MRMInvalidSchemaError, MRMDefineIndexError, \
-    MRMValidateDataError
+from .common.exceptions import ParamValueError, ParamTypeError, MRMInvalidSchemaError, MRMDefineIndexError
 
 __all__ = ['FileWriter']
 
@@ -143,6 +142,7 @@ class FileWriter:
             ParamTypeError: If index field is invalid.
             MRMDefineIndexError: If index field is not primitive type.
             MRMAddIndexError: If failed to add index field.
+            MRMGetMetaError: If the schema is not set or get meta failed.
         """
         if not index_fields or not isinstance(index_fields, list):
             raise ParamTypeError('index_fields', 'list')
@@ -200,52 +200,24 @@ class FileWriter:
             raw_data.pop(i)
             logger.warning(v)
 
-    def _verify_based_on_blob_fields(self, raw_data):
+    def open_and_set_header(self):
         """
-        Verify data according to blob fields which is sub set of schema's fields.
+        Open writer and set header
 
-        Raise exception if validation failed.
-        1) allowed data type contains: "int32", "int64", "float32", "float64", "string", "bytes".
-
-        Args:
-            raw_data (list[dict]): List of raw data.
-
-        Raises:
-            MRMValidateDataError: If data does not match blob fields.
         """
-        schema_content = self._header.schema
-        for field in schema_content:
-            for i, v in enumerate(raw_data):
-                if field not in v:
-                    raise MRMValidateDataError("for schema, {} th data is wrong: "\
-                    "there is not '{}' object in the raw data.".format(i, field))
-                if field in self._header.blob_fields:
-                    field_type = type(v[field]).__name__
-                    if field_type not in VALUE_TYPE_MAP:
-                        raise MRMValidateDataError("for schema, {} th data is wrong: "\
-                        "data type for '{}' is not matched.".format(i, field))
-                    if schema_content[field]["type"] not in VALUE_TYPE_MAP[field_type]:
-                        raise MRMValidateDataError("for schema, {} th data is wrong: "\
-                        "data type for '{}' is not matched.".format(i, field))
-                    if field_type == 'ndarray':
-                        if 'shape' not in schema_content[field]:
-                            raise MRMValidateDataError("for schema, {} th data is wrong: " \
-                                                       "data type for '{}' is not matched.".format(i, field))
-                        try:
-                            # tuple or list
-                            np.reshape(v[field], schema_content[field]['shape'])
-                        except ValueError:
-                            raise MRMValidateDataError("for schema, {} th data is wrong: " \
-                                                      "data type for '{}' is not matched.".format(i, field))
+        if not self._writer.is_open:
+            self._writer.open(self._paths)
+        if not self._writer.get_shard_header():
+            self._writer.set_shard_header(self._header)
 
-    def write_raw_data(self, raw_data, validate=True):
+    def write_raw_data(self, raw_data, parallel_writer=False):
         """
-        Write raw data and generate sequential pair of MindRecord File.
+        Write raw data and generate sequential pair of MindRecord File and \
+        validate data based on predefined schema by default.
 
         Args:
            raw_data (list[dict]): List of raw data.
-           validate (bool, optional): Validate data according schema if it equals to True,
-               or validate data according to blob fields (default=True).
+           parallel_writer (bool, optional): Load data parallel if it equals to True (default=False).
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -263,11 +235,8 @@ class FileWriter:
         for each_raw in raw_data:
             if not isinstance(each_raw, dict):
                 raise ParamTypeError('raw_data item', 'dict')
-        if validate is True:
-            self._verify_based_on_schema(raw_data)
-        elif validate is False:
-            self._verify_based_on_blob_fields(raw_data)
-        return self._writer.write_raw_data(raw_data, validate)
+        self._verify_based_on_schema(raw_data)
+        return self._writer.write_raw_data(raw_data, True, parallel_writer)
 
     def set_header_size(self, header_size):
         """
@@ -328,13 +297,20 @@ class FileWriter:
             self._generator.build()
             self._generator.write_to_db()
 
+        mindrecord_files = []
+        index_files = []
         # change the file mode to 600
         for item in self._paths:
             if os.path.exists(item):
                 os.chmod(item, stat.S_IRUSR | stat.S_IWUSR)
+                mindrecord_files.append(item)
             index_file = item + ".db"
             if os.path.exists(index_file):
                 os.chmod(index_file, stat.S_IRUSR | stat.S_IWUSR)
+                index_files.append(index_file)
+
+        logger.info("The list of mindrecord files created are: {}, and the list of index files are: {}".format(
+            mindrecord_files, index_files))
 
         return ret
 

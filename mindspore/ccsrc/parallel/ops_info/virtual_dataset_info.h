@@ -17,11 +17,11 @@
 #ifndef PARALLEL_OPS_INFO_DATASET_INFO_H_
 #define PARALLEL_OPS_INFO_DATASET_INFO_H_
 
-#include <list>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <memory>
+
 #include "ir/value.h"
 #include "parallel/ops_info/operator_info.h"
 #include "parallel/strategy.h"
@@ -30,22 +30,19 @@ namespace mindspore {
 namespace parallel {
 class VirtualDatasetInfo : public OperatorInfo {
  public:
-  VirtualDatasetInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-                     const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs) {
-    vd_cost_ptr_ = std::make_shared<VirtualDatasetCost>();
-  }
+  VirtualDatasetInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                     const PrimitiveAttrs &attrs)
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<VirtualDatasetCost>(false)) {}
   ~VirtualDatasetInfo() override = default;
-  Status Init(const StrategyPtr& strategy) override;
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status Init(const StrategyPtr &strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
 
   Status GenerateStrategies(int32_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return vd_cost_ptr_; }
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReComputeBatchSplitFlagList() override;
 
  protected:
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorInfo() override;
@@ -53,11 +50,7 @@ class VirtualDatasetInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status GetAttrs() override;
   Status InferAsLossDivisor() override;
-
- private:
-  VirtualDatasetCostPtr vd_cost_ptr_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

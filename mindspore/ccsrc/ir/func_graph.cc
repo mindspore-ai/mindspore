@@ -61,24 +61,24 @@ FuncGraph::FuncGraph()
 AbstractFunctionPtr FuncGraph::abstract() {
   AbstractBasePtrList args_spec_list;
 
-  for (auto& p : parameters_) {
+  for (auto &p : parameters_) {
     MS_EXCEPTION_IF_NULL(p);
     if (p->abstract() == nullptr) {
-      MS_LOG(ERROR) << "error!!";
+      MS_LOG(ERROR) << "Error!!";
       return nullptr;
     }
     args_spec_list.push_back(p->abstract());
   }
 
   if (nullptr == output()) {
-    MS_LOG(ERROR) << "error func graph no output";
+    MS_LOG(ERROR) << "Error func graph no output";
     return nullptr;
   }
 
   return std::make_shared<VirtualAbstractClosure>(args_spec_list, output()->abstract());
 }
 
-abstract::AbstractBasePtr FuncGraph::MakeAbstractClosure(const abstract::AnalysisContextPtr& context) {
+abstract::AbstractBasePtr FuncGraph::MakeAbstractClosure(const abstract::AnalysisContextPtr &context) {
   AnalysisContextPtr temp_context = context;
   if (temp_context == nullptr) {
     temp_context = abstract::AnalysisContext::DummyContext();
@@ -96,7 +96,7 @@ AnfNodePtr FuncGraph::output() const {
   }
 }
 
-void FuncGraph::set_output(const AnfNodePtr& value, bool force_new_ret) {
+void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
   if (force_new_ret || return_ == nullptr) {
     std::vector<AnfNodePtr> params({NewValueNode(prim::kPrimReturn), value});
     FuncGraphPtr this_graph = shared_from_base<FuncGraph>();
@@ -125,7 +125,7 @@ ParameterPtr FuncGraph::add_parameter() {
   return p;
 }
 
-void FuncGraph::add_parameter(const ParameterPtr& p) {
+void FuncGraph::add_parameter(const ParameterPtr &p) {
   if (manager_.lock()) {
     std::vector<AnfNodePtr> new_params = parameters_;
     new_params.push_back(p);
@@ -135,7 +135,7 @@ void FuncGraph::add_parameter(const ParameterPtr& p) {
   }
 }
 
-ParameterPtr FuncGraph::AddWeightParameter(const std::string& name) {
+ParameterPtr FuncGraph::AddWeightParameter(const std::string &name) {
   FuncGraphPtr this_graph = shared_from_base<FuncGraph>();
   ParameterPtr p = std::make_shared<Parameter>(this_graph);
   p->set_name(name);
@@ -154,14 +154,14 @@ ParameterPtr FuncGraph::AddWeightParameter(const std::string& name) {
   return p;
 }
 
-bool FuncGraph::has_flag(const std::string& flag) {
+bool FuncGraph::has_flag(const std::string &flag) {
   if (flags_.count(flag)) {
     return flags_[flag];
   }
   return false;
 }
 
-CNodePtr FuncGraph::NewCNode(const std::vector<AnfNodePtr>& inputs) {
+CNodePtr FuncGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   CNodePtr cnode = std::make_shared<CNode>(inputs, shared_from_base<FuncGraph>());
   if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
     order_.push_back(cnode);
@@ -170,7 +170,7 @@ CNodePtr FuncGraph::NewCNode(const std::vector<AnfNodePtr>& inputs) {
   return cnode;
 }
 
-CNodePtr FuncGraph::NewCNodeWithScope(const std::vector<AnfNodePtr>& inputs, const ScopePtr& scope) {
+CNodePtr FuncGraph::NewCNodeWithScope(const std::vector<AnfNodePtr> &inputs, const ScopePtr &scope) {
   CNodePtr app = NewCNode(inputs);
   app->set_scope(scope);
   return app;
@@ -178,13 +178,13 @@ CNodePtr FuncGraph::NewCNodeWithScope(const std::vector<AnfNodePtr>& inputs, con
 
 void FuncGraph::DumpCNodeList() {
   MS_LOG(INFO) << "FuncGraph " << ToString() << " has following CNode in code order:";
-  for (const auto& cnode : order_) {
+  for (const auto &cnode : order_) {
     MS_LOG(INFO) << cnode->DebugString();
   }
 }
 
 std::string FuncGraph::ToString() const {
-  return mindspore::label_manage::Label(const_cast<FuncGraph*>(this)->shared_from_base<FuncGraph>()->debug_info());
+  return mindspore::label_manage::Label(const_cast<FuncGraph *>(this)->shared_from_base<FuncGraph>()->debug_info());
 }
 
 GraphDebugInfoPtr FuncGraph::debug_info() {
@@ -195,38 +195,38 @@ GraphDebugInfoPtr FuncGraph::debug_info() {
   return this->debug_info_;
 }
 
-const AnfNodeSet& FuncGraph::nodes() {
+const AnfNodeSet &FuncGraph::nodes() {
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);
-  auto& nodes = mng->nodes();
+  auto &nodes = mng->nodes();
   return nodes[shared_from_base<FuncGraph>()];
 }
 
-const AnfNodeCounterMap& FuncGraph::value_nodes() {
+const AnfNodeCounterMap &FuncGraph::value_nodes() {
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);
-  auto& cts = mng->valuenodes();
+  auto &cts = mng->valuenodes();
   return cts[shared_from_base<FuncGraph>()];
 }
 
-const AnfNodeCounterMap& FuncGraph::free_variables_direct() {
+const AnfNodeCounterMap &FuncGraph::free_variables_direct() {
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);
-  auto& fv_direct = mng->free_variables_direct();
+  auto &fv_direct = mng->free_variables_direct();
   return fv_direct[shared_from_base<FuncGraph>()];
 }
 
-const BaseRefCounterMap& FuncGraph::free_variables_total() {
+const BaseRefCounterMap &FuncGraph::free_variables_total() {
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);
-  auto& fv_total = mng->free_variables_total();
+  auto &fv_total = mng->free_variables_total();
   return fv_total[shared_from_base<FuncGraph>()];
 }
 
 std::vector<AnfNodePtr> FuncGraph::free_variables_nodes() {
   std::vector<AnfNodePtr> nodes;
-  const auto& fv_total = this->free_variables_total();
-  for (auto& p : fv_total) {
+  const auto &fv_total = this->free_variables_total();
+  for (auto &p : fv_total) {
     auto key = p.first;
     if (utils::isa<AnfNodePtr>(key)) {
       nodes.push_back(utils::cast<AnfNodePtr>(key));
@@ -238,8 +238,8 @@ std::vector<AnfNodePtr> FuncGraph::free_variables_nodes() {
 
 std::vector<FuncGraphPtr> FuncGraph::free_variables_func_graphs() {
   std::vector<FuncGraphPtr> func_graphs;
-  const auto& fv_total = this->free_variables_total();
-  for (auto& p : fv_total) {
+  const auto &fv_total = this->free_variables_total();
+  for (auto &p : fv_total) {
     auto key = p.first;
     if (utils::isa<FuncGraphPtr>(key)) {
       func_graphs.push_back(utils::cast<FuncGraphPtr>(key));
@@ -249,32 +249,29 @@ std::vector<FuncGraphPtr> FuncGraph::free_variables_func_graphs() {
   return func_graphs;
 }
 
-const FuncGraphCounterMap& FuncGraph::func_graphs_used() {
+const FuncGraphCounterMap &FuncGraph::func_graphs_used() {
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);
-  auto& used = mng->func_graphs_used();
+  auto &used = mng->func_graphs_used();
   return used[shared_from_base<FuncGraph>()];
 }
 
-const FuncGraphSet& FuncGraph::func_graphs_used_total() {
+const FuncGraphSet &FuncGraph::func_graphs_used_total() {
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);
-  auto& used = mng->func_graphs_used_total(shared_from_base<FuncGraph>());
+  auto &used = mng->func_graphs_used_total(shared_from_base<FuncGraph>());
   return used;
 }
 
-const FuncGraphCounterMap& FuncGraph::func_graph_users() {
+const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() {
   auto mng = manager_.lock();
+  if (mng == nullptr) {
+    MS_LOG(EXCEPTION) << "BUG: no manager for this func graph: " << ToString()
+                      << " NodeInfo: " << trace::GetDebugInfo(debug_info());
+  }
   MS_EXCEPTION_IF_NULL(mng);
-  auto& users = mng->func_graph_users();
-  return users[shared_from_base<FuncGraph>()];
-}
-
-const AnfNodeCounterMap& FuncGraph::func_graph_user_cnodes() {
-  auto mng = manager_.lock();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto& users = mng->func_graph_user_cnodes();
-  return users[shared_from_base<FuncGraph>()];
+  auto &cnode = mng->func_graph_cnodes_index();
+  return cnode[shared_from_base<FuncGraph>()];
 }
 
 FuncGraphPtr FuncGraph::parent() {
@@ -288,13 +285,13 @@ FuncGraphPtr FuncGraph::parent() {
   return mng->parent(shared_from_base<FuncGraph>());
 }
 
-const FuncGraphSet& FuncGraph::children() {
+const FuncGraphSet &FuncGraph::children() {
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);
   return mng->children(shared_from_base<FuncGraph>());
 }
 
-const FuncGraphSet& FuncGraph::scope() {
+const FuncGraphSet &FuncGraph::scope() {
   auto mng = manager_.lock();
   MS_EXCEPTION_IF_NULL(mng);
   return mng->scopes(shared_from_base<FuncGraph>());
@@ -312,9 +309,9 @@ std::shared_ptr<std::list<FuncGraphPtr>> FuncGraph::recursive_graphs() {
   return mng->recursive_graphs(shared_from_base<FuncGraph>());
 }
 
-void FuncGraph::DumpFuncGraph(const std::string& path) { draw::Draw(path + ".dot", shared_from_base<FuncGraph>()); }
+void FuncGraph::DumpFuncGraph(const std::string &path) { draw::Draw(path + ".dot", shared_from_base<FuncGraph>()); }
 
-AnfNodePtr FuncGraph::GetDefaultValueByName(const std::string& name) {
+AnfNodePtr FuncGraph::GetDefaultValueByName(const std::string &name) {
   auto itr = this->parameter_default_value_.find(name);
   if (itr == parameter_default_value_.end()) {
     return nullptr;
@@ -330,9 +327,9 @@ AnfNodePtr FuncGraph::GetDefaultValueByName(const std::string& name) {
 }
 
 // set the default values
-void FuncGraph::SetDefaultValues(const std::vector<std::string>& name_list, const std::vector<AnfNodePtr>& value_list) {
+void FuncGraph::SetDefaultValues(const std::vector<std::string> &name_list, const std::vector<AnfNodePtr> &value_list) {
   auto all_is_null = std::all_of(value_list.begin(), value_list.end(),
-                                 [](const AnfNodePtr& node) { return IsValueNode<NullObj>(node); });
+                                 [](const AnfNodePtr &node) { return IsValueNode<NullObj>(node); });
   if (value_list.empty()) {
     all_is_null = true;
   }
@@ -348,7 +345,7 @@ void FuncGraph::ClearDefaultValues() { parameter_default_value_.clear(); }
 size_t FuncGraph::GetDefaultValueCount() {
   int null_count =
     std::count_if(parameter_default_value_.begin(), parameter_default_value_.end(),
-                  [](const std::pair<std::string, AnfNodePtr>& pair) { return IsValueNode<NullObj>(pair.second); });
+                  [](const std::pair<std::string, AnfNodePtr> &pair) { return IsValueNode<NullObj>(pair.second); });
   return parameter_default_value_.size() - IntToSize(null_count);
 }
 
@@ -425,7 +422,7 @@ int FuncGraph::GetPositionalArgsCount() const {
   return count - kwonlyargs_count_ - SizeToInt(hyper_param_count_);
 }
 
-AnfNodePtr FuncGraph::GetParameterByName(const std::string& name) {
+AnfNodePtr FuncGraph::GetParameterByName(const std::string &name) {
   for (size_t i = 0; i < parameters_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(parameters_[i]);
     auto param_cast = parameters_[i]->cast<ParameterPtr>();
@@ -437,9 +434,9 @@ AnfNodePtr FuncGraph::GetParameterByName(const std::string& name) {
   return nullptr;
 }
 
-void FuncGraph::GenerateVarParams(const FuncGraphPtr& specialized_graph,
-                                  std::vector<AnfNodePtr>* specialized_parameter_list,
-                                  std::unordered_map<AnfNodePtr, AnfNodePtr>* repl_nodes, int variable_args_count,
+void FuncGraph::GenerateVarParams(const FuncGraphPtr &specialized_graph,
+                                  std::vector<AnfNodePtr> *specialized_parameter_list,
+                                  std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes, int variable_args_count,
                                   int pos_args_input_count) {
   // if there is variable argument, pass the input arguments that does not match positional args to it as a tuple
   if (specialized_graph->has_vararg()) {
@@ -472,14 +469,14 @@ void FuncGraph::GenerateVarParams(const FuncGraphPtr& specialized_graph,
   }
 }
 
-void FuncGraph::GenerateKwParams(const FuncGraphPtr& specialized_graph,
-                                 std::vector<AnfNodePtr>* specialized_parameter_list,
-                                 const std::vector<abstract::AbstractKeywordArgPtr>& kwarg_list,
-                                 std::unordered_map<AnfNodePtr, AnfNodePtr>* repl_nodes) {
+void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
+                                 std::vector<AnfNodePtr> *specialized_parameter_list,
+                                 const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list,
+                                 std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) {
   std::vector<AnfNodePtr> kwarg_keys_tuple_nodes = {NewValueNode(prim::kPrimMakeTuple)};
   std::vector<AnfNodePtr> kwarg_values_tuple_nodes = {NewValueNode(prim::kPrimMakeTuple)};
 
-  for (const auto& kwarg : kwarg_list) {
+  for (const auto &kwarg : kwarg_list) {
     MS_EXCEPTION_IF_NULL(kwarg);
     std::string kw_param_name = kwarg->get_key();
     MS_EXCEPTION_IF_NULL(specialized_graph);
@@ -493,7 +490,7 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr& specialized_graph,
         std::string param_name = specialized_graph->GetVariableKwargName() + "[" + kw_param_name + "]";
         MS_EXCEPTION_IF_NULL(specialized_parameter_list);
         auto find_kw_arg_in_list = std::any_of(specialized_parameter_list->begin(), specialized_parameter_list->end(),
-                                               [param_name](const AnfNodePtr& node) {
+                                               [param_name](const AnfNodePtr &node) {
                                                  MS_EXCEPTION_IF_NULL(node);
                                                  auto param = node->cast<ParameterPtr>();
                                                  return param != nullptr && param->name() == param_name;
@@ -526,10 +523,10 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr& specialized_graph,
   GenerateKwargReplNode(specialized_graph, repl_nodes, kwarg_keys_tuple_nodes, kwarg_values_tuple_nodes);
 }
 
-void FuncGraph::GenerateKwargReplNode(const FuncGraphPtr& specialized_graph,
-                                      std::unordered_map<AnfNodePtr, AnfNodePtr>* repl_nodes,
-                                      const std::vector<AnfNodePtr>& kwarg_keys_tuple_nodes,
-                                      const std::vector<AnfNodePtr>& kwarg_values_tuple_nodes) {
+void FuncGraph::GenerateKwargReplNode(const FuncGraphPtr &specialized_graph,
+                                      std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes,
+                                      const std::vector<AnfNodePtr> &kwarg_keys_tuple_nodes,
+                                      const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes) {
   if (has_kwarg()) {
     MS_EXCEPTION_IF_NULL(specialized_graph);
     TraceManager::DebugTrace(
@@ -543,7 +540,8 @@ void FuncGraph::GenerateKwargReplNode(const FuncGraphPtr& specialized_graph,
     TraceManager::EndTrace();
   }
 }
-bool FuncGraph::NeedGenerate(const std::vector<abstract::AbstractKeywordArgPtr>& kwarg_list) {
+
+bool FuncGraph::NeedGenerate(const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list) {
   // if the function does not have any vararg/kwarg/kwonly/default value/kw args input
   // return the original graph
   if (!has_vararg() && kwonlyargs_count() == 0 && !has_kwarg() && GetDefaultValueCount() == 0 && kwarg_list.empty()) {
@@ -556,9 +554,10 @@ bool FuncGraph::NeedGenerate(const std::vector<abstract::AbstractKeywordArgPtr>&
   }
   return true;
 }
-void FuncGraph::GenerateDefaultValue(const FuncGraphPtr& specialized_graph,
-                                     const std::vector<AnfNodePtr>& specialized_parameter_list,
-                                     std::unordered_map<AnfNodePtr, AnfNodePtr>* repl_nodes) {
+
+void FuncGraph::GenerateDefaultValue(const FuncGraphPtr &specialized_graph,
+                                     const std::vector<AnfNodePtr> &specialized_parameter_list,
+                                     std::unordered_map<AnfNodePtr, AnfNodePtr> *repl_nodes) {
   MS_EXCEPTION_IF_NULL(specialized_graph);
   for (size_t i = 0; i < specialized_graph->parameters().size() - hyper_param_count(); ++i) {
     auto param_node = specialized_graph->parameters()[i];
@@ -581,10 +580,10 @@ void FuncGraph::GenerateDefaultValue(const FuncGraphPtr& specialized_graph,
   }
 }
 
-FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list) {
   std::vector<abstract::AbstractKeywordArgPtr> kwarg_list;
   size_t arguments_count = args_spec_list.size();
-  for (const auto& arg : args_spec_list) {
+  for (const auto &arg : args_spec_list) {
     // if it is a keyword argument
     MS_EXCEPTION_IF_NULL(arg);
     if (arg->isa<abstract::AbstractKeywordArg>()) {
@@ -617,11 +616,11 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList& args_spec_list)
   MS_EXCEPTION_IF_NULL(specialized_graph);
   auto params = specialized_graph->parameters();
   (void)std::transform(params.end() - SizeToInt(hyper_param_count()), params.end(),
-                       std::back_inserter(specialized_parameter_list), [](const AnfNodePtr& node) { return node; });
+                       std::back_inserter(specialized_parameter_list), [](const AnfNodePtr &node) { return node; });
 
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(specialized_graph, false);
   auto tr = manager->Transact();
-  for (auto& node_pair : repl_nodes) {
+  for (auto &node_pair : repl_nodes) {
     MS_LOG(DEBUG) << "GenerateGraph replace:" << node_pair.first->DebugString() << "-"
                   << node_pair.second->DebugString();
     (void)tr.Replace(node_pair.first, node_pair.second);
@@ -636,10 +635,10 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList& args_spec_list)
   return specialized_graph;
 }
 
-void FuncGraph::add_parameter_obj_node(const AnfNodePtr& p) { paramter_obj_nodes_.push_back(p); }
+void FuncGraph::add_parameter_obj_node(const AnfNodePtr &p) { paramter_obj_nodes_.push_back(p); }
 
-std::list<CNodePtr> FuncGraph::GetOrderedCnodes(bool force_use_topo_sort) {
-  if (has_flag(GRAPH_FLAG_HAS_EFFECT) && !force_use_topo_sort) {
+std::list<CNodePtr> FuncGraph::GetOrderedCnodes() {
+  if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
     MS_LOG(DEBUG) << "Return ordered cnodes.";
     return order_;
   } else {
@@ -649,7 +648,7 @@ std::list<CNodePtr> FuncGraph::GetOrderedCnodes(bool force_use_topo_sort) {
 
     std::list<CNodePtr> cnodes;
     auto nodes = TopoSort(get_return(), SuccDepends, BelongSameGraph);
-    for (const auto& node : nodes) {
+    for (const auto &node : nodes) {
       auto cnode = dyn_cast<CNode>(node);
       if (cnode) {
         cnodes.push_back(cnode);
@@ -664,7 +663,7 @@ void FuncGraph::EraseUnusedNodeInOrder() {
     auto mng = manager_.lock();
     if (mng) {
       auto nodes = mng->nodes()[shared_from_base<FuncGraph>()];
-      // Erase unusued cnode.
+      // Erase unused cnode.
       for (auto it = order_.begin(); it != order_.end();) {
         if (nodes.count(*it)) {
           (void)it++;
@@ -677,7 +676,7 @@ void FuncGraph::EraseUnusedNodeInOrder() {
   }
 }
 
-void FuncGraph::EraseUnusedNodeInOrder(const AnfNodePtr& n) {
+void FuncGraph::EraseUnusedNodeInOrder(const AnfNodePtr &n) {
   if (has_flag(GRAPH_FLAG_HAS_EFFECT) && n && n->isa<CNode>()) {
     order_.remove(n->cast<CNodePtr>());
     MS_LOG(DEBUG) << "Remove the node" << n->DebugString() << " from order list.";
@@ -688,27 +687,27 @@ void FuncGraph::CheckOrder() {
   if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
     MS_LOG(DEBUG) << "Check graph " << ToString();
     for (auto it = order_.begin(); it != order_.end(); (void)it++) {
-      for (const auto& input_node : (*it)->inputs()) {
+      for (const auto &input_node : (*it)->inputs()) {
         if (input_node && input_node->isa<CNode>() && input_node->func_graph() == shared_from_base<FuncGraph>()) {
           // Need to reorder the wrong order node.
           auto found = std::find(order_.begin(), it, input_node);
           if (found == it) {
             DumpCNodeList();
             MS_LOG(EXCEPTION) << "The cnode " << (*it)->DebugString() << " order in " << ToString()
-                              << " doesn't obey the input denpency, "
+                              << " doesn't obey the input dependency, "
                               << "as input " << input_node->DebugString() << " is not ahead of itself.";
           }
         }
       }
     }
-    auto topo_sort = GetOrderedCnodes(true);
-    if (topo_sort.size() != order_.size()) {
-      DumpCNodeList();
-      DumpIR(ToString(), shared_from_base<FuncGraph>());
-      MS_LOG(INFO) << "Dump graph: " << ToString() << ".";
-      DumpFuncGraph(ToString());
-      MS_LOG(EXCEPTION) << "CNode order size " << order_.size() << " is not equal to topo sort list size "
-                        << topo_sort.size() << ".";
+    auto mng = manager_.lock();
+    if (mng != nullptr) {
+      const auto &nodes = mng->nodes()[shared_from_base<FuncGraph>()];
+      if (nodes.size() != (order_.size() + parameters_.size())) {
+        DumpCNodeList();
+        MS_LOG(EXCEPTION) << "CNode order size " << order_.size() << " is not equal to managed node size "
+                          << nodes.size() - parameters_.size() << ".";
+      }
     }
     MS_LOG(DEBUG) << "Check order okay.";
   }
@@ -716,7 +715,7 @@ void FuncGraph::CheckOrder() {
 
 const char kPrimHasEffect[] = "_side_effect_flag";
 
-bool FuncGraph::HasEffect(const CNodePtr& cnode) {
+bool FuncGraph::HasEffect(const CNodePtr &cnode) {
   auto prim = GetCNodePrimitive(cnode);
   if (prim != nullptr && prim->isa<prim::DoSignaturePrimitive>()) {
     auto do_sig = prim->cast<prim::DoSignaturePrimitivePtr>();
@@ -737,9 +736,9 @@ bool FuncGraph::HasEffect(const CNodePtr& cnode) {
   return false;
 }
 
-std::shared_ptr<OrderedSet<CNodePtr>> FindRoots(const std::vector<CNodePtr>& segment) {
+std::shared_ptr<OrderedSet<CNodePtr>> FindRoots(const std::vector<CNodePtr> &segment) {
   std::shared_ptr<OrderedSet<CNodePtr>> roots = std::make_shared<OrderedSet<CNodePtr>>(segment);
-  for (const auto& node : segment) {
+  for (const auto &node : segment) {
     if (roots->size() == 1) {
       return roots;
     }
@@ -755,9 +754,9 @@ std::shared_ptr<OrderedSet<CNodePtr>> FindRoots(const std::vector<CNodePtr>& seg
   return roots;
 }
 
-std::shared_ptr<OrderedSet<CNodePtr>> FindLeaves(const std::vector<CNodePtr>& segment) {
+std::shared_ptr<OrderedSet<CNodePtr>> FindLeaves(const std::vector<CNodePtr> &segment) {
   std::shared_ptr<OrderedSet<CNodePtr>> nodes = std::make_shared<OrderedSet<CNodePtr>>(segment);
-  for (const auto& node : segment) {
+  for (const auto &node : segment) {
     if (nodes->size() == 1) {
       return nodes;
     }
@@ -788,7 +787,7 @@ void FuncGraph::ReleaseFullOrderToEffectOrder() {
   if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
     std::list<AnfNodePtr> depends_order;
     std::vector<CNodePtr> segment;
-    for (const auto& cnode : order_) {
+    for (const auto &cnode : order_) {
       if (IsPrimitiveCNode(cnode, prim::kPrimReturn)) {
         continue;
       }
@@ -828,7 +827,7 @@ void FuncGraph::ReleaseFullOrderToEffectOrder() {
   }
 }
 
-void FuncGraph::SetEffectDepends(const std::vector<AnfNodePtr>& depend_inputs) {
+void FuncGraph::SetEffectDepends(const std::vector<AnfNodePtr> &depend_inputs) {
   auto old_ret = output();
   std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimDepend), old_ret};
   (void)inputs.insert(inputs.end(), depend_inputs.begin(), depend_inputs.end());
@@ -842,5 +841,5 @@ void FuncGraph::SetEffectDepends(const std::vector<AnfNodePtr>& depend_inputs) {
 }
 
 const PrimitivePtr FuncGraphTransform::func_graph_prim_ = std::make_shared<Primitive>("FuncGraph");
-const char kFuncGraphFlagUndetermin[] = "Undeterminate";
+const char kFuncGraphFlagUndetermined[] = "Undeterminate";
 }  // namespace mindspore

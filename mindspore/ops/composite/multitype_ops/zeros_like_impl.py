@@ -31,6 +31,10 @@ def _zeros_like_scala(x):
     """Returns 0 which has the same dtype as x where x is a scalar."""
     return 0
 
+@zeros_like_leaf.register("Bool")
+def _zeros_like_bool(x):
+    """Returns False if x is a bool."""
+    return False
 
 newenv = base.EnvInstance_()
 

@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include "ir/func_graph.h"
 #include "session/kernel_graph.h"
 #include "common/utils.h"
@@ -29,6 +30,7 @@ constexpr size_t kTransOpInputNum = 2;
 constexpr size_t kCastInputNum = 2;
 constexpr size_t kDependInputNum = 3;
 constexpr size_t kReluInputNum = 2;
+constexpr size_t kReluGradInputNum = 3;
 constexpr size_t kAddInputNum = 3;
 constexpr size_t kAddNInputNum = 3;
 constexpr size_t kTupleGetitemInputNum = 3;
@@ -84,6 +86,8 @@ constexpr size_t kLayerNormGradInputNum = 6;
 constexpr size_t kAdamApplyOneOutputNum = 3;
 constexpr size_t kBackendTransDataInputNum = 2;
 constexpr size_t kApplyMomentumInputNum = 6;
+constexpr size_t kBiasAddInputNum = 3;
+constexpr size_t kTopkInputNum = 3;
 
 enum FusedBatchNormInput {
   kX = 1,
@@ -134,13 +138,22 @@ void CreateOutputsOfFusedBn3(const FuncGraphPtr &graph, const AnfNodePtr &data_i
 void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &anf_node_ptr, size_t output_num,
                                     std::vector<AnfNodePtr> *outputs);
 
+tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_ptr, const TypePtr &type_ptr,
+                                             size_t data_length);
+
+tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple);
+
 bool IsNopNode(const AnfNodePtr &node);
 
 void HideNopNode(session::KernelGraph *const graph);
 
 void RemoveNopNode(session::KernelGraph *const graph);
 
+AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx);
+
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
+
+void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &input_attrs);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_

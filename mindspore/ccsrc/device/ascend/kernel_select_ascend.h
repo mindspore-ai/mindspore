@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-void SelectKernelInfo(const CNodePtr &kernel_node);
+int SelectKernelInfo(const CNodePtr &kernel_node);
 bool CheckKernelAccuracySupported(const CNodePtr &kernel_node, const kernel::KernelBuildInfoPtr &new_kernel_build_info);
 }  // namespace ascend
 }  // namespace device

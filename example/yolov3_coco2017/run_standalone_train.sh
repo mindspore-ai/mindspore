@@ -14,8 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
+echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_standalone_train.sh DEVICE_ID EPOCH_SIZE IMAGE_DIR ANNO_PATH"
-echo "for example: sh run_standalone_train.sh 0 50 ./dataset/coco/train2017 ./dataset/train.txt"
+echo "sh run_standalone_train.sh DEVICE_ID EPOCH_SIZE MINDRECORD_DIR IMAGE_DIR ANNO_PATH"
+echo "for example: sh run_standalone_train.sh 0 50 ./Mindrecord_train ./dataset ./dataset/train.txt"
+echo "=============================================================================================================="
 
-python train.py --device_id=$1 --epoch_size=$2 --image_dir=$3 --anno_path=$4
+python train.py --device_id=$1 --epoch_size=$2 --mindrecord_dir=$3 --image_dir=$4 --anno_path=$5

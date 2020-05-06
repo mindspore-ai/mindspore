@@ -44,6 +44,10 @@ const char kOutput[] = "output";
 
 class InferenceResource;
 
+using MethodMap = std::unordered_map<int, std::unordered_map<std::string, Any>>;
+
+MethodMap &GetMethodMap();
+
 class ResourceBase {
  public:
   ResourceBase() { manager_ = MakeManager(); }
@@ -52,20 +56,20 @@ class ResourceBase {
 
   FuncGraphManagerPtr manager() { return manager_; }
   // set a manager defined outside which will not manage the graphs.
-  void set_manager(const FuncGraphManagerPtr& manager) { manager_ = manager; }
+  void set_manager(const FuncGraphManagerPtr &manager) { manager_ = manager; }
 
-  std::unordered_map<std::string, Any>& results() { return results_; }
+  std::unordered_map<std::string, Any> &results() { return results_; }
 
-  void SetResult(const std::string& key, const Any& value) { results_[key] = value; }
+  void SetResult(const std::string &key, const Any &value) { results_[key] = value; }
 
-  Any GetResult(const std::string& key) {
+  Any GetResult(const std::string &key) {
     if (results_.count(key) == 0) {
       MS_LOG(EXCEPTION) << "this key is not in resource list:" << key;
     }
     return results_[key];
   }
 
-  bool HasResult(const std::string& key) const { return results_.count(key) != 0; }
+  bool HasResult(const std::string &key) const { return results_.count(key) != 0; }
 
   std::unordered_map<std::string, Any> results_;
 
@@ -77,23 +81,23 @@ using ResourceBasePtr = std::shared_ptr<pipeline::ResourceBase>;
 
 class Resource : public ResourceBase {
  public:
-  explicit Resource(const py::object& obj = py::none());
+  explicit Resource(const py::object &obj = py::none());
 
   ~Resource() override;
 
   abstract::AnalysisEnginePtr engine() { return engine_; }
 
-  static bool IsTypeInMethodMap(const TypeId& type);
+  static bool IsTypeInMethodMap(const TypeId &type);
 
-  static Any GetMethodPtr(const TypeId& type, const std::string& name);
+  static Any GetMethodPtr(const TypeId &type, const std::string &name);
 
-  const py::object& input() const { return input_; }
+  const py::object &input() const { return input_; }
 
   FuncGraphPtr func_graph() const { return func_graph_; }
-  void set_func_graph(const FuncGraphPtr& func_graph) { func_graph_ = func_graph; }
+  void set_func_graph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
 
-  const abstract::AbstractBasePtrList& args_spec() const { return args_spec_; }
-  void set_args_spec(const abstract::AbstractBasePtrList& args_spec) { args_spec_ = args_spec; }
+  const abstract::AbstractBasePtrList &args_spec() const { return args_spec_; }
+  void set_args_spec(const abstract::AbstractBasePtrList &args_spec) { args_spec_ = args_spec; }
 
   // Reclaim resource and clear the cache.
   // ExecutorPy::Compile() can be called multiple times, so cache
@@ -109,9 +113,6 @@ class Resource : public ResourceBase {
 };
 
 using ResourcePtr = std::shared_ptr<pipeline::Resource>;
-
-void ClearResAtexit();
-void ReleaseGeTsd();
 
 }  // namespace pipeline
 }  // namespace mindspore

@@ -24,7 +24,7 @@ namespace mindspore {
 namespace dataset {
 // Constructor
 ExecutionTree::ExecutionTree() : id_count_(0) {
-  tg_ = mindspore::make_unique<TaskGroup>();
+  tg_ = std::make_unique<TaskGroup>();
   tree_state_ = kDeTStateInit;
   prepare_flags_ = kDePrepNone;
 }
@@ -81,13 +81,29 @@ Status ExecutionTree::AssignRoot(const std::shared_ptr<DatasetOp> &op) {
 }
 
 // A print method typically used for debugging
-void ExecutionTree::Print(std::ostream &out, bool show_all) const {
-  out << "Total number of nodes in the ExecutionTree (may or may not be connected nodes): " << id_count_
-      << "\nTree state: " << static_cast<int>(tree_state_) << "\n";
-  if (root_ != nullptr) {
-    // Just call the printer on the root node.  Each node descends to it's children to print them if
-    // showAll is true.
-    root_->Print(out, show_all);
+void ExecutionTree::Print(std::ostream &out) const {
+  out << "Execution tree summary:\n"
+      << "-----------------------\n";
+  this->PrintNode(out, root_, "", true, false);
+  out << "\nExecution tree operator details:\n"
+      << "--------------------------------\n";
+  this->PrintNode(out, root_, "", true, true);
+}
+
+// A helper functions for doing the recursive printing
+void ExecutionTree::PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp> &dataset_op, std::string indent,
+                              bool last, bool detailed) const {
+  // Decide which printer to use based on detailed arg.
+  if (!detailed) {
+    out << indent << "+- " << *dataset_op;
+    indent += (last ? "    " : "|   ");
+  } else {
+    dataset_op->Print(out, detailed);
+  }
+
+  // Descend to children
+  for (int32_t i = 0; i < dataset_op->child_.size(); ++i) {
+    this->PrintNode(out, dataset_op->child_[i], indent, (i == (dataset_op->child_.size() - 1)), detailed);
   }
 }
 
@@ -100,6 +116,9 @@ Status ExecutionTree::Launch() {
       " Expected state: " + std::to_string(static_cast<int>(kDeTStateReady));
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+  std::ostringstream ss;
+  ss << *this;
+  MS_LOG(INFO) << "Printing the tree before launch tasks:\n" << ss.str();
   for (auto itr = this->begin(); itr != this->end(); ++itr) {
     // An inlined operator is one that has an output connector size of 0, and it does not
     // require a thread to execute.  Instead, the work of this operator is executed inlined
@@ -162,30 +181,25 @@ Status ExecutionTree::Prepare() {
 // Recursive function used during prepare phase to visit a node and drive any pre- and post-
 // node actions during a tree walk.
 Status ExecutionTree::PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op) {
-  int32_t num_children = dataset_op->child_.size();
+  // execute PreAction
+  RETURN_IF_NOT_OK(dataset_op->PrepareNodePreAction());
 
-  // Before going down into children, make any prepare flags updates based on this
-  // operator.
+  // Before going down into children, make any prepare flags updates based on this operator.
   uint32_t op_prep_flags = dataset_op->PrepareFlags();
-  // Sanity check.  In future we can support nested repeats.  for now it's not allowed.
-  // If somebody above us already set the repeat flag, and now we are another repeat...
-  if (BitTest(op_prep_flags, kDePrepRepeat) && BitTest(prepare_flags_, kDePrepRepeat)) {
-    std::string err_msg("Nested RepeatOp detected! This is not supported yet.");
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
   BitSet(&prepare_flags_, op_prep_flags);
 
   // Now, descend to children
-  for (int32_t i = 0; i < num_children; ++i) {
-    RETURN_IF_NOT_OK(this->PrepareNode(dataset_op->child_[i]));
+  for (const auto &i : dataset_op->child_) {
+    RETURN_IF_NOT_OK(this->PrepareNode(i));
   }
-
-  // No more children, now we execute any prepare actions before going back up the
-  // the tree on recursive function exit
-  RETURN_IF_NOT_OK(dataset_op->PrepareNodeAction());
 
   // Then clear the flags from this op now that we have prepared it.
   BitClear(&prepare_flags_, op_prep_flags);
+
+  // No more children, now we execute any prepare actions before going back up the
+  // the tree on recursive function
+  RETURN_IF_NOT_OK(dataset_op->PrepareNodePostAction());
+
   return Status::OK();
 }
 

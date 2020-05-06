@@ -15,6 +15,7 @@
 """ test_framstruct """
 import pytest
 import numpy as np
+import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.ops import composite as C
@@ -31,21 +32,13 @@ from ....mindspore_test_framework.utils.check_gradient import (
     OperationGradChecker, check_gradient, ScalarGradChecker)
 from ....mindspore_test_framework.utils.bprop_util import bprop
 import mindspore.context as context
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 
 
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
 
-
-@ms_function
-def refactor_fac(n):
-    """ grad_refactor_fac """
-    if n == 0:
-        return 1
-    return n * refactor_fac(n-1)
-def test_refactor():
-    res = refactor_fac(3)
-    assert res == 6
 
 @ms_function
 def while_upper_bound(upper):
@@ -385,16 +378,19 @@ def test_grad_while():
     assert grad_while(5) == (60,)
 
 @ms_function
-def fac(n):
-    """ fac """
+def factorial(n):
+    """ factorial """
     if n == 0:
         return 1
-    return n * fac(n-1)
+    return n * factorial(n-1)
 
-def test_fac():
-    """ test_fac """
-    res = fac(4)
-    assert res == 24
+def test_factorial():
+    res = factorial(3)
+    assert res == 6
+
+def test_grad_factorial():
+    res = C.grad(factorial)(3)
+    assert res == 11
 
 def _for(x):
     """ _for """
@@ -706,3 +702,115 @@ def grad_refactor_14(a, b):
     return inner1(b) + inner2(a) + inner3(a)
 def test_grad_refactor_14():
     assert C.grad_all(grad_refactor_14)(2, 3) == (3, 9)
+
+
+class IfDeferInline(nn.Cell):
+    def __init__(self, mul_size):
+        super().__init__()
+        self.mul_weight = Tensor(np.full(mul_size, 0.6, dtype=np.float32))
+        self.mul = P.Mul()
+
+    def construct(self, inputs):
+        x = self.mul(inputs, self.mul_weight)
+        if True:
+            x = x
+        return x
+
+def test_grad_if_defer_inline():
+    """ test_grad_if_defer_inline """
+    network = IfDeferInline([128, 96])
+    network.add_flags(defer_inline=False)
+    inp = Tensor(np.ones([128, 96]).astype(np.float32))
+    grads = C.grad_all(network)(inp)
+    assert grads == (Tensor(np.full([128, 96], 0.6, dtype=np.float32)),)
+
+def test_bprop_with_wrong_output_num():
+    class BpropWithWrongOutputNum(PrimitiveWithInfer):
+        @prim_attr_register
+        def __init__(self):
+            super(BpropWithWrongOutputNum, self).__init__('BpropWithWrongOutputNum')
+
+        def __call__(self, x, y):
+            return x
+
+        def infer_shape(self, x_shape, yshape):
+            return x_shape
+
+        def infer_dtype(self, x_type, y_type):
+            return x_type
+
+    @bprop_getters.register(BpropWithWrongOutputNum)
+    def get_bprop_with_wrong_output_num(self):
+        """Generate bprop for BpropWithWrongOutputNum"""
+        def bprop(x, y, out, dout):
+            return (dout,)
+        return bprop
+
+    class BpropWithWrongOutputNumCell(nn.Cell):
+        def __init__(self):
+            super(BpropWithWrongOutputNumCell, self).__init__()
+        def construct(self, x, y):
+            return BpropWithWrongOutputNum()(x, y)
+    with pytest.raises(TypeError):
+        C.grad_all(BpropWithWrongOutputNumCell())(1, 2)
+
+def test_bprop_with_wrong_output_type():
+    class BpropWithWrongOutputType(PrimitiveWithInfer):
+        @prim_attr_register
+        def __init__(self):
+            super(BpropWithWrongOutputType, self).__init__('BpropWithWrongOutputType')
+
+        def __call__(self, x):
+            return x
+
+        def infer_shape(self, x_shape):
+            return x_shape
+
+        def infer_dtype(self, x_type):
+            return x_type
+
+    @bprop_getters.register(BpropWithWrongOutputType)
+    def get_bprop_with_wrong_output_type(self):
+        """Generate bprop for BpropWithWrongOutputType"""
+        def bprop(x, out, dout):
+            return (1,)
+        return bprop
+
+    class BpropWithWrongOutputTypeCell(nn.Cell):
+        def __init__(self):
+            super(BpropWithWrongOutputTypeCell, self).__init__()
+        def construct(self, x):
+            return BpropWithWrongOutputType()(x)
+    with pytest.raises(TypeError):
+        C.grad_all(BpropWithWrongOutputTypeCell())(Tensor(np.ones([64, 10]).astype(np.int32)))
+
+def test_bprop_with_wrong_output_shape():
+    class BpropWithWrongOutputShape(PrimitiveWithInfer):
+        @prim_attr_register
+        def __init__(self):
+            super(BpropWithWrongOutputShape, self).__init__('BpropWithWrongOutputShape')
+
+        def __call__(self, x):
+            return x
+
+        def infer_shape(self, x_shape):
+            return x_shape
+
+        def infer_dtype(self, x_type):
+            return x_type
+
+    @bprop_getters.register(BpropWithWrongOutputShape)
+    def get_bprop_with_wrong_output_shape(self):
+        """Generate bprop for BpropWithWrongOutputShape"""
+        ones = Tensor(np.ones([2,]).astype(np.int32))
+        def bprop(x, out, dout):
+            return (ones,)
+        return bprop
+
+    class BpropWithWrongOutputShapeCell(nn.Cell):
+        def __init__(self):
+            super(BpropWithWrongOutputShapeCell, self).__init__()
+        def construct(self, x):
+            return BpropWithWrongOutputShape()(x)
+    with pytest.raises(TypeError):
+        C.grad_all(BpropWithWrongOutputShapeCell())(Tensor(np.ones([64, 10]).astype(np.int32)))

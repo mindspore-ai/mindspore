@@ -80,8 +80,7 @@ AbstractBasePtr InferImplDot(const AnalysisEnginePtr &, const PrimitivePtr &prim
   auto y_shp_value = y_shp->shape();
   // Should be matrix which shape size is 2.
   if (x_shp_value.size() != 2 || y_shp_value.size() != 2) {
-    MS_LOG(EXCEPTION) << "" << op_name
-                      << " evaluator requires input two 2D tensors, while the dimensions of two tensors are "
+    MS_LOG(EXCEPTION) << op_name << " evaluator requires input two 2D tensors, while the dimensions of two tensors are "
                       << x_shp_value.size() << ", " << y_shp_value.size() << " ";
   }
   if (x_shp_value[1] != y_shp_value[0] && x_shp_value[1] != Shape::SHP_ANY && y_shp_value[0] != Shape::SHP_ANY) {
@@ -168,6 +167,37 @@ AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &pr
   ValuePtr x = args_spec_list[0]->BuildValue();
 
   return std::make_shared<AbstractScalar>(!(*t == *x));
+}
+
+bool IsInDict(const PrimitivePtr &primitive, const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  auto key = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
+  auto dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 1);
+
+  ValuePtr key_value = key->BuildValue();
+  if (!key_value->isa<StringImm>()) {
+    MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
+  }
+  auto key_str = GetValue<std::string>(key_value);
+  std::vector<AbstractAttribute> dict_elems = dict->elements();
+  auto it = std::find_if(dict_elems.begin(), dict_elems.end(),
+                         [key_str](const AbstractAttribute &item) { return item.first == key_str; });
+  return it != dict_elems.end();
+}
+
+AbstractBasePtr InferImplInDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const AbstractBasePtrList &args_spec_list) {
+  // statement: x in t
+  // Inputs: x, t
+  return std::make_shared<AbstractScalar>(IsInDict(primitive, args_spec_list));
+}
+
+AbstractBasePtr InferImplNotInDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  // statement: x not in t
+  // Inputs: x, t
+  return std::make_shared<AbstractScalar>(!IsInDict(primitive, args_spec_list));
 }
 }  // namespace abstract
 }  // namespace mindspore

@@ -46,16 +46,16 @@ struct RunOptions {
 
 class GraphRunner {
  public:
-  explicit GraphRunner(const GraphRunnerOptions& options);
+  explicit GraphRunner(const GraphRunnerOptions &options);
   ~GraphRunner() { sess_ = nullptr; }
-  Status RunGraph(const RunOptions& options, const std::vector<MeTensorPtr>& inputs, std::vector<MeTensorPtr>* outputs);
-  Status RunGraph(const RunOptions& options, const std::vector<GeTensorPtr>& inputs, std::vector<GeTensorPtr>* outputs);
-  static std::shared_ptr<ge::Session> NewSession(const SessionOptions& sess_options);
+  Status RunGraph(const RunOptions &options, const std::vector<MeTensorPtr> &inputs, std::vector<MeTensorPtr> *outputs);
+  Status RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
+  static std::shared_ptr<ge::Session> NewSession(const SessionOptions &sess_options);
 
  private:
   std::shared_ptr<ge::Session> sess_;
   transform::GraphRunnerOptions options_;
-  DfGraphManager& graph_manager_;
+  DfGraphManager &graph_manager_;
 };
 }  // namespace transform
 }  // namespace mindspore

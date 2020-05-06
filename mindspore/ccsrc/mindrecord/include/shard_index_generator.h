@@ -42,11 +42,11 @@ class ShardIndexGenerator {
 
   ~ShardIndexGenerator() {}
 
-  /// \brief fetch value in json by field path
-  /// \param[in] field_path
-  /// \param[in] schema
-  /// \return the vector of value
-  static std::vector<std::string> GetField(const std::string &field_path, json schema);
+  /// \brief fetch value in json by field name
+  /// \param[in] field
+  /// \param[in] input
+  /// \return pair<MSRStatus, value>
+  std::pair<MSRStatus, std::string> GetValueByField(const string &field, json input);
 
   /// \brief fetch field type in schema n by field path
   /// \param[in] field_path
@@ -85,14 +85,14 @@ class ShardIndexGenerator {
   /// \param sql
   /// \param data
   /// \return
-  MSRStatus BindParamaterExecuteSQL(
+  MSRStatus BindParameterExecuteSQL(
     sqlite3 *db, const std::string &sql,
     const std::vector<std::vector<std::tuple<std::string, std::string, std::string>>> &data);
 
   INDEX_FIELDS GenerateIndexFields(const std::vector<json> &schema_detail);
 
-  MSRStatus ExcuteTransaction(const int &shard_no, const std::pair<MSRStatus, sqlite3 *> &db,
-                              const std::vector<int> &raw_page_ids, const std::map<int, int> &blob_id_to_page_id);
+  MSRStatus ExecuteTransaction(const int &shard_no, const std::pair<MSRStatus, sqlite3 *> &db,
+                               const std::vector<int> &raw_page_ids, const std::map<int, int> &blob_id_to_page_id);
 
   MSRStatus CreateShardNameTable(sqlite3 *db, const std::string &shard_name);
 
@@ -103,12 +103,16 @@ class ShardIndexGenerator {
   void AddIndexFieldByRawData(const std::vector<json> &schema_detail,
                               std::vector<std::tuple<std::string, std::string, std::string>> &row_data);
 
+  void DatabaseWriter();  // worker thread
+
   std::string file_path_;
   bool append_;
   ShardHeader shard_header_;
   uint64_t page_size_;
   uint64_t header_size_;
   int schema_count_;
+  std::atomic_int task_;
+  std::atomic_bool write_success_;
   std::vector<std::pair<uint64_t, std::string>> fields_;
 };
 }  // namespace mindrecord

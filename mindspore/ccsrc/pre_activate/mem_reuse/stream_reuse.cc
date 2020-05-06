@@ -20,8 +20,8 @@ namespace mindspore {
 namespace memreuse {
 void StreamReuse::SetStreamReuseResource() {
 #ifdef ENABLE_D
-  auto logic_physic_map = device::ascend::AscendStreamAssign::GetInstance().GetPhysicMap();
-  auto logic_independent_map = device::ascend::AscendStreamAssign::GetInstance().GetIndependentMap();
+  auto logic_physic_map = device::ascend::AscendStreamAssign::GetInstance().logic_to_physic_map();
+  auto logic_independent_map = device::ascend::AscendStreamAssign::GetInstance().logic_to_independent_map();
   MS_LOG(INFO) << "stream mem reuse for Davici";
   if (!logic_independent_map.empty() && !logic_physic_map.empty()) {
     set_logic_physic_map(logic_physic_map);

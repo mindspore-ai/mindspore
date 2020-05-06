@@ -27,12 +27,16 @@
 #include "kernel/gpu/kernel_constants.h"
 namespace mindspore {
 namespace kernel {
-enum BinaryOpType { BINARY_OP_ADD = 0, BINARY_OP_SUB, BINARY_OP_MUL, BINARY_OP_DIV, BINARY_OP_INVALID_TYPE = 255 };
-const std::map<std::string, BinaryOpType> kBinaryOpTypeMap = {
-  {"Sub", BINARY_OP_SUB},
-  {"Mul", BINARY_OP_MUL},
-  {"RealDiv", BINARY_OP_DIV},
+enum BinaryOpType {
+  BINARY_OP_ADD = 0,
+  BINARY_OP_SUB,
+  BINARY_OP_MUL,
+  BINARY_OP_DIV,
+  BINARY_OP_MAX,
+  BINARY_OP_INVALID_TYPE = 255
 };
+static const std::map<std::string, BinaryOpType> kBinaryOpTypeMap = {
+  {"Sub", BINARY_OP_SUB}, {"Mul", BINARY_OP_MUL}, {"RealDiv", BINARY_OP_DIV}, {"Maximum", BINARY_OP_MAX}};
 template <typename T>
 class BinaryOpGpuKernel : public GpuKernel {
  public:
@@ -82,6 +86,10 @@ class BinaryOpGpuKernel : public GpuKernel {
         Reciprocal(input_addr2, workspace_addr, inputs[1]->size / sizeof(T),
                    reinterpret_cast<cudaStream_t>(stream_ptr));
         inputB_addr = workspace_addr;
+        break;
+      }
+      case BINARY_OP_MAX: {
+        inputB_addr = input_addr2;
         break;
       }
       default: {
@@ -201,12 +209,16 @@ class BinaryOpGpuKernel : public GpuKernel {
         tensor_op_ = CUDNN_OP_TENSOR_ADD;
         break;
       }
+      case BINARY_OP_MAX: {
+        tensor_op_ = CUDNN_OP_TENSOR_MAX;
+        break;
+      }
       default: {
         MS_LOG(EXCEPTION) << "Binary operation " << binary_op_type_ << " is not supported.";
       }
     }
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetOpTensorDescriptor(opTensor_descriptor_, tensor_op_, cudnn_data_type_, CUDNN_NOT_PROPAGATE_NAN),
+      cudnnSetOpTensorDescriptor(opTensor_descriptor_, tensor_op_, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN),
       "cudnnSetOpTensorDescriptor failed");
     return;
   }

@@ -77,7 +77,7 @@ class AbstractBase : public Base {
   }
 
  protected:
-  // default implementation, it can be overrided by subclass;
+  // default implementation, it can be overwritten by subclass;
   virtual ValuePtr RealBuildValue() const { return kAnyValue; }
 
  private:
@@ -495,10 +495,10 @@ class AbstractNone : public AbstractBase {
 };
 using AbstractNonePtr = std::shared_ptr<AbstractNone>;
 
-// the un assgined state value for variable, which means the variable is not assigned
+// the un assigned state value for variable, which means the variable is not assigned
 class AbstractNull : public AbstractBase {
  public:
-  AbstractNull() : AbstractBase(kNullObj) { set_type(std::make_shared<TypeNull>()); }
+  AbstractNull() : AbstractBase(kNull) { set_type(std::make_shared<TypeNull>()); }
   ~AbstractNull() override = default;
   MS_DECLARE_PARENT(AbstractNull, AbstractBase)
 
@@ -509,6 +509,20 @@ class AbstractNull : public AbstractBase {
   std::string ToString() const override;
 };
 using AbstractNullPtr = std::shared_ptr<AbstractNull>;
+
+class AbstractEllipsis : public AbstractBase {
+ public:
+  AbstractEllipsis() : AbstractBase(kEllipsis) { set_type(std::make_shared<Ellipsis>()); }
+  ~AbstractEllipsis() override = default;
+  MS_DECLARE_PARENT(AbstractEllipsis, AbstractBase)
+
+  TypePtr BuildType() const override { return std::make_shared<Ellipsis>(); }
+  bool operator==(const AbstractEllipsis &other) const;
+  bool operator==(const AbstractBase &other) const override;
+  AbstractBasePtr Clone() const override { return std::make_shared<AbstractEllipsis>(); }
+  std::string ToString() const override;
+};
+using AbstractEllipsisPtr = std::shared_ptr<AbstractEllipsis>;
 
 class AbstractRefKey : public AbstractBase {
  public:

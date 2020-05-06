@@ -28,6 +28,7 @@
 
 namespace mindspore {
 namespace opt {
+constexpr size_t kType32Len = 4;
 std::vector<int> Convert2Int(const std::vector<size_t> &v) {
   std::vector<int> result;
   (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToInt);
@@ -264,6 +265,66 @@ void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNod
   }
 }
 
+template <typename T>
+tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_ptr, const TypePtr &type_ptr,
+                                             size_t data_length) {
+  MS_EXCEPTION_IF_NULL(value_tuple_ptr);
+  MS_EXCEPTION_IF_NULL(type_ptr);
+  std::vector<T> values;
+  for (const auto &v : value_tuple_ptr->value()) {
+    MS_EXCEPTION_IF_NULL(v);
+    if (v->isa<Scalar>()) {
+      ScalarPtr scalar = v->cast<ScalarPtr>();
+      values.push_back(GetValue<T>(scalar));
+    } else {
+      MS_LOG(WARNING) << "The value " << v << "of tuple is not a scalar";
+      return nullptr;
+    }
+  }
+  std::vector<int> tensor_shape = {SizeToInt(values.size())};
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_ptr->type_id(), tensor_shape);
+  MS_EXCEPTION_IF_NULL(tensor);
+  tensor::DeviceInfo device_info{kOpFormat_DEFAULT, type_ptr};
+  tensor->set_device_info(device_info);
+  auto data_ptr = tensor->data_c(true);
+  MS_EXCEPTION_IF_NULL(data_ptr);
+  auto elem_num = values.size() * data_length;
+  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), values.data(), elem_num);
+  if (ret_code != 0) {
+    MS_LOG(EXCEPTION) << "Failed to copy data into Tensor.";
+  }
+  return tensor;
+}
+
+tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
+  MS_EXCEPTION_IF_NULL(value_tuple);
+  tensor::TensorPtr tensor = nullptr;
+  if (value_tuple->value().empty()) {
+    MS_LOG(WARNING) << "The value tuple is empty.";
+    return nullptr;
+  }
+  ValuePtr v = *(value_tuple->value().begin());
+  MS_EXCEPTION_IF_NULL(v);
+  // Currently we only deal with the scalar tuple
+  if (!v->isa<Scalar>()) {
+    MS_LOG(WARNING) << "The value " << v << "of tuple is not a scalar";
+    return nullptr;
+  }
+  ScalarPtr scalar = v->cast<ScalarPtr>();
+  MS_EXCEPTION_IF_NULL(scalar);
+  if (scalar->isa<IntergerImm>()) {
+    tensor = CreateTensorWithValueTuple<int>(value_tuple, kInt32, kType32Len);
+  } else if (scalar->isa<FloatImm>()) {
+    tensor = CreateTensorWithValueTuple<float>(value_tuple, kFloat32, kType32Len);
+  } else {
+    auto type = scalar->type();
+    auto type_str = (type == nullptr) ? "nullptr" : type->ToString();
+    MS_LOG(ERROR) << "Invalid scalar type: " << type_str;
+    return nullptr;
+  }
+  return tensor;
+}
+
 bool IsNopNode(const AnfNodePtr &node) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -280,15 +341,26 @@ bool IsNopNode(const AnfNodePtr &node) {
   if (nop_nodes.find(AnfAlgo::GetCNodeName(cnode)) == nop_nodes.end()) {
     return false;
   }
-  if (cnode->inputs().size() != 2) {
-    MS_LOG(EXCEPTION) << "Nop node(" + cnode->DebugString() + ") should have only 1 input, but it has "
-                      << cnode->inputs().size() - 1 << " inputs.";
+  return true;
+}
+
+bool IsAllNopNode(session::KernelGraph *const graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto execution_order = graph->execution_order();
+  for (auto &cnode : execution_order) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (!IsNopNode(cnode)) {
+      return false;
+    }
   }
   return true;
 }
 
 void HideNopNode(session::KernelGraph *const graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  if (IsAllNopNode(graph) == true) {
+    return;
+  }
   auto execution_order = graph->execution_order();
   MS_LOG(INFO) << "nop node info (Before Remove) size: " << execution_order.size();
   std::vector<CNodePtr> new_nodes;
@@ -304,6 +376,9 @@ void HideNopNode(session::KernelGraph *const graph) {
 
 void RemoveNopNode(session::KernelGraph *const graph) {
   MS_EXCEPTION_IF_NULL(graph);
+  if (IsAllNopNode(graph) == true) {
+    return;
+  }
   bool changed = true;
   while (changed) {
     changed = false;
@@ -353,6 +428,63 @@ bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
     MS_LOG(EXCEPTION) << "node has no output in manager";
   }
   return manager->node_users()[node].size() > 1;
+}
+
+AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
+  auto idx = NewValueNode(SizeToInt(output_idx));
+  MS_EXCEPTION_IF_NULL(idx);
+  auto imm = std::make_shared<Int32Imm>(SizeToInt(output_idx));
+  auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
+  idx->set_abstract(abstract_scalar);
+  AnfNodePtr tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
+  MS_EXCEPTION_IF_NULL(tuple_getitem);
+  tuple_getitem->set_scope(node->scope());
+  std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);
+  TypeId origin_type = AnfAlgo::GetOutputInferDataType(node, output_idx);
+  AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
+  return tuple_getitem;
+}
+
+void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &input_attrs) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<AnfNodePtr> new_inputs;
+  std::vector<std::string> new_input_names;
+  auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto input_names = primitive->GetAttr(kAttrInputNames);
+  if (input_names == nullptr) {
+    MS_LOG(DEBUG) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
+    return;
+  }
+  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
+  auto inputs = cnode->inputs();
+  new_inputs.push_back(inputs[0]);
+  bool need_update = false;
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
+    auto input_node = inputs[i + 1];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (input_attrs.find(i) != input_attrs.end() && input_node->isa<ValueNode>()) {
+      auto value_node = input_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      MS_LOG(DEBUG) << "start erase input[" << i << "] of cnode[" + cnode->DebugString() + "]";
+      if (i >= input_names_vec.size()) {
+        MS_LOG(EXCEPTION) << "index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
+      }
+      primitive->set_attr(input_names_vec[i], value_node->value());
+      need_update = true;
+    } else {
+      new_inputs.push_back(input_node);
+      if (i < input_names_vec.size()) {
+        new_input_names.push_back(input_names_vec[i]);
+      }
+    }
+  }
+  if (need_update) {
+    // Update cnode's inputs
+    cnode->set_inputs(new_inputs);
+    // Update cnode's input_names attr
+    primitive->set_attr(kAttrInputNames, MakeValue(new_input_names));
+  }
 }
 }  // namespace opt
 }  // namespace mindspore

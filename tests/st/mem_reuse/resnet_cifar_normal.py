@@ -12,20 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore.nn as nn
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn.optim.momentum import Momentum
-from mindspore.train.model import Model, ParallelMode
-from mindspore import context
-import mindspore.common.dtype as mstype
+import argparse
 import os
 import numpy as np
-import mindspore.ops.functional as F
+import mindspore.context as context
+import mindspore.nn as nn
+import mindspore.common.dtype as mstype
+from mindspore import Tensor
+from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore.dataengine as de
-import mindspore._c_dataengine as deMap
+import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore.communication.management import init
@@ -36,7 +36,6 @@ random.seed(1)
 np.random.seed(1)
 de.config.set_seed(1)
 
-import argparse
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
@@ -124,16 +123,10 @@ class CrossEntropyLoss(nn.Cell):
 
 
 if __name__ == '__main__':
-    if args_opt.do_eval:
-        context.set_context(enable_hccl=False)
-    else:
-        if args_opt.run_distribute:
-            context.set_context(enable_hccl=True)
-            context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL)
-            context.set_auto_parallel_context(all_reduce_fusion_split_indices=[140])
-            init()
-        else:
-            context.set_context(enable_hccl=False)
+    if not args_opt.do_eval and args_opt.run_distribute:
+        context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL)
+        context.set_auto_parallel_context(all_reduce_fusion_split_indices=[140])
+        init()
 
     context.set_context(mode=context.GRAPH_MODE)
     epoch_size = args_opt.epoch_size

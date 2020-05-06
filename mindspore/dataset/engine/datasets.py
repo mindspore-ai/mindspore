@@ -24,21 +24,26 @@ import math
 import os
 import random
 import uuid
+import multiprocessing
+import queue
 from enum import Enum
 from importlib import import_module
+import threading
 
+import copy
 import numpy as np
+
 from mindspore._c_dataengine import DataType, TFReaderOp, ImageFolderOp, CifarOp, MnistOp, ManifestOp, \
-    MindRecordOp, CBatchInfo
+    MindRecordOp, TextFileOp, CBatchInfo
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
 from . import samplers
 from .iterators import DictIterator, TupleIterator
-from .validators import check, check_batch, check_shuffle, check_map, check_repeat, check_zip, check_rename, \
-    check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
+from .validators import check, check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, check_rename, \
+    check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
-    check_zip_dataset
+    check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -82,8 +87,6 @@ def zip(datasets):
     if len(datasets) <= 1:
         raise ValueError(
             "Can't zip empty or just one dataset!")
-    if not isinstance(datasets, tuple):
-        raise TypeError("The zip function %s type error!" % (datasets))
     return ZipDataset(datasets)
 
 
@@ -141,6 +144,7 @@ class Dataset:
         self._batch_size = None
         self._num_classes = None
         self._repeat_count = None
+        self._sync = False
 
     def get_args(self):
         """
@@ -198,6 +202,29 @@ class Dataset:
         """
         return BatchDataset(self, batch_size, drop_remainder, num_parallel_workers, per_batch_map, input_columns)
 
+    @check_sync_wait
+    def sync_wait(self, condition_name, num_batch=1, callback=None):
+        '''
+        Add a blocking condition to the input Dataset
+
+        Args:
+            num_batch (int): the number of batches without blocking at the start of each epoch
+            condition_name (str): The condition name that is used to toggle sending next row
+            callback (function): The callback funciton that will be invoked when sync_update is called
+
+        Raises:
+            RuntimeError: If condition name already exists.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object.
+            >>> data = data.sync_wait("callback1")
+            >>> data = data.batch(batch_size)
+            >>> for batch_data in data.create_dict_iterator():
+            >>>     data = data.sync_update("callback1")
+        '''
+        return SyncWaitDataset(self, condition_name, num_batch, callback)
+
     @check_shuffle
     def shuffle(self, buffer_size):
         """
@@ -220,6 +247,9 @@ class Dataset:
         Returns:
             ShuffleDataset, dataset shuffled.
 
+        Raises:
+            RuntimeError: If exist sync operators before shuffle.
+
         Examples:
             >>> import mindspore.dataset as ds
             >>> # data is an instance of Dataset object
@@ -233,7 +263,7 @@ class Dataset:
 
     @check_map
     def map(self, input_columns=None, operations=None, output_columns=None, columns_order=None,
-            num_parallel_workers=None):
+            num_parallel_workers=None, python_multiprocessing=False):
         """
         Applies each operation in operations to this dataset.
 
@@ -272,6 +302,8 @@ class Dataset:
                 same).
             num_parallel_workers (int, optional): Number of threads used to process the dataset in
                 parallel (default=None, the value from the config will be used).
+            python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
+                option could be beneficial if the python operation is computational heavy (default=False).
 
         Returns:
             MapDataset, dataset after mapping operation.
@@ -385,7 +417,34 @@ class Dataset:
             >>> columns_order = ["mod7", "mod3", "col1"]
             >>> ds_mapped = ds_pyfunc.map(input_columns, operations, output_columns, columns_order)
         """
-        return MapDataset(self, input_columns, operations, output_columns, columns_order, num_parallel_workers)
+        return MapDataset(self, input_columns, operations, output_columns, columns_order, num_parallel_workers,
+                          python_multiprocessing)
+
+    @check_filter
+    def filter(self, predicate, input_columns=None, num_parallel_workers=1):
+        """
+        Filter dataset by predicate.
+
+        Note:
+             If input_columns not provided or empty, all columns will be used.
+
+        Args:
+            predicate(callable): python callable which returns a boolean value.
+            input_columns: (list[str], optional): List of names of the input columns, when
+                default=None, the predicate will be applied on all columns in the dataset.
+            num_parallel_workers (int, optional): Number of workers to process the Dataset
+                in parallel (default=None).
+
+        Returns:
+            FilterDataset, dataset filter.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # generator data(0 ~ 63)
+            >>> # filter the data that greater than or equal to 11
+            >>> dataset_f = dataset.filter(predicate=lambda data: data < 11, input_columns = ["data"])
+        """
+        return FilterDataset(self, predicate, input_columns, num_parallel_workers)
 
     @check_repeat
     def repeat(self, count=None):
@@ -395,7 +454,9 @@ class Dataset:
         Note:
             The order of using repeat and batch reflects the number of batches. Recommend that
             repeat operation should be used after batch operation.
-            If dataset_sink_mode is False (feed mode), here repeat operation is invalid.
+            If dataset_sink_mode is False, here repeat operation is invalid.
+            If dataset_sink_mode is True, repeat count should be equal to the epoch of training. Otherwise,
+            errors could occur since the amount of data is not the amount training requires.
 
         Args:
             count (int): Number of times the dataset should be repeated (default=None).
@@ -419,7 +480,55 @@ class Dataset:
             >>> repeat_and_shuffle = data.repeat(50)
             >>> repeat_and_shuffle = repeat_and_shuffle.shuffle(10)
         """
+        if count == 1:
+            return self
         return RepeatDataset(self, count)
+
+    @check_skip
+    def skip(self, count):
+        """
+        Skip the first N elements of this dataset.
+
+        Args:
+            count (int): Number of elements the dataset should be skipped.
+
+        Returns:
+            SkipDataset, dataset skipped.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object.
+            >>> # creates a dataset which skips first 3 elements from data
+            >>> data = data.skip(3)
+        """
+        return SkipDataset(self, count)
+
+    @check_take
+    def take(self, count=-1):
+        """
+        Takes at most given numbers of elements from the dataset.
+
+        Note:
+            1. If count is greater than the number of element in dataset or equal to -1,
+            all the element in dataset will be taken.
+            2. The order of using take and batch effects. If take before batch operation,
+            then taken given number of rows, otherwise take given number of batches.
+
+        Args:
+            count (int, optional): Number of elements to be taken from the dataset (default=-1).
+
+        Returns:
+            TakeDataset, dataset taken.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object.
+            >>> # creates a dataset where the dataset including 50 elements.
+            >>> data = data.take(50)
+        """
+        if count == -1:
+            return self
+        return TakeDataset(self, count)
 
     @check_zip_dataset
     def zip(self, datasets):
@@ -499,13 +608,54 @@ class Dataset:
 
         return ProjectDataset(self, columns)
 
+    def apply(self, apply_func):
+        """
+        Apply a function in this dataset.
+
+        The specified apply_func is a function that must take one 'Dataset' as an argument
+        and return a preprogressing 'Dataset'.
+
+        Args:
+            apply_func (function): A function that must take one 'Dataset' as an argument and
+                                   return a preprogressing 'Dataset'.
+
+        Returns:
+            Dataset, applied by the function.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # data is an instance of Dataset object
+            >>> # declare an apply_func function which returns a Dataset object
+            >>> def apply_func(ds):
+            >>>     ds = ds.batch(2)
+            >>>     return ds
+            >>> # use apply to call apply_func
+            >>> data = data.apply(apply_func)
+
+        Raises:
+            TypeError: If apply_func is not a function.
+            TypeError: If apply_func doesn't return a Dataset.
+        """
+
+        if not hasattr(apply_func, '__call__'):
+            raise TypeError("apply_func must be a function.")
+
+        dataset = apply_func(self)
+        if not isinstance(dataset, Dataset):
+            raise TypeError("apply_func must return a dataset.")
+        return dataset
+
     def device_que(self, prefetch_size=None):
         """
-        Returns a transferredDataset that transfer data through tdt.
+        Returns a transferredDataset that transfer data through device.
 
         Args:
             prefetch_size (int, optional): prefetch number of records ahead of the
                 user's request (default=None).
+
+        Note:
+            If device is Ascend, features of data will be transferred one by one. The limitation
+            of data transmission per time is 256M.
 
         Return:
             TransferDataset, dataset for transferring.
@@ -518,6 +668,10 @@ class Dataset:
 
         Args:
             num_batch (int, optional): limit the number of batch to be sent to device (default=None).
+
+        Note:
+            If device is Ascend, features of data will be transferred one by one. The limitation
+            of data transmission per time is 256M.
 
         Returns:
             TransferDataset, dataset for transferring.
@@ -552,9 +706,9 @@ class Dataset:
 
         def get_distribution(output_dataset):
             dev_id = 0
-            if isinstance(output_dataset, (StorageDataset, GeneratorDataset, MindDataset)):
+            if isinstance(output_dataset, (StorageDataset, MindDataset)):
                 return output_dataset.distribution, dev_id
-            if isinstance(output_dataset, (Cifar10Dataset, Cifar100Dataset, ImageFolderDatasetV2,
+            if isinstance(output_dataset, (Cifar10Dataset, Cifar100Dataset, GeneratorDataset, ImageFolderDatasetV2,
                                            ManifestDataset, MnistDataset, VOCDataset, CelebADataset)):
                 sampler = output_dataset.sampler
                 if isinstance(sampler, samplers.DistributedSampler):
@@ -697,6 +851,9 @@ class Dataset:
         self._input_indexs = value
 
     def _get_pipeline_info(self):
+        """
+        Gets pipeline information.
+        """
         device_iter = TupleIterator(self)
         self._output_shapes = device_iter.get_output_shapes()
         self._output_types = device_iter.get_output_types()
@@ -751,6 +908,33 @@ class Dataset:
             return self.input[0].num_classes()
         return None
 
+    def get_sync_notifiers(self):
+        if self.input:
+            return self.input[0].get_sync_notifiers()
+        return {}
+
+    def is_sync(self):
+        if self.input:
+            return self.input[0].is_sync()
+        return False
+
+    def sync_update(self, condition_name, num_batch=None, data=None):
+        """
+        Release a blocking condition and triger callback with given data
+
+        Args:
+            condition_name (str): The condition name that is used to toggle sending next row
+            num_batch (int or None): The number of batches(rows) that are released
+                When num_batch is None, it will default to the number specified by the sync_wait operator
+            data (dict or None): The data passed to the callback
+        """
+        notifiers_dict = self.get_sync_notifiers()
+        if condition_name not in notifiers_dict:
+            raise RuntimeError("Condition name not found")
+        if num_batch is not None:
+            num_batch *= self.get_batch_size()
+        notifiers_dict[condition_name](num_batch, data)
+
     def get_batch_size(self):
         """
         Get the size of a batch.
@@ -782,7 +966,7 @@ class Dataset:
         """
         if self.input:
             return self.input[0].get_class_indexing()
-        return None
+        raise NotImplementedError("Dataset {} has not supported api get_class_indexing yet.".format(type(self)))
 
     def reset(self):
         """Reset the dataset for next epoch"""
@@ -794,6 +978,38 @@ class SourceDataset(Dataset):
     """
 
     # No need for __init__ since it is the same as the super's init
+
+    @staticmethod
+    def _find_files(patterns):
+        """
+        Utility function to search for files with the given glob patterns.
+
+        Args:
+            patterns (str or list[str]): string or list of patterns to be searched.
+
+        Returns:
+            List, files.
+        """
+
+        if not isinstance(patterns, list):
+            patterns = [patterns]
+
+        file_list = []
+        unmatched_patterns = []
+        for pattern in patterns:
+            matches = [match for match in glob.glob(pattern, recursive=True) if os.path.isfile(match)]
+
+            if matches:
+                file_list.extend(matches)
+            else:
+                unmatched_patterns.append(pattern)
+
+        if unmatched_patterns:
+            raise ValueError("The following patterns did not match any files: ", unmatched_patterns)
+
+        if file_list:  # not empty
+            return file_list
+        raise ValueError("The list of path names matching the patterns is empty.")
 
 
 class DatasetOp(Dataset):
@@ -821,6 +1037,8 @@ class BatchDataset(DatasetOp):
 
         if BatchDataset._is_ancestor_of_repeat(input_dataset):
             logger.warning("Repeat is located before batch, data from two epochs can be batched together.")
+
+        BatchDataset._update_batch_size_for_syncwait(input_dataset, batch_size)
 
         self.batch_size = batch_size
         self.drop_remainder = drop_remainder
@@ -878,6 +1096,20 @@ class BatchDataset(DatasetOp):
             flag = flag | BatchDataset._is_ancestor_of_repeat(input_dataset)
         return flag
 
+    @staticmethod
+    def _update_batch_size_for_syncwait(dataset, batch_size):
+        """
+        Utility function to notify batch size to sync_wait.
+
+        Args:
+             dataset (Dataset): dataset to be checked
+             batchsize (int): batch size to notify
+        """
+        if isinstance(dataset, SyncWaitDataset):
+            dataset.update_sync_batch_size(batch_size)
+        for input_dataset in dataset.input:
+            BatchDataset._update_batch_size_for_syncwait(input_dataset, batch_size)
+
 
 class BatchInfo(CBatchInfo):
     """
@@ -902,6 +1134,108 @@ class BatchInfo(CBatchInfo):
         """
         return
 
+class BlockReleasePair:
+    """
+    The blocking condition class used by SyncWaitDataset
+
+    Args:
+        init_release_rows (int): Number of lines to allow through the pipeline
+        callback (function): The callback funciton that will be called when release is called
+    """
+    def __init__(self, init_release_rows, callback=None):
+        self.row_count = -init_release_rows
+        self.cv = threading.Condition()
+        self.callback = callback
+        self.default_rows = init_release_rows
+
+    def __deepcopy__(self, memodict):
+        if id(self) in memodict:
+            return memodict[id(self)]
+        memodict[id(self)] = self
+        # condition variable and callback are the same, but reset the counter
+        self.reset()
+        return self
+
+    def reset(self):
+        with self.cv:
+            self.row_count = -self.default_rows
+            self.cv.notify_all()
+
+    def update_batched_size(self, batch_size):
+        # should only use before the pipeline creates
+        self.row_count *= batch_size
+        self.default_rows *= batch_size
+
+    def block_func(self):
+        with self.cv:
+            self.cv.wait_for(lambda: self.row_count < 0)
+            self.row_count += 1
+        return True
+
+    def release_func(self, pass_rows=None, data=None):
+        with self.cv:
+            if pass_rows is None:
+                pass_rows = self.default_rows
+            self.row_count -= pass_rows
+            if self.callback is not None:
+                self.callback(data)
+            self.cv.notify_all()
+
+class SyncWaitDataset(DatasetOp):
+    """
+    The result of adding a blocking condition to the input Dataset
+
+    Args:
+        input_dataset (Dataset): Input dataset to apply flow control
+        num_batch (int): the number of batches without blocking at the start of each epoch
+        condition_name (str): The condition name that is used to toggle sending next row
+        callback (function): The callback funciton that will be invoked when sync_update is called
+
+    Raises:
+        RuntimeError: If condition name already exists.
+    """
+
+    def __init__(self, input_dataset, condition_name, num_batch, callback=None):
+        super().__init__()
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        # set to the default value, waiting for the batch to update it
+        self._condition_name = condition_name
+        self._pair = BlockReleasePair(num_batch, callback)
+        if self._condition_name in self.input[0].get_sync_notifiers():
+            raise RuntimeError("Condition name is already in use")
+
+    def get_sync_notifiers(self):
+        return {**self.input[0].get_sync_notifiers(), **{self._condition_name: self._pair.release_func}}
+
+    def is_sync(self):
+        return True
+
+    def get_args(self):
+        args = super().get_args()
+        args["condition_name"] = self._condition_name
+        args["condition_func"] = self._pair.block_func
+        return args
+
+    def update_sync_batch_size(self, batch_size):
+        self._pair.update_batched_size(batch_size)
+
+    @staticmethod
+    def _is_ancestor_of_batch(dataset):
+        """
+        Utility function to find the case where sync_wait is used before batch.
+
+        Args:
+             dataset (Dataset): dataset to be checked
+        Return:
+            True or False
+        """
+        if isinstance(dataset, BatchDataset):
+            return True
+        flag = False
+        for input_dataset in dataset.input:
+            flag = flag | SyncWaitDataset._is_ancestor_of_batch(input_dataset)
+        return flag
 
 class ShuffleDataset(DatasetOp):
     """
@@ -910,6 +1244,9 @@ class ShuffleDataset(DatasetOp):
     Args:
         input_dataset (Dataset): Input Dataset to be shuffled.
         buffer_size (int): The size of the buffer.
+
+    Raises:
+        RuntimeError: If exist sync operators before shuffle.
     """
 
     def __init__(self, input_dataset, buffer_size):
@@ -918,11 +1255,62 @@ class ShuffleDataset(DatasetOp):
         self.input.append(input_dataset)
         input_dataset.output.append(self)
         self._input_indexs = input_dataset.input_indexs
+        if self.is_sync():
+            raise RuntimeError("No shuffle after sync operators")
 
     def get_args(self):
         args = super().get_args()
         args["buffer_size"] = self.buffer_size
         return args
+
+
+# Pyfunc collection for multiprocess pyfunc
+# This global variable will only be used within subprocesses
+_GLOBAL_PYFUNC_LIST = []
+
+
+# Pyfunc worker init function
+# Python multiprocessing library forbid sending lambda function through pipe.
+# This init function allow us to add all python function to a global collection and then fork afterwards.
+def _pyfunc_worker_init(pyfunc_list):
+    global _GLOBAL_PYFUNC_LIST
+    _GLOBAL_PYFUNC_LIST = pyfunc_list
+
+
+# Pyfunc worker execution function
+# All exceptions will be raised to main processes
+def _pyfunc_worker_exec(index, *args):
+    try:
+        return _GLOBAL_PYFUNC_LIST[index](*args)
+    except KeyboardInterrupt:
+        raise Exception("Multiprocess MapOp worker receives KeyboardInterrupt")
+
+
+# PythonCallable wrapper for multiprocess pyfunc
+class _PythonCallable:
+    """
+    Internal python function wrapper for multiprocessing pyfunc
+    """
+    def __init__(self, py_callable, idx, pool=None):
+        # Original python callable from user.
+        self.py_callable = py_callable
+        # Process pool created for current iterator.
+        self.pool = pool
+        # Python callable index for subprocess _GLOBAL_PYFUNC_LIST
+        self.idx = idx
+
+    def __call__(self, *args):
+        if self.pool is not None:
+            try:
+                # This call will send the tensors along with Python callable index to the process pool.
+                # Block, yield GIL. Current thread will reacquire GIL once result is returned.
+                return self.pool.apply(_pyfunc_worker_exec, [self.idx, *args])
+            except KeyboardInterrupt:
+                self.pool.terminate()
+                self.pool.join()
+                raise Exception("Multiprocess MapOp worker receives KeyboardInterrupt")
+        # Invoke original python callable in master process in case the pool is gone.
+        return self.py_callable(*args)
 
 
 class MapDataset(DatasetOp):
@@ -944,13 +1332,15 @@ class MapDataset(DatasetOp):
             The argument is mandatory if len(input_columns) != len(output_columns).
         num_parallel_workers (int, optional): Number of workers to process the Dataset
             in parallel (default=None).
+        python_multiprocessing (bool, optional): Parallelize python operations with multiple worker process. This
+            option could be beneficial if the python operation is computational heavy (default=False).
 
         Raises:
             ValueError: If len(input_columns) != len(output_columns) and columns_order is not specified.
     """
 
     def __init__(self, input_dataset, input_columns=None, operations=None, output_columns=None, columns_order=None,
-                 num_parallel_workers=None):
+                 num_parallel_workers=None, python_multiprocessing=False):
         super().__init__(num_parallel_workers)
         self.input.append(input_dataset)
         if input_columns is not None and not isinstance(input_columns, list):
@@ -971,6 +1361,8 @@ class MapDataset(DatasetOp):
 
         input_dataset.output.append(self)
         self._input_indexs = input_dataset.input_indexs
+        self.python_multiprocessing = python_multiprocessing
+        self.process_pool = None
 
     def get_args(self):
         args = super().get_args()
@@ -987,6 +1379,95 @@ class MapDataset(DatasetOp):
             Number, number of batches.
         """
         return self.input[0].get_dataset_size()
+
+    def __deepcopy__(self, memodict):
+        if id(self) in memodict:
+            return memodict[id(self)]
+        cls = self.__class__
+        new_op = cls.__new__(cls)
+        memodict[id(self)] = new_op
+        new_op.input = copy.deepcopy(self.input, memodict)
+        new_op.input_columns = copy.deepcopy(self.input_columns, memodict)
+        new_op.output_columns = copy.deepcopy(self.output_columns, memodict)
+        new_op.columns_order = copy.deepcopy(self.columns_order, memodict)
+        new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
+        new_op.output = copy.deepcopy(self.output, memodict)
+        new_op.input_indexs = copy.deepcopy(self._input_indexs, memodict)
+        new_op.python_multiprocessing = copy.deepcopy(self.python_multiprocessing, memodict)
+        new_op.operations = self.operations
+        return new_op
+
+    # Iterator bootstrap will be called on iterator construction.
+    # A deep copy of Dataset object is created prior of iterator_bootstrap.
+    # This method will create per iterator process pool and bind pyfunc execution to the pool.
+    def iterator_bootstrap(self):
+        """
+        Per iterator bootstrap callback.
+        """
+        if self.python_multiprocessing:
+            iter_specific_operations = []
+            callable_list = []
+
+            # Pass #1, look for python callables and build list
+            for op in self.operations:
+                if callable(op):
+                    callable_list.append(op)
+
+            if callable_list:
+                # Construct pool with the callable list
+                # The callable list and _pyfunc_worker_init are used to pass lambda function in to subprocesses
+                self.process_pool = multiprocessing.Pool(processes=self.num_parallel_workers,
+                                                         initializer=_pyfunc_worker_init,
+                                                         initargs=(callable_list,))
+                # Pass #2
+                idx = 0
+                for op in self.operations:
+                    if callable(op):
+                        # Wrap python callable into _PythonCallable
+                        iter_specific_operations.append(_PythonCallable(op, idx, self.process_pool))
+                        idx += 1
+                    else:
+                        # CPP ops remain the same
+                        iter_specific_operations.append(op)
+                self.operations = iter_specific_operations
+
+
+class FilterDataset(DatasetOp):
+    """
+    The result of applying filter predicate to the input Dataset.
+
+    Args:
+        input_dataset: Input Dataset to be mapped.
+        predicate: python callable which returns a boolean value.
+        input_columns: (list[str]): List of names of the input columns, when
+        default=None, the predicate will be applied all columns in the dataset.
+        num_parallel_workers (int, optional): Number of workers to process the Dataset
+            in parallel (default=None).
+    """
+
+    def __init__(self, input_dataset, predicate, input_columns=None, num_parallel_workers=None):
+        super().__init__(num_parallel_workers)
+        self.predicate = lambda *args: bool(predicate(*args))
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        if input_columns is not None and not isinstance(input_columns, list):
+            input_columns = [input_columns]
+        self.input_columns = input_columns
+
+    def get_args(self):
+        args = super().get_args()
+        args["predicate"] = self.predicate
+        args["input_columns"] = self.input_columns
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+        the size cannot be determined before we run the pipeline
+        Return:
+            0
+        """
+        return 0
 
 
 class RepeatDataset(DatasetOp):
@@ -1035,6 +1516,75 @@ class RepeatDataset(DatasetOp):
         return self.count
 
 
+class SkipDataset(DatasetOp):
+    """
+    The result of applying Skip operator to the input Dataset.
+
+    Args:
+        datasets (tuple): A tuple of datasets to be skipped.
+        count (int): Number of rows the dataset should be skipped.
+    """
+
+    def __init__(self, input_dataset, count):
+        super().__init__()
+        self.count = count
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        self._input_indexs = input_dataset.input_indexs
+
+    def get_args(self):
+        args = super().get_args()
+        args["count"] = self.count
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        child_size = self.input[0].get_dataset_size()
+        output_size = 0
+        if self.count >= 0 and self.count < child_size:
+            output_size = child_size - self.count
+        return output_size
+
+
+class TakeDataset(DatasetOp):
+    """
+    The result of applying Take operator to the input Dataset.
+
+    Args:
+        input_dataset (Dataset): Input Dataset to be taken element from.
+        count (int): Number of elements to be taken from the dataset.
+    """
+
+    def __init__(self, input_dataset, count):
+        super().__init__()
+        self.count = count
+        self.input.append(input_dataset)
+        input_dataset.output.append(self)
+        self._input_indexs = input_dataset.input_indexs
+
+    def get_args(self):
+        args = super().get_args()
+        args["count"] = self.count
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        child_size = self.input[0].get_dataset_size()
+        if child_size < self.count:
+            return child_size
+        return self.count
+
+
 class ZipDataset(DatasetOp):
     """
     The result of applying Zip operator to the input Dataset.
@@ -1076,6 +1626,9 @@ class ZipDataset(DatasetOp):
             Number, number of classes.
         """
         return None
+
+    def is_sync(self):
+        return any([c.is_sync() for c in self.input])
 
     def get_args(self):
         args = super().get_args()
@@ -1197,7 +1750,7 @@ class StorageDataset(SourceDataset):
 
     Args:
         dataset_files (list[str]): List of files to be read.
-        schema (str): Path to the json schema file.
+        schema (str): Path to the json schema file. If numRows(parsed from schema) is not exist, read the full dataset.
         distribution (str, optional): Path of distribution config file (default="").
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns).
         num_parallel_workers (int, optional): Number of parallel working threads (default=None).
@@ -1363,7 +1916,6 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
         return samplers.DistributedSampler(num_shards, shard_id, shuffle=shuffle)
     # If shuffle disabled, sharding disabled, use sequential sampler
     return samplers.SequentialSampler()
-
 
 
 class ImageFolderDatasetV2(SourceDataset):
@@ -1623,6 +2175,10 @@ class MindDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument should be specified only when num_shards is also specified.
         block_reader (bool, optional): Whether read data by block mode (default=False).
+        sampler (Sampler, optional): Object used to choose samples from the
+            dataset (default=None, sampler is exclusive
+            with shuffle and block_reader). Support list: SubsetRandomSampler,
+            PkSampler
 
     Raises:
         ValueError: If num_shards is specified but shard_id is None.
@@ -1632,14 +2188,16 @@ class MindDataset(SourceDataset):
 
     @check_minddataset
     def __init__(self, dataset_file, columns_list=None, num_parallel_workers=None,
-                 shuffle=None, num_shards=None, shard_id=None, block_reader=False):
+                 shuffle=None, num_shards=None, shard_id=None,
+                 block_reader=False, sampler=None):
         super().__init__(num_parallel_workers)
         self.dataset_file = dataset_file
         self.columns_list = columns_list
-        self.global_shuffle = not bool(shuffle is False)
+        self.global_shuffle = shuffle
         self.distribution = ""
+        self.sampler = sampler
 
-        if num_shards is None:
+        if num_shards is None or shard_id is None:
             self.partitions = None
         else:
             self.partitions = [num_shards, shard_id]
@@ -1647,8 +2205,26 @@ class MindDataset(SourceDataset):
         if block_reader is True and self.partitions is not None:
             raise ValueError("block reader not allowed true when use partitions")
 
+        if block_reader is True and shuffle is True:
+            raise ValueError("block reader not allowed true when use shuffle")
+
         if block_reader is True:
             logger.warning("WARN: global shuffle is not used.")
+
+        if sampler is not None:
+            if isinstance(sampler, samplers.SubsetRandomSampler) is False and \
+            isinstance(sampler, samplers.PKSampler) is False:
+                raise ValueError("the sampler is not supported yet.")
+
+        # sampler exclusive
+        if block_reader is True and sampler is not None:
+            raise ValueError("block reader not allowed true when use sampler")
+
+        if shuffle is True and sampler is not None:
+            raise ValueError("shuffle not allowed true when use sampler")
+
+        if block_reader is False and sampler is None:
+            self.global_shuffle = not bool(shuffle is False)
 
         self.num_shards = num_shards
         self.shard_id = shard_id
@@ -1663,6 +2239,7 @@ class MindDataset(SourceDataset):
         args["block_reader"] = self.block_reader
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
+        args["sampler"] = self.sampler
         return args
 
     def get_dataset_size(self):
@@ -1673,7 +2250,7 @@ class MindDataset(SourceDataset):
             Number, number of batches.
         """
 
-        num_rows = MindRecordOp.get_num_rows(self.dataset_file)
+        num_rows = MindRecordOp.get_num_rows(self.dataset_file, self.sampler)
         if self.partitions is not None and self.partitions[0] > 0:
             if num_rows % self.partitions[0] == 0:
                 num_rows = num_rows // self.partitions[0]
@@ -1682,82 +2259,361 @@ class MindDataset(SourceDataset):
         return num_rows
 
 
-def ds_fn(dataset):
-    for val in dataset:
-        # convert output tensors to ndarrays
-        yield tuple([np.array(x) for x in val])
+def _iter_fn(dataset, num_samples):
+    """
+    Generator function wrapper for iterable dataset
+    """
+    if num_samples is not None:
+        ds_iter = iter(dataset)
+        for _ in range(num_samples):
+            try:
+                val = next(ds_iter)
+            except StopIteration:
+                return
+            # convert output tensors to ndarrays
+            yield tuple([np.array(x) for x in val])
+    else:
+        for val in dataset:
+            # convert output tensors to ndarrays
+            yield tuple([np.array(x) for x in val])
 
 
-def sampler_fn(sampler, dataset):
-    for i in sampler:
+def _generator_fn(generator, num_samples):
+    """
+    Generator function wrapper for generator function dataset
+    """
+    if num_samples is not None:
+        gen_iter = generator()
+        for _ in range(num_samples):
+            try:
+                val = next(gen_iter)
+            except StopIteration:
+                return
+            yield val
+    else:
+        gen_iter = generator()
+        for val in gen_iter:
+            yield val
+
+
+def _py_sampler_fn(sampler, num_samples, dataset):
+    """
+    Generator function wrapper for mappable dataset with python sampler
+    """
+    if num_samples is not None:
+        sampler_iter = iter(sampler)
+        for _ in range(num_samples):
+            try:
+                idx = next(sampler_iter)
+            except StopIteration:
+                return
+            val = dataset[idx]
+            # convert output tensors to ndarrays
+            yield tuple([np.array(x) for x in val])
+    else:
+        for i in sampler:
+            val = dataset[i]
+            # convert output tensors to ndarrays
+            yield tuple([np.array(x) for x in val])
+
+
+def _cpp_sampler_fn(sampler, dataset):
+    """
+    Generator function wrapper for mappable dataset with cpp sampler
+    """
+    indices = sampler.get_indices()
+    for i in indices:
         val = dataset[i]
         # convert output tensors to ndarrays
         yield tuple([np.array(x) for x in val])
 
 
+def _cpp_sampler_fn_mp(sampler, dataset, num_worker):
+    """
+    Multiprocessing generator function wrapper for mappable dataset with cpp sampler
+    """
+    indices = sampler.get_indices()
+    return _sampler_fn_mp(indices, dataset, num_worker)
+
+
+def _py_sampler_fn_mp(sampler, num_samples, dataset, num_worker):
+    """
+    Multiprocessing generator function wrapper for mappable dataset with python sampler
+    """
+    indices = _fetch_py_sampler_indices(sampler, num_samples)
+    return _sampler_fn_mp(indices, dataset, num_worker)
+
+
+def _fetch_py_sampler_indices(sampler, num_samples):
+    """
+    Indices fetcher for python sampler
+    """
+    if num_samples is not None:
+        sampler_iter = iter(sampler)
+        ret = []
+        for _ in range(num_samples):
+            try:
+                val = next(sampler_iter)
+                ret.append(val)
+            except StopIteration:
+                break
+        return ret
+    return [i for i in sampler]
+
+
+def _fill_worker_indices(workers, indices, idx):
+    """
+    Worker index queue filler, fill worker index queue in round robin order
+    """
+    num_worker = len(workers)
+    while idx < len(indices):
+        try:
+            workers[idx % num_worker].put(indices[idx])
+            idx += 1
+        except queue.Full:
+            break
+    return idx
+
+
+def _sampler_fn_mp(indices, dataset, num_worker):
+    """
+    Multiprocessing generator function wrapper master process
+    """
+    workers = []
+    # Event for end of epoch
+    eoe = multiprocessing.Event()
+
+    # Create workers
+    for _ in range(num_worker):
+        worker = _GeneratorWorker(dataset, eoe)
+        worker.daemon = True
+        workers.append(worker)
+
+    # Fill initial index queues
+    idx_cursor = 0
+    idx_cursor = _fill_worker_indices(workers, indices, idx_cursor)
+
+    # Start all workers
+    for w in workers:
+        w.start()
+
+    # Fetch results
+    for i in range(len(indices)):
+        # Fetch result and put index
+        try:
+            result = workers[i % num_worker].get()
+        except queue.Empty:
+            raise Exception("Generator worker process timeout")
+        except KeyboardInterrupt:
+            for w in workers:
+                w.terminate()
+                w.join()
+            raise Exception("Generator worker receives KeyboardInterrupt")
+        if idx_cursor < len(indices):
+            idx_cursor = _fill_worker_indices(workers, indices, idx_cursor)
+        # Set eoe event once all indices are sent
+        if idx_cursor == len(indices) and not eoe.is_set():
+            eoe.set()
+        yield tuple([np.array(x) for x in result])
+
+
+def _generator_worker_loop(dataset, idx_queue, result_queue, eoe):
+    """
+    Multiprocessing generator worker process loop
+    """
+    while True:
+        # Fetch index, block
+        try:
+            idx = idx_queue.get()
+        except KeyboardInterrupt:
+            raise Exception("Generator worker receives KeyboardInterrupt")
+        if idx is None:
+            # When the queue is out of scope from master process, a None item can be fetched from the queue.
+            # Upon receiving None, worker process should check if EOE is set.
+            assert eoe.is_set(), ""
+            return
+        # Fetch data, any exception from __getitem__ will terminate worker and timeout master process
+        result = dataset[idx]
+        # Send data, block
+        try:
+            result_queue.put(result)
+        except KeyboardInterrupt:
+            raise Exception("Generator worker receives KeyboardInterrupt")
+        del result, idx
+
+
+class _GeneratorWorker(multiprocessing.Process):
+    """
+    Worker process for multiprocess Generator
+    """
+    def __init__(self, dataset, eoe):
+        self.idx_queue = multiprocessing.Queue(16)
+        self.res_queue = multiprocessing.Queue(16)
+        super().__init__(target=_generator_worker_loop, args=(dataset, self.idx_queue, self.res_queue, eoe))
+
+    def put(self, item):
+        """
+        Put function for worker index queue. Never block. Raise queue.Full on failure.
+        """
+        self.idx_queue.put_nowait(item)
+
+    def get(self):
+        """
+        Get function for worker result queue. Block with timeout.
+        """
+        return self.res_queue.get(timeout=5)
+
+
 class GeneratorDataset(SourceDataset):
     """
-    A source dataset that generate data from calling generator function each epoch.
+    A source dataset that generate data from python by invoking python data source each epoch.
+
+    This dataset can take in a sampler. sampler and shuffle are mutually exclusive. Table
+    below shows what input args are allowed and their expected behavior.
+
+    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+       :widths: 25 25 50
+       :header-rows: 1
+
+       * - Parameter 'sampler'
+         - Parameter 'shuffle'
+         - Expected Order Behavior
+       * - None
+         - None
+         - random order
+       * - None
+         - True
+         - random order
+       * - None
+         - False
+         - sequential order
+       * - Sampler object
+         - None
+         - order defined by sampler
+       * - Sampler object
+         - True
+         - not allowed
+       * - Sampler object
+         - False
+         - not allowed
 
     Args:
-        generator_function (callable):
-            A callable object that returns an Generator object that supports the iter() protocol.
-            Generator object is required to return a tuple of numpy array as a row of the dataset on next().
-        column_names (list[str]): List of column names of the dataset.
+        source (Callable/Iterable/Random Accessible):
+            A generator callable object, an iterable python object or a random accessible python object.
+            Callable source is required to return a tuple of numpy array as a row of the dataset on source().next().
+            Iterable source is required to return a tuple of numpy array as a row of the dataset on iter(source).next().
+            Random accessible source is required to return a tuple of numpy array as a row of the dataset on
+            source[idx].
+        column_names (list[str], optional): List of column names of the dataset (default=None). Users are required to
+            provide either column_names or schema.
         column_types (list[mindspore.dtype], optional): List of column data types of the dataset (default=None).
             If provided, sanity check will be performed on generator output.
-        prefetch_size (int, optional): Prefetch number of records ahead of the user's request (default=None).
-        sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
+        schema (Schema/String, optional): Path to the json schema file or schema object (default=None). Users are
+            required to provide either column_names or schema. If both are provided, schema will be used.
+        num_samples (int, optional): The number of samples to be included in the dataset
+            (default=None, all images).
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
+            (default=None, expected order behavior shown in the table).
+        sampler (Sampler/Iterable, optional): Object used to choose samples from the dataset. Random accessible input is
+            required (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
+            This argument should be specified only when 'num_samples' is "None". Random accessible input is required.
+        shard_id (int, optional): The shard ID within num_shards (default=None). This argument should be specified only
+            when num_shards is also specified. Random accessible input is required.
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>> # 1) generator function that generates multi-dimensional data
+        >>> import mindspore.dataengine as de
+        >>> # 1) Multidimensional generator function as callable input
         >>> def generator_md():
         >>>     for i in range(64):
         >>>         yield (np.array([[i, i + 1], [i + 2, i + 3]]),)
-        >>> # create multi_dimension_generator_dataset with GeneratorMD() and column name "multi_dimensional_data"
-        >>> multi_dimension_generator_dataset = ds.GeneratorDataset(generator_md, ["multi_dimensional_data"])
-        >>> # 2) generator function that generates multi-columns data
+        >>> # create multi_dimension_generator_dataset with GeneratorMD and column name "multi_dimensional_data"
+        >>> multi_dimension_generator_dataset = de.GeneratorDataset(generator_md, ["multi_dimensional_data"])
+        >>> # 2) Multi-column generator function as callable input
         >>> def generator_mc(maxid = 64):
         >>>     for i in range(maxid):
         >>>         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]]))
-        >>> # create multi_column_generator_dataset with GeneratorMC() and column names "col1" and "col2"
-        >>> multi_column_generator_dataset = ds.GeneratorDataset(generator_mc, ["col1, col2"])
+        >>> # create multi_column_generator_dataset with GeneratorMC and column names "col1" and "col2"
+        >>> multi_column_generator_dataset = de.GeneratorDataset(generator_mc, ["col1", "col2"])
+        >>> # 3) Iterable dataset as iterable input
+        >>> class MyIterable():
+        >>>     def __iter__(self):
+        >>>         return # User implementation
+        >>> # create iterable_generator_dataset with MyIterable object
+        >>> iterable_generator_dataset = de.GeneratorDataset(MyIterable(), ["col1"])
+        >>> # 4) Random accessible dataset as Random accessible input
+        >>> class MyRA():
+        >>>     def __getitem__(self, index):
+        >>>         return # User implementation
+        >>> # create ra_generator_dataset with MyRA object
+        >>> ra_generator_dataset = de.GeneratorDataset(MyRA(), ["col1"])
+        >>> # List/Dict/Tuple is also random accessible
+        >>> list_generator = de.GeneratorDataset([(np.array(0),), (np.array(1)), (np.array(2))], ["col1"])
+        >>> # 5) Built-in Sampler
+        >>> my_generator = de.GeneratorDataset(my_ds, ["img", "label"], sampler=samplers.RandomSampler())
+        >>>
     """
 
     @check_generatordataset
-    def __init__(self, generator_function, column_names, column_types=None, prefetch_size=None, sampler=None):
-        super().__init__(1)
-        if sampler is not None:
-            self.generator_function = (lambda: sampler_fn(sampler, generator_function))
+    def __init__(self, source, column_names=None, column_types=None, schema=None, num_samples=None,
+                 num_parallel_workers=1, shuffle=None, sampler=None, num_shards=None, shard_id=None):
+        super().__init__(num_parallel_workers)
+        self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
+        if self.sampler is not None and hasattr(source, "__getitem__"):
+            if isinstance(self.sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
+                                         samplers.RandomSampler, samplers.SubsetRandomSampler,
+                                         samplers.WeightedRandomSampler, samplers.Sampler)):
+                if num_samples is None:
+                    num_samples = len(source)
+                sampler_instance = self.sampler.create()
+                sampler_instance.set_num_rows(len(source))
+                sampler_instance.set_num_samples(num_samples)
+                sampler_instance.initialize()
+                if num_parallel_workers > 1:
+                    self.source = (lambda: _cpp_sampler_fn_mp(sampler_instance, source, num_parallel_workers))
+                else:
+                    self.source = (lambda: _cpp_sampler_fn(sampler_instance, source))
+            else:
+                if num_parallel_workers > 1:
+                    self.source = (lambda: _py_sampler_fn_mp(self.sampler, num_samples, source, num_parallel_workers))
+                else:
+                    self.source = (lambda: _py_sampler_fn(self.sampler, num_samples, source))
         else:
             try:
-                # test to see if generator_function is iterable
-                iter(generator_function)
+                iter(source)
             except TypeError:
-                # generator_function was not iterable, assume it is a function
-                self.generator_function = generator_function
+                # Use generator function if input callable
+                self.source = (lambda: _generator_fn(source, num_samples))
             else:
-                # generator_function was iterable, build a function around it
-                self.generator_function = (lambda: ds_fn(generator_function))
+                # Use iterator function if input is iterable
+                # Random accessible input is also iterable
+                self.source = (lambda: _iter_fn(source, num_samples))
 
+        if column_names is not None and not isinstance(column_names, list):
+            column_names = [column_names]
         self.column_names = column_names
 
         if column_types is not None:
             self.column_types = mstypelist_to_detypelist(column_types)
         else:
             self.column_types = column_types
-        self.distribution = ""
-        self.prefetch_size = prefetch_size
-        self.sampler = sampler
+
+        if schema is not None:
+            self.schema = schema
+            if not isinstance(schema, Schema):
+                self.schema = Schema(schema)
+            self.column_names = []
+            self.column_types = []
+            for col in self.schema.columns:
+                self.column_names.append(col["name"])
+                self.column_types.append(DataType(col["type"]))
 
     def get_args(self):
         args = super().get_args()
-        args["generator_function"] = self.generator_function
+        args["source"] = self.source
         args["column_names"] = self.column_names
         args["column_types"] = self.column_types
-        args["prefetch_size"] = self.prefetch_size
-        args["sampler"] = self.sampler
         return args
 
     def get_dataset_size(self):
@@ -1776,6 +2632,23 @@ class GeneratorDataset(SourceDataset):
         else:
             raise ValueError('set dataset_size with negative value {}'.format(value))
 
+    def __deepcopy__(self, memodict):
+        if id(self) in memodict:
+            return memodict[id(self)]
+        cls = self.__class__
+        new_op = cls.__new__(cls)
+        memodict[id(self)] = new_op
+        new_op.input = copy.deepcopy(self.input, memodict)
+        new_op.output = copy.deepcopy(self.output, memodict)
+        new_op.num_parallel_workers = copy.deepcopy(self.num_parallel_workers, memodict)
+        new_op.column_types = copy.deepcopy(self.column_types, memodict)
+        new_op.column_names = copy.deepcopy(self.column_names, memodict)
+
+        new_op.source = self.source
+        new_op.sampler = self.sampler
+
+        return new_op
+
 
 class TFRecordDataset(SourceDataset):
     """
@@ -1787,7 +2660,10 @@ class TFRecordDataset(SourceDataset):
         schema (str or Schema, optional): Path to the json schema file or schema object (default=None).
             If the schema is not provided, the meta data from the TFData file is considered the schema.
         columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
-        num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
+        num_samples (int, optional): number of samples(rows) to read (default=None).
+            If num_samples is None and numRows(parsed from schema) is not exist, read the full dataset;
+            If num_samples is None and numRows(parsed from schema) is greater than 0, read numRows rows;
+            If both num_samples and numRows(parsed from schema) are greater than 0, read num_samples rows.
         num_parallel_workers (int, optional): number of workers to read the data
             (default=None, number set in the config).
         shuffle (bool, Shuffle level, optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
@@ -1814,35 +2690,11 @@ class TFRecordDataset(SourceDataset):
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files)
         >>> # 2) get all rows from dataset_files with user-defined schema:
         >>> schema = ds.Schema()
-        >>> schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
+        >>> schema.add_column('col_1d', de_type=mindspore.int64, shape=[2])
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema=schema)
         >>> # 3) get all rows from dataset_files with schema file "./schema.json":
         >>> tfdataset = ds.TFRecordDataset(dataset_files=dataset_files, schema="./schema.json")
     """
-
-    @staticmethod
-    def _find_files(patterns):
-        """
-        Utility function to search for files with the given glob patterns.
-
-        Args:
-            patterns (str or list[str]): string or list of patterns to be searched.
-
-        Returns:
-            List, files.
-        """
-
-        def flat(lists):
-            return list(np.array(lists).flatten())
-
-        if not isinstance(patterns, list):
-            patterns = [patterns]
-
-        file_list = flat([glob.glob(file, recursive=True) for file in patterns])
-        if file_list:  # not empty
-            return file_list
-        raise ValueError("The list of path names matching the patterns is empty.")
-
     @check_tfrecorddataset
     def __init__(self, dataset_files, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None,
                  shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False):
@@ -1906,11 +2758,21 @@ class TFRecordDataset(SourceDataset):
         Return:
             Number, number of batches.
         """
-        num_rows = TFReaderOp.get_num_rows(self.dataset_files, 8, estimate)
-        num_rows = get_num_rows(num_rows, self.num_shards)
-        if self.num_samples is None:
-            return num_rows
-        return min(self.num_samples, num_rows)
+        if self._dataset_size is None:
+            num_rows = TFReaderOp.get_num_rows(self.dataset_files, 8, estimate)
+            num_rows = get_num_rows(num_rows, self.num_shards)
+            if self.num_samples is None:
+                return num_rows
+            return min(self.num_samples, num_rows)
+        return self._dataset_size
+
+    # manually set dataset_size as a tempoary solution.
+    def set_dataset_size(self, value):
+        logger.warning("WARN_DEPRECATED: This method is deprecated. Please use get_dataset_size directly.")
+        if value >= 0:
+            self._dataset_size = value
+        else:
+            raise ValueError('set dataset_size with negative value {}'.format(value))
 
 
 class ManifestDataset(SourceDataset):
@@ -2297,6 +3159,57 @@ class Cifar100Dataset(SourceDataset):
         return get_num_rows(num_rows, self.num_shards)
 
 
+class RandomDataset(SourceDataset):
+    """
+    A source dataset that generates random data.
+
+    Args:
+        num_samples (int): number of samples to generate.
+        schema (str or Schema, optional): Path to the json schema file or schema object (default=None).
+            If the schema is not provided, the meta data from the TFRecord file is considered the schema.
+        columns_list (list[str], optional): List of columns to be read (default=None, read all columns)
+        num_parallel_workers (int, optional): number of workers to read the data
+            (default=None, number set in the config).
+    """
+
+    def __init__(self, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None):
+        super().__init__(num_parallel_workers)
+        schema_obj = None
+        if (schema is not None) and (not isinstance(schema, Schema)):
+            schema_obj = Schema(schema)  # read the schema file and convert to schema object to validate it
+        self.schema = schema
+        self.columns_list = columns_list
+        self.num_samples = num_samples
+        if schema_obj is not None and num_samples is None:
+            self.num_samples = schema_obj.num_rows
+
+    def get_args(self):
+        args = super().get_args()
+        if self.schema is not None:
+            if isinstance(self.schema, Schema):
+                self.schema.datasetType = 'Random'
+                if self.num_samples is not None:
+                    self.schema.num_rows = self.num_samples
+                args["schema_json_string"] = self.schema.to_json()
+            else:
+                args["schema_file_path"] = self.schema
+        args["schema"] = self.schema
+        if self.columns_list is not None:
+            args["columns_list"] = self.columns_list
+        if self.num_samples is not None:
+            args["num_samples"] = self.num_samples
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        return num_samples
+
+
 class Schema:
     """
     Class to represent a schema of dataset.
@@ -2315,22 +3228,29 @@ class Schema:
         >>> import mindspore.common.dtype as mstype
         >>> # create schema, specify column name, mindspore.dtype and shape of the column
         >>> schema = ds.Schema()
-        >>> schema.add_column('col1', de_type=mstype.int64, shape=[2])
+        >>> schema.add_column('col1', de_type=mindspore.int64, shape=[2])
     """
 
     def __init__(self, schema_file=None):
+        self.num_rows = None
         if schema_file is None:
             self.columns = []
             self.dataset_type = ''
-            self.num_rows = 0
         else:
+            if not os.path.isfile(schema_file) or not os.access(schema_file, os.R_OK):
+                raise ValueError("The file %s does not exist or permission denied!" % schema_file)
             try:
                 with open(schema_file, 'r') as load_f:
                     json_obj = json.load(load_f)
-                    self.from_json(json_obj)
             except json.decoder.JSONDecodeError:
-                raise RuntimeError("Schema file failed to load")
+                raise RuntimeError("Schema file failed to load.")
+            except UnicodeDecodeError:
+                raise RuntimeError("Schema file failed to decode.")
+            except Exception:
+                raise RuntimeError("Schema file failed to open.")
+            self.from_json(json_obj)
 
+    @check_add_column
     def add_column(self, name, de_type, shape=None):
         """
         Add new column to the schema.
@@ -2349,10 +3269,8 @@ class Schema:
         if isinstance(de_type, typing.Type):
             de_type = mstype_to_detype(de_type)
             new_column["type"] = str(de_type)
-        elif isinstance(de_type, str):
-            new_column["type"] = str(DataType(de_type))
         else:
-            raise ValueError("Unknown column type")
+            new_column["type"] = str(DataType(de_type))
 
         if shape is not None:
             new_column["shape"] = shape
@@ -2381,45 +3299,58 @@ class Schema:
         Parse the columns and add it to self.
 
         Args:
-            columns (list[str]): names of columns.
+            columns (dict or list[dict]): dataset attribution information, decoded from schema file.
+
+                - list[dict], 'name' and 'type' must be in keys, 'shape' optional.
+
+                - dict, columns.keys() as name, columns.values() is dict, and 'type' inside, 'shape' optional.
 
         Raises:
-            RuntimeError: If failed to parse schema file.
-            RuntimeError: If unknown items in schema file.
+            RuntimeError: If failed to parse columns.
+            RuntimeError: If unknown items in columns.
             RuntimeError: If column's name field is missing.
             RuntimeError: If column's type field is missing.
+
+        Example:
+            >>> schema = Schema()
+            >>> columns1 = [{'name': 'image', 'type': 'int8', 'shape': [3, 3]},
+            >>>             {'name': 'label', 'type': 'int8', 'shape': [1]}]
+            >>> schema.parse_columns(columns1)
+            >>> columns2 = {'image': {'shape': [3, 3], 'type': 'int8'}, 'label': {'shape': [1], 'type': 'int8'}}
+            >>> schema.parse_columns(columns2)
         """
         self.columns = []
-        for col in columns:
-            name = None
-            shape = None
-            data_type = None
-            col_details = None
-            if isinstance(columns, list):
-                col_details = col
-                if "name" in col:
-                    name = col["name"]
-            elif isinstance(columns, dict):
-                col_details = columns[col]
-                name = col
-            else:
-                raise RuntimeError("Error parsing the schema file")
-
-            for k, v in col_details.items():
-                if k == "shape":
-                    shape = v
-                elif k == "type":
-                    data_type = v
-                elif k in ("t_impl", "rank"):
-                    pass
-                else:
-                    raise RuntimeError("Unknown field %s" % k)
-
-            if name is None:
-                raise RuntimeError("Column's name field is missing.")
-            if data_type is None:
-                raise RuntimeError("Column's type field is missing.")
-            self.add_column(name, data_type, shape)
+        if isinstance(columns, list):
+            for column in columns:
+                try:
+                    name = column.pop("name")
+                except KeyError:
+                    raise RuntimeError("Column's name is missing")
+                try:
+                    de_type = column.pop("type")
+                except KeyError:
+                    raise RuntimeError("Column' type is missing")
+                shape = column.pop("shape", None)
+                column.pop("t_impl", None)
+                column.pop("rank", None)
+                if column:
+                    raise RuntimeError("Unknown field {}".format(",".join(column.keys())))
+                self.add_column(name, de_type, shape)
+        elif isinstance(columns, dict):
+            for key, value in columns.items():
+                name = key
+                try:
+                    de_type = value.pop("type")
+                except KeyError:
+                    raise RuntimeError("Column' type is missing")
+                shape = value.pop("shape", None)
+                value.pop("t_impl", None)
+                value.pop("rank", None)
+                if value:
+                    raise RuntimeError("Unknown field {}".format(",".join(value.keys())))
+                self.add_column(name, de_type, shape)
+        else:
+            raise RuntimeError("columns must be dict or list, columns contain name, type, shape(optional).")
 
     def from_json(self, json_obj):
         """
@@ -2433,6 +3364,8 @@ class Schema:
             RuntimeError: if dataset type is missing in the object.
             RuntimeError: if columns are missing in the object.
         """
+        if not isinstance(json_obj, dict) or json_obj is None:
+            raise ValueError("Expected non-empty dict.")
         for k, v in json_obj.items():
             if k == "datasetType":
                 self.dataset_type = v
@@ -2447,6 +3380,9 @@ class Schema:
             raise RuntimeError("DatasetType field is missing.")
         if self.columns is None:
             raise RuntimeError("Columns are missing.")
+        if self.num_rows is not None:
+            if not isinstance(self.num_rows, int) or self.num_rows <= 0:
+                raise ValueError("numRows must be greater than 0")
 
     def __str__(self):
         return self.to_json()
@@ -2500,14 +3436,17 @@ class VOCDataset(SourceDataset):
         decode (bool, optional): Decode the images after reading (default=False).
         sampler (Sampler, optional): Object used to choose samples from the dataset
             (default=None, expected order behavior shown in the table).
-        distribution (str, optional): Path to the json distribution file to configure
-            dataset sharding (default=None). This argument should be specified
-            only when no 'sampler' is used.
+        num_shards (int, optional): Number of shards that the dataset should be divided
+            into (default=None).
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument should be specified only when num_shards is also specified.
 
     Raises:
-        RuntimeError: If distribution and sampler are specified at the same time.
-        RuntimeError: If distribution is failed to read.
-        RuntimeError: If shuffle and sampler are specified at the same time.
+        RuntimeError: If sampler and shuffle are specified at the same time.
+        RuntimeError: If sampler and sharding are specified at the same time.
+        RuntimeError: If num_shards is specified but shard_id is None.
+        RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -2521,27 +3460,15 @@ class VOCDataset(SourceDataset):
 
     @check_vocdataset
     def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None,
-                 shuffle=None, decode=False, sampler=None, distribution=None):
+                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers)
         self.dataset_dir = dataset_dir
-        self.sampler = sampler
-        if distribution is not None:
-            if sampler is not None:
-                raise RuntimeError("Cannot specify distribution and sampler at the same time.")
-            try:
-                with open(distribution, 'r') as load_d:
-                    json.load(load_d)
-            except json.decoder.JSONDecodeError:
-                raise RuntimeError("Json decode error when load distribution file")
-            except Exception:
-                raise RuntimeError("Distribution file has failed to load.")
-        elif shuffle is not None:
-            if sampler is not None:
-                raise RuntimeError("Cannot specify shuffle and sampler at the same time.")
+        self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.decode = decode
-        self.distribution = distribution
         self.shuffle_level = shuffle
+        self.num_shards = num_shards
+        self.shard_id = shard_id
 
     def get_args(self):
         args = super().get_args()
@@ -2550,7 +3477,8 @@ class VOCDataset(SourceDataset):
         args["sampler"] = self.sampler
         args["decode"] = self.decode
         args["shuffle"] = self.shuffle_level
-        args["distribution"] = self.distribution
+        args["num_shards"] = self.num_shards
+        args["shard_id"] = self.shard_id
         return args
 
     def get_dataset_size(self):
@@ -2615,3 +3543,82 @@ class CelebADataset(SourceDataset):
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         return args
+
+class TextFileDataset(SourceDataset):
+    """
+    A source dataset that reads and parses datasets stored on disk in text format.
+    The generated dataset has one columns ['text'].
+
+    Args:
+        dataset_files (str or list[str]): String or list of files to be read or glob strings to search for a pattern of
+            files. The list will be sorted in a lexicographical order.
+        num_samples (int, optional): number of samples(rows) to read (default=None, reads the full dataset).
+        num_parallel_workers (int, optional): number of workers to read the data
+            (default=None, number set in the config).
+        shuffle (bool, Shuffle level, optional): perform reshuffling of the data every epoch (default=Shuffle.GLOBAL).
+            If shuffle is False, no shuffling will be performed;
+            If shuffle is True, the behavior is the same as setting shuffle to be Shuffle.GLOBAL
+            Otherwise, there are two levels of shuffling:
+
+            - Shuffle.GLOBAL: Shuffle both the files and samples.
+
+            - Shuffle.FILES: Shuffle files only.
+
+        num_shards (int, optional): Number of shards that the dataset should be divided into (default=None).
+        shard_id (int, optional): The shard ID within num_shards (default=None). This
+            argument should be specified only when num_shards is also specified.
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>> dataset_files = ["/path/to/1", "/path/to/2"] # contains 1 or multiple text files
+        >>> dataset = ds.TextFileDataset(dataset_files=dataset_files)
+    """
+
+    @check_textfiledataset
+    def __init__(self, dataset_files, num_samples=None, num_parallel_workers=None,
+                 shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None):
+        super().__init__(num_parallel_workers)
+        self.dataset_files = self._find_files(dataset_files)
+        self.dataset_files.sort()
+        self.num_samples = num_samples
+
+        if not isinstance(shuffle, (bool, Shuffle)):
+            raise TypeError("shuffle should be of boolean or enum 'Shuffle'.")
+        if not isinstance(shuffle, Shuffle):
+            if shuffle:
+                self.shuffle_level = Shuffle.GLOBAL
+                self.shuffle_files = True
+            else:
+                self.shuffle_level = None
+                self.shuffle_files = False
+        else:
+            self.shuffle_level = shuffle
+            self.shuffle_files = True
+
+        self.num_shards = num_shards
+        self.shard_id = shard_id
+
+    def get_args(self):
+        args = super().get_args()
+        args["dataset_files"] = self.dataset_files
+        args["num_samples"] = self.num_samples
+        if self.shuffle_files is not None:
+            args["shuffle_files"] = self.shuffle_files
+        args["shuffle"] = self.shuffle_level
+        args["num_shards"] = self.num_shards
+        args["shard_id"] = self.shard_id
+        return args
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        if self._dataset_size is None:
+            num_rows = TextFileOp.get_num_rows(self.dataset_files)
+            num_rows = get_num_rows(num_rows, self.num_shards)
+            if self.num_samples is None:
+                return num_rows
+            return min(self.num_samples, num_rows)
+        return self._dataset_size

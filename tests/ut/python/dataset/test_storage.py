@@ -37,3 +37,15 @@ def test_case_storage():
 
     filename = "storage_result.npz"
     save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
+
+
+def test_case_no_rows():
+    DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetNoRowsSchema.json"
+
+    dataset = ds.StorageDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
+    assert dataset.get_dataset_size() == 3
+    count = 0
+    for data in dataset.create_tuple_iterator():
+        count += 1
+    assert count == 3

@@ -40,10 +40,10 @@ class Crc32c {
   ~Crc32c() = default;
 
   // Calculate the crc32c value, use the 8 table method
-  static uint32 MakeCrc32c(uint32 init_crc, const char* data, size_t size);
+  static uint32 MakeCrc32c(uint32 init_crc, const char *data, size_t size);
 
   // retrun the crc32c value(need mask)
-  static uint32 GetMaskCrc32cValue(const char* data, size_t n) {
+  static uint32 GetMaskCrc32cValue(const char *data, size_t n) {
     auto crc = MakeCrc32c(0, data, n);
     // Rotate right by kRightShift bits and add kMaskDelta(a constant).
     return ((crc >> kRightShift) | (crc << kLeftShift)) + kMaskDelta;

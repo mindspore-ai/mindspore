@@ -26,8 +26,8 @@
 #include "common/utils.h"
 #include "dataset/util/status.h"
 #include "dataset/core/tensor_shape.h"
-#include "dataset/util/make_unique.h"
 #include "utils/log_adapter.h"
+#include "dataset/util/de_error.h"
 
 namespace mindspore {
 namespace dataset {
@@ -58,7 +58,7 @@ ColDescriptor::ColDescriptor(const std::string &col_name, DataType col_type, Ten
   // our shape.  Otherwise, set our shape to be empty.
   if (in_shape != nullptr) {
     // Create a shape and copy construct it into our column's shape.
-    tensor_shape_ = mindspore::make_unique<TensorShape>(*in_shape);
+    tensor_shape_ = std::make_unique<TensorShape>(*in_shape);
   } else {
     tensor_shape_ = nullptr;
   }
@@ -75,7 +75,7 @@ ColDescriptor::ColDescriptor(const std::string &col_name, DataType col_type, Ten
 ColDescriptor::ColDescriptor(const ColDescriptor &in_cd)
     : type_(in_cd.type_), rank_(in_cd.rank_), tensor_impl_(in_cd.tensor_impl_), col_name_(in_cd.col_name_) {
   // If it has a tensor shape, make a copy of it with our own unique_ptr.
-  tensor_shape_ = in_cd.hasShape() ? mindspore::make_unique<TensorShape>(in_cd.shape()) : nullptr;
+  tensor_shape_ = in_cd.hasShape() ? std::make_unique<TensorShape>(in_cd.shape()) : nullptr;
 }
 
 // Assignment overload
@@ -86,7 +86,7 @@ ColDescriptor &ColDescriptor::operator=(const ColDescriptor &in_cd) {
     tensor_impl_ = in_cd.tensor_impl_;
     col_name_ = in_cd.col_name_;
     // If it has a tensor shape, make a copy of it with our own unique_ptr.
-    tensor_shape_ = in_cd.hasShape() ? mindspore::make_unique<TensorShape>(in_cd.shape()) : nullptr;
+    tensor_shape_ = in_cd.hasShape() ? std::make_unique<TensorShape>(in_cd.shape()) : nullptr;
   }
   return *this;
 }
@@ -464,6 +464,24 @@ Status DataSchema::PreLoadExceptionCheck(const nlohmann::json &js) {
   if (js.find("columns") == js.end())
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
                   "\"columns\" node is required in the schema json file.");
+  return Status::OK();
+}
+
+// Loops through all columns in the schema and returns a map with the column
+// name to column index number.
+Status DataSchema::GetColumnNameMap(std::unordered_map<std::string, int32_t> *out_column_name_map) {
+  if (out_column_name_map == nullptr) {
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "unexpected null output column name map.");
+  }
+
+  for (int32_t i = 0; i < col_descs_.size(); ++i) {
+    if (col_descs_[i].name().empty()) {
+      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+                    "Constructing column name map from schema, but found empty column name.");
+    }
+    (*out_column_name_map)[col_descs_[i].name()] = i;
+  }
+
   return Status::OK();
 }
 }  // namespace dataset

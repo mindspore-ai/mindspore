@@ -21,21 +21,21 @@
 namespace mindspore {
 
 // only support (int, float, bool) as Literal
-bool AnyIsLiteral(const Any& any) {
+bool AnyIsLiteral(const Any &any) {
   static const std::type_index typeid_int = std::type_index(typeid(int));
   static const std::type_index typeid_float = std::type_index(typeid(float));
   static const std::type_index typeid_bool = std::type_index(typeid(bool));
 
-  std::type_index typeid_any = std::type_index(any.type());
+  auto typeid_any = std::type_index(any.type());
   return typeid_int == typeid_any || typeid_float == typeid_any || typeid_bool == typeid_any;
 }
 
-std::ostream& operator<<(std::ostream& os, const pybind11::object& obj) {
+std::ostream &operator<<(std::ostream &os, const pybind11::object &obj) {
   os << "[py::object]";
   return os;
 }
 
-Any& Any::operator=(const Any& other) {
+Any &Any::operator=(const Any &other) {
   if (m_ptr == other.m_ptr || &other == this) {
     return *this;
   }
@@ -44,9 +44,9 @@ Any& Any::operator=(const Any& other) {
   return *this;
 }
 
-bool Any::operator<(const Any& other) const { return this < &other; }
+bool Any::operator<(const Any &other) const { return this < &other; }
 
-Any& Any::operator=(Any&& other) {
+Any &Any::operator=(Any &&other) {
   if (this != &other) {
     if (m_ptr == other.m_ptr || &other == this) {
       return *this;

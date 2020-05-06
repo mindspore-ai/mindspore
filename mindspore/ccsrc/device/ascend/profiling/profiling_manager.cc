@@ -27,6 +27,7 @@
 #include "utils/log_adapter.h"
 #include "utils/context/ms_context.h"
 #include "common/utils.h"
+#include "utils/convert_utils.h"
 
 using std::vector;
 using Json = nlohmann::json;
@@ -34,7 +35,7 @@ using Json = nlohmann::json;
 namespace mindspore {
 namespace device {
 namespace ascend {
-ProfilingManager& ProfilingManager::GetInstance() {
+ProfilingManager &ProfilingManager::GetInstance() {
   static ProfilingManager inst;
   return inst;
 }
@@ -44,11 +45,11 @@ ProfilingManager::ProfilingManager() : device_id_(0), prof_handle_(nullptr) {
 }
 
 uint64_t ProfilingManager::GetJobId() const {
-  const char* job_id = std::getenv("JOB_ID");
+  const char *job_id = std::getenv("JOB_ID");
   return ((job_id != nullptr) ? std::strtoul(job_id, nullptr, 10) : 0);
 }
 
-bool ProfilingManager::ReportProfilingData(const map<uint32_t, string>& op_taskId_map) const {
+bool ProfilingManager::ReportProfilingData(const map<uint32_t, string> &op_taskId_map) const {
   if (!IsProfiling()) {
     MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";
     return false;
@@ -65,10 +66,10 @@ bool ProfilingManager::ReportProfilingData(const map<uint32_t, string>& op_taskI
   MS_LOG(INFO) << "DistributeTask: op tasId map size = " << op_taskId_map.size();
 
   Msprof::Engine::ReporterData reporter_data = {};
-  for (const auto& iter : op_taskId_map) {
+  for (const auto &iter : op_taskId_map) {
     auto data = iter.second + ' ' + std::to_string(iter.first) + ';';
     reporter_data.deviceId = UintToInt(device_id_);
-    reporter_data.data = (unsigned char*)(const_cast<char*>(data.c_str()));
+    reporter_data.data = (unsigned char *)(const_cast<char *>(data.c_str()));
     reporter_data.dataLen = data.size();
     auto ret = memcpy_s(reporter_data.tag, MSPROF_ENGINE_MAX_TAG_LEN + 1, "framework", sizeof("framework"));
     if (ret != 0) {
@@ -84,7 +85,7 @@ bool ProfilingManager::ReportProfilingData(const map<uint32_t, string>& op_taskI
   return true;
 }
 
-static std::vector<std::string> Split(const std::string& str, const char delim) {
+static std::vector<std::string> Split(const std::string &str, const char delim) {
   std::vector<std::string> elems;
 
   if (str.empty()) {
@@ -115,7 +116,7 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
   device_id_ = device_id;
   // exp: export PROFILING_MODE=true
   // export PROFILING_OPTIONS=training_trace
-  const char* prof_options_str = std::getenv("PROFILING_OPTIONS");
+  const char *prof_options_str = std::getenv("PROFILING_OPTIONS");
   // register Framework to profiling
   int result = Msprof::Engine::RegisterEngine("Framework", engine_0_.get());
   if (result != 0) {
@@ -175,7 +176,7 @@ bool ProfilingManager::StopProfiling() const {
     MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";
     return true;
   }
-  Msprof::Engine::Reporter* reporter = PluginImpl::GetPluginReporter();
+  Msprof::Engine::Reporter *reporter = PluginImpl::GetPluginReporter();
   if (reporter != nullptr) {
     MS_LOG(INFO) << "report data end, ret = " << reporter->Flush();
   }

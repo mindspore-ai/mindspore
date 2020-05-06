@@ -16,9 +16,11 @@
 #ifndef MINDSPORE_CCSRC_VM_BACKEND_H_
 #define MINDSPORE_CCSRC_VM_BACKEND_H_
 
-#include <string>
+#include <list>
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <utility>
 
 #include "ir/anf.h"
 #include "vm/segment_runner.h"
@@ -45,6 +47,8 @@ class Backend {
   virtual bool GetCond(const BaseRef &c, bool *value);
   virtual void SetSwitchGraph() {}
   virtual void SetSwitchActive(const BaseRef &, bool) {}
+  virtual void RecallGraphInput(const FuncGraphPtr &, const VectorRef &, const BaseRef &) {}
+  virtual void SetGraphUserInputs(const FuncGraphPtr &, const FuncGraphPtr &, const AnfNodePtrList &) {}
 
   void set_curr_switch(const BaseRef &value) {
     curr_switch_ = value;
@@ -54,8 +58,6 @@ class Backend {
   BaseRef curr_switch() { return curr_switch_; }
   virtual void Link(GraphId) {}
   virtual LinConvertResult GetMultiGraphRun(const FuncGraphPtr &) { return LinConvertResult(); }
-  virtual void SetSimuCondFlag(const BaseRef &, int) {}
-  virtual int GetSimuCondFlag(const BaseRef &) { return 0; }
 
   LinConvertResult multi_result() { return multi_result_; }
   void set_multi_result(const LinConvertResult &value) { multi_result_ = value; }
@@ -75,11 +77,11 @@ class Backend {
   bool simu_flag_;
   LinConvertResult multi_result_;
   AnfNodePtr final_output_;
+  std::unordered_map<FuncGraphPtr, std::pair<FuncGraphPtr, AnfNodePtrList>> graph_user_inputs_;
 };
 
 struct CondGraph {
   bool curr_cond;
-  int flag;
   std::unordered_map<bool, GraphId> cond_graph_map;
 };
 
@@ -97,15 +99,17 @@ class MsBackend : public Backend {
 
   void SetSwitchGraph() override;
   void SetSwitchActive(const BaseRef &c, bool cond) override;
+  void RecallGraphInput(const FuncGraphPtr &, const VectorRef &, const BaseRef &) override;
+  void SetGraphUserInputs(const FuncGraphPtr &, const FuncGraphPtr &, const AnfNodePtrList &) override;
   void Link(GraphId) override;
+  AnfNodePtr ConvertGraphInput(const FuncGraphPtr &, const AnfNodePtr &);
   LinConvertResult GetMultiGraphRun(const FuncGraphPtr &g) override;
-  void SetSimuCondFlag(const BaseRef &c, int flag) override;
-  int GetSimuCondFlag(const BaseRef &c) override;
 
  private:
   session::SessionPtr sess_;
   std::unordered_map<BaseRef, CondGraph, BaseRefHash> simu_cond_map_;
   std::unordered_map<GraphId, LinConvertResult> graph_id_map_;
+  std::unordered_map<BaseRef, std::list<std::pair<GraphId, VectorRef>>, BaseRefHash> graph_inputs_;
 };
 }  // namespace compile
 }  // namespace mindspore

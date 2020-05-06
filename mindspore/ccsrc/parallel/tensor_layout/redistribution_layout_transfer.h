@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 class RedistributionLayoutTransfer : public LayoutTransfer {
  public:
   RedistributionLayoutTransfer() = default;
@@ -35,7 +34,6 @@ class RedistributionLayoutTransfer : public LayoutTransfer {
   Status CheckValidTransfer() override;
   std::shared_ptr<ReshapeLayoutTransfer> UnifyDeviceArrangement() const;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

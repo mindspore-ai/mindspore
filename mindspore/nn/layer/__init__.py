@@ -17,21 +17,24 @@ Layer.
 
 The high-level components(Cells) used to construct the neural network.
 """
-from .activation import Softmax, LogSoftmax, ReLU, ReLU6, Tanh, GELU, ELU, Sigmoid, PReLU, get_activation, LeakyReLU
-from .normalization import BatchNorm1d, BatchNorm2d, LayerNorm
+from .activation import Softmax, LogSoftmax, ReLU, ReLU6, Tanh, GELU, ELU, Sigmoid, PReLU, get_activation, LeakyReLU, HSigmoid, HSwish
+from .normalization import BatchNorm1d, BatchNorm2d, LayerNorm, GroupNorm, GlobalBatchNorm
 from .container import SequentialCell, CellList
 from .conv import Conv2d, Conv2dTranspose
 from .lstm import LSTM
-from .basic import Dropout, Flatten, Dense, ClipByNorm, Norm, OneHot
+from .basic import Dropout, Flatten, Dense, ClipByNorm, Norm, OneHot, Pad, Unfold
 from .embedding import Embedding
-from .pooling import AvgPool2d, MaxPool2d
+from .pooling import AvgPool2d, MaxPool2d, AvgPool1d
+from .image import ImageGradients, SSIM, PSNR
 
-__all__ = ['Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid', 'PReLU', 'get_activation', 'LeakyReLU',
-           'BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'ELU',
+__all__ = ['Softmax', 'LogSoftmax', 'ReLU', 'ReLU6', 'Tanh', 'GELU', 'Sigmoid',
+           'PReLU', 'get_activation', 'LeakyReLU', 'HSigmoid', 'HSwish', 'ELU',
+           'BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'GroupNorm', 'GlobalBatchNorm',
            'SequentialCell', 'CellList',
            'Conv2d', 'Conv2dTranspose',
            'LSTM',
            'Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot',
            'Embedding',
-           'AvgPool2d', 'MaxPool2d',
+           'AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'Pad', 'Unfold',
+           'ImageGradients', 'SSIM', 'PSNR',
            ]

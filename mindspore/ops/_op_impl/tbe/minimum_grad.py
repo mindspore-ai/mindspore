@@ -14,112 +14,38 @@
 # ============================================================================
 
 """MinimumGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+minimum_grad_op_info = TBERegOp("MinimumGrad") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("minimum_grad.so") \
+    .compute_cost(10) \
+    .kernel_name("minimum_grad") \
+    .partial_flag(True) \
+    .attr("grad_x", "optional", "bool", "all") \
+    .attr("grad_y", "optional", "bool", "all") \
+    .input(0, "grads", False, "required", "all") \
+    .input(1, "x1", False, "required", "all") \
+    .input(2, "x2", False, "required", "all") \
+    .output(0, "y1", False, "required", "all") \
+    .output(1, "y2", False, "required", "all") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
+                  DataType.I32_Default) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_5HD, DataType.I32_5HD, DataType.I32_5HD,
+                  DataType.I32_5HD) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD,
+                  DataType.F16_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name":"MinimumGrad",
-    "imply_type":"TBE",
-    "fusion_type":"OPAQUE",
-    "async_flag":false,
-    "binfile_name":"minimum_grad.so",
-    "compute_cost":10,
-    "kernel_name":"minimum_grad",
-    "partial_flag":true,
-    "attr":[
-        {
-            "name":"grad_x",
-            "param_type":"optional",
-            "type":"bool",
-            "value":"all"
-        },
-        {
-            "name":"grad_y",
-            "param_type":"optional",
-            "type":"bool",
-            "value":"all"
-        }
-    ],
-    "inputs":[
-        {
-            "index":0,
-            "dtype":[
-                "float16", "float16", "float16", "float16", "float", "float", "float", "float",
-                "int32", "int32", "int32", "int32"
-            ],
-            "format":[
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat"
-            ],
-            "name":"grads",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":1,
-            "dtype":[
-                "float16", "float16", "float16", "float16", "float", "float", "float", "float",
-                "int32", "int32", "int32", "int32"
-            ],
-            "format":[
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat"
-            ],
-            "name":"x1",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":2,
-            "dtype":[
-                "float16", "float16", "float16", "float16", "float", "float", "float", "float",
-                "int32", "int32", "int32", "int32"
-            ],
-            "format":[
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat"
-            ],
-            "name":"x2",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        }
-    ],
-    "outputs":[
-        {
-            "index":0,
-            "dtype":[
-                "float16", "float16", "float16", "float16", "float", "float", "float", "float",
-                "int32", "int32", "int32", "int32"
-            ],
-            "format":[
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat"
-            ],
-            "name":"y1",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        },
-        {
-            "index":1,
-            "dtype":[
-                "float16", "float16", "float16", "float16", "float", "float", "float", "float",
-                "int32", "int32", "int32", "int32"
-            ],
-            "format":[
-                "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-                "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat"
-            ],
-            "name":"y2",
-            "need_compile":false,
-            "param_type":"required",
-            "shape":"all"
-        }
-    ]
-}""")
+@op_info_register(minimum_grad_op_info)
 def _minimum_grad_tbe():
     """MinimumGrad TBE register"""
     return

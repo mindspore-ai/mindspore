@@ -23,7 +23,7 @@
 #include "pipeline/parse/python_adapter.h"
 
 namespace mindspore {
-std::string TraceInfo::GetActionBetweenNode(const DebugInfoPtr& info) {
+std::string TraceInfo::GetActionBetweenNode(const DebugInfoPtr &info) {
   if (info == nullptr) {
     return "";
   }
@@ -36,6 +36,6 @@ std::string TraceInfo::GetActionBetweenNode(const DebugInfoPtr& info) {
   } else if (debug_info()->trace_info() != nullptr) {
     return act_name + debug_info()->trace_info()->GetActionBetweenNode(info);
   }
-  return "not in the traced info";
+  return "Not in the traced info";
 }
 }  // namespace mindspore

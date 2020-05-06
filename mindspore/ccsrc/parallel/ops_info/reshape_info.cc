@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status ReshapeInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
@@ -137,7 +137,7 @@ Status ReshapeInfo::GetParameterInput() {
     return FAILED;
   }
 
-  for (auto& element : elements) {
+  for (auto &element : elements) {
     MS_EXCEPTION_IF_NULL(element);
     if (element->isa<Int32Imm>()) {
       int32_t axis = element->cast<Int32ImmPtr>()->value();
@@ -216,7 +216,7 @@ Strategys ReshapeInfo::GetOutputsStrategy() {
   return outputs_strategy;
 }
 
-Status ReshapeInfo::InferTensorLayout(TensorLayouts* inputs_layout, TensorLayouts* outputs_layout) {
+Status ReshapeInfo::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout) {
   if (inputs_layout == nullptr || outputs_layout == nullptr) {
     MS_LOG(ERROR) << name_ << ": InferTensorLayout: the layout is null.";
     return FAILED;
@@ -302,7 +302,7 @@ void ReshapeInfo::InferTensorInfoByLayout() {
  */
 Status ReshapeInfo::GetAttrs() { return GetParameterInput(); }
 
-void ReshapeInfo::device_number(const StrategyPtr& strategy) {
+void ReshapeInfo::device_number(const StrategyPtr &strategy) {
   int32_t stage = 0;
   if (strategy != nullptr) {
     stage = strategy->GetInputStage();
@@ -313,7 +313,7 @@ void ReshapeInfo::device_number(const StrategyPtr& strategy) {
   MS_ASSERT(dev_num_ > 0);
 }
 
-Status ReshapeInfo::InferDefaultLayout(const Shape& shape, TensorLayout* const layout) {
+Status ReshapeInfo::InferDefaultLayout(const Shape &shape, TensorLayout *const layout) {
   std::vector<int32_t> tensor_map_index;
   for (size_t i = 0; i < shape.size(); i++) {
     tensor_map_index.push_back(MAP_NONE);
@@ -326,7 +326,7 @@ Status ReshapeInfo::InferDefaultLayout(const Shape& shape, TensorLayout* const l
   return Status::SUCCESS;
 }
 
-Status ReshapeInfo::Init(const StrategyPtr& strategy) {
+Status ReshapeInfo::Init(const StrategyPtr &strategy) {
   ResetQueueMember();
   device_number(strategy);
   if (strategy) {
@@ -375,7 +375,7 @@ Status ReshapeInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status ReshapeInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status ReshapeInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
@@ -389,7 +389,7 @@ Status ReshapeInfo::InitForCostModel(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status ReshapeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr& strategy) {
+Status ReshapeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";
@@ -413,8 +413,9 @@ Status ReshapeInfo::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   is_auto_parallel_ = true;
-  Shape input0_split(inputs_shape_[0].size(), 0);
-  input0_split[0] = 1;
+  Shape input0_split;
+  input0_split.emplace_back(1);
+  (void)input0_split.insert(input0_split.end(), inputs_shape_[0].size() - 1, 0);
   Shapes splittable_inputs = {input0_split};
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
@@ -422,7 +423,7 @@ Status ReshapeInfo::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";

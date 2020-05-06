@@ -41,8 +41,9 @@ void GpuKernelFactory::CheckIOParam(const std::string &kernel_name, const Kernel
                                     size_t attr_index) {
   if (kernel_info->GetInputNum() != iter_second->at(attr_index).first.GetInputSize()) {
     if (iter_second->at(attr_index).first.GetAllSame()) {
+      auto dtype = iter_second->at(attr_index).first.GetInputAttr(0).first;
       for (size_t attr = 1; attr < kernel_info->GetInputNum(); ++attr) {
-        (void)iter_second->at(attr_index).first.AddInputAttr(kernel_info->GetInputDeviceType(0));
+        (void)iter_second->at(attr_index).first.AddInputAttr(dtype);
       }
     } else {
       MS_LOG(EXCEPTION) << "op[" << kernel_name << "] Input size is mismatching!";
@@ -50,8 +51,9 @@ void GpuKernelFactory::CheckIOParam(const std::string &kernel_name, const Kernel
   }
   if (kernel_info->GetOutputNum() != iter_second->at(attr_index).first.GetOutputSize()) {
     if (iter_second->at(attr_index).first.GetAllSame()) {
+      auto dtype = iter_second->at(attr_index).first.GetOutputAttr(0).first;
       for (size_t attr = 1; attr < kernel_info->GetOutputNum(); ++attr) {
-        (void)iter_second->at(attr_index).first.AddOutputAttr(kernel_info->GetOutputDeviceType(0));
+        (void)iter_second->at(attr_index).first.AddOutputAttr(dtype);
       }
     } else {
       MS_LOG(EXCEPTION) << "op[" << kernel_name << "] Output size is mismatching!";
@@ -66,13 +68,18 @@ std::string GpuKernelFactory::SupportedTypeList(const std::string &kernel_name) 
     return type_lists;
   }
   for (size_t attr_index = 0; attr_index < (iter->second).size(); ++attr_index) {
-    std::string type_list = "[";
+    std::string type_list = "in[";
     auto attr = (iter->second)[attr_index].first;
     for (size_t input_index = 0; input_index < attr.GetInputSize(); ++input_index) {
       type_list = type_list + TypeId2String(attr.GetInputAttr(input_index).first) +
                   ((input_index == (attr.GetInputSize() - 1)) ? "" : " ");
     }
-    type_lists = type_lists + type_list + "] ";
+    type_list = type_list + "], out[";
+    for (size_t input_index = 0; input_index < attr.GetOutputSize(); ++input_index) {
+      type_list = type_list + TypeId2String(attr.GetOutputAttr(input_index).first) +
+                  ((input_index == (attr.GetOutputSize() - 1)) ? "" : " ");
+    }
+    type_lists = type_lists + type_list + "]; ";
   }
   return type_lists;
 }
@@ -94,9 +101,13 @@ std::pair<bool, size_t> GpuKernelFactory::GpuKernelAttrCheck(const std::string &
     bool flag = true;
     // data type matching check of all input parameters of kernel
     for (size_t input_index = 0; input_index < kernel_info->GetInputNum(); input_index++) {
-      if (marjor_sm < MINIUM_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
-        MS_LOG(EXCEPTION) << "Half precision op can be used on Devices which compute capacity is above " << MINIUM_SM
-                          << ", but your device's compute capacity is " << marjor_sm;
+      if (marjor_sm < RECOMMEND_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
+        if (marjor_sm < MINIUM_SM) {
+          MS_LOG(EXCEPTION) << "Half precision ops can be used on Devices which computing capacity is >= " << MINIUM_SM
+                            << ", but the current device's computing capacity is " << marjor_sm;
+        }
+        MS_LOG(WARNING) << "It is recommended to use devices with a computing capacity >= " << RECOMMEND_SM
+                        << ", but the current device's computing capacity is " << marjor_sm;
       }
       if (kernel_info->GetInputDeviceType(input_index) !=
           (iter->second)[attr_index].first.GetInputAttr(input_index).first) {

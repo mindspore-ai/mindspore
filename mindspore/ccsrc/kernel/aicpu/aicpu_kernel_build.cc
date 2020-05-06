@@ -39,46 +39,6 @@ namespace mindspore {
 namespace kernel {
 using FNodeAttrHandle = std::function<void(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto)>;
 
-const std::vector<std::string> local_framework_op_vec = {kInitDataSetQueue, kGetNext, kDropoutGenMask, kPrint};
-
-void InitDataSetQueueAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(proto);
-
-  ::google::protobuf::Map<::std::string, ::mindspore::AttrValue> *node_attr = proto->mutable_attrs();
-  MS_EXCEPTION_IF_NULL(node_attr);
-  std::string channel_name = AnfAlgo::GetNodeAttr<std::string>(anf_node, kQueueName);
-  (*node_attr)[kChannelName].set_s(channel_name);
-}
-
-void GetNextAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(proto);
-
-  ::google::protobuf::Map<::std::string, ::mindspore::AttrValue> *node_attr = proto->mutable_attrs();
-  MS_EXCEPTION_IF_NULL(node_attr);
-  std::string shared_name = AnfAlgo::GetNodeAttr<std::string>(anf_node, kSharedName);
-  (*node_attr)[kChannelName].set_s(shared_name);
-}
-
-void DropoutGenMaskAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  MS_EXCEPTION_IF_NULL(proto);
-
-  ::google::protobuf::Map<::std::string, ::mindspore::AttrValue> *node_attr = proto->mutable_attrs();
-  MS_EXCEPTION_IF_NULL(node_attr);
-  int seed = AnfAlgo::GetNodeAttr<int>(anf_node, kSeed);
-  int seed2 = AnfAlgo::GetNodeAttr<int>(anf_node, kSeed2);
-  (*node_attr)["seed"].set_i(seed);
-  (*node_attr)["seed2"].set_i(seed2);
-}
-
-void CreateAttrFuncMap(std::map<std::string, FNodeAttrHandle> *mOpAttrFuncMap) {
-  (void)mOpAttrFuncMap->emplace(std::pair<std::string, FNodeAttrHandle>(kInitDataSetQueue, InitDataSetQueueAttr));
-  (void)mOpAttrFuncMap->emplace(std::pair<std::string, FNodeAttrHandle>(kGetNext, GetNextAttr));
-  (void)mOpAttrFuncMap->emplace(std::pair<std::string, FNodeAttrHandle>(kDropoutGenMask, DropoutGenMaskAttr));
-}
-
 bool SetIOIputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input_num,
                    std::vector<size_t> *input_size_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
@@ -147,24 +107,73 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<A
   return true;
 }
 
+void ParseAttrValue(const std::string &type, const std::string &attr_name, const mindspore::ValuePtr &value,
+                    ::google::protobuf::Map<::std::string, ::mindspore::AttrValue> *node_attr) {
+  MS_EXCEPTION_IF_NULL(node_attr);
+  if (type == "int") {
+    auto attr_value = GetValue<int>(value);
+    (*node_attr)[attr_name].set_i(attr_value);
+  } else if (type == "str") {
+    auto attr_value = GetValue<std::string>(value);
+    (*node_attr)[attr_name].set_s(attr_value);
+  } else if (type == "bool") {
+    auto attr_value = GetValue<bool>(value);
+    (*node_attr)[attr_name].set_b(attr_value);
+  } else if (type == "float") {
+    auto attr_value = GetValue<float>(value);
+    (*node_attr)[attr_name].set_f(attr_value);
+  } else if (type == "listInt") {
+    std::vector<int> attr_value;
+    auto value_type = value->type();
+    MS_EXCEPTION_IF_NULL(value_type);
+    auto value_type_str = value_type->ToString();
+    if (value_type_str == "Int32") {
+      int data = GetValue<int>(value);
+      attr_value.push_back(data);
+    } else {
+      attr_value = GetValue<std::vector<int>>(value);
+    }
+    mindspore::AttrValue input_shape_attr;
+    mindspore::AttrValue_ArrayValue *input_shape_attr_list = input_shape_attr.mutable_array();
+    MS_EXCEPTION_IF_NULL(input_shape_attr_list);
+    for (const auto shape : attr_value) {
+      input_shape_attr_list->add_i(shape);
+    }
+    (*node_attr)[attr_name] = input_shape_attr;
+  } else {
+    MS_LOG(EXCEPTION) << "type: " << type << "not support";
+  }
+}
+
 void SetNodeAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
   std::string op_name = AnfAlgo::GetCNodeName(anf_node);
-  if (op_name == "InitDataSetQueue") {
-    op_name = "InitData";
+  if (op_name == kInitDataSetQueue) {
+    op_name = kInitData;
   }
-  if (op_name == "Print") {
+  if (op_name == kPrint) {
     return;
   }
-  std::map<std::string, FNodeAttrHandle> mOpAttrFuncMap;
-  CreateAttrFuncMap(&mOpAttrFuncMap);
-  FNodeAttrHandle func_ptr = nullptr;
-  auto iter = mOpAttrFuncMap.find(op_name);
-  if (iter != mOpAttrFuncMap.end()) {
-    func_ptr = iter->second;
-    MS_EXCEPTION_IF_NULL(func_ptr);
-    func_ptr(anf_node, proto);
-  } else {
-    MS_LOG(ERROR) << "Don't support node [" << op_name << "] to set nodedef of attr";
+
+  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kAICPU);
+  MS_EXCEPTION_IF_NULL(op_info_ptr);
+  auto attrs_ptr = op_info_ptr->attrs_ptr();
+  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  ::google::protobuf::Map<::std::string, ::mindspore::AttrValue> *node_attr = proto->mutable_attrs();
+  for (const auto &attr_ptr : attrs_ptr) {
+    std::string attr_name = attr_ptr->name();
+    auto value = primitive->GetAttr(attr_name);
+    if (value != nullptr) {
+      if (attr_name == kQueueName || attr_name == kSharedName) {
+        attr_name = kChannelName;
+      } else if (attr_name == kSeed) {
+        attr_name = "seed";
+      } else if (attr_name == kSeed2) {
+        attr_name = "seed2";
+      }
+      std::string type = attr_ptr->type();
+      ParseAttrValue(type, attr_name, value, node_attr);
+    }
   }
   MS_LOG(INFO) << "Set node attr end!";
 }
@@ -172,7 +181,7 @@ void SetNodeAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *p
 void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
   size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
   if (input_num == 0) {
-    MS_LOG(INFO) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] does not have input. ";
+    MS_LOG(INFO) << "Node [" << AnfAlgo::GetCNodeName(anf_node) << "] does not have input.";
     return;
   }
 
@@ -286,19 +295,12 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   kernel_mod_ptr->SetAnfNode(anf_node);
   kernel_mod_ptr->SetNodeName(op_name);
-  auto iter = std::find(local_framework_op_vec.begin(), local_framework_op_vec.end(), op_name);
-  if (iter != local_framework_op_vec.end()) {
-    if (!CreateNodeDefBytes(anf_node, kernel_mod_ptr)) {
-      MS_LOG(EXCEPTION) << "Create nodeDefBytes faild!";
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "Aicpu don't support node [" << op_name << "]";
+  if (!CreateNodeDefBytes(anf_node, kernel_mod_ptr)) {
+    MS_LOG(EXCEPTION) << "Create nodeDefBytes faild!";
   }
-
   if (!SetIOSize(anf_node, kernel_mod_ptr)) {
     MS_LOG(EXCEPTION) << "Set input output size list failed.";
   }
-
   return kernel_mod_ptr;
 }
 }  // namespace kernel

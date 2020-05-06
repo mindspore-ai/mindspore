@@ -17,14 +17,13 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_GETNEXT_INFO_H_
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_GETNEXT_INFO_H_
 
+#include <memory>
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
-#include "parallel/ops_info/operator_info.h"
 #include "parallel/auto_parallel/operator_costmodel.h"
+#include "parallel/ops_info/operator_info.h"
 #include "parallel/strategy.h"
 
 namespace mindspore {
@@ -33,14 +32,11 @@ class GetNextInfo : public OperatorInfo {
  public:
   GetNextInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
               const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs) {
-    getnextcost_ptr_ = std::make_shared<GetNextCost>();
-  }
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<GetNextCost>(false)) {}
   ~GetNextInfo() override = default;
 
   Status Init(const StrategyPtr &strategy) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return getnextcost_ptr_; }
   Status InitForCostModel(const StrategyPtr &strategy) override;
   Status GenerateStrategies(int32_t stage_id) override;
 
@@ -66,7 +62,6 @@ class GetNextInfo : public OperatorInfo {
   Shapes shapes_;
   int32_t output_num_ = 0;
   std::string shared_name_;
-  GetNextCostPtr getnextcost_ptr_;
 };
 }  // namespace parallel
 }  // namespace mindspore

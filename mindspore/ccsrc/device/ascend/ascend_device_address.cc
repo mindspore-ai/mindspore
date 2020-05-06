@@ -106,16 +106,19 @@ bool AscendDeviceAddress::SyncDeviceToHost(const std::vector<int> &shape, size_t
     } else {
       auto shape_size = trans::ShapeSize(host_shape);
       auto host = std::vector<uint8_t>(size_);
-      const trans::TypeIdArgs type_args{ptr_, shape_size, type_id_, type};
-      sync_ok = trans::TransDataType(type_args, host.data());
+      SyncMemory(host.data(), ptr_, size_, RT_MEMCPY_DEVICE_TO_HOST);
+      const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
+      sync_ok = trans::TransDataType(type_args, host_ptr);
       if (!sync_ok) {
         MS_LOG(ERROR) << "trans data type failed.";
         return false;
       }
-      SyncMemory(host_ptr, host.data(), size, RT_MEMCPY_DEVICE_TO_HOST);
     }
-  } else if (format_ == kOpFormat_NC1HWC0 || format_ == kOpFormat_FRAC_Z || format_ == kOpFormat_FRAC_NZ) {
-    sync_ok = SyncDeviceToHostAndConvertFormat(shape, size, type, host_ptr);
+  } else {
+    auto iter = kNeedTransFormatSet.find(format_);
+    if (iter != kNeedTransFormatSet.end()) {
+      sync_ok = SyncDeviceToHostAndConvertFormat(shape, size, type, host_ptr);
+    }
   }
   if (!sync_ok) {
     MS_LOG(ERROR) << "Not support to trans, dev_format:" << format_ << ", dev_type:" << TypeIdLabel(type_id_)
@@ -141,7 +144,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const std::vector<int
   if (format_ == kOpFormat_FRAC_NZ) {
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
-    host_shape = trans::TransShapeTo4d(host_shape);
+    host_shape = trans::PaddingShapeTo4d(host_shape);
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   }
   if (type_id_ != type) {
@@ -150,14 +153,14 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const std::vector<int
     auto host = std::vector<uint8_t>(size_);
     sync_ok = trans::TransFormatFromDeviceToHost(format_args, host.data());
     if (!sync_ok) {
-      MS_LOG(ERROR) << "trans format failed.";
+      MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
     auto shape_size = trans::ShapeSize(host_shape);
-    const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type};
+    const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
     sync_ok = trans::TransDataType(type_args, host_ptr);
     if (!sync_ok) {
-      MS_LOG(ERROR) << "trans format failed.";
+      MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
   } else {
@@ -165,7 +168,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const std::vector<int
                                         host_shape,      device_shape, type_id_};
     sync_ok = trans::TransFormatFromDeviceToHost(format_args, host_ptr);
     if (!sync_ok) {
-      MS_LOG(ERROR) << "trans format failed.";
+      MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
   }
@@ -190,17 +193,20 @@ bool AscendDeviceAddress::SyncHostToDevice(const std::vector<int> &shape, size_t
       sync_ok = Float64ToFloatAndSyncHostToDevice(ptr_, size_, host_ptr, size);
     } else {
       auto shape_size = trans::ShapeSize(host_shape);
-      const trans::TypeIdArgs type_args{host_ptr, shape_size, type, type_id_};
+      const trans::TypeIdArgs type_args{host_ptr, shape_size, type, type_id_, size};
       auto host_tmp = std::vector<uint8_t>(size_);
       sync_ok = trans::TransDataType(type_args, host_tmp.data());
       if (!sync_ok) {
-        MS_LOG(ERROR) << "trans data type failed.";
+        MS_LOG(ERROR) << "Trans data type failed.";
         return false;
       }
       SyncMemory(ptr_, host_tmp.data(), size_, RT_MEMCPY_HOST_TO_DEVICE);
     }
-  } else if (format_ == kOpFormat_NC1HWC0 || format_ == kOpFormat_FRAC_Z || format_ == kOpFormat_FRAC_NZ) {
-    sync_ok = ConvertFormatAndSyncHostToDevice(shape, size, type, host_ptr);
+  } else {
+    auto iter = kNeedTransFormatSet.find(format_);
+    if (iter != kNeedTransFormatSet.end()) {
+      sync_ok = ConvertFormatAndSyncHostToDevice(shape, size, type, host_ptr);
+    }
   }
   if (!sync_ok) {
     MS_LOG(ERROR) << "Not support to trans, dev_format:" << format_ << ", dev_type:" << TypeIdLabel(type_id_)
@@ -224,16 +230,16 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const std::vector<int
   if (format_ == kOpFormat_FRAC_NZ) {
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
-    host_shape = trans::TransShapeTo4d(host_shape);
+    host_shape = trans::PaddingShapeTo4d(host_shape);
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   }
   if (type_id_ != type) {
     auto shape_size = trans::ShapeSize(host_shape);
-    const trans::TypeIdArgs type_args{host_ptr, shape_size, type, type_id_};
+    const trans::TypeIdArgs type_args{host_ptr, shape_size, type, type_id_, size};
     auto host_tmp = std::vector<uint8_t>(size_);
     sync_ok = trans::TransDataType(type_args, host_tmp.data());
     if (!sync_ok) {
-      MS_LOG(ERROR) << "trans datatype failed.";
+      MS_LOG(ERROR) << "Trans datatype failed.";
       return false;
     }
     const trans::FormatArgs format_args{host_tmp.data(), size_,        kOpFormat_NCHW, format_,
@@ -241,7 +247,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const std::vector<int
     auto dst_tmp = std::vector<uint8_t>(size_);
     sync_ok = trans::TransFormat(format_args, dst_tmp.data());
     if (!sync_ok) {
-      MS_LOG(ERROR) << "trans format failed.";
+      MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
     SyncMemory(ptr_, dst_tmp.data(), size_, RT_MEMCPY_HOST_TO_DEVICE);
@@ -250,7 +256,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const std::vector<int
     auto host_tmp = std::vector<uint8_t>(size_);
     sync_ok = trans::TransFormat(format_args, host_tmp.data());
     if (!sync_ok) {
-      MS_LOG(ERROR) << "trans format failed.";
+      MS_LOG(ERROR) << "Trans format failed.";
       return false;
     }
     SyncMemory(ptr_, host_tmp.data(), size_, RT_MEMCPY_HOST_TO_DEVICE);
@@ -262,8 +268,8 @@ AscendDeviceAddress::~AscendDeviceAddress() {
   if (ptr_ == nullptr) {
     return;
   }
-  if (mem_dynamic_alloc_) {
-    AscendMemoryAllocator::GetInstance().FreeTensorMem(ptr_);
+  if (from_mem_pool_) {
+    AscendMemoryPool::GetInstance().FreeTensorMem(ptr_);
     ptr_ = nullptr;
   }
 }

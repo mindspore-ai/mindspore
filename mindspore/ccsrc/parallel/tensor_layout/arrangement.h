@@ -21,30 +21,29 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 #include "parallel/status.h"
 #include "parallel/tensor_layout/array.h"
 
 namespace mindspore {
 namespace parallel {
-
 class Arrangement : public Array {
  public:
   Arrangement() : size_(1) {}
   ~Arrangement() override = default;
-  Status Init(const std::vector<int32_t>& array) override;
+  Status Init(const std::vector<int32_t> &array) override;
   int32_t size() const { return size_; }
   std::vector<int32_t> GetFrontElementByValue(int32_t value) const;
-  std::shared_ptr<std::vector<Arrangement>> GetExpandShapeList(const Arrangement& expand_shape) const;
+  std::shared_ptr<std::vector<Arrangement>> GetExpandShapeList(const Arrangement &expand_shape) const;
   std::vector<int32_t> ComputeReverseAccumulateSumInReverseOrder() const;
   std::shared_ptr<Arrangement> GetExpandedShapeByExpandListReserveLeft(
-    const std::vector<Arrangement>& expand_list) const;
+    const std::vector<Arrangement> &expand_list) const;
   std::shared_ptr<Arrangement> GetExpandedShapeByExpandListRemoveLeft(
-    const std::vector<Arrangement>& expand_list) const;
+    const std::vector<Arrangement> &expand_list) const;
   std::shared_ptr<std::pair<std::vector<Arrangement>, Arrangement>> GetExpandShapeListPair(
-    const Arrangement& expand_shape) const;
-  std::shared_ptr<Arrangement> GetUnifiedShape(const Arrangement& in2) const;
+    const Arrangement &expand_shape) const;
+  std::shared_ptr<Arrangement> GetUnifiedShape(const Arrangement &in2) const;
   std::vector<size_t> GetSqueezeIdx() const;
   Arrangement GetSqueezeArrangement() const;
 
@@ -53,7 +52,6 @@ class Arrangement : public Array {
   void ComputeSize();
   int32_t size_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

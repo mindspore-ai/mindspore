@@ -18,6 +18,5 @@
 
 namespace mindspore {
 const TypePtr kTypeNone = std::make_shared<TypeNone>();
-const TypePtr kTypeAnything = std::make_shared<TypeAnything>();
 const TypePtr kAnyType = std::make_shared<TypeAnything>();
 }  // namespace mindspore

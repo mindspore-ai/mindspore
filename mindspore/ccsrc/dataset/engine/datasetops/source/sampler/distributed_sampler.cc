@@ -31,8 +31,9 @@ DistributedSampler::DistributedSampler(int64_t num_dev, int64_t dev_id, bool shu
       num_devices_(num_dev),
       shuffle_(shuffle) {}
 
-Status DistributedSampler::Init(const RandomAccessOp *op) {
-  RETURN_IF_NOT_OK(Sampler::Init(op));
+Status DistributedSampler::InitSampler() {
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0, "num_samples <= 0\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "num_rows <= 0\n");
   CHECK_FAIL_RETURN_UNEXPECTED(device_id_ < num_devices_ && device_id_ >= 0 && num_rows_ > 0 && num_samples_ > 0,
                                "fail to init DistributedSampler");
   rnd_.seed(seed_++);
@@ -52,9 +53,9 @@ Status DistributedSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer
   if (cnt_ > samples_per_buffer_) {
     RETURN_STATUS_UNEXPECTED("Distributed Sampler Error");
   } else if (cnt_ == samples_per_buffer_) {
-    (*out_buffer) = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
-    (*out_buffer) = mindspore::make_unique<DataBuffer>(cnt_, DataBuffer::kDeBFlagNone);
+    (*out_buffer) = std::make_unique<DataBuffer>(cnt_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sample_ids;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, samples_per_buffer_));
     int64_t *id_ptr = reinterpret_cast<int64_t *>(sample_ids->StartAddr());
@@ -63,7 +64,7 @@ Status DistributedSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer
       *(id_ptr++) = shuffle_ ? shuffle_vec_[static_cast<size_t>(next_id)] : next_id;
     }
     TensorRow row(1, sample_ids);
-    (*out_buffer)->set_tensor_table(make_unique<TensorQTable>(1, row));
+    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
   }
   return Status::OK();
 }

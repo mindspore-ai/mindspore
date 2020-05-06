@@ -26,14 +26,15 @@
 namespace mindspore {
 // namespace to support primitive operators
 namespace prim {
-ValuePtr GetPythonOps(const std::string& op_name,
-                      const std::string& module_name = "mindspore._extends.parse.standard_method");
+ValuePtr GetPythonOps(const std::string &op_name,
+                      const std::string &module_name = "mindspore._extends.parse.standard_method");
 
 // Arithmetic
 extern const PrimitivePtr kPrimScalarAdd;
 extern const PrimitivePtr kPrimScalarSub;
 extern const PrimitivePtr kPrimScalarMul;
 extern const PrimitivePtr kPrimScalarDiv;
+extern const PrimitivePtr kPrimScalarFloordiv;
 extern const PrimitivePtr kPrimScalarMod;
 extern const PrimitivePtr kPrimScalarPow;
 extern const PrimitivePtr kPrimScalarTrunc;
@@ -84,6 +85,7 @@ extern const PrimitivePtr kPrimCreateInstance;
 
 // Structure
 extern const PrimitivePtr kPrimStringEqual;
+extern const PrimitivePtr kPrimStringConcat;
 extern const PrimitivePtr kPrimMakeTuple;
 extern const PrimitivePtr kPrimMakeList;
 extern const PrimitivePtr kPrimMakeDict;
@@ -135,6 +137,7 @@ extern const PrimitivePtr kPrimGatherV2;
 extern const PrimitivePtr kPrimSize;
 extern const PrimitivePtr kPrimArgMax;
 extern const PrimitivePtr kPrimPack;
+extern const PrimitivePtr kPrimUnpack;
 extern const PrimitivePtr kPrimUnsortedSegmentSum;
 extern const PrimitivePtr kPrimConcatOffset;
 extern const PrimitivePtr kPrimReshape;
@@ -159,6 +162,9 @@ extern const PrimitivePtr kPrimMul;
 extern const PrimitivePtr kPrimMinimum;
 extern const PrimitivePtr kPrimMaximum;
 extern const PrimitivePtr kPrimSquare;
+extern const PrimitivePtr kPrimEqual;
+extern const PrimitivePtr kPrimLess;
+extern const PrimitivePtr kPrimLessEqual;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;
@@ -169,9 +175,12 @@ extern const PrimitivePtr kPrimTanhGrad;
 extern const PrimitivePtr kPrimPooling;
 extern const PrimitivePtr kPrimPoolingGrad;
 extern const PrimitivePtr kPrimFusedBatchNorm;
+extern const PrimitivePtr kPrimBatchNorm;
+extern const PrimitivePtr kPrimBatchNormGrad;
 extern const PrimitivePtr kPrimConv2D;
 extern const PrimitivePtr kPrimMaxPool;
 extern const PrimitivePtr kPrimMaxPoolGrad;
+extern const PrimitivePtr kPrimAvgPoolGrad;
 extern const PrimitivePtr kPrimFusedBatchNormGrad;
 extern const PrimitivePtr kPrimReluGrad;
 extern const PrimitivePtr kPrimConv2DBackpropInput;
@@ -214,17 +223,19 @@ extern const PrimitivePtr kPrimInsertGradientOf;
 extern const PrimitivePtr kPrimPrintShapeType;
 extern const PrimitivePtr kPrimPrint;
 extern const PrimitivePtr kPrimSameTypeShape;
+extern const PrimitivePtr kPrimCheckBprop;
 extern const PrimitivePtr kPrimDepend;
 extern const PrimitivePtr kPrimStateSetItem;
 extern const PrimitivePtr kPrimScalarSummary;
 extern const PrimitivePtr kPrimImageSummary;
 extern const PrimitivePtr kPrimTensorSummary;
+extern const PrimitivePtr kPrimHistogramSummary;
 extern const PrimitivePtr kPrimBroadcastGradientArgs;
 extern const PrimitivePtr kPrimControlDepend;
 extern const PrimitivePtr kPrimIs_;
 extern const PrimitivePtr kPrimIsNot;
-extern const PrimitivePtr kPrimMinimumGrad;
-extern const PrimitivePtr kPrimMaximumGrad;
+extern const PrimitivePtr kPrimInDict;
+extern const PrimitivePtr kPrimNotInDict;
 
 // Comm ops
 extern const PrimitivePtr kPrimMirror;
@@ -233,7 +244,7 @@ extern const PrimitivePtr kPrimVirtualDataset;
 
 class DoSignaturePrimitive : public Primitive {
  public:
-  explicit DoSignaturePrimitive(const std::string& name, const ValuePtr& function)
+  explicit DoSignaturePrimitive(const std::string &name, const ValuePtr &function)
       : Primitive("S-Prim-" + name), function_(function) {}
 
   ~DoSignaturePrimitive() override = default;
@@ -246,6 +257,21 @@ class DoSignaturePrimitive : public Primitive {
   ValuePtr function_;
 };
 using DoSignaturePrimitivePtr = std::shared_ptr<DoSignaturePrimitive>;
+
+class UnpackGraphPrimitive : public Primitive {
+ public:
+  explicit UnpackGraphPrimitive(const std::string &name, const bool &with_sens, const bool &need_unpack_args)
+      : Primitive("UnpackGraph"), with_sens_in_args_(with_sens), need_unpack_args_(need_unpack_args) {}
+  ~UnpackGraphPrimitive() override = default;
+  MS_DECLARE_PARENT(UnpackGraphPrimitive, Primitive)
+  bool with_sens_in_args() const { return with_sens_in_args_; }
+  bool need_unpack_args() const { return need_unpack_args_; }
+
+ private:
+  bool with_sens_in_args_;
+  bool need_unpack_args_;
+};
+using UnpackGraphPrimitivePtr = std::shared_ptr<UnpackGraphPrimitive>;
 }  // namespace prim
 }  // namespace mindspore
 

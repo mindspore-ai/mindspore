@@ -26,8 +26,6 @@
 #include <memory>
 #include <set>
 
-#include "transform/graph_runner.h"
-#include "transform/convert.h"
 #include "ir/meta_tensor.h"
 #include "operator/ops.h"
 #include "ir/manager.h"
@@ -40,60 +38,27 @@ namespace compile {
 
 using PrimitivePyPtr = std::shared_ptr<PrimitivePy>;
 
-static const char SEGMENT_GRAPH_NAME[] = "runnable_segment";
-
-VectorRef GeVM::RunGraph(const FuncGraphPtr& anf_graph, const VectorRef& args) {
-  // Convert graph
-  transform::DfGraphConvertor convertor(anf_graph);
-
-  (void)convertor.ConvertAllNode().BuildGraph();
-  if (convertor.ErrCode() == 0) {
-    (void)transform::DfGraphManager::GetInstance().AddGraph(SEGMENT_GRAPH_NAME, convertor.GetComputeGraph());
-  } else {
-    MS_LOG(EXCEPTION) << "convert df graph failed";
-  }
-
-  // Run graph
-  transform::GraphRunnerOptions options;
-  transform::GraphRunner graph_runner(options);
-  transform::RunOptions run_options;
-  run_options.name = SEGMENT_GRAPH_NAME;
-
-  std::vector<tensor::TensorPtr> inputs;
-  (void)std::transform(std::begin(args), std::end(args), std::back_inserter(inputs),
-                       [](const BaseRef& arg) -> tensor::TensorPtr {
-                         auto value_ref = utils::cast<PyObjectRef>(arg);
-                         auto value = value_ref.object_;
-                         return py::cast<tensor::TensorPtr>(value);
-                       });
-  std::vector<tensor::TensorPtr> outputs;
-  (void)graph_runner.RunGraph(run_options, inputs, &outputs);
-  std::vector<BaseRef> ret;
-  (void)std::copy(outputs.begin(), outputs.end(), std::back_inserter(ret));
-  return VectorRef(ret);
-}
-
 // Indicate a call to a new frame.
 struct CallWrap : public Base {
-  explicit CallWrap(const VMFramePtr& vm_frame) : frame(vm_frame) {}
+  explicit CallWrap(const VMFramePtr &vm_frame) : frame(vm_frame) {}
   VMFramePtr frame{nullptr};
 };
 using CallWrapPtr = std::shared_ptr<CallWrap>;
 
 // Indicates a return with its value.
 struct ReturnWrap : public Base {
-  explicit ReturnWrap(const BaseRef& r_value) : value(r_value) {}
+  explicit ReturnWrap(const BaseRef &r_value) : value(r_value) {}
   BaseRef value{BaseRef()};
 };
 using ReturnWrapPtr = std::shared_ptr<ReturnWrap>;
 
-VMFrame::VMFrame(const AnfNodePtrList& nodes, const AnfNodePtrToBaseRefMap& values,
-                 const AnfNodePtrToBaseRefMap& closure)
+VMFrame::VMFrame(const AnfNodePtrList &nodes, const AnfNodePtrToBaseRefMap &values,
+                 const AnfNodePtrToBaseRefMap &closure)
     : values_(values), todo_(nodes), closure_(closure) {
   std::reverse(std::begin(todo_), std::end(todo_));
 }
 
-const BaseRef VMFrame::operator[](const AnfNodePtr& node) {
+const BaseRef VMFrame::operator[](const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto ret = values_.find(node);
   if (ret != values_.end()) {
@@ -112,31 +77,31 @@ const BaseRef VMFrame::operator[](const AnfNodePtr& node) {
   MS_LOG(EXCEPTION) << "ValueError " << node->type_name();
 }
 
-Closure::Closure(const FuncGraphPtr& graph, const AnfNodePtrToBaseRefMap& values)
+Closure::Closure(const FuncGraphPtr &graph, const AnfNodePtrToBaseRefMap &values)
     : func_graph_(graph), values_(values) {}
 
-BaseRef Closure::operator()(const VectorRef& args) {
+BaseRef Closure::operator()(const VectorRef &args) {
   MS_LOG(DEBUG) << "start closure";
   return vm_->Evaluate(func_graph_, args, values_);
 }
 
-Partial::Partial(const BaseRef& fn, const VectorRef& args, const VMPtr& vm) : fn_(fn), args_(args), vm_(vm) {}
+Partial::Partial(const BaseRef &fn, const VectorRef &args, const VMPtr &vm) : fn_(fn), args_(args), vm_(vm) {}
 
-BaseRef Partial::operator()(const VectorRef& nodes) {
+BaseRef Partial::operator()(const VectorRef &nodes) {
   VectorRef arglist;
   (void)arglist.insert(arglist.end(), args_.begin(), args_.end());
   (void)arglist.insert(arglist.end(), nodes.begin(), nodes.end());
   return vm_->Call(fn_, arglist);
 }
 
-SetRef VM::ComputeFvs(const FuncGraphPtr& graph) {
+SetRef VM::ComputeFvs(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   SetRef rval;
-  for (auto& fkv : graph->free_variables_total()) {
+  for (auto &fkv : graph->free_variables_total()) {
     if (utils::isa<FuncGraphPtr>(fkv.first)) {
       // Add all value_nodes of g that refer to a fv graph
       auto g = utils::cast<FuncGraphPtr>(fkv.first);
-      for (auto& ctkv : g->value_nodes()) {
+      for (auto &ctkv : g->value_nodes()) {
         auto ct = ctkv.first;
         if (GetValueNode(ct) == g) {
           (void)rval.insert(ct);
@@ -151,7 +116,7 @@ SetRef VM::ComputeFvs(const FuncGraphPtr& graph) {
   return rval;
 }
 
-void VM::AcquireGraph(const FuncGraphPtr& graph) {
+void VM::AcquireGraph(const FuncGraphPtr &graph) {
   // Already acquired
   if (vars_.find(graph) != vars_.end()) {
     return;
@@ -165,30 +130,30 @@ void VM::AcquireGraph(const FuncGraphPtr& graph) {
   }
 }
 
-VectorRef VM::ExportSequence(const VectorRef& seq) {
+VectorRef VM::ExportSequence(const VectorRef &seq) {
   std::vector<BaseRef> ret;
   (void)std::transform(std::begin(seq), std::end(seq), std::back_inserter(ret),
-                       [&, this](const BaseRef& x) -> BaseRef { return Export(x); });
+                       [&, this](const BaseRef &x) -> BaseRef { return Export(x); });
   return VectorRef(ret);
 }
 
-ClosurePtr VM::ExportClosure(const ClosurePtr& clos) {
+ClosurePtr VM::ExportClosure(const ClosurePtr &clos) {
   MS_EXCEPTION_IF_NULL(clos);
   clos->set_vm(shared_from_this());
   return clos;
 }
 
 // transform graph to executable closure
-ClosurePtr VM::ExportGraph(const FuncGraphPtr& g) {
+ClosurePtr VM::ExportGraph(const FuncGraphPtr &g) {
   auto c = std::make_shared<Closure>(g, AnfNodePtrToBaseRefMap());
   MS_EXCEPTION_IF_NULL(c);
   c->set_vm(shared_from_this());
   return c;
 }
 
-BaseRef VM::ExportObj(const BaseRef& obj) const { return obj; }
+BaseRef VM::ExportObj(const BaseRef &obj) const { return obj; }
 
-BaseRef VM::Export(const BaseRef& value) {
+BaseRef VM::Export(const BaseRef &value) {
   if (utils::isa<ValuePtr>(value) && utils::cast<ValuePtr>(value)->isa<FuncGraph>()) {
     return ExportGraph(utils::cast<ValuePtr>(value)->cast<FuncGraphPtr>());
   }
@@ -218,7 +183,7 @@ BaseRef VM::Export(const BaseRef& value) {
 
 // Run a graph.
 // This will evaluate the passed-in graph and return the resulting value.
-BaseRef VM::Evaluate(const FuncGraphPtr& graph, const VectorRef& args, const AnfNodePtrToBaseRefMap& closure) {
+BaseRef VM::Evaluate(const FuncGraphPtr &graph, const VectorRef &args, const AnfNodePtrToBaseRefMap &closure) {
   AcquireGraph(graph);
   MS_LOG(DEBUG) << "evalue arg size: " << args.size();
   if (args.size() != graph->parameters().size()) {
@@ -272,15 +237,15 @@ BaseRef VM::Evaluate(const FuncGraphPtr& graph, const VectorRef& args, const Anf
   MS_LOG(EXCEPTION) << "VM Evaluate error";
 }
 
-SuccFunc VM::SuccVm(const FuncGraphPtr& graph) {
-  auto fn = [&, this](const AnfNodePtr& node) -> AnfNodePtrList {
+SuccFunc VM::SuccVm(const FuncGraphPtr &graph) {
+  auto fn = [&, this](const AnfNodePtr &node) -> AnfNodePtrList {
     MS_EXCEPTION_IF_NULL(node);
     AnfNodePtrList ret;
 
     // Follow node.incoming
     if (node->isa<CNode>()) {
-      auto& inputs = node->cast<CNodePtr>()->inputs();
-      for (auto& i : inputs) {
+      auto &inputs = node->cast<CNodePtr>()->inputs();
+      for (auto &i : inputs) {
         if (i->func_graph() == node->func_graph() ||
             (IsValueNode<FuncGraph>(i) && GetValueNode<FuncGraphPtr>(i)->parent() == graph)) {
           ret.push_back(i);
@@ -292,7 +257,7 @@ SuccFunc VM::SuccVm(const FuncGraphPtr& graph) {
     if (IsValueNode<FuncGraph>(node) && GetValueNode<FuncGraphPtr>(node)->parent() == graph) {
       auto fvs = utils::cast<SetRef>(vars_[GetValueNode<FuncGraphPtr>(node)]);
       (void)std::transform(fvs.begin(), fvs.end(), std::back_inserter(ret),
-                           [](const BaseRef& value) -> AnfNodePtr { return utils::cast<AnfNodePtr>(value); });
+                           [](const BaseRef &value) -> AnfNodePtr { return utils::cast<AnfNodePtr>(value); });
     }
 
     return ret;
@@ -300,7 +265,7 @@ SuccFunc VM::SuccVm(const FuncGraphPtr& graph) {
   return fn;
 }
 
-BaseRef VM::Call(const BaseRef& fn, const VectorRef& args) {
+BaseRef VM::Call(const BaseRef &fn, const VectorRef &args) {
   if (utils::isa<PrimitivePtr>(fn)) {
     return RunOperation(utils::cast<PrimitivePtr>(fn), args);
   }
@@ -318,7 +283,7 @@ BaseRef VM::Call(const BaseRef& fn, const VectorRef& args) {
 }
 
 // make call frame for graph
-BaseRef VM::_Call(const BaseRef& graph, const VectorRef& args) {
+BaseRef VM::_Call(const BaseRef &graph, const VectorRef &args) {
   AnfNodePtrToBaseRefMap clos;
   auto func_graph = graph;
   if (utils::isa<ClosurePtr>(func_graph)) {
@@ -354,11 +319,11 @@ BaseRef VM::_Call(const BaseRef& graph, const VectorRef& args) {
 }
 
 // make closure out of graph with fv values from frame
-ClosurePtr VM::MakeClosure(const FuncGraphPtr& graph, const VMFramePtr& frame) {
+ClosurePtr VM::MakeClosure(const FuncGraphPtr &graph, const VMFramePtr &frame) {
   MS_EXCEPTION_IF_NULL(frame);
   AnfNodePtrToBaseRefMap clos;
 
-  for (auto& v : utils::cast<SetRef>(vars_[graph])) {
+  for (auto &v : utils::cast<SetRef>(vars_[graph])) {
     auto anf = utils::cast<AnfNodePtr>(v);
     clos[anf] = (*frame)[anf];
   }
@@ -366,7 +331,7 @@ ClosurePtr VM::MakeClosure(const FuncGraphPtr& graph, const VMFramePtr& frame) {
   return std::make_shared<Closure>(graph, clos);
 }
 
-BaseRef VM::DispatchCall(const AnfNodePtr& node, const VMFramePtr& frame, const BaseRef& fn, const VectorRef& args) {
+BaseRef VM::DispatchCall(const AnfNodePtr &node, const VMFramePtr &frame, const BaseRef &fn, const VectorRef &args) {
   if (utils::isa<ValuePtr>(fn) && utils::cast<ValuePtr>(fn)->isa<Primitive>()) {
     auto fnval = utils::cast<ValuePtr>(fn)->cast<PrimitivePtr>();
     MS_LOG(DEBUG) << "DispatchCall prim:" << fnval->name() << ", node:" << node->DebugString(true);
@@ -419,7 +384,7 @@ BaseRef VM::DispatchCall(const AnfNodePtr& node, const VMFramePtr& frame, const 
   MS_LOG(EXCEPTION) << "Invalid fn to call";
 }
 
-BaseRef VM::HandleNode(const AnfNodePtr& node, const VMFramePtr& frame) {
+BaseRef VM::HandleNode(const AnfNodePtr &node, const VMFramePtr &frame) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<Parameter>()) {
     // pass
@@ -444,10 +409,10 @@ BaseRef VM::HandleNode(const AnfNodePtr& node, const VMFramePtr& frame) {
 
   if (node->isa<CNode>()) {
     std::vector<BaseRef> fnArgs;
-    auto& inputs = node->cast<CNodePtr>()->inputs();
+    auto &inputs = node->cast<CNodePtr>()->inputs();
     // set args' values in frame
     (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(fnArgs),
-                         [&](const AnfNodePtr& inp) -> BaseRef { return (*frame)[inp]; });
+                         [&](const AnfNodePtr &inp) -> BaseRef { return (*frame)[inp]; });
     if (fnArgs.empty()) {
       MS_LOG(EXCEPTION) << "function arguments is empty";
     } else {
@@ -460,7 +425,7 @@ BaseRef VM::HandleNode(const AnfNodePtr& node, const VMFramePtr& frame) {
   MS_LOG(EXCEPTION) << "Unknown node type";
 }
 
-VectorRef VM::RunGraph(const FuncGraphPtr& g, const VectorRef& args) {
+VectorRef VM::RunGraph(const FuncGraphPtr &g, const VectorRef &args) {
   this->manager_ = Manage(g);
 
   auto fn = utils::cast<ClosurePtr>(Export(g));
@@ -474,19 +439,19 @@ VectorRef VM::RunGraph(const FuncGraphPtr& g, const VectorRef& args) {
   }
 }
 
-BaseRef RunOperation(const PrimitivePtr& prim, const VectorRef& args) {
+BaseRef RunOperation(const PrimitivePtr &prim, const VectorRef &args) {
   PrimitivePyPtr operation = dyn_cast<PrimitivePy>(prim);
 
   MS_LOG(DEBUG) << "operation start " << prim->name();
   auto func = operation != nullptr ? operation->GetComputeFunction() : prim->GetComputeFunction();
   if (py::isinstance<py::none>(func)) {
-    MS_LOG(EXCEPTION) << "" << prim->name() << " 's compute function is not implemented";
+    MS_LOG(EXCEPTION) << prim->name() << " 's compute function is not implemented";
   }
 
   py::tuple py_args = py::tuple(args.size());
   MS_LOG(DEBUG) << "input for operation:";
   size_t i = 0;
-  for (auto& arg : args) {
+  for (auto &arg : args) {
     py_args[i] = BaseRefToPyData(arg);
     MS_LOG(DEBUG) << "arg: " << i << ":";
     i++;

@@ -76,7 +76,8 @@ TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
       EXPECT_TRUE(res[i] == label);
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 4);
@@ -85,7 +86,7 @@ TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
 
 TEST_F(MindDataTestManifest, TestSubsetRandomSamplerManifest) {
   std::vector<int64_t> indices({1});
-  std::unique_ptr<Sampler> sampler = mindspore::make_unique<SubsetRandomSampler>(indices);
+  std::unique_ptr<Sampler> sampler = std::make_unique<SubsetRandomSampler>(indices);
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
   // Expect 6 samples for label 0 and 1
   auto tree = Build({Manifest(16, 2, 32, file, "train", std::move(sampler))});
@@ -134,7 +135,8 @@ TEST_F(MindDataTestManifest, MindDataTestManifestClassIndex) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
       EXPECT_TRUE(label == res[i]);
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 2);
@@ -159,7 +161,8 @@ TEST_F(MindDataTestManifest, MindDataTestManifestNumSamples) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
       EXPECT_TRUE(0 == label);
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 4);
@@ -184,7 +187,8 @@ TEST_F(MindDataTestManifest, MindDataTestManifestEval) {
     while (tensor_map.size() != 0) {
       tensor_map["label"]->GetItemAt<uint32_t>(&label, {});
       EXPECT_TRUE(0 == label);
-      std::cout << "row: " << i++ << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      MS_LOG(DEBUG) << "row: " << i << "\t" << tensor_map["image"]->shape() << "label:" << label << "\n";
+      i++;
       di.GetNextAsMap(&tensor_map);
     }
     EXPECT_TRUE(i == 1);

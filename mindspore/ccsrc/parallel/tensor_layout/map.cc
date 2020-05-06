@@ -15,19 +15,18 @@
  */
 
 #include "parallel/tensor_layout/map.h"
-#include <utility>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <utility>
+#include "common/utils.h"
 #include "parallel/status.h"
-#include "utils/log_adapter.h"
 #include "parallel/tensor_layout/shape_util.h"
 #include "utils/convert_utils.h"
-#include "common/utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {
-
-Status Map::Init(const std::vector<int32_t>& array) {
+Status Map::Init(const std::vector<int32_t> &array) {
   Status status = Array::Init(array);
   if (status != Status::SUCCESS) {
     return Status::FAILED;
@@ -47,7 +46,7 @@ bool Map::IsValidMap() {
   std::vector<int32_t> sorted_array = array_;
   std::sort(sorted_array.begin(), sorted_array.end());
   int32_t value = MAP_NONE;
-  for (auto& element : sorted_array) {
+  for (auto &element : sorted_array) {
     if (element == MAP_NONE) {
       continue;
     }
@@ -79,7 +78,7 @@ int32_t Map::GetIndexByValue(int32_t value) const {
 /*
  * expand.size() should be equal to array_.size()
  */
-std::shared_ptr<Map> Map::ExpandMapByNone(const Arrangement& expand_num_list) const {
+std::shared_ptr<Map> Map::ExpandMapByNone(const Arrangement &expand_num_list) const {
   if (expand_num_list.GetDimSize() != GetDimSize()) {
     return nullptr;
   }
@@ -106,7 +105,7 @@ std::shared_ptr<Map> Map::ExpandMapByNone(const Arrangement& expand_num_list) co
 /*
  * expand.size() should be equal to array_.size()
  */
-std::shared_ptr<Map> Map::ExpandMapByDecreaseNumber(const Arrangement& expand_num_list) const {
+std::shared_ptr<Map> Map::ExpandMapByDecreaseNumber(const Arrangement &expand_num_list) const {
   if (GetMaxItem() >= static_cast<int32_t>(expand_num_list.GetDimSize())) {
     return nullptr;
   }
@@ -127,7 +126,7 @@ std::shared_ptr<Map> Map::ExpandMapByDecreaseNumber(const Arrangement& expand_nu
   return map_new;
 }
 
-std::shared_ptr<std::vector<Arrangement>> Map::ReMapVector(const std::vector<Arrangement>& input_vector) const {
+std::shared_ptr<std::vector<Arrangement>> Map::ReMapVector(const std::vector<Arrangement> &input_vector) const {
   if (GetMaxItem() >= static_cast<int32_t>(input_vector.size())) {
     return nullptr;
   }
@@ -144,7 +143,7 @@ std::shared_ptr<std::vector<Arrangement>> Map::ReMapVector(const std::vector<Arr
 }
 
 bool Map::CheckNoneByIdxList(std::vector<size_t> idx_list) const {
-  for (auto& value : idx_list) {
+  for (auto &value : idx_list) {
     if (GetDimByIdx(SizeToUint(value)) != MAP_NONE) {
       return false;
     }

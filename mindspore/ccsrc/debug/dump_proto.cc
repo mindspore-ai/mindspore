@@ -23,7 +23,7 @@
 #include <algorithm>
 
 #include "debug/anf_ir_utils.h"
-#include "utils/anf_ir.pb.h"
+#include "proto/anf_ir.pb.h"
 #include "utils/graph_utils.h"
 #include "utils/symbolic.h"
 
@@ -33,38 +33,38 @@ class ProtoExporter {
   ProtoExporter() {}
   ~ProtoExporter() {}
 
-  std::string GetFuncGraphProtoString(const FuncGraphPtr& func_graph);
+  std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);
 
  private:
   void InitModelInfo();
-  void GetOpNodeTypeAndAttrs(const FuncGraphPtr& func_graph, const AnfNodePtr& node, irpb::NodeProto* node_proto);
-  std::string GetOpNodeInputId(const FuncGraphPtr& func_graph, const AnfNodePtr& node,
-                               const std::map<AnfNodePtr, size_t>& apply_map,
-                               std::map<AnfNodePtr, size_t>* const_map_ptr);
-  void SetValueToProto(const ValuePtr& attr_value, irpb::ValueProto* value_proto);
-  void SetScalarToProto(const ScalarPtr& val, irpb::ValueProto* value_proto);
-  void SetSequenceToProto(const ValueSequeuePtr& val, irpb::ValueProto* value_proto);
-  void SetDictionaryToProto(const ValueDictionaryPtr& val, irpb::ValueProto* value_proto);
-  void SetNodeOutputType(const AnfNodePtr& node, irpb::TypeProto* type_proto);
-  void SetNodeOutputType(const TypePtr& node, const BaseShapePtr& shape, irpb::TypeProto* type_proto);
+  void GetOpNodeTypeAndAttrs(const FuncGraphPtr &func_graph, const AnfNodePtr &node, irpb::NodeProto *node_proto);
+  std::string GetOpNodeInputId(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                               const std::map<AnfNodePtr, size_t> &apply_map,
+                               std::map<AnfNodePtr, size_t> *const_map_ptr);
+  void SetValueToProto(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
+  void SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto);
+  void SetSequenceToProto(const ValueSequeuePtr &val, irpb::ValueProto *value_proto);
+  void SetDictionaryToProto(const ValueDictionaryPtr &val, irpb::ValueProto *value_proto);
+  void SetNodeOutputType(const AnfNodePtr &node, irpb::TypeProto *type_proto);
+  void SetNodeOutputType(const TypePtr &node, const BaseShapePtr &shape, irpb::TypeProto *type_proto);
 
-  void ExportFuncGraph(const FuncGraphPtr& func_graph, irpb::GraphProto* graph_proto);
-  void ExportParameters(const FuncGraphPtr& func_graph, irpb::GraphProto* graph_proto);
-  void ExportCNodes(const FuncGraphPtr& func_graph, irpb::GraphProto* graph_proto,
-                    std::map<AnfNodePtr, size_t>* const_map_ptr);
-  void ExportCNode(const FuncGraphPtr& func_graph, const CNodePtr& node, std::map<AnfNodePtr, size_t>* apply_map_ptr,
-                   std::map<AnfNodePtr, size_t>* const_map_ptr, irpb::GraphProto* graph_proto);
-  void ExportFuncGraphOutput(const FuncGraphPtr& func_graph, const CNodePtr& ret_node,
-                             const std::map<AnfNodePtr, size_t>& apply_map, std::map<AnfNodePtr, size_t>* const_map_ptr,
-                             irpb::GraphProto* graph_proto);
-  void ExportValueNodes(const std::map<AnfNodePtr, size_t>& const_map, irpb::GraphProto* graph_proto);
+  void ExportFuncGraph(const FuncGraphPtr &func_graph, irpb::GraphProto *graph_proto);
+  void ExportParameters(const FuncGraphPtr &func_graph, irpb::GraphProto *graph_proto);
+  void ExportCNodes(const FuncGraphPtr &func_graph, irpb::GraphProto *graph_proto,
+                    std::map<AnfNodePtr, size_t> *const_map_ptr);
+  void ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node, std::map<AnfNodePtr, size_t> *apply_map_ptr,
+                   std::map<AnfNodePtr, size_t> *const_map_ptr, irpb::GraphProto *graph_proto);
+  void ExportFuncGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &ret_node,
+                             const std::map<AnfNodePtr, size_t> &apply_map, std::map<AnfNodePtr, size_t> *const_map_ptr,
+                             irpb::GraphProto *graph_proto);
+  void ExportValueNodes(const std::map<AnfNodePtr, size_t> &const_map, irpb::GraphProto *graph_proto);
 
   static std::string GetConstNodeId(size_t idx) { return std::string("cst") + std::to_string(idx); }
 
   irpb::ModelProto model_;
 };
 
-static irpb::DataType GetNumberDataType(const TypePtr& type) {
+static irpb::DataType GetNumberDataType(const TypePtr &type) {
   switch (type->type_id()) {
     case kNumberTypeBool:
       return irpb::DT_BOOL;
@@ -101,7 +101,7 @@ static irpb::DataType GetNumberDataType(const TypePtr& type) {
   }
 }
 
-void ProtoExporter::SetNodeOutputType(const TypePtr& type, const BaseShapePtr& shape, irpb::TypeProto* type_proto) {
+void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &shape, irpb::TypeProto *type_proto) {
   if (type_proto == nullptr) {
     return;
   }
@@ -116,14 +116,14 @@ void ProtoExporter::SetNodeOutputType(const TypePtr& type, const BaseShapePtr& s
     type_proto->set_data_type(irpb::DT_TENSOR);
     if (shape != nullptr && shape->isa<abstract::Shape>()) {
       abstract::ShapePtr shape_info = dyn_cast<abstract::Shape>(shape);
-      for (const auto& elem : shape_info->shape()) {
+      for (const auto &elem : shape_info->shape()) {
         type_proto->mutable_tensor_type()->mutable_shape()->add_dim()->set_size(elem);
       }
     }
   } else if (type->isa<Tuple>()) {
     TuplePtr tuple_type = dyn_cast<Tuple>(type);
     type_proto->set_data_type(irpb::DT_TUPLE);
-    for (const auto& elem_type : tuple_type->elements()) {
+    for (const auto &elem_type : tuple_type->elements()) {
       SetNodeOutputType(elem_type, nullptr, type_proto->mutable_sequence_type()->add_elem_types());
     }
   } else if (type->isa<TypeType>()) {
@@ -131,7 +131,7 @@ void ProtoExporter::SetNodeOutputType(const TypePtr& type, const BaseShapePtr& s
   } else if (type->isa<List>()) {
     ListPtr list_type = dyn_cast<List>(type);
     type_proto->set_data_type(irpb::DT_LIST);
-    for (const auto& elem_type : list_type->elements()) {
+    for (const auto &elem_type : list_type->elements()) {
       SetNodeOutputType(elem_type, nullptr, type_proto->mutable_sequence_type()->add_elem_types());
     }
   } else if (type->isa<TypeAnything>()) {
@@ -153,20 +153,20 @@ void ProtoExporter::SetNodeOutputType(const TypePtr& type, const BaseShapePtr& s
   }
 }
 
-void ProtoExporter::SetNodeOutputType(const AnfNodePtr& node, irpb::TypeProto* type_proto) {
+void ProtoExporter::SetNodeOutputType(const AnfNodePtr &node, irpb::TypeProto *type_proto) {
   if (node == nullptr || type_proto == nullptr) {
     return;
   }
   SetNodeOutputType(node->Type(), node->Shape(), type_proto);
 }
 
-void ProtoExporter::SetValueToProto(const ValuePtr& val, irpb::ValueProto* value_proto) {
+void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value_proto) {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }
 
   if (val->isa<StringImm>()) {
-    const StringImmPtr& value = dyn_cast<StringImm>(val);
+    const StringImmPtr &value = dyn_cast<StringImm>(val);
     value_proto->set_dtype(irpb::DT_STRING);
     value_proto->set_str_val(value->value());
   } else if (val->isa<Scalar>()) {
@@ -195,70 +195,70 @@ void ProtoExporter::SetValueToProto(const ValuePtr& val, irpb::ValueProto* value
   } else if (val->isa<tensor::Tensor>()) {
     tensor::TensorPtr tensor_ptr = dyn_cast<tensor::Tensor>(val);
     value_proto->set_dtype(irpb::DT_TENSOR);
-    irpb::TensorProto* tensor_proto = value_proto->mutable_tensor_val();
+    irpb::TensorProto *tensor_proto = value_proto->mutable_tensor_val();
     tensor_proto->set_data_type(GetNumberDataType(tensor_ptr->Dtype()));
-    for (auto& elem : tensor_ptr->shape()) {
+    for (auto &elem : tensor_ptr->shape()) {
       tensor_proto->add_dims(elem);
     }
   } else if (val->isa<TensorType>()) {
     value_proto->set_dtype(irpb::DT_TYPE);
 
-    irpb::TypeProto* type_proto = value_proto->mutable_type_val();
+    irpb::TypeProto *type_proto = value_proto->mutable_type_val();
     type_proto->set_data_type(irpb::DT_TENSOR);
     TypePtr elem_type = dyn_cast<TensorType>(val)->element();
     type_proto->mutable_tensor_type()->set_elem_type(GetNumberDataType(elem_type));
   } else {
-    MS_LOG(WARNING) << "Not supported type " << val->type_name();
+    MS_LOG(WARNING) << "Unsupported type " << val->type_name();
   }
 }
 
-void ProtoExporter::SetScalarToProto(const ScalarPtr& val, irpb::ValueProto* value_proto) {
+void ProtoExporter::SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto) {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }
 
   if (val->isa<BoolImm>()) {
-    const BoolImmPtr& value = dyn_cast<BoolImm>(val);
+    const BoolImmPtr &value = dyn_cast<BoolImm>(val);
     value_proto->set_dtype(irpb::DT_BOOL);
     value_proto->set_bool_val(value->value());
   } else if (val->isa<Int8Imm>()) {
-    const Int8ImmPtr& value = dyn_cast<Int8Imm>(val);
+    const Int8ImmPtr &value = dyn_cast<Int8Imm>(val);
     value_proto->set_dtype(irpb::DT_INT8);
     value_proto->set_int_val(value->value());
   } else if (val->isa<Int16Imm>()) {
-    const Int16ImmPtr& value = dyn_cast<Int16Imm>(val);
+    const Int16ImmPtr &value = dyn_cast<Int16Imm>(val);
     value_proto->set_dtype(irpb::DT_INT16);
     value_proto->set_int_val(value->value());
   } else if (val->isa<Int32Imm>()) {
-    const Int32ImmPtr& value = dyn_cast<Int32Imm>(val);
+    const Int32ImmPtr &value = dyn_cast<Int32Imm>(val);
     value_proto->set_dtype(irpb::DT_INT32);
     value_proto->set_int_val(value->value());
   } else if (val->isa<Int64Imm>()) {
-    const Int64ImmPtr& value = dyn_cast<Int64Imm>(val);
+    const Int64ImmPtr &value = dyn_cast<Int64Imm>(val);
     value_proto->set_dtype(irpb::DT_INT64);
     value_proto->set_int_val(value->value());
   } else if (val->isa<UInt8Imm>()) {
-    const UInt8ImmPtr& value = dyn_cast<UInt8Imm>(val);
+    const UInt8ImmPtr &value = dyn_cast<UInt8Imm>(val);
     value_proto->set_dtype(irpb::DT_UINT8);
     value_proto->set_uint_val(value->value());
   } else if (val->isa<UInt16Imm>()) {
-    const UInt16ImmPtr& value = dyn_cast<UInt16Imm>(val);
+    const UInt16ImmPtr &value = dyn_cast<UInt16Imm>(val);
     value_proto->set_dtype(irpb::DT_UINT16);
     value_proto->set_uint_val(value->value());
   } else if (val->isa<UInt32Imm>()) {
-    const UInt32ImmPtr& value = dyn_cast<UInt32Imm>(val);
+    const UInt32ImmPtr &value = dyn_cast<UInt32Imm>(val);
     value_proto->set_dtype(irpb::DT_UINT32);
     value_proto->set_uint_val(value->value());
   } else if (val->isa<UInt64Imm>()) {
-    const UInt64ImmPtr& value = dyn_cast<UInt64Imm>(val);
+    const UInt64ImmPtr &value = dyn_cast<UInt64Imm>(val);
     value_proto->set_dtype(irpb::DT_UINT64);
     value_proto->set_uint_val(value->value());
   } else if (val->isa<FP32Imm>()) {
-    const FP32ImmPtr& value = dyn_cast<FP32Imm>(val);
+    const FP32ImmPtr &value = dyn_cast<FP32Imm>(val);
     value_proto->set_dtype(irpb::DT_FLOAT32);
     value_proto->set_float_val(value->value());
   } else if (val->isa<FP64Imm>()) {
-    const FP64ImmPtr& value = dyn_cast<FP64Imm>(val);
+    const FP64ImmPtr &value = dyn_cast<FP64Imm>(val);
     value_proto->set_dtype(irpb::DT_FLOAT64);
     value_proto->set_double_val(value->value());
   } else {
@@ -266,40 +266,40 @@ void ProtoExporter::SetScalarToProto(const ScalarPtr& val, irpb::ValueProto* val
   }
 }
 
-void ProtoExporter::SetSequenceToProto(const ValueSequeuePtr& val, irpb::ValueProto* value_proto) {
+void ProtoExporter::SetSequenceToProto(const ValueSequeuePtr &val, irpb::ValueProto *value_proto) {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }
 
   if (val->isa<ValueTuple>()) {
-    const ValueTuplePtr& value = dyn_cast<ValueTuple>(val);
+    const ValueTuplePtr &value = dyn_cast<ValueTuple>(val);
     value_proto->set_dtype(irpb::DT_TUPLE);
-    for (const auto& item : value->value()) {
+    for (const auto &item : value->value()) {
       SetValueToProto(item, value_proto->add_values());
     }
   } else if (val->isa<ValueList>()) {
-    const ValueListPtr& value = dyn_cast<ValueList>(val);
+    const ValueListPtr &value = dyn_cast<ValueList>(val);
     value_proto->set_dtype(irpb::DT_LIST);
-    for (const auto& item : value->value()) {
+    for (const auto &item : value->value()) {
       SetValueToProto(item, value_proto->add_values());
     }
   }
 }
 
-void ProtoExporter::SetDictionaryToProto(const ValueDictionaryPtr& val, irpb::ValueProto* value_proto) {
+void ProtoExporter::SetDictionaryToProto(const ValueDictionaryPtr &val, irpb::ValueProto *value_proto) {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }
 
   value_proto->set_dtype(irpb::DT_DICT);
-  for (const auto& item : val->value()) {
-    irpb::NamedValueProto* named_val = value_proto->add_dict_val();
+  for (const auto &item : val->value()) {
+    irpb::NamedValueProto *named_val = value_proto->add_dict_val();
     named_val->set_key(item.first);
     SetValueToProto(item.second, named_val->mutable_value());
   }
 }
 
-void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr&, const AnfNodePtr& node, irpb::NodeProto* node_proto) {
+void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr &, const AnfNodePtr &node, irpb::NodeProto *node_proto) {
   if (node == nullptr || node_proto == nullptr) {
     return;
   }
@@ -312,19 +312,19 @@ void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr&, const AnfNodePtr&
     MS_LOG(EXCEPTION) << "Op node is not primitive: " << node->ToString();
   }
 
-  const PrimitivePtr& prim = GetValueNode<PrimitivePtr>(node);
+  const PrimitivePtr &prim = GetValueNode<PrimitivePtr>(node);
   node_proto->set_op_type(prim->name());
-  for (const auto& attr : prim->attrs()) {
-    irpb::AttributeProto* attr_proto = node_proto->add_attribute();
+  for (const auto &attr : prim->attrs()) {
+    irpb::AttributeProto *attr_proto = node_proto->add_attribute();
     attr_proto->set_name(attr.first);
     SetValueToProto(attr.second, attr_proto->mutable_value());
   }
   node_proto->set_scope(node->scope()->name());
 }
 
-std::string ProtoExporter::GetOpNodeInputId(const FuncGraphPtr&, const AnfNodePtr& node,
-                                            const std::map<AnfNodePtr, size_t>& apply_map,
-                                            std::map<AnfNodePtr, size_t>* const_map_ptr) {
+std::string ProtoExporter::GetOpNodeInputId(const FuncGraphPtr &, const AnfNodePtr &node,
+                                            const std::map<AnfNodePtr, size_t> &apply_map,
+                                            std::map<AnfNodePtr, size_t> *const_map_ptr) {
   if (node == nullptr || const_map_ptr == nullptr) {
     return "";
   }
@@ -354,18 +354,18 @@ std::string ProtoExporter::GetOpNodeInputId(const FuncGraphPtr&, const AnfNodePt
   MS_LOG(EXCEPTION) << "Unknown node type. node is '" << node->ToString() << "'";
 }
 
-std::string ProtoExporter::GetFuncGraphProtoString(const FuncGraphPtr& func_graph) {
+std::string ProtoExporter::GetFuncGraphProtoString(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     return "";
   }
 
   InitModelInfo();
-  irpb::GraphProto* graph_proto = model_.mutable_graph();
+  irpb::GraphProto *graph_proto = model_.mutable_graph();
   ExportFuncGraph(func_graph, graph_proto);
   return model_.SerializeAsString();
 }
 
-void ProtoExporter::ExportFuncGraph(const FuncGraphPtr& func_graph, irpb::GraphProto* graph_proto) {
+void ProtoExporter::ExportFuncGraph(const FuncGraphPtr &func_graph, irpb::GraphProto *graph_proto) {
   if (func_graph == nullptr || graph_proto == nullptr) {
     return;
   }
@@ -383,14 +383,14 @@ void ProtoExporter::ExportFuncGraph(const FuncGraphPtr& func_graph, irpb::GraphP
   ExportValueNodes(const_map, graph_proto);
 }
 
-void ProtoExporter::ExportParameters(const FuncGraphPtr& func_graph, irpb::GraphProto* graph_proto) {
+void ProtoExporter::ExportParameters(const FuncGraphPtr &func_graph, irpb::GraphProto *graph_proto) {
   if (func_graph == nullptr || graph_proto == nullptr) {
     return;
   }
 
   std::vector<AnfNodePtr> parameters = func_graph->parameters();
-  for (auto& param : parameters) {
-    irpb::ParameterProto* param_proto = graph_proto->add_parameters();
+  for (auto &param : parameters) {
+    irpb::ParameterProto *param_proto = graph_proto->add_parameters();
     param_proto->set_name(param->ToString());
 
     SetNodeOutputType(param, param_proto->mutable_type());
@@ -402,15 +402,15 @@ void ProtoExporter::ExportParameters(const FuncGraphPtr& func_graph, irpb::Graph
   }
 }
 
-void ProtoExporter::ExportCNodes(const FuncGraphPtr& func_graph, irpb::GraphProto* graph_proto,
-                                 std::map<AnfNodePtr, size_t>* const_map_ptr) {
+void ProtoExporter::ExportCNodes(const FuncGraphPtr &func_graph, irpb::GraphProto *graph_proto,
+                                 std::map<AnfNodePtr, size_t> *const_map_ptr) {
   if (func_graph == nullptr || graph_proto == nullptr || const_map_ptr == nullptr) {
     return;
   }
   // topo sort nodes
   std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
   std::map<AnfNodePtr, size_t> apply_map;
-  for (const AnfNodePtr& node : nodes) {
+  for (const AnfNodePtr &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
       continue;
@@ -424,9 +424,9 @@ void ProtoExporter::ExportCNodes(const FuncGraphPtr& func_graph, irpb::GraphProt
   }
 }
 
-void ProtoExporter::ExportCNode(const FuncGraphPtr& func_graph, const CNodePtr& node,
-                                std::map<AnfNodePtr, size_t>* apply_map_ptr,
-                                std::map<AnfNodePtr, size_t>* const_map_ptr, irpb::GraphProto* graph_proto) {
+void ProtoExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &node,
+                                std::map<AnfNodePtr, size_t> *apply_map_ptr,
+                                std::map<AnfNodePtr, size_t> *const_map_ptr, irpb::GraphProto *graph_proto) {
   if (func_graph == nullptr || node == nullptr || apply_map_ptr == nullptr || const_map_ptr == nullptr ||
       graph_proto == nullptr) {
     return;
@@ -435,12 +435,12 @@ void ProtoExporter::ExportCNode(const FuncGraphPtr& func_graph, const CNodePtr& 
   auto apply_idx = apply_map_ptr->size() + 1;
   (*apply_map_ptr)[node] = apply_idx;
 
-  auto& inputs = node->inputs();
+  auto &inputs = node->inputs();
   if (inputs.size() < 1) {
     MS_LOG(EXCEPTION) << "Inputs of apply node is empty";
   }
   AnfNodePtr op = inputs[0];
-  irpb::NodeProto* node_proto = graph_proto->add_node();
+  irpb::NodeProto *node_proto = graph_proto->add_node();
 
   // CNode/ConstGraph/Const/Parameter
   if (op->isa<CNode>() || IsValueNode<FuncGraph>(op) || op->isa<Parameter>()) {
@@ -452,7 +452,7 @@ void ProtoExporter::ExportCNode(const FuncGraphPtr& func_graph, const CNodePtr& 
 
     // process OP inputs
     for (size_t i = 1; i < inputs.size(); ++i) {
-      irpb::InputProto* input_proto = node_proto->add_input();
+      irpb::InputProto *input_proto = node_proto->add_input();
       input_proto->set_type(irpb::InputProto_EdgeType_DATA_EDGE);
       std::string id = GetOpNodeInputId(func_graph, inputs[i], *apply_map_ptr, const_map_ptr);
       input_proto->set_name(id);
@@ -463,9 +463,9 @@ void ProtoExporter::ExportCNode(const FuncGraphPtr& func_graph, const CNodePtr& 
   }
 }
 
-void ProtoExporter::ExportFuncGraphOutput(const FuncGraphPtr& func_graph, const CNodePtr& ret_node,
-                                          const std::map<AnfNodePtr, size_t>& apply_map,
-                                          std::map<AnfNodePtr, size_t>* const_map_ptr, irpb::GraphProto* graph_proto) {
+void ProtoExporter::ExportFuncGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &ret_node,
+                                          const std::map<AnfNodePtr, size_t> &apply_map,
+                                          std::map<AnfNodePtr, size_t> *const_map_ptr, irpb::GraphProto *graph_proto) {
   if (ret_node == nullptr || !ret_node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Graph return node is illegal";
   }
@@ -473,7 +473,7 @@ void ProtoExporter::ExportFuncGraphOutput(const FuncGraphPtr& func_graph, const 
   if (graph_proto == nullptr) {
     MS_LOG(EXCEPTION) << "graph_proto is nullptr";
   }
-  irpb::OutputProto* output_proto = graph_proto->add_outputs();
+  irpb::OutputProto *output_proto = graph_proto->add_outputs();
   if (output_proto == nullptr) {
     MS_LOG(EXCEPTION) << "output_proto is nullptr";
   }
@@ -482,22 +482,22 @@ void ProtoExporter::ExportFuncGraphOutput(const FuncGraphPtr& func_graph, const 
   SetNodeOutputType(arg, output_proto->mutable_type());
 }
 
-static bool CompareValue(const std::pair<AnfNodePtr, size_t>& x, const std::pair<AnfNodePtr, size_t>& y) {
+static bool CompareValue(const std::pair<AnfNodePtr, size_t> &x, const std::pair<AnfNodePtr, size_t> &y) {
   return x.second < y.second;
 }
 
-void ProtoExporter::ExportValueNodes(const std::map<AnfNodePtr, size_t>& const_map, irpb::GraphProto* graph_proto) {
+void ProtoExporter::ExportValueNodes(const std::map<AnfNodePtr, size_t> &const_map, irpb::GraphProto *graph_proto) {
   std::vector<std::pair<AnfNodePtr, size_t>> nodes;
   (void)std::transform(const_map.cbegin(), const_map.cend(), std::back_inserter(nodes),
-                       [](const std::pair<AnfNodePtr, size_t>& item) { return item; });
+                       [](const std::pair<AnfNodePtr, size_t> &item) { return item; });
 
   sort(nodes.begin(), nodes.end(), CompareValue);
 
-  for (auto& item : nodes) {
+  for (auto &item : nodes) {
     if (graph_proto == nullptr) {
       MS_LOG(EXCEPTION) << "graph_proto is nullptr";
     }
-    irpb::NamedValueProto* named_value = graph_proto->add_const_vals();
+    irpb::NamedValueProto *named_value = graph_proto->add_const_vals();
     MS_EXCEPTION_IF_NULL(named_value);
     named_value->set_key(GetConstNodeId(item.second));
     SetValueToProto(GetValueNode(item.first), named_value->mutable_value());
@@ -506,7 +506,7 @@ void ProtoExporter::ExportValueNodes(const std::map<AnfNodePtr, size_t>& const_m
 
 void ProtoExporter::InitModelInfo() { model_.set_ir_version(irpb::IR_VERSION); }
 
-std::string GetFuncGraphProtoString(const FuncGraphPtr& func_graph) {
+std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph) {
   ProtoExporter exporter;
   return exporter.GetFuncGraphProtoString(func_graph);
 }

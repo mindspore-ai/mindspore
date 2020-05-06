@@ -56,3 +56,17 @@ def test_compile():
     net = Net()
     input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]).astype(np.float32))
     _executor.compile(net, input_data)
+
+
+class GroupNet(nn.Cell):
+    def __init__(self):
+        super(GroupNet, self).__init__()
+        self.group_bn = nn.GroupNorm()
+    def construct(self, x):
+        return self.group_bn(x)
+
+
+def test_compile_groupnorm():
+    net = nn.GroupNorm(16, 64)
+    input_data = Tensor(np.random.rand(1,64,256,256).astype(np.float32))
+    _executor.compile(net, input_data)

@@ -108,7 +108,8 @@ std::map<int32_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     }
 
     if ((task_result != nullptr) && (strcmp(task_result, "Success") != 0)) {
-      MS_LOG(DEBUG) << "fuison op build failed, err log: " << task_result << "  change to single op build.";
+      MS_LOG(INFO) << "Fusion warning: Fuison op build failed, err log: " << task_result
+                   << "  change to single op build.";
       build_failed_num++;
     }
     auto kernel_mod_item = build_manger->TaskFinishProcess(task_id, false);

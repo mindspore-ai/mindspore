@@ -16,6 +16,7 @@
 
 #include "dataset/engine/datasetops/project_op.h"
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -49,12 +50,23 @@ ProjectOp::ProjectOp(const std::vector<std::string> &columns_to_project)
     : PipelineOp(0), columns_to_project_(columns_to_project) {}
 
 void ProjectOp::Print(std::ostream &out, bool show_all) const {
-  PipelineOp::Print(out, show_all);
-  out << "ProjectOp: columns that are projected: ";
-  for (size_t i = 0; i < columns_to_project_.size(); i++) {
-    out << columns_to_project_[i] << " ";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <ProjectOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nColumns that are projected:";
+    for (size_t i = 0; i < columns_to_project_.size(); i++) {
+      out << "\n" << columns_to_project_[i];
+    }
+    out << "\n\n";
   }
-  out << '\n';
 }
 
 // Gets a buffer from the child operator and projects the buffer.
@@ -79,7 +91,7 @@ Status ProjectOp::Project(std::unique_ptr<DataBuffer> *data_buffer) {
     new_column_name_mapping[current_column] = i;
     projected_column_indices.push_back(column_name_mapping[current_column]);
   }
-  std::unique_ptr<TensorQTable> new_tensor_table = mindspore::make_unique<TensorQTable>();
+  std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
   while ((*data_buffer)->NumRows() > 0) {
     TensorRow current_row;
     RETURN_IF_NOT_OK((*data_buffer)->PopRow(&current_row));

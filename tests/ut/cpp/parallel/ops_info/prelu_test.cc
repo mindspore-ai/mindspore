@@ -39,13 +39,13 @@ class TestPReLUInfo : public UT::Common {
 };
 
 void TestPReLUInfo::SetUp() {
-  std::list<int32_t> dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::list<int32_t> stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
   int32_t local_dev = 0;
@@ -146,11 +146,10 @@ TEST_F(TestPReLUInfo, CheckStrategy1) {
 }
 
 TEST_F(TestPReLUInfo, CheckStrategy2) {
-  // Success: {{2,1,8,16},{1}}
   std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu->Init(strategy);
-  ASSERT_EQ(ret, FAILED);
+  ASSERT_EQ(ret, SUCCESS);
 }
 
 TEST_F(TestPReLUInfo, AutoStrategy1) {
@@ -252,11 +251,10 @@ TEST_F(TestPReLUInfo, CheckStrategy_2d1) {
 }
 
 TEST_F(TestPReLUInfo, CheckStrategy_2d2) {
-  // Success: {{2,1,8,16},{1}}
   std::vector<Dimensions> inputs = {{128, 4}, {4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu_2d->Init(strategy);
-  ASSERT_EQ(ret, FAILED);
+  ASSERT_EQ(ret, SUCCESS);
 }
 
 TEST_F(TestPReLUInfo, AutoStrategy_2d1) {

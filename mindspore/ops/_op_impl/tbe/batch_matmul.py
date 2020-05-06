@@ -14,88 +14,29 @@
 # ============================================================================
 
 """BatchMatMul op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+batch_matmul_op_info = TBERegOp("BatchMatMul") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("batch_matmul.so") \
+    .compute_cost(10) \
+    .kernel_name("batch_matmul") \
+    .attr("transpose_x1", "required", "bool", "all") \
+    .attr("transpose_x2", "required", "bool", "all") \
+    .partial_flag(True) \
+    .input(0, "x1", False, "required", "all") \
+    .input(1, "x2", False, "required", "all") \
+    .input(2, "bias", False, "optional", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_Default, DataType.F16_FracNZ) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "BatchMatMul",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "batch_matmul.so",
-    "compute_cost": 10,
-    "kernel_name": "batch_matmul",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "transpose_x1",
-            "param_type": "required",
-            "type": "bool",
-            "value": "all"
-        },
-        {
-            "name": "transpose_x2",
-            "param_type": "required",
-            "type": "bool",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float16","float","float","int32","int32"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","FRACTAL_NZ","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float16","float16","float","float","int32","int32"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","FRACTAL_NZ","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x2",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16","float16","float16","float","float","int32","int32"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "bias",
-            "need_compile": false,
-            "param_type": "optional",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float16","float","float","int32","int32"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","FRACTAL_NZ","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "y",
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(batch_matmul_op_info)
 def _batch_matmul_tbe():
     """BatchMatMul TBE register"""
     return

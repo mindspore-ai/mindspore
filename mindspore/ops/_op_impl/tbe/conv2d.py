@@ -14,114 +14,30 @@
 # ============================================================================
 
 """Conv2D op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+conv2d_op_info = TBERegOp("Conv2D") \
+    .fusion_type("CONVLUTION") \
+    .async_flag(False) \
+    .binfile_name("conv2d.so") \
+    .compute_cost(10) \
+    .kernel_name("conv2d") \
+    .partial_flag(True) \
+    .attr("stride", "required", "listInt", "all") \
+    .attr("pad_list", "required", "listInt", "all") \
+    .attr("dilation", "required", "listInt", "all") \
+    .attr("offset_a", "optional", "int", "all") \
+    .input(0, "x", False, "required", "all") \
+    .input(1, "filter", False, "required", "all") \
+    .input(2, "bias", False, "optional", "all") \
+    .input(3, "offset_w", False, "optional", "all") \
+    .output(0, "y", True, "required", "all") \
+    .dtype_format(DataType.F16_5HD, DataType.F16_FracZ, DataType.F16_Default, DataType.I8_Default,
+                  DataType.F16_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Conv2D",
-    "imply_type": "TBE",
-    "fusion_type": "CONVLUTION",
-    "async_flag": false,
-    "binfile_name": "conv2d.so",
-    "compute_cost": 10,
-    "kernel_name": "conv2d",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "stride",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "pad",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "dilation",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "offset_a",
-            "param_type": "optional",
-            "type": "int",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "FracZ"
-            ],
-            "name": "filter",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "bias",
-            "need_compile": false,
-            "param_type": "optional",
-            "shape": "all"
-        },
-        {
-            "index": 3,
-            "dtype": [
-                "int8"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "offset_w",
-            "need_compile": false,
-            "param_type": "optional",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "y",
-            "need_compile": true,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(conv2d_op_info)
 def _conv2d_tbe():
     """Conv2D TBE register"""
     return

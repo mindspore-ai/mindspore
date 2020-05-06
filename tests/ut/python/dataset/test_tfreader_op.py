@@ -32,9 +32,39 @@ def test_case_tf_shape():
     ds1 = ds.TFRecordDataset(FILES, schema_file)
     ds1 = ds1.batch(2)
     for data in ds1.create_dict_iterator():
-        print(data)
+        logger.info(data)
     output_shape = ds1.output_shapes()
     assert (len(output_shape[-1]) == 1)
+
+
+def test_case_tf_read_all_dataset():
+    schema_file = "../data/dataset/testTFTestAllTypes/datasetSchemaNoRow.json"
+    ds1 = ds.TFRecordDataset(FILES, schema_file)
+    assert ds1.get_dataset_size() == 12
+    count = 0
+    for data in ds1.create_tuple_iterator():
+        count += 1
+    assert count == 12
+
+
+def test_case_num_samples():
+    schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema7Rows.json"
+    ds1 = ds.TFRecordDataset(FILES, schema_file, num_samples=8)
+    assert ds1.get_dataset_size() == 8
+    count = 0
+    for data in ds1.create_dict_iterator():
+        count += 1
+    assert count == 8
+
+
+def test_case_num_samples2():
+    schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema7Rows.json"
+    ds1 = ds.TFRecordDataset(FILES, schema_file)
+    assert ds1.get_dataset_size() == 7
+    count = 0
+    for data in ds1.create_dict_iterator():
+        count += 1
+    assert count == 7
 
 
 def test_case_tf_shape_2():
@@ -203,6 +233,32 @@ def test_tf_record_schema_columns_list():
         a = row["col_sint32"]
     assert "col_sint32" in str(info.value)
 
+def test_case_invalid_files():
+    valid_file = "../data/dataset/testTFTestAllTypes/test.data"
+    invalid_file = "../data/dataset/testTFTestAllTypes/invalidFile.txt"
+    files = [invalid_file, valid_file, SCHEMA_FILE]
+
+    data = ds.TFRecordDataset(files, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
+
+    with pytest.raises(RuntimeError) as info:
+        row = data.create_dict_iterator().get_next()
+    assert "cannot be opened" in str(info.value)
+    assert "not valid tfrecord files" in str(info.value)
+    assert valid_file not in str(info.value)
+    assert invalid_file in str(info.value)
+    assert SCHEMA_FILE in str(info.value)
+
+    nonexistent_file = "this/file/does/not/exist"
+    files = [invalid_file, valid_file, SCHEMA_FILE, nonexistent_file]
+
+    with pytest.raises(ValueError) as info:
+        data = ds.TFRecordDataset(files, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
+    assert "did not match any files" in str(info.value)
+    assert valid_file not in str(info.value)
+    assert invalid_file not in str(info.value)
+    assert SCHEMA_FILE not in str(info.value)
+    assert nonexistent_file in str(info.value)
+
 if __name__ == '__main__':
     test_case_tf_shape()
     test_case_tf_file()
@@ -212,3 +268,4 @@ if __name__ == '__main__':
     test_tf_record_schema()
     test_tf_record_shuffle()
     test_tf_shard_equal_rows()
+    test_case_invalid_files()

@@ -14,80 +14,34 @@
 # ============================================================================
 
 """AssignAdd op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+assign_add_op_info = TBERegOp("AssignAdd") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("assignadd.so") \
+    .compute_cost(10) \
+    .kernel_name("assignadd") \
+    .partial_flag(True) \
+    .input(0, "ref", False, "required", "all") \
+    .input(1, "value", False, "required", "all") \
+    .output(0, "ref", False, "required", "all") \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.I8_5HD, DataType.I8_5HD, DataType.I8_5HD) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.U8_5HD, DataType.U8_5HD, DataType.U8_5HD) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_5HD, DataType.I32_5HD) \
+    .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default) \
+    .dtype_format(DataType.I64_5HD, DataType.I64_5HD, DataType.I64_5HD) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "AssignAdd",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "assignadd.so",
-    "compute_cost": 10,
-    "kernel_name": "assignadd",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype":[
-            "float16", "float16", "float16", "float16", "float", "float", "float", "float", "int32", "int32",
-            "int32", "int32", "int8", "int8", "int8", "int8", "uint8", "uint8", "uint8", "uint8", "int64",
-            "int64", "int64", "int64"
-            ],
-            "format":[
-            "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-            "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat",
-            "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-            "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "ref",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype":[
-            "float16", "float16", "float16", "float16", "float", "float", "float", "float", "int32", "int32",
-            "int32", "int32", "int8", "int8", "int8", "int8", "uint8", "uint8", "uint8", "uint8", "int64",
-            "int64", "int64", "int64"
-            ],
-            "format":[
-            "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-            "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat",
-            "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-            "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "value",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype":[
-            "float16", "float16", "float16", "float16", "float", "float", "float", "float", "int32", "int32",
-            "int32", "int32", "int8", "int8", "int8", "int8", "uint8", "uint8", "uint8", "uint8", "int64",
-            "int64", "int64", "int64"
-            ],
-            "format":[
-            "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-            "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat",
-            "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0",
-            "DefaultFormat", "DefaultFormat", "DefaultFormat", "NC1HWC0", "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "output_ref",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(assign_add_op_info)
 def _assign_add_tbe():
     """AssignAdd TBE register"""
     return

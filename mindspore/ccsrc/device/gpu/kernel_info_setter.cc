@@ -33,8 +33,8 @@ namespace gpu {
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
-bool CheckKernelInfo(const std::shared_ptr<KernelBuildInfo>& alternative_kernel_info,
-                     const std::shared_ptr<KernelBuildInfo>& selected_kernel_info) {
+bool CheckKernelInfo(const std::shared_ptr<KernelBuildInfo> &alternative_kernel_info,
+                     const std::shared_ptr<KernelBuildInfo> &selected_kernel_info) {
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
   MS_EXCEPTION_IF_NULL(alternative_kernel_info);
   size_t selected_input_num = selected_kernel_info->GetInputNum();
@@ -67,7 +67,7 @@ bool CheckKernelInfo(const std::shared_ptr<KernelBuildInfo>& alternative_kernel_
   return true;
 }
 
-std::string SupportedTypeList(const CNodePtr& kernel_node) {
+std::string SupportedTypeList(const CNodePtr &kernel_node) {
   std::string supported_type_lists =
     kernel::GpuKernelFactory::GetInstance().SupportedTypeList(AnfAlgo::GetCNodeName(kernel_node));
   if (!supported_type_lists.empty()) {
@@ -91,7 +91,7 @@ std::string SupportedTypeList(const CNodePtr& kernel_node) {
   return supported_type_lists;
 }
 
-bool SelectAkgKernel(const CNodePtr& kernel_node, const shared_ptr<KernelBuildInfo>& selected_kernel_info) {
+bool SelectAkgKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBuildInfo> &selected_kernel_info) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
   std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
@@ -110,7 +110,7 @@ bool SelectAkgKernel(const CNodePtr& kernel_node, const shared_ptr<KernelBuildIn
   }
 
   bool match = std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
-                           [&](const std::shared_ptr<KernelBuildInfo>& alternative_kernel_info) {
+                           [&](const std::shared_ptr<KernelBuildInfo> &alternative_kernel_info) {
                              return CheckKernelInfo(alternative_kernel_info, selected_kernel_info);
                            });
   if (!match) {
@@ -120,7 +120,7 @@ bool SelectAkgKernel(const CNodePtr& kernel_node, const shared_ptr<KernelBuildIn
   return true;
 }
 
-void SetTensorDeviceInfo(const kernel::KernelBuildInfo& selected_kernel_info, const CNodePtr& kernel_node) {
+void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
     auto input_kernel_node = kernel_node->input(input_index + 1);
@@ -153,7 +153,7 @@ void SetTensorDeviceInfo(const kernel::KernelBuildInfo& selected_kernel_info, co
 }
 }  // namespace
 
-void SetKernelInfo(const CNodePtr& kernel_node) {
+void SetKernelInfo(const CNodePtr &kernel_node) {
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
   std::shared_ptr<KernelBuildInfo::KernelBuildInfoBuilder> builder =

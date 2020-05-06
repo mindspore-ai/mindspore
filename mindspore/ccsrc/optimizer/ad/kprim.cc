@@ -50,9 +50,13 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
                                        grad_op_child_scope_prefix + prim->name());
   ScopeGuard scope_guard(scope);
   py::function fn = prim->GetBpropFunction();
+  if (fn == nullptr || py::isinstance<py::none>(fn)) {
+    MS_LOG(DEBUG) << "Fail to find bprop function for " << prim->name() << ".";
+    return nullptr;
+  }
   FuncGraphPtr func_graph = parse::ParsePythonCode(fn);
   if (func_graph == nullptr) {
-    MS_LOG(WARNING) << "Fail to find bprop function for " << prim->name() << ".";
+    MS_LOG(ERROR) << "Fail to parse bprop function for " << prim->name() << ".";
     return nullptr;
   }
   return func_graph;
@@ -92,9 +96,11 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
     return nullptr;
   }
 
+  bool is_faked_bprop = false;
   auto bprop_fg = GetBprop(prim);
   if (bprop_fg == nullptr) {
     bprop_fg = FakeBprop(value_node, resources);
+    is_faked_bprop = true;
   }
 
   auto expanded_fg = BpropToK(prim, bprop_fg);
@@ -104,8 +110,11 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
                       << trace::GetDebugInfo(bprop_fg->debug_info());
   }
 
-  // Set bprop_g graph cache
-  bprop_registry_[prim] = expanded_fg;
+  // To support primitives with variable params, do not cache faked bprop
+  if (!is_faked_bprop) {
+    // Set bprop_g graph cache
+    bprop_registry_[prim] = expanded_fg;
+  }
   return expanded_fg;
 }
 
@@ -148,31 +157,23 @@ void KPrim::TransformArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bp
   }
 }
 
-void KPrim::AddCheckTypeShapeOp(const FuncGraphPtr &bprop_fg) {
+void KPrim::CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check) {
   // bprop_fg has been checked in caller
-  auto same_type_shape = prim::GetPythonOps("same_type_shape", "mindspore.ops.functional")->cast<PrimitivePtr>();
-  MS_EXCEPTION_IF_NULL(same_type_shape);
+  auto check_bprop = prim::GetPythonOps("check_bprop", "mindspore.ops.functional")->cast<PrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(check_bprop);
+  check_bprop->set_attr("prim_to_check", std::make_shared<StringImm>(prim_to_check));
 
-  std::vector<AnfNodePtr> bout_input;
-  bout_input.push_back(NewValueNode(prim::kPrimMakeTuple));
+  std::vector<AnfNodePtr> inputs;
+  inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+  inputs.insert(inputs.begin() + 1, bprop_fg->parameters().begin(), bprop_fg->parameters().end() - 2);
+  AnfNodePtr params = bprop_fg->NewCNode(inputs);
 
-  auto fg_out = bprop_fg->output();
-  MS_EXCEPTION_IF_NULL(fg_out);
-  auto cnode = fg_out->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-
-  auto &inputs = cnode->inputs();
-  auto params = bprop_fg->parameters();
-  std::vector<AnfNodePtr> sub_input;
-  for (size_t i = 1; i < inputs.size(); ++i) {
-    sub_input.clear();
-    sub_input.push_back(NewValueNode(same_type_shape));
-    sub_input.push_back(inputs[i]);
-    sub_input.push_back(params[i - 1]);
-    bout_input.push_back(bprop_fg->NewCNode(sub_input));
-  }
-  AnfNodePtr cbout = bprop_fg->NewCNode(bout_input);
-  bprop_fg->set_output(cbout);
+  inputs.clear();
+  inputs.push_back(NewValueNode(check_bprop));
+  inputs.push_back(bprop_fg->output());
+  inputs.push_back(params);
+  AnfNodePtr bprop_out = bprop_fg->NewCNode(inputs);
+  bprop_fg->set_output(bprop_out);
 }
 
 FuncGraphPtr KPrim::KUserDefinedCellBprop(const FuncGraphPtr bprop_fg) {

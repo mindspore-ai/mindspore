@@ -40,13 +40,13 @@ class TestActivation : public UT::Common {
 };
 
 void TestActivation::SetUp() {
-  std::list<int32_t> dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::list<int32_t> stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
 
@@ -84,9 +84,9 @@ TEST_F(TestActivation, test_activation_strategies) {
     act_ptr_->InitForCostModel(sp);
     std::vector<TensorInfo> inputs_info = act_ptr_->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = act_ptr_->outputs_tensor_info();
-    ASSERT_DOUBLE_EQ(act_ptr_->GetOperatorCost()->GetMemoryCost(inputs_info, outputs_info, sp->GetInputStage()),
-                     cost.memory_cost_);
-    ASSERT_DOUBLE_EQ(act_ptr_->GetOperatorCost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(act_ptr_->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
+                     cost.computation_cost_);
+    ASSERT_DOUBLE_EQ(act_ptr_->operator_cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
                      cost.communication_cost_);
   }
 }
@@ -109,9 +109,9 @@ TEST_F(TestActivation, test_softmax_strategies) {
     soft_ptr_->InitForCostModel(sp);
     std::vector<TensorInfo> inputs_info = soft_ptr_->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = soft_ptr_->outputs_tensor_info();
-    ASSERT_DOUBLE_EQ(soft_ptr_->GetOperatorCost()->GetMemoryCost(inputs_info, outputs_info, sp->GetInputStage()),
-                     cost.memory_cost_);
-    ASSERT_DOUBLE_EQ(soft_ptr_->GetOperatorCost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(soft_ptr_->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
+                     cost.computation_cost_);
+    ASSERT_DOUBLE_EQ(soft_ptr_->operator_cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
                      cost.communication_cost_);
   }
 }

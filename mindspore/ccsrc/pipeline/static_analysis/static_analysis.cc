@@ -87,9 +87,12 @@ AbstractBasePtr AnalysisCache::GetValue(const AnfNodeConfigPtr &conf) {
 std::size_t AnfNodeConfigHasher::operator()(const AnfNodeConfigPtr conf) const {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(conf->node());
-  std::size_t hash_value = hash_combine(conf->node()->hash(), conf->context()->hash());
+  std::size_t hash_value = conf->node()->hash();
+  if (!conf->context()->IsDummyContext()) {
+    hash_value = hash_combine(hash_value, std::hash<AnalysisContext *>{}(conf->context().get()));
+  }
   if (conf->context() != nullptr && conf->context()->func_graph() != nullptr) {
-    MS_LOG(DEBUG) << "NodeConfgHasher Node: " << conf->node()->DebugString()
+    MS_LOG(DEBUG) << "NodeConfigHasher Node: " << conf->node()->DebugString()
                   << ", Graph: " << conf->context()->func_graph()->ToString() << " ### , hash value: " << hash_value;
   } else {
     MS_LOG(DEBUG) << "NodeConfigHasher Node: " << conf->node()->DebugString() << " ### , hash value: " << hash_value;
@@ -122,7 +125,7 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
   MS_EXCEPTION_IF_NULL(root_context->func_graph());
   AnfNodeConfigPtr output_conf = MakeConfig(root_context->func_graph()->get_return(), root_context);
   MS_EXCEPTION_IF_NULL(func_graph);
-  MS_LOG(INFO) << "" << func_graph->ToString() << ": Run finished.";
+  MS_LOG(INFO) << func_graph->ToString() << ": Run finished.";
 
   AnalysisResult result;
   MS_EXCEPTION_IF_NULL(output_conf);
@@ -167,7 +170,7 @@ AbstractBasePtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
   for (auto iter : compute_conf_stack_) {
     buffer << " -> " << iter->DebugString();
   }
-  MS_LOG(DEBUG) << "" << buffer.str();
+  MS_LOG(DEBUG) << buffer.str();
 #endif
   MS_LOG(DEBUG) << "Begin Eval NodeConfig " << conf->ToString();
   MS_EXCEPTION_IF_NULL(node);
@@ -271,6 +274,18 @@ void AnalysisEngine::ClearEvaluatorCache() {
     MS_EXCEPTION_IF_NULL(evaluator->cache());
     evaluator->cache()->clear();
   }
+  for (auto &element : prim_constructors_) {
+    EvaluatorPtr evaluator = element.second;
+    MS_EXCEPTION_IF_NULL(evaluator);
+    MS_EXCEPTION_IF_NULL(evaluator->cache());
+    evaluator->cache()->clear();
+  }
+  for (auto &element : prim_py_evaluators_) {
+    EvaluatorPtr evaluator = element.second;
+    MS_EXCEPTION_IF_NULL(evaluator);
+    MS_EXCEPTION_IF_NULL(evaluator->cache());
+    evaluator->cache()->clear();
+  }
 }
 
 void AnalysisEngine::Clear() {
@@ -289,41 +304,52 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     evaluator = std::make_shared<DoSignatureEvaluator>(prim);
     return evaluator;
   }
+  if (prim->isa<prim::UnpackGraphPrimitive>()) {
+    evaluator = std::make_shared<UnpackGraphEvaluator>(prim);
+    return evaluator;
+  }
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
     if (prim_py != nullptr) {
+      if (engine == nullptr) {
+        return std::make_shared<PythonPrimEvaluator>(prim_py);
+      }
+
+      const auto &iter = engine->prim_py_evaluators_.find(prim_py);
+      if (iter != engine->prim_py_evaluators_.end()) {
+        return iter->second;
+      }
       evaluator = std::make_shared<PythonPrimEvaluator>(prim_py);
-    } else {
-      MS_LOG(EXCEPTION) << "The primitive with python evaluator should be a python primitive.";
+      engine->prim_py_evaluators_[prim_py] = evaluator;
+      return evaluator;
     }
-  } else if (prim->isa<PrimitivePy>() || prim->HasAttr()) {
+    MS_LOG(EXCEPTION) << "The primitive with python evaluator should be a python primitive.";
+  }
+
+  if (prim->isa<PrimitivePy>() || prim->HasAttr()) {
+    if (engine == nullptr) {
+      (void)GetPrimEvaluatorConstructors();
+    }
     // If a primitive may have attr, try to create a new evaluator.
     StandardPrimitiveEvalImpl eval_impl = GetPrimitiveInferImpl(prim);
     if (eval_impl != nullptr) {
-      std::shared_ptr<StandardPrimEvaluator> standard_evaluator =
-        std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
-      evaluator = standard_evaluator;
+      return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
     }
   }
-  if (evaluator == nullptr) {
-    if (engine == nullptr) {
-      // If engine is nullptr, get constructor from default.
-      const PrimEvaluatorMap &prim_evaluator_map = GetPrimEvaluatorConstructors();
-      auto iter = prim_evaluator_map.find(prim);
-      if (iter == prim_evaluator_map.end()) {
-        evaluator = nullptr;
-      } else {
-        evaluator = iter->second;
-      }
-    } else {
-      // If engine is given, get constructor from engine resource.
-      const PrimEvaluatorMap &prim_evaluator_map = engine->PrimConstructors();
-      auto iter = prim_evaluator_map.find(prim);
-      if (iter == prim_evaluator_map.end()) {
-        evaluator = nullptr;
-      } else {
-        evaluator = iter->second;
-      }
+
+  if (engine == nullptr) {
+    // If engine is nullptr, get constructor from default.
+    const PrimEvaluatorMap &prim_evaluator_map = GetPrimEvaluatorConstructors();
+    auto iter = prim_evaluator_map.find(prim);
+    if (iter != prim_evaluator_map.end()) {
+      evaluator = iter->second;
+    }
+  } else {
+    // If engine is given, get constructor from engine resource.
+    const PrimEvaluatorMap &prim_evaluator_map = engine->PrimConstructors();
+    auto iter = prim_evaluator_map.find(prim);
+    if (iter != prim_evaluator_map.end()) {
+      evaluator = iter->second;
     }
   }
   if (evaluator == nullptr) {
@@ -452,13 +478,13 @@ AbstractBasePtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Eval
   for (auto eval : evaluators) {
     auto fg_eval = eval->cast<FuncGraphEvaluatorPtr>();
     if (fg_eval) {
-      auto undetermin_fgs = fg_eval->func_graph()->recursive_graphs();
-      if (undetermin_fgs) {
-        for (auto undetermin_fg : *undetermin_fgs) {
-          MS_LOG(DEBUG) << "Set graph undetermin: " << undetermin_fg->ToString();
+      auto undetermined_fgs = fg_eval->func_graph()->recursive_graphs();
+      if (undetermined_fgs) {
+        for (auto undetermined_fg : *undetermined_fgs) {
+          MS_LOG(DEBUG) << "Set graph undetermined: " << undetermined_fg->ToString();
           // As the current evaluator has multiple possibles, all the func_graphs which
           // are recursive with the current func_graph are undetermined in control flow.
-          undetermin_fg->set_flags(kFuncGraphFlagUndetermin, true);
+          undetermined_fg->set_flags(kFuncGraphFlagUndetermined, true);
         }
       }
     }

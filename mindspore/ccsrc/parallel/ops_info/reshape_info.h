@@ -19,11 +19,10 @@
 
 #include <ir/value.h>
 
-#include <list>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 #include "parallel/ops_info/operator_info.h"
 #include "parallel/strategy.h"
@@ -35,47 +34,43 @@ namespace parallel {
  */
 class ReshapeInfo : public OperatorInfo {
  public:
-  ReshapeInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-              const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs),
+  ReshapeInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs)
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReshapeCost>(false)),
         dev_num_(0),
         input_layout_set_flag_(false),
-        output_layout_set_flag_(false) {
-    reshape_cost_ptr_ = std::make_shared<ReshapeCost>();
-  }
+        output_layout_set_flag_(false) {}
   ~ReshapeInfo() override = default;
-  Status Init(const StrategyPtr& strategy) override;
-  void SetInputLayout(const TensorLayout& input_layout) {
+  Status Init(const StrategyPtr &strategy) override;
+  void SetInputLayout(const TensorLayout &input_layout) {
     input_layout_ = input_layout;
     input_layout_set_flag_ = true;
   }
-  void SetOutputLayout(const TensorLayout& output_layout) {
+  void SetOutputLayout(const TensorLayout &output_layout) {
     output_layout_ = output_layout;
     output_layout_set_flag_ = true;
   }
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
   Status GenerateStrategies(int32_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return reshape_cost_ptr_; }
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
 
  protected:
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
   Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorMap() override;
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
-  Status InferTensorLayout(TensorLayouts* inputs_layout, TensorLayouts* outputs_layout);
+  Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
   Status GetAttrs() override;
   Strategys GetOutputsStrategy();
-  ReshapeCostPtr reshape_cost_ptr_;
 
  private:
   Status GetParameterInput();
   Status ComputeReplaceOp();
   void InferTensorInfoByLayout();
-  void device_number(const StrategyPtr& strategy);
-  Status InferDefaultLayout(const Shape& shape, TensorLayout* const layout);
+  void device_number(const StrategyPtr &strategy);
+  Status InferDefaultLayout(const Shape &shape, TensorLayout *const layout);
 
   int32_t dev_num_;
   std::vector<int32_t> parameter_input_v_;

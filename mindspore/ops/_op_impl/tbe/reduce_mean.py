@@ -14,63 +14,28 @@
 # ============================================================================
 
 """ReduceMean op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+reduce_mean_op_info = TBERegOp("ReduceMean") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("reduce_mean.so") \
+    .compute_cost(10) \
+    .kernel_name("reduce_mean") \
+    .partial_flag(True) \
+    .attr("axis", "optional", "listInt", "all") \
+    .attr("keep_dims", "optional", "bool", "all") \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "ReduceMean",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "reduce_mean.so",
-    "compute_cost": 10,
-    "kernel_name": "reduce_mean",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "axis",
-            "param_type": "optional",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "keep_dims",
-            "param_type": "optional",
-            "type": "bool",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float","float16","int8","uint8"
-            ],
-            "format": [
-                "NC1HWC0","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float","float16","int8","uint8"
-            ],
-            "format": [
-                "NC1HWC0","DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(reduce_mean_op_info)
 def _reduce_mean_tbe():
     """ReduceMean TBE register"""
     return

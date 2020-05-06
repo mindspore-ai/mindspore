@@ -391,6 +391,80 @@ def test_case_13():
         i = i + 1
 
 
+def test_case_14():
+    """
+    Test 1D Generator MP + CPP sampler
+    """
+    logger.info("Test 1D Generator MP : 0 - 63")
+
+    source = [(np.array([x]),) for x in range(256)]
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(), num_parallel_workers=4).repeat(2)
+    i = 0
+    for data in ds1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([i])
+        assert np.array_equal(data["data"], golden)
+        i = i + 1
+        if i == 256:
+            i = 0
+
+
+def test_case_15():
+    """
+    Test 1D Generator MP + Python sampler
+    """
+    logger.info("Test 1D Generator MP : 0 - 63")
+
+    sampler = [x for x in range(256)]
+    source = [(np.array([x]),) for x in range(256)]
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=sampler, num_parallel_workers=4).repeat(2)
+    i = 0
+    for data in ds1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([i])
+        assert np.array_equal(data["data"], golden)
+        i = i + 1
+        if i == 256:
+            i = 0
+
+
+def test_case_16():
+    """
+    Test multi column generator Mp + CPP sampler
+    """
+    logger.info("Test multi column generator")
+
+    source = [(np.array([x]), np.array([x + 1])) for x in range(256)]
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(source, ["col0", "col1"], sampler=ds.SequentialSampler())
+
+    i = 0
+    for item in data1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([i])
+        assert np.array_equal(item["col0"], golden)
+        golden = np.array([i + 1])
+        assert np.array_equal(item["col1"], golden)
+        i = i + 1
+
+
+def test_case_17():
+    """
+    Test multi column generator Mp + Python sampler
+    """
+    logger.info("Test multi column generator")
+
+    sampler = [x for x in range(256)]
+    source = [(np.array([x]), np.array([x + 1])) for x in range(256)]
+    # apply dataset operations
+    data1 = ds.GeneratorDataset(source, ["col0", "col1"], sampler=sampler)
+
+    i = 0
+    for item in data1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([i])
+        assert np.array_equal(item["col0"], golden)
+        golden = np.array([i + 1])
+        assert np.array_equal(item["col1"], golden)
+        i = i + 1
+
+
 def test_case_error_1():
     def generator_np():
         for i in range(64):
@@ -439,6 +513,128 @@ def test_case_error_4():
     assert "Unexpected error. Result of a tensorOp doesn't match output column names" in str(info.value)
 
 
+def test_sequential_sampler():
+    source = [(np.array([x]),) for x in range(64)]
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler())
+    i = 0
+    for data in ds1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([i])
+        assert np.array_equal(data["data"], golden)
+        i = i + 1
+
+
+def test_random_sampler():
+    source = [(np.array([x]),) for x in range(64)]
+    ds1 = ds.GeneratorDataset(source, ["data"], shuffle = True)
+    for data in ds1.create_dict_iterator():  # each data is a dictionary
+        pass
+
+
+def test_distributed_sampler():
+    source = [(np.array([x]),) for x in range(64)]
+    for sid in range(8):
+        ds1 = ds.GeneratorDataset(source, ["data"], shuffle = False, num_shards=8, shard_id=sid)
+        i = sid
+        for data in ds1.create_dict_iterator():  # each data is a dictionary
+            golden = np.array([i])
+            assert np.array_equal(data["data"], golden)
+            i = i + 8
+
+
+def test_num_samples():
+    source = [(np.array([x]),) for x in range(64)]
+    num_samples = 32
+    ds1 = ds.GeneratorDataset(source, ["data"], sampler=ds.SequentialSampler(), num_samples = num_samples)
+    ds2 = ds.GeneratorDataset(source, ["data"], sampler=[i for i in range(32)], num_samples = num_samples)
+    ds3 = ds.GeneratorDataset(generator_1d, ["data"], num_samples = num_samples)
+
+    count = 0
+    for _ in ds1.create_dict_iterator():
+        count = count + 1
+    assert count == num_samples
+
+    count = 0
+    for _ in ds2.create_dict_iterator():
+        count = count + 1
+    assert count == num_samples
+
+    count = 0
+    for _ in ds3.create_dict_iterator():
+        count = count + 1
+    assert count == num_samples
+
+
+def test_num_samples_underflow():
+    source = [(np.array([x]),) for x in range(64)]
+    num_samples = 256
+    ds2 = ds.GeneratorDataset(source, ["data"], sampler=[i for i in range(64)], num_samples = num_samples)
+    ds3 = ds.GeneratorDataset(generator_1d, ["data"], num_samples = num_samples)
+
+    count = 0
+    for _ in ds2.create_dict_iterator():
+        count = count + 1
+    assert count == 64
+
+    count = 0
+    for _ in ds3.create_dict_iterator():
+        count = count + 1
+    assert count == 64
+
+
+def type_tester_with_type_check_2c_schema(t, c):
+    logger.info("Test with Type {}".format(t.__name__))
+
+    schema = ds.Schema()
+    schema.add_column("data0", c[0])
+    schema.add_column("data1", c[1])
+
+    # apply dataset operations
+    data1 = ds.GeneratorDataset((lambda: generator_with_type_2c(t)), schema=schema)
+
+    data1 = data1.batch(4)
+
+    i = 0
+    for item in data1.create_dict_iterator():  # each data is a dictionary
+        golden = np.array([[i], [i + 1], [i + 2], [i + 3]], dtype=t)
+        assert np.array_equal(item["data0"], golden)
+        i = i + 4
+
+
+def test_schema():
+    """
+    Test 2 column Generator on different data type with type check with schema input
+    """
+    logger.info("Test 2 column Generator on all data types with type check")
+
+    np_types = [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32,
+                np.float64]
+    de_types = [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.uint8, mstype.uint16, mstype.uint32,
+                mstype.uint64, mstype.float32, mstype.float64]
+
+    for i in range(len(np_types)):
+        type_tester_with_type_check_2c_schema(np_types[i], [de_types[i], de_types[i]])
+
+
+def manual_test_keyborad_interrupt():
+    """
+    Test keyborad_interrupt
+    """
+    logger.info("Test 1D Generator MP : 0 - 63")
+
+    class MyDS():
+        def __getitem__(self, item):
+            while True:
+                pass
+
+        def __len__(self):
+            return 1024
+
+    ds1 = ds.GeneratorDataset(MyDS(), ["data"], num_parallel_workers=4).repeat(2)
+    i = 0
+    for data in ds1.create_dict_iterator():  # each data is a dictionary
+        pass
+
+
 if __name__ == "__main__":
     test_case_0()
     test_case_1()
@@ -454,7 +650,17 @@ if __name__ == "__main__":
     test_case_11()
     test_case_12()
     test_case_13()
+    test_case_14()
+    test_case_15()
+    test_case_16()
+    test_case_17()
     test_case_error_1()
     test_case_error_2()
     test_case_error_3()
     test_case_error_4()
+    test_sequential_sampler()
+    test_distributed_sampler()
+    test_random_sampler()
+    test_schema()
+
+

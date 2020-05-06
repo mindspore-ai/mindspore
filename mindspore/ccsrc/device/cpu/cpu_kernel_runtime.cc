@@ -66,7 +66,7 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
         address->ptr_ = resource_manager_.MemMalloc(tensor_size);
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                        tensor->data_c(false))) {
-          MS_LOG(EXCEPTION) << "value node sync host to device failed!";
+          MS_LOG(EXCEPTION) << "Value node sync host to device failed!";
         }
       }
       address->ref_count_ = INIT_NODE_REF;
@@ -141,7 +141,7 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(const AnfNodePtr &input_node, siz
     MS_EXCEPTION_IF_NULL(node);
     size_t output_size = AnfAlgo::GetOutputTensorNum(node);
     if (index >= output_size) {
-      MS_LOG(EXCEPTION) << "invalid input index " << index;
+      MS_LOG(EXCEPTION) << "Invalid input index " << index;
     }
     auto address = AnfAlgo::GetMutableOutputAddr(node, index);
     MS_EXCEPTION_IF_NULL(address);
@@ -157,7 +157,7 @@ BaseRef CPUKernelRuntime::CreatTensorForOutput(const AnfNodePtr &input_node, siz
       type_id = kNumberTypeFloat32;
     }
     if (type_id != kNumberTypeInt32 && type_id != kNumberTypeFloat32) {
-      MS_LOG(EXCEPTION) << "check output type failed.";
+      MS_LOG(EXCEPTION) << "Check output type failed.";
     }
     tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
     MS_EXCEPTION_IF_NULL(tensor);
@@ -181,7 +181,7 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
   // bind input ptr
   auto &input_nodes = kernel_graph->inputs();
   if (input_nodes.size() != inputs.size()) {
-    MS_LOG(EXCEPTION) << "input size not equal to input node size!";
+    MS_LOG(EXCEPTION) << "Input size not equal to input node size!";
   }
 
   std::unordered_map<AnfNode *, tensor::TensorPtr> input_map;
@@ -203,7 +203,7 @@ void CPUKernelRuntime::BindInputOutput(const session::KernelGraph *kernel_graph,
         address->ptr_ = resource_manager_.MemMalloc(tensor_size);
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                        tensor->data_c(false))) {
-          MS_LOG(EXCEPTION) << "parameter node sync host to device failed!";
+          MS_LOG(EXCEPTION) << "Parameter node sync host to device failed!";
         }
         tensor->set_dirty(true);
       }

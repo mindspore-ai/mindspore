@@ -31,9 +31,8 @@ SubsetRandomSampler::SubsetRandomSampler(const std::vector<int64_t> &indices, in
     : Sampler(samples_per_buffer), indices_(indices), sample_id_(0), buffer_id_(0) {}
 
 // Initialized this Sampler.
-Status SubsetRandomSampler::Init(const RandomAccessOp *op) {
-  // Calling base class init.
-  RETURN_IF_NOT_OK(Sampler::Init(op));
+Status SubsetRandomSampler::InitSampler() {
+  CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "num_rows <= 0\n");
 
   // Initialize random generator with seed from config manager
   rand_gen_.seed(GetSeed());
@@ -64,9 +63,9 @@ Status SubsetRandomSampler::Reset() {
 Status SubsetRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
   // All samples have been drawn
   if (sample_id_ == indices_.size()) {
-    (*out_buffer) = make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
+    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
   } else {
-    (*out_buffer) = make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
+    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> outputIds;
 
     int64_t last_id = sample_id_ + samples_per_buffer_;
@@ -92,7 +91,7 @@ Status SubsetRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffe
     }
 
     // Create a TensorTable from that single tensor and push into DataBuffer
-    (*out_buffer)->set_tensor_table(make_unique<TensorQTable>(1, TensorRow(1, outputIds)));
+    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, TensorRow(1, outputIds)));
   }
 
   return Status::OK();

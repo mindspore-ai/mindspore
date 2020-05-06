@@ -29,8 +29,11 @@
 #include "parallel/context.h"
 #include "parallel/device_manager.h"
 #include "parallel/costmodel_context.h"
+#ifdef ENABLE_GPU_COLLECTIVE
 #include "device/gpu/distribution/collective_init.h"
-
+#else
+#include "device/gpu/distribution/collective_fake_init.h"
+#endif
 namespace py = pybind11;
 
 using FuncGraph = mindspore::FuncGraph;
@@ -50,10 +53,10 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)py::class_<MetaFuncGraph, std::shared_ptr<MetaFuncGraph>>(*m, "MetaFuncGraph_")
     .def_readonly(mindspore::PYTHON_METAFUNCGRAPH_FLAG, &mindspore::MetaFuncGraph::parse_info_)
-    .def(py::init<std::string&>());
+    .def(py::init<std::string &>());
 
   auto fns = mindspore::PybindDefineRegister::AllFuncs();
-  for (auto& item : fns) {
+  for (auto &item : fns) {
     item.second(&m);
   }
 
@@ -73,7 +76,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get CNode Strategy Dictionary.")
     .def("get_allreduce_fusion", &ExecutorPy::GetAllreduceFusion, py::arg("phase") = py::str("train"),
          "Get Allreduce Fusion Dictionary.")
-    .def("build_data_graph", &ExecutorPy::BuildDFGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
+    .def("build_data_graph", &ExecutorPy::BuildGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
     .def("has_compiled", &ExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "get if cell compiled.")
     .def("run_init_graph", &ExecutorPy::RunInitGraph, "Run init Graph.");
@@ -86,19 +89,17 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)m.def("generate_key", &mindspore::pipeline::GenerateKey, "Generate the function graph key.");
   (void)m.def("real_run_op", &mindspore::pynative::RunOp, "Run op pynatively.");
-  (void)m.def("initialize_distribute", &mindspore::pipeline::InitDistribute, "Initialize for Distribute.")
-    .def("init_ge", &mindspore::pipeline::InitGe, "Init GE");
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");
   (void)m.def("init_hccl", &mindspore::pipeline::InitHccl, "Init Hccl");
-  (void)m.def("finalize_ge", &mindspore::pipeline::FinalizeGe, "Finalize Ge");
   (void)m.def("finalize_hccl", &mindspore::pipeline::FinalizeHccl, "Finalize Hccl");
-  (void)m.def("set_ge_option", &mindspore::pipeline::SetGeOption, "API for set ge option.");
   (void)m.def("verify_inputs_signature", &mindspore::pipeline::VerifyInputSignature, "Verify input signature.");
   (void)m.def("init_exec_dataset", &mindspore::pipeline::InitExecDataset, py::arg("queue_name"), py::arg("size"),
               py::arg("batch_size"), py::arg("types"), py::arg("shapes"), py::arg("input_indexs"),
               py::arg("phase") = py::str("dataset"), "Init and exec dataset.");
   (void)m.def("_set_dataset_mode_config", &mindspore::ConfigManager::SetDatasetModeConfig, "API for set dataset mode.");
-  (void)m.def("export_graph", &mindspore::pipeline::ExportDFGraph, "Export Graph.");
+  (void)m.def("init_backend", &mindspore::pipeline::InitBackend, "Init Backend.");
+
+  (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, "Export Graph.");
 
   (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(m, "MSContext")
     .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
@@ -114,8 +115,6 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_device_id", &mindspore::MsContext::set_device_id, "Set device id.")
     .def("open_tsd", &mindspore::MsContext::OpenTsd, "Open tdt dataset client.")
     .def("close_tsd", &mindspore::MsContext::CloseTsd, "Close tdt dataset client.")
-    .def("set_hccl_flag", &mindspore::MsContext::set_enable_hccl, "Set enable hccl.")
-    .def("get_hccl_flag", &mindspore::MsContext::enable_hccl, "Get whether to enable hccl.")
     .def("set_task_sink_flag", &mindspore::MsContext::set_enable_task_sink, "Set enable task sink.")
     .def("get_task_sink_flag", &mindspore::MsContext::enable_task_sink, "Get whether to enable task sink.")
     .def("get_save_graphs_flag", &mindspore::MsContext::save_graphs_flag, "Get whether to save graphs.")
@@ -182,10 +181,20 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set all reduce fusion split sizes.")
     .def("get_all_reduce_fusion_split_sizes", &ParallelContext::all_reduce_fusion_split_sizes,
          "Get all reduce fusion split sizes.")
+    .def("set_enable_all_reduce_fusion", &ParallelContext::set_enable_all_reduce_fusion,
+         "Set enable/disable all reduce fusion.")
+    .def("get_enable_all_reduce_fusion", &ParallelContext::enable_all_reduce_fusion,
+         "Get enable/disable all reduce fusion.")
     .def("get_parameter_broadcast", &ParallelContext::parameter_broadcast, "Get parameter broadcast.")
     .def("get_parameter_broadcast_is_set", &ParallelContext::parameter_broadcast_is_set,
          "Get parameter broadcast is set.")
     .def("set_parameter_broadcast", &ParallelContext::set_parameter_broadcast, "Set parameter broadcast.")
+    .def("set_strategy_ckpt_load_file", &ParallelContext::set_strategy_ckpt_load_file,
+         "Set strategy checkpoint load file.")
+    .def("set_strategy_ckpt_save_file", &ParallelContext::set_strategy_ckpt_save_file,
+         "Set strategy checkpoint save file.")
+    .def("get_strategy_ckpt_load_file", &ParallelContext::strategy_ckpt_load_file, "Get strategy checkpoint load file.")
+    .def("get_strategy_ckpt_save_file", &ParallelContext::strategy_ckpt_save_file, "Get strategy checkpoint save file.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")
@@ -205,10 +214,6 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the parameter cost_model_gamma of the DP algorithm")
     .def("get_costmodel_gamma", &CostModelContext::costmodel_gamma,
          "Get the parameter cost_model_gamma of the DP algorithm.")
-    .def("set_simplify_cal", &CostModelContext::set_costmodel_simplify_cal,
-         "Set the parameter cost_model_simplify_cal of the DP algorithm.")
-    .def("get_simplify_cal", &CostModelContext::costmodel_simplify_cal,
-         "Get the parameter cost_model_simplify_cal of the DP algorithm.")
     .def("set_costmodel_communi_threshold", &CostModelContext::set_costmodel_communi_threshold,
          "Set the parameter cost_model_communi_threshold of the DP algorithm.")
     .def("get_costmodel_communi_threshold", &CostModelContext::costmodel_communi_threshold,
@@ -221,6 +226,8 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the parameter cost_model_communi_bias of the DP algorithm.")
     .def("get_costmodel_communi_bias", &CostModelContext::costmodel_communi_bias,
          "Get the parameter cost_model_communi_bias of the DP algorithm.")
+    .def("set_multi_subgraphs", &CostModelContext::set_multi_subgraphs, "Set the parameter is_multi_subgraphs.")
+    .def("get_multi_subgraphs", &CostModelContext::is_multi_subgraphs, "Get the parameter is_multi_subgraphs.")
     .def("set_costmodel_allreduce_fusion_algorithm", &CostModelContext::set_costmodel_allreduce_fusion_algorithm,
          "Set the parameter gradient AllReduce fusion algorithm.")
     .def("get_costmodel_allreduce_fusion_algorithm", &CostModelContext::costmodel_allreduce_fusion_algorithm,
@@ -263,10 +270,10 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set the parameter tensor_slice_size in strategy generation.")
     .def("get_tensor_slice_align_size", &CostModelContext::tensor_slice_alignment_size,
          "Get the parameter tensor_slice_size in strategy generation.")
-    .def("set_not_fully_use_devices", &CostModelContext::set_not_fully_use_device,
-         "Set the parameter not_fully_use_devices in the DP algorithm.")
-    .def("get_not_fully_use_devices", &CostModelContext::not_fully_use_device,
-         "Get the parameter not_fully_use_devices in the DP algorithm.")
+    .def("set_fully_use_devices", &CostModelContext::set_fully_use_device,
+         "Set the parameter fully_use_devices in the DP algorithm.")
+    .def("get_fully_use_devices", &CostModelContext::fully_use_device,
+         "Get the parameter fully_use_devices in the DP algorithm.")
     .def("set_elementwise_op_strategy_follow", &CostModelContext::set_elementwise_stra_follow,
          "Set the parameter elementwise_op_strategy_follow in the DP algorithm.")
     .def("get_elementwise_op_strategy_follow", &CostModelContext::elementwise_stra_follow,
@@ -287,7 +294,7 @@ PYBIND11_MODULE(_c_expression, m) {
   }});
 
   (void)py::class_<EventWriter, std::shared_ptr<EventWriter>>(m, "EventWriter_")
-    .def(py::init<const std::string&>())
+    .def(py::init<const std::string &>())
     .def("GetFileName", &EventWriter::GetFileName, "Get the file name.")
     .def("Open", &EventWriter::Open, "Open the write file.")
     .def("Write", &EventWriter::Write, "Write the serialize event.")
@@ -299,9 +306,16 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)py::class_<OpLib, std::shared_ptr<OpLib>>(m, "Oplib")
     .def(py::init())
     .def("reg_op", &OpLib::RegOp, "Register op info.");
-
+#ifdef ENABLE_GPU_COLLECTIVE
   (void)m.def("init_gpu_collective", &mindspore::device::gpu::CollectiveInitializer::InitCollective,
               "Init gpu collective communication mode.");
   (void)m.def("finalize_gpu_collective", &mindspore::device::gpu::CollectiveInitializer::FinalizeCollective,
               "Finalize gpu collective communication mode.");
+#else
+  (void)m.def("init_gpu_collective", &mindspore::device::gpu::CollectiveFakeInitializer::InitCollective,
+              "Init gpu collective communication mode.");
+  (void)m.def("finalize_gpu_collective", &mindspore::device::gpu::CollectiveFakeInitializer::FinalizeCollective,
+              "Finalize gpu collective communication mode.");
+
+#endif
 }

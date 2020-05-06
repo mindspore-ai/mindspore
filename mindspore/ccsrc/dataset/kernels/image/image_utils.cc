@@ -24,7 +24,6 @@
 #include "dataset/core/cv_tensor.h"
 #include "dataset/core/tensor.h"
 #include "dataset/core/tensor_shape.h"
-#include "dataset/util/make_unique.h"
 #include "dataset/util/random.h"
 
 #define MAX_INT_PRECISION 16777216  // float int precision is 16777216
@@ -187,7 +186,11 @@ void JpegSetSource(j_decompress_ptr cinfo, const void *data, int64_t datasize) {
     (*cinfo->mem->alloc_small)(reinterpret_cast<j_common_ptr>(cinfo), JPOOL_PERMANENT, sizeof(struct jpeg_source_mgr)));
   cinfo->src->init_source = JpegInitSource;
   cinfo->src->fill_input_buffer = JpegFillInputBuffer;
+#if defined(_WIN32) || defined(_WIN64)
+  cinfo->src->skip_input_data = reinterpret_cast<void (*)(j_decompress_ptr, long)>(JpegSkipInputData);
+#else
   cinfo->src->skip_input_data = JpegSkipInputData;
+#endif
   cinfo->src->resync_to_restart = jpeg_resync_to_restart;
   cinfo->src->term_source = JpegTermSource;
   cinfo->src->bytes_in_buffer = datasize;
@@ -376,7 +379,7 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
     int width = input_cv->shape()[1];
     int num_channels = input_cv->shape()[2];
 
-    auto output_cv = mindspore::make_unique<CVTensor>(TensorShape{num_channels, height, width}, input_cv->type());
+    auto output_cv = std::make_unique<CVTensor>(TensorShape{num_channels, height, width}, input_cv->type());
     for (int i = 0; i < num_channels; ++i) {
       cv::Mat mat;
       RETURN_IF_NOT_OK(output_cv->Mat({i}, &mat));
@@ -633,76 +636,10 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   return Status::OK();
 }
 
-Status GenerateRandomCropBox(int input_height, int input_width, float ratio, float lb, float ub, int max_itr,
-                             cv::Rect *crop_box, uint32_t seed) {
-  try {
-    std::mt19937 rnd;
-    rnd.seed(GetSeed());
-    if (input_height <= 0 || input_width <= 0 || ratio <= 0.0 || lb <= 0.0 || lb > ub) {
-      RETURN_STATUS_UNEXPECTED("Invalid inputs GenerateRandomCropBox");
-    }
-    std::uniform_real_distribution<float> rd_crop_ratio(lb, ub);
-    float crop_ratio;
-    int crop_width, crop_height;
-    bool crop_success = false;
-    int64_t input_area = input_height * input_width;
-    for (auto i = 0; i < max_itr; i++) {
-      crop_ratio = rd_crop_ratio(rnd);
-      crop_width = static_cast<int32_t>(std::round(std::sqrt(input_area * static_cast<double>(crop_ratio) / ratio)));
-      crop_height = static_cast<int32_t>(std::round(crop_width * ratio));
-      if (crop_width <= input_width && crop_height <= input_height) {
-        crop_success = true;
-        break;
-      }
-    }
-    if (crop_success == false) {
-      ratio = static_cast<float>(input_height) / input_width;
-      crop_ratio = rd_crop_ratio(rnd);
-      crop_width = static_cast<int>(std::lround(std::sqrt(input_area * static_cast<double>(crop_ratio) / ratio)));
-      crop_height = static_cast<int>(std::lround(crop_width * ratio));
-      crop_height = (crop_height > input_height) ? input_height : crop_height;
-      crop_width = (crop_width > input_width) ? input_width : crop_width;
-    }
-    std::uniform_int_distribution<> rd_x(0, input_width - crop_width);
-    std::uniform_int_distribution<> rd_y(0, input_height - crop_height);
-    *crop_box = cv::Rect(rd_x(rnd), rd_y(rnd), crop_width, crop_height);
-    return Status::OK();
-  } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("error in GenerateRandomCropBox.");
-  }
-}
-
-Status CheckOverlapConstraint(const cv::Rect &crop_box, const std::vector<cv::Rect> &bounding_boxes,
-                              float min_intersect_ratio, bool *is_satisfied) {
-  try {
-    // not satisfied if the crop box contains no pixel
-    if (crop_box.area() < 1.0) {
-      *is_satisfied = false;
-    }
-    for (const auto &b_box : bounding_boxes) {
-      const float b_box_area = b_box.area();
-      // not satisfied if the bounding box contains no pixel
-      if (b_box_area < 1.0) {
-        continue;
-      }
-      const float intersect_ratio = (crop_box & b_box).area() / b_box_area;
-      if (intersect_ratio >= min_intersect_ratio) {
-        *is_satisfied = true;
-        break;
-      }
-    }
-    return Status::OK();
-  } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("error in CheckOverlapConstraint.");
-  }
-}
-
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
-             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, uint8_t fill_r, uint8_t fill_g,
-             uint8_t fill_b) {
+             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd, uint8_t fill_r,
+             uint8_t fill_g, uint8_t fill_b) {
   try {
-    std::mt19937 rnd;
-    rnd.seed(GetSeed());
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (input_cv->mat().data == nullptr || (input_cv->Rank() != 3 && input_cv->shape()[2] != 3)) {
       RETURN_STATUS_UNEXPECTED("bad CV Tensor input for erase");
@@ -728,8 +665,8 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
       // rows in cv mat refers to the height of the cropped box
       // we determine h_start and w_start using two different distributions as erasing is used by two different
       // image augmentations. The bounds are also different in each case.
-      int32_t h_start = (bounded) ? height_distribution_bound(rnd) : (height_distribution_unbound(rnd) - box_height);
-      int32_t w_start = (bounded) ? width_distribution_bound(rnd) : (width_distribution_unbound(rnd) - box_width);
+      int32_t h_start = (bounded) ? height_distribution_bound(*rnd) : (height_distribution_unbound(*rnd) - box_height);
+      int32_t w_start = (bounded) ? width_distribution_bound(*rnd) : (width_distribution_unbound(*rnd) - box_width);
 
       int32_t max_width = (w_start + box_width > image_w) ? image_w : w_start + box_width;
       int32_t max_height = (h_start + box_height > image_h) ? image_h : h_start + box_height;
@@ -741,9 +678,9 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
         for (int x = h_start; x < max_height; x++) {
           if (random_color) {
             // fill each box with a random value
-            input_img.at<cv::Vec3b>(cv::Point(y, x))[0] = static_cast<int32_t>(normal_distribution(rnd));
-            input_img.at<cv::Vec3b>(cv::Point(y, x))[1] = static_cast<int32_t>(normal_distribution(rnd));
-            input_img.at<cv::Vec3b>(cv::Point(y, x))[2] = static_cast<int32_t>(normal_distribution(rnd));
+            input_img.at<cv::Vec3b>(cv::Point(y, x))[0] = static_cast<int32_t>(normal_distribution(*rnd));
+            input_img.at<cv::Vec3b>(cv::Point(y, x))[1] = static_cast<int32_t>(normal_distribution(*rnd));
+            input_img.at<cv::Vec3b>(cv::Point(y, x))[2] = static_cast<int32_t>(normal_distribution(*rnd));
           } else {
             input_img.at<cv::Vec3b>(cv::Point(y, x))[0] = fill_r;
             input_img.at<cv::Vec3b>(cv::Point(y, x))[1] = fill_g;

@@ -17,6 +17,7 @@
 #ifndef TESTS_MINDRECORD_UT_UT_COMMON_H_
 #define TESTS_MINDRECORD_UT_UT_COMMON_H_
 
+#include <dirent.h>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -25,7 +26,9 @@
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 #include "mindrecord/include/shard_index.h"
-
+#include "mindrecord/include/shard_header.h" 
+#include "mindrecord/include/shard_index_generator.h"
+#include "mindrecord/include/shard_writer.h"
 using json = nlohmann::json;
 using std::ifstream;
 using std::pair;
@@ -40,11 +43,10 @@ class Common : public testing::Test {
   std::string install_root;
 
   // every TEST_F macro will enter one
-  void SetUp();
+  virtual void SetUp();
 
-  void TearDown();
+  virtual void TearDown();
 
-  static void LoadData(const std::string &directory, std::vector<json> &json_buffer, const int max_num);
 };
 }  // namespace UT
 
@@ -55,6 +57,21 @@ class Common : public testing::Test {
 ///
 /// return the formatted string
 const std::string FormatInfo(const std::string &message, uint32_t message_total_length = 128);
+
+
+void LoadData(const std::string &directory, std::vector<json> &json_buffer, const int max_num);
+
+void LoadDataFromImageNet(const std::string &directory, std::vector<json> &json_buffer, const int max_num);
+
+int Img2DataUint8(const std::vector<std::string> &img_absolute_path, std::vector<std::vector<uint8_t>> &bin_data);
+
+int GetAbsoluteFiles(std::string directory, std::vector<std::string> &files_absolute_path);
+
+void ShardWriterImageNet();
+
+void ShardWriterImageNetOneSample();
+
+void ShardWriterImageNetOpenForAppend(string filename);
 }  // namespace mindrecord
 }  // namespace mindspore
 #endif  // TESTS_MINDRECORD_UT_UT_COMMON_H_

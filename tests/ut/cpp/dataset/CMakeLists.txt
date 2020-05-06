@@ -32,7 +32,7 @@ SET(DE_UT_SRCS
     project_op_test.cc
     queue_test.cc
     random_crop_op_test.cc
-    random_crop_decode_resizeOp_test.cc
+    random_crop_decode_resize_op_test.cc
     random_crop_and_resize_op_test.cc
     random_color_adjust_op_test.cc
     random_horizontal_flip_op_test.cc
@@ -41,6 +41,7 @@ SET(DE_UT_SRCS
     random_vertical_flip_op_test.cc
     rename_op_test.cc
     repeat_op_test.cc
+    skip_op_test.cc
     rescale_op_test.cc
     resize_bilinear_op_test.cc
     resize_op_test.cc
@@ -63,6 +64,9 @@ SET(DE_UT_SRCS
     voc_op_test.cc
     cifar_op_test.cc
     celeba_op_test.cc
+    take_op_test.cc
+    text_file_op_test.cc)
+    filter_op_test.cc
     )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})

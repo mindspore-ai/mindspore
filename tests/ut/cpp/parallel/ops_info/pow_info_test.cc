@@ -19,7 +19,7 @@
 #include <vector>
 #include "common/common_test.h"
 #include "parallel/strategy.h"
-#include "parallel/ops_info/elementary_function_info.h"
+#include "parallel/ops_info/arithmetic_info.h"
 #include "parallel/device_manager.h"
 #include "parallel/step_parallel.h"
 
@@ -38,13 +38,13 @@ class TestPowInfo : public UT::Common {
 };
 
 void TestPowInfo::SetUp() {
-  std::list<int32_t> dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 66; i++) {
     dev_list.push_back(i);
   }
 
-  std::list<int32_t> stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(64);
   stage_map.push_back(2);
 
@@ -56,14 +56,14 @@ void TestPowInfo::SetUp() {
 
   std::unordered_map<std::string, ValuePtr> attr;
 
-  Shapes inputs_shape = {{32, 64, 128}};
+  Shapes inputs_shape = {{32, 64, 128}, {32, 64, 128}};
   Shapes outputs_shape = {{32, 64, 128}};
 
   pow = std::make_shared<PowInfo>("pow_info", inputs_shape, outputs_shape, attr);
 }
 
 TEST_F(TestPowInfo, InferDevMatrixShape1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   pow->Init(strategy);
@@ -74,7 +74,7 @@ TEST_F(TestPowInfo, InferDevMatrixShape1) {
 }
 
 TEST_F(TestPowInfo, InferSliceShape1) {
-  std::vector<Dimensions> str = {{2, 4, 8}};
+  std::vector<Dimensions> str = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   pow->Init(strategy);
@@ -95,7 +95,7 @@ TEST_F(TestPowInfo, InferSliceShape1) {
 }
 
 TEST_F(TestPowInfo, GetTensorLayout1) {
-  std::vector<Dimensions> str = {{2, 4, 8}};
+  std::vector<Dimensions> str = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   pow->Init(strategy);
@@ -116,7 +116,7 @@ TEST_F(TestPowInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestPowInfo, GetForwardOp1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   pow->Init(strategy);
@@ -127,7 +127,7 @@ TEST_F(TestPowInfo, GetForwardOp1) {
 }
 
 TEST_F(TestPowInfo, GetMirrorOPs1) {
-  std::vector<Dimensions> inputs = {{2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   pow->Init(strategy);
@@ -147,7 +147,7 @@ TEST_F(TestPowInfo, CheckStrategy1) {
 }
 
 TEST_F(TestPowInfo, CheckStrategy2) {
-  std::vector<Dimensions> inputs = {{2, 4, 8, 16}};
+  std::vector<Dimensions> inputs = {{2, 4, 8, 16}, {2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = pow->Init(strategy);
@@ -155,7 +155,7 @@ TEST_F(TestPowInfo, CheckStrategy2) {
 }
 
 TEST_F(TestPowInfo, CheckStrategy3) {
-  std::vector<Dimensions> inputs = {{2, 4, 8}};
+  std::vector<Dimensions> inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = pow->Init(strategy);

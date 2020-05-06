@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import argparse
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
@@ -35,7 +36,6 @@ random.seed(1)
 np.random.seed(1)
 ds.config.set_seed(1)
 
-import argparse
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
 parser.add_argument('--device_num', type=int, default=1, help='Device num.')
@@ -48,14 +48,15 @@ parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoin
 parser.add_argument('--dataset_path', type=str, default="/var/log/npu/datasets/cifar", help='Dataset path')
 args_opt = parser.parse_args()
 
-device_id=int(os.getenv('DEVICE_ID'))
+device_id = int(os.getenv('DEVICE_ID'))
 
-data_home=args_opt.dataset_path
+data_home = args_opt.dataset_path
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(enable_task_sink=True, device_id=device_id)
 context.set_context(enable_loop_sink=True)
 context.set_context(enable_mem_reuse=True)
+
 
 def create_dataset(repeat_num=1, training=True):
     data_dir = data_home + "/cifar-10-batches-bin"
@@ -64,8 +65,8 @@ def create_dataset(repeat_num=1, training=True):
     data_set = ds.Cifar10Dataset(data_dir)
 
     if args_opt.run_distribute:
-        rank_id=int(os.getenv('RANK_ID'))
-        rank_size=int(os.getenv('RANK_SIZE'))
+        rank_id = int(os.getenv('RANK_ID'))
+        rank_size = int(os.getenv('RANK_SIZE'))
         data_set = ds.Cifar10Dataset(data_dir, num_shards=rank_size, shard_id=rank_id)
 
     resize_height = 224
@@ -74,9 +75,9 @@ def create_dataset(repeat_num=1, training=True):
     shift = 0.0
 
     # define map operations
-    random_crop_op = vision.RandomCrop((32, 32), (4, 4, 4, 4)) # padding_mode default CONSTANT
+    random_crop_op = vision.RandomCrop((32, 32), (4, 4, 4, 4))  # padding_mode default CONSTANT
     random_horizontal_op = vision.RandomHorizontalFlip()
-    resize_op = vision.Resize((resize_height, resize_width)) # interpolation default BILINEAR
+    resize_op = vision.Resize((resize_height, resize_width))  # interpolation default BILINEAR
     rescale_op = vision.Rescale(rescale, shift)
     normalize_op = vision.Normalize((0.4465, 0.4822, 0.4914), (0.2010, 0.1994, 0.2023))
     changeswap_op = vision.HWC2CHW()
@@ -103,6 +104,7 @@ def create_dataset(repeat_num=1, training=True):
 
     return data_set
 
+
 class CrossEntropyLoss(nn.Cell):
     def __init__(self):
         super(CrossEntropyLoss, self).__init__()
@@ -120,16 +122,10 @@ class CrossEntropyLoss(nn.Cell):
 
 
 if __name__ == '__main__':
-    if args_opt.do_eval:
-        context.set_context(enable_hccl=False)
-    else:
-        if args_opt.run_distribute:
-            context.set_context(enable_hccl=True)
-            context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL)
-            auto_parallel_context().set_all_reduce_fusion_split_indices([140])
-            init()
-        else:
-            context.set_context(enable_hccl=False)
+    if not args_opt.do_eval and args_opt.run_distribute:
+        context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL)
+        auto_parallel_context().set_all_reduce_fusion_split_indices([140])
+        init()
 
     context.set_context(mode=context.GRAPH_MODE)
     epoch_size = args_opt.epoch_size

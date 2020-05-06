@@ -18,14 +18,14 @@
 #define MINDSPORE_CCSRC_PARALLEL_ALLREDUCE_FUSION_ALLREDUCE_GRAPH_H_
 
 #include <memory>
-#include <vector>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include <set>
 #include <utility>
+#include <vector>
 #include "ir/anf.h"
-#include "parallel/status.h"
 #include "parallel/allreduce_fusion/allreduce_node.h"
+#include "parallel/status.h"
 
 namespace mindspore {
 namespace parallel {
@@ -42,9 +42,9 @@ class AllreduceGraph {
         cnode_arnode_map_(),
         max_(0) {}
   virtual ~AllreduceGraph() = default;
-  Status AddNode(const CNodePtr& node, const AnfNodePtr& para);
-  Status AddEdge(const CNodePtr& from, const CNodePtr& to, double dist);
-  bool NodeInGraph(const CNodePtr& node) const;
+  Status AddNode(const CNodePtr &node, const AnfNodePtr &para);
+  Status AddEdge(const CNodePtr &from, const CNodePtr &to, double dist);
+  bool NodeInGraph(const CNodePtr &node) const;
   std::vector<AnfNodePtr> GetParaByCost(double from, double to);
   // Find the first several AllreduceNode whose depend_feat_size is less than to, the sum of whose parameter size is
   // over para_size.
@@ -60,9 +60,9 @@ class AllreduceGraph {
   void PrintAllredueGraphInfo() const;
   void PrintArnodeVec() const;
   void PrintArnodeSet() const;
-  const std::unordered_set<CNodePtr>& cnode_set() const { return cnode_set_; }
+  const std::unordered_set<CNodePtr> &cnode_set() const { return cnode_set_; }
   CNodePtr head_cnode() const { return head_cnode_; }
-  Status set_head_cnode(const CNodePtr& node);
+  Status set_head_cnode(const CNodePtr &node);
   double max() const { return max_; }
 
  private:

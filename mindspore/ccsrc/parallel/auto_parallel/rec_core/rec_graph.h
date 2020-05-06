@@ -18,26 +18,35 @@
 #define PARALLEL_AUTO_PARALLEL_REC_GRAPH_H_
 
 #include <iostream>
-#include <vector>
 #include <string>
+#include <vector>
 
-#include "parallel/auto_parallel/rec_core/rec_tensor.h"
 #include "parallel/auto_parallel/rec_core/rec_strategy.h"
+#include "parallel/auto_parallel/rec_core/rec_tensor.h"
 
 namespace mindspore {
 namespace parallel {
 enum OperatorType {
+  kRecUnkownType,
   kRecMatMul,
   kRecConvolution,
   kRecPooling,
-  kRecAdd,
-  kRecSoftmax,
-  kRecReshape,
-  kRecBiasAdd,
+  kRecTensorAdd,
   kRecReLU,
   kRecBatchNorm,
+  kRecReshape,
+  kRecBiasAdd,
+  kRecSoftmax,
   kRecSparseSoftmaxCrossEntropyWithLogits,
-  kRecUnkownType
+  kRecOneHot,
+  kRecLog,
+  kRecExp,
+  kRecAdd,
+  kRecSub,
+  kRecMul,
+  kRecDiv,
+  kRecSqueeze,
+  kRecCast
 };
 
 enum InfoType { kApplication, kConstant };

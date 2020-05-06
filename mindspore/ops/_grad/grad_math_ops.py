@@ -17,6 +17,7 @@
 
 
 from functools import reduce
+import numpy as np
 from .. import functional as F
 from .. import operations as P
 from ..operations import _grad_ops as G
@@ -251,6 +252,17 @@ def get_bprop_floordiv(self):
     return bprop
 
 
+@bprop_getters.register(P.FloorMod)
+def get_bprop_floormod(self):
+    """Grad definition for `FloorMod` operation."""
+
+    def bprop(x, y, out, dout):
+        bc_x = dout
+        bc_y = -dout * (x // y)
+        return binop_grad_common(x, y, bc_x, bc_y)
+    return bprop
+
+
 @bprop_getters.register(P.Square)
 def get_bprop_square(self):
     """Grad definition for `Square` operation."""
@@ -319,17 +331,33 @@ def get_bprop_log(self):
     return bprop
 
 
-@bprop_getters.register(P.Pow)
-def get_bprop_pow(self):
-    """Grad definition for `Pow` operation."""
-    pow_ = P.Pow()
+@bprop_getters.register(P.Erf)
+def get_bprop_erf(self):
+    """Grad definition for `Erf` operation."""
+    exp = P.Exp()
+    square = P.Square()
+    sqrt = P.Sqrt()
     cast = P.Cast()
     dtype = P.DType()
 
+    def bprop(x, out, dout):
+        half_root_pi = cast(2 / sqrt(F.scalar_to_tensor(np.pi)), dtype(x))
+        x_square = square(x)
+        dx = dout * half_root_pi * exp(-x_square)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.Pow)
+def get_bprop_pow(self):
+    """Grad definition for `Pow` operation."""
+    pow_op = P.Pow()
+    ln = P.Log()
+
     def bprop(x, power, out, dout):
-        g = cast(F.tuple_to_array((power,)), dtype(x)) * pow_(x, power-1.0)
-        dx = g * dout
-        return dx, 0
+        bc_dx = power * pow_op(x, power - 1.0) * dout
+        bc_dpower = out * ln(x) * dout
+        return binop_grad_common(x, power, bc_dx, bc_dpower)
     return bprop
 
 
@@ -381,6 +409,7 @@ def get_bprop_reducesum(self):
 def get_bprop_cumsum(self):
     """Grad definition for `CumSum` operation."""
     cumsum = P.CumSum(exclusive=self.exclusive, reverse=not self.reverse)
+
     def bprop(x, axis, out, dout):
         return cumsum(dout, axis), zeros_like(axis)
     return bprop
@@ -394,8 +423,8 @@ def _split_shape_index(input_shape, axis):
         axis = tuple([axis])
     reduction_indices = tuple([(i + rank) % rank for i in axis])
     other_indices = tuple(set(range(rank)) - set(reduction_indices))
-    reduced_num = reduce(lambda x, y: x * y, [input_shape[i] for i in reduction_indices])
-    other_num = reduce(lambda x, y: x * y, [input_shape[i] for i in other_indices])
+    reduced_num = reduce(lambda x, y: x * y, [1] + [input_shape[i] for i in reduction_indices])
+    other_num = reduce(lambda x, y: x * y, [1] + [input_shape[i] for i in other_indices])
     perm = reduction_indices + other_indices
     return tuple([reduced_num, other_num]), perm
 
@@ -474,7 +503,7 @@ def get_bprop_reducemax(self):
 
     def bprop(x, axis, out, dout):
         dx = _min_or_max_grad(x, axis, out, dout)
-        return (dx,)
+        return (dx, zeros_like(axis))
     return bprop
 
 
@@ -497,7 +526,7 @@ def get_bprop_reducemin(self):
 
     def bprop(x, axis, out, dout):
         dx = _min_or_max_grad(x, axis, out, dout)
-        return (dx,)
+        return (dx, zeros_like(axis))
     return bprop
 
 
@@ -690,6 +719,17 @@ def get_bprop_acos(self):
     return bprop
 
 
+@bprop_getters.register(P.Acosh)
+def get_bprop_acosh(self):
+    """Grad definition for `Acosh` operation."""
+    input_grad = G.AcoshGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(out, dout)
+        return (dx,)
+    return bprop
+
+
 @bprop_getters.register(P.Abs)
 def get_bprop_abs(self):
     """Grad definition for `Abs` operation."""
@@ -737,4 +777,18 @@ def get_bprop_round(self):
 
     def bprop(x, out, dout):
         return (zeros_like(x),)
+    return bprop
+
+
+@bprop_getters.register(P.Atan2)
+def get_bprop_atan2(self):
+    """Generate bprop for Atan2"""
+
+    square = P.Square()
+
+    def bprop(x, y, out, dout):
+        tmp = dout / (square(x) + square(y))
+        bc_dx = tmp * y
+        bc_dy = tmp * (-x)
+        return binop_grad_common(x, y, bc_dx, bc_dy)
     return bprop

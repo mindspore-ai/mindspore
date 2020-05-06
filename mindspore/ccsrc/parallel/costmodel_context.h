@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_COSTMODEL_CONTEXT_H_
 #define MINDSPORE_CCSRC_PARALLEL_COSTMODEL_CONTEXT_H_
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "utils/log_adapter.h"
 
@@ -28,8 +28,8 @@ namespace parallel {
 class CostModelContext {
  public:
   ~CostModelContext() = default;
-  CostModelContext(const CostModelContext&) = delete;
-  CostModelContext& operator=(const CostModelContext&) = delete;
+  CostModelContext(const CostModelContext &) = delete;
+  CostModelContext &operator=(const CostModelContext &) = delete;
   void ResetCostModel();
   void ResetAlgoParameters();
 
@@ -67,6 +67,9 @@ class CostModelContext {
   void set_costmodel_communi_bias(double);
   double costmodel_communi_bias() const { return costmodel_communi_bias_; }
 
+  void set_multi_subgraphs(bool);
+  bool is_multi_subgraphs() const { return is_multi_subgraphs_; }
+
   void set_costmodel_allreduce_fusion_algorithm(int32_t);
   int32_t costmodel_allreduce_fusion_algorithm() const { return costmodel_allreduce_fusion_algorithm_; }
 
@@ -102,9 +105,9 @@ class CostModelContext {
   void set_tensor_slice_alignment_size(size_t);
   size_t tensor_slice_alignment_size() const { return tensor_slice_alignment_size_; }
 
-  // NOT_FULLY_USE_DEVICES
-  void set_not_fully_use_device(bool);
-  bool not_fully_use_device() const { return not_fully_use_device_; }
+  // FULLY_USE_DEVICES
+  void set_fully_use_device(bool);
+  bool fully_use_device() const { return fully_use_device_; }
 
   // ELEMENTWISE_OP_STRA_FOLLOW
   void set_elementwise_stra_follow(bool);
@@ -138,6 +141,8 @@ class CostModelContext {
   // COST_MODEL_COMMUNI_BIAS
   double costmodel_communi_bias_;
 
+  bool is_multi_subgraphs_;
+
   int32_t costmodel_allreduce_fusion_algorithm_;
 
   int32_t costmodel_allreduce_fusion_times_;
@@ -158,8 +163,8 @@ class CostModelContext {
   // TENSOR_SLICE_ALIGNMENT_SIZE
   size_t tensor_slice_alignment_size_;
 
-  // NOT_FULLY_USE_DEVICES
-  bool not_fully_use_device_;
+  // FULLY_USE_DEVICES
+  bool fully_use_device_;
 
   // ELEMENTWISE_OP_STRA_FOLLOW
   bool elementwise_stra_follow_;

@@ -13,37 +13,18 @@
 # limitations under the License.
 # ============================================================================
 """momentum"""
-from typing import Iterable
-
 from mindspore.ops import functional as F, composite as C, operations as P
-from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
-from mindspore.common import Tensor
-from .optimizer import Optimizer, apply_decay, grad_scale
+from .optimizer import Optimizer
 
 momentum_opt = C.MultitypeFuncGraph("momentum_opt")
-
-
-@momentum_opt.register("Function", "Number", "Number", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt(opt, learning_rate, momentum, gradient, weight, moment):
-    """Apply momentum optimizer to the weight parameter."""
-    success = True
-    success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
-    return success
 
 
 @momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
 def _tensor_run_opt_ext(opt, learning_rate, momentum, gradient, weight, moment):
     """Apply momentum optimizer to the weight parameter using Tensor."""
-    success = True
-    success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
-    return success
-
-
-@momentum_opt.register("Function", "Tensor", "Number", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt_dyn(opt, learning_rate, momentum, gradient, weight, moment):
-    """Apply momentum optimizer to the weight parameter using dynamic learning rate."""
     success = True
     success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
     return success
@@ -75,7 +56,7 @@ class Momentum(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
 
     Outputs:
-        Tensor[bool], the value is True.
+        tuple[bool], all elements are True.
 
     Raises:
         ValueError: If the momentum is less than 0.0.
@@ -83,48 +64,25 @@ class Momentum(Optimizer):
     Examples:
         >>> net = Net()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
-        >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
     def __init__(self, params, learning_rate, momentum, weight_decay=0.0, loss_scale=1.0,
                  decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
-        super(Momentum, self).__init__(learning_rate, params)
+        super(Momentum, self).__init__(learning_rate, params, weight_decay, loss_scale, decay_filter)
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
-        if isinstance(learning_rate, Iterable) or \
-                (isinstance(learning_rate, Tensor) and learning_rate.dim() == 1):
-            self.dynamic_lr = True
-            self.gather = P.GatherV2()
-            self.assignadd = P.AssignAdd()
-            self.global_step = Parameter(initializer(0, [1], mstype.int32), name="global_step")
-            self.axis = 0
-        else:
-            self.dynamic_lr = False
-            self.gather = None
-            self.assignadd = None
-            self.global_step = None
-            self.axis = None
-        self.momentum = Parameter(momentum, name="momentum")
+        self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.params = self.parameters
         self.moments = self.params.clone(prefix="moments", init='zeros')
-        self.decay_tf = tuple(decay_filter(x) for x in self.parameters)
         self.hyper_map = C.HyperMap()
         self.opt = P.ApplyMomentum()
-        self.weight_decay = weight_decay * loss_scale
-        self.reciprocal_scale = 1.0 / loss_scale
-        self.one = Tensor(1, mstype.int32)
 
     def construct(self, gradients):
         params = self.params
         moments = self.moments
-        if self.weight_decay > 0:
-            gradients = self.hyper_map(F.partial(apply_decay, self.weight_decay), self.decay_tf, params, gradients)
-        if self.reciprocal_scale != 1.0:
-            gradients = self.hyper_map(F.partial(grad_scale, self.reciprocal_scale), gradients)
-        if self.dynamic_lr:
-            lr = self.gather(self.learning_rate, self.global_step, self.axis)
-            F.control_depend(lr, self.assignadd(self.global_step, self.one))
-        else:
-            lr = self.learning_rate
+        gradients = self.decay_weight(gradients)
+        gradients = self.scale_grad(gradients)
+        lr = self.get_lr()
         success = self.hyper_map(F.partial(momentum_opt, self.opt, lr, self.momentum), gradients, params, moments)
         return success

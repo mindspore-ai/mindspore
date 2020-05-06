@@ -23,6 +23,7 @@
 #include <chrono>
 #include <cstdint>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -303,7 +304,7 @@ Status StorageOp::init() {
     // For simplicity, we'll make both of them 3 so they are the same size.
     int32_t action_queue_size = (buffers_needed / num_workers_) + 1;
     for (int32_t i = 0; i < num_workers_; ++i) {
-      auto new_queue = mindspore::make_unique<Queue<int32_t>>(action_queue_size);
+      auto new_queue = std::make_unique<Queue<int32_t>>(action_queue_size);
       action_queue_.push_back(std::move(new_queue));
     }
   }
@@ -319,31 +320,18 @@ StorageOp::~StorageOp() {}
 
 // A print method typically used for debugging
 void StorageOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  ParallelOp::Print(out, show_all);
-
-  // Then display our own stuff
-  out << "\nStorageOp:";
-  out << "\n  Dataset files dir : " << dataset_files_dir_ << "\n  Dataset schema file    : " << schema_file_;
-  if (!dataset_file_list_.empty()) {
-    out << "\n  Dataset Files List:\n";
-    for (auto filename : dataset_file_list_) {
-      out << "      " << filename << "\n";
-    }
-  }
-  out << "\n\n";
-  if (!data_buffers_.empty()) {
-    out << std::boolalpha << "  Number of DataBuffers inside StorageOp: " << data_buffers_.size()
-        << "\n  Number of rows: " << num_rows_ << "\n  Rows per buffer: " << rows_per_buffer_ << "\n\n  DataBuffers:\n";
-
-    // Iterate over each DataBuffer and display the buffer id and the buffer
-    int32_t i = 0;
-    for (i = 0; i < data_buffers_.size(); i++) {
-      out << "  " << i << ")\n";
-      data_buffers_[i]->Print(out, show_all);
-    }
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <StorageOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
   } else {
-    out << "DataCache is empty!\n";
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nDetailed operator printing has not been implemented for this op.\n\n";
   }
 }
 
@@ -483,10 +471,10 @@ Status StorageOp::operator()() {
         // Post the control message to tell the workers to stop waiting on action queue
         // because we are done!
         RETURN_IF_NOT_OK(this->PostEndOfData());
-        std::unique_ptr<DataBuffer> eoeBuffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+        std::unique_ptr<DataBuffer> eoeBuffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoeBuffer)));
         MS_LOG(INFO) << "StorageOp master: Flow end-of-data eof message.";
-        std::unique_ptr<DataBuffer> eofBuffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
+        std::unique_ptr<DataBuffer> eofBuffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eofBuffer)));
         MS_LOG(INFO) << "StorageOp master: Main execution loop complete.";
         done = true;  // while loop exit
@@ -496,7 +484,7 @@ Status StorageOp::operator()() {
         // RepeatOp above us somewhere in the tree will re-init us with the data to fetch again
         // once it gets the end-of-epoch message.
         MS_LOG(INFO) << "StorageOp master: Flow end-of-epoch eoe message.";
-        std::unique_ptr<DataBuffer> eoe_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+        std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
 
         // reset our buffer count and go to loop again.

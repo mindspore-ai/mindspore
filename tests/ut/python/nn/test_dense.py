@@ -27,11 +27,6 @@ def test_dense_none():
         nn.Dense(3, 2, None, None)
 
 
-def test_dense_invalid_activation():
-    with pytest.raises(KeyError):
-        nn.Dense(3, 2, activation='relu6')
-
-
 @non_graph_engine
 def test_dense_str_activation():
     dense = nn.Dense(1, 1, activation='relu')

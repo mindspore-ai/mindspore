@@ -18,8 +18,8 @@
 #define MINDSPORE_CCSRC_PARALLEL_AUTO_PARALLEL_DP_ALGO_COSTMODEL_H_
 
 #include <memory>
-#include <vector>
 #include <utility>
+#include <vector>
 #include "ir/value.h"
 #include "parallel/auto_parallel/edge_costmodel.h"
 #include "parallel/auto_parallel/graph_costmodel.h"
@@ -35,7 +35,7 @@ namespace parallel {
 //       interpretation of 6 operations in costmodel.h.
 // Phase 2: Search the cost_list in the final graph, and determine the optimal one
 //       Create the cost_list for the final graph, and choose the optimal one: one the minimum quantity
-//       COST_MODEL_ALPHA * memory_cost + COST_MODEL_BETA * communication_cost
+//       COST_MODEL_ALPHA * computation_cost + COST_MODEL_BETA * communication_cost
 // Phase 3: Recover the original CostGraph, the determine strategy for each operator
 //       After determining the optimal cost for the final graph, the algorithm recovers the original graph by applying
 //       the 4 operations in the reverse order in the Phase 1. Because each operation decision contains the strategy,
@@ -65,7 +65,7 @@ struct OpElimination : public Elimination {
 
 // Edge Elimination
 struct EdgeElimination : public Elimination {
-  EdgeElimination(const EdgePtr& n_edge, std::vector<EdgePtr> eds)
+  EdgeElimination(const EdgePtr &n_edge, std::vector<EdgePtr> eds)
       : Elimination(n_edge, Elimination::EliminationType::EDGE), edges_(std::move(eds)) {}
 
   std::vector<EdgePtr> edges_;
@@ -102,20 +102,17 @@ struct ContractElimination : public Elimination {
 
 // Triangle Elimination
 struct TriangleElimination : public Elimination {
-  TriangleElimination(OperatorInfoPtr elim_node, EdgePtr l_edge, OperatorInfoPtr l_node, EdgePtr r_edge,
-                      OperatorInfoPtr r_node)
+  TriangleElimination(OperatorInfoPtr elim_node, EdgePtr l_edge, OperatorInfoPtr l_node, EdgePtr r_edge)
       : Elimination(nullptr, Elimination::EliminationType::TRIANGLE),
         eliminated_node_(std::move(elim_node)),
         left_edge_(std::move(l_edge)),
         left_node_(std::move(l_node)),
-        right_edge_(std::move(r_edge)),
-        right_node_(std::move(r_node)) {}
+        right_edge_(std::move(r_edge)) {}
 
   OperatorInfoPtr eliminated_node_;
   EdgePtr left_edge_;
   OperatorInfoPtr left_node_;
   EdgePtr right_edge_;
-  OperatorInfoPtr right_node_;
   MS_DECLARE_PARENT(TriangleElimination, Elimination);
 };
 
@@ -142,7 +139,7 @@ using TriangleEliminationPtr = std::shared_ptr<TriangleElimination>;
 using StarEliminationPtr = std::shared_ptr<StarElimination>;
 
 // Phase 1 and Phase 2
-Status GetStrategy(const CostGraphPtr& graph);
+Status GetStrategy(const CostGraphPtr &graph);
 
 // Phase 3
 Status RecoverStrategy(std::vector<EliminationPtr> eliminations);

@@ -17,9 +17,9 @@
 #include "parallel/ops_info/l2_normalize_info.h"
 
 #include <algorithm>
-#include <vector>
-#include <utility>
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "parallel/device_matrix.h"
 #include "parallel/strategy.h"
@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status L2NormalizeInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status L2NormalizeInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
@@ -111,7 +111,7 @@ Status L2NormalizeInfo::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy.";

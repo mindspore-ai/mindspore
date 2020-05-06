@@ -15,6 +15,7 @@
  */
 #include "dataset/engine/datasetops/batch_op.h"
 #include <utility>
+#include <iomanip>
 #include "common/utils.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
@@ -57,10 +58,10 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, int32_t op_queue_size, int32_t n
 Status BatchOp::operator()() {
   RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
   TaskManager::FindMe()->Post();
-  int32_t epoch_num = 0, batch_num = 0, cnt = 0;
+  int64_t epoch_num = 0, batch_num = 0, cnt = 0;
   TensorRow new_row;
-  std::unique_ptr<TensorQTable> table = make_unique<TensorQTable>();
-  child_iterator_ = mindspore::make_unique<ChildIterator>(this, 0, 0);
+  std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
+  child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
   column_name_map_ = child_iterator_->col_name_id_map();
   int32_t cur_batch_size = 0;
@@ -72,7 +73,7 @@ Status BatchOp::operator()() {
       if (table->size() == static_cast<size_t>(cur_batch_size)) {
         RETURN_IF_NOT_OK(worker_queues_[cnt++ % num_workers_]->EmplaceBack(
           std::make_pair(std::move(table), CBatchInfo(epoch_num, batch_num++, cnt - epoch_num))));
-        table = make_unique<TensorQTable>();
+        table = std::make_unique<TensorQTable>();
         RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(epoch_num, batch_num, cnt - epoch_num)));
       }
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
@@ -82,7 +83,7 @@ Status BatchOp::operator()() {
       RETURN_IF_NOT_OK(worker_queues_[cnt++ % num_workers_]->EmplaceBack(
         std::make_pair(std::move(table), CBatchInfo(epoch_num, batch_num++, cnt - epoch_num))));
     }
-    table = make_unique<TensorQTable>();  // this drops when drop == true
+    table = std::make_unique<TensorQTable>();  // this drops when drop == true
     // end of the current epoch, batch_num should start from 0 again
     batch_num = 0;
     epoch_num++;
@@ -102,10 +103,19 @@ Status BatchOp::operator()() {
 }
 
 void BatchOp::Print(std::ostream &out, bool show_all) const {
-  ParallelOp::Print(out, show_all);
-  out << "\nBatchOp:\n"
-      << "number of parallel workers: " << num_workers_ << "\nBatch size: " << start_batch_size_
-      << "\nDrop remainder: " << (drop_ ? "yes" : "no") << "\n\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <BatchOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << " [batch size: " << start_batch_size_ << "]\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nStart batch size: " << start_batch_size_ << "\nDrop remainder: " << (drop_ ? "yes" : "no") << "\n\n";
+  }
 }
 
 Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *source_table,
@@ -153,9 +163,9 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
   RETURN_IF_NOT_OK(worker_queues_[workerId]->PopFront(&table_pair));
   while (table_pair.second.ctrl_ != batchCtrl::kQuit) {
     if (table_pair.second.ctrl_ == batchCtrl::kEOE) {
-      RETURN_IF_NOT_OK(out_connector_->Add(workerId, make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
+      RETURN_IF_NOT_OK(out_connector_->Add(workerId, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
     } else if (table_pair.second.ctrl_ == batchCtrl::kEOF) {
-      RETURN_IF_NOT_OK(out_connector_->Add(workerId, make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
+      RETURN_IF_NOT_OK(out_connector_->Add(workerId, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
     } else if (table_pair.second.ctrl_ == batchCtrl::kNoCtrl) {
       std::unique_ptr<DataBuffer> db = nullptr;
       RETURN_IF_NOT_OK(MakeBatchedBuffer(std::move(table_pair), &db));
@@ -170,8 +180,8 @@ Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatc
                                   std::unique_ptr<DataBuffer> *db) {
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
   if (!input_column_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));  // pass it through pyfunc
-  (*db) = make_unique<DataBuffer>(table_pair.second.batch_num_, DataBuffer::kDeBFlagNone);
-  std::unique_ptr<TensorQTable> dest_table = make_unique<TensorQTable>();
+  (*db) = std::make_unique<DataBuffer>(table_pair.second.batch_num_, DataBuffer::kDeBFlagNone);
+  std::unique_ptr<TensorQTable> dest_table = std::make_unique<TensorQTable>();
   RETURN_IF_NOT_OK(BatchRows(&table_pair.first, &dest_table, table_pair.first->size()));
   (*db)->set_tensor_table(std::move(dest_table));
   (*db)->set_column_name_map(column_name_map_);

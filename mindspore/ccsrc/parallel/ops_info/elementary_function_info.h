@@ -18,59 +18,48 @@
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ELEMENTARY_FUNCTION_INFO_H_
 
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
 #include "ir/value.h"
 #include "parallel/auto_parallel/operator_costmodel.h"
-#include "parallel/strategy.h"
 #include "parallel/ops_info/activation_info.h"
+#include "parallel/strategy.h"
 
 namespace mindspore {
 namespace parallel {
-class PowInfo : public ActivationOther {
- public:
-  PowInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
-      : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
-  ~PowInfo() override = default;
-
- protected:
-  Status InferMirrorOps() override;
-};
-
 class ExpInfo : public ActivationOther {
  public:
-  ExpInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+  ExpInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~ExpInfo() override = default;
 };
 
 class LogInfo : public ActivationOther {
  public:
-  LogInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+  LogInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~LogInfo() override = default;
 };
 
 class CosInfo : public ActivationOther {
  public:
-  CosInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape, const PrimitiveAttrs& attrs)
+  CosInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~CosInfo() override = default;
 };
 
 class ACosInfo : public ActivationOther {
  public:
-  ACosInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-           const PrimitiveAttrs& attrs)
+  ACosInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+           const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~ACosInfo() override = default;
 };
 
 class LogicalNotInfo : public ActivationOther {
  public:
-  LogicalNotInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-                 const PrimitiveAttrs& attrs)
+  LogicalNotInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs) {}
   ~LogicalNotInfo() override = default;
 };

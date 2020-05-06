@@ -20,15 +20,13 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <list>
 
 #include "parallel/status.h"
 #include "utils/convert_utils.h"
 
 namespace mindspore {
 namespace parallel {
-
-using RankList = std::list<int32_t>;
+using RankList = std::vector<int32_t>;
 using Shape = std::vector<int32_t>;
 
 class DeviceMatrix {
@@ -36,21 +34,21 @@ class DeviceMatrix {
   DeviceMatrix(int32_t rank, RankList devices, Shape dev_shape);
   DeviceMatrix() = default;
   ~DeviceMatrix() = default;
-  std::list<RankList> group_list() const { return group_list_; }
+  std::vector<RankList> group_list() const { return group_list_; }
   Status CreateGroupList();
-  Status GetDevicesByTensorMap(const Shape& tensor_map, RankList* rank_list);
-  Status GetDevicesAlongDim(const uint32_t& dim, RankList* devices);
+  Status GetDevicesByTensorMap(const Shape &tensor_map, RankList *rank_list);
+  Status GetDevicesAlongDim(const uint32_t &dim, RankList *devices);
 
  private:
   int32_t rank_ = -1;
   RankList dev_list_;
   // From low dim to high dim. eg: [D0 D1 D2 D3]
   Shape dev_shape_;
-  std::list<RankList> group_list_;
+  std::vector<RankList> group_list_;
 };
 
-std::string ShapeToString(const Shape& shape);
-std::string ListToString(const std::list<int32_t>& list);
+std::string ShapeToString(const Shape &shape);
+std::string ListToString(const std::vector<int32_t> &list);
 }  // namespace parallel
 }  // namespace mindspore
 

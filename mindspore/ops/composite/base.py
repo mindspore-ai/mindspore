@@ -307,3 +307,12 @@ def _mixed_precision_cast_helper_2(type_, x):
     if F.issubclass_(F.dtype(x), mstype.float_):
         return P.Cast()(x, type_)
     return x
+
+@_mp_cast_helper.register("TypeType", "Tuple")
+@core
+def _mixed_precision_cast_helper_3(type_, x):
+    """if x is a tuple"""
+    t = ()
+    for item in x:
+        t = t + (_mp_cast_helper(type_, item),)
+    return t

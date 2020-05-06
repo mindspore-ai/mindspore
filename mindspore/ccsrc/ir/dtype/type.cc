@@ -37,7 +37,7 @@ TypeId IntBitsToTypeId(const int nbits) {
     case 64:
       return kNumberTypeInt64;
     default:
-      MS_LOG(EXCEPTION) << "wrong number of bits.";
+      MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
 
@@ -52,7 +52,7 @@ TypeId UIntBitsToTypeId(const int nbits) {
     case 64:
       return kNumberTypeUInt64;
     default:
-      MS_LOG(EXCEPTION) << "wrong number of bits.";
+      MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
 
@@ -65,11 +65,11 @@ TypeId FloatBitsToTypeId(const int nbits) {
     case 64:
       return kNumberTypeFloat64;
     default:
-      MS_LOG(EXCEPTION) << "wrong number of bits.";
+      MS_LOG(EXCEPTION) << "Wrong number of bits.";
   }
 }
 
-const char* MetaIdLabel(const TypeId& v) {
+const char *MetaIdLabel(const TypeId &v) {
   switch (v) {
     case kTypeUnknown:
       return "kTypeUnknown";
@@ -87,12 +87,18 @@ const char* MetaIdLabel(const TypeId& v) {
       return "kMetaTypeExternal";
     case kMetaTypeNone:
       return "kMetaTypeNone";
+    case kMetaTypeNull:
+      return "kMetaTypeNull";
+    case kMetaTypeEllipsis:
+      return "kMetaTypeEllipsis";
+    case kMetaTypeEnd:
+      return "kMetaTypeEnd";
     default:
       return "[Unknown Type Id]";
   }
 }
 
-const char* ObjectIdLabel(const TypeId& v) {
+const char *ObjectIdLabel(const TypeId &v) {
   switch (v) {
     case kObjectTypeNumber:
       return "kObjectTypeNumber";
@@ -129,7 +135,7 @@ const char* ObjectIdLabel(const TypeId& v) {
   }
 }
 
-const char* NumberIdLabel(const TypeId& v) {
+const char *NumberIdLabel(const TypeId &v) {
   switch (v) {
     case kNumberTypeBool:
       return "kNumberTypeBool";
@@ -166,7 +172,7 @@ const char* NumberIdLabel(const TypeId& v) {
   }
 }
 
-const char* TypeIdLabel(const TypeId& v) {
+const char *TypeIdLabel(const TypeId &v) {
   if (v < kMetaTypeEnd) {
     return MetaIdLabel(v);
   } else {
@@ -190,14 +196,14 @@ TypeId NormalizeTypeId(const TypeId type_id) {
   }
 }
 
-bool IsSameObjectType(const Type& lhs, const Type& rhs) {
+bool IsSameObjectType(const Type &lhs, const Type &rhs) {
   if ((lhs.meta_type() != kMetaTypeObject) || (rhs.meta_type() != kMetaTypeObject)) {
     return false;
   }
   return lhs.object_type() == rhs.object_type();
 }
 
-size_t GetTypeByte(const TypePtr& type_ptr) {
+size_t GetTypeByte(const TypePtr &type_ptr) {
   if (type_ptr && type_ptr->isa<Number>()) {
     auto number = dyn_cast<Number>(type_ptr);
     if (!number) {
@@ -212,9 +218,9 @@ size_t GetTypeByte(const TypePtr& type_ptr) {
   }
 }
 
-bool Type::operator==(const Value& other) const {
+bool Type::operator==(const Value &other) const {
   if (other.isa<Type>()) {
-    auto other_type = static_cast<const Type*>(&other);
+    auto other_type = static_cast<const Type *>(&other);
     return *this == *other_type;
   } else {
     return false;
@@ -226,12 +232,12 @@ abstract::AbstractBasePtr Type::ToAbstract() {
   return ptr;
 }
 
-std::ostream& operator<<(std::ostream& os, const Type& type) {
+std::ostream &operator<<(std::ostream &os, const Type &type) {
   os << type.ToString();
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const TypePtr type) {
+std::ostream &operator<<(std::ostream &os, const TypePtr type) {
   os << type->ToString();
   return os;
 }
@@ -244,17 +250,17 @@ bool Object::equal(const TypePtr other) const {
   return false;
 }
 
-std::ostream& operator<<(std::ostream& os, const Object& obj) {
+std::ostream &operator<<(std::ostream &os, const Object &obj) {
   os << obj.ToString();
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const std::shared_ptr<Object> obj) {
+std::ostream &operator<<(std::ostream &os, const std::shared_ptr<Object> obj) {
   os << obj->ToString();
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const TypePtrList& types) {
+std::ostream &operator<<(std::ostream &os, const TypePtrList &types) {
   os << "[";
   for (size_t i = 0; i < types.size(); ++i) {
     if (i > 0) {

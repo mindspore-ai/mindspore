@@ -27,7 +27,7 @@ process_pid=()
 for((i=0; i<$DEVICE_NUM; i++)); do
     rm -rf ${BASE_PATH}/resnet50_expand_loss${i}
     mkdir ${BASE_PATH}/resnet50_expand_loss${i}
-    cp -r resnet50_expand_loss.py  ${BASE_PATH}/resnet50_expand_loss${i}/
+    cp -r ${BASE_PATH}/resnet50_expand_loss.py  ${BASE_PATH}/resnet50_expand_loss${i}/
     cd ${BASE_PATH}/resnet50_expand_loss${i}
     export RANK_ID=${i}
     export DEVICE_ID=${i}

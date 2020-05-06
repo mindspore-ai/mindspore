@@ -188,6 +188,11 @@ class TFReaderOp : public ParallelOp {
   // Default destructor
   ~TFReaderOp() = default;
 
+  // A print method typically used for debugging
+  // @param out - The output stream to write output to
+  // @param show_all - A bool to control if you want to show all info or just a summary
+  void Print(std::ostream &out, bool show_all) const override;
+
   // Instantiates the internal queues and connectors.
   // @return Status - the error code returned.
   Status Init();
@@ -369,6 +374,7 @@ class TFReaderOp : public ParallelOp {
   std::unique_ptr<DataSchema> data_schema_;
   std::unique_ptr<StringIndex> filename_index_;
   bool load_io_block_queue_;
+  bool load_jagged_connector_;
 
   std::unique_ptr<JaggedConnector> jagged_buffer_connector_;
   QueueList<std::unique_ptr<FilenameBlock>> io_block_queues_;

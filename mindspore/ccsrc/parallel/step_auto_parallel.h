@@ -17,14 +17,14 @@
 #ifndef PARALLEL_STEP_AUTO_PARALLEL_H_
 #define PARALLEL_STEP_AUTO_PARALLEL_H_
 
-#include <vector>
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
+#include <vector>
 #include "ir/anf.h"
 #include "optimizer/opt.h"
-#include "pipeline/pipeline.h"
 #include "parallel/status.h"
+#include "pipeline/pipeline.h"
 
 namespace mindspore {
 namespace parallel {
@@ -39,9 +39,13 @@ size_t GetLengthOfDataType(const TypePtr &type);
 
 std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node);
 
-std::vector<std::vector<size_t>> ExtractInputAndOutputTypeLengthByNode(const CNodePtr &node);
+std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node);
 
-Status ConstructCostGraphNodes(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
+std::vector<TypePtr> ExtractOutputTypeByNode(const CNodePtr &node);
+
+Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
+
+Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
 
 void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes);
 
@@ -53,7 +57,6 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
 
 std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::string, std::string>::iterator &it,
                                                           std::vector<std::vector<std::string>> input_tensor_names);
-
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_STEP_AUTO_PARALLEL_H_

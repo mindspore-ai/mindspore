@@ -19,6 +19,7 @@ from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common import dtype as mstype
 
+
 def weight_variable(shape):
     return initializer('XavierUniform', shape=shape, dtype=mstype.float32)
 
@@ -267,7 +268,7 @@ class ResNet(nn.Cell):
 
         self.bn1 = bn_with_initialize(64)
         self.relu = P.ReLU()
-        self.maxpool = P.MaxPoolWithArgmax(window=3, stride=2, pad_mode="same")
+        self.maxpool = P.MaxPoolWithArgmax(ksize=3, strides=2, padding="SAME")
 
         self.layer1 = MakeLayer0(block, layer_num[0], in_channels=64, out_channels=256, stride=1)
         self.layer2 = MakeLayer1(block, layer_num[1], in_channels=256, out_channels=512, stride=2)
@@ -297,4 +298,3 @@ class ResNet(nn.Cell):
 
 def resnet50(batch_size, num_classes):
     return ResNet(ResidualBlock, [3, 4, 6, 3], num_classes, batch_size)
-

@@ -25,20 +25,32 @@
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 #include "mindrecord/include/shard_category.h"
+#include "mindrecord/include/shard_pk_sample.h"
 #include "mindrecord/include/shard_reader.h"
 #include "mindrecord/include/shard_sample.h"
 #include "mindrecord/include/shard_shuffle.h"
 #include "ut_common.h"
 
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 namespace mindspore {
 namespace mindrecord {
 class TestShardOperator : public UT::Common {
  public:
   TestShardOperator() {}
+
+  void SetUp() override { ShardWriterImageNet(); }
+
+  void TearDown() override {
+    for (int i = 1; i <= 4; i++) {
+      string filename = std::string("./imagenet.shard0") + std::to_string(i);
+      string db_name = std::string("./imagenet.shard0") + std::to_string(i) + ".db";
+      remove(common::SafeCStr(filename));
+      remove(common::SafeCStr(db_name));
+    }
+  }
 };
 
 TEST_F(TestShardOperator, TestShardSampleBasic) {
@@ -58,7 +70,8 @@ TEST_F(TestShardOperator, TestShardSampleBasic) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
+    i++;
   }
   dataset.Finish();
   ASSERT_TRUE(i <= kSampleCount);
@@ -83,7 +96,8 @@ TEST_F(TestShardOperator, TestShardSampleWrongNumber) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
+    i++;
   }
   dataset.Finish();
   ASSERT_TRUE(i <= 5);
@@ -108,12 +122,12 @@ TEST_F(TestShardOperator, TestShardSampleRatio) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
+    i++;
   }
   dataset.Finish();
   ASSERT_TRUE(i <= 10);
 }
-
 
 TEST_F(TestShardOperator, TestShardSamplePartition) {
   MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test read imageNet"));
@@ -137,11 +151,63 @@ TEST_F(TestShardOperator, TestShardSamplePartition) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]);
+    i++;
   }
   dataset.Finish();
   ASSERT_TRUE(i <= 10);
 }
+
+TEST_F(TestShardOperator, TestShardPkSamplerBasic) {
+  MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test pk sampler"));
+
+  std::string file_name = "./imagenet.shard01";
+  auto column_list = std::vector<std::string>{"file_name", "label"};
+
+  std::vector<std::shared_ptr<ShardOperator>> ops;
+  ops.push_back(std::make_shared<ShardPkSample>("label", 2));
+
+  ShardReader dataset;
+  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Launch();
+
+  int i = 0;
+  while (true) {
+    auto x = dataset.GetNext();
+    if (x.empty()) break;
+    std::cout << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+              << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump()) << std::endl;
+    i++;
+  }
+  dataset.Finish();
+  ASSERT_TRUE(i == 20);
+}  // namespace mindrecord
+
+TEST_F(TestShardOperator, TestShardPkSamplerNumClass) {
+  MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test pk sampler"));
+
+  std::string file_name = "./imagenet.shard01";
+  auto column_list = std::vector<std::string>{"file_name", "label"};
+
+  std::vector<std::shared_ptr<ShardOperator>> ops;
+  ops.push_back(std::make_shared<ShardPkSample>("label", 2, 3, 0));
+
+  ShardReader dataset;
+  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Launch();
+
+  int i = 0;
+  while (true) {
+    auto x = dataset.GetNext();
+    if (x.empty()) break;
+
+    std::cout << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+              << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump()) << std::endl;
+    i++;
+  }
+  dataset.Finish();
+  ASSERT_TRUE(i == 6);
+}  // namespace mindrecord
 
 TEST_F(TestShardOperator, TestShardCategory) {
   MS_LOG(INFO) << common::SafeCStr(FormatInfo("Test read imageNet"));
@@ -166,8 +232,9 @@ TEST_F(TestShardOperator, TestShardCategory) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
 
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]) <<
-        ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    i++;
 
     ASSERT_TRUE((std::get<1>(x[0]))["label"] == categories[category_no].second);
 
@@ -194,8 +261,9 @@ TEST_F(TestShardOperator, TestShardShuffle) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]) <<
-        ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    i++;
   }
   dataset.Finish();
 }
@@ -218,8 +286,9 @@ TEST_F(TestShardOperator, TestShardSampleShuffle) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]) <<
-        ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    i++;
   }
   dataset.Finish();
   ASSERT_LE(i, 35);
@@ -244,8 +313,9 @@ TEST_F(TestShardOperator, TestShardShuffleSample) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]) <<
-        ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    i++;
   }
   dataset.Finish();
   ASSERT_TRUE(i <= kSampleSize);
@@ -270,8 +340,9 @@ TEST_F(TestShardOperator, TestShardSampleShuffleSample) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]) <<
-        ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    i++;
   }
   dataset.Finish();
   ASSERT_LE(i, 35);
@@ -298,8 +369,9 @@ TEST_F(TestShardOperator, TestShardShuffleCompare) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]) <<
-        ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    i++;
 
     auto y = compare_dataset.GetNext();
     if ((std::get<1>(x[0]))["file_name"] != (std::get<1>(y[0]))["file_name"]) different = true;
@@ -332,8 +404,9 @@ TEST_F(TestShardOperator, TestShardCategoryShuffle1) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]) <<
-        ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    i++;
 
     ASSERT_TRUE((std::get<1>(x[0]))["label"] == categories[category_no].second);
     category_no++;
@@ -365,8 +438,9 @@ TEST_F(TestShardOperator, TestShardCategoryShuffle2) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]) <<
-        ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    i++;
     ASSERT_TRUE((std::get<1>(x[0]))["label"] == categories[category_no].second);
     category_no++;
     category_no %= static_cast<int>(categories.size());
@@ -398,8 +472,9 @@ TEST_F(TestShardOperator, TestShardCategorySample) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]) <<
-        ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    i++;
 
     ASSERT_TRUE((std::get<1>(x[0]))["label"] == categories[category_no].second);
     category_no++;
@@ -435,8 +510,9 @@ TEST_F(TestShardOperator, TestShardCategorySampleShuffle) {
   while (true) {
     auto x = dataset.GetNext();
     if (x.empty()) break;
-    MS_LOG(INFO) << "index: " << i++ << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"]) <<
-        ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    MS_LOG(INFO) << "index: " << i << ", filename: " << common::SafeCStr((std::get<1>(x[0]))["file_name"])
+                 << ", label: " << common::SafeCStr((std::get<1>(x[0]))["label"].dump());
+    i++;
 
     ASSERT_TRUE((std::get<1>(x[0]))["label"] == categories[category_no].second);
     category_no++;

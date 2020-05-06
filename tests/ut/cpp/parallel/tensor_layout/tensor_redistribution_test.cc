@@ -33,7 +33,7 @@ class TestTensorRedistribution : public UT::Common {
       dev_list.push_back(i);
     }
 
-    std::list<int32_t> stage_map;
+    std::vector<int32_t> stage_map;
     stage_map.push_back(16);
     stage_map.push_back(4);
 

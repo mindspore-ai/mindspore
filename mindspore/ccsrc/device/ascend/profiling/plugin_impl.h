@@ -28,14 +28,14 @@ namespace device {
 namespace ascend {
 class PluginImpl : public PluginIntf {
  public:
-  explicit PluginImpl(const std::string& module);
+  explicit PluginImpl(const std::string &module);
   ~PluginImpl() override = default;
-  int Init(const Reporter* reporter) override;
+  int Init(const Reporter *reporter) override;
   int UnInit() override;
-  static Reporter* GetPluginReporter() { return reporter_; }
+  static Reporter *GetPluginReporter() { return reporter_; }
 
  private:
-  static Reporter* reporter_;
+  static Reporter *reporter_;
   std::string module_;
 };
 }  // namespace ascend

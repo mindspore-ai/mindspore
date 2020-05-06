@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "dataset/engine/datasetops/rename_op.h"
-
+#include <iomanip>
 #include <vector>
 #include <utility>
 #include <unordered_map>
@@ -84,13 +84,13 @@ Status RenameOp::operator()() {
 
     // we got eoe, now try again until we get eof
     MS_LOG(INFO) << "Rename operator EOE Received.";
-    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
+    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
     MS_LOG(DEBUG) << "Rename operator fetching buffer after EOE.";
     RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
   }  // end of while eof loop
 
   MS_LOG(INFO) << "Rename opeerator EOF Received.";
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
+  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
   return Status::OK();
 }
 
@@ -138,11 +138,25 @@ Status RenameOp::RenameBuffer(std::unique_ptr<DataBuffer> *input_buffer) {
 // prints rename
 void RenameOp::Print(std::ostream &out,      // In: The output stream to print to
                      bool show_all) const {  // In: T/F if it should print everything
-  // Call base class printer first
-  PipelineOp::Print(out, show_all);
-  out << "\nRenameOp:\n";
-  for (size_t i = 0; i < in_columns_.size(); ++i) {
-    out << "\nin Columns: " << in_columns_[i] << "\nOut Columns: " << out_columns_[i] << "\n\n";
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <RenameOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nIn columns:";
+    for (size_t i = 0; i < in_columns_.size(); ++i) {
+      out << "\n  " << in_columns_[i];
+    }
+    for (size_t i = 0; i < out_columns_.size(); ++i) {
+      out << "\n  " << out_columns_[i];
+    }
+    out << "\n\n";
   }
 }
 

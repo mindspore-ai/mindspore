@@ -32,9 +32,9 @@ Status RandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
   if (next_id_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED("RandomSampler Internal Error");
   } else if (next_id_ == num_samples_) {
-    (*out_buffer) = make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
-    (*out_buffer) = make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
+    (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sampleIds;
     int64_t last_id = samples_per_buffer_ + next_id_ > num_samples_ ? num_samples_ : samples_per_buffer_ + next_id_;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, last_id - next_id_));
@@ -44,16 +44,16 @@ Status RandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
     }
     next_id_ = last_id;
     TensorRow row(1, sampleIds);
-    (*out_buffer)->set_tensor_table(make_unique<TensorQTable>(1, row));
+    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
   }
   return Status::OK();
 }
 
-Status RandomSampler::Init(const RandomAccessOp *op) {
-  RETURN_IF_NOT_OK(Sampler::Init(op));
+Status RandomSampler::InitSampler() {
   num_samples_ = (user_num_samples_ < num_samples_) ? user_num_samples_ : num_samples_;
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && num_rows_ > 0, "Fail to init RandomSampler");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && num_rows_ > 0, "both num_samples & num_rows need to be positive");
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
+  rnd_.seed(seed_++);
   if (replacement_ == false) {
     shuffled_ids_.reserve(num_rows_);
     for (int64_t i = 0; i < num_rows_; i++) {
@@ -61,9 +61,8 @@ Status RandomSampler::Init(const RandomAccessOp *op) {
     }
     std::shuffle(shuffled_ids_.begin(), shuffled_ids_.end(), rnd_);
   } else {
-    dist = make_unique<std::uniform_int_distribution<int64_t>>(0, num_rows_ - 1);
+    dist = std::make_unique<std::uniform_int_distribution<int64_t>>(0, num_rows_ - 1);
   }
-  rnd_.seed(seed_++);
   return Status::OK();
 }
 

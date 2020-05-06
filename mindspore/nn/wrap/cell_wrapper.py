@@ -13,16 +13,17 @@
 # limitations under the License.
 # ============================================================================
 """Cell_wrapper."""
-import copy
-import numpy as np
+from mindspore.parallel._utils import (_get_device_num, _get_mirror_mean,
+                                       _get_parallel_mode)
 from mindspore.train.parallel_utils import ParallelMode
-from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
-from ...ops import composite as C, functional as F, operations as P
-from ...common import Tensor, dtype as mstype
-from ..cell import Cell
-from ...common.initializer import initializer
+from ...common import dtype as mstype
 from ...common.parameter import Parameter, ParameterTuple
+from ...ops import composite as C
+from ...ops import functional as F
+from ...ops import operations as P
+from ...ops.composite.base import _mp_cast_helper
 from ...ops.operations.comm_ops import _VirtualDataset
+from ..cell import Cell
 from .grad_reducer import DistributedGradReducer
 
 
@@ -50,8 +51,8 @@ class WithLossCell(Cell):
         >>> net_with_criterion = nn.WithLossCell(net, loss_fn)
         >>>
         >>> batch_size = 2
-        >>> data = mindspore.Tensor(np.ones([batch_size, 3, 64, 64]).astype(np.float32) * 0.01)
-        >>> label = mindspore.Tensor(np.ones([batch_size, 1, 1, 1]).astype(np.int32))
+        >>> data = Tensor(np.ones([batch_size, 3, 64, 64]).astype(np.float32) * 0.01)
+        >>> label = Tensor(np.ones([batch_size, 1, 1, 1]).astype(np.int32))
         >>>
         >>> net_with_criterion(data, label)
     """
@@ -62,16 +63,6 @@ class WithLossCell(Cell):
         self._loss_fn = loss_fn
 
     def construct(self, data, label):
-        """
-        Computes loss based on the wrapped loss cell.
-
-        Args:
-            data (Tensor): Tensor data to train.
-            label (Tensor): Tensor label data.
-
-        Returns:
-            Tensor, compute result.
-        """
         out = self._backbone(data)
         return self._loss_fn(out, label)
 
@@ -137,19 +128,6 @@ class WithGradCell(Cell):
         self.network_with_loss.set_train()
 
     def construct(self, data, label):
-        """
-        Computes gradients based on the wrapped gradients cell.
-
-        Note:
-            Run in PyNative mode.
-
-        Args:
-            data (Tensor): Tensor data to train.
-            label (Tensor): Tensor label data.
-
-        Returns:
-            Tensor, return compute gradients.
-        """
         weights = self.weights
         if self.sens is None:
             grads = self.grad(self.network_with_loss, weights)(data, label)
@@ -241,7 +219,7 @@ class DataWrapper(Cell):
     """
 
     def __init__(self, network, dataset_types, dataset_shapes, queue_name):
-        super(DataWrapper, self).__init__(auto_prefix=False)
+        super(DataWrapper, self).__init__(auto_prefix=False, flags=network.get_flags())
 
         self.get_next = P.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
         self.network = network
@@ -326,15 +304,19 @@ class WithEvalCell(Cell):
         >>> eval_net = nn.WithEvalCell(net, loss_fn)
     """
 
-    def __init__(self, network, loss_fn):
+    def __init__(self, network, loss_fn, add_cast_fp32=False):
         super(WithEvalCell, self).__init__(auto_prefix=False)
         self._network = network
         self._loss_fn = loss_fn
+        self.add_cast_fp32 = add_cast_fp32
+
 
     def construct(self, data, label):
         outputs = self._network(data)
+        if self.add_cast_fp32:
+            label = _mp_cast_helper(mstype.float32, label)
+            outputs = F.cast(outputs, mstype.float32)
         loss = self._loss_fn(outputs, label)
-
         return loss, outputs, label
 
 
@@ -355,7 +337,7 @@ class ParameterUpdate(Cell):
         >>> param = network.parameters_dict()['learning_rate']
         >>> update = nn.ParameterUpdate(param)
         >>> update.phase = "update_param"
-        >>> lr = mindspore.Tensor(0.001, mindspore.float32)
+        >>> lr = Tensor(0.001, mindspore.float32)
         >>> update(lr)
     """
 
@@ -363,25 +345,8 @@ class ParameterUpdate(Cell):
         super(ParameterUpdate, self).__init__(auto_prefix=False)
         if not isinstance(param, Parameter):
             raise TypeError("`param` must be `Parameter`, but got {}".format(param))
-
-        default_input = param.default_input
-        if isinstance(default_input, Tensor):
-            shape = default_input.shape()
-            zero_dtype = default_input.dtype()
-        elif isinstance(default_input, float):
-            shape = [1]
-            zero_dtype = mstype.float32
-        elif isinstance(default_input, int):
-            shape = [1]
-            zero_dtype = mstype.int32
-        else:
-            raise TypeError("`default_input` in `param` must be Tensor, float or int, but got {}".format(default_input))
-
-        self._param = Parameter(initializer(copy.deepcopy(default_input), shape), param.name)
-        self._param.is_init = True
-        self._zero = Tensor(np.zeros(shape), zero_dtype)
+        self._param = param
 
     def construct(self, x):
-        zero = self._param + self._zero
-        F.control_depend(zero, F.assign(self._param, x))
-        return zero
+        F.assign(self._param, x)
+        return x

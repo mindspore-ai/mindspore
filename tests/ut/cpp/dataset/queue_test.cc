@@ -44,7 +44,7 @@ class RefCount {
     explicit RefCount(int x) : v_(std::make_shared<int>(x)) {}
     explicit RefCount(const RefCount &o) : v_(o.v_) {}
     ~RefCount() {
-      std::cout << "Destructor of RefCount called" << std::endl;
+      MS_LOG(DEBUG) << "Destructor of RefCount called" << std::endl;
       gRefCountDestructorCalled++;
     }
     RefCount& operator=(const RefCount &o) {

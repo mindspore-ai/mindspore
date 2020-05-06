@@ -45,7 +45,7 @@ enum AstSubType : int {
 
 // define the parse target type
 enum ParseTargetTypeDef {
-  PARSE_TARGET_FUNCTION = 0,         // funciton
+  PARSE_TARGET_FUNCTION = 0,         // function
   PARSE_TARGET_METHOD = 1,           // method
   PARSE_TARGET_OBJECT_INSTANCE = 2,  // object instance
   PARSE_TARGET_UNKNOW = 0xFF         // ERROR TYPE
@@ -59,7 +59,7 @@ const char PYTHON_MOD_RESOLVE_GET_OBJ_KEY[] = "get_object_key";
 const char PYTHON_MOD_PARSE_CHECK_IS_CLASS_MEMBER[] = "is_class_member";
 const char PYTHON_MOD_RESOLVE_GET_OBJ_TYPE[] = "get_obj_type";
 const char PYTHON_MOD_GET_CLASS_INSTANCE_TYPE[] = "get_class_instance_type";
-const char PYTHON_MOD_CRETAE_OBJ_INSTANCE[] = "create_obj_instance";
+const char PYTHON_MOD_CREATE_OBJ_INSTANCE[] = "create_obj_instance";
 const char PYTHON_MOD_GET_DATACLASS_ATTRS[] = "get_dataclass_attributes";
 const char PYTHON_MOD_GET_DATACLASS_METHODS[] = "get_dataclass_methods";
 const char PYTHON_MOD_GET_MODULE_NAMESPACE[] = "get_module_namespace";
@@ -78,6 +78,9 @@ const char PYTHON_PARSE_GET_LOCATION[] = "get_location";
 const char PYTHON_PARSE_EXPAND_EXPR_STATEMENT[] = "expand_expr_statement";
 const char PYTHON_PARSE_GENERATE_SCOPE[] = "generate_scope";
 const char PYTHON_PARSE_GET_SCOPE_NAME[] = "get_scope_name";
+
+const char PYTHON_PARSE_CLASS_SLICE[] = "create_slice_obj";
+const char PYTHON_PARSE_CLASS_ELLIPSIS[] = "create_ellipsis_obj";
 
 // define the common name
 const char NAMED_PRIMITIVE_ITER[] = "iter";
@@ -128,15 +131,15 @@ enum ClassInstanceTypeDef {
 };
 
 // Convert python object to ValuePtr
-bool ConvertData(const py::object& obj, ValuePtr* data, bool use_signature = false);
+bool ConvertData(const py::object &obj, ValuePtr *data, bool use_signature = false);
 
 // Convert python obj to graph
-FuncGraphPtr ConvertToFuncGraph(const py::object& obj,
-                                const std::string& python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
+FuncGraphPtr ConvertToFuncGraph(const py::object &obj,
+                                const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
 
 // Parse the python object to graph
-FuncGraphPtr ParsePythonCode(const py::object& obj,
-                             const std::string& python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
+FuncGraphPtr ParsePythonCode(const py::object &obj,
+                             const std::string &python_mod_get_parse_method = PYTHON_MOD_GET_PARSE_METHOD);
 }  // namespace parse
 }  // namespace mindspore
 

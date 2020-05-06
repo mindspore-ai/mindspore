@@ -23,6 +23,7 @@
 #include "runtime/context.h"
 #include "framework/ge_runtime/davinci_model.h"
 #include "device/kernel_runtime_manager.h"
+#include "session/session_basic.h"
 
 using ge::model_runner::TaskInfo;
 using std::unordered_map;
@@ -39,13 +40,11 @@ class AscendKernelRuntime : public KernelRuntime {
   bool GenTask(const session::KernelGraph *graph) override;
   bool RunTask(const session::KernelGraph *graph) override;
   bool LoadTask(const session::KernelGraph *graph) override;
-  void FreeHostMemory() override;
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) override;
   bool SyncStream() override;
-  void MallocOpMemory(const DeviceAddressPtr address, size_t size, int flag) override;
 
  private:
   bool InitDevice();
@@ -53,16 +52,17 @@ class AscendKernelRuntime : public KernelRuntime {
   bool HcclInit();
   bool NeedDestroyHccl();
   bool DestroyHccl();
-  bool MallocDeviceMemory();
-  void FreeDeviceMemory();
+
   void ClearGraphModelMap();
   void ReleaseDeviceRes() override;
-  uint32_t GetGraphModelId(const session::KernelGraph *kernel_graph);
+  bool GraphWithEmptyTaskList(const session::KernelGraph *graph) const;
+  bool CheckGraphIdValid(GraphId graph_id) const;
+  static void DebugTaskIdName(GraphId graph_id);
+
   rtContext_t rt_context_{nullptr};
   bool initialized_{false};
-  unordered_map<const session::KernelGraph *, vector<std::shared_ptr<TaskInfo>>> task_map_;
-  unordered_map<const session::KernelGraph *, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
-  unordered_map<const session::KernelGraph *, uint32_t> graph_model_id_map_;
+  unordered_map<GraphId, vector<std::shared_ptr<TaskInfo>>> task_map_;
+  unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);

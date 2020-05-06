@@ -28,15 +28,15 @@ namespace mindspore {
 namespace ad {
 class Adjoint {
  public:
-  Adjoint(const AnfNodePtr& primal, const AnfNodePtr& k, const FuncGraphPtr& caller);
+  Adjoint(const AnfNodePtr &primal, const AnfNodePtr &k, const FuncGraphPtr &caller);
   ~Adjoint() = default;
   AnfNodePtr primal();
   AnfNodePtr k();
-  void UpdateK(const AnfNodePtr& k);
-  void RegisterKUser(const CNodePtr& user, size_t index);
+  void UpdateK(const AnfNodePtr &k);
+  void RegisterKUser(const CNodePtr &user, size_t index);
   AnfNodePtr dout();
-  void AccumulateDout(const AnfNodePtr& dout_factor);
-  void RegisterDoutUser(const CNodePtr& user, size_t index);
+  void AccumulateDout(const AnfNodePtr &dout_factor);
+  void RegisterDoutUser(const CNodePtr &user, size_t index);
   void CallDoutHole();
 
  private:

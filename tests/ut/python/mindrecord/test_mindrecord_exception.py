@@ -15,8 +15,9 @@
 """test mindrecord exception"""
 import os
 import pytest
-from mindspore.mindrecord import FileWriter, FileReader, MindPage
-from mindspore.mindrecord import MRMOpenError, MRMGenerateIndexError, ParamValueError
+from mindspore.mindrecord import FileWriter, FileReader, MindPage, SUCCESS
+from mindspore.mindrecord import MRMOpenError, MRMGenerateIndexError, ParamValueError, MRMGetMetaError, \
+                                 MRMFetchDataError
 from mindspore import log as logger
 from utils import get_data
 
@@ -280,3 +281,73 @@ def test_cv_file_writer_shard_num_greater_than_1000():
     with pytest.raises(ParamValueError) as err:
         FileWriter(CV_FILE_NAME, 1001)
     assert 'Shard number should between' in str(err.value)
+
+def test_add_index_without_add_schema():
+    with pytest.raises(MRMGetMetaError) as err:
+        fw = FileWriter(CV_FILE_NAME)
+        fw.add_index(["label"])
+    assert 'Failed to get meta info' in str(err.value)
+
+def test_mindpage_pageno_pagesize_not_int():
+    """test page reader when some partition does not exist."""
+    create_cv_mindrecord(4)
+    reader = MindPage(CV_FILE_NAME + "0")
+    fields = reader.get_category_fields()
+    assert fields == ['file_name', 'label'],\
+        'failed on getting candidate category fields.'
+
+    ret = reader.set_category_field("label")
+    assert ret == SUCCESS, 'failed on setting category field.'
+
+    info = reader.read_category_info()
+    logger.info("category info: {}".format(info))
+
+    with pytest.raises(ParamValueError) as err:
+        reader.read_at_page_by_id(0, "0", 1)
+
+    with pytest.raises(ParamValueError) as err:
+        reader.read_at_page_by_id(0, 0, "b")
+
+    with pytest.raises(ParamValueError) as err:
+        reader.read_at_page_by_name("822", "e", 1)
+
+    with pytest.raises(ParamValueError) as err:
+        reader.read_at_page_by_name("822", 0, "qwer")
+
+    with pytest.raises(MRMFetchDataError, match="Failed to fetch data by category."):
+        reader.read_at_page_by_id(99999, 0, 1)
+
+    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
+             for x in range(FILES_NUM)]
+    for x in paths:
+        os.remove("{}".format(x))
+        os.remove("{}.db".format(x))
+
+def test_mindpage_filename_not_exist():
+    """test page reader when some partition does not exist."""
+    create_cv_mindrecord(4)
+    reader = MindPage(CV_FILE_NAME + "0")
+    fields = reader.get_category_fields()
+    assert fields == ['file_name', 'label'],\
+        'failed on getting candidate category fields.'
+
+    ret = reader.set_category_field("file_name")
+    assert ret == SUCCESS, 'failed on setting category field.'
+
+    info = reader.read_category_info()
+    logger.info("category info: {}".format(info))
+
+    with pytest.raises(MRMFetchDataError) as err:
+        reader.read_at_page_by_id(9999, 0, 1)
+
+    with pytest.raises(MRMFetchDataError) as err:
+        reader.read_at_page_by_name("abc.jpg", 0, 1)
+
+    with pytest.raises(ParamValueError) as err:
+        reader.read_at_page_by_name(1, 0, 1)
+
+    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
+             for x in range(FILES_NUM)]
+    for x in paths:
+        os.remove("{}".format(x))
+        os.remove("{}.db".format(x))

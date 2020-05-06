@@ -18,13 +18,12 @@
 #define MINDSPORE_CCSRC_PARALLEL_CONTEXT_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
-#include <list>
-#include <memory>
 
-#include "parallel/status.h"
 #include "parallel/ops_info/ops_utils.h"
+#include "parallel/status.h"
 #include "utils/convert_utils.h"
 
 namespace mindspore {
@@ -41,8 +40,8 @@ constexpr char RECURSIVE_PROGRAMMING[] = "recursive_programming";
 class ParallelContext {
  public:
   ~ParallelContext() = default;
-  ParallelContext(const ParallelContext&) = delete;
-  ParallelContext& operator=(const ParallelContext&) = delete;
+  ParallelContext(const ParallelContext &) = delete;
+  ParallelContext &operator=(const ParallelContext &) = delete;
 
   static std::shared_ptr<ParallelContext> GetInstance();
 
@@ -61,13 +60,13 @@ class ParallelContext {
   void set_global_rank(int32_t global_rank);
   int32_t global_rank() const { return global_rank_; }
 
-  void set_communication_backend(const std::string& communication_backend);
+  void set_communication_backend(const std::string &communication_backend);
   std::string communication_backend() const { return communication_backend_; }
 
-  bool set_parallel_mode(const std::string& parallel_mode);
+  bool set_parallel_mode(const std::string &parallel_mode);
   std::string parallel_mode() const { return parallel_mode_; }
 
-  bool set_strategy_search_mode(const std::string& strategy_search_mode);
+  bool set_strategy_search_mode(const std::string &strategy_search_mode);
   std::string strategy_search_mode() const { return strategy_search_mode_; }
 
   void set_parameter_broadcast(bool parameter_broadcast);
@@ -81,6 +80,15 @@ class ParallelContext {
   const std::vector<uint32_t> all_reduce_fusion_split_indices() const;
   void set_all_reduce_fusion_split_sizes(const std::vector<uint32_t> sizes);
   const std::vector<uint32_t> all_reduce_fusion_split_sizes() const;
+  void set_enable_all_reduce_fusion(bool enable_all_reduce_fusion) {
+    enable_all_reduce_fusion_ = enable_all_reduce_fusion;
+  }
+  bool enable_all_reduce_fusion() const { return enable_all_reduce_fusion_; }
+
+  void set_strategy_ckpt_load_file(const std::string &strategy_ckpt_load_file);
+  std::string strategy_ckpt_load_file() const { return strategy_ckpt_load_file_; }
+  void set_strategy_ckpt_save_file(const std::string &strategy_ckpt_save_file);
+  std::string strategy_ckpt_save_file() const { return strategy_ckpt_save_file_; }
 
   void Reset();
 
@@ -99,8 +107,11 @@ class ParallelContext {
   bool device_num_is_set_;
   bool global_rank_is_set_;
   bool parameter_broadcast_is_set_;
+  bool enable_all_reduce_fusion_;
   std::vector<uint32_t> all_reduce_fusion_split_indices_;
   std::vector<uint32_t> all_reduce_fusion_split_sizes_;
+  std::string strategy_ckpt_load_file_;
+  std::string strategy_ckpt_save_file_;
 };
 }  // namespace parallel
 }  // namespace mindspore

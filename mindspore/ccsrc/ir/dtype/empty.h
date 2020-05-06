@@ -71,8 +71,20 @@ class TypeNull : public Type {
 };
 using TypeNullPtr = std::shared_ptr<TypeNull>;
 
+class Ellipsis : public Type {
+ public:
+  Ellipsis() : Type(kMetaTypeEllipsis) {}
+  ~Ellipsis() override {}
+  MS_DECLARE_PARENT(Ellipsis, Type)
+
+  TypeId generic_type_id() const override { return kMetaTypeEllipsis; }
+  TypePtr DeepCopy() const override { return std::make_shared<Ellipsis>(); }
+  std::string ToReprString() const override { return "Ellipsis"; }
+  std::string DumpText() const override { return "Ellipsis"; }
+};
+using EllipsisPtr = std::shared_ptr<Ellipsis>;
+
 extern const TypePtr kTypeNone;
-extern const TypePtr kTypeAnything;
 extern const TypePtr kAnyType;
 }  // namespace mindspore
 

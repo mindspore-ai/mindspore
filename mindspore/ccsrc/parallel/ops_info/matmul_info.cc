@@ -18,21 +18,21 @@
 
 #include <algorithm>
 #include <functional>
-#include <vector>
-#include <utility>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "ir/value.h"
+#include "parallel/auto_parallel/graph_costmodel.h"
+#include "parallel/device_manager.h"
 #include "parallel/device_matrix.h"
 #include "parallel/tensor_layout/tensor_redistribution.h"
-#include "parallel/device_manager.h"
-#include "parallel/auto_parallel/graph_costmodel.h"
 
 namespace mindspore {
 namespace parallel {
-void SetDevMatrixShape(const Dimensions& mat_a_strategy, const Dimensions& mat_b_strategy, bool transpose_b,
-                       Shape* dev_matrix_shape) {
+void SetDevMatrixShape(const Dimensions &mat_a_strategy, const Dimensions &mat_b_strategy, bool transpose_b,
+                       Shape *dev_matrix_shape) {
   MS_EXCEPTION_IF_NULL(dev_matrix_shape);
   size_t mat_a_size = mat_a_strategy.size();
   size_t mat_b_size = mat_b_strategy.size();
@@ -105,7 +105,7 @@ Status MatMulBase::GetAttrs() {
   return SUCCESS;
 }
 
-Status CheckRelevantDimension(const Dimensions& long_strategy, const Dimensions& short_strategy) {
+Status CheckRelevantDimension(const Dimensions &long_strategy, const Dimensions &short_strategy) {
   size_t long_size = long_strategy.size();
   size_t short_size = short_strategy.size();
   if (long_size < short_size) {
@@ -126,7 +126,7 @@ Status CheckRelevantDimension(const Dimensions& long_strategy, const Dimensions&
   return SUCCESS;
 }
 
-Status MatMul::CheckStrategy(const StrategyPtr& strategy) {
+Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
@@ -239,7 +239,7 @@ Status MatMulBase::InferForwardCommunication() {
 }
 
 // dev_matrix_shape: [a, b, c, d, e], then output strategy: [a, b, c, e];
-Dimensions GetOutputStrategy(const Shape& dev_matrix_shape, int32_t repeated_calculation_num) {
+Dimensions GetOutputStrategy(const Shape &dev_matrix_shape, int32_t repeated_calculation_num) {
   Dimensions output_strategy = dev_matrix_shape;
   if (repeated_calculation_num > 1) {
     // move the first dimension(repeated_calc_num_)
@@ -301,7 +301,7 @@ Status MatMulBase::InferTensorMap() {
   return SUCCESS;
 }
 
-Status MatMulBase::InferTensorLayout(TensorLayouts* inputs_layout, TensorLayouts* outputs_layout) {
+Status MatMulBase::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout) {
   TensorLayout mat_a_layout, mat_b_layout, output_layout;
   if ((mat_a_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[0], inputs_shape_[0]) != SUCCESS) ||
       (mat_b_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_[1], inputs_shape_[1]) != SUCCESS) ||
@@ -353,7 +353,7 @@ Status MatMulBase::InferTensorInfo() {
   return SUCCESS;
 }
 
-Status MatMulBase::Init(const StrategyPtr& strategy) {
+Status MatMulBase::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed.";
     return FAILED;
@@ -363,7 +363,7 @@ Status MatMulBase::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status MatMulBase::InitForCostModel(const StrategyPtr& strategy) {
+Status MatMulBase::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
@@ -377,7 +377,7 @@ Status MatMulBase::InitForCostModel(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status MatMulBase::SwapLastTwoElements(mindspore::parallel::Shape* const input) {
+Status MatMulBase::SwapLastTwoElements(mindspore::parallel::Shape *const input) {
   if (input->size() < 2) {
     MS_LOG(ERROR) << name_ << " : The size of inputs small than 2.";
     return FAILED;
@@ -397,7 +397,7 @@ Status MatMulBase::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   CheckGlobalDeviceManager();
-  std::list<int32_t> dev_list = g_device_manager->GetDeviceListByStageId(stage_id);
+  std::vector<int32_t> dev_list = g_device_manager->GetDeviceListByStageId(stage_id);
   size_t dev_num = dev_list.size();
   Shape input0_shape = inputs_shape_[0], input1_shape = inputs_shape_[1];
   if (transpose_a_) {
@@ -463,9 +463,9 @@ Status MatMulBase::GenerateStrategies(int32_t stage_id) {
 
 Status MatMulBase::PrepareStrategy(int32_t stage_id, size_t dev_num,
                                    mindspore::parallel::Dimensions combined_partitions, size_t input0_shape_size,
-                                   size_t input1_shape_size, mindspore::parallel::StrategyPtr* const sp) {
+                                   size_t input1_shape_size, mindspore::parallel::StrategyPtr *const sp) {
   int32_t product = std::accumulate(combined_partitions.begin(), combined_partitions.end(), 1, std::multiplies<int>());
-  if (NOT_FULLY_USE_DEVICES) {
+  if (!FULLY_USE_DEVICES) {
     if (IntToSize(product) > dev_num) {
       return FAILED;
     }
@@ -519,7 +519,7 @@ Status MatMulBase::PrepareStrategy(int32_t stage_id, size_t dev_num,
   return SUCCESS;
 }
 
-void MatMulBase::InitTensorInfoForCost(std::vector<TensorInfo>* relica_inputs_tensor_vector) {
+void MatMulBase::InitTensorInfoForCost(std::vector<TensorInfo> *relica_inputs_tensor_vector) {
   TensorLayout tly;
   if (transpose_a_) {
     Shape replica_input0_shape(inputs_tensor_info_[0].shape());
@@ -560,7 +560,7 @@ Status MatMulBase::CheckForTensorSliceValid() const {
   if (inputs_tensor_info_.empty()) {
     return FAILED;
   }
-  for (auto& one_input_tensor : inputs_tensor_info_) {
+  for (auto &one_input_tensor : inputs_tensor_info_) {
     auto slice_shape = one_input_tensor.slice_shape();
     if ((IntToSize(slice_shape[LAST_INDEX(slice_shape.size())]) % TENSOR_SLICE_ALIGNMENT_SIZE != 0) ||
         (IntToSize(slice_shape[SECOND_FROM_END(slice_shape.size())]) % TENSOR_SLICE_ALIGNMENT_SIZE != 0)) {
@@ -570,7 +570,7 @@ Status MatMulBase::CheckForTensorSliceValid() const {
   return SUCCESS;
 }
 
-Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr& strategy) {
+Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (InitForCostModel(strategy) == FAILED) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Initialization under the strategy failed.";
@@ -592,19 +592,19 @@ Status MatMulBase::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr& 
   int32_t stage_id = strategy->GetInputStage();
   // Here, we use the origin outputs_, because we only use the slice size of the output tensor.
   // It does not matter whether the output tensor is transposed or not.
-  double memory_cost =
-    matmulcost_ptr->GetForwardMemoryCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
-  double communication_cost = matmulcost_ptr->GetCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
-  std::shared_ptr<Cost> result = std::make_shared<Cost>(memory_cost, communication_cost);
+  double computation_cost =
+    operator_cost()->GetForwardComputationCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
+  double communication_cost = operator_cost()->GetCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
+  std::shared_ptr<Cost> result = std::make_shared<Cost>(computation_cost, communication_cost);
   result->communication_without_parameter_ =
-    matmulcost_ptr->GetForwardCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
+    operator_cost()->GetForwardCommCost(relica_inputs_tensor_vector, outputs_tensor_info_, stage_id);
   result->communication_with_partial_para_ =
     result->communication_without_parameter_ +
     COST_MODEL_GAMMA * (communication_cost - result->communication_without_parameter_);
 
   // Breaking ties for preferring data parallelization
   BreakingTiesForPerferringDataParallel(strategy, result);
-  MS_LOG(DEBUG) << name_ << " : memory_cost: " << result->memory_cost_
+  MS_LOG(DEBUG) << name_ << " : computation_cost: " << result->computation_cost_
                 << ", communication_cost: " << result->communication_cost_
                 << ", communication_without_parameter_: " << result->communication_without_parameter_
                 << ", communication_with_partial_para_: " << result->communication_with_partial_para_;

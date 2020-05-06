@@ -26,6 +26,8 @@
 #include "device/kernel_runtime_manager.h"
 #include "device/gpu/gpu_common.h"
 #include "common/utils.h"
+#include "device/gpu/gpu_memory_manager.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -36,26 +38,14 @@ bool GPUKernelRuntime::Init() {
   if (device_init_ == true) {
     return true;
   }
-
   auto ret = InitDevice();
   if (!ret) {
     MS_LOG(ERROR) << "InitDevice error.";
     return ret;
   }
-
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  // If use the dynamic memory pool, then alloc the first memory block to init.
-  if (context_ptr->enable_dynamic_mem_pool()) {
-    auto device_addr = AllocTensorMemDynamic(1);
-    if (!device_addr) {
-      MS_LOG(ERROR) << "Dynamic memory pool init error.";
-      return false;
-    }
-  } else {
-    MallocDeviceMemory();
-  }
-
+  mem_manager_ = std::make_shared<GPUMemoryManager>();
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->MallocDeviceMemory();
   const void *collective_handle_ = CollectiveInitializer::instance().collective_handle();
   bool collective_inited = CollectiveInitializer::instance().collective_inited();
   if (collective_inited && collective_handle_ != nullptr) {
@@ -101,16 +91,6 @@ bool GPUKernelRuntime::InitDevice() {
   return true;
 }
 
-void GPUKernelRuntime::MallocDeviceMemory() {
-  // Need to reserve 20% space for dynamic memory
-  const float init_gpu_mem_ratio = 0.8;
-  size_t mem_size = FloatToSize(GPUMemoryAllocator::GetInstance().free_mem_size() * init_gpu_mem_ratio);
-  auto alloc_size =
-    GPUMemoryAllocator::GetInstance().AllocDeviceMem(mem_size, reinterpret_cast<void **>(&device_mem_base_));
-  device_mem_size_ = alloc_size;
-  static_mem_offset_ = device_mem_size_;
-}
-
 void GPUKernelRuntime::ReleaseDeviceRes() {
   // For dataset mode.
   if (GpuBufferMgr::GetInstance().IsInit()) {
@@ -122,39 +102,25 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
     CHECK_OP_RET_WITH_EXCEPT(GpuBufferMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
   }
   GPUDeviceManager::GetInstance().ReleaseDevice();
-  if (device_mem_base_ != nullptr) {
-    if (!GPUMemoryAllocator::GetInstance().FreeDeviceMem(device_mem_base_)) {
-      MS_LOG(EXCEPTION) << "Could not free gpu device memory.";
-    }
+  if (mem_manager_ != nullptr) {
+    mem_manager_->FreeDeviceMemory();
   }
-  GPUMemoryAllocator::GetInstance().ReleaseDeviceRes();
-}
-
-void GPUKernelRuntime::FreeHostMemory() { dynamic_mem_offset_ = 0; }
-
-void *GPUKernelRuntime::AllocTensorMemDynamic(size_t size) {
-  return GPUMemoryAllocator::GetInstance().AllocTensorMem(size);
-}
-
-void GPUKernelRuntime::FreeTensorMemDynamic(void *device_ptr) {
-  GPUMemoryAllocator::GetInstance().FreeTensorMem(device_ptr);
+  kernel::KernelMeta::GetInstance()->RemoveKernelCache();
 }
 
 void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  AssignStaticMemory(graph);
-  bool is_enable_mem_reuse = context_ptr->enable_mem_reuse();
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->ResetDynamicMemory();
+  AssignStaticMemoryInput(graph);
+  AssignStaticMemoryValueNode(graph);
   bool is_enable_dynamic_mem = context_ptr->enable_dynamic_mem_pool();
   if (is_enable_dynamic_mem) {
     // Use the dynamic memory pool.
     InitKernelRefCount(graph);
     InitKernelOutputAddress(graph);
-  } else if (is_enable_mem_reuse) {
-    // Use the memory reuse.
-    ReuseAssignDynamicMemory(graph);
   } else {
-    // Normal way.
     AssignDynamicMemory(graph);
   }
 }
@@ -164,9 +130,10 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_enable_dynamic_mem = context_ptr->enable_dynamic_mem_pool();
+  bool is_enable_pynative_infer = context_ptr->enable_pynative_infer();
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
-  if (is_enable_dynamic_mem) {
+  if (is_enable_dynamic_mem && !is_enable_pynative_infer) {
     ret = LaunchKernelDynamic(graph);
   } else {
     ret = LaunchKernel(graph);
@@ -179,32 +146,6 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph) {
   return ret;
 }
 
-uint8_t *GPUKernelRuntime::MallocStaticMem(size_t size, bool) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->enable_dynamic_mem_pool()) {
-    auto device_ptr = AllocTensorMemDynamic(size);
-    MS_EXCEPTION_IF_NULL(device_ptr);
-    return AddressOffset(device_ptr, 0);
-  }
-
-  auto align_size = GetCommonAlignSize(size);
-  if (static_mem_offset_ < align_size) {
-    MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
-                      << "] static[" << total_static_size_ << "])"
-                      << " malloc [" << align_size << "] failed!";
-  }
-  auto offset = static_mem_offset_ - align_size;
-  if (dynamic_mem_offset_ > offset) {
-    MS_LOG(EXCEPTION) << "Out of memory!!! total[" << device_mem_size_ << "](dynamic[" << total_dynamic_size_
-                      << "] static[" << total_static_size_ << "])"
-                      << " malloc [" << align_size << "] failed!";
-  }
-  total_static_size_ += align_size;
-  static_mem_offset_ = offset;
-  return device_mem_base_ + offset;
-}
-
 void GPUKernelRuntime::InitKernelRefCount(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MemReuseUtilPtr mem_reuse_util_ptr = std::make_shared<memreuse::MemReuseUtil>();
@@ -215,9 +156,10 @@ void GPUKernelRuntime::InitKernelRefCount(const session::KernelGraph *graph) {
   }
   mem_reuse_util_ptr->SetKernelDefMap();
   mem_reuse_util_ptr->SetReuseRefCount();
-  // Can't free the device address of graph output, so set the reference count of graph output specially,
+  // Can't free the device address of graph output, so set the reference count of graph output specially.
   mem_reuse_util_ptr->SetGraphOutputRefCount();
-  mem_reuse_util_ptr_ = mem_reuse_util_ptr;
+  auto graph_id = graph->graph_id();
+  mem_reuse_util_map_[graph_id] = mem_reuse_util_ptr;
 }
 
 void GPUKernelRuntime::InitKernelOutputAddress(const session::KernelGraph *graph) {
@@ -241,7 +183,8 @@ void GPUKernelRuntime::InitKernelOutputAddress(const session::KernelGraph *graph
 
 bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  // The inputs and outputs memory of communication kernel are special, so separate processing.
+  auto graph_id = graph->graph_id();
+  // The inputs and outputs memory of communication kernel need be continuous, so separate processing.
   AllocCommunicationOpDynamicRes(graph);
 
   auto &kernels = graph->execution_order();
@@ -256,7 +199,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph) {
       MS_LOG(ERROR) << "Launch kernel failed.";
       return false;
     }
-    FreeKernelDynamicRes(kernel, kernel_workspaces);
+    FreeKernelDynamicRes(kernel, kernel_workspaces, graph_id);
   }
 
   if (!SyncStream()) {
@@ -273,6 +216,7 @@ void GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod 
   MS_EXCEPTION_IF_NULL(kernel_inputs);
   MS_EXCEPTION_IF_NULL(kernel_workspaces);
   MS_EXCEPTION_IF_NULL(kernel_outputs);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
     auto device_address = AnfAlgo::GetPrevNodeOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(device_address);
@@ -281,39 +225,39 @@ void GPUKernelRuntime::AllocKernelDynamicRes(const mindspore::kernel::KernelMod 
     MS_EXCEPTION_IF_NULL(input);
     input->addr = device_address->ptr_;
     input->size = device_address->size_;
-    kernel_inputs->push_back(input);
+    kernel_inputs->emplace_back(input);
   }
-
   auto output_sizes = kernel_mod.GetOutputSizeList();
   for (size_t i = 0; i < output_sizes.size(); ++i) {
     auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(device_address);
-    auto device_ptr = device_address->ptr_;
-    if (device_ptr == nullptr) {
-      device_ptr = AllocTensorMemDynamic(output_sizes[i]);
-      MS_EXCEPTION_IF_NULL(device_ptr);
-      device_address->ptr_ = device_ptr;
+    if (device_address->ptr_ == nullptr) {
+      auto ret = mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
+      if (!ret) {
+        MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+      }
     }
     kernel::AddressPtr output = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(output);
-    output->addr = device_ptr;
+    output->addr = device_address->ptr_;
     output->size = output_sizes[i];
-    kernel_outputs->push_back(output);
+    kernel_outputs->emplace_back(output);
   }
-
   auto workspace_sizes = kernel_mod.GetWorkspaceSizeList();
   for (size_t i = 0; i < workspace_sizes.size(); ++i) {
     if (workspace_sizes[i] == 0) {
       kernel_workspaces->emplace_back(nullptr);
       continue;
     }
-    auto device_ptr = AllocTensorMemDynamic(workspace_sizes[i]);
-    MS_EXCEPTION_IF_NULL(device_ptr);
+    auto device_ptr = mem_manager_->MallocMemFromMemPool(workspace_sizes[i]);
+    if (!device_ptr) {
+      MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+    }
     kernel::AddressPtr workspace = std::make_shared<kernel::Address>();
     MS_EXCEPTION_IF_NULL(workspace);
     workspace->addr = device_ptr;
     workspace->size = workspace_sizes[i];
-    kernel_workspaces->push_back(workspace);
+    kernel_workspaces->emplace_back(workspace);
   }
 }
 
@@ -322,166 +266,132 @@ void GPUKernelRuntime::AllocCommunicationOpDynamicRes(const session::KernelGraph
   auto &kernels = graph->execution_order();
   for (auto &kernel : kernels) {
     MS_EXCEPTION_IF_NULL(kernel);
-    auto kernel_name = AnfAlgo::GetCNodeName(kernel);
-    if (kernel_name == kAllReduceOpName) {
+    if (AnfAlgo::IsCommunicationOp(kernel)) {
       AllocCommunicationOpInputDynamicRes(kernel);
       AllocCommunicationOpOutputDynamicRes(kernel);
-      return;
     }
   }
 }
 
 void GPUKernelRuntime::AllocCommunicationOpInputDynamicRes(const mindspore::AnfNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
-  // The reference count of communication kernel input is not 0.
-  if (communication_op_input_ref_count_ != 0) {
-    MS_LOG(ERROR) << "The reference count of communication kernel input is not 0.";
-    return;
-  }
-
-  size_t total = 0;
-  std::vector<std::pair<mindspore::device::DeviceAddress *, size_t>> addr_size;
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  bool is_need_alloc_memory = false;
+  bool is_need_free_memory = false;
+  size_t total_size = 0;
+  std::vector<size_t> size_list;
+  DeviceAddressPtrList addr_list;
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
     auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(device_address);
-    // The inputs of communication kernel are not released.
-    if ((i == 0) && (device_address->ptr_ != nullptr)) {
-      MS_LOG(ERROR) << "The inputs of communication kernel are not released.";
-      return;
+    if (device_address->ptr_ == nullptr) {
+      is_need_alloc_memory = true;
+    } else {
+      is_need_free_memory = true;
     }
-    auto output_size = device_address->size_;
-    total += output_size;
-    addr_size.emplace_back(device_address.get(), output_size);
+    total_size += device_address->size_;
+    size_list.emplace_back(device_address->size_);
+    addr_list.emplace_back(device_address);
   }
-
-  auto device_mem_ptr = AllocTensorMemDynamic(total);
-  MS_EXCEPTION_IF_NULL(device_mem_ptr);
-  for (const auto &iter : addr_size) {
-    MS_EXCEPTION_IF_NULL(iter.first);
-    iter.first->set_ptr(device_mem_ptr);
-    communication_op_input_ref_count_++;
-    device_mem_ptr = AddressOffset(device_mem_ptr, iter.second);
-  }
+  AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);
 }
 
 void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::AnfNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel);
-  // The reference count of communication kernel output is not 0.
-  if (communication_op_output_ref_count_ != 0) {
-    MS_LOG(ERROR) << "The reference count of communication kernel output is not 0.";
-    return;
-  }
-
-  size_t total = 0;
-  std::vector<std::pair<mindspore::device::DeviceAddress *, size_t>> addr_size;
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  bool is_need_alloc_memory = false;
+  bool is_need_free_memory = false;
+  size_t total_size = 0;
+  std::vector<size_t> size_list;
+  DeviceAddressPtrList addr_list;
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto output_sizes = kernel_mod->GetOutputSizeList();
   for (size_t i = 0; i < output_sizes.size(); ++i) {
     auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i);
     MS_EXCEPTION_IF_NULL(device_address);
-    // The outputs of communication kernel are not released.
-    if ((i == 0) && (device_address->ptr_ != nullptr)) {
-      MS_LOG(ERROR) << "The outputs of communication kernel are not released.";
-      return;
+    if (device_address->ptr_ == nullptr) {
+      is_need_alloc_memory = true;
+    } else {
+      is_need_free_memory = true;
     }
-    total += output_sizes[i];
-    addr_size.emplace_back(device_address.get(), output_sizes[i]);
+    total_size += output_sizes[i];
+    size_list.emplace_back(output_sizes[i]);
+    addr_list.emplace_back(device_address);
   }
+  AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);
+}
 
-  auto device_mem_ptr = AllocTensorMemDynamic(total);
-  MS_EXCEPTION_IF_NULL(device_mem_ptr);
-  for (const auto &iter : addr_size) {
-    MS_EXCEPTION_IF_NULL(iter.first);
-    iter.first->set_ptr(device_mem_ptr);
-    communication_op_output_ref_count_++;
-    device_mem_ptr = AddressOffset(device_mem_ptr, iter.second);
+void GPUKernelRuntime::AllocCommunicationOpMemory(bool is_need_alloc_memory, bool is_need_free_memory,
+                                                  const DeviceAddressPtrList addr_list, size_t total_size,
+                                                  std::vector<size_t> size_list) {
+  if (!is_need_alloc_memory) {
+    return;
+  }
+  if (is_need_free_memory) {
+    for (const auto &iter : addr_list) {
+      MS_EXCEPTION_IF_NULL(iter);
+      // Free the inputs/outputs of communication kernel which are not released.
+      if (iter->ptr_ != nullptr) {
+        mem_manager_->FreeMemFromMemPool(iter);
+      }
+    }
+  }
+  auto ret = mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Malloc device memory failed.";
   }
 }
 
 void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel,
-                                            const AddressPtrList &kernel_workspaces) {
+                                            const AddressPtrList &kernel_workspaces, uint32_t graph_id) {
   MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  auto mem_reuse_util_ptr = mem_reuse_util_map_[graph_id];
+  MS_EXCEPTION_IF_NULL(mem_reuse_util_ptr);
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  if (AnfAlgo::GetCNodeName(kernel) == kAllReduceOpName) {
+    return;
+  }
   // Free the input of kernel by reference count.
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
-    auto kernel_ref_count_ptr = mem_reuse_util_ptr_->GetKernelInputRef(cnode, i);
+    auto kernel_ref_count_ptr = mem_reuse_util_ptr->GetKernelInputRef(cnode, i);
     if (kernel_ref_count_ptr == nullptr) {
+      continue;
+    }
+    // Can't free the output of graph.
+    if (kernel_ref_count_ptr->ref_count_dynamic_use_ == memreuse::kMaxRefCount) {
       continue;
     }
     kernel_ref_count_ptr->ref_count_dynamic_use_--;
     if (kernel_ref_count_ptr->ref_count_dynamic_use_ == 0) {
+      auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
+      mem_manager_->FreeMemFromMemPool(device_address);
       // Reset the reference count.
       kernel_ref_count_ptr->ref_count_dynamic_use_ = kernel_ref_count_ptr->ref_count_;
-      bool is_communication_op = false;
-      // The inputs and outputs memory of communication kernel are special, so separate processing.
-      FreeCommunicationOpDynamicRes(kernel, i, &is_communication_op);
-      if (!is_communication_op) {
-        auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
-        MS_EXCEPTION_IF_NULL(device_address);
-        MS_EXCEPTION_IF_NULL(device_address->ptr_);
-        FreeTensorMemDynamic(device_address->ptr_);
-        device_address->ptr_ = nullptr;
-      }
     }
   }
-
+  // Free the output of kernel, if output has no reference.
+  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel); ++i) {
+    auto kernel_ref_count_ptr = mem_reuse_util_ptr->GetRef(cnode, i);
+    if (kernel_ref_count_ptr == nullptr) {
+      continue;
+    }
+    if (kernel_ref_count_ptr->ref_count_dynamic_use_ == 0) {
+      auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i);
+      mem_manager_->FreeMemFromMemPool(device_address);
+    }
+  }
   // Free the workspace of kernel.
   for (size_t i = 0; i < kernel_workspaces.size(); ++i) {
     auto workspace = kernel_workspaces[i];
     if (workspace != nullptr) {
       MS_EXCEPTION_IF_NULL(workspace->addr);
-      FreeTensorMemDynamic(workspace->addr);
+      mem_manager_->FreeMemFromMemPool(workspace->addr);
       workspace->addr = nullptr;
     }
   }
-}
-
-void GPUKernelRuntime::FreeCommunicationOpDynamicRes(const mindspore::AnfNodePtr &kernel, size_t input_idx,
-                                                     bool *is_communication_op) {
-  MS_EXCEPTION_IF_NULL(kernel);
-  // The inputs memory of communication kernel is one piece memory, need release together.
-  if (AnfAlgo::GetCNodeName(kernel) == kAllReduceOpName) {
-    communication_op_input_ref_count_--;
-    if (communication_op_input_ref_count_ == 0) {
-      auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, 0);
-      MS_EXCEPTION_IF_NULL(device_address);
-      MS_EXCEPTION_IF_NULL(device_address->ptr_);
-      FreeTensorMemDynamic(device_address->ptr_);
-      device_address->ptr_ = nullptr;
-    }
-    *is_communication_op = true;
-    return;
-  }
-
-  auto cnode = kernel->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (input_idx + 1 >= cnode->inputs().size()) {
-    MS_LOG(EXCEPTION) << "Input index " << input_idx << " is larger than input number " << cnode->inputs().size() - 1
-                      << ".";
-  }
-  auto input_node = cnode->input(input_idx + 1);
-  auto kernel_input = AnfAlgo::VisitKernel(input_node, 0);
-  // The outputs memory of communication kernel is one piece memory, need release together.
-  if (AnfAlgo::GetCNodeName(kernel_input.first) == kAllReduceOpName) {
-    communication_op_output_ref_count_--;
-    if (communication_op_output_ref_count_ == 0) {
-      auto device_address = AnfAlgo::GetMutableOutputAddr(kernel_input.first, 0);
-      MS_EXCEPTION_IF_NULL(device_address);
-      MS_EXCEPTION_IF_NULL(device_address->ptr_);
-      FreeTensorMemDynamic(device_address->ptr_);
-      device_address->ptr_ = nullptr;
-    }
-    *is_communication_op = true;
-  }
-}
-
-void GPUKernelRuntime::MallocOpMemory(const DeviceAddressPtr address, size_t size, int) {
-  auto device_ptr = AllocTensorMemDynamic(size);
-  MS_EXCEPTION_IF_NULL(device_ptr);
-  address->ptr_ = device_ptr;
-  address->mem_dynamic_alloc_ = true;
 }
 }  // namespace gpu
 }  // namespace device

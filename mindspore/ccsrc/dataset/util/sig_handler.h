@@ -22,12 +22,14 @@
 namespace mindspore {
 namespace dataset {
 // Register the custom signal handlers
+#if !defined(_WIN32) && !defined(_WIN64)
 extern void RegisterHandlers();
 
 // A signal handler for SIGINT.  Drives interrupt to watchdog
 extern void IntHandler(int sig_num,          // The signal that was raised
                        siginfo_t *sig_info,  // The siginfo structure.
                        void *context);       // context info
+#endif
 }  // namespace dataset
 }  // namespace mindspore
 

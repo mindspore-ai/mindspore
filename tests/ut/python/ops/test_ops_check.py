@@ -62,7 +62,7 @@ def test_net_without_construct():
     try:
         _executor.compile(net, inp)
     except RuntimeError as err:
-        if str(err).find("unsupported syntax 'Raise' at ") >= 0:
+        if str(err).find("Unsupported syntax 'Raise' at ") >= 0:
             print(str(err))
         else:
             raise err
@@ -86,7 +86,7 @@ def test_net_with_raise():
     try:
         _executor.compile(net, inp)
     except RuntimeError as err:
-        if str(err).find("unsupported syntax 'Raise' at ") >= 0:
+        if str(err).find("Unsupported syntax 'Raise' at ") >= 0:
             print(str(err))
         else:
             raise err
@@ -160,16 +160,16 @@ test_case_check_ops = [
         'block': nn.Dense(1, 6, has_bias=False, bias_init=Tensor(np.ones([6]).astype(np.float32))),
         'desc_inputs': [Tensor(np.ones(shape=[6, 1]).astype(np.float32))]}),
     ('MaxPool2d_1', {
-        'block': nn.MaxPool2d(5, pad_mode='same', padding=0),
+        'block': nn.MaxPool2d(5, pad_mode='same'),
         'desc_inputs': [Tensor(np.ones(shape=[5, 5, 8, 8]).astype(np.float32))]}),
     ('MaxPool2d_2', {
-        'block': nn.MaxPool2d(5, pad_mode='valid', padding=0),
+        'block': nn.MaxPool2d(5, pad_mode='valid'),
         'desc_inputs': [Tensor(np.ones(shape=[5, 5, 8, 8]).astype(np.float32))]}),
     ('AvgPool2d_1', {
-        'block': nn.AvgPool2d(5, pad_mode='same', padding=0),
+        'block': nn.AvgPool2d(5, pad_mode='same'),
         'desc_inputs': [Tensor(np.ones(shape=[5, 5, 8, 8]).astype(np.float32))]}),
     ('AvgPool2d_2', {
-        'block': nn.AvgPool2d(5, pad_mode='valid', padding=0),
+        'block': nn.AvgPool2d(5, pad_mode='valid'),
         'desc_inputs': [Tensor(np.ones(shape=[5, 5, 8, 8]).astype(np.float32))]}),
     ('Conv2D_1', {
         'block': P.Conv2D(1, 6, pad_mode='same', pad=0),

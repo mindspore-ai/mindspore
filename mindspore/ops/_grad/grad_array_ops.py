@@ -191,7 +191,7 @@ def get_bprop_concat(self):
 
     def bprop(x, out, dout):
         dx = ()
-        out_offset = P.ConcatOffset(F.tuple_len(x), axis)(x)
+        out_offset = G.ConcatOffset(F.tuple_len(x), axis)(x)
         for i in range(F.tuple_len(x)):
             slice_out = P.Slice()(dout, out_offset[i], shape_op(x[i]))
             dx = dx + (slice_out,)
@@ -211,11 +211,11 @@ def get_bprop_slice(self):
 
     def bprop(x, begin, size, out, dout):
         dx = P.Pad(_slice_grad_pad(begin, size, shape_op(x)))(dout)
-        return (dx,)
+        return (dx, zeros_like(begin), zeros_like(size))
 
     def bprop_gpu(x, begin, size, out, dout):
         dx = dx = G.SliceGrad()(dout, x, begin, size)
-        return (dx,)
+        return (dx, zeros_like(begin), zeros_like(size))
 
     if context.get_context('device_target') == "GPU":
         return bprop_gpu
@@ -262,7 +262,31 @@ def get_bprop_gather_v2(self):
         # Example: out_shape:(3,2,3) axis 2 -> (1,2,0)
         perm_2 = _generate_inverse_index(x_shp, axis)
         params_grad = transpose(params_grad, perm_2)
-        return params_grad, zeros_like(indices)
+        return params_grad, zeros_like(indices), zeros_like(axis)
+    return bprop
+
+
+@bprop_getters.register(P.Pack)
+def get_bprop_pack(self):
+    """Generate bprop for Pack"""
+    axis = self.axis
+
+    def bprop(x, out, dout):
+        pack_grad = P.Unpack(axis)
+        out = pack_grad(dout)
+        return (out,)
+    return bprop
+
+
+@bprop_getters.register(P.Unpack)
+def get_bprop_unpack(self):
+    """Generate bprop for Unpack"""
+    axis = self.axis
+
+    def bprop(x, out, dout):
+        unpack_grad = P.Pack(axis)
+        out = unpack_grad(dout)
+        return (out,)
     return bprop
 
 
@@ -407,4 +431,46 @@ def get_bprop_depth_to_space(self):
     def bprop(x, out, dout):
         return (op(dout),)
 
+    return bprop
+
+
+@bprop_getters.register(P.Diag)
+def get_bprop_diag(self):
+    """Generate bprop for Diag"""
+    op = P.DiagPart()
+
+    def bprop(x, out, dout):
+        return (op(dout),)
+
+    return bprop
+
+
+@bprop_getters.register(P.DiagPart)
+def get_bprop_diag_part(self):
+    """Generate bprop for DiagPart"""
+    op = P.Diag()
+
+    def bprop(x, out, dout):
+        return (op(dout),)
+
+    return bprop
+
+
+@bprop_getters.register(P.SpaceToBatch)
+def get_bprop_space_to_batch(self):
+    """Generate bprop for SpaceToBatch"""
+    space_to_batch_grad = P.BatchToSpace(self.block_size, self.paddings)
+    def bprop(x, out, dout):
+        dx = space_to_batch_grad(dout)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.BatchToSpace)
+def get_bprop_batch_to_space(self):
+    """Generate bprop for BatchToSpace"""
+    batch_to_space_grad = P.SpaceToBatch(self.block_size, self.crops)
+    def bprop(x, out, dout):
+        dx = batch_to_space_grad(dout)
+        return (dx,)
     return bprop

@@ -14,63 +14,24 @@
 # ============================================================================
 
 """ResizeNearestNeighborgrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+resize_nearest_neighbor_grad_d_op_info = TBERegOp("ResizeNearestNeighborGrad") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("resize_nearest_neighbor_grad_d.so") \
+    .compute_cost(10) \
+    .kernel_name("resize_nearest_neighbor_grad_d") \
+    .partial_flag(True) \
+    .attr("size", "required", "listInt", "all") \
+    .attr("align_corners", "optional", "bool", "all") \
+    .input(0, "grads", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "ResizeNearestNeighborGrad",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "resize_nearest_neighbor_grad_d.so",
-    "compute_cost": 10,
-    "kernel_name": "resize_nearest_neighbor_grad_d",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "size",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "align_corners",
-            "param_type": "optional",
-            "type": "bool",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "grads",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(resize_nearest_neighbor_grad_d_op_info)
 def _resize_nearest_neighbor_grad_d_tbe():
     """ResizeNearestNeighborGrad TBE register"""
     return

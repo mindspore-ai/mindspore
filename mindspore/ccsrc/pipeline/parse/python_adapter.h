@@ -31,10 +31,10 @@ namespace mindspore {
 namespace parse {
 // A utility to call python interface
 namespace python_adapter {
-py::module GetPyModule(const std::string& module);
-py::object GetPyObjAttr(const py::object& obj, const std::string& attr);
+py::module GetPyModule(const std::string &module);
+py::object GetPyObjAttr(const py::object &obj, const std::string &attr);
 template <class... T>
-py::object CallPyObjMethod(const py::object& obj, const std::string& method, T... args) {
+py::object CallPyObjMethod(const py::object &obj, const std::string &method, T... args) {
   if (!method.empty() && !py::isinstance<py::none>(obj)) {
     return obj.attr(method.c_str())(args...);
   }
@@ -43,7 +43,7 @@ py::object CallPyObjMethod(const py::object& obj, const std::string& method, T..
 
 // call python function of module
 template <class... T>
-py::object CallPyModFn(const py::module& mod, const std::string& function, T... args) {
+py::object CallPyModFn(const py::module &mod, const std::string &function, T... args) {
   if (!function.empty() && !py::isinstance<py::none>(mod)) {
     return mod.attr(function.c_str())(args...);
   }
@@ -55,13 +55,14 @@ void set_use_signature_in_resolve(bool use_signature) noexcept;
 bool UseSignatureInResolve();
 
 std::shared_ptr<py::scoped_interpreter> set_python_scoped();
+void ResetPythonScope();
 bool IsPythonEnv();
-void SetPythonPath(const std::string& path);
+void SetPythonPath(const std::string &path);
 void set_python_env_flag(bool python_env) noexcept;
-py::object GetPyFn(const std::string& module, const std::string& name);
+py::object GetPyFn(const std::string &module, const std::string &name);
 // Call the python function
 template <class... T>
-py::object CallPyFn(const std::string& module, const std::string& name, T... args) {
+py::object CallPyFn(const std::string &module, const std::string &name, T... args) {
   (void)set_python_scoped();
   if (!module.empty() && !name.empty()) {
     py::module mod = py::module::import(module.c_str());

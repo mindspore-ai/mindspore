@@ -26,11 +26,13 @@ Note:
     - The Primitive operators in operations need to be used after instantiation.
     - The composite operators are pre-defined combination of operator.
     - The functional operators are the pre-instantiated Primitive operators, which can be used directly like a function.
+    - For functional operators usage, please refer to
+      https://gitee.com/mindspore/mindspore/blob/master/mindspore/ops/functional.py
 """
 
 from .primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from .vm_impl_registry import get_vm_impl_fn, vm_impl_registry
-from .op_info_register import op_info_register
+from .op_info_register import op_info_register, AkgRegOp, AiCPURegOp, TBERegOp, DataType
 from .primitive import constexpr
 from .._c_expression import signature_rw, signature_kind
 
@@ -40,6 +42,6 @@ __primitive__ = [
 ]
 
 __all__ = ["get_vm_impl_fn", "vm_impl_registry",
-           "op_info_register",
+           "op_info_register", "AkgRegOp", "AiCPURegOp", "TBERegOp", "DataType",
            "constexpr"]
 __all__.extend(__primitive__)

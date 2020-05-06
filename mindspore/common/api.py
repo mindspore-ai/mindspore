@@ -22,7 +22,7 @@ from mindspore import context
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_parallel_mode
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor
-from .._c_expression import verify_inputs_signature, init_exec_dataset, export_graph, _set_dataset_mode_config, init_ge
+from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
 
 # store ms_function class compiled pipeline cache
@@ -70,12 +70,11 @@ def _wrap_func(fn):
         def _convert_data(data):
             if isinstance(data, Tensor) and not isinstance(data, MsTensor):
                 return MsTensor(data)
+            if isinstance(data, tuple):
+                return tuple(_convert_data(x) for x in data)
+            if isinstance(data, list):
+                return list(_convert_data(x) for x in data)
             return data
-
-        if isinstance(results, tuple):
-            return tuple(_convert_data(x) for x in results)
-        if isinstance(results, list):
-            return list(_convert_data(x) for x in results)
         return _convert_data(results)
 
     return wrapper
@@ -184,7 +183,7 @@ class _MindSporeFunction:
 
     @_wrap_func
     def __call__(self, *args):
-        init_ge()
+        init_backend()
         converted, arguments_dict, parse_method = _convert_function_arguments(self.fn, *args)
         if not converted:
             raise RuntimeError('Process function parameter is failure')
@@ -230,8 +229,8 @@ def ms_function(fn=None, obj=None, input_signature=None):
         >>>     z = F.tensor_add(x, y)
         >>>     return z
         >>>
-        >>> @ms_function(input_signature=(MetaTensor(mstype.float32, (1, 1, 3, 3)),
-        >>>                               MetaTensor(mstype.float32, (1, 1, 3, 3))))
+        >>> @ms_function(input_signature=(MetaTensor(mindspore.float32, (1, 1, 3, 3)),
+        >>>                               MetaTensor(mindspore.float32, (1, 1, 3, 3))))
         >>> def tensor_add_with_sig(x, y):
         >>>     z = F.tensor_add(x, y)
         >>>     return z
@@ -328,7 +327,7 @@ class _Executor:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
 
-    def compile(self, obj, *args, phase='predict', params=None):
+    def compile(self, obj, *args, phase='predict', params=None, do_convert=True):
         """
         Compiles graph.
 
@@ -337,6 +336,7 @@ class _Executor:
             args (tuple): Function or cell input arguments.
             phase (str): The name of compile phase. Default: 'predict'.
             params (OrderedDict): The parameters dictionary used for init data graph. Default: None.
+            do_convert (bool): When set to True, convert ME graph to GE graph after compiling graph.
 
         Return:
             Str, the full phase of the cell.
@@ -368,22 +368,20 @@ class _Executor:
 
         if graph is None:
             logger.error("%r graph compile failed.", phase)
-
+        if not do_convert:
+            return phase, True
         if not enable_debug_runtime or enable_ge:
             if _get_parallel_mode() in ["auto_parallel", "semi_auto_parallel"]:
                 obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
                 obj.load_parameter_slice(params)
 
-            if _get_parallel_mode() in ["hybrid_parallel"]:
-                obj.parameter_layout_dict = self._build_parameter_layout(obj)
-
         # the following GE init process is not needed when use vm or ms backend
         if enable_ge:
             # decide whether to sink based on whether the inputs is virtual or not
             if args_list and isinstance(args_list[0], Tensor) and args_list[0].virtual_flag:
-                _set_dataset_mode_config('graph')
+                _set_dataset_mode_config('sink')
             else:
-                _set_dataset_mode_config('feed')
+                _set_dataset_mode_config('normal')
 
             self._build_data_graph(obj, params, phase)
 
@@ -449,38 +447,6 @@ class _Executor:
             return self._exec_pip(obj, *args, phase=phase_real)
         raise KeyError('{} graph is not exist.'.format(phase_real))
 
-    def _build_parameter_layout(self, obj):
-        """
-        Build parameter layout, for layerwise_parallel parameter.
-
-        Args:
-            obj (Function or Cell): The function or cell instance need to be compiled.
-
-        Returns:
-            Dictionary, parameter layout info.
-        """
-        parameter_layout_dict = {}
-        layerwise_parallel_parameters = []
-        for key in obj.parameters_dict():
-            if obj.parameters_dict()[key].layerwise_parallel is True:
-                layerwise_parallel_parameters.append(key)
-
-        if not layerwise_parallel_parameters:
-            return parameter_layout_dict
-
-        from ..communication.management import get_group_size
-        group_size = [get_group_size()]
-        for key in layerwise_parallel_parameters:
-            tensor_map = [0]
-            shape = obj.parameters_dict()[key].data.shape()
-            for x in range(len(shape)):  # dim 0 set 0, others set -1
-                if x:
-                    tensor_map.append(-1)
-            layout = [group_size, tensor_map]
-            parameter_layout_dict[key] = layout
-
-        return parameter_layout_dict
-
     def del_net_res(self, net_id):
         self._executor.del_net_res(net_id)
 
@@ -501,6 +467,7 @@ class _Executor:
             file_name (str): File name of model to export
             file_format (str): MindSpore currently support 'GEIR' and 'ONNX' format for exported model
         """
+        from .._c_expression import export_graph
         phase = 'export' + '.' + str(net.create_time)
         export_graph(file_name, file_format, phase)
 

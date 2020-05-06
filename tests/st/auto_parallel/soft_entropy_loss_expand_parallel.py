@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+# ============================================================================
 
 import os
 import pytest
@@ -31,7 +32,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.train.callback import Callback
 
 np.set_printoptions(threshold=np.inf)
-device_num=2
+device_num = 2
 device_id = int(os.getenv('DEVICE_ID'))
 rank_id = 0
 embed = 128
@@ -39,12 +40,12 @@ classes = 32
 batch_size = 32*2
 MatmulParamShape = (classes, embed)
 
+
 def setup_module():
     global device_num
     global rank_id
     np.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_hccl=True)
     context.set_context(enable_task_sink=True,
                         device_id=device_id)
     context.set_context(enable_ir_fusion=True)
@@ -55,8 +56,10 @@ def setup_module():
     context.set_auto_parallel_context(device_num=device_num,
                                       global_rank=device_id)
 
+
 def teardown_module():
     distributedTool.release()
+
 
 class DataGenerator():
     def get_parallel_blocks(self, input_, strategy):
@@ -64,17 +67,17 @@ class DataGenerator():
         i = 0
         for stra in strategy:
             temp = []
-            while len(blocks)>0:
+            while len(blocks) > 0:
                 block = blocks.pop(0)
                 temp.extend(np.split(block, stra, axis=i))
             blocks.extend(temp)
-            i+=1
+            i += 1
         return blocks
 
     def generate_data(self, shape):
         size = np.cumprod(shape)[-1]
         num_range = min(size, 1000)
-        data = (np.arange(0, size)%num_range)/num_range
+        data = (np.arange(0, size) % num_range)/num_range
         data = np.reshape(data, shape)
         return data
 
@@ -83,14 +86,15 @@ class DataGenerator():
         stra = [1]*len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
-        return Tensor(data), Tensor(datas[rank_id]) 
+        return Tensor(data), Tensor(datas[rank_id])
 
     def label_data(self, shape, embed):
         data = (self.generate_data(shape)*(embed-1)).astype(np.int32)
         stra = [1]*len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
-        return Tensor(data),Tensor(datas[rank_id])
+        return Tensor(data), Tensor(datas[rank_id])
+
 
 class Dataset():
     def __init__(self, predict, label, length=1, input_num=2):
@@ -118,14 +122,20 @@ class Dataset():
     def get_dataset_size(self):
         return self.length
 
+    def get_repeat_count(self):
+        return self.length
+
+
 class ModelCallback(Callback):
     def __init__(self):
         super(ModelCallback, self).__init__()
         self.loss_list = []
+
     def epoch_end(self, run_context, *args):
         cb_params = run_context.original_args()
         result = cb_params.net_outputs
         self.loss_list.append(result.asnumpy().mean())
+
 
 class SoftmaxCrossEntropyExpand(Cell):
     def __init__(self, sparse=False, stra_list=[]):
@@ -161,23 +171,25 @@ class SoftmaxCrossEntropyExpand(Cell):
         loss = self.reduce_mean(loss, -1)
         return loss
 
+
 class MatmulNet(Cell):
-    def __init__(self, matmul_stra = None, loss_stra_list=[]):
+    def __init__(self, matmul_stra=None, loss_stra_list=[]):
         super(MatmulNet, self).__init__()
         self.matmul = P.MatMul(transpose_b=True).set_strategy(strategy=matmul_stra)
         self.loss = SoftmaxCrossEntropyExpand(sparse=True, stra_list=loss_stra_list)
-        self.weight = Parameter(Tensor(np.ones(MatmulParamShape), dtype=ms.float32), name="weight") 
+        self.weight = Parameter(Tensor(np.ones(MatmulParamShape), dtype=ms.float32), name="weight")
+
     def construct(self, x, label):
         loss_input = self.matmul(x, self.weight)
         out = self.loss(loss_input, label)
         return out
 
+
 class LossFactory():
     def __init__(self):
         dataGen = DataGenerator()
         self.input_full, self.input_part = dataGen.input_data((batch_size, embed))
-        self.label_full, self.label_part = dataGen.label_data((batch_size,),embed)
-        self.expect_out = np.array([0.9205861 , 0.9205861 , 0.9205861 , 0.9201946 , 0.91951686, 0.919343])
+        self.label_full, self.label_part = dataGen.label_data((batch_size,), embed)
 
     def single_matmul_trains(self):
         single_callback = ModelCallback()
@@ -187,90 +199,79 @@ class LossFactory():
         epoch_size = 6
         dataset = Dataset(self.input_full, self.label_full)
         model.train(epoch_size, dataset, callbacks=single_callback, dataset_sink_mode=False)
-        print("---loss---",single_callback.loss_list)
+        loss_value = np.array(single_callback.loss_list)
+        return loss_value
 
     def data_parallel_matmul_trains(self):
         parallel_callback = ModelCallback()
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
         net = MatmulNet()
-        optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9) 
-        model = Model(net, optimizer=optimizer)
-        epoch_size = 6
-        dataset = Dataset(self.input_part, self.label_part)
-        model.train(epoch_size, dataset, callbacks=parallel_callback, dataset_sink_mode=False)
-        loss_value = np.array(parallel_callback.loss_list)
-        assert allclose(loss_value, self.expect_out, 0.00001, 0.00001)
-    
-    def model_parallel_matmul_trains(self):
-        parallel_callback = ModelCallback()
-        matmul_stra = ((1,1),(device_num,1))
-        reduce_max_stra = ((1,device_num),)
-        sub_stra = ((1,device_num),(1,1))
-        exp_stra = ((1,device_num),)
-        reduce_sum_stra = ((1,device_num),)
-        div_stra = ((1,device_num),(1,1))
-        log_stra = ((1,device_num),)
-        mul_stra = ((1,device_num),(1,device_num))
-        sum_cross_entropy_stra = ((1,device_num),)
-        mul2_stra = ((),(device_num,))
-        reduce_mean_stra = ((device_num,),)
-        onehot_stra = ((1,device_num),(),())
-        loss_stra_list = [exp_stra, reduce_sum_stra, onehot_stra, div_stra, log_stra, sum_cross_entropy_stra, mul_stra, mul2_stra, reduce_mean_stra, reduce_max_stra, sub_stra]
-        context.set_auto_parallel_context(parallel_mode="auto_parallel")
-        net = MatmulNet(matmul_stra = matmul_stra, loss_stra_list = loss_stra_list)
-        optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9) 
-        model = Model(net, optimizer=optimizer)
-        epoch_size = 6
-        dataset = Dataset(self.input_part, self.label_part)
-        model.train(epoch_size, dataset, callbacks=parallel_callback, dataset_sink_mode=False)
-        loss_value = np.array(parallel_callback.loss_list)
-        assert allclose(loss_value, self.expect_out, 0.00001, 0.00001)
-
-    def mix_parallel_matmul_trains(self):
-        parallel_callback = ModelCallback()
-        matmul_stra = ((device_num,1),(1,1))
-        reduce_max_stra = ((1,device_num),)
-        sub_stra = ((device_num,1),(device_num,1))
-        exp_stra = ((1,device_num),)
-        reduce_sum_stra = ((1,device_num),)
-        div_stra = ((1,device_num),(1,1))
-        log_stra = ((1,device_num),)
-        mul_stra = ((1,device_num),(1,device_num))
-        sum_cross_entropy_stra = ((1,device_num),)
-        mul2_stra = ((),(device_num,))
-        reduce_mean_stra = ((device_num,),)
-        onehot_stra = ((1,device_num),(),())
-        loss_stra_list = [exp_stra, reduce_sum_stra, onehot_stra, div_stra, log_stra, sum_cross_entropy_stra, mul_stra, mul2_stra, reduce_mean_stra, reduce_max_stra, sub_stra]
-        context.set_auto_parallel_context(parallel_mode="auto_parallel")
-        net = MatmulNet(matmul_stra = matmul_stra, loss_stra_list = loss_stra_list)
         optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
         model = Model(net, optimizer=optimizer)
         epoch_size = 6
         dataset = Dataset(self.input_part, self.label_part)
         model.train(epoch_size, dataset, callbacks=parallel_callback, dataset_sink_mode=False)
         loss_value = np.array(parallel_callback.loss_list)
-        assert allclose(loss_value, self.expect_out, 0.00001, 0.00001)
+        return loss_value
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
-def test_matmul_loss_data_parallel_trains():
+    def model_parallel_matmul_trains(self):
+        parallel_callback = ModelCallback()
+        matmul_stra = ((1, 1), (device_num, 1))
+        reduce_max_stra = ((1, device_num),)
+        sub_stra = ((1, device_num), (1, 1))
+        exp_stra = ((1, device_num),)
+        reduce_sum_stra = ((1, device_num),)
+        div_stra = ((1, device_num), (1, 1))
+        log_stra = ((1, device_num),)
+        mul_stra = ((1, device_num), (1, device_num))
+        sum_cross_entropy_stra = ((1, device_num),)
+        mul2_stra = ((), (device_num,))
+        reduce_mean_stra = ((device_num,),)
+        onehot_stra = ((1, device_num), (), ())
+        loss_stra_list = [exp_stra, reduce_sum_stra, onehot_stra, div_stra, log_stra,
+                          sum_cross_entropy_stra, mul_stra, mul2_stra, reduce_mean_stra, reduce_max_stra, sub_stra]
+        context.set_auto_parallel_context(parallel_mode="auto_parallel")
+        net = MatmulNet(matmul_stra=matmul_stra, loss_stra_list=loss_stra_list)
+        optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        model = Model(net, optimizer=optimizer)
+        epoch_size = 6
+        dataset = Dataset(self.input_part, self.label_part)
+        model.train(epoch_size, dataset, callbacks=parallel_callback, dataset_sink_mode=False)
+        loss_value = np.array(parallel_callback.loss_list)
+        return loss_value
+
+    def mix_parallel_matmul_trains(self):
+        parallel_callback = ModelCallback()
+        matmul_stra = ((device_num, 1), (1, 1))
+        reduce_max_stra = ((1, device_num),)
+        sub_stra = ((device_num, 1), (device_num, 1))
+        exp_stra = ((1, device_num),)
+        reduce_sum_stra = ((1, device_num),)
+        div_stra = ((1, device_num), (1, 1))
+        log_stra = ((1, device_num),)
+        mul_stra = ((1, device_num), (1, device_num))
+        sum_cross_entropy_stra = ((1, device_num),)
+        mul2_stra = ((), (device_num,))
+        reduce_mean_stra = ((device_num,),)
+        onehot_stra = ((1, device_num), (), ())
+        loss_stra_list = [exp_stra, reduce_sum_stra, onehot_stra, div_stra, log_stra,
+                          sum_cross_entropy_stra, mul_stra, mul2_stra, reduce_mean_stra, reduce_max_stra, sub_stra]
+        context.set_auto_parallel_context(parallel_mode="auto_parallel")
+        net = MatmulNet(matmul_stra=matmul_stra, loss_stra_list=loss_stra_list)
+        optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        model = Model(net, optimizer=optimizer)
+        epoch_size = 6
+        dataset = Dataset(self.input_part, self.label_part)
+        model.train(epoch_size, dataset, callbacks=parallel_callback, dataset_sink_mode=False)
+        loss_value = np.array(parallel_callback.loss_list)
+        return loss_value
+
+
+def test_all_trains():
     loss_factory = LossFactory()
     context.reset_auto_parallel_context()
-    loss_factory.data_parallel_matmul_trains()
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
-def test_matmul_loss_model_parallel_trains():
-    loss_factory = LossFactory()
-    context.reset_auto_parallel_context()
-    loss_factory.model_parallel_matmul_trains()
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single 
-def test_matmul_loss_mix_parallel_trains():
-    loss_factory = LossFactory()
-    context.reset_auto_parallel_context()
-    loss_factory.mix_parallel_matmul_trains()
+    single_loss = loss_factory.single_matmul_trains()
+    model_parallel_loss = loss_factory.model_parallel_matmul_trains()
+    mix_parallel_loss = loss_factory.mix_parallel_matmul_trains()
+    assert allclose(single_loss, model_parallel_loss)
+    assert allclose(single_loss, mix_parallel_loss)

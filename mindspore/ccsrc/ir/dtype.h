@@ -51,7 +51,7 @@ class String : public Object {
   TypeId generic_type_id() const override { return kObjectTypeString; }
 
   TypePtr DeepCopy() const override { return std::make_shared<String>(); }
-  std::string ToString() const override { return std::string("String:"); }
+  std::string ToString() const override { return std::string("String"); }
   std::string ToReprString() const override { return "string"; }
   std::string DumpText() const override { return "String"; }
 };
@@ -60,7 +60,7 @@ using StringPtr = std::shared_ptr<String>;
 class Keyword : public Object {
  public:
   Keyword() : Object(kObjectTypeKeyword, false), key_(""), value_(nullptr) {}
-  Keyword(const std::string& key, const TypePtr& value) : Object(kObjectTypeKeyword, false), key_(key), value_(value) {}
+  Keyword(const std::string &key, const TypePtr &value) : Object(kObjectTypeKeyword, false), key_(key), value_(value) {}
 
   ~Keyword() override = default;
   MS_DECLARE_PARENT(Keyword, Object)
@@ -70,7 +70,7 @@ class Keyword : public Object {
 
   std::string ToString() const override;
   std::string DumpText() const override;
-  bool operator==(const Type& other) const override;
+  bool operator==(const Type &other) const override;
 
   std::string GetKey() const { return key_; }
   TypePtr GetValue() const { return value_; }
@@ -84,7 +84,7 @@ using KeywordPtr = std::shared_ptr<Keyword>;
 class Slice : public Object {
  public:
   Slice() : Object(kObjectTypeSlice), start_(nullptr), stop_(nullptr), step_(nullptr) {}
-  Slice(const TypePtr& start, const TypePtr& stop, const TypePtr& step)
+  Slice(const TypePtr &start, const TypePtr &stop, const TypePtr &step)
       : Object(kObjectTypeSlice, false), start_(start), stop_(stop), step_(step) {}
 
   ~Slice() override = default;
@@ -95,7 +95,7 @@ class Slice : public Object {
 
   std::string ToString() const override;
   std::string DumpText() const override;
-  bool operator==(const Type& other) const override;
+  bool operator==(const Type &other) const override;
 
   TypePtr get_start() const { return start_; }
   TypePtr get_stop() const { return stop_; }
@@ -111,19 +111,19 @@ using SlicePtr = std::shared_ptr<Slice>;
 class TensorType : public Object {
  public:
   TensorType() : Object(kObjectTypeTensorType) {}
-  explicit TensorType(const TypePtr& ele) : Object(kObjectTypeTensorType, false), element_type_(ele) {}
+  explicit TensorType(const TypePtr &ele) : Object(kObjectTypeTensorType, false), element_type_(ele) {}
   ~TensorType() override = default;
   MS_DECLARE_PARENT(TensorType, Object)
 
   TypeId generic_type_id() const override { return kObjectTypeTensorType; }
   const TypePtr element() const { return element_type_; }
-  void set_element(const TypePtr& element_type) { element_type_ = element_type; }
+  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
 
   TypePtr DeepCopy() const override;
   std::string ToString() const override;
   std::string ToReprString() const override { return "tensor"; }
   std::string DumpText() const override;
-  bool operator==(const Type& other) const override;
+  bool operator==(const Type &other) const override;
 
  private:
   TypePtr element_type_;
@@ -133,7 +133,7 @@ using TensorTypePtr = std::shared_ptr<TensorType>;
 class Function : public Object {
  public:
   Function();
-  Function(const std::vector<TypePtr>& args, const TypePtr retval);
+  Function(const std::vector<TypePtr> &args, const TypePtr retval);
   ~Function() override = default;
   MS_DECLARE_PARENT(Function, Object)
 
@@ -141,11 +141,11 @@ class Function : public Object {
 
   // Add temporarily for return abstraction to avoid type checking.
   bool IsTransparent() const { return (args_.empty()) && (retval_ == nullptr); }
-  const std::vector<TypePtr>& args() const { return args_; }
-  const TypePtr& retval() const { return retval_; }
+  const std::vector<TypePtr> &args() const { return args_; }
+  const TypePtr &retval() const { return retval_; }
 
   TypePtr DeepCopy() const override;
-  bool operator==(const Type& other) const override;
+  bool operator==(const Type &other) const override;
   std::string ToString() const override;
   std::string ToReprString() const override { return "function"; }
 
@@ -158,7 +158,7 @@ using FunctionPtr = std::shared_ptr<Function>;
 class JTagged : public Object {
  public:
   JTagged() : Object(kObjectTypeJTagged) {}
-  explicit JTagged(const TypePtr& subtype) : Object(kObjectTypeJTagged, false), subtype_(subtype) {}
+  explicit JTagged(const TypePtr &subtype) : Object(kObjectTypeJTagged, false), subtype_(subtype) {}
   ~JTagged() override = default;
   MS_DECLARE_PARENT(JTagged, Object)
 
@@ -213,7 +213,7 @@ using TypeTypePtr = std::shared_ptr<TypeType>;
 class Problem : public Type {
  public:
   Problem() : Type(kMetaTypeProblem), kind_(Named("unknown")) {}
-  explicit Problem(const Named& kind) : Type(kMetaTypeProblem), kind_(kind) {}
+  explicit Problem(const Named &kind) : Type(kMetaTypeProblem), kind_(kind) {}
   ~Problem() override = default;
   MS_DECLARE_PARENT(Problem, Type)
 
@@ -222,7 +222,7 @@ class Problem : public Type {
   std::string ToString() const override { return kind_.name(); }
   std::string DumpText() const override { return "ProblemType"; }
 
-  friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<Problem> problem);
+  friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<Problem> problem);
 
  private:
   Named kind_;
@@ -246,29 +246,29 @@ using ExternalPtr = std::shared_ptr<External>;
 
 // helper template
 template <class T>
-TypePtr Clone(const T& t) {
+TypePtr Clone(const T &t) {
   return t.Clone();
 }
 
-TypePtr StringToType(const std::string& type_name);
+TypePtr StringToType(const std::string &type_name);
 
 // Judge whether x is predicate or is a subclass of predicate.
-bool IsIdentidityOrSubclass(TypePtr const& x, TypePtr const& base_type);
+bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type);
 
 // Whether t1 is identity or a subclass of t2.
-bool IsSubType(TypePtr const& t1, TypePtr const& t2 = nullptr);
+bool IsSubType(TypePtr const &t1, TypePtr const &t2 = nullptr);
 
 struct TypeHasher {
-  std::size_t operator()(TypePtr const& type) const;
+  std::size_t operator()(TypePtr const &type) const;
 };
 struct TypeListHasher {
-  std::size_t operator()(const TypePtrList& type_list) const;
+  std::size_t operator()(const TypePtrList &type_list) const;
 };
 struct TypeEqual {
-  bool operator()(TypePtr const& t1, TypePtr const& t2) const;
+  bool operator()(TypePtr const &t1, TypePtr const &t2) const;
 };
 struct TypeListEqual {
-  bool operator()(TypePtrList const& lhs, TypePtrList const& rhs) const;
+  bool operator()(TypePtrList const &lhs, TypePtrList const &rhs) const;
 };
 
 extern const TypePtr kTypeExternal;

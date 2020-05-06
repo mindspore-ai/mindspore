@@ -24,10 +24,13 @@
 #include "utils/callbacks.h"
 #include "utils/utils.h"
 #include "./common.h"
+#ifdef ENABLE_GE
+#include "utils/callbacks_ge.h"
+#endif
 
 #ifdef NO_GE_CLIENT
 namespace ge {
-Session::Session(const std::map<std::string, std::string>& options) {
+Session::Session(const std::map<std::string, std::string> &options) {
   if (options.empty()) {
     MS_LOG(ERROR) << "session input options is empty";
   }
@@ -39,7 +42,7 @@ Session::~Session() {}
 
 namespace mindspore {
 namespace transform {
-std::shared_ptr<ge::Session> GraphRunner::NewSession(const SessionOptions& sess_options) {
+std::shared_ptr<ge::Session> GraphRunner::NewSession(const SessionOptions &sess_options) {
   std::shared_ptr<ge::Session> ret = std::make_shared<ge::Session>(sess_options);
   if (ret == nullptr) {
     MS_LOG(ERROR) << "Create GE session failed";
@@ -49,7 +52,7 @@ std::shared_ptr<ge::Session> GraphRunner::NewSession(const SessionOptions& sess_
   return ret;
 }
 
-GraphRunner::GraphRunner(const GraphRunnerOptions& options)
+GraphRunner::GraphRunner(const GraphRunnerOptions &options)
     : options_(options), graph_manager_(DfGraphManager::GetInstance()) {
   if (ConfigManager::GetInstance().parallel_strategy() == ParallelStrategy::ONE_DEVICE) {
     MS_LOG(INFO) << "ME run in ONE_DEVICE strategy mode";
@@ -85,7 +88,7 @@ GraphRunner::GraphRunner(const GraphRunnerOptions& options)
   }
 
 #ifdef ENABLE_GE
-  for (auto& it : wrappers) {
+  for (auto &it : wrappers) {
     std::set<string> saved_graph = graph_manager_.GetSavedGraphs();
     auto iter_find = saved_graph.find(std::to_string(it->id_));
     if (iter_find != saved_graph.end()) {
@@ -98,8 +101,8 @@ GraphRunner::GraphRunner(const GraphRunnerOptions& options)
 #endif
 }
 
-Status GraphRunner::RunGraph(const RunOptions& options, const std::vector<GeTensorPtr>& inputs,
-                             std::vector<GeTensorPtr>* outputs) {
+Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,
+                             std::vector<GeTensorPtr> *outputs) {
   std::string name = options.name;
   if (name.empty()) {
     MS_LOG(ERROR) << "The graph name is null";
@@ -122,7 +125,7 @@ Status GraphRunner::RunGraph(const RunOptions& options, const std::vector<GeTens
   std::vector<GeTensor> ge_outputs;
 
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(ge_inputs),
-                       [](const GeTensorPtr& i) { return *i; });
+                       [](const GeTensorPtr &i) { return *i; });
 
   MS_LOG(INFO) << "Run the graph in GE with " << ge_inputs.size() << " inputs";
 
@@ -158,19 +161,19 @@ Status GraphRunner::RunGraph(const RunOptions& options, const std::vector<GeTens
   MS_LOG(INFO) << "Call GE RunGraph Success in " << cost << " us, the GE outputs num is: " << ge_outputs.size();
 
   (void)std::transform(ge_outputs.begin(), ge_outputs.end(), std::back_inserter(*outputs),
-                       [](const GeTensor& ge_tensor) { return std::make_shared<GeTensor>(ge_tensor); });
+                       [](const GeTensor &ge_tensor) { return std::make_shared<GeTensor>(ge_tensor); });
 
   return Status::SUCCESS;
 }
 
-Status GraphRunner::RunGraph(const RunOptions& options, const std::vector<MeTensorPtr>& inputs,
-                             std::vector<MeTensorPtr>* const outputs) {
+Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<MeTensorPtr> &inputs,
+                             std::vector<MeTensorPtr> *const outputs) {
   std::vector<GeTensorPtr> ge_inputs;
   for (auto it : inputs) {
     MS_LOG(INFO) << "inputs tensor's data size is: " << (*it).DataSize();
     auto shape = (*it).shape();
     std::string shape_str;
-    for (const auto& elem : shape) {
+    for (const auto &elem : shape) {
       shape_str += std::to_string(elem);
       shape_str += " ";
     }
@@ -196,7 +199,7 @@ Status GraphRunner::RunGraph(const RunOptions& options, const std::vector<MeTens
     return ret;
   } else {
     // conver GeTensor to MeTensor
-    for (auto& it : ge_outputs) {
+    for (auto &it : ge_outputs) {
       auto tensor = TransformUtil::ConvertGeTensor(it);
       if (tensor != nullptr) {
         outputs->emplace_back(tensor);

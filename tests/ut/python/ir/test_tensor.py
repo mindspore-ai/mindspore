@@ -24,6 +24,9 @@ import pytest
 import mindspore as ms
 import mindspore.common.api as me
 import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.parameter import Parameter
+from mindspore.common.initializer import initializer
 from ..ut_filter import non_graph_engine
 
 
@@ -198,6 +201,21 @@ def test_sub():
     y = ms.Tensor(ndarr)
     z = x - y
     assert isinstance(z, ms.Tensor)
+
+@non_graph_engine
+def test_div():
+    x = ms.Tensor(np.array([[2,6,10],[12, 4, 8]]).astype(np.float32))
+    y = ms.Tensor(np.array([[2,2,5],[6, 1, 2]]).astype(np.float32))
+    z = x / y
+    z2 = x / 2
+    assert isinstance(z, ms.Tensor)
+    assert isinstance(z2, ms.Tensor)
+
+@non_graph_engine
+def test_parameter():
+    x = Parameter(initializer(1, [1], ms.float32), name="beta1_power")
+    z = x / 2
+    print(z)
 
 
 class Net(nn.Cell):
@@ -378,3 +396,25 @@ def test_tensor_dtype_fp32_to_bool():
         input = np.random.randn(2, 3, 4, 5).astype(np.float32)
         input = ms.Tensor(input)
         input_me = ms.Tensor(input, dtype=ms.bool_)
+
+
+def test_tensor_operation():
+    x = Tensor(np.ones((3,3)) * 4)
+    res = x + 1
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 5)
+    res = 1 + x
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 5)
+    res = x - 2
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
+    res = 6 - x
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
+    res = x * 3
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 12)
+    res = 3 * x
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 12)
+    res = x / 2
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
+    res = 8 / x
+    assert np.all(res.asnumpy() == np.ones((3, 3)) * 2)
+    with pytest.raises(TypeError):
+        res = x * (2, 3)

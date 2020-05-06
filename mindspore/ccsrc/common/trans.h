@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 #include "ir/dtype.h"
+#include "kernel/kernel.h"
 #include "ir/dtype/type.h"
 
 namespace mindspore {
@@ -33,6 +34,7 @@ struct TypeIdArgs {
   size_t host_shape_size;  // Multiply each dimension elements. [a, b, c, d] => a*b*c*d
   TypeId host_data_type;
   TypeId device_data_type;
+  size_t data_size;
 };
 
 struct FormatArgs {
@@ -49,7 +51,10 @@ size_t TypeIdSize(const TypeId data_type);
 size_t ShapeSize(const std::vector<size_t> &shape);
 size_t CubeSizeByType(const TypeId data_type);
 
-std::vector<size_t> TransShapeTo4d(const std::vector<size_t> &shape);
+std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape,
+                                     const std::vector<kernel::Axis> &padding_axis = {});
+std::vector<int> GetRuntimePaddingShape(const AnfNodePtr &node, size_t index);
+bool IsNeedPadding(const std::string &format, const size_t shape_size);
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format);
 bool TransDataType(const TypeIdArgs &args, void *result);
 bool TransFormat(const FormatArgs &args, void *result);
@@ -59,10 +64,12 @@ bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result);
 bool NchwToFracZ(const FormatArgs &args, void *result);
 bool NchwToFracNz(const FormatArgs &args, void *result);
 bool NchwToNc1hwc0(const FormatArgs &args, void *result);
+bool NchwToC1hwncoc0(const FormatArgs &args, void *result);
 // device to host
 bool FracZToNchw(const FormatArgs &args, void *result);
 bool FracNzToNchw(const FormatArgs &args, void *result);
 bool Nc1hwc0ToNchw(const FormatArgs &args, void *result);
+bool C1hwncoc0ToNchw(const FormatArgs &args, void *result);
 }  // namespace trans
 }  // namespace mindspore
 

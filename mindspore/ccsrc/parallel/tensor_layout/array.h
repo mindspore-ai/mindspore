@@ -26,24 +26,22 @@
 
 namespace mindspore {
 namespace parallel {
-
 class Array {
  public:
   Array() = default;
   virtual ~Array() = default;
   std::string ToString() const;
-  virtual Status Init(const std::vector<int32_t>& array);
+  virtual Status Init(const std::vector<int32_t> &array);
   bool IsvalidArray() const;
   std::vector<int32_t> array() const { return array_; }
   size_t GetDimSize() const { return array_.size(); }
   int32_t GetDimByIdx(uint32_t idx) const;
   int32_t GetDimByReverseIdx(uint32_t idx) const;
-  bool operator==(const Array& a1) const;
+  bool operator==(const Array &a1) const;
 
  protected:
   std::vector<int32_t> array_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

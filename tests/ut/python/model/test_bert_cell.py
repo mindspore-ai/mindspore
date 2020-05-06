@@ -317,7 +317,7 @@ test_case_cell_ops = [
                             initializer_range=0.02,
                             dropout_prob=0.1),
         'desc_inputs': [[1, 768], [1, 768]],
-        'desc_bprop': [[1, 128, 768]]}),  # maybe not right
+        'desc_bprop': [[1, 768]]}),
     ('BertTransformer_2', {
         'block': bert_trans(),
         'desc_inputs': [[1, 128, 768], [1, 128, 128]]}),
@@ -331,7 +331,7 @@ test_case_cell_ops = [
         'desc_inputs': [Tensor(np.random.rand(128).astype(np.int32)),
                         Tensor(np.random.rand(128).astype(np.int32)), [128]],
         'desc_bprop': [[1, 128, 768], [1, 128, 768], [1, 128, 768]],
-        'num_output': 3}),  # maybe not right
+        'num_output': 3}),
 
     ('BertModel_1', {
         'block': BertModel(config=BertConfig(batch_size=1,
@@ -342,7 +342,7 @@ test_case_cell_ops = [
         'desc_inputs': [Tensor(np.random.rand(128).astype(np.int32)),
                         Tensor(np.random.rand(128).astype(np.int32)), [128]],
         'desc_bprop': [[1, 128, 768], [1, 128, 768], [1, 128, 768]],
-        'num_output': 3}),  # maybe not right
+        'num_output': 3}),
 
     ('BertModel_2', {
         'block': BertModel(config=BertConfig(batch_size=1,
@@ -354,7 +354,7 @@ test_case_cell_ops = [
         'desc_inputs': [Tensor(np.random.rand(128).astype(np.int32)),
                         Tensor(np.random.rand(128).astype(np.int32)), [128]],
         'desc_bprop': [[1, 128, 768], [1, 128, 768], [1, 128, 768]],
-        'num_output': 3}),  # maybe not right
+        'num_output': 3}),
 
     ('BertPretrainingLoss', {
         'block': BertPretrainingLoss(config=BertConfig(batch_size=1)),

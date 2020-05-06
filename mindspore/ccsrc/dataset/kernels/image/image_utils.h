@@ -22,6 +22,10 @@
 #include <random>
 #include <string>
 #include <vector>
+#if defined(_WIN32) || defined(_WIN64)
+#undef HAVE_STDDEF_H
+#undef HAVE_STDLIB_H
+#endif
 #include "./jpeglib.h"
 #include "./jerror.h"
 #include <opencv2/imgproc/imgproc.hpp>
@@ -84,18 +88,8 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 
 // Returns Decoded image
 // Supported images:
-// -   Windows bitmaps - \*.bmp, \*.dib (always supported)
-// -   JPEG files - \*.jpeg, \*.jpg, \*.jpe (see the *Note* section)
-// -   JPEG 2000 files - \*.jp2 (see the *Note* section)
-// -   Portable Network Graphics - \*.png (see the *Note* section)
-// -   WebP - \*.webp (see the *Note* section)
-// -   Portable image format - \*.pbm, \*.pgm, \*.ppm \*.pxm, \*.pnm (always supported)
-// -   PFM files - \*.pfm (see the *Note* section)
-// -   Sun rasters - \*.sr, \*.ras (always supported)
-// -   TIFF files - \*.tiff, \*.tif (see the *Note* section)
-// -   OpenEXR Image files - \*.exr (see the *Note* section)
-// -   Radiance HDR - \*.hdr, \*.pic (always supported)
-// -   Raster and Vector geospatial data supported by GDAL (see the *Note* section)
+//  BMP JPEG JPG PNG TIFF
+// supported by opencv, if user need more image analysis capabilities, please compile opencv particularlly.
 // @param input: CVTensor containing the not decoded image 1D bytes
 // @param output: Decoded image Tensor of shape <H,W,C> and type DE_UINT8. Pixel order is RGB
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
@@ -202,12 +196,6 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 // @param output: Adjusted image of same shape and type.
 Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &hue);
 
-Status GenerateRandomCropBox(int input_height, int input_width, float ratio, float lb, float ub, int max_itr,
-                             cv::Rect *crop_box, uint32_t seed = std::mt19937::default_seed);
-
-Status CheckOverlapConstraint(const cv::Rect &crop_box, const std::vector<cv::Rect> &bounding_boxes,
-                              float min_intersect_ratio, bool *is_satisfied);
-
 // Masks out a random section from the image with set dimension
 // @param input: input Tensor
 // @param output: cutOut Tensor
@@ -220,8 +208,8 @@ Status CheckOverlapConstraint(const cv::Rect &crop_box, const std::vector<cv::Re
 // @param fill_g: green fill value for erase
 // @param fill_b: blue fill value for erase.
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
-             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, uint8_t fill_r = 0,
-             uint8_t fill_g = 0, uint8_t fill_b = 0);
+             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
+             uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 
 // Pads the input image and puts the padded image in the output
 // @param input: input Tensor

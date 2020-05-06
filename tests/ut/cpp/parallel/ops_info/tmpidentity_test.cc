@@ -38,13 +38,13 @@ class TestTmpIdentityInfo : public UT::Common {
 };
 
 void TestTmpIdentityInfo::SetUp() {
-  std::list<int32_t> dev_list;
+  std::vector<int32_t> dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {
     dev_list.push_back(i);
   }
 
-  std::list<int32_t> stage_map;
+  std::vector<int32_t> stage_map;
   stage_map.push_back(1024);
   stage_map.push_back(26);
 
@@ -145,9 +145,9 @@ TEST_F(TestTmpIdentityInfo, test_generate_strategies) {
     identity_ptr->Init(sp);
     std::vector<TensorInfo> inputs_info = identity_ptr->inputs_tensor_info();
     std::vector<TensorInfo> outputs_info = identity_ptr->outputs_tensor_info();
-    ASSERT_DOUBLE_EQ(identity_ptr->GetOperatorCost()->GetMemoryCost(inputs_info, outputs_info, sp->GetInputStage()),
-                     cost.memory_cost_);
-    ASSERT_DOUBLE_EQ(identity_ptr->GetOperatorCost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
+    ASSERT_DOUBLE_EQ(identity_ptr->operator_cost()->GetComputationCost(inputs_info, outputs_info, sp->GetInputStage()),
+                     cost.computation_cost_);
+    ASSERT_DOUBLE_EQ(identity_ptr->operator_cost()->GetCommCost(inputs_info, outputs_info, sp->GetInputStage()),
                      cost.communication_cost_);
   }
 }

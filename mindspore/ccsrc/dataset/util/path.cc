@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace dataset {
 #ifdef _WIN32
-char Path::_separator = '\\';
+char Path::separator_ = '\\';
 #else
 char Path::separator_ = '/';
 #endif
@@ -129,7 +129,11 @@ bool Path::IsDirectory() {
 
 Status Path::CreateDirectory() {
   if (!Exists()) {
+#if defined(_WIN32) || defined(_WIN64)
+    int rc = mkdir(common::SafeCStr(path_));
+#else
     int rc = mkdir(common::SafeCStr(path_), 0700);
+#endif
     if (rc) {
       std::ostringstream oss;
       oss << "Unable to create directory " << path_ << ". Errno = " << errno;

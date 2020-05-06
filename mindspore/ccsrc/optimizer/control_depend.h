@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace opt {
 // Automatically adding control depend based on effect order and side effect analysis.
-void AddControlDepend(const FuncGraphPtr& graph);
+void AddControlDepend(const FuncGraphPtr &graph);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_OPTIMIZER_CONTROL_DEPEND_H_

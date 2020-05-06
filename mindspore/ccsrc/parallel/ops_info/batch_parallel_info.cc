@@ -27,8 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-
-Status BatchParallelInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status BatchParallelInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Invalid strategy.";
@@ -162,7 +161,7 @@ Status BatchParallelInfo::InferTensorInfo() {
 
 Status BatchParallelInfo::GetAttrs() { return SUCCESS; }
 
-Status BatchParallelInfo::Init(const StrategyPtr& strategy) {
+Status BatchParallelInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " : Init failed.";
     return FAILED;
@@ -171,7 +170,7 @@ Status BatchParallelInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status BatchParallelInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status BatchParallelInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Init for cost model failed.";
@@ -185,7 +184,7 @@ Status BatchParallelInfo::InitForCostModel(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << " : Set cost under strategy failed.";
@@ -225,26 +224,6 @@ Status BatchParallelInfo::GenerateStrategies(int32_t stage_id) {
 void SparseSoftmaxCrossEntropyWithLogitsInfo::ReComputeBatchSplitFlagList() {
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     split_flag_list_[i] = true;
-  }
-}
-
-void GatherV2Info::ReComputeBatchSplitFlagList() {
-  MS_ASSERT(inputs_shape_.size() == 2);
-  MS_ASSERT(input_value_.size() == 3);
-  MS_ASSERT(input_value_[0] == nullptr);
-  // the second input is the index tensor
-  MS_ASSERT(input_value_[1] != nullptr);
-  // the third input is the axis
-  MS_ASSERT(input_value_[2] != nullptr);
-  int axis = GetValue<int>(input_value_[2]);
-  MS_ASSERT(axis < inputs_shape_[0].size() && axis >= 0 - inputs_shape_[0].size());
-  if (axis < 0) {
-    axis += SizeToInt(inputs_shape_[0].size());
-  }
-  split_flag_list_[0] = true;
-  // if gather axis is 0, the index's strategy is equal to device number
-  if (axis == 0) {
-    split_flag_list_[1] = true;
   }
 }
 

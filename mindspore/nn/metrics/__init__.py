@@ -83,7 +83,7 @@ def get_metric_fn(name, *args, **kwargs):
         Metric object, class instance of the metric method.
 
     Examples:
-        >>> metric = get_metric_fn('precision', eval_type='classification')
+        >>> metric = nn.get_metric_fn('precision', eval_type='classification')
     """
     if name not in __factory__:
         raise KeyError("Unknown Metric:", name)

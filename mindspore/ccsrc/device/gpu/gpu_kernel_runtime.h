@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <unordered_map>
 #include "device/kernel_runtime.h"
 #include "device/kernel_runtime_manager.h"
 
@@ -33,7 +34,6 @@ class GPUKernelRuntime : public KernelRuntime {
   ~GPUKernelRuntime() override = default;
   bool Init() override;
   void ReleaseDeviceRes() override;
-  void FreeHostMemory() override;
   void AssignMemory(session::KernelGraph *graph) override;
   bool Run(session::KernelGraph *graph) override;
 
@@ -41,18 +41,11 @@ class GPUKernelRuntime : public KernelRuntime {
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) override;
   bool SyncStream() override;
-  // Alloc memory use the dynamic memory pool.
-  void *AllocTensorMemDynamic(size_t size) override;
-  // Free memory use the dynamic memory pool.
-  void FreeTensorMemDynamic(void *device_ptr) override;
-  void MallocOpMemory(const DeviceAddressPtr address, size_t size, int flag) override;
-  uint8_t *MallocStaticMem(size_t size, bool communication_mem) override;
 
  private:
   GPUKernelRuntime(const GPUKernelRuntime &);
   GPUKernelRuntime &operator=(const GPUKernelRuntime &);
   bool InitDevice();
-  void MallocDeviceMemory();
   bool device_init_{false};
 
   // The related functions and members for using dynamic memory pool.
@@ -65,10 +58,12 @@ class GPUKernelRuntime : public KernelRuntime {
   void AllocCommunicationOpDynamicRes(const session::KernelGraph *graph);
   void AllocCommunicationOpInputDynamicRes(const mindspore::AnfNodePtr &kernel);
   void AllocCommunicationOpOutputDynamicRes(const mindspore::AnfNodePtr &kernel);
-  void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel, const AddressPtrList &kernel_workspaces);
-  void FreeCommunicationOpDynamicRes(const mindspore::AnfNodePtr &kernel, size_t input_idx, bool *is_communication_op);
-  size_t communication_op_input_ref_count_{0};
-  size_t communication_op_output_ref_count_{0};
+  void AllocCommunicationOpMemory(bool is_need_alloc_memory, bool is_need_free_memory,
+                                  const DeviceAddressPtrList addr_list, size_t total_size,
+                                  std::vector<size_t> size_list);
+  void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel, const AddressPtrList &kernel_workspaces,
+                            uint32_t graph_id);
+  std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
 };
 MS_REG_KERNEL_RUNTIME(kGPUDevice, GPUKernelRuntime);
 }  // namespace gpu

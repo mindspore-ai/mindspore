@@ -162,10 +162,6 @@ void MemReuseUtil::SetInputMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr
         if (iter == kernel_def_ptr->inputs_.end()) {
           kernel_def_ptr->inputs_[key].push_back(ref_ptr);
         } else {
-          if (std::any_of(iter->second.begin(), iter->second.end(),
-                          [ref_ptr](const KernelRefCountPtr &it) { return (it.get() == ref_ptr.get()); })) {
-            break;
-          }
           iter->second.push_back(ref_ptr);
         }
       }
@@ -185,10 +181,6 @@ void MemReuseUtil::SetOutputMap(const CNodePtr &kernel, KernelDef *kernel_def_pt
     if (iter == kernel_def_ptr->outputs_.end()) {
       kernel_def_ptr->outputs_[key].push_back(kernel_ref);
     } else {
-      if (std::any_of(iter->second.begin(), iter->second.end(),
-                      [kernel_ref](const KernelRefCountPtr &it) { return (it == kernel_ref); })) {
-        break;
-      }
       iter->second.push_back(kernel_ref);
     }
   }
@@ -273,30 +265,21 @@ void MemReuseUtil::SetReuseRefCount() {
 }
 
 void MemReuseUtil::SetGraphOutputRefCount() {
-  for (const auto &output : graph_->outputs()) {
-    MS_EXCEPTION_IF_NULL(output);
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(output); ++i) {
-      if (!(output->isa<CNode>())) {
-        continue;
-      }
-      auto cnode = output->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(cnode);
-      auto input_node = cnode->input(i + 1);
-      MS_EXCEPTION_IF_NULL(input_node);
-      auto kernel_input = AnfAlgo::VisitKernel(input_node, 0);
-      MS_EXCEPTION_IF_NULL(kernel_input.first);
-      if (!(kernel_input.first->isa<CNode>())) {
-        continue;
-      }
-      auto ak_node = kernel_input.first->cast<CNodePtr>();
-      auto key = ak_node.get();
-      auto iter = kernel_output_refs_.find(key);
-      if ((iter != kernel_output_refs_.end()) && (kernel_input.second < iter->second.size())) {
-        auto kernel_ref_count_ptr = kernel_output_refs_[key][kernel_input.second];
-        MS_EXCEPTION_IF_NULL(kernel_ref_count_ptr);
-        kernel_ref_count_ptr->ref_count_ = kMaxRefCount;
-        kernel_ref_count_ptr->ref_count_dynamic_use_ = kMaxRefCount;
-      }
+  auto nodes = AnfAlgo::GetAllOutput(graph_->output(), {prim::kPrimTupleGetItem});
+  for (const auto &node : nodes) {
+    auto kernel_input = AnfAlgo::VisitKernelWithReturnType(node, 0);
+    MS_EXCEPTION_IF_NULL(kernel_input.first);
+    if (!kernel_input.first->isa<CNode>() || !AnfAlgo::IsRealKernel(kernel_input.first)) {
+      continue;
+    }
+    auto ak_node = kernel_input.first->cast<CNodePtr>();
+    auto key = ak_node.get();
+    auto iter = kernel_output_refs_.find(key);
+    if ((iter != kernel_output_refs_.end()) && (kernel_input.second < iter->second.size())) {
+      auto kernel_ref_count_ptr = kernel_output_refs_[key][kernel_input.second];
+      MS_EXCEPTION_IF_NULL(kernel_ref_count_ptr);
+      kernel_ref_count_ptr->ref_count_ = kMaxRefCount;
+      kernel_ref_count_ptr->ref_count_dynamic_use_ = kMaxRefCount;
     }
   }
 #ifdef MEM_REUSE_DEBUG
@@ -315,6 +298,36 @@ void MemReuseUtil::SetAllInfo(KernelGraph *graph) {
 #ifdef MEM_REUSE_DEBUG
   MemReuseChecker::GetInstance().CheckMemReuseIR(total_refs_list_, kernel_def_ptr_list_, graph);
 #endif
+}
+
+uint8_t *MemReuseUtil::GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const {
+  auto key = node.get();
+  auto iter = kernel_output_refs_.find(key);
+  uint8_t *ptr = nullptr;
+  if (iter != kernel_output_refs_.end()) {
+    if (index >= iter->second.size()) {
+      MS_LOG(EXCEPTION) << "index:[" << index << "] is larger than it's workspace size:[" << iter->second.size() << "]";
+    }
+    auto output_ref = iter->second[index];
+    ptr = mem_base_ + output_ref->offset_;
+  } else {
+    MS_LOG(EXCEPTION) << "node [" << AnfAlgo::GetCNodeName(node) << "] don't exist in kernel_output_refs";
+  }
+  return ptr;
+}
+
+uint8_t *MemReuseUtil::GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const {
+  auto key = node.get();
+  auto iter = kernel_workspace_refs_.find(key);
+  uint8_t *ptr = nullptr;
+  if (iter != kernel_workspace_refs_.end()) {
+    if (index >= iter->second.size()) {
+      MS_LOG(EXCEPTION) << "index:[" << index << "] is larger than it's workspace size:[" << iter->second.size() << "]";
+    }
+    auto wk_ref = iter->second[index];
+    ptr = mem_base_ + wk_ref->offset_;
+  }
+  return ptr;
 }
 }  // namespace memreuse
 }  // namespace mindspore

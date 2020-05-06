@@ -25,8 +25,8 @@
 #include "session/anf_runtime_algorithm.h"
 #include "device/kernel_adjust.h"
 #include "predict/generator/utils/ir_model_util.h"
-#include "device/kernel_info.h"
 #include "pre_activate/common/helper.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace device {
@@ -54,6 +54,7 @@ void AscendStreamAssign::ResetNew() {
   inner_parallel_streams_.clear();
   processed_parallel_streams_.clear();
   hcom_stream_list_.clear();
+  need_first_active_streams_.clear();
 }
 
 void AscendStreamAssign::AssignIndependentStreamId(const CNodePtr &cur_cnode_ptr, uint32_t processing_logic_id) {
@@ -200,13 +201,12 @@ void AscendStreamAssign::AssignAllNodesStream(const shared_ptr<session::KernelGr
   MS_LOG(INFO) << "stream nums:common:" << total_common_stream_num_ << ",independ:" << total_independ_stream_num_;
 }
 
-vector<uint32_t> AscendStreamAssign::TransLogicToPhysic(const vector<uint32_t> &logic_ids) {
-  vector<uint32_t> physic_ids;
+void AscendStreamAssign::TransLogicToPhysic(const vector<uint32_t> &logic_ids, vector<uint32_t> *physic_ids) {
   for (auto &id : logic_ids) {
     auto it = logic_to_physic_map_.find(id);
     if (it != logic_to_physic_map_.end()) {
       MS_LOG(INFO) << "logic id[" << id << "] to physic id[" << it->second << "]";
-      physic_ids.push_back(it->second);
+      (*physic_ids).push_back(it->second);
     } else {
       MS_LOG(EXCEPTION) << "logic id[" << id << "] has no correspond physic id";
     }
@@ -214,10 +214,9 @@ vector<uint32_t> AscendStreamAssign::TransLogicToPhysic(const vector<uint32_t> &
     auto it_independ = logic_to_independent_map_.find(id);
     if (it_independ != logic_to_independent_map_.end()) {
       MS_LOG(INFO) << "logic id[" << id << "] to independent id[" << it_independ->second << "]";
-      physic_ids.push_back(it_independ->second);
+      (*physic_ids).push_back(it_independ->second);
     }
   }
-  return physic_ids;
 }
 
 void AscendStreamAssign::UpdateStreamActive(const CNodePtr &active_ptr) {
@@ -227,7 +226,8 @@ void AscendStreamAssign::UpdateStreamActive(const CNodePtr &active_ptr) {
   MS_EXCEPTION_IF_NULL(primitive);
   vector<uint32_t> active_logic_ids = GetValue<std::vector<uint32_t>>(primitive->GetAttr(kAttrActiveStreamList));
   // out StreamAcitve active physic stream is not parallel now, if parallel, should deal here.
-  vector<uint32_t> active_physic_ids = TransLogicToPhysic(active_logic_ids);
+  vector<uint32_t> active_physic_ids;
+  TransLogicToPhysic(active_logic_ids, &active_physic_ids);
   ValuePtr active_physic_value = MakeValue<std::vector<uint32_t>>(active_physic_ids);
   AnfAlgo::SetNodeAttr(kAttrActiveStreamList, active_physic_value, active_ptr);
 }
@@ -242,7 +242,8 @@ void AscendStreamAssign::UpdateStreamSwitch(const CNodePtr &switch_ptr, const CN
   MS_LOG(INFO) << "streamswtich stream id[" << AnfAlgo::GetStreamId(switch_ptr) << "], true_logic_id[" << true_logic_id
                << "]";
   vector<uint32_t> logic_ids{true_logic_id};
-  vector<uint32_t> physic_ids = TransLogicToPhysic(logic_ids);
+  vector<uint32_t> physic_ids;
+  TransLogicToPhysic(logic_ids, &physic_ids);
   if (physic_ids.empty()) {
     MS_LOG(EXCEPTION) << "stream switch true logic id[" << true_logic_id << "] has no physical id";
   }
@@ -334,8 +335,8 @@ bool AscendStreamAssign::IsProcessedParallelStream(uint32_t stream_id) {
   return false;
 }
 
-vector<uint32_t> AscendStreamAssign::GetParallelStream(uint32_t cur_stream_id, uint32_t stream_acitve_id) {
-  vector<uint32_t> parallel_streams;
+void AscendStreamAssign::GetParallelStream(uint32_t cur_stream_id, uint32_t stream_acitve_id,
+                                           vector<uint32_t> *parallel_streams) {
   for (size_t i = 0; i < inner_parallel_streams_.size(); i++) {
     auto cur_parallel_streams = inner_parallel_streams_[i];
     auto it = std::find(cur_parallel_streams.begin(), cur_parallel_streams.end(), cur_stream_id);
@@ -347,17 +348,17 @@ vector<uint32_t> AscendStreamAssign::GetParallelStream(uint32_t cur_stream_id, u
                        << "is same with streamacvite stream id" << stream_acitve_id;
           continue;
         }
-        parallel_streams.emplace_back(cur_parallel_streams[j]);
+        (*parallel_streams).emplace_back(cur_parallel_streams[j]);
       }
 
       // record processed parallel streams
-      (void)std::copy(parallel_streams.begin(), parallel_streams.end(),
+      (void)std::copy((*parallel_streams).begin(), (*parallel_streams).end(),
                       std::back_inserter(processed_parallel_streams_));
-      return parallel_streams;
+      return;
     }
   }
 
-  return vector<uint32_t>{cur_stream_id};
+  (*parallel_streams).push_back(cur_stream_id);
 }
 
 void AscendStreamAssign::InsertActiveNew(const std::shared_ptr<session::KernelGraph> &graph_ptr) {
@@ -379,30 +380,32 @@ void AscendStreamAssign::InsertActiveNew(const std::shared_ptr<session::KernelGr
     }
 
     bool inner_active = pre_stream_id != cur_stream_id && pre_stream_id < cur_stream_id &&
-                        AnfAlgo::GetCNodeName(pre_cnode_ptr) != "StreamSwitch" &&
-                        AnfAlgo::GetCNodeName(pre_cnode_ptr) != "StreamActive";
+                        AnfAlgo::GetCNodeName(pre_cnode_ptr) != kStreamSwitchOpName &&
+                        AnfAlgo::GetCNodeName(pre_cnode_ptr) != kStreamActiveOpName &&
+                        AnfAlgo::GetCNodeName(pre_cnode_ptr) != kSendOpName;
     bool processed = IsProcessedParallelStream(cur_stream_id);
     // 1)inner stream assign, need insert active op
     if (inner_active && !processed) {
       MS_LOG(INFO) << "Inner insert active op, self stream id[" << pre_stream_id << "]";
-      CNodePtr active_ptr = KernelAdjust::GetInstance().CreateSteamActiveOp(graph_ptr);
+      CNodePtr active_ptr = KernelAdjust::GetInstance().CreateStreamActiveOp(graph_ptr);
       update_cnode_list.emplace_back(active_ptr);
-      update_cnode_list.emplace_back(cur_cnode_ptr);
-
       // 1.set stream id
       AnfAlgo::SetStreamId(pre_stream_id, active_ptr.get());
       // 2.set active stream ids
-      vector<uint32_t> active_index_list = GetParallelStream(cur_stream_id, pre_stream_id);
+      std::vector<uint32_t> active_index_list;
+      GetParallelStream(cur_stream_id, pre_stream_id, &active_index_list);
       AnfAlgo::SetNodeAttr(kAttrActiveStreamList, MakeValue<std::vector<uint32_t>>(active_index_list), active_ptr);
-    } else if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == "StreamActive" &&
-               AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) != UINT32_MAX) {
+    }
+    // inner_active is not a if/else relationship with the next if/else. such as:StreamActive(S7)-->StreamActive(S8)
+    if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kStreamActiveOpName &&
+        AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) != UINT32_MAX) {
       // 2)outter stream assign, update active op
       update_cnode_list.emplace_back(cur_cnode_ptr);
       UpdateStreamActive(cur_cnode_ptr);
-    } else if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == "StreamSwitch") {
+    } else if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kStreamSwitchOpName) {
       // 3)update switch op
       MS_LOG(INFO) << "Insert active op after switch";
-      CNodePtr active_ptr = KernelAdjust::GetInstance().CreateSteamActiveOp(graph_ptr);
+      CNodePtr active_ptr = KernelAdjust::GetInstance().CreateStreamActiveOp(graph_ptr);
       update_cnode_list.emplace_back(cur_cnode_ptr);
       update_cnode_list.emplace_back(active_ptr);
       UpdateStreamSwitch(cur_cnode_ptr, active_ptr);
@@ -417,6 +420,37 @@ void AscendStreamAssign::InsertActiveNew(const std::shared_ptr<session::KernelGr
   MS_LOG(INFO) << "end";
 }
 
+void AscendStreamAssign::UpdateEventId(const shared_ptr<session::KernelGraph> &graph_ptr) {
+  MS_LOG(INFO) << "start";
+  MS_EXCEPTION_IF_NULL(graph_ptr);
+  CNodePtr cur_cnode_ptr = nullptr;
+  // key:virutal event id, value:real event id
+  std::unordered_map<uint32_t, uint32_t> event_id_map;
+  uint32_t event_id;
+  auto cnode_ptr_list = graph_ptr->execution_order();
+  for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
+    cur_cnode_ptr = cnode_ptr_list[i];
+    MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
+    if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kSendOpName || AnfAlgo::GetCNodeName(cur_cnode_ptr) == kRecvOpName) {
+      auto primitive = AnfAlgo::GetCNodePrimitive(cur_cnode_ptr);
+      MS_EXCEPTION_IF_NULL(primitive);
+      event_id = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
+      // before stream assign, send/recv event_id assign from kFirstEventId
+      if (event_id < kFirstEventId) {
+        continue;
+      }
+      auto it = event_id_map.find(event_id);
+      if (it == event_id_map.end()) {
+        event_id_map.insert(std::make_pair(event_id, total_event_num_));
+        AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue<uint32_t>(total_event_num_), cur_cnode_ptr);
+        total_event_num_++;
+      } else {
+        AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue<uint32_t>(it->second), cur_cnode_ptr);
+      }
+    }
+  }
+}
+
 void AscendStreamAssign::UpdateStreamId(const shared_ptr<session::KernelGraph> &graph_ptr) {
   MS_LOG(INFO) << "start";
   MS_EXCEPTION_IF_NULL(graph_ptr);
@@ -427,7 +461,7 @@ void AscendStreamAssign::UpdateStreamId(const shared_ptr<session::KernelGraph> &
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
     uint32_t cur_stream_id = AnfAlgo::GetStreamId(cur_cnode_ptr);
     if (cur_stream_id < kIndependFirstStreamId) {
-      if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == "StreamActive") {
+      if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kStreamActiveOpName) {
         auto primitive = AnfAlgo::GetCNodePrimitive(cur_cnode_ptr);
         MS_EXCEPTION_IF_NULL(primitive);
         vector<uint32_t> active_ids = GetValue<std::vector<uint32_t>>(primitive->GetAttr(kAttrActiveStreamList));
@@ -471,6 +505,29 @@ void AscendStreamAssign::UpdateStreamId(const shared_ptr<session::KernelGraph> &
   MS_LOG(INFO) << "end";
 }
 
+void AscendStreamAssign::GetNeedActiveStreams(const shared_ptr<session::KernelGraph> &graph_ptr) {
+  MS_EXCEPTION_IF_NULL(graph_ptr);
+  CNodePtr cur_cnode_ptr = nullptr;
+  auto cnode_ptr_list = graph_ptr->execution_order();
+  for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
+    cur_cnode_ptr = cnode_ptr_list[i];
+    MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
+    auto primitive = AnfAlgo::GetCNodePrimitive(cur_cnode_ptr);
+    MS_EXCEPTION_IF_NULL(primitive);
+    auto value_ptr = primitive->GetAttr(kStreamNeedActivedFirst);
+    if (value_ptr == nullptr) {
+      continue;
+    }
+
+    auto need_active = GetValue<bool>(value_ptr);
+    if (need_active) {
+      auto stream_id = AnfAlgo::GetStreamId(cur_cnode_ptr);
+      MS_LOG(INFO) << "stream id:" << stream_id << " is need actived at first";
+      need_first_active_streams_.push_back(stream_id);
+    }
+  }
+}
+
 void AscendStreamAssign::AssignStreamNew(const shared_ptr<session::KernelGraph> &graph_ptr) {
   if (IsTaskSink()) {
     ResetNew();
@@ -480,13 +537,15 @@ void AscendStreamAssign::AssignStreamNew(const shared_ptr<session::KernelGraph> 
     InsertSendRecvForHcomParallel(graph_ptr);
     InsertSendRecvForIndependent(graph_ptr);
     UpdateStreamId(graph_ptr);
+    UpdateEventId(graph_ptr);
+    GetNeedActiveStreams(graph_ptr);
 
     MS_LOG(INFO) << "after finish stream assign";
     PrintGraphExeOrders(graph_ptr);
 
     // Get info for D Model
-    generator::IRModelUtil::GetInstance().set_event_num(GetTotalEventNum());
-    generator::IRModelUtil::GetInstance().set_stream_num(GetTotalCommonStreamNum() + GetTotalIndependStreamNum());
+    generator::IRModelUtil::GetInstance().set_event_num(total_event_num());
+    generator::IRModelUtil::GetInstance().set_stream_num(total_common_stream_num() + total_independ_stream_num());
     // Init to 1,temporarily
     generator::IRModelUtil::GetInstance().set_batch_num(1);
   }
@@ -495,7 +554,7 @@ void AscendStreamAssign::AssignStreamNew(const shared_ptr<session::KernelGraph> 
 CNodePtr AscendStreamAssign::CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr,
                                                    uint32_t event_id, uint32_t stream_id) {
   MS_EXCEPTION_IF_NULL(graph_ptr);
-  auto send_op = std::make_shared<Primitive>("Send");
+  auto send_op = std::make_shared<Primitive>(kSendOpName);
   MS_EXCEPTION_IF_NULL(send_op);
   auto send_apply = std::make_shared<ValueNode>(send_op);
   MS_EXCEPTION_IF_NULL(send_apply);
@@ -505,7 +564,7 @@ CNodePtr AscendStreamAssign::CreateSendApplyKernel(const std::shared_ptr<session
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
   selected_kernel_builder.SetKernelType(KernelType::RT_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), send_node_ptr.get());
-  AnfAlgo::SetNodeAttr("event_id", MakeValue(event_id), send_node_ptr);
+  AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), send_node_ptr);
   auto abstract_none = std::make_shared<abstract::AbstractNone>();
   MS_EXCEPTION_IF_NULL(abstract_none);
   send_node_ptr->set_abstract(abstract_none);
@@ -516,7 +575,7 @@ CNodePtr AscendStreamAssign::CreateSendApplyKernel(const std::shared_ptr<session
 CNodePtr AscendStreamAssign::CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr,
                                                    uint32_t event_id, uint32_t stream_id) {
   MS_EXCEPTION_IF_NULL(graph_ptr);
-  auto recv_op = std::make_shared<Primitive>("Recv");
+  auto recv_op = std::make_shared<Primitive>(kRecvOpName);
   MS_EXCEPTION_IF_NULL(recv_op);
   auto recv_apply = std::make_shared<ValueNode>(recv_op);
   MS_EXCEPTION_IF_NULL(recv_apply);
@@ -526,7 +585,7 @@ CNodePtr AscendStreamAssign::CreateRecvApplyKernel(const std::shared_ptr<session
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
   selected_kernel_builder.SetKernelType(KernelType::RT_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_builder.Build(), recv_node_ptr.get());
-  AnfAlgo::SetNodeAttr("event_id", MakeValue(event_id), recv_node_ptr);
+  AnfAlgo::SetNodeAttr(kAttrEventId, MakeValue(event_id), recv_node_ptr);
   AnfAlgo::SetStreamId(stream_id, recv_node_ptr.get());
   auto abstract_none = std::make_shared<abstract::AbstractNone>();
   MS_EXCEPTION_IF_NULL(abstract_none);
@@ -605,7 +664,7 @@ bool AscendStreamAssign::IsIndependentNode(const CNodePtr &node_ptr) {
     return false;
   }
 
-  if (AnfAlgo::GetCNodeName(node_ptr) == "GetNext") {
+  if (AnfAlgo::GetCNodeName(node_ptr) == kGetNextOpName) {
     MS_LOG(INFO) << "GetNext should not be independent node";
     return false;
   }
@@ -638,20 +697,23 @@ bool AscendStreamAssign::IsTaskSink() {
   }
 }
 
-std::vector<uint32_t> AscendStreamAssign::GetWaitStreams() {
-  vector<uint32_t> wait_active_stream_list;
+void AscendStreamAssign::GetWaitStreams(vector<uint32_t> *wait_active_stream_list) {
   if (total_common_stream_num_ == 0) {
     MS_LOG(INFO) << "total_common_stream_num is zero";
-    return wait_active_stream_list;
+    return;
   }
 
   // common stream:active first common stream
   MS_LOG(INFO) << "active physic id[" << first_physic_id_ << "]";
   for (uint32_t i = first_physic_id_ + 1; i < total_common_stream_num_; i++) {
-    MS_LOG(INFO) << "wait common stream id = " << i;
-    wait_active_stream_list.push_back(i);
+    auto it = std::find(need_first_active_streams_.begin(), need_first_active_streams_.end(), i);
+    if (it == need_first_active_streams_.end()) {
+      MS_LOG(INFO) << "wait common stream id = " << i;
+      (*wait_active_stream_list).push_back(i);
+    }
   }
 
+  // all independ stream id before first physical stream id should be actived
   auto it = logic_to_independent_map_.find(first_logic_id_);
   if (it != logic_to_independent_map_.end()) {
     uint32_t independent_id = it->second;
@@ -675,16 +737,14 @@ std::vector<uint32_t> AscendStreamAssign::GetWaitStreams() {
     if (i + total_common_stream_num_ <= max_before_physic) {
       continue;
     }
-    MS_LOG(INFO) << "wait independent stream id:" << i + total_common_stream_num_;
-    wait_active_stream_list.push_back(i + total_common_stream_num_);
+    // all wait streams should not in need_first_active_streams_
+    auto iter =
+      std::find(need_first_active_streams_.begin(), need_first_active_streams_.end(), i + total_common_stream_num_);
+    if (iter == need_first_active_streams_.end()) {
+      MS_LOG(INFO) << "wait independent stream id:" << i + total_common_stream_num_;
+      (*wait_active_stream_list).push_back(i + total_common_stream_num_);
+    }
   }
-
-  return wait_active_stream_list;
-}
-
-std::vector<uint32_t> AscendStreamAssign::GetHcomStreams() {
-  MS_LOG(INFO) << "hcom total stream nums:" << hcom_stream_list_.size();
-  return hcom_stream_list_;
 }
 
 uint32_t AscendStreamAssign::GetTotalStreamNum() const { return total_common_stream_num_ + total_independ_stream_num_; }
@@ -695,14 +755,14 @@ void AscendStreamAssign::PrintGraphExeOrders(const shared_ptr<mindspore::session
   for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
     CNodePtr cur_cnode_ptr = cnode_ptr_list[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-    if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == "Send" || AnfAlgo::GetCNodeName(cur_cnode_ptr) == "Recv") {
+    if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kSendOpName || AnfAlgo::GetCNodeName(cur_cnode_ptr) == kRecvOpName) {
       auto primitive = AnfAlgo::GetCNodePrimitive(cur_cnode_ptr);
       MS_LOG(INFO) << "node name[" << AnfAlgo::GetCNodeName(cur_cnode_ptr) << "], logic id["
                    << AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) << "], stream id["
                    << AnfAlgo::GetStreamId(cur_cnode_ptr) << "], event_id["
                    << GetValue<uint32_t>(primitive->GetAttr(kAttrEventId)) << "]";
     } else {
-      MS_LOG(INFO) << "node name[" << AnfAlgo::GetCNodeName(cur_cnode_ptr) << "], logic id["
+      MS_LOG(INFO) << "node name[" << cur_cnode_ptr->fullname_with_scope() << "], logic id["
                    << AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) << "], stream id["
                    << AnfAlgo::GetStreamId(cur_cnode_ptr) << "]";
     }

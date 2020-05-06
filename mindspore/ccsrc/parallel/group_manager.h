@@ -18,9 +18,9 @@
 #define MINDSPORE_CCSRC_PARALLEL_GROUP_MANAGER_H_
 
 #include <cstdint>
-#include <list>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "parallel/device.h"
 #include "parallel/status.h"
@@ -37,16 +37,16 @@ class Group {
  public:
   Group();
   ~Group() = default;
-  Status Init(const std::string& name, const std::list<Device>& devices);
-  std::list<Device> GetDevicesList() const;
+  Status Init(const std::string &name, const std::vector<Device> &devices);
+  std::vector<Device> GetDevicesList() const;
   std::string name() const { return name_; }
   bool IsInThisGroup(int32_t device_rank);
-  Status GetIndex(size_t* index);
+  Status GetIndex(size_t *index);
   size_t GetDevNum() const { return devices_.size(); }
 
  private:
   std::string name_;
-  std::list<Device> devices_;
+  std::vector<Device> devices_;
 };
 
 class GroupManager {
@@ -54,14 +54,14 @@ class GroupManager {
   GroupManager();
   ~GroupManager() = default;
 
-  Status CreateGroup(const std::string& name, const std::list<Device>& devices, Group* group);
-  Status DestroyGroup(Group* group);
+  Status CreateGroup(const std::string &name, const std::vector<Device> &devices, Group *group);
+  Status DestroyGroup(Group *group);
   Status DestroyAllGroups();
-  Status GetRankID(const std::string& name, unsigned int* rank_id);
-  Status GetRankSize(const std::string& name, unsigned int* rank_size);
-  Status FindGroup(const std::string& name, Group** group);
+  Status GetRankID(const std::string &name, unsigned int *rank_id);
+  Status GetRankSize(const std::string &name, unsigned int *rank_size);
+  Status FindGroup(const std::string &name, Group **group);
   std::string world_group() const { return world_group_; }
-  void set_world_group(const std::string& name) { world_group_ = name; }
+  void set_world_group(const std::string &name) { world_group_ = name; }
   void Clear();
 
  private:

@@ -21,7 +21,6 @@
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "operator/ops.h"
 #include "pybind11/stl.h"
-#include "transform/convert.h"
 #include "session/anf_runtime_algorithm.h"
 namespace mindspore {
 namespace device {
@@ -29,11 +28,7 @@ namespace gpu {
 namespace py = pybind11;
 void GpuBuild(const KernelGraphPtr &kernel_graph) {
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
-  if (!bin_map->ReadIndex(kernel::kGpuKernelMeta)) {
-    MS_LOG(INFO) << "kernel cache miss, cache directory will be created later.";
-  } else {
-    MS_LOG(INFO) << "cache initialize to[" << kernel::kGpuKernelMeta << "].";
-  }
+  bin_map->Initialize();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {

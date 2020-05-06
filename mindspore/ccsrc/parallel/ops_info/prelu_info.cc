@@ -32,9 +32,9 @@ namespace parallel {
  * prelu has 2 input
  *  A: A float tensor of shape [NCHW] representing the output of the preview layer.
  *  w: Float Tensor, w > 0: there is only two shapes are legitimate: 1, or the number of channels at input.
- *  the strategy of w should equal to the channel dimension of strategy of A
+ *  the strategy of w should equal to the channel dimension of strategy of A, or equal to 1
  */
-Status PReLUInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status PReLUInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
@@ -52,7 +52,7 @@ Status PReLUInfo::CheckStrategy(const StrategyPtr& strategy) {
     }
     return FAILED;
   }
-  if ((stra[0][PRELU_CHANNEL_INDEX] != PRELU_CHANNEL_STRATEGY) || (stra[1][0] != PRELU_CHANNEL_STRATEGY)) {
+  if (stra[0][PRELU_CHANNEL_INDEX] != stra[1][0] && inputs_shape_[1][0] != 1) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Invalid channel strategy.";
     } else {
@@ -107,7 +107,11 @@ Status PReLUInfo::InferTensorMap() {
   }
 
   TensorMap param_tensor_map;
-  param_tensor_map.push_back(input_tensor_map.at(1));
+  if (inputs_shape_[1][0] == 1) {
+    param_tensor_map.push_back(-1);
+  } else {
+    param_tensor_map.push_back(input_tensor_map.at(1));
+  }
   inputs_tensor_map_.push_back(input_tensor_map);
   inputs_tensor_map_.push_back(param_tensor_map);
   outputs_tensor_map_.push_back(input_tensor_map);
@@ -119,7 +123,7 @@ Dimensions PReLUInfo::GetOutputStrategy() {
   return output_strategy;
 }
 
-Status PReLUInfo::InferTensorLayout(TensorLayouts* inputs_layout, TensorLayouts* outputs_layout) {
+Status PReLUInfo::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout) {
   if (inputs_layout == nullptr || outputs_layout == nullptr) {
     MS_LOG(ERROR) << name_ << ": InferTensorLayout: the layout is null.";
     return FAILED;
@@ -181,7 +185,7 @@ Status PReLUInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status PReLUInfo::Init(const StrategyPtr& strategy) {
+Status PReLUInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
@@ -190,7 +194,7 @@ Status PReLUInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status PReLUInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status PReLUInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
@@ -212,8 +216,10 @@ Status PReLUInfo::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   is_auto_parallel_ = true;
-  Shape input0_split(inputs_shape_[0].size(), 1);
-  input0_split[1] = 0;
+  Shape input0_split;
+  input0_split.emplace_back(1);
+  input0_split.emplace_back(0);
+  (void)input0_split.insert(input0_split.end(), inputs_shape_[0].size() - 2, 1);
   Shape input1_split(inputs_shape_[1].size(), 0);
   Shapes splittable_inputs = {input0_split, input1_split};
   std::vector<StrategyPtr> sp_vector;
@@ -222,7 +228,7 @@ Status PReLUInfo::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << ": Successfully generated " << success << " strategy.";
@@ -232,7 +238,7 @@ Status PReLUInfo::GenerateStrategies(int32_t stage_id) {
   return SUCCESS;
 }
 
-Status PReLUInfo::SetCostUnderStrategy(const StrategyPtr& strategy) {
+Status PReLUInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Set cost under strategy failed.";

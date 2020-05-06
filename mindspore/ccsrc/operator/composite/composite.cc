@@ -46,6 +46,8 @@ using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractClass;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractDictionaryPtr;
+using mindspore::abstract::AbstractEllipsis;
+using mindspore::abstract::AbstractEllipsisPtr;
 using mindspore::abstract::AbstractFunction;
 using mindspore::abstract::AbstractFunctionPtr;
 using mindspore::abstract::AbstractList;
@@ -66,7 +68,7 @@ const MetaFuncGraphPtr kTail = std::make_shared<Tail>("tail");
 // Apply a function of two arguments cumulatively to the items of a sequence,
 // from left to right, so as to reduce the sequence to a single value.For example,
 // reduce(lambda x, y: x + y, [ 1, 2, 3, 4, 5 ]) calculates ((((1 + 2) + 3) + 4) + 5).
-AnyPtr Reduce(const OpsFunction& func, const AnyPtrList& list) {
+AnyPtr Reduce(const OpsFunction &func, const AnyPtrList &list) {
   std::shared_ptr<Any> ret;
   size_t size = list.size();
   if (size < 2) {
@@ -88,7 +90,7 @@ AnyPtr Reduce(const OpsFunction& func, const AnyPtrList& list) {
   return ret;
 }
 
-AnfNodePtr Reduce(const AnfNodeOpsFunction& func, const std::vector<AnfNodePtr>& list) {
+AnfNodePtr Reduce(const AnfNodeOpsFunction &func, const std::vector<AnfNodePtr> &list) {
   size_t size = list.size();
   if (size < 2) {
     MS_LOG(EXCEPTION) << "length of inputs of Reduce is less than 2";
@@ -121,7 +123,7 @@ void HyperMap::Init() {
                             {"args", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindVarPositional}});
 }
 
-HyperMap::HyperMap(const std::shared_ptr<MultitypeFuncGraph>& fn_leaf)
+HyperMap::HyperMap(const std::shared_ptr<MultitypeFuncGraph> &fn_leaf)
     : MetaFuncGraph("hyper_map"),
       fn_leaf_(fn_leaf),
       broadcast_(false),
@@ -129,13 +131,13 @@ HyperMap::HyperMap(const std::shared_ptr<MultitypeFuncGraph>& fn_leaf)
   Init();
 }
 
-HyperMap::HyperMap(const HyperMap& h)
+HyperMap::HyperMap(const HyperMap &h)
     : MetaFuncGraph("hyper_map"), fn_leaf_(h.fn_leaf_), broadcast_(h.broadcast_), nonleaf_(h.nonleaf_) {
   Init();
 }
 
-AnfNodePtr HyperMap::FullMake(TypePtr, const FuncGraphPtr& func_graph, const AnfNodePtr& fn_arg,
-                              const ArgsPairList& arg_map) {
+AnfNodePtr HyperMap::FullMake(TypePtr, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
+                              const ArgsPairList &arg_map) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> inputs;
   if (fn_arg != nullptr) {
@@ -145,17 +147,17 @@ AnfNodePtr HyperMap::FullMake(TypePtr, const FuncGraphPtr& func_graph, const Anf
   }
 
   (void)std::transform(arg_map.begin(), arg_map.end(), std::back_inserter(inputs),
-                       [](const std::pair<AnfNodePtr, Any>& item) { return item.first; });
+                       [](const std::pair<AnfNodePtr, Any> &item) { return item.first; });
   return func_graph->NewCNode(inputs);
 }
 
-AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List>& type, const FuncGraphPtr& func_graph,
-                              const AnfNodePtr& fn_arg, const ArgsPairList& arg_map) {
+AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraphPtr &func_graph,
+                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(type);
 
   std::size_t size = type->elements().size();
-  bool is_not_same = std::any_of(arg_map.begin(), arg_map.end(), [size](const std::pair<AnfNodePtr, TypePtr>& item) {
+  bool is_not_same = std::any_of(arg_map.begin(), arg_map.end(), [size](const std::pair<AnfNodePtr, TypePtr> &item) {
     auto lhs = std::static_pointer_cast<List>(item.second);
     MS_EXCEPTION_IF_NULL(lhs);
     return lhs->elements().size() != size;
@@ -179,7 +181,7 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List>& type, const FuncGraph
 
     (void)std::transform(
       arg_map.begin(), arg_map.end(), std::back_inserter(inputs2),
-      [&func_graph, i](const std::pair<AnfNodePtr, Any>& item) {
+      [&func_graph, i](const std::pair<AnfNodePtr, Any> &item) {
         return func_graph->NewCNode({NewValueNode(prim::kPrimListGetItem), item.first, NewValueNode(i)});
       });
 
@@ -188,13 +190,13 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List>& type, const FuncGraph
   return func_graph->NewCNode(inputs);
 }
 
-AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple>& type, const FuncGraphPtr& func_graph,
-                              const AnfNodePtr& fn_arg, const ArgsPairList& arg_map) {
+AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph,
+                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(type);
 
   std::size_t size = type->elements().size();
-  bool is_not_same = std::any_of(arg_map.begin(), arg_map.end(), [size](const std::pair<AnfNodePtr, TypePtr>& item) {
+  bool is_not_same = std::any_of(arg_map.begin(), arg_map.end(), [size](const std::pair<AnfNodePtr, TypePtr> &item) {
     auto lhs = std::static_pointer_cast<Tuple>(item.second);
     MS_EXCEPTION_IF_NULL(lhs);
     return lhs->elements().size() != size;
@@ -226,8 +228,8 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple>& type, const FuncGrap
   return func_graph->NewCNode(inputs);
 }
 
-AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class>& type, const FuncGraphPtr& func_graph,
-                              const AnfNodePtr& fn_arg, const ArgsPairList& arg_map) {
+AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGraphPtr &func_graph,
+                              const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
   MS_EXCEPTION_IF_NULL(type);
   MS_EXCEPTION_IF_NULL(func_graph);
 
@@ -257,11 +259,11 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class>& type, const FuncGrap
   return func_graph->NewCNode(inputs);
 }
 
-AnfNodePtr HyperMap::Make(const FuncGraphPtr& func_graph, const AnfNodePtr& fn_arg, const ArgsPairList& arg_map) {
+AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
   bool found = false;
   TypeId id = kObjectTypeEnd;
   std::pair<AnfNodePtr, TypePtr> pair;
-  for (auto& item : arg_map) {
+  for (auto &item : arg_map) {
     pair = item;
     id = item.second->type_id();
     if (nonleaf_.count(id)) {
@@ -272,7 +274,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr& func_graph, const AnfNodePtr& fn_a
 
   if (found) {
     // In a nonleaf situation, all arguments must have the same generic.
-    bool is_not_same = std::any_of(arg_map.begin(), arg_map.end(), [pair](const std::pair<AnfNodePtr, TypePtr>& item) {
+    bool is_not_same = std::any_of(arg_map.begin(), arg_map.end(), [pair](const std::pair<AnfNodePtr, TypePtr> &item) {
       if (item.first != pair.first) {
         return item.second->type_id() != pair.second->type_id();
       }
@@ -283,7 +285,7 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr& func_graph, const AnfNodePtr& fn_a
       oss << "There are " << arg_map.size() << " inputs of `" << name_ << "`, corresponding type info:\n"
           << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
       int idx = 0;
-      for (auto& item : arg_map) {
+      for (auto &item : arg_map) {
         oss << ++idx << ": " << item.second->ToString() << "\n";
       }
       MS_LOG(EXCEPTION) << "HyperMap cannot match up all input types of arguments.\n" << oss.str();
@@ -308,14 +310,14 @@ AnfNodePtr HyperMap::Make(const FuncGraphPtr& func_graph, const AnfNodePtr& fn_a
   }
 }
 
-ArgsPairList HyperMap::Harmonize(const FuncGraphPtr& func_graph, const ArgsPairList& args_spec_list) {
+ArgsPairList HyperMap::Harmonize(const FuncGraphPtr &func_graph, const ArgsPairList &args_spec_list) {
   TypePtr type_tensor = std::make_shared<TensorType>();
   bool flag = std::any_of(
     args_spec_list.begin(), args_spec_list.end(),
-    [type_tensor](const std::pair<AnfNodePtr, TypePtr>& item) { return IsSubType(item.second, type_tensor); });
+    [type_tensor](const std::pair<AnfNodePtr, TypePtr> &item) { return IsSubType(item.second, type_tensor); });
   if (flag && broadcast_) {
     ArgsPairList ret;
-    for (auto& item : args_spec_list) {
+    for (auto &item : args_spec_list) {
       if (!IsSubType(item.second, type_tensor)) {
         TypePtr type_tensor_ele = std::make_shared<TensorType>(item.second);
         ret.push_back(
@@ -329,7 +331,7 @@ ArgsPairList HyperMap::Harmonize(const FuncGraphPtr& func_graph, const ArgsPairL
   return args_spec_list;
 }
 
-FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList& args_spec_list) {
+FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
   FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
   ptrGraph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
   ptrGraph->debug_info()->set_name("hyper_map");
@@ -353,7 +355,7 @@ FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList& args_spec_list) {
   return ptrGraph;
 }
 
-abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList& args_spec_list) const {
+abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
   if (fn_leaf_ == nullptr) {
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     // Assert that hypermap's function param does not contain free variables
@@ -368,20 +370,20 @@ abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList&
 
   AbstractBasePtrList broadened;
   (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(broadened),
-                       [](const AbstractBasePtr& arg) -> AbstractBasePtr {
+                       [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
                          return arg->Broaden();
                        });
   return broadened;
 }
 
-REGISTER_PYBIND_DEFINE(HyperMap_, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(HyperMap_, ([](const py::module *m) {
                          (void)py::class_<HyperMapPy, MetaFuncGraph, std::shared_ptr<HyperMapPy>>(*m, "HyperMap_")
                            .def(py::init<std::shared_ptr<MultitypeFuncGraph>>(), py::arg("leaf"))
                            .def(py::init<>());
                        }));
 
-FuncGraphPtr Tail::GenerateTupleFuncGraph(const abstract::AbstractTuplePtr& a_tuple) {
+FuncGraphPtr Tail::GenerateTupleFuncGraph(const abstract::AbstractTuplePtr &a_tuple) {
   MS_EXCEPTION_IF_NULL(a_tuple);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
@@ -401,7 +403,7 @@ FuncGraphPtr Tail::GenerateTupleFuncGraph(const abstract::AbstractTuplePtr& a_tu
   return ret;
 }
 
-FuncGraphPtr Tail::GenerateListFuncGraph(const abstract::AbstractListPtr& a_list) {
+FuncGraphPtr Tail::GenerateListFuncGraph(const abstract::AbstractListPtr &a_list) {
   MS_EXCEPTION_IF_NULL(a_list);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
@@ -421,7 +423,7 @@ FuncGraphPtr Tail::GenerateListFuncGraph(const abstract::AbstractListPtr& a_list
   return ret;
 }
 
-FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   if (args_spec_list.size() != 1) {
     MS_LOG(EXCEPTION) << "tail requires a non-empty tuple.";
   }
@@ -441,11 +443,11 @@ FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) 
 }
 
 REGISTER_PYBIND_DEFINE(
-  Tail_, ([](const py::module* m) {
-    (void)py::class_<Tail, MetaFuncGraph, std::shared_ptr<Tail>>(*m, "Tail_").def(py::init<std::string&>());
+  Tail_, ([](const py::module *m) {
+    (void)py::class_<Tail, MetaFuncGraph, std::shared_ptr<Tail>>(*m, "Tail_").def(py::init<std::string &>());
   }));
 
-FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   int tuple_size = SizeToInt(args_spec_list.size());
 
   std::ostringstream ss;
@@ -486,7 +488,7 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList& arg
   return fg;
 }
 
-GradOperation::GradOperation(const std::string& name, bool get_all, bool get_by_list, bool sens_param)
+GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_list, bool sens_param)
     : MetaFuncGraph(name), get_all_(get_all), get_by_list_(get_by_list), sens_param_(sens_param) {
   if (get_by_list) {
     signatures_ =
@@ -496,8 +498,8 @@ GradOperation::GradOperation(const std::string& name, bool get_all, bool get_by_
   }
 }
 
-FuncGraphPtr GradOperation::GetGrad(AnfNodePtr node, const AnfNodePtr& weights,
-                                    const std::vector<AnfNodePtr>& params_list, bool applyJ) {
+FuncGraphPtr GradOperation::GetGrad(AnfNodePtr node, const AnfNodePtr &weights,
+                                    const std::vector<AnfNodePtr> &params_list, bool applyJ) {
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
   ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
 
@@ -537,7 +539,7 @@ FuncGraphPtr GradOperation::GetGrad(AnfNodePtr node, const AnfNodePtr& weights,
   return ret;
 }
 
-void GradOperation::doGetGrad(const FuncGraphPtr& func_graph, AnfNodePtr out, AnfNodePtr ptrBprop, AnfNodePtr weights,
+void GradOperation::doGetGrad(const FuncGraphPtr &func_graph, AnfNodePtr out, AnfNodePtr ptrBprop, AnfNodePtr weights,
                               ValueNodePtr opsTupleItem) {
   MS_EXCEPTION_IF_NULL(func_graph);
 
@@ -590,7 +592,7 @@ void GradOperation::doGetGrad(const FuncGraphPtr& func_graph, AnfNodePtr out, An
 }
 
 // Generate the graph.
-FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   if (args_spec_list.size() < 1) {
     MS_LOG(EXCEPTION) << "GenerateGraph requires at least 1 parameters, while the input size is "
                       << args_spec_list.size() << ".";
@@ -637,21 +639,21 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList& args_sp
   return dfBuilder;
 }
 
-REGISTER_PYBIND_DEFINE(GradOperation_, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(GradOperation_, ([](const py::module *m) {
                          (void)py::class_<GradOperation, MetaFuncGraph, std::shared_ptr<GradOperation>>(
                            *m, "GradOperation_")
-                           .def(py::init<std::string&>(), py::arg("fn"))
-                           .def(py::init<std::string&, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"),
+                           .def(py::init<std::string &>(), py::arg("fn"))
+                           .def(py::init<std::string &, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"),
                                 py::arg("get_by_list"), py::arg("sens_param"));
                        }));
 
-MultitypeFuncGraph::MultitypeFuncGraph(const std::string& name) : MetaFuncGraph(name) {
+MultitypeFuncGraph::MultitypeFuncGraph(const std::string &name) : MetaFuncGraph(name) {
   fn_cache_.clear();
   signatures_ = std::vector<Signature>({// def multitype(*args:ref):
                                         {"args", SignatureEnumRW::kRWRef, SignatureEnumKind::kKindVarPositional}});
 }
 
-void MultitypeFuncGraph::Register(const TypePtrList& types, specialize_fn s_fn) {
+void MultitypeFuncGraph::Register(const TypePtrList &types, specialize_fn s_fn) {
   MS_LOG(DEBUG) << "Register type (" << ::mindspore::ToString(types) << ".";
   auto fn = fn_cache_.find(types);
   if (fn != fn_cache_.end()) {
@@ -660,7 +662,7 @@ void MultitypeFuncGraph::Register(const TypePtrList& types, specialize_fn s_fn) 
   fn_cache_[types] = s_fn;
 }
 
-void MultitypeFuncGraph::Register(const TypePtrList& types, const py::function& py_fn) {
+void MultitypeFuncGraph::Register(const TypePtrList &types, const py::function &py_fn) {
   MS_LOG(DEBUG) << "Register type (" << ::mindspore::ToString(types) << ", " << std::string(py_fn.str()) << ").";
   auto fn = fn_cache_.find(types);
   if (fn != fn_cache_.end()) {
@@ -669,19 +671,19 @@ void MultitypeFuncGraph::Register(const TypePtrList& types, const py::function& 
   fn_cache_py_[types] = py_fn;
 }
 
-void MultitypeFuncGraph::Register(const std::vector<std::string>& types_name, const py::function& py_fn) {
+void MultitypeFuncGraph::Register(const std::vector<std::string> &types_name, const py::function &py_fn) {
   TypePtrList types;
-  for (auto& type_name : types_name) {
+  for (auto &type_name : types_name) {
     auto type_ptr = StringToType(type_name);
     if (type_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "" << type_name << " convert from string error ";
+      MS_LOG(EXCEPTION) << type_name << " convert from string error ";
     }
     types.push_back(type_ptr);
   }
   Register(types, py_fn);
 }
 
-void MultitypeFuncGraph::PyRegister(const py::tuple& tuple, const py::function& py_fn) {
+void MultitypeFuncGraph::PyRegister(const py::tuple &tuple, const py::function &py_fn) {
   std::vector<std::string> types_name;
   for (size_t it = 0; it < tuple.size(); ++it) {
     py::object name_py = tuple[it];
@@ -693,16 +695,16 @@ void MultitypeFuncGraph::PyRegister(const py::tuple& tuple, const py::function& 
   }
   Register(types_name, py_fn);
 }
-static TypePtr UnwrapRef(const TypePtr& type) {
+static TypePtr UnwrapRef(const TypePtr &type) {
   if (type->isa<RefType>()) {
     return type->cast<RefTypePtr>()->subtype();
   }
   return type;
 }
-FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList& types) {
+FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
   bool find_fn = false;
   py::function py_fn;
-  for (auto& item : fn_cache_py_) {
+  for (auto &item : fn_cache_py_) {
     TypePtrList sign = item.first;
     if (sign.size() != types.size()) {
       continue;
@@ -735,7 +737,7 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList& types) {
   oss << "There are " << fn_cache_py_.size() << " prototypes for overload function `" << name_
       << "`, corresponding location info:\n";
   int idx = 0;
-  for (auto& item : fn_cache_py_) {
+  for (auto &item : fn_cache_py_) {
     FuncGraphPtr func_graph = parse::ParsePythonCode(item.second);
     if (func_graph == nullptr) {
       MS_LOG(WARNING) << "Fail to parse Python code for function `" << name_ << "`.";
@@ -743,19 +745,19 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList& types) {
     }
     oss << ++idx << ". " << item.first << "\n  " << trace::GetDebugInfo(func_graph->debug_info()) << "\n";
   }
-  MS_LOG(EXCEPTION) << "Fail to find overload function for `" << name_ << "` with type " << buffer.str() << "\n"
+  MS_LOG(EXCEPTION) << "The '" << name_ << "' operation does not support the type " << buffer.str() << "\n"
                     << oss.str();
 }
 
-REGISTER_PYBIND_DEFINE(MultitypeFuncGraph_, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(MultitypeFuncGraph_, ([](const py::module *m) {
                          (void)py::class_<MultitypeFuncGraph, MetaFuncGraph, std::shared_ptr<MultitypeFuncGraph>>(
                            *m, "MultitypeFuncGraph_")
-                           .def(py::init<std::string&>())
+                           .def(py::init<std::string &>())
                            .def("register_fn", &MultitypeFuncGraph::PyRegister);
                        }));
 
 // Generate the ListMap func graph.
-FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   size_t args_num = args_spec_list.size();
   // args: fn, list1, list2, ...
   if (args_num < 2) {
@@ -821,8 +823,8 @@ FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList& args_spec_lis
   return fg_ptr;
 }
 
-void ListMap::MakeCond(const std::vector<AnfNodePtr>& lists, const FuncGraphPtr& fgnext_ptr,
-                       const FuncGraphPtr& fg_ptr) {
+void ListMap::MakeCond(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr &fgnext_ptr,
+                       const FuncGraphPtr &fg_ptr) {
   MS_EXCEPTION_IF_NULL(fg_ptr);
 
   AnfNodePtr fn = fg_ptr->add_parameter();
@@ -858,8 +860,8 @@ void ListMap::MakeCond(const std::vector<AnfNodePtr>& lists, const FuncGraphPtr&
   fgtrue_ptr->set_output(output_cnode);
 }
 
-void ListMap::MakeNext(const std::vector<AnfNodePtr>& lists, const FuncGraphPtr& fgcond_ptr,
-                       const FuncGraphPtr& fg_ptr) {
+void ListMap::MakeNext(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr &fgcond_ptr,
+                       const FuncGraphPtr &fg_ptr) {
   MS_EXCEPTION_IF_NULL(fg_ptr);
   AnfNodePtr fn = fg_ptr->add_parameter();
 
@@ -893,7 +895,7 @@ void ListMap::MakeNext(const std::vector<AnfNodePtr>& lists, const FuncGraphPtr&
   fg_ptr->set_output(output_cnode);
 }
 
-FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // args: tuple1, tuple2
   abstract::CheckArgsSize("TupleAdd", args_spec_list, 2);
   AbstractBasePtr abs_a = args_spec_list[0];
@@ -928,7 +930,7 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList& args_spec_li
   return ret;
 }
 
-int GetArgScalarValue(const abstract::AbstractScalarPtr& scalar, const std::string&) {
+int GetArgScalarValue(const abstract::AbstractScalarPtr &scalar, const std::string &) {
   MS_EXCEPTION_IF_NULL(scalar);
   return GetValue<int>(scalar->BuildValue());
 }
@@ -942,7 +944,7 @@ int GetPositiveIndex(int index, int length) {
   return index;
 }
 
-int CheckSliceMember(const AbstractBasePtr& member, int default_value, const std::string& member_name) {
+int CheckSliceMember(const AbstractBasePtr &member, int default_value, const std::string &member_name) {
   MS_EXCEPTION_IF_NULL(member);
 
   if (member->isa<AbstractScalar>()) {
@@ -953,12 +955,11 @@ int CheckSliceMember(const AbstractBasePtr& member, int default_value, const std
     return default_value;
   }
 
-  MS_LOG(EXCEPTION) << "" << member_name << " should be a AbstractScalar or AbstractNone, but got "
-                    << member->ToString();
+  MS_LOG(EXCEPTION) << member_name << " should be a AbstractScalar or AbstractNone, but got " << member->ToString();
 }
 
-void GenerateTupleSliceParameter(const AbstractTuplePtr& tuple, const AbstractSlicePtr& slice, int* start_index,
-                                 int* stop_index, int* step_value) {
+void GenerateTupleSliceParameter(const AbstractTuplePtr &tuple, const AbstractSlicePtr &slice, int *start_index,
+                                 int *stop_index, int *step_value) {
   MS_EXCEPTION_IF_NULL(tuple);
   MS_EXCEPTION_IF_NULL(slice);
   MS_EXCEPTION_IF_NULL(start_index);
@@ -998,7 +999,7 @@ void GenerateTupleSliceParameter(const AbstractTuplePtr& tuple, const AbstractSl
   }
 }
 
-FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // slice a tuple
   // args: tuple, start index, end index, step
   const std::string op_name("TupleSlice");
@@ -1032,7 +1033,7 @@ FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList& args_spec_
   return ret;
 }
 
-int ConvertBinaryToDecimal(const std::vector<unsigned int>& number_bin) {
+int ConvertBinaryToDecimal(const std::vector<unsigned int> &number_bin) {
   unsigned int number_dec = 0;
   for (size_t index = 0; index < number_bin.size(); index++) {
     number_dec |= number_bin[index] << index;
@@ -1040,8 +1041,8 @@ int ConvertBinaryToDecimal(const std::vector<unsigned int>& number_bin) {
   return static_cast<int>(number_dec);
 }
 
-void ParseSlice(const AbstractSlicePtr& slice, std::vector<int>* begin, std::vector<int>* end,
-                std::vector<int>* strides, int length) {
+void ParseSlice(const AbstractSlicePtr &slice, std::vector<int> *begin, std::vector<int> *end,
+                std::vector<int> *strides, int length) {
   MS_EXCEPTION_IF_NULL(slice);
   MS_EXCEPTION_IF_NULL(begin);
   MS_EXCEPTION_IF_NULL(end);
@@ -1064,8 +1065,8 @@ void ParseSlice(const AbstractSlicePtr& slice, std::vector<int>* begin, std::vec
   strides->push_back(step_value);
 }
 
-int GenerateStridedSliceParametersFromTuple(const AbstractTuplePtr& slice_tuple, const std::vector<int>& shape,
-                                            std::vector<int>* begin, std::vector<int>* end, std::vector<int>* strides) {
+int GenerateStridedSliceParametersFromTuple(const AbstractTuplePtr &slice_tuple, const std::vector<int> &shape,
+                                            std::vector<int> *begin, std::vector<int> *end, std::vector<int> *strides) {
   MS_EXCEPTION_IF_NULL(slice_tuple);
   MS_EXCEPTION_IF_NULL(begin);
   MS_EXCEPTION_IF_NULL(end);
@@ -1081,6 +1082,8 @@ int GenerateStridedSliceParametersFromTuple(const AbstractTuplePtr& slice_tuple,
 
   std::vector<unsigned int> shrink;
   auto slice_tuple_eles = slice_tuple->elements();
+  size_t ellipsis_num = 0;
+
   for (size_t index = 0; index < slice_tuple_size; index++) {
     if (slice_tuple_eles[index]->isa<AbstractSlice>()) {
       AbstractSlicePtr slice = dyn_cast<AbstractSlice>(slice_tuple_eles[index]);
@@ -1098,21 +1101,35 @@ int GenerateStridedSliceParametersFromTuple(const AbstractTuplePtr& slice_tuple,
       continue;
     }
 
-    MS_LOG(EXCEPTION) << "Slice tuple only could contain slice or int number, but got "
+    if (slice_tuple_eles[index]->isa<AbstractEllipsis>()) {
+      ellipsis_num++;
+      if (ellipsis_num > 1) {
+        MS_LOG(EXCEPTION) << "Tensor slice supports at most one ellipsis";
+      }
+      size_t ellipsis_len = shape_size - (slice_tuple_size - 1);
+      begin->insert(begin->end(), ellipsis_len, 0);
+      end->insert(end->end(), shape.begin() + index, shape.begin() + index + ellipsis_len);
+      strides->insert(strides->end(), ellipsis_len, 1);
+      shrink.insert(shrink.end(), ellipsis_len, 0);
+      continue;
+    }
+
+    MS_LOG(EXCEPTION) << "Slice tuple only could contain slice, int number or ellipsis, but got "
                       << slice_tuple_eles[index]->ToString();
   }
 
-  for (size_t index = slice_tuple_size; index < shape_size; index++) {
-    begin->push_back(0);
-    end->push_back(shape[index]);
-    strides->push_back(1);
+  if (ellipsis_num == 0) {
+    for (size_t index = slice_tuple_size; index < shape_size; index++) {
+      begin->push_back(0);
+      end->push_back(shape[index]);
+      strides->push_back(1);
+    }
   }
-
   return ConvertBinaryToDecimal(shrink);
 }
 
-int GenerateStridedSliceParametersFromSlice(const AbstractSlicePtr& slice, const std::vector<int>& shape,
-                                            std::vector<int>* begin, std::vector<int>* end, std::vector<int>* strides) {
+int GenerateStridedSliceParametersFromSlice(const AbstractSlicePtr &slice, const std::vector<int> &shape,
+                                            std::vector<int> *begin, std::vector<int> *end, std::vector<int> *strides) {
   MS_EXCEPTION_IF_NULL(begin);
   MS_EXCEPTION_IF_NULL(end);
   MS_EXCEPTION_IF_NULL(strides);
@@ -1132,9 +1149,9 @@ int GenerateStridedSliceParametersFromSlice(const AbstractSlicePtr& slice, const
   return 0;
 }
 
-int GenerateStridedSliceParametersFromNumber(const AbstractScalarPtr& scalar, const std::vector<int>& shape,
-                                             std::vector<int>* begin, std::vector<int>* end,
-                                             std::vector<int>* strides) {
+int GenerateStridedSliceParametersFromNumber(const AbstractScalarPtr &scalar, const std::vector<int> &shape,
+                                             std::vector<int> *begin, std::vector<int> *end,
+                                             std::vector<int> *strides) {
   MS_EXCEPTION_IF_NULL(begin);
   MS_EXCEPTION_IF_NULL(end);
   MS_EXCEPTION_IF_NULL(strides);
@@ -1153,12 +1170,17 @@ int GenerateStridedSliceParametersFromNumber(const AbstractScalarPtr& scalar, co
   return 1;
 }
 
-FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
+FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // slice a tensor
   // args: tensor, slice or slice tuple
   const std::string op_name = std::string("TensorSlice");
   abstract::CheckArgsSize(op_name, args_spec_list, 2);
   AbstractTensorPtr tensorPtr = abstract::CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+
+  FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
+  ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  AnfNodePtr tensor_node = ret_graph->add_parameter();
+  (void)ret_graph->add_parameter();
 
   auto shape = tensorPtr->shape()->shape();
   std::vector<int> begin;
@@ -1174,22 +1196,28 @@ FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList& args_spec
     shrink_axis_mask = GenerateStridedSliceParametersFromSlice(slice_ptr, shape, &begin, &end, &strides);
   } else if (args_spec_list[1]->isa<AbstractScalar>()) {
     AbstractScalarPtr scalar_ptr = dyn_cast<AbstractScalar>(args_spec_list[1]);
+    if (scalar_ptr->BuildValue()->isa<BoolImm>()) {
+      if (scalar_ptr->BuildValue()->cast<BoolImmPtr>()->value()) {
+        return ExpandADim(ret_graph, tensor_node);
+      }
+      MS_LOG(EXCEPTION) << "TensorSlice not support the index is False.";
+    }
     shrink_axis_mask = GenerateStridedSliceParametersFromNumber(scalar_ptr, shape, &begin, &end, &strides);
+  } else if (args_spec_list[1]->isa<AbstractEllipsis>()) {
+    ret_graph->set_output(tensor_node);
+    return ret_graph;
+  } else if (args_spec_list[1]->isa<AbstractNone>()) {
+    return ExpandADim(ret_graph, tensor_node);
   } else {
     std::ostringstream args_info;
-    for (const auto& arg : args_spec_list) {
+    for (const auto &arg : args_spec_list) {
       MS_EXCEPTION_IF_NULL(arg);
       args_info << arg->ToString() << "\n";
     }
-    MS_LOG(EXCEPTION) << "TensorSlice requires to input a tensor and a slice or slice tuple, but got "
-                      << args_info.str();
+    MS_LOG(EXCEPTION)
+      << "TensorSlice requires the input should be one of [slice, ellipsis, int number, bool, none, tuple] , but got "
+      << args_info.str();
   }
-
-  FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
-  ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
-
-  AnfNodePtr tensor_node = ret_graph->add_parameter();
-  (void)ret_graph->add_parameter();
 
   auto PrimStridedSliceClass = prim::GetPythonOps("StridedSlice", "mindspore.ops.operations");
   auto PrimStridedSlice = ret_graph->NewCNode({NewValueNode(PrimStridedSliceClass), NewValueNode(0), NewValueNode(0),
@@ -1199,69 +1227,25 @@ FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList& args_spec
   return ret_graph;
 }
 
-FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList& args_spec_list) {
-  // slice a tensor
-  // args: tensor, slice or slice tuple
-  const std::string op_name = std::string("UnpackCall");
-  size_t arg_length = args_spec_list.size();
-  if (arg_length < 2) {
-    MS_LOG(EXCEPTION) << "" << op_name << " requires at least two args, but got " << arg_length << ".";
-  }
-
-  (void)abstract::CheckArg<AbstractFunction>(op_name, args_spec_list, 0);
-  FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
-  ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
-
-  AnfNodePtr fnNode = ret_graph->add_parameter();
-  std::vector<AnfNodePtr> elems;
-  elems.push_back(fnNode);
-  for (size_t index = 1; index < arg_length; index++) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[index]);
-    if (args_spec_list[index]->isa<AbstractTuple>()) {
-      AbstractTuplePtr arg_tuple = dyn_cast<AbstractTuple>(args_spec_list[index]);
-      AnfNodePtr para_tuple = ret_graph->add_parameter();
-      for (size_t i = 0; i < arg_tuple->size(); ++i) {
-        elems.push_back(
-          ret_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), para_tuple, NewValueNode(SizeToInt(i))}));
-      }
-    } else if (args_spec_list[index]->isa<AbstractDictionary>()) {
-      AbstractDictionaryPtr arg_dict = dyn_cast<AbstractDictionary>(args_spec_list[index]);
-      AnfNodePtr para_dict = ret_graph->add_parameter();
-      auto dict_elems = arg_dict->elements();
-      (void)std::transform(
-        dict_elems.begin(), dict_elems.end(), std::back_inserter(elems),
-        [ret_graph, para_dict](const AbstractAttribute& item) {
-          return ret_graph->NewCNode(
-            {NewValueNode(prim::kPrimMakeKeywordArg), NewValueNode(item.first),
-             ret_graph->NewCNode({NewValueNode(prim::kPrimDictGetItem), para_dict, NewValueNode(item.first)})});
-        });
-    } else {
-      MS_LOG(EXCEPTION) << "" << op_name << " require args should be tuple or dict, but got "
-                        << args_spec_list[index]->ToString();
-    }
-  }
-  ret_graph->set_output(ret_graph->NewCNode(elems));
+FuncGraphPtr TensorSlice::ExpandADim(const FuncGraphPtr &ret_graph, const AnfNodePtr &tensor_node) const {
+  auto PrimExpandDims = GetPythonOps("expand_dims", "mindspore.ops.functional");
+  ret_graph->set_output(NewCNode({NewValueNode(PrimExpandDims), tensor_node, NewValueNode(0)}, ret_graph));
   return ret_graph;
 }
 
-REGISTER_PYBIND_DEFINE(
-  TupleAdd_, ([](const py::module* m) {
-    (void)py::class_<TupleAdd, MetaFuncGraph, std::shared_ptr<TupleAdd>>(*m, "TupleAdd_").def(py::init<std::string&>());
-  }));
+REGISTER_PYBIND_DEFINE(TupleAdd_, ([](const py::module *m) {
+                         (void)py::class_<TupleAdd, MetaFuncGraph, std::shared_ptr<TupleAdd>>(*m, "TupleAdd_")
+                           .def(py::init<std::string &>());
+                       }));
 
-REGISTER_PYBIND_DEFINE(TupleSlice_, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(TupleSlice_, ([](const py::module *m) {
                          (void)py::class_<TupleSlice, MetaFuncGraph, std::shared_ptr<TupleSlice>>(*m, "TupleSlice_")
-                           .def(py::init<std::string&>());
+                           .def(py::init<std::string &>());
                        }));
 
-REGISTER_PYBIND_DEFINE(TensorSlice_, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(TensorSlice_, ([](const py::module *m) {
                          (void)py::class_<TensorSlice, MetaFuncGraph, std::shared_ptr<TensorSlice>>(*m, "TensorSlice_")
-                           .def(py::init<std::string&>());
-                       }));
-
-REGISTER_PYBIND_DEFINE(UnpackCall_, ([](const py::module* m) {
-                         (void)py::class_<UnpackCall, MetaFuncGraph, std::shared_ptr<UnpackCall>>(*m, "UnpackCall_")
-                           .def(py::init<std::string&>());
+                           .def(py::init<std::string &>());
                        }));
 }  // namespace prim
 }  // namespace mindspore

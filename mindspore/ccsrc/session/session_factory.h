@@ -22,7 +22,6 @@
 #include <string>
 #include <utility>
 #include "common/utils.h"
-#include "device/cpu/cpu_kernel.h"
 #include "session/session_basic.h"
 namespace mindspore {
 namespace session {

@@ -36,7 +36,6 @@ tensor_to_ms_type = {"Int8": mstype.int8, "Int16": mstype.int16, "Int32": mstype
 tensor_to_np_type = {"Int8": np.int8, "Int16": np.int16, "Int32": np.int32, "Int64": np.int64,
                      "Float16": np.float16, "Float32": np.float32, "Float64": np.float64}
 
-
 def _special_process_par(par, new_par):
     """
     Processes the special condition.
@@ -182,8 +181,14 @@ def load_checkpoint(ckpoint_file_name, net=None):
             param_data = np.fromstring(data, np_type)
             dims = element.tensor.dims
 
-            if dims in [[0], [1]]:
-                parameter_dict[element.tag] = Parameter(param_data[0], name=element.tag)
+            if dims == [0]:
+                if 'Float' in data_type:
+                    param_data = float(param_data[0])
+                elif 'Int' in data_type:
+                    param_data = int(param_data[0])
+                parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
+            elif dims == [1]:
+                parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
             else:
                 param_dim = []
                 for dim in dims:
@@ -224,42 +229,52 @@ def load_param_into_net(net, parameter_dict):
         msg = ("Argument parameter_dict should be a dict, but got {}.".format(type(parameter_dict)))
         raise TypeError(msg)
 
-    logger.info("Execute parameter into net process.")
-    param_name_net_not_have = []
-    for name in parameter_dict:
-        b_par_dict_have_par_of_net = False
-        for _, param in net.parameters_and_names():
-            if name == param.name:
-                b_par_dict_have_par_of_net = True
-                # layerwise parallel parameter data loaded from checkpoint file,
-                # was a complete(merged) data, need to be splited
-                if param.layerwise_parallel:
-                    new_param = parameter_dict[param.name]
-                    _load_tensor_for_layerwise(new_param, param)
-                break
-        if not b_par_dict_have_par_of_net:
-            param_name_net_not_have.append(name)
-
-    param_name_param_dict_not_have = []
+    logger.info("Execute load parameter into net process.")
+    param_not_load = []
     for _, param in net.parameters_and_names():
         if param.name in parameter_dict:
             new_param = parameter_dict[param.name]
-
             if not isinstance(new_param, Parameter):
                 logger.error("Failed to combine the net and the parameters.")
                 msg = ("Argument parameter_dict element should be a Parameter, but got {}.".format(type(new_param)))
                 raise TypeError(msg)
             _update_param(param, new_param)
         else:
-            param_name_param_dict_not_have.append(param.name)
+            param_not_load.append(param.name)
+
+    if param_not_load:
+        _load_dismatch_prefix_params(net, parameter_dict, param_not_load)
 
     logger.debug("Params not matched(in net but not in parameter_dict):")
-    for paramname in param_name_param_dict_not_have:
-        logger.debug("%s", paramname)
-    logger.debug("Params not matched(in parameter_dict but not in net):")
-    for paramname in param_name_net_not_have:
-        logger.debug("%s", paramname)
-    logger.info("Load parameter into net process finish.")
+    for param_name in param_not_load:
+        logger.debug("%s", param_name)
+
+    logger.info("Load parameter into net finish, {} parameters has not been loaded.".format(len(param_not_load)))
+
+
+def _load_dismatch_prefix_params(net, parameter_dict, param_not_load):
+    """When some net parameter did not load, try to continue load."""
+    prefix_name = ""
+    longest_name = param_not_load[0]
+    while prefix_name != longest_name and param_not_load:
+        logger.debug("Count: {} parameters has not been loaded, try to load continue.".format(len(param_not_load)))
+        prefix_name = longest_name
+        for net_param_name in param_not_load:
+            for dict_name in parameter_dict:
+                if dict_name.endswith(net_param_name):
+                    prefix_name = dict_name[:-len(net_param_name)]
+                    break
+            if prefix_name != longest_name:
+                break
+
+        if prefix_name != longest_name:
+            logger.warning("Remove parameter prefix name: {}, continue to load.".format(prefix_name))
+            for _, param in net.parameters_and_names():
+                new_param_name = prefix_name + param.name
+                if param.name in param_not_load and new_param_name in parameter_dict:
+                    new_param = parameter_dict[new_param_name]
+                    _update_param(param, new_param)
+                    param_not_load.remove(param.name)
 
 
 def _save_graph(network, file_name):
@@ -279,13 +294,14 @@ def _save_graph(network, file_name):
         os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
 
 
-def _exec_save_checkpoint(train_network, ckpoint_file_name):
+def _exec_save_checkpoint(train_network, ckpoint_file_name, integrated_save=True):
     """
     Saves checkpoint for 'ms' backend.
 
     Args:
         train_network (Network): The train network for training.
         ckpoint_file_name (str): The name of checkpoint file.
+        integrated_save (bool): Whether to intergrated save in automatic model parallel scene.
     """
 
     param_dict = {}
@@ -300,9 +316,9 @@ def _exec_save_checkpoint(train_network, ckpoint_file_name):
         else:
             param_data = Tensor(value.data)
 
-        # in model parallel scenario, some parameters were spliteds to all the devices,
+        # in automatic model parallel scenario, some parameters were spliteds to all the devices,
         # which should be combined before saving
-        if key in train_network.parameter_layout_dict:
+        if integrated_save and key in train_network.parameter_layout_dict:
             param_data = _get_merged_param_data(train_network, key, param_data)
 
         each_param["data"] = param_data
@@ -344,34 +360,6 @@ def _get_merged_param_data(net, param_name, param_data):
     return param_data
 
 
-def _load_tensor_for_layerwise(new_param, old_param):
-    """
-    Replaces parameters with sliced tensors by layerwise parallel strategies.
-
-    Args:
-        new_param (Parameter): The new layerwise parallel parameter, will be loaded into net.
-        old_param(Parameter): The current parameter in the net.
-    """
-    if not isinstance(new_param.data, Tensor) or not isinstance(old_param.data, Tensor):
-        logger.error("Failed to combine the net and the parameters.")
-        msg = ("layerwise parallel parameter should be a Tensor, but got {}.".format(type(new_param.data)))
-        raise TypeError(msg)
-
-    if old_param.data.shape() == new_param.data.shape():
-        return
-
-    from mindspore.parallel._tensor import _load_tensor
-    from mindspore.communication.management import get_group_size
-    dev_mat = [get_group_size()]
-    shape = new_param.data.shape()
-    for x in range(len(shape)):  # dim 0 set 0, others set -1
-        if x:
-            tensor_map.append(-1)
-
-    new_tensor = _load_tensor(new_param.data, dev_mat, tensor_map)
-    new_param.set_parameter_data(new_tensor)
-
-
 def _fill_param_into_net(net, parameter_list):
     """
     Fills parameter_list into net.
@@ -384,10 +372,11 @@ def _fill_param_into_net(net, parameter_list):
     for each_param in parameter_list:
         param_name = each_param["name"]
         np_val = each_param["data"].asnumpy()
-        if np_val.shape == (1,):  # to scalar
-            parameter_dict[param_name] = Parameter(np_val[0], name=param_name)
+        if np_val.shape == (1,):
+            parameter_dict[param_name] = Parameter(np_val, name=param_name)
         elif np_val.shape == ():
-            parameter_dict[param_name] = Parameter(np_val.tolist(), name=param_name)
+            parameter_dict[param_name] = Parameter(Tensor(np_val.tolist(), mstype.pytype_to_dtype(np_val.dtype)),
+                                                   name=param_name)
         else:
             parameter_dict[param_name] = Parameter(Tensor(np_val), name=param_name)
 
@@ -405,9 +394,9 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         file_format (str): MindSpore currently supports 'GEIR', 'ONNX' and 'LITE' format for exported model.
 
             - GEIR: Graph Engine Intermidiate Representation. An intermidiate representation format of
-            Ascend model.
+              Ascend model.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
-            - LITE: Huawei model format for mobile.
+            - LITE: Huawei model format for mobile. A lite model only for the MindSpore Lite
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
     check_input_data(*inputs, data_class=Tensor)
@@ -425,7 +414,7 @@ def export(net, *inputs, file_name, file_format='GEIR'):
         _executor.export(net, file_name, file_format)
     elif file_format == 'ONNX':  # file_format is 'ONNX'
         phase_name = 'export_onnx'
-        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name)
+        graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(graph_id)
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)

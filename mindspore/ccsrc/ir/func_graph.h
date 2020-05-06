@@ -37,6 +37,7 @@ namespace mindspore {
 using BaseRefCounterMap = OrderedMap<BaseRef, int, BaseRefHash>;
 using FuncGraphCounterMap = OrderedMap<FuncGraphPtr, int>;
 using AnfNodeCounterMap = OrderedMap<AnfNodePtr, int>;
+using CNodeIndexCounterMap = OrderedMap<CNodeIndexPairPtr, int, CNodeIndexHasher, CNodeIndexEqual>;
 
 const char FUNC_GRAPH_FLAG_IGNORE_VALUES[] = "ignore_values";
 const char FUNC_GRAPH_FLAG_DEFER_INLINE[] = "defer_inline";
@@ -96,7 +97,7 @@ class FuncGraphBase : public Value {
   MS_DECLARE_PARENT(FuncGraphBase, Value);
 };
 
-extern const char kFuncGraphFlagUndetermin[];
+extern const char kFuncGraphFlagUndetermined[];
 
 class FuncGraph : public FuncGraphBase {
  public:
@@ -174,7 +175,7 @@ class FuncGraph : public FuncGraphBase {
   GraphDebugInfoPtr debug_info();
   void set_debug_info(const GraphDebugInfoPtr &info) {
     if (info == nullptr) {
-      MS_LOG(EXCEPTION) << "graph set null debug info";
+      MS_LOG(EXCEPTION) << "Graph set null debug info";
     }
     this->debug_info_ = info;
   }
@@ -200,14 +201,11 @@ class FuncGraph : public FuncGraphBase {
   // get all func graphs directly used by this func graph
   const FuncGraphCounterMap &func_graphs_used();
 
-  // get all func graphs nestedly used by this func graph
+  // get all func graphs nested used by this func graph
   const FuncGraphSet &func_graphs_used_total();
 
-  // get all users of this func graph
-  const FuncGraphCounterMap &func_graph_users();
-
-  // get all user cnodes of this func graph
-  const AnfNodeCounterMap &func_graph_user_cnodes();
+  // get all user value nodes of this func graph
+  const CNodeIndexCounterMap &func_graph_cnodes_index();
 
   // Return the parent of this graph.
   FuncGraphPtr parent();
@@ -258,7 +256,7 @@ class FuncGraph : public FuncGraphBase {
   std::map<std::string, AnfNodePtr> parameter_default_value_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> make_ref_params_;
 
-  std::list<CNodePtr> GetOrderedCnodes(bool force_use_topo_sort = false);
+  std::list<CNodePtr> GetOrderedCnodes();
   void EraseUnusedNodeInOrder(const AnfNodePtr &n);
   void EraseUnusedNodeInOrder();
   void CheckOrder();

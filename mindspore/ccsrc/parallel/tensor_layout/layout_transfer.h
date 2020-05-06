@@ -23,13 +23,12 @@
 
 namespace mindspore {
 namespace parallel {
-
 class LayoutTransfer {
  public:
   LayoutTransfer() = default;
   virtual ~LayoutTransfer() = 0;
   std::string ToString() const;
-  Status Init(const TensorLayout& from_in, const TensorLayout& to_in);
+  Status Init(const TensorLayout &from_in, const TensorLayout &to_in);
   TensorLayout from_in() const { return from_in_; }
   TensorLayout to_in() const { return to_in_; }
 
@@ -43,7 +42,6 @@ class LayoutTransfer {
  private:
   virtual Status CheckValidTransfer() = 0;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

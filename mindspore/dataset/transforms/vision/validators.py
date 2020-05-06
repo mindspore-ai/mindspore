@@ -17,10 +17,11 @@
 import numbers
 from functools import wraps
 
+from mindspore._c_dataengine import TensorOp
+
 from .utils import Inter, Border
 from ...transforms.validators import check_pos_int32, check_pos_float32, check_value, check_uint8, FLOAT_MAX_INTEGER, \
     check_bool, check_2tuple, check_range, check_list, check_type, check_positive, INT32_MAX
-
 
 def check_inter_mode(mode):
     if not isinstance(mode, Inter):
@@ -41,7 +42,7 @@ def check_crop_size(size):
     else:
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
     for value in size:
-        check_value(value, (1, INT32_MAX))
+        check_pos_int32(value)
     return size
 
 
@@ -104,6 +105,10 @@ def check_padding(padding):
             raise ValueError("The size of the padding list or tuple should be 2 or 4.")
     else:
         raise TypeError("Padding can be any of: a number, a tuple or list of size 2 or 4.")
+    if not (isinstance(left, int) and isinstance(top, int) and isinstance(right, int) and isinstance(bottom, int)):
+        raise TypeError("Padding value should be integer.")
+    if left < 0 or top < 0 or right < 0 or bottom < 0:
+        raise ValueError("Padding value could not be negative.")
     return left, top, right, bottom
 
 
@@ -115,7 +120,7 @@ def check_degrees(degrees):
         degrees = (-degrees, degrees)
     elif isinstance(degrees, (list, tuple)):
         if len(degrees) != 2:
-            raise ValueError("If degrees is a sequence, the length must be 2.")
+            raise TypeError("If degrees is a sequence, the length must be 2.")
     else:
         raise TypeError("Degrees must be a single non-negative number or a sequence")
     return degrees
@@ -239,6 +244,7 @@ def check_random_resize_crop(method):
             kwargs["scale"] = scale
         if ratio is not None:
             check_range(ratio, [0, FLOAT_MAX_INTEGER])
+            check_positive(ratio[0])
             kwargs["ratio"] = ratio
         if interpolation is not None:
             check_inter_mode(interpolation)
@@ -324,7 +330,7 @@ def check_random_crop(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        args = (list(args) + 4 * [None])[:5]
+        args = (list(args) + 5 * [None])[:5]
         size, padding, pad_if_needed, fill_value, padding_mode = args
 
         if "size" in kwargs:
@@ -803,6 +809,39 @@ def check_rescale(method):
         if not isinstance(shift, numbers.Number):
             raise TypeError("shift is not a number.")
         kwargs["shift"] = shift
+
+        return method(self, **kwargs)
+
+    return new_method
+
+
+def check_uniform_augmentation(method):
+    """Wrapper method to check the parameters of UniformAugmentation."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        operations, num_ops = (list(args) + 2 * [None])[:2]
+        if "operations" in kwargs:
+            operations = kwargs.get("operations")
+        else:
+            raise ValueError("operations list required")
+        if "num_ops" in kwargs:
+            num_ops = kwargs.get("num_ops")
+        else:
+            num_ops = 2
+
+        if num_ops <= 0:
+            raise ValueError("num_ops should be greater than zero")
+        if num_ops > len(operations):
+            raise ValueError("num_ops is greater than operations list size")
+        if not isinstance(operations, list):
+            raise ValueError("operations is not a python list")
+        for op in operations:
+            if not isinstance(op, TensorOp):
+                raise ValueError("operations list only accepts C++ operations.")
+
+        kwargs["num_ops"] = num_ops
+        kwargs["operations"] = operations
 
         return method(self, **kwargs)
 

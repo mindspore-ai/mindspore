@@ -27,14 +27,11 @@ namespace opt {
 class ConvertConstInputToAttr : public PatternProcessPass {
  public:
   explicit ConvertConstInputToAttr(bool multigraph = true)
-      : PatternProcessPass("convert_const_input_to_attr", multigraph) {
-    Init();
-  }
+      : PatternProcessPass("convert_const_input_to_attr", multigraph) {}
   ~ConvertConstInputToAttr() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  void Init();
   std::unordered_map<std::string, std::unordered_set<size_t>> op_input_attr_map_;
 };
 }  // namespace opt

@@ -19,11 +19,13 @@ import sys
 import os
 import stat
 import time
-import fcntl
 import logging
 from logging.handlers import RotatingFileHandler
 import traceback
 import threading
+import platform
+if platform.system() != "Windows":
+    import fcntl
 
 __all__ = ['get_level', 'get_log_config']
 
@@ -90,7 +92,8 @@ class _MultiCompatibleRotatingFileHandler(RotatingFileHandler):
 
         # Attain an exclusive lock with bloking mode by `fcntl` module.
         with open(self.baseFilename, 'a') as file_pointer:
-            fcntl.lockf(file_pointer.fileno(), fcntl.LOCK_EX)
+            if platform.system() != "Windows":
+                fcntl.lockf(file_pointer.fileno(), fcntl.LOCK_EX)
 
         if self.backupCount > 0:
             self.rolling_rename()

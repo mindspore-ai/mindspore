@@ -28,10 +28,22 @@
 #include "session/session_context.h"
 #include "ir/meta_tensor.h"
 #include "device/ascend/profiling/profiling_utils.h"
+#include "device/kernel_info.h"
 
 using mindspore::device::ascend::ProfilingTraceInfo;
 using mindspore::device::ascend::ProfilingUtils;
 namespace mindspore {
+constexpr auto kLoopCountParamName = "loop_count";
+constexpr auto kIterLoopParamName = "iter_loop";
+constexpr auto kZeroParamName = "zero";
+constexpr auto kOneParamName = "one";
+constexpr auto kStreamNeedActivedFirst = "stream_need_active_first";
+
+const uint32_t kFirstStreamSwitchLabel = kInvalidDistincLabel - 1;
+const uint32_t kGetNextLabel = kInvalidDistincLabel - 2;
+const uint32_t kSecondStreamSwitchLabel = kInvalidDistincLabel - 3;
+const uint32_t kInvalidEventId = UINT32_MAX;
+const uint32_t kFirstEventId = kInvalidEventId / 2;
 namespace device {
 class KernelAdjust {
  public:
@@ -41,33 +53,31 @@ class KernelAdjust {
   }
   void Reorder(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   void InsertSwitchLoop(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  void SetStreamActiveOPs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                          const std::unordered_set<uint32_t> &ctrl_stream_list,
-                          const std::unordered_set<uint32_t> &comm_stream_list,
-                          const std::unordered_set<uint32_t> &momentum_stream_list);
-  void SetStreamSwitchOps(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   bool StepLoadCtrlInputs(const std::shared_ptr<session::Context> &context,
                           const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  void Profiling(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void Profiling(NotNull<session::KernelGraph *> kernel_graph_ptr);
   static bool NeedInsertSwitch();
-  CNodePtr CreateSteamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  CNodePtr CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
 
  private:
   KernelAdjust() = default;
   ~KernelAdjust() = default;
+
+  void ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
+  CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
+  uint32_t FindFirstStreamSwitchLabel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   void CreateSwitchOpParameters(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 std::map<std::string, mindspore::ParameterPtr> *switch_loop_input);
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                 const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
-  CNodePtr CreateStreamActiveSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  CNodePtr CreateStreamActiveOtherOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   CNodePtr CreateStreamAssignAddnOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                     const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder CreateMngKernelBuilder(const std::vector<std::string> &formats,
                                                                          const std::vector<TypeId> &type_ids);
   void LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs);
-  void InsertProfilingKernel(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                             const ProfilingTraceInfo &profiling_trace_info);
+  void InsertProfilingKernel(const ProfilingTraceInfo &profiling_trace_info,
+                             NotNull<session::KernelGraph *> kernel_graph_ptr);
 };
 }  // namespace device
 }  // namespace mindspore

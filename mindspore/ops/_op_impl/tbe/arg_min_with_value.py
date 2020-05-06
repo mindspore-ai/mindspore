@@ -14,70 +14,25 @@
 # ============================================================================
 
 """ArgMinWithValue op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+arg_min_with_value_op_info = TBERegOp("ArgMinWithValue") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("arg_min_with_value.so") \
+    .compute_cost(10) \
+    .kernel_name("arg_min_with_value") \
+    .partial_flag(True) \
+    .attr("axis", "required", "int", "all") \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "indice", False, "required", "all") \
+    .output(1, "values", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "ArgMinWithValue",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "arg_min_with_value.so",
-    "compute_cost": 10,
-    "kernel_name": "arg_min_with_value",
-    "partial_flag": true,
-    "attr": [
-            {
-            "name": "axis",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "int32", "int32"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "indice",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "values",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(arg_min_with_value_op_info)
 def _arg_min_with_value_tbe():
     """ArgMinWithValue TBE register"""
     return

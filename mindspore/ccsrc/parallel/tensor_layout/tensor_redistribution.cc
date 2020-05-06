@@ -18,14 +18,13 @@
 #include <cfloat>
 #include <functional>
 #include <numeric>
+#include "common/utils.h"
 #include "parallel/status.h"
 #include "parallel/tensor_layout/shape_util.h"
-#include "common/utils.h"
 
 namespace mindspore {
 namespace parallel {
-
-Status TensorRedistribution::Init(const TensorLayout& from, const TensorLayout& to, const RankList& dev_list) {
+Status TensorRedistribution::Init(const TensorLayout &from, const TensorLayout &to, const RankList &dev_list) {
   from_origin_ = from;
   to_origin_ = to;
   if (from_origin_.tensor_shape().size() != to_origin_.tensor_shape().size()) {
@@ -41,7 +40,7 @@ Status TensorRedistribution::Init(const TensorLayout& from, const TensorLayout& 
   return Status::SUCCESS;
 }
 
-RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorList() {
+RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorList(bool is_cost_model) {
   // Step 1: Match device arrangement between from_ and to_
   RedistributionLayoutTransfer layout_transfer;
   Status status = layout_transfer.Init(from_, to_);
@@ -63,7 +62,7 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
   MS_LOG(DEBUG) << "reshape to_ " << to_.ToString();
   // Step 2: Infer redistribution and insert operators
   RedistributionOperatorInfer operator_infer(construct_op_flag_);
-  if (operator_infer.Init(from_layout, to_layout.tensor_map(), dev_list_) == Status::FAILED) {
+  if (operator_infer.Init(from_layout, to_layout.tensor_map(), dev_list_, is_cost_model) == Status::FAILED) {
     MS_LOG(ERROR) << "Init operatorInfer failed!";
     return nullptr;
   }
@@ -88,9 +87,9 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
     std::make_pair(operator_vector, output_info_vector));
 }
 
-Status TensorRedistribution::InferReshape(const TensorLayout& from_layout, const TensorLayout& to_layout,
-                                          OperatorVector* const operator_vector,
-                                          OutPutInfoVector* const output_info_vector) {
+Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const TensorLayout &to_layout,
+                                          OperatorVector *const operator_vector,
+                                          OutPutInfoVector *const output_info_vector) {
   MS_EXCEPTION_IF_NULL(operator_vector);
   MS_EXCEPTION_IF_NULL(output_info_vector);
   ConstructOperator constructor;
@@ -139,56 +138,70 @@ Status TensorRedistribution::InferReshape(const TensorLayout& from_layout, const
 }
 
 Status TensorRedistribution::ComputeCost() {
-  RedistributionOpListPtr redistribution_oplist_ptr = InferTensorRedistributionOperatorList();
+  RedistributionOpListPtr redistribution_oplist_ptr = InferTensorRedistributionOperatorList(true);
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(ERROR) << "Failure: InferTensorRedistribution failed";
     return Status::FAILED;
   }
-  // Compute redistribution communication cost and memory cost
-  for (auto& op_cost : operator_list_) {
+  // Compute redistribution communication cost and computation cost
+  for (auto &op_cost : operator_list_) {
     OperatorR op = op_cost.first;
     Shape slice_shape = op_cost.second;
     double prod =
       std::accumulate(slice_shape.begin(), slice_shape.end(), static_cast<double>(1.0), std::multiplies<double>());
     std::string str = op.first;
     if (str == PERMUTE_BY_AXIS) {
-      // The shape does not change after PermuteByAxis operation.
-      // communication cost = all_to_all + all_to_all = 2 * slice_shape
-      // memory cost = slice_shape
-      forward_comm_cost_ += prod;
-      backward_comm_cost_ += prod;
-      comm_cost_ += 2.0 * prod;
-      mem_cost_ += prod;
+      // Since AlltoAll is a virtual operator, the expanded operators are used here to compute cost.
+      // communication cost = all_gather + reduce_scatter = before_slice_shape + after_slice_shape
+      forward_comm_cost_ += prod * ALLTOALL_SCALE_FACTOR;
+      backward_comm_cost_ += prod * ALLTOALL_SCALE_FACTOR;
+      comm_cost_ += 2.0 * prod * ALLTOALL_SCALE_FACTOR;
+      int32_t concat_dim = op.second[2];
+      if (concat_dim == 0) {
+        // memory cost = all_gather
+        computation_cost_ += prod;
+        memory_cost_ += prod;
+      } else {
+        // memory cost = all_gather + split + concat
+        int32_t dev_num = op.second[4];
+        computation_cost_ += (prod + prod * dev_num + prod * dev_num);
+        memory_cost_ += (prod * dev_num + prod * dev_num + prod);
+      }
     } else if (str == CONCAT_BY_AXIS) {
       // communication cost = all_gather + reduce_scatter = before_slice_shape + after_slice_shape
-      // memory cost = before_slice_shape
+      // computation cost = before_slice_shape
       if (op.second.size() < 3) {
         MS_LOG(ERROR) << "op.second size should not be less than 3!";
         return Status::FAILED;
       }
       double dev_num = op.second[2];
       // here, communication cost = all_gather + reduce_scatter
-      forward_comm_cost_ += prod * dev_num;
-      backward_comm_cost_ += prod;
-      comm_cost_ += prod * (dev_num + 1.0);
+      forward_comm_cost_ += prod * dev_num * ALLGATHER_REDUCESCATTER_SCALE_FACTOR;
+      backward_comm_cost_ += prod * ALLGATHER_REDUCESCATTER_SCALE_FACTOR;
+      comm_cost_ += prod * (dev_num + 1.0) * ALLGATHER_REDUCESCATTER_SCALE_FACTOR;
       int32_t concat_dim = op.second[0];
       if (concat_dim == 0) {
-        // memory cost = all_gather
-        mem_cost_ += prod;
+        // computation cost = all_gather
+        computation_cost_ += prod;
+        memory_cost_ += prod * dev_num;
       } else {
-        // memory cost = all_gather + split + concat
-        mem_cost_ += (prod + prod * dev_num + prod * dev_num);
+        // computation cost = all_gather + split + concat
+        computation_cost_ += (prod + prod * dev_num + prod * dev_num);
+        memory_cost_ += (prod * dev_num + prod * dev_num + prod);
       }
     } else {
-      // There is only memory cost in SplitByAxis.
-      // memory cost = before_slice_shape
-      mem_cost_ += prod;
+      // There is only computation cost in SplitByAxis.
+      // computation cost = before_slice_shape
+      computation_cost_ += prod;
+      // This addtion may be  erroneous
+      memory_cost_ += prod;
     }
   }
   if (reshape_flag()) {
     Shape prev_slice_shape = from_.slice_shape().array();
     double prev_prod = std::accumulate(prev_slice_shape.begin(), prev_slice_shape.end(), 1, std::multiplies<int>());
-    mem_cost_ += 2.0 * prev_prod;
+    computation_cost_ += 2.0 * prev_prod;
+    memory_cost_ += 2.0 * prev_prod;
   }
   return Status::SUCCESS;
 }

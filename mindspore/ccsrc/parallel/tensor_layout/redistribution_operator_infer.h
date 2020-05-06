@@ -18,18 +18,16 @@
 #define MINDSPORE_CCSRC_PARALLEL_TENSOR_LAYOUT_REDISTRIBUTION_OPERATOR_INFER_H_
 
 #include <algorithm>
-#include <unordered_map>
 #include <string>
-#include <vector>
+#include <unordered_map>
 #include <utility>
-#include <list>
+#include <vector>
 
-#include "parallel/tensor_layout/redistribution_layout_transfer.h"
 #include "parallel/tensor_layout/construct_operator.h"
+#include "parallel/tensor_layout/redistribution_layout_transfer.h"
 #include "utils/convert_utils.h"
 namespace mindspore {
 namespace parallel {
-
 using DeviceArrangement = std::vector<int32_t>;
 using TensorMap = std::vector<int32_t>;
 using TensorShape = std::vector<int32_t>;
@@ -41,8 +39,10 @@ using OperatorList = std::vector<OperatorC>;
 class RedistributionOperatorInfer {
  public:
   const int NONE = -1;
-  explicit RedistributionOperatorInfer(bool construct_op_flag = true) : construct_op_flag_(construct_op_flag) {}
-  Status Init(const TensorLayout& tensor_layout, const Map& out_tensor_map, RankList dev_list);
+  explicit RedistributionOperatorInfer(bool construct_op_flag = true)
+      : construct_op_flag_(construct_op_flag), is_cost_model_(false) {}
+  Status Init(const TensorLayout &tensor_layout, const Map &out_tensor_map, RankList dev_list,
+              bool is_cost_model = false);
   ~RedistributionOperatorInfer() = default;
   OperatorList operator_list() const { return operator_list_; }
   OperatorVector operator_vector() const { return operator_vector_; }
@@ -69,8 +69,8 @@ class RedistributionOperatorInfer {
   ConstructOperator constructor_;
   RankList dev_list_;
   bool construct_op_flag_;
+  bool is_cost_model_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

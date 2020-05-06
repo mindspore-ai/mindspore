@@ -22,15 +22,14 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "parallel/device_manager.h"
 #include "parallel/status.h"
 #include "parallel/tensor_layout/arrangement.h"
 #include "parallel/tensor_layout/map.h"
 #include "utils/convert_utils.h"
-#include "parallel/device_manager.h"
 
 namespace mindspore {
 namespace parallel {
-
 class TensorLayout {
  public:
   TensorLayout() = default;
@@ -38,9 +37,9 @@ class TensorLayout {
   std::string ToString() const;
   std::string StandardToString() const;
   std::string OriginToString() const;
-  Status Init(const Arrangement& device_arrangement, const Map& tensor_map, const Arrangement& tensor_shape);
-  Status InitFromVector(const std::vector<int32_t>& device_arrangement, const std::vector<int32_t>& tensor_map,
-                        const std::vector<int32_t>& tensor_shape);
+  Status Init(const Arrangement &device_arrangement, const Map &tensor_map, const Arrangement &tensor_shape);
+  Status InitFromVector(const std::vector<int32_t> &device_arrangement, const std::vector<int32_t> &tensor_map,
+                        const std::vector<int32_t> &tensor_shape);
 
   Arrangement device_arrangement() const { return device_arrangement_; }
 
@@ -50,25 +49,25 @@ class TensorLayout {
 
   Map origin_tensor_map() const { return tensor_map_origin_; }
 
-  std::shared_ptr<TensorLayout> ExpandTensorShape(const Arrangement& expanded_shape) const;
+  std::shared_ptr<TensorLayout> ExpandTensorShape(const Arrangement &expanded_shape) const;
 
-  std::shared_ptr<TensorLayout> ExpandDeviceArrangement(const Arrangement& expanded_arrangement) const;
+  std::shared_ptr<TensorLayout> ExpandDeviceArrangement(const Arrangement &expanded_arrangement) const;
 
-  bool IsSameTensorShape(const TensorLayout& tensor_layout) const {
+  bool IsSameTensorShape(const TensorLayout &tensor_layout) const {
     return (tensor_shape_ == tensor_layout.tensor_shape());
   }
 
-  bool IsSameDeviceArrangement(const TensorLayout& tensor_layout) const {
+  bool IsSameDeviceArrangement(const TensorLayout &tensor_layout) const {
     return (device_arrangement_ == tensor_layout.device_arrangement());
   }
 
-  bool IsSameTensorMap(const TensorLayout& tensor_layout) const { return (tensor_map_ == tensor_layout.tensor_map()); }
+  bool IsSameTensorMap(const TensorLayout &tensor_layout) const { return (tensor_map_ == tensor_layout.tensor_map()); }
 
-  bool operator==(const TensorLayout& t1) const;
+  bool operator==(const TensorLayout &t1) const;
 
-  bool TensorShapeCanBeExpanded(const Arrangement& expanded_shape) const;
+  bool TensorShapeCanBeExpanded(const Arrangement &expanded_shape) const;
 
-  std::shared_ptr<Arrangement> ComputeExpandedTensorShape(const Arrangement& expand_shape) const;
+  std::shared_ptr<Arrangement> ComputeExpandedTensorShape(const Arrangement &expand_shape) const;
 
   Arrangement slice_shape() const;
 
@@ -78,8 +77,8 @@ class TensorLayout {
 
  private:
   std::shared_ptr<TensorLayout> ExpandTensorShapeWithoutExtendDeviceArrangement(
-    const Arrangement& expanded_shape) const;
-  std::shared_ptr<Arrangement> ComputeArrangementByExpandedShape(const Arrangement& tensor_shape) const;
+    const Arrangement &expanded_shape) const;
+  std::shared_ptr<Arrangement> ComputeArrangementByExpandedShape(const Arrangement &tensor_shape) const;
   bool IsValidTensorLayout() const;
   void RemoveElementEqualToOneInDeviceArrangement();
   int32_t GetSliceDeviceDimensionByTensorDimensionIndex(uint32_t idx) const;
@@ -94,7 +93,6 @@ class TensorLayout {
   Map tensor_map_;
   Arrangement tensor_shape_;
 };
-
 }  // namespace parallel
 }  // namespace mindspore
 

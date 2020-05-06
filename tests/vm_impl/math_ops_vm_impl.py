@@ -117,6 +117,7 @@ def vm_impl_pow(self):
     """Generate vm_impl function for Pow."""
     def vm_impl(x, y):
         x = x.asnumpy()
+        y = y.asnumpy()
         res = vm.power(x, y)
         return Tensor(res)
     return vm_impl
@@ -171,7 +172,7 @@ def vm_impl_equal(self):
         x = x.asnumpy()
         y = y.asnumpy()
         out = vm.equal(x, y)
-        return Tensor(out)
+        return Tensor(np.array(out))
     return vm_impl
 
 
@@ -182,7 +183,7 @@ def vm_impl_not_equal(self):
         x = x.asnumpy()
         y = y.asnumpy()
         out = vm.not_equal(x, y)
-        return Tensor(out)
+        return Tensor(np.array(out))
     return vm_impl
 
 
@@ -193,7 +194,7 @@ def vm_impl_greater(self):
         x = x.asnumpy()
         y = y.asnumpy()
         out = vm.greater(x, y)
-        return Tensor(out)
+        return Tensor(np.array(out))
     return vm_impl
 
 @vm_impl_getters.register(P.Maximum)
@@ -218,17 +219,17 @@ def vm_impl_minimum(self):
     return vm_impl
 
 @vm_impl_getters.register(P.Less)
-def vm_impl_greater(self):
+def vm_impl_less(self):
     """Generate vm_impl function for Less"""
     def vm_impl(x, y):
         x = x.asnumpy()
         y = y.asnumpy()
         out = vm.less(x, y)
-        return Tensor(out)
+        return Tensor(np.array(out))
     return vm_impl
 
 @vm_impl_getters.register(P.ScalarCast)
-def vm_impl_greater(self):
+def vm_impl_scalar_cast(self):
     """Generate vm_impl function for ScalarCast"""
     def vm_impl(x, t):
         np_type = dtype_to_nptype(t)

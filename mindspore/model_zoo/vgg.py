@@ -14,8 +14,8 @@
 # ============================================================================
 """VGG."""
 import mindspore.nn as nn
-from mindspore.ops import operations as P
-
+from mindspore.common.initializer import initializer
+import mindspore.common.dtype as mstype
 
 def _make_layer(base, batch_norm):
     """Make stage network of VGG."""
@@ -25,11 +25,14 @@ def _make_layer(base, batch_norm):
         if v == 'M':
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
         else:
+            weight_shape = (v, in_channels, 3, 3)
+            weight = initializer('XavierUniform', shape=weight_shape, dtype=mstype.float32)
             conv2d = nn.Conv2d(in_channels=in_channels,
                                out_channels=v,
                                kernel_size=3,
-                               padding=1,
-                               pad_mode='pad')
+                               padding=0,
+                               pad_mode='same',
+                               weight_init=weight)
             if batch_norm:
                 layers += [conv2d, nn.BatchNorm2d(v), nn.ReLU()]
             else:
@@ -52,15 +55,15 @@ class Vgg(nn.Cell):
         Tensor, infer output tensor.
 
     Examples:
-        >>> VGG([64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
+        >>> Vgg([64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
         >>>     num_classes=1000, batch_norm=False, batch_size=1)
     """
+
     def __init__(self, base, num_classes=1000, batch_norm=False, batch_size=1):
         super(Vgg, self).__init__()
+        _ = batch_size
         self.layers = _make_layer(base, batch_norm=batch_norm)
-        self.avgpool = nn.AvgPool2d(7)
-        self.reshape = P.Reshape()
-        self.shp = (batch_size, -1)
+        self.flatten = nn.Flatten()
         self.classifier = nn.SequentialCell([
             nn.Dense(512 * 7 * 7, 4096),
             nn.ReLU(),
@@ -70,8 +73,7 @@ class Vgg(nn.Cell):
 
     def construct(self, x):
         x = self.layers(x)
-        x = self.avgpool(x)
-        x = self.reshape(x, self.shp)
+        x = self.flatten(x)
         x = self.classifier(x)
         return x
 
@@ -84,15 +86,19 @@ cfg = {
 }
 
 
-def vgg16():
+def vgg16(num_classes=1000):
     """
-    Get VGG16 neural network.
+    Get Vgg16 neural network with batch normalization.
+
+    Args:
+        num_classes (int): Class numbers. Default: 1000.
 
     Returns:
-        Cell, cell instance of VGG16 neural network.
+        Cell, cell instance of Vgg16 neural network with batch normalization.
 
     Examples:
-        >>> vgg16()
+        >>> vgg16(num_classes=1000)
     """
-    net = Vgg(cfg['16'], num_classes=1000, batch_norm=False, batch_size=1)
+
+    net = Vgg(cfg['16'], num_classes=num_classes, batch_norm=True)
     return net

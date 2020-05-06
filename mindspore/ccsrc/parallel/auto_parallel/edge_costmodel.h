@@ -17,16 +17,16 @@
 #ifndef PARALLEL_AUTO_PARALLEL_EDGE_COSTMODEL_H_
 #define PARALLEL_AUTO_PARALLEL_EDGE_COSTMODEL_H_
 
-#include <memory>
-#include <vector>
-#include <utility>
 #include <map>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 #include "common/utils.h"
-#include "parallel/tensor_layout/tensor_layout.h"
-#include "parallel/tensor_layout/tensor_info.h"
-#include "parallel/ops_info/operator_info.h"
 #include "parallel/auto_parallel/costmodel.h"
+#include "parallel/ops_info/operator_info.h"
+#include "parallel/tensor_layout/tensor_info.h"
+#include "parallel/tensor_layout/tensor_layout.h"
 
 namespace mindspore {
 namespace parallel {
@@ -37,9 +37,9 @@ using EdgePtr = std::shared_ptr<mindspore::parallel::Edge>;
 class Edge {
   // An 'Edge' connects two Operators in the CostGraph.
  public:
-  Edge(const std::string& edge_name, const std::shared_ptr<OperatorInfo>& prev_op,
-       const std::shared_ptr<OperatorInfo>& next_op, const size_t& output_index_, const size_t& input_index_,
-       const bool& is_com)
+  Edge(const std::string &edge_name, const std::shared_ptr<OperatorInfo> &prev_op,
+       const std::shared_ptr<OperatorInfo> &next_op, const size_t &output_index_, const size_t &input_index_,
+       const bool &is_com)
       : edge_name_(edge_name),
         prev_op_(prev_op),
         next_op_(next_op),
@@ -49,9 +49,9 @@ class Edge {
     is_identity_edge = false;
   }
 
-  Edge(const std::string& edge_name, const std::shared_ptr<OperatorInfo>& prev_op,
-       const std::shared_ptr<OperatorInfo>& next_op, const size_t& output_index_, const size_t& input_index_,
-       const bool& is_com, const bool& is_iden)
+  Edge(const std::string &edge_name, const std::shared_ptr<OperatorInfo> &prev_op,
+       const std::shared_ptr<OperatorInfo> &next_op, const size_t &output_index_, const size_t &input_index_,
+       const bool &is_com, const bool &is_iden)
       : edge_name_(edge_name),
         prev_op_(prev_op),
         next_op_(next_op),
@@ -60,9 +60,9 @@ class Edge {
         is_combined_(is_com),
         is_identity_edge(is_iden) {}
 
-  Edge(const std::string& edge_name, const std::shared_ptr<OperatorInfo>& prev_op,
-       const std::shared_ptr<OperatorInfo>& next_op, const std::vector<size_t>& output_indexs_,
-       const std::vector<size_t>& input_indexs_, const bool& is_com)
+  Edge(const std::string &edge_name, const std::shared_ptr<OperatorInfo> &prev_op,
+       const std::shared_ptr<OperatorInfo> &next_op, const std::vector<size_t> &output_indexs_,
+       const std::vector<size_t> &input_indexs_, const bool &is_com)
       : edge_name_(edge_name),
         prev_op_(prev_op),
         next_op_(next_op),
@@ -83,13 +83,13 @@ class Edge {
   // For two operators u--->v, given the output tensor layout of u,
   // and the input tensor layout of v, return the redistribution cost,
   // and the op_list to carry out the redistribution.
-  Status GetRedistributionCost(const TensorLayout& prev_op_output_layout, const TensorLayout& next_op_input_layout,
-                               size_t, CostPtr* cost);
+  Status GetRedistributionCost(const TensorLayout &prev_op_output_layout, const TensorLayout &next_op_input_layout,
+                               size_t, TypePtr type, CostPtr *cost);
 
-  void set_pre_op_output(const std::vector<std::pair<std::shared_ptr<Strategy>, std::vector<TensorInfo>>>& output_set) {
+  void set_pre_op_output(const std::vector<std::pair<std::shared_ptr<Strategy>, std::vector<TensorInfo>>> &output_set) {
     pre_op_output_ = output_set;
   }
-  void set_next_op_input(const std::vector<std::pair<std::shared_ptr<Strategy>, std::vector<TensorInfo>>>& input_set) {
+  void set_next_op_input(const std::vector<std::pair<std::shared_ptr<Strategy>, std::vector<TensorInfo>>> &input_set) {
     next_op_input_ = input_set;
   }
 
@@ -109,31 +109,31 @@ class Edge {
   std::vector<size_t> prev_op_output_indexs() const { return pre_op_output_indexs_; }
   std::vector<size_t> next_op_input_indexs() const { return next_op_input_indexs_; }
 
-  CostPtrList CreateEdgeEliminationCostList(const StrategyPtr& output_st_ptr,
-                                            const std::vector<std::shared_ptr<Edge>>& edges,
-                                            const StrategyPtr& input_st_ptr);
+  CostPtrList CreateEdgeEliminationCostList(const StrategyPtr &output_st_ptr,
+                                            const std::vector<std::shared_ptr<Edge>> &edges,
+                                            const StrategyPtr &input_st_ptr);
   // In the Edge Elimination operation in DP algorithm, 'edges' is replaced by a new edge. This method is used to
   // set cost for this new edge
-  void EdgeEliminationSetNewCost(std::shared_ptr<OperatorInfo> u, const std::vector<std::shared_ptr<Edge>>& edges,
+  void EdgeEliminationSetNewCost(std::shared_ptr<OperatorInfo> u, const std::vector<std::shared_ptr<Edge>> &edges,
                                  std::shared_ptr<OperatorInfo> v);
-  void CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList& left_cost_list,
-                                      const CostPtrList& middle_cost_list, const CostPtrList& right_cost_list,
-                                      CostPtrList* ret_cost_list);
+  void CreateOpEliminationSubCostList(StrategyPtr op_strategy, const CostPtrList &left_cost_list,
+                                      const CostPtrList &middle_cost_list, const CostPtrList &right_cost_list,
+                                      CostPtrList *ret_cost_list);
 
-  CostPtrList CreateOpEliminationCostList(const std::shared_ptr<Edge>& e1, const StrategyPtr& output_st_ptr,
-                                          const std::shared_ptr<OperatorInfo>& op, const std::shared_ptr<Edge>& e2,
-                                          const StrategyPtr& input_st_ptr);
+  CostPtrList CreateOpEliminationCostList(const std::shared_ptr<Edge> &e1, const StrategyPtr &output_st_ptr,
+                                          const std::shared_ptr<OperatorInfo> &op, const std::shared_ptr<Edge> &e2,
+                                          const StrategyPtr &input_st_ptr);
   // In the Operation Elimination operation in DP algorithm, 'op', 'e1' and 'e2' are replaced by a new edge.
   // This method is used to set cost for this new edge
-  void OpEliminationSetNewCost(const std::shared_ptr<Edge>& e1, const std::shared_ptr<OperatorInfo>& op,
-                               const std::shared_ptr<Edge>& e2);
+  void OpEliminationSetNewCost(const std::shared_ptr<Edge> &e1, const std::shared_ptr<OperatorInfo> &op,
+                               const std::shared_ptr<Edge> &e2);
 
-  void set_selected_cost(const CostPtr& cost) { selected_cost_ = cost; }
-  const CostPtr& selected_cost() const { return selected_cost_; }
+  void set_selected_cost(const CostPtr &cost) { selected_cost_ = cost; }
+  const CostPtr &selected_cost() const { return selected_cost_; }
   void set_parameter_involve(int para_invol) { is_output_parameter_involve_ = para_invol; }
   // When the input of a operator contains WEIGHT or a output from other operators involving WEIGHT, then these input
   // should stay in memory until it is used in the backward phase, which is kept in memory at the end of forward phase.
-  Status CorrectStrategyCostForMemoryReuse() const { return SUCCESS; }
+  Status CalculateMemoryCost();
 
  private:
   std::string edge_name_;

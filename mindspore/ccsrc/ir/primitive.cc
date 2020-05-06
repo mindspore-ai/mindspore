@@ -31,7 +31,7 @@
 namespace mindspore {
 using mindspore::abstract::AbstractFunction;
 
-abstract::AbstractBasePtr Primitive::ToPrimAbstract(const AnfNodePtr& anf_node) {
+abstract::AbstractBasePtr Primitive::ToPrimAbstract(const AnfNodePtr &anf_node) {
   auto prim_func = std::make_shared<abstract::PrimitiveAbstractClosure>(shared_from_base<Primitive>(), anf_node);
   return prim_func;
 }
@@ -63,23 +63,23 @@ py::function Primitive::GetComputeFunction() {
   return fn;
 }
 
-bool Primitive::operator==(const Value& other) const {
+bool Primitive::operator==(const Value &other) const {
   if (other.isa<Primitive>()) {
-    auto other_prim = static_cast<const Primitive&>(other);
+    auto other_prim = static_cast<const Primitive &>(other);
     return *this == other_prim;
   } else {
     return false;
   }
 }
 
-bool Primitive::operator==(const Primitive& other) const {
+bool Primitive::operator==(const Primitive &other) const {
   if (name() != other.name()) {
     return false;
   }
   if (attrs_.size() != other.attrs_.size()) {
     return false;
   }
-  auto all = std::all_of(attrs_.begin(), attrs_.end(), [&other](const std::pair<std::string, ValuePtr>& item) -> bool {
+  auto all = std::all_of(attrs_.begin(), attrs_.end(), [&other](const std::pair<std::string, ValuePtr> &item) -> bool {
     if (item.second == nullptr) {
       return false;
     }
@@ -95,7 +95,7 @@ bool Primitive::operator==(const Primitive& other) const {
 void Primitive::set_signatures(
   std::vector<std::tuple<std::string, SignatureEnumRW, SignatureEnumKind, py::object, SignatureEnumDType>> signatures) {
   signatures_.clear();
-  for (auto& signature : signatures) {
+  for (auto &signature : signatures) {
     std::string name;
     SignatureEnumRW rw;
     SignatureEnumKind kind;
@@ -106,8 +106,29 @@ void Primitive::set_signatures(
   }
 }
 
+std::string Primitive::GetAttrsText() const {
+  if (attrs_.empty()) {
+    return "";
+  }
+
+  std::ostringstream oss;
+  oss << "[";
+  bool is_first = true;
+  for (auto &attr : attrs_) {
+    if (is_first) {
+      is_first = false;
+    } else {
+      oss << ", ";
+    }
+    oss << attr.first << "=" << attr.second->DumpText();
+  }
+  oss << "]";
+
+  return oss.str();
+}
+
 py::function PrimitivePy::GetBpropFunction() {
-  static const char* const get_bprop_func_name = "get_bprop";
+  static const char *const get_bprop_func_name = "get_bprop";
   if (py::hasattr(python_obj_, get_bprop_func_name)) {
     py::function fn = python_obj_.attr(get_bprop_func_name)().cast<py::function>();
     return fn;
@@ -121,17 +142,17 @@ py::function PrimitivePy::GetBpropFunction() {
 }
 
 py::function PrimitivePy::GetComputeFunction() {
-  static const char* const compute_func_name = "vm_impl";
+  static const char *const compute_func_name = "vm_impl";
 
   if (py::hasattr(python_obj_, compute_func_name)) {
-    MS_LOG(INFO) << "" << name() << " compute_func_name";
+    MS_LOG(INFO) << name() << " compute_func_name";
     py::function fn = python_obj_.attr(compute_func_name).cast<py::function>();
     return fn;
   }
 
   static const std::string vm_module = "mindspore.ops.vm_impl_registry";
   static const std::string get_vm_impl_fn = "get_vm_impl_fn";
-  MS_LOG(INFO) << "" << name() << ": get_vm_impl_fn";
+  MS_LOG(INFO) << name() << ": get_vm_impl_fn";
   py::function get_fn = parse::python_adapter::GetPyFn(vm_module, get_vm_impl_fn);
   py::function vm_fn = get_fn(python_obj_);
 
@@ -142,7 +163,7 @@ py::function PrimitivePy::GetComputeFunction() {
   return vm_fn;
 }
 
-void PrimitivePy::AddPyAttr(const py::str& name, const py::object& obj) {
+void PrimitivePy::AddPyAttr(const py::str &name, const py::object &obj) {
   std::string attr_name = name;
   ValuePtr converted_ret = nullptr;
   if (py::isinstance<py::module>(obj)) {
@@ -157,13 +178,13 @@ void PrimitivePy::AddPyAttr(const py::str& name, const py::object& obj) {
 
 py::dict PrimitivePy::GetAttrDict() {
   py::dict attr_dict;
-  for (auto& attr : attrs_) {
+  for (auto &attr : attrs_) {
     attr_dict[py::str(attr.first)] = ValuePtrToPyData(attr.second);
   }
   return attr_dict;
 }
 
-REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module* m) {
+REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
                          (void)py::enum_<PrimType>(*m, "prim_type", py::arithmetic())
                            .value("unknown", PrimType::kPrimTypeUnknown)
                            .value("builtin", PrimType::kPrimTypeBuiltIn)
@@ -171,7 +192,7 @@ REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module* m) {
                            .value("user_custom", PrimType::kPrimTypeUserCustom);
                          (void)py::class_<PrimitivePy, std::shared_ptr<PrimitivePy>>(*m, "Primitive_")
                            .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePy::parse_info_)
-                           .def(py::init<py::str&, py::object>())
+                           .def(py::init<py::str &, py::object>())
                            .def("add_attr", &PrimitivePy::AddPyAttr, "add primitive attr")
                            .def("get_attr_dict", &PrimitivePy::GetAttrDict, "get primitive attr")
                            .def("set_prim_type", &PrimitivePy::set_prim_type, "Set primitive type.")

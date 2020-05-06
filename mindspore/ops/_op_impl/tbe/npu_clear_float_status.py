@@ -14,52 +14,22 @@
 # ============================================================================
 
 """NPUClearFloatStatus op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+npu_clear_float_status_op_info = TBERegOp("NPUClearFloatStatus") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("n_p_u_clear_float_status.so") \
+    .compute_cost(10) \
+    .kernel_name("n_p_u_clear_float_status") \
+    .partial_flag(True) \
+    .input(0, "addr", False, "required", "all") \
+    .output(0, "data", False, "required", "all") \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "NPUClearFloatStatus",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "n_p_u_clear_float_status.so",
-    "compute_cost": 10,
-    "kernel_name": "n_p_u_clear_float_status",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "addr",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "data",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(npu_clear_float_status_op_info)
 def _npu_clear_float_status_tbe():
     """NPUClearFloatStatus TBE register"""
     return

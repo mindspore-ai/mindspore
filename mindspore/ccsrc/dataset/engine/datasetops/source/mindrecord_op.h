@@ -15,7 +15,6 @@
  */
 #ifndef DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_
 #define DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_
-#ifdef ENABLE_MINDRECORD
 #pragma once
 
 #include <cstdint>
@@ -33,6 +32,7 @@
 #include "dataset/engine/datasetops/source/io_block.h"
 #include "dataset/util/queue.h"
 #include "dataset/util/status.h"
+#include "mindrecord/include/shard_error.h"
 #include "mindrecord/include/shard_reader.h"
 #include "mindrecord/include/common/shard_utils.h"
 #include "dataset/util/wait_post.h"
@@ -171,7 +171,8 @@ class MindRecordOp : public ParallelOp {
   int32_t num_rows() const { return num_rows_; }
 
   // Getter method
-  static Status CountTotalRows(const std::string dataset_path, int64_t *count);
+  static Status CountTotalRows(const std::string dataset_path, const std::shared_ptr<ShardOperator> &op,
+                               int64_t *count);
 
   // Getter method
   int32_t rows_per_buffer() const { return rows_per_buffer_; }
@@ -276,5 +277,4 @@ class MindRecordOp : public ParallelOp {
 };
 }  // namespace dataset
 }  // namespace mindspore
-#endif
 #endif  // DATASET_ENGINE_DATASETOPS_SOURCE_MINDRECORD_OP_H_

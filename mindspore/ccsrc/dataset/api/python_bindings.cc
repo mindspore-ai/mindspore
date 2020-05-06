@@ -19,10 +19,11 @@
 #include "dataset/kernels/no_op.h"
 #include "dataset/kernels/data/one_hot_op.h"
 #include "dataset/kernels/image/center_crop_op.h"
+#if !defined(_WIN32) && !defined(_WIN64)
 #include "dataset/kernels/image/change_mode_op.h"
+#endif
 #include "dataset/kernels/image/cut_out_op.h"
 #include "dataset/kernels/image/decode_op.h"
-#include "dataset/kernels/image/distort_bounding_box_crop_op.h"
 #include "dataset/kernels/image/hwc_to_chw_op.h"
 #include "dataset/kernels/image/image_utils.h"
 #include "dataset/kernels/image/normalize_op.h"
@@ -38,24 +39,30 @@
 #include "dataset/kernels/image/rescale_op.h"
 #include "dataset/kernels/image/resize_bilinear_op.h"
 #include "dataset/kernels/image/resize_op.h"
+#include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/io_block.h"
 #include "dataset/engine/datasetops/source/mnist_op.h"
 #include "dataset/engine/datasetops/source/manifest_op.h"
-#ifdef ENABLE_MINDRECORD
 #include "dataset/engine/datasetops/source/mindrecord_op.h"
-#endif
+#include "dataset/engine/datasetops/source/random_data_op.h"
 #include "dataset/engine/datasetops/source/sampler/distributed_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/pk_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
+#include "dataset/engine/datasetops/source/sampler/python_sampler.h"
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "dataset/engine/jagged_connector.h"
+#include "dataset/engine/datasetops/source/text_file_op.h"
 #include "dataset/kernels/data/to_float16_op.h"
+#include "dataset/util/random.h"
+#include "mindrecord/include/shard_operator.h"
+#include "mindrecord/include/shard_pk_sample.h"
+#include "mindrecord/include/shard_sample.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 #include "pybind11/stl_bind.h"
@@ -146,14 +153,17 @@ void bindDatasetOps(py::module *m) {
       return py::make_tuple(count, num_classes);
     });
 
-#ifdef ENABLE_MINDRECORD
   (void)py::class_<MindRecordOp, DatasetOp, std::shared_ptr<MindRecordOp>>(*m, "MindRecordOp")
-    .def_static("get_num_rows", [](const std::string &path) {
+    .def_static("get_num_rows", [](const std::string &path, const py::object &sampler) {
       int64_t count = 0;
-      THROW_IF_ERROR(MindRecordOp::CountTotalRows(path, &count));
+      std::shared_ptr<mindrecord::ShardOperator> op;
+      if (py::hasattr(sampler, "_create_for_minddataset")) {
+        auto create = sampler.attr("_create_for_minddataset");
+        op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
+      }
+      THROW_IF_ERROR(MindRecordOp::CountTotalRows(path, op, &count));
       return count;
     });
-#endif
 
   (void)py::class_<ManifestOp, DatasetOp, std::shared_ptr<ManifestOp>>(*m, "ManifestOp")
     .def_static("get_num_rows_and_classes",
@@ -173,6 +183,17 @@ void bindDatasetOps(py::module *m) {
     .def_static("get_num_rows", [](const std::string &dir, int64_t numSamples) {
       int64_t count = 0;
       THROW_IF_ERROR(MnistOp::CountTotalRows(dir, numSamples, &count));
+      return count;
+    });
+
+  (void)py::class_<TextFileOp, DatasetOp, std::shared_ptr<TextFileOp>>(*m, "TextFileOp")
+    .def_static("get_num_rows", [](const py::list &files) {
+      int64_t count = 0;
+      std::vector<std::string> filenames;
+      for (auto file : files) {
+        !file.is_none() ? filenames.push_back(py::str(file)) : (void)filenames.emplace_back("");
+      }
+      THROW_IF_ERROR(TextFileOp::CountAllFileRows(filenames, &count));
       return count;
     });
 }
@@ -224,11 +245,13 @@ void bindTensor(py::module *m) {
   (void)py::class_<DataType>(*m, "DataType")
     .def(py::init<std::string>())
     .def(py::self == py::self)
-    .def("__str__", &DataType::ToString);
+    .def("__str__", &DataType::ToString)
+    .def("__deepcopy__", [](py::object &t, py::dict memo) { return t; });
 }
 
 void bindTensorOps1(py::module *m) {
-  (void)py::class_<TensorOp, std::shared_ptr<TensorOp>>(*m, "TensorOp");
+  (void)py::class_<TensorOp, std::shared_ptr<TensorOp>>(*m, "TensorOp")
+    .def("__deepcopy__", [](py::object &t, py::dict memo) { return t; });
 
   (void)py::class_<NormalizeOp, TensorOp, std::shared_ptr<NormalizeOp>>(
     *m, "NormalizeOp", "Tensor operation to normalize an image. Takes mean and std.")
@@ -247,6 +270,10 @@ void bindTensorOps1(py::module *m) {
     *m, "ResizeOp", "Tensor operation to resize an image. Takes height, width and mode")
     .def(py::init<int32_t, int32_t, InterpolationMode>(), py::arg("targetHeight"),
          py::arg("targetWidth") = ResizeOp::kDefWidth, py::arg("interpolation") = ResizeOp::kDefInterpolation);
+
+  (void)py::class_<UniformAugOp, TensorOp, std::shared_ptr<UniformAugOp>>(
+    *m, "UniformAugOp", "Tensor operation to apply random augmentation(s).")
+    .def(py::init<py::list, int32_t>(), py::arg("operations"), py::arg("NumOps") = UniformAugOp::kDefNumOps);
 
   (void)py::class_<ResizeBilinearOp, TensorOp, std::shared_ptr<ResizeBilinearOp>>(
     *m, "ResizeBilinearOp",
@@ -280,9 +307,11 @@ void bindTensorOps2(py::module *m) {
          py::arg("fillG") = RandomCropOp::kDefFillG, py::arg("fillB") = RandomCropOp::kDefFillB);
   (void)py::class_<HwcToChwOp, TensorOp, std::shared_ptr<HwcToChwOp>>(*m, "ChannelSwapOp").def(py::init<>());
 
+#if !defined(_WIN32) && !defined(_WIN64)
   (void)py::class_<ChangeModeOp, TensorOp, std::shared_ptr<ChangeModeOp>>(
     *m, "ChangeModeOp", "Tensor operation to change colors from BGR to RGB")
     .def(py::init<>());
+#endif
 
   (void)py::class_<OneHotOp, TensorOp, std::shared_ptr<OneHotOp>>(
     *m, "OneHotOp", "Tensor operation to apply one hot encoding. Takes number of classes.")
@@ -340,18 +369,6 @@ void bindTensorOps3(py::module *m) {
 }
 
 void bindTensorOps4(py::module *m) {
-  (void)py::class_<DistortBoundingBoxCropOp, TensorOp, std::shared_ptr<DistortBoundingBoxCropOp>>(
-    *m, "DistortBoundingBoxCropOp",
-    "Tensor operator to crop an image randomly as long as the cropped image has sufficient "
-    "overlap with any one bounding box associated with original image"
-    "Takes aspect ratio of the generated crop box, the intersection ratio of crop box and bounding box,"
-    "crop ratio lower and upper bounds"
-    "Optional parameters: number of attempts for crop, number of attempts of crop box generation")
-    .def(py::init<float, float, float, float, int32_t, int32_t>(), py::arg("aspect_ratio"), py::arg("intersect_ratio"),
-         py::arg("crop_ratio_lower_bound"), py::arg("crop_ratio_upper_bound"),
-         py::arg("max_attempts") = DistortBoundingBoxCropOp::kDefMaxAttempts,
-         py::arg("box_gen_attempts") = DistortBoundingBoxCropOp::kDefBoxGenAttempts);
-
   (void)py::class_<TypeCastOp, TensorOp, std::shared_ptr<TypeCastOp>>(
     *m, "TypeCastOp", "Tensor operator to type cast data to a specified type.")
     .def(py::init<DataType>(), py::arg("data_type"))
@@ -385,7 +402,17 @@ void bindTensorOps4(py::module *m) {
 }
 
 void bindSamplerOps(py::module *m) {
-  (void)py::class_<Sampler, std::shared_ptr<Sampler>>(*m, "Sampler");
+  (void)py::class_<Sampler, std::shared_ptr<Sampler>>(*m, "Sampler")
+    .def("set_num_rows", [](Sampler &self, int64_t rows) { THROW_IF_ERROR(self.SetNumRowsInDataset(rows)); })
+    .def("set_num_samples", [](Sampler &self, int64_t samples) { THROW_IF_ERROR(self.SetNumSamples(samples)); })
+    .def("initialize", [](Sampler &self) { THROW_IF_ERROR(self.InitSampler()); })
+    .def("get_indices", [](Sampler &self) {
+      py::array ret;
+      THROW_IF_ERROR(self.GetAllIdsThenReset(&ret));
+      return ret;
+    });
+
+  (void)py::class_<mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardOperator>>(*m, "ShardOperator");
 
   (void)py::class_<DistributedSampler, Sampler, std::shared_ptr<DistributedSampler>>(*m, "DistributedSampler")
     .def(py::init<int64_t, int64_t, bool, uint32_t>(), py::arg("numDev"), py::arg("devId"), py::arg("shuffle"),
@@ -400,17 +427,35 @@ void bindSamplerOps(py::module *m) {
 
   (void)py::class_<SequentialSampler, Sampler, std::shared_ptr<SequentialSampler>>(*m, "SequentialSampler")
     .def(py::init<>());
+
   (void)py::class_<SubsetRandomSampler, Sampler, std::shared_ptr<SubsetRandomSampler>>(*m, "SubsetRandomSampler")
     .def(py::init<std::vector<int64_t>>(), py::arg("indices"));
+
+  (void)py::class_<mindrecord::ShardSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardSample>>(
+    *m, "MindrecordSubsetRandomSampler")
+    .def(py::init<std::vector<int64_t>, uint32_t>(), py::arg("indices"), py::arg("seed") = GetSeed());
+  (void)py::class_<mindrecord::ShardPkSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardPkSample>>(
+    *m, "MindrecordPkSampler")
+    .def(py::init([](int64_t kVal, std::string kColumn, bool shuffle) {
+      if (shuffle == true) {
+        return std::make_shared<mindrecord::ShardPkSample>(kColumn, kVal, std::numeric_limits<int64_t>::max(),
+                                                           GetSeed());
+      } else {
+        return std::make_shared<mindrecord::ShardPkSample>(kColumn, kVal);
+      }
+    }));
 
   (void)py::class_<WeightedRandomSampler, Sampler, std::shared_ptr<WeightedRandomSampler>>(*m, "WeightedRandomSampler")
     .def(py::init<std::vector<double>, int64_t, bool>(), py::arg("weights"), py::arg("numSamples"),
          py::arg("replacement"));
+
+  (void)py::class_<PythonSampler, Sampler, std::shared_ptr<PythonSampler>>(*m, "PythonSampler")
+    .def(py::init<py::object>(), py::arg("pySampler"));
 }
 
 void bindInfoObjects(py::module *m) {
   (void)py::class_<BatchOp::CBatchInfo>(*m, "CBatchInfo")
-    .def(py::init<int32_t, int32_t, int32_t>())
+    .def(py::init<int64_t, int64_t, int64_t>())
     .def("get_epoch_num", &BatchOp::CBatchInfo::get_epoch_num)
     .def("get_batch_num", &BatchOp::CBatchInfo::get_batch_num);
 }
@@ -424,11 +469,11 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("STORAGE", OpName::kStorage)
     .value("SHUFFLE", OpName::kShuffle)
     .value("BATCH", OpName::kBatch)
-#ifdef ENABLE_MINDRECORD
+    .value("BARRIER", OpName::kBarrier)
     .value("MINDRECORD", OpName::kMindrecord)
-#endif
     .value("CACHE", OpName::kCache)
     .value("REPEAT", OpName::kRepeat)
+    .value("SKIP", OpName::kSkip)
     .value("TAKE", OpName::kTake)
     .value("ZIP", OpName::kZip)
     .value("MAP", OpName::kMap)
@@ -445,7 +490,9 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("VOC", OpName::kVoc)
     .value("CIFAR10", OpName::kCifar10)
     .value("CIFAR100", OpName::kCifar100)
-    .value("CELEBA", OpName::kCelebA);
+    .value("RANDOMDATA", OpName::kRandomData)
+    .value("CELEBA", OpName::kCelebA)
+    .value("TEXTFILE", OpName::kTextFile);
 
   (void)py::enum_<InterpolationMode>(m, "InterpolationMode", py::arithmetic())
     .value("DE_INTER_LINEAR", InterpolationMode::kLinear)

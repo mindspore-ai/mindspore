@@ -36,6 +36,39 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size) {
   return device_addr;
 }
 
+std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(size_t total_size,
+                                                                          std::vector<size_t> size_list) {
+  std::vector<DeviceMemPtr> device_addr_list;
+  // Pre-alloc the one whole piece memory.
+  auto device_addr = AllocTensorMem(total_size);
+  if (!device_addr) {
+    return device_addr_list;
+  }
+  // Remove the pre-alloc memory.
+  auto mem_block = FindMemBlock(device_addr);
+  MS_EXCEPTION_IF_NULL(mem_block);
+  auto iter = mem_block->block_all_mem_buf_map_.find(device_addr);
+  if (iter == mem_block->block_all_mem_buf_map_.end()) {
+    MS_LOG(EXCEPTION) << "Can't find the device address[" << device_addr << "].";
+  }
+  auto mem_buf = iter->second;
+  MS_EXCEPTION_IF_NULL(mem_buf);
+  auto rest_size = mem_buf->size_ - total_size;
+  (void)mem_block->block_all_mem_buf_map_.erase(iter);
+  // Split the pre-alloc memory into continuous memory by the size list.
+  DynamicMemBufPtr continuous_mem_buf;
+  auto buf_addr = device_addr;
+  for (size_t i = 0; i < size_list.size(); i++) {
+    continuous_mem_buf = std::make_shared<DynamicMemBuf>(buf_addr, kMemBufUsed, size_list[i]);
+    (void)mem_block->block_all_mem_buf_map_.emplace(buf_addr, continuous_mem_buf);
+    device_addr_list.emplace_back(buf_addr);
+    buf_addr = AddressOffset(buf_addr, size_list[i]);
+  }
+  // Update the size of the last memory buf.
+  continuous_mem_buf->size_ += rest_size;
+  return device_addr_list;
+}
+
 size_t DynamicMemPoolBestFit::AlignMemorySize(size_t size) const {
   if (size == 0) {
     return DYNAMIC_MEM_ALIGN_SIZE;
@@ -71,13 +104,16 @@ DeviceMemPtr DynamicMemPoolBestFit::FindIdleMemBuf(size_t size) {
 
 DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size) {
   size_t alloc_mem_size = CalMemBlockAllocSize(size);
-
+  if (alloc_mem_size == 0) {
+    return nullptr;
+  }
   // Add new memory block
   DeviceMemPtr device_addr = nullptr;
   auto real_alloc_size = AllocDeviceMem(alloc_mem_size, &device_addr);
   if (real_alloc_size < size) {
-    MS_LOG(EXCEPTION) << "Memory not enough: alloc size[" << real_alloc_size << "] is smaller than required size["
-                      << size << "].";
+    MS_LOG(WARNING) << "Memory not enough: alloc size[" << real_alloc_size << "] is smaller than required size[" << size
+                    << "].";
+    return nullptr;
   }
   auto mem_block = std::make_shared<DynamicMemBlock>(device_addr, real_alloc_size);
   MS_EXCEPTION_IF_NULL(mem_block);
@@ -104,10 +140,10 @@ DeviceMemPtr DynamicMemPoolBestFit::AddMemBlockAndMemBuf(size_t size) {
 size_t DynamicMemPoolBestFit::CalMemBlockAllocSize(size_t size) {
   auto device_free_mem_size = free_mem_size();
   if (device_free_mem_size < size) {
-    MS_LOG(EXCEPTION) << "Memory not enough: current free memory size[" << device_free_mem_size
-                      << "] is smaller than required size[" << size << "].";
+    MS_LOG(WARNING) << "Memory not enough: current free memory size[" << device_free_mem_size
+                    << "] is smaller than required size[" << size << "].";
+    return 0;
   }
-
   auto alloc_mem_size = mem_alloc_unit_size();
   // Growing at twice of alloc size
   while (alloc_mem_size < size) {
@@ -121,11 +157,10 @@ bool DynamicMemPoolBestFit::IsDivide(size_t tensor_size, size_t mem_buf_size) co
   return mem_buf_size - tensor_size >= DYNAMIC_MEM_ALIGN_SIZE;
 }
 
-void DynamicMemPoolBestFit::DivideMemBuf(size_t size, const DynamicMemBufPtr& mem_buf) {
+void DynamicMemPoolBestFit::DivideMemBuf(size_t size, const DynamicMemBufPtr &mem_buf) {
   MS_EXCEPTION_IF_NULL(mem_buf);
   auto mem_block = FindMemBlock(mem_buf->device_addr_);
   MS_EXCEPTION_IF_NULL(mem_block);
-
   // Divide new memory buf
   size_t newbuf_size = mem_buf->size_ - size;
   mem_buf->size_ = size;
@@ -160,7 +195,7 @@ void DynamicMemPoolBestFit::FreeTensorMem(const DeviceMemPtr device_addr) {
   CombineMemBuf(mem_block, device_addr);
 }
 
-void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr& mem_block, const DeviceMemPtr device_addr) {
+void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, const DeviceMemPtr device_addr) {
   MS_EXCEPTION_IF_NULL(mem_block);
   MS_EXCEPTION_IF_NULL(device_addr);
   auto iter = mem_block->block_all_mem_buf_map_.find(device_addr);

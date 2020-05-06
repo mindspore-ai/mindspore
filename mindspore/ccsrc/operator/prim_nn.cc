@@ -114,12 +114,12 @@ void FusedBatchNormCheckDim(const PrimitivePtr &primitive, const AbstractBasePtr
     AbstractTensorPtr arg = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
     ShapePtr arg_shape = dyn_cast<Shape>(arg->GetShapeTrack());
     if (arg_shape == nullptr) {
-      MS_LOG(EXCEPTION) << "" << op_name << " type of args[" << i << "] should be Shape, but " << arg->ToString();
+      MS_LOG(EXCEPTION) << op_name << " type of args[" << i << "] should be Shape, but " << arg->ToString();
     }
 
     if (i == 0) {
       if (arg_shape->shape().size() < 2) {
-        MS_LOG(EXCEPTION) << "" << op_name << " shape of args[" << i
+        MS_LOG(EXCEPTION) << op_name << " shape of args[" << i
                           << "] should be TensorShape with dimension greater than 1, but shape: "
                           << arg_shape->ToString();
       }
@@ -127,7 +127,7 @@ void FusedBatchNormCheckDim(const PrimitivePtr &primitive, const AbstractBasePtr
     }
 
     if (arg_shape->shape().size() != 1) {
-      MS_LOG(EXCEPTION) << "" << op_name << " shape of args[" << i
+      MS_LOG(EXCEPTION) << op_name << " shape of args[" << i
                         << "] should be TensorShape with dimension: 1, but shape: " << arg_shape->ToString();
     }
   }
@@ -159,7 +159,7 @@ AbstractBasePtr InferImplFusedBatchNorm(const AnalysisEnginePtr &, const Primiti
       MS_LOG(EXCEPTION) << "Arg shape size should >= 1.";
     }
     if (arg_shape_list[0] != input_shape_list[1]) {
-      MS_LOG(EXCEPTION) << "" << op_name << " size of tensor param[" << i << "](which is " << arg_shape_list[0]
+      MS_LOG(EXCEPTION) << op_name << " size of tensor param[" << i << "](which is " << arg_shape_list[0]
                         << ") should match the second dimension of tensor"
                            " param[0](which is "
                         << input_shape_list[1] << ").";
@@ -246,7 +246,7 @@ AbstractBasePtr InferImplBiasAddGrad(const AnalysisEnginePtr &, const PrimitiveP
   // Inputs: at least one tensor(y_backprop)
   // Outputs: dbias
   if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "" << primitive->name() << " evaluator at least has 1 parameters, while the input size is "
+    MS_LOG(EXCEPTION) << primitive->name() << " evaluator at least has 1 parameters, while the input size is "
                       << args_spec_list.size() << ".";
   }
 
@@ -255,8 +255,7 @@ AbstractBasePtr InferImplBiasAddGrad(const AnalysisEnginePtr &, const PrimitiveP
   MS_EXCEPTION_IF_NULL(shape_y);
   std::vector<int> y_dims = shape_y->shape();
   if (y_dims.size() < 2) {
-    MS_LOG(EXCEPTION) << "" << primitive->name() << " input y backprop, dim should >= 2, while " << y_dims.size()
-                      << ".";
+    MS_LOG(EXCEPTION) << primitive->name() << " input y backprop, dim should >= 2, while " << y_dims.size() << ".";
   }
   std::vector<int> bias_dims = {y_dims[1]};
   ShapePtr ret_shape = std::make_shared<Shape>(bias_dims);
@@ -378,7 +377,7 @@ AbstractBasePtr InferImplDropoutGenMask(const AnalysisEnginePtr &, const Primiti
 
   TypePtr prob_type = keep_prob->element()->BuildType();
   if ((prob_type->type_id() != kNumberTypeFloat16) && (prob_type->type_id() != kNumberTypeFloat32)) {
-    MS_LOG(EXCEPTION) << "" << op_name << " keep_prob type should be float16 or float32, but " << prob_type->ToString()
+    MS_LOG(EXCEPTION) << op_name << " keep_prob type should be float16 or float32, but " << prob_type->ToString()
                       << ".";
   }
 

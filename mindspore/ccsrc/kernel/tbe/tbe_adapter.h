@@ -44,21 +44,12 @@ class TbeAdapter {
   static void GenTopKV2IndicesTensorInfo(const std::shared_ptr<AnfNode> &anf_node, size_t real_input_index,
                                          std::vector<nlohmann::json> *input_list, kCreaterType creater_type);
 
+  static void FusionInputOrderPass(const std::string &op_name, const std::vector<nlohmann::json> &inputs_list,
+                                   std::vector<nlohmann::json> *inputs_json);
+  static void FusionDataOrderPass(const std::string &op_name, const std::vector<AnfNodePtr> &data_layer,
+                                  std::vector<AnfNodePtr> *reorder_data_layer);
+
  private:
-  static void MaxPoolWithArgmaxAttrJsonPass(const AnfNodePtr &anf_node,
-                                            const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
-                                            nlohmann::json *attrs_json);
-  static void MaxPoolGradWithArgmaxAttrJsonPass(const AnfNodePtr &anf_node,
-                                                const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
-                                                nlohmann::json *attrs_json);
-  static void Conv2DAttrJsonPass(const AnfNodePtr &anf_node, const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
-                                 nlohmann::json *attrs_json);
-  static void Conv2DBackpropFilterAttrJsonPass(const AnfNodePtr &anf_node,
-                                               const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
-                                               nlohmann::json *attrs_json);
-  static void Conv2DBackpropInputAttrJsonPass(const AnfNodePtr &anf_node,
-                                              const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
-                                              nlohmann::json *attrs_json);
   static void MaximumGradAttrJsonPass(const AnfNodePtr &anf_node,
                                       const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
                                       nlohmann::json *attrs_json);

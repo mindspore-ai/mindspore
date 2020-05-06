@@ -23,7 +23,7 @@ from tests.dataset_mock import MindData
 from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.parallel import _cost_model_context as cost_model_context
-
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 
 class Dataset(MindData):
@@ -105,6 +105,7 @@ def train_common(net):
     epoch_size = 2
     device_num=4
     context.reset_auto_parallel_context()
+    auto_parallel_context().set_enable_all_reduce_fusion(enable_all_reduce_fusion=True)
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=device_num, parameter_broadcast=False)
     context.set_context(mode=context.GRAPH_MODE)
 
@@ -275,7 +276,7 @@ def test_allreduce_fusion5():
     expect_dict = {'backbone2.fc8.weight': 3,
                    'backbone2.fc7.weight': 3,
                    'backbone2.fc6.weight': 3,
-                   'backbone2.fc5.weight': 2,
+                   'backbone2.fc5.weight': 3,
                    'backbone2.fc4.weight': 2,
                    'backbone2.fc3.weight': 2,
                    'backbone2.fc2.weight': 1,
@@ -283,7 +284,7 @@ def test_allreduce_fusion5():
                    'backbone1.fc8.weight': 3,
                    'backbone1.fc7.weight': 3,
                    'backbone1.fc6.weight': 3,
-                   'backbone1.fc5.weight': 2,
+                   'backbone1.fc5.weight': 3,
                    'backbone1.fc4.weight': 2,
                    'backbone1.fc3.weight': 2,
                    'backbone1.fc2.weight': 1,

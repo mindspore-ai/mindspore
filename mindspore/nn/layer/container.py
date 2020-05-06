@@ -86,7 +86,7 @@ class SequentialCell(Cell):
         >>> relu = nn.ReLU()
         >>> seq = nn.SequentialCell([conv, bn, relu])
         >>>
-        >>> x = mindspore.Tensor(np.random.random((1, 3, 4, 4)), dtype=mindspore.float32)
+        >>> x = Tensor(np.random.random((1, 3, 4, 4)), dtype=mindspore.float32)
         >>> seq(x)
         [[[[0.02531557 0.        ]
            [0.04933941 0.04880078]]
@@ -138,7 +138,6 @@ class SequentialCell(Cell):
         return len(self._cells)
 
     def construct(self, input_data):
-        """Processes the input with the defined sequence of Cells."""
         for cell in self.cell_list:
             input_data = cell(input_data)
         return input_data
@@ -161,7 +160,7 @@ class CellList(_CellListBase, Cell):
         >>> cell_ls = nn.CellList([bn])
         >>> cell_ls.insert(0, conv)
         >>> cell_ls.append(relu)
-        >>> x = mindspore.Tensor(np.random.random((1, 3, 4, 4)), dtype=mindspore.float32)
+        >>> x = Tensor(np.random.random((1, 3, 4, 4)), dtype=mindspore.float32)
         >>> # not same as nn.SequentialCell, `cell_ls(x)` is not correct
         >>> cell_ls
         CellList< (0): Conv2d<input_channels=100, ..., bias_init=None>

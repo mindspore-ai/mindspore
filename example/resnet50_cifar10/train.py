@@ -54,21 +54,15 @@ context.set_context(enable_loop_sink=True)
 context.set_context(enable_mem_reuse=True)
 
 if __name__ == '__main__':
-    if args_opt.do_eval:
-        context.set_context(enable_hccl=False)
-    else:
-        if args_opt.run_distribute:
-            context.set_context(enable_hccl=True)
-            context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              mirror_mean=True)
-            auto_parallel_context().set_all_reduce_fusion_split_indices([140])
-            init()
-        else:
-            context.set_context(enable_hccl=False)
+    if not args_opt.do_eval and args_opt.run_distribute:
+        context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                          mirror_mean=True)
+        auto_parallel_context().set_all_reduce_fusion_split_indices([107, 160])
+        init()
 
     epoch_size = config.epoch_size
     net = resnet50(class_num=config.class_num)
-    loss = SoftmaxCrossEntropyWithLogits(sparse=True)
+    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 
 
     if args_opt.do_train:

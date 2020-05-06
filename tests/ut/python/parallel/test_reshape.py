@@ -490,15 +490,15 @@ def fc_with_initialize(input_channels, out_channels):
 class BNReshapeDenseBNNet(nn.Cell):
     def __init__(self):
         super(BNReshapeDenseBNNet, self).__init__()
-        self.batch_norm = bn_with_initialize(512)
+        self.batch_norm = bn_with_initialize(2)
         self.reshape = P.Reshape()
         self.cast = P.Cast()
         self.batch_norm2 = nn.BatchNorm1d(512, affine=False)
-        self.fc = fc_with_initialize(512 * 32 * 32, 512)
+        self.fc = fc_with_initialize(2 * 32 * 32, 512)
 
     def construct(self, x):
         x = self.batch_norm(x)
-        x = self.reshape(x, (16, 512*32*32))
+        x = self.reshape(x, (16, 2*32*32))
         x = self.fc(x)
         x = self.batch_norm2(x)
         return x
@@ -508,7 +508,7 @@ def test_bn_reshape_dense_bn_train():
     batch_size = 16
     device_num = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
-    input = Tensor(np.ones([batch_size, 512, 32, 32]).astype(np.float32) * 0.01)
+    input = Tensor(np.ones([batch_size, 2, 32, 32]).astype(np.float32) * 0.01)
 
     net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
@@ -576,7 +576,7 @@ def test_flatten_reshape2(parallel_mode="auto_parallel"):
     epoch_size = 2
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=8)
-    set_algo_parameters(not_fully_use_devices=True)
+    set_algo_parameters(fully_use_devices=False)
     net = ParallelReduceMeanNet(conv_in_channel=3, conv_out_channel=64, reducemean_axis=(2, 3), strategy=((4, 1, 1, 1),))
     loss = CrossEntropyLoss()
     predict = Tensor(np.ones([batch_size, 3, 32, 32]), dtype=ms.float32)
@@ -617,7 +617,7 @@ def test_flatten_reshape3(parallel_mode="auto_parallel"):
     epoch_size = 2
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=8)
-    set_algo_parameters(not_fully_use_devices=True)
+    set_algo_parameters(fully_use_devices=False)
     net = ParallelReshapeNet(dense_in_channel=2048, dense_out_channel=1000, shape=(128, 1000), strategy=((16, 1),))
     loss = CrossEntropyLoss()
     predict = Tensor(np.ones([batch_size, 1, 2, 1024]), dtype=ms.float32)
@@ -646,7 +646,7 @@ def test_flatten_reshape4(parallel_mode="semi_auto_parallel"):
     epoch_size = 2
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=8)
-    set_algo_parameters(not_fully_use_devices=True)
+    set_algo_parameters(fully_use_devices=False)
     net = ParallelReduceMeanNet(conv_in_channel=3, conv_out_channel=64, reducemean_keep_dims=True, strategy=((4, 1, 1, 1),))
     loss = CrossEntropyLoss2()
     predict = Tensor(np.ones([batch_size, 3, 32, 32]), dtype=ms.float32)

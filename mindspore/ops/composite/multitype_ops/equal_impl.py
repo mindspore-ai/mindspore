@@ -191,6 +191,8 @@ def _none_equal_tuple(x, y):
     return False
 
 
+@equal.register("Tensor", "Number")
+@equal.register("Number", "Tensor")
 @equal.register("Tensor", "Tensor")
 def _tensor_equal_tensor(x, y):
     """
@@ -229,6 +231,36 @@ def _none_equal_tensor(x, y):
     Args:
        x : None.
        y : Tensor.
+
+    Returns:
+       bool, return false.
+   """
+    return False
+
+
+@equal.register("List", "None")
+def _list_equal_none(x, y):
+    """
+    Determine if list equal none.
+
+    Args:
+       x (list): The first input which is a list.
+       y (none): The second input which is none.
+
+    Returns:
+       bool, return false.
+   """
+    return False
+
+
+@equal.register("None", "List")
+def _none_equal_list(x, y):
+    """
+    Determine if none equal list.
+
+    Args:
+       x (none): The first input which is none.
+       y (list): The second input which is a list.
 
     Returns:
        bool, return false.

@@ -17,6 +17,8 @@
 #ifndef MINDRECORD_INCLUDE_SHARD_CATEGORY_H_
 #define MINDRECORD_INCLUDE_SHARD_CATEGORY_H_
 
+#include <algorithm>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -26,16 +28,34 @@ namespace mindspore {
 namespace mindrecord {
 class ShardCategory : public ShardOperator {
  public:
-  explicit ShardCategory(const std::vector<std::pair<std::string, std::string>> &categories);
+  explicit ShardCategory(const std::vector<std::pair<std::string, std::string>> &categories,
+                         int64_t num_elements = std::numeric_limits<int64_t>::max(), bool replacement = false);
+
+  ShardCategory(const std::string &category_field, int64_t num_elements,
+                int64_t num_categories = std::numeric_limits<int64_t>::max(), bool replacement = false);
 
   ~ShardCategory() override{};
 
-  const std::vector<std::pair<std::string, std::string>> &get_categories() const;
+  const std::vector<std::pair<std::string, std::string>> &get_categories() const { return categories_; }
 
-  MSRStatus operator()(ShardTask &tasks) override;
+  const std::string GetCategoryField() const { return category_field_; }
+
+  int64_t GetNumElements() const { return num_elements_; }
+
+  int64_t GetNumCategories() const { return num_categories_; }
+
+  bool GetReplacement() const { return replacement_; }
+
+  MSRStatus execute(ShardTask &tasks) override;
+
+  int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 
  private:
   std::vector<std::pair<std::string, std::string>> categories_;
+  std::string category_field_;
+  int64_t num_elements_;
+  int64_t num_categories_;
+  bool replacement_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore

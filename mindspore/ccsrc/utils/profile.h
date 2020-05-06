@@ -27,19 +27,20 @@
 namespace mindspore {
 
 struct TimeInfo;
-using TimeInfoMap = std::map<std::string, const TimeInfo*>;
+using TimeInfoMap = std::map<std::string, const TimeInfo *>;
 
 extern double GetTime();
 
 class ProfileBase;
 
 struct TimeInfo {
-  explicit TimeInfo(double time = -1.0) : time_(time), dict_(nullptr) {}
-  TimeInfo(const TimeInfo&) = delete;
+  explicit TimeInfo(double time = -1.0) : time_(time), dict_(nullptr), actionNum_(0) {}
+  TimeInfo(const TimeInfo &) = delete;
   ~TimeInfo();
 
   double time_;
-  TimeInfoMap* dict_;
+  TimeInfoMap *dict_;
+  size_t actionNum_;
 };
 
 // Utility class for Profile.
@@ -49,21 +50,21 @@ class ProfContext {
   friend class ProfTransaction;
 
  public:
-  ProfContext(const std::string& name, ProfileBase* prof);
+  ProfContext(const std::string &name, ProfileBase *prof);
   ~ProfContext();
 
-  ProfContext(const ProfContext&) = delete;
-  ProfContext& operator=(const ProfContext&) = delete;
+  ProfContext(const ProfContext &) = delete;
+  ProfContext &operator=(const ProfContext &) = delete;
 
   void SetTime(double time) noexcept;
-  void Insert(const std::string& name, const TimeInfo* time) noexcept;
+  void Insert(const std::string &name, const TimeInfo *time) noexcept;
   bool IsTopContext() const noexcept;
 
  private:
   std::string name_;
-  ProfileBase* prof_;
-  ProfContext* parent_;
-  TimeInfo* time_info_;
+  ProfileBase *prof_;
+  ProfContext *parent_;
+  TimeInfo *time_info_;
 };
 
 class ProfileBase {
@@ -75,38 +76,38 @@ class ProfileBase {
   virtual ~ProfileBase();
 
   virtual void Print(void) {}
-  virtual ProfContext* Step(const std::string&) { return nullptr; }
-  virtual ProfContext* Lap(int) { return nullptr; }
+  virtual ProfContext *Step(const std::string &) { return nullptr; }
+  virtual ProfContext *Lap(int) { return nullptr; }
   virtual void Pop(void) {}
 
   // top level profile context
   ProfContext context_;
   // profile context pointer, act as a stack pointer
-  ProfContext* ctx_ptr_ = nullptr;
+  ProfContext *ctx_ptr_ = nullptr;
 };
 
 class Profile : public ProfileBase {
  public:
   Profile() = default;
   ~Profile() override = default;
-  Profile(const Profile&) = delete;
-  Profile& operator=(const Profile&) = delete;
+  Profile(const Profile &) = delete;
+  Profile &operator=(const Profile &) = delete;
 
   void Print(void) override;
-  ProfContext* Step(const std::string& name) override;
-  ProfContext* Lap(int count) override;
+  ProfContext *Step(const std::string &name) override;
+  ProfContext *Lap(int count) override;
   void Pop(void) noexcept override;
 };
 
 class ProfTransaction {
  public:
-  explicit ProfTransaction(const ProfileBase* prof);
-  explicit ProfTransaction(ProfContext* const ctx) : ctx_(ctx) {}
-  ProfTransaction(const ProfTransaction&) = delete;
+  explicit ProfTransaction(const ProfileBase *prof);
+  explicit ProfTransaction(ProfContext *const ctx) : ctx_(ctx) {}
+  ProfTransaction(const ProfTransaction &) = delete;
   ~ProfTransaction();
 
   template <class Function>
-  void operator-(const Function& func) {
+  void operator-(const Function &func) {
     double start_time = GetTime();
     func();
     double end_time = GetTime();
@@ -116,17 +117,17 @@ class ProfTransaction {
   }
 
  private:
-  ProfContext* ctx_ = nullptr;
+  ProfContext *ctx_ = nullptr;
 };
 
 class NoProfTransaction {
  public:
-  explicit NoProfTransaction(ProfileBase* prof) {}
-  explicit NoProfTransaction(ProfContext* ctx) {}
+  explicit NoProfTransaction(ProfileBase *prof) {}
+  explicit NoProfTransaction(ProfContext *ctx) {}
   ~NoProfTransaction() = default;
 
   template <class Function>
-  void operator-(const Function& func) {
+  void operator-(const Function &func) {
     func();
   }
 };
@@ -136,20 +137,20 @@ class DumpTime {
   ~DumpTime() {
     try {
       Save();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Cannot save file by profile::DumpTime::save";
     } catch (...) {
       MS_LOG(ERROR) << "Uncaught exception";
     }
   }
-  DumpTime(const DumpTime&) = delete;
-  DumpTime& operator=(const DumpTime&) = delete;
-  static DumpTime& GetInstance() {
+  DumpTime(const DumpTime &) = delete;
+  DumpTime &operator=(const DumpTime &) = delete;
+  static DumpTime &GetInstance() {
     static DumpTime instance;
     return instance;
   }
-  void set_file_path(const std::string& save_path) { file_path_ = save_path; }
-  void Record(const std::string& name, const double time, const bool is_start);
+  void set_file_path(const std::string &save_path) { file_path_ = save_path; }
+  void Record(const std::string &name, const double time, const bool is_start);
   void Save();
 
  private:
@@ -187,8 +188,8 @@ class MsProfile {
 
   static void Reset() { GetSingleton().Clear(); }
 
-  static ProfileBase* GetProfile() {
-    MsProfile& ms_prof = GetSingleton();
+  static ProfileBase *GetProfile() {
+    MsProfile &ms_prof = GetSingleton();
     if (ms_prof.profile_ == nullptr) {
 #ifdef ENABLE_PROFILE
       ms_prof.profile_ = new Profile();
@@ -198,14 +199,14 @@ class MsProfile {
     }
     return ms_prof.profile_;
   }
-  static void StatTime(const std::string& id, double time) { GetSingleton().time_stat_[id] += time; }
+  static void StatTime(const std::string &id, double time) { GetSingleton().time_stat_[id] += time; }
 
   static void Print();
 
  private:
   MsProfile() = default;
 
-  static MsProfile& GetSingleton() {
+  static MsProfile &GetSingleton() {
     static MsProfile profile;
     return profile;
   }
@@ -219,7 +220,7 @@ class MsProfile {
   }
 
   std::map<std::string, TimeStat> time_stat_;  // record time and count info from some activity
-  ProfileBase* profile_ = nullptr;             // record hierarchical profile info
+  ProfileBase *profile_ = nullptr;             // record hierarchical profile info
 };
 
 }  // namespace mindspore

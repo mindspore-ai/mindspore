@@ -53,28 +53,28 @@ class OrderedSet {
   // OrderedSet use an iterator to list as mapped value to improve the performance of insertion and deletion,
   // So copy of OrderedSet should re-build value of the map key to make it pointer to the new list,, thus we use
   // traversal to build elements.
-  OrderedSet(const OrderedSet& os) {
-    for (auto& item : os.ordered_data_) {
+  OrderedSet(const OrderedSet &os) {
+    for (auto &item : os.ordered_data_) {
       add(item);
     }
   }
 
-  explicit OrderedSet(const sequential_type& other) {
-    for (auto& item : other) {
+  explicit OrderedSet(const sequential_type &other) {
+    for (auto &item : other) {
       add(item);
     }
   }
 
   // Explicitly construct an OrderedSet use vector
-  explicit OrderedSet(const vector_type& other) {
-    for (auto& item : other) {
+  explicit OrderedSet(const vector_type &other) {
+    for (auto &item : other) {
       add(item);
     }
   }
 
-  OrderedSet& operator=(const OrderedSet& os) {
+  OrderedSet &operator=(const OrderedSet &os) {
     if (this != &os) {
-      for (auto& item : os.ordered_data_) {
+      for (auto &item : os.ordered_data_) {
         add(item);
       }
     }
@@ -82,14 +82,14 @@ class OrderedSet {
   }
 
   // Add an element to the OrderedSet, without judging return value
-  void add(const element_type& e) { (void)insert(e); }
+  void add(const element_type &e) { (void)insert(e); }
 
   // insert an element to the OrderedSet
-  std::pair<iterator, bool> insert(const element_type& e) {
+  std::pair<iterator, bool> insert(const element_type &e) {
     iterator empty_itr;
     std::pair<element_type, typename map_type::mapped_type> map_pair = std::make_pair(e, empty_itr);
     auto result = mapped_data_.insert(map_pair);
-    auto& seq_idx = result.first->second;
+    auto &seq_idx = result.first->second;
     // if insert success;
     if (result.second) {
       auto it = ordered_data_.insert(ordered_data_.end(), e);
@@ -99,7 +99,7 @@ class OrderedSet {
   }
 
   // Remove an element, if removed return true, otherwise return false
-  bool erase(const element_type& e) {
+  bool erase(const element_type &e) {
     auto pos = mapped_data_.find(e);
     if (pos == mapped_data_.end()) {
       return false;
@@ -119,7 +119,7 @@ class OrderedSet {
   std::string toString() {
     std::ostringstream res;
     res << "orderset content:\n";
-    for (auto& item : ordered_data_) {
+    for (auto &item : ordered_data_) {
       res << std::to_string(reinterpret_cast<uintptr_t>(item.get())) << " ";
     }
     return res.str();
@@ -132,7 +132,7 @@ class OrderedSet {
   }
 
   // Compare two orderedset, if the order is not equal shall return false
-  bool operator==(const OrderedSet& other) const { return ordered_data_ == other.ordered_data_; }
+  bool operator==(const OrderedSet &other) const { return ordered_data_ == other.ordered_data_; }
 
   // Remove and return the first element in the OrderedSet
   T pop() {
@@ -153,8 +153,8 @@ class OrderedSet {
   }
 
   // Return true if there are no common elements
-  bool is_disjoint(const OrderedSet& other) {
-    for (auto& item : other.ordered_data_) {
+  bool is_disjoint(const OrderedSet &other) {
+    for (auto &item : other.ordered_data_) {
       if (mapped_data_.find(item) != mapped_data_.end()) {
         return false;
       }
@@ -163,8 +163,8 @@ class OrderedSet {
   }
 
   // Test whether this is subset of other
-  bool is_subset(const OrderedSet& other) {
-    for (auto& item : ordered_data_) {
+  bool is_subset(const OrderedSet &other) {
+    for (auto &item : ordered_data_) {
       if (other.mapped_data_.find(item) == other.mapped_data_.end()) {
         return false;
       }
@@ -173,51 +173,51 @@ class OrderedSet {
   }
 
   // Add elements in other to this orderedset
-  void update(const OrderedSet& other) {
-    for (auto& item : other.ordered_data_) {
+  void update(const OrderedSet &other) {
+    for (auto &item : other.ordered_data_) {
       add(item);
     }
   }
 
-  void update(const std::shared_ptr<OrderedSet>& other) { update(*other); }
+  void update(const std::shared_ptr<OrderedSet> &other) { update(*other); }
 
-  void update(const sequential_type& other) {
-    for (auto& item : other) {
+  void update(const sequential_type &other) {
+    for (auto &item : other) {
       add(item);
     }
   }
 
-  void update(const vector_type& other) {
-    for (auto& item : other) {
+  void update(const vector_type &other) {
+    for (auto &item : other) {
       add(item);
     }
   }
 
-  ordered_set_type get_union(const OrderedSet& other) {
+  ordered_set_type get_union(const OrderedSet &other) {
     ordered_set_type res(ordered_data_);
     res.update(other);
     return res;
   }
 
   // Get the union with other set, this operator may cost time because of copy
-  ordered_set_type operator|(const OrderedSet& other) { return get_union(other); }
+  ordered_set_type operator|(const OrderedSet &other) { return get_union(other); }
 
   // Return the intersection of two sets
-  ordered_set_type intersection(const OrderedSet& other) {
+  ordered_set_type intersection(const OrderedSet &other) {
     ordered_set_type res(ordered_data_);
-    for (auto& item : ordered_data_) {
+    for (auto &item : ordered_data_) {
       if (other.mapped_data_.find(item) == other.mapped_data_.end()) {
         (void)res.erase(item);
       }
     }
     return res;
   }
-  ordered_set_type operator&(const OrderedSet& other) { return intersection(other); }
+  ordered_set_type operator&(const OrderedSet &other) { return intersection(other); }
 
   // Return the symmetric difference of two sets
-  ordered_set_type symmetric_difference(const OrderedSet& other) {
+  ordered_set_type symmetric_difference(const OrderedSet &other) {
     ordered_set_type res(ordered_data_);
-    for (auto& item : other.ordered_data_) {
+    for (auto &item : other.ordered_data_) {
       if (mapped_data_.find(item) != mapped_data_.end()) {
         (void)res.erase(item);
       } else {
@@ -227,40 +227,40 @@ class OrderedSet {
     return res;
   }
 
-  ordered_set_type operator^(const OrderedSet& other) { return symmetric_difference(other); }
+  ordered_set_type operator^(const OrderedSet &other) { return symmetric_difference(other); }
 
   // Remove elements which is also in others.
-  void difference_update(const OrderedSet& other) {
+  void difference_update(const OrderedSet &other) {
     // use vector traversal, to keep ordrer
-    for (auto& item : other.ordered_data_) {
+    for (auto &item : other.ordered_data_) {
       (void)erase(item);
     }
   }
 
-  void difference_update(const sequential_type& other) {
-    for (auto& item : other) {
+  void difference_update(const sequential_type &other) {
+    for (auto &item : other) {
       (void)erase(item);
     }
   }
 
-  void difference_update(const vector_type& other) {
-    for (auto& item : other) {
+  void difference_update(const vector_type &other) {
+    for (auto &item : other) {
       (void)erase(item);
     }
   }
 
   // Return the set with elements that are not in the others
-  ordered_set_type difference(const OrderedSet& other) {
+  ordered_set_type difference(const OrderedSet &other) {
     ordered_set_type res(ordered_data_);
     res.difference_update(other);
     return res;
   }
-  ordered_set_type operator-(const OrderedSet& other) { return difference(other); }
+  ordered_set_type operator-(const OrderedSet &other) { return difference(other); }
 
-  bool contains(const element_type& e) const { return (mapped_data_.find(e) != mapped_data_.end()); }
+  bool contains(const element_type &e) const { return (mapped_data_.find(e) != mapped_data_.end()); }
 
   // Return the count of an element in set
-  std::size_t count(const element_type& e) const { return mapped_data_.count(e); }
+  std::size_t count(const element_type &e) const { return mapped_data_.count(e); }
 
   iterator begin() { return ordered_data_.begin(); }
   iterator end() { return ordered_data_.end(); }

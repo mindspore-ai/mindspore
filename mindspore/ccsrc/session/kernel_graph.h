@@ -27,6 +27,7 @@
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "utils/graph_utils.h"
+#include "device/kernel_info.h"
 
 namespace mindspore {
 namespace session {
@@ -37,6 +38,7 @@ class KernelGraph : public FuncGraph {
     inputs_ = std::make_shared<std::vector<AnfNodePtr>>();
     execution_order_ = {};
     executable_ = true;
+    stream_distinction_label_ = kInvalidDistincLabel;
   }
   ~KernelGraph() override = default;
 
@@ -62,8 +64,8 @@ class KernelGraph : public FuncGraph {
   void FrontBackendlMapUpdate(const AnfNodePtr &old_backend_anf, const AnfNodePtr &new_backend_anf);
   // get backend anf by front anf
   AnfNodePtr GetBackendAnfByFrontAnf(const AnfNodePtr &front_anf);
-  // check backend node wheteher exist in map
-  bool BakcendNodeExistInFrontBackendMap(const AnfNodePtr &backend_anf);
+  // check backend node whether exist in map
+  bool BackendNodeExistInFrontBackendMap(const AnfNodePtr &backend_anf);
   // get value node by tensor
   ValueNodePtr GetValueNodeByTensor(const tensor::TensorPtr &tensor);
   // add value node tensor relation map
@@ -86,12 +88,25 @@ class KernelGraph : public FuncGraph {
   bool executable() const { return executable_; }
   // set executable of graph
   void set_executable(bool executable) { executable_ = executable; }
+  // set invalid inputs for control sink
+  std::vector<bool> *MutableValidInputs() { return &valid_inputs_; }
+  std::vector<bool> valid_inputs() const { return valid_inputs_; }
+  // replace node in graph
+  void ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf_node);
+  // set stream label of graph
+  void set_stream_distinction_label(uint32_t stream_label) { stream_distinction_label_ = stream_label; }
+  // get stream label of graph
+  uint32_t stream_distinction_label() { return stream_distinction_label_; }
+  // refresh execute kernel stream label
+  void UpdateExecuteKernelStreamLabel();
 
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
-  // BFS to update all nodes' output
-  void BfsToUpdateNodeOutput();
+  void VisitNodeDescendants(const AnfNodePtr &node, std::queue<AnfNodePtr> *visit_queue,
+                            std::unordered_set<AnfNodePtr> *visited_nodes);
+  // update node edge list
+  void UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes);
   // add node depend edge by data edge or control depend
   void AddDependEdge(const AnfNodePtr &node, const AnfNodePtr &input, size_t depend_edge_num);
   // handle control depend
@@ -103,6 +118,7 @@ class KernelGraph : public FuncGraph {
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
   std::vector<CNodePtr> execution_order_;
   uint32_t graph_id_;
+  uint32_t stream_distinction_label_;
 
   // record map bettween front anf and backend anf,use two map implement bidirectional map
   std::unordered_map<AnfNodePtr, AnfNodePtr> front_backend_anf_map_;
@@ -111,13 +127,15 @@ class KernelGraph : public FuncGraph {
   std::unordered_map<tensor::TensorPtr, ValueNodePtr> tensor_to_value_node_map_;
   // include all value nodes
   std::unordered_set<ValueNodePtr> graph_value_nodes_;
-  std::unordered_map<AnfNodePtr, size_t> node_output_num_;
+  std::unordered_map<AnfNodePtr, size_t> node_input_num_;
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_input_edges_;
   // record map between ref final output anf with index and ref origin input with index
   std::map<AnfWithOutIndex, AnfWithOutIndex> ref_out_in_map_;
   std::unordered_map<AnfNodePtr, std::vector<std::pair<AnfNodePtr, size_t>>> node_output_edges_;
   // graph needn't execute
   bool executable_;
+  // valid inputs
+  std::vector<bool> valid_inputs_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

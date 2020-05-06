@@ -87,8 +87,9 @@ def get_function_config(function):
     init_param_with = function.get(keyword.init_param_with, None)
     split_outputs = function.get(keyword.split_outputs, True)
     exception = function.get(keyword.exception, Exception)
+    error_keywords = function.get(keyword.error_keywords, None)
     return delta, max_error, input_selector, output_selector, sampling_times, \
-           reduce_output, init_param_with, split_outputs, exception
+           reduce_output, init_param_with, split_outputs, exception, error_keywords
 
 def get_grad_checking_options(function, inputs):
     """
@@ -104,6 +105,6 @@ def get_grad_checking_options(function, inputs):
     """
     f = function[keyword.block]
     args = inputs[keyword.desc_inputs]
-    delta, max_error, input_selector, output_selector, sampling_times, reduce_output, _, _, _ = \
+    delta, max_error, input_selector, output_selector, sampling_times, reduce_output, _, _, _, _ = \
         get_function_config(function)
     return f, args, delta, max_error, input_selector, output_selector, sampling_times, reduce_output

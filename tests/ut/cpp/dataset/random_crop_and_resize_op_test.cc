@@ -20,35 +20,17 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestRandomCropAndResizeOp : public UT::CVOP::CVOpCommon {
  public:
   MindDataTestRandomCropAndResizeOp() : CVOpCommon() {}
 };
 
-TEST_F(MindDataTestRandomCropAndResizeOp, TestOpDefault) {
-  MS_LOG(INFO) << "Doing testRandomCropAndResize.";
-  TensorShape s_in = input_tensor_->shape();
-  std::shared_ptr<Tensor> output_tensor;
-  int h_out = 512;
-  int w_out = 512;
-
-  TensorShape s_out({(uint32_t) h_out, (uint32_t) w_out, (uint32_t) s_in[2]});
-
-  std::unique_ptr<RandomCropAndResizeOp> op(new RandomCropAndResizeOp(h_out, w_out));
-  Status s;
-  for (auto i = 0; i < 100; i++) {
-    s = op->Compute(input_tensor_, &output_tensor);
-  }
-  EXPECT_TRUE(s.IsOk());
-  MS_LOG(INFO) << "testRandomCropAndResize end.";
-}
-
-TEST_F(MindDataTestRandomCropAndResizeOp, TestOpExtended) {
-  MS_LOG(INFO) << "Doing testRandomCropAndResize.";
+TEST_F(MindDataTestRandomCropAndResizeOp, TestOpSimpleTest) {
+  MS_LOG(INFO) << " starting RandomCropAndResizeOp simple test";
   TensorShape s_in = input_tensor_->shape();
   std::shared_ptr<Tensor> output_tensor;
   int h_out = 1024;
@@ -58,14 +40,14 @@ TEST_F(MindDataTestRandomCropAndResizeOp, TestOpExtended) {
   float scale_lb = 0.0001;
   float scale_ub = 1.0;
 
-  TensorShape s_out({(uint32_t) h_out, (uint32_t) w_out, (uint32_t) s_in[2]});
+  TensorShape s_out({h_out, w_out, s_in[2]});
 
-  std::unique_ptr<RandomCropAndResizeOp> op(
-    new RandomCropAndResizeOp(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub));
+  auto op = std::make_unique<RandomCropAndResizeOp>(h_out, w_out, scale_lb, scale_ub, aspect_lb, aspect_ub);
   Status s;
   for (auto i = 0; i < 100; i++) {
     s = op->Compute(input_tensor_, &output_tensor);
+    EXPECT_TRUE(s.IsOk());
   }
-  EXPECT_TRUE(s.IsOk());
-  MS_LOG(INFO) << "testRandomCropAndResize end.";
+
+  MS_LOG(INFO) << "RandomCropAndResizeOp simple test finished";
 }

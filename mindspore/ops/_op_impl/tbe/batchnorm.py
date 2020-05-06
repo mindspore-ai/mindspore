@@ -14,174 +14,44 @@
 # ============================================================================
 
 """BatchNorm op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+batch_norm_op_info = TBERegOp("BatchNorm") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("batch_norm.so") \
+    .compute_cost(10) \
+    .kernel_name("batch_norm") \
+    .partial_flag(True) \
+    .attr("epsilon", "optional", "float", "all") \
+    .attr("data_format", "optional", "str", "all") \
+    .attr("is_training", "optional", "bool", "all") \
+    .input(0, "x", False, "required", "all") \
+    .input(1, "scale", False, "required", "all") \
+    .input(2, "offset", False, "required", "all") \
+    .input(3, "mean", False, "optional", "all") \
+    .input(4, "variance", False, "optional", "all") \
+    .output(0, "y", False, "required", "all") \
+    .output(1, "batch_mean", False, "required", "all") \
+    .output(2, "batch_variance", False, "required", "all") \
+    .output(3, "reserve_space_1", False, "optional", "all") \
+    .output(4, "reserve_space_2", False, "optional", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F16_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "BatchNorm",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "batch_norm.so",
-    "compute_cost": 10,
-    "kernel_name": "batch_norm",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "epsilon",
-            "param_type": "required",
-            "type": "float",
-            "value": "all"
-        },
-        {
-            "name": "data_format",
-            "param_type": "required",
-            "type": "str",
-            "value": "all"
-        },
-        {
-            "name": "is_training",
-            "param_type": "required",
-            "type": "bool",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0", "DefaultFormat","NC1HWC0"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat", "NC1HWC0"
-            ],
-            "name": "scale",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "offset",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 3,
-            "dtype": [
-                "float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "mean",
-            "need_compile": false,
-            "param_type": "optional",
-            "shape": "all"
-        },
-        {
-            "index": 4,
-            "dtype": [
-                "float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "variance",
-            "need_compile": false,
-            "param_type": "optional",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float", "float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0", "DefaultFormat","NC1HWC0"
-            ],
-            "name": "y",
-            "param_type": "required"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "batch_mean",
-            "param_type": "required"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float", "float", "float", "float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "batch_variance",
-            "param_type": "required"
-        },
-        {
-            "index": 3,
-            "dtype": [
-                "float", "float", "float", "float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "reserve_space_1",
-            "param_type": "optional"
-        },
-        {
-            "index": 4,
-            "dtype": [
-                "float", "float", "float", "float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "reserve_space_2",
-            "param_type": "optional"
-        },
-        {
-            "index": 5,
-            "dtype": [
-                "float", "float", "float", "float"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","DefaultFormat","NC1HWC0"
-            ],
-            "name": "reserve_space_3",
-            "param_type": "optional"
-        }
-    ]
-}""")
+@op_info_register(batch_norm_op_info)
 def _batch_norm_tbe():
     """BatchNorm TBE register"""
     return

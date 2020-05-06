@@ -28,7 +28,6 @@
 #include "dataset/core/global_context.h"
 #include "dataset/core/pybind_support.h"
 #include "dataset/core/tensor_shape.h"
-#include "dataset/util/make_unique.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -53,7 +52,7 @@ namespace dataset {
 Tensor::Tensor(const TensorShape &shape, const DataType &type) : shape_(shape), type_(type), data_(nullptr) {
   // grab the mem pool from global context and create the allocator for char data area
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
-  data_allocator_ = mindspore::make_unique<Allocator<unsigned char>>(global_pool);
+  data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
 }
 
 Tensor::Tensor(const TensorShape &shape, const DataType &type, const unsigned char *data) : Tensor(shape, type) {
@@ -86,6 +85,7 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept {
     shape_ = other.shape();
     type_ = other.type();
     data_ = other.StartAddr();
+    data_end_ = other.data_end_;
     data_allocator_ = std::move(other.data_allocator_);
     other.Invalidate();
   }
@@ -137,7 +137,7 @@ Status Tensor::CreateTensor(std::shared_ptr<Tensor> *ptr, py::array arr) {
   if ((*ptr)->type_ == DataType::DE_UNKNOWN) RETURN_STATUS_UNEXPECTED("Invalid data type.");
 
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
-  (*ptr)->data_allocator_ = mindspore::make_unique<Allocator<unsigned char>>(global_pool);
+  (*ptr)->data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
   static_cast<void>((*ptr)->StartAddr());
   int64_t byte_size = (*ptr)->SizeInBytes();
   unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
@@ -209,11 +209,13 @@ Tensor::~Tensor() {
     if (data_allocator_ != nullptr) {
       data_allocator_->deallocate(data_);
       data_ = nullptr;
+      data_end_ = nullptr;
     } else {
       // If we didn't have an allocator, but data_ is not null then it must
       // be a stand-alone tensor that used malloc directly.
       free(data_);
       data_ = nullptr;
+      data_end_ = nullptr;
     }
   }
 }
@@ -238,7 +240,7 @@ void Tensor::PrintItemAt(const std::vector<dsize_t> &index, std::ostream &out) c
   DS_ASSERT(data_);
 
   switch (type_.value()) {
-    CASE_PRINT_HEX(DataType::DE_BOOL, uint8_t);
+    CASE_PRINT_HEX(DataType::DE_BOOL, bool);
 
     CASE_PRINT_HEX(DataType::DE_INT8, int8_t);
 
@@ -339,8 +341,10 @@ unsigned char *Tensor::StartAddr() {
     // on the shape and type and allocate it.
     if (data_allocator_ != nullptr) {
       data_ = data_allocator_->allocate(this->SizeInBytes());
+      data_end_ = data_ + SizeInBytes();
     } else {
       data_ = static_cast<unsigned char *>(malloc(this->SizeInBytes()));
+      data_end_ = data_ + SizeInBytes();
       if (data_ == nullptr) {
         return nullptr;
       }
@@ -363,6 +367,7 @@ void Tensor::Invalidate() {
   shape_ = TensorShape::CreateUnknownRankShape();
   type_ = DataType(DataType::DE_UNKNOWN);
   data_ = nullptr;
+  data_end_ = nullptr;
   data_allocator_ = nullptr;
 }
 
@@ -492,6 +497,8 @@ Status Tensor::GetItemAt(T *o, const std::vector<dsize_t> &index) const {
 
 // return data as numpy, should return status
 Status Tensor::GetDataAsNumpy(py::array *data) {
+  RETURN_UNEXPECTED_IF_NULL(data_);
+  RETURN_UNEXPECTED_IF_NULL(data);
   if (type_ == DataType::DE_BOOL) {
     *data = py::array_t<bool>(shape_.AsVector(), reinterpret_cast<bool *>(data_));
   } else if (type_ == DataType::DE_INT8) {

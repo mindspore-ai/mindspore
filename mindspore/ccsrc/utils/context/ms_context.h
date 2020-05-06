@@ -23,7 +23,6 @@
 #include <vector>
 #include <string>
 #include <utility>
-#include "transform/graph_runner.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -49,13 +48,13 @@ const std::set<std::string> kTargetSet = {kCPUDevice, kGPUDevice, kAscendDevice,
 class MsContext {
  public:
   ~MsContext() = default;
-  MsContext(const MsContext&) = delete;
-  MsContext& operator=(const MsContext&) = delete;
+  MsContext(const MsContext &) = delete;
+  MsContext &operator=(const MsContext &) = delete;
 
   static std::shared_ptr<MsContext> GetInstance();
 
   std::string backend_policy() const;
-  bool set_backend_policy(const std::string& policy);
+  bool set_backend_policy(const std::string &policy);
 
   int execution_mode() const { return execution_mode_; }
   void set_execution_mode(int execution_mode);
@@ -70,7 +69,7 @@ class MsContext {
   bool precompile_only() const { return precompile_only_; }
 
   std::string device_target() const { return device_target_; }
-  bool set_device_target(const std::string& target);
+  bool set_device_target(const std::string &target);
 
   uint32_t device_id() const { return device_id_; }
   bool set_device_id(uint32_t device_id);
@@ -79,12 +78,14 @@ class MsContext {
   void set_save_graphs_flag(bool save_graphs_flag) { save_graphs_flag_ = save_graphs_flag; }
 
   std::string save_graphs_path() const { return save_graphs_path_; }
-  void set_save_graphs_path(const std::string& save_paths) { save_graphs_path_ = save_paths; }
+  void set_save_graphs_path(const std::string &save_paths) { save_graphs_path_ = save_paths; }
 
   bool OpenTsd();
   bool CloseTsd(bool force = false);
+  bool IsTsdOpened();
   bool InitGe();
   bool FinalizeGe(bool force = false);
+  bool IsGeInited();
   void set_enable_hccl(bool enable_hccl) { enable_hccl_ = enable_hccl; }
   bool enable_hccl() const { return enable_hccl_; }
   bool PynativeInitGe();
@@ -102,7 +103,7 @@ class MsContext {
   void set_save_ms_model_flag(bool save_ms_model_flag) { save_ms_model_flag_ = save_ms_model_flag; }
 
   std::string save_ms_model_path() const { return save_ms_model_path_; }
-  void set_save_ms_model_path(const std::string& save_ms_model_path) { save_ms_model_path_ = save_ms_model_path; }
+  void set_save_ms_model_path(const std::string &save_ms_model_path) { save_ms_model_path_ = save_ms_model_path; }
 
   void set_enable_gpu_summary(bool enable_gpu_summary) { enable_gpu_summary_ = enable_gpu_summary; }
   bool enable_gpu_summary() const { return enable_gpu_summary_; }
@@ -118,7 +119,7 @@ class MsContext {
   void set_enable_dump(bool flag) { enable_dump_ = flag; }
   bool enable_dump() const { return enable_dump_; }
 
-  void set_save_dump_path(const std::string& path) { save_dump_path_ = path; }
+  void set_save_dump_path(const std::string &path) { save_dump_path_ = path; }
   std::string save_dump_path() const { return save_dump_path_; }
 
   bool IsTsdOpened() const { return tsd_ref_ > 0; }
@@ -129,19 +130,19 @@ class MsContext {
   void set_enable_dynamic_mem_pool(bool enable_dynamic_mem_pool) { enable_dynamic_mem_pool_ = enable_dynamic_mem_pool; }
   bool enable_dynamic_mem_pool() const { return enable_dynamic_mem_pool_; }
 
-  void set_graph_memory_max_size(const std::string& graph_memory_max_size) {
+  void set_graph_memory_max_size(const std::string &graph_memory_max_size) {
     graph_memory_max_size_ = graph_memory_max_size;
   }
 
-  void set_variable_memory_max_size(const std::string& variable_memory_max_size) {
+  void set_variable_memory_max_size(const std::string &variable_memory_max_size) {
     variable_memory_max_size_ = variable_memory_max_size;
   }
 
  private:
-  MsContext(const std::string& backend_policy, const std::string& target);
-  void GetGeOptions(std::map<std::string, std::string>* ge_options) const;
-  void SetDisableReuseMemoryFlag(std::map<std::string, std::string>* ge_options) const;
-  void SetHcclOptions(std::map<std::string, std::string>* ge_options) const;
+  MsContext(const std::string &backend_policy, const std::string &target);
+  void GetGeOptions(std::map<std::string, std::string> *ge_options) const;
+  void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) const;
+  void SetHcclOptions(std::map<std::string, std::string> *ge_options) const;
 
   static std::shared_ptr<MsContext> inst_context_;
   static std::map<std::string, MsBackendPolicy> policy_map_;

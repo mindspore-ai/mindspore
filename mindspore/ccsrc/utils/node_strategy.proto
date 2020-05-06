@@ -33,6 +33,6 @@ message ParallelStrategyItem {
 }
 
 message ParallelStrategyMap {
-    required uint32 train_time = 1;
+    required uint32 current_stage = 1;
     repeated ParallelStrategyItem parallel_strategy_item = 2;
 }

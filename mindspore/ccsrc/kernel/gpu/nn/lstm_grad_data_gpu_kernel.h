@@ -23,7 +23,6 @@
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "kernel/gpu/kernel_constants.h"
-#include "dataset/util/make_unique.h"
 
 namespace mindspore {
 namespace kernel {
@@ -212,9 +211,9 @@ class LstmGradDataGpuKernel : public GpuKernel {
     int x_dims[3]{batch_size_, input_size_, 1};
     int y_dims[3]{batch_size_, hidden_size_ * (bidirectional_ ? 2 : 1), 1};
 
-    dx_desc_ = mindspore::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
-    y_desc_ = mindspore::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
-    dy_desc_ = mindspore::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
+    dx_desc_ = std::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
+    y_desc_ = std::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
+    dy_desc_ = std::make_unique<cudnnTensorDescriptor_t[]>(seq_len_);
 
     for (size_t i = 0; i < IntToSize(seq_len_); ++i) {
       CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&dx_desc_[i]), "create x_desc failed");
@@ -258,8 +257,8 @@ class LstmGradDataGpuKernel : public GpuKernel {
   cudnnRNNDescriptor_t rnn_desc_;
 
   // input desc
-  unique_ptr<cudnnTensorDescriptor_t[]> y_desc_;
-  unique_ptr<cudnnTensorDescriptor_t[]> dy_desc_;
+  std::unique_ptr<cudnnTensorDescriptor_t[]> y_desc_;
+  std::unique_ptr<cudnnTensorDescriptor_t[]> dy_desc_;
   cudnnTensorDescriptor_t dhy_desc_;
   cudnnTensorDescriptor_t dcy_desc_;
   cudnnFilterDescriptor_t w_desc_;
@@ -269,7 +268,7 @@ class LstmGradDataGpuKernel : public GpuKernel {
   cudnnDropoutDescriptor_t dropout_desc_;
 
   // output desc
-  unique_ptr<cudnnTensorDescriptor_t[]> dx_desc_;
+  std::unique_ptr<cudnnTensorDescriptor_t[]> dx_desc_;
   cudnnTensorDescriptor_t dhx_desc_;
   cudnnTensorDescriptor_t dcx_desc_;
 

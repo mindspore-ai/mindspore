@@ -61,6 +61,7 @@ class DFunctor {
  private:
   // Map one morphism.
   AdjointPtr MapMorphism(const AnfNodePtr &morph);
+  bool IsFreeMorphism(const AnfNodePtr &node);
   // Map morphism that's not attached to output.
   void MapFreeMorphism();
   void BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din);
@@ -126,7 +127,7 @@ class KPrim {
   AnfNodePtr BuildOutput(const FuncGraphPtr &bprop_fg);
   void TransformArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg, const FuncGraphPtr &outer,
                      std::vector<AnfNodePtr> *const transf_args);
-  void AddCheckTypeShapeOp(const FuncGraphPtr &bprop_fg);
+  void CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check);
 
   Registry bprop_registry_;
   std::unordered_map<PrimitivePtr, MetaFuncGraphPtr> bprop_registry_meta_;
@@ -136,10 +137,7 @@ template <typename T>
 FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg) {
   MS_EXCEPTION_IF_NULL(primal);
   MS_EXCEPTION_IF_NULL(bprop_fg);
-
-  if (IsPrimitiveCNode(bprop_fg->output(), prim::kPrimMakeTuple)) {
-    AddCheckTypeShapeOp(bprop_fg);
-  }
+  CheckBprop(bprop_fg, primal->ToString());
 
   auto debug_info = std::make_shared<GraphDebugInfo>();
   debug_info->set_name(primal->ToString());

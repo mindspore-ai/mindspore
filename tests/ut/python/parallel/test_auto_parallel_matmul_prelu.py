@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 import numpy as np
 from mindspore import context
 import mindspore.nn as nn
@@ -66,7 +67,10 @@ def test_matmul_prelu():
 
     _executor.compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
-    assert strategies['Default/network-Net/PReLU-op2'] == [[16, 1, 1, 1], [1]]
-    assert strategies['Default/network-Net/Mul-op3'] == [[16, 1, 1, 1], [16, 1, 1, 1]]
+    for (k, v) in strategies.items():
+        if re.search('PReLU-op', k) is not None:
+            assert v == [[16, 1, 1, 1], [1]]
+        elif re.search('Mul-op', k) is not None:
+            assert v == [[16, 1, 1, 1], [16, 1, 1, 1]]
 
 

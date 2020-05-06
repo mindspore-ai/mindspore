@@ -41,8 +41,8 @@ class BaseShape : public Base {
   ~BaseShape() override = default;
 
   MS_DECLARE_PARENT(BaseShape, Base)
-  virtual bool operator==(const BaseShape& other) const;
-  bool operator!=(const BaseShape& other) const;
+  virtual bool operator==(const BaseShape &other) const;
+  bool operator!=(const BaseShape &other) const;
   std::size_t hash() const override { return tid(); }
 
   // return a deep copy
@@ -62,16 +62,16 @@ class Shape : public BaseShape {
  public:
   static const int SHP_ANY = -1;
   Shape() : shape_() {}
-  Shape(const std::initializer_list<int>& list) : shape_(list) {}
-  explicit Shape(const std::vector<int>& list) : shape_(list) {}
+  Shape(const std::initializer_list<int> &list) : shape_(list) {}
+  explicit Shape(const std::vector<int> &list) : shape_(list) {}
   ~Shape() override = default;
   MS_DECLARE_PARENT(Shape, BaseShape)
   std::string ToString() const override;
   std::string DumpText() const override;
-  bool operator==(const BaseShape& other) const override;
+  bool operator==(const BaseShape &other) const override;
   BaseShapePtr Clone() const override { return std::make_shared<Shape>(shape_); }
   void Broaden() override;
-  std::vector<int>& shape() { return shape_; }
+  std::vector<int> &shape() { return shape_; }
 
   std::vector<int> shape_;  // use SHP_ANY to implement the any shape in python
 };
@@ -81,7 +81,7 @@ using ShapePtrList = std::vector<ShapePtr>;
 class SequeueShape : public BaseShape {
  public:
   SequeueShape() : p_shapes_() {}
-  explicit SequeueShape(const BaseShapePtrList& shapes) : p_shapes_(shapes) {}
+  explicit SequeueShape(const BaseShapePtrList &shapes) : p_shapes_(shapes) {}
   ~SequeueShape() override = default;
   MS_DECLARE_PARENT(SequeueShape, BaseShape)
 
@@ -89,9 +89,9 @@ class SequeueShape : public BaseShape {
   BaseShapePtrList ElementsClone() const;
 
   template <typename T>
-  bool SequeueEqual(const BaseShape& other) const;
+  bool SequeueEqual(const BaseShape &other) const;
 
-  const BaseShapePtrList& shape() const { return p_shapes_; }
+  const BaseShapePtrList &shape() const { return p_shapes_; }
   size_t size() const { return p_shapes_.size(); }
   const BaseShapePtr operator[](std::size_t dim) const { return p_shapes_[dim]; }
 
@@ -103,7 +103,7 @@ using SequeueShapePtr = std::shared_ptr<SequeueShape>;
 class TupleShape : public SequeueShape {
  public:
   TupleShape() : SequeueShape() {}
-  explicit TupleShape(const BaseShapePtrList& shapes) : SequeueShape(shapes) {}
+  explicit TupleShape(const BaseShapePtrList &shapes) : SequeueShape(shapes) {}
   ~TupleShape() override = default;
   MS_DECLARE_PARENT(TupleShape, SequeueShape)
 
@@ -111,14 +111,14 @@ class TupleShape : public SequeueShape {
 
   BaseShapePtr Clone() const override { return std::make_shared<TupleShape>(ElementsClone()); }
 
-  bool operator==(const BaseShape& other) const override { return SequeueEqual<TupleShape>(other); }
+  bool operator==(const BaseShape &other) const override { return SequeueEqual<TupleShape>(other); }
 };
 using TupleShapePtr = std::shared_ptr<TupleShape>;
 
 class ListShape : public SequeueShape {
  public:
   ListShape() : SequeueShape() {}
-  explicit ListShape(const BaseShapePtrList& shapes) : SequeueShape(shapes) {}
+  explicit ListShape(const BaseShapePtrList &shapes) : SequeueShape(shapes) {}
   ~ListShape() override = default;
   MS_DECLARE_PARENT(ListShape, SequeueShape)
 
@@ -126,7 +126,7 @@ class ListShape : public SequeueShape {
 
   BaseShapePtr Clone() const override { return std::make_shared<ListShape>(SequeueShape::ElementsClone()); }
 
-  bool operator==(const BaseShape& other) const override { return SequeueEqual<ListShape>(other); }
+  bool operator==(const BaseShape &other) const override { return SequeueEqual<ListShape>(other); }
 };
 using ListShapePtr = std::shared_ptr<ListShape>;
 }  // namespace abstract

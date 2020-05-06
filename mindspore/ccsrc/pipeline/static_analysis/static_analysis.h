@@ -83,9 +83,12 @@ class AnfNodeConfig : public Config {
 
   // used by unordered_map;
   bool operator==(const AnfNodeConfig &other) const {
-    // compare node with pointer, context with content;
+    // compare node with pointer, context with pointer except DummyContext as it's created by make_shared;
     // context should not be nullptr;
-    return (node_ == other.node_) && (*context_ == *other.context_);
+    if (context_->IsDummyContext() && other.context_->IsDummyContext()) {
+      return true;
+    }
+    return (node_ == other.node_) && (context_ == other.context_);
   }
 
   std::string ToString() const override {
@@ -194,6 +197,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   const PrimEvaluatorMap &PrimConstructors() const { return prim_constructors_; }
 
   AnalysisCache cache_;
+  std::unordered_map<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
  private:
   const PrimEvaluatorMap &prim_constructors_;

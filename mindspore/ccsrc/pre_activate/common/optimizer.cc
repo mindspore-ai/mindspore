@@ -30,7 +30,8 @@
 namespace mindspore {
 namespace opt {
 namespace {
-AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, bool multigraph);
+AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
+                            bool multigraph);
 
 ValueNodePtr CreateValueNodeWithSexp(const BaseRef &sexp) {
   if (utils::isa<int>(sexp)) {
@@ -71,12 +72,20 @@ VarNodePtr CreateVarNodeWithSexp(const BaseRef &sexp, const BaseRef &graph) {
   return nullptr;
 }
 
-AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, bool multigraph = false) {
+AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
+                      bool multigraph = false) {
   MS_LOG(DEBUG) << "SexpToNode sexp: " + sexp.ToString() + ", graph " + graph.ToString();
+  MS_EXCEPTION_IF_NULL(primitive_vars);
   if (utils::isa<VectorRef>(sexp)) {
-    return HandleSexpVector(sexp, graph, multigraph);
+    return HandleSexpVector(sexp, graph, primitive_vars, multigraph);
   }
   if (utils::isa<VarPtr>(sexp)) {
+    auto var_ptr = utils::cast<VarPtr>(sexp);
+    MS_EXCEPTION_IF_NULL(var_ptr);
+    if (var_ptr->primitive()) {
+      (*primitive_vars)[var_ptr->primitive()] = var_ptr;
+      return NewValueNode(var_ptr->primitive());
+    }
     return CreateVarNodeWithSexp(sexp, graph);
   }
   if (utils::isa<AnfNodePtr>(sexp)) {
@@ -89,13 +98,14 @@ AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, bool multigraph
   return value_node;
 }
 
-AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, bool multigraph) {
+AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
+                            bool multigraph) {
   MS_LOG(DEBUG) << "HandleSexpVector sexp: " + sexp.ToString() + ", graph " + graph.ToString();
   std::vector<AnfNodePtr> input_nodes;
   const auto &tuple = utils::cast<VectorRef>(sexp);
   if (multigraph && utils::isa<VarPtr>(graph)) {
     for (auto &x : tuple) {
-      AnfNodePtr node = SexpToNode(x, std::make_shared<Var>("G"), true);
+      AnfNodePtr node = SexpToNode(x, std::make_shared<Var>("G"), primitive_vars, true);
       input_nodes.push_back(node);
     }
     VarPtr var_ptr = utils::cast<VarPtr>(graph);
@@ -103,7 +113,7 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, bool mult
   }
 
   for (auto &x : tuple) {
-    AnfNodePtr node = SexpToNode(x, graph, multigraph);
+    AnfNodePtr node = SexpToNode(x, graph, primitive_vars, multigraph);
     input_nodes.push_back(node);
   }
   return CreateCNodeWithGraph(input_nodes, graph);
@@ -166,7 +176,8 @@ PatternProcessPass::PatternProcessPass(const std::string &name, bool multigraph)
       multigraph_(multigraph),
       pattern_engine_(PatternEngine(std::make_shared<DefaultVisitor>(),
                                     std::function<bool(const BaseRef &, const BaseRef &)>(AnfEqual),
-                                    std::function<bool(const BaseRef &, const BaseRef &)>(CNodeTypeEqual))) {}
+                                    std::function<bool(const BaseRef &, const BaseRef &)>(CNodeTypeEqual))),
+      primitive_vars_(std::make_shared<PrimitiveVarMap>()) {}
 
 const BaseRef PatternProcessPass::DefinePattern() const {
   VarPtr X = std::make_shared<Var>();
@@ -176,7 +187,7 @@ const BaseRef PatternProcessPass::DefinePattern() const {
 void PatternProcessPass::Build() {
   VarPtr fg = std::make_shared<Var>("RootG");
   BaseRef pattern = std::move(DefinePattern());
-  pattern_ = SexpToNode(pattern, fg, multigraph_);
+  pattern_ = SexpToNode(pattern, fg, primitive_vars_.get(), multigraph_);
 }
 
 AnfNodePtr PatternProcessPass::Run(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
@@ -185,7 +196,8 @@ AnfNodePtr PatternProcessPass::Run(const FuncGraphPtr &func_graph, const AnfNode
   }
 
   auto empty_equiv = std::make_shared<Equiv>();
-  EquivPtr equiv = pattern_engine_.Match(pattern_, node, empty_equiv);
+  MS_EXCEPTION_IF_NULL(primitive_vars_);
+  EquivPtr equiv = pattern_engine_.Match(pattern_, node, *primitive_vars_, empty_equiv);
   if (equiv != nullptr && !equiv->empty()) {
     return Process(func_graph, node, equiv);
   }

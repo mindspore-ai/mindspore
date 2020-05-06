@@ -1,2 +1,2 @@
-
-add_library(_mindspore_common_obj OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
+file(GLOB_RECURSE _COMMON_ALL_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
+add_library(_mindspore_common_obj OBJECT ${_COMMON_ALL_SRC_FILES})

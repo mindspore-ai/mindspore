@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status TransposeInfo::CheckStrategy(const StrategyPtr& strategy) {
+Status TransposeInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_, is_auto_parallel_) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Invalid strategy.";
@@ -43,7 +43,7 @@ Status TransposeInfo::CheckStrategy(const StrategyPtr& strategy) {
 Status TransposeInfo::InferDevMatrixShape() {
   std::vector<Dimensions> stra = strategy_->GetInputDim();
   input_strategy_ = stra.at(0);
-  for (auto& iter : input_strategy_) {
+  for (auto &iter : input_strategy_) {
     dev_matrix_shape_.push_back(iter);
   }
   return SUCCESS;
@@ -77,7 +77,7 @@ Status TransposeInfo::ComputeAxis() {
     return FAILED;
   }
   axis_v_.clear();
-  for (auto& element : elements) {
+  for (auto &element : elements) {
     MS_EXCEPTION_IF_NULL(element);
     if (element->isa<Int32Imm>()) {
       int32_t axis = element->cast<Int32ImmPtr>()->value();
@@ -130,7 +130,7 @@ Strategys TransposeInfo::GetOutputsStrategy() {
   return outputs_strategy;
 }
 
-Status TransposeInfo::InferTensorLayout(TensorLayouts* inputs_layout, TensorLayouts* outputs_layout) {
+Status TransposeInfo::InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout) {
   if ((inputs_layout == nullptr) || (outputs_layout == nullptr)) {
     MS_LOG(ERROR) << name_ << ": InferTensorLayout: the layout is null.";
     return FAILED;
@@ -179,7 +179,7 @@ Status TransposeInfo::InferTensorInfo() {
 // compute axis_v_ during this method
 Status TransposeInfo::GetAttrs() { return ComputeAxis(); }
 
-Status TransposeInfo::Init(const StrategyPtr& strategy) {
+Status TransposeInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
@@ -188,7 +188,7 @@ Status TransposeInfo::Init(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status TransposeInfo::InitForCostModel(const StrategyPtr& strategy) {
+Status TransposeInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
@@ -202,7 +202,7 @@ Status TransposeInfo::InitForCostModel(const StrategyPtr& strategy) {
   return SUCCESS;
 }
 
-Status TransposeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr& strategy) {
+Status TransposeInfo::SetCostUnderStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (SetCostUnderStrategyBase(strategy) != SUCCESS) {
     if (is_auto_parallel_) {
       MS_LOG(ERROR) << name_ << ": Set cost under strategy failed.";
@@ -234,7 +234,7 @@ Status TransposeInfo::GenerateStrategies(int32_t stage_id) {
     return FAILED;
   }
   size_t success = 0;
-  for (auto& sp : sp_vector) {
+  for (auto &sp : sp_vector) {
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << ": Successfully generated " << success << "strategy.";

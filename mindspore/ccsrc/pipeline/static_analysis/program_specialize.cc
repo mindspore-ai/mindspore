@@ -190,7 +190,7 @@ void FuncGraphSpecializer::FirstPass() {
     }
     if (node->func_graph() != func_graph_) {
       if (parent_ == nullptr) {
-        MS_LOG(EXCEPTION) << "parent must not null NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+        MS_LOG(EXCEPTION) << "Parent must not null NodeInfo: " << trace::GetDebugInfo(node->debug_info());
       }
       parent_->AddTodoItem(node);
       parent_->FirstPass();
@@ -365,16 +365,16 @@ AnfNodePtr FuncGraphSpecializer::BuildSpecializedNodeInner(const AbstractBasePtr
   }
 
   if (!eval->isa<BaseFuncGraphEvaluator>()) {
-    MS_LOG(EXCEPTION) << "eval is not BaseGraphEvaluator, but " << eval->ToString();
+    MS_LOG(EXCEPTION) << "Eval is not BaseGraphEvaluator, but " << eval->ToString();
   }
   auto real_eval = dyn_cast<BaseFuncGraphEvaluator>(eval);
 
   if (func->context() != nullptr) {
     if (!IsVisible(func_graph_, func->context()->func_graph())) {
-      MS_LOG(EXCEPTION) << "func is not visible NodeInfo: " << trace::GetDebugInfo(func_graph_->debug_info());
+      MS_LOG(EXCEPTION) << "Func is not visible NodeInfo: " << trace::GetDebugInfo(func_graph_->debug_info());
     }
   } else {
-    MS_LOG(EXCEPTION) << "func context is nullptr NodeInfo: " << trace::GetDebugInfo(func_graph_->debug_info());
+    MS_LOG(EXCEPTION) << "Func context is nullptr NodeInfo: " << trace::GetDebugInfo(func_graph_->debug_info());
   }
   AnalysisContextPtr context = real_eval->MakeContext(engine_, argvals);
   MS_LOG(DEBUG) << "Specialize function graph: " << context->func_graph()->ToString() << ", args: " << argvals.size()
@@ -556,7 +556,7 @@ SpecializeStatusCode FuncGraphSpecializer::FindUniqueArgvals(const AbstractFunct
     if (!result->first.empty()) {
       return kSpecializeSuccess;
     }
-    MS_LOG(DEBUG) << "Find POLY code, it may be unused code or unresoved polymorphism.";
+    MS_LOG(DEBUG) << "Find POLY code, it may be unused code or unresolved polymorphism.";
     return kSpecializeFindUniqueArgvalPoly;
   }
 }

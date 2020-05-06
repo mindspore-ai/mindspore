@@ -23,18 +23,17 @@
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/mnist_op.h"
 #include "dataset/engine/datasetops/source/voc_op.h"
-#include "dataset/util/make_unique.h"
 #include "dataset/core/tensor.h"
 #include "dataset/engine/dataset_iterator.h"
 #include "dataset/engine/datasetops/source/manifest_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/celeba_op.h"
-#ifdef ENABLE_MINDRECORD
-#include "./shard_category.h"
-#include "./shard_sample.h"
-#include "./shard_shuffle.h"
-#endif
-
+#include "dataset/engine/datasetops/source/random_data_op.h"
+#include "dataset/engine/datasetops/source/text_file_op.h"
+#include "dataset/engine/datasetops/filter_op.h"
+#include "mindrecord/include/shard_category.h"
+#include "mindrecord/include/shard_sample.h"
+#include "mindrecord/include/shard_shuffle.h"
 #include "dataset/util/random.h"
 #include "dataset/util/status.h"
 #include "utils/log_adapter.h"
@@ -46,25 +45,29 @@ using pFunction = Status (DEPipeline::*)(const py::dict &, std::shared_ptr<Datas
 
 static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &DEPipeline::ParseStorageOp},
                                                                    {kShuffle, &DEPipeline::ParseShuffleOp},
-#ifdef ENABLE_MINDRECORD
                                                                    {kMindrecord, &DEPipeline::ParseMindRecordOp},
-#endif
                                                                    {kMap, &DEPipeline::ParseMapOp},
+                                                                   {kFilter, &DEPipeline::ParseFilterOp},
                                                                    {kBatch, &DEPipeline::ParseBatchOp},
+                                                                   {kBarrier, &DEPipeline::ParseBarrierOp},
                                                                    {kRepeat, &DEPipeline::ParseRepeatOp},
+                                                                   {kSkip, &DEPipeline::ParseSkipOp},
                                                                    {kZip, &DEPipeline::ParseZipOp},
                                                                    {kRename, &DEPipeline::ParseRenameOp},
                                                                    {kDeviceQueue, &DEPipeline::ParseDeviceQueueOp},
                                                                    {kGenerator, &DEPipeline::ParseGeneratorOp},
                                                                    {kTfReader, &DEPipeline::ParseTFReaderOp},
                                                                    {kProject, &DEPipeline::ParseProjectOp},
+                                                                   {kTake, &DEPipeline::ParseTakeOp},
                                                                    {kImageFolder, &DEPipeline::ParseImageFolderOp},
                                                                    {kMnist, &DEPipeline::ParseMnistOp},
                                                                    {kManifest, &DEPipeline::ParseManifestOp},
                                                                    {kVoc, &DEPipeline::ParseVOCOp},
                                                                    {kCifar10, &DEPipeline::ParseCifar10Op},
                                                                    {kCifar100, &DEPipeline::ParseCifar100Op},
-                                                                   {kCelebA, &DEPipeline::ParseCelebAOp}};
+                                                                   {kCelebA, &DEPipeline::ParseCelebAOp},
+                                                                   {kRandomData, &DEPipeline::ParseRandomDataOp},
+                                                                   {kTextFile, &DEPipeline::ParseTextFileOp}};
 
 DEPipeline::DEPipeline() : iterator_(nullptr) {
   try {
@@ -123,7 +126,7 @@ Status DEPipeline::AssignRootNode(const DsOpPtr &dataset_op) { return (tree_->As
 Status DEPipeline::LaunchTreeExec() {
   RETURN_IF_NOT_OK(tree_->Prepare());
   RETURN_IF_NOT_OK(tree_->Launch());
-  iterator_ = make_unique<DatasetIterator>(tree_);
+  iterator_ = std::make_unique<DatasetIterator>(tree_);
   if (iterator_ == nullptr) RETURN_STATUS_UNEXPECTED("Cannot create an Iterator.");
   return Status::OK();
 }
@@ -311,7 +314,7 @@ Status DEPipeline::ParseStorageOp(const py::dict &args, std::shared_ptr<DatasetO
     if (!args["schema"].is_none()) {
       (void)builder->SetSchemaFile(ToString(args["schema"]));
     } else if (!args["schema_json_string"].is_none()) {
-      std::unique_ptr<DataSchema> schema = make_unique<DataSchema>();
+      std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
       std::string s = ToString(args["schema_json_string"]);
       RETURN_IF_NOT_OK(schema->LoadSchemaString(s, std::vector<std::string>()));
       (void)builder->SetNumRows(schema->num_rows());
@@ -364,7 +367,6 @@ Status DEPipeline::ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetO
   return Status::OK();
 }
 
-#ifdef ENABLE_MINDRECORD
 Status DEPipeline::CheckMindRecordPartitionInfo(const py::dict &args, std::vector<int> *in_partitions) {
   if (args["partitions"].is_none()) {
     std::string err_msg = "Error: partitions is not set (None)";
@@ -428,6 +430,11 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
       } else if (key == "global_shuffle" && ToBool(value) == true) {
         uint32_t seed = args["partitions"].is_none() ? GetSeed() : 0;
         operators.push_back(std::make_shared<mindrecord::ShardShuffle>(seed));
+      } else if (key == "sampler") {
+        auto create = py::reinterpret_borrow<py::object>(value).attr("_create_for_minddataset");
+        std::shared_ptr<mindrecord::ShardOperator> sample_op =
+          create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
+        operators.push_back(sample_op);
       }
     }
   }
@@ -450,7 +457,6 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
   *ptr = op;
   return Status::OK();
 }
-#endif
 
 Status DEPipeline::ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   std::shared_ptr<MapOp::Builder> builder = std::make_shared<MapOp::Builder>();
@@ -501,6 +507,41 @@ Status DEPipeline::ParseMapOp(const py::dict &args, std::shared_ptr<DatasetOp> *
   return Status::OK();
 }
 
+Status DEPipeline::ParseFilterOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<FilterOp::Builder> builder = std::make_shared<FilterOp::Builder>();
+
+  if (args["predicate"].is_none()) {
+    RETURN_STATUS_UNEXPECTED("Error: 'predicate' is not set. \n");
+  }
+
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "predicate") {
+        py::handle op = args["predicate"];
+        if (!py::isinstance<py::function>(op)) {
+          RETURN_STATUS_UNEXPECTED("Error: predicate is not recognised (not pyfunc).");
+        }
+        py::function predicate_func = op.cast<py::function>();
+        (void)builder->SetPredicateFunc(std::move(predicate_func));
+      } else if (key == "input_columns") {
+        std::vector<std::string> in_col_names = ToStringVector(args["input_columns"]);
+        (void)builder->SetInColNames(in_col_names);
+      } else {
+        RETURN_STATUS_UNEXPECTED("Error: Unhandled key: " + key);
+      }
+    }
+  }
+
+  std::shared_ptr<FilterOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
 Status DEPipeline::ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   if (args["count"].is_none()) {
     std::string err_msg = "Error: count is invalid or not set.";
@@ -513,13 +554,24 @@ Status DEPipeline::ParseRepeatOp(const py::dict &args, std::shared_ptr<DatasetOp
   return Status::OK();
 }
 
+Status DEPipeline::ParseSkipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  if (args["count"].is_none()) {
+    std::string err_msg = "Error: count is invalid or not set.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::shared_ptr<SkipOp> op;
+  RETURN_IF_NOT_OK(SkipOp::Builder(ToInt(args["count"])).Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
 Status DEPipeline::ParseGeneratorOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   std::shared_ptr<GeneratorOp::Builder> builder = std::make_shared<GeneratorOp::Builder>();
   for (auto arg : args) {
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
     if (!value.is_none()) {
-      if (key == "generator_function") {
+      if (key == "source") {
         py::object obj = py::cast(&value);
         if (!py::isinstance<py::function>(obj)) {
           std::string err_msg = "Error: generator is invalid or not set.";
@@ -573,6 +625,30 @@ Status DEPipeline::ParseBatchOp(const py::dict &args, std::shared_ptr<DatasetOp>
   }
 
   std::shared_ptr<BatchOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseBarrierOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<BarrierOp::Builder> builder = std::make_shared<BarrierOp::Builder>();
+  // Right now barrier should only take num_rows_per_buffer = 1
+  // The reason for this is because having it otherwise can lead to blocking issues
+  // See barrier_op.h for more details
+  (void)builder->SetRowsPerBuffer(1);
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "condition_name") {
+        (void)builder->SetConditionName(ToString(value));
+      } else if (key == "condition_func") {
+        (void)builder->SetConditionFunc(value.cast<py::function>());
+      }
+    }
+  }
+
+  std::shared_ptr<BarrierOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
   return Status::OK();
@@ -640,7 +716,16 @@ Status DEPipeline::ParseRenameOp(const py::dict &args, std::shared_ptr<DatasetOp
   return Status::OK();
 }
 
-DsOpPtr DEPipeline::ParseTakeOp(const py::dict &args) const { return DsOpPtr(); }
+Status DEPipeline::ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  if (args["count"].is_none()) {
+    std::string err_msg = "Error: count is invalid or not set.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::shared_ptr<TakeOp> op;
+  RETURN_IF_NOT_OK(TakeOp::Builder(ToInt(args["count"])).Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
 
 Status DEPipeline::ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   std::shared_ptr<ZipOp::Builder> builder = std::make_shared<ZipOp::Builder>();
@@ -649,8 +734,6 @@ Status DEPipeline::ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *
   *ptr = op;
   return Status::OK();
 }
-
-DsOpPtr DEPipeline::ParseFilterOp(const py::dict &args) const { return DsOpPtr(); }
 
 Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   // Required arguments
@@ -689,7 +772,7 @@ Status DEPipeline::ParseTFReaderOp(const py::dict &args, std::shared_ptr<Dataset
     }
   }
   if (schema_exists) {
-    std::unique_ptr<DataSchema> schema = make_unique<DataSchema>();
+    std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
     if (args.contains("schema_file_path")) {
       RETURN_IF_NOT_OK(schema->LoadSchemaFile(ToString(args["schema_file_path"]), columns_to_load));
     } else {
@@ -891,6 +974,45 @@ Status DEPipeline::ParseCifar100Op(const py::dict &args, std::shared_ptr<Dataset
   return Status::OK();
 }
 
+Status DEPipeline::ParseRandomDataOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  // Required arguments
+  RandomDataOp::Builder builder;
+
+  if (args["num_samples"].is_none()) {
+    std::string err_msg = "Error: num_samples is a required argument";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  std::vector<std::string> columns_to_load;
+  bool schema_exists = false;
+  // Optional arguments
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (key == "num_parallel_workers") {
+      (void)builder.SetNumWorkers(ToInt(value));
+    } else if (key == "schema_file_path" || key == "schema_json_string") {
+      schema_exists = true;
+    } else if (key == "num_samples") {
+      (void)builder.SetTotalRows(ToInt(value));
+    } else if (key == "columns_list") {
+      columns_to_load = ToStringVector(value);
+    }
+  }
+  if (schema_exists) {
+    std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+    if (args.contains("schema_file_path")) {
+      RETURN_IF_NOT_OK(schema->LoadSchemaFile(ToString(args["schema_file_path"]), columns_to_load));
+    } else {
+      RETURN_IF_NOT_OK(schema->LoadSchemaString(ToString(args["schema_json_string"]), columns_to_load));
+    }
+    (void)builder.SetDataSchema(std::move(schema));
+  }
+  std::shared_ptr<RandomDataOp> op;
+  RETURN_IF_NOT_OK(builder.Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
 int32_t DEPipeline::GetNumClasses() const { return num_classes_; }
 
 Status DEPipeline::ParseMnistOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
@@ -961,6 +1083,38 @@ Status DEPipeline::ParseCelebAOp(const py::dict &args, std::shared_ptr<DatasetOp
   }
 
   std::shared_ptr<CelebAOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseTextFileOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  // Required arguments
+  std::shared_ptr<TextFileOp::Builder> builder = std::make_shared<TextFileOp::Builder>();
+  if (!args["dataset_files"].is_none()) {
+    (void)builder->SetTextFilesList(ToStringVector(args["dataset_files"]));
+  } else {
+    RETURN_STATUS_UNEXPECTED("Error: dataset_files is missing");
+  }
+  // Optional arguments
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "num_parallel_workers") {
+        (void)builder->SetNumWorkers(ToInt(value));
+      } else if (key == "shuffle_files") {
+        (void)builder->SetShuffleFiles(ToBool(value));
+      } else if (key == "num_samples") {
+        (void)builder->SetNumSamples(ToInt(value));
+      } else if (key == "num_shards") {
+        (void)builder->SetNumDevices(ToInt(value));
+      } else if (key == "shard_id") {
+        (void)builder->SetDeviceId(ToInt(value));
+      }
+    }
+  }
+  std::shared_ptr<TextFileOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
   return Status::OK();

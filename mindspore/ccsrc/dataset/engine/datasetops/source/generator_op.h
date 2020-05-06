@@ -95,6 +95,11 @@ class GeneratorOp : public PipelineOp {
 
   ~GeneratorOp();
 
+  // A print method typically used for debugging
+  // @param out - The output stream to write output to
+  // @param show_all - A bool to control if you want to show all info or just a summary
+  void Print(std::ostream &out, bool show_all) const override;
+
   // << Stream output operator overload
   // @notes This allows you to write the debug print info using stream operators
   // @param out - reference to the output stream being overloaded

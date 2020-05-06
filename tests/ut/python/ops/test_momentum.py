@@ -31,15 +31,14 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 run_opt = C.MultitypeFuncGraph("run_opt")
 
 
-@run_opt.register("Function", "Int", "Number", "Number",
+@run_opt.register("Function", "Tensor", "Tensor", "Tensor",
                   "Tensor", "Tensor",
                   "Tensor")
 def tensor_run_opt(opt, iters, learning_rate, momentum,
                    gradient, variable, moment):
     """ tensor_run_opt """
     success = True
-    new_weight = opt(gradient, moment, variable,
-                     learning_rate, momentum)
+    new_weight = opt(variable, moment, learning_rate, gradient, momentum)[0]
     success = F.depend(success, F.assign(variable, new_weight))
     return success
 

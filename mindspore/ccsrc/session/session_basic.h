@@ -56,27 +56,31 @@ class SessionBasic {
   virtual ~SessionBasic() { summary_callback_ = nullptr; }
 
   virtual GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) = 0;
-  // build graph ,used to handle mupltiple child graphs
+  // build graph, used to handle multiple child graphs
   virtual void BuildGraph(GraphId) {}
 
   virtual void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) = 0;
 
-  virtual void BuildOp(const OpRunInfo &, const GraphInfo &) {}
+  virtual void BuildOp(const OpRunInfo &, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors,
+                       const std::vector<bool> &tensors_mask) {}
 
-  virtual py::tuple RunOp(const OpRunInfo &, const GraphInfo &) { return py::tuple(); }
+  virtual py::tuple RunOp(const OpRunInfo &, const GraphInfo &, const std::vector<tensor::TensorPtr> &input_tensors) {
+    return py::tuple();
+  }
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
 
-  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
+  CNodePtr CreateNewCNode(const CNodePtr &cnode, bool valid_input, KernelGraph *graph, bool *from_other_graph,
+                          std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
 
   // set parameters of final graph
   virtual GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &) { return kInvalidGraphId; }
   // set output of final graph
   virtual void SetFinalGraphOutput(const BaseRef &) {}
-  // insert switch and set the relative acitve ops
-  virtual void SwitchCompile(GraphId, GraphId, GraphId) {}
+  // insert switch and set the relative active ops
+  virtual void SwitchCompile(GraphId, GraphId, GraphId, const AnfNodePtr &) {}
   // set args of child graph.the arg maybe come from a output of other child graphs,or from final graph's parameter
   virtual void SetChildGraphInput(GraphId, const VectorRef &) {}
   // get graph id in child graphs by ME front anf node pointer
@@ -95,12 +99,13 @@ class SessionBasic {
   void CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph);
   CNodePtr ConstructOutput(const AnfNodePtrList &outputs, const std::shared_ptr<KernelGraph> &graph);
   // create a single run op graph
-  std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info);
-  // get tensors from op inputs
-  void ToTensorPtr(const OpRunInfo &op_run_info, std::vector<tensor::TensorPtr> *inputs,
-                   std::vector<bool> *tensor_mask);
+  std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
+                                                      const std::vector<tensor::TensorPtr> &input_tensors,
+                                                      const std::vector<bool> &tensors_mask);
   // trans BaseRef list to py::tuple
   BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref);
+  // create a new kernel graph and update the graph sum
+  KernelGraphPtr NewKernelGraph();
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;

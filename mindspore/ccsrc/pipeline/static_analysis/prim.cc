@@ -42,92 +42,99 @@
 
 namespace mindspore {
 namespace abstract {
-PrimitiveEvalImplMap PrimitiveToInferImplMap = {
-  // Statements
-  {prim::kPrimReturn, {InferImplReturn, true}},
-  {prim::kPrimTypeOf, {InferImplTypeof, false}},
-  {prim::kPrimHasType, {InferImplHasType, false}},
-  {prim::kPrimDot, {InferImplDot, true}},
-  {prim::kPrimSwitch, {InferImplSwitch, true}},
-  {prim::kPrimIs_, {InferImplIs_, true}},
-  {prim::kPrimIsNot, {InferImplIsNot, true}},
-  // Maths
-  {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, true}},
-  {prim::kPrimMinimumGrad, {InferImplMinOrMaxGrad, true}},
-  // Array
-  {prim::kPrimScalarToArray, {InferImplScalarToArray, true}},
-  {prim::kPrimArrayToScalar, {InferImplArrayToScalar, true}},
-  {prim::kPrimBroadcastShape, {InferImplBroadCastShape, true}},
-  {prim::kPrimShape, {InferImplShape, true}},
-  {prim::kPrimPack, {InferImplPack, true}},
-  // Structure
-  {prim::kPrimMakeTuple, {InferImplMakeTuple, true}},
-  {prim::kPrimMakeList, {InferImplMakeList, true}},
-  {prim::kPrimMakeDict, {InferImplMakeDict, true}},
-  {prim::kPrimMakeSlice, {InferImplMakeSlice, true}},
-  {prim::kPrimMakeKeywordArg, {InferImplMakeKwarg, true}},
-  {prim::kPrimExtractKeywordArg, {InferImplExtractKwarg, true}},
-  {prim::kPrimMakeRecord, {InferImplMakeRecord, false}},
-  {prim::kPrimTupleGetItem, {InferImplTupleGetItem, true}},
-  {prim::kPrimListGetItem, {InferImplListGetItem, true}},
-  {prim::kPrimTupleSetItem, {InferImplTupleSetItem, true}},
-  {prim::kPrimListSetItem, {InferImplListSetItem, true}},
-  {prim::kPrimDictGetItem, {InferImplDictGetItem, true}},
-  {prim::kPrimDictSetItem, {InferImplDictSetItem, true}},
-  {prim::kPrimListAppend, {InferImplListAppend, true}},
-  {prim::kPrimTupleLen, {InferImplTupleLen, true}},
-  {prim::kPrimListLen, {InferImplListLen, true}},
-  {prim::kPrimArrayLen, {InferImplArrayLen, true}},
-  {prim::kPrimListMap, {InferImplListMap, false}},
-  {prim::kPrimListReduce, {InferImplListReduce, false}},
-  {prim::kPrimTupleReversed, {InferImplTupleReversed, false}},
-  {prim::kPrimReducedShape, {InferImplReduceShape, false}},
-  {prim::kPrimTupleDiv, {InferImplTupleDiv, false}},
-  {prim::kPrimTupleToArray, {InferImplTuple2Array, false}},
-  {prim::kPrimShapeMul, {InferImplShapeMul, false}},
-  {prim::kPrimTupleEqual, {InferImplTupleEqual, false}},
-  {prim::kPrimListEqual, {InferImplListEqual, false}},
-  {prim::kPrimMakeRange, {InferImplMakeRange, false}},
-  {prim::kPrimStopGradient, {InferImplStopGradient, false}},
-  {prim::kPrimStringEqual, {InferImplStringEqual, false}},
-  {prim::kPrimDictLen, {InferImplDictLen, false}},
-  // NN
-  {prim::kPrimPooling, {InferImplPooling, true}},
-  {prim::kPrimPoolingGrad, {InferImplPoolingGrad, true}},
-  {prim::kPrimFusedBatchNorm, {InferImplFusedBatchNorm, true}},
-  {prim::kPrimFusedBatchNormGrad, {InferImplFusedBatchNormGrad, true}},
-  {prim::kPrimReluGrad, {InferImplReluGrad, true}},
-  {prim::kPrimConv2DBackpropInput, {InferImplConv2DBackpropInput, true}},
-  {prim::kPrimConv2DBackpropFilter, {InferImplConv2DBackpropFilter, true}},
-  {prim::kPrimBiasAddGrad, {InferImplBiasAddGrad, true}},
-  {prim::kPrimRelu, {InferImplRelu, true}},
-  {prim::kPrimZerosLikeTensor, {InferImplZerosLikeTensor, true}},
-  {prim::kPrimFakeBprop, {InferImplFakeBprop, false}},
-  {prim::kPrimLayerNorm, {InferImplLayerNorm, true}},
-  {prim::kPrimLayerNormGrad, {InferImplLayerNormGrad, true}},
-  {prim::kPrimDropoutGenMask, {InferImplDropoutGenMask, true}},
-  // Others
-  {prim::kPrimIdentity, {InferImplIdentity, true}},
-  // Set impl to null as it will use PartialEvaluator;
-  {prim::kPrimPartial, {nullptr, true}},
-  {prim::kPrimJ, {InferImplJ, false}},
-  {prim::kPrimEnvGetItem, {InferImplEnvGetItem, true}},
-  {prim::kPrimEnvSetItem, {InferImplEnvSetItem, true}},
-  {prim::kPrimEnvAdd, {InferImplEnvAdd, true}},
-  {prim::kPrimMakeRefKey, {InferImplMakeRefKey, true}},
-  {prim::kPrimMakeRef, {InferImplMakeRef, true}},
-  {prim::kPrimGetRefKey, {InferImplGetRefKey, true}},
-  {prim::kPrimGetRefValue, {InferImplGetRefValue, true}},
-  {prim::kPrimGetRefOrigin, {InferImplGetRefOrigin, true}},
-  {prim::kPrimStateSetItem, {InferImplStateSetItem, true}},
-  {prim::kPrimDepend, {InferImplDepend, true}},
-  {prim::kPrimBroadcastGradientArgs, {InferImplBroadcastGradientArgs, false}},
-  {prim::kPrimControlDepend, {InferImplControlDepend, true}},
-  // Debug
-  {prim::kPrimScalarSummary, {InferImplScalarSummary, true}},
-  {prim::kPrimImageSummary, {InferImplTensorSummary, true}},
-  {prim::kPrimTensorSummary, {InferImplTensorSummary, true}},
-};
+PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
+  static PrimitiveEvalImplMap prim_eval_implement_map = {
+    // Statements
+    {prim::kPrimReturn, {InferImplReturn, true}},
+    {prim::kPrimTypeOf, {InferImplTypeof, false}},
+    {prim::kPrimHasType, {InferImplHasType, false}},
+    {prim::kPrimDot, {InferImplDot, true}},
+    {prim::kPrimSwitch, {InferImplSwitch, true}},
+    {prim::kPrimIs_, {InferImplIs_, true}},
+    {prim::kPrimIsNot, {InferImplIsNot, true}},
+    {prim::kPrimInDict, {InferImplInDict, true}},
+    {prim::kPrimNotInDict, {InferImplNotInDict, true}},
+    // Maths
+    {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, true}},
+    {prim::kPrimMinimumGrad, {InferImplMinOrMaxGrad, true}},
+    // Array
+    {prim::kPrimScalarToArray, {InferImplScalarToArray, true}},
+    {prim::kPrimArrayToScalar, {InferImplArrayToScalar, true}},
+    {prim::kPrimBroadcastShape, {InferImplBroadCastShape, true}},
+    {prim::kPrimShape, {InferImplShape, true}},
+    {prim::kPrimPack, {InferImplPack, true}},
+    // Structure
+    {prim::kPrimMakeTuple, {InferImplMakeTuple, true}},
+    {prim::kPrimMakeList, {InferImplMakeList, true}},
+    {prim::kPrimMakeDict, {InferImplMakeDict, true}},
+    {prim::kPrimMakeSlice, {InferImplMakeSlice, true}},
+    {prim::kPrimMakeKeywordArg, {InferImplMakeKwarg, true}},
+    {prim::kPrimExtractKeywordArg, {InferImplExtractKwarg, true}},
+    {prim::kPrimMakeRecord, {InferImplMakeRecord, false}},
+    {prim::kPrimTupleGetItem, {InferImplTupleGetItem, true}},
+    {prim::kPrimListGetItem, {InferImplListGetItem, true}},
+    {prim::kPrimTupleSetItem, {InferImplTupleSetItem, true}},
+    {prim::kPrimListSetItem, {InferImplListSetItem, true}},
+    {prim::kPrimDictGetItem, {InferImplDictGetItem, true}},
+    {prim::kPrimDictSetItem, {InferImplDictSetItem, true}},
+    {prim::kPrimListAppend, {InferImplListAppend, true}},
+    {prim::kPrimTupleLen, {InferImplTupleLen, true}},
+    {prim::kPrimListLen, {InferImplListLen, true}},
+    {prim::kPrimArrayLen, {InferImplArrayLen, true}},
+    {prim::kPrimListMap, {InferImplListMap, false}},
+    {prim::kPrimListReduce, {InferImplListReduce, false}},
+    {prim::kPrimTupleReversed, {InferImplTupleReversed, false}},
+    {prim::kPrimReducedShape, {InferImplReduceShape, false}},
+    {prim::kPrimTupleDiv, {InferImplTupleDiv, false}},
+    {prim::kPrimTupleToArray, {InferImplTuple2Array, false}},
+    {prim::kPrimShapeMul, {InferImplShapeMul, false}},
+    {prim::kPrimTupleEqual, {InferImplTupleEqual, false}},
+    {prim::kPrimListEqual, {InferImplListEqual, false}},
+    {prim::kPrimMakeRange, {InferImplMakeRange, false}},
+    {prim::kPrimStopGradient, {InferImplStopGradient, false}},
+    {prim::kPrimStringEqual, {InferImplStringEqual, false}},
+    {prim::kPrimStringConcat, {InferImplStringConcat, false}},
+    {prim::kPrimDictLen, {InferImplDictLen, false}},
+    // NN
+    {prim::kPrimPooling, {InferImplPooling, true}},
+    {prim::kPrimPoolingGrad, {InferImplPoolingGrad, true}},
+    {prim::kPrimFusedBatchNorm, {InferImplFusedBatchNorm, true}},
+    {prim::kPrimFusedBatchNormGrad, {InferImplFusedBatchNormGrad, true}},
+    {prim::kPrimReluGrad, {InferImplReluGrad, true}},
+    {prim::kPrimConv2DBackpropInput, {InferImplConv2DBackpropInput, true}},
+    {prim::kPrimConv2DBackpropFilter, {InferImplConv2DBackpropFilter, true}},
+    {prim::kPrimBiasAddGrad, {InferImplBiasAddGrad, true}},
+    {prim::kPrimRelu, {InferImplRelu, true}},
+    {prim::kPrimZerosLikeTensor, {InferImplZerosLikeTensor, true}},
+    {prim::kPrimFakeBprop, {InferImplFakeBprop, false}},
+    {prim::kPrimLayerNorm, {InferImplLayerNorm, true}},
+    {prim::kPrimLayerNormGrad, {InferImplLayerNormGrad, true}},
+    {prim::kPrimDropoutGenMask, {InferImplDropoutGenMask, true}},
+    // Others
+    {prim::kPrimIdentity, {InferImplIdentity, true}},
+    // Set impl to null as it will use PartialEvaluator;
+    {prim::kPrimPartial, {nullptr, true}},
+    {prim::kPrimJ, {InferImplJ, false}},
+    {prim::kPrimEnvGetItem, {InferImplEnvGetItem, true}},
+    {prim::kPrimEnvSetItem, {InferImplEnvSetItem, true}},
+    {prim::kPrimEnvAdd, {InferImplEnvAdd, true}},
+    {prim::kPrimMakeRefKey, {InferImplMakeRefKey, true}},
+    {prim::kPrimMakeRef, {InferImplMakeRef, true}},
+    {prim::kPrimGetRefKey, {InferImplGetRefKey, true}},
+    {prim::kPrimGetRefValue, {InferImplGetRefValue, true}},
+    {prim::kPrimGetRefOrigin, {InferImplGetRefOrigin, true}},
+    {prim::kPrimStateSetItem, {InferImplStateSetItem, true}},
+    {prim::kPrimDepend, {InferImplDepend, true}},
+    {prim::kPrimBroadcastGradientArgs, {InferImplBroadcastGradientArgs, false}},
+    {prim::kPrimControlDepend, {InferImplControlDepend, true}},
+    // Debug
+    {prim::kPrimScalarSummary, {InferImplScalarSummary, true}},
+    {prim::kPrimImageSummary, {InferImplTensorSummary, true}},
+    {prim::kPrimTensorSummary, {InferImplTensorSummary, true}},
+    {prim::kPrimHistogramSummary, {InferImplTensorSummary, true}},
+  };
+  return prim_eval_implement_map;
+}
 
 using mindspore::parse::PyObjectWrapper;
 
@@ -180,6 +187,85 @@ AbstractBasePtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const Config
   return engine->ForwardConfig(out_conf, fn_conf);
 }
 
+static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_spec_list, bool need_unpack) {
+  // arg[0] is the func graph to unpack, ignore it
+  AbstractBasePtrList specialize_args_before_unpack(args_spec_list.begin() + 1, args_spec_list.end());
+  AbstractBasePtrList graph_specialize_args;
+  if (need_unpack) {
+    for (size_t index = 0; index < specialize_args_before_unpack.size(); index++) {
+      MS_EXCEPTION_IF_NULL(specialize_args_before_unpack[index]);
+      if (specialize_args_before_unpack[index]->isa<AbstractTuple>()) {
+        AbstractTuplePtr arg_tuple = specialize_args_before_unpack[index]->cast<AbstractTuplePtr>();
+        std::transform(arg_tuple->elements().begin(), arg_tuple->elements().end(),
+                       std::back_inserter(graph_specialize_args), [](AbstractBasePtr abs) { return abs; });
+      } else if (specialize_args_before_unpack[index]->isa<AbstractDictionary>()) {
+        AbstractDictionaryPtr arg_dict = specialize_args_before_unpack[index]->cast<AbstractDictionaryPtr>();
+        auto dict_elems = arg_dict->elements();
+        (void)std::transform(
+          dict_elems.begin(), dict_elems.end(), std::back_inserter(graph_specialize_args),
+          [](const AbstractAttribute &item) { return std::make_shared<AbstractKeywordArg>(item.first, item.second); });
+      } else {
+        MS_LOG(EXCEPTION) << "UnpackGraph require args should be tuple or dict, but got "
+                          << specialize_args_before_unpack[index]->ToString();
+      }
+    }
+  } else {
+    graph_specialize_args = specialize_args_before_unpack;
+  }
+  return graph_specialize_args;
+}
+
+AbstractBasePtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                          AnfNodeConfigPtr out_conf) {
+  if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
+  }
+  if (!prim_->isa<prim::UnpackGraphPrimitive>()) {
+    MS_LOG(EXCEPTION) << "Primitive should be UnpackGraphPrimitive, but got " << prim_->ToString();
+  }
+
+  auto unpack_graph = prim_->cast<prim::UnpackGraphPrimitivePtr>();
+  auto out_node = out_conf->node()->cast<CNodePtr>();
+  const auto &out_node_inputs = out_node->inputs();
+  if (out_node->inputs().size() == 0 || (out_node_inputs.size() - 1) != args_conf_list.size()) {
+    MS_LOG(EXCEPTION) << "UnpackGraphPrimitive"
+                      << " args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
+                      << ", inputs size " << out_node_inputs.size();
+  }
+  AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
+  AbstractBasePtrList args_spec_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue(); });
+  // get the forward graph
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  AbstractFunctionPtr fn = args_spec_list[0]->cast<AbstractFunctionPtr>();
+  if (fn == nullptr) {
+    MS_LOG(EXCEPTION) << "UnpackGraphPrimitive arg0 must be AbstractFunction, but " << args_spec_list[0]->ToString();
+  }
+  auto real_fn = fn->cast<FuncGraphAbstractClosurePtr>();
+  MS_EXCEPTION_IF_NULL(real_fn);
+  FuncGraphPtr forward_graph = real_fn->func_graph();
+  MS_EXCEPTION_IF_NULL(forward_graph);
+  AbstractBasePtrList graph_specialize_args =
+    GetUnpackGraphSpecArgsList(args_spec_list, unpack_graph->need_unpack_args());
+
+  AbstractBasePtrList graph_specialize_args_without_sens;
+  (void)std::transform(graph_specialize_args.begin(),
+                       graph_specialize_args.end() - (unpack_graph->with_sens_in_args() ? 1 : 0),
+                       std::back_inserter(graph_specialize_args_without_sens), [](AbstractBasePtr abs) { return abs; });
+  auto new_graph = forward_graph->GenerateGraph(graph_specialize_args_without_sens);
+  engine->func_graph_manager()->AddFuncGraph(new_graph);
+  ScopePtr scope = kDefaultScope;
+  if (out_conf != nullptr) {
+    scope = out_conf->node()->scope();
+  }
+  ScopeGuard scope_guard(scope);
+  AnfNodePtr new_vnode = NewValueNode(new_graph);
+  AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_vnode, out_conf->context());
+
+  return engine->ForwardConfig(out_conf, fn_conf);
+}
+
 namespace {
 py::object BuildValue(const ValuePtr &value_ptr) {
   if (value_ptr == nullptr) {
@@ -203,6 +289,21 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic["shape"] = shape;
     dic["dtype"] = abs_base->BuildType();
     dic["value"] = BuildValue(abs_base->BuildValue());
+  } else if (abs_base->isa<AbstractSlice>()) {
+    auto arg_slice = dyn_cast<AbstractSlice>(abs_base);
+    std::vector<int> shape;
+    dic["shape"] = shape;
+    dic["dtype"] = arg_slice->BuildType();
+    dic["value"] = BuildValue(arg_slice->BuildValue());
+  } else if (abs_base->isa<AbstractRef>()) {
+    auto value = abs_base->cast<AbstractRefPtr>()->ref();
+    dic = ConvertAbstractToPython(value);
+  } else if (abs_base->isa<AbstractEllipsis>()) {
+    auto arg_slice = dyn_cast<AbstractEllipsis>(abs_base);
+    std::vector<int> shape;
+    dic["shape"] = shape;
+    dic["dtype"] = arg_slice->BuildType();
+    dic["value"] = BuildValue(arg_slice->BuildValue());
   } else if (abs_base->isa<AbstractTuple>()) {
     auto arg_tuple = dyn_cast<AbstractTuple>(abs_base);
     size_t len = arg_tuple->size();
@@ -234,6 +335,10 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
   } else if (abs_base->isa<AbstractNone>()) {
     dic["shape"] = py::none();
     dic["dtype"] = py::none();
+    dic["value"] = py::none();
+  } else if (abs_base->isa<AbstractFunction>()) {
+    dic["shape"] = py::none();
+    dic["dtype"] = abs_base->BuildType();
     dic["value"] = py::none();
   } else {
     auto value = abs_base->BuildValue();
@@ -312,6 +417,10 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
 AbstractBasePtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
   MS_LOG(DEBUG) << "Eval for:" << prim_py_->ToString();
 
+  const auto &iter = cache_->find(args);
+  if (iter != cache_->end()) {
+    return iter->second;
+  }
   auto py_args = PreparePyInputs(prim_py_, args);
 
   auto pyobj = prim_py_->GetPyObj();
@@ -325,6 +434,7 @@ AbstractBasePtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const A
   auto res_spec = PyInferRes2Abstract(prim_py_, output);
 
   MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
+  (*cache_)[args] = res_spec;
   return res_spec;
 }
 
@@ -360,6 +470,9 @@ AbstractBasePtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const 
   }
 
   ValuePtr inferred_value = RunImpl(value_list);
+  if (!(*inferred_value == *kAnyValue)) {
+    ret_value_type = inferred_value->type();
+  }
   // for comparison primitives , return type shall have be specified to be bool.
   if (specify_out_type_ != nullptr) {
     ret_value_type = specify_out_type_;
@@ -475,24 +588,6 @@ AbstractBasePtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &dat
   return eng->ForwardConfig(old_conf, fn_conf);
 }
 
-AbstractBasePtr GenerateResolveAbstract(const AnfNodeConfigPtr &out_conf, const py::object &obj,
-                                        const ValuePtr &converted_ret) {
-  if (py::hasattr(obj, PYTHON_DATACLASS_FIELDS)) {
-    TypePtr cls_ptr = parse::ParseDataClass(converted_ret->cast<std::shared_ptr<parse::PyObjectWrapper>>()->obj());
-
-    std::vector<AnfNodePtr> input = {NewValueNode(prim::kPrimPartial), NewValueNode(prim::kPrimMakeRecord),
-                                     NewValueNode(cls_ptr)};
-    MS_EXCEPTION_IF_NULL(out_conf);
-    FuncGraphPtr func_graph = out_conf->node()->func_graph();
-    CNodePtr new_cnode = func_graph->NewCNode(input);
-    AnalysisEnginePtr eng = out_conf->engine();
-    AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, out_conf->context());
-    return eng->ForwardConfig(out_conf, fn_conf);
-  } else {
-    return ToAbstract(converted_ret, AnalysisContext::DummyContext(), out_conf);
-  }
-}
-
 AbstractBasePtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engine,
                                                     const AbstractBasePtrList &args_spec_list,
                                                     const AnfNodeConfigPtr &out_conf) {
@@ -523,23 +618,16 @@ AbstractBasePtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &eng
   // item_name to func addr from obj_map
   parse::SymbolPtr symbol = item_v->cast<parse::SymbolPtr>();
   parse::NameSpacePtr name_space = data_v->cast<parse::NameSpacePtr>();
+  FuncGraphPtr func_graph = out_conf->node()->func_graph();
 
-  parse::SymbolResolverPtr symbol_resolver =
-    std::make_shared<parse::SymbolResolver>(name_space, symbol, out_conf->node());
-  if (!symbol_resolver->Resolve()) {
+  auto new_node = parse::ResolveSymbol(func_graph->manager(), name_space, symbol, out_conf->node());
+  if (new_node == nullptr) {
     MS_LOG(EXCEPTION) << "Resolve node failed";
   }
 
-  py::object obj = symbol_resolver->result();
-  ValuePtr converted_ret = nullptr;
-  bool converted = parse::ConvertData(obj, &converted_ret, true);
-  if (!converted) {
-    MS_LOG(EXCEPTION) << "Convert data failed";
-  }
-  if (converted_ret->isa<FuncGraph>()) {
-    AddToManager(engine, converted_ret->cast<FuncGraphPtr>());
-  }
-  return GenerateResolveAbstract(out_conf, obj, converted_ret);
+  AnalysisEnginePtr eng = out_conf->engine();
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context());
+  return eng->ForwardConfig(out_conf, fn_conf);
 }
 
 AbstractBasePtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &engine,
@@ -556,8 +644,8 @@ AbstractBasePtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &e
     MS_LOG(EXCEPTION) << "Attribute type error";
   }
   std::string item_name = item_v->cast<StringImmPtr>()->value();
-  MS_LOG(DEBUG) << "Resovle name: " << cls->tag().name();
-  MS_LOG(DEBUG) << "Resovle item: " << item_name;
+  MS_LOG(DEBUG) << "Resolve name: " << cls->tag().name();
+  MS_LOG(DEBUG) << "Resolve item: " << item_name;
 
   AbstractBasePtr attr = cls->GetAttribute(item_name);
   if (attr != nullptr) {
@@ -641,7 +729,7 @@ class EmbedEvaluator : public SymbolicPrimEvaluator {
   ~EmbedEvaluator() override = default;
   MS_DECLARE_PARENT(EmbedEvaluator, SymbolicPrimEvaluator);
   AbstractBasePtr EvalPrim(const ConfigPtrList &args_conf_list) override {
-    // arg: free variable to be embeded
+    // arg: free variable to be embedded
     if (args_conf_list.size() != 1) {
       MS_LOG(EXCEPTION) << "EmbedEvaluator requires 1 parameter, but got " << args_conf_list.size();
     }
@@ -860,7 +948,7 @@ class PartialEvaluator : public Evaluator {
   AbstractBasePtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                       AnfNodeConfigPtr out_conf = nullptr) override {
     if (args_conf_list.size() == 0) {
-      MS_LOG(EXCEPTION) << "args size should be greater than 0";
+      MS_LOG(EXCEPTION) << "Args size should be greater than 0";
     }
     auto arg0_value = args_conf_list[0]->GetEvaluatedValue();
     AbstractBasePtrList args_spec_list{arg0_value};
@@ -907,10 +995,7 @@ class PartialEvaluator : public Evaluator {
     new_nodes_inputs[1] = NewValueNode(new_signature_value);
     FuncGraphPtr func_graph = cnode->func_graph();
 
-    ScopePtr scope = kDefaultScope;
-    if (out_conf != nullptr) {
-      scope = out_conf->node()->scope();
-    }
+    ScopePtr scope = out_conf->node()->scope();
     ScopeGuard scope_guard(scope);
 
     CNodePtr new_cnode = func_graph->NewCNode(new_nodes_inputs);
@@ -927,39 +1012,43 @@ struct PrimitiveImplInferValue {
 };
 
 using PrimitiveToImplMap = std::unordered_map<PrimitivePtr, PrimitiveImplInferValue, PrimitiveHasher, PrimitiveEqual>;
-
-PrimitiveToImplMap UniformPrimitiveToImplMapValue = {
-  {prim::kPrimScalarAdd, {prim::ScalarAdd, true, nullptr, true}},
-  {prim::kPrimScalarSub, {prim::ScalarSub, true, nullptr, true}},
-  {prim::kPrimScalarMul, {prim::ScalarMul, true, nullptr, true}},
-  {prim::kPrimScalarDiv, {prim::ScalarDiv, true, nullptr, true}},
-  {prim::kPrimScalarMod, {prim::ScalarMod, true, nullptr, true}},
-  {prim::kPrimScalarUadd, {prim::ScalarUAdd, true, nullptr, true}},
-  {prim::kPrimScalarUsub, {prim::ScalarUSub, true, nullptr, true}},
-  {prim::kPrimScalarLog, {prim::ScalarLog, true, nullptr, true}},
-  {prim::kPrimScalarEq, {prim::ScalarEq, true, std::make_shared<Bool>(), true}},
-  {prim::kPrimScalarLt, {prim::ScalarLt, true, std::make_shared<Bool>(), true}},
-  {prim::kPrimScalarGt, {prim::ScalarGt, true, std::make_shared<Bool>(), true}},
-  {prim::kPrimScalarNe, {prim::ScalarNe, true, std::make_shared<Bool>(), true}},
-  {prim::kPrimScalarLe, {prim::ScalarLe, true, std::make_shared<Bool>(), true}},
-  {prim::kPrimScalarGe, {prim::ScalarGe, true, std::make_shared<Bool>(), true}},
-  {prim::kPrimBoolNot, {prim::BoolNot, true, std::make_shared<Bool>(), true}},
-  {prim::kPrimBoolAnd, {prim::BoolAnd, true, std::make_shared<Bool>(), true}},
-  {prim::kPrimBoolEq, {prim::BoolEq, true, std::make_shared<Bool>(), true}},
-  {prim::kPrimBoolOr, {prim::BoolOr, true, std::make_shared<Bool>(), true}},
-};
+PrimitiveToImplMap &GetUniformPrimitiveToImplMap() {
+  static PrimitiveToImplMap uniform_prim_implement_map = {
+    {prim::kPrimScalarAdd, {prim::ScalarAdd, true, nullptr, true}},
+    {prim::kPrimScalarSub, {prim::ScalarSub, true, nullptr, true}},
+    {prim::kPrimScalarMul, {prim::ScalarMul, true, nullptr, true}},
+    {prim::kPrimScalarDiv, {prim::ScalarDiv, true, nullptr, true}},
+    {prim::kPrimScalarMod, {prim::ScalarMod, true, nullptr, true}},
+    {prim::kPrimScalarPow, {prim::ScalarPow, true, nullptr, true}},
+    {prim::kPrimScalarFloordiv, {prim::ScalarFloordiv, true, nullptr, true}},
+    {prim::kPrimScalarUadd, {prim::ScalarUAdd, true, nullptr, true}},
+    {prim::kPrimScalarUsub, {prim::ScalarUSub, true, nullptr, true}},
+    {prim::kPrimScalarLog, {prim::ScalarLog, true, nullptr, true}},
+    {prim::kPrimScalarEq, {prim::ScalarEq, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimScalarLt, {prim::ScalarLt, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimScalarGt, {prim::ScalarGt, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimScalarNe, {prim::ScalarNe, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimScalarLe, {prim::ScalarLe, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimScalarGe, {prim::ScalarGe, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimBoolNot, {prim::BoolNot, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimBoolAnd, {prim::BoolAnd, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimBoolEq, {prim::BoolEq, true, std::make_shared<Bool>(), true}},
+    {prim::kPrimBoolOr, {prim::BoolOr, true, std::make_shared<Bool>(), true}},
+  };
+  return uniform_prim_implement_map;
+}
 
 PrimEvaluatorMap PrimEvaluatorConstructors = PrimEvaluatorMap();
 std::mutex PrimEvaluatorConstructorMutex;
 
-void InitPrimEvaluatorConstructors(const PrimitiveEvalImplMap &prim_eval_impl_map) {
+void InitPrimEvaluatorConstructors() {
   PrimEvaluatorMap &constructor = PrimEvaluatorConstructors;
 
-  for (const auto &iter : prim_eval_impl_map) {
+  for (const auto &iter : GetPrimitiveToEvalImplMap()) {
     constructor[iter.first] = InitStandardPrimEvaluator(iter.first, iter.second.impl_);
   }
 
-  for (const auto &iter : UniformPrimitiveToImplMapValue) {
+  for (const auto &iter : GetUniformPrimitiveToImplMap()) {
     constructor[iter.first] =
       InitUniformPrimEvaluator(iter.first, iter.second.impl_, iter.second.eval_value_, iter.second.specify_out_type_);
   }
@@ -974,20 +1063,20 @@ void InitPrimEvaluatorConstructors(const PrimitiveEvalImplMap &prim_eval_impl_ma
 
 void ClearPrimEvaluatorMap() {
   PrimEvaluatorConstructors.clear();
-  PrimitiveToInferImplMap.clear();
-  UniformPrimitiveToImplMapValue.clear();
+  GetPrimitiveToEvalImplMap().clear();
+  GetUniformPrimitiveToImplMap().clear();
 }
 
 bool IsInWhiteList(const PrimitivePtr primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
 
-  auto iter = PrimitiveToInferImplMap.find(primitive);
-  if (iter != PrimitiveToInferImplMap.end()) {
+  auto iter = GetPrimitiveToEvalImplMap().find(primitive);
+  if (iter != GetPrimitiveToEvalImplMap().end()) {
     return iter->second.in_white_list_;
   }
 
-  auto uni_iter = UniformPrimitiveToImplMapValue.find(primitive);
-  if (uni_iter != UniformPrimitiveToImplMapValue.end()) {
+  auto uni_iter = GetUniformPrimitiveToImplMap().find(primitive);
+  if (uni_iter != GetUniformPrimitiveToImplMap().end()) {
     return uni_iter->second.in_white_list_;
   }
 
@@ -996,8 +1085,8 @@ bool IsInWhiteList(const PrimitivePtr primitive) {
 
 StandardPrimitiveEvalImpl GetPrimitiveInferImpl(const PrimitivePtr &primitive) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto iter = PrimitiveToInferImplMap.find(primitive);
-  if (iter == PrimitiveToInferImplMap.end()) {
+  auto iter = GetPrimitiveToEvalImplMap().find(primitive);
+  if (iter == GetPrimitiveToEvalImplMap().end()) {
     return nullptr;
   }
   return iter->second.impl_;
@@ -1010,7 +1099,7 @@ PrimEvaluatorMap &GetPrimEvaluatorConstructors() {
   }
   std::lock_guard<std::mutex> initLock(PrimEvaluatorConstructorMutex);
   if (constructor.empty()) {
-    InitPrimEvaluatorConstructors(PrimitiveToInferImplMap);
+    InitPrimEvaluatorConstructors();
   }
 
   return constructor;

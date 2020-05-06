@@ -39,64 +39,64 @@ using std::vector;
 
 class AscendStreamAssign {
  public:
-  static AscendStreamAssign& GetInstance() {
+  static AscendStreamAssign &GetInstance() {
     static AscendStreamAssign instance;  // Guaranteed to be destroyed.
     return instance;
   }
 
-  AscendStreamAssign(const AscendStreamAssign&) = delete;
-  AscendStreamAssign& operator=(const AscendStreamAssign&) = delete;
+  AscendStreamAssign(const AscendStreamAssign &) = delete;
+  AscendStreamAssign &operator=(const AscendStreamAssign &) = delete;
 
   uint32_t GetTotalStreamNum() const;
   // new stream policy
-  uint32_t GetTotalCommonStreamNum() const { return total_common_stream_num_; }
-  uint32_t GetTotalIndependStreamNum() const { return total_independ_stream_num_; }
-  uint32_t GetTotalEventNum() const { return total_event_num_; }
-  const uint32_t GetFisrtPhysicId() const { return first_physic_id_; }
-  const uint32_t GetFirstLogicId() const { return first_logic_id_; }
+  uint32_t total_common_stream_num() const { return total_common_stream_num_; }
+  uint32_t total_independ_stream_num() const { return total_independ_stream_num_; }
+  uint32_t total_event_num() const { return total_event_num_; }
 
-  void InsertActiveNew(const std::shared_ptr<session::KernelGraph>& graph_ptr);
-  void AssignAllNodesStream(const std::shared_ptr<session::KernelGraph>& graph_ptr);
+  void InsertActiveNew(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  void AssignAllNodesStream(const std::shared_ptr<session::KernelGraph> &graph_ptr);
   void ResetNew();
-  void AssignStreamNew(const std::shared_ptr<session::KernelGraph>& graph_ptr);
-  bool IsIndependentNode(const CNodePtr& node_ptr);
-  const std::unordered_map<uint32_t, uint32_t> GetIndependentMap() { return logic_to_independent_map_; }
-  const std::unordered_map<uint32_t, uint32_t> GetPhysicMap() { return logic_to_physic_map_; }
-  std::vector<uint32_t> GetWaitStreams();
-  std::vector<uint32_t> GetHcomStreams();
+  void AssignStreamNew(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  bool IsIndependentNode(const CNodePtr &node_ptr);
+  const std::unordered_map<uint32_t, uint32_t> &logic_to_independent_map() { return logic_to_independent_map_; }
+  const std::unordered_map<uint32_t, uint32_t> &logic_to_physic_map() { return logic_to_physic_map_; }
+  const std::vector<std::vector<uint32_t>> &inner_parallel_streams() { return inner_parallel_streams_; }
+  void GetWaitStreams(vector<uint32_t> *wait_active_stream_list);
+  const std::vector<uint32_t> &hcom_streams() { return hcom_stream_list_; }
+  CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id,
+                                 uint32_t stream_id);
+  CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id,
+                                 uint32_t stream_id);
 
  private:
   AscendStreamAssign() = default;
   ~AscendStreamAssign() = default;
 
-  CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph>& graph_ptr, uint32_t event_id,
-                                 uint32_t stream_id);
-  CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph>& graph_ptr, uint32_t event_id,
-                                 uint32_t stream_id);
-
   vector<CNodePtr>::iterator FindTargetOp(vector<CNodePtr>::iterator begin, vector<CNodePtr>::iterator end,
-                                          const CNodePtr& node);
+                                          const CNodePtr &node);
 
-  bool IsHcom(const CNodePtr& apply_kernel);
+  bool IsHcom(const CNodePtr &apply_kernel);
   bool IsProcessed(uint32_t logic_id);
-  vector<uint32_t> TransLogicToPhysic(const vector<uint32_t>& logic_ids);
-  void AssignCommonStreamId(const CNodePtr& cur_cnode_ptr, CNodePtr* pre_cnode_ptr, uint32_t* cur_index,
-                            uint32_t* cur_stream_id);
+  void TransLogicToPhysic(const vector<uint32_t> &logic_ids, vector<uint32_t> *physic_ids);
+  void AssignCommonStreamId(const CNodePtr &cur_cnode_ptr, CNodePtr *pre_cnode_ptr, uint32_t *cur_index,
+                            uint32_t *cur_stream_id);
   void RecordIdMap(uint32_t logic_id, uint32_t physic_id);
-  void UpdateStreamActive(const CNodePtr& active_ptr);
-  void UpdateStreamSwitch(const CNodePtr& switch_ptr, const CNodePtr& active_ptr);
+  void UpdateStreamActive(const CNodePtr &active_ptr);
+  void UpdateStreamSwitch(const CNodePtr &switch_ptr, const CNodePtr &active_ptr);
   bool IsTaskSink();
-  void AssignIndependentStreamId(const CNodePtr& cur_cnode_ptr, uint32_t deal_logic_id);
-  void UpdateStreamId(const std::shared_ptr<session::KernelGraph>& graph_ptr);
-  void PrintGraphExeOrders(const std::shared_ptr<session::KernelGraph>& graph_ptr);
-  void RecordFirstCommonOp(const CNodePtr& cur_cnode_ptr, uint32_t cur_node_logic_id, uint32_t cur_stream_id);
-  uint32_t GetLogicId(const CNodePtr& cur_cnode_ptr);
+  void AssignIndependentStreamId(const CNodePtr &cur_cnode_ptr, uint32_t deal_logic_id);
+  void UpdateStreamId(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  void UpdateEventId(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  void PrintGraphExeOrders(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  void RecordFirstCommonOp(const CNodePtr &cur_cnode_ptr, uint32_t cur_node_logic_id, uint32_t cur_stream_id);
+  uint32_t GetLogicId(const CNodePtr &cur_cnode_ptr);
   void SetCommonStreamNum(uint32_t cur_stream_id);
-  void FindAllReduceParallel(const std::shared_ptr<session::KernelGraph>& graph_ptr);
+  void FindAllReduceParallel(const std::shared_ptr<session::KernelGraph> &graph_ptr);
   bool IsProcessedParallelStream(uint32_t stream_id);
-  vector<uint32_t> GetParallelStream(uint32_t cur_stream_id, uint32_t stream_acitve_id);
-  void InsertSendRecvForIndependent(const std::shared_ptr<session::KernelGraph>& graph_ptr);
-  void InsertSendRecvForHcomParallel(const std::shared_ptr<session::KernelGraph>& graph_ptr);
+  void GetParallelStream(uint32_t cur_stream_id, uint32_t stream_acitve_id, std::vector<uint32_t> *parallel_streams);
+  void InsertSendRecvForIndependent(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  void InsertSendRecvForHcomParallel(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  void GetNeedActiveStreams(const std::shared_ptr<session::KernelGraph> &graph_ptr);
 
   uint32_t total_common_stream_num_{0};
   uint32_t total_independ_stream_num_{0};
@@ -112,6 +112,7 @@ class AscendStreamAssign {
   std::vector<std::vector<uint32_t>> inner_parallel_streams_{};
   std::vector<uint32_t> processed_parallel_streams_{};
   std::vector<uint32_t> hcom_stream_list_{};
+  std::vector<uint32_t> need_first_active_streams_{};
   // new policy end
 };
 }  // namespace ascend

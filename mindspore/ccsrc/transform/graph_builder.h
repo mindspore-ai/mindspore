@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace transform {
-Status BuildDatasetGraph(const DatasetGraphParam& param, const std::string& phase = "dataset");
+Status BuildDatasetGraph(const DatasetGraphParam &param, const std::string &phase = "dataset");
 }  // namespace transform
 }  // namespace mindspore
 

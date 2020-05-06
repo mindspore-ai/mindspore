@@ -24,6 +24,7 @@
 #include <functional>
 
 #include "ir/func_graph_cloner.h"
+#include "parallel/costmodel_context.h"
 #include "pipeline/pass.h"
 #include "pipeline/parse/parse_base.h"
 #include "pipeline/parse/data_converter.h"
@@ -41,8 +42,8 @@ using CompileGraphs = compile::CompileGraphs;
 using abstract::AnalysisResult;
 using mindspore::abstract::AnalysisContextPtr;
 
-abstract::AnalysisResult AbstractAnalyze(const ResourcePtr& res, const FuncGraphPtr& func_graph,
-                                         const abstract::AbstractBasePtrList& args_spec, bool clear) {
+abstract::AnalysisResult AbstractAnalyze(const ResourcePtr &res, const FuncGraphPtr &func_graph,
+                                         const abstract::AbstractBasePtrList &args_spec, bool clear) {
   MS_LOG(DEBUG) << "AbstractAnalyze start";
   auto engine = res->engine();
   MS_EXCEPTION_IF_NULL(engine);
@@ -50,9 +51,9 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr& res, const FuncGraph
     auto manager = res->manager();
     MS_EXCEPTION_IF_NULL(manager);
     engine->Clear();
-    for (auto& node : manager->all_nodes()) {
+    for (auto &node : manager->all_nodes()) {
       MS_EXCEPTION_IF_NULL(node);
-      const AbstractBasePtr& prev_inferred = node->abstract();
+      const AbstractBasePtr &prev_inferred = node->abstract();
       // Keep previous inferred value for ValueNode if the inferred value is not AbstractFunction.
       if (!node->isa<ValueNode>() || (prev_inferred != nullptr && prev_inferred->isa<abstract::AbstractFunction>())) {
         node->set_abstract(nullptr);
@@ -65,8 +66,8 @@ abstract::AnalysisResult AbstractAnalyze(const ResourcePtr& res, const FuncGraph
   return ret;
 }
 
-FuncGraphPtr ProgramSpecialize(const ResourcePtr& res, const FuncGraphPtr& func_graph,
-                               const abstract::AnalysisContextPtr& context) {
+FuncGraphPtr ProgramSpecialize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
+                               const abstract::AnalysisContextPtr &context) {
   MS_LOG(DEBUG) << "ProgramSpecialize start";
   abstract::ProgramSpecializer spc(res->engine());
   FuncGraphPtr result = spc.Run(func_graph, context);
@@ -77,8 +78,8 @@ FuncGraphPtr ProgramSpecialize(const ResourcePtr& res, const FuncGraphPtr& func_
   return result;
 }
 
-FuncGraphPtr Renormalize(const ResourcePtr& res, const FuncGraphPtr& func_graph,
-                         const abstract::AbstractBasePtrList& args_spec) {
+FuncGraphPtr Renormalize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
+                         const abstract::AbstractBasePtrList &args_spec) {
   MS_LOG(DEBUG) << "Renormalize start";
 #ifdef ENABLE_PROFILE
   double t1 = GetTime();
@@ -88,6 +89,7 @@ FuncGraphPtr Renormalize(const ResourcePtr& res, const FuncGraphPtr& func_graph,
   double t2 = GetTime();
 #endif
   auto ret = ProgramSpecialize(res, func_graph, result.context);
+  res->set_func_graph(ret);
 #ifdef ENABLE_PROFILE
   double t3 = GetTime();
   MsProfile::StatTime("renormalize.infer", t2 - t1);
@@ -97,7 +99,7 @@ FuncGraphPtr Renormalize(const ResourcePtr& res, const FuncGraphPtr& func_graph,
   return ret;
 }
 
-bool ParseAction(const ResourcePtr& res) {
+bool ParseAction(const ResourcePtr &res) {
   if (!res->input()) {
     MS_LOG(EXCEPTION) << "Parse error";
   }
@@ -128,11 +130,11 @@ bool ParseAction(const ResourcePtr& res) {
 // This step do this optimize: graph1(x){xx(fv1),xxx(fv2)}, graph2(x){xxx(fv3),xxx(fv4)}->
 // graph1(x){base_graph(x, fv1, fv2)}, graph1(x){base_graph(x, fv3, fv4)}, base_graph(x, fv...){xxx,xxx}
 // all obj_map's graph shared base_graph
-bool CombineLikeGraphs(const ResourcePtr&) {
-  auto& obj_map = parse::data_converter::GetObjGraphs();
+bool CombineLikeGraphs(const ResourcePtr &res) {
+  auto &obj_map = parse::data_converter::GetObjGraphs();
 
   for (auto it : obj_map) {
-    auto& graphs = it.second;
+    auto &graphs = it.second;
     MS_LOG(DEBUG) << "Start combine like graph:" << it.first << ", size:" << graphs.size();
     auto fg = graphs[0];
     FuncGraphPtrList func_graphs = {fg};
@@ -145,21 +147,23 @@ bool CombineLikeGraphs(const ResourcePtr&) {
     if (fg->paramter_obj_nodes().size() == 0 || graphs.size() <= 1) {
       continue;
     }
-    auto mng = Manage(base_graph, false);
-    for (auto& fv : fg->paramter_obj_nodes()) {
+    for (auto &fv : fg->paramter_obj_nodes()) {
       TraceManager::DebugTrace(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
       auto param = base_graph->add_parameter();
       TraceManager::EndTrace();
-      auto repl_node = (*cloner->cloned_node())[fv];
-      (void)mng->Replace(repl_node, param);
+      auto &node_users = res->manager()->node_users()[fv];
+      for (auto &n : node_users) {
+        auto repl_n = (*cloner->cloned_node())[n.first]->cast<CNodePtr>();
+        repl_n->set_input(n.second, param);
+      }
     }
     MS_LOG(DEBUG) << "Fg0 paramter_obj_nodes size :" << fg->paramter_obj_nodes().size();
 
-    for (auto& g : graphs) {
+    for (auto &g : graphs) {
       auto fvs = g->paramter_obj_nodes();
       std::vector<AnfNodePtr> new_node_inputs;
       new_node_inputs.push_back(NewValueNode(base_graph));
-      for (auto& p : g->parameters()) {
+      for (auto &p : g->parameters()) {
         AnfNodePtr para_after_cast = parse::GetMixedPrecisionCastHelp(g, p);
         new_node_inputs.push_back(para_after_cast);
       }
@@ -173,17 +177,17 @@ bool CombineLikeGraphs(const ResourcePtr&) {
   return true;
 }
 
-bool SymbolResolveAction(const ResourcePtr& res) {
+bool SymbolResolveAction(const ResourcePtr &res) {
   if (res->manager() == nullptr) {
-    MS_LOG(EXCEPTION) << "Resolve error.";
+    MS_LOG(EXCEPTION) << "SymbolResolve error, manager is null";
   }
   if (res->func_graph() == nullptr) {
-    MS_LOG(EXCEPTION) << "Resolve error";
+    MS_LOG(EXCEPTION) << "SymbolResolve error, graph is null";
   }
   FuncGraphPtr func_graph = res->func_graph();
   auto succ = parse::ResolveFuncGraph(func_graph, res);
 
-  // Remove usued nodes in cnode order list.
+  // Remove unused nodes in cnode order list.
   func_graph->EraseUnusedNodeInOrder();
   func_graph->ReleaseFullOrderToEffectOrder();
   for (auto fg : func_graph->func_graphs_used_total()) {
@@ -194,7 +198,17 @@ bool SymbolResolveAction(const ResourcePtr& res) {
   return succ;
 }
 
-bool AbstractSpecializeAction(const ResourcePtr& res) {
+bool InferenceOptPrepareAction(const ResourcePtr &res) {
+  if (res->manager() == nullptr) {
+    MS_LOG(EXCEPTION) << "InferenceOptPrepare error, manager is null.";
+  }
+  if (res->func_graph() == nullptr) {
+    MS_LOG(EXCEPTION) << "InferenceOptPrepare error, graph is null.";
+  }
+  return InferenceOptPreparePass(res);
+}
+
+bool AbstractSpecializeAction(const ResourcePtr &res) {
   if (res->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "AbstractSpecialize error";
   }
@@ -204,7 +218,7 @@ bool AbstractSpecializeAction(const ResourcePtr& res) {
 
   // suppose that there is not KeywordArgument for the top graph
   // get the hyper parameter
-  for (const auto& param : func_graph->parameters()) {
+  for (const auto &param : func_graph->parameters()) {
     auto param_node = std::static_pointer_cast<Parameter>(param);
     if (param_node->has_default()) {
       AbstractBasePtr ptr =
@@ -225,8 +239,8 @@ bool AbstractSpecializeAction(const ResourcePtr& res) {
   return true;
 }
 
-bool OptimizeAction(const ResourcePtr& res, const std::vector<PassItem>& passes) {
-  for (auto& pass : passes) {
+bool OptimizeAction(const ResourcePtr &res, const std::vector<PassItem> &passes) {
+  for (auto &pass : passes) {
     WITH(MsProfile::GetProfile()->Step(pass.first))[&pass, &res]() {
       MS_LOG(DEBUG) << "Pass " << pass.first << " start ...";
       auto result = pass.second(res);
@@ -240,11 +254,11 @@ bool OptimizeAction(const ResourcePtr& res, const std::vector<PassItem>& passes)
   return true;
 }
 
-bool GeOptimizeAction(const ResourcePtr& res) { return OptimizeAction(res, kGePasses); }
+bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePasses); }
 
-bool VmOptimizeAction(const ResourcePtr& res) { return OptimizeAction(res, kVmPasses); }
+bool VmOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kVmPasses); }
 
-bool TaskEmitAction(const ResourcePtr& res) {
+bool TaskEmitAction(const ResourcePtr &res) {
   if (res->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "TaskEmit args error";
   }
@@ -253,14 +267,14 @@ bool TaskEmitAction(const ResourcePtr& res) {
   auto bc_ptr = res->results()[kBackend].cast<compile::BackendPtr>();
   std::vector<PrimitivePtr> cut_list = compile::nonlinear_ops;
   if (bc_ptr->name() == kMsConvert) {
-    cut_list = compile::ms_nonlinear_ops;
+    cut_list = compile::GetMsNonlinearOps();
   }
   std::shared_ptr<CompileGraphs> compile = std::make_shared<CompileGraphs>(bc_ptr, cut_list);
   res->results()[kOutput] = compile->CompileAndLink(func_graph);
   return true;
 }
 
-bool ExecuteAction(const ResourcePtr& res) {
+bool ExecuteAction(const ResourcePtr &res) {
   if (res->results().count(kOutput) == 0 || !res->results()[kOutput].is<compile::FinalVMPtr>()) {
     MS_LOG(EXCEPTION) << "Execute args error";
   }
@@ -276,7 +290,32 @@ bool ExecuteAction(const ResourcePtr& res) {
   return true;
 }
 
-bool RemoveValueNodeDuplicationsAction(const ResourcePtr& res) {
+// The parallel primitive related valuenode might be partitioned so that its value changes by device,
+// that will result in a syncronization error due to different executing order.
+// Here we temporarily avoid the problem by skipping valuenode merging used by parallel related primitive,
+// the final solution will be proposed later as a parallel feature.
+bool KeepValueNodeDuplication(const AnfNodePtr &value_node, const ResourcePtr &res) {
+  auto &node_users = res->manager()->node_users();
+  auto &users = node_users[value_node];
+  auto used_by_keep_value_prim =
+    std::any_of(users.begin(), users.end(), [](const std::pair<AnfNodePtr, int> &user) -> bool {
+      MS_EXCEPTION_IF_NULL(user.first);
+      auto cnode = user.first->cast<CNodePtr>();
+      if (cnode == nullptr) {
+        return false;
+      }
+      auto prim_node = cnode->input(0);
+      if (IsValueNode<Primitive>(prim_node)) {
+        auto prim = GetValue<PrimitivePtr>(prim_node->cast<ValueNodePtr>()->value());
+        // value_node is referenced by some parallel primitive
+        return prim->HasAttr("keep_value_node_input");
+      }
+      return false;
+    });
+  return used_by_keep_value_prim;
+}
+
+bool RemoveValueNodeDuplicationsAction(const ResourcePtr &res) {
   if (res->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "Remove value node duplications error.";
   }
@@ -286,13 +325,16 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr& res) {
   auto value_nodes = manager->valuenodes()[func_graph];
   HashCache hash_cache;
   HashValue hashes;
-  for (const auto& value_pair : value_nodes) {
+  for (const auto &value_pair : value_nodes) {
+    if (KeepValueNodeDuplication(value_pair.first, res)) {
+      continue;
+    }
     TryToDoReplace(manager.get(), value_pair.first, &hash_cache, &hashes);
   }
   return true;
 }
 
-bool ValidateAction(const ResourcePtr& res) { return ValidatePass(res); }
+bool ValidateAction(const ResourcePtr &res) { return ValidatePass(res); }
 
 static std::vector<ActionItem> CommonPipeline() {
   std::vector<ActionItem> actions;
@@ -302,8 +344,11 @@ static std::vector<ActionItem> CommonPipeline() {
 
   // Resolve the python func
   actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
-  actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
-
+  auto multi_graphs = parallel::CostModelContext::GetInstance()->is_multi_subgraphs();
+  if (!multi_graphs) {
+    actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
+  }
+  actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
   // Evaluate type and shape, and specialize
   actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
 

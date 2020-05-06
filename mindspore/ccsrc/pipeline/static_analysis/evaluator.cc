@@ -17,6 +17,7 @@
 #include "pipeline/static_analysis/evaluator.h"
 
 #include <algorithm>
+#include <unordered_set>
 
 #include "ir/func_graph_cloner.h"
 #include "pipeline/static_analysis/utils.h"
@@ -32,8 +33,7 @@ void InferEntryLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList 
     MS_LOG(DEBUG) << "Evaluator " << evaluator->ToString() << " run for " << out_conf->node()->scope()->name();
   }
   for (size_t i = 0; i < arg_spec_list.size(); i++) {
-    MS_LOG(DEBUG) << "" << evaluator->ToString() << " input[" << i
-                  << "] abstract value: " << arg_spec_list[i]->ToString();
+    MS_LOG(DEBUG) << evaluator->ToString() << " input[" << i << "] abstract value: " << arg_spec_list[i]->ToString();
   }
 }
 
@@ -61,16 +61,41 @@ AnalysisContextPtr BaseFuncGraphEvaluator::MakeContext(const AnalysisEnginePtr &
   return context;
 }
 
+static std::vector<AnfNodePtr> FastShadowSort(const AnfNodePtr &ret_node) {
+  auto ori_func_graph = ret_node->func_graph();
+  MS_EXCEPTION_IF_NULL(ori_func_graph);
+
+  std::vector<AnfNodePtr> sorted_nodes;
+  std::unordered_set<AnfNodePtr> checked_cnodes;
+  std::size_t index = 0;
+  sorted_nodes.emplace_back(ret_node);
+  while (index < sorted_nodes.size()) {
+    auto current = sorted_nodes[index];
+    index++;
+    MS_EXCEPTION_IF_NULL(current);
+    if (current->isa<CNode>()) {
+      auto &inputs = current->cast<CNodePtr>()->inputs();
+      for (auto it = inputs.begin(); it != inputs.end(); it++) {
+        AnfNodePtr input = *it;
+        if (input != nullptr && input->isa<CNode>() && checked_cnodes.find(input) == checked_cnodes.end() &&
+            input->func_graph() == ori_func_graph) {
+          sorted_nodes.emplace_back(input);
+          (void)checked_cnodes.insert(input);
+        }
+      }
+    }
+  }
+  return sorted_nodes;
+}
+
 AbstractBasePtr BaseFuncGraphEvaluator::Infer(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) {
   FuncGraphPtr fg = GetFuncGraph(engine, args_spec_list);
   MS_EXCEPTION_IF_NULL(fg);
   std::size_t nargs = fg->parameters().size();
   if (args_spec_list.size() != nargs) {
-    MS_LOG(EXCEPTION) << "Function " << fg->ToString() << ", The number of parameters of this function is "
-                      << fg->parameters().size()
-                      << ","
-                         " but the number of provided arguments is "
-                      << args_spec_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
+    MS_EXCEPTION(TypeError) << "Function " << fg->ToString() << ", The number of parameters of this function is "
+                            << fg->parameters().size() << ", but the number of provided arguments is "
+                            << args_spec_list.size() << ". NodeInfo: " << trace::GetDebugInfo(fg->debug_info());
   }
   MS_EXCEPTION_IF_NULL(parent_context_);
   MS_EXCEPTION_IF_NULL(engine);
@@ -86,20 +111,20 @@ AbstractBasePtr BaseFuncGraphEvaluator::Infer(AnalysisEnginePtr engine, const Ab
 
   MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg->ToString()
                 << ", context: " << graph_context_->ToString() << ", return node: " << func_node->DebugString();
-  const std::vector<AnfNodePtr> &all_nodes = TopoSort(func_node);
-  for (const auto &node : all_nodes) {
+  AbstractBasePtr ret_base = nullptr;
+  std::vector<AnfNodePtr> nodes = FastShadowSort(func_node);
+  for (auto it = nodes.crbegin(); it != nodes.crend(); it++) {
+    const auto &node = *it;
     AnfNodeConfigPtr node_conf = engine->MakeConfig(node, graph_context_);
     MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg->ToString() << ", node_conf: " << node_conf->ToString();
-    AbstractBasePtr base = engine->GetEvaluatedValue(node_conf);
+    ret_base = engine->GetEvaluatedValue(node_conf);
     MS_LOG(DEBUG) << "Analysis node end, func graph: " << fg->ToString() << ", node_conf: " << node_conf->ToString()
-                  << ", abstract: " << base->ToString();
+                  << ", abstract: " << ret_base->ToString();
   }
 
-  AnfNodeConfigPtr ret_conf = engine->MakeConfig(func_node, graph_context_);
-  AbstractBasePtr base = engine->GetEvaluatedValue(ret_conf);
-  MS_EXCEPTION_IF_NULL(base);
-  MS_LOG(DEBUG) << "BaseFuncGraph " << fg->ToString() << " infer end, inferred abstract: " << base->ToString();
-  return base;
+  MS_EXCEPTION_IF_NULL(ret_base);
+  MS_LOG(DEBUG) << "BaseFuncGraph " << fg->ToString() << " infer end, inferred abstract: " << ret_base->ToString();
+  return ret_base;
 }
 
 AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
@@ -111,12 +136,12 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
                            MS_EXCEPTION_IF_NULL(arg);
                            return arg->Broaden();
                          });
-    MS_LOG(DEBUG) << "" << func_graph_->ToString() << " original: " << mindspore::ToString(args_spec_list)
+    MS_LOG(DEBUG) << func_graph_->ToString() << " original: " << mindspore::ToString(args_spec_list)
                   << ", broaded: " << mindspore::ToString(broaded_list);
     return broaded_list;
   }
 
-  if (func_graph_->has_flag(kFuncGraphFlagUndetermin)) {
+  if (func_graph_->has_flag(kFuncGraphFlagUndetermined)) {
     if (parent_context_) {
       MS_LOG(DEBUG) << "Undeterminate FuncGraphEvaluator " << ToString()
                     << ", context: " << parent_context_->ToString();
@@ -204,20 +229,20 @@ AbstractBasePtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &ar
   MS_EXCEPTION_IF_NULL(cache_);
   auto iter = cache_->find(args_spec_list);
   if (iter == cache_->end()) {
-    MS_LOG(DEBUG) << "" << evaluator_name << " cache miss, call Infer().";
+    MS_LOG(DEBUG) << evaluator_name << " cache miss, call Infer().";
     AbstractBasePtr ret = Infer(engine, args_spec_list);
     if (ret == nullptr) {
       InferFailLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
       MS_LOG(EXCEPTION) << "Evaluator " << evaluator_name << " result is nullptr.";
     }
     MS_EXCEPTION_IF_NULL(ret);
-    MS_LOG(DEBUG) << "" << evaluator_name << " set cache. return: " << ret->ToString() << ".";
+    MS_LOG(DEBUG) << evaluator_name << " set cache. return: " << ret->ToString() << ".";
     (*cache_)[args_spec_list] = ret;
     trace::TraceGraphInferLeave(shared_from_base<Evaluator>());
     return ret;
   } else {
     MS_EXCEPTION_IF_NULL(iter->second);
-    MS_LOG(DEBUG) << "" << evaluator_name << " cache hit. return: " << iter->second->ToString() << ".";
+    MS_LOG(DEBUG) << evaluator_name << " cache hit. return: " << iter->second->ToString() << ".";
     trace::TraceGraphInferLeave(shared_from_base<Evaluator>());
     return iter->second;
   }
@@ -232,7 +257,6 @@ AbstractBasePtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const Config
                          return conf->GetEvaluatedValue();
                        });
   AbstractBasePtr ret = EvalPrim(engine, args_spec_list);
-  (*cache_)[args_spec_list] = ret;
   return ret;
 }
 

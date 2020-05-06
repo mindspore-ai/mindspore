@@ -36,7 +36,8 @@ def _less_scala(x, y):
    """
     return F.scalar_lt(x, y)
 
-
+@less.register("Tensor", "Number")
+@less.register("Number", "Tensor")
 @less.register("Tensor", "Tensor")
 def _less_tensor(x, y):
     """
@@ -47,6 +48,6 @@ def _less_tensor(x, y):
        y(Tensor): Tensor.
 
     Returns:
-       bool, if x and y are less elements by element return true, else return false.
+       Tensor, return value of  x and y by operation P.Less()
    """
     return F.tensor_lt(x, y)

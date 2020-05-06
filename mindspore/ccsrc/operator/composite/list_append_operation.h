@@ -28,15 +28,15 @@ namespace mindspore {
 namespace prim {
 class ListAppend : public MetaFuncGraph {
  public:
-  explicit ListAppend(const std::string& name) : MetaFuncGraph(name) {}
+  explicit ListAppend(const std::string &name) : MetaFuncGraph(name) {}
   ~ListAppend() override = default;
   MS_DECLARE_PARENT(ListAppend, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList& a_list) override;
-  friend std::ostream& operator<<(std::ostream& os, const ListAppend& list_append) {
+  FuncGraphPtr GenerateFuncGraph(const abstract::AbstractBasePtrList &a_list) override;
+  friend std::ostream &operator<<(std::ostream &os, const ListAppend &list_append) {
     os << list_append.name_;
     return os;
   }
-  friend bool operator==(const ListAppend& lhs, const ListAppend& rhs) { return lhs.name_ == rhs.name_; }
+  friend bool operator==(const ListAppend &lhs, const ListAppend &rhs) { return lhs.name_ == rhs.name_; }
 };
 using ListAppendPtr = std::shared_ptr<ListAppend>;
 }  // namespace prim

@@ -18,8 +18,8 @@
 
 #include <memory>
 
-#include "parallel/auto_parallel/graph_costmodel.h"
 #include "parallel/allreduce_fusion/allreduce_fusion.h"
+#include "parallel/auto_parallel/graph_costmodel.h"
 
 namespace mindspore {
 namespace parallel {
@@ -46,6 +46,7 @@ void CostModelContext::ResetCostModel() {
   costmodel_communi_threshold_ = DEFAULT_COST_MODEL_COMMUNI_THRESHOLD;
   costmodel_communi_const_ = DEFAULT_COST_MODEL_COMMUNI_CONST;
   costmodel_communi_bias_ = DEFAULT_COST_MODEL_COMMUNI_BIAS;
+  is_multi_subgraphs_ = DEFAULT_IS_MULTI_SUBGRAPHS;
   costmodel_allreduce_fusion_algorithm_ = DEFAULT_COST_MODEL_ALLREDUCE_FUSION_ALGORITHM;
   costmodel_allreduce_fusion_times_ = DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TIMES;
   costmodel_allreduce_fusion_tail_percent_ = DEFAULT_COST_MODEL_ALLREDUCE_FUSION_TAIL_PERCENT;
@@ -60,7 +61,7 @@ void CostModelContext::ResetAlgoParameters() {
   costmodel_simplify_cal_ = DEFAULT_COST_MODEL_SIMPLIFY_CALCULATION;
   tensor_slice_alignment_enable_ = DEFAULT_TENSOR_SLICE_ALIGNMENT_ENABLE;
   tensor_slice_alignment_size_ = DEFAULT_TENSOR_SLICE_ALIGNMENT_SIZE;
-  not_fully_use_device_ = DEFAULT_NOT_FULLY_USE_DEVICES;
+  fully_use_device_ = DEFAULT_FULLY_USE_DEVICES;
   elementwise_stra_follow_ = DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW;
 }
 
@@ -84,6 +85,7 @@ void CostModelContext::set_costmodel_communi_const(double cm_communi_const) {
 
 void CostModelContext::set_costmodel_communi_bias(double cm_communi_bias) { costmodel_communi_bias_ = cm_communi_bias; }
 
+void CostModelContext::set_multi_subgraphs(bool multi_graphs) { is_multi_subgraphs_ = multi_graphs; }
 void CostModelContext::set_costmodel_allreduce_fusion_algorithm(int32_t algorithm) {
   costmodel_allreduce_fusion_algorithm_ = algorithm;
 }
@@ -118,7 +120,7 @@ void CostModelContext::set_tensor_slice_alignment_size(size_t ts_align_size) {
   tensor_slice_alignment_size_ = ts_align_size;
 }
 
-void CostModelContext::set_not_fully_use_device(bool not_fully_use) { not_fully_use_device_ = not_fully_use; }
+void CostModelContext::set_fully_use_device(bool fully_use) { fully_use_device_ = fully_use; }
 
 void CostModelContext::set_elementwise_stra_follow(bool elementwise_follow) {
   elementwise_stra_follow_ = elementwise_follow;

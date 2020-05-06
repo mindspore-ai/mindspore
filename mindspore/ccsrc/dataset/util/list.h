@@ -18,8 +18,7 @@
 
 #include <iostream>
 #include <iterator>
-
-#include "dataset/util/make_unique.h"
+#include "dataset/util/de_error.h"
 
 namespace mindspore {
 namespace dataset {

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <iomanip>
 #include <iostream>
 #include "dataset/engine/datasetops/pipeline_op.h"
 
@@ -23,11 +24,26 @@ PipelineOp::PipelineOp(int32_t op_connector_size) : DatasetOp(op_connector_size)
 
 // A print method typically used for debugging
 void PipelineOp::Print(std::ostream &out, bool show_all) const {
-  // Call base class printer first
-  DatasetOp::Print(out, show_all);
-
-  // Then display our own stuff for the pipeline op
-  // out << "This is a pipeline op print.  nothing to display here at the moment.\n";
+  // Summary 1-liner print
+  if (!show_all) {
+    out << " [workers: ";
+    if (this->inlined()) {
+      out << "0 (inlined)]";
+    } else {
+      out << "1]";  // Pipeline ops only have 1 worker
+    }
+    // Call super class printer
+    DatasetOp::Print(out, show_all);
+  } else {
+    // Detailed print
+    DatasetOp::Print(out, show_all);
+    out << "\nNum workers: ";
+    if (this->inlined()) {
+      out << "0 (inlined)";
+    } else {
+      out << "1";  // Pipeline ops only have 1 worker
+    }
+  }
 }
 }  // namespace dataset
 }  // namespace mindspore

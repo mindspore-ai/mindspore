@@ -21,16 +21,16 @@
 #include <string>
 
 #define DISABLE_COPY_AND_ASSIGN(ClassType) \
-  ClassType(const ClassType&) = delete;    \
-  ClassType& operator=(const ClassType&) = delete;
+  ClassType(const ClassType &) = delete;   \
+  ClassType &operator=(const ClassType &) = delete;
 
 namespace mindspore {
 namespace common {
-inline const char* SafeCStr(const std::string& str) { return str.c_str(); }
-const char* SafeCStr(const std::string&& str);
+inline const char *SafeCStr(const std::string &str) { return str.c_str(); }
+const char *SafeCStr(const std::string &&str);
 
-static inline std::string GetEnv(const std::string& envvar) {
-  const char* value = ::getenv(envvar.c_str());
+static inline std::string GetEnv(const std::string &envvar) {
+  const char *value = ::getenv(envvar.c_str());
 
   if (value == nullptr) {
     return std::string();

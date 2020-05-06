@@ -96,6 +96,7 @@ const char kNameConfusionMatrix[] = "ConfusionMatrix";
 const char kNameResizeNearestNeighborD[] = "ResizeNearestNeighbor";
 const char kNameResizeNearestNeighborGrad[] = "ResizeNearestNeighborGrad";
 const char kNameApplyAdam[] = "Adam";
+const char kNameExtractImagePatches[] = "ExtractImagePatches";
 const char kNameReLU6[] = "ReLU6";
 const char kNameReLU6Grad[] = "ReLU6Grad";
 const char kNameElu[] = "Elu";
@@ -110,6 +111,8 @@ const char kNameSigmoidCrossEntropyWithLogits[] = "SigmoidCrossEntropyWithLogits
 const char kNameSigmoidCrossEntropyWithLogitsGrad[] = "SigmoidCrossEntropyWithLogitsGrad";
 const char kNameScatterNdD[] = "ScatterNd";
 const char kNamePadD[] = "Pad";
+const char kNameMirrorPad[] = "MirrorPad";
+const char kNameMirrorPadGrad[] = "MirrorPadGrad";
 const char kNameGatherNd[] = "GatherNd";
 const char kNameArgmax[] = "Argmax";
 const char kNameArgmin[] = "Argmin";
@@ -122,6 +125,7 @@ const char kNameSplitD[] = "Split";
 const char kNameBatchToSpaceNd[] = "BatchToSpaceNd";
 const char kNameFloor[] = "Floor";
 const char kNameNPUGetFloatStatus[] = "NPUGetFloatStatus";
+const char kNameAssign[] = "Assign";
 const char kNameAssignAdd[] = "AssignAdd";
 const char kNameAssignSub[] = "AssignSub";
 const char kNameNPUAllocFloatStatus[] = "NPUAllocFloatStatus";
@@ -148,7 +152,8 @@ const char kNameSlice[] = "Slice";
 const char kNameAddN[] = "AddN";
 const char kNameLess[] = "Less";
 const char kNameGreater[] = "Greater";
-const char kNamePack[] = "Stack";
+const char kNamePack[] = "Pack";
+const char kNameUnpack[] = "Unpack";
 const char kNameMerge[] = "Merge";
 const char kNameGeSwitch[] = "GeSwitch";
 
@@ -161,6 +166,7 @@ const char kNameTopK[] = "TopK";
 const char kNameSoftmaxGrad[] = "SoftmaxGrad";
 const char kNameMaxPool[] = "MaxPool";
 const char kNameAvgPool[] = "AvgPool";
+const char kNameMaxPoolWithArgmax[] = "MaxPoolWithArgmax";
 const char kNameBatchNorm[] = "BatchNorm";
 const char kNameBatchNormGrad[] = "BatchNormGrad";
 const char kNameROIAlign[] = "ROIAlign";
@@ -172,6 +178,9 @@ const char kNameBinaryCrossEntropy[] = "BinaryCrossEntropy";
 const char kNameBinaryCrossEntropyGrad[] = "BinaryCrossEntropyGrad";
 const char kNameSparseApplyAdagrad[] = "SparseApplyAdagrad";
 const char kNameSparseApplyFtrlD[] = "SparseApplyFtrlD";
+const char kNameAcosh[] = "Acosh";
+const char kNameAcoshGrad[] = "AcoshGrad";
+const char kNameFloorMod[] = "FloorMod";
 const char kNameSpaceToDepth[] = "SpaceToDepth";
 const char kNameDepthToSpace[] = "DepthToSpace";
 const char kNameSign[] = "Sign";
@@ -179,6 +188,13 @@ const char kNameLARSUpdate[] = "LARSUpdate";
 const char kNameRound[] = "Round";
 const char kNamePrint[] = "Print";
 const char kNameApplyFtrl[] = "ApplyFtrl";
+const char kNameDiag[] = "Diag";
+const char kNameDiagPart[] = "DiagPart";
+const char kNameSpaceToBatch[] = "SpaceToBatch";
+const char kNameBatchToSpace[] = "BatchToSpace";
+const char kNameAtan2[] = "Atan2";
+const char kNameApplyRMSProp[] = "ApplyRMSProp";
+const char kNameApplyCenteredRMSProp[] = "ApplyCenteredRMSProp";
 
 // -----------------OpAdapter initialization--------------
 std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_map() {
@@ -190,8 +206,10 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentum)},
     {string(kNameMaxPool), ADPT_DESC(MaxPool)},
     {string(kNameAvgPool), ADPT_DESC(AvgPool)},
+    {string(kNameMaxPoolWithArgmax), ADPT_DESC(MaxPoolWithArgmax)},
     {string(kNameTopK), ADPT_DESC(TopK)},
     {string(kNamePack), ADPT_DESC(Pack)},
+    {string(kNameUnpack), ADPT_DESC(Unpack)},
     {string(kNameSplitD), ADPT_DESC(SplitD)},
     {string(kNameAllReduce), ADPT_DESC(HcomAllReduce)},
     {string(kNameBroadcast), ADPT_DESC(HcomBroadcast)},
@@ -200,10 +218,10 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameMaxPoolGrad), ADPT_DESC(MaxPoolGrad)},
     {string(kNameAvgPoolGrad), ADPT_DESC(AvgPoolGrad)},
     {string(kNameMaxPoolGradWithArgmax), ADPT_DESC(MaxPoolGradWithArgmax)},
+    {string(kNameExtractImagePatches), ADPT_DESC(ExtractImagePatches)},
     {prim::kPrimAssign->name(), ADPT_DESC(Assign)},
     {prim::kPrimStateSetItem->name(), ADPT_DESC(Assign)},
     {prim::kPrimReluGrad->name(), ADPT_DESC(ReluGrad)},
-    {prim::kPrimFusedBatchNormGrad->name(), ADPT_DESC(FusedBatchNormGrad)},
     {prim::kPrimBiasAddGrad->name(), ADPT_DESC(BiasAddGrad)},
     {prim::kPrimConv2D->name(), ADPT_DESC(Conv2D)},
     {prim::kPrimConv2DBackpropInput->name(), ADPT_DESC(Conv2DBackpropInputD)},
@@ -211,7 +229,6 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimDepthwiseConv2dNative->name(), ADPT_DESC(DepthwiseConv2D)},
     {prim::kPrimDepthwiseConv2dNativeBackpropFilter->name(), ADPT_DESC(DepthwiseConv2DBackpropFilterD)},
     {prim::kPrimDepthwiseConv2dNativeBackpropInput->name(), ADPT_DESC(DepthwiseConv2DBackpropInputD)},
-    {prim::kPrimFusedBatchNorm->name(), ADPT_DESC(FusedBatchNorm, BatchNorm)},
     {string(kNameBatchNorm), ADPT_DESC(BatchNorm)},
     {string(kNameBatchNormGrad), ADPT_DESC(BatchNormGrad)},
     {string(kNameReshape), ADPT_DESC(Reshape)},
@@ -224,15 +241,15 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameSquare), ADPT_DESC(Square)},
     {prim::kPrimTanh->name(), ADPT_DESC(Tanh)},
     {prim::kPrimTanhGrad->name(), ADPT_DESC(TanhGrad)},
-    {string(kNameResizeNearestNeighborD), ADPT_DESC(ResizeNearestNeighborD)},
-    {string(kNameResizeNearestNeighborGrad), ADPT_DESC(ResizeNearestNeighborGrad)},
+    {string(kNameResizeNearestNeighborD), ADPT_DESC(ResizeNearestNeighborV2D)},
+    {string(kNameResizeNearestNeighborGrad), ADPT_DESC(ResizeNearestNeighborV2Grad)},
     {string(kNameApplyAdam), ADPT_DESC(ApplyAdam)},
     {string(kNameReLU6), ADPT_DESC(Relu6)},
     {string(kNameReLU6Grad), ADPT_DESC(Relu6Grad)},
     {string(kNameElu), ADPT_DESC(Elu)},
     {string(kNameEluGrad), ADPT_DESC(EluGrad)},
-    {string(kNameResizeBilinearGrad), ADPT_DESC(ResizeBilinearGrad)},
-    {string(kNameResizeBilinear), ADPT_DESC(ResizeBilinearD)},
+    {string(kNameResizeBilinearGrad), ADPT_DESC(ResizeBilinearV2Grad)},
+    {string(kNameResizeBilinear), ADPT_DESC(ResizeBilinearV2D)},
     {string(kNameZerosLike), ADPT_DESC(ZerosLike)},
     {string(kNameOnesLike), ADPT_DESC(OnesLike)},
     {string(kNameScatterNdUpdate), ADPT_DESC(ScatterNdUpdate)},
@@ -244,6 +261,8 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameSigmoidCrossEntropyWithLogitsGrad), ADPT_DESC(SigmoidCrossEntropyWithLogitsGrad)},
     {string(kNameScatterNdD), ADPT_DESC(ScatterNdD)},
     {string(kNamePadD), ADPT_DESC(PadD)},
+    {string(kNameMirrorPad), ADPT_DESC(MirrorPad)},
+    {string(kNameMirrorPadGrad), ADPT_DESC(MirrorPadGrad)},
     {string(kNameGatherNd), ADPT_DESC(GatherNd)},
     {string(kNameArgmax), ADPT_DESC(ArgMaxD)},
     {string(kNameArgmin), ADPT_DESC(ArgMinD)},
@@ -251,7 +270,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameArgMinWithValue), ADPT_DESC(ArgMinWithValue)},
     {prim::kPrimReduceSum->name(), ADPT_DESC(ReduceSumD)},
     {prim::kPrimReduceMean->name(), ADPT_DESC(ReduceMeanD)},
-    {prim::kPrimReduceAll->name(), ADPT_DESC(ReduceAll)},
+    {prim::kPrimReduceAll->name(), ADPT_DESC(ReduceAllD)},
     {prim::kPrimReduceMin->name(), ADPT_DESC(ReduceMinD)},
     {prim::kPrimReduceMax->name(), ADPT_DESC(ReduceMaxD)},
     {string(kNameLARSUpdate), ADPT_DESC(LarsV2Update)},
@@ -335,6 +354,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimScalarSummary->name(), ADPT_DESC(Summary)},
     {prim::kPrimImageSummary->name(), ADPT_DESC(Summary)},
     {prim::kPrimTensorSummary->name(), ADPT_DESC(Summary)},
+    {prim::kPrimHistogramSummary->name(), ADPT_DESC(Summary)},
     {prim::kPrimTensorAdd->name(),
      std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(1)}})),
                                      std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(1)}})))},
@@ -355,36 +375,29 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBinaryCrossEntropyGrad), ADPT_DESC(BinaryCrossEntropyGrad)},
     {string(kNameSparseApplyAdagrad), ADPT_DESC(SparseApplyAdagradD)},
     {string(kNameSparseApplyFtrlD), ADPT_DESC(SparseApplyFtrlD)},
+    {string(kNameAcosh), ADPT_DESC(Acosh)},
+    {string(kNameAcoshGrad), ADPT_DESC(AcoshGrad)},
+    {string(kNameFloorMod), ADPT_DESC(FloorMod)},
     {string(kNameSpaceToDepth), ADPT_DESC(SpaceToDepth)},
     {string(kNameDepthToSpace), ADPT_DESC(DepthToSpace)},
     {string(kNameSign), ADPT_DESC(Sign)},
     {string(kNameRound), ADPT_DESC(Round)},
-    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrl)}};
+    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrl)},
+    {string(kNameDiag), ADPT_DESC(Diag)},
+    {string(kNameDiagPart), ADPT_DESC(DiagPart)},
+    {string(kNameSpaceToBatch), ADPT_DESC(SpaceToBatchD)},
+    {string(kNameBatchToSpace), ADPT_DESC(BatchToSpaceD)},
+    {string(kNameAtan2), ADPT_DESC(Atan2)},
+    {string(kNameApplyRMSProp), ADPT_DESC(ApplyRMSPropD)},
+    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);
+  adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdamD);
 #endif
   return adpt_map;
 }
 
 // ---------------implement of DfGraphConvertor-------------
-std::string GetCNodeFuncName(const CNodePtr cnode) {
-  if (cnode->inputs().empty()) {
-    return "";
-  }
-
-  AnfNodePtr valuenode = cnode->input(0);
-  if (valuenode->isa<ValueNode>()) {
-    auto value = GetValueNode(valuenode);
-    // check whether the valuenode is primitive
-    if (value->isa<Primitive>()) {
-      return value->cast<PrimitivePtr>()->name();
-    } else {
-      return value->ToString();
-    }
-  }
-  return "";
-}
-
 PrimType GetCNodeFuncType(const CNodePtr cnode) {
   if (cnode->inputs().empty()) {
     return kPrimTypeUnknown;
@@ -442,10 +455,10 @@ void DfGraphConvertor::InitLoopVar(std::vector<ge::Operator> *init_input) {
 
     int64_t value = 0;
     auto const_iter_num = std::make_shared<Constant>("const/npu_runconfig/iterations_per_loop");
-    if (ConfigManager::GetInstance().dataset_mode() == DS_GRAPH_MODE) {
+    if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
       value = ConfigManager::GetInstance().iter_num();
     } else {
-      MS_LOG(INFO) << "Run with feed mode, the iterator number will always be 1";
+      MS_LOG(INFO) << "Run with normal(non-sink) mode, the iterator number will always be 1";
       value = 1;
       ConfigManager::GetInstance().set_iter_num(value);
     }
@@ -576,7 +589,7 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors, std
 
 void DfGraphConvertor::MakeDatasetHandler(const std::string &name, const size_t &input_idx, const AnfNodePtr &it) {
   MS_LOG(INFO) << "The " << name << " is the " << input_idx << "(st/nd/th) input";
-  if (ConfigManager::GetInstance().dataset_mode() == DS_GRAPH_MODE) {
+  if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
     auto getnext_idx = static_cast<int64_t>(input_idx);
     DatasetGraphParam param = ConfigManager::GetInstance().dataset_param();
     if (!param.input_indexes().empty() && input_idx <= param.input_indexes().size()) {
@@ -613,7 +626,7 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     auto node_itor = params_.find(name);
     // if name not in params_, create a node in graph
     if (node_itor == params_.end()) {
-      MS_LOG(WARNING) << "" << name << " is not in params, and create a new node.";
+      MS_LOG(WARNING) << name << " is not in params, and create a new node.";
       ParameterPtr param = anf_graph_->add_parameter();
       name = name + "_temp";
       param->set_name(name);
@@ -868,7 +881,7 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
   }
 
   // Create dataset iterator and iterator_getnext node
-  if (ConfigManager::GetInstance().dataset_mode() == DS_GRAPH_MODE) {
+  if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
     DatasetGraphParam param = ConfigManager::GetInstance().dataset_param();
     MS_LOG(INFO) << "Dataset param is " << param.ToString() << ".";
     // GetNext
@@ -977,7 +990,7 @@ void DfGraphConvertor::TraceOutputFromParameter(const AnfNodePtr &anf_out) {
 }
 
 void SetupDatasetIterGetNextNode(const OperatorPtr &op) {
-  if (ConfigManager::GetInstance().dataset_mode() == DS_GRAPH_MODE) {
+  if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
     DatasetGraphParam param = ConfigManager::GetInstance().dataset_param();
     size_t output_num = param.ge_types().size();
     MS_LOG(INFO) << "Set iterator_getnext op's output num = " << output_num << ".";
@@ -1019,8 +1032,8 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
     }
   }
 
-  // set up dependencies
-  MS_LOG(DEBUG) << "set up dependencies";
+  // set up dependices
+  MS_LOG(DEBUG) << "set up dependices";
   std::vector<AnfNodePtr> nodes = ::mindspore::TopoSort(anf_graph_->get_return());
   for (auto &it : nodes) {
     SetNodeInput(it);
@@ -1036,7 +1049,7 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph() {
 
   // set graph input according to the order from anf graph
   std::vector<Operator> inputs;
-  if (ConfigManager::GetInstance().dataset_mode() == DS_GRAPH_MODE) {
+  if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
     inputs.push_back(*dataset_iter_getnext_);
   } else {
     auto params = anf_graph_->parameters();
@@ -1098,12 +1111,12 @@ void DfGraphConvertor::UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr 
   auto normal_shape_ptr = dyn_cast<abstract::Shape>(node->Shape());
   vector<int> shape;
   if (normal_shape_ptr == nullptr) {
-    MS_LOG(ERROR) << "Update data op descriptor failed! Invalid shape.";
+    MS_LOG(INFO) << "Invalid shape to update data op descriptor.";
     return;
   }
   shape = normal_shape_ptr->shape();
   if (node->Type() == nullptr) {
-    MS_LOG(ERROR) << "Update data op descriptor failed! Invalid type.";
+    MS_LOG(INFO) << "Invalid type to update data op descriptor.";
     return;
   }
   TypeId me_type = node->Type()->type_id();
@@ -1146,6 +1159,8 @@ void DfGraphConvertor::SetOpControlInput(const AnfNodePtr node) {
   }
 }
 
+const std::vector<std::string> trans_var_list = {string(kNameAssign), string(kNameAssignAdd), string(kNameAssignSub)};
+
 void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node) {
   OperatorPtr src = Convert(node);
   auto &inputs = node->inputs();
@@ -1157,6 +1172,26 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     // skip the None input
     if (IsValueNode<None>(pred)) {
       continue;
+    }
+    // transform "Const" op to "Variable" op when the next node is "Assign" op.
+    std::string c_name = GetCNodeFuncName(node);
+    auto pos = std::find(trans_var_list.begin(), trans_var_list.end(), c_name);
+    if (!training_ && pos != trans_var_list.end() && pred->isa<Parameter>()) {
+      std::string name = std::static_pointer_cast<Parameter>(pred)->name();
+      auto op_itor = op_cache_.find(pred.get());
+      if (op_itor == op_cache_.end()) {
+        MS_LOG(EXCEPTION) << "Can not find op for node " << pred->ToString() << ".";
+      }
+      if (op_itor->second != nullptr &&
+          (op_itor->second->GetOpType() == "Constant" || op_itor->second->GetOpType() == "Const") &&
+          vars_.find(name) != vars_.end()) {
+        auto variable = std::make_shared<Variable>(name);
+        auto desc = vars_[name]->GetOutputDesc("y");
+        (void)variable->update_output_desc_y(desc);
+        MS_LOG(DEBUG) << "Trans to variable, var = " << variable->GetName() << ".";
+        op_itor->second = variable;  // replace parameter with variable
+        vars_[name] = variable;
+      }
     }
     // find in out_hadnle_cache_ first
     auto it = out_handle_cache_.find(pred.get());

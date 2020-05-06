@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Loss scale cell for loss scale training."""
+import mindspore.context as context
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_mirror_mean
@@ -32,8 +33,15 @@ reciprocal = P.Reciprocal()
 
 @_grad_scale.register("Tensor", "Tensor")
 def tensor_grad_scale(scale, grad):
-    return grad * reciprocal(scale)
+    return grad * F.cast(reciprocal(scale), F.dtype(grad))
 
+_grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
+grad_overflow = P.FloatStatus()
+
+
+@_grad_overflow.register("Tensor")
+def _tensor_grad_overflow(grad):
+    return grad_overflow(grad)
 
 class DynamicLossScaleUpdateCell(Cell):
     r"""
@@ -43,7 +51,7 @@ class DynamicLossScaleUpdateCell(Cell):
     In every training step, the loss scaling value  will be updated by loss scaling value/`scale_factor`
     when there is overflow. And it will be increased by loss scaling value * `scale_factor` if there is no
     overflow for a continuous `scale_window` steps. This cell is used for Graph mode training in which all
-    logic will be executed on device side(Another training mode is feed mode in which some logic will be
+    logic will be executed on device side(Another training mode is normal(non-sink) mode in which some logic will be
     executed on host).
 
     Args:
@@ -65,9 +73,10 @@ class DynamicLossScaleUpdateCell(Cell):
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=manager)
         >>> train_network.set_train()
         >>>
-        >>> inputs = mindspore.Tensor(np.ones([16, 16]).astype(np.float32))
-        >>> label = mindspore.Tensor(np.zeros([16, 16]).astype(np.float32))
-        >>> output = train_network(inputs, label)
+        >>> inputs = Tensor(np.ones([16, 16]).astype(np.float32))
+        >>> label = Tensor(np.zeros([16, 16]).astype(np.float32))
+        >>> scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mindspore.float32)
+        >>> output = train_network(inputs, label, scaling_sens)
     """
 
     def __init__(self,
@@ -126,13 +135,14 @@ class FixedLossScaleUpdateCell(Cell):
     Examples:
         >>> net_with_loss = Net()
         >>> optimizer = nn.Momentum(net_with_loss.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> manager = nn.FixedLossScaleUpdateCell(loss_scale_value=2**12, scale_factor=2, scale_window=1000)
+        >>> manager = nn.FixedLossScaleUpdateCell(loss_scale_value=2**12)
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=manager)
         >>> train_network.set_train()
         >>>
-        >>> inputs = mindspore.Tensor(np.ones([16, 16]).astype(np.float32))
-        >>> label = mindspore.Tensor(np.zeros([16, 16]).astype(np.float32))
-        >>> output = train_network(inputs, label)
+        >>> inputs = Tensor(np.ones([16, 16]).astype(np.float32))
+        >>> label = Tensor(np.zeros([16, 16]).astype(np.float32))
+        >>> scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mindspore.float32)
+        >>> output = train_network(inputs, label, scaling_sens)
     """
 
     def __init__(self, loss_scale_value):
@@ -181,9 +191,9 @@ class TrainOneStepWithLossScaleCell(Cell):
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=manager)
         >>> train_network.set_train()
         >>>
-        >>> inputs = mindspore.Tensor(np.ones([16, 16]).astype(np.float32))
-        >>> label = mindspore.Tensor(np.zeros([16, 16]).astype(np.float32))
-        >>> scaling_sens = mindspore.Tensor(np.full((1), np.finfo(np.float32).max), dtype=mindspore.float32)
+        >>> inputs = Tensor(np.ones([16, 16]).astype(np.float32))
+        >>> label = Tensor(np.zeros([16, 16]).astype(np.float32))
+        >>> scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mindspore.float32)
         >>> output = train_network(inputs, label, scaling_sens)
     """
 
@@ -195,16 +205,23 @@ class TrainOneStepWithLossScaleCell(Cell):
         self.optimizer = optimizer
         self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
         self.hyper_map = C.HyperMap()
-        self.alloc_status = NPUAllocFloatStatus()
-        self.get_status = NPUGetFloatStatus()
-        self.clear_status = NPUClearFloatStatus()
+        if context.get_context("device_target") == "GPU":
+            self.gpu_target = True
+            self.float_status = P.FloatStatus()
+            self.addn = P.AddN()
+            self.reshape = P.Reshape()
+        else:
+            self.gpu_target = False
+            self.alloc_status = NPUAllocFloatStatus()
+            self.get_status = NPUGetFloatStatus()
+            self.clear_status = NPUClearFloatStatus()
         self.reduce_sum = ReduceSum(keep_dims=False)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = LessEqual()
         self.depend_parameter_use = ControlDepend(depend_mode=1)
         self.allreduce = P.AllReduce()
         self.parallel_mode = _get_parallel_mode()
-        self.grad_reducer = None
+        self.grad_reducer = F.identity
         self.reducer_flag = self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]
         if self.reducer_flag:
             mean = _get_mirror_mean()
@@ -222,23 +239,30 @@ class TrainOneStepWithLossScaleCell(Cell):
     def construct(self, data, label, sens=None):
         weights = self.weights
         loss = self.network(data, label)
-        # init overflow buffer
-        init = self.alloc_status()
-        # clear overflow buffer
-        self.clear_status(init)
+        init = False
+        if not self.gpu_target:
+            # init overflow buffer
+            init = self.alloc_status()
+            # clear overflow buffer
+            self.clear_status(init)
         if sens is None:
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
         grads = self.grad(self.network, weights)(data, label, F.cast(scaling_sens, F.dtype(loss)))
         grads = self.hyper_map(F.partial(_grad_scale, scaling_sens), grads)
-        if self.reducer_flag:
-            # apply grad reducer on grads
-            grads = self.grad_reducer(grads)
+        # apply grad reducer on grads
+        grads = self.grad_reducer(grads)
         # get the overflow buffer
-        self.get_status(init)
-        # sum overflow buffer elements, 0:not overflow , >0:overflow
-        flag_sum = self.reduce_sum(init, (0,))
+        if not self.gpu_target:
+            self.get_status(init)
+            # sum overflow buffer elements, 0:not overflow , >0:overflow
+            flag_sum = self.reduce_sum(init, (0,))
+        else:
+            flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
+            flag_sum = self.addn(flag_sum)
+            # convert flag_sum to scalar
+            flag_sum = self.reshape(flag_sum, (()))
         if self.is_distributed:
             # sum overflow flag over devices
             flag_reduce = self.allreduce(flag_sum)

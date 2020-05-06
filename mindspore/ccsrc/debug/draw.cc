@@ -34,7 +34,7 @@ namespace draw {
 
 namespace {
 // Only for ValueNode
-std::string ValueType(const ValueNodePtr& node) {
+std::string ValueType(const ValueNodePtr &node) {
   if (node == nullptr) {
     return "";
   }
@@ -43,7 +43,7 @@ std::string ValueType(const ValueNodePtr& node) {
   return v->type_name();
 }
 
-std::string ReplaceSpecialChar(const std::string& str) {
+std::string ReplaceSpecialChar(const std::string &str) {
   std::ostringstream oss;
   for (size_t i = 0; i < str.size(); i++) {
     if (str[i] == '<') {
@@ -59,12 +59,12 @@ std::string ReplaceSpecialChar(const std::string& str) {
 }  // namespace
 
 // API of debug utils
-void DrawNodes(const std::vector<AnfNodePtr>& nodes, OrderedMap<FuncGraphPtr, std::shared_ptr<BaseDigraph>>* sub_graphs,
+void DrawNodes(const std::vector<AnfNodePtr> &nodes, OrderedMap<FuncGraphPtr, std::shared_ptr<BaseDigraph>> *sub_graphs,
                bool is_user) {
   if (sub_graphs == nullptr) {
     return;
   }
-  for (auto& nd : nodes) {
+  for (auto &nd : nodes) {
     MS_EXCEPTION_IF_NULL(nd);
     auto sub_graph = nd->func_graph();
     if (sub_graph != nullptr) {
@@ -84,16 +84,16 @@ void DrawNodes(const std::vector<AnfNodePtr>& nodes, OrderedMap<FuncGraphPtr, st
   }
 }
 
-void DrawValueNodes(const std::vector<AnfNodePtr>& nodes,
-                    OrderedMap<FuncGraphPtr, std::shared_ptr<BaseDigraph>>* sub_graphs) {
+void DrawValueNodes(const std::vector<AnfNodePtr> &nodes,
+                    OrderedMap<FuncGraphPtr, std::shared_ptr<BaseDigraph>> *sub_graphs) {
   if (sub_graphs == nullptr) {
     return;
   }
 
   int dup_idx = 0;
 
-  for (auto& nd : nodes) {
-    for (auto& t : SuccIncoming(nd)) {
+  for (auto &nd : nodes) {
+    for (auto &t : SuccIncoming(nd)) {
       MS_EXCEPTION_IF_NULL(t);
       MS_EXCEPTION_IF_NULL(nd);
       if (t->isa<ValueNode>() && (*sub_graphs).find(nd->func_graph()) != (*sub_graphs).end()) {
@@ -107,7 +107,7 @@ void DrawValueNodes(const std::vector<AnfNodePtr>& nodes,
   }
 }
 
-void DrawEdges(const std::vector<AnfNodePtr>& nodes, const std::shared_ptr<BaseDigraph>& digraph, bool is_user) {
+void DrawEdges(const std::vector<AnfNodePtr> &nodes, const std::shared_ptr<BaseDigraph> &digraph, bool is_user) {
   if (digraph == nullptr) {
     return;
   }
@@ -120,11 +120,11 @@ void DrawEdges(const std::vector<AnfNodePtr>& nodes, const std::shared_ptr<BaseD
   }
 
   // Draw edge
-  for (auto& nd : nodes) {
+  for (auto &nd : nodes) {
     auto succs = SuccIncoming(nd);
     auto num = succs.size();
     for (size_t i = 0; i < num; i++) {
-      auto& t = succs.at(i);
+      auto &t = succs.at(i);
       MS_EXCEPTION_IF_NULL(t);
       if (t->isa<ValueNode>() || t->isa<Parameter>()) {
         if ((!is_user) || (i != 0)) {
@@ -143,7 +143,7 @@ void DrawEdges(const std::vector<AnfNodePtr>& nodes, const std::shared_ptr<BaseD
   }
 }
 
-void DrawByOpt(std::string filename, const FuncGraphPtr& func_graph, bool is_user) {
+void DrawByOpt(std::string filename, const FuncGraphPtr &func_graph, bool is_user) {
   if (func_graph == nullptr) {
     return;
   }
@@ -169,7 +169,7 @@ void DrawByOpt(std::string filename, const FuncGraphPtr& func_graph, bool is_use
   DrawValueNodes(nodes, &sub_graphs);
 
   // Draw subgraph
-  for (const auto& gsub : sub_graphs) {
+  for (const auto &gsub : sub_graphs) {
     digraph->SubGraph(gsub.first, gsub.second);
   }
 
@@ -182,18 +182,18 @@ void DrawByOpt(std::string filename, const FuncGraphPtr& func_graph, bool is_use
 }
 
 #ifdef ENABLE_DUMP_IR
-void Draw(const std::string& filename, const FuncGraphPtr& func_graph) {
+void Draw(const std::string &filename, const FuncGraphPtr &func_graph) {
   const std::string dot_suffix = ".dot";
   std::string filename_with_suffix =
     (filename.rfind(dot_suffix) != (filename.size() - dot_suffix.size())) ? (filename + dot_suffix) : filename;
   DrawByOpt(filename_with_suffix, func_graph, false);
 }
 
-void DrawUserFuncGraph(const std::string& filename, const FuncGraphPtr& func_graph) {
+void DrawUserFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph) {
   DrawByOpt(filename, func_graph, true);
 }
 #else
-void Draw(const std::string&, const FuncGraphPtr&) {
+void Draw(const std::string &, const FuncGraphPtr &) {
   static bool already_printed = false;
   if (already_printed) {
     return;
@@ -203,7 +203,7 @@ void Draw(const std::string&, const FuncGraphPtr&) {
                   << "please recompile source to enable it. See help of building script.";
 }
 
-void DrawUserFuncGraph(const std::string&, const FuncGraphPtr&) {
+void DrawUserFuncGraph(const std::string &, const FuncGraphPtr &) {
   static bool already_printed = false;
   if (already_printed) {
     return;
@@ -234,7 +234,7 @@ std::string Graphviz::Shape(AnfNodePtr node) {
   return "plaintext";
 }
 
-std::string Graphviz::Color(const AnfNodePtr& node) {
+std::string Graphviz::Color(const AnfNodePtr &node) {
   if (node == nullptr) {
     return "";
   }
@@ -259,7 +259,7 @@ void BaseDigraph::Start() {
   buffer_ << "compound=true" << std::endl;
 }
 
-void BaseDigraph::Head(const AnfNodePtr& node, int id) {
+void BaseDigraph::Head(const AnfNodePtr &node, int id) {
   if (node == nullptr) {
     return;
   }
@@ -270,7 +270,7 @@ void BaseDigraph::Head(const AnfNodePtr& node, int id) {
   }
 }
 
-void BaseDigraph::Tail(const AnfNodePtr& node, int idx, int id) {
+void BaseDigraph::Tail(const AnfNodePtr &node, int idx, int id) {
   if (node == nullptr) {
     return;
   }
@@ -279,7 +279,7 @@ void BaseDigraph::Tail(const AnfNodePtr& node, int idx, int id) {
   buffer_ << ":" << idx;
 }
 
-void BaseDigraph::Tail(const FuncGraphPtr& func_graph) {
+void BaseDigraph::Tail(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     return;
   }
@@ -304,12 +304,12 @@ void BaseDigraph::End() {
   }
 }
 
-void BaseDigraph::FuncGraphParameters(const FuncGraphPtr& key) {
+void BaseDigraph::FuncGraphParameters(const FuncGraphPtr &key) {
   buffer_ << "parameters_" << key << "[shape=plaintext ";
   buffer_ << "label=<<table bgcolor='paleturquoise' cellspacing='0' cellborder='1' border='0'>";
   buffer_ << "<tr><td>parameters</td></tr>";
   int count = 0;
-  for (auto& parameter : key->parameters()) {
+  for (auto &parameter : key->parameters()) {
     buffer_ << "<tr><td>";
     buffer_ << parameter->ToString();
     auto py_p = dyn_cast<Parameter>(parameter)->default_param();
@@ -331,7 +331,7 @@ void BaseDigraph::FuncGraphParameters(const FuncGraphPtr& key) {
   buffer_ << "</table>>,];";
 }
 
-void BaseDigraph::SubGraph(const FuncGraphPtr& key, const std::shared_ptr<BaseDigraph>& gsub) {
+void BaseDigraph::SubGraph(const FuncGraphPtr &key, const std::shared_ptr<BaseDigraph> &gsub) {
   if (key == nullptr || gsub == nullptr) {
     return;
   }
@@ -361,12 +361,12 @@ Digraph::~Digraph() {
     if (fout_.is_open()) {
       fout_.close();
     }
-  } catch (const std::exception& e) {
-    MS_LOG(ERROR) << "exception when closing file " << filename_;
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Exception when closing file " << filename_;
   }
 }
 
-static std::string ReplaceAll(std::string str, const std::string& from, const std::string& to) {
+static std::string ReplaceAll(std::string str, const std::string &from, const std::string &to) {
   size_t start_pos = 0;
   while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
     (void)str.replace(start_pos, from.length(), to);
@@ -375,7 +375,7 @@ static std::string ReplaceAll(std::string str, const std::string& from, const st
   return str;
 }
 
-static void DrawValueNode(Graphviz* const graph_obj, const ValueNodePtr& node) {
+static void DrawValueNode(Graphviz *const graph_obj, const ValueNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph_obj);
   graph_obj->buffer() << "label=<<table port='core' cellborder='0' cellspacing='2' bgcolor='" << graph_obj->Color(node)
                       << "'>";
@@ -410,7 +410,7 @@ static void DrawValueNode(Graphviz* const graph_obj, const ValueNodePtr& node) {
         graph_obj->buffer() << "</td></tr>";
         graph_obj->buffer() << "<tr><td align='left'>";
         int i = 0;
-        for (const auto& attr : attrs) {
+        for (const auto &attr : attrs) {
           if (i != 0) {
             graph_obj->buffer() << "<br/>";
           }
@@ -425,7 +425,7 @@ static void DrawValueNode(Graphviz* const graph_obj, const ValueNodePtr& node) {
   graph_obj->buffer() << "</table>>,";
 }
 
-static void DrawParallelInfo(Graphviz* const graph_obj, const CNodePtr& node) {
+static void DrawParallelInfo(Graphviz *const graph_obj, const CNodePtr &node) {
   if (graph_obj == nullptr || node == nullptr) {
     return;
   }
@@ -444,7 +444,7 @@ static void DrawParallelInfo(Graphviz* const graph_obj, const CNodePtr& node) {
   }
 }
 
-static void DrawCNode(Graphviz* const graph_obj, const CNodePtr& node) {
+static void DrawCNode(Graphviz *const graph_obj, const CNodePtr &node) {
   if (graph_obj == nullptr || node == nullptr || node->size() == 0) {
     return;
   }
@@ -484,7 +484,7 @@ static void DrawCNode(Graphviz* const graph_obj, const CNodePtr& node) {
       }
       graph_obj->buffer() << ">";
       int i = 0;
-      for (auto& attr : attrs) {
+      for (auto &attr : attrs) {
         if (i != 0) {
           graph_obj->buffer() << "<br/>";
         }
@@ -567,7 +567,7 @@ ModelDigraph::~ModelDigraph() {
     if (fout_.is_open()) {
       fout_.close();
     }
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     MS_LOG(ERROR) << "exception when closing file " << filename_;
   }
 }

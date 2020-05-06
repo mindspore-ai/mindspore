@@ -39,18 +39,21 @@
 #include "optimizer/irpass/specialize_transform.h"
 #include "optimizer/irpass/incorporate_getitem.h"
 #include "optimizer/irpass/incorporate_call.h"
+#include "optimizer/irpass/grad_var_prepare.h"
+#include "optimizer/irpass/param_replace.h"
 
 namespace mindspore {
 namespace opt {
 namespace irpass {
 OptimizeIRPassLib::OptimizeIRPassLib() {
-  arithmetic_simplify_ = MakeSubstitution(
-    ArithmeticSimplify(), "arithmetic_simplify",
-    {prim::kPrimScalarAdd, prim::kPrimScalarMul, prim::kPrimTensorAdd, prim::kPrimIdentity, prim::kPrimMomentum});
+  arithmetic_simplify_ = MakeSubstitution(ArithmeticSimplify(), "arithmetic_simplify",
+                                          {prim::kPrimScalarAdd, prim::kPrimScalarMul, prim::kPrimTensorAdd,
+                                           prim::kPrimIdentity, prim::kPrimMomentum, prim::kPrimMul});
   special_op_eliminate_ = MakeSubstitution(SpecialOpEliminater(), "special_op_eliminate",
                                            {prim::kPrimInsertGradientOf, prim::kPrimPrintShapeType,
                                             prim::kPrimGetRefKey, prim::kPrimMirror, prim::kPrimVirtualDiv});
-  zero_like_fill_zero_ = MakeSubstitution(ZeroLikeFillZero(), "zero_like_fill_zero", prim::kPrimZerosLikeTensor);
+  zero_like_fill_zero_ =
+    MakeSubstitution(ZeroLikeFillZero(), "zero_like_fill_zero", prim::kPrimZerosLikeTensor, opt::FORCE_RENORM);
 
   // ops eliminate
   item_tuple_eliminate_ =
@@ -64,6 +67,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     {prim::kPrimReduceMean, prim::kPrimReduceAll, prim::kPrimReduceSum, prim::kPrimReduceMax, prim::kPrimReduceMin});
   partial_eliminate_ = MakeSubstitution(PartialEliminater(), "partial_eliminate", IsCNodeDup);
   same_eliminate_ = MakeSubstitution(SameEliminater(), "same_eliminate", prim::kPrimSameTypeShape);
+  check_bprop_eliminate_ = MakeSubstitution(CheckBpropEliminater(), "check_bprop_eliminate", prim::kPrimCheckBprop);
   reset_defer_inline_ = MakeSubstitution(ResetDeferInline(), "reset_defer_inline", IsValueNode<FuncGraph>);
 
   // Env Item Eliminate
@@ -79,7 +83,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   make_ref_eliminate_ = MakeSubstitution(MakeRefEliminater(), "make_ref_eliminate", prim::kPrimMakeRef);
   get_make_ref_eliminate_ =
     MakeSubstitution(GetMakeRefEliminater(), "get_make_ref_eliminate", {prim::kPrimGetRefKey, prim::kPrimGetRefValue});
-  replace_refkey_by_param_ = MakeSubstitution(ReplaceRefkeyByParam(), "replace_refkey_by_param", IsValueNode<RefKey>);
+
+  replace_refkey_by_param_ =
+    MakeSubstitution(ReplaceRefkeyByParam(), "replace_refkey_by_param", IsValueNode<RefKey>, opt::FORCE_RENORM);
+  replace_old_param_ = MakeSubstitution(ReplaceOldParam(), "replace_old_param", IsParam);
 
   // Gradient transforms
   expand_jprim_ = MakeSubstitution(ExpandJPrim(), "expand_jprim", prim::kPrimJ);
@@ -122,6 +129,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 ResolveIRPassLib::ResolveIRPassLib() {
   resolver_resolve_ = MakeSubstitution(ResolverResolve(), "resolver_resolve", prim::kPrimResolve);
   resolver_getattr_ = MakeSubstitution(ResolverGetattr(), "resolver_getattr", prim::kPrimGetAttr);
+}
+
+InferenceOptPrepareLib::InferenceOptPrepareLib() {
+  grad_var_prepare_ = MakeSubstitution(GradVarPrepare(), "grad_var_prepare", IsCNode);
 }
 }  // namespace irpass
 }  // namespace opt

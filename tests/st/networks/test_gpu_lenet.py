@@ -16,16 +16,19 @@
 import pytest
 import numpy as np
 import mindspore.nn as nn
+import mindspore.context as context
+from mindspore import Tensor
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn import Dense
-from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common import dtype as mstype
-import mindspore.context as context
+
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+
 class LeNet(nn.Cell):
     def __init__(self):
         super(LeNet, self).__init__()
@@ -65,6 +68,7 @@ def multisteplr(total_steps, gap, base_lr=0.9, gamma=0.1, dtype=mstype.float32):
         lr.append(lr_)
     return Tensor(np.array(lr), dtype)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -81,7 +85,7 @@ def test_train_lenet():
     train_network.set_train()
     losses = []
     for i in range(epoch):
-        data = Tensor(np.ones([net.batch_size, 3 ,32, 32]).astype(np.float32) * 0.01)
+        data = Tensor(np.ones([net.batch_size, 3, 32, 32]).astype(np.float32) * 0.01)
         label = Tensor(np.ones([net.batch_size]).astype(np.int32))
         loss = train_network(data, label)
         losses.append(loss)

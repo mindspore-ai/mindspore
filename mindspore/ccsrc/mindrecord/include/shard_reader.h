@@ -19,7 +19,9 @@
 
 #include <dirent.h>
 #include <signal.h>
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <sys/prctl.h>
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -113,9 +115,10 @@ class ShardReader {
 
   /// \brief get the number of rows in database
   /// \param[in] file_path the path of ONE file, any file in dataset is fine
+  /// \param[in] op smart pointer refer to ShardCategory or ShardSample object
   /// \param[out] count # of rows
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus CountTotalRows(const std::string &file_path, int64_t *count);
+  MSRStatus CountTotalRows(const std::string &file_path, const std::shared_ptr<ShardOperator> &op, int64_t *count);
 
   /// \brief shuffle task with incremental seed
   /// \return void
@@ -195,6 +198,9 @@ class ShardReader {
   /// \brief get NLP flag
   bool get_nlp_flag();
 
+  /// \brief get all classes
+  MSRStatus GetAllClasses(const std::string &category_field, std::set<std::string> &categories);
+
  protected:
   /// \brief sqlite call back function
   static int SelectCallback(void *p_data, int num_fields, char **p_fields, char **p_col_names);
@@ -247,8 +253,8 @@ class ShardReader {
                                const std::vector<std::shared_ptr<ShardOperator>> &operators);
 
   /// \brief create category-applied task list
-  int CreateTasksByCategory(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
-                            const std::vector<std::shared_ptr<ShardOperator>> &operators);
+  MSRStatus CreateTasksByCategory(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
+                                  const std::shared_ptr<ShardOperator> &op);
 
   /// \brief create task list in row-reader mode
   MSRStatus CreateTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
@@ -281,6 +287,12 @@ class ShardReader {
     int shard_id, const std::vector<std::string> &columns, const std::vector<std::vector<std::string>> &label_offsets);
 
   MSRStatus ReadBlob(const int &shard_id, const uint64_t &page_offset, const int &page_length, const int &buf_id);
+
+  /// \brief get classes in one shard
+  void GetClassesInShard(sqlite3 *db, int shard_id, const std::string sql, std::set<std::string> &categories);
+
+  /// \brief get number of classes
+  int64_t GetNumClasses(const std::string &file_path, const std::string &category_field);
 
  protected:
   uint64_t header_size_;                       // header size

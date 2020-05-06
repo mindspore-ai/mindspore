@@ -24,8 +24,8 @@
 
 namespace mindspore {
 namespace parallel {
-std::vector<PrimitivePtr> FindPrimtive(const FuncGraphPtr& graph, const std::string& name);
-void DumpGraph(const FuncGraphPtr& root, const std::string& name);
+std::vector<PrimitivePtr> FindPrimtive(const FuncGraphPtr &graph, const std::string &name);
+void DumpGraph(const FuncGraphPtr &root, const std::string &name);
 }  // namespace parallel
 }  // namespace mindspore
 

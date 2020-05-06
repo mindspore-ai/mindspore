@@ -49,7 +49,7 @@ bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<hcclDataType_t
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(data_type_list);
   for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(anf_node); ++i) {
-    auto type_ptr = AnfAlgo::GetPrevNodeOutputInferDataType(anf_node, i);
+    auto type_ptr = AnfAlgo::GetPrevNodeOutputDeviceDataType(anf_node, i);
     auto iter = CONST_OP_HCOM_DATA_TYPE_MAP.find(type_ptr);
     if (iter == CONST_OP_HCOM_DATA_TYPE_MAP.end()) {
       MS_LOG(EXCEPTION) << "HcomDataType cann't support Current Ascend Data Type : " << type_ptr;
@@ -136,7 +136,7 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<hcclDataTyp
     }
   }
 
-  if (total_size % type_size != 0) {
+  if (type_size == 0 || total_size % type_size != 0) {
     MS_LOG(ERROR) << "Total_size[" << total_size << "],Type_size[" << type_size << "] != 0, fail!";
     return false;
   }

@@ -19,6 +19,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.common.initializer import TruncatedNormal
+from mindspore.communication.management import init
 from mindspore.train.model import Model, ParallelMode
 from mindspore import context
 import os
@@ -31,10 +32,10 @@ from mindspore.parallel import set_algo_parameters
 from mindspore.parallel import _cost_model_context as cost_model_context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(enable_hccl=True)
 context.set_context(enable_task_sink=True, device_id= 0)
 context.set_context(enable_ir_fusion=True)
 context.set_context(enable_loop_sink=False)
+init()
 
 def weight_variable(shape, factor=0.1):
     return TruncatedNormal(0.02)
@@ -273,13 +274,9 @@ class DatasetLenet():
         return 1
 
 
-def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768): #1048576 #131072 #32768 #8192
+def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768):
     dev_num = 8
     context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
-    cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=260.0)
-    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
-    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
-    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_percent=0.5)
     set_algo_parameters(elementwise_op_strategy_follow=True)
     resset_op_id()
     np.random.seed(6)
@@ -295,16 +292,24 @@ def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768): #1048576 
     model.train(5, dataset, dataset_sink_mode=False)
     strategies = _executor._get_strategy(model._train_network)
     for (k, v) in strategies.items():
-        if re.match(k, 'Conv2D-op') is not None:
+        if re.search('Conv2D-op', k) is not None:
             assert v[0][0] == dev_num
-        elif re.match(k, 'MatMul-op') is not None:
+        elif re.search('MatMul-op', k) is not None:
             assert v == [[dev_num, 1], [1, 1]]
-        elif re.match(k, 'ReduceSum-op') is not None:
+        elif re.search('ReduceSum-op', k) is not None:
             assert v == [[dev_num, 1]]
 
     allreduce_fusion_dict = _executor._get_allreduce_fusion(model._train_network)
-
     print(allreduce_fusion_dict)
+    return allreduce_fusion_dict
+
+
+def train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768): #1048576 #131072 #32768 #8192
+    cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)
+    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
+    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
+    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_percent=0.5)
+    allreduce_fusion_dict = test_train_32k_8p(epoch_size, batch_size, num_classes)
     expect_dict = {'end_point.bias': 2,
                    'end_point.weight': 2,
                    'layer4.2.bn3.beta': 2,
@@ -382,11 +387,11 @@ def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768): #1048576 
                    'layer3.1.bn1.beta': 2,
                    'layer3.1.bn1.gamma': 2,
                    'layer3.1.conv1.weight': 2,
-                   'layer3.0.bn_down_sample.beta': 1,
-                   'layer3.0.bn_down_sample.gamma': 1,
+                   'layer3.0.bn_down_sample.beta': 2,
+                   'layer3.0.bn_down_sample.gamma': 2,
                    'layer3.0.conv_down_sample.weight': 2,
-                   'layer3.0.bn3.beta': 1,
-                   'layer3.0.bn3.gamma': 1,
+                   'layer3.0.bn3.beta': 2,
+                   'layer3.0.bn3.gamma': 2,
                    'layer3.0.conv3.weight': 2,
                    'layer3.0.bn2.beta': 2,
                    'layer3.0.bn2.gamma': 2,
@@ -412,8 +417,8 @@ def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768): #1048576 
                    'layer2.2.bn1.beta': 2,
                    'layer2.2.bn1.gamma': 2,
                    'layer2.2.conv1.weight': 2,
-                   'layer2.1.bn3.beta': 1,
-                   'layer2.1.bn3.gamma': 1,
+                   'layer2.1.bn3.beta': 2,
+                   'layer2.1.bn3.gamma': 2,
                    'layer2.1.conv3.weight': 2,
                    'layer2.1.bn2.beta': 2,
                    'layer2.1.bn2.gamma': 2,
@@ -421,11 +426,11 @@ def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768): #1048576 
                    'layer2.1.bn1.beta': 2,
                    'layer2.1.bn1.gamma': 2,
                    'layer2.1.conv1.weight': 2,
-                   'layer2.0.bn_down_sample.beta': 1,
-                   'layer2.0.bn_down_sample.gamma': 1,
+                   'layer2.0.bn_down_sample.beta': 2,
+                   'layer2.0.bn_down_sample.gamma': 2,
                    'layer2.0.conv_down_sample.weight': 2,
-                   'layer2.0.bn3.beta': 1,
-                   'layer2.0.bn3.gamma': 1,
+                   'layer2.0.bn3.beta': 2,
+                   'layer2.0.bn3.gamma': 2,
                    'layer2.0.conv3.weight': 2,
                    'layer2.0.bn2.beta': 2,
                    'layer2.0.bn2.gamma': 2,
@@ -442,8 +447,8 @@ def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768): #1048576 
                    'layer1.2.bn1.beta': 2,
                    'layer1.2.bn1.gamma': 2,
                    'layer1.2.conv1.weight': 2,
-                   'layer1.1.bn3.beta': 1,
-                   'layer1.1.bn3.gamma': 1,
+                   'layer1.1.bn3.beta': 2,
+                   'layer1.1.bn3.gamma': 2,
                    'layer1.1.conv3.weight': 2,
                    'layer1.1.bn2.beta': 2,
                    'layer1.1.bn2.gamma': 2,
@@ -451,11 +456,11 @@ def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768): #1048576 
                    'layer1.1.bn1.beta': 2,
                    'layer1.1.bn1.gamma': 2,
                    'layer1.1.conv1.weight': 2,
-                   'layer1.0.bn_down_sample.beta': 1,
-                   'layer1.0.bn_down_sample.gamma': 1,
+                   'layer1.0.bn_down_sample.beta': 2,
+                   'layer1.0.bn_down_sample.gamma': 2,
                    'layer1.0.conv_down_sample.weight': 2,
-                   'layer1.0.bn3.beta': 1,
-                   'layer1.0.bn3.gamma': 1,
+                   'layer1.0.bn3.beta': 2,
+                   'layer1.0.bn3.gamma': 2,
                    'layer1.0.conv3.weight': 2,
                    'layer1.0.bn2.beta': 2,
                    'layer1.0.bn2.gamma': 2,
@@ -465,7 +470,180 @@ def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768): #1048576 
                    'layer1.0.conv1.weight': 2,
                    'bn1.beta': 1,
                    'bn1.gamma': 1,
-                   'conv1.weight': 2}
+                   'conv1.weight': 1}
+
+    assert (allreduce_fusion_dict == expect_dict)
+    cost_model_context.reset_cost_model_context()
+
+
+def train_32k_8p_fusion2(epoch_size=3, batch_size=32, num_classes=32768): #1048576 #131072 #32768 #8192
+    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=2)
+    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_time=0.1)
+    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_inherent_time=0.05)
+    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_bandwidth=0.000001)
+    cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_computation_time_parameter=0.0000015)
+    allreduce_fusion_dict = test_train_32k_8p(epoch_size, batch_size, num_classes)
+    expect_dict = {'end_point.bias': 2,
+                   'end_point.weight': 2,
+                   'layer4.2.bn3.beta': 2,
+                   'layer4.2.bn3.gamma': 2,
+                   'layer4.2.conv3.weight': 2,
+                   'layer4.2.bn2.beta': 2,
+                   'layer4.2.bn2.gamma': 2,
+                   'layer4.2.conv2.weight': 2,
+                   'layer4.2.bn1.beta': 2,
+                   'layer4.2.bn1.gamma': 2,
+                   'layer4.2.conv1.weight': 2,
+                   'layer4.1.bn3.beta': 2,
+                   'layer4.1.bn3.gamma': 2,
+                   'layer4.1.conv3.weight': 2,
+                   'layer4.1.bn2.beta': 2,
+                   'layer4.1.bn2.gamma': 2,
+                   'layer4.1.conv2.weight': 2,
+                   'layer4.1.bn1.beta': 2,
+                   'layer4.1.bn1.gamma': 2,
+                   'layer4.1.conv1.weight': 2,
+                   'layer4.0.bn_down_sample.beta': 2,
+                   'layer4.0.bn_down_sample.gamma': 2,
+                   'layer4.0.conv_down_sample.weight': 2,
+                   'layer4.0.bn3.beta': 2,
+                   'layer4.0.bn3.gamma': 2,
+                   'layer4.0.conv3.weight': 2,
+                   'layer4.0.bn2.beta': 2,
+                   'layer4.0.bn2.gamma': 2,
+                   'layer4.0.conv2.weight': 2,
+                   'layer4.0.bn1.beta': 2,
+                   'layer4.0.bn1.gamma': 2,
+                   'layer4.0.conv1.weight': 2,
+                   'layer3.5.bn3.beta': 2,
+                   'layer3.5.bn3.gamma': 2,
+                   'layer3.5.conv3.weight': 2,
+                   'layer3.5.bn2.beta': 2,
+                   'layer3.5.bn2.gamma': 2,
+                   'layer3.5.conv2.weight': 2,
+                   'layer3.5.bn1.beta': 2,
+                   'layer3.5.bn1.gamma': 2,
+                   'layer3.5.conv1.weight': 2,
+                   'layer3.4.bn3.beta': 2,
+                   'layer3.4.bn3.gamma': 2,
+                   'layer3.4.conv3.weight': 2,
+                   'layer3.4.bn2.beta': 2,
+                   'layer3.4.bn2.gamma': 2,
+                   'layer3.4.conv2.weight': 2,
+                   'layer3.4.bn1.beta': 2,
+                   'layer3.4.bn1.gamma': 2,
+                   'layer3.4.conv1.weight': 2,
+                   'layer3.3.bn3.beta': 2,
+                   'layer3.3.bn3.gamma': 2,
+                   'layer3.3.conv3.weight': 2,
+                   'layer3.3.bn2.beta': 2,
+                   'layer3.3.bn2.gamma': 2,
+                   'layer3.3.conv2.weight': 2,
+                   'layer3.3.bn1.beta': 2,
+                   'layer3.3.bn1.gamma': 2,
+                   'layer3.3.conv1.weight': 2,
+                   'layer3.2.bn3.beta': 2,
+                   'layer3.2.bn3.gamma': 2,
+                   'layer3.2.conv3.weight': 2,
+                   'layer3.2.bn2.beta': 2,
+                   'layer3.2.bn2.gamma': 2,
+                   'layer3.2.conv2.weight': 2,
+                   'layer3.2.bn1.beta': 2,
+                   'layer3.2.bn1.gamma': 2,
+                   'layer3.2.conv1.weight': 2,
+                   'layer3.1.bn3.beta': 2,
+                   'layer3.1.bn3.gamma': 2,
+                   'layer3.1.conv3.weight': 2,
+                   'layer3.1.bn2.beta': 2,
+                   'layer3.1.bn2.gamma': 2,
+                   'layer3.1.conv2.weight': 2,
+                   'layer3.1.bn1.beta': 2,
+                   'layer3.1.bn1.gamma': 2,
+                   'layer3.1.conv1.weight': 2,
+                   'layer3.0.bn_down_sample.beta': 2,
+                   'layer3.0.bn_down_sample.gamma': 2,
+                   'layer3.0.conv_down_sample.weight': 2,
+                   'layer3.0.bn3.beta': 2,
+                   'layer3.0.bn3.gamma': 2,
+                   'layer3.0.conv3.weight': 2,
+                   'layer3.0.bn2.beta': 2,
+                   'layer3.0.bn2.gamma': 2,
+                   'layer3.0.conv2.weight': 2,
+                   'layer3.0.bn1.beta': 2,
+                   'layer3.0.bn1.gamma': 2,
+                   'layer3.0.conv1.weight': 2,
+                   'layer2.3.bn3.beta': 2,
+                   'layer2.3.bn3.gamma': 2,
+                   'layer2.3.conv3.weight': 2,
+                   'layer2.3.bn2.beta': 2,
+                   'layer2.3.bn2.gamma': 2,
+                   'layer2.3.conv2.weight': 2,
+                   'layer2.3.bn1.beta': 2,
+                   'layer2.3.bn1.gamma': 2,
+                   'layer2.3.conv1.weight': 2,
+                   'layer2.2.bn3.beta': 2,
+                   'layer2.2.bn3.gamma': 2,
+                   'layer2.2.conv3.weight': 2,
+                   'layer2.2.bn2.beta': 2,
+                   'layer2.2.bn2.gamma': 2,
+                   'layer2.2.conv2.weight': 2,
+                   'layer2.2.bn1.beta': 2,
+                   'layer2.2.bn1.gamma': 2,
+                   'layer2.2.conv1.weight': 2,
+                   'layer2.1.bn3.beta': 2,
+                   'layer2.1.bn3.gamma': 2,
+                   'layer2.1.conv3.weight': 2,
+                   'layer2.1.bn2.beta': 2,
+                   'layer2.1.bn2.gamma': 2,
+                   'layer2.1.conv2.weight': 2,
+                   'layer2.1.bn1.beta': 2,
+                   'layer2.1.bn1.gamma': 2,
+                   'layer2.1.conv1.weight': 2,
+                   'layer2.0.bn_down_sample.beta': 2,
+                   'layer2.0.bn_down_sample.gamma': 2,
+                   'layer2.0.conv_down_sample.weight': 2,
+                   'layer2.0.bn3.beta': 2,
+                   'layer2.0.bn3.gamma': 2,
+                   'layer2.0.conv3.weight': 2,
+                   'layer2.0.bn2.beta': 2,
+                   'layer2.0.bn2.gamma': 2,
+                   'layer2.0.conv2.weight': 2,
+                   'layer2.0.bn1.beta': 2,
+                   'layer2.0.bn1.gamma': 2,
+                   'layer2.0.conv1.weight': 2,
+                   'layer1.2.bn3.beta': 2,
+                   'layer1.2.bn3.gamma': 2,
+                   'layer1.2.conv3.weight': 2,
+                   'layer1.2.bn2.beta': 2,
+                   'layer1.2.bn2.gamma': 2,
+                   'layer1.2.conv2.weight': 2,
+                   'layer1.2.bn1.beta': 2,
+                   'layer1.2.bn1.gamma': 2,
+                   'layer1.2.conv1.weight': 2,
+                   'layer1.1.bn3.beta': 2,
+                   'layer1.1.bn3.gamma': 2,
+                   'layer1.1.conv3.weight': 2,
+                   'layer1.1.bn2.beta': 2,
+                   'layer1.1.bn2.gamma': 2,
+                   'layer1.1.conv2.weight': 2,
+                   'layer1.1.bn1.beta': 2,
+                   'layer1.1.bn1.gamma': 2,
+                   'layer1.1.conv1.weight': 2,
+                   'layer1.0.bn_down_sample.beta': 2,
+                   'layer1.0.bn_down_sample.gamma': 2,
+                   'layer1.0.conv_down_sample.weight': 2,
+                   'layer1.0.bn3.beta': 2,
+                   'layer1.0.bn3.gamma': 2,
+                   'layer1.0.conv3.weight': 2,
+                   'layer1.0.bn2.beta': 2,
+                   'layer1.0.bn2.gamma': 2,
+                   'layer1.0.conv2.weight': 1,
+                   'layer1.0.bn1.beta': 1,
+                   'layer1.0.bn1.gamma': 1,
+                   'layer1.0.conv1.weight': 1,
+                   'bn1.beta': 1,
+                   'bn1.gamma': 1,
+                   'conv1.weight': 1}
 
     assert (allreduce_fusion_dict == expect_dict)
     cost_model_context.reset_cost_model_context()
@@ -474,7 +652,7 @@ def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768): #1048576 
 def test_train_64k_8p(epoch_size=3, batch_size=32, num_classes=65536): #1048576 #131072 #32768 #8192
     dev_num = 8
     context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
-    cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=260.0)
+    cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)
     set_algo_parameters(elementwise_op_strategy_follow=True)
     resset_op_id()
     np.random.seed(6)
@@ -490,9 +668,9 @@ def test_train_64k_8p(epoch_size=3, batch_size=32, num_classes=65536): #1048576 
     model.train(5, dataset, dataset_sink_mode=False)
     strategies = _executor._get_strategy(model._train_network)
     for (k, v) in strategies.items():
-        if re.match(k, 'Conv2D-op') is not None:
+        if re.search('Conv2D-op', k ) is not None:
             assert v[0][0] == dev_num
-        elif re.match(k, 'MatMul-op') is not None:
+        elif re.search('MatMul-op', k) is not None:
             assert v == [[1, 1], [dev_num, 1]]
-        elif re.match(k, 'ReduceSum-op') is not None:
+        elif re.search('ReduceSum-op', k) is not None:
             assert v == [[1, dev_num]]

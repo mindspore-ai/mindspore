@@ -33,13 +33,15 @@ enum UnaryOptype {
   UNARY_OP_NEG,
   UNARY_OP_RECIPROCAL,
   UNARY_OP_ZEROSLIKE,
+  UNARY_OP_SQUARE,
   UNARY_OP_INVALID_TYPE = 255
 };
-const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY_OP_EXP},
-                                                            {"Log", UNARY_OP_LOG},
-                                                            {"Neg", UNARY_OP_NEG},
-                                                            {"Reciprocal", UNARY_OP_RECIPROCAL},
-                                                            {"ZerosLike", UNARY_OP_ZEROSLIKE}};
+static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY_OP_EXP},
+                                                                   {"Log", UNARY_OP_LOG},
+                                                                   {"Neg", UNARY_OP_NEG},
+                                                                   {"Reciprocal", UNARY_OP_RECIPROCAL},
+                                                                   {"ZerosLike", UNARY_OP_ZEROSLIKE},
+                                                                   {"Square", UNARY_OP_SQUARE}};
 template <typename T>
 class UnaryOpGpuKernel : public GpuKernel {
  public:
@@ -74,7 +76,12 @@ class UnaryOpGpuKernel : public GpuKernel {
         Reciprocal(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
+      case UNARY_OP_SQUARE: {
+        Square(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
       case UNARY_OP_ZEROSLIKE: {
+        Zeroslike(output_addr, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         return true;
       }
       default: {
@@ -93,12 +100,12 @@ class UnaryOpGpuKernel : public GpuKernel {
     }
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but negative op needs 1 inputs.";
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but unary op needs 1 inputs.";
       return false;
     }
     size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but negative op needs 1 output.";
+      MS_LOG(ERROR) << "Output number is " << output_num << ", but unary op needs 1 output.";
       return false;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);

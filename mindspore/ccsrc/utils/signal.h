@@ -24,14 +24,14 @@
 
 namespace mindspore {
 template <class Return, class Type, class... Args>
-std::function<Return(Args...)> bind_member(Type* instance, Return (Type::*method)(Args...)) {
-  return [=](Args&&... args) -> Return { return (instance->*method)(std::forward<Args>(args)...); };
+std::function<Return(Args...)> bind_member(Type *instance, Return (Type::*method)(Args...)) {
+  return [=](Args &&... args) -> Return { return (instance->*method)(std::forward<Args>(args)...); };
 }
 
 template <class FuncType>
 class Slot {
  public:
-  explicit Slot(const std::function<FuncType>& callback) : callback(callback) {}
+  explicit Slot(const std::function<FuncType> &callback) : callback(callback) {}
 
   ~Slot() {}
 
@@ -42,15 +42,15 @@ template <class FuncType>
 class Signal {
  public:
   template <class... Args>
-  void operator()(Args&&... args) {
-    for (auto& slot : slots_) {
+  void operator()(Args &&... args) {
+    for (auto &slot : slots_) {
       if (slot->callback != nullptr) {
         slot->callback(std::forward<Args>(args)...);
       }
     }
   }
 
-  void add_slot(const std::function<FuncType>& func) {
+  void add_slot(const std::function<FuncType> &func) {
     auto slot = std::make_shared<Slot<FuncType>>(func);
     slots_.push_back(slot);
   }

@@ -25,9 +25,9 @@ Status SequentialSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer)
   if (next_id_ > num_samples_) {
     RETURN_STATUS_UNEXPECTED("Sequential Sampler Internal Error");
   } else if (next_id_ == num_samples_) {
-    (*out_buffer) = make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
-    (*out_buffer) = make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
+    (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sampleIds;
     int64_t lastId = (samples_per_buffer_ + next_id_ > num_samples_) ? num_samples_ : samples_per_buffer_ + next_id_;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, lastId - next_id_));
@@ -36,14 +36,13 @@ Status SequentialSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer)
       *(idPtr++) = next_id_++;
     }
     TensorRow row(1, sampleIds);
-    (*out_buffer)->set_tensor_table(make_unique<TensorQTable>(1, row));
+    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
   }
   return Status::OK();
 }
 
-Status SequentialSampler::Init(const RandomAccessOp *op) {
-  RETURN_UNEXPECTED_IF_NULL(op);
-  RETURN_IF_NOT_OK(op->GetNumSamples(&num_samples_));
+Status SequentialSampler::InitSampler() {
+  num_samples_ = (num_samples_ <= 0) ? num_rows_ : num_samples_;  // if num_samples < 0, try if num_rows is set
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && samples_per_buffer_ > 0, "Fail to init Sequential Sampler");
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
   return Status::OK();

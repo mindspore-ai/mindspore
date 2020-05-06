@@ -13,50 +13,19 @@
 # limitations under the License.
 
 """SqueezeGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, AkgRegOp, DataType
 
-@op_info_register("""{
-    "op_name": "SqueezeGrad",
-    "imply_type": "AutoDiff",
-    "fusion_type": "OPAQUE",
-    "processor": "cuda",
-    "attr": [
-        {
-            "name": "x_shape",
-            "param_type": "required",
-            "type": "listInt"
-        },
-        {
-            "name": "axis",
-            "param_type": "optional",
-            "type": "listInt"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float32", "float16"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "y_grad"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float32", "float16"
-            ],
-            "format": [
-                "DefaultFormat", "DefaultFormat"
-            ],
-            "name": "output"
-        }
-    ]
-}""")
+squeeze_grad_op_info = AkgRegOp("SqueezeGrad") \
+    .fusion_type("OPAQUE") \
+    .input(0, "y_grad") \
+    .output(0, "output") \
+    .attr("x_shape", "required", "listInt") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
+
+
+@op_info_register(squeeze_grad_op_info)
 def _squeeze_grad_akg():
     """SqueezeGrad AutoDiff register"""
     return

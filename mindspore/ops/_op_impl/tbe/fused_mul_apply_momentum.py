@@ -14,137 +14,43 @@
 # ============================================================================
 
 """FusedMulApplyMomentum op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+fused_mul_apply_momentum_op_info = TBERegOp("FusedMulApplyMomentum") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("fused_mul_apply_momentum.so") \
+    .compute_cost(10) \
+    .kernel_name("fused_mul_apply_momentum") \
+    .partial_flag(True) \
+    .attr("use_nesterov", "optional", "bool", "true,false", "false") \
+    .input(0, "var", False, "required", "all") \
+    .input(1, "accum", False, "required", "all") \
+    .input(2, "lr", False, "required", "all") \
+    .input(3, "x1", False, "required", "all") \
+    .input(4, "momentum", False, "required", "all") \
+    .input(5, "x2", False, "required", "all") \
+    .output(0, "var", False, "required", "all") \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_Default, DataType.F16_5HD,
+                  DataType.F16_Default, DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_Default, DataType.F16_C1HWNCoC0,
+                  DataType.F16_Default, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_Default, DataType.F16_FracZ,
+                  DataType.F16_Default, DataType.F16_FracZ, DataType.F16_FracZ) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_Default, DataType.F32_5HD,
+                  DataType.F32_Default, DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_Default, DataType.F32_C1HWNCoC0,
+                  DataType.F32_Default, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_Default, DataType.F32_FracZ,
+                  DataType.F32_Default, DataType.F32_FracZ, DataType.F32_FracZ) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "FusedMulApplyMomentum",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "fused_mul_apply_momentum.so",
-    "compute_cost": 10,
-    "kernel_name": "fused_mul_apply_momentum",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "use_nesterov",
-            "param_type": "optional",
-            "type": "bool",
-            "value": "true,false",
-            "default_value":"false"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float16","float16",
-                "float","float","float","float"
-            ],
-            "format": [
-                "NC1HWC0","C1HWNCoC0","DefaultFormat","FracZ",
-                "NC1HWC0","C1HWNCoC0","DefaultFormat","FracZ"
-            ],
-            "name": "var",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float16","float16","float16","float16",
-                "float","float","float","float"
-            ],
-            "format": [
-                "NC1HWC0","C1HWNCoC0","DefaultFormat","FracZ",
-                "NC1HWC0","C1HWNCoC0","DefaultFormat","FracZ"
-            ],
-            "name": "accum",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 2,
-            "dtype": [
-                "float16","float16","float16","float16",
-                "float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "lr",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 3,
-            "dtype": [
-                "float16","float16","float16","float16",
-                "float","float","float","float"
-            ],
-            "format": [
-                "NC1HWC0","C1HWNCoC0","DefaultFormat","FracZ",
-                "NC1HWC0","C1HWNCoC0","DefaultFormat","FracZ"
-            ],
-            "name": "x1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 4,
-            "dtype": [
-                "float16","float16","float16","float16",
-                "float","float","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat",
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "momentum",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 5,
-            "dtype": [
-                "float16","float16","float16","float16",
-                "float","float","float","float"
-            ],
-            "format": [
-                "NC1HWC0","C1HWNCoC0","DefaultFormat","FracZ",
-                "NC1HWC0","C1HWNCoC0","DefaultFormat","FracZ"
-            ],
-            "name": "x2",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float16","float16",
-                "float","float","float","float"
-            ],
-            "format": [
-                "NC1HWC0","C1HWNCoC0","DefaultFormat","FracZ",
-                "NC1HWC0","C1HWNCoC0","DefaultFormat","FracZ"
-            ],
-            "name": "var",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(fused_mul_apply_momentum_op_info)
 def _fused_mul_apply_momentum_tbe():
     """FusedMulApplyMomentum TBE register"""
     return

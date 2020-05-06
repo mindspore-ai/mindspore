@@ -15,19 +15,18 @@
  */
 
 #include "parallel/tensor_layout/arrangement.h"
-#include <utility>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <utility>
+#include "common/utils.h"
 #include "parallel/status.h"
-#include "utils/log_adapter.h"
 #include "parallel/tensor_layout/shape_util.h"
 #include "utils/convert_utils.h"
-#include "common/utils.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {
-
-Status Arrangement::Init(const std::vector<int32_t>& array) {
+Status Arrangement::Init(const std::vector<int32_t> &array) {
   Status status = Array::Init(array);
   if (status != Status::SUCCESS) {
     return Status::FAILED;
@@ -46,7 +45,7 @@ bool Arrangement::IsValidArrangement() {
 
 void Arrangement::ComputeSize() {
   size_ = 1;
-  for (auto& value : array_) {
+  for (auto &value : array_) {
     size_ *= value;
   }
 }
@@ -85,7 +84,7 @@ std::vector<int32_t> Arrangement::GetFrontElementByValue(int32_t value) const {
 }
 
 std::shared_ptr<Arrangement> Arrangement::GetExpandedShapeByExpandListRemoveLeft(
-  const std::vector<Arrangement>& expand_list) const {
+  const std::vector<Arrangement> &expand_list) const {
   if (expand_list.size() != GetDimSize()) {
     return nullptr;
   }
@@ -109,7 +108,7 @@ std::shared_ptr<Arrangement> Arrangement::GetExpandedShapeByExpandListRemoveLeft
  *    array_ = [8, 4],
  *    arrangement_list = [[4, 2], [2, 2]]
  */
-std::shared_ptr<std::vector<Arrangement>> Arrangement::GetExpandShapeList(const Arrangement& expand_shape) const {
+std::shared_ptr<std::vector<Arrangement>> Arrangement::GetExpandShapeList(const Arrangement &expand_shape) const {
   int32_t size = 1;
   uint32_t ind = 0;
   std::vector<Arrangement> arrangement_list;
@@ -141,7 +140,7 @@ std::shared_ptr<std::vector<Arrangement>> Arrangement::GetExpandShapeList(const 
 }
 
 std::shared_ptr<std::pair<std::vector<Arrangement>, Arrangement>> Arrangement::GetExpandShapeListPair(
-  const Arrangement& expand_shape) const {
+  const Arrangement &expand_shape) const {
   std::shared_ptr<std::vector<Arrangement>> expand_shape_list_ptr = GetExpandShapeList(expand_shape);
   if (expand_shape_list_ptr == nullptr) {
     return nullptr;
@@ -149,7 +148,7 @@ std::shared_ptr<std::pair<std::vector<Arrangement>, Arrangement>> Arrangement::G
   std::vector<int32_t> expand_num_list_shape;
   (void)std::transform(expand_shape_list_ptr->begin(), expand_shape_list_ptr->end(),
                        std::back_inserter(expand_num_list_shape),
-                       [](const Arrangement& arr) { return SizeToInt(arr.GetDimSize()); });
+                       [](const Arrangement &arr) { return SizeToInt(arr.GetDimSize()); });
   Arrangement expand_num_list;
   Status status = expand_num_list.Init(expand_num_list_shape);
   if (status != Status::SUCCESS) {
@@ -170,7 +169,7 @@ std::vector<int32_t> Arrangement::ComputeReverseAccumulateSumInReverseOrder() co
 }
 
 std::shared_ptr<Arrangement> Arrangement::GetExpandedShapeByExpandListReserveLeft(
-  const std::vector<Arrangement>& expand_list) const {
+  const std::vector<Arrangement> &expand_list) const {
   if (expand_list.size() != GetDimSize()) {
     return nullptr;
   }
@@ -192,7 +191,7 @@ std::shared_ptr<Arrangement> Arrangement::GetExpandedShapeByExpandListReserveLef
   return std::make_shared<Arrangement>(arrangement_new);
 }
 
-std::shared_ptr<Arrangement> Arrangement::GetUnifiedShape(const Arrangement& in2) const {
+std::shared_ptr<Arrangement> Arrangement::GetUnifiedShape(const Arrangement &in2) const {
   std::vector<int64_t> in1_accum;
   Status status = ShapeToAccumulateProduct(array_, &in1_accum);
   if (status != Status::SUCCESS) {

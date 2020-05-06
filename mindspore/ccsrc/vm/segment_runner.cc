@@ -47,7 +47,7 @@ void ClearConvertCache() { g_ConvertCache.clear(); }
 //   lst: list of nodes (the segment)
 //   users: dict mapping each node to its users (globally)
 //   seen: set of nodes that are part of the segment
-AnfNodePtrList GetOutput(const AnfNodePtrList& lst, const NodeUsersMap& users, const std::vector<AnfNodePtr>& seen) {
+AnfNodePtrList GetOutput(const AnfNodePtrList &lst, const NodeUsersMap &users, const std::vector<AnfNodePtr> &seen) {
   AnfNodePtrList output;
   if (users.size() == 0) {
     return output;
@@ -57,7 +57,7 @@ AnfNodePtrList GetOutput(const AnfNodePtrList& lst, const NodeUsersMap& users, c
     std::begin(lst), std::end(lst), std::back_inserter(output), [&users, &seen](AnfNodePtr n) -> AnfNodePtr {
       auto usersn = users.find(n);
       bool is_referred_out_of_segment = std::any_of(
-        std::begin(usersn->second), std::end(usersn->second), [&seen](const std::pair<AnfNodePtr, int>& u) -> bool {
+        std::begin(usersn->second), std::end(usersn->second), [&seen](const std::pair<AnfNodePtr, int> &u) -> bool {
           return std::find(std::begin(seen), std::end(seen), u.first) == std::end(seen);
         });
       if (n->isa<CNode>() && is_referred_out_of_segment) {
@@ -78,7 +78,7 @@ AnfNodePtrList GetOutput(const AnfNodePtrList& lst, const NodeUsersMap& users, c
   return output;
 }
 
-std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(const AnfNodePtrList& lst) {
+std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGraph(const AnfNodePtrList &lst) {
   auto fg = std::make_shared<FuncGraph>();
   AnfNodePtrList inputs;
   AnfNodePtrToAnfNodePtrMap eqv;
@@ -86,7 +86,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
     MS_LOG(EXCEPTION) << "Input anf node list is empty";
   }
 
-  auto ref = [&eqv, &inputs, &fg](const AnfNodePtr& a) -> AnfNodePtr {
+  auto ref = [&eqv, &inputs, &fg](const AnfNodePtr &a) -> AnfNodePtr {
     if (a->isa<ValueNode>() && !IsValueNode<FuncGraph>(a)) {
       eqv[a] = a;
     } else if (eqv.find(a) == eqv.end()) {
@@ -102,7 +102,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
     if (!n->isa<CNode>()) {
       MS_LOG(EXCEPTION) << "Inst is not CNode";
     }
-    auto& inps = n->cast<CNodePtr>()->inputs();
+    auto &inps = n->cast<CNodePtr>()->inputs();
 
     if (inps.empty()) {
       MS_LOG(EXCEPTION) << "Input is empty";
@@ -120,13 +120,13 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
 
   std::vector<AnfNodePtr> eqv_keys;
   (void)std::transform(std::begin(eqv), std::end(eqv), std::back_inserter(eqv_keys),
-                       [](const std::pair<AnfNodePtr, AnfNodePtr>& elem) -> AnfNodePtr { return elem.first; });
+                       [](const std::pair<AnfNodePtr, AnfNodePtr> &elem) -> AnfNodePtr { return elem.first; });
 
   auto outputs = GetOutput(lst, lst[0]->func_graph()->manager()->node_users(), eqv_keys);
   std::vector<AnfNodePtr> output_args;
   output_args.push_back(NewValueNode(prim::kPrimMakeTuple));
   (void)std::transform(std::begin(outputs), std::end(outputs), std::back_inserter(output_args),
-                       [&eqv](const AnfNodePtr& o) -> AnfNodePtr { return eqv[o]; });
+                       [&eqv](const AnfNodePtr &o) -> AnfNodePtr { return eqv[o]; });
 
   // Set output for AnfGraph
   auto fg_output = fg->NewCNode(output_args);
@@ -148,7 +148,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
 //   This implementation will convert the nodes into a subgraph
 //   that will run using the MsVM.
 template <typename T>
-LinConvertResult Convert(const AnfNodePtrList& lst) {
+LinConvertResult Convert(const AnfNodePtrList &lst) {
   auto cached = g_ConvertCache.find(lst);
   if (cached != g_ConvertCache.end()) {
     return cached->second;
@@ -168,7 +168,7 @@ LinConvertResult Convert(const AnfNodePtrList& lst) {
   std::shared_ptr<VMImpl> vm = std::make_shared<T>();
 
   result.run =
-    std::make_shared<RunFunc>([fg, vm](const VectorRef& args) -> VectorRef { return vm->RunGraph(fg, args); });
+    std::make_shared<RunFunc>([fg, vm](const VectorRef &args) -> VectorRef { return vm->RunGraph(fg, args); });
   result.inputs = inputs;
   result.outputs = outputs;
   result.graph_id = UINT32_MAX;
@@ -178,14 +178,12 @@ LinConvertResult Convert(const AnfNodePtrList& lst) {
 }
 
 LinkFuncType MsVmConvert = Convert<VM>;
-LinkFuncType GeVmConvert = Convert<GeVM>;
 
-std::unordered_map<std::string, LinkFuncType> backends = {{kMsVm, MsVmConvert}, {kGeVm, GeVmConvert}};
+std::unordered_map<std::string, LinkFuncType> backends = {{kMsVm, MsVmConvert}};
 
 std::set<std::string> backend_list = {
   kMsConvert,
   kMsVm,
-  kGeVm,
 };
 
 }  // namespace compile

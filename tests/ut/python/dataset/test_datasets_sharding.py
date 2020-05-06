@@ -33,14 +33,14 @@ def test_imagefolder_shardings(print_res=False):
     # total 44 rows in dataset
     assert (sharding_config(4, 0, 5, False, dict()) == [0, 0, 0, 1, 1])  # 5 rows
     assert (sharding_config(4, 0, 12, False, dict()) == [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3])  # 11 rows
-    assert (sharding_config(4, 3, 0, False, dict()) == [0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3])  # 11 rows
+    assert (sharding_config(4, 3, None, False, dict()) == [0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3])  # 11 rows
     # total 22 in dataset rows because of class indexing which takes only 2 folders
-    assert (len(sharding_config(4, 0, 0, True, {"class1": 111, "class2": 999})) == 6)
+    assert (len(sharding_config(4, 0, None, True, {"class1": 111, "class2": 999})) == 6)
     assert (len(sharding_config(4, 2, 3, True, {"class1": 111, "class2": 999})) == 3)
     # test with repeat
     assert (sharding_config(4, 0, 12, False, dict(), 3) == [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3] * 3)
     assert (sharding_config(4, 0, 5, False, dict(), 5) == [0, 0, 0, 1, 1] * 5)
-    assert (len(sharding_config(5, 1, 0, True, {"class1": 111, "class2": 999}, 4)) == 20)
+    assert (len(sharding_config(5, 1, None, True, {"class1": 111, "class2": 999}, 4)) == 20)
 
 
 def test_manifest_shardings(print_res=False):

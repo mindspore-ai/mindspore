@@ -15,6 +15,9 @@
 """Built-in iterators.
 """
 from abc import abstractmethod
+import copy
+import weakref
+from importlib import import_module
 
 from mindspore._c_dataengine import DEPipeline
 from mindspore._c_dataengine import OpName
@@ -22,12 +25,29 @@ from mindspore._c_dataengine import OpName
 from mindspore import log as logger
 from . import datasets as de
 
+try:
+    context = import_module("mindspore.context")
+except ModuleNotFoundError:
+    context = None
+
 ITERATORS_LIST = list()
 
 
 def _cleanup():
-    for itr in ITERATORS_LIST:
-        itr.release()
+    """Release all the Iterator."""
+    for itr_ref in ITERATORS_LIST:
+        if context:
+            device_type = context.get_context("device_target")
+            if device_type == "GPU":
+                itr_ref.release()
+            else:
+                itr = itr_ref()
+                if itr is not None:
+                    itr.release()
+        else:
+            itr = itr_ref()
+            if itr is not None:
+                itr.release()
 
 
 def alter_tree(node):
@@ -44,17 +64,25 @@ def alter_tree(node):
 
 def _alter_node(node):
     """Performing some alteration to a dataset node. A common alteration is to insert a node."""
-    if isinstance(node, de.TFRecordDataset) and node.shuffle_level == de.Shuffle.GLOBAL:
+    if isinstance(node, (de.TFRecordDataset, de.TextFileDataset)) and node.shuffle_level == de.Shuffle.GLOBAL:
         # Remove the connection between the parent's node to the current node because we are inserting a node.
         if node.output:
             node.output.pop()
         # Perform a fast scan for average rows per file
-        avg_rows_per_file = node.get_dataset_size(True) // len(node.dataset_files)
+        if isinstance(node, de.TFRecordDataset):
+            avg_rows_per_file = node.get_dataset_size(True) // len(node.dataset_files)
+        else:
+            avg_rows_per_file = node.get_dataset_size() // len(node.dataset_files)
+
         # Shuffle between 4 files with a minimum size of 10000 rows
         new_shuffle = node.shuffle(max(avg_rows_per_file * 4, 10000))
         return new_shuffle
 
     if isinstance(node, de.MapDataset):
+        if node.python_multiprocessing:
+            # Bootstrap can only be performed on a copy of the original dataset node.
+            # Bootstrap on original dataset node will make all iterators share the same process pool
+            node.iterator_bootstrap()
         if node.columns_order is not None:
             # Remove the connection between the parent's node to the current node because we are inserting a node.
             if node.output:
@@ -66,16 +94,24 @@ def _alter_node(node):
 
 class Iterator:
     """
-        General Iterator over a dataset.
+    General Iterator over a dataset.
 
-        Attributes:
-            dataset: Dataset to be iterated over
-
+    Attributes:
+        dataset: Dataset to be iterated over
     """
 
     def __init__(self, dataset):
-        ITERATORS_LIST.append(self)
-        self.dataset = alter_tree(dataset)
+        if context:
+            device_type = context.get_context("device_target")
+            if device_type == "GPU":
+                ITERATORS_LIST.append(self)
+            else:
+                ITERATORS_LIST.append(weakref.ref(self))
+        else:
+            ITERATORS_LIST.append(weakref.ref(self))
+        # create a copy of tree and work on it.
+        self.dataset = copy.deepcopy(dataset)
+        self.dataset = alter_tree(self.dataset)
         if not self.__is_tree():
             raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers)")
         self.depipeline = DEPipeline()
@@ -86,6 +122,7 @@ class Iterator:
         root = self.__convert_node_postorder(self.dataset)
         self.depipeline.AssignRootNode(root)
         self.depipeline.LaunchTreeExec()
+        self._index = 0
 
     def __is_tree_node(self, node):
         """Check if a node is tree node."""
@@ -115,12 +152,20 @@ class Iterator:
             op_type = OpName.MINDRECORD
         elif isinstance(dataset, de.BatchDataset):
             op_type = OpName.BATCH
+        elif isinstance(dataset, de.SyncWaitDataset):
+            op_type = OpName.BARRIER
         elif isinstance(dataset, de.ZipDataset):
             op_type = OpName.ZIP
         elif isinstance(dataset, de.MapDataset):
             op_type = OpName.MAP
+        elif isinstance(dataset, de.FilterDataset):
+            op_type = OpName.FILTER
         elif isinstance(dataset, de.RepeatDataset):
             op_type = OpName.REPEAT
+        elif isinstance(dataset, de.SkipDataset):
+            op_type = OpName.SKIP
+        elif isinstance(dataset, de.TakeDataset):
+            op_type = OpName.TAKE
         elif isinstance(dataset, de.StorageDataset):
             op_type = OpName.STORAGE
         elif isinstance(dataset, de.ImageFolderDatasetV2):
@@ -147,6 +192,10 @@ class Iterator:
             op_type = OpName.CIFAR100
         elif isinstance(dataset, de.CelebADataset):
             op_type = OpName.CELEBA
+        elif isinstance(dataset, de.RandomDataset):
+            op_type = OpName.RANDOMDATA
+        elif isinstance(dataset, de.TextFileDataset):
+            op_type = OpName.TEXTFILE
         else:
             raise ValueError("Unsupported DatasetOp")
 
@@ -185,10 +234,7 @@ class Iterator:
             Iterator.__print_local(input_op, level + 1)
 
     def print(self):
-        """
-            Print the dataset tree
-
-        """
+        """Print the dataset tree"""
         self.__print_local(self.dataset, 0)
 
     def release(self):
@@ -202,7 +248,10 @@ class Iterator:
     def __next__(self):
         data = self.get_next()
         if not data:
+            if self._index == 0:
+                logger.warning("No records available.")
             raise StopIteration
+        self._index += 1
         return data
 
     def get_output_shapes(self):
@@ -223,6 +272,9 @@ class Iterator:
     def num_classes(self):
         return self.depipeline.GetNumClasses()
 
+    def __deepcopy__(self, memo):
+        return self
+
 
 class DictIterator(Iterator):
     """
@@ -234,7 +286,7 @@ class DictIterator(Iterator):
 
     def get_next(self):
         """
-            Returns the next record in the dataset as dictionary
+        Returns the next record in the dataset as dictionary
 
         Returns:
             Dict, the next record in the dataset.
@@ -260,7 +312,7 @@ class TupleIterator(Iterator):
 
     def get_next(self):
         """
-            Returns the next record in the dataset as a list
+        Returns the next record in the dataset as a list
 
         Returns:
             List, the next record in the dataset.

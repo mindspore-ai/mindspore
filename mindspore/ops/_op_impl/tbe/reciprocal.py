@@ -14,52 +14,27 @@
 # ============================================================================
 
 """Add op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+reciprocal_op_info = TBERegOp("Reciprocal") \
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("reciprocal.so") \
+    .compute_cost(10) \
+    .kernel_name("reciprocal") \
+    .partial_flag(True) \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_NHWC, DataType.F16_NHWC) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "Reciprocal",
-    "imply_type": "TBE",
-    "fusion_type": "OPAQUE",
-    "async_flag": false,
-    "binfile_name": "reciprocal.so",
-    "compute_cost": 10,
-    "kernel_name": "reciprocal",
-    "partial_flag": true,
-    "attr": [
-
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float16", "float32", "float32", "float32"
-            ],
-            "format": [
-                    "DefaultFormat", "NC1HWC0", "NHWC", "DefaultFormat", "NC1HWC0", "NHWC"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16", "float16", "float16", "float32", "float32", "float32"
-            ],
-            "format": [
-                    "DefaultFormat", "NC1HWC0", "NHWC", "DefaultFormat", "NC1HWC0", "NHWC"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(reciprocal_op_info)
 def _reciprocal_tbe():
     """Add TBE register"""
     return

@@ -39,10 +39,10 @@ using SymbolicKeyTypePtr = std::shared_ptr<SymbolicKeyType>;
 namespace {
 class DeepFirstSearcher : public AnfVisitor {
  public:
-  explicit DeepFirstSearcher(const IncludeFunc& include) : include_(include) {}
+  explicit DeepFirstSearcher(const IncludeFunc &include) : include_(include) {}
   ~DeepFirstSearcher() override = default;
 
-  std::vector<AnfNodePtr> Search(const AnfNodePtr& root) {
+  std::vector<AnfNodePtr> Search(const AnfNodePtr &root) {
     if (root == nullptr) {
       return res_;
     }
@@ -50,7 +50,7 @@ class DeepFirstSearcher : public AnfVisitor {
     return res_;
   }
 
-  void Visit(const AnfNodePtr& node) override {
+  void Visit(const AnfNodePtr &node) override {
     MS_EXCEPTION_IF_NULL(node);
     if (seen_.count(node) != 0) {
       return;
@@ -77,10 +77,10 @@ class DeepFirstSearcher : public AnfVisitor {
 
 class DeepScopedGraphSearcher : public DeepFirstSearcher {
  public:
-  explicit DeepScopedGraphSearcher(const IncludeFunc& include) : DeepFirstSearcher(include) {}
+  explicit DeepScopedGraphSearcher(const IncludeFunc &include) : DeepFirstSearcher(include) {}
   ~DeepScopedGraphSearcher() override = default;
 
-  void Visit(const CNodePtr& cnode) override {
+  void Visit(const CNodePtr &cnode) override {
     if (cnode->func_graph() == nullptr) {
       return;
     }
@@ -90,13 +90,13 @@ class DeepScopedGraphSearcher : public DeepFirstSearcher {
       DeepFirstSearcher::Visit(ret);
     }
 
-    auto& inputs = cnode->inputs();
+    auto &inputs = cnode->inputs();
     for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
       DeepFirstSearcher::Visit(*iter);
     }
   }
 
-  void Visit(const ValueNodePtr& vnode) override {
+  void Visit(const ValueNodePtr &vnode) override {
     if (!IsValueNode<FuncGraph>(vnode)) {
       return;
     }
@@ -108,7 +108,7 @@ class DeepScopedGraphSearcher : public DeepFirstSearcher {
     }
   }
 
-  void Visit(const ParameterPtr& param) override {
+  void Visit(const ParameterPtr &param) override {
     if (param->func_graph() == nullptr) {
       return;
     }
@@ -122,17 +122,17 @@ class DeepScopedGraphSearcher : public DeepFirstSearcher {
 
 class DeepUsedGraphSearcher : public DeepFirstSearcher {
  public:
-  explicit DeepUsedGraphSearcher(const IncludeFunc& include) : DeepFirstSearcher(include) {}
+  explicit DeepUsedGraphSearcher(const IncludeFunc &include) : DeepFirstSearcher(include) {}
   ~DeepUsedGraphSearcher() override = default;
 
-  void Visit(const CNodePtr& cnode) override {
-    auto& inputs = cnode->inputs();
+  void Visit(const CNodePtr &cnode) override {
+    auto &inputs = cnode->inputs();
     for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
       DeepFirstSearcher::Visit(*iter);
     }
   }
 
-  void Visit(const ValueNodePtr& vnode) override {
+  void Visit(const ValueNodePtr &vnode) override {
     if (!IsValueNode<FuncGraph>(vnode)) {
       return;
     }
@@ -147,33 +147,33 @@ class DeepUsedGraphSearcher : public DeepFirstSearcher {
 
 class DeepLinkedGraphSearcher : public DeepFirstSearcher {
  public:
-  explicit DeepLinkedGraphSearcher(const IncludeFunc& include) : DeepFirstSearcher(include) {}
+  explicit DeepLinkedGraphSearcher(const IncludeFunc &include) : DeepFirstSearcher(include) {}
   ~DeepLinkedGraphSearcher() override = default;
 
-  void Visit(const CNodePtr& cnode) override {
-    auto& inputs = cnode->inputs();
+  void Visit(const CNodePtr &cnode) override {
+    auto &inputs = cnode->inputs();
     for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
       DeepFirstSearcher::Visit(*iter);
     }
   }
 
-  void Visit(const ValueNodePtr&) override {}
+  void Visit(const ValueNodePtr &) override {}
 };
 }  // namespace
 
-std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr& root, const IncludeFunc& include) {
+std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
   return DeepScopedGraphSearcher(include).Search(root);
 }
 
-std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr& root, const IncludeFunc& include) {
+std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
   return DeepUsedGraphSearcher(include).Search(root);
 }
 
-std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr& root, const IncludeFunc& include) {
+std::vector<AnfNodePtr> DeepLinkedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include) {
   return DeepLinkedGraphSearcher(include).Search(root);
 }
 
-std::vector<AnfNodePtr> TopoSort(const AnfNodePtr& root, const SuccFunc& succ, const IncludeFunc& include) {
+std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
   std::unordered_set<AnfNodePtr> done;
   std::list<AnfNodePtr> todo(1, root);
   std::unordered_map<AnfNodePtr, size_t> rank;
@@ -222,7 +222,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr& root, const SuccFunc& succ, c
   return res;
 }
 
-std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr& node) {
+std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
   std::vector<AnfNodePtr> vecs;
   if (node == nullptr) {
     return vecs;
@@ -237,7 +237,7 @@ std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr& node) {
     return vecs;
   } else if (node->func_graph() != nullptr) {
     if (node->isa<CNode>()) {
-      auto& inputs = node->cast<CNodePtr>()->inputs();
+      auto &inputs = node->cast<CNodePtr>()->inputs();
       (void)vecs.insert(vecs.end(), inputs.begin(), inputs.end());
     }
     auto graph = node->func_graph();
@@ -250,7 +250,7 @@ std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr& node) {
   return vecs;
 }
 
-std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr& node) {
+std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node) {
   std::vector<AnfNodePtr> vecs;
   if (node == nullptr) {
     return vecs;
@@ -265,39 +265,39 @@ std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr& node) {
     return vecs;
   } else {
     if (node->isa<CNode>()) {
-      auto& inputs = node->cast<CNodePtr>()->inputs();
+      auto &inputs = node->cast<CNodePtr>()->inputs();
       (void)vecs.insert(vecs.end(), inputs.begin(), inputs.end());
     }
     return vecs;
   }
 }
 
-std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr& node) {
+std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node) {
   std::vector<AnfNodePtr> vecs;
   if (node == nullptr) {
     return vecs;
   }
 
   if (node->isa<CNode>()) {
-    auto& inputs = node->cast<CNodePtr>()->inputs();
+    auto &inputs = node->cast<CNodePtr>()->inputs();
     (void)vecs.insert(vecs.end(), inputs.begin(), inputs.end());
   }
   return vecs;
 }
 
-std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr& fg, const AnfNodePtr& node) {
+std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node) {
   std::vector<AnfNodePtr> vecs;
   if (node == nullptr) {
     return vecs;
   }
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
-    auto& inputs = cnode->inputs();
+    auto &inputs = cnode->inputs();
     // Check if free variables used.
-    for (const auto& input : inputs) {
+    for (const auto &input : inputs) {
       auto input_fg = GetValueNode<FuncGraphPtr>(input);
       if (input_fg) {
-        for (auto& fv : input_fg->free_variables_nodes()) {
+        for (auto &fv : input_fg->free_variables_nodes()) {
           if (fv->func_graph() == fg && fg->nodes().contains(fv)) {
             vecs.push_back(fv);
           }
@@ -309,9 +309,9 @@ std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr& fg, const AnfNodePtr& 
   return vecs;
 }
 
-IncludeType AlwaysInclude(const AnfNodePtr&) { return FOLLOW; }
+IncludeType AlwaysInclude(const AnfNodePtr &) { return FOLLOW; }
 
-IncludeType IncludeBelongGraph(const FuncGraphPtr& fg, const AnfNodePtr& node) {
+IncludeType IncludeBelongGraph(const FuncGraphPtr &fg, const AnfNodePtr &node) {
   if (node->func_graph() == fg) {
     return FOLLOW;
   } else {
@@ -319,12 +319,12 @@ IncludeType IncludeBelongGraph(const FuncGraphPtr& fg, const AnfNodePtr& node) {
   }
 }
 
-FuncGraphIndex::FuncGraphIndex(const FuncGraphPtr& fg, const SearchFunc& search, const IncludeFunc& include) {
+FuncGraphIndex::FuncGraphIndex(const FuncGraphPtr &fg, const SearchFunc &search, const IncludeFunc &include) {
   MS_EXCEPTION_IF_NULL(fg);
   Acquire(fg);
 
   auto vec = search(fg->get_return(), include);
-  for (auto& node : vec) {
+  for (auto &node : vec) {
     MS_EXCEPTION_IF_NULL(node);
     Acquire(node);
     if (node->func_graph() != nullptr) {
@@ -333,7 +333,7 @@ FuncGraphIndex::FuncGraphIndex(const FuncGraphPtr& fg, const SearchFunc& search,
   }
 }
 
-std::set<FuncGraphPtr> FuncGraphIndex::GetFuncGraphs(const std::string& key) {
+std::set<FuncGraphPtr> FuncGraphIndex::GetFuncGraphs(const std::string &key) {
   std::set<FuncGraphPtr> func_graphs;
   if (index_func_graph_.find(key) != index_func_graph_.end()) {
     func_graphs = index_func_graph_[key];
@@ -341,7 +341,7 @@ std::set<FuncGraphPtr> FuncGraphIndex::GetFuncGraphs(const std::string& key) {
   return func_graphs;
 }
 
-std::set<AnfNodePtr> FuncGraphIndex::GetNodes(const std::string& key) {
+std::set<AnfNodePtr> FuncGraphIndex::GetNodes(const std::string &key) {
   if (index_node_.find(key) != index_node_.end()) {
     return index_node_[key];
   }
@@ -349,7 +349,7 @@ std::set<AnfNodePtr> FuncGraphIndex::GetNodes(const std::string& key) {
   return std::set<AnfNodePtr>();
 }
 
-FuncGraphPtr FuncGraphIndex::GetFirstFuncGraph(const std::string& key) {
+FuncGraphPtr FuncGraphIndex::GetFirstFuncGraph(const std::string &key) {
   if (GetFuncGraphs(key).empty()) {
     return nullptr;
   }
@@ -358,7 +358,7 @@ FuncGraphPtr FuncGraphIndex::GetFirstFuncGraph(const std::string& key) {
   return fg;
 }
 
-AnfNodePtr FuncGraphIndex::GetFirstNode(const std::string& key) {
+AnfNodePtr FuncGraphIndex::GetFirstNode(const std::string &key) {
   if (GetNodes(key).empty()) {
     return nullptr;
   }
@@ -367,14 +367,14 @@ AnfNodePtr FuncGraphIndex::GetFirstNode(const std::string& key) {
   return node;
 }
 
-void FuncGraphIndex::Acquire(const FuncGraphPtr& key) {
+void FuncGraphIndex::Acquire(const FuncGraphPtr &key) {
   std::string name = label_manage::Label(key->debug_info());
   if (!name.empty()) {
     (void)index_func_graph_[name].insert(key);
   }
 }
 
-void FuncGraphIndex::Acquire(const AnfNodePtr& key) {
+void FuncGraphIndex::Acquire(const AnfNodePtr &key) {
   std::string name = label_manage::Label(key->debug_info());
   if (!name.empty()) {
     (void)index_node_[name].insert(key);
@@ -382,8 +382,8 @@ void FuncGraphIndex::Acquire(const AnfNodePtr& key) {
 }
 
 // Isomorphism
-static bool SameNodeShallow(const AnfNodePtr& node1, const AnfNodePtr& node2, FuncGraphPairMapEquiv* equiv_func_graph,
-                            NodeMapEquiv* const equiv_node) {
+static bool SameNodeShallow(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
+                            NodeMapEquiv *const equiv_node) {
   if (equiv_node == nullptr) {
     MS_LOG(ERROR) << "Invalid equiv_node";
     return false;
@@ -400,6 +400,8 @@ static bool SameNodeShallow(const AnfNodePtr& node1, const AnfNodePtr& node2, Fu
     auto a2 = GetValueNode(node2);
     if (a1->isa<Primitive>() && a2->isa<Primitive>()) {
       return a1->cast<PrimitivePtr>()->name() == a2->cast<PrimitivePtr>()->name();
+    } else if (a1->isa<tensor::Tensor>() && a2->isa<tensor::Tensor>()) {
+      return a1->cast<tensor::TensorPtr>()->ValueEqual(*(a2->cast<tensor::TensorPtr>()));
     } else {
       return *a1 == *a2;
     }
@@ -417,13 +419,13 @@ static bool SameNodeShallow(const AnfNodePtr& node1, const AnfNodePtr& node2, Fu
   return false;
 }
 
-static bool SameNode(const AnfNodePtr& node1, const AnfNodePtr& node2, FuncGraphPairMapEquiv* equiv_func_graph,
-                     NodeMapEquiv* const equiv_node) {
+static bool SameNode(const AnfNodePtr &node1, const AnfNodePtr &node2, FuncGraphPairMapEquiv *equiv_func_graph,
+                     NodeMapEquiv *const equiv_node) {
   MS_EXCEPTION_IF_NULL(node1);
   MS_EXCEPTION_IF_NULL(node2);
   if (node1->isa<CNode>() && node2->isa<CNode>()) {
-    auto& inputs1 = node1->cast<CNodePtr>()->inputs();
-    auto& inputs2 = node2->cast<CNodePtr>()->inputs();
+    auto &inputs1 = node1->cast<CNodePtr>()->inputs();
+    auto &inputs2 = node2->cast<CNodePtr>()->inputs();
     for (std::size_t i = 0; i < inputs1.size(); ++i) {
       if (!SameNodeShallow(inputs1[i], inputs2[i], equiv_func_graph, equiv_node)) {
         return false;
@@ -434,8 +436,8 @@ static bool SameNode(const AnfNodePtr& node1, const AnfNodePtr& node2, FuncGraph
   return SameNodeShallow(node1, node2, equiv_func_graph, equiv_node);
 }
 
-static bool SameSubgraph(AnfNodePtr root1, AnfNodePtr root2, FuncGraphPairMapEquiv* equiv_func_graph,
-                         NodeMapEquiv* const equiv_node) {
+static bool SameSubgraph(AnfNodePtr root1, AnfNodePtr root2, FuncGraphPairMapEquiv *equiv_func_graph,
+                         NodeMapEquiv *const equiv_node) {
   std::unordered_set<AnfNodePtr> done;
   std::stack<std::pair<AnfNodePtr, AnfNodePtr>> todo;
 
@@ -477,8 +479,8 @@ static bool SameSubgraph(AnfNodePtr root1, AnfNodePtr root2, FuncGraphPairMapEqu
   return true;
 }
 
-bool Isomorphic(FuncGraphPtr fg1, FuncGraphPtr fg2, FuncGraphPairMapEquiv* equiv_func_graph,
-                NodeMapEquiv* const equiv_node) {
+bool Isomorphic(FuncGraphPtr fg1, FuncGraphPtr fg2, FuncGraphPairMapEquiv *equiv_func_graph,
+                NodeMapEquiv *const equiv_node) {
   auto fg1_fg2 = std::make_pair(fg1, fg2);
   if (equiv_func_graph == nullptr) {
     MS_LOG(ERROR) << "equiv_func_graph not init";
@@ -509,7 +511,7 @@ bool Isomorphic(FuncGraphPtr fg1, FuncGraphPtr fg2, FuncGraphPairMapEquiv* equiv
   return false;
 }
 
-tensor::TensorPtr ScalarToTensor(const ScalarPtr& scalar) {
+tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar) {
   if (scalar == nullptr) {
     MS_EXCEPTION(ArgumentError) << "Nullptr Error!";
   }

@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace parallel {
-
 Status ReshapeLayoutTransfer::CheckValidTransfer() {
   if (!IsSameDeviceArrangement()) {
     return Status::FAILED;
@@ -105,7 +104,7 @@ std::shared_ptr<ReshapeLayoutTransfer> ReshapeLayoutTransfer::ExchangeFromAndTo(
 }
 
 std::shared_ptr<ReshapeLayoutTransfer> ReshapeLayoutTransfer::ExpandFromTensorShapeAndExpandToDeviceArrangement(
-  const Arrangement& expand_shape) const {
+  const Arrangement &expand_shape) const {
   std::shared_ptr<TensorLayout> extend_tensor_shape_from_ptr = from_in_.ExpandTensorShape(expand_shape);
   if (extend_tensor_shape_from_ptr == nullptr) {
     return nullptr;

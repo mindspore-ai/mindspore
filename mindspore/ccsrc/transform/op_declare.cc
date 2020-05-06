@@ -155,13 +155,14 @@ OUTPUT_MAP(BatchNorm) = {{0, OUTPUT_DESC(y)},
                          {1, OUTPUT_DESC(batch_mean)},
                          {2, OUTPUT_DESC(batch_variance)},
                          {3, OUTPUT_DESC(reserve_space_1)},
-                         {4, OUTPUT_DESC(reserve_space_2)},
-                         {5, OUTPUT_DESC(reserve_space_3)}};
+                         {4, OUTPUT_DESC(reserve_space_2)}};
 
 // BatchNormGrad
-INPUT_MAP(BatchNormGrad) = {{1, INPUT_DESC(y_backprop)},      {2, INPUT_DESC(x)},
-                            {3, INPUT_DESC(scale)},           {4, INPUT_DESC(reserve_space_1)},
-                            {5, INPUT_DESC(reserve_space_2)}, {6, INPUT_DESC(reserve_space_3)}};
+INPUT_MAP(BatchNormGrad) = {{1, INPUT_DESC(y_backprop)},
+                            {2, INPUT_DESC(x)},
+                            {3, INPUT_DESC(scale)},
+                            {4, INPUT_DESC(reserve_space_1)},
+                            {5, INPUT_DESC(reserve_space_2)}};
 ATTR_MAP(BatchNormGrad) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
                            {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
                            {"is_training", ATTR_DESC(is_training, AnyTraits<bool>())}};
@@ -192,8 +193,7 @@ ATTR_MAP(PRelu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(PRelu) = {{0, OUTPUT_DESC(y)}};
 
 // PReluGrad
-INPUT_MAP(PReluGrad) = {
-  {1, INPUT_DESC(grads)}, {2, INPUT_DESC(features)}, {3, INPUT_DESC(weights)}};
+INPUT_MAP(PReluGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(features)}, {3, INPUT_DESC(weights)}};
 ATTR_MAP(PReluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(PReluGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(da)}};
 
@@ -266,11 +266,6 @@ OUTPUT_MAP(Add) = {{0, OUTPUT_DESC(y)}};
 INPUT_MAP(GatherV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(axis)}};
 ATTR_MAP(GatherV2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherV2) = {{0, OUTPUT_DESC(y)}};
-
-// ReduceSum
-INPUT_MAP(ReduceSum) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
-ATTR_MAP(ReduceSum) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceSum) = {{0, OUTPUT_DESC(y)}};
 
 // ReduceSumD
 INPUT_MAP(ReduceSumD) = {{1, INPUT_DESC(x)}};
@@ -356,6 +351,16 @@ INPUT_MAP(AcosGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
 ATTR_MAP(AcosGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(AcosGrad) = {{0, OUTPUT_DESC(z)}};
 
+// Acosh
+INPUT_MAP(Acosh) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Acosh) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Acosh) = {{0, OUTPUT_DESC(y)}};
+
+// AcoshGrad
+INPUT_MAP(AcoshGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(AcoshGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AcoshGrad) = {{0, OUTPUT_DESC(z)}};
+
 // Floor
 INPUT_MAP(Floor) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Floor) = EMPTY_ATTR_MAP;
@@ -365,6 +370,11 @@ OUTPUT_MAP(Floor) = {{0, OUTPUT_DESC(y)}};
 INPUT_MAP(FloorDiv) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(FloorDiv) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(FloorDiv) = {{0, OUTPUT_DESC(y)}};
+
+// FloorMod
+INPUT_MAP(FloorMod) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(FloorMod) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(FloorMod) = {{0, OUTPUT_DESC(y)}};
 
 // Sin
 INPUT_MAP(Sin) = {{1, INPUT_DESC(x)}};
@@ -442,17 +452,17 @@ INPUT_MAP(Iou) = {{1, INPUT_DESC(bboxes)}, {2, INPUT_DESC(gtboxes)}};
 ATTR_MAP(Iou) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
 OUTPUT_MAP(Iou) = {{0, OUTPUT_DESC(overlap)}};
 
-// ResizeNearestNeighborD
-INPUT_MAP(ResizeNearestNeighborD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ResizeNearestNeighborD) = {
+// ResizeNearestNeighborV2D
+INPUT_MAP(ResizeNearestNeighborV2D) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ResizeNearestNeighborV2D) = {
   {"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeNearestNeighborD) = {{0, OUTPUT_DESC(y)}};
+OUTPUT_MAP(ResizeNearestNeighborV2D) = {{0, OUTPUT_DESC(y)}};
 
-// ResizeNearestNeighborGrad
-INPUT_MAP(ResizeNearestNeighborGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(size)}};
-ATTR_MAP(ResizeNearestNeighborGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeNearestNeighborGrad) = {{0, OUTPUT_DESC(y)}};
+// ResizeNearestNeighborV2Grad
+INPUT_MAP(ResizeNearestNeighborV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(size)}};
+ATTR_MAP(ResizeNearestNeighborV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(ResizeNearestNeighborV2Grad) = {{0, OUTPUT_DESC(y)}};
 
 // ApplyAdam
 INPUT_MAP(ApplyAdam) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},
@@ -461,33 +471,38 @@ INPUT_MAP(ApplyAdam) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},       
                         {10, INPUT_DESC(grad)}};
 ATTR_MAP(ApplyAdam) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
-#ifdef ENABLE_GE
-OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
-#else
 OUTPUT_MAP(ApplyAdam) = {{0, OUTPUT_DESC(var)}};
-#endif
+
+// ApplyAdamD
+INPUT_MAP(ApplyAdamD) = {{1, INPUT_DESC(var)},         {2, INPUT_DESC(m)},           {3, INPUT_DESC(v)},
+                         {4, INPUT_DESC(beta1_power)}, {5, INPUT_DESC(beta2_power)}, {6, INPUT_DESC(lr)},
+                         {7, INPUT_DESC(beta1)},       {8, INPUT_DESC(beta2)},       {9, INPUT_DESC(epsilon)},
+                         {10, INPUT_DESC(grad)}};
+ATTR_MAP(ApplyAdamD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())},
+                        {"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyAdamD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(m)}, {2, OUTPUT_DESC(v)}};
 
 // Relu6
-INPUT_MAP(Relu6) = {{1, INPUT_DESC(features)}};
+INPUT_MAP(Relu6) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Relu6) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(Relu6) = {{0, OUTPUT_DESC(activations)}};
+OUTPUT_MAP(Relu6) = {{0, OUTPUT_DESC(y)}};
 
 // Relu6Grad
-INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(gradients)}};
+INPUT_MAP(Relu6Grad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(Relu6Grad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Relu6Grad) = {{0, OUTPUT_DESC(backprops)}};
 
-// ResizeBilinearGrad
-INPUT_MAP(ResizeBilinearGrad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
-ATTR_MAP(ResizeBilinearGrad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeBilinearGrad) = {{0, OUTPUT_DESC(y)}};
+// ResizeBilinearV2Grad
+INPUT_MAP(ResizeBilinearV2Grad) = {{1, INPUT_DESC(grads)}, {2, INPUT_DESC(original_image)}};
+ATTR_MAP(ResizeBilinearV2Grad) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(ResizeBilinearV2Grad) = {{0, OUTPUT_DESC(y)}};
 
-// ResizeBilinearD
-INPUT_MAP(ResizeBilinearD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ResizeBilinearD) = {
+// ResizeBilinearV2D
+INPUT_MAP(ResizeBilinearV2D) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ResizeBilinearV2D) = {
   {"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeBilinearD) = {{0, OUTPUT_DESC(y)}};
+OUTPUT_MAP(ResizeBilinearV2D) = {{0, OUTPUT_DESC(y)}};
 
 // ZerosLike
 INPUT_MAP(ZerosLike) = {{1, INPUT_DESC(x)}};
@@ -553,6 +568,16 @@ INPUT_MAP(PadD) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(PadD) = {{"paddings", ATTR_DESC(paddings, AnyTraits<std::vector<std::vector<int64_t>>>())}};
 OUTPUT_MAP(PadD) = {{0, OUTPUT_DESC(y)}};
 
+// MirrorPad
+INPUT_MAP(MirrorPad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}};
+ATTR_MAP(MirrorPad) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
+OUTPUT_MAP(MirrorPad) = {{0, OUTPUT_DESC(y)}};
+
+// MirrorPadGrad
+INPUT_MAP(MirrorPadGrad) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(paddings)}};
+ATTR_MAP(MirrorPadGrad) = {{"mode", ATTR_DESC(mode, AnyTraits<std::string>())}};
+OUTPUT_MAP(MirrorPadGrad) = {{0, OUTPUT_DESC(y)}};
+
 // GatherNd
 INPUT_MAP(GatherNd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}};
 ATTR_MAP(GatherNd) = EMPTY_ATTR_MAP;
@@ -560,7 +585,7 @@ OUTPUT_MAP(GatherNd) = {{0, OUTPUT_DESC(y)}};
 
 // ROIAlign
 INPUT_MAP(ROIAlign) = {{1, INPUT_DESC(features)}, {2, INPUT_DESC(rois)}};
-OUTPUT_MAP(ROIAlign) = {{0, OUTPUT_DESC(output)}};
+OUTPUT_MAP(ROIAlign) = {{0, OUTPUT_DESC(y)}};
 ATTR_MAP(ROIAlign) = {{"pooled_height", ATTR_DESC(pooled_height, AnyTraits<int>())},
                       {"pooled_width", ATTR_DESC(pooled_width, AnyTraits<int>())},
                       {"spatial_scale", ATTR_DESC(spatial_scale, AnyTraits<float>())},
@@ -600,10 +625,12 @@ ATTR_MAP(ArgMinWithValue) = {{"axis", ATTR_DESC(dimension, AnyTraits<int>())},
                              {"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
 OUTPUT_MAP(ArgMinWithValue) = {{0, OUTPUT_DESC(indice)}, {1, OUTPUT_DESC(values)}};
 
-// ReduceAll
-INPUT_MAP(ReduceAll) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axes)}};
-ATTR_MAP(ReduceAll) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
-OUTPUT_MAP(ReduceAll) = {{0, OUTPUT_DESC(y)}};
+// ReduceAllD
+INPUT_MAP(ReduceAllD) = {{1, INPUT_DESC(x)}};
+INPUT_ATTR_MAP(ReduceAllD) = {
+  {2, ATTR_DESC(axes, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
+ATTR_MAP(ReduceAllD) = {{"keep_dims", ATTR_DESC(keep_dims, AnyTraits<bool>())}};
+OUTPUT_MAP(ReduceAllD) = {{0, OUTPUT_DESC(y)}};
 
 // ReduceMeanD
 INPUT_MAP(ReduceMeanD) = {{1, INPUT_DESC(x)}};
@@ -648,28 +675,6 @@ INPUT_MAP(ReluGrad) = {{1, INPUT_DESC(gradients)}, {2, INPUT_DESC(features)}};
 ATTR_MAP(ReluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(ReluGrad) = {{0, OUTPUT_DESC(backprops)}};
 
-// FusedBatchNorm
-INPUT_MAP(FusedBatchNorm) = {
-  {1, INPUT_DESC(x)}, {2, INPUT_DESC(scale)}, {3, INPUT_DESC(b)}, {4, INPUT_DESC(mean)}, {5, INPUT_DESC(variance)}};
-ATTR_MAP(FusedBatchNorm) = {{"mode", ATTR_DESC(mode, AnyTraits<int64_t>())},
-                            {"momentum", ATTR_DESC(moving_average_fraction, AnyTraits<float>())},
-                            {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
-OUTPUT_MAP(FusedBatchNorm) = {{0, OUTPUT_DESC(y)},
-                              {1, OUTPUT_DESC(running_mean)},
-                              {2, OUTPUT_DESC(running_variance)},
-                              {3, OUTPUT_DESC(save_mean)},
-                              {4, OUTPUT_DESC(save_inv_variance)}};
-
-// FusedBatchNromGrad
-INPUT_MAP(FusedBatchNormGrad) = {{1, INPUT_DESC(dy)},
-                                 {2, INPUT_DESC(x)},
-                                 {3, INPUT_DESC(scale)},
-                                 {4, INPUT_DESC(save_mean)},
-                                 {5, INPUT_DESC(save_inv_variance)}};
-ATTR_MAP(FusedBatchNormGrad) = {{"momentum", ATTR_DESC(momentum, AnyTraits<float>())},
-                                {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
-OUTPUT_MAP(FusedBatchNormGrad) = {{0, OUTPUT_DESC(dx)}, {1, OUTPUT_DESC(bn_scale)}, {2, OUTPUT_DESC(bn_bias)}};
-
 // BiasAddGrad
 INPUT_MAP(BiasAddGrad) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(BiasAddGrad) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
@@ -692,23 +697,35 @@ ATTR_MAP(AvgPoolGrad) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<
 OUTPUT_MAP(AvgPoolGrad) = {{0, OUTPUT_DESC(out_grad)}};
 
 // MaxPoolWithArgmax
-INPUT_MAP(MaxPoolGradWithArgmax) = {
-  {1, INPUT_DESC(x)},
-  {2, INPUT_DESC(argmax)},
-  {3, INPUT_DESC(grad)},
-};
-ATTR_MAP(MaxPoolGradWithArgmax) = {{"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
-                                   {"window", ATTR_DESC(ksize, "window", AnyTraits<std::vector<int64_t>>())},
-                                   {"stride", ATTR_DESC(strides, "stride", AnyTraits<std::vector<int64_t>>())}};
+INPUT_MAP(MaxPoolWithArgmax) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MaxPoolWithArgmax) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                               {"strides", ATTR_DESC(strides, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                               {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPoolWithArgmax) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(argmax)}};
+
+// MaxPoolGradWithArgmax
+INPUT_MAP(MaxPoolGradWithArgmax) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(grad)}, {3, INPUT_DESC(argmax)}};
+ATTR_MAP(MaxPoolGradWithArgmax) = {{"ksize", ATTR_DESC(ksize, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                   {"strides", ATTR_DESC(strides, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                   {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+OUTPUT_MAP(MaxPoolGradWithArgmax) = {{0, OUTPUT_DESC(y)}};
+
+// ExtractImagePatches
+INPUT_MAP(ExtractImagePatches) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(ExtractImagePatches) = {{"ksizes", ATTR_DESC(ksizes, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                 {"strides", ATTR_DESC(strides, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                 {"rates", ATTR_DESC(rates, AnyTraits<int>(), AnyTraits<std::vector<int64_t>>())},
+                                 {"padding", ATTR_DESC(padding, AnyTraits<std::string>())}};
+OUTPUT_MAP(ExtractImagePatches) = {{0, OUTPUT_DESC(y)}};
 
 // Conv2D
 INPUT_MAP(Conv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
 ATTR_MAP(Conv2D) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())}
+  {"group", ATTR_DESC(groups, AnyTraits<int>())},
 };
 OUTPUT_MAP(Conv2D) = {{0, OUTPUT_DESC(y)}};
 
@@ -719,9 +736,9 @@ INPUT_ATTR_MAP(Conv2DBackpropInputD) = {
 ATTR_MAP(Conv2DBackpropInputD) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())}
+  {"group", ATTR_DESC(groups, AnyTraits<int>())},
 };
 OUTPUT_MAP(Conv2DBackpropInputD) = {{0, OUTPUT_DESC(y)}};
 
@@ -732,18 +749,18 @@ INPUT_ATTR_MAP(Conv2DBackpropFilterD) = {
 ATTR_MAP(Conv2DBackpropFilterD) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
-  {"group", ATTR_DESC(groups, AnyTraits<int>())}
+  {"group", ATTR_DESC(groups, AnyTraits<int>())},
 };
 OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
 
 // DepthwiseConv2D
 INPUT_MAP(DepthwiseConv2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(filter)}};
 ATTR_MAP(DepthwiseConv2D) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
 };
 OUTPUT_MAP(DepthwiseConv2D) = {{0, OUTPUT_DESC(y)}};
@@ -753,9 +770,9 @@ INPUT_MAP(DepthwiseConv2DBackpropInputD) = {{2, INPUT_DESC(filter)}, {3, INPUT_D
 INPUT_ATTR_MAP(DepthwiseConv2DBackpropInputD) = {
   {1, ATTR_DESC(input_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(DepthwiseConv2DBackpropInputD) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
 OUTPUT_MAP(DepthwiseConv2DBackpropInputD) = {{0, OUTPUT_DESC(input_grad)}};
 
@@ -764,9 +781,9 @@ INPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{1, INPUT_DESC(input)}, {3, INPUT_D
 INPUT_ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
   {2, ATTR_DESC(filter_size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
 ATTR_MAP(DepthwiseConv2DBackpropFilterD) = {
-  {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"dilation", ATTR_DESC(dilations, "pad", AnyTraits<std::vector<int64_t>>())},
+  {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
 };
 OUTPUT_MAP(DepthwiseConv2DBackpropFilterD) = {{0, OUTPUT_DESC(filter_grad)}};
 
@@ -838,8 +855,8 @@ ATTR_MAP(TransposeD) = EMPTY_ATTR_MAP;
 
 // DropOutGenMask
 INPUT_MAP(DropOutGenMask) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(prob)}};
-ATTR_MAP(DropOutGenMask) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
-                            {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+ATTR_MAP(DropOutGenMask) = {{"Seed0", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                            {"Seed1", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
 OUTPUT_MAP(DropOutGenMask) = {{0, OUTPUT_DESC(y)}};
 
 // Pack
@@ -1118,7 +1135,7 @@ INPUT_MAP(SparseApplyAdagradD) = {
   {1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(grad)}, {4, INPUT_DESC(indices)}};
 ATTR_MAP(SparseApplyAdagradD) = {{"lr", ATTR_DESC(lr, AnyTraits<float>())},
                                  {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
-OUTPUT_MAP(SparseApplyAdagradD) = {{0, OUTPUT_DESC(var)}};
+OUTPUT_MAP(SparseApplyAdagradD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
 
 // SparseApplyFtrlD
 INPUT_MAP(SparseApplyFtrlD) = {{1, INPUT_DESC(var)},
@@ -1159,6 +1176,51 @@ INPUT_MAP(ApplyFtrl) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INP
                         {7, INPUT_DESC(l2)},   {8, INPUT_DESC(lr_power)}};
 ATTR_MAP(ApplyFtrl) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyFtrl) = {{0, OUTPUT_DESC(var)}};
+
+// Diag
+INPUT_MAP(Diag) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Diag) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Diag) = {{0, OUTPUT_DESC(y)}};
+
+// DiagPart
+INPUT_MAP(DiagPart) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(DiagPart) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(DiagPart) = {{0, OUTPUT_DESC(y)}};
+
+// SpaceToBatchD
+INPUT_MAP(SpaceToBatchD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(SpaceToBatchD) = {
+  {"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())},
+  {"paddings", ATTR_DESC(paddings, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(SpaceToBatchD) = {{0, OUTPUT_DESC(y)}};
+
+// BatchToSpaceD
+INPUT_MAP(BatchToSpaceD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(BatchToSpaceD) = {
+  {"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())},
+  {"crops", ATTR_DESC(crops, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(BatchToSpaceD) = {{0, OUTPUT_DESC(y)}};
+
+// Atan2
+INPUT_MAP(Atan2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Atan2) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Atan2) = {{0, OUTPUT_DESC(y)}};
+
+// ApplyRMSPropD
+INPUT_MAP(ApplyRMSPropD) = {
+  {1, INPUT_DESC(var)}, {2, INPUT_DESC(ms)}, {3, INPUT_DESC(mom)}, {4, INPUT_DESC(grad)}, {5, INPUT_DESC(lr)}};
+INPUT_ATTR_MAP(ApplyRMSPropD) = {{6, ATTR_DESC(rho, AnyTraits<float>())},
+                                 {7, ATTR_DESC(momentum, AnyTraits<float>())},
+                                 {8, ATTR_DESC(epsilon, AnyTraits<float>())}};
+ATTR_MAP(ApplyRMSPropD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyRMSPropD) = {{0, OUTPUT_DESC(var)}};
+
+// ApplyCenteredRMSProp
+INPUT_MAP(ApplyCenteredRMSProp) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(mg)},       {3, INPUT_DESC(ms)},
+                                   {4, INPUT_DESC(mom)}, {5, INPUT_DESC(grad)},     {6, INPUT_DESC(lr)},
+                                   {7, INPUT_DESC(rho)}, {8, INPUT_DESC(momentum)}, {9, INPUT_DESC(epsilon)}};
+ATTR_MAP(ApplyCenteredRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyCenteredRMSProp) = {{0, OUTPUT_DESC(var)}};
 
 #ifdef ENABLE_GE
 // Print

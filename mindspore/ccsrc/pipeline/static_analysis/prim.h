@@ -87,6 +87,21 @@ class DoSignatureEvaluator : public Evaluator {
   PrimitivePtr prim_;
 };
 
+class UnpackGraphEvaluator : public Evaluator {
+ public:
+  explicit UnpackGraphEvaluator(const PrimitivePtr primitive) : Evaluator("UnpackGraphEvaluator"), prim_(primitive) {}
+  ~UnpackGraphEvaluator() override = default;
+  AbstractBasePtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
+                      AnfNodeConfigPtr out_config = nullptr) override;
+
+  AbstractBasePtr Infer(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+    MS_LOG(EXCEPTION) << "Infer() should not be called, Run() method should be called";
+  }
+
+ private:
+  PrimitivePtr prim_;
+};
+
 bool IsInWhiteList(PrimitivePtr primitive);
 StandardPrimitiveEvalImpl GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 
@@ -163,6 +178,10 @@ AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &,
                              const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &,
                                const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplInDict(const AnalysisEnginePtr &, const PrimitivePtr &,
+                                const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplNotInDict(const AnalysisEnginePtr &, const PrimitivePtr &,
+                                   const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplPoolingGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -272,6 +291,8 @@ AbstractBasePtr InferImplStopGradient(const AnalysisEnginePtr &, const Primitive
                                       const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplStringEqual(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplStringConcat(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplDictLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list);
 

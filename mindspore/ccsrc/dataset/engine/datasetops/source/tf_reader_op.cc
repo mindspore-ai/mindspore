@@ -18,12 +18,13 @@
 #include <cmath>
 #include <condition_variable>
 #include <future>
+#include <iomanip>
 #include <memory>
 #include <mutex>
 #include <utility>
 #include <unordered_map>
 
-#include "./example.pb.h"
+#include "proto/example.pb.h"
 #include "./securec.h"
 #include "common/utils.h"
 #include "dataset/core/config_manager.h"
@@ -36,13 +37,13 @@
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
 #include "dataset/engine/jagged_connector.h"
-#include "dataset/util/make_unique.h"
 #include "dataset/util/path.h"
 #include "dataset/util/queue.h"
 #include "dataset/util/random.h"
 #include "dataset/util/status.h"
 #include "dataset/util/task_manager.h"
 #include "dataset/util/wait_post.h"
+#include "utils/system/crc32c.h"
 
 namespace mindspore {
 namespace dataset {
@@ -54,18 +55,61 @@ TFReaderOp::Builder::Builder()
   builder_op_connector_size_ = config_manager->op_connector_size();
   builder_rows_per_buffer_ = config_manager->rows_per_buffer();
   builder_shuffle_files_ = false;
-  builder_data_schema_ = make_unique<DataSchema>();
+  builder_data_schema_ = std::make_unique<DataSchema>();
+}
+
+bool ValidateFirstRowCrc(const std::string &filename) {
+  std::ifstream reader;
+  reader.open(filename);
+  if (!reader) {
+    return false;
+  }
+
+  // read data
+  int64_t record_length = 0;
+  (void)reader.read(reinterpret_cast<char *>(&record_length), static_cast<std::streamsize>(sizeof(int64_t)));
+
+  // read crc from file
+  uint32_t masked_crc = 0;
+  (void)reader.read(reinterpret_cast<char *>(&masked_crc), static_cast<std::streamsize>(sizeof(uint32_t)));
+
+  // generate crc from data
+  uint32_t generated_crc =
+    system::Crc32c::GetMaskCrc32cValue(reinterpret_cast<char *>(&record_length), sizeof(int64_t));
+
+  return masked_crc == generated_crc;
 }
 
 Status TFReaderOp::Builder::ValidateInputs() const {
   std::string err_msg;
-  err_msg += builder_num_workers_ <= 0 ? "Number of parallel workers is smaller or equal to 0\n" : "";
-  if (!builder_equal_rows_per_shard_) {
-    err_msg += builder_dataset_files_list_.size() < static_cast<uint32_t>(builder_num_devices_)
-                 ? "No enough tf_file files provided\n"
-                 : "";
+
+  if (builder_num_workers_ <= 0) {
+    err_msg += "Number of parallel workers is smaller or equal to 0\n";
   }
-  err_msg += builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1 ? "Wrong sharding configs\n" : "";
+
+  if (!builder_equal_rows_per_shard_ &&
+      builder_dataset_files_list_.size() < static_cast<uint32_t>(builder_num_devices_)) {
+    err_msg += "Not enough tfrecord files provided\n";
+  }
+
+  if (builder_device_id_ >= builder_num_devices_ || builder_num_devices_ < 1) {
+    err_msg += "Wrong sharding configs\n";
+  }
+
+  std::vector<std::string> invalid_files(builder_dataset_files_list_.size());
+  auto it = std::copy_if(builder_dataset_files_list_.begin(), builder_dataset_files_list_.end(), invalid_files.begin(),
+                         [](const std::string &filename) { return !ValidateFirstRowCrc(filename); });
+  invalid_files.resize(std::distance(invalid_files.begin(), it));
+
+  if (!invalid_files.empty()) {
+    err_msg += "The following files either cannot be opened, or are not valid tfrecord files:\n";
+
+    std::string accumulated_filenames = std::accumulate(
+      invalid_files.begin(), invalid_files.end(), std::string(""),
+      [](const std::string &accumulated, const std::string &next) { return accumulated + "    " + next + "\n"; });
+    err_msg += accumulated_filenames;
+  }
+
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
@@ -103,12 +147,43 @@ TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64
       finished_reading_dataset_(false),
       shuffle_files_(shuffle_files),
       data_schema_(std::move(data_schema)),
-      filename_index_(make_unique<StringIndex>()),
+      filename_index_(std::make_unique<StringIndex>()),
       load_io_block_queue_(true),
+      load_jagged_connector_(true),
       num_rows_(0),
       num_rows_per_shard_(0),
       equal_rows_per_shard_(equal_rows_per_shard) {
   worker_connector_size_ = worker_connector_size;
+}
+
+// A print method typically used for debugging
+void TFReaderOp::Print(std::ostream &out, bool show_all) const {
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <TFReaderOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    ParallelOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nRows per buffer: " << rows_per_buffer_ << "\nTotal rows: " << total_rows_ << "\nDevice id: " << device_id_
+        << "\nNumber of devices: " << num_devices_ << "\nShuffle files: " << ((shuffle_files_) ? "yes" : "no")
+        << "\nDataset files list:\n";
+    for (int i = 0; i < dataset_files_list_.size(); ++i) {
+      out << " " << dataset_files_list_[i];
+    }
+    if (!columns_to_load_.empty()) {
+      out << "\nColumns to load:\n";
+      for (int i = 0; i < columns_to_load_.size(); ++i) {
+        out << " " << columns_to_load_[i];
+      }
+    }
+    out << "\nData Schema:\n";
+    out << *data_schema_ << "\n\n";
+  }
 }
 
 Status TFReaderOp::Init() {
@@ -119,6 +194,9 @@ Status TFReaderOp::Init() {
   if (total_rows_ == 0) {
     total_rows_ = data_schema_->num_rows();
   }
+  if (total_rows_ < 0) {
+    RETURN_STATUS_UNEXPECTED("The num_sample or numRows for TFRecordDataset should be greater than 0");
+  }
 
   // Build the index with our files such that each file corresponds to a key id.
   RETURN_IF_NOT_OK(filename_index_->insert(dataset_files_list_));
@@ -128,7 +206,7 @@ Status TFReaderOp::Init() {
   // parallel op base.
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
 
-  jagged_buffer_connector_ = mindspore::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
+  jagged_buffer_connector_ = std::make_unique<JaggedConnector>(num_workers_, 1, worker_connector_size_);
 
   // temporary: make size large enough to hold all files + EOE to avoid hangs
   int32_t safe_queue_size = static_cast<int32_t>(std::ceil(dataset_files_list_.size() / num_workers_)) + 1;
@@ -151,7 +229,9 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
   }
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));
   if (num_rows_per_shard_ == 0) {
-    RETURN_STATUS_UNEXPECTED("Number of rows can not be zero");
+    RETURN_STATUS_UNEXPECTED(
+      "There is no valid data matching the dataset API TFRecordDataset.Please check file path or dataset API "
+      "validation first.");
   }
   return Status::OK();
 }
@@ -173,7 +253,7 @@ Status TFReaderOp::operator()() {
   // so workers have to be kept alive until the end of the program
   TaskManager::FindMe()->Post();
 
-  io_block_queue_wait_post_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
 
   NotifyToFillIOBlockQueue();
   while (!finished_reading_dataset_) {
@@ -203,13 +283,32 @@ Status TFReaderOp::operator()() {
         buffer_id++;
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(fetched_buffer)));
       } else {
+        // user specified number of rows they want, and we read enough rows
+        //
+        // IOBlockQueue thread needs to:
+        // -stop pushing stuff to IOBlockQueue
+        // -call PostEndOfEpoch (will send EOE)
+        // -wait for reset
+        //
+        // Worker threads need to:
+        // -stop reading the file they are currently reading and throw it away
+        // -keep pulling, but dont read other files (eventually skips all IOBlocks and will get EOE)
+        //
+        // Master thread needs to:
+        // -tell IOBlockQueue thread to stop pushing
+        // -tell worker threads to stop reading the file tey are currently reading
+        // -keep pulling until EOE
+
+        // don't think we need a lock for now
+        load_jagged_connector_ = false;
+
         std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
         load_io_block_queue_ = false;
       }
     }
 
     // all workers finished reading for this epoch, and we have read all the data from all workers
-    std::unique_ptr<DataBuffer> eoe_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+    std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
     RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
 
     if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
@@ -221,7 +320,7 @@ Status TFReaderOp::operator()() {
     }
   }
 
-  std::unique_ptr<DataBuffer> eof_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
+  std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
   RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
 
   RETURN_IF_NOT_OK(PostEndOfData());
@@ -245,14 +344,16 @@ Status TFReaderOp::WorkerEntry(int32_t worker_id) {
 
   while (!io_block->eof()) {
     if (!io_block->eoe()) {
-      std::string filename;
-      RETURN_IF_NOT_OK(io_block->GetFilename(&filename, *filename_index_));
-      int64_t start_offset = io_block->GetStartOffset();
-      int64_t end_offset = io_block->GetEndOffset();
-      RETURN_IF_NOT_OK(LoadFile(filename, start_offset, end_offset, worker_id));
-      MS_LOG(INFO) << "TFReader operator worker " << worker_id << " loaded file " << common::SafeCStr(filename) << ".";
+      if (load_jagged_connector_) {
+        std::string filename;
+        RETURN_IF_NOT_OK(io_block->GetFilename(&filename, *filename_index_));
+        int64_t start_offset = io_block->GetStartOffset();
+        int64_t end_offset = io_block->GetEndOffset();
+        RETURN_IF_NOT_OK(LoadFile(filename, start_offset, end_offset, worker_id));
+        MS_LOG(INFO) << "TFReader operator worker " << worker_id << " loaded file " << filename << ".";
+      }
     } else {
-      std::unique_ptr<DataBuffer> eoe_buffer = mindspore::make_unique<DataBuffer>(1, DataBuffer::kDeBFlagEOE);
+      std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(1, DataBuffer::kDeBFlagEOE);
       RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(eoe_buffer)));
     }
 
@@ -266,7 +367,7 @@ Status TFReaderOp::WorkerEntry(int32_t worker_id) {
 // When the worker pops this control indicator, it will shut itself down gracefully.
 Status TFReaderOp::PostEndOfData() {
   for (int i = 0; i < num_workers_; ++i) {
-    std::unique_ptr<FilenameBlock> eof = mindspore::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEof);
+    std::unique_ptr<FilenameBlock> eof = std::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEof);
     RETURN_IF_NOT_OK(PushIoBlockQueue(i, std::move(eof)));
   }
 
@@ -277,7 +378,7 @@ Status TFReaderOp::PostEndOfData() {
 // pops this control indicator, it will wait until the next epoch starts and then resume execution.
 Status TFReaderOp::PostEndOfEpoch(int32_t queue_index) {
   for (int i = 0; i < num_workers_; ++i) {
-    std::unique_ptr<FilenameBlock> eoe = mindspore::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEoe);
+    std::unique_ptr<FilenameBlock> eoe = std::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEoe);
     RETURN_IF_NOT_OK(PushIoBlockQueue((queue_index + i) % num_workers_, std::move(eoe)));
   }
 
@@ -336,7 +437,7 @@ Status TFReaderOp::FillIOBlockShuffle(const std::vector<int64_t> &i_keys) {
       }
       if (!equal_rows_per_shard_) {
         if (key_index++ % num_devices_ == device_id_) {
-          auto ioBlock = make_unique<FilenameBlock>(*it, kInvalidOffset, kInvalidOffset, IOBlock::kDeIoBlockNone);
+          auto ioBlock = std::make_unique<FilenameBlock>(*it, kInvalidOffset, kInvalidOffset, IOBlock::kDeIoBlockNone);
           RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
           queue_index = (queue_index + 1) % num_workers_;
         }
@@ -345,7 +446,7 @@ Status TFReaderOp::FillIOBlockShuffle(const std::vector<int64_t> &i_keys) {
         auto file_it = filename_index_->Search(*it);
         std::string file_name = file_it.value();
         if (NeedPushFileToblockQueue(file_name, &start_offset, &end_offset, pre_count)) {
-          auto ioBlock = make_unique<FilenameBlock>(*it, start_offset, end_offset, IOBlock::kDeIoBlockNone);
+          auto ioBlock = std::make_unique<FilenameBlock>(*it, start_offset, end_offset, IOBlock::kDeIoBlockNone);
           RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
           MS_LOG(DEBUG) << "File name " << *it << " start offset " << start_offset << " end_offset " << end_offset;
           queue_index = (queue_index + 1) % num_workers_;
@@ -382,14 +483,15 @@ Status TFReaderOp::FillIOBlockNoShuffle() {
       }
       if (!equal_rows_per_shard_) {
         if (key_index++ % num_devices_ == device_id_) {
-          auto ioBlock = make_unique<FilenameBlock>(it.key(), kInvalidOffset, kInvalidOffset, IOBlock::kDeIoBlockNone);
+          auto ioBlock =
+            std::make_unique<FilenameBlock>(it.key(), kInvalidOffset, kInvalidOffset, IOBlock::kDeIoBlockNone);
           RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
           queue_index = (queue_index + 1) % num_workers_;
         }
       } else {
         std::string file_name = it.value();
         if (NeedPushFileToblockQueue(file_name, &start_offset, &end_offset, pre_count)) {
-          auto ioBlock = make_unique<FilenameBlock>(it.key(), start_offset, end_offset, IOBlock::kDeIoBlockNone);
+          auto ioBlock = std::make_unique<FilenameBlock>(it.key(), start_offset, end_offset, IOBlock::kDeIoBlockNone);
           RETURN_IF_NOT_OK(PushIoBlockQueue(queue_index, std::move(ioBlock)));
           queue_index = (queue_index + 1) % num_workers_;
         }
@@ -468,16 +570,19 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
 
   int64_t rows_read = 0;
   int64_t rows_total = 0;
-  std::unique_ptr<DataBuffer> current_buffer =
-    mindspore::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
+  std::unique_ptr<DataBuffer> current_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
   std::unordered_map<std::string, int32_t> column_name_map;
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
     column_name_map[data_schema_->column(i).name()] = i;
   }
   current_buffer->set_column_name_map(column_name_map);
-  std::unique_ptr<TensorQTable> new_tensor_table = make_unique<TensorQTable>();
+  std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
 
   while (reader.peek() != EOF) {
+    if (!load_jagged_connector_) {
+      break;
+    }
+
     // read length
     int64_t record_length = 0;
     (void)reader.read(reinterpret_cast<char *>(&record_length), static_cast<std::streamsize>(sizeof(int64_t)));
@@ -498,6 +603,7 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
       RETURN_IF_NOT_OK(LoadExample(&tf_file, &new_tensor_table, rows_read));
       rows_read++;
     }
+
     // ignore crc footer
     (void)reader.ignore(static_cast<std::streamsize>(sizeof(int32_t)));
     rows_total++;
@@ -506,9 +612,9 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
       current_buffer->set_tensor_table(std::move(new_tensor_table));
       RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(current_buffer)));
 
-      current_buffer = make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
+      current_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
       current_buffer->set_column_name_map(column_name_map);
-      new_tensor_table = make_unique<TensorQTable>();
+      new_tensor_table = std::make_unique<TensorQTable>();
       rows_read = 0;
     }
   }
@@ -599,6 +705,9 @@ Status TFReaderOp::LoadFeature(const std::unique_ptr<TensorQTable> *tensor_table
 // Overrides base class reset method. Cleans up any state info from it's previous execution and
 // reinitializes itself so that it can be executed again, as if it was just created.
 Status TFReaderOp::Reset() {
+  // start workers first, otherwise IOBlokcs will fall through if workers see it before this is set to true
+  load_jagged_connector_ = true;
+
   {
     std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
     load_io_block_queue_ = true;
@@ -713,7 +822,7 @@ Status TFReaderOp::LoadFloatList(const ColDescriptor &current_col, const dataeng
   // Identify how many values we have and then create a local array of these
   // to deserialize into
   *num_elements = float_list.value_size();
-  *float_array = mindspore::make_unique<float[]>(*num_elements);
+  *float_array = std::make_unique<float[]>(*num_elements);
   for (int i = 0; i < float_list.value_size(); ++i) {
     (*float_array)[i] = float_list.value(i);
   }

@@ -26,7 +26,6 @@
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "kernel/gpu/kernel_constants.h"
-#include "dataset/util/make_unique.h"
 
 namespace mindspore {
 namespace kernel {
@@ -84,8 +83,8 @@ class BiasAddGradGpuKernel : public GpuKernel {
 
     // Expand to 4 dims for cudnnSetTensorNdDescriptorEx.
     auto cudnn_dims = std::max(num_dims, 4UL);
-    std::unique_ptr<int[]> dy_dims = mindspore::make_unique<int[]>(cudnn_dims);
-    std::unique_ptr<int[]> db_dims = mindspore::make_unique<int[]>(cudnn_dims);
+    std::unique_ptr<int[]> dy_dims = std::make_unique<int[]>(cudnn_dims);
+    std::unique_ptr<int[]> db_dims = std::make_unique<int[]>(cudnn_dims);
     for (size_t i = 0; i < cudnn_dims; i++) {
       dy_dims[i] = (i < num_dims) ? SizeToInt(dy_shape[i]) : 1;
       db_dims[i] = (i == pos) ? SizeToInt(dy_shape[i]) : 1;
@@ -102,7 +101,7 @@ class BiasAddGradGpuKernel : public GpuKernel {
       cudnnSetTensorNdDescriptorEx(db_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(cudnn_dims), db_dims.get()),
       "cudnnSetTensorNdDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetReduceTensorDescriptor(op_desc_, CUDNN_REDUCE_TENSOR_ADD, cudnn_data_type_, CUDNN_NOT_PROPAGATE_NAN,
+      cudnnSetReduceTensorDescriptor(op_desc_, CUDNN_REDUCE_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN,
                                      CUDNN_REDUCE_TENSOR_NO_INDICES, CUDNN_32BIT_INDICES),
       "cudnnSetReduceTensorDescriptor failed");
 

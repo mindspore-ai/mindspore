@@ -38,9 +38,8 @@ class SubsetRandomSampler : public Sampler {
   ~SubsetRandomSampler() = default;
 
   // Initialize the sampler.
-  // @param op (Not used in this sampler)
   // @return Status
-  Status Init(const RandomAccessOp *op) override;
+  Status InitSampler() override;
 
   // Reset the internal variable to the initial state and reshuffle the indices.
   // @return Status

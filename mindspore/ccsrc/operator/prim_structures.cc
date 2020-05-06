@@ -36,11 +36,30 @@ AbstractBasePtr InferImplStringEqual(const AnalysisEnginePtr &, const PrimitiveP
   ValuePtr value_x = scalar_x->BuildValue();
   ValuePtr value_y = scalar_y->BuildValue();
   if (!value_x->isa<StringImm>() || !value_y->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "" << op_name << " requires 2 parameters are string, but got param0: " << value_x->ToString()
+    MS_LOG(EXCEPTION) << op_name << " requires 2 parameters are string, but got param0: " << value_x->ToString()
                       << ", param1: " << value_y->ToString();
   }
 
   bool ret = (value_x->cast<StringImmPtr>()->value() == value_y->cast<StringImmPtr>()->value());
+  return std::make_shared<AbstractScalar>(ret);
+}
+
+AbstractBasePtr InferImplStringConcat(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  // Inputs: two scalars whose value is a string.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  AbstractScalarPtr scalar_x = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
+  AbstractScalarPtr scalar_y = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
+
+  ValuePtr value_x = scalar_x->BuildValue();
+  ValuePtr value_y = scalar_y->BuildValue();
+  if (!value_x->isa<StringImm>() || !value_y->isa<StringImm>()) {
+    MS_LOG(EXCEPTION) << op_name << " requires 2 parameters are string, but got param0: " << value_x->ToString()
+                      << ", param1: " << value_y->ToString();
+  }
+
+  std::string ret = (value_x->cast<StringImmPtr>()->value() + value_y->cast<StringImmPtr>()->value());
   return std::make_shared<AbstractScalar>(ret);
 }
 
@@ -64,7 +83,7 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
 
   size_t keys_size = keys->size();
   if (values->size() != keys_size) {
-    MS_LOG(EXCEPTION) << "" << op_name << " evaluator keys' size is not equal with values' size";
+    MS_LOG(EXCEPTION) << op_name << " evaluator keys' size is not equal with values' size";
   }
 
   std::vector<AbstractAttribute> key_value;
@@ -76,7 +95,7 @@ AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr 
     ValuePtr keyPtr = key->BuildValue();
     MS_EXCEPTION_IF_NULL(keyPtr);
     if (!keyPtr->isa<StringImm>()) {
-      MS_LOG(EXCEPTION) << "" << op_name << " evaluator keys should be string, but got " << keyPtr->ToString();
+      MS_LOG(EXCEPTION) << op_name << " evaluator keys should be string, but got " << keyPtr->ToString();
     }
     std::string key_string = GetValue<std::string>(keyPtr);
     key_value.emplace_back(key_string, value_list[index]);
@@ -93,7 +112,7 @@ AbstractBasePtr InferImplMakeKwarg(const AnalysisEnginePtr &, const PrimitivePtr
 
   ValuePtr keyPtr = key->BuildValue();
   if (!keyPtr->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "" << op_name << " evaluator key should be string, but got " << keyPtr->ToString();
+    MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << keyPtr->ToString();
   }
   std::string key_string = GetValue<std::string>(keyPtr);
   return std::make_shared<AbstractKeywordArg>(key_string, args_spec_list[1]);
@@ -109,14 +128,13 @@ AbstractBasePtr InferImplExtractKwarg(const AnalysisEnginePtr &, const Primitive
 
   ValuePtr key_value = key->BuildValue();
   if (!key_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "" << op_name << " evaluator key should be string, but got " << key_value->ToString();
+    MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
   }
   std::string key_input = GetValue<std::string>(key_value);
   std::string key_actual = kwarg->get_key();
   if (key_actual != key_input) {
-    MS_LOG(EXCEPTION) << "" << op_name
-                      << " evaluator input key should be same as AbstractKeywordArg' key, but input is " << key_input
-                      << ", AbstractKeywordArg' key is " << key_actual;
+    MS_LOG(EXCEPTION) << op_name << " evaluator input key should be same as AbstractKeywordArg' key, but input is "
+                      << key_input << ", AbstractKeywordArg' key is " << key_actual;
   }
   return kwarg->get_arg();
 }
@@ -187,13 +205,12 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
 
   ValuePtr index_value = index->BuildValue();
   if (!index_value->isa<Int32Imm>()) {
-    MS_LOG(EXCEPTION) << "" << op_name << " evaluator index should be an int32 number, but got "
-                      << index_value->ToString();
+    MS_LOG(EXCEPTION) << op_name << " evaluator index should be an int32 number, but got " << index_value->ToString();
   }
   int idx_v = GetValue<int>(index_value);
   std::size_t nelems = queue->elements().size();
   if (idx_v >= SizeToInt(nelems) || idx_v < -SizeToInt(nelems)) {
-    MS_LOG(EXCEPTION) << "" << op_name << " evaluator index should be in range[-" << SizeToInt(nelems) << ", "
+    MS_LOG(EXCEPTION) << op_name << " evaluator index should be in range[-" << SizeToInt(nelems) << ", "
                       << SizeToInt(nelems) << "), but got " << idx_v << ".";
   }
 
@@ -215,8 +232,7 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
 
   ValuePtr index_value = index->BuildValue();
   if (!index_value->isa<Int32Imm>()) {
-    MS_LOG(EXCEPTION) << "" << op_name << " evaluator index should be an int32 number, but got "
-                      << index_value->ToString();
+    MS_LOG(EXCEPTION) << op_name << " evaluator index should be an int32 number, but got " << index_value->ToString();
   }
   int idx_v = GetValue<int>(index_value);
   if (idx_v < 0) {
@@ -227,8 +243,7 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
   AbstractBasePtrList elements = queue->elements();
   std::size_t nelems = elements.size();
   if (uidx_v >= nelems) {
-    MS_LOG(EXCEPTION) << "" << op_name << " evaluator the index: " << uidx_v << " to set out of range: " << nelems - 1
-                      << ".";
+    MS_LOG(EXCEPTION) << op_name << " evaluator the index: " << uidx_v << " to set out of range: " << nelems - 1 << ".";
   }
   elements[uidx_v] = args_spec_list[2];
   return std::make_shared<T>(elements);
@@ -264,12 +279,12 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
 
   ValuePtr key_value = key->BuildValue();
   if (!key_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "" << op_name << " evaluator key should be string, but got " << key_value->ToString();
+    MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
   }
-  std::string key_str = GetValue<std::string>(key_value);
+  auto key_str = GetValue<std::string>(key_value);
   std::vector<AbstractAttribute> dict_elems = dict->elements();
   auto it = std::find_if(dict_elems.begin(), dict_elems.end(),
-                         [key_str](AbstractAttribute &item) { return item.first == key_str; });
+                         [key_str](const AbstractAttribute &item) { return item.first == key_str; });
 
   if (it == dict_elems.end()) {
     MS_LOG(EXCEPTION) << "The key " << key_str << " does not exist in the dict:" << args_spec_list[0]->ToString();
@@ -287,7 +302,7 @@ AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitiveP
 
   ValuePtr key_value = key->BuildValue();
   if (!key_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "" << op_name << " evaluator key should be string, but got " << key_value->ToString();
+    MS_LOG(EXCEPTION) << op_name << " evaluator key should be string, but got " << key_value->ToString();
   }
   std::string key_str = GetValue<std::string>(key_value);
   std::vector<AbstractAttribute> dict_elems = dict->elements();
@@ -446,27 +461,27 @@ AbstractBasePtr InferImplReduceShape(const AnalysisEnginePtr &, const PrimitiveP
 
   auto x_shp_value = shape_x->BuildValue();
   if (x_shp_value->isa<AnyValue>()) {
-    MS_LOG(EXCEPTION) << "" << op_name
+    MS_LOG(EXCEPTION) << op_name
                       << " evaluator shape's data field can't be anything: " << args_spec_list[1]->ToString();
   }
 
   // Axis can be scalar, tuple or None
   AbstractTuplePtr axis = nullptr;
   if (args_spec_list[1]->isa<AbstractScalar>()) {
-    MS_LOG(DEBUG) << "" << op_name << " evaluator second parameter is scalar";
+    MS_LOG(DEBUG) << op_name << " evaluator second parameter is scalar";
     AbstractBasePtrList axis_list = {dyn_cast<AbstractScalar>(args_spec_list[1])};
     axis = std::make_shared<AbstractTuple>(axis_list);
   } else if (args_spec_list[1]->isa<AbstractTuple>()) {
-    MS_LOG(DEBUG) << "" << op_name << " evaluator second parameter is tuple";
+    MS_LOG(DEBUG) << op_name << " evaluator second parameter is tuple";
     axis = args_spec_list[1]->cast<AbstractTuplePtr>();
   } else {
-    MS_LOG(EXCEPTION) << "" << op_name << " evaluator second parameter should be a scalar or tuple, but got "
+    MS_LOG(EXCEPTION) << op_name << " evaluator second parameter should be a scalar or tuple, but got "
                       << args_spec_list[1]->ToString();
   }
 
   auto axis_value = axis->BuildValue();
   if (axis_value->isa<AnyValue>()) {
-    MS_LOG(EXCEPTION) << "" << op_name
+    MS_LOG(EXCEPTION) << op_name
                       << " evaluator shape's data field can't be anything: " << args_spec_list[1]->ToString();
   }
   auto axis_value_ptr = axis_value->cast<ValueTuplePtr>();

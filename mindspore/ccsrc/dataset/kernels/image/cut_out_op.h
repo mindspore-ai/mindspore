@@ -62,6 +62,7 @@ class CutOutOp : public TensorOp {
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
  private:
+  std::mt19937 rnd_;
   int32_t box_height_;
   int32_t box_width_;
   int32_t num_patches_;

@@ -53,7 +53,7 @@ Status TaskManager::CreateAsyncTask(const std::string &my_name, const std::funct
     LockGuard lck(&tg_lock_);
     this->grp_list_.insert(vg);
   }
-  (*task)->wp_.Register(vg);
+  RETURN_IF_NOT_OK((*task)->wp_.Register(vg));
   RETURN_IF_NOT_OK((*task)->Run());
   // Wait for the thread to initialize successfully.
   RETURN_IF_NOT_OK((*task)->Wait());

@@ -16,23 +16,22 @@
 
 #include "parallel/tensor_layout/array.h"
 #include <utility>
-#include "utils/log_adapter.h"
 #include "parallel/status.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace parallel {
-
 std::string Array::ToString() const {
   std::ostringstream buffer;
   buffer << "[ ";
-  for (auto& element : array_) {
+  for (auto &element : array_) {
     buffer << std::to_string(element) + " ";
   }
   buffer << "]";
   return buffer.str();
 }
 
-Status Array::Init(const std::vector<int32_t>& array) {
+Status Array::Init(const std::vector<int32_t> &array) {
   array_ = array;
   return IsvalidArray() ? Status::SUCCESS : Status::FAILED;
 }
@@ -55,7 +54,7 @@ int32_t Array::GetDimByReverseIdx(uint32_t idx) const {
   return array_[GetDimSize() - 1 - mod_idx];
 }
 
-bool Array::operator==(const Array& shape) const {
+bool Array::operator==(const Array &shape) const {
   if (GetDimSize() != shape.GetDimSize()) {
     return false;
   }

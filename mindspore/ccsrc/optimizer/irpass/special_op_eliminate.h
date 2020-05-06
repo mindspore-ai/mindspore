@@ -109,6 +109,25 @@ class SameEliminater : public AnfVisitor {
   AnfNodePtr x_{nullptr};
 };
 
+// {prim::kPrimCheckBprop, X, Y} -> X
+class CheckBpropEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    x_ = nullptr;
+    AnfVisitor::Match(prim::kPrimCheckBprop, {IsNode, IsNode})(node);
+    return x_;
+  }
+
+  void Visit(const AnfNodePtr &node) override {
+    if (x_ == nullptr) {
+      x_ = node;
+    }
+  }
+
+ private:
+  AnfNodePtr x_{nullptr};
+};
+
 // Reset defer_inline flag
 class ResetDeferInline : public AnfVisitor {
  public:

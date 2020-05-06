@@ -86,7 +86,7 @@ def identity(x):
 def zeros_like_tensor(x):
     """Implement `zeros_like_tensor`."""
     x = x.asnumpy()
-    value = Tensor(np.zeros(x.shape))
+    value = Tensor(np.zeros(x.shape).astype(np.float32))
     return value
 
 
@@ -125,7 +125,7 @@ def list_len(x):
     return len(x)
 
 
-# only used in PyNative modes
+# only used in PyNative mode
 def partial(*args):
     """Implement `partial`."""
     func = args[0].__call__
@@ -133,8 +133,12 @@ def partial(*args):
     return partial_func
 
 
-# only used in PyNative modes
+# only used in PyNative mode
 def depend(value, expr):
+    return value
+
+# only used in PyNative mode
+def make_ref(key, value, ref):
     return value
 
 

@@ -17,32 +17,37 @@
 #include "kernel/kernel_build_info.h"
 #include <algorithm>
 #include "utils/log_adapter.h"
+#include "debug/anf_ir_dump.h"
 namespace mindspore {
 namespace kernel {
 std::string KernelBuildInfo::GetInputFormat(size_t input_index) const {
   if (input_index >= inputs_format_.size()) {
-    MS_LOG(EXCEPTION) << "The index [" << input_index << "] is exceed the number of input node";
+    MS_LOG(ERROR) << "The index [" << input_index << "] is exceed the number of input node";
+    return kInvalidFormat;
   }
   return inputs_format_[input_index];
 }
 
 std::string KernelBuildInfo::GetOutputFormat(size_t output_index) const {
   if (output_index >= outputs_format_.size()) {
-    MS_LOG(EXCEPTION) << "The index [" << output_index << "] is exceed the number of input node";
+    MS_LOG(ERROR) << "The index [" << output_index << "] is exceed the number of input node";
+    return kInvalidFormat;
   }
   return outputs_format_[output_index];
 }
 
 TypeId KernelBuildInfo::GetInputDeviceType(size_t input_index) const {
   if (input_index >= inputs_device_type_.size()) {
-    MS_LOG(EXCEPTION) << "The index [" << input_index << "] is exceed the number of input node";
+    MS_LOG(ERROR) << "The index [" << input_index << "] is exceed the number of input";
+    return TypeId::kNumberTypeEnd;
   }
   return inputs_device_type_[input_index];
 }
 
 TypeId KernelBuildInfo::GetOutputDeviceType(size_t output_index) const {
   if (output_index >= outputs_device_type_.size()) {
-    MS_LOG(EXCEPTION) << "The index [" << output_index << "] is exceed the number of input node";
+    MS_LOG(ERROR) << "The index [" << output_index << "] is exceed the number of output";
+    return TypeId::kNumberTypeEnd;
   }
   return outputs_device_type_[output_index];
 }
@@ -59,30 +64,20 @@ size_t KernelBuildInfo::GetInputNum() const { return inputs_format_.size(); }
 
 size_t KernelBuildInfo::GetOutputNum() const { return outputs_format_.size(); }
 
-bool KernelBuildInfo::GetInputReshapeType(size_t input_index, std::vector<Axis> *reshape_type) const {
-  MS_EXCEPTION_IF_NULL(reshape_type);
-  reshape_type->clear();
+std::vector<Axis> KernelBuildInfo::GetInputReshapeType(size_t input_index) const {
   if (input_index >= input_reshape_type_.size()) {
-    MS_LOG(WARNING) << "The index [" << input_index << "] is exceed the number of input node size "
-                    << input_reshape_type_.size();
-    return false;
+    MS_LOG(EXCEPTION) << "The index [" << input_index << "] is exceed the number of input node size "
+                      << input_reshape_type_.size();
   }
-  (void)std::copy(input_reshape_type_[input_index].begin(), input_reshape_type_[input_index].end(),
-                  std::inserter(*reshape_type, (*reshape_type).begin()));
-  return true;
+  return input_reshape_type_[input_index];
 }
 
-bool KernelBuildInfo::GetOutputReshapeType(size_t output_index, std::vector<Axis> *reshape_type) const {
-  MS_EXCEPTION_IF_NULL(reshape_type);
-  reshape_type->clear();
+std::vector<Axis> KernelBuildInfo::GetOutputReshapeType(size_t output_index) const {
   if (output_index >= output_reshape_type_.size()) {
-    MS_LOG(WARNING) << "The index [" << output_index << "] is exceed the number of output node dixr"
-                    << output_reshape_type_.size();
-    return false;
+    MS_LOG(EXCEPTION) << "The index [" << output_index << "] is exceed the number of output node size "
+                      << output_reshape_type_.size();
   }
-  (void)std::copy(output_reshape_type_[output_index].begin(), output_reshape_type_[output_index].end(),
-                  std::inserter(*reshape_type, (*reshape_type).begin()));
-  return true;
+  return output_reshape_type_[output_index];
 }
 
 std::string KernelBuildInfo::ToString() const {
@@ -92,14 +87,14 @@ std::string KernelBuildInfo::ToString() const {
     if (index != 0) {
       output_buffer << ", ";
     }
-    output_buffer << "<" << static_cast<int>(GetInputDeviceType(index)) << "x" << GetInputFormat(index) << ">";
+    output_buffer << "<" << ToShortString(GetInputDeviceType(index)) << "x" << GetInputFormat(index) << ">";
   }
   output_buffer << ") -> (";
   for (size_t index = 0; index < GetOutputNum(); ++index) {
     if (index != 0) {
       output_buffer << ", ";
     }
-    output_buffer << "<" << static_cast<int>(GetOutputDeviceType(index)) << "x" << GetOutputFormat(index) << ">";
+    output_buffer << "<" << ToShortString(GetOutputDeviceType(index)) << "x" << GetOutputFormat(index) << ">";
   }
   output_buffer << ")";
   return output_buffer.str();
@@ -114,6 +109,10 @@ bool KernelBuildInfo::operator==(const KernelBuildInfo &other) const {
   }
   return !(inputs_device_type_ != other.inputs_device_type_ || outputs_device_type_ != other.outputs_device_type_);
 }
+
+bool KernelBuildInfo::IsInputDefaultPadding() const { return output_reshape_type_.empty(); }
+
+bool KernelBuildInfo::IsOutputDefaultPadding() const { return input_reshape_type_.empty(); }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetKernelType(const KernelType &kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);

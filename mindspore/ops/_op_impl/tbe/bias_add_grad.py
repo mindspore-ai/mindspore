@@ -14,57 +14,26 @@
 # ============================================================================
 
 """BiasAddGrad op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+bias_add_grad_op_info = TBERegOp("BiasAddGrad") \
+    .fusion_type("COMMREDUCE") \
+    .async_flag(False) \
+    .binfile_name("biasaddgrad.so") \
+    .compute_cost(10) \
+    .kernel_name("biasaddgrad") \
+    .partial_flag(True) \
+    .attr("data_format", "required", "str", "all") \
+    .input(0, "output_backprop", False, "required", "all") \
+    .output(0, "output", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_FracNZ, DataType.F32_Default) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "BiasAddGrad",
-    "imply_type": "TBE",
-    "fusion_type": "COMMREDUCE",
-    "async_flag": false,
-    "binfile_name": "biasaddgrad.so",
-    "compute_cost": 10,
-    "kernel_name": "biasaddgrad",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "data_format",
-            "param_type": "required",
-            "type": "str",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "FRACTAL_NZ","DefaultFormat","FRACTAL_NZ","DefaultFormat"
-            ],
-            "name": "out_backprop",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float","float"
-            ],
-            "format": [
-                "DefaultFormat","DefaultFormat","DefaultFormat","DefaultFormat"
-            ],
-            "name": "output",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(bias_add_grad_op_info)
 def _bias_add_grad_tbe():
     """BiasAddGrad TBE register"""
     return

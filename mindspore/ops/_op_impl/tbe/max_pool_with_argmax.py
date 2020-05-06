@@ -14,82 +14,26 @@
 # ============================================================================
 
 """MaxPoolWithArgmax op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+max_pool_with_argmax_op_info = TBERegOp("MaxPoolWithArgmax") \
+    .fusion_type("CONVLUTION") \
+    .async_flag(False) \
+    .binfile_name("max_pool_with_argmax.so") \
+    .compute_cost(10) \
+    .kernel_name("max_pool_with_argmax") \
+    .partial_flag(True) \
+    .attr("ksize", "required", "listInt", "all") \
+    .attr("strides", "required", "listInt", "all") \
+    .attr("padding", "required", "str", "all") \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .output(1, "argmax", False, "required", "all") \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.U16_5HD) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "MaxPoolWithArgmax",
-    "imply_type": "TBE",
-    "fusion_type": "CONVLUTION",
-    "async_flag": false,
-    "binfile_name": "max_pool_with_argmax.so",
-    "compute_cost": 10,
-    "kernel_name": "max_pool_with_argmax",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "window",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "stride",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "pad_mode",
-            "param_type": "required",
-            "type": "str",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "uint16"
-            ],
-            "format": [
-                "NC1HWC0"
-            ],
-            "name": "argmax",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(max_pool_with_argmax_op_info)
 def _max_pool_with_argmax_tbe():
     """MaxPoolWithArgmax TBE register"""
     return

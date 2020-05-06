@@ -41,7 +41,7 @@ class AbstractFuncAtom : public AbstractFunction {
 
   AbstractFunctionPtr Join(const AbstractFunctionPtr &other) final;
   void Visit(std::function<void(const AbstractFuncAtomPtr &)>) const final;
-  bool operator==(const AbstractFunction &other) const;
+  bool operator==(const AbstractFunction &other) const override;
 
   std::size_t hash() const override { return tid(); }
 };
@@ -133,6 +133,7 @@ class FuncGraphAbstractClosure : public AbstractFuncAtom {
   FuncGraphPtr func_graph_;
   AnalysisContextPtr context_;
 };
+using FuncGraphAbstractClosurePtr = std::shared_ptr<FuncGraphAbstractClosure>;
 
 class MetaFuncGraphAbstractClosure : public AbstractFuncAtom {
  public:
@@ -269,7 +270,7 @@ class TypedPrimitiveAbstractClosure : public AbstractFuncAtom {
 class DummyAbstractClosure : public AbstractFuncAtom {
  public:
   DummyAbstractClosure() = default;
-  ~DummyAbstractClosure() = default;
+  ~DummyAbstractClosure() override = default;
   MS_DECLARE_PARENT(DummyAbstractClosure, AbstractFuncAtom)
 
   EvaluatorPtr GetEvaluator(AnalysisEnginePtr) override { MS_LOG(EXCEPTION) << "A dummy function cannot eval."; }

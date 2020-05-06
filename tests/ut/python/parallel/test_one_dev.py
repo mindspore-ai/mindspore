@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 from mindspore.train import Model, ParallelMode
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
@@ -89,16 +90,13 @@ def all_to_all_common():
 
 
 def test_one_dev():
-
     _reset_op_id()
-    strategys = all_to_all_common()
-    expect_dict = {'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits'
-                   '/SoftmaxCrossEntropyWithLogits-op9': [[1, 1], [1, 1]],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits'
-                   '/OneHot-op10': [[1, 1], [], []],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/Transpose-op11':
-                       [[1, 1]],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/MatMul-op12':
-                       [[1, 1], [1, 1]]}
-    assert (strategys == expect_dict)
+    strategies = all_to_all_common()
+    for (k, v) in strategies.items():
+        if re.search('SoftmaxCrossEntropyWithLogits-op', k) is not None:
+            assert v == [[1, 1], [1, 1]]
+        elif re.search('Transpose-op', k) is not None:
+            assert v == [[1, 1]]
+        elif re.search('MatMul-op', k) is not None:
+            assert v == [[1, 1], [1, 1]]
 

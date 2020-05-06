@@ -220,13 +220,13 @@ class Decode:
 
 class Normalize:
     """
-    Normalize the input Numpy image array of shape (H, W, C) with the given mean and standard deviation.
+    Normalize the input Numpy image array of shape (C, H, W) with the given mean and standard deviation.
 
     The values of the array need to be in range [0.0, 1.0].
 
     Args:
-        mean (list): List of mean values for each channel, w.r.t channel order.
-        std (list): List of standard deviations for each channel, w.r.t. channel order.
+        mean (sequence): List or tuple of mean values for each channel, w.r.t channel order.
+        std (sequence): List or tuple of standard deviations for each channel, w.r.t. channel order.
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
@@ -262,6 +262,7 @@ class RandomCrop:
             If size is an int, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         padding (int or sequence, optional): The number of pixels to pad the image (default=None).
+            If padding is not None, pad image firstly with padding values.
             If a single number is provided, it pads all borders with this value.
             If a tuple or list of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
@@ -1312,3 +1313,177 @@ class HsvToRgb:
             rgb_imgs (numpy.ndarray), Numpy RGB image with same shape of hsv_imgs.
         """
         return util.hsv_to_rgbs(hsv_imgs, self.is_hwc)
+
+
+class RandomColor:
+    """
+    Adjust the color of the input PIL image by a random degree.
+
+    Args:
+        degrees (sequence): Range of random color adjustment degrees.
+            It should be in (min, max) format (default=(0.1,1.9)).
+
+    Examples:
+        >>> py_transforms.ComposeOp([py_transforms.Decode(),
+        >>>                          py_transforms.RandomColor(0.5,1.5),
+        >>>                          py_transforms.ToTensor()])
+    """
+
+    def __init__(self, degrees=(0.1, 1.9)):
+        self.degrees = degrees
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (PIL Image): Image to be color adjusted.
+
+        Returns:
+            img (PIL Image), Color adjusted image.
+        """
+
+        return util.random_color(img, self.degrees)
+
+class RandomSharpness:
+    """
+    Adjust the sharpness of the input PIL image by a random degree.
+
+    Args:
+        degrees (sequence): Range of random sharpness adjustment degrees.
+            It should be in (min, max) format (default=(0.1,1.9)).
+
+    Examples:
+        >>> py_transforms.ComposeOp([py_transforms.Decode(),
+        >>>                          py_transforms.RandomSharpness(0.5,1.5),
+        >>>                          py_transforms.ToTensor()])
+
+    """
+
+    def __init__(self, degrees=(0.1, 1.9)):
+        self.degrees = degrees
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (PIL Image): Image to be sharpness adjusted.
+
+        Returns:
+            img (PIL Image), Color adjusted image.
+        """
+
+        return util.random_sharpness(img, self.degrees)
+
+
+class AutoContrast:
+    """
+    Automatically maximize the contrast of the input PIL image.
+
+    Examples:
+        >>> py_transforms.ComposeOp([py_transforms.Decode(),
+        >>>                          py_transforms.AutoContrast(),
+        >>>                          py_transforms.ToTensor()])
+
+    """
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (PIL Image): Image to be augmented with AutoContrast.
+
+        Returns:
+            img (PIL Image), Augmented image.
+        """
+
+        return util.auto_contrast(img)
+
+
+class Invert:
+    """
+    Invert colors of input PIL image.
+
+    Examples:
+        >>> py_transforms.ComposeOp([py_transforms.Decode(),
+        >>>                          py_transforms.Invert(),
+        >>>                          py_transforms.ToTensor()])
+
+    """
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (PIL Image): Image to be color Inverted.
+
+        Returns:
+            img (PIL Image), Color inverted image.
+        """
+
+        return util.invert_color(img)
+
+
+class Equalize:
+    """
+    Equalize the histogram of input PIL image.
+
+    Examples:
+        >>> py_transforms.ComposeOp([py_transforms.Decode(),
+        >>>                          py_transforms.Equalize(),
+        >>>                          py_transforms.ToTensor()])
+
+    """
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (PIL Image): Image to be equalized.
+
+        Returns:
+            img (PIL Image), Equalized image.
+        """
+
+        return util.equalize(img)
+
+
+class UniformAugment:
+    """
+    Uniformly select and apply a number of transforms sequentially from
+    a list of transforms. Randomly assigns a probability to each transform for
+    each image to decide whether apply it or not.
+
+    Args:
+         transforms (list): List of transformations to be chosen from to apply.
+         num_ops (int, optional): number of transforms to sequentially apply (default=2).
+
+    Examples:
+        >>> transforms_list = [py_transforms.CenterCrop(64),
+        >>>                    py_transforms.RandomColor(),
+        >>>                    py_transforms.RandomSharpness(),
+        >>>                    py_transforms.RandomRotation(30)]
+        >>> py_transforms.ComposeOp([py_transforms.Decode(),
+        >>>                          py_transforms.UniformAugment(transforms_list),
+        >>>                          py_transforms.ToTensor()])
+    """
+
+    def __init__(self, transforms, num_ops=2):
+        self.transforms = transforms
+        self.num_ops = num_ops
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (PIL Image): Image to be applied transformation.
+
+        Returns:
+            img (PIL Image), Transformed image.
+        """
+        return util.uniform_augment(img, self.transforms.copy(), self.num_ops)

@@ -19,69 +19,13 @@
 #include <memory>
 
 #include "utils/graph_utils.h"
+#include "pre_activate/common/helper.h"
 #include "session/anf_runtime_algorithm.h"
 #include "session/kernel_graph.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kType32Len = 4;
-template <typename T>
-tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_ptr, const TypePtr &type_ptr,
-                                             size_t data_length) {
-  MS_EXCEPTION_IF_NULL(value_tuple_ptr);
-  MS_EXCEPTION_IF_NULL(type_ptr);
-  std::vector<T> values;
-  for (const auto &v : value_tuple_ptr->value()) {
-    MS_EXCEPTION_IF_NULL(v);
-    if (v->isa<Scalar>()) {
-      ScalarPtr scalar = v->cast<ScalarPtr>();
-      values.push_back(GetValue<T>(scalar));
-    } else {
-      MS_LOG(WARNING) << "The value " << v << "of tuple is not a scalar";
-      return nullptr;
-    }
-  }
-  std::vector<int> tensor_shape = {SizeToInt(values.size())};
-  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_ptr->type_id(), tensor_shape);
-  MS_EXCEPTION_IF_NULL(tensor);
-  tensor::DeviceInfo device_info{kOpFormat_DEFAULT, type_ptr};
-  tensor->set_device_info(device_info);
-  auto data_ptr = tensor->data_c(true);
-  MS_EXCEPTION_IF_NULL(data_ptr);
-  auto elem_num = values.size() * data_length;
-  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(tensor->data().nbytes()), values.data(), elem_num);
-  if (ret_code != 0) {
-    MS_LOG(EXCEPTION) << "Failed to copy data into Tensor.";
-  }
-  return tensor;
-}
-
-tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
-  MS_EXCEPTION_IF_NULL(value_tuple);
-  tensor::TensorPtr tensor = nullptr;
-  ValuePtr v = *(value_tuple->value().begin());
-  MS_EXCEPTION_IF_NULL(v);
-  // Currently we only deal with the scalar tuple
-  if (!v->isa<Scalar>()) {
-    MS_LOG(WARNING) << "The value " << v << "of tuple is not a scalar";
-    return nullptr;
-  }
-  ScalarPtr scalar = v->cast<ScalarPtr>();
-  MS_EXCEPTION_IF_NULL(scalar);
-  if (scalar->isa<IntergerImm>()) {
-    tensor = CreateTensorWithValueTuple<int>(value_tuple, kInt32, kType32Len);
-  } else if (scalar->isa<FloatImm>()) {
-    tensor = CreateTensorWithValueTuple<float>(value_tuple, kFloat32, kType32Len);
-  } else {
-    auto type = scalar->type();
-    auto type_str = (type == nullptr) ? "nullptr" : type->ToString();
-    MS_LOG(ERROR) << "Invalid scalar type: " << type_str;
-    return nullptr;
-  }
-  return tensor;
-}
-
 AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePtr &input_node) {
   MS_EXCEPTION_IF_NULL(input_node);
   auto value_node = input_node->cast<ValueNodePtr>();

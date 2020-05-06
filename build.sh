@@ -16,7 +16,6 @@
 
 set -e
 BASEPATH=$(cd "$(dirname $0)"; pwd)
-PROJECT_PATH="${BASEPATH}"
 CUDA_PATH=""
 CUDNN_PATH=""
 export BUILD_PATH="${BASEPATH}/build/"
@@ -24,34 +23,33 @@ export BUILD_PATH="${BASEPATH}/build/"
 usage()
 {
   echo "Usage:"
-  echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-s] [-b ge|cpu] [-m infer|train] \\"
-  echo "              [-a on|off] [-g on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
-  echo "              [-P on|off] [-z] [-M on|off] [-V 9.2|10.1] [-I] [-K]"
+  echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
+  echo "              [-a on|off] [-Q on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|d|cpu] \\"
+  echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1] [-I] [-K]"
   echo ""
   echo "Options:"
   echo "    -d Debug mode"
   echo "    -r Release mode, default mode"
   echo "    -v Display build command"
-  echo "    -c Enable code coverage switch, default off"
-  echo "    -t Run testcases switch, default on"
+  echo "    -c Enable code coverage, default off"
+  echo "    -t Run testcases, default on"
   echo "    -g Use glog to output log, default on"
   echo "    -h Print usage"
-  echo "    -s Install or setup"
   echo "    -b Select other backend, available: \\"
-  echo "           ge:graph engine, cpu"
-  echo "    -m Select mode, available: infer, train, default is infer "
+  echo "           ge:graph engine"
+  echo "    -m Select graph engine backend mode, available: infer, train, default is infer"
   echo "    -a Enable ASAN, default off"
-  echo "    -p Enable pipeline profile, default off"
+  echo "    -p Enable pipeline profile, print to stdout, default off"
+  echo "    -R Enable pipeline profile, record to json, default off"
   echo "    -i Enable increment building, default off"
   echo "    -L Enable load ANF-IR as input of 'infer', default off"
-  echo "    -R Enable the time_line record, default off"
   echo "    -j[n] Set the threads when building (Default: -j8)"
   echo "    -e Use gpu, d or cpu"
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
-  echo "    -Q Enable dump end to end, default off"
+  echo "    -Q Enable dump memory, default off"
   echo "    -D Enable dumping of function graph ir, default on"
-  echo "    -z Compile dataset & mindrecord, default off"
-  echo "    -M Enable MPI and NCCL for GPU training, default off"
+  echo "    -z Compile dataset & mindrecord, default on"
+  echo "    -M Enable MPI and NCCL for GPU training, default on"
   echo "    -V Specify the minimum required cuda version, default CUDA 9.2"
   echo "    -I Compile predict, default off"
   echo "    -K Compile with AKG, default off"
@@ -77,7 +75,6 @@ checkopts()
   VERBOSE=""
   ENABLE_COVERAGE="off"
   RUN_TESTCASES="off"
-  EXECUTE_SETUP="off"
   ENABLE_BACKEND=""
   TRAIN_MODE="INFER"
   ENABLE_ASAN="off"
@@ -88,8 +85,8 @@ checkopts()
   ENABLE_DUMP2PROTO="on"
   ENABLE_DUMPE2E="off"
   ENABLE_DUMP_IR="on"
-  COMPILE_MINDDATA="off"
-  ENABLE_MPI="off"
+  COMPILE_MINDDATA="on"
+  ENABLE_MPI="on"
   CUDA_VERSION="9.2"
   COMPILE_PREDICT="off"
   USE_GLOG="on"
@@ -129,9 +126,6 @@ checkopts()
         usage
         exit 0
         ;;
-      s)
-        EXECUTE_SETUP="on"
-        ;;
       b)
         if [[ "X$OPTARG" != "Xge" && "X$OPTARG" != "Xcpu" ]]; then
           echo "Invalid value ${OPTARG} for option -b"
@@ -139,9 +133,6 @@ checkopts()
           exit 1
         fi
         ENABLE_BACKEND=$(echo "$OPTARG" | tr '[a-z]' '[A-Z]')
-        if [[ "X$ENABLE_BACKEND" == "XGE" ]]; then
-          ENABLE_GE="on"
-        fi
         if [[ "X$ENABLE_BACKEND" != "XCPU" ]]; then
           ENABLE_CPU="on"
         fi
@@ -177,7 +168,7 @@ checkopts()
         if [[ "X$OPTARG" == "Xgpu" ]]; then
           ENABLE_GPU="on"
           ENABLE_CPU="on"
-        elif [[ "X$OPTARG" == "Xd" ]]; then
+        elif [[ "X$OPTARG" == "Xd" || "X$OPTARG" == "Xascend" ]]; then
           ENABLE_D="on"
           ENABLE_CPU="on"
         elif [[ "X$OPTARG" == "Xcpu" ]]; then
@@ -216,7 +207,17 @@ checkopts()
         echo "enable dump function graph ir"
         ;;
       z)
-        COMPILE_MINDDATA="on"
+        eval ARG=\$\{$OPTIND\}
+        if [[ -n $ARG && $ARG != -* ]]; then
+          OPTARG=$ARG
+          check_on_off $OPTARG z
+          OPTIND=$((OPTIND + 1))
+        else
+          OPTARG=""
+        fi
+        if [[ "X$OPTARG" == "Xoff" ]]; then
+          COMPILE_MINDDATA="off"
+        fi
         ;;
       I)
         COMPILE_PREDICT="on"
@@ -287,7 +288,7 @@ build_mindspore()
     if [[ "X$ENABLE_DUMPE2E" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_E2E=ON"
     fi
-    CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_IR=${ENABLE_DUMP_IR^^}"
+    CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_DUMP_IR=${ENABLE_DUMP_IR}"
     if [[ "X$ENABLE_MPI" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_MPI=ON"
     fi
@@ -313,10 +314,10 @@ build_mindspore()
     if [[ "X$INC_BUILD" = "Xoff" ]]; then
       cmake ${CMAKE_ARGS} ../..
     fi
-    make ${VERBOSE} -j$THREAD_NUM
-    if [[ "X$EXECUTE_SETUP" = "Xon" ]]; then
-      make install
+    if [[ -n "$VERBOSE" ]]; then
+      CMAKE_VERBOSE="--verbose"
     fi
+    cmake --build . --target package ${CMAKE_VERBOSE} -j$THREAD_NUM
     echo "success to build mindspore project!"
 }
 
@@ -432,9 +433,9 @@ build_predict()
 
     cd "${BASEPATH}/predict/output/"
     if [[ "$PREDICT_PLATFORM" == "x86_64" ]]; then
-      tar -cf MSPredict-0.1.0-linux_x86_64.tar.gz include/ lib/ --warning=no-file-changed
+      tar -cf MSPredict-0.2.0-linux_x86_64.tar.gz include/ lib/ --warning=no-file-changed
     elif [[ "$PREDICT_PLATFORM" == "arm64" ]]; then
-      tar -cf MSPredict-0.1.0-linux_aarch64.tar.gz include/ lib/ --warning=no-file-changed
+      tar -cf MSPredict-0.2.0-linux_aarch64.tar.gz include/ lib/ --warning=no-file-changed
     fi
     echo "success to build predict project!"
 }
@@ -447,22 +448,7 @@ else
     build_mindspore
 fi
 
-if [[ "X$INC_BUILD" = "Xoff" ]]; then
-    if [[ "X$ENABLE_GE" = "Xon" ]]; then
-        bash "${PROJECT_PATH}/package.sh" ge
-    elif [[ "X$ENABLE_GPU" = "Xon" ]]; then
-        bash "${PROJECT_PATH}/package.sh" ms gpu
-    elif [[ "X$ENABLE_D" = "Xon" ]] || [[ "X$ENABLE_CPU" = "Xon" ]]; then
-        bash "${PROJECT_PATH}/package.sh" ms
-    else
-        bash "${PROJECT_PATH}/package.sh" debug
-    fi
-fi
-
 cp -rf ${BUILD_PATH}/package/mindspore/lib ${BUILD_PATH}/../mindspore
 cp -rf ${BUILD_PATH}/package/mindspore/*.so ${BUILD_PATH}/../mindspore
 
-if [[ -d "${BUILD_PATH}/package/build" ]]; then
-    rm -rf "${BUILD_PATH}/package/build"
-fi
 echo "---------------- mindspore: build end   ----------------"

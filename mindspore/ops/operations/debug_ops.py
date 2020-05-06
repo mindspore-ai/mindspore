@@ -14,6 +14,7 @@
 # ============================================================================
 
 """debug_ops"""
+from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
 from ..primitive import Primitive, prim_attr_register, PrimitiveWithInfer
 
@@ -44,6 +45,9 @@ class ScalarSummary(Primitive):
     def __init__(self):
         """init"""
 
+    def __call__(self, *args, **kwargs):
+        pass
+
 
 class ImageSummary(Primitive):
     """
@@ -69,6 +73,9 @@ class ImageSummary(Primitive):
     def __init__(self):
         """init"""
 
+    def __call__(self, *args, **kwargs):
+        pass
+
 
 class TensorSummary(Primitive):
     """
@@ -83,6 +90,36 @@ class TensorSummary(Primitive):
         >>>     def __init__(self,):
         >>>         super(SummaryDemo, self).__init__()
         >>>         self.summary = P.TensorSummary()
+        >>>         self.add = P.TensorAdd()
+        >>>
+        >>>     def construct(self, x, y):
+        >>>         x = self.add(x, y)
+        >>>         name = "x"
+        >>>         self.summary(name, x)
+        >>>         return x
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init"""
+
+    def __call__(self, *args, **kwargs):
+        pass
+
+
+class HistogramSummary(Primitive):
+    """
+    Output tensor to protocol buffer through histogram summary operator.
+
+    Inputs:
+        - **name** (str) - The name of the input variable.
+        - **value** (Tensor) - The value of tensor, and the rank of tensor should be greater than 0.
+
+    Examples:
+        >>> class SummaryDemo(nn.Cell):
+        >>>     def __init__(self,):
+        >>>         super(SummaryDemo, self).__init__()
+        >>>         self.summary = P.HistogramSummary()
         >>>         self.add = P.TensorAdd()
         >>>
         >>>     def construct(self, x, y):
@@ -122,6 +159,7 @@ class InsertGradientOf(PrimitiveWithInfer):
         >>>     return ret
         >>>
         >>> clip = P.InsertGradientOf(clip_gradient)
+        >>> grad_all = C.GradOperation('get_all', get_all=True)
         >>> def InsertGradientOfClipDemo():
         >>>     def clip_test(x, y):
         >>>         x = clip(x)
@@ -134,7 +172,7 @@ class InsertGradientOf(PrimitiveWithInfer):
         >>>         return clip_test(x, y)
         >>>
         >>>     def fd(x, y):
-        >>>         return C.grad_all(clip_test)(x, y)
+        >>>         return grad_all(clip_test)(x, y)
         >>>
         >>>     print("forward: ", f(1.1, 0.1))
         >>>     print("clip_gradient:", fd(1.1, 0.1))
@@ -157,19 +195,27 @@ class InsertGradientOf(PrimitiveWithInfer):
 
 class Print(PrimitiveWithInfer):
     """
-    Output tensor to stdout.
+    Output tensor or string to stdout.
+
+    Note:
+        The print operation cannot support the following cases currently.
+
+        1. The type of tensor is float64 or bool.
+
+        2. The data of tensor is a scalar type.
 
     Inputs:
-        - **input_x** (Tensor) - The graph node to attach to.
+        - **input_x** (Union[Tensor, str]) - The graph node to attach to. The input supports
+          multiple strings and tensors which are separated by ','.
 
     Examples:
         >>> class PrintDemo(nn.Cell):
-        >>>     def __init__(self,):
+        >>>     def __init__(self):
         >>>         super(PrintDemo, self).__init__()
         >>>         self.print = P.Print()
         >>>
-        >>>     def construct(self, x):
-        >>>         self.print(x)
+        >>>     def construct(self, x, y):
+        >>>         self.print('Print Tensor x and Tensor y:', x, y)
         >>>         return x
     """
 
@@ -177,8 +223,14 @@ class Print(PrimitiveWithInfer):
     def __init__(self):
         pass
 
+    def __call__(self, *args):
+        for arg in args:
+            print(arg)
+
     def infer_shape(self, *inputs):
         return [1]
 
     def infer_dtype(self, *inputs):
+        for dtype in inputs:
+            validator.check_subclass("input", dtype, (mstype.tensor, mstype.string), self.name)
         return mstype.int32

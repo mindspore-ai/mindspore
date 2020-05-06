@@ -24,6 +24,9 @@
 #include "utils/graph_utils.h"
 #include "session/session_factory.h"
 #include "common/utils.h"
+#ifdef ENABLE_GE
+#include "utils/callbacks_ge.h"
+#endif
 
 namespace mindspore {
 namespace compile {
@@ -133,11 +136,71 @@ void MsBackend::SetSwitchGraph() {
         MS_LOG(EXCEPTION) << "cond not a anf node:" << curr_switch_.ToString();
       }
       MS_LOG(DEBUG) << "switch compile:" << cond_g << ", " << true_g << ", " << false_g;
-      sess_->SwitchCompile(cond_g, true_g, false_g);
+      sess_->SwitchCompile(cond_g, true_g, false_g, utils::cast<AnfNodePtr>(curr_switch_));
     }
     is_switch_call_ = false;
     MS_LOG(DEBUG) << "end SetSwitchGraph:" << curr_cond << ", " << is_switch_call_;
   }
+}
+
+// convert node from formal parameter to actual parameter,
+// and actual parameter is graph user's formal parameter.
+// get top while graph's parameter in recall while.
+AnfNodePtr MsBackend::ConvertGraphInput(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+  std::unordered_map<AnfNodePtr, size_t> params_index;
+  auto result = node;
+  auto graph = result->func_graph();
+  while (func_graph != graph) {
+    auto iter = graph_user_inputs_.find(graph);
+    if (iter == graph_user_inputs_.end()) {
+      break;
+    }
+
+    params_index.clear();
+    auto &params = graph->parameters();
+    for (size_t i = 0; i < params.size(); ++i) {
+      params_index[params[i]] = i;
+    }
+
+    graph = iter->second.first;
+    auto &inputs = iter->second.second;
+    result = inputs[params_index[result]];
+  }
+  return result;
+}
+
+void MsBackend::SetGraphUserInputs(const FuncGraphPtr &func_graph, const FuncGraphPtr &user,
+                                   const AnfNodePtrList &inputs) {
+  if (graph_user_inputs_.find(func_graph) != graph_user_inputs_.end()) {
+    return;
+  }
+  graph_user_inputs_[func_graph] = {user, inputs};
+}
+
+void MsBackend::RecallGraphInput(const FuncGraphPtr &func_graph, const VectorRef &args, const BaseRef &c) {
+  std::unordered_map<AnfNodePtr, size_t> params_index;
+  auto &params = func_graph->parameters();
+  for (size_t i = 0; i < params.size(); ++i) {
+    params_index[params[i]] = i;
+  }
+
+  // recall all child graphs in this while
+  auto &graph_inputs = graph_inputs_[c];
+  for (auto &iter : graph_inputs) {
+    auto &graph = iter.first;
+    auto &old_args = iter.second;
+    auto &result = graph_id_map_[graph];
+    auto &inputs = result.inputs;
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      auto input = ConvertGraphInput(func_graph, inputs[i]);
+      auto it = params_index.find(input);
+      if (it != params_index.end()) {
+        old_args[i] = args[it->second];
+      }
+    }
+    sess_->SetChildGraphInput(graph, old_args);
+  }
+  graph_inputs_.erase(c);
 }
 
 // compile set input output
@@ -147,13 +210,20 @@ VectorRef MsBackend::MsSimuRunGraph(const GraphId &g, const VectorRef &args) {
   sess_->SetChildGraphInput(g, args);
 
   if (is_switch_call_) {
-    bool curr_cond = simu_cond_map_[curr_switch_].curr_cond;
-    MS_LOG(DEBUG) << "switch call MsSimuRunGraph:" << curr_cond;
-    if (0 == simu_cond_map_[curr_switch_].cond_graph_map.count(curr_cond)) {
-      MS_LOG(DEBUG) << "switch call MsSimuRunGraph:" << curr_cond << ", " << g;
-      simu_cond_map_[curr_switch_].cond_graph_map[curr_cond] = g;
-      SetSwitchGraph();
+    if (!curr_switch_.is_null()) {
+      // push this {g, args} to all user while graph_inputs for nest while,
+      // when current condition recall over delete this cond in graph_inputs.
+      for (auto &iter : graph_inputs_) {
+        iter.second.push_back({g, args});
+      }
+      if (graph_inputs_.find(curr_switch_) == graph_inputs_.end()) {
+        graph_inputs_[curr_switch_].push_back({g, args});
+      }
     }
+    bool curr_cond = simu_cond_map_[curr_switch_].curr_cond;
+    MS_LOG(DEBUG) << "switch call MsSimuRunGraph:" << curr_cond << ", " << g;
+    simu_cond_map_[curr_switch_].cond_graph_map[curr_cond] = g;
+    SetSwitchGraph();
   }
 
   std::vector<BaseRef> outputs;
@@ -186,6 +256,12 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args) {
     } else if (utils::isa<PyObjectRef>(arg)) {
       auto value = utils::cast<PyObjectRef>(arg).object_;
       inputs.push_back(py::cast<tensor::TensorPtr>(value));
+    } else if (utils::isa<VectorRefPtr>(arg)) {
+      auto args_new = utils::cast<VectorRef>(arg);
+      (void)std::transform(args_new.begin(), args_new.end(), std::back_inserter(inputs),
+                           [](const BaseRef &v) { return utils::cast<tensor::TensorPtr>(v); });
+    } else {
+      MS_LOG(WARNING) << "Invalid input type.";
     }
   }
 
@@ -196,42 +272,17 @@ VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args) {
   return outputs;
 }
 
-void MsBackend::SetSimuCondFlag(const BaseRef &c, int flag) {
-  MS_LOG(DEBUG) << "while set cond :" << c.ToString() << ", " << simu_cond_map_.size();
-
-  if (simu_cond_map_.find(c) == simu_cond_map_.end()) {
-    MS_LOG(EXCEPTION) << "error c not find";
-  }
-  simu_cond_map_[c].flag = flag;
-}
-
-int MsBackend::GetSimuCondFlag(const BaseRef &c) {
-  BaseRef cond = c;
-  if (cond.is_null()) {
-    MS_LOG(DEBUG) << "get curr_switch";
-    cond = curr_switch_;
-  }
-  if (simu_cond_map_.find(cond) == simu_cond_map_.end()) {
-    MS_LOG(ERROR) << "error c not find";
-    return -1;
-  }
-  return simu_cond_map_[cond].flag;
-}
-
 SwitchCondStatus MsBackend::SetSimuCond(const BaseRef &c, bool value) {
   MS_LOG(DEBUG) << "set cond :" << c.ToString() << ", " << simu_cond_map_.size();
 
   CondGraph cond_graph;
   cond_graph.curr_cond = value;
   if (simu_cond_map_.find(c) == simu_cond_map_.end()) {
-    cond_graph.flag = 0;
     simu_cond_map_[c] = cond_graph;
   }
 
   if (simu_cond_map_[c].cond_graph_map.count(value)) {
-    if (value == true) {
-      return kCondAlreadyRun;
-    }
+    return kCondAlreadyRun;
   }
   simu_cond_map_[c].curr_cond = value;
   MS_LOG(DEBUG) << "end set cond ";

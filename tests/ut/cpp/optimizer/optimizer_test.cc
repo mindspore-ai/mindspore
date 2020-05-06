@@ -57,8 +57,7 @@ TEST_F(TestOptOptimizer, test_step_opt) {
                                                                   true);
   EXPECT_TRUE(optimizer.get() != nullptr);
 
-  abstract::AbstractBasePtrList args;
-  auto after = optimizer->step(before, args);
+  auto after = optimizer->step(before);
 
   draw::Draw("optimizer_test_expendJ_before.dot", before);
   draw::Draw("optimizer_test_expendJ_after.dot", after);

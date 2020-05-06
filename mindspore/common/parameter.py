@@ -14,8 +14,7 @@
 # ============================================================================
 
 """Parameter for cell."""
-from copy import copy
-import numpy as np
+from copy import copy, deepcopy
 from .initializer import initializer
 from .tensor import Tensor
 from .._checkparam import _check_str_by_regular
@@ -155,15 +154,36 @@ class Parameter:
     def data(self):
         return self.default_input
 
+    def __add__(self, other):
+        res = deepcopy(self)
+        res.default_input = res.default_input + other
+        return res
+
+    def __sub__(self, other):
+        res = deepcopy(self)
+        res.default_input = res.default_input - other
+        return res
+
+    def __mul__(self, other):
+        res = deepcopy(self)
+        res.default_input = res.default_input * other
+        return res
+
+    def __truediv__(self, other):
+        res = deepcopy(self)
+        res.default_input = res.default_input / other
+        return res
+
     def set_parameter_data(self, data):
-        if isinstance(data, (Tensor, list, int, float,
-                             np.float16, np.float32, np.int32, np.int16, np.ndarray)) and not isinstance(data, bool):
-            if isinstance(data, Tensor):
-                # make a copy of Tensor to init the parameter
-                data = Tensor(data.asnumpy().copy())
-            self.default_input = data
+        """Set `default_input` of current `Parameter`."""
+        if isinstance(data, bool):
+            raise ValueError('Parameter data can not be `bool`')
+        if isinstance(data, Tensor):
+            # make a copy of Tensor to init the parameter
+            data = Tensor(data.asnumpy().copy())
         else:
-            raise ValueError("Parameter data must be tensor or number.")
+            data = Tensor(data)
+        self.default_input = data
 
 
 class ParameterTuple(tuple):

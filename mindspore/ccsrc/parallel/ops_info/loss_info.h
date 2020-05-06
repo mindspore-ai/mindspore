@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_LOSS_INFO_H_
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_LOSS_INFO_H_
 
+#include <memory>
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
-#include <memory>
+
 #include "ir/value.h"
-#include "parallel/ops_info/operator_info.h"
 #include "parallel/ops_info/activation_info.h"
+#include "parallel/ops_info/operator_info.h"
 #include "parallel/strategy.h"
 
 namespace mindspore {
@@ -34,22 +34,20 @@ namespace parallel {
 // output_0 : [a],  output_1: [a, b]
 class SoftmaxCrossEntropyWithLogitsInfo : public OperatorInfo {
  public:
-  SoftmaxCrossEntropyWithLogitsInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-                                    const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs) {
-    softmax_loss_cost_ptr_ = std::make_shared<SoftmaxCrossEntropyWithLogitsCost>();
-  }
+  SoftmaxCrossEntropyWithLogitsInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                                    const PrimitiveAttrs &attrs)
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs,
+                     std::make_shared<SoftmaxCrossEntropyWithLogitsCost>(false)) {}
   ~SoftmaxCrossEntropyWithLogitsInfo() override = default;
-  Status Init(const StrategyPtr& strategy) override;
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status Init(const StrategyPtr &strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
 
   Status GenerateStrategies(int32_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return softmax_loss_cost_ptr_; }
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReComputeBatchSplitFlagList() override;
 
  protected:
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
   Status GetAttrs() override;
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
@@ -59,7 +57,6 @@ class SoftmaxCrossEntropyWithLogitsInfo : public OperatorInfo {
   // There are two outputs for SoftmaxCrossEntropyWithLogits, and outputs[1] is used for grad and overload
   // the InferAsLossDivisor.
   Status InferAsLossDivisor() override;
-  SoftmaxCrossEntropyWithLogitsCostPtr softmax_loss_cost_ptr_;
 
  private:
   int32_t axis_ = -1;  // default -1

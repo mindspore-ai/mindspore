@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status ConstructOperator::Init(const RankList& dev_list, const Shape& dev_matrix_shape) {
+Status ConstructOperator::Init(const RankList &dev_list, const Shape &dev_matrix_shape) {
   dev_size_ = dev_matrix_shape.size();
   dev_matrix_shape_ = dev_matrix_shape;
   dev_list_ = dev_list;
@@ -46,7 +46,7 @@ Status ConstructOperator::ReshapeOP(Shape shape) {
   return Status::SUCCESS;
 }
 
-Operator CreateStridedSliceOp(int32_t value, const Shape& begin, const Shape& end, const Shape& strides) {
+Operator CreateStridedSliceOp(int32_t value, const Shape &begin, const Shape &end, const Shape &strides) {
   ValuePtr attr_value = MakeValue(value);
   Attr attr_begin_mask = std::make_pair(BEGIN_MASK, attr_value);
   Attr attr_end_mask = std::make_pair(END_MASK, attr_value);
@@ -230,7 +230,7 @@ Status ConstructOperator::AlltoAllOP(Args args) {
   return Status::SUCCESS;
 }
 
-Status ConstructOperator::CreateGroupByDim(size_t axis, std::vector<Group>* group) {
+Status ConstructOperator::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
   MS_EXCEPTION_IF_NULL(group);
   CheckGlobalDeviceManager();
   MS_EXCEPTION_IF_NULL(g_device_manager);

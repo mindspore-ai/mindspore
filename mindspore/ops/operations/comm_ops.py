@@ -15,8 +15,9 @@
 
 """comm_ops"""
 
-from ..._checkparam import ParamValidator as validator
-from ...communication.management import get_rank, get_group_size, GlobalComm, get_group
+from ..._checkparam import Validator as validator
+from ..._checkparam import Rel
+from ...communication.management import get_rank, get_group_size, GlobalComm, _get_group
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register
 
@@ -44,7 +45,6 @@ class AllReduce(PrimitiveWithInfer):
 
     Note:
         The operation of AllReduce does not support "prod" currently.
-        The input of AllReduce does not support dtype "Bool".
         Tensor must have same shape and format in all processes participating in the collective.
 
     Args:
@@ -65,12 +65,13 @@ class AllReduce(PrimitiveWithInfer):
         The contents depend on the specified operation.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
+        >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
-        >>>         self.allreduce_sum = AllReduce(ReduceOp.SUM, group="nccl_world_group")
+        >>>         self.allreduce_sum = P.AllReduce(ReduceOp.SUM, group="nccl_world_group")
         >>>
         >>>     def construct(self, x):
         >>>         return self.allreduce_sum(x)
@@ -86,10 +87,10 @@ class AllReduce(PrimitiveWithInfer):
             raise TypeError("The operation of AllReduce should be str.")
         if op == ReduceOp.PROD:
             raise RuntimeError("The operation of AllReduce 'prod' is not supported yet.")
-        if not isinstance(get_group(group), str):
+        if not isinstance(_get_group(group), str):
             raise TypeError("The group of AllReduce should be str.")
         self.op = op
-        self.add_prim_attr('group', get_group(group))
+        self.add_prim_attr('group', _get_group(group))
         self.add_prim_attr('fusion', 0)
 
     def vm_impl(self, x):
@@ -101,7 +102,7 @@ class AllReduce(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        if x_dtype == mstype.bool_:
+        if x_dtype.element_type() == mstype.bool_:
             raise TypeError("AllReduce does not support 'Bool' as the dtype of input!")
         return x_dtype
 
@@ -129,12 +130,13 @@ class AllGather(PrimitiveWithInfer):
         then the shape of output is :math:`(N, x_1, x_2, ..., x_R)`.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
+        >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
-        >>>         self.allgather = AllGather(group="nccl_world_group")
+        >>>         self.allgather = P.AllGather(group="nccl_world_group")
         >>>
         >>>     def construct(self, x):
         >>>         return self.allgather(x)
@@ -146,20 +148,20 @@ class AllGather(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
-        if not isinstance(get_group(group), str):
-            raise TypeError("The group of AllGather should be str.")
-        self.rank = get_rank(get_group(group))
-        self.rank_size = get_group_size(get_group(group))
-        if self.rank >= self.rank_size:
-            raise ValueError("The rank of AllGather should be less than the rank_size.")
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.rank = get_rank(_get_group(group))
+        self.rank_size = get_group_size(_get_group(group))
+        validator.check('rank', self.rank, 'rank_size', self.rank_size, Rel.LT, self.name)
         self.add_prim_attr('rank_size', self.rank_size)
-        self.add_prim_attr('group', get_group(group))
+        self.add_prim_attr('group', _get_group(group))
 
     def infer_shape(self, x_shape):
         x_shape[0] = x_shape[0] * self.rank_size
         return x_shape
 
     def infer_dtype(self, x_dtype):
+        if x_dtype.element_type() == mstype.bool_:
+            raise TypeError(f"{self.name} does not support 'Bool' as the dtype of input!")
         return x_dtype
 
     def __call__(self, tensor):
@@ -173,6 +175,7 @@ class ReduceScatter(PrimitiveWithInfer):
     Note:
         The back propagation of the op is not surported yet. Stay tuned for more.
         Tensor must have the same shape and format in all processes participating in the collective.
+
     Args:
         op (str): Specifies an operation used for element-wise reductions,
                   like sum, max, avg. Default: ReduceOp.SUM.
@@ -183,12 +186,13 @@ class ReduceScatter(PrimitiveWithInfer):
         ValueError: If the first dimension of input can not be divided by rank size.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
+        >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
-        >>>         self.reducescatter = ReduceScatter(ReduceOp.SUM, group="nccl_world_group")
+        >>>         self.reducescatter = P.ReduceScatter(ReduceOp.SUM, group="nccl_world_group")
         >>>
         >>>     def construct(self, x):
         >>>         return self.reducescatter(x)
@@ -200,22 +204,22 @@ class ReduceScatter(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
-        if not isinstance(op, type(ReduceOp.SUM)):
-            raise TypeError("The operation of ReduceScatter should be {}.".format(type(ReduceOp.SUM)))
-        if not isinstance(get_group(group), str):
-            raise TypeError("The group of ReduceScatter should be str.")
+        validator.check_value_type('op', op, (type(ReduceOp.SUM),), self.name)
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.op = op
-        self.rank_size = get_group_size(get_group(group))
+        self.rank_size = get_group_size(_get_group(group))
         self.add_prim_attr('rank_size', self.rank_size)
-        self.add_prim_attr('group', get_group(group))
+        self.add_prim_attr('group', _get_group(group))
 
     def infer_shape(self, x_shape):
         if x_shape[0] % self.rank_size != 0:
-            raise ValueError("The first dimension of x should be divided by rank_size.")
+            raise ValueError(f"For '{self.name}' the first dimension of x should be divided by rank_size.")
         x_shape[0] = int(x_shape[0]/self.rank_size)
         return x_shape
 
     def infer_dtype(self, x_dtype):
+        if x_dtype.element_type() == mstype.bool_:
+            raise TypeError(f"{self.name} does not support 'Bool' as the dtype of input!")
         return x_dtype
 
     def __call__(self, tensor):
@@ -245,12 +249,13 @@ class Broadcast(PrimitiveWithInfer):
         TypeError: If root_rank is not a integer or group is not a string.
 
     Examples:
-        >>> from mindspore.communication.management import init
+        >>> from mindspore.communication import init
+        >>> import mindspore.ops.operations as P
         >>> init('nccl')
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
         >>>         super(Net, self).__init__()
-        >>>         self.broadcast = Broadcast(1)
+        >>>         self.broadcast = P.Broadcast(1)
         >>>
         >>>     def construct(self, x):
         >>>         return self.broadcast((x,))
@@ -262,16 +267,19 @@ class Broadcast(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, root_rank, group=GlobalComm.WORLD_COMM_GROUP):
-        if not isinstance(root_rank, int):
-            raise TypeError("The root_rank of Broadcast should be int.")
-        if not isinstance(get_group(group), str):
-            raise TypeError("The group of Broadcast should be str.")
-        self.add_prim_attr('group', get_group(group))
+        validator.check_value_type('root_rank', root_rank, (int,), self.name)
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.add_prim_attr('group', _get_group(group))
 
     def infer_shape(self, x_shape):
         return x_shape
 
     def infer_dtype(self, x_dtype):
+        if not isinstance(x_dtype, tuple):
+            raise TypeError(f"{self.name}'s input should be a tuple!")
+        for _ele in x_dtype:
+            if _ele.element_type() == mstype.bool_:
+                raise TypeError(f"{self.name} does not support 'Bool' as the dtype of input!")
         return x_dtype
 
 
@@ -301,12 +309,11 @@ class _AlltoAll(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, split_count, split_dim, concat_dim, group=GlobalComm.WORLD_COMM_GROUP):
         """init AlltoAll"""
-        if not isinstance(get_group(group), str):
-            raise TypeError("The group of AllGather should be str.")
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
         self.split_count = split_count
         self.split_dim = split_dim
         self.concat_dim = concat_dim
-        self.add_prim_attr('group', get_group(group))
+        self.add_prim_attr('group', _get_group(group))
 
     def infer_shape(self, x_shape):
         x_shape[self.concat_dim] = x_shape[self.concat_dim] * self.split_count
@@ -314,6 +321,8 @@ class _AlltoAll(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
+        if x_dtype.element_type() == mstype.bool_:
+            raise TypeError(f"{self.name} does not support 'Bool' as the dtype of input!")
         return x_dtype
 
     def __call__(self, tensor):
@@ -408,6 +417,6 @@ class _GetTensorSlice(PrimitiveWithInfer):
 
     def infer_value(self, x, dev_mat, tensor_map):
         from mindspore.parallel._tensor import _load_tensor
-        validator.check_type("dev_mat", dev_mat, [tuple])
-        validator.check_type("tensor_map", tensor_map, [tuple])
+        validator.check_value_type("dev_mat", dev_mat, [tuple], self.name)
+        validator.check_value_type("tensor_map", tensor_map, [tuple], self.name)
         return _load_tensor(x, dev_mat, tensor_map)

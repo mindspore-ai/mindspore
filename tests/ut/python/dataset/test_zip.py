@@ -48,7 +48,7 @@ def test_zip_01():
     save_and_check_dict(dataz, parameters, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def skip_test_zip_02():
+def test_zip_02():
     """
     Test zip: zip 2 datasets, #rows-data1 < #rows-data2, #cols-data1 == #cols-data2
     """
@@ -63,7 +63,7 @@ def skip_test_zip_02():
     save_and_check_dict(dataz, parameters, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def skip_test_zip_03():
+def test_zip_03():
     """
     Test zip: zip 2 datasets, #rows-data1 > #rows-data2, #cols-data1 > #cols-data2
     """
@@ -78,7 +78,7 @@ def skip_test_zip_03():
     save_and_check_dict(dataz, parameters, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def skip_test_zip_04():
+def test_zip_04():
     """
     Test zip: zip >2 datasets
     """

@@ -55,8 +55,9 @@ class ParallelBuildManager {
   bool WaitOne(int *task_id, char **task_result) const;
   bool IsAllTaskFinish() const;
   std::pair<int32_t, KernelModPtr> TaskFinishProcess(int32_t task_id, bool set_kernel_mod = true);
-  KernelModPtr GenKernelMod(const string &json_name, const string &processor, const vector<size_t> &input_size_list,
-                            const vector<size_t> &output_size_list, const KernelPackPtr &kernel_pack) const;
+  KernelModPtr GenKernelMod(const string &json_name, const string &processor,
+                            const std::vector<size_t> &input_size_list, const std::vector<size_t> &output_size_list,
+                            const KernelPackPtr &kernel_pack) const;
 
  private:
   PyObject *tbe_parallel_compiler_;

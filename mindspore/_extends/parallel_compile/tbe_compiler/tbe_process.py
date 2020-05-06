@@ -19,10 +19,8 @@ import subprocess
 import sys
 import os
 import json
-from .common import check_kernel_info, get_args, get_build_in_impl_path
-
-build_in_impl_path = get_build_in_impl_path()
-
+from .common import check_kernel_info, TBEException
+from .helper import _op_select_format, _check_supported
 
 def create_tbe_parallel_compiler():
     """
@@ -41,40 +39,17 @@ def op_select_format(op_json: str):
         op_json (str): json string of the op
 
     Returns:
-        op supported format
+        op supported format or exception message
     """
     ret = ""
-    kernel_info = json.loads(op_json)
-    check_kernel_info(kernel_info)
+    try:
+        kernel_info = json.loads(op_json)
+        check_kernel_info(kernel_info)
+        ret = _op_select_format(kernel_info)
 
-    # import module
-    op_name = kernel_info['op_info']['name']
-    impl_path = build_in_impl_path
-    custom_flag = False
-    if 'impl_path' in kernel_info and kernel_info['impl_path'] is not None:
-        op_impl_path = os.path.realpath(kernel_info['impl_path'])
-        if os.path.isfile(op_impl_path):
-            path, file_name = os.path.split(op_impl_path)
-            op_name, _ = os.path.splitext(file_name)
-            impl_path = path
-            custom_flag = True
-    sys.path.insert(0, impl_path)
+    except TBEException as e:
+        return "TBEException: " + str(e)
 
-    if custom_flag:
-        op_module = __import__(op_name)
-    else:
-        op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
-    # get function
-    if not hasattr(op_module, "op_select_format"):
-        return ""
-    op_func = getattr(op_module, "op_select_format", None)
-
-    # call function
-    inputs_args = get_args(kernel_info['op_info'], 'inputs')
-    outputs_args = get_args(kernel_info['op_info'], 'outputs')
-    attrs_args = get_args(kernel_info['op_info'], 'attrs')
-    kernel_name = kernel_info['op_info']['kernel_name']
-    ret = op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
     return ret
 
 
@@ -86,40 +61,18 @@ def check_supported(op_json: str):
         op_json (str): json string of the op
 
     Returns:
-        true or false
+        bool: check result, true or false
+        str: exception message when catch an Exception
     """
     ret = ""
-    kernel_info = json.loads(op_json)
-    check_kernel_info(kernel_info)
+    try:
+        kernel_info = json.loads(op_json)
+        check_kernel_info(kernel_info)
+        ret = _check_supported(kernel_info)
 
-    # import module
-    op_name = kernel_info['op_info']['name']
-    impl_path = build_in_impl_path
-    custom_flag = False
-    if 'impl_path' in kernel_info and kernel_info['impl_path'] is not None:
-        op_impl_path = os.path.realpath(kernel_info['impl_path'])
-        if os.path.isfile(op_impl_path):
-            path, file_name = os.path.split(op_impl_path)
-            op_name, _ = os.path.splitext(file_name)
-            impl_path = path
-            custom_flag = True
-    sys.path.insert(0, impl_path)
+    except TBEException as e:
+        return "TBEException: " + str(e)
 
-    if custom_flag:
-        op_module = __import__(op_name)
-    else:
-        op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
-    # get function
-    if not hasattr(op_module, "check_supported"):
-        return ""
-    op_func = getattr(op_module, "check_supported", None)
-
-    # call function
-    inputs_args = get_args(kernel_info['op_info'], 'inputs')
-    outputs_args = get_args(kernel_info['op_info'], 'outputs')
-    attrs_args = get_args(kernel_info['op_info'], 'attrs')
-    kernel_name = kernel_info['op_info']['kernel_name']
-    ret = op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
     return ret
 
 
@@ -149,12 +102,12 @@ class CompilerPool:
     """compiler pool"""
 
     def __init__(self):
-        processes = multiprocessing.cpu_count()
+        self.__processe_num = multiprocessing.cpu_count()
         # max_processes_num: Set the maximum number of concurrent processes for compiler
         max_processes_num = 16
-        if processes > max_processes_num:
-            processes = max_processes_num
-        self.__pool = multiprocessing.Pool(processes=processes)
+        if self.__processe_num > max_processes_num:
+            self.__processe_num = max_processes_num
+        self.__pool = None
         self.__next_task_id = 1
         self.__running_tasks = []
 
@@ -165,11 +118,10 @@ class CompilerPool:
             del self.__pool
 
     def exit(self):
-        return
-        # self.__pool.terminate()
-        # self.__pool.join()
-        # if self.__pool is not None:
-        #     del self.__pool
+        if self.__pool is not None:
+            self.__pool.terminate()
+            self.__pool.join()
+            del self.__pool
 
     def start_compile_op(self, op_json):
         """
@@ -183,6 +135,8 @@ class CompilerPool:
         """
         task_id = self.__next_task_id
         self.__next_task_id = self.__next_task_id + 1
+        if self.__pool is None:
+            self.__pool = multiprocessing.Pool(processes=self.__processe_num)
         task_future = self.__pool.apply_async(func=run_compiler, args=(op_json,))
         self.__running_tasks.append((task_id, task_future))
         return task_id

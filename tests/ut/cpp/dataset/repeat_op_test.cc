@@ -33,18 +33,29 @@ TEST_F(MindDataTestrepeat_op, Testrepeat_opFuntions) {
   auto my_tree = std::make_shared<ExecutionTree>();
 
   std::shared_ptr<DatasetOp> parent_op = std::make_shared<RepeatOp>(32);
-
-  std::shared_ptr<DatasetOp> leaf_op = std::make_shared<RepeatOp>(16);
+  std::string dataset_path;
+  dataset_path = datasets_root_path_ + "/testTFTestAllTypes/test.data";
+// TFReaderOp
+  std::shared_ptr<TFReaderOp> my_tfreader_op;
+  TFReaderOp::Builder builder;
+  builder.SetDatasetFilesList({dataset_path})
+    .SetRowsPerBuffer(16)
+    .SetWorkerConnectorSize(16)
+    .SetNumWorkers(16);
+  Status rc= builder.Build(&my_tfreader_op);
+  ASSERT_TRUE(rc.IsOk());
+  rc = my_tree->AssociateNode(my_tfreader_op);
+  ASSERT_TRUE(rc.IsOk());
   my_tree->AssociateNode(parent_op);
-  my_tree->AssociateNode(leaf_op);
   ASSERT_NE(parent_op, nullptr);
-  ASSERT_NE(leaf_op, nullptr);
-  parent_op->AddChild(std::move(leaf_op));
-  parent_op->Print(std::cout, false);
-  parent_op->PrepareNodeAction();
+  ASSERT_NE(my_tfreader_op, nullptr);
+  parent_op->AddChild(std::move(my_tfreader_op));
+  MS_LOG(INFO) << parent_op;
+  my_tree->Prepare();
+
   RepeatOp RepeatOpOp();
 
   std::shared_ptr<RepeatOp> repeat_op;
-  Status rc = RepeatOp::Builder(3).Build(&repeat_op);
+  rc = RepeatOp::Builder(3).Build(&repeat_op);
   ASSERT_NE(repeat_op, nullptr);
 }

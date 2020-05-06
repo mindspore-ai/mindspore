@@ -25,20 +25,14 @@
 #include "pipeline/parse/data_converter.h"
 #include "operator/ops.h"
 #include "utils/graph_utils.h"
-#include "transform/convert.h"
 #include "optimizer/ad/dfunctor.h"
 #include "vm/segment_runner.h"
-#include "utils/context/ms_context.h"
-#include "transform/df_graph_manager.h"
-#include "device/kernel_runtime_manager.h"
 
 namespace mindspore {
 // namespace to support opmap definition
 namespace pipeline {
 
-using MethodMap = std::unordered_map<int, std::unordered_map<std::string, Any>>;
-
-MethodMap& GetMethodMap() {
+MethodMap &GetMethodMap() {
   static MethodMap method_map = {{kObjectTypeString,
                                   {
                                     {"__bool__", std::string("str_bool")}  // C.str_bool
@@ -184,7 +178,7 @@ MethodMap& GetMethodMap() {
   return method_map;
 }
 
-Resource::Resource(const py::object& obj)
+Resource::Resource(const py::object &obj)
     : engine_(std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager_)),
       input_(obj),
       is_cleaned_(false) {}
@@ -195,7 +189,7 @@ Resource::~Resource() {
   // If exit normally, these global variables will be cleaned
   // in Resource::Clean call by MsPipeline::Compile, but if exit with MS_LOGEXCEPTION,
   // these global variables may not being cleaned, it may
-  // cause segmentfault when free python object inside these global varaibles
+  // cause segmentfault when free python object inside these global variables
   // after python interpreter got freed, so these global variables
   // are cleaned here.
   // So if exit normally, these global variable will be cleaned twice,
@@ -203,7 +197,7 @@ Resource::~Resource() {
   if (!is_cleaned_) {
     try {
       Clean();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Exception when cleaning resource. Error info " << e.what();
     } catch (...) {
       MS_LOG(ERROR) << "Exception when cleaning resource.";
@@ -211,9 +205,9 @@ Resource::~Resource() {
   }
 }
 
-bool Resource::IsTypeInMethodMap(const TypeId& type) {
+bool Resource::IsTypeInMethodMap(const TypeId &type) {
   TypeId type_id = NormalizeTypeId(type);
-  const MethodMap& method_map = GetMethodMap();
+  const MethodMap &method_map = GetMethodMap();
   auto iter = method_map.find(static_cast<int>(type_id));
   if (iter != method_map.end()) {
     return true;
@@ -221,9 +215,9 @@ bool Resource::IsTypeInMethodMap(const TypeId& type) {
   return false;
 }
 
-Any Resource::GetMethodPtr(const TypeId& type, const std::string& name) {
+Any Resource::GetMethodPtr(const TypeId &type, const std::string &name) {
   TypeId type_id = NormalizeTypeId(type);
-  const MethodMap& method_map = GetMethodMap();
+  const MethodMap &method_map = GetMethodMap();
   auto iter = method_map.find(static_cast<int>(type_id));
   if (iter == method_map.end()) {
     MS_LOG(WARNING) << "Object type: " << type_id << " not in the method_map";
@@ -254,29 +248,6 @@ void Resource::Clean() {
   parse::CleanDataClassToClassMap();
   trace::ClearTraceStack();
   is_cleaned_ = true;
-}
-
-void ReleaseGeTsd() {
-  auto context_ptr = MsContext::GetInstance();
-  if (context_ptr != nullptr) {
-    (void)context_ptr->FinalizeGe(true);
-    (void)context_ptr->CloseTsd(true);
-  }
-}
-
-void ClearResAtexit() {
-  MS_LOG(DEBUG) << "pipeline clear all resource";
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-  transform::DfGraphManager::GetInstance().ClearGraph();
-  ad::g_k_prims.clear();
-
-  abstract::ClearPrimEvaluatorMap();
-  compile::ClearConvertCache();
-  transform::DfGraphConvertor::get_adpt_map().clear();
-  pipeline::GetMethodMap().clear();
-  pipeline::ExecutorPy::ClearRes();
-
-  ReleaseGeTsd();
 }
 }  // namespace pipeline
 }  // namespace mindspore

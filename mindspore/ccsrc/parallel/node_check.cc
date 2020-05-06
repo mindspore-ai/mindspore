@@ -16,8 +16,8 @@
 
 #include "parallel/node_check.h"
 
-#include <string>
 #include <set>
+#include <string>
 
 #include "parallel/ops_info/ops_utils.h"
 
@@ -66,11 +66,13 @@ const std::set<std::string> BLACK_LIST = {TUPLE_GETITEM,
                                           SCALARSUMMARY,
                                           IMAGESUMMARY,
                                           TENSORSUMMARY,
+                                          HISTOGRAMSUMMARY,
                                           COL2IMV1,
                                           RESOLVE,
                                           BROADCASTGRADIENTARGS,
                                           INVERTPERMUTATION,
                                           CONTROLDEPEND,
+                                          DROPOUT_GEN_MASK,
                                           EMBED,
                                           CREATINSTANCE,
                                           ZEROSLIKETENSOR,
@@ -78,7 +80,7 @@ const std::set<std::string> BLACK_LIST = {TUPLE_GETITEM,
                                           REF_TO_EMBED,
                                           STOP_GRADIENT};
 
-bool IsInBlackList(const PrimitivePtr& prim) {
+bool IsInBlackList(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (BLACK_LIST.find(prim->name()) != BLACK_LIST.end());
 }

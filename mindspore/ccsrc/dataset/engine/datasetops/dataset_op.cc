@@ -80,9 +80,9 @@ void DatasetOp::CreateConnector(int32_t num_producers, int32_t num_consumers) {
   MS_LOG(INFO) << "Creating connector in tree operator: " << operator_id_ << ". Producer: " << num_producers
                << ". Consumer: " << num_consumers << ".";
   if (oc_queue_size_ > 0) {
-    out_connector_ = mindspore::make_unique<DbConnector>(num_producers,  // The number of producers
-                                                         num_consumers,  // Only one consumer (the training App)
-                                                         oc_queue_size_);
+    out_connector_ = std::make_unique<DbConnector>(num_producers,  // The number of producers
+                                                   num_consumers,  // Only one consumer (the training App)
+                                                   oc_queue_size_);
   } else {
     // Some op's may choose not to have an output connector
     MS_LOG(INFO) << "Bypassed connector creation for tree operator: " << operator_id_ << ".";
@@ -92,28 +92,38 @@ void DatasetOp::CreateConnector(int32_t num_producers, int32_t num_consumers) {
 
 // A print method typically used for debugging.  showAll of true will recursively descend to child prints
 void DatasetOp::Print(std::ostream &out, bool show_all) const {
+  // When show_all is false, we display a 1 liner piece of text for the op.
+  // When show_all is true, we display more detailed output for the op.
+  // Derived printers should show their own header info, then call base class printer, followed by
+  // derived-specific items.
+  // For now, the base class doesn't have any summary info to show so it's a no-op in that case.
   if (show_all) {
+    // The detailed display will show common base class info of the op.  Allow the derived class to print
+    // it's own id and name though as the first line.
+    out << "\nNumber of children     : " << child_.size();
     for (size_t i = 0; i < child_.size(); i++) {
-      child_[i]->Print(out, show_all);
+      out << "\n  Child[" << i << "] id: " << child_[i]->id();
     }
-  }
-  out << "\n-------------------------"
-      << "\nOperator #             : " << operator_id_ << "\nNumber of children     : " << child_.size()
-      << "\nNumber of parents      : " << parent_.size() << "\nConnector queue size   : " << oc_queue_size_
-      << "\nOperator control flags : 0x" << std::hex << std::setw(8) << std::setfill('0') << op_ctrl_flags_ << std::dec
-      << std::setfill(' ') << "\nHas parents:\n";
-  for (size_t i = 0; i < parent_.size(); i++) {
-    out << "Parent[" << i << "] id: " << parent_[i]->id() << "\n";
+    out << "\nNumber of parents      : " << parent_.size();
+    for (size_t i = 0; i < parent_.size(); i++) {
+      out << "\n  Parent[" << i << "] id: " << parent_[i]->id();
+    }
+    out << "\nConnector queue size   : " << oc_queue_size_ << "\nOperator control flags : 0x" << std::hex
+        << std::setw(8) << std::setfill('0') << op_ctrl_flags_ << std::dec << std::setfill(' ');
   }
 }
 
 // Gets the next buffer from the given child
 Status DatasetOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
+#if defined(_WIN32) || defined(_WIN64)
+  RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), p_buffer, retry_if_eoe));
+#else
   std::unique_ptr<DataBuffer> next_buff;
   // pop is a blocked call and will throw an interruption if the whole group shuts down.
   RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), &next_buff, retry_if_eoe));
 
   *p_buffer = std::move(next_buff);
+#endif
   return Status::OK();
 }
 
@@ -149,7 +159,7 @@ Status DatasetOp::GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t wo
 // The base class implementation simply flows the eoe message to output. Derived classes
 // may override if they need to perform special eoe handling.
 Status DatasetOp::EoeReceived(int32_t worker_id) {
-  std::unique_ptr<DataBuffer> eoe_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+  std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   return (out_connector_->Add(static_cast<int>(worker_id), std::move(eoe_buffer)));
 }
 
@@ -157,19 +167,22 @@ Status DatasetOp::EoeReceived(int32_t worker_id) {
 // The base class implementation simply flows the eof message to output. Derived classes
 // may override if they need to perform special eof handling.
 Status DatasetOp::EofReceived(int32_t worker_id) {
-  std::unique_ptr<DataBuffer> eof_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
+  std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
   return (out_connector_->Add(static_cast<int>(worker_id), std::move(eof_buffer)));
 }
 
-// During tree prepare phase, operators may have specific operations to perform depending on
+// During tree prepare phase, operators may have specific pre-operations to perform depending on
 // their role.
-Status DatasetOp::PrepareNodeAction() {
+Status DatasetOp::PrepareNodePreAction() {
+  if (BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepRepeat)) set_control_flag(kDeOpRepeated);
+  return Status::OK();
+}
+// During tree prepare phase, operators may have specific post-operations to perform depending on
+// their role.
+Status DatasetOp::PrepareNodePostAction() {
   // If this op does not have any children and it is in a repeat path of the tree...
-  if (child_.size() == 0 && BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepRepeat)) {
-    // Then, flag this operator as a leaf node in a repeat path of tree execution.
-    BitSet(&op_ctrl_flags_, kDeOpRepeated);
-
-    // Secondly, push ourselves onto the tree repeat stack.  Later, the repeat operator
+  if (child_.empty() && BitTest(op_ctrl_flags_, kDeOpRepeated)) {
+    // push ourselves onto the tree repeat stack.  Later, the repeat operator
     // above us will consume them.
     tree_->AddToRepeatStack(shared_from_this());
   }

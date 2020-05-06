@@ -40,8 +40,8 @@ enum ParseStatusCode : int {
   PARSE_PARAMETER_INVALID,           // parameter is invalid
   PARSE_NO_RETURN,                   // function no return node
   PARSE_NODE_TYPE_NO_MATCH,          // ast node type is error
-  PARSE_NODE_TYPE_UNKONW,            // node type is unkonw
-  PARSE_NODE_METHOD_UNSUPPORT,       // no method to parse the node
+  PARSE_NODE_TYPE_UNKOWN,            // node type is unkown
+  PARSE_NODE_METHOD_UNSUPPORTED,     // no method to parse the node
   PARSE_DONT_RESOLVE_SYMBOL,         // can't resolve the string
   PARSE_NOT_SUPPORTED_COMPARE_EXPR,  // the comparison is not supported
   PARSE_FAILURE = 0xFF
@@ -92,6 +92,8 @@ class Parser {
   AnfNodePtr ParseName(const FunctionBlockPtr &block, const py::object &node);
   // process NoneType
   AnfNodePtr ParseNone(const FunctionBlockPtr &block, const py::object &node);
+  // process Ellipsis
+  AnfNodePtr ParseEllipsis(const FunctionBlockPtr &block, const py::object &node);
   // process a integer or float number
   AnfNodePtr ParseNum(const FunctionBlockPtr &block, const py::object &node);
   // process a string variable
@@ -102,7 +104,7 @@ class Parser {
   AnfNodePtr ParseCall(const FunctionBlockPtr &block, const py::object &node);
   // process the if expression
   AnfNodePtr ParseIfExp(const FunctionBlockPtr &block, const py::object &node);
-  // process calss type define
+  // process class type define
   AnfNodePtr ParseAttribute(const FunctionBlockPtr &block, const py::object &node);
   // process a compare expression
   AnfNodePtr ParseCompare(const FunctionBlockPtr &block, const py::object &node);

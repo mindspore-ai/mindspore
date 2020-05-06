@@ -15,6 +15,7 @@
 
 """YOLOv3 based on ResNet18."""
 
+import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context, Tensor
@@ -31,19 +32,14 @@ def weight_variable():
     return TruncatedNormal(0.02)
 
 
-class _conv_with_pad(nn.Cell):
+class _conv2d(nn.Cell):
     """Create Conv2D with padding."""
     def __init__(self, in_channels, out_channels, kernel_size, stride=1):
-        super(_conv_with_pad, self).__init__()
-        total_pad = kernel_size - 1
-        pad_begin = total_pad // 2
-        pad_end = total_pad - pad_begin
-        self.pad = P.Pad(((0, 0), (0, 0), (pad_begin, pad_end), (pad_begin, pad_end)))
+        super(_conv2d, self).__init__()
         self.conv = nn.Conv2d(in_channels, out_channels,
-                              kernel_size=kernel_size, stride=stride, padding=0, pad_mode='valid',
+                              kernel_size=kernel_size, stride=stride, padding=0, pad_mode='same',
                               weight_init=weight_variable())
     def construct(self, x):
-        x = self.pad(x)
         x = self.conv(x)
         return x
 
@@ -101,15 +97,15 @@ class BasicBlock(nn.Cell):
                  momentum=0.99):
         super(BasicBlock, self).__init__()
 
-        self.conv1 = _conv_with_pad(in_channels, out_channels, 3, stride=stride)
+        self.conv1 = _conv2d(in_channels, out_channels, 3, stride=stride)
         self.bn1 = _fused_bn(out_channels, momentum=momentum)
-        self.conv2 = _conv_with_pad(out_channels, out_channels, 3)
+        self.conv2 = _conv2d(out_channels, out_channels, 3)
         self.bn2 = _fused_bn(out_channels, momentum=momentum)
         self.relu = P.ReLU()
         self.down_sample_layer = None
         self.downsample = (in_channels != out_channels)
         if self.downsample:
-            self.down_sample_layer = _conv_with_pad(in_channels, out_channels, 1, stride=stride)
+            self.down_sample_layer = _conv2d(in_channels, out_channels, 1, stride=stride)
         self.add = P.TensorAdd()
 
     def construct(self, x):
@@ -166,7 +162,7 @@ class ResNet(nn.Cell):
             raise ValueError("the length of "
                              "layer_num, inchannel, outchannel list must be 4!")
 
-        self.conv1 = _conv_with_pad(3, 64, 7, stride=2)
+        self.conv1 = _conv2d(3, 64, 7, stride=2)
         self.bn1 = _fused_bn(64)
         self.relu = P.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same')
@@ -452,7 +448,7 @@ class DetectionBlock(nn.Cell):
 
         if self.training:
             return grid, prediction, box_xy, box_wh
-        return self.concat((box_xy, box_wh, box_confidence, box_probs))
+        return box_xy, box_wh, box_confidence, box_probs
 
 
 class Iou(nn.Cell):
@@ -675,3 +671,78 @@ class TrainingWrapper(nn.Cell):
             # apply grad reducer on grads
             grads = self.grad_reducer(grads)
         return F.depend(loss, self.optimizer(grads))
+
+
+class YoloBoxScores(nn.Cell):
+    """
+    Calculate the boxes of the original picture size and the score of each box.
+
+    Args:
+        config (Class): YOLOv3 config.
+
+    Returns:
+        Tensor, the boxes of the original picture size.
+        Tensor, the score of each box.
+    """
+    def __init__(self, config):
+        super(YoloBoxScores, self).__init__()
+        self.input_shape = Tensor(np.array(config.img_shape), ms.float32)
+        self.num_classes = config.num_classes
+
+    def construct(self, box_xy, box_wh, box_confidence, box_probs, image_shape):
+        batch_size = F.shape(box_xy)[0]
+        x = box_xy[:, :, :, :, 0:1]
+        y = box_xy[:, :, :, :, 1:2]
+        box_yx = P.Concat(-1)((y, x))
+        w = box_wh[:, :, :, :, 0:1]
+        h = box_wh[:, :, :, :, 1:2]
+        box_hw = P.Concat(-1)((h, w))
+
+        new_shape = P.Round()(image_shape * P.ReduceMin()(self.input_shape / image_shape))
+        offset = (self.input_shape - new_shape) / 2.0 / self.input_shape
+        scale = self.input_shape / new_shape
+        box_yx = (box_yx - offset) * scale
+        box_hw = box_hw * scale
+
+        box_min = box_yx - box_hw / 2.0
+        box_max = box_yx + box_hw / 2.0
+        boxes = P.Concat(-1)((box_min[:, :, :, :, 0:1],
+                              box_min[:, :, :, :, 1:2],
+                              box_max[:, :, :, :, 0:1],
+                              box_max[:, :, :, :, 1:2]))
+        image_scale = P.Tile()(image_shape, (1, 2))
+        boxes = boxes * image_scale
+        boxes = F.reshape(boxes, (batch_size, -1, 4))
+        boxes_scores = box_confidence * box_probs
+        boxes_scores = F.reshape(boxes_scores, (batch_size, -1, self.num_classes))
+        return boxes, boxes_scores
+
+
+class YoloWithEval(nn.Cell):
+    """
+    Encapsulation class of YOLOv3 evaluation.
+
+    Args:
+        network (Cell): The training network. Note that loss function and optimizer must not be added.
+        config (Class): YOLOv3 config.
+
+    Returns:
+        Tensor, the boxes of the original picture size.
+        Tensor, the score of each box.
+        Tensor, the original picture size.
+    """
+    def __init__(self, network, config):
+        super(YoloWithEval, self).__init__()
+        self.yolo_network = network
+        self.box_score_0 = YoloBoxScores(config)
+        self.box_score_1 = YoloBoxScores(config)
+        self.box_score_2 = YoloBoxScores(config)
+
+    def construct(self, x, image_shape):
+        yolo_output = self.yolo_network(x)
+        boxes_0, boxes_scores_0 = self.box_score_0(*yolo_output[0], image_shape)
+        boxes_1, boxes_scores_1 = self.box_score_1(*yolo_output[1], image_shape)
+        boxes_2, boxes_scores_2 = self.box_score_2(*yolo_output[2], image_shape)
+        boxes = P.Concat(1)((boxes_0, boxes_1, boxes_2))
+        boxes_scores = P.Concat(1)((boxes_scores_0, boxes_scores_1, boxes_scores_2))
+        return boxes, boxes_scores, image_shape

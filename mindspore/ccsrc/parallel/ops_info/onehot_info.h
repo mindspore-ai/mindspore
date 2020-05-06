@@ -17,37 +17,34 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ONEHOT_INFO_H_
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ONEHOT_INFO_H_
 
+#include <memory>
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
-#include <memory>
+
 #include "ir/value.h"
-#include "parallel/ops_info/operator_info.h"
 #include "parallel/auto_parallel/operator_costmodel.h"
+#include "parallel/ops_info/operator_info.h"
 #include "parallel/strategy.h"
 
 namespace mindspore {
 namespace parallel {
 class OneHotInfo : public OperatorInfo {
  public:
-  OneHotInfo(const std::string& name, const Shapes& inputs_shape, const Shapes& outputs_shape,
-             const PrimitiveAttrs& attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs) {
-    onehot_cost_ptr_ = std::make_shared<OneHotCost>();
-  }
+  OneHotInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<OneHotCost>(false)) {}
   ~OneHotInfo() override = default;
-  Status Init(const StrategyPtr& strategy) override;
-  Status InitForCostModel(const StrategyPtr& strategy) override;
+  Status Init(const StrategyPtr &strategy) override;
+  Status InitForCostModel(const StrategyPtr &strategy) override;
 
   Status GenerateStrategies(int32_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr& strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return onehot_cost_ptr_; }
-  ReplaceGraphPtr replace_graph(const CNodePtr& cnode) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
   std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
 
  protected:
-  Status CheckStrategy(const StrategyPtr& strategy) override;
+  Status CheckStrategy(const StrategyPtr &strategy) override;
   Status GetAttrs() override;
   Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
@@ -57,10 +54,9 @@ class OneHotInfo : public OperatorInfo {
   Status ExtractInputInfo();
 
  private:
-  Status ComputeReplaceGraph(const CNodePtr& cnode);
+  Status ComputeReplaceGraph(const CNodePtr &cnode);
 
   int axis_ = -1;
-  OneHotCostPtr onehot_cost_ptr_;
   int32_t rank_ = 0;
   int32_t total_class_number_ = 1;
   int32_t classes_each_device_ = 1;
@@ -69,4 +65,4 @@ class OneHotInfo : public OperatorInfo {
 };
 }  // namespace parallel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_OPTIMIZER_OPS_INFO_PARALLEL_ONEHOT_INFO_H_
+#endif  // MINDSPORE_CCSRC_PARALLEL_OPS_INFO_ONEHOT_INFO_H_

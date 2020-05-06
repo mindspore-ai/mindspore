@@ -23,7 +23,7 @@
 #include "pipeline/parse/python_adapter.h"
 
 namespace mindspore {
-std::string HighLightLine(const std::string& line, int col_begin, int col_end, SourceLineTip tip) {
+std::string HighLightLine(const std::string &line, int col_begin, int col_end, SourceLineTip tip) {
   std::string temp_line = line;
   if (col_begin < col_end && col_begin != -1 && col_end <= SizeToInt(temp_line.length()) &&
       tip != kSourceLineTipDiscard) {
@@ -53,10 +53,15 @@ std::string Location::ToString(SourceLineTip tip) {
   }
 
   char path[PATH_MAX + 1] = {0x00};
+#if defined(_WIN32) || defined(_WIN64)
+  if (file_name_.size() > PATH_MAX || _fullpath(path, file_name_.c_str(), PATH_MAX) == nullptr) {
+    return debug_info_ss.str();
+  }
+#else
   if (file_name_.size() > PATH_MAX || realpath(file_name_.c_str(), path) == nullptr) {
     return debug_info_ss.str();
   }
-
+#endif
   auto src_path = std::string(path);
   std::ifstream file(src_path);
   if (!file.is_open()) {
@@ -96,14 +101,14 @@ DebugInfo::DebugInfo() {
   name_ = "";
 }
 
-DebugInfo::DebugInfo(const std::string& name) {
+DebugInfo::DebugInfo(const std::string &name) {
   InitValueFromContext();
   unique_id_ = gen_unique_id();
   debug_id_ = -1;
   name_ = name;
 }
 
-DebugInfo::DebugInfo(const LocationPtr& loc) {
+DebugInfo::DebugInfo(const LocationPtr &loc) {
   InitValueFromContext();
   unique_id_ = gen_unique_id();
   debug_id_ = -1;
@@ -121,7 +126,7 @@ int64_t DebugInfo::debug_id() {
 }
 
 int64_t DebugInfo::unique_id_through_copy() const {
-  TraceInfoPtr trace_info = const_cast<DebugInfo*>(this)->trace_info();
+  TraceInfoPtr trace_info = const_cast<DebugInfo *>(this)->trace_info();
   if (trace_info != nullptr) {
     if (trace_info->isa<TraceCopy>() && trace_info->debug_info() != nullptr) {
       return trace_info->debug_info()->unique_id_through_copy();
@@ -167,7 +172,7 @@ LocationPtr GraphDebugInfo::location() {
   }
   return DebugInfo::location();
 }
-void GraphDebugInfo::set_deco_location(const LocationPtr& deco_list_loc) { deco_loc_ = deco_list_loc; }
+void GraphDebugInfo::set_deco_location(const LocationPtr &deco_list_loc) { deco_loc_ = deco_list_loc; }
 
 TraceContextPtr TraceManager::CurrentContextInfo() {
   if (!TraceManager::trace_context_stack_.empty()) {
@@ -176,36 +181,36 @@ TraceContextPtr TraceManager::CurrentContextInfo() {
   return nullptr;
 }
 
-void TraceManager::DebugTrace(const std::string& func_name, const LocationPtr& location) {
+void TraceManager::DebugTrace(const std::string &func_name, const LocationPtr &location) {
   TraceContextPtr context = std::make_shared<TraceContext>(location);
   context->set_func_name(func_name);
   TraceManager::trace_context_stack_.push(context);
 }
 
-void TraceManager::DebugTrace(const LocationPtr& location) {
+void TraceManager::DebugTrace(const LocationPtr &location) {
   TraceContextPtr context = std::make_shared<TraceContext>(location);
   TraceManager::trace_context_stack_.push(context);
 }
 
-void TraceManager::DebugTrace(const TraceInfoPtr& trace_info) {
+void TraceManager::DebugTrace(const TraceInfoPtr &trace_info) {
   if (trace_info == nullptr) {
     MS_LOG(EXCEPTION) << "DebugTrace wrong traced info is null";
   }
   TraceContextPtr context = std::make_shared<TraceContext>(trace_info);
   if (trace_info->debug_info() == nullptr) {
-    MS_LOG(EXCEPTION) << "trace debug info is null";
+    MS_LOG(EXCEPTION) << "Trace debug info is null";
   }
   TraceManager::trace_context_stack_.push(context);
 }
 
-void TraceManager::DebugTrace(const DebugInfoPtr& debug_info, const TraceInfoPtr& trace_info) {
+void TraceManager::DebugTrace(const DebugInfoPtr &debug_info, const TraceInfoPtr &trace_info) {
   if (trace_info == nullptr) {
     MS_LOG(EXCEPTION) << "DebugTrace wrong traced info is null";
   }
   auto cloned_info = trace_info->clone();
   cloned_info->set_debug_info(debug_info);
   if (cloned_info->debug_info() == nullptr) {
-    MS_LOG(EXCEPTION) << "trace debug info is null with cloned trace";
+    MS_LOG(EXCEPTION) << "Trace debug info is null with cloned trace";
   }
   TraceContextPtr context = std::make_shared<TraceContext>(cloned_info);
   TraceManager::trace_context_stack_.push(context);

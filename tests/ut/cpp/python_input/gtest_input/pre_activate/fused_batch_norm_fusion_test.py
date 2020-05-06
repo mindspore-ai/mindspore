@@ -24,7 +24,8 @@ make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
 depend = Primitive('depend')
 BatchNorm = P.BatchNorm()
-FusedBatchNorm = P.FusedBatchNorm()
+BNTrainingReduce = Primitive('BNTrainingReduce')
+BNTrainingUpdate = Primitive('BNTrainingUpdate')
 constant0 = Tensor(0.1, mstype.float32)
 constant1 = Tensor(0.1, mstype.float32)
 
@@ -40,7 +41,7 @@ class FnDict:
         return self.fnDict[name]
 
 
-def useless_test_fused_batch_norm_fusion(tag):
+def test_fused_batch_norm_fusion(tag):
     fns = FnDict()
 
     @fns
@@ -60,9 +61,11 @@ def useless_test_fused_batch_norm_fusion(tag):
 
     @fns
     def after(input0, input1, input2, input3, input4, var0, var1):
-        fused_batch_norm = FusedBatchNorm(input0, input1, input2, var0, var1)
-        outputs = make_tuple(tuple_getitem(fused_batch_norm, 0), tuple_getitem(fused_batch_norm, 3),
-                             tuple_getitem(fused_batch_norm, 4))
+        bn_training_reduce = BNTrainingReduce(input0)
+        bn_training_update = BNTrainingUpdate(input0, tuple_getitem(bn_training_reduce, 0),
+                                              tuple_getitem(bn_training_reduce, 1), input1, input2, var0, var1)
+        outputs = make_tuple(tuple_getitem(bn_training_update, 0), tuple_getitem(bn_training_update, 3),
+                             tuple_getitem(bn_training_update, 4))
         output = tuple_getitem(outputs, 0)
         return make_tuple(output)
 

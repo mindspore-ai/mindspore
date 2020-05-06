@@ -56,7 +56,7 @@ TypePtr CheckTensorDType(const AbstractTensorPtr &tensor, const TypePtrList &acc
   }
   TypePtr ele_type = tensor->element()->BuildType();
   if (ele_type == nullptr) {
-    MS_LOG(EXCEPTION) << "abstract tensor element type nullptr";
+    MS_LOG(EXCEPTION) << "Abstract tensor element type nullptr";
   }
   return CheckType(ele_type, accepts, error_message_prefix);
 }
@@ -64,7 +64,7 @@ TypePtr CheckTensorDType(const AbstractTensorPtr &tensor, const TypePtrList &acc
 TypePtr CheckTensorsDTypeSame(const AbstractTensorPtrList &tensor_list, const TypePtrList &accepts,
                               const std::string &error_message_prefix) {
   if (tensor_list.empty()) {
-    MS_LOG(EXCEPTION) << "array list is empty";
+    MS_LOG(EXCEPTION) << "Array list is empty";
   }
 
   auto sample_tensor = tensor_list[0];
@@ -78,7 +78,7 @@ TypePtr CheckTensorsDTypeSame(const AbstractTensorPtrList &tensor_list, const Ty
     auto aType = tensor_list[index]->element()->BuildType();
     loginfoBuffer << " " << aType->ToString();
     if (sample_type->type_id() != aType->type_id()) {
-      MS_LOG(EXCEPTION) << "expected type " << sample_type->ToString() << ", but got " << aType->ToString()
+      MS_LOG(EXCEPTION) << "Expected type " << sample_type->ToString() << ", but got " << aType->ToString()
                         << ", index " << index;
     }
   }
@@ -89,11 +89,11 @@ TypePtr CheckTensorsDTypeSame(const AbstractTensorPtrList &tensor_list, const Ty
 TypePtr CheckScalarType(const AbstractScalarPtr &scalar, const TypePtrList &accepts,
                         const std::string &error_message_prefix) {
   if (scalar == nullptr) {
-    MS_LOG(EXCEPTION) << "scalar nullptr";
+    MS_LOG(EXCEPTION) << "Scalar nullptr";
   }
   auto type = scalar->BuildType();
   if (type == nullptr) {
-    MS_LOG(EXCEPTION) << "scalar value nullptr";
+    MS_LOG(EXCEPTION) << "Scalar value nullptr";
   }
 
   return CheckType(type, accepts, error_message_prefix);
@@ -103,7 +103,7 @@ ShapePtr CheckShapeSame(const std::string &op, const AbstractTensorPtr &tensor_b
   ShapePtr shape_base = tensor_base->shape();
   ShapePtr shape = tensor->shape();
   if (*shape != *shape_base) {
-    MS_LOG(EXCEPTION) << "" << op << " evaluator first arg shape " << tensor->shape()->ToString()
+    MS_LOG(EXCEPTION) << op << " evaluator first arg shape " << tensor->shape()->ToString()
                       << " are not consistent with second arg shape " << tensor_base->shape()->ToString();
   }
   return shape_base;
@@ -113,7 +113,7 @@ TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_ba
   TypePtr type_base = tensor_base->element()->BuildType();
   TypePtr type = tensor->element()->BuildType();
   if (*type != *type_base) {
-    MS_LOG(EXCEPTION) << "" << op << " evaluator first arg dtype " << type_base->ToString()
+    MS_LOG(EXCEPTION) << op << " evaluator first arg dtype " << type_base->ToString()
                       << " are not consistent with second arg dtype " << type->ToString();
   }
   return type_base;
@@ -121,14 +121,14 @@ TypePtr CheckDtypeSame(const std::string &op, const AbstractTensorPtr &tensor_ba
 
 int CheckAxis(const std::string &op, const ValuePtr &axis, int minimum, int max) {
   if (axis == nullptr) {
-    MS_LOG(EXCEPTION) << "" << op << " evaluator axis is null";
+    MS_LOG(EXCEPTION) << op << " evaluator axis is null";
   }
   if (!axis->isa<Int32Imm>()) {
-    MS_LOG(EXCEPTION) << "" << op << " evaluator axis should be int, but got " << axis->type_name();
+    MS_LOG(EXCEPTION) << op << " evaluator axis should be int, but got " << axis->type_name();
   }
   int axis_value = GetValue<int>(axis);
   if (axis_value > max || axis_value < minimum) {
-    MS_LOG(EXCEPTION) << "" << op << " evaluator axis value should be in the range [" << minimum << ", " << max
+    MS_LOG(EXCEPTION) << op << " evaluator axis value should be in the range [" << minimum << ", " << max
                       << "], but get " << axis_value;
   }
   return axis_value;
@@ -136,8 +136,7 @@ int CheckAxis(const std::string &op, const ValuePtr &axis, int minimum, int max)
 void CheckArgsSize(const std::string &op, const mindspore::abstract::AbstractBasePtrList &args_spec_list,
                    size_t size_expect) {
   if (args_spec_list.size() != size_expect) {
-    MS_LOG(EXCEPTION) << "" << op << " input args size should be " << size_expect << ", but got "
-                      << args_spec_list.size();
+    MS_LOG(EXCEPTION) << op << " input args size should be " << size_expect << ", but got " << args_spec_list.size();
   }
 
   for (size_t i = 0; i < size_expect; i++) {

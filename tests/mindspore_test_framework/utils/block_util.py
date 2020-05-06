@@ -65,32 +65,12 @@ class IthOutputCell(nn.Cell):
         self.output_index = output_index
 
     def construct(self, *inputs):
-        raise NotImplementedError
-
-    def construct1(self, x1):
-        predict = self.network(x1)[self.output_index]
-        return predict
-
-    def construct2(self, x1, x2):
-        predict = self.network(x1, x2)[self.output_index]
-        return predict
-
-    def construct3(self, x1, x2, x3):
-        predict = self.network(x1, x2, x3)[self.output_index]
-        return predict
-
-    def construct4(self, x1, x2, x3, x4):
-        predict = self.network(x1, x2, x3, x4)[self.output_index]
-        return predict
-
-    def construct5(self, x1, x2, x3, x4, x5):
-        predict = self.network(x1, x2, x3, x4, x5)[self.output_index]
+        predict = self.network(*inputs)[self.output_index]
         return predict
 
 def get_output_cell(network, num_input, output_index, training=True):
+    _ = num_input
     net = IthOutputCell(network, output_index)
-    f = getattr(net, 'construct%d' % num_input)
-    setattr(net, "construct", f)
     set_block_training(net, training)
     return net
 
@@ -221,6 +201,10 @@ class InputOpNet(nn.Cell):
 
     def construct5_c1(self, x1, x2, x3, x4, x5):
         x = self.op(x1, x2, x3, x4, x5, self.c1)
+        return x
+
+    def construct5_c4(self, x1, x2, x3, x4, x5):
+        x = self.op(x1, x2, x3, x4, x5, self.c1, self.c2, self.c3, self.c4)
         return x
 
 def gen_net(op, input_num, training=True, desc_const=(), const_first=False, add_fake_input=False):

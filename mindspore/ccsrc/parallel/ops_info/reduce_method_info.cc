@@ -17,14 +17,14 @@
 #include "parallel/ops_info/reduce_method_info.h"
 
 #include <algorithm>
-#include <vector>
-#include <utility>
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "ir/value.h"
+#include "parallel/device_manager.h"
 #include "parallel/device_matrix.h"
 #include "parallel/tensor_layout/tensor_redistribution.h"
-#include "parallel/device_manager.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -109,8 +109,12 @@ Status ReduceMethod::GetAttrs() {
     }
     cross_batch_ = cross_batch_iter->second->cast<BoolImmPtr>()->value();
   }
-  reducemethodcost_ptr_->set_cross_batch(cross_batch_);
-
+  auto reducemethodcost = std::dynamic_pointer_cast<ReduceMethodCost>(operator_cost());
+  if (reducemethodcost == nullptr) {
+    MS_LOG(ERROR) << "Cost cast to ReduceMethodCostPtr failed!";
+    return FAILED;
+  }
+  reducemethodcost->set_cross_batch(cross_batch_);
   return SUCCESS;
 }
 
@@ -198,7 +202,7 @@ ForwardOp CreatReduceMeanForwardOp(const std::vector<Group> &forward_group, cons
 
   // Creat RealDiv op
   OperatorName operator1_name = REAL_DIV;
-  std::list<Device> device_list = forward_group[0].GetDevicesList();
+  std::vector<Device> device_list = forward_group[0].GetDevicesList();
   auto divisor = static_cast<float>(device_list.size());
   py::tuple tuple = py::make_tuple(divisor);
   mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(tuple, dtype);

@@ -49,6 +49,7 @@ enum TypeId : int {
   kMetaTypeExternal,
   kMetaTypeNone,
   kMetaTypeNull,
+  kMetaTypeEllipsis,
   kMetaTypeEnd,
   //
   // Object types
@@ -95,10 +96,10 @@ enum TypeId : int {
 TypeId IntBitsToTypeId(const int nbits);
 TypeId UIntBitsToTypeId(const int nbits);
 TypeId FloatBitsToTypeId(const int nbits);
-const char* TypeIdLabel(const TypeId& v);
+const char *TypeIdLabel(const TypeId &v);
 TypeId NormalizeTypeId(const TypeId type_id);
-bool IsSameObjectType(const Type& lhs, const Type& rhs);
-size_t GetTypeByte(const TypePtr& type_ptr);
+bool IsSameObjectType(const Type &lhs, const Type &rhs);
+size_t GetTypeByte(const TypePtr &type_ptr);
 
 // Base class for all types
 // forward declaration.
@@ -110,14 +111,14 @@ class Type : public Value {
   ~Type() override = default;
   MS_DECLARE_PARENT(Type, Value)
 
-  bool operator==(const Value& other) const override;
+  bool operator==(const Value &other) const override;
   TypeId meta_type() const { return meta_type_; }
 
   virtual TypeId type_id() const { return meta_type_; }
   virtual TypeId generic_type_id() const { return kMetaTypeType; }
 
-  virtual bool operator!=(const Type& other) const { return !(*this == other); }
-  virtual bool operator==(const Type& other) const { return this->type_id() == other.type_id(); }
+  virtual bool operator!=(const Type &other) const { return !(*this == other); }
+  virtual bool operator==(const Type &other) const { return this->type_id() == other.type_id(); }
   virtual bool equal(const TypePtr other) const { return *this == *other; }
 
   virtual TypeId object_type() const { return kTypeUnknown; }
@@ -134,8 +135,8 @@ class Type : public Value {
   bool IsUnknown() const { return (meta_type_ == kMetaTypeType); }
   bool IsGeneric() const { return is_generic_; }
   abstract::AbstractBasePtr ToAbstract() override;
-  friend std::ostream& operator<<(std::ostream& os, const Type& type);
-  friend std::ostream& operator<<(std::ostream& os, const TypePtr type);
+  friend std::ostream &operator<<(std::ostream &os, const Type &type);
+  friend std::ostream &operator<<(std::ostream &os, const TypePtr type);
 
   const bool parse_info_ = true;
 
@@ -163,14 +164,14 @@ class Object : public Type {
   bool equal(const TypePtr other) const override;
   std::string ToString() const override { return std::string("Object:") + TypeIdLabel(object_type_); }
 
-  friend std::ostream& operator<<(std::ostream& os, const Object& obj);
-  friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<Object> obj);
+  friend std::ostream &operator<<(std::ostream &os, const Object &obj);
+  friend std::ostream &operator<<(std::ostream &os, const std::shared_ptr<Object> obj);
 
  private:
   const TypeId object_type_;
 };
 
-std::ostream& operator<<(std::ostream& os, const TypePtrList& types);
+std::ostream &operator<<(std::ostream &os, const TypePtrList &types);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_IR_DTYPE_TYPE_H_

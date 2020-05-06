@@ -201,8 +201,8 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   Status Reset() override;
 
   bool decode_;
-  uint64_t row_cnt_;
-  uint64_t buf_cnt_;
+  int64_t row_cnt_;
+  int64_t buf_cnt_;
   int64_t num_rows_;
   int64_t num_samples_;
   std::string folder_path_;

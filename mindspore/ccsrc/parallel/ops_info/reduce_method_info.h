@@ -17,17 +17,16 @@
 #ifndef MINDSPORE_CCSRC_PARALLEL_OPS_INFO_REDUCE_SUM_INFO_H_
 #define MINDSPORE_CCSRC_PARALLEL_OPS_INFO_REDUCE_SUM_INFO_H_
 
+#include <memory>
 #include <string>
-#include <list>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
+#include "ir/meta_tensor.h"
 #include "ir/value.h"
+#include "parallel/auto_parallel/operator_costmodel.h"
 #include "parallel/ops_info/activation_info.h"
 #include "parallel/strategy.h"
-#include "parallel/auto_parallel/operator_costmodel.h"
-#include "ir/meta_tensor.h"
 
 namespace mindspore {
 namespace parallel {
@@ -35,9 +34,7 @@ class ReduceMethod : public OperatorInfo {
  public:
   ReduceMethod(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs) {
-    reducemethodcost_ptr_ = std::make_shared<ReduceMethodCost>();
-  }
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceMethodCost>(true)) {}
   ~ReduceMethod() override = default;
 
   Status Init(const StrategyPtr &strategy) override;
@@ -45,13 +42,11 @@ class ReduceMethod : public OperatorInfo {
 
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  OperatorCostPtr GetOperatorCost() const override { return reducemethodcost_ptr_; }
 
  protected:
   std::string reduce_method_;
   bool keepdims_ = false;
   bool cross_batch_ = false;
-  ReduceMethodCostPtr reducemethodcost_ptr_;
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status GetAttrs() override;
   Dimensions InferOutputStrategy();
@@ -111,7 +106,7 @@ class ReduceMeanInfo : public ReduceMethod {
   ReduceMeanInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                  const PrimitiveAttrs &attrs)
       : ReduceMethod(name, inputs_shape, outputs_shape, attrs) {
-    reducemethodcost_ptr_ = std::make_shared<ReduceMeanCost>();
+    set_cost(std::make_shared<ReduceMeanCost>());
   }
 
   ~ReduceMeanInfo() override = default;

@@ -25,7 +25,7 @@ namespace device {
 namespace gpu {
 void GPUDeviceManager::InitDevice() {
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::set_current_device(SizeToInt(cur_dev_id_)), "Failed to set current device id");
-  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateStream(&stream_), "Failed to create CUDA stream.");
+  CHECK_OP_RET_WITH_EXCEPT(CreateStream(&default_stream_), "Failed to create CUDA stream.");
   CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreate(&cudnn_handle_), "Failed to create cuDNN handle");
   CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetStream(cudnn_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
                               "Failed to set stream for cuDNN handle.");
@@ -36,19 +36,27 @@ void GPUDeviceManager::InitDevice() {
 }
 
 void GPUDeviceManager::ReleaseDevice() {
-  if (stream_ != nullptr) {
-    CHECK_OP_RET_WITH_ERROR(CudaDriver::DestroyStream(stream_), "Failed to destroy cuda stream.");
+  for (DeviceStream stream : gpu_streams_) {
+    if (stream != nullptr) {
+      CHECK_OP_RET_WITH_ERROR(CudaDriver::DestroyStream(stream), "Failed to destroy CUDA stream.");
+    }
   }
   if (cudnn_handle_ != nullptr) {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroy(cudnn_handle_), "Failed to destroy cudnn handle");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroy(cudnn_handle_), "Failed to destroy cuDNN handle");
   }
   if (cublas_handle_ != nullptr) {
-    CHECK_CUBLAS_RET_WITH_ERROR(cublasDestroy(cublas_handle_), "Failed to destroy cublas handle.");
+    CHECK_CUBLAS_RET_WITH_ERROR(cublasDestroy(cublas_handle_), "Failed to destroy cuBLAS handle.");
   }
   CHECK_OP_RET_WITH_ERROR(GPUMemoryAllocator::GetInstance().Finalize(), "Failed to destroy gpu memory allocator");
 }
 
-const DeviceStream& GPUDeviceManager::default_stream() const { return stream_; }
+bool GPUDeviceManager::CreateStream(DeviceStream *stream) {
+  CHECK_OP_RET_WITH_EXCEPT(CudaDriver::CreateStream(stream), "Failed to create CUDA stream");
+  gpu_streams_.emplace_back(*stream);
+  return true;
+}
+
+const DeviceStream &GPUDeviceManager::default_stream() const { return default_stream_; }
 
 int GPUDeviceManager::device_count() const { return CudaDriver::device_count(); }
 
@@ -68,17 +76,17 @@ uint32_t GPUDeviceManager::cur_device_id() const { return cur_dev_id_; }
 
 bool GPUDeviceManager::is_device_id_init() const { return dev_id_init_; }
 
-const cudnnHandle_t& GPUDeviceManager::GetCudnnHandle() const { return cudnn_handle_; }
+const cudnnHandle_t &GPUDeviceManager::GetCudnnHandle() const { return cudnn_handle_; }
 
-const cublasHandle_t& GPUDeviceManager::GetCublasHandle() const { return cublas_handle_; }
+const cublasHandle_t &GPUDeviceManager::GetCublasHandle() const { return cublas_handle_; }
 
-bool GPUDeviceManager::SyncStream(const DeviceStream& stream) const { return CudaDriver::SyncStream(stream); }
+bool GPUDeviceManager::SyncStream(const DeviceStream &stream) const { return CudaDriver::SyncStream(stream); }
 
-bool GPUDeviceManager::CopyDeviceMemToHost(const HostMemPtr& dst, const DeviceMemPtr& src, size_t size) const {
+bool GPUDeviceManager::CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const {
   return CudaDriver::CopyDeviceMemToHost(dst, src, size);
 }
 
-bool GPUDeviceManager::CopyHostMemToDevice(const DeviceMemPtr& dst, const void* src, size_t size) const {
+bool GPUDeviceManager::CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size) const {
   return CudaDriver::CopyHostMemToDevice(dst, src, size);
 }
 }  // namespace gpu

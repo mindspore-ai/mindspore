@@ -27,7 +27,6 @@
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/data_schema.h"
 #include "dataset/engine/datasetops/dataset_op.h"
-#include "dataset/util/make_unique.h"
 
 namespace mindspore {
 namespace dataset {
@@ -79,14 +78,26 @@ class Sampler : public DatasetOp {
   // @return - The error code return
   Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override = 0;
 
+  // return all ids in one epoch as a numpy array, then call reset
+  Status GetAllIdsThenReset(py::array *data);
+
   // for next epoch of sampleIds
   // @return - The error code return
   Status Reset() override = 0;
 
-  // first handshake between StorageOp and Sampler. Base class init will call both GetNumRows and GetNumSamples
-  // @param op - StorageOp pointer, pass in so Sampler can call GetNumSamples() and get ClassIds()
+  // setter function for num_rows_
+  Status SetNumRowsInDataset(int64_t num_rows);
+
+  // setter function for num_samples_
+  Status SetNumSamples(int64_t num_samples);
+
+  // first handshake between StorageOp and Sampler. This func will call getNumRows and getNumSamples
+  // @param op - StorageOp pointer, pass in so Sampler can call getNumSamples() and get ClassIds()
   // @return
-  virtual Status Init(const RandomAccessOp *op);
+  virtual Status HandshakeRandomAccessOp(const RandomAccessOp *op);
+
+  // initialize sampler and perform checks on certain vars
+  virtual Status InitSampler() { return Status::OK(); }
 
   // Not meant to be called
   // @return

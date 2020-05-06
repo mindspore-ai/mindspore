@@ -17,7 +17,7 @@ from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
-from mindspore._checkparam import ParamValidator as validator
+from mindspore._checkparam import Validator as validator
 
 
 class LSTM(Cell):
@@ -96,9 +96,9 @@ class LSTM(Cell):
         >>>         return self.lstm(inp, (h0, c0))
         >>>
         >>> net = LstmNet(10, 12, 2, has_bias=True, batch_first=True, bidirectional=False)
-        >>> input = mindspore.Tensor(np.ones([3, 5, 10]).astype(np.float32))
-        >>> h0 = mindspore.Tensor(np.ones([1 * 2, 3, 12]).astype(np.float32))
-        >>> c0 = mindspore.Tensor(np.ones([1 * 2, 3, 12]).astype(np.float32))
+        >>> input = Tensor(np.ones([3, 5, 10]).astype(np.float32))
+        >>> h0 = Tensor(np.ones([1 * 2, 3, 12]).astype(np.float32))
+        >>> c0 = Tensor(np.ones([1 * 2, 3, 12]).astype(np.float32))
         >>> output, (hn, cn) = net(input, h0, c0)
     """
     def __init__(self,
@@ -114,7 +114,7 @@ class LSTM(Cell):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.has_bias = has_bias
-        self.batch_first = validator.check_type("batch_first", batch_first, [bool])
+        self.batch_first = validator.check_value_type("batch_first", batch_first, [bool], self.cls_name)
         self.dropout = float(dropout)
         self.bidirectional = bidirectional
 
@@ -149,7 +149,7 @@ class LSTM(Cell):
         if self.batch_first:
             x = self.transpose1(x, (1, 0, 2))
         h0, c0 = hx
-        output, hn, cn, _ = self.lstm(x, h0, c0, self.weight)
+        output, hn, cn, _, _ = self.lstm(x, h0, c0, self.weight)
         if self.batch_first:
             output = self.transpose2(output, (1, 0, 2))
         return (output, (hn, cn))

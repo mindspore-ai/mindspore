@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dataset/core/global_context.h"
 #include "dataset/engine/datasetops/source/generator_op.h"
+#include <iomanip>
+#include "dataset/core/global_context.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/execution_tree.h"
@@ -57,6 +58,26 @@ GeneratorOp::GeneratorOp(py::function generator_function, std::vector<std::strin
       buffer_id_(0) {}
 
 GeneratorOp::~GeneratorOp() { this->Dealloc(); }
+
+void GeneratorOp::Print(std::ostream &out, bool show_all) const {
+  // Always show the id and name as first line regardless if this summary or detailed print
+  out << "(" << std::setw(2) << operator_id_ << ") <GeneratorOp>:";
+  if (!show_all) {
+    // Call the super class for displaying any common 1-liner info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal 1-liner info for this op
+    out << "\n";
+  } else {
+    // Call the super class for displaying any common detailed info
+    PipelineOp::Print(out, show_all);
+    // Then show any custom derived-internal stuff
+    out << "\nColumn names:\n";
+    for (int i = 0; i < column_names_.size(); ++i) {
+      out << "\n  " << column_names_[i];
+    }
+    out << "\n\n";
+  }
+}
 
 void GeneratorOp::Dealloc() noexcept {
   // Setup GIL state
@@ -168,14 +189,14 @@ Status GeneratorOp::FillBuffer(TensorQTable *tt) {
 Status GeneratorOp::operator()() {
   // Handshake with TaskManager to synchronize thread creation
   TaskManager::FindMe()->Post();
-  wp_.Register(tree_->AllTasks());
+  RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
   std::unique_ptr<DataBuffer> fetched_buffer;
   bool eof = false;
   while (!eof) {
     // Create new buffer each iteration
-    fetched_buffer = mindspore::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
+    fetched_buffer = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
     fetched_buffer->set_column_name_map(column_names_map_);
-    std::unique_ptr<TensorQTable> fetched_table = mindspore::make_unique<TensorQTable>();
+    std::unique_ptr<TensorQTable> fetched_table = std::make_unique<TensorQTable>();
     bool eoe = false;
     {
       py::gil_scoped_acquire gil_acquire;
@@ -201,12 +222,12 @@ Status GeneratorOp::operator()() {
     if (eoe) {
       // Push out EOE upon StopIteration exception from generator
       MS_LOG(INFO) << "Generator operator sends out EOE.";
-      std::unique_ptr<DataBuffer> eoe_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
+      std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
       if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
         // If last repeat or not repeated, push out EOF and exit master loop
         MS_LOG(INFO) << "Generator operator sends out EOF.";
-        std::unique_ptr<DataBuffer> eof_buffer = mindspore::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
+        std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
         MS_LOG(INFO) << "Generator operator main execution loop complete.";
         eof = true;

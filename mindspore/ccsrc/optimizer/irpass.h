@@ -45,6 +45,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr reduce_eliminate_;
   SubstitutionPtr partial_eliminate_;
   SubstitutionPtr same_eliminate_;
+  SubstitutionPtr check_bprop_eliminate_;
   SubstitutionPtr reset_defer_inline_;
 
   // Env Item Eliminate
@@ -58,6 +59,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr make_ref_eliminate_;
   SubstitutionPtr get_make_ref_eliminate_;
   SubstitutionPtr replace_refkey_by_param_;
+  SubstitutionPtr replace_old_param_;
 
   // Branch culling
   SubstitutionPtr switch_simplify_;
@@ -100,6 +102,13 @@ class ResolveIRPassLib {
 
   SubstitutionPtr resolver_resolve_;
   SubstitutionPtr resolver_getattr_;
+};
+
+class InferenceOptPrepareLib {
+ public:
+  InferenceOptPrepareLib();
+  ~InferenceOptPrepareLib() = default;
+  SubstitutionPtr grad_var_prepare_;
 };
 
 // predicate functions

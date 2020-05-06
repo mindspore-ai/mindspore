@@ -69,6 +69,21 @@ def _scalar_add_scalar(x, y):
     return F.scalar_add(x, y)
 
 
+@add.register("String", "String")
+def _string_concat_string(x, y):
+    """
+    Concatenate the string y to the string x.
+
+    Args:
+        x (str): The first input string.
+        y (str): the second input string.
+
+    Returns:
+        str, concatenate the y to the x.
+    """
+    return F.string_concat(x, y)
+
+
 @add.register("Number", "Tensor")
 def _scalar_add_tensor(x, y):
     """
@@ -81,8 +96,7 @@ def _scalar_add_tensor(x, y):
     Returns:
         Tensor, has the same dtype as x.
     """
-    z = F.scalar_to_tensor(x, F.dtype(y))
-    return F.tensor_add(z, y)
+    return F.tensor_add(x, y)
 
 
 @add.register("Tensor", "Number")
@@ -97,8 +111,7 @@ def _tensor_add_scalar(x, y):
     Returns:
         Tensor, has the same dtype as x.
     """
-    z = F.scalar_to_tensor(y, F.dtype(x))
-    return F.tensor_add(x, z)
+    return F.tensor_add(x, y)
 
 
 @add.register("Tensor", "Tensor")

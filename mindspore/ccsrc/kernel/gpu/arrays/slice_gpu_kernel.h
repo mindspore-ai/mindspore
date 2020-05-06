@@ -129,10 +129,10 @@ class SliceGpuFwdKernel : public GpuKernel {
     }
     begin_ = GetAttr<std::vector<int>>(kernel_node, "begin");
     for (size_t i = 0; i < input_shape.size(); i++) {
-      if ((begin_[i] > 0 && (begin_[i] >= SizeToInt(input_shape[i]))) ||
+      if ((begin_[i] > 0 && (begin_[i] > SizeToInt(input_shape[i]))) ||
           (begin_[i] < 0 && (std::abs(begin_[i]) > SizeToInt(input_shape[i])))) {
-        MS_LOG(ERROR) << "Error input, out of bounds " << input_shape[i] << " in axis " << i << ".";
-        return false;
+        MS_LOG(INFO) << "Input out of bounds " << input_shape[i] << " in axis " << i << ".";
+        begin_[i] = 0;
       }
     }
     return true;

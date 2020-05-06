@@ -28,20 +28,23 @@ class OpLib {
  public:
   OpLib() = default;
   virtual ~OpLib() = default;
-  bool RegOp(const std::string& json_string, const std::string& impl_path);
-  static std::shared_ptr<OpInfo> FindOp(const std::string& op_name, OpImplyType imply_type);
+  bool RegOp(const std::string &json_string, const std::string &impl_path);
+  static std::shared_ptr<OpInfo> FindOp(const std::string &op_name, OpImplyType imply_type);
 
  protected:
   static std::vector<std::shared_ptr<OpInfo>> op_info_;
 
  private:
-  static bool DecodeOpInfo(const nlohmann::json& obj, const OpImplyType imply_type, const std::string& impl_path);
-  static bool DecodeAttr(const nlohmann::json& obj, const OpImplyType imply_type,
-                         const std::shared_ptr<OpInfo>& op_info);
-  static bool DecodeInputOutput(const nlohmann::json& obj, const OpImplyType imply_type, const OpIOType io_type,
-                                const std::shared_ptr<OpInfo>& op_info);
-  static bool GetRefInfo(const std::shared_ptr<OpInfo>& op_info);
-  static bool CheckRepetition(const std::shared_ptr<OpInfo>& op_info);
+  static bool DecodeOpInfo(const nlohmann::json &obj, const OpImplyType imply_type, const std::string &impl_path);
+  static bool DecodeAttr(const nlohmann::json &obj, const OpImplyType imply_type,
+                         const std::shared_ptr<OpInfo> &op_info);
+  static bool DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::shared_ptr<OpIOInfo> &op_io,
+                                size_t index);
+  static void DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_ptr<OpInfo> &op_info);
+  static bool DecodeInputOutput(const nlohmann::json &obj, const OpImplyType imply_type, const OpIOType io_type,
+                                const std::shared_ptr<OpInfo> &op_info, const nlohmann::json &dtype_format);
+  static bool GetRefInfo(const std::shared_ptr<OpInfo> &op_info);
+  static bool CheckRepetition(const std::shared_ptr<OpInfo> &op_info);
 };
 }  // namespace kernel
 }  // namespace mindspore

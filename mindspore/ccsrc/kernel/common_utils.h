@@ -30,14 +30,14 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kCceKernelMeta = "./kernel_meta/";
-constexpr auto kGpuKernelMeta = "/tmp/cuda_meta/";
+constexpr auto kGpuKernelMeta = "./cuda_meta";
 constexpr auto kProcessorAiCore = "aicore";
 constexpr auto kProcessorAiCpu = "aicpu";
 constexpr auto kProcessorCuda = "cuda";
 constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
 constexpr unsigned int AUTODIFF_COMPILE_OVERTIME = 600;
-constexpr auto kAkgModule = "akg";
+constexpr auto kAkgModule = "_akg";
 constexpr auto kArgDataformat = "data_format";
 
 const std::vector<std::string> support_devices = {"aicore", "aicpu", "cuda"};
@@ -51,9 +51,11 @@ using KernelMetaPtr = std::shared_ptr<KernelMetaInfo>;
 class KernelMeta {
  public:
   KernelMeta() = default;
-  bool ReadIndex(const std::string &bin_dir);
+  void Initialize();
+  void RemoveKernelCache();
   std::string Search(const std::string &kernel_name) const;
-  bool Insert(const std::string &kernel_name, const std::string &cce_json);
+  bool Insert(const std::string &kernel_name, const std::string &kernel_json);
+  std::string GetKernelMetaPath() { return kernel_meta_path_; }
 
   static KernelMeta *GetInstance() {
     static KernelMeta kernel_meta;
@@ -63,6 +65,7 @@ class KernelMeta {
 
  private:
   bool initialized_ = false;
+  std::string kernel_meta_path_;
   std::unordered_map<std::string, std::string> kernel_meta_map_;
 };
 

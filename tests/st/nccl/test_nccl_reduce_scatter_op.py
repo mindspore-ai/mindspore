@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
 import numpy as np
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import init, NCCL_WORLD_COMM_GROUP, get_rank, get_group_size
@@ -27,8 +27,9 @@ rank = get_rank()
 size = get_group_size()
 x = np.ones([size, 1, 3, 3]).astype(np.float32) * 0.01 * (rank + 1)
 
+
 class Net(nn.Cell):
-    def __init__( self):
+    def __init__(self):
         super(Net, self).__init__()
         self.x = Parameter(initializer(Tensor(x), x.shape), name='x')
 
@@ -46,6 +47,7 @@ class Net(nn.Cell):
                 self.reduce_scatter2(self.x),
                 self.reduce_scatter3(self.x))
 
+
 def test_ReduceScatter():
     reduce_scatter = Net()
     output = reduce_scatter()
@@ -53,7 +55,7 @@ def test_ReduceScatter():
     sum = np.ones([size, 1, 3, 3]).astype(np.float32) * 0
     for i in range(size):
         sum += np.ones([size, 1, 3, 3]).astype(np.float32) * 0.01 * (i + 1)
-    expect0 = sum[rank : rank + 1]
+    expect0 = sum[rank: rank + 1]
     diff0 = output[0].asnumpy() - expect0
     error0 = np.ones(shape=expect0.shape) * 1.0e-5
     assert np.all(diff0 < error0)
@@ -62,8 +64,6 @@ def test_ReduceScatter():
     expect1 = np.ones([1, 1, 3, 3]).astype(np.float32) * 0.01 * size
     diff1 = output[1].asnumpy() - expect1
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
-    print(expect1)
-    print(output[1])
     assert np.all(diff1 < error1)
     assert (output[1].shape() == expect1.shape)
 

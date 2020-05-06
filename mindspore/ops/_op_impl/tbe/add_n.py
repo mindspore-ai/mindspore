@@ -14,61 +14,33 @@
 # ============================================================================
 
 """AddN op"""
-from mindspore.ops.op_info_register import op_info_register
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
+add_n_op_info = TBERegOp("AddN") \
+    .fusion_type("ELEMWISE") \
+    .async_flag(False) \
+    .binfile_name("add_n.so") \
+    .compute_cost(10) \
+    .kernel_name("add_n") \
+    .partial_flag(True) \
+    .attr("n", "required", "int", "all") \
+    .input(0, "x", False, "dynamic", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.F16_FracZ, DataType.F16_FracZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ) \
+    .dtype_format(DataType.F32_FracNZ, DataType.F32_FracNZ) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_5HD, DataType.I32_5HD) \
+    .dtype_format(DataType.I32_FracZ, DataType.I32_FracZ) \
+    .get_op_info()
 
 
-@op_info_register("""{
-    "op_name": "AddN",
-    "imply_type": "TBE",
-    "fusion_type": "ELEMWISE",
-    "async_flag": false,
-    "binfile_name": "add_n.so",
-    "compute_cost": 10,
-    "kernel_name": "add_n",
-    "partial_flag": true,
-    "attr": [
-        {
-            "name": "n",
-            "param_type": "required",
-            "type": "int",
-            "value": "all"
-        }
-    ],
-    "inputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float16","float16",
-                "float","float","float","float","int32","int32","int32"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","FracZ","FRACTAL_NZ",
-                "DefaultFormat","NC1HWC0","FracZ","FRACTAL_NZ","DefaultFormat","NC1HWC0","FracZ"
-            ],
-            "name": "x",
-            "need_compile": false,
-            "param_type": "dynamic",
-            "shape": "all"
-        }
-    ],
-    "outputs": [
-        {
-            "index": 0,
-            "dtype": [
-                "float16","float16","float16","float16",
-                "float","float","float","float","int32","int32","int32"
-            ],
-            "format": [
-                "DefaultFormat","NC1HWC0","FracZ","FRACTAL_NZ",
-                "DefaultFormat","NC1HWC0","FracZ","FRACTAL_NZ","DefaultFormat","NC1HWC0","FracZ"
-            ],
-            "name": "y",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        }
-    ]
-}""")
+@op_info_register(add_n_op_info)
 def _add_n_tbe():
     """AddN TBE register"""
     return

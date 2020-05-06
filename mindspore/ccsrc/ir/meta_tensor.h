@@ -131,16 +131,16 @@ class MetaTensor : public Value {
   // information of a Tensor. The following codes will create a 2x3 float
   // param data_type The data type of the tensor.
   // param shape The shape of the tensor.
-  MetaTensor(const TypeId data_type, const std::vector<int>& shape);
+  MetaTensor(const TypeId data_type, const std::vector<int> &shape);
 
-  MetaTensor(const TypePtr& type_ptr, const py::tuple& shape);
+  MetaTensor(const TypePtr &type_ptr, const py::tuple &shape);
   // brief Constructs a MetaTensor object from an existing MetaTensor instance.
   //
   // The constructed MetaTensor object will have the same data type and shape as the
   // meta_tensor.
   //
   // param meta_tensor An existing MetaTensor object.
-  MetaTensor(const MetaTensor& meta_tensor);
+  MetaTensor(const MetaTensor &meta_tensor);
   ~MetaTensor() override = default;
   MS_DECLARE_PARENT(MetaTensor, Value)
 
@@ -148,8 +148,8 @@ class MetaTensor : public Value {
   //
   // The constructed MetaTensor object has the same type and shape with meta_tensor.
   //
-  // param meta_tensor An exisiting MetaTensor object.
-  virtual MetaTensor& operator=(const MetaTensor& meta_tensor);
+  // param meta_tensor An existing MetaTensor object.
+  virtual MetaTensor &operator=(const MetaTensor &meta_tensor);
 
   // brief Compares two MetaTensor objects.
   //
@@ -157,7 +157,7 @@ class MetaTensor : public Value {
   //
   // param meta_tensor The MetaTensor object to be compared.
   // return true: If having same type and shape, return true, or return false.
-  virtual bool operator==(const MetaTensor& meta_tensor) const;
+  virtual bool operator==(const MetaTensor &meta_tensor) const;
 
   // brief Returns the data type of the tensor in its MetaTensor.
   //
@@ -166,7 +166,7 @@ class MetaTensor : public Value {
   TypeId data_type() const { return data_type_; }
   std::string ToString() const override;
   std::string DumpText() const override;
-  // bried Sets the data type of a tensor in its MetaTensor.
+  // brief Sets the data type of a tensor in its MetaTensor.
   //
   // param data_type The data type of the tensor to be set.
   virtual TypeId set_data_type(const TypeId data_type) {
@@ -193,7 +193,7 @@ class MetaTensor : public Value {
   //
   // param shape The shape of the tensor.
   // return The shape's size.
-  size_t set_shape(const std::vector<int>& shape) {
+  size_t set_shape(const std::vector<int> &shape) {
     this->shape_ = shape;
     return shape_.size();
   }
@@ -202,9 +202,9 @@ class MetaTensor : public Value {
   DeviceInfo device_info() const { return device_info_; }
 
   // Set tensor's device info.
-  void set_device_info(const DeviceInfo& device_info) { device_info_ = device_info; }
+  void set_device_info(const DeviceInfo &device_info) { device_info_ = device_info; }
 
-  void SetDeviceInfo(const std::string& format, const TypePtr& data_type);
+  void SetDeviceInfo(const std::string &format, const TypePtr &data_type);
 
   // Get the size of a given dimension by its index number.
   int DimensionSize(size_t index) const;
@@ -222,9 +222,9 @@ class MetaTensor : public Value {
     }
     return hash_value;
   }
-  bool operator==(const Value& other) const override {
+  bool operator==(const Value &other) const override {
     if (other.isa<MetaTensor>()) {
-      auto other_ = static_cast<const MetaTensor&>(other);
+      auto other_ = static_cast<const MetaTensor &>(other);
       return *this == other_;
     } else {
       return false;
@@ -262,49 +262,49 @@ class Tensor : public MetaTensor {
   //
   // param type_ptr [TypePty] Data type of the tensor.
   // param py_shape [py::tuple] The shape represented by py::tuple of the tensor.
-  Tensor(const TypePtr& type_ptr, const py::tuple& shape);
+  Tensor(const TypePtr &type_ptr, const py::tuple &shape);
 
   // brief Constructor for C++.
   //
   // param data_type [TypeId] Data type of the tensor.
   // param shape The shape represented by std::vector<int> of the tensor.
-  Tensor(TypeId data_type, const std::vector<int>& shape);
+  Tensor(TypeId data_type, const std::vector<int> &shape);
 
   // brief Constructor for Python.
   //
   // param input [py::array] Data value of the tensor.
   // param data_type [TypeId] Data type of the tensor.
-  explicit Tensor(const py::array& input, const TypePtr& data_type = nullptr);
+  explicit Tensor(const py::array &input, const TypePtr &data_type = nullptr);
 
   // brief Constructor
   //
   // param input [py::list] the data for tensor
   // param data_type [TypeId] data type
-  explicit Tensor(const py::list& input, const TypePtr& data_type = nullptr);
+  explicit Tensor(const py::list &input, const TypePtr &data_type = nullptr);
 
   // brief Constructor
   //
   // param input [py::tuple] the data for tensor
   // param data_type [TypeId] data type
-  explicit Tensor(const py::tuple& input, const TypePtr& data_type = nullptr);
+  explicit Tensor(const py::tuple &input, const TypePtr &data_type = nullptr);
 
   // brief Constructor
   //
   // param input [py::float_] the data for tensor
   // param data_type [TypeId] data type
-  explicit Tensor(const py::float_& input, const TypePtr& data_type = nullptr);
+  explicit Tensor(const py::float_ &input, const TypePtr &data_type = nullptr);
 
   // brief Constructor
   //
   // param input [py::int_] the data for tensor
   // param data_type [TypeId] data type
-  explicit Tensor(const py::int_& input, const TypePtr& data_type = nullptr);
+  explicit Tensor(const py::int_ &input, const TypePtr &data_type = nullptr);
 
   // brief Constructor
   //
   // param input [Tensor] the data for tensor
   // param data_type [TypeId] data type
-  Tensor(const Tensor& tensor, const TypePtr& data_type = nullptr);
+  Tensor(const Tensor &tensor, const TypePtr &data_type = nullptr);
 
   ~Tensor() override = default;
 
@@ -314,8 +314,8 @@ class Tensor : public MetaTensor {
   //
   // The constructed Tensor object has the same type and shape with tensor.
   //
-  // param tensor An exisiting Tensor object.
-  Tensor& operator=(const Tensor& tensor);
+  // param tensor An existing Tensor object.
+  Tensor &operator=(const Tensor &tensor);
 
   // brief Compares two Tensor objects.
   //
@@ -324,17 +324,14 @@ class Tensor : public MetaTensor {
   //
   // param tensor The Tensor object to be compared.
   // return true: If having same type, shape and data, return true, or return false.
-  bool operator==(const Tensor& tensor) const;
+  bool operator==(const Tensor &tensor) const;
 
   // It is different from 'operator==' which just compare shape/type/address, it do real value comparison.
-  bool ValueEqual(const Tensor& other) const;
+  bool ValueEqual(const Tensor &other) const;
 
-  // It is different from 'operator==' which just compare shape/type/address, it do real value comparison.
-  bool ValueEqualPy(const py::object& other) const;
-
-  bool operator==(const Value& other) const override {
+  bool operator==(const Value &other) const override {
     if (other.isa<Tensor>()) {
-      auto other_ = static_cast<const Tensor&>(other);
+      auto other_ = static_cast<const Tensor &>(other);
       return *this == other_;
     } else {
       return false;
@@ -375,15 +372,15 @@ class Tensor : public MetaTensor {
   //
   // param writable true if writable, false if read only
   // return The pointer to the object
-  void* data_c(bool writable = false);
+  void *data_c(bool writable = false);
 
   // brief Get data type from tensor data.
   //
   // param buf The buffer info of the py::array data.
   // return The [TypeId] of the tensor data.
-  TypeId GetDataType(const py::buffer_info& buf) const;
+  TypeId GetDataType(const py::buffer_info &buf) const;
 
-  // bried Sets the data type of a tensor.
+  // brief Sets the data type of a tensor.
   //
   // param data_type The data type of the tensor to be set.
   //
@@ -401,23 +398,23 @@ class Tensor : public MetaTensor {
   // param input [py::array] the data for tensor
   // param data_type [TypeId] data type
   // return true if succeed, false if failed.
-  void init(const py::array& input, const TypeId& data_type);
-  void init(const py::array& input, const TypePtr& type_ptr);
+  void init(const py::array &input, const TypeId &data_type);
+  void init(const py::array &input, const TypePtr &type_ptr);
 
   // brief init tensor attribute
   //
   // param data_type [TypeId] Data type of the tensor.
   // param shape [py::array] The shape of the tensor.
   // return true if succeed, false if failed.
-  void init(TypeId data_type, const std::vector<int>& shape, py::array* data);
+  void init(TypeId data_type, const std::vector<int> &shape, py::array *data);
 
-  bool convert_data(const py::array& in, const TypeId in_data_type, py::array* out, const TypeId out_data_type);
+  bool convert_data(const py::array &in, const TypeId in_data_type, py::array *out, const TypeId out_data_type);
 
  public:
   bool is_dirty() const { return dirty_; }
   void set_dirty(const bool dirty) { dirty_ = dirty; }
   DeviceAddressPtr device_address() const { return device_address_; }
-  void set_device_address(const DeviceAddressPtr& device_address) { device_address_ = device_address; }
+  void set_device_address(const DeviceAddressPtr &device_address) { device_address_ = device_address; }
   py::array data_sync();
 
  private:
