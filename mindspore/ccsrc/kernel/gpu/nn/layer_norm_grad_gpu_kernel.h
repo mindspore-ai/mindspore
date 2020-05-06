@@ -45,7 +45,7 @@ class LayerNormGradGpuKernel : public GpuKernel {
     auto dg = GetDeviceAddress<T>(outputs, 1);
     auto db = GetDeviceAddress<T>(outputs, 2);
 
-    T epsilon = 10e-12;
+    const T epsilon = 10e-12;
     LayerNormGrad(input_row_, input_col_, param_dim_, epsilon, dy, x, mean, var, gamma, dx, dg, db,
                   reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;

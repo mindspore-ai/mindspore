@@ -43,7 +43,7 @@ class LayerNormGpuKernel : public GpuKernel {
     auto mean = GetDeviceAddress<T>(outputs, 1);
     auto variance = GetDeviceAddress<T>(outputs, 2);
 
-    T epsilon = 10e-12;
+    const T epsilon = 10e-12;
     LayerNorm(input_row_, input_col_, param_dim_, epsilon, x, gamma, beta, y, mean, variance,
               reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
