@@ -7,6 +7,7 @@
     * DeepFM: a factorization-machine based neural network for CTR prediction on Criteo dataset.
     * DeepLabV3: significantly improves over our previous DeepLab versions without DenseCRF post-processing and attains comparable performance with other state-of-art models on the PASCAL VOC 2007 semantic image segmentation benchmark.
     * Faster-RCNN: towards real-time object detection with region proposal networks on COCO 2017 dataset.
+    * SSD: a single stage object detection methods on COCO 2017 dataset.
     * GoogLeNet: a deep convolutional neural network architecture codenamed Inception V1 for classification and detection on CIFAR-10 dataset.
     * Wide&Deep: jointly trained wide linear models and deep neural networks for recommender systems on Criteo dataset.
 * Frontend and User Interface
