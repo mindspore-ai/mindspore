@@ -59,10 +59,10 @@ FilterOp::FilterOp(const std::vector<std::string> &in_col_names, int32_t num_wor
     : ParallelOp(num_workers, op_queue_size), predicate_func_(std::move(predicate_func)), in_columns_(in_col_names) {}
 
 Status FilterOp::operator()() {
-  // The operator class just starts off threads by calling the tree_ function.
-  RETURN_UNEXPECTED_IF_NULL(tree_);
   // Synchronize with TaskManager.
   TaskManager::FindMe()->Post();
+  // The operator class just starts off threads by calling the tree_ function.
+  RETURN_UNEXPECTED_IF_NULL(tree_);
   filter_queues_.Init(num_workers_, oc_queue_size_);
   RETURN_IF_NOT_OK(filter_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&FilterOp::WorkerEntry, this, std::placeholders::_1)));
