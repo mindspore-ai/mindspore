@@ -14,49 +14,51 @@
 # ============================================================================
 
 """Evaluation for SSD"""
+
 import os
 import argparse
 import time
+import numpy as np
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.model_zoo.ssd import SSD300, ssd_mobilenet_v2
-from dataset import create_ssd_dataset, data_to_mindrecord_byte_image
-from config import ConfigSSD
-from util import metrics
+from src.ssd import SSD300, ssd_mobilenet_v2
+from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image
+from src.config import config
+from src.coco_eval import metrics
 
 def ssd_eval(dataset_path, ckpt_path):
     """SSD evaluation."""
-
-    ds = create_ssd_dataset(dataset_path, batch_size=1, repeat_num=1, is_training=False)
-    net = SSD300(ssd_mobilenet_v2(), ConfigSSD(), is_training=False)
+    batch_size = 1
+    ds = create_ssd_dataset(dataset_path, batch_size=batch_size, repeat_num=1, is_training=False)
+    net = SSD300(ssd_mobilenet_v2(), config, is_training=False)
     print("Load Checkpoint!")
     param_dict = load_checkpoint(ckpt_path)
     net.init_parameters_data()
     load_param_into_net(net, param_dict)
 
     net.set_train(False)
-    i = 1.
-    total = ds.get_dataset_size()
+    i = batch_size
+    total = ds.get_dataset_size() * batch_size
     start = time.time()
     pred_data = []
     print("\n========================================\n")
     print("total images num: ", total)
     print("Processing, please wait a moment.")
     for data in ds.create_dict_iterator():
+        img_id = data['img_id']
         img_np = data['image']
         image_shape = data['image_shape']
-        annotation = data['annotation']
 
         output = net(Tensor(img_np))
         for batch_idx in range(img_np.shape[0]):
             pred_data.append({"boxes": output[0].asnumpy()[batch_idx],
                               "box_scores": output[1].asnumpy()[batch_idx],
-                              "annotation": annotation,
-                              "image_shape": image_shape})
-        percent = round(i / total * 100, 2)
+                              "img_id": int(np.squeeze(img_id[batch_idx])),
+                              "image_shape": image_shape[batch_idx]})
+        percent = round(i / total * 100., 2)
 
         print(f'    {str(percent)} [{i}/{total}]', end='\r')
-        i += 1
+        i += batch_size
     cost_time = int((time.time() - start) * 1000)
     print(f'    100% [{total}/{total}] cost {cost_time} ms')
     mAP = metrics(pred_data)
@@ -73,22 +75,21 @@ if __name__ == '__main__':
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
 
-    config = ConfigSSD()
     prefix = "ssd_eval.mindrecord"
-    mindrecord_dir = config.MINDRECORD_DIR
+    mindrecord_dir = config.mindrecord_dir
     mindrecord_file = os.path.join(mindrecord_dir, prefix + "0")
     if not os.path.exists(mindrecord_file):
         if not os.path.isdir(mindrecord_dir):
             os.makedirs(mindrecord_dir)
         if args_opt.dataset == "coco":
-            if os.path.isdir(config.COCO_ROOT):
+            if os.path.isdir(config.coco_root):
                 print("Create Mindrecord.")
                 data_to_mindrecord_byte_image("coco", False, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
             else:
-                print("COCO_ROOT not exits.")
+                print("coco_root not exits.")
         else:
-            if os.path.isdir(config.IMAGE_DIR) and os.path.exists(config.ANNO_PATH):
+            if os.path.isdir(config.image_dir) and os.path.exists(config.anno_path):
                 print("Create Mindrecord.")
                 data_to_mindrecord_byte_image("other", False, prefix)
                 print("Create Mindrecord Done, at {}".format(mindrecord_dir))
