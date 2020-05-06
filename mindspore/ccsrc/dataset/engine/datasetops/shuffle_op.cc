@@ -86,20 +86,10 @@ Status ShuffleOp::SelfReset() {
   // epoch.
   // If ReshuffleEachEpoch is true, then the first epoch uses the given seed,
   // and all subsequent epochs will then reset the seed based on random device.
-  if (!reshuffle_each_epoch_) {
-    rng_ = std::mt19937_64(shuffle_seed_);
-  } else {
-#if defined(_WIN32) || defined(_WIN64)
-    unsigned int number;
-    rand_s(&number);
-    std::mt19937 random_device{static_cast<uint32_t>(number)};
-#else
-    std::random_device random_device("/dev/urandom");
-#endif
-    std::uniform_int_distribution<int32_t> distribution(0, std::numeric_limits<int32_t>::max());
-    shuffle_seed_ = distribution(random_device);
-    rng_ = std::mt19937_64(shuffle_seed_);
+  if (reshuffle_each_epoch_) {
+    shuffle_seed_ = GetNewSeed();
   }
+  rng_ = std::mt19937_64(shuffle_seed_);
   shuffle_buffer_ = std::make_unique<TensorTable>();
   buffer_counter_ = 0;
   shuffle_last_row_idx_ = 0;
