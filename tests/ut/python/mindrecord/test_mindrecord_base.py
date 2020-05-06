@@ -448,3 +448,456 @@ def test_cv_file_writer_no_raw():
     reader.close()
     os.remove(NLP_FILE_NAME)
     os.remove("{}.db".format(NLP_FILE_NAME))
+
+def test_write_read_process_with_multi_bytes():
+    mindrecord_file_name = "test.mindrecord"
+    data = [{"file_name": "001.jpg", "label": 43,
+             "image1": bytes("image1 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image1 bytes def", encoding='UTF-8'),
+             "image3": bytes("image1 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image1 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image1 bytes mno", encoding='UTF-8')},
+            {"file_name": "002.jpg", "label": 91,
+             "image1": bytes("image2 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image2 bytes def", encoding='UTF-8'),
+             "image3": bytes("image2 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image2 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image2 bytes mno", encoding='UTF-8')},
+            {"file_name": "003.jpg", "label": 61,
+             "image1": bytes("image3 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image3 bytes def", encoding='UTF-8'),
+             "image3": bytes("image3 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image3 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image3 bytes mno", encoding='UTF-8')},
+            {"file_name": "004.jpg", "label": 29,
+             "image1": bytes("image4 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image4 bytes def", encoding='UTF-8'),
+             "image3": bytes("image4 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image4 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image4 bytes mno", encoding='UTF-8')},
+            {"file_name": "005.jpg", "label": 78,
+             "image1": bytes("image5 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image5 bytes def", encoding='UTF-8'),
+             "image3": bytes("image5 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image5 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image5 bytes mno", encoding='UTF-8')},
+            {"file_name": "006.jpg", "label": 37,
+             "image1": bytes("image6 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image6 bytes def", encoding='UTF-8'),
+             "image3": bytes("image6 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image6 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image6 bytes mno", encoding='UTF-8')}
+            ]
+    writer = FileWriter(mindrecord_file_name)
+    schema = {"file_name": {"type": "string"},
+              "image1": {"type": "bytes"},
+              "image2": {"type": "bytes"},
+              "image3": {"type": "bytes"},
+              "label": {"type": "int32"},
+              "image4": {"type": "bytes"},
+              "image5": {"type": "bytes"}}
+    writer.add_schema(schema, "data is so cool")
+    writer.write_raw_data(data)
+    writer.commit()
+
+    reader = FileReader(mindrecord_file_name)
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 7
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    reader2 = FileReader(file_name=mindrecord_file_name, columns=["image1", "image2", "image5"])
+    count = 0
+    for index, x in enumerate(reader2.get_next()):
+        assert len(x) == 3
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader2.close()
+
+    reader3 = FileReader(file_name=mindrecord_file_name, columns=["image2", "image4"])
+    count = 0
+    for index, x in enumerate(reader3.get_next()):
+        assert len(x) == 2
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader3.close()
+
+    reader4 = FileReader(file_name=mindrecord_file_name, columns=["image5", "image2"])
+    count = 0
+    for index, x in enumerate(reader4.get_next()):
+        assert len(x) == 2
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader4.close()
+
+    reader5 = FileReader(file_name=mindrecord_file_name, columns=["image5", "image2", "label"])
+    count = 0
+    for index, x in enumerate(reader5.get_next()):
+        assert len(x) == 3
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader5.close()
+
+    os.remove("{}".format(mindrecord_file_name))
+    os.remove("{}.db".format(mindrecord_file_name))
+
+def test_write_read_process_with_multi_array():
+    mindrecord_file_name = "test.mindrecord"
+    data = [{"source_sos_ids": np.array([1, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([6, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([13, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([19, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([28, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([33, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([39, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([48, 49, 50, 51], dtype=np.int64)},
+            {"source_sos_ids": np.array([11, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([16, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([113, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([119, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([128, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([133, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([139, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([148, 49, 50, 51], dtype=np.int64)},
+            {"source_sos_ids": np.array([21, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([26, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([213, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([219, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([228, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([233, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([239, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([248, 49, 50, 51], dtype=np.int64)},
+            {"source_sos_ids": np.array([31, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([36, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([313, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([319, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([328, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([333, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([339, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([348, 49, 50, 51], dtype=np.int64)},
+            {"source_sos_ids": np.array([41, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([46, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([413, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([419, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([428, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([433, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([439, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([448, 49, 50, 51], dtype=np.int64)},
+            {"source_sos_ids": np.array([51, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([56, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([513, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([519, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([528, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([533, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([539, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([548, 49, 50, 51], dtype=np.int64)}
+            ]
+    writer = FileWriter(mindrecord_file_name)
+    schema = {"source_sos_ids": {"type": "int64", "shape": [-1]},
+              "source_sos_mask": {"type": "int64", "shape": [-1]},
+              "source_eos_ids": {"type": "int64", "shape": [-1]},
+              "source_eos_mask": {"type": "int64", "shape": [-1]},
+              "target_sos_ids": {"type": "int64", "shape": [-1]},
+              "target_sos_mask": {"type": "int64", "shape": [-1]},
+              "target_eos_ids": {"type": "int64", "shape": [-1]},
+              "target_eos_mask": {"type": "int64", "shape": [-1]}}
+    writer.add_schema(schema, "data is so cool")
+    writer.write_raw_data(data)
+    writer.commit()
+
+    reader = FileReader(mindrecord_file_name)
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 8
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    reader = FileReader(file_name=mindrecord_file_name, columns=["source_eos_ids", "source_eos_mask",
+                                                                 "target_sos_ids", "target_sos_mask",
+                                                                 "target_eos_ids", "target_eos_mask"])
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 6
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    reader = FileReader(file_name=mindrecord_file_name, columns=["source_sos_ids",
+                                                                 "target_sos_ids",
+                                                                 "target_eos_mask"])
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 3
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    reader = FileReader(file_name=mindrecord_file_name, columns=["target_eos_mask",
+                                                                 "source_eos_mask",
+                                                                 "source_sos_mask"])
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 3
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    reader = FileReader(file_name=mindrecord_file_name, columns=["target_eos_ids"])
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 1
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    os.remove("{}".format(mindrecord_file_name))
+    os.remove("{}.db".format(mindrecord_file_name))
+
+def test_write_read_process_with_multi_bytes_and_array():
+    mindrecord_file_name = "test.mindrecord"
+    data = [{"file_name": "001.jpg", "label": 4,
+             "image1": bytes("image1 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image1 bytes def", encoding='UTF-8'),
+             "source_sos_ids": np.array([1, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([6, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "image3": bytes("image1 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image1 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image1 bytes mno", encoding='UTF-8'),
+             "target_sos_ids": np.array([28, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([33, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([39, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([48, 49, 50, 51], dtype=np.int64)},
+            {"file_name": "002.jpg", "label": 5,
+             "image1": bytes("image2 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image2 bytes def", encoding='UTF-8'),
+             "image3": bytes("image2 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image2 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image2 bytes mno", encoding='UTF-8'),
+             "source_sos_ids": np.array([11, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([16, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "target_sos_ids": np.array([128, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([133, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([139, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([148, 49, 50, 51], dtype=np.int64)},
+            {"file_name": "003.jpg", "label": 6,
+             "source_sos_ids": np.array([21, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([26, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "target_sos_ids": np.array([228, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([233, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([239, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "image1": bytes("image3 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image3 bytes def", encoding='UTF-8'),
+             "image3": bytes("image3 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image3 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image3 bytes mno", encoding='UTF-8'),
+             "target_eos_mask": np.array([248, 49, 50, 51], dtype=np.int64)},
+            {"file_name": "004.jpg", "label": 7,
+             "source_sos_ids": np.array([31, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([36, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "image1": bytes("image4 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image4 bytes def", encoding='UTF-8'),
+             "image3": bytes("image4 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image4 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image4 bytes mno", encoding='UTF-8'),
+             "target_sos_ids": np.array([328, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([333, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([339, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([348, 49, 50, 51], dtype=np.int64)},
+            {"file_name": "005.jpg", "label": 8,
+             "source_sos_ids": np.array([41, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([46, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "target_sos_ids": np.array([428, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([433, 34, 35, 36, 37, 38], dtype=np.int64),
+             "image1": bytes("image5 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image5 bytes def", encoding='UTF-8'),
+             "image3": bytes("image5 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image5 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image5 bytes mno", encoding='UTF-8'),
+             "target_eos_ids": np.array([439, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([448, 49, 50, 51], dtype=np.int64)},
+            {"file_name": "006.jpg", "label": 9,
+             "source_sos_ids": np.array([51, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([56, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "target_sos_ids": np.array([528, 29, 30, 31, 32], dtype=np.int64),
+             "image1": bytes("image6 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image6 bytes def", encoding='UTF-8'),
+             "image3": bytes("image6 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image6 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image6 bytes mno", encoding='UTF-8'),
+             "target_sos_mask": np.array([533, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([539, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([548, 49, 50, 51], dtype=np.int64)}
+            ]
+
+    writer = FileWriter(mindrecord_file_name)
+    schema = {"file_name": {"type": "string"},
+              "image1": {"type": "bytes"},
+              "image2": {"type": "bytes"},
+              "source_sos_ids": {"type": "int64", "shape": [-1]},
+              "source_sos_mask": {"type": "int64", "shape": [-1]},
+              "image3": {"type": "bytes"},
+              "image4": {"type": "bytes"},
+              "image5": {"type": "bytes"},
+              "target_sos_ids": {"type": "int64", "shape": [-1]},
+              "target_sos_mask": {"type": "int64", "shape": [-1]},
+              "target_eos_ids": {"type": "int64", "shape": [-1]},
+              "target_eos_mask": {"type": "int64", "shape": [-1]},
+              "label": {"type": "int32"}}
+    writer.add_schema(schema, "data is so cool")
+    writer.write_raw_data(data)
+    writer.commit()
+
+    reader = FileReader(mindrecord_file_name)
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 13
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    reader = FileReader(file_name=mindrecord_file_name, columns=["source_sos_ids", "source_sos_mask",
+                                                                 "target_sos_ids"])
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 3
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    reader = FileReader(file_name=mindrecord_file_name, columns=["image2", "source_sos_mask",
+                                                                 "image3", "target_sos_ids"])
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 4
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    reader = FileReader(file_name=mindrecord_file_name, columns=["target_sos_ids", "image4",
+                                                                 "source_sos_ids"])
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 3
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    reader = FileReader(file_name=mindrecord_file_name, columns=["target_sos_ids", "image5",
+                                                                 "image4", "image3", "source_sos_ids"])
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 5
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    reader = FileReader(file_name=mindrecord_file_name, columns=["target_eos_mask", "image5", "image2",
+                                                                 "source_sos_mask", "label"])
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 5
+        for field in x:
+            if isinstance(x[field], np.ndarray):
+                assert (x[field] == data[count][field]).all()
+            else:
+                assert x[field] == data[count][field]
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 6
+    reader.close()
+
+    os.remove("{}".format(mindrecord_file_name))
+    os.remove("{}.db".format(mindrecord_file_name))
