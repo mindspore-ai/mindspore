@@ -601,7 +601,12 @@ void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, V
     if (ms_context->backend_policy() == kMsConvert && py::isinstance<py::array>(arg)) {
       MS_LOG(EXCEPTION) << "Args[" << i << "] is numpy array, not tensor";
     }
-    arg_list->push_back(arg);
+    ValuePtr converted = nullptr;
+    bool succ = parse::ConvertData(arg, &converted);
+    if (!succ) {
+      MS_LOG(EXCEPTION) << "Args convert error";
+    }
+    arg_list->push_back(converted);
   }
 
   ResourcePtr res = GetResource(phase);
