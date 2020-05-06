@@ -19,9 +19,6 @@
 #include "dataset/kernels/no_op.h"
 #include "dataset/kernels/data/one_hot_op.h"
 #include "dataset/kernels/image/center_crop_op.h"
-#if !defined(_WIN32) && !defined(_WIN64)
-#include "dataset/kernels/image/change_mode_op.h"
-#endif
 #include "dataset/kernels/image/cut_out_op.h"
 #include "dataset/kernels/image/decode_op.h"
 #include "dataset/kernels/image/hwc_to_chw_op.h"
@@ -306,12 +303,6 @@ void bindTensorOps2(py::module *m) {
          py::arg("padIfNeeded") = RandomCropOp::kDefPadIfNeeded, py::arg("fillR") = RandomCropOp::kDefFillR,
          py::arg("fillG") = RandomCropOp::kDefFillG, py::arg("fillB") = RandomCropOp::kDefFillB);
   (void)py::class_<HwcToChwOp, TensorOp, std::shared_ptr<HwcToChwOp>>(*m, "ChannelSwapOp").def(py::init<>());
-
-#if !defined(_WIN32) && !defined(_WIN64)
-  (void)py::class_<ChangeModeOp, TensorOp, std::shared_ptr<ChangeModeOp>>(
-    *m, "ChangeModeOp", "Tensor operation to change colors from BGR to RGB")
-    .def(py::init<>());
-#endif
 
   (void)py::class_<OneHotOp, TensorOp, std::shared_ptr<OneHotOp>>(
     *m, "OneHotOp", "Tensor operation to apply one hot encoding. Takes number of classes.")

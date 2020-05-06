@@ -13,7 +13,6 @@ SET(DE_UT_SRCS
     arena_test.cc
     btree_test.cc
     center_crop_op_test.cc
-    change_mode_test.cc
     channel_swap_test.cc
     circular_pool_test.cc
     client_config_test.cc
