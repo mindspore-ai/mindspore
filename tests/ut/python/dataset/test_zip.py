@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from util import save_and_check_dict
+from util import save_and_check_dict, save_and_check_md5
 from mindspore import log as logger
 
 import mindspore.dataset as ds
@@ -58,7 +58,7 @@ def test_zip_02():
     dataz = ds.zip((data1, data2))
     # Note: zipped dataset has 3 rows and 4 columns
     filename = "zip_02_result.npz"
-    save_and_check_dict(dataz, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5(dataz, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_zip_03():
@@ -72,7 +72,7 @@ def test_zip_03():
     dataz = ds.zip((data1, data2))
     # Note: zipped dataset has 3 rows and 7 columns
     filename = "zip_03_result.npz"
-    save_and_check_dict(dataz, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5(dataz, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_zip_04():
@@ -87,7 +87,7 @@ def test_zip_04():
     dataz = ds.zip((data1, data2, data3))
     # Note: zipped dataset has 3 rows and 9 columns
     filename = "zip_04_result.npz"
-    save_and_check_dict(dataz, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5(dataz, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_zip_05():
