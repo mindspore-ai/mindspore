@@ -34,6 +34,8 @@ enum UnaryOptype {
   UNARY_OP_RECIPROCAL,
   UNARY_OP_ZEROSLIKE,
   UNARY_OP_SQUARE,
+  UNARY_OP_SQRT,
+  UNARY_OP_RSQRT,
   UNARY_OP_INVALID_TYPE = 255
 };
 static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY_OP_EXP},
@@ -41,7 +43,9 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY
                                                                    {"Neg", UNARY_OP_NEG},
                                                                    {"Reciprocal", UNARY_OP_RECIPROCAL},
                                                                    {"ZerosLike", UNARY_OP_ZEROSLIKE},
-                                                                   {"Square", UNARY_OP_SQUARE}};
+                                                                   {"Square", UNARY_OP_SQUARE},
+                                                                   {"Sqrt", UNARY_OP_SQRT},
+                                                                   {"Rsqrt", UNARY_OP_RSQRT}};
 template <typename T>
 class UnaryOpGpuKernel : public GpuKernel {
  public:
@@ -78,6 +82,14 @@ class UnaryOpGpuKernel : public GpuKernel {
       }
       case UNARY_OP_SQUARE: {
         Square(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_SQRT: {
+        Sqrt(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_RSQRT: {
+        Rsqrt(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
       case UNARY_OP_ZEROSLIKE: {
