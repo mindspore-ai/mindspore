@@ -198,15 +198,14 @@ void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel) {
   if (output_sizes.empty()) {
     return;
   }
-  if (AnfAlgo::GetCNodeName(kernel) == "ApplyMomentum") {
-    auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, 0);
-    AnfAlgo::SetOutputAddr(device_address, 0, kernel.get());
-    AnfAlgo::SetOutputAddr(device_address, 1, kernel.get());
-    return;
-  }
 
   for (size_t i = 0; i < output_sizes.size(); ++i) {
     if (AnfAlgo::OutputAddrExist(kernel, i)) {
+      continue;
+    }
+    if (AnfAlgo::GetCNodeName(kernel) == kApplyMomentumOpName) {
+      auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i);
+      AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
       continue;
     }
     std::string output_format = AnfAlgo::GetOutputFormat(kernel, i);

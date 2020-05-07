@@ -77,10 +77,12 @@ class Tensor(Tensor_):
     def __eq__(self, other):
         if not isinstance(other, Tensor):
             return False
-        x = self.asnumpy()
-        y = other.asnumpy()
-        out = np.equal(x, y)
-        return Tensor(np.array(out))
+        return Tensor(np.array(self.asnumpy() == other.asnumpy()))
+
+    def __ne__(self, other):
+        if not isinstance(other, Tensor):
+            return True
+        return Tensor(np.array(self.asnumpy() != other.asnumpy()))
 
     def __hash__(self):
         return hash(id(self))
