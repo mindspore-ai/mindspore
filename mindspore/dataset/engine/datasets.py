@@ -2224,8 +2224,8 @@ class MindDataset(SourceDataset):
         if block_reader is True and sampler is not None:
             raise ValueError("block reader not allowed true when use sampler")
 
-        if shuffle is True and sampler is not None:
-            raise ValueError("shuffle not allowed true when use sampler")
+        if shuffle is not None and sampler is not None:
+            raise ValueError("shuffle not allowed when use sampler")
 
         if block_reader is False and sampler is None:
             self.global_shuffle = not bool(shuffle is False)
