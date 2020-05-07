@@ -243,9 +243,15 @@ void KernelRuntime::RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel) {
 void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
-  for (auto &item : graph->inputs()) {
+  auto graph_inputs = graph->inputs();
+  auto graph_valid_input = graph->valid_inputs();
+  for (size_t i = 0; i < graph_inputs.size(); i++) {
+    auto item = graph_inputs[i];
     MS_EXCEPTION_IF_NULL(item);
     if (!item->isa<Parameter>()) {
+      continue;
+    }
+    if (i < graph_valid_input.size() && !graph_valid_input[i]) {
       continue;
     }
     if (AnfAlgo::OutputAddrExist(item, 0)) {

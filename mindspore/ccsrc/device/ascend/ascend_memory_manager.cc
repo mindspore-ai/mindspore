@@ -21,8 +21,8 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-const uint64_t kAscendDeviceMemGB = 20;
-const uint64_t kAscendMemPoolGB = 10;
+const uint64_t kAscendDeviceMemGB = 24;
+const uint64_t kAscendMemPoolGB = 6;
 const uint64_t kAscendDeviceMemSize = (kAscendDeviceMemGB << 30);
 const uint64_t kAscendMemPoolSize = (kAscendMemPoolGB << 30);
 
