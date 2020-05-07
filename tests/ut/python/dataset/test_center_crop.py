@@ -108,9 +108,42 @@ def test_center_crop_comp(height=375, width=375, plot=False):
         visualize(image, image_cropped)
 
 
+def test_crop_grayscale(height=375, width=375): 
+    """
+    Test that centercrop works with pad and grayscale images 
+    """
+    def channel_swap(image): 
+        """
+        Py func hack for our pytransforms to work with c transforms
+        """
+        return (image.transpose(1, 2, 0) * 255).astype(np.uint8)
+    
+    transforms = [
+        py_vision.Decode(),
+        py_vision.Grayscale(1), 
+        py_vision.ToTensor(),
+        (lambda image: channel_swap(image))
+    ]
+
+    transform = py_vision.ComposeOp(transforms)
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = data1.map(input_columns=["image"], operations=transform())
+
+    # if input is grayscale, the output dimensions should be single channel 
+    crop_gray = vision.CenterCrop([height, width])
+    data1 = data1.map(input_columns=["image"], operations=crop_gray)
+
+    for item1 in data1.create_dict_iterator():
+        c_image = item1["image"]
+        
+        # check that the image is grayscale
+        assert (len(c_image.shape) == 3 and c_image.shape[2] == 1) 
+        
+
 if __name__ == "__main__":
     test_center_crop_op(600, 600)
     test_center_crop_op(300, 600)
     test_center_crop_op(600, 300)
-    test_center_crop_md5(600, 600)
+    test_center_crop_md5()
     test_center_crop_comp()
+    test_crop_grayscale()
