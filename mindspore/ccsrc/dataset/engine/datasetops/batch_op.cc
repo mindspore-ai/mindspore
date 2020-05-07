@@ -74,7 +74,7 @@ Status BatchOp::operator()() {
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
-  column_name_map_ = child_iterator_->col_name_id_map();
+  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());  // must come after the first fetch above
   int32_t cur_batch_size = 0;
   RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(0, 0, 0)));
   while (child_iterator_->eof_handled() == false) {
@@ -196,7 +196,6 @@ Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatc
   std::unique_ptr<TensorQTable> dest_table = std::make_unique<TensorQTable>();
   RETURN_IF_NOT_OK(BatchRows(&table_pair.first, &dest_table, table_pair.first->size()));
   (*db)->set_tensor_table(std::move(dest_table));
-  (*db)->set_column_name_map(column_name_map_);
   return Status::OK();
 }
 
@@ -218,12 +217,12 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
   TensorBatchTable input_table;
   input_table.reserve(pyfunc_column_names_.size());
   for (std::string col_name : pyfunc_column_names_) {
-    if (column_name_map_.find(col_name) == column_name_map_.end()) {
+    if (column_name_id_map_.find(col_name) == column_name_id_map_.end()) {
       RETURN_STATUS_UNEXPECTED("column : '" + col_name + "' does not exist\n");
     }
     TensorBatch tensor_batch;
     tensor_batch.reserve(table_pair->first->size());
-    size_t col_idx = static_cast<size_t>(column_name_map_[col_name]);
+    size_t col_idx = static_cast<size_t>(column_name_id_map_[col_name]);
     for (size_t row_idx = 0; row_idx < table_pair->first->size(); row_idx++) {
       tensor_batch.push_back(std::move(table_pair->first->at(row_idx)[col_idx]));
     }
@@ -236,7 +235,7 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
 
   // Write back to TensorQTable
   for (size_t input_idx = 0; input_idx < pyfunc_column_names_.size(); input_idx++) {
-    size_t col_idx = static_cast<size_t>(column_name_map_[pyfunc_column_names_[input_idx]]);
+    size_t col_idx = static_cast<size_t>(column_name_id_map_[pyfunc_column_names_[input_idx]]);
     size_t row_id = 0;
     for (TensorRow &row : *(table_pair->first)) {
       row[col_idx] = std::move(output_table[input_idx][row_id++]);
@@ -372,11 +371,12 @@ Status BatchOp::PadTensor(std::shared_ptr<Tensor> src, std::shared_ptr<Tensor> *
 
 Status BatchOp::PadColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair) {
   RETURN_UNEXPECTED_IF_NULL(table_pair);  // placeholder for now, might need this in the future
-  CHECK_FAIL_RETURN_UNEXPECTED(table_pair->first->front().size() == column_name_map_.size(), "col_name_map mismatch");
-  std::vector<float> pad_vals(column_name_map_.size(), 0);  // value to pad each column's tensor with, default 0
+  CHECK_FAIL_RETURN_UNEXPECTED(table_pair->first->front().size() == column_name_id_map_.size(),
+                               "col_name_map mismatch");
+  std::vector<float> pad_vals(column_name_id_map_.size(), 0);  // value to pad each column's tensor with, default 0
   std::set<int32_t> pad_cols;
   // padded_shape provided by user, maximum shapes of current batch of tensors
-  std::vector<std::vector<dsize_t>> pad_shapes(column_name_map_.size()), max_shapes(column_name_map_.size());
+  std::vector<std::vector<dsize_t>> pad_shapes(column_name_id_map_.size()), max_shapes(column_name_id_map_.size());
   RETURN_IF_NOT_OK(UnpackPadInfo(&pad_cols, &pad_vals, &pad_shapes));
 
   // init each shape in max_shape to {-1,-1...} init each unspecified shape in pad_shape to -1 as well
@@ -418,14 +418,14 @@ Status BatchOp::PadColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
 Status BatchOp::UnpackPadInfo(std::set<int32_t> *pad_cols, std::vector<float> *pad_vals,
                               std::vector<std::vector<dsize_t>> *pad_shapes) {
   if (pad_info_.empty()) {  // if pad_info empty, pad every columns automatically
-    for (dsize_t col_id = 0; col_id < column_name_map_.size(); col_id++) {
+    for (dsize_t col_id = 0; col_id < column_name_id_map_.size(); col_id++) {
       pad_cols->insert(col_id);
     }
   } else {
     for (auto p : pad_info_) {
-      CHECK_FAIL_RETURN_UNEXPECTED(column_name_map_.find(p.first) != column_name_map_.end(),
+      CHECK_FAIL_RETURN_UNEXPECTED(column_name_id_map_.find(p.first) != column_name_id_map_.end(),
                                    "no column exists with name:" + p.first);
-      dsize_t col_id = static_cast<dsize_t>(column_name_map_[p.first]);
+      dsize_t col_id = static_cast<dsize_t>(column_name_id_map_[p.first]);
       CHECK_FAIL_RETURN_UNEXPECTED(col_id < pad_vals->size() && col_id < pad_shapes->size(), "col_id out of bound");
       pad_cols->insert(col_id);
       (*pad_vals)[col_id] = p.second.second;              // set pad values

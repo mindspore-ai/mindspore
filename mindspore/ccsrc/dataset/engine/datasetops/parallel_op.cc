@@ -15,17 +15,12 @@
  */
 #include "dataset/engine/datasetops/parallel_op.h"
 
-#include <cstdint>
 #include <iostream>
-#include <map>
 #include <utility>
-#include "dataset/engine/data_schema.h"
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/execution_tree.h"
 #include "dataset/core/config_manager.h"
 #include "dataset/engine/db_connector.h"
-
-#include "dataset/engine/datasetops/source/storage_client.h"
 #include "dataset/util/task_manager.h"
 
 namespace mindspore {

@@ -136,7 +136,6 @@ class ZipOp : public PipelineOp {
   int32_t buffer_id_;
   bool draining_;
   bool eof_;
-  std::unordered_map<std::string, int32_t> col_name_id_map_;
   std::vector<std::unique_ptr<ChildIterator>> child_iterators_;
 };
 }  // namespace dataset

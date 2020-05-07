@@ -185,7 +185,6 @@ class ShuffleOp : public PipelineOp {
   std::unique_ptr<TensorTable> shuffle_buffer_;
   int32_t shuffle_last_row_idx_;  // Internal tracking of the last slot of our shuffle buffer
   int32_t shuffle_buffer_state_;  // State tracking for the shuffle buffer phases of work
-  std::unordered_map<std::string, int32_t> column_name_map_;  // A mapping between column index to column name.
 
   std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
 };

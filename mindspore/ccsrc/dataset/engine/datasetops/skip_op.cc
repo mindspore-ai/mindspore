@@ -84,6 +84,10 @@ Status SkipOp::operator()() {
   TaskManager::FindMe()->Post();
   std::unique_ptr<DataBuffer> curr_buffer;
   RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
+
+  // After the first buffer fetch above we can do the one-time assign of the column name map
+  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
+
   while (curr_buffer->eof() == false) {
     // Reset count
     skip_count_ = 0;

@@ -72,6 +72,7 @@ Status TakeOp::operator()() {
   TaskManager::FindMe()->Post();
   std::unique_ptr<DataBuffer> buf;
   RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&buf));
+  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
 
   while (buf->eof() == false) {
     if (take_count_ == max_takes_) {

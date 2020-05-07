@@ -21,7 +21,6 @@
 #include <memory>
 #include <random>
 #include <vector>
-#include <unordered_map>
 
 #include "dataset/core/tensor.h"
 #include "dataset/engine/data_buffer.h"
@@ -53,7 +52,7 @@ class RandomAccessOp {
   }
 
   // sampler gets label , imageIds from storageOp, this function is unique to PK
-  // @param std::unordered_map<int64_t, std::vector<int64_t>> * map
+  // @param std::map<int64_t, std::vector<int64_t>> * map
   // @return - The error code return
   virtual Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *map) const {
     RETURN_STATUS_UNEXPECTED("GetClassIds needs to be override to support PK");

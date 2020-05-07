@@ -112,8 +112,7 @@ class RenameOp : public PipelineOp {
 
  protected:
   // Rename core functionality
-  // @param input_buffer buffer to run rename on
-  Status RenameBuffer(std::unique_ptr<DataBuffer> *input_buffer);
+  Status RenameColumns();
 
   // Variable to store the input column names
   std::vector<std::string> in_columns_;

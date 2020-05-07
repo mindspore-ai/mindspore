@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "dataset/engine/dataset_iterator.h"
+#include <unordered_map>
 #include <utility>
 #include "dataset/core/data_type.h"
 #include "dataset/core/tensor.h"
@@ -26,7 +27,7 @@
 namespace mindspore {
 namespace dataset {
 // Constructor of the IteratorBase
-IteratorBase::IteratorBase() : curr_buffer_(nullptr), eof_handled_(false) {}
+IteratorBase::IteratorBase() : curr_buffer_(nullptr), eof_handled_(false), first_row_(true) {}
 
 IteratorBase::~IteratorBase() = default;
 
@@ -44,6 +45,19 @@ Status IteratorBase::GetNextAsMap(TensorMap *out_map) {
   // Return empty map if there's no data
   if (curr_row.empty()) {
     return Status::OK();
+  }
+
+  // The column name mapping is needed to be able to produce the tensor map output.
+  // The column name mapping comes from the source operator that is producing the data into the iterator.
+  // To avoid having to fetch this for every time, we'll take a local copy of the column name id mapping
+  // and save in the iterator.  We only have to do this once.  All subsequent iterations use the same mapping.
+  // Note: This can only be done after the first row has been produced, as this guarantees the the child has
+  // it's column mapping set up.
+  if (first_row_) {
+    // Determine the column name map by calling the derived class method to retrieve the column
+    // name map
+    col_name_id_map_ = this->GetColumnNameMap();
+    first_row_ = false;
   }
 
   // Populate the out map from the row and return it
@@ -87,7 +101,6 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
 
   // Check if we need to get a new DataBuffer to iterate.
   if (curr_buffer_ == nullptr || curr_buffer_->NumRows() == 0) {
-    col_name_id_map_.clear();
     RETURN_IF_NOT_OK(root_->GetNextBuffer(&curr_buffer_));
 
     // Since GetNextBuffer was used rather than GetNextInput(), it means we need to manually
@@ -120,8 +133,6 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
       curr_buffer_.reset();  // explicitly free the eof buffer
       return Status::OK();
     }
-
-    col_name_id_map_ = curr_buffer_->column_name_map();
   }
 
   // If we got this far, now it's time to pop that next row for return to caller
@@ -157,6 +168,11 @@ Status DatasetIterator::GetOutputTypes(std::vector<DataType> *out_types) {
   return Status::OK();
 }
 
+// Getter
+std::unordered_map<std::string, int32_t> DatasetIterator::GetColumnNameMap() const {
+  return root_->column_name_id_map();
+}
+
 // Constructor of the ChildIterator
 ChildIterator::ChildIterator(DatasetOp *current_op, int32_t worker_id, int32_t child_idx)
     : IteratorBase(), current_op_(current_op), child_idx_(child_idx), worker_id_(worker_id), end_epoch_(false) {}
@@ -177,7 +193,6 @@ Status ChildIterator::FetchNextTensorRow(TensorRow *out_row) {
 
   // Check if we need to get a new DataBuffer to iterate.
   if (curr_buffer_ == nullptr || curr_buffer_->NumRows() == 0) {
-    col_name_id_map_.clear();
     RETURN_IF_NOT_OK(current_op_->GetNextInput(&curr_buffer_, worker_id_, child_idx_));
 
     // Unlike the DatasetIterator, this child iterator does not quit after eoe.
@@ -194,8 +209,6 @@ Status ChildIterator::FetchNextTensorRow(TensorRow *out_row) {
       eof_handled_ = true;
       return Status::OK();
     }
-
-    col_name_id_map_ = curr_buffer_->column_name_map();
   }
 
   // If we got this far, now it's time to pop that next row for return to caller
@@ -225,6 +238,11 @@ Status ChildIterator::Drain() {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Child iterator picked up EOF in drain.");
   }
   return Status::OK();
+}
+
+// Getter
+std::unordered_map<std::string, int32_t> ChildIterator::GetColumnNameMap() const {
+  return current_op_->child(child_idx_)->column_name_id_map();
 }
 }  // namespace dataset
 }  // namespace mindspore

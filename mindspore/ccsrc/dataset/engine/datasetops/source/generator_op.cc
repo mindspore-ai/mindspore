@@ -93,10 +93,10 @@ void GeneratorOp::Dealloc() noexcept {
 Status GeneratorOp::Init() {
   // Reset BufferID
   buffer_id_ = 0;
-  // Setup column names map.
-  if (column_names_map_.empty()) {
+  // Setup column names map (base class field)
+  if (column_name_id_map_.empty()) {
     for (int i = 0; i < column_names_.size(); ++i) {
-      (void)column_names_map_.insert(std::make_pair(column_names_[i], i));
+      column_name_id_map_[column_names_[i]] = i;
     }
   }
   Status ret;
@@ -195,7 +195,6 @@ Status GeneratorOp::operator()() {
   while (!eof) {
     // Create new buffer each iteration
     fetched_buffer = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
-    fetched_buffer->set_column_name_map(column_names_map_);
     std::unique_ptr<TensorQTable> fetched_table = std::make_unique<TensorQTable>();
     bool eoe = false;
     {

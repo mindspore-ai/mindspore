@@ -17,10 +17,8 @@
 #define DATASET_ENGINE_DATA_BUFFER_H_
 
 #include <iostream>
-#include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "dataset/util/allocator.h"
@@ -106,14 +104,6 @@ class DataBuffer {
 
   Status SliceOff(int64_t number_of_rows);
 
-  // Return a mapping from col names to col id.
-  std::unordered_map<std::string, int32_t> column_name_map() const { return column_name_map_; }
-
-  // Update the column name to index mapping.
-  void set_column_name_map(const std::unordered_map<std::string, int32_t> &new_col_name_map) {
-    column_name_map_ = new_col_name_map;
-  }
-
   // Replacing mTensorTable, the unique_ptr assignment will release the old TensorTable.
   void set_tensor_table(std::unique_ptr<TensorQTable> new_table) { tensor_table_ = std::move(new_table); }
 
@@ -123,18 +113,10 @@ class DataBuffer {
 
   void Shuffle() {}  // does nothing right now.  possibly remove later
 
-  // *****  column_name_map_ manipulation methods  *****
-
-  // Append Column to mColumnNameMap
-  Status AppendColumn(const std::string &name, const int32_t &old_id) const {  // does nothing right now
-    return Status::OK();
-  }
-
  protected:
-  int32_t buffer_id_;                                         // An id for the buffer.
-  std::unique_ptr<TensorQTable> tensor_table_;                // A table (row major) of Tensors
-  BufferFlags buffer_flags_;                                  // bit mask for various buffer properties
-  std::unordered_map<std::string, int32_t> column_name_map_;  // A mapping between column index to column name.
+  int32_t buffer_id_;                           // An id for the buffer.
+  std::unique_ptr<TensorQTable> tensor_table_;  // A table (row major) of Tensors
+  BufferFlags buffer_flags_;                    // bit mask for various buffer properties
 };
 }  // namespace dataset
 }  // namespace mindspore

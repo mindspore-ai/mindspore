@@ -66,15 +66,13 @@ class IteratorBase {
 
   // Getter
   // @return The string to column id mapping.
-  std::unordered_map<std::string, int32_t> col_name_id_map() const { return col_name_id_map_; }
+  virtual std::unordered_map<std::string, int32_t> GetColumnNameMap() const = 0;
 
  protected:
   std::unique_ptr<DataBuffer> curr_buffer_;  // holds the current buffer
-
-  // The column name-id mapping for the current data buffer.
+  bool eof_handled_;                         // T/F if this op got an eof
+  bool first_row_;                           // internal tracking for first row case
   std::unordered_map<std::string, int32_t> col_name_id_map_;
-
-  bool eof_handled_;  // T/F if this op got an eof
 };
 
 // The DatasetIterator derived class is for fetching rows off the end/root of the execution tree.
@@ -103,6 +101,10 @@ class DatasetIterator : public IteratorBase {
   // @param outShapes - A vector of tensor shapes (one shape per column)
   // @return Status - The error code return
   Status GetOutputTypes(std::vector<DataType> *out_types);
+
+  // Getter
+  // @return The string to column id mapping.
+  std::unordered_map<std::string, int32_t> GetColumnNameMap() const override;
 
  private:
   std::shared_ptr<DatasetOp> root_;  // saves the root of the executionTree
@@ -133,6 +135,10 @@ class ChildIterator : public IteratorBase {
   // It will be a no-op if the previous row returned is empty.
   // @return Status - The error code return
   Status Drain();
+
+  // Getter
+  // @return The string to column id mapping.
+  std::unordered_map<std::string, int32_t> GetColumnNameMap() const override;
 
  private:
   DatasetOp *current_op_;  // The parent operator. We consume from it's children.

@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -221,7 +220,7 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   Status ParseCifarData();
 
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each calss
-  // @param (std::unordered_map<uint64_t, std::vector<uint64_t >> * map - key label, val all ids for this class
+  // @param (std::map<uint64_t, std::vector<uint64_t >> * map - key label, val all ids for this class
   // @return Status - The error code return
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 
@@ -236,7 +235,6 @@ class CifarOp : public ParallelOp, public RandomAccessOp {
   int64_t buf_cnt_;
 
   WaitPost wp_;
-  std::unordered_map<std::string, int32_t> col_name_map_;
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
   std::unique_ptr<Queue<std::vector<unsigned char>>> cifar_raw_data_block_;
   std::vector<std::string> cifar_files_;

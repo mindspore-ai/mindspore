@@ -103,6 +103,7 @@ class ProjectOp : public PipelineOp {
 
  private:
   std::vector<std::string> columns_to_project_;
+  std::vector<int32_t> projected_column_indices_;
 
   Status Project(std::unique_ptr<DataBuffer> *data_buffer);
 };

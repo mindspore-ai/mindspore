@@ -23,7 +23,6 @@
 #include <queue>
 #include <string>
 #include <tuple>
-#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -262,7 +261,6 @@ class MindRecordOp : public ParallelOp {
   std::vector<std::string> columns_blob_;    // Blob Columns to load from dataset
   std::vector<int32_t> columns_blob_index_;  // Blob Columns to load from dataset
 
-  std::unordered_map<std::string, int32_t> column_name_mapping_;
   std::unique_ptr<ShardReader> shard_reader_;
   WaitPost shard_reader_wait_post_;
   QueueList<std::unique_ptr<IOBlock>> io_blk_queues_;

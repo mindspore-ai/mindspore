@@ -147,28 +147,33 @@ Status MapOp::operator()() {
 Status MapOp::WorkerEntry(int32_t worker_id) {
   // Handshake with TaskManager that thread creation is successful.
   TaskManager::FindMe()->Post();
-
-  // MapOp is not using the ChildIterator class to fetch rows because it needs to track
-  // rows at a per-buffer level. ChildIterator abstracts the concept of buffers making it
-  // less convenient to use that interface for fetching.
   std::unique_ptr<DataBuffer> in_buffer;
 
-  // Loop until eof buffer is encountered
-  while (true) {
-    // Getting a databuffer to work on.
-    // When PerformanceMode is enabled, workers pop from the local queue.
-    // Otherwise, workers pop from the first child output Connector.
-    if (perf_mode_) {
-      RETURN_IF_NOT_OK(local_queues_[worker_id]->PopFront(&in_buffer));
-    } else {
-      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&in_buffer, worker_id));
-    }
+  // Getting a databuffer to work on.
+  // Perform the first fetch here outside of the loop.  This allows us to execute one-time only
+  // initializations that happen after the first fetch.
+  RETURN_IF_NOT_OK(FetchNextBuffer(&in_buffer, worker_id));
 
+  // Initialize details related to column selections and column map by calling WorkerEntryInit.
+  // WorkerEntryInit contains thread-safe lock to ensure that this init work is only performed once
+  // by the first worker to enter the codepath. All other threads will share the const info that
+  // gets set up here going forward.
+  // Special case: if there's more threads than buffers, some threads simply get the final control
+  // messages (eoe/eof), and so they will not perform the init work.
+  if (!in_buffer->eoe() && !in_buffer->eof()) {
+    RETURN_IF_NOT_OK(WorkerEntryInit(in_buffer.get()));
+  }
+
+  // Now that init work is done, drop into the main fetching loop.
+  // Map op does not use child iterator, and it needs to manually handle eoe and eof's itself
+  // rather than use the base-class defaults.
+  while (true) {
     // Handle EOE and EOF ourselves. Implicit eoe/eof handling in GetNextInput does not work
     // with Performance Mode design.
     if (in_buffer->eoe()) {
       // Calling base class EoeReceived to forward eoe buffer.
       RETURN_IF_NOT_OK(EoeReceived(worker_id));
+      RETURN_IF_NOT_OK(FetchNextBuffer(&in_buffer, worker_id));
       continue;
     } else if (in_buffer->eof()) {
       // Calling base class EofReceived to forward eof buffer.
@@ -176,42 +181,24 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
       break;
     }
 
-    // Boolean mapping, true means to keep the column.
-    std::vector<bool> keep_input_columns;
-    // Indices of the columns to process.
-    std::vector<size_t> to_process_indices;
-    // The final column mapping after performing this map
-    std::unordered_map<std::string, int32_t> final_col_name_id_map;
-
-    // Thread local variables to avoid lock. When in_columns_ is empty and workers will write
-    // the name of the first column into input_columns (thread local) instead of in_columns_ (thread global).
-    std::vector<std::string> input_columns = in_columns_;
-    std::vector<std::string> output_columns = out_columns_;
-
-    // Initialize the above data structures
-    RETURN_IF_NOT_OK(WorkerEntryInit(in_buffer.get(), &keep_input_columns, &to_process_indices, &final_col_name_id_map,
-                                     &input_columns, &output_columns));
-
     std::unique_ptr<TensorQTable> new_tensor_table(std::make_unique<TensorQTable>());
     // Perform the compute function of TensorOp(s) and store the result in new_tensor_table.
-    RETURN_IF_NOT_OK(WorkerCompute(in_buffer.get(), to_process_indices, new_tensor_table.get(), keep_input_columns,
-                                   &input_columns, &output_columns));
+    RETURN_IF_NOT_OK(WorkerCompute(in_buffer.get(), new_tensor_table.get()));
 
-    // Update column name to index mapping because tensorOp might add/remove column.
-    in_buffer->set_column_name_map(final_col_name_id_map);
     // Replace the TensorTable in DataBuffer with the new one.
     in_buffer->set_tensor_table(std::move(new_tensor_table));
 
     // Push the buffer onto the connector for next operator to consume.
     RETURN_IF_NOT_OK(out_connector_->Add(static_cast<int>(worker_id), std::move(in_buffer)));
+
+    // Fetch the next buffer and loop back to the top.
+    RETURN_IF_NOT_OK(FetchNextBuffer(&in_buffer, worker_id));
   }
 
   return Status::OK();
 }
 
-Status MapOp::WorkerCompute(DataBuffer *in_buffer, const std::vector<size_t> &to_process_indices,
-                            TensorQTable *new_tensor_table, const std::vector<bool> &keep_input_columns,
-                            std::vector<std::string> *input_columns, std::vector<std::string> *output_columns) {
+Status MapOp::WorkerCompute(DataBuffer *in_buffer, TensorQTable *new_tensor_table) {
   // Getting number of rows and cols in this buffer.
   int32_t num_rows = in_buffer->NumRows();
   int32_t num_cols = in_buffer->NumCols();
@@ -224,7 +211,7 @@ Status MapOp::WorkerCompute(DataBuffer *in_buffer, const std::vector<size_t> &to
     RETURN_IF_NOT_OK(in_buffer->PopRow(&cur_row));
 
     // Populate the Tensor from the current row to be processed by TensorOp
-    for (const auto &idx : to_process_indices) {
+    for (const auto &idx : to_process_indices_) {
       to_process.push_back(std::move(cur_row[idx]));
     }
 
@@ -243,20 +230,20 @@ Status MapOp::WorkerCompute(DataBuffer *in_buffer, const std::vector<size_t> &to
       }
     }
 
-    if (output_columns->size() != result_row.size()) {
+    if (out_columns_.size() != result_row.size()) {
       return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
                     "Result of a tensorOp doesn't match output column names");
     }
 
-    if (input_columns->size() == output_columns->size()) {
+    if (in_columns_.size() == out_columns_.size()) {
       for (size_t i = 0; i < result_row.size(); i++) {
-        cur_row[to_process_indices[i]] = std::move(result_row[i]);
+        cur_row[to_process_indices_[i]] = std::move(result_row[i]);
       }
       new_tensor_table->push_back(std::move(cur_row));
     } else {
       // Add the columns we did not touch to the result_row.
       for (int32_t i = 0; i < num_cols; i++) {
-        if (keep_input_columns[i]) {
+        if (keep_input_columns_[i]) {
           result_row.push_back(std::move(cur_row[i]));
         }
       }
@@ -269,10 +256,69 @@ Status MapOp::WorkerCompute(DataBuffer *in_buffer, const std::vector<size_t> &to
   return Status::OK();
 }
 
+// initialize some internal data structure used by WorkerEntry()
+Status MapOp::WorkerEntryInit(const DataBuffer *in_buf) {
+  int32_t num_rows = in_buf->NumRows();
+  int32_t num_cols = in_buf->NumCols();
+  if (num_rows == 0 || num_cols == 0) {
+    RETURN_STATUS_UNEXPECTED("MapOp is getting an empty DataBuffer.");
+  }
+
+  // We can't use AssignColMapFromChild() here since we need to modify the column map. We need to be threadsafe
+  // though for saving the final map in the op, so use the lock here.
+  if (first_fetch_) {
+    std::unique_lock<std::mutex> lock(column_name_map_mutex_);
+    // If the map has not been set up yet in the base class, then we are the first one in to set it up
+    // (and we are under protection of the mutex lock)
+    if (column_name_id_map_.empty()) {
+      std::unordered_map<std::string, int32_t> current_name_id_map = child_[0]->column_name_id_map();
+
+      // If input_columns is empty(), The col at index-0 will be picked.
+      if (in_columns_.empty()) {
+        for (const auto &pair : current_name_id_map) {
+          if (pair.second == 0) {
+            MS_LOG(INFO) << "Input columns empty for map op, will apply to the first column in the current table.";
+            in_columns_.push_back(pair.first);
+            break;
+          }
+        }
+
+        // If caller didn't specify the out_col_names, assume they are same as the input_columns.
+        // This was done in the constructor, but if input columns was empty to start we have to redo it here.
+        if (out_columns_.empty() || out_columns_[0].empty()) {
+          out_columns_ = in_columns_;
+        }
+      }
+
+      // Before we continue, issue a sanity check to make sure the input columns from user and the incoming
+      // columns from child are correct
+      this->ValidateInColumns(current_name_id_map);
+
+      // initialize keep_input_columns, true means to keep the column.
+      keep_input_columns_.resize(num_cols, true);
+      for (const auto &col_name : in_columns_) {
+        int32_t missed = current_name_id_map[col_name];
+        keep_input_columns_[missed] = false;
+      }
+
+      // initialize to_process_indices.
+      for (const auto &col_name : in_columns_) {
+        to_process_indices_.push_back(current_name_id_map[col_name]);
+      }
+
+      // Create the final column name to index mapping in the base class field
+      CreateFinalColMap(&current_name_id_map);
+      first_fetch_ = false;
+    }
+  }  // mutex lock will release here
+
+  MS_LOG(INFO) << "Column name map for map op set: " << this->ColumnNameMapAsString();
+  return Status::OK();
+}
+
 // Validating if each of the input_columns exists in the DataBuffer.
-Status MapOp::ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map,
-                                std::vector<std::string> *input_columns) {
-  for (const auto &inCol : *input_columns) {
+Status MapOp::ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map) {
+  for (const auto &inCol : in_columns_) {
     bool found = col_name_id_map.find(inCol) != col_name_id_map.end() ? true : false;
     if (!found) {
       std::string err_msg = "input column name: " + inCol + " doesn't exist in the dataset columns.";
@@ -282,79 +328,30 @@ Status MapOp::ValidateInColumns(const std::unordered_map<std::string, int32_t> &
   return Status::OK();
 }
 
-// initialize some internal data structure used by WorkerEntry()
-Status MapOp::WorkerEntryInit(const DataBuffer *in_buf, std::vector<bool> *keep_input_columns,
-                              std::vector<size_t> *to_process_indices,
-                              std::unordered_map<std::string, int32_t> *final_col_name_id_map,
-                              std::vector<std::string> *input_columns, std::vector<std::string> *output_columns) {
-  int32_t num_rows = in_buf->NumRows();
-  int32_t num_cols = in_buf->NumCols();
-  if (num_rows == 0 || num_cols == 0) {
-    RETURN_STATUS_UNEXPECTED("MapOp is getting an empty DataBuffer.");
-  }
-  std::unordered_map<std::string, int32_t> col_name_id_map = in_buf->column_name_map();
-  // Check if there is invalid column name in the inColumns.
-  RETURN_IF_NOT_OK(ValidateInColumns(col_name_id_map, input_columns));
-
-  // If input_columns is empty(), The col at index-0 will be picked.
-  if (input_columns->empty()) {
-    for (const auto &pair : col_name_id_map) {
-      if (pair.second == 0) {
-        MS_LOG(INFO) << "Input columns in map operator is empty, will apply to the first column in the current table.";
-        input_columns->push_back(pair.first);
-        break;
-      }
-    }
-
-    // If caller didn't specify the out_col_names, assume they are same as the input_columns.
-    if (output_columns->empty() || (*output_columns)[0].empty()) {
-      *output_columns = *input_columns;
-    }
-  }
-
-  // initialize keep_input_columns, true means to keep the column.
-  keep_input_columns->resize(num_cols, true);
-  for (const auto &col_name : *input_columns) {
-    int32_t missed = col_name_id_map[col_name];
-    (*keep_input_columns)[missed] = false;
-  }
-
-  // initialize to_process_indices.
-  for (const auto &col_name : *input_columns) {
-    to_process_indices->push_back(col_name_id_map[col_name]);
-  }
-
-  // Create the final column name to index mapping.
-  *final_col_name_id_map = CreateFinalColMap(&col_name_id_map, *keep_input_columns, input_columns, output_columns);
-
-  return Status::OK();
-}
-
 // Create the final column name to index mapping and get indices of the columns this mapop does not use.
-std::unordered_map<std::string, int32_t> MapOp::CreateFinalColMap(
-  std::unordered_map<std::string, int32_t> *col_name_id_map, const std::vector<bool> &keep_input_columns,
-  std::vector<std::string> *input_columns, std::vector<std::string> *output_columns) {
+void MapOp::CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name_id_map) {
   std::unordered_map<std::string, int32_t> final_col_name_id_map;
   size_t num_cols = col_name_id_map->size();
   std::vector<int32_t> new_ids(num_cols);
-  if (input_columns->size() == output_columns->size()) {
-    for (size_t i = 0; i < input_columns->size(); i++) {
-      int32_t loc = (*col_name_id_map)[(*input_columns)[i]];
-      (void)col_name_id_map->erase((*input_columns)[i]);
-      (*col_name_id_map)[(*output_columns)[i]] = loc;
+  if (in_columns_.size() == out_columns_.size()) {
+    for (size_t i = 0; i < in_columns_.size(); i++) {
+      int32_t loc = (*col_name_id_map)[in_columns_[i]];
+      (void)col_name_id_map->erase(in_columns_[i]);
+      (*col_name_id_map)[out_columns_[i]] = loc;
     }
 
-    return *col_name_id_map;
+    // Set the base class final column id map result
+    column_name_id_map_ = *col_name_id_map;
   } else {
     int32_t fill_idx = 0;
     // First columns of the tables are occupied by the output columns from tensorOp.
-    for (const auto &col_name : *output_columns) {
+    for (const auto &col_name : out_columns_) {
       final_col_name_id_map[col_name] = fill_idx++;
     }
 
     // Creating new_ids mapping for the columns we keep.
     for (size_t i = 0; i < num_cols; i++) {
-      if (keep_input_columns[i]) {
+      if (keep_input_columns_[i]) {
         new_ids[i] = fill_idx++;
       }
     }
@@ -364,12 +361,13 @@ std::unordered_map<std::string, int32_t> MapOp::CreateFinalColMap(
     for (const auto &pair : *col_name_id_map) {
       name = pair.first;
       int32_t old_id = pair.second;
-      if (keep_input_columns[old_id]) {
+      if (keep_input_columns_[old_id]) {
         final_col_name_id_map[name] = new_ids[old_id];
       }
     }
 
-    return final_col_name_id_map;
+    // Set the base class final column id map result
+    column_name_id_map_ = final_col_name_id_map;
   }
 }
 }  // namespace dataset

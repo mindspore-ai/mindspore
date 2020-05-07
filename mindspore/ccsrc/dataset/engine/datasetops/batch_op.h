@@ -263,7 +263,6 @@ class BatchOp : public ParallelOp {
   std::vector<std::string> pyfunc_column_names_;                   // Name of the columns to perform map op on
   std::map<std::string, std::pair<TensorShape, float>> pad_info_;  // column names to perform padding on
   std::unique_ptr<ChildIterator> child_iterator_;                  // child iterator for fetching TensorRows 1 by 1
-  std::unordered_map<std::string, int32_t> column_name_map_;       // Map of column_name: column_index
   QueueList<std::pair<std::unique_ptr<TensorQTable>, CBatchInfo>> worker_queues_;  // internal queue for syncing worker
   py::function batch_size_func_;  // Function pointer of batch size function
   py::function batch_map_func_;   // Function pointer of per batch map function

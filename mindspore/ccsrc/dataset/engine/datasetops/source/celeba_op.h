@@ -21,7 +21,6 @@
 #include <set>
 #include <memory>
 #include <vector>
-#include <unordered_map>
 #include <utility>
 #include <fstream>
 
@@ -232,7 +231,6 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   std::set<std::string> extensions_;  // extensions allowed
   std::unique_ptr<DataSchema> data_schema_;
   std::shared_ptr<Sampler> sampler_;
-  std::unordered_map<std::string, int32_t> col_name_map_;
   std::unique_ptr<Queue<std::vector<std::string>>> attr_info_queue_;
   int64_t num_rows_in_attr_file_;  // rows number specified in attr file
   int64_t num_rows_exact_;         // exact rows number,maybe is less than rows_num_in_attr_file_

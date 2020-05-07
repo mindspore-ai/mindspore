@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <map>
 #include <set>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "dataset/core/tensor.h"
@@ -210,7 +209,7 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   Status GetNumRowsInDataset(int64_t *num) const override;
 
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
-  // @param (std::unordered_map<int64_t, std::vector<int64_t >> * map - key label, val all ids for this class
+  // @param (std::map<int64_t, std::vector<int64_t >> * map - key label, val all ids for this class
   // @return Status - The error code return
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 
@@ -275,7 +274,6 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   int64_t dirname_offset_;
   WaitPost wp_;
   std::vector<ImageLabelPair> image_label_pairs_;
-  std::unordered_map<std::string, int32_t> col_name_map_;
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;  // queues of IOBlocks
   std::unique_ptr<Queue<std::string>> folder_name_queue_;
   std::unique_ptr<Queue<FolderImagesPair>> image_name_queue_;

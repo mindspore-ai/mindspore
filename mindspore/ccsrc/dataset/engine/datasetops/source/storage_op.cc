@@ -247,9 +247,15 @@ Status StorageOp::InitOp(const std::vector<std::string> &files_list, const std::
 Status StorageOp::init() {
   // First a sanity check to make sure the StorageClient initialization has done the proper
   // handshake and initialized both the schema and the number of rows for the dataset.
-  if (store_client_->schema()->NumColumns() == 0 || num_rows_ == 0) {
+  const DataSchema *the_schema = store_client_->schema();
+  if (the_schema->NumColumns() == 0 || num_rows_ == 0) {
     return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
                   "Storage client did not run handshake to init schema and number of rows.");
+  }
+
+  // Now that we have schema, generate the column name map (base class field)
+  for (int32_t i = 0; i < the_schema->NumColumns(); ++i) {
+    column_name_id_map_[the_schema->column(i).name()] = i;
   }
 
   // If the data buffer vector is not empty, then we may be redoing a scan again after a repeat.
