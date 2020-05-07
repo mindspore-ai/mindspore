@@ -874,7 +874,7 @@ test_case_nn_ops = [
         'skip': ['backward']}),
     ('L2Loss_1', {
         'block': P.L2Loss(),
-        'desc_inputs': [Tensor(np.array([1, 2, 3, 4]), mstype.float16)],
+        'desc_inputs': [Tensor(np.array([1, 2, 3, 4]), mstype.float32)],
         'desc_bprop': []}),
     ('L2Loss_2', {
         'block': P.L2Loss(),
