@@ -117,9 +117,16 @@ class SoftmaxGpuKernel : public GpuKernel {
     if (shape_size_ != 2) {
       MS_LOG(EXCEPTION) << "Input is " << shape_size_ << "-D, but softmax only supports 2-D inputs.";
     }
-
-    auto axis = GetAttr<std::vector<int>>(kernel_node, "axis");
-    InitSizeByAxis(input_shape, axis[0]);
+    auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
+    if (kernel_name == "LogSoftmax") {
+      algo_ = CUDNN_SOFTMAX_LOG;
+      auto axis = GetAttr<int>(kernel_node, "axis");
+      InitSizeByAxis(input_shape, axis);
+    } else {
+      algo_ = CUDNN_SOFTMAX_ACCURATE;
+      auto axis = GetAttr<std::vector<int>>(kernel_node, "axis");
+      InitSizeByAxis(input_shape, axis[0]);
+    }
     CHECK_CUDNN_RET_WITH_EXCEPT(
       cudnnSetTensor4dDescriptor(input_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(batch_size_),
                                  SizeToInt(channel_size_), SizeToInt(height_), SizeToInt(width_)),
