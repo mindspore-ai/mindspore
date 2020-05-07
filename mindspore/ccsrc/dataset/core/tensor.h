@@ -93,10 +93,10 @@ class Tensor {
 
   // Copy raw data of a array based on shape and strides to the destination pointer
   // @param dst Pointer to the destination array where the content is to be copied
-  // @param src Pointer to the source of stided array to be copied
+  // @param src Pointer to the source of strided array to be copied
   // @param shape - shape of the source array
   // @param strides - strides of the source array
-  // @param type_size - number of bytes needed to store one array elment's type
+  // @param type_size - number of bytes needed to store one array element's type
   // @return Status Code
   static Status CopyStridedArray(unsigned char *dst, unsigned char *src, std::vector<dsize_t> shape,
                                  std::vector<dsize_t> strides, uint8_t type_size);
@@ -138,10 +138,10 @@ class Tensor {
     return Status::OK();
   }
 
+  // fill tensor with Zeros
   Status Zero() {
     dsize_t size = SizeInBytes();
-    int retCode = memset_sp(StartAddr(), size, 0, size);
-    if (retCode != 0) return Status(StatusCode::kUnexpectedError, "Failed to fill tensor with zeroes.");
+    CHECK_FAIL_RETURN_UNEXPECTED(memset_sp(StartAddr(), size, 0, size) == 0, "Failed to fill tensor with zeroes.");
     return Status::OK();
   }
 
@@ -154,10 +154,7 @@ class Tensor {
     int64_t cellSize = type_.SizeInBytes();
     if ((data_ != nullptr) && type_.IsCompatible<T>()) {
       for (dsize_t i = 0; i < Size(); i++) {
-        int retCode = memcpy_s((data_ + i * cellSize), cellSize, &value, cellSize);
-        if (retCode != 0) {
-          return Status(StatusCode::kUnexpectedError, "Failed to fill tensor.");
-        }
+        CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s((data_ + i * cellSize), cellSize, &value, cellSize) == 0, "memcpy err");
       }
       return Status::OK();
     } else {

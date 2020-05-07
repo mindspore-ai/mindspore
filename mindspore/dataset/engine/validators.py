@@ -324,6 +324,7 @@ def check_sampler_shuffle_shard_options(param_dict):
 
 def check_imagefolderdatasetv2(method):
     """A wrapper that wrap a parameter checker to the original Dataset(ImageFolderDatasetV2)."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -356,6 +357,7 @@ def check_imagefolderdatasetv2(method):
 
 def check_mnist_cifar_dataset(method):
     """A wrapper that wrap a parameter checker to the original Dataset(ManifestDataset, Cifar10/100Dataset)."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -382,6 +384,7 @@ def check_mnist_cifar_dataset(method):
 
 def check_manifestdataset(method):
     """A wrapper that wrap a parameter checker to the original Dataset(ManifestDataset)."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -414,6 +417,7 @@ def check_manifestdataset(method):
 
 def check_tfrecorddataset(method):
     """A wrapper that wrap a parameter checker to the original Dataset(TFRecordDataset)."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -444,6 +448,7 @@ def check_tfrecorddataset(method):
 
 def check_vocdataset(method):
     """A wrapper that wrap a parameter checker to the original Dataset(VOCDataset)."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -470,6 +475,7 @@ def check_vocdataset(method):
 
 def check_celebadataset(method):
     """A wrapper that wrap a parameter checker to the original Dataset(CelebADataset)."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -510,6 +516,7 @@ def check_celebadataset(method):
 
 def check_minddataset(method):
     """A wrapper that wrap a parameter checker to the original Dataset(MindDataset)."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -541,6 +548,7 @@ def check_minddataset(method):
 
 def check_generatordataset(method):
     """A wrapper that wrap a parameter checker to the original Dataset(GeneratorDataset)."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -628,8 +636,25 @@ def check_columns(columns, name):
         raise TypeError("{} should be either a list of strings or a single string.".format(name))
 
 
+def check_pad_info(key, val):
+    """check the key and value pair of pad_info in batch"""
+    check_type(key, "key in pad_info", str)
+    if val is not None:
+        assert len(val) == 2, "value of pad_info should be a tuple of size 2"
+        check_type(val, "value in pad_info", tuple)
+        if val[0] is not None:
+            check_type(val[0], "pad_shape", list)
+            for dim in val[0]:
+                if dim is not None:
+                    check_type(dim, "dim in pad_shape", int)
+                    assert dim > 0, "pad shape should be positive integers"
+        if val[1] is not None:
+            check_type(val[1], "pad_value", (int, float))
+
+
 def check_batch(method):
     """check the input arguments of batch."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -647,6 +672,14 @@ def check_batch(method):
         check_param_type(nreq_param_int, param_dict, int)
 
         check_param_type(nreq_param_bool, param_dict, bool)
+
+        if (param_dict.get('pad_info') is not None) and (param_dict.get('per_batch_map') is not None):
+            raise ValueError("pad_info and per_batch_map can't both be set")
+
+        if param_dict.get('pad_info') is not None:
+            check_type(param_dict["pad_info"], "pad_info", dict)
+            for k, v in param_dict.get('pad_info').items():
+                check_pad_info(k, v)
 
         for param_name in nreq_param_columns:
             param = param_dict.get(param_name)
@@ -687,6 +720,7 @@ def check_sync_wait(method):
 
 def check_shuffle(method):
     """check the input arguments of shuffle."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -705,6 +739,7 @@ def check_shuffle(method):
 
 def check_map(method):
     """check the input arguments of map."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -729,6 +764,7 @@ def check_map(method):
 
 def check_filter(method):
     """"check the input arguments of filter."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -749,6 +785,7 @@ def check_filter(method):
 
 def check_repeat(method):
     """check the input arguments of repeat."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -764,6 +801,7 @@ def check_repeat(method):
 
 def check_skip(method):
     """check the input arguments of skip."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -780,6 +818,7 @@ def check_skip(method):
 
 def check_take(method):
     """check the input arguments of take."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -794,6 +833,7 @@ def check_take(method):
 
 def check_zip(method):
     """check the input arguments of zip."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -811,6 +851,7 @@ def check_zip(method):
 
 def check_zip_dataset(method):
     """check the input arguments of zip method in `Dataset`."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -830,6 +871,7 @@ def check_zip_dataset(method):
 
 def check_rename(method):
     """check the input arguments of rename."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -849,6 +891,7 @@ def check_rename(method):
 
 def check_project(method):
     """check the input arguments of project."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -876,6 +919,7 @@ def check_shape(shape, name):
 
 def check_add_column(method):
     """check the input arguments of add_column."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)
@@ -905,6 +949,7 @@ def check_add_column(method):
 
 def check_textfiledataset(method):
     """A wrapper that wrap a parameter checker to the original Dataset(TextFileDataset)."""
+
     @wraps(method)
     def new_method(*args, **kwargs):
         param_dict = make_param_dict(method, args, kwargs)

@@ -65,6 +65,10 @@ class TensorShape {
   // @param shape
   TensorShape(const TensorShape &shape);
 
+  // construct a TensorShape via a python list
+  // @param py::list l - a list object from python
+  explicit TensorShape(py::list l);
+
   ~TensorShape() = default;
 
   // Create a scalar Shape (i.e., empty shape with mKnown = true)
@@ -141,8 +145,6 @@ class TensorShape {
     so.Print(out);
     return out;
   }
-
-  explicit TensorShape(py::list l);
 
   py::list AsPyList();
 
