@@ -46,7 +46,10 @@ Status IntrpService::Register(const std::string &name, IntrpResource *res) {
       std::ostringstream ss;
       ss << this_thread::get_id();
       MS_LOG(DEBUG) << "Register resource with name " << name << ". Thread ID " << ss.str() << ".";
-      (void)all_intrp_resources_.emplace(name, res);
+      auto it = all_intrp_resources_.emplace(name, res);
+      if (it.second == false) {
+        return Status(StatusCode::kDuplicateKey, __LINE__, __FILE__, name);
+      }
       high_water_mark_++;
     } catch (std::exception &e) {
       RETURN_STATUS_UNEXPECTED(e.what());
