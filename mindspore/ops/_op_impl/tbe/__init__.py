@@ -129,7 +129,7 @@ from .confusion_transpose_d import _confusion_transpose_d_tbe
 from .confusion_softmax_grad import _confusion_softmax_grad_tbe
 from .lamb_update_with_lr_v2 import _lamb_update_with_lr_v2_tbe
 from .lamb_next_mv import _lamb_next_mv_tbe
-from .lamb_next_mv_with_decay_v1 import _lamb_next_mv_with_decay_v1_tbe
+from .lamb_next_mv_with_decay import _lamb_next_mv_with_decay_tbe
 from .lamb_update_with_lr import _lamb_update_with_lr_tbe
 from .rsqrt import _rsqrt_tbe
 from .sigmoid import _sigmoid_tbe
