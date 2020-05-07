@@ -53,6 +53,11 @@ class GradWrap3(nn.Cell):
         return C.grad_all(self.network)(x, y, bias)
 
 
+def compile(net, x, y, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, b)
+
+
 def test_no_grad():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
@@ -75,7 +80,7 @@ def test_no_grad():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_grad_sens_parameter_type():
@@ -103,6 +108,7 @@ def test_grad_sens_parameter_type():
 
     sens = Tensor(np.ones([128, 64]), dtype=ms.float32)
     # net(x, y, b, sens)
+    net.set_auto_parallel()
     _executor.compile(net, x, y, b, sens)
 
 
@@ -128,7 +134,7 @@ def test_grad_sens_tensor_type():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_grad_sens_scalar_broadcast():
@@ -152,4 +158,4 @@ def test_grad_sens_scalar_broadcast():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
-    _executor.compile(net, x, y, bias)
+    compile(net, x, y, bias)

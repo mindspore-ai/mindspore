@@ -52,6 +52,12 @@ class GradWrap(nn.Cell):
     def construct(self):
         return C.grad_by_list(self.network, self.weights)()
 
+
+def compile(net):
+    net.set_auto_parallel()
+    _executor.compile(net)
+
+
 def test_get_next_single():
     class Net(nn.Cell):
         def __init__(self, channel=1, w=0.25):
@@ -87,7 +93,7 @@ def test_get_next_semi_auto_parallel():
     net_with_loss = NetWithLoss(network, [ms.float32, ms.int32],[[32,64], [32]], 2, strategy3=strategy3, strategy4=strategy4)
     net = GradWrap(net_with_loss)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    _executor.compile(net)
+    compile(net)
 
 def test_get_next_semi_auto_parallel1():
     class Net(nn.Cell):
@@ -109,7 +115,7 @@ def test_get_next_semi_auto_parallel1():
     net_with_loss = NetWithLoss(network, [ms.float32, ms.int32],[[32,64], [32]], 2, strategy3=strategy3, strategy4=strategy4)
     net = GradWrap(net_with_loss)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    _executor.compile(net)
+    compile(net)
 
 def test_get_next_auto_parallel():
     class Net(nn.Cell):
@@ -129,7 +135,7 @@ def test_get_next_auto_parallel():
     net_with_loss = NetWithLoss(network, [ms.float32, ms.int32],[[32,64], [32]], 2)
     net = GradWrap(net_with_loss)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net)
+    compile(net)
 
 
 def test_only_one_get_next():
@@ -145,4 +151,4 @@ def test_only_one_get_next():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     net = Net()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    _executor.compile(net)
+    compile(net)

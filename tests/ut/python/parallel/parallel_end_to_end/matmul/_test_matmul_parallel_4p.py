@@ -229,6 +229,7 @@ class BatchmatmulFactory:
         y1 = Tensor(ys[self.y_id]) #需要从设备矩阵推导
         z1 = Tensor(zs[self.x_id])
         matmul.set_train()
+        matmul.set_auto_parallel()
         out_me = matmul(x, y, z, parallel_inputs_compile=[x, y, z], parallel_inputs_run=[x1, y1, z1])
         return out_me.asnumpy()
         
@@ -267,6 +268,7 @@ class BatchmatmulFactory:
         out_grad1 = Tensor(out_grads[self.out_id])
         net_me = Grad(matmul)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        net_me.set_auto_parallel()
         net_me.set_train()
         
         out_grad = net_me(x, y, z, out_grad_me, parallel_inputs_compile = [x, y, z, out_grad1], parallel_inputs_run = [x1, y1, z1, out_grad1])

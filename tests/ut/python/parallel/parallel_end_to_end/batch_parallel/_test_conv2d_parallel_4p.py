@@ -249,6 +249,7 @@ class Conv2dFactory:
                          padding=self.padding, dilation=self.dilation,
                          group=self.group, has_bias=False, weight_init=weight, strategy=(self.strategy0[0], self.strategy0[1], self.strategy0[1]))
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        net.set_auto_parallel()
         out = net(x, y, parallel_inputs_compile=[x, y], parallel_inputs_run=[x1, y1])
         return out.asnumpy()
 
@@ -307,7 +308,8 @@ class Conv2dFactory:
 
         grad_net = Grad(net)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-        grad_net.set_train()        
+        grad_net.set_train()
+        grad_net.set_auto_parallel()
         out_grad = grad_net(x, y, output_grad, parallel_inputs_compile=[x, y, output_grad1], parallel_inputs_run=[x1, y1, output_grad1])
         return out_grad
     

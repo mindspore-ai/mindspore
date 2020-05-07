@@ -62,6 +62,7 @@ def test_reshape_matmul():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net.set_auto_parallel()
     _executor.compile(net, x)
 
 

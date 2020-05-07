@@ -35,6 +35,11 @@ class NetWithLoss(nn.Cell):
         return self.loss(predict, b)[0]
 
 
+def compile(net, x, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, b)
+
+
 def test_momentum():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, weight):
@@ -66,7 +71,7 @@ def test_momentum():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    _executor.compile(train_net, x,  b)
+    compile(train_net, x,  b)
 
 
 def test_momentum_with_loss_scale():
@@ -100,7 +105,7 @@ def test_momentum_with_loss_scale():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    _executor.compile(train_net, x,  b)
+    compile(train_net, x,  b)
 
 
 def test_momentum_with_dynamic_lr():
@@ -135,7 +140,7 @@ def test_momentum_with_dynamic_lr():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    _executor.compile(train_net, x,  b)
+    compile(train_net, x,  b)
 
 
 def test_momentum_with_loss_scale_and_dynamic_lr():
@@ -171,7 +176,7 @@ def test_momentum_with_loss_scale_and_dynamic_lr():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    _executor.compile(train_net, x,  b)
+    compile(train_net, x,  b)
 
 def test_lars():
     class Net(nn.Cell):
@@ -205,4 +210,4 @@ def test_lars():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    _executor.compile(train_net, x,  b)
+    compile(train_net, x,  b)

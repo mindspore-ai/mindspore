@@ -16,8 +16,7 @@
 
 from mindspore._c_expression import reset_op_id
 from mindspore.communication.management import get_group_size, get_rank
-from mindspore.parallel._auto_parallel_context import auto_parallel_context, _set_auto_parallel_context,\
-    _reset_auto_parallel_context
+from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 
 def _get_parallel_mode():
@@ -106,102 +105,6 @@ def _parameter_broadcast_check(parallel_mode, parameter_broadcast):
         raise ValueError("stand_alone, semi_auto_parallel and auto_parallel "
                          "do not support parameter broadcast, parallel_mode: {0}, parameter_broadcast:{1}"
                          .format(parallel_mode, parameter_broadcast))
-
-
-_parallel_mode = None
-_device_num = None
-_global_rank = None
-_parameter_broadcast = None
-_mirror_mean = None
-_cast_before_mirror = None
-_loss_repeated_mean = None
-_communication_backend = None
-_has_checkpointed = False
-_enable_all_reduce_fusion = None
-
-
-def _checkpoint_auto_parallel_context():
-    """checkpoint auto parallel context"""
-    global _has_checkpointed
-    if _has_checkpointed is True:
-        return
-
-    global _parallel_mode
-    global _device_num
-    global _global_rank
-    global _parameter_broadcast
-    global _mirror_mean
-    global _cast_before_mirror
-    global _loss_repeated_mean
-    global _communication_backend
-    global _enable_all_reduce_fusion
-    _parallel_mode = auto_parallel_context().get_parallel_mode()
-    _device_num = _get_device_num()
-    _global_rank = _get_global_rank()
-    _parameter_broadcast = auto_parallel_context().get_parameter_broadcast()
-    _mirror_mean = auto_parallel_context().get_mirror_mean()
-    _cast_before_mirror = auto_parallel_context().get_cast_before_mirror()
-    _loss_repeated_mean = auto_parallel_context().get_loss_repeated_mean()
-    _communication_backend = auto_parallel_context().get_communication_backend()
-    _enable_all_reduce_fusion = auto_parallel_context().get_enable_all_reduce_fusion()
-    _has_checkpointed = True
-
-
-def _restore_auto_parallel_context():
-    """restore auto parallel context"""
-    global _parallel_mode
-    global _device_num
-    global _global_rank
-    global _parameter_broadcast
-    global _mirror_mean
-    global _cast_before_mirror
-    global _loss_repeated_mean
-    global _communication_backend
-    global _enable_all_reduce_fusion
-    _set_auto_parallel_context(parallel_mode=_parallel_mode, device_num=_device_num, global_rank=_global_rank,
-                               parameter_broadcast=_parameter_broadcast, mirror_mean=_mirror_mean,
-                               cast_before_mirror=_cast_before_mirror, loss_repeated_mean=_loss_repeated_mean)
-    auto_parallel_context().set_communication_backend(_communication_backend)
-    auto_parallel_context().set_enable_all_reduce_fusion(_enable_all_reduce_fusion)
-
-
-def _reset_checkpoint_auto_parallel_context():
-    """reset the _has_checkpointed"""
-    global _has_checkpointed
-    _has_checkpointed = False
-
-
-def _callback_wrapper(list_callback, run_context, callback_type):
-    """
-    reset the context for callback of model train
-
-    Raises:
-        ValueError: If the type keyword is not recognized
-    """
-    _callback_func_map = {
-        "begin": list_callback.begin,
-        "epoch_begin": list_callback.epoch_begin,
-        "step_begin": list_callback.step_begin,
-        "step_end": list_callback.step_end,
-        "epoch_end": list_callback.epoch_end,
-        "end": list_callback.end}
-
-    if callback_type not in _callback_func_map:
-        raise ValueError("Get type keyword %s is not recognized!" % callback_type)
-    func = _callback_func_map[callback_type]
-
-    if callback_type == "begin":
-        _reset_checkpoint_auto_parallel_context()
-
-    _checkpoint_auto_parallel_context()
-    global _parallel_mode
-    if _parallel_mode == "stand_alone":
-        func(run_context)
-        return
-
-    _reset_auto_parallel_context()
-    func(run_context)
-    _restore_auto_parallel_context()
 
 
 PARAMETER_CLONED_INDEX = 0

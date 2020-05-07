@@ -35,8 +35,8 @@ bool StepAllreduceFusion(const FuncGraphPtr &root, const opt::OptimizerPtr &opti
   // assume no change to graph
   bool changes = false;
   // control whether use model_parallel mode
-  if (((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) || (!enable_all_reduce_fusion) ||
-      (root->has_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY))) {
+  if (!root->has_flag(AUTO_PARALLEL) || ((parallel_mode != AUTO_PARALLEL) && (parallel_mode != SEMI_AUTO_PARALLEL)) ||
+      (!enable_all_reduce_fusion) || (root->has_flag(ALLREDUCE_FUSION_RUN_ONCE_ONLY))) {
     return changes;
   }
 #if defined(_WIN32) || defined(_WIN64)

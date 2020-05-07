@@ -20,7 +20,6 @@ from collections import OrderedDict
 from functools import wraps
 from mindspore import context
 from mindspore import log as logger
-from mindspore.parallel._utils import _get_parallel_mode
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
@@ -327,7 +326,7 @@ class _Executor:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
 
-    def compile(self, obj, *args, phase='predict', params=None, do_convert=True):
+    def compile(self, obj, *args, phase='predict', params=None, do_convert=True, auto_parallel_mode=False):
         """
         Compiles graph.
 
@@ -337,6 +336,7 @@ class _Executor:
             phase (str): The name of compile phase. Default: 'predict'.
             params (OrderedDict): The parameters dictionary used for init data graph. Default: None.
             do_convert (bool): When set to True, convert ME graph to GE graph after compiling graph.
+            auto_parallel_mode: When set to True, use auto parallel mode to compile graph.
 
         Return:
             Str, the full phase of the cell.
@@ -370,8 +370,9 @@ class _Executor:
             logger.error("%r graph compile failed.", phase)
         if not do_convert:
             return phase, True
+
         if not enable_debug_runtime or enable_ge:
-            if _get_parallel_mode() in ["auto_parallel", "semi_auto_parallel"]:
+            if auto_parallel_mode:
                 obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
                 obj.load_parameter_slice(params)
 

@@ -100,6 +100,7 @@ def test_batch():
 
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net.set_auto_parallel()
 
     x = Tensor(np.ones([128, 16, 34, 34]), dtype=ms.float32)
     w1 = Tensor(np.ones([128, 8, 32, 32]), dtype=ms.float32)

@@ -86,6 +86,7 @@ class PReLUFactory:
     def forward_mindspore_parallel_impl(self):
         net = PReLU(channel=self.channel, w=self.weight, strategy_=self.strategy, strategy1_=(self.strategy[0], self.strategy[1], self.strategy[1]))
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        net.set_auto_parallel()
         x = Tensor(self.input_np)
         z = Tensor(np.zeros(self.input_np.shape), ms.float32)
         w = Tensor(self.weight)
@@ -122,6 +123,7 @@ class PReLUFactory:
         net = PReLU(channel=self.channel, w=self.weight, strategy_=self.strategy, strategy1_=(self.strategy[0], self.strategy[1], self.strategy[1]))
         grad_net = Grad(net)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        grad_net.set_auto_parallel()
         
         grad_net.set_train()
         inputs = self.get_parallel_blocks(self.input_np, self.strategy[1])

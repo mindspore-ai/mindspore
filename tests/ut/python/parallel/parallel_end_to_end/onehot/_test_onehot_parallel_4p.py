@@ -113,6 +113,7 @@ class OneHotFactory:
                      on_value=self.on_value, 
                      off_value=self.off_value, strategy=self.strategy0)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        net.set_auto_parallel()
         out = net(x, parallel_inputs_compile=[x], parallel_inputs_run=[x1])
         return out.asnumpy()
 

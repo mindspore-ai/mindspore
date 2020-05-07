@@ -102,4 +102,5 @@ def test_dmnet_train_step():
     input = Tensor(np.ones([4096, 4096]).astype(np.float32) * 0.01)
     net = GradWrap(NetWithLoss(MultiTransformer()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net.set_auto_parallel()
     _executor.compile(net, input)

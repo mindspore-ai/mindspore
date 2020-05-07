@@ -40,6 +40,12 @@ class GradWrap(nn.Cell):
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
 
+
+def compile(net, x, y, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, b)
+
+
 def test_rhombus1():
     class Net(nn.Cell):
         def __init__(self):
@@ -63,7 +69,7 @@ def test_rhombus1():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 def test_rhombus2():
     class Net(nn.Cell):
@@ -93,7 +99,7 @@ def test_rhombus2():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 def test_rhombus3():
     class Net(nn.Cell):
@@ -123,4 +129,4 @@ def test_rhombus3():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, z)
+    compile(net, x, y, z)

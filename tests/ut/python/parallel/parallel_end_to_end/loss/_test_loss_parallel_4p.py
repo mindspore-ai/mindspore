@@ -140,6 +140,7 @@ class AddReluFactory:
         net_with_loss = NetWithLoss(net, strategy2=self.strategy2)
         grad_net = Grad(net_with_loss)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        grad_net.set_auto_parallel()
         grad_net.set_train()
         input_grads = []
         for i in range(0, 3):

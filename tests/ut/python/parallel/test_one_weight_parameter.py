@@ -63,11 +63,11 @@ def test_one_weight_parameter():
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
     net = Net(strategy1, weight)
-    print ("======================================dict", net.__dict__)
 
     net_with_loss = NetWithLoss(net, strategy3)
 
     train_net = OneStepCell(net_with_loss)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    train_net.set_auto_parallel()
 
     _executor.compile(train_net, x, b)
