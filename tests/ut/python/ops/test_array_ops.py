@@ -95,6 +95,22 @@ def test_select():
     expect = np.array([[1, 8, 9], [10, 5, 6]])
     assert np.all(output.asnumpy() == expect)
 
+def test_batch_to_space():
+    block_size = 2
+    crops = [[0, 0], [0, 0]]
+    batch_to_space = P.BatchToSpace(block_size, crops)
+    input_x = Tensor(np.array([[[[1]]], [[[2]]], [[[3]]], [[[4]]]]).astype(np.float16))
+    output = batch_to_space(input_x)
+    assert output.shape() == (1, 1, 2, 2)
+
+def test_space_to_batch():
+    block_size = 2
+    paddings = [[0, 0], [0, 0]]
+    space_to_batch = P.SpaceToBatch(block_size, paddings)
+    input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]).astype(np.float16))
+    output = space_to_batch(input_x)
+    assert output.shape() == (4, 1, 1, 1)
+
 def test_argmin_invalid_output_type():
     P.Argmin(-1, mstype.int64)
     P.Argmin(-1, mstype.int32)
