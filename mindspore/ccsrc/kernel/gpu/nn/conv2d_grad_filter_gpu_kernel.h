@@ -49,6 +49,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
         group_(1),
         is_null_input_(false),
         input_size_(0),
+        dy_size_(0),
         output_size_(0),
         padded_size_(0),
         workspace_size_(0),
@@ -152,22 +153,16 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
   }
   void InitSizeLists() override {
     if (!is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(dy_desc_, reinterpret_cast<size_t *>(&input_size_)),
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(dy_desc_, reinterpret_cast<size_t *>(&dy_size_)),
                                   "cudnnGetTensorSizeInBytes failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetFilterSizeInBytes(dw_desc_, reinterpret_cast<size_t *>(&output_size_)),
-                                  "cudnnGetFilterSizeInBytes failed");
-    }
-    input_size_list_.push_back(input_size_);
-    output_size_list_.push_back(output_size_);
-
-    if (!is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(x_desc_, reinterpret_cast<size_t *>(&input_size_)),
                                   "cudnnGetTensorSizeInBytes failed");
       CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetFilterSizeInBytes(dw_desc_, reinterpret_cast<size_t *>(&output_size_)),
                                   "cudnnGetFilterSizeInBytes failed");
     }
+    input_size_list_.push_back(dy_size_);
     input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(output_size_);
+    output_size_list_.push_back(output_size_);
 
     if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_ && !is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT(
@@ -313,6 +308,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
   int group_;
   bool is_null_input_;
   size_t input_size_;
+  size_t dy_size_;
   size_t output_size_;
   size_t padded_size_;
   size_t workspace_size_;

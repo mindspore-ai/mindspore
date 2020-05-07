@@ -48,7 +48,8 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
         c_(0),
         group_(1),
         is_null_input_(false),
-        input_size_(0),
+        dy_size_(0),
+        w_size_(0),
         output_size_(0),
         padded_size_(0),
         workspace_size_(0),
@@ -82,7 +83,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
         cudnnConvolutionBackwardData(cudnn_handle_, &alpha, w_desc_, w, dy_desc_, dy, conv_desc_, algo_, work_space,
                                      workspace_size_, &beta, padded_descriptor_, padded),
         "ConvolutionBackwardData failed");
-      CalPadGrad(input_size_ / sizeof(T), padded, n_, c_, old_height_, old_width_, old_height_ + pad_height_,
+      CalPadGrad(output_size_ / sizeof(T), padded, n_, c_, old_height_, old_width_, old_height_ + pad_height_,
                  old_width_ + pad_width_, pad_top_, pad_left_, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT(
@@ -153,22 +154,14 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
   }
   void InitSizeLists() override {
     if (!is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(dy_desc_, &input_size_),
-                                  "cudnnGetTensorSizeInBytes failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(dy_desc_, &dy_size_), "cudnnGetTensorSizeInBytes failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetFilterSizeInBytes(w_desc_, &w_size_), "cudnnGetTensorSizeInBytes failed");
       CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(dx_desc_, &output_size_),
                                   "cudnnGetTensorSizeInBytes failed");
     }
-    input_size_list_.push_back(input_size_);
+    input_size_list_.push_back(dy_size_);
+    input_size_list_.push_back(w_size_);
     output_size_list_.push_back(output_size_);
-
-    if (!is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(dx_desc_, &input_size_),
-                                  "cudnnGetTensorSizeInBytes failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetFilterSizeInBytes(w_desc_, &output_size_),
-                                  "cudnnGetTensorSizeInBytes failed");
-    }
-    input_size_list_.push_back(input_size_);
-    input_size_list_.push_back(output_size_);
 
     if ((pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) && use_pad_ && !is_null_input_) {
       CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(padded_descriptor_, &padded_size_),
@@ -309,7 +302,8 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
   std::vector<int> dilation_;
   int group_;
   bool is_null_input_;
-  size_t input_size_;
+  size_t dy_size_;
+  size_t w_size_;
   size_t output_size_;
   size_t padded_size_;
   size_t workspace_size_;
