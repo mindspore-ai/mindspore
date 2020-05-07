@@ -38,13 +38,5 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   Sub, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   BinaryOpGpuKernel, half)
-MS_REG_GPU_KERNEL_ONE(
-  Maximum,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  BinaryOpGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(
-  Maximum,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  BinaryOpGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
