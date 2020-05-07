@@ -165,12 +165,22 @@ Status MindRecordOp::Init() {
 
 Status MindRecordOp::SetColumnsBlob() {
   columns_blob_ = shard_reader_->get_blob_fields().second;
+
+  // get the exactly blob fields by columns_to_load_
+  std::vector<std::string> columns_blob_exact;
+  for (auto &blob_field : columns_blob_) {
+    for (auto &column : columns_to_load_) {
+      if (column.compare(blob_field) == 0) {
+        columns_blob_exact.push_back(blob_field);
+        break;
+      }
+    }
+  }
+
   columns_blob_index_ = std::vector<int32_t>(columns_to_load_.size(), -1);
   int32_t iBlob = 0;
-  for (uint32_t i = 0; i < columns_blob_.size(); ++i) {
-    if (column_name_mapping_.count(columns_blob_[i])) {
-      columns_blob_index_[column_name_mapping_[columns_blob_[i]]] = iBlob++;
-    }
+  for (auto &blob_exact : columns_blob_exact) {
+    columns_blob_index_[column_name_mapping_[blob_exact]] = iBlob++;
   }
   return Status::OK();
 }

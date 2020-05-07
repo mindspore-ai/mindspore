@@ -92,15 +92,25 @@ def populate_data(raw, blob, columns, blob_fields, schema):
     if raw:
         # remove dummy fileds
         raw = {k: v for k, v in raw.items() if k in schema}
+    else:
+        raw = {}
     if not blob_fields:
         return raw
+
+    # Get the order preserving sequence of columns in blob
+    ordered_columns = []
+    if columns:
+        for blob_field in blob_fields:
+            if blob_field in columns:
+                ordered_columns.append(blob_field)
+    else:
+        ordered_columns = blob_fields
+
     blob_bytes = bytes(blob)
 
     def _render_raw(field, blob_data):
         data_type = schema[field]['type']
         data_shape = schema[field]['shape'] if 'shape' in schema[field] else []
-        if columns and field not in columns:
-            return
         if data_shape:
             try:
                 raw[field] = np.reshape(np.frombuffer(blob_data, dtype=data_type), data_shape)
@@ -110,7 +120,9 @@ def populate_data(raw, blob, columns, blob_fields, schema):
             raw[field] = blob_data
 
     if len(blob_fields) == 1:
-        _render_raw(blob_fields[0], blob_bytes)
+        if len(ordered_columns) == 1:
+            _render_raw(blob_fields[0], blob_bytes)
+            return raw
         return raw
 
     def _int_from_bytes(xbytes: bytes) -> int:
@@ -125,6 +137,6 @@ def populate_data(raw, blob, columns, blob_fields, schema):
         start += 8
         return blob_bytes[start : start + n_bytes]
 
-    for i, blob_field in enumerate(blob_fields):
+    for i, blob_field in enumerate(ordered_columns):
         _render_raw(blob_field, _blob_at_position(i))
     return raw

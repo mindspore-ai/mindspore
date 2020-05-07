@@ -545,3 +545,597 @@ def inputs(vectors, maxlen=50):
     mask = [1]*length + [0]*(maxlen-length)
     segment = [0]*maxlen
     return input_, mask, segment
+
+def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
+    mindrecord_file_name = "test.mindrecord"
+    data = [{"file_name": "001.jpg", "label": 4,
+             "image1": bytes("image1 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image1 bytes def", encoding='UTF-8'),
+             "source_sos_ids": np.array([1, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([6, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "image3": bytes("image1 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image1 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image1 bytes mno", encoding='UTF-8'),
+             "target_sos_ids": np.array([28, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([33, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([39, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([48, 49, 50, 51], dtype=np.int64)},
+            {"file_name": "002.jpg", "label": 5,
+             "image1": bytes("image2 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image2 bytes def", encoding='UTF-8'),
+             "image3": bytes("image2 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image2 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image2 bytes mno", encoding='UTF-8'),
+             "source_sos_ids": np.array([11, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([16, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "target_sos_ids": np.array([128, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([133, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([139, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([148, 49, 50, 51], dtype=np.int64)},
+            {"file_name": "003.jpg", "label": 6,
+             "source_sos_ids": np.array([21, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([26, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "target_sos_ids": np.array([228, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([233, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([239, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "image1": bytes("image3 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image3 bytes def", encoding='UTF-8'),
+             "image3": bytes("image3 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image3 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image3 bytes mno", encoding='UTF-8'),
+             "target_eos_mask": np.array([248, 49, 50, 51], dtype=np.int64)},
+            {"file_name": "004.jpg", "label": 7,
+             "source_sos_ids": np.array([31, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([36, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "image1": bytes("image4 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image4 bytes def", encoding='UTF-8'),
+             "image3": bytes("image4 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image4 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image4 bytes mno", encoding='UTF-8'),
+             "target_sos_ids": np.array([328, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([333, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([339, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([348, 49, 50, 51], dtype=np.int64)},
+            {"file_name": "005.jpg", "label": 8,
+             "source_sos_ids": np.array([41, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([46, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "target_sos_ids": np.array([428, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([433, 34, 35, 36, 37, 38], dtype=np.int64),
+             "image1": bytes("image5 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image5 bytes def", encoding='UTF-8'),
+             "image3": bytes("image5 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image5 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image5 bytes mno", encoding='UTF-8'),
+             "target_eos_ids": np.array([439, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([448, 49, 50, 51], dtype=np.int64)},
+            {"file_name": "006.jpg", "label": 9,
+             "source_sos_ids": np.array([51, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([56, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "target_sos_ids": np.array([528, 29, 30, 31, 32], dtype=np.int64),
+             "image1": bytes("image6 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image6 bytes def", encoding='UTF-8'),
+             "image3": bytes("image6 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image6 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image6 bytes mno", encoding='UTF-8'),
+             "target_sos_mask": np.array([533, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([539, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([548, 49, 50, 51], dtype=np.int64)}
+            ]
+
+    writer = FileWriter(mindrecord_file_name)
+    schema = {"file_name": {"type": "string"},
+              "image1": {"type": "bytes"},
+              "image2": {"type": "bytes"},
+              "source_sos_ids": {"type": "int64", "shape": [-1]},
+              "source_sos_mask": {"type": "int64", "shape": [-1]},
+              "image3": {"type": "bytes"},
+              "image4": {"type": "bytes"},
+              "image5": {"type": "bytes"},
+              "target_sos_ids": {"type": "int64", "shape": [-1]},
+              "target_sos_mask": {"type": "int64", "shape": [-1]},
+              "target_eos_ids": {"type": "int64", "shape": [-1]},
+              "target_eos_mask": {"type": "int64", "shape": [-1]},
+              "label": {"type": "int32"}}
+    writer.add_schema(schema, "data is so cool")
+    writer.write_raw_data(data)
+    writer.commit()
+
+    # change data value to list
+    data_value_to_list = []
+    for item in data:
+        new_data = {}
+        new_data['file_name'] = np.asarray(list(bytes(item["file_name"], encoding='utf-8')), dtype=np.uint8)
+        new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
+        new_data['image1'] = np.asarray(list(item["image1"]), dtype=np.uint8)
+        new_data['image2'] = np.asarray(list(item["image2"]), dtype=np.uint8)
+        new_data['image3'] = np.asarray(list(item["image3"]), dtype=np.uint8)
+        new_data['image4'] = np.asarray(list(item["image4"]), dtype=np.uint8)
+        new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
+        new_data['source_sos_ids'] = item["source_sos_ids"]
+        new_data['source_sos_mask'] = item["source_sos_mask"]
+        new_data['target_sos_ids'] = item["target_sos_ids"]
+        new_data['target_sos_mask'] = item["target_sos_mask"]
+        new_data['target_eos_ids'] = item["target_eos_ids"]
+        new_data['target_eos_mask'] = item["target_eos_mask"]
+        data_value_to_list.append(new_data)
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 13
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["source_sos_ids", "source_sos_mask", "target_sos_ids"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 3
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data[num_iter][field]).all()
+            else:
+                assert item[field] == data[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 1
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["image2", "source_sos_mask", "image3", "target_sos_ids"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 4
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 3
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["target_sos_ids", "image4", "source_sos_ids"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 3
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 3
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["target_sos_ids", "image5", "image4", "image3", "source_sos_ids"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 5
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 1
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["target_eos_mask", "image5", "image2", "source_sos_mask", "label"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 5
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["label", "target_eos_mask", "image1", "target_eos_ids", "source_sos_mask",
+                                            "image2", "image4", "image3", "source_sos_ids", "image5", "file_name"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 11
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    os.remove("{}".format(mindrecord_file_name))
+    os.remove("{}.db".format(mindrecord_file_name))
+
+def test_write_with_multi_bytes_and_MindDataset():
+    mindrecord_file_name = "test.mindrecord"
+    data = [{"file_name": "001.jpg", "label": 43,
+             "image1": bytes("image1 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image1 bytes def", encoding='UTF-8'),
+             "image3": bytes("image1 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image1 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image1 bytes mno", encoding='UTF-8')},
+            {"file_name": "002.jpg", "label": 91,
+             "image1": bytes("image2 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image2 bytes def", encoding='UTF-8'),
+             "image3": bytes("image2 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image2 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image2 bytes mno", encoding='UTF-8')},
+            {"file_name": "003.jpg", "label": 61,
+             "image1": bytes("image3 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image3 bytes def", encoding='UTF-8'),
+             "image3": bytes("image3 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image3 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image3 bytes mno", encoding='UTF-8')},
+            {"file_name": "004.jpg", "label": 29,
+             "image1": bytes("image4 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image4 bytes def", encoding='UTF-8'),
+             "image3": bytes("image4 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image4 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image4 bytes mno", encoding='UTF-8')},
+            {"file_name": "005.jpg", "label": 78,
+             "image1": bytes("image5 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image5 bytes def", encoding='UTF-8'),
+             "image3": bytes("image5 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image5 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image5 bytes mno", encoding='UTF-8')},
+            {"file_name": "006.jpg", "label": 37,
+             "image1": bytes("image6 bytes abc", encoding='UTF-8'),
+             "image2": bytes("image6 bytes def", encoding='UTF-8'),
+             "image3": bytes("image6 bytes ghi", encoding='UTF-8'),
+             "image4": bytes("image6 bytes jkl", encoding='UTF-8'),
+             "image5": bytes("image6 bytes mno", encoding='UTF-8')}
+            ]
+    writer = FileWriter(mindrecord_file_name)
+    schema = {"file_name": {"type": "string"},
+              "image1": {"type": "bytes"},
+              "image2": {"type": "bytes"},
+              "image3": {"type": "bytes"},
+              "label": {"type": "int32"},
+              "image4": {"type": "bytes"},
+              "image5": {"type": "bytes"}}
+    writer.add_schema(schema, "data is so cool")
+    writer.write_raw_data(data)
+    writer.commit()
+
+    # change data value to list
+    data_value_to_list = []
+    for item in data:
+        new_data = {}
+        new_data['file_name'] = np.asarray(list(bytes(item["file_name"], encoding='utf-8')), dtype=np.uint8)
+        new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
+        new_data['image1'] = np.asarray(list(item["image1"]), dtype=np.uint8)
+        new_data['image2'] = np.asarray(list(item["image2"]), dtype=np.uint8)
+        new_data['image3'] = np.asarray(list(item["image3"]), dtype=np.uint8)
+        new_data['image4'] = np.asarray(list(item["image4"]), dtype=np.uint8)
+        new_data['image5'] = np.asarray(list(item["image5"]), dtype=np.uint8)
+        data_value_to_list.append(new_data)
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 7
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["image1", "image2", "image5"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 3
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["image2", "image4"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 2
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["image5", "image2"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 2
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["image5", "image2", "label"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 3
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["image4", "image5", "image2", "image3", "file_name"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 5
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    os.remove("{}".format(mindrecord_file_name))
+    os.remove("{}.db".format(mindrecord_file_name))
+
+def test_write_with_multi_array_and_MindDataset():
+    mindrecord_file_name = "test.mindrecord"
+    data = [{"source_sos_ids": np.array([1, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([6, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([13, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([19, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([28, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([33, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([39, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([48, 49, 50, 51], dtype=np.int64)},
+            {"source_sos_ids": np.array([11, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([16, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([113, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([119, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([128, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([133, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([139, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([148, 49, 50, 51], dtype=np.int64)},
+            {"source_sos_ids": np.array([21, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([26, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([213, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([219, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([228, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([233, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([239, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([248, 49, 50, 51], dtype=np.int64)},
+            {"source_sos_ids": np.array([31, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([36, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([313, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([319, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([328, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([333, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([339, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([348, 49, 50, 51], dtype=np.int64)},
+            {"source_sos_ids": np.array([41, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([46, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([413, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([419, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([428, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([433, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([439, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([448, 49, 50, 51], dtype=np.int64)},
+            {"source_sos_ids": np.array([51, 2, 3, 4, 5], dtype=np.int64),
+             "source_sos_mask": np.array([56, 7, 8, 9, 10, 11, 12], dtype=np.int64),
+             "source_eos_ids": np.array([513, 14, 15, 16, 17, 18], dtype=np.int64),
+             "source_eos_mask": np.array([519, 20, 21, 22, 23, 24, 25, 26, 27], dtype=np.int64),
+             "target_sos_ids": np.array([528, 29, 30, 31, 32], dtype=np.int64),
+             "target_sos_mask": np.array([533, 34, 35, 36, 37, 38], dtype=np.int64),
+             "target_eos_ids": np.array([539, 40, 41, 42, 43, 44, 45, 46, 47], dtype=np.int64),
+             "target_eos_mask": np.array([548, 49, 50, 51], dtype=np.int64)}
+            ]
+    writer = FileWriter(mindrecord_file_name)
+    schema = {"source_sos_ids": {"type": "int64", "shape": [-1]},
+              "source_sos_mask": {"type": "int64", "shape": [-1]},
+              "source_eos_ids": {"type": "int64", "shape": [-1]},
+              "source_eos_mask": {"type": "int64", "shape": [-1]},
+              "target_sos_ids": {"type": "int64", "shape": [-1]},
+              "target_sos_mask": {"type": "int64", "shape": [-1]},
+              "target_eos_ids": {"type": "int64", "shape": [-1]},
+              "target_eos_mask": {"type": "int64", "shape": [-1]}}
+    writer.add_schema(schema, "data is so cool")
+    writer.write_raw_data(data)
+    writer.commit()
+
+    # change data value to list - do none
+    data_value_to_list = []
+    for item in data:
+        new_data = {}
+        new_data['source_sos_ids'] = item["source_sos_ids"]
+        new_data['source_sos_mask'] = item["source_sos_mask"]
+        new_data['source_eos_ids'] = item["source_eos_ids"]
+        new_data['source_eos_mask'] = item["source_eos_mask"]
+        new_data['target_sos_ids'] = item["target_sos_ids"]
+        new_data['target_sos_mask'] = item["target_sos_mask"]
+        new_data['target_eos_ids'] = item["target_eos_ids"]
+        new_data['target_eos_mask'] = item["target_eos_mask"]
+        data_value_to_list.append(new_data)
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 8
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["source_eos_ids", "source_eos_mask",
+                                            "target_sos_ids", "target_sos_mask",
+                                            "target_eos_ids", "target_eos_mask"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 6
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["source_sos_ids",
+                                            "target_sos_ids",
+                                            "target_eos_mask"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 3
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["target_eos_mask",
+                                            "source_eos_mask",
+                                            "source_sos_mask"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 3
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 2
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["target_eos_ids"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 1
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    num_readers = 1
+    data_set = ds.MindDataset(dataset_file=mindrecord_file_name,
+                              columns_list=["target_eos_mask", "target_eos_ids",
+                                            "target_sos_mask", "target_sos_ids",
+                                            "source_eos_mask", "source_eos_ids",
+                                            "source_sos_mask", "source_sos_ids"],
+                              num_parallel_workers=num_readers,
+                              shuffle=False)
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        assert len(item) == 8
+        for field in item:
+            if isinstance(item[field], np.ndarray):
+                assert (item[field] == data_value_to_list[num_iter][field]).all()
+            else:
+                assert item[field] == data_value_to_list[num_iter][field]
+        num_iter += 1
+    assert num_iter == 6
+
+    os.remove("{}".format(mindrecord_file_name))
+    os.remove("{}.db".format(mindrecord_file_name))

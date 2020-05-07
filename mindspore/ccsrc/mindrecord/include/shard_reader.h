@@ -294,6 +294,10 @@ class ShardReader {
   /// \brief get number of classes
   int64_t GetNumClasses(const std::string &file_path, const std::string &category_field);
 
+  /// \brief get exactly blob fields data by indices
+  std::vector<uint8_t> ExtractBlobFieldBySelectColumns(std::vector<uint8_t> &blob_fields_bytes,
+                                                       std::vector<uint32_t> &ordered_selected_columns_index);
+
  protected:
   uint64_t header_size_;                       // header size
   uint64_t page_size_;                         // page size
