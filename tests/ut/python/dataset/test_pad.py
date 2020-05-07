@@ -22,33 +22,10 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
+from util import diff_mse
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
-
-
-def visualize(first, mse, second):
-    """
-    visualizes the image using DE op and enCV
-    """
-    plt.subplot(141)
-    plt.imshow(first)
-    plt.title("c transformed image")
-
-    plt.subplot(142)
-    plt.imshow(second)
-    plt.title("py random_color_jitter image")
-
-    plt.subplot(143)
-    plt.imshow(first - second)
-    plt.title("Difference image, mse : {}".format(mse))
-    plt.show()
-
-
-def diff_mse(in1, in2):
-    mse = (np.square(in1.astype(float) / 255 - in2.astype(float) / 255)).mean()
-    return mse * 100
-
 
 def test_pad_op():
     """
@@ -77,9 +54,7 @@ def test_pad_op():
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(input_columns=["image"], operations=transform())
 
-    num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-        num_iter += 1
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
 
@@ -89,11 +64,60 @@ def test_pad_op():
         logger.info("dtype of c_image: {}".format(c_image.dtype))
         logger.info("dtype of py_image: {}".format(py_image.dtype))
 
-        diff = c_image - py_image
         mse = diff_mse(c_image, py_image)
         logger.info("mse is {}".format(mse))
         assert mse < 0.01
 
 
+def test_pad_grayscale(): 
+    """
+    Tests that the pad works for grayscale images 
+    """
+    def channel_swap(image): 
+        """
+        Py func hack for our pytransforms to work with c transforms
+        """
+        return (image.transpose(1, 2, 0) * 255).astype(np.uint8)
+
+    transforms = [
+        py_vision.Decode(),
+        py_vision.Grayscale(1), 
+        py_vision.ToTensor(),
+        (lambda image: channel_swap(image))
+    ]
+
+    transform = py_vision.ComposeOp(transforms)
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = data1.map(input_columns=["image"], operations=transform())
+
+    # if input is grayscale, the output dimensions should be single channel 
+    pad_gray = c_vision.Pad(100, fill_value=(20, 20, 20))
+    data1 = data1.map(input_columns=["image"], operations=pad_gray)
+    dataset_shape_1 = []
+    for item1 in data1.create_dict_iterator():
+        c_image = item1["image"]
+        dataset_shape_1.append(c_image.shape)
+
+    # Dataset for comparison 
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = c_vision.Decode()
+
+    # we use the same padding logic 
+    ctrans = [decode_op, pad_gray]
+    dataset_shape_2 = []
+
+    data2 = data2.map(input_columns=["image"], operations=ctrans)
+
+    for item2 in data2.create_dict_iterator():
+        c_image = item2["image"]
+        dataset_shape_2.append(c_image.shape)
+
+    for shape1, shape2 in zip(dataset_shape_1, dataset_shape_2):
+        # validate that the first two dimensions are the same
+        # we have a little inconsistency here because the third dimension is 1 after py_vision.Grayscale
+        assert (shape1[0:1] == shape2[0:1])
+
+
 if __name__ == "__main__":
     test_pad_op()
+    test_pad_grayscale()

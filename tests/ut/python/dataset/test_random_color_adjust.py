@@ -22,6 +22,7 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
+from util import diff_mse
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -29,7 +30,7 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def visualize(first, mse, second):
     """
-    visualizes the image using DE op and enCV
+    visualizes the image using DE op and OpenCV
     """
     plt.subplot(141)
     plt.imshow(first)
@@ -45,12 +46,7 @@ def visualize(first, mse, second):
     plt.show()
 
 
-def diff_mse(in1, in2):
-    mse = (np.square(in1.astype(float) / 255 - in2.astype(float) / 255)).mean()
-    return mse * 100
-
-
-def test_random_color_adjust_op_brightness():
+def test_random_color_adjust_op_brightness(plot=False):
     """
     Test RandomColorAdjust op
     """
@@ -92,15 +88,16 @@ def test_random_color_adjust_op_brightness():
 
         mse = diff_mse(c_image, py_image)
         logger.info("mse is {}".format(mse))
+
+        logger.info("random_rotation_op_{}, mse: {}".format(num_iter + 1, mse))
         assert mse < 0.01
-        # logger.info("random_rotation_op_{}, mse: {}".format(num_iter + 1, mse))
         # if mse != 0:
         #     logger.info("mse is: {}".format(mse))
-        # Uncomment below line if you want to visualize images
-        # visualize(c_image, mse, py_image)
+        if plot:
+            visualize(c_image, mse, py_image)
 
 
-def test_random_color_adjust_op_contrast():
+def test_random_color_adjust_op_contrast(plot=False):
     """
     Test RandomColorAdjust op
     """
@@ -139,11 +136,10 @@ def test_random_color_adjust_op_contrast():
 
         logger.info("dtype of c_image: {}".format(c_image.dtype))
         logger.info("dtype of py_image: {}".format(py_image.dtype))
-
         diff = c_image - py_image
         logger.info("contrast difference c is : {}".format(c_image[0][0]))
         logger.info("contrast difference  py is : {}".format(py_image[0][0]))
-
+        diff = c_image - py_image
         logger.info("contrast difference is : {}".format(diff[0][0]))
         # mse = (np.sum(np.power(diff, 2))) / (c_image.shape[0] * c_image.shape[1])
         mse = diff_mse(c_image, py_image)
@@ -152,11 +148,11 @@ def test_random_color_adjust_op_contrast():
         # logger.info("random_rotation_op_{}, mse: {}".format(num_iter + 1, mse))
         # if mse != 0:
         #     logger.info("mse is: {}".format(mse))
-        # Uncomment below line if you want to visualize images
-        # visualize(c_image, mse, py_image)
+        if plot:
+            visualize(c_image, mse, py_image)
 
 
-def test_random_color_adjust_op_saturation():
+def test_random_color_adjust_op_saturation(plot=False):
     """
     Test RandomColorAdjust op
     """
@@ -197,19 +193,17 @@ def test_random_color_adjust_op_saturation():
         logger.info("dtype of c_image: {}".format(c_image.dtype))
         logger.info("dtype of py_image: {}".format(py_image.dtype))
 
-        diff = c_image - py_image
-
         mse = diff_mse(c_image, py_image)
         logger.info("mse is {}".format(mse))
         assert mse < 0.01
         # logger.info("random_rotation_op_{}, mse: {}".format(num_iter + 1, mse))
         # if mse != 0:
         #     logger.info("mse is: {}".format(mse))
-        # Uncomment below line if you want to visualize images
-        # visualize(c_image, mse, py_image)
+        if plot:
+            visualize(c_image, mse, py_image)
 
 
-def test_random_color_adjust_op_hue():
+def test_random_color_adjust_op_hue(plot=False):
     """
     Test RandomColorAdjust op
     """
@@ -251,13 +245,45 @@ def test_random_color_adjust_op_hue():
         logger.info("dtype of py_image: {}".format(py_image.dtype))
         # logger.info("dtype of img: {}".format(img.dtype))
 
-        diff = c_image - py_image
         # mse = (np.sum(np.power(diff, 2))) / (c_image.shape[0] * c_image.shape[1])
         mse = diff_mse(c_image, py_image)
         logger.info("mse is {}".format(mse))
         assert mse < 0.01
-        # Uncomment below line if you want to visualize images
-        # visualize(c_image, mse, py_image)
+        if plot:
+            visualize(c_image, mse, py_image)
+
+
+def test_random_color_adjust_grayscale(): 
+    """
+    Tests that the random color adjust works for grayscale images 
+    """
+    def channel_swap(image): 
+        """
+        Py func hack for our pytransforms to work with c transforms
+        """
+        return (image.transpose(1, 2, 0) * 255).astype(np.uint8)
+
+    transforms = [
+        py_vision.Decode(),
+        py_vision.Grayscale(1), 
+        py_vision.ToTensor(),
+        (lambda image: channel_swap(image))
+    ]
+
+    transform = py_vision.ComposeOp(transforms)
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = data1.map(input_columns=["image"], operations=transform())
+
+    # if input is grayscale, the output dimensions should be single channel, the following should fail
+    random_adjust_op = c_vision.RandomColorAdjust((1, 1), (1, 1), (1, 1), (0.2, 0.2))
+    try: 
+        data1 = data1.map(input_columns=["image"], operations=random_adjust_op)
+        dataset_shape_1 = []
+        for item1 in data1.create_dict_iterator():
+            c_image = item1["image"]
+            dataset_shape_1.append(c_image.shape)
+    except BaseException as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
 
 
 if __name__ == "__main__":
@@ -265,3 +291,4 @@ if __name__ == "__main__":
     test_random_color_adjust_op_contrast()
     test_random_color_adjust_op_saturation()
     test_random_color_adjust_op_hue()
+    test_random_color_adjust_grayscale()
