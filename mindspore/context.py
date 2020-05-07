@@ -403,6 +403,9 @@ def set_auto_parallel_context(**kwargs):
 
     Note:
         Attribute name is required for setting attributes.
+        If a program has tasks with different parallel modes, then before setting new parallel mode for
+        next task, interface mindspore.context.reset_auto_parallel_context() needs to be called to reset
+        the configuration.
 
     Args:
         device_num (int): Available device number, the value must be in [1, 4096]. Default: 1.
