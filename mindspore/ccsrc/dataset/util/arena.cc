@@ -52,7 +52,7 @@ Status Arena::Allocate(size_t n, void **p) {
   // Round up n to 1K block
   uint64_t req_size = static_cast<uint64_t>(n) + ARENA_WALL_OVERHEAD_SZ;
   if (req_size > this->get_max_size()) {
-    RETURN_STATUS_UNEXPECTED("Request size too big : " + std::to_string(n));
+    return Status(StatusCode::kOutOfMemory);
   }
   uint64_t reqBlk = SizeToBlk(req_size);
   // Do a first fit search
