@@ -1527,7 +1527,8 @@ class L2Loss(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type):
         validator.check_subclass("x_type", x_type, mstype.tensor, self.name)
-        validator.check_tensor_type_same({'x_type': x_type}, [mstype.double, mstype.float_, mstype.float16], self.name)
+        valid_types = [mstype.float16, mstype.float32, mstype.double]
+        validator.check_tensor_type_same({'x_type': x_type}, valid_types, self.name)
         return x_type
 
 

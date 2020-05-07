@@ -600,7 +600,6 @@ def get_bprop_roi_align(self):
     sample_num = self.sample_num
 
     def bprop(inputs, rois, out, dout):
-        rois_shape = shape_op(rois)
         inputs_shape = shape_op(inputs)
         dx = G.ROIAlignGrad(inputs_shape,
                             pooled_height,
@@ -608,7 +607,7 @@ def get_bprop_roi_align(self):
                             spatial_scale,
                             sample_num,
                             )(dout, rois)
-        return dx, zeros_like(rois_shape)
+        return dx, zeros_like(rois)
 
     return bprop
 
