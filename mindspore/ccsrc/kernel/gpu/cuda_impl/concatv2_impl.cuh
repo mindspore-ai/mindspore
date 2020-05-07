@@ -19,7 +19,13 @@
 
 #include "device/gpu/cuda_common.h"
 template <typename T>
-void CalConcatV2(const size_t size, const int w1, const int w2, const T* input_1, const T* input_2, T* output,
-                 cudaStream_t cuda_stream);
-
+void ConcatKernel(const size_t size, const int w1, const int w2, const T* input_1, const T* input_2, T* output,
+                  cudaStream_t cuda_stream);
+template <typename T>
+void ConcatKernel(const size_t size, const int w1, const int w2, const int w3,
+                  const T* input_1, const T* input_2, const T* input_3, T* output, cudaStream_t cuda_stream);
+template <typename T>
+void ConcatKernel(const size_t size, const int w1, const int w2, const int w3, const int w4,
+                  const T* input_1, const T* input_2, const T* input_3, const T* input_4, T* output,
+                  cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_CONCATV2IMPL_H_
