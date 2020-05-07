@@ -316,11 +316,15 @@ MSRStatus ShardReader::ReadAllRowsInShard(int shard_id, const std::string &sql, 
 }
 
 MSRStatus ShardReader::GetAllClasses(const std::string &category_field, std::set<std::string> &categories) {
-  if (column_schema_id_.find(category_field) == column_schema_id_.end()) {
-    MS_LOG(ERROR) << "Field " << category_field << " does not exist.";
+  std::map<std::string, uint64_t> index_columns;
+  for (auto &field : get_shard_header()->get_fields()) {
+    index_columns[field.second] = field.first;
+  }
+  if (index_columns.find(category_field) == index_columns.end()) {
+    MS_LOG(ERROR) << "Index field " << category_field << " does not exist.";
     return FAILED;
   }
-  auto ret = ShardIndexGenerator::GenerateFieldName(std::make_pair(column_schema_id_[category_field], category_field));
+  auto ret = ShardIndexGenerator::GenerateFieldName(std::make_pair(index_columns[category_field], category_field));
   if (SUCCESS != ret.first) {
     return FAILED;
   }

@@ -60,7 +60,21 @@ def add_and_remove_cv_file():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
+    """tutorial for cv minderdataset."""
+    num_readers = 4
+    sampler = ds.PKSampler(2)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", None, num_readers,
+                              sampler=sampler)
 
+    assert data_set.get_dataset_size() == 6
+    num_iter = 0
+    for item in data_set.create_dict_iterator():
+        logger.info("-------------- cv reader basic: {} ------------------------".format(num_iter))
+        logger.info("-------------- item[file_name]: \
+                {}------------------------".format("".join([chr(x) for x in item["file_name"]])))
+        logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
+        num_iter += 1
 def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
