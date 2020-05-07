@@ -1877,6 +1877,7 @@ class DropoutGenMask(Primitive):
         self.init_prim_io_names(inputs=['shape', 'keep_prob'], outputs=['output'])
         validator.check_value_type("Seed0", Seed0, [int], self.name)
         validator.check_value_type("Seed1", Seed1, [int], self.name)
+        self.add_prim_attr("_random_effect", True)
 
 
 class DropoutDoMask(PrimitiveWithInfer):

@@ -33,6 +33,7 @@ extern const char GRAPH_FLAG_MIX_PRECISION_FP32[];
 extern const char GRAPH_FLAG_LOOP_CAN_UNROLL[];
 extern const char GRAPH_FLAG_HAS_EFFECT[];
 extern const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[];
+extern const char GRAPH_FLAG_RANDOM_EFFECT[];
 
 }  // namespace mindspore
 
