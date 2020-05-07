@@ -668,11 +668,10 @@ void AscendSession::CopyOutputOfIf(GraphId false_graph_id) {
       auto true_last = GetGraph(true_last_id);
       auto final_graph = GetGraph(final_graph_id_);
       MS_EXCEPTION_IF_NULL(final_graph);
-      auto false_last_id = AnfAlgo::GetGraphId(final_graph->output().get());
-      auto false_last = GetGraph(false_last_id);
+      auto false_last = GetGraph(false_graph_id);
       MS_EXCEPTION_IF_NULL(true_last);
       MS_EXCEPTION_IF_NULL(false_last);
-      MS_LOG(INFO) << "The last graph of false branch is " << false_last_id;
+      MS_LOG(INFO) << "The last graph of false branch is " << false_graph_id;
       // create fake output
       auto fake_output_graph = NewKernelGraph();
       graph_execute_order.push_back(fake_output_graph->graph_id());
@@ -680,7 +679,7 @@ void AscendSession::CopyOutputOfIf(GraphId false_graph_id) {
       fake_output_graph->set_output(CreateFakeOutput(fake_output_graph->graph_id(), final_graph->output()));
       final_graph->set_output(fake_output_graph->output());
       InsertMultipleAssignToGraph(true_last_id, true_last->output(), final_graph->output());
-      InsertMultipleAssignToGraph(false_last_id, false_last->output(), final_graph->output());
+      InsertMultipleAssignToGraph(false_graph_id, false_last->output(), final_graph->output());
       // insert stream active for loop sink
       auto context_ptr = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context_ptr);
