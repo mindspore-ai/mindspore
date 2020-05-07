@@ -35,6 +35,7 @@ __all__ = ['Softmax',
            'HSigmoid',
            'HSwish',
            'ELU',
+           'LogSigmoid',
            ]
 
 
@@ -476,6 +477,49 @@ class HSigmoid(Cell):
         return self.hsigmoid(x)
 
 
+class LogSigmoid(Cell):
+    r"""
+    Logsigmoid activation function.
+
+    Applies logsigmoid activation element-wise. The input is a Tensor with any valid shape.
+
+    Logsigmoid is defined as:
+
+    .. math::
+        \text{logsigmoid}(x_{i}) = log(\frac{1}{1 + \exp(-x_i)}),
+
+    where :math:`x_{i}` is the element of the input.
+
+    Inputs:
+        - **input_data** (Tensor) - The input of LogSigmoid.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_data`.
+
+    Examples:
+        >>> net = nn.LogSigmoid()
+        >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
+        >>> logsigmoid = net(input_x)
+        [-3.1326166e-01, -1.2692806e-01, -4.8587345e-02]
+
+    """
+    def __init__(self):
+        super(LogSigmoid, self).__init__()
+        self.mul = P.Mul()
+        self.exp = P.Exp()
+        self.add = P.TensorAdd()
+        self.rec = P.Reciprocal()
+        self.log = P.Log()
+
+    def construct(self, input_x):
+        neg_input = self.mul(input_x, -1)
+        exp_neg_input = self.exp(neg_input)
+        exp_neg_input_1 = self.add(exp_neg_input, 1)
+        rec_exp_neg_input_1 = self.rec(exp_neg_input_1)
+        ret = self.log(rec_exp_neg_input_1)
+        return ret
+
+
 _activation = {
     'softmax': Softmax,
     'logsoftmax': LogSoftmax,
@@ -488,6 +532,7 @@ _activation = {
     'leakyrelu': LeakyReLU,
     'hswish': HSwish,
     'hsigmoid': HSigmoid,
+    'logsigmoid': LogSigmoid,
 }
 
 

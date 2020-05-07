@@ -522,6 +522,16 @@ test_cases = [
         'desc_inputs': [Tensor(np.ones([1, 1, 3, 3], np.float32))],
         'desc_bprop': [Tensor(np.ones([1, 4, 2, 2], np.float32))],
         'skip': ['backward']}),
+    ('LogSigmoid', {
+        'block': nn.LogSigmoid(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3, 4]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([1, 2, 3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('ReduceLogSumExp', {
+        'block': nn.ReduceLogSumExp((0, ), False),
+        'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([1, 2, 3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
 ]
 
 test_cases_for_verify_exception = [
@@ -620,6 +630,20 @@ test_cases_for_verify_exception = [
             {'exception': TypeError},
         ),
         'desc_inputs': [Tensor(np.random.randn(32, 3, 112, 112).astype(np.float32).transpose(0, 3, 1, 2))],
+    }),
+    ('ReduceLogsumexp_TypeError_1', {
+        'block': (
+            lambda _: nn.ReduceLogSumExp(axis=(0,), keep_dims=2),
+            {'exception': TypeError},
+        ),
+        'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
+    }),
+    ('ReduceLogsumexp_TypeError_2', {
+        'block': (
+            lambda _: nn.ReduceLogSumExp(axis=1.2, keep_dims=True),
+            {'exception': TypeError},
+        ),
+        'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
     }),
 ]
 
