@@ -102,6 +102,7 @@ const char kNameReLU6Grad[] = "ReLU6Grad";
 const char kNameElu[] = "Elu";
 const char kNameEluGrad[] = "EluGrad";
 const char kNameScatterNdUpdate[] = "ScatterNdUpdate";
+const char kNameScatterMax[] = "ScatterMax";
 const char kNameNMSWithMask[] = "NMSWithMask";
 const char kNameCheckValid[] = "CheckValid";
 const char kNameSmoothL1Loss[] = "SmoothL1Loss";
@@ -253,6 +254,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameZerosLike), ADPT_DESC(ZerosLike)},
     {string(kNameOnesLike), ADPT_DESC(OnesLike)},
     {string(kNameScatterNdUpdate), ADPT_DESC(ScatterNdUpdate)},
+    {string(kNameScatterMax), ADPT_DESC(ScatterMax)},
     {string(kNameNMSWithMask), ADPT_DESC(NMSWithMask)},
     {string(kNameCheckValid), ADPT_DESC(CheckValid)},
     {string(kNameSmoothL1Loss), ADPT_DESC(SmoothL1Loss)},
