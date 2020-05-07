@@ -43,3 +43,22 @@ def test_slice():
     slice = Slice()
     output = slice(x)
     assert (output.asnumpy() == expect).all()
+
+
+class SliceNet(nn.Cell):
+    def __init__(self):
+        super(SliceNet, self).__init__()
+        self.slice = P.Slice()
+
+    def construct(self, x):
+        return self.slice(x, (0, 11, 0, 0), (32, 7, 224, 224))
+
+def test_slice_4d():
+    x_np = np.random.randn(32, 24, 224, 224).astype(np.float32)
+    output_np = x_np[:, 11:18, :, :]
+
+    x_ms = Tensor(x_np)
+    net = SliceNet()
+    output_ms = net(x_ms)
+
+    assert (output_ms.asnumpy() == output_np).all()
