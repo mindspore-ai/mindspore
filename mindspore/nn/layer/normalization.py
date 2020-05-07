@@ -355,6 +355,9 @@ class GlobalBatchNorm(_BatchNorm):
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
+    Note:
+        Currently, GlobalBatchNorm only supports 2D and 4D inputs.
+
     Args:
         num_features (int): `C` from an expected input of size (N, C, H, W).
         device_num_each_group (int): The number of devices in each group.
