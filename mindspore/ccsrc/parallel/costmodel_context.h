@@ -113,6 +113,9 @@ class CostModelContext {
   void set_elementwise_stra_follow(bool);
   bool elementwise_stra_follow() const { return elementwise_stra_follow_; }
 
+  void set_run_phase(int32_t);
+  int32_t run_phase() const { return run_phase_; }
+
  private:
   CostModelContext();
   static std::shared_ptr<CostModelContext> cm_context_inst_;
@@ -141,7 +144,10 @@ class CostModelContext {
   // COST_MODEL_COMMUNI_BIAS
   double costmodel_communi_bias_;
 
+  // MULTI_SUBGRAPHS
   bool is_multi_subgraphs_;
+
+  int32_t run_phase_;  // 0: 'training', 1: 'inference'
 
   int32_t costmodel_allreduce_fusion_algorithm_;
 

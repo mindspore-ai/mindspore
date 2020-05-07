@@ -228,6 +228,8 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get the parameter cost_model_communi_bias of the DP algorithm.")
     .def("set_multi_subgraphs", &CostModelContext::set_multi_subgraphs, "Set the parameter is_multi_subgraphs.")
     .def("get_multi_subgraphs", &CostModelContext::is_multi_subgraphs, "Get the parameter is_multi_subgraphs.")
+    .def("set_run_phase", &CostModelContext::set_run_phase, "Set the flag run_phase.")
+    .def("get_run_phase", &CostModelContext::run_phase, "Get the flag run_phase.")
     .def("set_costmodel_allreduce_fusion_algorithm", &CostModelContext::set_costmodel_allreduce_fusion_algorithm,
          "Set the parameter gradient AllReduce fusion algorithm.")
     .def("get_costmodel_allreduce_fusion_algorithm", &CostModelContext::costmodel_allreduce_fusion_algorithm,

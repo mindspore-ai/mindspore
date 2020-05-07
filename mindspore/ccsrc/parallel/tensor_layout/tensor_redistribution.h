@@ -69,16 +69,16 @@ class TensorRedistribution {
   RankList dev_list_;
   OperatorList operator_list_;
   bool reshape_flag_;
-  // communication cost
+  // communication cost, which is the sum of forward communication cost and backward communication cost
   double comm_cost_;
   // forward communication cost
   double forward_comm_cost_;
   // backward communication cost
   double backward_comm_cost_;
   // computation_cost models the time spending on computing in this tensor redistribution, which is calculated by the
-  // inputs.
+  // inputs. This is calculated ONLY for forward phase.
   double computation_cost_;
-  // memory_cost models the PEAK memory cost in a traning iteration contributed by this tensor redistribution, which is
+  // memory_cost models the PEAK memory cost in a training iteration contributed by this tensor redistribution, which is
   // calculated by the outputs.
   double memory_cost_;
   bool construct_op_flag_;
