@@ -1,3 +1,4 @@
+
 /**
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
@@ -62,6 +63,27 @@ const std::map<TypeId, size_t> type_map = {{kNumberTypeBool, 1},    {kNumberType
                                            {kNumberTypeUInt, 4},    {kNumberTypeUInt8, 1},   {kNumberTypeUInt16, 2},
                                            {kNumberTypeUInt32, 4},  {kNumberTypeUInt64, 8},  {kNumberTypeFloat, 4},
                                            {kNumberTypeFloat16, 2}, {kNumberTypeFloat32, 4}, {kNumberTypeFloat64, 8}};
+
+#define SetDataBysize(size, pad_zero)                                                                                \
+  do {                                                                                                               \
+    switch (size) {                                                                                                  \
+      case 1:                                                                                                        \
+        static_cast<uint8_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint8_t *>(args.data)[src_idx];   \
+        break;                                                                                                       \
+      case 2:                                                                                                        \
+        static_cast<uint16_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint16_t *>(args.data)[src_idx]; \
+        break;                                                                                                       \
+      case 4:                                                                                                        \
+        static_cast<uint32_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint32_t *>(args.data)[src_idx]; \
+        break;                                                                                                       \
+      case 8:                                                                                                        \
+        static_cast<uint64_t *>(result)[dst_idx] = pad_zero ? 0 : static_cast<const uint64_t *>(args.data)[src_idx]; \
+        break;                                                                                                       \
+      default:                                                                                                       \
+        MS_LOG(ERROR) << "Trans data not support size " << size;                                                     \
+        return false;                                                                                                \
+    }                                                                                                                \
+  } while (0)
 
 template <typename T>
 T Ceil(T n1, T n2) {
@@ -372,10 +394,10 @@ std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const s
     temp_shape = PaddingShapeTo4dByDefault(shape);
   }
   auto iter = device_shape_map.find(format);
-  if (iter != device_shape_map.end()) {
-    return iter->second(temp_shape);
+  if (iter == device_shape_map.end()) {
+    MS_LOG(EXCEPTION) << "Unexpected format[" << format << "]";
   }
-  MS_LOG(EXCEPTION) << "Unexpected format[" << format << "]";
+  return iter->second(temp_shape);
 }
 
 bool CheckArgs(const FormatArgs &args, size_t *size, size_t *total_size) {
@@ -483,13 +505,13 @@ bool NchwToFracZ(const FormatArgs &args, void *result) {
   size_t vf_cnt = c1 * hw;
   size_t fractal_ele_cnt = c0 * kCubeSize;
   size_t total_ele_cnt = hf_cnt * vf_cnt * fractal_ele_cnt;
-
   size_t dst_size = total_ele_cnt * size;
   if (dst_size != args.device_size) {
     MS_LOG(ERROR) << "Illegal total data size."
                   << "dst size is :" << dst_size << "device size is :" << args.device_size;
     return false;
   }
+
   for (size_t vfi = 0; vfi < vf_cnt; vfi++) {
     auto vf_base_i = vfi * hf_cnt;  // vertical fractal matrix base index
     for (size_t hfi = 0; hfi < hf_cnt; hfi++) {
@@ -501,25 +523,10 @@ bool NchwToFracZ(const FormatArgs &args, void *result) {
         auto src_row_offset = src_f_offset + row * hw;
         for (size_t col = 0; col < kCubeSize; col++) {
           auto src_ni = hfi * kCubeSize + col;
-          auto src_offset = src_row_offset + chw * col;
-
-          auto need_pad_zero = src_ni >= n || src_offset >= nchw || src_ci >= c;
-          auto idx = gfi * fractal_ele_cnt + col * c0 + row;
-          auto offset = idx * size;
-          auto protected_size = dst_size - offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                  ? dst_size - offset
-                                  : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-          errno_t ret;
-          if (need_pad_zero) {
-            ret = memset_s(static_cast<uint8_t *>(result) + offset, protected_size, 0, size);
-          } else {
-            ret = memcpy_s(static_cast<uint8_t *>(result) + offset, protected_size,
-                           static_cast<uint8_t const *>(args.data) + src_offset * size, size);
-          }
-          if (ret != 0) {
-            MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << ret;
-            return false;
-          }
+          auto src_idx = src_row_offset + chw * col;
+          auto dst_idx = gfi * fractal_ele_cnt + col * c0 + row;
+          auto pad_zero = src_ni >= n || src_idx >= nchw || src_ci >= c;
+          SetDataBysize(size, pad_zero);
         }
       }
     }
@@ -573,17 +580,7 @@ bool FracZToNchw(const FormatArgs &args, void *result) {
           size_t c0_idx = c_idx % c0;
           size_t nc_idx = n_idx;
           size_t src_idx = c1_idx * hwncc0 + h_idx * wncc0 + w_idx * ncc0 + nc_idx * c0 + c0_idx;
-          auto src_offset = src_idx * size;
-          auto dst_offset = dst_idx * size;
-          auto protected_size = total_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                  ? total_size - dst_offset
-                                  : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-          auto ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                              static_cast<uint8_t const *>(args.data) + src_offset, size);
-          if (ret != EOK) {
-            MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << ret;
-            return false;
-          }
+          SetDataBysize(size, 0);
         }
       }
     }
@@ -664,32 +661,16 @@ bool NchwToFracNz(const FormatArgs &args, void *result) {
       auto h1h0_head = times_head + h1h0_idx * w0;
       auto src_h_head = src_times_head + h1h0_idx * w;
       for (size_t w1_idx = 0; w1_idx < num_w1; w1_idx++) {
-        size_t dst_offset = (h1h0_head + w1_idx * h1h0w0) * size;
-        size_t src_offset = (src_h_head + w1_idx * w0) * size;
-        auto protected_size = dst_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                ? dst_size - dst_offset
-                                : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-        auto cp_ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                               static_cast<uint8_t const *>(args.data) + src_offset, size * w0);
-        if (cp_ret != EOK) {
-          MS_LOG(ERROR) << "Failed to operate the dst memory, error-code " << cp_ret;
-          return false;
-        }
+        size_t dst_idx = h1h0_head + w1_idx * h1h0w0;
+        size_t src_idx = src_h_head + w1_idx * w0;
+        SetDataBysize(size, 0);
       }
       auto w1_head = num_w1 * w0;
       for (size_t w0_idx = 0; w1_head + w0_idx < w; w0_idx++) {
         auto src_w_idx = w1_head + w0_idx;
-        size_t dst_offset = (h1h0_head + num_w1 * h1h0w0 + w0_idx) * size;
-        size_t src_offset = (src_h_head + src_w_idx) * size;
-        auto protected_size = dst_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                ? dst_size - dst_offset
-                                : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-        auto cp_ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                               static_cast<uint8_t const *>(args.data) + src_offset, size);
-        if (cp_ret != EOK) {
-          MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << cp_ret;
-          return false;
-        }
+        size_t dst_idx = h1h0_head + num_w1 * h1h0w0 + w0_idx;
+        size_t src_idx = src_h_head + src_w_idx;
+        SetDataBysize(size, 0);
       }
     }
   }
@@ -740,32 +721,16 @@ bool FracNzToNchw(const FormatArgs &args, void *result) {
       auto h1h0_head = times_head + h1h0_idx * w0;
       auto src_h_head = src_times_head + h1h0_idx * w;
       for (size_t w1_idx = 0; w1_idx < num_w1; w1_idx++) {
-        size_t src_offset = (h1h0_head + w1_idx * h1h0w0) * size;
-        size_t dst_offset = (src_h_head + w1_idx * w0) * size;
-        auto protected_size = dst_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                ? dst_size - dst_offset
-                                : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-        auto cp_ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                               static_cast<uint8_t const *>(args.data) + src_offset, size * w0);
-        if (cp_ret != EOK) {
-          MS_LOG(ERROR) << "Failed to operate the dst memory, error-code " << cp_ret;
-          return false;
-        }
+        size_t src_idx = h1h0_head + w1_idx * h1h0w0;
+        size_t dst_idx = src_h_head + w1_idx * w0;
+        SetDataBysize(size, 0);
       }
       auto w1_head = num_w1 * w0;
       for (size_t w0_idx = 0; w1_head + w0_idx < w; w0_idx++) {
         auto src_w_idx = w1_head + w0_idx;
-        size_t src_offset = (h1h0_head + num_w1 * h1h0w0 + w0_idx) * size;
-        size_t dst_offset = (src_h_head + src_w_idx) * size;
-        auto protected_size = dst_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                ? dst_size - dst_offset
-                                : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-        auto cp_ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                               static_cast<uint8_t const *>(args.data) + src_offset, size);
-        if (cp_ret != EOK) {
-          MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << cp_ret;
-          return false;
-        }
+        size_t src_idx = h1h0_head + num_w1 * h1h0w0 + w0_idx;
+        size_t dst_idx = src_h_head + src_w_idx;
+        SetDataBysize(size, 0);
       }
     }
   }
@@ -814,29 +779,11 @@ bool NchwToNc1hwc0(const FormatArgs &args, void *result) {
         for (size_t w_idx = 0; w_idx < w; w_idx++) {
           size_t w_head_addr = h_head_addr + w_idx * c0;
           for (size_t c0_idx = 0; c0_idx < c0; c0_idx++) {
-            size_t dst_index = c0_idx + w_head_addr;
-            size_t dst_offset = dst_index * size;
-            auto protected_size = total_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                    ? total_size - dst_offset
-                                    : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
+            size_t dst_idx = c0_idx + w_head_addr;
             size_t c_idx = c0_idx + c1_idx * c0;
             size_t src_idx = n_idx * chw + c_idx * hw + h_idx * w + w_idx;
-            auto src_offset = src_idx * size;
-
-            if (c_idx < c) {
-              auto ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                                  static_cast<uint8_t const *>(args.data) + src_offset, size);
-              if (ret != EOK) {
-                MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << ret;
-                return false;
-              }
-            } else {
-              auto ret = memset_s(static_cast<uint8_t *>(result) + dst_offset, protected_size, 0, size);
-              if (ret != EOK) {
-                MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << ret;
-                return false;
-              }
-            }
+            auto pad_zero = (c_idx < c) ? 0 : 1;
+            SetDataBysize(size, pad_zero);
           }
         }
       }
@@ -887,17 +834,7 @@ bool Nc1hwc0ToNchw(const FormatArgs &args, void *result) {
           size_t c1_idx = c_idx / c0;
           size_t c0_idx = c_idx % c0;
           size_t src_idx = n_idx * c1hwc0 + c1_idx * hwc0 + h_idx * wc0 + w_idx * c0 + c0_idx;
-          auto src_offset = src_idx * size;
-          auto dst_offset = dst_idx * size;
-          auto protected_size = total_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                  ? total_size - dst_offset
-                                  : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-          auto ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                              static_cast<uint8_t const *>(args.data) + src_offset, size);
-          if (ret != EOK) {
-            MS_LOG(ERROR) << "Failed to operate the dst memory error-code " << ret;
-            return false;
-          }
+          SetDataBysize(size, 0);
         }
       }
     }
@@ -922,31 +859,19 @@ bool NchwToC1hwncoc0(const FormatArgs &args, void *result) {
   auto c1 = args.device_shape[0];
   auto co = args.device_shape[4];
   auto c0 = args.device_shape[5];
+
   for (size_t c1_i = 0; c1_i < c1; c1_i++) {
     for (size_t h_i = 0; h_i < h; h_i++) {
       for (size_t w_i = 0; w_i < w; w_i++) {
         for (size_t n_i = 0; n_i < n; n_i++) {
           for (size_t co_i = 0; co_i < co; co_i++) {
             for (size_t c0_i = 0; c0_i < c0; c0_i++) {
-              size_t dst_offset = (c1_i * h * w * n * co * c0 + h_i * w * n * co * c0 + w_i * n * co * c0 +
-                                   n_i * co * c0 + co_i * c0 + c0_i) *
-                                  size;
-              size_t protected_size = total_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                        ? total_size - dst_offset
-                                        : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
+              size_t dst_idx = c1_i * h * w * n * co * c0 + h_i * w * n * co * c0 + w_i * n * co * c0 + n_i * co * c0 +
+                               co_i * c0 + c0_i;
               size_t c_i = c0_i + c1_i * c0;
-              size_t src_offset = (n_i * c * h * w + c_i * h * w + h_i * w + w_i) * size;
-              errno_t ret;
-              if (c_i < c && c0_i == co_i) {
-                ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                               static_cast<uint8_t const *>(args.data) + src_offset, size);
-              } else {
-                ret = memset_s(static_cast<uint8_t *>(result) + dst_offset, protected_size, 0, size);
-              }
-              if (ret != EOK) {
-                MS_LOG(ERROR) << "Failed to operate the dst memory, error-code:" << ret;
-                return false;
-              }
+              size_t src_idx = n_i * c * h * w + c_i * h * w + h_i * w + w_i;
+              auto pad_zero = (c_i < c && c0_i == co_i) ? 0 : 1;
+              SetDataBysize(size, pad_zero);
             }
           }
         }
@@ -976,22 +901,13 @@ bool C1hwncoc0ToNchw(const FormatArgs &args, void *result) {
     for (size_t c_i = 0; c_i < c; c_i++) {
       for (size_t h_i = 0; h_i < h; h_i++) {
         for (size_t w_i = 0; w_i < w; w_i++) {
-          size_t dst_offset = (n_i * c * h * w + c_i * h * w + h_i * w + w_i) * size;
+          size_t dst_idx = n_i * c * h * w + c_i * h * w + h_i * w + w_i;
           size_t c1_i = c_i / kCubeSize;
           size_t c0_i = c_i % kCubeSize;
           size_t co_i = c0_i;
-          size_t src_offset = (c1_i * h * w * n * co * c0 + h_i * w * n * co * c0 + w_i * n * co * c0 + n_i * co * c0 +
-                               co_i * c0 + c0_i) *
-                              size;
-          size_t protected_size = total_size - dst_offset < static_cast<size_t>(SECUREC_MEM_MAX_LEN)
-                                    ? total_size - dst_offset
-                                    : static_cast<size_t>(SECUREC_MEM_MAX_LEN);
-          auto ret = memcpy_s(static_cast<uint8_t *>(result) + dst_offset, protected_size,
-                              static_cast<uint8_t const *>(args.data) + src_offset, size);
-          if (ret != EOK) {
-            MS_LOG(ERROR) << "Failed to operate the dst memory, error-code:" << ret;
-            return false;
-          }
+          size_t src_idx =
+            c1_i * h * w * n * co * c0 + h_i * w * n * co * c0 + w_i * n * co * c0 + n_i * co * c0 + co_i * c0 + c0_i;
+          SetDataBysize(size, 0);
         }
       }
     }
