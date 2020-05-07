@@ -33,6 +33,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"softmax", "softmax_v2"},
   {"log_softmax", "log_softmax_v2"},
   {"apply_momentum", "apply_momentum_d"},
+  {"apply_ftrl", "apply_ftrl_d"},
   {"re_lu6", "relu6"},
   {"re_lu6_grad", "relu6_grad"},
   {"re_lu", "relu"},

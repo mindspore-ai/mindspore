@@ -974,6 +974,23 @@ class StridedSliceGrad(PrimitiveWithInfer):
                 'value': None}
 
 
+class SoftplusGrad(PrimitiveWithInfer):
+    """Computes gradient for the Log Softmax activation."""
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['dout', 'x'], outputs=['output'])
+
+    def infer_shape(self, dout_shape, x_shape):
+        validator.check("x_shape", x_shape, "dout_shape", dout_shape, Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, dout_dtype, x_dtype):
+        args = {"x_dtype": x_dtype, "dout_dtype": dout_dtype}
+        validator.check_tensor_type_same(args, mstype.float_type, self.name)
+        return x_dtype
+
+
 class TanhGrad(PrimitiveWithInfer):
     """Computes gradient of hyperbolic tangent of input element-wise."""
 

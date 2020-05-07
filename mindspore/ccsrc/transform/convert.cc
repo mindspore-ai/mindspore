@@ -384,7 +384,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameDepthToSpace), ADPT_DESC(DepthToSpace)},
     {string(kNameSign), ADPT_DESC(Sign)},
     {string(kNameRound), ADPT_DESC(Round)},
-    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrl)},
+    {string(kNameApplyFtrl), ADPT_DESC(ApplyFtrlD)},
     {string(kNameDiag), ADPT_DESC(Diag)},
     {string(kNameDiagPart), ADPT_DESC(DiagPart)},
     {string(kNameSpaceToBatch), ADPT_DESC(SpaceToBatchD)},

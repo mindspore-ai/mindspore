@@ -183,6 +183,41 @@ class LogSoftmax(PrimitiveWithInfer):
         return logits
 
 
+class Softplus(PrimitiveWithInfer):
+    r"""
+    Softplus activation function.
+
+    Softplus is a smooth approximation to the ReLU function.
+    The function is shown as follows:
+
+    .. math::
+        \text{output} = \log(1 + \exp(\text{input_x})),
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor whose data type should be float.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
+        >>> softplus = P.Softplus()
+        >>> softplus(input_x)
+        [1.3132615, 2.126928, 3.0485873, 4.01815, 5.0067153]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """init Softplus"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, input_x):
+        return input_x
+
+    def infer_dtype(self, input_x):
+        validator.check_tensor_type_same({'input_x': input_x}, mstype.float_type, self.name)
+        return input_x
+
+
 class ReLU(PrimitiveWithInfer):
     r"""
     Computes ReLU(Rectified Linear Unit) of input tensor element-wise.
@@ -2701,11 +2736,14 @@ class ApplyFtrl(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'lr', 'l1', 'l2', 'lr_power'],
                                 outputs=['output'])
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.is_tbe = context.get_context("device_target") == "Ascend"
 
     def infer_shape(self, var_shape, accum_shape, linear_shape, grad_shape, lr_shape, l1_shape, l2_shape,
                     lr_power_shape):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
         validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
+        if self.is_tbe:
+            return var_shape, var_shape, var_shape
         return var_shape
 
     def infer_dtype(self, var_type, accum_type, linear_type, grad_type, lr_type, l1_type, l2_type, lr_power_type):
@@ -2717,6 +2755,8 @@ class ApplyFtrl(PrimitiveWithInfer):
         validator.check_scalar_or_tensor_type_same({"l1": l1_type}, valid_types, self.name)
         validator.check_scalar_or_tensor_type_same({"l2": l2_type}, valid_types, self.name)
         validator.check_scalar_or_tensor_type_same({"lr_power": lr_power_type}, valid_types, self.name)
+        if self.is_tbe:
+            return var_type, var_type, var_type
         return var_type
 
 
