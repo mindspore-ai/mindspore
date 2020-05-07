@@ -23,7 +23,7 @@ momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 
 
 @momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor")
-def _tensor_run_opt_ext(opt, learning_rate, momentum, gradient, weight, moment):
+def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment):
     """Apply momentum optimizer to the weight parameter using Tensor."""
     success = True
     success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
@@ -36,9 +36,27 @@ class Momentum(Optimizer):
 
     Refer to the paper on the importance of initialization and momentum in deep learning for more details.
 
+    Note:
+        The Momentum optimizer supports separating parameter groups. Different parameter groups can set different
+        `learning_rate` and `weight_decay`.
+
+        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
+        value of weight_decay > 0. When not separating parameter groups, the `weight_decay` in the API will be
+        applied on the parameters if `weight_decay` > 0 and the 'beta' and 'gamma' are not in the name of parameters.
+
     Args:
-        params (list[Parameter]): A list of parameter, which will be updated. The element in `parameters`
-                                  should be class mindspore.Parameter.
+        params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
+            the element in `params` should be class `Parameter`. When the `params` is a list of `dict`, the "params",
+            "lr" and "weight_decay" are the keys can be parsed.
+
+            - params: Required. The value should be a list of `Parameter`.
+
+            - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
+              If not, the `learning_rate` in the API will be used.
+
+            - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
+              will be used. If not, the `weight_decay` in the API will be used.
+
         learning_rate (Union[float, Tensor, Iterable]): A value for the learning rate. When the learning_rate is
                                                         Iterable or a Tensor and the dims of the Tensor is 1,
                                                         use dynamic learning rate, then the i-th step will
@@ -49,8 +67,6 @@ class Momentum(Optimizer):
         momentum (float): Hyperparameter of type float, means momentum for the moving average.
         weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. Default: 1.0.
-        decay_filter (Function): A function to determine whether to apply weight decay on parameters. Default:
-                                 lambda x: 'beta' not in x.name and 'gamma' not in x.name.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
@@ -63,13 +79,24 @@ class Momentum(Optimizer):
 
     Examples:
         >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
+        >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>>
+        >>> #2) Use parameter groups and set different values
+        >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
+        >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'lr': 0.01},
+        >>>                 {'params': no_conv_params}]
+        >>> opt = nn.Momentum(group_params, learning_rate=0.1, momentum=0.9, weight_decay=0.0)
+        >>> # the conv_params's parameters will use a learning rate of 0.01 and a weight decay of 0.01
+        >>> # the no_cov_params's parameters don't set learning and weight decay. So they will use a
+        >>> # learning rate of 0.1 and a weight decay of 0.0.
+        >>>
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
-    def __init__(self, params, learning_rate, momentum, weight_decay=0.0, loss_scale=1.0,
-                 decay_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name):
-        super(Momentum, self).__init__(learning_rate, params, weight_decay, loss_scale, decay_filter)
+    def __init__(self, params, learning_rate, momentum, weight_decay=0.0, loss_scale=1.0):
+        super(Momentum, self).__init__(learning_rate, params, weight_decay, loss_scale)
         if isinstance(momentum, float) and momentum < 0.0:
             raise ValueError("momentum should be at least 0.0, but got momentum {}".format(momentum))
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
@@ -84,5 +111,8 @@ class Momentum(Optimizer):
         gradients = self.decay_weight(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
-        success = self.hyper_map(F.partial(momentum_opt, self.opt, lr, self.momentum), gradients, params, moments)
+        if self.is_group:
+            success = self.hyper_map(F.partial(momentum_opt, self.opt, self.momentum), lr, gradients, params, moments)
+        else:
+            success = self.hyper_map(F.partial(momentum_opt, self.opt, self.momentum, lr), gradients, params, moments)
         return success
