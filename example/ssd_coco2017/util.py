@@ -110,14 +110,12 @@ def metrics(pred_data):
         pred_boxes = sample['boxes']
         boxes_scores = sample['box_scores']
         annotation = sample['annotation']
-        image_shape = sample['image_shape']
 
         annotation = np.squeeze(annotation, axis=0)
-        image_shape = np.squeeze(image_shape, axis=0)
 
         pred_labels = np.argmax(boxes_scores, axis=-1)
         index = np.nonzero(pred_labels)
-        pred_boxes = ssd_bboxes_decode(pred_boxes, index, image_shape)
+        pred_boxes = ssd_bboxes_decode(pred_boxes, index)
 
         pred_boxes = pred_boxes.clip(0, 1)
         boxes_scores = np.max(boxes_scores, axis=-1)
