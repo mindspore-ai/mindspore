@@ -137,7 +137,7 @@ def ssd_bboxes_encode(boxes):
     num_match_num = np.array([len(np.nonzero(t_label)[0])], dtype=np.int32)
     return bboxes, t_label.astype(np.int32), num_match_num
 
-def ssd_bboxes_decode(boxes, index, image_shape):
+def ssd_bboxes_decode(boxes, index):
     """Decode predict boxes to [x, y, w, h]"""
     boxes_t = boxes[index]
     default_boxes_t = default_boxes[index]

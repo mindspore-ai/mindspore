@@ -60,7 +60,7 @@ def init_net_param(net, init='ones'):
             p.set_parameter_data(initializer(init, p.data.shape(), p.data.dtype()))
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description="YOLOv3 train")
     parser.add_argument("--only_create_dataset", type=bool, default=False, help="If set it true, only create "
                                                                                 "Mindrecord, default is false.")
@@ -153,3 +153,6 @@ if __name__ == '__main__':
             dataset_sink_mode = True
         print("Start train YOLOv3, the first epoch will be slower because of the graph compilation.")
         model.train(args_opt.epoch_size, dataset, callbacks=callback, dataset_sink_mode=dataset_sink_mode)
+
+if __name__ == '__main__':
+    main()
