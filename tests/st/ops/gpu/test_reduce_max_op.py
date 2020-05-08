@@ -55,6 +55,11 @@ x7 = np.random.rand(2, 3, 4, 4).astype(np.float32)
 axis7 = (-2, -1)
 keep_dims7 = True
 
+x8 = np.random.rand(1, 1, 1, 1).astype(np.float32)
+axis8 = ()
+np_axis8 = None
+keep_dims8 = True
+
 context.set_context(device_target='GPU')
 
 
@@ -94,6 +99,10 @@ class ReduceMax(nn.Cell):
         self.axis7 = axis7
         self.keep_dims7 = keep_dims7
 
+        self.x8 = Tensor(x8)
+        self.axis8 = axis8
+        self.keep_dims8 = keep_dims8
+
     @ms_function
     def construct(self):
         return (P.ReduceMax(self.keep_dims0)(self.x0, self.axis0),
@@ -103,7 +112,8 @@ class ReduceMax(nn.Cell):
                 P.ReduceMax(self.keep_dims4)(self.x4, self.axis4),
                 P.ReduceMax(self.keep_dims5)(self.x5, self.axis5),
                 P.ReduceMax(self.keep_dims6)(self.x6, self.axis6),
-                P.ReduceMax(self.keep_dims7)(self.x7, self.axis7))
+                P.ReduceMax(self.keep_dims7)(self.x7, self.axis7),
+                P.ReduceMax(self.keep_dims8)(self.x8, self.axis8))
 
 
 @pytest.mark.level0
@@ -114,48 +124,53 @@ def test_ReduceMax():
     output = reduce_max()
 
     expect0 = np.max(x0, axis=axis0, keepdims=keep_dims0)
-    diff0 = output[0].asnumpy() - expect0
+    diff0 = abs(output[0].asnumpy() - expect0)
     error0 = np.ones(shape=expect0.shape) * 1.0e-5
     assert np.all(diff0 < error0)
     assert (output[0].shape() == expect0.shape)
 
     expect1 = np.max(x1, axis=axis1, keepdims=keep_dims1)
-    diff1 = output[1].asnumpy() - expect1
+    diff1 = abs(output[1].asnumpy() - expect1)
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
     assert np.all(diff1 < error1)
     assert (output[1].shape() == expect1.shape)
 
     expect2 = np.max(x2, axis=axis2, keepdims=keep_dims2)
-    diff2 = output[2].asnumpy() - expect2
+    diff2 = abs(output[2].asnumpy() - expect2)
     error2 = np.ones(shape=expect2.shape) * 1.0e-5
     assert np.all(diff2 < error2)
     assert (output[2].shape() == expect2.shape)
 
     expect3 = np.max(x3, axis=axis3, keepdims=keep_dims3)
-    diff3 = output[3].asnumpy() - expect3
+    diff3 = abs(output[3].asnumpy() - expect3)
     error3 = np.ones(shape=expect3.shape) * 1.0e-5
     assert np.all(diff3 < error3)
     assert (output[3].shape() == expect3.shape)
 
     expect4 = np.max(x4, axis=np_axis4, keepdims=keep_dims4)
-    diff4 = output[4].asnumpy() - expect4
+    diff4 = abs(output[4].asnumpy() - expect4)
     error4 = np.ones(shape=expect4.shape) * 1.0e-5
     assert np.all(diff4 < error4)
     assert (output[4].shape() == expect4.shape)
 
     expect5 = np.max(x5, axis=np_axis5, keepdims=keep_dims5)
-    diff5 = output[5].asnumpy() - expect5
+    diff5 = abs(output[5].asnumpy() - expect5)
     error5 = np.ones(shape=expect5.shape) * 1.0e-5
     assert np.all(diff5 < error5)
     assert (output[5].shape() == expect5.shape)
 
     expect6 = np.max(x6, axis=axis6, keepdims=keep_dims6)
-    diff6 = output[6].asnumpy() - expect6
+    diff6 = abs(output[6].asnumpy() - expect6)
     error6 = np.ones(shape=expect6.shape) * 1.0e-5
     assert np.all(diff6 < error6)
     assert (output[6].shape() == expect6.shape)
 
     expect7 = np.max(x7, axis=axis7, keepdims=keep_dims7)
-    diff7 = output[7].asnumpy() - expect7
+    diff7 = abs(output[7].asnumpy() - expect7)
     error7 = np.ones(shape=expect7.shape) * 1.0e-5
     assert np.all(diff7 < error7)
+
+    expect8 = np.max(x8, axis=np_axis8, keepdims=keep_dims8)
+    diff8 = abs(output[8].asnumpy() - expect8)
+    error8 = np.ones(shape=expect8.shape) * 1.0e-5
+    assert np.all(diff8 < error8)
