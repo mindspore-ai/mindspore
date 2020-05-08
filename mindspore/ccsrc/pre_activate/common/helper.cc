@@ -344,7 +344,7 @@ bool IsNopNode(const AnfNodePtr &node) {
   return true;
 }
 
-bool IsAllNopNode(session::KernelGraph *const graph) {
+bool IsAllNopNode(const session::KernelGraph *const graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto execution_order = graph->execution_order();
   for (auto &cnode : execution_order) {

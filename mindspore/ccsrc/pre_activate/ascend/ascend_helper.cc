@@ -55,12 +55,17 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   trans_inputs.push_back(input);
   CNodePtr trans_node = func_graph->NewCNode(trans_inputs);
   MS_EXCEPTION_IF_NULL(trans_node);
+  std::vector<kernel::Axis> padding_axis;
+  if (AnfAlgo::IsRealKernel(input)) {
+    padding_axis = AnfAlgo::GetOutputReshapeType(input, 0);
+  } else {
+    padding_axis = AnfAlgo::GetPrevNodeOutputReshapeType(input, 0);
+  }
   if (need_padding) {
     // if need padding we should set the transdata node's shape to the padding shape
-    AnfAlgo::SetOutputInferTypeAndShape(
-      {AnfAlgo::GetOutputInferDataType(input, 0)},
-      {trans::PaddingShapeTo4d(AnfAlgo::GetOutputInferShape(input, 0), AnfAlgo::GetOutputReshapeType(input, 0))},
-      trans_node.get());
+    AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input, 0)},
+                                        {trans::PaddingShapeTo4d(AnfAlgo::GetOutputInferShape(input, 0), padding_axis)},
+                                        trans_node.get());
   } else {
     AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input, 0)},
                                         {AnfAlgo::GetOutputInferShape(input, 0)}, trans_node.get());
@@ -194,8 +199,14 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
     MS_EXCEPTION_IF_NULL(cnode);
     input_node = AnfAlgo::GetInputNode(cnode, insert_index);
   }
-  bool need_padding = (trans::IsNeedPadding(dest_format, AnfAlgo::GetOutputInferShape(input_node, 0).size()) &&
-                       op_name == kTransDataOpName);
+  bool need_padding = false;
+  if (is_insert_input) {
+    need_padding = (trans::IsNeedPadding(dest_format, AnfAlgo::GetOutputInferShape(input_node, 0).size()) &&
+                    op_name == kTransDataOpName);
+  } else {
+    need_padding = (trans::IsNeedPadding(origin_format, AnfAlgo::GetOutputInferShape(input_node, 0).size()) &&
+                    op_name == kTransDataOpName);
+  }
   if (!need_padding) {
     // don't need padding insert transdata only
     trans_data = NewTransOpNode(func_graph, input_node, kernel_select, need_padding, op_name);

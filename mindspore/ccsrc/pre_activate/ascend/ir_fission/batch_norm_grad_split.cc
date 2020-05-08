@@ -86,7 +86,6 @@ void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   AnfAlgo::CopyNodeAttr(kAttrEpsilon, bn_grad_node, bn_reduce_grad);
   (*bn_reduce_grad_outputs).push_back(bn_reduce_grad);
 }
-
 }  // namespace
 const BaseRef BatchNormGradSplit::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
