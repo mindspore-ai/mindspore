@@ -34,7 +34,7 @@ ShardPkSample::ShardPkSample(const std::string &category_field, int64_t num_elem
   shuffle_op_ = std::make_shared<ShardShuffle>(seed, kShuffleSample);  // do shuffle and replacement
 }
 
-MSRStatus ShardPkSample::suf_execute(ShardTask &tasks) {
+MSRStatus ShardPkSample::SufExecute(ShardTask &tasks) {
   if (shuffle_ == true) {
     if (SUCCESS != (*shuffle_op_)(tasks)) {
       return FAILED;

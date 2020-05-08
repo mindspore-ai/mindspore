@@ -51,7 +51,7 @@ class Schema {
 
   /// \brief get the schema and its description
   /// \return the json format of the schema and its description
-  std::string get_desc() const;
+  std::string GetDesc() const;
 
   /// \brief get the schema and its description
   /// \return the json format of the schema and its description
@@ -63,15 +63,15 @@ class Schema {
 
   /// set the schema id
   /// \param[in] id the id need to be set
-  void set_schema_id(int64_t id);
+  void SetSchemaID(int64_t id);
 
   /// get the schema id
   /// \return the int64 schema id
-  int64_t get_schema_id() const;
+  int64_t GetSchemaID() const;
 
   /// get the blob fields
   /// \return the vector<string> blob fields
-  std::vector<std::string> get_blob_fields() const;
+  std::vector<std::string> GetBlobFields() const;
 
  private:
   Schema() = default;

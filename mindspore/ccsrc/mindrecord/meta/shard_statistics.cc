@@ -48,9 +48,9 @@ std::shared_ptr<Statistics> Statistics::Build(std::string desc, pybind11::handle
   return std::make_shared<Statistics>(object_statistics);
 }
 
-std::string Statistics::get_desc() const { return desc_; }
+std::string Statistics::GetDesc() const { return desc_; }
 
-json Statistics::get_statistics() const {
+json Statistics::GetStatistics() const {
   json str_statistics;
   str_statistics["desc"] = desc_;
   str_statistics["statistics"] = statistics_;
@@ -58,13 +58,13 @@ json Statistics::get_statistics() const {
 }
 
 pybind11::object Statistics::GetStatisticsForPython() const {
-  json str_statistics = Statistics::get_statistics();
+  json str_statistics = Statistics::GetStatistics();
   return nlohmann::detail::FromJsonImpl(str_statistics);
 }
 
-void Statistics::set_statistics_id(int64_t id) { statistics_id_ = id; }
+void Statistics::SetStatisticsID(int64_t id) { statistics_id_ = id; }
 
-int64_t Statistics::get_statistics_id() const { return statistics_id_; }
+int64_t Statistics::GetStatisticsID() const { return statistics_id_; }
 
 bool Statistics::Validate(const json &statistics) {
   if (statistics.size() != kInt1) {
@@ -103,7 +103,7 @@ bool Statistics::LevelRecursive(json level) {
 }
 
 bool Statistics::operator==(const Statistics &b) const {
-  if (this->get_statistics() != b.get_statistics()) {
+  if (this->GetStatistics() != b.GetStatistics()) {
     return false;
   }
   return true;

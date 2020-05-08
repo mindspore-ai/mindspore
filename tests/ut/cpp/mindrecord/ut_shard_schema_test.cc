@@ -107,15 +107,15 @@ TEST_F(TestShardSchema, TestFunction) {
   std::shared_ptr<Schema> schema = Schema::Build(desc, schema_content);
   ASSERT_NE(schema, nullptr);
 
-  ASSERT_EQ(schema->get_desc(), desc);
+  ASSERT_EQ(schema->GetDesc(), desc);
 
   json schema_json = schema->GetSchema();
   ASSERT_EQ(schema_json["desc"], desc);
   ASSERT_EQ(schema_json["schema"], schema_content);
 
-  ASSERT_EQ(schema->get_schema_id(), -1);
-  schema->set_schema_id(2);
-  ASSERT_EQ(schema->get_schema_id(), 2);
+  ASSERT_EQ(schema->GetSchemaID(), -1);
+  schema->SetSchemaID(2);
+  ASSERT_EQ(schema->GetSchemaID(), 2);
 }
 
 TEST_F(TestStatistics, StatisticPart) {
@@ -137,8 +137,8 @@ TEST_F(TestStatistics, StatisticPart) {
 
   ASSERT_NE(statistics, nullptr);
 
-  MS_LOG(INFO) << "test get_desc(), result: " << statistics->get_desc();
-  MS_LOG(INFO) << "test get_statistics, result: " << statistics->get_statistics().dump();
+  MS_LOG(INFO) << "test GetDesc(), result: " << statistics->GetDesc();
+  MS_LOG(INFO) << "test GetStatistics, result: " << statistics->GetStatistics().dump();
 
   statistic_json["test"] = "test";
   statistics = Statistics::Build(desc, statistic_json);

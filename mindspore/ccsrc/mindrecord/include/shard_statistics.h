@@ -53,11 +53,11 @@ class Statistics {
 
   /// \brief get the description
   /// \return the description
-  std::string get_desc() const;
+  std::string GetDesc() const;
 
   /// \brief get the statistic
   /// \return json format of the statistic
-  json get_statistics() const;
+  json GetStatistics() const;
 
   /// \brief get the statistic for python
   /// \return the python object of statistics
@@ -66,11 +66,11 @@ class Statistics {
   /// \brief decode the bson statistics to json
   /// \param[in] encodedStatistics the bson type of statistics
   /// \return json type of statistic
-  void set_statistics_id(int64_t id);
+  void SetStatisticsID(int64_t id);
 
   /// \brief get the statistics id
   /// \return the int64 statistics id
-  int64_t get_statistics_id() const;
+  int64_t GetStatisticsID() const;
 
  private:
   /// \brief validate the statistic

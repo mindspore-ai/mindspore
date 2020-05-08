@@ -64,7 +64,7 @@ std::pair<MSRStatus, std::string> ShardIndexGenerator::GetValueByField(const str
   }
 
   // schema does not contain the field
-  auto schema = shard_header_.get_schemas()[0]->GetSchema()["schema"];
+  auto schema = shard_header_.GetSchemas()[0]->GetSchema()["schema"];
   if (schema.find(field) == schema.end()) {
     MS_LOG(ERROR) << "The field " << field << " is not found in schema " << schema;
     return {FAILED, ""};
@@ -203,7 +203,7 @@ MSRStatus ShardIndexGenerator::CreateShardNameTable(sqlite3 *db, const std::stri
 }
 
 std::pair<MSRStatus, sqlite3 *> ShardIndexGenerator::CreateDatabase(int shard_no) {
-  std::string shard_address = shard_header_.get_shard_address_by_id(shard_no);
+  std::string shard_address = shard_header_.GetShardAddressByID(shard_no);
   if (shard_address.empty()) {
     MS_LOG(ERROR) << "Shard address is null, shard no: " << shard_no;
     return {FAILED, nullptr};
@@ -357,12 +357,12 @@ MSRStatus ShardIndexGenerator::BindParameterExecuteSQL(
 MSRStatus ShardIndexGenerator::AddBlobPageInfo(std::vector<std::tuple<std::string, std::string, std::string>> &row_data,
                                                const std::shared_ptr<Page> cur_blob_page,
                                                uint64_t &cur_blob_page_offset, std::fstream &in) {
-  row_data.emplace_back(":PAGE_ID_BLOB", "INTEGER", std::to_string(cur_blob_page->get_page_id()));
+  row_data.emplace_back(":PAGE_ID_BLOB", "INTEGER", std::to_string(cur_blob_page->GetPageID()));
 
   // blob data start
   row_data.emplace_back(":PAGE_OFFSET_BLOB", "INTEGER", std::to_string(cur_blob_page_offset));
   auto &io_seekg_blob =
-    in.seekg(page_size_ * cur_blob_page->get_page_id() + header_size_ + cur_blob_page_offset, std::ios::beg);
+    in.seekg(page_size_ * cur_blob_page->GetPageID() + header_size_ + cur_blob_page_offset, std::ios::beg);
   if (!io_seekg_blob.good() || io_seekg_blob.fail() || io_seekg_blob.bad()) {
     MS_LOG(ERROR) << "File seekg failed";
     in.close();
@@ -405,7 +405,7 @@ ROW_DATA ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, 
   std::shared_ptr<Page> cur_raw_page = shard_header_.GetPage(shard_no, raw_page_id).first;
 
   // related blob page
-  vector<pair<int, uint64_t>> row_group_list = cur_raw_page->get_row_group_ids();
+  vector<pair<int, uint64_t>> row_group_list = cur_raw_page->GetRowGroupIds();
 
   // pair: row_group id, offset in raw data page
   for (pair<int, int> blob_ids : row_group_list) {
@@ -415,18 +415,18 @@ ROW_DATA ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, 
     // offset in current raw data page
     auto cur_raw_page_offset = static_cast<uint64_t>(blob_ids.second);
     uint64_t cur_blob_page_offset = 0;
-    for (unsigned int i = cur_blob_page->get_start_row_id(); i < cur_blob_page->get_end_row_id(); ++i) {
+    for (unsigned int i = cur_blob_page->GetStartRowID(); i < cur_blob_page->GetEndRowID(); ++i) {
       std::vector<std::tuple<std::string, std::string, std::string>> row_data;
       row_data.emplace_back(":ROW_ID", "INTEGER", std::to_string(i));
-      row_data.emplace_back(":ROW_GROUP_ID", "INTEGER", std::to_string(cur_blob_page->get_page_type_id()));
-      row_data.emplace_back(":PAGE_ID_RAW", "INTEGER", std::to_string(cur_raw_page->get_page_id()));
+      row_data.emplace_back(":ROW_GROUP_ID", "INTEGER", std::to_string(cur_blob_page->GetPageTypeID()));
+      row_data.emplace_back(":PAGE_ID_RAW", "INTEGER", std::to_string(cur_raw_page->GetPageID()));
 
       // raw data start
       row_data.emplace_back(":PAGE_OFFSET_RAW", "INTEGER", std::to_string(cur_raw_page_offset));
 
       // calculate raw data end
       auto &io_seekg =
-        in.seekg(page_size_ * (cur_raw_page->get_page_id()) + header_size_ + cur_raw_page_offset, std::ios::beg);
+        in.seekg(page_size_ * (cur_raw_page->GetPageID()) + header_size_ + cur_raw_page_offset, std::ios::beg);
       if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
         MS_LOG(ERROR) << "File seekg failed";
         in.close();
@@ -473,7 +473,7 @@ ROW_DATA ShardIndexGenerator::GenerateRowData(int shard_no, const std::map<int, 
 INDEX_FIELDS ShardIndexGenerator::GenerateIndexFields(const std::vector<json> &schema_detail) {
   std::vector<std::tuple<std::string, std::string, std::string>> fields;
   // index fields
-  std::vector<std::pair<uint64_t, std::string>> index_fields = shard_header_.get_fields();
+  std::vector<std::pair<uint64_t, std::string>> index_fields = shard_header_.GetFields();
   for (const auto &field : index_fields) {
     if (field.first >= schema_detail.size()) {
       return {FAILED, {}};
@@ -504,7 +504,7 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, const std
                                                   const std::vector<int> &raw_page_ids,
                                                   const std::map<int, int> &blob_id_to_page_id) {
   // Add index data to database
-  std::string shard_address = shard_header_.get_shard_address_by_id(shard_no);
+  std::string shard_address = shard_header_.GetShardAddressByID(shard_no);
   if (shard_address.empty()) {
     MS_LOG(ERROR) << "Shard address is null";
     return FAILED;
@@ -546,12 +546,12 @@ MSRStatus ShardIndexGenerator::ExecuteTransaction(const int &shard_no, const std
 }
 
 MSRStatus ShardIndexGenerator::WriteToDatabase() {
-  fields_ = shard_header_.get_fields();
-  page_size_ = shard_header_.get_page_size();
-  header_size_ = shard_header_.get_header_size();
-  schema_count_ = shard_header_.get_schema_count();
-  if (shard_header_.get_shard_count() > kMaxShardCount) {
-    MS_LOG(ERROR) << "num shards: " << shard_header_.get_shard_count() << " exceeds max count:" << kMaxSchemaCount;
+  fields_ = shard_header_.GetFields();
+  page_size_ = shard_header_.GetPageSize();
+  header_size_ = shard_header_.GetHeaderSize();
+  schema_count_ = shard_header_.GetSchemaCount();
+  if (shard_header_.GetShardCount() > kMaxShardCount) {
+    MS_LOG(ERROR) << "num shards: " << shard_header_.GetShardCount() << " exceeds max count:" << kMaxSchemaCount;
     return FAILED;
   }
   task_ = 0;  // set two atomic vars to initial value
@@ -559,7 +559,7 @@ MSRStatus ShardIndexGenerator::WriteToDatabase() {
 
   // spawn half the physical threads or total number of shards whichever is smaller
   const unsigned int num_workers =
-    std::min(std::thread::hardware_concurrency() / 2 + 1, static_cast<unsigned int>(shard_header_.get_shard_count()));
+    std::min(std::thread::hardware_concurrency() / 2 + 1, static_cast<unsigned int>(shard_header_.GetShardCount()));
 
   std::vector<std::thread> threads;
   threads.reserve(num_workers);
@@ -576,7 +576,7 @@ MSRStatus ShardIndexGenerator::WriteToDatabase() {
 
 void ShardIndexGenerator::DatabaseWriter() {
   int shard_no = task_++;
-  while (shard_no < shard_header_.get_shard_count()) {
+  while (shard_no < shard_header_.GetShardCount()) {
     auto db = CreateDatabase(shard_no);
     if (db.first != SUCCESS || db.second == nullptr || write_success_ == false) {
       write_success_ = false;
@@ -592,10 +592,10 @@ void ShardIndexGenerator::DatabaseWriter() {
     std::vector<int> raw_page_ids;
     for (uint64_t i = 0; i < total_pages; ++i) {
       std::shared_ptr<Page> cur_page = shard_header_.GetPage(shard_no, i).first;
-      if (cur_page->get_page_type() == "RAW_DATA") {
+      if (cur_page->GetPageType() == "RAW_DATA") {
         raw_page_ids.push_back(i);
-      } else if (cur_page->get_page_type() == "BLOB_DATA") {
-        blob_id_to_page_id[cur_page->get_page_type_id()] = i;
+      } else if (cur_page->GetPageType() == "BLOB_DATA") {
+        blob_id_to_page_id[cur_page->GetPageTypeID()] = i;
       }
     }
 

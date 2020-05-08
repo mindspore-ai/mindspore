@@ -194,8 +194,8 @@ TEST_F(TestShardWriter, TestShardWriterShiftRawPage) {
     fw.Open(file_names);
     uint64_t header_size = 1 << 14;
     uint64_t page_size = 1 << 15;
-    fw.set_header_size(header_size);
-    fw.set_page_size(page_size);
+    fw.SetHeaderSize(header_size);
+    fw.SetPageSize(page_size);
 
     // set shardHeader
     fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
@@ -331,8 +331,8 @@ TEST_F(TestShardWriter, TestShardWriterTrial) {
   fw.Open(file_names);
   uint64_t header_size = 1 << 14;
   uint64_t page_size = 1 << 17;
-  fw.set_header_size(header_size);
-  fw.set_page_size(page_size);
+  fw.SetHeaderSize(header_size);
+  fw.SetPageSize(page_size);
 
   // set shardHeader
   fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
@@ -466,8 +466,8 @@ TEST_F(TestShardWriter, TestShardWriterTrialNoFields) {
   fw.Open(file_names);
   uint64_t header_size = 1 << 14;
   uint64_t page_size = 1 << 17;
-  fw.set_header_size(header_size);
-  fw.set_page_size(page_size);
+  fw.SetHeaderSize(header_size);
+  fw.SetPageSize(page_size);
 
   // set shardHeader
   fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
@@ -567,8 +567,8 @@ TEST_F(TestShardWriter, DataCheck) {
   fw.Open(file_names);
   uint64_t header_size = 1 << 14;
   uint64_t page_size = 1 << 17;
-  fw.set_header_size(header_size);
-  fw.set_page_size(page_size);
+  fw.SetHeaderSize(header_size);
+  fw.SetPageSize(page_size);
 
   // set shardHeader
   fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));
@@ -668,8 +668,8 @@ TEST_F(TestShardWriter, AllRawDataWrong) {
   fw.Open(file_names);
   uint64_t header_size = 1 << 14;
   uint64_t page_size = 1 << 17;
-  fw.set_header_size(header_size);
-  fw.set_page_size(page_size);
+  fw.SetHeaderSize(header_size);
+  fw.SetPageSize(page_size);
 
   // set shardHeader
   fw.SetShardHeader(std::make_shared<mindrecord::ShardHeader>(header_data));

@@ -38,11 +38,11 @@ class ShardSample : public ShardOperator {
 
   ~ShardSample() override{};
 
-  const std::pair<int, int> get_partitions() const;
+  const std::pair<int, int> GetPartitions() const;
 
-  MSRStatus execute(ShardTask &tasks) override;
+  MSRStatus Execute(ShardTask &tasks) override;
 
-  MSRStatus suf_execute(ShardTask &tasks) override;
+  MSRStatus SufExecute(ShardTask &tasks) override;
 
   int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) override;
 

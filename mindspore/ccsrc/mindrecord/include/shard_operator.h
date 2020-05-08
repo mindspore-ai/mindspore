@@ -26,23 +26,23 @@ class ShardOperator {
   virtual ~ShardOperator() = default;
 
   MSRStatus operator()(ShardTask &tasks) {
-    if (SUCCESS != this->pre_execute(tasks)) {
+    if (SUCCESS != this->PreExecute(tasks)) {
       return FAILED;
     }
-    if (SUCCESS != this->execute(tasks)) {
+    if (SUCCESS != this->Execute(tasks)) {
       return FAILED;
     }
-    if (SUCCESS != this->suf_execute(tasks)) {
+    if (SUCCESS != this->SufExecute(tasks)) {
       return FAILED;
     }
     return SUCCESS;
   }
 
-  virtual MSRStatus pre_execute(ShardTask &tasks) { return SUCCESS; }
+  virtual MSRStatus PreExecute(ShardTask &tasks) { return SUCCESS; }
 
-  virtual MSRStatus execute(ShardTask &tasks) = 0;
+  virtual MSRStatus Execute(ShardTask &tasks) = 0;
 
-  virtual MSRStatus suf_execute(ShardTask &tasks) { return SUCCESS; }
+  virtual MSRStatus SufExecute(ShardTask &tasks) { return SUCCESS; }
 
   virtual int64_t GetNumSamples(int64_t dataset_size, int64_t num_classes) { return -1; }
 };

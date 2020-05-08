@@ -74,14 +74,14 @@ int64_t ShardSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   return -1;
 }
 
-const std::pair<int, int> ShardSample::get_partitions() const {
+const std::pair<int, int> ShardSample::GetPartitions() const {
   if (numerator_ == 1 && denominator_ > 1) {
     return std::pair<int, int>(denominator_, partition_id_);
   }
   return std::pair<int, int>(-1, -1);
 }
 
-MSRStatus ShardSample::execute(ShardTask &tasks) {
+MSRStatus ShardSample::Execute(ShardTask &tasks) {
   int no_of_categories = static_cast<int>(tasks.categories);
   int total_no = static_cast<int>(tasks.Size());
 
@@ -114,11 +114,11 @@ MSRStatus ShardSample::execute(ShardTask &tasks) {
     if (sampler_type_ == kSubsetRandomSampler) {
       for (int i = 0; i < indices_.size(); ++i) {
         int index = ((indices_[i] % total_no) + total_no) % total_no;
-        new_tasks.InsertTask(tasks.get_task_by_id(index));  // different mod result between c and python
+        new_tasks.InsertTask(tasks.GetTaskByID(index));  // different mod result between c and python
       }
     } else {
       for (int i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
-        new_tasks.InsertTask(tasks.get_task_by_id(i % total_no));  // rounding up. if overflow, go back to start
+        new_tasks.InsertTask(tasks.GetTaskByID(i % total_no));  // rounding up. if overflow, go back to start
       }
     }
     std::swap(tasks, new_tasks);
@@ -129,14 +129,14 @@ MSRStatus ShardSample::execute(ShardTask &tasks) {
     }
     total_no = static_cast<int>(tasks.permutation_.size());
     for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
-      new_tasks.InsertTask(tasks.get_task_by_id(tasks.permutation_[i % total_no]));
+      new_tasks.InsertTask(tasks.GetTaskByID(tasks.permutation_[i % total_no]));
     }
     std::swap(tasks, new_tasks);
   }
   return SUCCESS;
 }
 
-MSRStatus ShardSample::suf_execute(ShardTask &tasks) {
+MSRStatus ShardSample::SufExecute(ShardTask &tasks) {
   if (sampler_type_ == kSubsetRandomSampler) {
     if (SUCCESS != (*shuffle_op_)(tasks)) {
       return FAILED;

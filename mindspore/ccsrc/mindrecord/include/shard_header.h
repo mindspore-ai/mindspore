@@ -58,19 +58,19 @@ class ShardHeader {
 
   /// \brief get the schema
   /// \return the schema
-  std::vector<std::shared_ptr<Schema>> get_schemas();
+  std::vector<std::shared_ptr<Schema>> GetSchemas();
 
   /// \brief get Statistics
   /// \return the Statistic
-  std::vector<std::shared_ptr<Statistics>> get_statistics();
+  std::vector<std::shared_ptr<Statistics>> GetStatistics();
 
   /// \brief get the fields of the index
   /// \return the fields of the index
-  std::vector<std::pair<uint64_t, std::string>> get_fields();
+  std::vector<std::pair<uint64_t, std::string>> GetFields();
 
   /// \brief get the index
   /// \return the index
-  std::shared_ptr<Index> get_index();
+  std::shared_ptr<Index> GetIndex();
 
   /// \brief get the schema by schemaid
   /// \param[in] schemaId the id of schema needs to be got
@@ -80,7 +80,7 @@ class ShardHeader {
   /// \brief get the filepath to shard by shardID
   /// \param[in] shardID the id of shard which filepath needs to be obtained
   /// \return the filepath obtained by shardID
-  std::string get_shard_address_by_id(int64_t shard_id);
+  std::string GetShardAddressByID(int64_t shard_id);
 
   /// \brief get the statistic by statistic id
   /// \param[in] statisticId the id of statistic needs to be get
@@ -89,7 +89,7 @@ class ShardHeader {
 
   MSRStatus InitByFiles(const std::vector<std::string> &file_paths);
 
-  void set_index(Index index) { index_ = std::make_shared<Index>(index); }
+  void SetIndex(Index index) { index_ = std::make_shared<Index>(index); }
 
   std::pair<std::shared_ptr<Page>, MSRStatus> GetPage(const int &shard_id, const int &page_id);
 
@@ -103,21 +103,21 @@ class ShardHeader {
 
   const std::pair<MSRStatus, std::shared_ptr<Page>> GetPageByGroupId(const int &group_id, const int &shard_id);
 
-  std::vector<std::string> get_shard_addresses() const { return shard_addresses_; }
+  std::vector<std::string> GetShardAddresses() const { return shard_addresses_; }
 
-  int get_shard_count() const { return shard_count_; }
+  int GetShardCount() const { return shard_count_; }
 
-  int get_schema_count() const { return schema_.size(); }
+  int GetSchemaCount() const { return schema_.size(); }
 
-  uint64_t get_header_size() const { return header_size_; }
+  uint64_t GetHeaderSize() const { return header_size_; }
 
-  uint64_t get_page_size() const { return page_size_; }
+  uint64_t GetPageSize() const { return page_size_; }
 
-  void set_header_size(const uint64_t &header_size) { header_size_ = header_size; }
+  void SetHeaderSize(const uint64_t &header_size) { header_size_ = header_size; }
 
-  void set_page_size(const uint64_t &page_size) { page_size_ = page_size; }
+  void SetPageSize(const uint64_t &page_size) { page_size_ = page_size; }
 
-  const string get_version() { return version_; }
+  const string GetVersion() { return version_; }
 
   std::vector<std::string> SerializeHeader();
 
@@ -132,7 +132,7 @@ class ShardHeader {
   /// \param[in] the shard data real path
   /// \param[in] the headers which readed from the shard data
   /// \return SUCCESS/FAILED
-  MSRStatus get_headers(const vector<string> &real_addresses, std::vector<json> &headers);
+  MSRStatus GetHeaders(const vector<string> &real_addresses, std::vector<json> &headers);
 
   MSRStatus ValidateField(const std::vector<std::string> &field_name, json schema, const uint64_t &schema_id);
 

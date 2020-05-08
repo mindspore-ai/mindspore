@@ -69,12 +69,12 @@ class ShardWriter {
   /// \brief Set file size
   /// \param[in] header_size the size of header, only (1<<N) is accepted
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus set_header_size(const uint64_t &header_size);
+  MSRStatus SetHeaderSize(const uint64_t &header_size);
 
   /// \brief Set page size
   /// \param[in] page_size the size of page, only (1<<N) is accepted
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus set_page_size(const uint64_t &page_size);
+  MSRStatus SetPageSize(const uint64_t &page_size);
 
   /// \brief Set shard header
   /// \param[in] header_data the info of header

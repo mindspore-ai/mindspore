@@ -28,7 +28,7 @@ using mindspore::MsLogLevel::INFO;
 
 namespace mindspore {
 namespace mindrecord {
-ShardSegment::ShardSegment() { set_all_in_index(false); }
+ShardSegment::ShardSegment() { SetAllInIndex(false); }
 
 std::pair<MSRStatus, vector<std::string>> ShardSegment::GetCategoryFields() {
   // Skip if already populated
@@ -211,7 +211,7 @@ std::pair<MSRStatus, std::vector<uint8_t>> ShardSegment::PackImages(int group_id
 
   // Pack image list
   std::vector<uint8_t> images(offset[1] - offset[0]);
-  auto file_offset = header_size_ + page_size_ * (blob_page->get_page_id()) + offset[0];
+  auto file_offset = header_size_ + page_size_ * (blob_page->GetPageID()) + offset[0];
   auto &io_seekg = file_streams_random_[0][shard_id]->seekg(file_offset, std::ios::beg);
   if (!io_seekg.good() || io_seekg.fail() || io_seekg.bad()) {
     MS_LOG(ERROR) << "File seekg failed";
@@ -363,21 +363,21 @@ std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, pybind11::obje
   return {SUCCESS, std::move(json_data)};
 }
 
-std::pair<ShardType, std::vector<std::string>> ShardSegment::get_blob_fields() {
+std::pair<ShardType, std::vector<std::string>> ShardSegment::GetBlobFields() {
   std::vector<std::string> blob_fields;
-  for (auto &p : get_shard_header()->get_schemas()) {
+  for (auto &p : GetShardHeader()->GetSchemas()) {
     // assume one schema
-    const auto &fields = p->get_blob_fields();
+    const auto &fields = p->GetBlobFields();
     blob_fields.assign(fields.begin(), fields.end());
     break;
   }
-  return std::make_pair(get_nlp_flag() ? kNLP : kCV, blob_fields);
+  return std::make_pair(GetNlpFlag() ? kNLP : kCV, blob_fields);
 }
 
 std::tuple<std::vector<uint8_t>, json> ShardSegment::GetImageLabel(std::vector<uint8_t> images, json label) {
-  if (get_nlp_flag()) {
+  if (GetNlpFlag()) {
     vector<std::string> columns;
-    for (auto &p : get_shard_header()->get_schemas()) {
+    for (auto &p : GetShardHeader()->GetSchemas()) {
       auto schema = p->GetSchema()["schema"];  // make sure schema is not reference since error occurred in arm.
       auto schema_items = schema.items();
       using it_type = decltype(schema_items.begin());
