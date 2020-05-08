@@ -69,7 +69,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"reduce_sum", "reduce_sum_d"},
   {"one_hot", "one_hot_d"},
   {"sum", "reduce_sum_d"},
-  {"lamb_next_mv_with_decay_v1", "lamb_next_m_v_with_decay_v1"},
+  {"lamb_next_mv_with_decay_v1", "lamb_next_m_v_with_decay"},
   {"lamb_next_mv", "lamb_next_m_v"},
   {"split", "split_d"},
   {"resize_nearest_neighbor", "resize_nearest_neighbor_v2_d"},
