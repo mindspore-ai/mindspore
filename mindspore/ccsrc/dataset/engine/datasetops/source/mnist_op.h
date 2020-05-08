@@ -20,7 +20,6 @@
 #include <string>
 #include <algorithm>
 #include <map>
-#include <unordered_map>
 #include <vector>
 #include <utility>
 
@@ -158,7 +157,7 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   Status GetNumRowsInDataset(int64_t *num) const override;
 
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
-  // @param (std::unordered_map<uint64_t, std::vector<uint64_t >> * map - key label, val all ids for this class
+  // @param (std::map<uint64_t, std::vector<uint64_t >> * map - key label, val all ids for this class
   // @return Status - The error code return
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 
@@ -253,7 +252,6 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   std::shared_ptr<Sampler> sampler_;
   std::unique_ptr<DataSchema> data_schema_;
   std::vector<MnistLabelPair> image_label_pairs_;
-  std::unordered_map<std::string, int32_t> col_name_map_;
   std::vector<std::string> image_names_;
   std::vector<std::string> label_names_;
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;

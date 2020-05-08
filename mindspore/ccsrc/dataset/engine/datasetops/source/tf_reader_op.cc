@@ -191,6 +191,11 @@ Status TFReaderOp::Init() {
     RETURN_IF_NOT_OK(CreateSchema(dataset_files_list_[0], columns_to_load_));
   }
 
+  // Construct the column name map for this operator (base class field)
+  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+    column_name_id_map_[data_schema_->column(i).name()] = i;
+  }
+
   if (total_rows_ == 0) {
     total_rows_ = data_schema_->num_rows();
   }
@@ -571,11 +576,6 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
   int64_t rows_read = 0;
   int64_t rows_total = 0;
   std::unique_ptr<DataBuffer> current_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-  std::unordered_map<std::string, int32_t> column_name_map;
-  for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    column_name_map[data_schema_->column(i).name()] = i;
-  }
-  current_buffer->set_column_name_map(column_name_map);
   std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
 
   while (reader.peek() != EOF) {
@@ -613,7 +613,6 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
       RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(current_buffer)));
 
       current_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-      current_buffer->set_column_name_map(column_name_map);
       new_tensor_table = std::make_unique<TensorQTable>();
       rows_read = 0;
     }

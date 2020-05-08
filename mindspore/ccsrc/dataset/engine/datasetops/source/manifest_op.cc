@@ -76,8 +76,9 @@ ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string f
       decode_(decode),
       usage_(usage),
       buf_cnt_(0) {
+  // Set the column name map (base class field)
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    col_name_map_[data_schema_->column(i).name()] = i;
+    column_name_id_map_[data_schema_->column(i).name()] = i;
   }
   io_block_queues_.Init(num_workers_, queue_size);
   (void)std::transform(usage_.begin(), usage_.end(), usage_.begin(), ::tolower);
@@ -235,7 +236,6 @@ Status ManifestOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));
-  (*db)->set_column_name_map(col_name_map_);
   return Status::OK();
 }
 

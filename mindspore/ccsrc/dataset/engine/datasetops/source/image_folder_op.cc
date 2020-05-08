@@ -78,8 +78,9 @@ ImageFolderOp::ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::str
       buf_cnt_(0),
       sampler_ind_(0),
       dirname_offset_(0) {
+  // Set the column name map (base class field)
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    col_name_map_[data_schema_->column(i).name()] = i;
+    column_name_id_map_[data_schema_->column(i).name()] = i;
   }
   folder_name_queue_ = std::make_unique<Queue<std::string>>(num_wkrs * queue_size);
   image_name_queue_ = std::make_unique<Queue<FolderImagesPair>>(num_wkrs * queue_size);
@@ -237,7 +238,6 @@ Status ImageFolderOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_p
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));
-  (*db)->set_column_name_map(col_name_map_);
   return Status::OK();
 }
 

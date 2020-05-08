@@ -185,7 +185,6 @@ Status ShuffleOp::operator()() {
       if (new_buffer_table->size() == rows_per_buffer_ || shuffle_last_row_idx_ == 0) {
         auto new_buffer = std::make_unique<DataBuffer>(buffer_counter_, DataBuffer::kDeBFlagNone);
         new_buffer->set_tensor_table(std::move(new_buffer_table));
-        new_buffer->set_column_name_map(column_name_map_);
         buffer_counter_++;
         MS_LOG(DEBUG) << "Shuffle operator sending a buffer to output.";
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(new_buffer)));
@@ -266,8 +265,8 @@ Status ShuffleOp::InitShuffleBuffer() {
     RETURN_STATUS_UNEXPECTED("Unable to fetch a single row for shuffle buffer.");
   }
 
-  // Take a copy of the column name mapping.  We'll use this when constructing output buffers later.
-  column_name_map_ = child_iterator_->col_name_id_map();
+  // Now that a first fetch is done, assign the column map for this operator
+  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
 
   // Now fill the rest of the shuffle buffer until we are unable to get the next row or we reached
   // the desired shuffle buffer size.

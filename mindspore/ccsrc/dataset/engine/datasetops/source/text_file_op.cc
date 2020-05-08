@@ -121,8 +121,9 @@ Status TextFileOp::Init() {
   int32_t safe_queue_size = static_cast<int32_t>(std::ceil(text_files_list_.size() / num_workers_) + 1);
   io_block_queues_.Init(num_workers_, safe_queue_size);
 
+  // Set the column name mapping (base class field)
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    col_name_map_[data_schema_->column(i).name()] = i;
+    column_name_id_map_[data_schema_->column(i).name()] = i;
   }
 
   RETURN_IF_NOT_OK(ParallelOp::CreateWorkerConnector(worker_connector_size_));
@@ -164,7 +165,6 @@ Status TextFileOp::LoadFile(const std::string &file, const int64_t start_offset,
   int64_t rows_total = 0;
   std::string line;
   std::unique_ptr<DataBuffer> cur_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-  cur_buffer->set_column_name_map(col_name_map_);
   std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
 
   while (getline(handle, line)) {
@@ -189,7 +189,6 @@ Status TextFileOp::LoadFile(const std::string &file, const int64_t start_offset,
       RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(cur_buffer)));
 
       cur_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-      cur_buffer->set_column_name_map(col_name_map_);
       tensor_table = std::make_unique<TensorQTable>();
       rows_each_buffer = 0;
     }

@@ -80,8 +80,9 @@ CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::stri
       num_rows_exact_(0),
       num_samples_(num_samples),
       dataset_type_(dataset_type) {
+  // Set the column name map (base class field)
   for (int32_t index = 0; index < data_schema_->NumColumns(); index++) {
-    col_name_map_[data_schema_->column(index).name()] = index;
+    column_name_id_map_[data_schema_->column(index).name()] = index;
   }
 
   attr_info_queue_ = std::make_unique<Queue<std::vector<std::string>>>(queue_size);
@@ -385,7 +386,6 @@ Status CelebAOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Da
   }
 
   (*db)->set_tensor_table(std::move(deq));
-  (*db)->set_column_name_map(col_name_map_);
   return Status::OK();
 }
 

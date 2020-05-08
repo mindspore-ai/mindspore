@@ -20,7 +20,6 @@
 #include <map>
 #include <mutex>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "dataset/util/status.h"
@@ -260,7 +259,6 @@ class TextFileOp : public ParallelOp {
   bool finished_reading_dataset_;
   bool load_io_block_queue_;
   bool load_jagged_connector_;
-  std::unordered_map<std::string, int32_t> col_name_map_;
   std::unique_ptr<JaggedConnector> jagged_buffer_connector_;
 };
 }  // namespace dataset

@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "dataset/core/tensor.h"
@@ -157,8 +156,6 @@ class BarrierOp : public PipelineOp {
   int32_t rows_per_buffer_;
   // buffer_id
   int32_t buffer_id_;
-  // local variable to keep track of the buffer information
-  std::unordered_map<std::string, int32_t> col_name_id_map_;
   // iterator to pull new rows, we only have one child
   std::unique_ptr<ChildIterator> child_iterator_;
   // condition name, to support multiple barriers

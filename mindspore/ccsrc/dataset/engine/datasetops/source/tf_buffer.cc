@@ -35,13 +35,7 @@ TFBuffer::TFBuffer(
   uint32_t id,                                           // In: The id for this buffer
   BufferFlags flags,                                     // In: The flags for this buffer
   const std::shared_ptr<StorageClient> &storage_client)  // In: Storage client that is related to this buffer type
-    : DataBuffer(id, flags), storage_client_(storage_client) {
-  // Initializing mColumnNameMap from the schema file
-  const DataSchema *the_schema = storage_client_->schema();
-  for (int32_t i = 0; i < the_schema->NumColumns(); ++i) {
-    column_name_map_[the_schema->column(i).name()] = i;
-  }
-}
+    : DataBuffer(id, flags), storage_client_(storage_client) {}
 
 // destructor
 TFBuffer::~TFBuffer() {}

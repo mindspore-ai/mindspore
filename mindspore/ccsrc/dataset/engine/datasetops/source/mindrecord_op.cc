@@ -152,7 +152,7 @@ Status MindRecordOp::Init() {
   }
 
   for (int i = 0; i < static_cast<int>(columns_to_load_.size()); i++) {
-    column_name_mapping_[columns_to_load_[i]] = i;
+    column_name_id_map_[columns_to_load_[i]] = i;
   }
 
   num_rows_ = shard_reader_->GetNumRows();
@@ -180,7 +180,7 @@ Status MindRecordOp::SetColumnsBlob() {
   columns_blob_index_ = std::vector<int32_t>(columns_to_load_.size(), -1);
   int32_t iBlob = 0;
   for (auto &blob_exact : columns_blob_exact) {
-    columns_blob_index_[column_name_mapping_[blob_exact]] = iBlob++;
+    columns_blob_index_[column_name_id_map_[blob_exact]] = iBlob++;
   }
   return Status::OK();
 }
@@ -501,7 +501,6 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
 Status MindRecordOp::GetBufferFromReader(std::unique_ptr<DataBuffer> *fetched_buffer, int64_t buffer_id,
                                          int32_t worker_id) {
   *fetched_buffer = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
-  (*fetched_buffer)->set_column_name_map(column_name_mapping_);
   std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
   for (int32_t i = 0; i < rows_per_buffer_; ++i) {
     ShardTuple tupled_buffer;

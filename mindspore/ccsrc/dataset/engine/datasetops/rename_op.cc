@@ -67,10 +67,15 @@ Status RenameOp::operator()() {
     // if 1st eoe or eof, pass it on then return
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+
+  // First, populate the column map from the input child.
+  // This will not be the final map for output from this op.
+  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
+  // core rename functionality only needs to happen once, to identify the new column names/indexes
+  RETURN_IF_NOT_OK(RenameColumns());
+
   while (curr_buffer->eof() == false) {
     while (curr_buffer->eoe() == false) {
-      // core rename functionality
-      RETURN_IF_NOT_OK(RenameBuffer(&curr_buffer));
       // push the renamed input buffer
       MS_LOG(DEBUG) << "Rename operator pushing next buffer.";
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(curr_buffer)));
@@ -89,17 +94,16 @@ Status RenameOp::operator()() {
   return Status::OK();
 }
 
-// renames buffer
-Status RenameOp::RenameBuffer(std::unique_ptr<DataBuffer> *input_buffer) {
+// renames the columns
+Status RenameOp::RenameColumns() {
   // iterate over my index in input vector, find the corresponding position
-  const std::unordered_map<std::string, int32_t> col_name_id_map = (*input_buffer)->column_name_map();
   std::unordered_map<std::string, int32_t> new_col_name_id_map = {};
   // parameter for input check
   size_t found = 0;
 
   // iterate over all the pairs and if there is a name match with rename, rename the column and add it to new map
   // by doing it this way we recreate a new ColNameIdMap and allow for switching
-  for (const auto &pair : col_name_id_map) {
+  for (const auto &pair : column_name_id_map_) {
     std::string name = pair.first;
     int32_t id = pair.second;
     // find name
@@ -126,7 +130,9 @@ Status RenameOp::RenameBuffer(std::unique_ptr<DataBuffer> *input_buffer) {
     std::string err_msg = "Renamed column doesn't exist in dataset";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
-  (*input_buffer)->set_column_name_map(new_col_name_id_map);
+
+  // Now, overwrite our column map with the new renamed columns/id's
+  column_name_id_map_ = new_col_name_id_map;
   return Status::OK();
 }
 

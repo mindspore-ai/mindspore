@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -212,7 +211,6 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
 
   WaitPost wp_;
   std::vector<std::string> image_ids_;
-  std::unordered_map<std::string, int32_t> col_name_map_;
   QueueList<std::unique_ptr<IOBlock>> io_block_queues_;
 };
 }  // namespace dataset

@@ -75,8 +75,9 @@ MnistOp::MnistOp(int32_t num_workers, int32_t rows_per_buffer, std::string folde
       rows_per_buffer_(rows_per_buffer),
       sampler_(std::move(sampler)),
       data_schema_(std::move(data_schema)) {
+  // set the column name map (base class field)
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
-    col_name_map_[data_schema_->column(i).name()] = i;
+    column_name_id_map_[data_schema_->column(i).name()] = i;
   }
   io_block_queues_.Init(num_workers, queue_size);
 }
@@ -185,7 +186,6 @@ Status MnistOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<Dat
     deq->push_back(std::move(trow));
   }
   (*db)->set_tensor_table(std::move(deq));
-  (*db)->set_column_name_map(col_name_map_);
   return Status::OK();
 }
 

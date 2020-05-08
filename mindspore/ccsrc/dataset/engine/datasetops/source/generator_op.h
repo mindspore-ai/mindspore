@@ -20,7 +20,6 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "dataset/core/data_type.h"
@@ -130,7 +129,6 @@ class GeneratorOp : public PipelineOp {
   int32_t buffer_size_;
 
   py::object generator_;
-  std::unordered_map<std::string, int32_t> column_names_map_;
   int32_t buffer_id_;
 
   WaitPost wp_;

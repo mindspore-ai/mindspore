@@ -96,9 +96,8 @@ Status BarrierOp::operator()() {
       if (!curr_table->empty()) {
         std::unique_ptr<DataBuffer> curr_buffer = std::make_unique<DataBuffer>(buffer_id_, DataBuffer::kDeBFlagNone);
         curr_buffer->set_tensor_table(std::move(curr_table));
-        curr_buffer->set_column_name_map(col_name_id_map_);
         MS_LOG(DEBUG) << "Barrier operator finished one buffer, pushing, rows " << curr_buffer->NumRows() << ", cols "
-                      << curr_buffer->NumCols() << ", map " << col_name_id_map_.size() << ".";
+                      << curr_buffer->NumCols() << ", map " << column_name_id_map_.size() << ".";
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(curr_buffer)));
         buffer_id_++;
       }
@@ -144,9 +143,10 @@ Status BarrierOp::prepare(TensorQTable *const table) {
   RETURN_IF_NOT_OK(blockCond());
 
   table->push_back(std::move(new_row));
-  // At this point we have 1 row produced, we take the old column map id and use it in the new table
-  // Initializing col_name_id_map_ from the first data buffer.
-  col_name_id_map_ = child_iterator_->col_name_id_map();
+
+  // Assign the column name id map
+  RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());
+
   // the update code below shouldn't do anything bad if the column name already exists.
   return Status::OK();
 }

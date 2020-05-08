@@ -19,7 +19,6 @@
 #include <memory>
 #include <queue>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "dataset/engine/datasetops/parallel_op.h"
@@ -162,11 +161,9 @@ class FilterOp : public ParallelOp {
 
   // Private function for validating if each of the user specified input column names
   // exist in the DataBuffer.
-  // @param col_name_id_map The column name to index mapping obtained from DataBuffer.
   // @param input_columns The vector of input column names used in the current thread.
   // @return Status The error code return.
-  Status ValidateInColumns(const std::unordered_map<std::string, int32_t> &col_name_id_map,
-                           const std::vector<std::string> *input_columns);
+  Status ValidateInColumns(const std::vector<std::string> *input_columns);
 
   // Private function for checking the column legality
   // @param in_buf A raw pointer to the DataBuffer. A raw pointer is fine because this function does not manage memory
