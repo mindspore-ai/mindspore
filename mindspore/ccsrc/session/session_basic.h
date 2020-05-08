@@ -35,6 +35,7 @@ namespace mindspore {
 using GraphId = uint32_t;
 using GraphInfo = std::string;
 namespace session {
+void ClearPythonParasMap();
 using CallBackFunc = uint32_t (*)(uint32_t graph_id,
                                   const std::map<std::string, mindspore::tensor::TensorPtr> &params_list);
 using AnyList = std::vector<Any>;
@@ -106,6 +107,7 @@ class SessionBasic {
   BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
+  ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;

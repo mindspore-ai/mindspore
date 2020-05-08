@@ -840,6 +840,7 @@ void FinalizeBackend() {
 void ClearResAtexit() {
   MS_LOG(DEBUG) << "Pipeline clear all resource";
   pynative::ClearPyNativeSession();
+  session::ClearPythonParasMap();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 
   ad::g_k_prims.clear();
