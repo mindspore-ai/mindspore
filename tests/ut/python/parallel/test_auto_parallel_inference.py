@@ -32,5 +32,6 @@ def test_inference_phase():
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)
     train_network.set_train()
+    train_network.set_auto_parallel()
 
     output = train_network(predict, label)

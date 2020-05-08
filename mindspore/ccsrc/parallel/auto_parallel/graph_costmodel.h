@@ -179,16 +179,24 @@ class CostGraph {
   void CreateStarEliminationSubCostList(const StrategyPtr &, const CostPtrList &, const CostPtrList &,
                                         const StrategyPtr &, const CostPtrList &, std::vector<StrategyPtr>,
                                         CostPtrList &, CostPtrList &, CostPtrList *);
+  // Calculate memory cost for training phase or inference phase.
+  Status CalculateMemoryCost();
   // When the input of a operator is neither a WEIGHT, nor a output of a subsequent operator involving WEIGHT, then
-  // the memory cost can be resused.
+  // the memory cost can be resused. This is used to calculate memory in the training phase.
   Status CalculateOpsMemoryCost();
   // When the input of the edge is neither a WEIGHT, nor a output of a subsequent operator involving WEIGHT, then
-  // the memory cost can be resused.
+  // the memory cost can be reused. This is used to calculate memory in the training phase.
   Status CalculateEdgesMemoryCost();
+  // Calculate memory cost of operators in the inference phase.
+  Status CalculateOpsMemoryCostForInference();
+  // Calculate memory cost of edges in the inference phase.
+  Status CalculateEdgesMemoryCostForInference();
   Status ComputeOpsAndEdgesParameterInvolved();
+  // Compute for each operator whether the output is critical.
+  Status ComputeOpsAndEdgesOutputCritical();
 
   std::vector<OperatorInfoPtr> GetOperators() const { return ops_; }
-  size_t GetNumPairs() const { return edges_.size(); }
+  size_t GetNumEdges() const;
   Status InitSelectedStrategy();
   OperatorInfoPtr FindTmpIdentityByParameterName(std::string &) const;
   // When TmpIdentity is used by mulitple operators, the corresponding parameter's memory cost should be calculated only
@@ -208,6 +216,10 @@ class CostGraph {
   const std::map<std::string, std::string> get_tuple_getitem_list() const { return tuple_getitem_list_; }
 
  private:
+  void TopologyOrder(std::vector<OperatorInfoPtr> *);
+  void DFSForTopoOrder(const OperatorInfoPtr &, std::map<OperatorInfoPtr, bool> *, std::vector<OperatorInfoPtr> *);
+  Status DetermineCriticalOps(const std::vector<OperatorInfoPtr> &);
+  void MarkCriticalOpsAndEdges(const std::map<OperatorInfoPtr, int> &);
   // Needed by rec_parser
   std::vector<std::vector<std::string>> inputs_tensor_name_list_;
   std::map<std::string, std::string> tuple_getitem_list_;
