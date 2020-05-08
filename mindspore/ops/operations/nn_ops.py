@@ -2288,10 +2288,10 @@ class MirrorPad(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Tensor) - The input tensor.
         - **paddings** (Tensor) - The paddings tensor. The value of `paddings` is a matrix(list),
-            and its shape is (N, 2). N is the rank of input data. All elements of paddings
-            are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
-            extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates
-            how many sizes to be extended behind of the `D` th dimension of the input tensor.
+          and its shape is (N, 2). N is the rank of input data. All elements of paddings
+          are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
+          extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates
+          how many sizes to be extended behind of the `D` th dimension of the input tensor.
 
     Outputs:
         Tensor, the tensor after padding.
