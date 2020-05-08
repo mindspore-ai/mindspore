@@ -165,6 +165,7 @@ constexpr auto kAttrFusion = "fusion";
 constexpr auto kAttrGroup = "group";
 constexpr auto kAttrOp = "op";
 constexpr auto kAttrIsTraining = "is_training";
+constexpr auto kAttrFusionId = "fusion_id";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
