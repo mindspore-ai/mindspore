@@ -8,9 +8,9 @@ This is an example of training ResNet101 with ImageNet dataset in MindSpore.
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the dataset [ImageNet](http://image-net.org/download).
+- Download the dataset ImageNet2012.
  
-> Unzip the ImageNet dataset to any path you want, the folder should include train and eval dataset as follows:
+> Unzip the ImageNet2012 dataset to any path you want, the folder should include train and eval dataset as follows:
  
 ```
 .
@@ -25,7 +25,6 @@ This is an example of training ResNet101 with ImageNet dataset in MindSpore.
 ```shell
 .
 ├── crossentropy.py                 # CrossEntropy loss function
-├── var_init.py                     # weight initial
 ├── config.py                       # parameter configuration
 ├── dataset.py                      # data preprocessing
 ├── eval.py                         # eval net
