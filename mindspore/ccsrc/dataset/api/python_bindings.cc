@@ -237,6 +237,11 @@ void bindTensor(py::module *m) {
     .def("type", &Tensor::type)
     .def("as_array", [](py::object &t) {
       auto &tensor = py::cast<Tensor &>(t);
+      if (tensor.type() == DataType::DE_STRING) {
+        py::array res;
+        tensor.GetDataAsNumpyStrings(&res);
+        return res;
+      }
       py::buffer_info info;
       THROW_IF_ERROR(Tensor::GetBufferInfo(tensor, &info));
       return py::array(pybind11::dtype(info), info.shape, info.strides, info.ptr, t);

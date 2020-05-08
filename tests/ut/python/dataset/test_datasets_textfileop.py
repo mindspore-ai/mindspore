@@ -41,8 +41,8 @@ def test_textline_dataset_totext():
     count = 0
     line = ["This is a text file.", "Another file.", "Be happy every day.", "End of file.", "Good luck to everyone."]
     for i in data.create_dict_iterator():
-        str = nlp.as_text(i["text"])
-        assert(str == line[count])       
+        str = i["text"].item().decode("utf8")
+        assert(str == line[count])
         count += 1
     assert(count == 5)
 
@@ -68,8 +68,8 @@ def test_textline_dataset_repeat():
             "This is a text file.", "Be happy every day.", "Good luck to everyone.",
             "This is a text file.", "Be happy every day.", "Good luck to everyone."]
     for i in data.create_dict_iterator():
-        str = nlp.as_text(i["text"])
-        assert(str == line[count])       
+        str = i["text"].item().decode("utf8")
+        assert(str == line[count])
         count += 1
     assert(count == 9)
 

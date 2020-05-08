@@ -190,7 +190,7 @@ TEST_F(MindDataTestMapOp, TestByPosition) {
     EXPECT_EQ(tensor_list[i]->type(), golden_types[i]);
     EXPECT_EQ(tensor_list[i]->Rank(), golden_ranks[i]);
     EXPECT_EQ(tensor_list[i]->shape(), golden_shapes[i]);
-    EXPECT_NE(tensor_list[i]->StartAddr(), nullptr);
+    EXPECT_NE(tensor_list[i]->GetMutableBuffer(), nullptr);
   }
 }
 
@@ -366,7 +366,7 @@ TEST_F(MindDataTestMapOp, Test1to3) {
       EXPECT_EQ(tensor_list[i]->type(), golden_types[i]);
       EXPECT_EQ(tensor_list[i]->Rank(), golden_ranks[i]);
       EXPECT_EQ(tensor_list[i]->shape(), golden_shapes[i]);
-      EXPECT_NE(tensor_list[i]->StartAddr(), nullptr);
+      EXPECT_NE(tensor_list[i]->GetMutableBuffer(), nullptr);
     }
     rc = di.FetchNextTensorRow(&tensor_list);
     EXPECT_TRUE(rc.IsOk());
@@ -700,7 +700,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
     MS_LOG(DEBUG) << "row:" << i << "\tlabel:" << label << "\n";
     EXPECT_TRUE(img_class[(i % 44) / 11] == label);
     // Dump all the image into string, to be used as a comparison later.
-    result.append((char *) tensor_map["image"]->StartAddr(), (int64_t) tensor_map["image"]->Size());
+    result.append((char *)tensor_map["image"]->GetMutableBuffer(), (int64_t) tensor_map["image"]->Size());
     di.GetNextAsMap(&tensor_map);
     i++;
   }
@@ -745,7 +745,7 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
     tensor_map["label"]->GetItemAt<int32_t>(&label, {});
     MS_LOG(DEBUG) << "row:" << i << "\tlabel:" << label << "\n";
     EXPECT_TRUE(img_class[(i % 44) / 11] == label);
-    result2.append((char *) tensor_map["image"]->StartAddr(), (int64_t) tensor_map["image"]->Size());
+    result2.append((char *)tensor_map["image"]->GetMutableBuffer(), (int64_t) tensor_map["image"]->Size());
     di2.GetNextAsMap(&tensor_map);
     i++;
   }

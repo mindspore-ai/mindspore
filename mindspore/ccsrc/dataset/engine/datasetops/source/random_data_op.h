@@ -43,7 +43,6 @@ class RandomDataOp : public ParallelOp {
   static constexpr int32_t kMaxNumColumns = 4;
   static constexpr int32_t kMaxRank = 4;
   static constexpr int32_t kMaxDimValue = 2048;
-  static constexpr int32_t kMaxDataType = (DataType::DE_UNKNOWN - 1);
   static constexpr int32_t kMaxTotalRows = 1024;
 
   // A nested builder class to aid in the construction of a RandomDataOp

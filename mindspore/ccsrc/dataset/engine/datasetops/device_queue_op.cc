@@ -85,6 +85,13 @@ Status DeviceQueueOp::operator()() {
 
 Status DeviceQueueOp::CheckExceptions(const std::unique_ptr<DataBuffer> &buffer) const {
   // this method checks if the buffer meets the conditions to be sent to TDT
+  if (buffer->NumRows() != 0) {
+    TensorRow row;
+    buffer->GetRow(0, &row);
+    for (const auto &item : row) {
+      CHECK_FAIL_RETURN_UNEXPECTED(item->type().IsNumeric(), "Cannot send tensor of string type to device.");
+    }
+  }
   return Status::OK();
 }
 
@@ -207,7 +214,7 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
       return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "memory malloc failed.");
     }
     (void)memset_s(sub_item.data_ptr_, sub_item.data_len_, 0, sub_item.data_len_);
-    unsigned char *column_data = curr_row[i]->StartAddr();
+    unsigned char *column_data = curr_row[i]->GetMutableBuffer();
     if (memcpy_s(sub_item.data_ptr_, sub_item.data_len_, column_data,
                  static_cast<uint32_t>(curr_row[i++]->SizeInBytes())) != 0) {
       MS_LOG(ERROR) << "memcpy_s failed!";

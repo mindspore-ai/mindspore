@@ -26,7 +26,7 @@ def test_flat_map_1():
     import mindspore.dataset.transforms.nlp.utils as nlp
 
     def flat_map_func(x):
-        data_dir = nlp.as_text(x[0])
+        data_dir = x[0].item().decode('utf8')
         d = ds.ImageFolderDatasetV2(data_dir)
         return d
 
@@ -47,12 +47,12 @@ def test_flat_map_2():
     import mindspore.dataset.transforms.nlp.utils as nlp
 
     def flat_map_func_1(x):
-        data_dir = nlp.as_text(x[0])
+        data_dir = x[0].item().decode('utf8')
         d = ds.ImageFolderDatasetV2(data_dir)
         return d
 
     def flat_map_func_2(x):
-        text_file = nlp.as_text(x[0])
+        text_file = x[0].item().decode('utf8')
         d = ds.TextFileDataset(text_file)
         d = d.flat_map(flat_map_func_1)
         return d

@@ -215,5 +215,17 @@ TensorShape TensorShape::Squeeze() const {
   }
   return TensorShape(new_shape);
 }
+std::vector<dsize_t> TensorShape::Strides() {
+  std::vector<dsize_t> strides(Rank());
+  dsize_t count = NumOfElements();
+  for (dsize_t i = 0; i < Rank(); i++) {
+    if (raw_shape_[i] != 0)
+      count /= raw_shape_[i];
+    else
+      count = 0;
+    strides[i] = count;
+  }
+  return strides;
+}
 }  // namespace dataset
 }  // namespace mindspore

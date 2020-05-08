@@ -74,6 +74,10 @@ Status BatchOp::operator()() {
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
+  for (const auto &t : new_row) {
+    CHECK_FAIL_RETURN_UNEXPECTED(t->type().IsNumeric(),
+                                 "[Batch ERROR] Batch does not support Tensor of type string yet.");
+  }
   RETURN_IF_NOT_OK(DatasetOp::AssignColMapFromChild());  // must come after the first fetch above
   int32_t cur_batch_size = 0;
   RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(0, 0, 0)));
@@ -445,8 +449,8 @@ Status BatchOp::PadHelper(std::shared_ptr<Tensor> src, std::shared_ptr<Tensor> d
       src_flat_ind += src_s[i] * cur_ind[i];
       dst_flat_ind += dst_s[i] * cur_ind[i];
     }
-    unsigned char *src_addr = src->StartAddr() + src_flat_ind * type_size;
-    unsigned char *dst_addr = dst->StartAddr() + dst_flat_ind * type_size;
+    unsigned char *src_addr = src->GetMutableBuffer() + src_flat_ind * type_size;
+    unsigned char *dst_addr = dst->GetMutableBuffer() + dst_flat_ind * type_size;
     CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(dst_addr, len, src_addr, len) == 0, "memcpy error");
   } else {  // not the last dimension, keep doing recursion
     dsize_t min_ind = std::min(dst->shape()[cur_dim], src->shape()[cur_dim]);

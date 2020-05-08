@@ -197,7 +197,7 @@ Status CifarOp::LoadTensorRow(uint64_t index, TensorRow *trow) {
   std::shared_ptr<Tensor> fine_label;
   std::shared_ptr<Tensor> ori_image = cifar_image_label_pairs_[index].first;
   std::shared_ptr<Tensor> copy_image =
-    std::make_shared<Tensor>(ori_image->shape(), ori_image->type(), ori_image->StartAddr());
+    std::make_shared<Tensor>(ori_image->shape(), ori_image->type(), ori_image->GetMutableBuffer());
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&label, data_schema_->column(1).tensorImpl(), data_schema_->column(1).shape(),
                                         data_schema_->column(1).type(),
                                         reinterpret_cast<unsigned char *>(&cifar_image_label_pairs_[index].second[0])));
@@ -394,7 +394,7 @@ Status CifarOp::ParseCifarData() {
                                             data_schema_->column(0).type()));
       for (int ch = 0; ch < kCifarImageChannel; ++ch) {
         for (int pix = 0; pix < kCifarImageHeight * kCifarImageWidth; ++pix) {
-          (image_tensor->StartAddr())[pix * kCifarImageChannel + ch] = block[cur_block_index++];
+          (image_tensor->GetMutableBuffer())[pix * kCifarImageChannel + ch] = block[cur_block_index++];
         }
       }
       cifar_image_label_pairs_.emplace_back(std::make_pair(image_tensor, labels));
