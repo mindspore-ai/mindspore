@@ -696,3 +696,13 @@ def get_bprop_reverse_sequence(self):
         dx = reverse_sequence_grad(dout, seq_lengths)
         return dx, zeros_like(seq_lengths)
     return bprop
+
+
+@bprop_getters.register(P.TransShape)
+def get_bprop_trans_shape(self):
+    """Generate bprop for TransShape"""
+    op = P.TransShape()
+    def bprop(x, shape, out, dout):
+        dx = op(dout, shape_op(x))
+        return (dx, zeros_like(shape))
+    return bprop

@@ -134,6 +134,7 @@ const char kNameAssignSub[] = "AssignSub";
 const char kNameNPUAllocFloatStatus[] = "NPUAllocFloatStatus";
 const char kNameNPUClearFloatStatus[] = "NPUClearFloatStatus";
 const char kNameReshape[] = "Reshape";
+const char kNameTransShape[] = "TransShape";
 const char kNameRealDiv[] = "RealDiv";
 const char kNameTile[] = "Tile";
 const char kNameCos[] = "Cos";
@@ -242,6 +243,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBatchNorm), ADPT_DESC(BatchNorm)},
     {string(kNameBatchNormGrad), ADPT_DESC(BatchNormGrad)},
     {string(kNameReshape), ADPT_DESC(Reshape)},
+    {string(kNameTransShape), ADPT_DESC(TransShape)},
     {string(kNameFlattenGrad), ADPT_DESC(Reshape)},
     {prim::kPrimFlatten->name(), ADPT_DESC(Flatten)},
     {string(kNameAddN), ADPT_DESC(AddN)},

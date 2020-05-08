@@ -1865,6 +1865,12 @@ test_case_array_ops = [
                         Tensor(np.arange(-12, 0).reshape(3, 2, 2), mstype.float32)],
         'skip': ['backward'],
     }),
+    ('TransShape', {
+        'block': P.TransShape(),
+        'desc_const': [(1, 12, 24, 24)],
+        'desc_inputs': [[1, 3, 24, 24]],
+        'desc_bprop': [[1, 12, 24, 24]],
+    }),
 ]
 
 test_case_other_ops = [
