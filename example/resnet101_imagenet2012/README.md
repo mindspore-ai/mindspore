@@ -8,9 +8,9 @@ This is an example of training ResNet101 with ImageNet dataset in MindSpore.
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the dataset [ImageNet](http://image-net.org/download).
+- Download the dataset ImageNet2012.
  
-> Unzip the ImageNet dataset to any path you want, the folder should include train and eval dataset as follows:
+> Unzip the ImageNet2012 dataset to any path you want, the folder should include train and eval dataset as follows:
  
 ```
 .
