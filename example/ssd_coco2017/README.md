@@ -13,7 +13,7 @@ SSD network based on MobileNetV2, with support for training and evaluation.
     We use coco2017 as training dataset in this example by default, and you can also use your own datasets.
 
     1. If coco dataset is used. **Select dataset to coco when run script.**
-        Download coco2017: [train2017](http://images.cocodataset.org/zips/train2017.zip), [val2017](http://images.cocodataset.org/zips/val2017.zip), [test2017](http://images.cocodataset.org/zips/test2017.zip), [annotations](http://images.cocodataset.org/annotations/annotations_trainval2017.zip). Install pycocotool.
+        Install Cython and pycocotool.
 
         ```
         pip install Cython
