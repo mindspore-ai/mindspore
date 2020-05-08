@@ -21,7 +21,6 @@ fused_mul_add = Primitive('FusedMulAdd')
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
 
-
 class FnDict:
     def __init__(self):
         self.fnDict = {}
@@ -32,14 +31,19 @@ class FnDict:
     def __getitem__(self, name):
         return self.fnDict[name]
 
-
 def test_mul_add_fusion(tag):
     fns = FnDict()
 
     @fns
-    def before(x, y, z):
+    def before1(x, y, z):
         res = mul(x, y)
         res = add(res, z)
+        return res
+
+    @fns
+    def before2(x, y, z):
+        res = mul(x, y)
+        res = add(z, res)
         return res
 
     @fns
