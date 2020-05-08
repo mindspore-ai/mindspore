@@ -18,6 +18,7 @@
 
 namespace mindspore {
 namespace kernel {
+// fp32
 MS_REG_GPU_KERNEL_TWO(
   Greater,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
@@ -36,5 +37,25 @@ MS_REG_GPU_KERNEL_TWO(
 MS_REG_GPU_KERNEL_TWO(
   Pow, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   BroadcastOpGpuKernel, float, float)
+
+// fp16
+MS_REG_GPU_KERNEL_TWO(
+  Greater,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernel, half, bool)
+MS_REG_GPU_KERNEL_TWO(
+  Less, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernel, half, bool)
+MS_REG_GPU_KERNEL_TWO(
+  Maximum,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  BroadcastOpGpuKernel, half, half)
+MS_REG_GPU_KERNEL_TWO(
+  Minimum,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  BroadcastOpGpuKernel, half, half)
+MS_REG_GPU_KERNEL_TWO(
+  Pow, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  BroadcastOpGpuKernel, half, half)
 }  // namespace kernel
 }  // namespace mindspore
