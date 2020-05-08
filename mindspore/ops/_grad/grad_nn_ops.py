@@ -627,7 +627,7 @@ def get_bprop_conv2d_backprop_input(self):
     def bprop(x, w, f_sizes, out, dout):
         dx = input_grad(dout, w)
         dw = filter_grad(x, dout, F.shape(w))
-        return dx, dw
+        return dx, dw, zeros_like(f_sizes)
 
     return bprop
 
