@@ -32,7 +32,7 @@ class Conv2dBlock(nn.Cell):
          kernel_size (int): Input kernel size. Default: 1
          stride (int): Stride size for the first convolutional layer. Default: 1.
          padding (int): Implicit paddings on both sides of the input. Default: 0.
-         pad_mode (int): Padding mode. Optional values are "same", "valid", "pad". Default: "same".
+         pad_mode (str): Padding mode. Optional values are "same", "valid", "pad". Default: "same".
       Returns:
           Tensor, output tensor.
     """
