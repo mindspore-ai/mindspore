@@ -140,7 +140,7 @@ class AscendSession : public SessionBasic {
   std::unordered_map<GraphId, std::pair<GraphId, GraphId>> switches_;
   std::unordered_map<GraphId, AnfNodePtr> condition_output_;
   // share parameters
-  std::set<std::tuple<AnfNodePtr, GraphId, size_t>> assigns_;
+  std::vector<std::tuple<AnfNodePtr, GraphId, size_t>> assigns_;
   // initial tensors, these tensor will sync data to device before run graph
   std::map<std::pair<GraphId, size_t>, tensor::TensorPtr> initial_tenosrs_;
   // final_graph_id is used in every root graph has it's own session situation

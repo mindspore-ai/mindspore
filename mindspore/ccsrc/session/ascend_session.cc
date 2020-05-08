@@ -770,7 +770,7 @@ void AscendSession::MergeSwitchCompile() {
 }
 
 void AscendSession::InsertAllAssigns() {
-  std::set<std::pair<AnfNodePtr, AnfNodePtr>> assigns;
+  std::vector<std::pair<AnfNodePtr, AnfNodePtr>> assigns;
   for (auto assign : assigns_) {
     auto front_anf = std::get<0>(assign);
     auto to_graph_id = std::get<1>(assign);
@@ -782,9 +782,10 @@ void AscendSession::InsertAllAssigns() {
       MS_LOG(EXCEPTION) << "input_index " << input_idx << " out of range size " << graph_inputs.size();
     }
     auto backend_parameter = graph_inputs[input_idx];
-    (void)assigns.insert(std::pair<AnfNodePtr, AnfNodePtr>(front_anf, backend_parameter));
+    assigns.emplace_back(std::pair<AnfNodePtr, AnfNodePtr>(front_anf, backend_parameter));
   }
   // erase the repeat assign
+  std::set<std::pair<AnfNodePtr, AnfNodePtr>> inserted_nodes;
   for (auto &assign : assigns) {
     auto front_anf = assign.first;
     auto backend_parameter = assign.second;
@@ -792,7 +793,10 @@ void AscendSession::InsertAllAssigns() {
     auto from_graph = GetGraph(from_graph_id);
     MS_EXCEPTION_IF_NULL(from_graph);
     auto backend_arg = from_graph->GetBackendAnfByFrontAnf(front_anf);
-    InsertAssignToGraph(from_graph_id, backend_arg, backend_parameter);
+    if (inserted_nodes.find(assign) == inserted_nodes.end()) {
+      InsertAssignToGraph(from_graph_id, backend_arg, backend_parameter);
+      (void)inserted_nodes.insert(assign);
+    }
   }
 }
 
@@ -857,7 +861,7 @@ void AscendSession::SetChildGraphParameter(const AnfNodePtr &front_anf, GraphId 
   }
   MS_LOG(INFO) << "Assign of node" << backend_arg->DebugString() << " of graph " << from_graph_id << " to node"
                << backend_parameter->DebugString() << "of graph " << to_graph_id;
-  (void)assigns_.insert(std::tuple<AnfNodePtr, GraphId, size_t>(front_anf, to_graph_id, input_idx));
+  assigns_.emplace_back(std::tuple<AnfNodePtr, GraphId, size_t>(front_anf, to_graph_id, input_idx));
 }
 
 void AscendSession::SetChildGraphParameter(const tensor::TensorPtr &front_tensor, GraphId to_graph_id,
