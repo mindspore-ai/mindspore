@@ -204,7 +204,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameIOU), ADPT_DESC(Iou)},
     {string(kNameGreaterEqual), ADPT_DESC(GreaterEqual)},
     {string(kNameSlice), ADPT_DESC(SliceD)},
-    {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentum)},
+    {string(kNameApplyMomentum), ADPT_DESC(ApplyMomentumD)},
     {string(kNameMaxPool), ADPT_DESC(MaxPool)},
     {string(kNameAvgPool), ADPT_DESC(AvgPool)},
     {string(kNameMaxPoolWithArgmax), ADPT_DESC(MaxPoolWithArgmax)},

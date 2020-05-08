@@ -127,12 +127,12 @@ INPUT_MAP(Constant) = EMPTY_INPUT_MAP;
 ATTR_MAP(Constant) = {{"value", ATTR_DESC(value, AnyTraits<AnyValue>())}};
 OUTPUT_MAP(Constant) = {{0, OUTPUT_DESC(y)}};
 
-// ApplyMomentum
-INPUT_MAP(ApplyMomentum) = {
+// ApplyMomentumD
+INPUT_MAP(ApplyMomentumD) = {
   {1, INPUT_DESC(var)}, {2, INPUT_DESC(accum)}, {3, INPUT_DESC(lr)}, {4, INPUT_DESC(grad)}, {5, INPUT_DESC(momentum)}};
-ATTR_MAP(ApplyMomentum) = {{"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())},
-                           {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
-OUTPUT_MAP(ApplyMomentum) = {{0, OUTPUT_DESC(var)}};
+ATTR_MAP(ApplyMomentumD) = {{"use_nesterov", ATTR_DESC(use_nesterov, AnyTraits<bool>())},
+                            {"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyMomentumD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}};
 
 // ScalarSummary
 INPUT_MAP(Summary) = {{2, INPUT_DESC(x)}};
