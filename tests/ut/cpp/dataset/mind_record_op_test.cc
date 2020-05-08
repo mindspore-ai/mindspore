@@ -62,7 +62,8 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBasic) {
 
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
-  builder.SetDatasetFile(mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0")
+  builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
+      .SetLoadDataset(true)
       .SetRowsPerBuffer(3)
       .SetNumMindRecordWorkers(4)
       .SetColumnsToLoad(column_list);
@@ -132,7 +133,8 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordSample) {
 
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
-  builder.SetDatasetFile(mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0")
+  builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
+      .SetLoadDataset(true)
       .SetRowsPerBuffer(3)
       .SetNumMindRecordWorkers(4)
       .SetColumnsToLoad(column_list)
@@ -203,7 +205,8 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordShuffle) {
 
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
-  builder.SetDatasetFile(mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0")
+  builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
+      .SetLoadDataset(true)
       .SetRowsPerBuffer(3)
       .SetNumMindRecordWorkers(4)
       .SetColumnsToLoad(column_list)
@@ -277,7 +280,8 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordCategory) {
 
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
-  builder.SetDatasetFile(mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0")
+  builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
+      .SetLoadDataset(true)
       .SetRowsPerBuffer(3)
       .SetNumMindRecordWorkers(4)
       .SetColumnsToLoad(column_list)
@@ -345,7 +349,8 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordRepeat) {
 
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
-  builder.SetDatasetFile(mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0")
+  builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
+      .SetLoadDataset(true)
       .SetRowsPerBuffer(3)
       .SetNumMindRecordWorkers(4)
       .SetColumnsToLoad(column_list);
@@ -426,7 +431,8 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBlockReaderRepeat) {
 
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
-  builder.SetDatasetFile(mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0")
+  builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
+      .SetLoadDataset(true)
       .SetRowsPerBuffer(3)
       .SetNumMindRecordWorkers(4)
       .SetBlockReader()
@@ -507,7 +513,8 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordInvalidColumnList) {
 
   std::shared_ptr<MindRecordOp> my_mindrecord_op;
   MindRecordOp::Builder builder;
-  builder.SetDatasetFile(mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0")
+  builder.SetDatasetFile({mindrecord_root_path_ + "/testMindDataSet/testImageNetData/imagenet.mindrecord0"})
+      .SetLoadDataset(true)
       .SetRowsPerBuffer(3)
       .SetNumMindRecordWorkers(4)
       .SetColumnsToLoad(column_list);

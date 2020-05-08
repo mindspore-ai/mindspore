@@ -529,8 +529,11 @@ def check_minddataset(method):
         dataset_file = param_dict.get('dataset_file')
         if dataset_file is None:
             raise ValueError("dataset_file is not provided.")
-        check_dataset_file(dataset_file)
-
+        if isinstance(dataset_file, list):
+            for f in dataset_file:
+                check_dataset_file(f)
+        else:
+            check_dataset_file(dataset_file)
         check_param_type(nreq_param_int, param_dict, int)
 
         check_param_type(nreq_param_list, param_dict, list)

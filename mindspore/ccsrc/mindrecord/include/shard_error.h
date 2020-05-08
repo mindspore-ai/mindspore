@@ -72,7 +72,8 @@ enum MSRStatus {
   ILLEGAL_PARAMETERS,
   GET_PAGE_BY_GROUP_ID_FAILED,
   GET_SYSTEM_STATE_FAILED,
-  IO_FAILED
+  IO_FAILED,
+  MATCH_HEADER_FAILED
 };
 
 // convert error no to string message

@@ -2189,7 +2189,7 @@ class MindDataset(SourceDataset):
     A source dataset that reads from shard files and database.
 
     Args:
-        dataset_file (str): one of file names in dataset.
+        dataset_file (str, list[str]): One of file names or file list in dataset.
         columns_list (list[str], optional): List of columns to be read (default=None).
         num_parallel_workers (int, optional): The number of readers (default=None).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
@@ -2214,6 +2214,10 @@ class MindDataset(SourceDataset):
                  shuffle=None, num_shards=None, shard_id=None,
                  block_reader=False, sampler=None):
         super().__init__(num_parallel_workers)
+        if isinstance(dataset_file, list):
+            self.load_dataset = False
+        else:
+            self.load_dataset = True
         self.dataset_file = dataset_file
         self.columns_list = columns_list
         self.global_shuffle = shuffle
@@ -2256,6 +2260,7 @@ class MindDataset(SourceDataset):
     def get_args(self):
         args = super().get_args()
         args["dataset_file"] = self.dataset_file
+        args["load_dataset"] = self.load_dataset
         args["columns_list"] = self.columns_list
         args["global_shuffle"] = self.global_shuffle
         args["partitions"] = self.partitions
@@ -2272,8 +2277,11 @@ class MindDataset(SourceDataset):
         Return:
             Number, number of batches.
         """
-
-        num_rows = MindRecordOp.get_num_rows(self.dataset_file, self.sampler)
+        if self.load_dataset:
+            dataset_file = [self.dataset_file]
+        else:
+            dataset_file = self.dataset_file
+        num_rows = MindRecordOp.get_num_rows(dataset_file, self.load_dataset, self.sampler)
         if self.partitions is not None and self.partitions[0] > 0:
             if num_rows % self.partitions[0] == 0:
                 num_rows = num_rows // self.partitions[0]

@@ -84,7 +84,8 @@ void BindShardWriter(py::module *m) {
 void BindShardReader(const py::module *m) {
   (void)py::class_<ShardReader, std::shared_ptr<ShardReader>>(*m, "ShardReader", py::module_local())
     .def(py::init<>())
-    .def("open", (MSRStatus(ShardReader::*)(const std::string &, const int &, const std::vector<std::string> &,
+    .def("open", (MSRStatus(ShardReader::*)(const std::vector<std::string> &, bool, const int &,
+                                            const std::vector<std::string> &,
                                             const std::vector<std::shared_ptr<ShardOperator>> &)) &
                    ShardReader::OpenPy)
     .def("launch", &ShardReader::Launch)
@@ -106,7 +107,8 @@ void BindShardIndexGenerator(const py::module *m) {
 void BindShardSegment(py::module *m) {
   (void)py::class_<ShardSegment>(*m, "ShardSegment", py::module_local())
     .def(py::init<>())
-    .def("open", (MSRStatus(ShardSegment::*)(const std::string &, const int &, const std::vector<std::string> &,
+    .def("open", (MSRStatus(ShardSegment::*)(const std::vector<std::string> &, bool, const int &,
+                                             const std::vector<std::string> &,
                                              const std::vector<std::shared_ptr<ShardOperator>> &)) &
                    ShardSegment::OpenPy)
     .def("get_category_fields",

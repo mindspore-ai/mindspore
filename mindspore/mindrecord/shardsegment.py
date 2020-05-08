@@ -40,7 +40,7 @@ class ShardSegment:
         Initialize the ShardSegment.
 
         Args:
-            file_name (str): File name of MindRecord File.
+            file_name (str, list[str]): File names of MindRecord File.
             num_consumer (int): Number of worker threads which load data in parallel. Default: 4.
             columns (list[str]): List of fields which correspond data would be read.
             operator(int): Reserved parameter for operators. Default: None.
@@ -53,7 +53,12 @@ class ShardSegment:
         """
         self._columns = columns if columns else []
         operator = operator if operator else []
-        ret = self._segment.open(file_name, num_consumer, self._columns, operator)
+        if isinstance(file_name, list):
+            load_dataset = False
+        else:
+            load_dataset = True
+            file_name = [file_name]
+        ret = self._segment.open(file_name, load_dataset, num_consumer, self._columns, operator)
         if ret != SUCCESS:
             logger.error("Failed to open {}.".format(file_name))
             raise MRMOpenError

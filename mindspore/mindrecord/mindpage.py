@@ -28,7 +28,7 @@ class MindPage:
     Class to read MindRecord File series in pagination.
 
     Args:
-        file_name (str): File name of MindRecord File.
+        file_name (str): One of MindRecord File or file list.
         num_consumer(int, optional): Number of consumer threads which load data to memory (default=4).
             It should not be smaller than 1 or larger than the number of CPU.
 
@@ -37,8 +37,11 @@ class MindPage:
         MRMInitSegmentError: If failed to initialize ShardSegment.
     """
     def __init__(self, file_name, num_consumer=4):
-        check_filename(file_name)
-        self._file_name = file_name
+        if isinstance(file_name, list):
+            for f in file_name:
+                check_filename(f)
+        else:
+            check_filename(file_name)
 
         if num_consumer is not None:
             if isinstance(num_consumer, int):

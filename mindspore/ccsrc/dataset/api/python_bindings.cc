@@ -151,16 +151,17 @@ void bindDatasetOps(py::module *m) {
     });
 
   (void)py::class_<MindRecordOp, DatasetOp, std::shared_ptr<MindRecordOp>>(*m, "MindRecordOp")
-    .def_static("get_num_rows", [](const std::string &path, const py::object &sampler) {
-      int64_t count = 0;
-      std::shared_ptr<mindrecord::ShardOperator> op;
-      if (py::hasattr(sampler, "_create_for_minddataset")) {
-        auto create = sampler.attr("_create_for_minddataset");
-        op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
-      }
-      THROW_IF_ERROR(MindRecordOp::CountTotalRows(path, op, &count));
-      return count;
-    });
+    .def_static("get_num_rows",
+                [](const std::vector<std::string> &paths, bool load_dataset, const py::object &sampler) {
+                  int64_t count = 0;
+                  std::shared_ptr<mindrecord::ShardOperator> op;
+                  if (py::hasattr(sampler, "_create_for_minddataset")) {
+                    auto create = sampler.attr("_create_for_minddataset");
+                    op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
+                  }
+                  THROW_IF_ERROR(MindRecordOp::CountTotalRows(paths, load_dataset, op, &count));
+                  return count;
+                });
 
   (void)py::class_<ManifestOp, DatasetOp, std::shared_ptr<ManifestOp>>(*m, "ManifestOp")
     .def_static("get_num_rows_and_classes",
