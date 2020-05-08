@@ -343,7 +343,7 @@ std::vector<std::string> ShardHeader::SerializeHeader() {
 
 std::string ShardHeader::SerializeIndexFields() {
   json j;
-  auto fields = index_->get_fields();
+  auto fields = index_->GetFields();
   for (const auto &field : fields) {
     j.push_back({{"schema_id", field.first}, {"index_field", field.second}});
   }
@@ -365,7 +365,7 @@ std::vector<std::string> ShardHeader::SerializePage() {
 std::string ShardHeader::SerializeStatistics() {
   json j;
   for (const auto &stats : statistics_) {
-    j.emplace_back(stats->get_statistics());
+    j.emplace_back(stats->GetStatistics());
   }
   return j.dump();
 }
@@ -398,8 +398,8 @@ MSRStatus ShardHeader::SetPage(const std::shared_ptr<Page> &new_page) {
   if (new_page == nullptr) {
     return FAILED;
   }
-  int shard_id = new_page->get_shard_id();
-  int page_id = new_page->get_page_id();
+  int shard_id = new_page->GetShardID();
+  int page_id = new_page->GetPageID();
   if (shard_id < static_cast<int>(pages_.size()) && page_id < static_cast<int>(pages_[shard_id].size())) {
     pages_[shard_id][page_id] = new_page;
     return SUCCESS;
@@ -412,8 +412,8 @@ MSRStatus ShardHeader::AddPage(const std::shared_ptr<Page> &new_page) {
   if (new_page == nullptr) {
     return FAILED;
   }
-  int shard_id = new_page->get_shard_id();
-  int page_id = new_page->get_page_id();
+  int shard_id = new_page->GetShardID();
+  int page_id = new_page->GetPageID();
   if (shard_id < static_cast<int>(pages_.size()) && page_id == static_cast<int>(pages_[shard_id].size())) {
     pages_[shard_id].push_back(new_page);
     return SUCCESS;
@@ -435,8 +435,8 @@ int ShardHeader::GetLastPageIdByType(const int &shard_id, const std::string &pag
   }
   int last_page_id = -1;
   for (uint64_t i = pages_[shard_id].size(); i >= 1; i--) {
-    if (pages_[shard_id][i - 1]->get_page_type() == page_type) {
-      last_page_id = pages_[shard_id][i - 1]->get_page_id();
+    if (pages_[shard_id][i - 1]->GetPageType() == page_type) {
+      last_page_id = pages_[shard_id][i - 1]->GetPageID();
       return last_page_id;
     }
   }
@@ -451,7 +451,7 @@ const std::pair<MSRStatus, std::shared_ptr<Page>> ShardHeader::GetPageByGroupId(
   }
   for (uint64_t i = pages_[shard_id].size(); i >= 1; i--) {
     auto page = pages_[shard_id][i - 1];
-    if (page->get_page_type() == kPageTypeBlob && page->get_page_type_id() == group_id) {
+    if (page->GetPageType() == kPageTypeBlob && page->GetPageTypeID() == group_id) {
       return {SUCCESS, page};
     }
   }
@@ -470,10 +470,10 @@ int ShardHeader::AddSchema(std::shared_ptr<Schema> schema) {
     return -1;
   }
 
-  int64_t schema_id = schema->get_schema_id();
+  int64_t schema_id = schema->GetSchemaID();
   if (schema_id == -1) {
     schema_id = schema_.size();
-    schema->set_schema_id(schema_id);
+    schema->SetSchemaID(schema_id);
   }
   schema_.push_back(schema);
   return schema_id;
@@ -481,10 +481,10 @@ int ShardHeader::AddSchema(std::shared_ptr<Schema> schema) {
 
 void ShardHeader::AddStatistic(std::shared_ptr<Statistics> statistic) {
   if (statistic) {
-    int64_t statistics_id = statistic->get_statistics_id();
+    int64_t statistics_id = statistic->GetStatisticsID();
     if (statistics_id == -1) {
       statistics_id = statistics_.size();
-      statistic->set_statistics_id(statistics_id);
+      statistic->SetStatisticsID(statistics_id);
     }
     statistics_.push_back(statistic);
   }
@@ -527,13 +527,13 @@ MSRStatus ShardHeader::AddIndexFields(const std::vector<std::string> &fields) {
     return FAILED;
   }
 
-  if (get_schemas().empty()) {
+  if (GetSchemas().empty()) {
     MS_LOG(ERROR) << "No schema is set";
     return FAILED;
   }
 
   for (const auto &schemaPtr : schema_) {
-    auto result = GetSchemaByID(schemaPtr->get_schema_id());
+    auto result = GetSchemaByID(schemaPtr->GetSchemaID());
     if (result.second != SUCCESS) {
       MS_LOG(ERROR) << "Could not get schema by id.";
       return FAILED;
@@ -548,7 +548,7 @@ MSRStatus ShardHeader::AddIndexFields(const std::vector<std::string> &fields) {
 
     // checkout and add fields for each schema
     std::set<std::string> field_set;
-    for (const auto &item : index->get_fields()) {
+    for (const auto &item : index->GetFields()) {
       field_set.insert(item.second);
     }
     for (const auto &field : fields) {
@@ -564,7 +564,7 @@ MSRStatus ShardHeader::AddIndexFields(const std::vector<std::string> &fields) {
       field_set.insert(field);
 
       // add field into index
-      index.get()->AddIndexField(schemaPtr->get_schema_id(), field);
+      index.get()->AddIndexField(schemaPtr->GetSchemaID(), field);
     }
   }
 
@@ -575,12 +575,12 @@ MSRStatus ShardHeader::AddIndexFields(const std::vector<std::string> &fields) {
 MSRStatus ShardHeader::GetAllSchemaID(std::set<uint64_t> &bucket_count) {
   // get all schema id
   for (const auto &schema : schema_) {
-    auto bucket_it = bucket_count.find(schema->get_schema_id());
+    auto bucket_it = bucket_count.find(schema->GetSchemaID());
     if (bucket_it != bucket_count.end()) {
       MS_LOG(ERROR) << "Schema duplication";
       return FAILED;
     } else {
-      bucket_count.insert(schema->get_schema_id());
+      bucket_count.insert(schema->GetSchemaID());
     }
   }
   return SUCCESS;
@@ -603,7 +603,7 @@ MSRStatus ShardHeader::AddIndexFields(std::vector<std::pair<uint64_t, std::strin
 
   // check and add fields for each schema
   std::set<std::pair<uint64_t, std::string>> field_set;
-  for (const auto &item : index->get_fields()) {
+  for (const auto &item : index->GetFields()) {
     field_set.insert(item);
   }
   for (const auto &field : fields) {
@@ -646,20 +646,20 @@ MSRStatus ShardHeader::AddIndexFields(std::vector<std::pair<uint64_t, std::strin
   return SUCCESS;
 }
 
-std::string ShardHeader::get_shard_address_by_id(int64_t shard_id) {
+std::string ShardHeader::GetShardAddressByID(int64_t shard_id) {
   if (shard_id >= shard_addresses_.size()) {
     return "";
   }
   return shard_addresses_.at(shard_id);
 }
 
-std::vector<std::shared_ptr<Schema>> ShardHeader::get_schemas() { return schema_; }
+std::vector<std::shared_ptr<Schema>> ShardHeader::GetSchemas() { return schema_; }
 
-std::vector<std::shared_ptr<Statistics>> ShardHeader::get_statistics() { return statistics_; }
+std::vector<std::shared_ptr<Statistics>> ShardHeader::GetStatistics() { return statistics_; }
 
-std::vector<std::pair<uint64_t, std::string>> ShardHeader::get_fields() { return index_->get_fields(); }
+std::vector<std::pair<uint64_t, std::string>> ShardHeader::GetFields() { return index_->GetFields(); }
 
-std::shared_ptr<Index> ShardHeader::get_index() { return index_; }
+std::shared_ptr<Index> ShardHeader::GetIndex() { return index_; }
 
 std::pair<std::shared_ptr<Schema>, MSRStatus> ShardHeader::GetSchemaByID(int64_t schema_id) {
   int64_t schemaSize = schema_.size();

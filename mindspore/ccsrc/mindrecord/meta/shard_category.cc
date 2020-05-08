@@ -34,7 +34,7 @@ ShardCategory::ShardCategory(const std::string &category_field, int64_t num_elem
       num_categories_(num_categories),
       replacement_(replacement) {}
 
-MSRStatus ShardCategory::execute(ShardTask &tasks) { return SUCCESS; }
+MSRStatus ShardCategory::Execute(ShardTask &tasks) { return SUCCESS; }
 
 int64_t ShardCategory::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
   if (dataset_size == 0) return dataset_size;

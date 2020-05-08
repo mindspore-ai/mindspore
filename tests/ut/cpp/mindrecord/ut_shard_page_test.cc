@@ -57,15 +57,15 @@ TEST_F(TestShardPage, TestBasic) {
 
   Page page =
     Page(kGoldenPageId, kGoldenShardId, kGoldenType, kGoldenTypeId, kGoldenStart, kGoldenEnd, golden_row_group, kGoldenSize);
-  EXPECT_EQ(kGoldenPageId, page.get_page_id());
-  EXPECT_EQ(kGoldenShardId, page.get_shard_id());
-  EXPECT_EQ(kGoldenTypeId, page.get_page_type_id());
-  ASSERT_TRUE(kGoldenType == page.get_page_type());
-  EXPECT_EQ(kGoldenSize, page.get_page_size());
-  EXPECT_EQ(kGoldenStart, page.get_start_row_id());
-  EXPECT_EQ(kGoldenEnd, page.get_end_row_id());
-  ASSERT_TRUE(std::make_pair(4, kOffset) == page.get_last_row_group_id());
-  ASSERT_TRUE(golden_row_group == page.get_row_group_ids());
+  EXPECT_EQ(kGoldenPageId, page.GetPageID());
+  EXPECT_EQ(kGoldenShardId, page.GetShardID());
+  EXPECT_EQ(kGoldenTypeId, page.GetPageTypeID());
+  ASSERT_TRUE(kGoldenType == page.GetPageType());
+  EXPECT_EQ(kGoldenSize, page.GetPageSize());
+  EXPECT_EQ(kGoldenStart, page.GetStartRowID());
+  EXPECT_EQ(kGoldenEnd, page.GetEndRowID());
+  ASSERT_TRUE(std::make_pair(4, kOffset) == page.GetLastRowGroupID());
+  ASSERT_TRUE(golden_row_group == page.GetRowGroupIds());
 }
 
 TEST_F(TestShardPage, TestSetter) {
@@ -86,43 +86,43 @@ TEST_F(TestShardPage, TestSetter) {
 
   Page page =
     Page(kGoldenPageId, kGoldenShardId, kGoldenType, kGoldenTypeId, kGoldenStart, kGoldenEnd, golden_row_group, kGoldenSize);
-  EXPECT_EQ(kGoldenPageId, page.get_page_id());
-  EXPECT_EQ(kGoldenShardId, page.get_shard_id());
-  EXPECT_EQ(kGoldenTypeId, page.get_page_type_id());
-  ASSERT_TRUE(kGoldenType == page.get_page_type());
-  EXPECT_EQ(kGoldenSize, page.get_page_size());
-  EXPECT_EQ(kGoldenStart, page.get_start_row_id());
-  EXPECT_EQ(kGoldenEnd, page.get_end_row_id());
-  ASSERT_TRUE(std::make_pair(4, kOffset1) == page.get_last_row_group_id());
-  ASSERT_TRUE(golden_row_group == page.get_row_group_ids());
+  EXPECT_EQ(kGoldenPageId, page.GetPageID());
+  EXPECT_EQ(kGoldenShardId, page.GetShardID());
+  EXPECT_EQ(kGoldenTypeId, page.GetPageTypeID());
+  ASSERT_TRUE(kGoldenType == page.GetPageType());
+  EXPECT_EQ(kGoldenSize, page.GetPageSize());
+  EXPECT_EQ(kGoldenStart, page.GetStartRowID());
+  EXPECT_EQ(kGoldenEnd, page.GetEndRowID());
+  ASSERT_TRUE(std::make_pair(4, kOffset1) == page.GetLastRowGroupID());
+  ASSERT_TRUE(golden_row_group == page.GetRowGroupIds());
 
   const int kNewEnd = 33;
   const int kNewSize = 300;
   std::vector<std::pair<int, uint64_t>> new_row_group = {{0, 100}, {100, 200}, {200, 3000}};
-  page.set_end_row_id(kNewEnd);
-  page.set_page_size(kNewSize);
-  page.set_row_group_ids(new_row_group);
-  EXPECT_EQ(kGoldenPageId, page.get_page_id());
-  EXPECT_EQ(kGoldenShardId, page.get_shard_id());
-  EXPECT_EQ(kGoldenTypeId, page.get_page_type_id());
-  ASSERT_TRUE(kGoldenType == page.get_page_type());
-  EXPECT_EQ(kNewSize, page.get_page_size());
-  EXPECT_EQ(kGoldenStart, page.get_start_row_id());
-  EXPECT_EQ(kNewEnd, page.get_end_row_id());
-  ASSERT_TRUE(std::make_pair(200, kOffset2) == page.get_last_row_group_id());
-  ASSERT_TRUE(new_row_group == page.get_row_group_ids());
+  page.SetEndRowID(kNewEnd);
+  page.SetPageSize(kNewSize);
+  page.SetRowGroupIds(new_row_group);
+  EXPECT_EQ(kGoldenPageId, page.GetPageID());
+  EXPECT_EQ(kGoldenShardId, page.GetShardID());
+  EXPECT_EQ(kGoldenTypeId, page.GetPageTypeID());
+  ASSERT_TRUE(kGoldenType == page.GetPageType());
+  EXPECT_EQ(kNewSize, page.GetPageSize());
+  EXPECT_EQ(kGoldenStart, page.GetStartRowID());
+  EXPECT_EQ(kNewEnd, page.GetEndRowID());
+  ASSERT_TRUE(std::make_pair(200, kOffset2) == page.GetLastRowGroupID());
+  ASSERT_TRUE(new_row_group == page.GetRowGroupIds());
   page.DeleteLastGroupId();
 
-  EXPECT_EQ(kGoldenPageId, page.get_page_id());
-  EXPECT_EQ(kGoldenShardId, page.get_shard_id());
-  EXPECT_EQ(kGoldenTypeId, page.get_page_type_id());
-  ASSERT_TRUE(kGoldenType == page.get_page_type());
-  EXPECT_EQ(3000, page.get_page_size());
-  EXPECT_EQ(kGoldenStart, page.get_start_row_id());
-  EXPECT_EQ(kNewEnd, page.get_end_row_id());
-  ASSERT_TRUE(std::make_pair(100, kOffset3) == page.get_last_row_group_id());
+  EXPECT_EQ(kGoldenPageId, page.GetPageID());
+  EXPECT_EQ(kGoldenShardId, page.GetShardID());
+  EXPECT_EQ(kGoldenTypeId, page.GetPageTypeID());
+  ASSERT_TRUE(kGoldenType == page.GetPageType());
+  EXPECT_EQ(3000, page.GetPageSize());
+  EXPECT_EQ(kGoldenStart, page.GetStartRowID());
+  EXPECT_EQ(kNewEnd, page.GetEndRowID());
+  ASSERT_TRUE(std::make_pair(100, kOffset3) == page.GetLastRowGroupID());
   new_row_group.pop_back();
-  ASSERT_TRUE(new_row_group == page.get_row_group_ids());
+  ASSERT_TRUE(new_row_group == page.GetRowGroupIds());
 }
 
 TEST_F(TestShardPage, TestJson) {

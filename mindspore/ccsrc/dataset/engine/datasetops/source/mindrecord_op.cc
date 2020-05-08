@@ -108,7 +108,7 @@ Status MindRecordOp::Init() {
 
   data_schema_ = std::make_unique<DataSchema>();
 
-  std::vector<std::shared_ptr<Schema>> schema_vec = shard_reader_->get_shard_header()->get_schemas();
+  std::vector<std::shared_ptr<Schema>> schema_vec = shard_reader_->GetShardHeader()->GetSchemas();
   // check whether schema exists, if so use the first one
   CHECK_FAIL_RETURN_UNEXPECTED(!schema_vec.empty(), "No schema found");
   mindrecord::json mr_schema = schema_vec[0]->GetSchema()["schema"];
@@ -155,7 +155,7 @@ Status MindRecordOp::Init() {
     column_name_mapping_[columns_to_load_[i]] = i;
   }
 
-  num_rows_ = shard_reader_->get_num_rows();
+  num_rows_ = shard_reader_->GetNumRows();
   // Compute how many buffers we would need to accomplish rowsPerBuffer
   buffers_needed_ = (num_rows_ + rows_per_buffer_ - 1) / rows_per_buffer_;
   RETURN_IF_NOT_OK(SetColumnsBlob());
@@ -164,7 +164,7 @@ Status MindRecordOp::Init() {
 }
 
 Status MindRecordOp::SetColumnsBlob() {
-  columns_blob_ = shard_reader_->get_blob_fields().second;
+  columns_blob_ = shard_reader_->GetBlobFields().second;
 
   // get the exactly blob fields by columns_to_load_
   std::vector<std::string> columns_blob_exact;
@@ -600,7 +600,7 @@ Status MindRecordOp::FetchBlockBuffer(const int32_t &buffer_id) {
 // Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
 Status MindRecordOp::operator()() {
   RETURN_IF_NOT_OK(LaunchThreadAndInitOp());
-  num_rows_ = shard_reader_->get_num_rows();
+  num_rows_ = shard_reader_->GetNumRows();
 
   buffers_needed_ = num_rows_ / rows_per_buffer_;
   if (num_rows_ % rows_per_buffer_ != 0) {

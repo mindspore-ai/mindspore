@@ -107,11 +107,11 @@ class ShardReader {
 
   /// \brief aim to get the meta data
   /// \return the metadata
-  std::shared_ptr<ShardHeader> get_shard_header() const;
+  std::shared_ptr<ShardHeader> GetShardHeader() const;
 
   /// \brief get the number of shards
   /// \return # of shards
-  int get_shard_count() const;
+  int GetShardCount() const;
 
   /// \brief get the number of rows in database
   /// \param[in] file_path the path of ONE file, any file in dataset is fine
@@ -126,7 +126,7 @@ class ShardReader {
 
   /// \brief get the number of rows in database
   /// \return # of rows
-  int get_num_rows() const;
+  int GetNumRows() const;
 
   /// \brief Read the summary of row groups
   /// \return the tuple of 4 elements
@@ -185,7 +185,7 @@ class ShardReader {
 
   /// \brief  get blob filed list
   /// \return blob field list
-  std::pair<ShardType, std::vector<std::string>> get_blob_fields();
+  std::pair<ShardType, std::vector<std::string>> GetBlobFields();
 
   /// \brief reset reader
   /// \return null
@@ -193,10 +193,10 @@ class ShardReader {
 
   /// \brief set flag of all-in-index
   /// \return null
-  void set_all_in_index(bool all_in_index) { all_in_index_ = all_in_index; }
+  void SetAllInIndex(bool all_in_index) { all_in_index_ = all_in_index; }
 
   /// \brief get NLP flag
-  bool get_nlp_flag();
+  bool GetNlpFlag();
 
   /// \brief get all classes
   MSRStatus GetAllClasses(const std::string &category_field, std::set<std::string> &categories);

@@ -81,7 +81,7 @@ class ShardSegment : public ShardReader {
   std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>>> ReadAtPageByNamePy(
     std::string category_name, int64_t page_no, int64_t n_rows_of_page);
 
-  std::pair<ShardType, std::vector<std::string>> get_blob_fields();
+  std::pair<ShardType, std::vector<std::string>> GetBlobFields();
 
  private:
   std::pair<MSRStatus, std::vector<std::tuple<int, std::string, int>>> WrapCategoryInfo();

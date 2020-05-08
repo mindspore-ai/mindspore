@@ -52,7 +52,7 @@ class Index {
 
   /// \brief get stored fields
   /// \return fields stored
-  std::vector<std::pair<uint64_t, std::string> > get_fields();
+  std::vector<std::pair<uint64_t, std::string> > GetFields();
 
  private:
   std::vector<std::pair<uint64_t, std::string> > fields_;

@@ -44,7 +44,7 @@ std::shared_ptr<Schema> Schema::Build(std::string desc, pybind11::handle schema)
   return Build(std::move(desc), schema_json);
 }
 
-std::string Schema::get_desc() const { return desc_; }
+std::string Schema::GetDesc() const { return desc_; }
 
 json Schema::GetSchema() const {
   json str_schema;
@@ -60,11 +60,11 @@ pybind11::object Schema::GetSchemaForPython() const {
   return schema_py;
 }
 
-void Schema::set_schema_id(int64_t id) { schema_id_ = id; }
+void Schema::SetSchemaID(int64_t id) { schema_id_ = id; }
 
-int64_t Schema::get_schema_id() const { return schema_id_; }
+int64_t Schema::GetSchemaID() const { return schema_id_; }
 
-std::vector<std::string> Schema::get_blob_fields() const { return blob_fields_; }
+std::vector<std::string> Schema::GetBlobFields() const { return blob_fields_; }
 
 std::vector<std::string> Schema::PopulateBlobFields(json schema) {
   std::vector<std::string> blob_fields;
@@ -155,7 +155,7 @@ bool Schema::Validate(json schema) {
 }
 
 bool Schema::operator==(const mindrecord::Schema &b) const {
-  if (this->get_desc() != b.get_desc() || this->GetSchema() != b.GetSchema()) {
+  if (this->GetDesc() != b.GetDesc() || this->GetSchema() != b.GetSchema()) {
     return false;
   }
   return true;

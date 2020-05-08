@@ -139,7 +139,7 @@ TEST_F(TestShardOperator, TestShardSamplePartition) {
   const int kPar = 2;
   std::vector<std::shared_ptr<ShardOperator>> ops;
   ops.push_back(std::make_shared<ShardSample>(kNum, kDen, kPar));
-  auto partitions = std::dynamic_pointer_cast<ShardSample>(ops[0])->get_partitions();
+  auto partitions = std::dynamic_pointer_cast<ShardSample>(ops[0])->GetPartitions();
   ASSERT_TRUE(partitions.first == 4);
   ASSERT_TRUE(partitions.second == 2);
 

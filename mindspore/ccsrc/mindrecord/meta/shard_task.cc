@@ -59,12 +59,12 @@ uint32_t ShardTask::SizeOfRows() const {
   return nRows;
 }
 
-std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::get_task_by_id(size_t id) {
+std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::GetTaskByID(size_t id) {
   MS_ASSERT(id < task_list_.size());
   return task_list_[id];
 }
 
-std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::get_random_task() {
+std::tuple<std::tuple<int, int>, std::vector<uint64_t>, json> &ShardTask::GetRandomTask() {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<> dis(0, task_list_.size() - 1);
@@ -82,7 +82,7 @@ ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replac
     }
     for (uint32_t task_no = 0; task_no < minTasks; task_no++) {
       for (uint32_t i = 0; i < total_categories; i++) {
-        res.InsertTask(std::move(category_tasks[i].get_task_by_id(static_cast<int>(task_no))));
+        res.InsertTask(std::move(category_tasks[i].GetTaskByID(static_cast<int>(task_no))));
       }
     }
   } else {
@@ -95,7 +95,7 @@ ShardTask ShardTask::Combine(std::vector<ShardTask> &category_tasks, bool replac
     }
     for (uint32_t i = 0; i < total_categories; i++) {
       for (uint32_t j = 0; j < maxTasks; j++) {
-        res.InsertTask(category_tasks[i].get_random_task());
+        res.InsertTask(category_tasks[i].GetRandomTask());
       }
     }
   }
