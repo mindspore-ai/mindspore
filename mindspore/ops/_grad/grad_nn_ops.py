@@ -668,3 +668,16 @@ def get_bprop_dropout(self):
         return (dx,)
 
     return bprop
+
+
+@bprop_getters.register(P.CTCLoss)
+def get_bprop_ctc_loss(self):
+    """Grad definition for `CTCLoss` operation"""
+    expand = P.ExpandDims()
+
+    def bprop(inputs, labels_indices, labels_values, sequence_length, out, dout):
+        grad_loss = out[1]
+        grad = grad_loss * expand(dout[0], -1)
+        return grad, zeros_like(labels_indices), zeros_like(labels_values), zeros_like(sequence_length)
+
+    return bprop

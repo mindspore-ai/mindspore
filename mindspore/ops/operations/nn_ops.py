@@ -1564,7 +1564,7 @@ class L2Loss(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type):
         validator.check_subclass("x_type", x_type, mstype.tensor, self.name)
-        valid_types = [mstype.float16, mstype.float32, mstype.double]
+        valid_types = [mstype.float16, mstype.float32]
         validator.check_tensor_type_same({'x_type': x_type}, valid_types, self.name)
         return x_type
 
@@ -2871,3 +2871,78 @@ class DropoutGrad(PrimitiveWithInfer):
         valid_types = (mstype.float16, mstype.float32)
         validator.check_tensor_type_same({"dy_dtype": dy_dtype}, valid_types, self.name)
         return dy_dtype
+
+
+class CTCLoss(PrimitiveWithInfer):
+    """
+    Calculates the CTC(Connectionist Temporal Classification) loss. Also calculates the gradient.
+
+    Args:
+        preprocess_collapse_repeated (bool): If True, repeated labels are collapsed prior to the CTC calculation.
+                                             Default: False.
+        ctc_merge_repeated (bool): If False, during CTC calculation, repeated non-blank labels will not be merged
+                                   and are interpreted as individual labels. This is a simplfied version if CTC.
+                                   Default: True.
+        ignore_longer_outputs_than_inputs (bool): If True, sequences with longer outputs than inputs will be ignored.
+                                                  Default: False.
+
+    Inputs:
+        - **inputs** (Tensor) - The input Tensor should be a `3-D` tensor whose shape is
+          :math:`(max_time, batch_size, num_class)`. `num_class` should be `num_labels + 1` classes, `num_labels`
+          indicates the number of actual labels. Blank labels are reserved.
+        - **labels_indices** (Tensor) - The indices of labels. `labels_indices[i, :] == [b, t]` means `labels_values[i]`
+          stores the id for `(batch b, time t)`. The type must be int64 and rank must be 2.
+        - **labels_values** (Tensor) - A `1-D` input tensor. The values associated with the given batch and time. The
+          type must be int32. `labels_values[i]` must in the range of `[0, num_class)`.
+        - **sequence_length** (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch_size)`.
+          The type must be int32. Each value in the tensor should not greater than `max_time`.
+
+    Outputs:
+        - **loss** (Tensor) - A tensor containing log-probabilities, the shape is :math:`(batch_size)`. Has the same
+          type with `inputs`.
+        - **gradient** (Tensor) - The gradient of `loss`. Has the same type and shape with `inputs`.
+
+    Examples:
+        >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
+        >>> labels_indices = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int64)
+        >>> labels_values = Tensor(np.array([2, 2]), mindspore.int32)
+        >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
+        >>> ctc_loss = P.CTCloss()
+        >>> output = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
+    """
+    @prim_attr_register
+    def __init__(self, preprocess_collapse_repeated=False, ctc_merge_repeated=False,
+                 ignore_longer_outputs_than_inputs=False):
+        self.init_prim_io_names(inputs=["inputs", "labels_indices", "labels_values", "sequence_length"],
+                                outputs=["loss", "gradient"])
+        validator.check_value_type("preprocess_collapse_repeated", preprocess_collapse_repeated, [bool], self.name)
+        self.preprocess_collapse_repeated_ = preprocess_collapse_repeated
+        self.ctc_merge_repeated_ = validator.check_value_type("ctc_merge_repeated", ctc_merge_repeated,
+                                                              [bool], self.name)
+        validator.check_value_type("ignore_longer_outputs_than_inputs",
+                                   ignore_longer_outputs_than_inputs, [bool], self.name)
+        self.ignore_longer_outputs_than_inputs_ = ignore_longer_outputs_than_inputs
+
+    def infer_shape(self, inputs, labels_indices, labels_values, sequence_length):
+        validator.check_integer("inputs rank", len(inputs), 3, Rel.EQ, self.name)
+        validator.check_integer("labels_indices rank", len(labels_indices), 2, Rel.EQ, self.name)
+        validator.check_integer("labels_values rank", len(labels_values), 1, Rel.EQ, self.name)
+        validator.check_integer("sequence_length rank", len(sequence_length), 1, Rel.EQ, self.name)
+        validator.check('labels_indices size', labels_indices[0], 'labels_values size',
+                        labels_values[0], Rel.EQ, self.name)
+        validator.check('inputs batch_size', inputs[1], 'sequence_length batch_size',
+                        sequence_length[0], Rel.EQ, self.name)
+        batch_size = []
+        batch_size.append(inputs[1])
+        return batch_size, inputs
+
+    def infer_dtype(self, inputs, labels_indices, labels_values, sequence_length):
+        validator.check_subclass("inputs_dtype", inputs, mstype.tensor, self.name)
+        validator.check_subclass("labels_indices_dtype", labels_indices, mstype.tensor, self.name)
+        validator.check_subclass("labels_values_dtype", labels_values, mstype.tensor, self.name)
+        validator.check_subclass("sequence_length_dtype", sequence_length, mstype.tensor, self.name)
+        validator.check_tensor_type_same({"inputs_dtype": inputs}, [mstype.float32, mstype.double], self.name)
+        validator.check_tensor_type_same({"labels_indices_dtype": labels_indices}, [mstype.int64], self.name)
+        validator.check_tensor_type_same({"labels_values_dtype": labels_values}, [mstype.int32], self.name)
+        validator.check_tensor_type_same({"sequence_length_dtype": sequence_length}, [mstype.int32], self.name)
+        return inputs, inputs

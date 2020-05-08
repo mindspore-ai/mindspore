@@ -1227,6 +1227,22 @@ INPUT_MAP(ApplyCenteredRMSProp) = {{1, INPUT_DESC(var)}, {2, INPUT_DESC(mg)},   
 ATTR_MAP(ApplyCenteredRMSProp) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
 OUTPUT_MAP(ApplyCenteredRMSProp) = {{0, OUTPUT_DESC(var)}};
 
+// L2Loss
+INPUT_MAP(L2Loss) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(L2Loss) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(L2Loss) = {{0, OUTPUT_DESC(y)}};
+
+// CTCLoss
+INPUT_MAP(CTCLoss) = {{1, INPUT_DESC(inputs)},
+                      {2, INPUT_DESC(labels_indices)},
+                      {3, INPUT_DESC(labels_values)},
+                      {4, INPUT_DESC(sequence_length)}};
+ATTR_MAP(CTCLoss) = {
+  {"preprocess_collapse_repeated", ATTR_DESC(preprocess_collapse_repeated, AnyTraits<bool>())},
+  {"ctc_merge_repeated", ATTR_DESC(ctc_merge_repeated, AnyTraits<bool>())},
+  {"ignore_longer_outputs_than_inputs", ATTR_DESC(ignore_longer_outputs_than_inputs, AnyTraits<bool>())}};
+OUTPUT_MAP(CTCLoss) = {{0, OUTPUT_DESC(loss)}, {1, OUTPUT_DESC(gradient)}};
+
 #ifdef ENABLE_GE
 // Print
 INPUT_MAP(Print) = EMPTY_INPUT_MAP;
