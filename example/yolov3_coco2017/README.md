@@ -12,7 +12,7 @@ YOLOv3 network based on ResNet-18, with support for training and evaluation.
 
     We use coco2017 as training dataset.
 
-    1. Download coco2017: [train2017](http://images.cocodataset.org/zips/train2017.zip), [val2017](http://images.cocodataset.org/zips/val2017.zip), [test2017](http://images.cocodataset.org/zips/test2017.zip), [annotations](http://images.cocodataset.org/annotations/annotations_trainval2017.zip). The directory structure is as follows:
+    1. The directory structure is as follows:
         > ```
         > .
         > ├── annotations  # annotation jsons
