@@ -31,7 +31,6 @@
 #include "pre_activate/ascend/ir_fusion/confusion_softmax_grad_rule.h"
 #include "pre_activate/ascend/ir_fusion/lamb_next_mv_rule.h"
 #include "pre_activate/ascend/ir_fusion/lamb_next_mv_with_decay_rule.h"
-#include "pre_activate/ascend/ir_fusion/lamb_next_mv_with_decay_v1_rule.h"
 #include "pre_activate/ascend/ir_fusion/lamb_next_right_rule.h"
 #include "pre_activate/ascend/ir_fusion/lamb_update_with_lr_v2.h"
 #include "pre_activate/ascend/ir_fusion/layer_norm_beta_gamma_backprop_fusion.h"
@@ -82,7 +81,6 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
-  ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayV1Rule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextRightRule>());
