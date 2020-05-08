@@ -1007,6 +1007,35 @@ class Log(PrimitiveWithInfer):
         return x
 
 
+class Log1p(PrimitiveWithInfer):
+    """
+    Returns the natural logarithm of one plus the input tensor element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+        >>> log1p = P.Log1p()
+        >>> log1p(input_x)
+        [0.6931472, 1.0986123, 1.609438]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+    def infer_shape(self, x):
+        return x
+
+    def infer_dtype(self, x):
+        validator.check_subclass("x", x, mstype.tensor, self.name)
+        return x
+
+
 class Erf(PrimitiveWithInfer):
     r"""
     Computes the Gauss error function of `input_x` element-wise.

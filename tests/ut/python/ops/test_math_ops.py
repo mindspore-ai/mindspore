@@ -359,6 +359,14 @@ class FloorNet(nn.Cell):
     def construct(self, x):
         return self.floor(x)
 
+class Log1pNet(nn.Cell):
+    def __init__(self):
+        super(Log1pNet, self).__init__()
+        self.log1p = P.Log1p()
+
+    def construct(self, x):
+        return self.log1p(x)
+
 
 test_case_math_ops = [
     ('MatMulGrad', {
@@ -404,6 +412,11 @@ test_case_math_ops = [
         'block': FloorNet(),
         'desc_inputs': [Tensor(np.array([[1., 0., -2.]], np.float32))],
         'desc_bprop': [Tensor(np.array([[1., 0., -2.]], np.float32))],
+        'skip': ['backward']}),
+    ('Log1p', {
+        'block': Log1pNet(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
         'skip': ['backward']}),
 ]
 
