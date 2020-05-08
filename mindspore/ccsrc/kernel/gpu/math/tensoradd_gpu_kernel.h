@@ -90,7 +90,7 @@ class TensorAddGpuFwdKernel : public GpuKernel {
     if (input_shape != output_shape && input_shapeB != output_shape) {
       MS_LOG(ERROR) << "Double-sided broadcast was not supported in cudnn of cudnnOpTensor:\n"
                        "InputA must match the corresponding dimension of the destination tensor outC, and each "
-                       "dimension of the inputB"
+                       "dimension of the inputB "
                        "must match the corresponding dimension of outC or must be equal to 1.";
       return false;
     }

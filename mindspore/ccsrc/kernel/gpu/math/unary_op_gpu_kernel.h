@@ -50,7 +50,11 @@ template <typename T>
 class UnaryOpGpuKernel : public GpuKernel {
  public:
   UnaryOpGpuKernel()
-      : unary_op_type_(UNARY_OP_INVALID_TYPE), input_size_(sizeof(T)), output_size_(sizeof(T)), workspace_size_(0) {}
+      : unary_op_type_(UNARY_OP_INVALID_TYPE),
+        input_size_(sizeof(T)),
+        output_size_(sizeof(T)),
+        workspace_size_(0),
+        is_null_input_(false) {}
   ~UnaryOpGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -121,6 +125,12 @@ class UnaryOpGpuKernel : public GpuKernel {
       return false;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "UnaryOpGpuKernel input is null";
+      InitSizeLists();
+      return true;
+    }
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
     }
@@ -140,6 +150,7 @@ class UnaryOpGpuKernel : public GpuKernel {
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;

@@ -114,6 +114,14 @@ class BinaryOpGpuKernel : public GpuKernel {
     InferBinaryType(kernel_node);
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto input_shapeB = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    if (input_shape != output_shape && input_shapeB != output_shape) {
+      MS_LOG(ERROR) << "Double-sided broadcast was not supported in cudnn of cudnnOpTensor:\n"
+                       "InputA must match the corresponding dimension of the destination tensor outC, and each "
+                       "dimension of the inputB "
+                       "must match the corresponding dimension of outC or must be equal to 1.";
+      return false;
+    }
     is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(input_shapeB);
     if (is_null_input_) {
       MS_LOG(WARNING) << "BinaryOpGpuKernel input is null";
