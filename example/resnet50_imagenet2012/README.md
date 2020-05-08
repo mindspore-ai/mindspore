@@ -2,19 +2,19 @@
 
 ## Description
 
-This is an example of training ResNet-50 with CIFAR-10 dataset in MindSpore.
+This is an example of training ResNet-50 with ImageNet2012 dataset in MindSpore.
 
 ## Requirements
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the dataset CIFAR-10
+- Download the dataset ImageNet2012 
 
-> Unzip the CIFAR-10 dataset to any path you want and the folder structure should include train and eval dataset as follows:
+> Unzip the ImageNet2012 dataset to any path you want and the folder structure should include train and eval dataset as follows:
 > ```
 > .  
-> ├── cifar-10-batches-bin  # train dataset
-> └── cifar-10-verify-bin   # infer dataset
+> ├── ilsvrc                  # train dataset
+> └── ilsvrc_eval             # infer dataset
 > ```
 
 
@@ -22,6 +22,7 @@ This is an example of training ResNet-50 with CIFAR-10 dataset in MindSpore.
 
 ```shell
 .
+├── crossentropy.py                 # CrossEntropy loss function
 ├── config.py                       # parameter configuration
 ├── dataset.py                      # data preprocessing
 ├── eval.py                         # infer script
@@ -38,23 +39,24 @@ This is an example of training ResNet-50 with CIFAR-10 dataset in MindSpore.
 Parameters for both training and inference can be set in config.py.
 
 ```
-"class_num": 10,                  # dataset class num
+"class_num": 1001,                # dataset class number
 "batch_size": 32,                 # batch size of input tensor
 "loss_scale": 1024,               # loss scale
-"momentum": 0.9,                  # momentum
+"momentum": 0.9,                  # momentum optimizer
 "weight_decay": 1e-4,             # weight decay 
 "epoch_size": 90,                 # only valid for taining, which is always 1 for inference 
-"buffer_size": 100,               # number of queue size in data preprocessing
+"buffer_size": 1000,              # number of queue size in data preprocessing
 "image_height": 224,              # image height
 "image_width": 224,               # image width
 "save_checkpoint": True,          # whether save checkpoint or not
-"save_checkpoint_steps": 195,     # the step interval between two checkpoints. By default, the last checkpoint will be saved after the last step
+"save_checkpoint_epochs": 1,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
 "keep_checkpoint_max": 10,        # only keep the last keep_checkpoint_max checkpoint
-"save_checkpoint_path": "./",     # path to save checkpoint
-"warmup_epochs": 5,               # number of warmup epoch
-"lr_decay_mode": "poly"           # decay mode can be selected in steps, ploy and default
-"lr_init": 0.01,                  # initial learning rate
-"lr_end": 0.00001,                # final learning rate
+"save_checkpoint_path": "./",     # path to save checkpoint relative to the executed path
+"warmup_epochs": 0,               # number of warmup epoch
+"lr_decay_mode": "cosine",        # decay mode for generating learning rate
+"label_smooth": True,             # label smooth
+"label_smooth_factor": 0.1,       # label smooth factor
+"lr_init": 0,                     # initial learning rate
 "lr_max": 0.1,                    # maximum learning rate
 ```
 
@@ -75,12 +77,12 @@ Usage: sh run_standalone_train.sh [DATASET_PATH]
 
 #### Launch
 
-```
-# distribute training example
-sh run_distribute_train.sh rank_table.json ~/cifar-10-batches-bin
+```bash
+# distributed training example(8 pcs)
+sh run_distribute_train.sh rank_table_8p.json dataset/ilsvrc
 
-# standalone training example
-sh run_standalone_train.sh ~/cifar-10-batches-bin
+# standalone training example(1 pcs)
+sh run_standalone_train.sh dataset/ilsvrc
 ```
 
 > About rank_table.json, you can refer to the [distributed training tutorial](https://www.mindspore.cn/tutorial/en/master/advanced_use/distributed_training.html).
@@ -91,11 +93,11 @@ Training result will be stored in the example path, whose folder name begins wit
 
 ```
 # distribute training result(8 pcs)
-epoch: 1 step: 195, loss is 1.9601055
-epoch: 2 step: 195, loss is 1.8555021
-epoch: 3 step: 195, loss is 1.6707983
-epoch: 4 step: 195, loss is 1.8162166
-epoch: 5 step: 195, loss is 1.393667
+epoch: 1 step: 5004, loss is 4.8995576
+epoch: 2 step: 5004, loss is 3.9235563
+epoch: 3 step: 5004, loss is 3.833077
+epoch: 4 step: 5004, loss is 3.2795618
+epoch: 5 step: 5004, loss is 3.1978393
 ```
 
 ### Infer
@@ -109,9 +111,9 @@ Usage: sh run_infer.sh [DATASET_PATH] [CHECKPOINT_PATH]
 
 #### Launch
 
-```
-# infer example
-sh run_infer.sh ~/cifar10-10-verify-bin ~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
+```bash
+# infer with checkpoint
+sh run_infer.sh dataset/ilsvrc_eval train_parallel0/resnet-90_5004.ckpt
 ```
 
 > checkpoint can be produced in training process.
@@ -121,5 +123,5 @@ sh run_infer.sh ~/cifar10-10-verify-bin ~/resnet50_cifar10/train_parallel0/resne
 Inference result will be stored in the example path, whose folder name is "infer". Under this, you can find result like the followings in log.
 
 ```
-result: {'acc': 0.91446314102564111} ckpt=~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
+result: {'acc': 0.7671054737516005} ckpt=train_parallel0/resnet-90_5004.ckpt
 ```

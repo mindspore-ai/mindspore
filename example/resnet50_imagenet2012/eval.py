@@ -21,11 +21,9 @@ from dataset import create_dataset
 from config import config
 from mindspore import context
 from mindspore.model_zoo.resnet import resnet50
-from mindspore.parallel._auto_parallel_context import auto_parallel_context
-from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-from mindspore.train.model import Model, ParallelMode
+from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init
+from crossentropy import CrossEntropy
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
@@ -44,15 +42,11 @@ context.set_context(enable_loop_sink=True)
 context.set_context(enable_mem_reuse=True)
 
 if __name__ == '__main__':
-    if not args_opt.do_eval and args_opt.run_distribute:
-        context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          mirror_mean=True)
-        auto_parallel_context().set_all_reduce_fusion_split_indices([140])
-        init()
 
-    epoch_size = config.epoch_size
     net = resnet50(class_num=config.class_num)
-    loss = SoftmaxCrossEntropyWithLogits(sparse=True)
+    if not config.use_label_smooth:
+        config.label_smooth_factor = 0.0
+    loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
 
     if args_opt.do_eval:
         dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size)

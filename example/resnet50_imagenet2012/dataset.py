@@ -20,7 +20,6 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
-from config import config
 
 
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
@@ -40,30 +39,36 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
     rank_id = int(os.getenv("RANK_ID"))
 
     if device_num == 1:
-        ds = de.Cifar10Dataset(dataset_path, num_parallel_workers=8, shuffle=True)
+        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
-        ds = de.Cifar10Dataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                               num_shards=device_num, shard_id=rank_id)
+        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
+                                     num_shards=device_num, shard_id=rank_id)
+
+    image_size = 224
+    mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
+    std = [0.229 * 255, 0.224 * 255, 0.225 * 255]
 
     # define map operations
-    trans = []
     if do_train:
-        trans += [
-            C.RandomCrop((32, 32), (4, 4, 4, 4)),
-            C.RandomHorizontalFlip(prob=0.5)
+        trans = [
+            C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
+            C.RandomHorizontalFlip(prob=0.5),
+            C.Normalize(mean=mean, std=std),
+            C.HWC2CHW()
         ]
-
-    trans += [
-        C.Resize((config.image_height, config.image_width)),
-        C.Rescale(1.0 / 255.0, 0.0),
-        C.Normalize([0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010]),
-        C.HWC2CHW()
-    ]
+    else:
+        trans = [
+            C.Decode(),
+            C.Resize((256, 256)),
+            C.CenterCrop(image_size),
+            C.Normalize(mean=mean, std=std),
+            C.HWC2CHW()
+        ]
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(input_columns="label", num_parallel_workers=8, operations=type_cast_op)
     ds = ds.map(input_columns="image", num_parallel_workers=8, operations=trans)
+    ds = ds.map(input_columns="label", num_parallel_workers=8, operations=type_cast_op)
 
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
