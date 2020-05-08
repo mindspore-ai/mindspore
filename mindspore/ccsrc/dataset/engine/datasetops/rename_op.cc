@@ -51,12 +51,7 @@ Status RenameOp::Builder::Build(std::shared_ptr<RenameOp> *ptr) {
 //  constructor
 RenameOp::RenameOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
                    int32_t op_connector_size)
-    : PipelineOp(op_connector_size), in_columns_(in_col_names), out_columns_(out_col_names) {
-  // check input & output sizes
-  if (in_columns_.size() != out_columns_.size()) {
-    MS_LOG(ERROR) << "Rename operator number of in columns != number of out columns.";
-  }
-}
+    : PipelineOp(op_connector_size), in_columns_(in_col_names), out_columns_(out_col_names) {}
 
 // destructor
 RenameOp::~RenameOp() {}

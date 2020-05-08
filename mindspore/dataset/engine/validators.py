@@ -884,6 +884,14 @@ def check_rename(method):
                 raise ValueError("{} is not provided.".format(param_name))
             check_columns(param, param_name)
 
+        input_size, output_size = 1, 1
+        if isinstance(param_dict.get(req_param_columns[0]), list):
+            input_size = len(param_dict.get(req_param_columns[0]))
+        if isinstance(param_dict.get(req_param_columns[1]), list):
+            output_size = len(param_dict.get(req_param_columns[1]))
+        if input_size != output_size:
+            raise ValueError("Number of column in input_columns and output_columns is not equal.")
+
         return method(*args, **kwargs)
 
     return new_method
