@@ -8,7 +8,7 @@ This example is for Googlenet model training and evaluation.
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the dataset [CIFAR-10](http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz).
+- Download the CIFAR-10 binary version dataset.
 
 > Unzip the CIFAR-10 dataset to any path you want and the folder structure should be as follows:
 > ```
