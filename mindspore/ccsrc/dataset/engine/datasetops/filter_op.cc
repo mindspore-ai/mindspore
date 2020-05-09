@@ -63,9 +63,10 @@ Status FilterOp::operator()() {
   RETURN_UNEXPECTED_IF_NULL(tree_);
   filter_queues_.Init(num_workers_, oc_queue_size_);
   RETURN_IF_NOT_OK(filter_queues_.Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&FilterOp::WorkerEntry, this, std::placeholders::_1)));
+  Status rc = tree_->LaunchWorkers(num_workers_, std::bind(&FilterOp::WorkerEntry, this, std::placeholders::_1));
   // Synchronize with TaskManager.
   TaskManager::FindMe()->Post();
+  RETURN_IF_NOT_OK(rc);
   RETURN_IF_NOT_OK(Collector());
   return Status::OK();
 }

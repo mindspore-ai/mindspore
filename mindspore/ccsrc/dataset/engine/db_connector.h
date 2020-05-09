@@ -62,7 +62,7 @@ class DbConnector : public Connector<std::unique_ptr<DataBuffer>> {
                     "[ERROR] nullptr detected when getting data from db connector");
     } else {
       std::unique_lock<std::mutex> lk(m_);
-      RETURN_IF_NOT_OK(cv_.Wait(&lk, [this, worker_id]() { return expect_consumer_ == worker_id; }));
+      RETURN_IF_NOT_OK(cv_.Wait(&lk, [this, worker_id]() { return (expect_consumer_ == worker_id) || end_of_file_; }));
       // Once an EOF message is encountered this flag will be set and we can return early.
       if (end_of_file_) {
         *result = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
