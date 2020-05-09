@@ -362,7 +362,7 @@ void MsContext::GetGeOptions(std::map<std::string, std::string> *ge_options) con
   if (auto_mixed_precision_flag_) {
     (*ge_options)["ge.exec.precision_mode"] = "allow_mix_precision";
   } else {
-    (*ge_options)["ge.exec.precision_mode"] = "must_keep_origin_dtype";
+    (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
   }
   // Disable the global variable acc, only enable it whlie adding training graph in pipeline
   (*ge_options)["ge.exec.variable_acc"] = "0";
