@@ -8,7 +8,7 @@ This is an example of training ResNet-50 with CIFAR-10 dataset in MindSpore.
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the dataset [CIFAR-10](http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz).
+- Download the dataset CIFAR-10.
 
 > Unzip the CIFAR-10 dataset to any path you want and the folder structure should be as follows:
 > ```
