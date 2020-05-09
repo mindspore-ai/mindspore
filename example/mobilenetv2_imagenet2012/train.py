@@ -119,7 +119,7 @@ class Monitor(Callback):
         print("epoch time: {:5.3f}, per step time: {:5.3f}, avg loss: {:5.3f}".format(epoch_mseconds,
                                                                                       per_step_mseconds,
                                                                                       np.mean(self.losses)
-                                                                                      ), flush=True)
+                                                                                      ))
 
     def step_begin(self, run_context):
         self.step_time = time.time()
@@ -139,7 +139,7 @@ class Monitor(Callback):
 
         print("epoch: [{:3d}/{:3d}], step:[{:5d}/{:5d}], loss:[{:5.3f}/{:5.3f}], time:[{:5.3f}], lr:[{:5.3f}]".format(
             cb_params.cur_epoch_num - 1, cb_params.epoch_num, cur_step_in_epoch, cb_params.batch_num, step_loss,
-            np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]), flush=True)
+            np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
 
 
 if __name__ == '__main__':

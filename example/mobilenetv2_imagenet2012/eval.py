@@ -42,6 +42,9 @@ if __name__ == '__main__':
     loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
     net = mobilenet_v2(num_classes=config.num_classes)
     net.to_float(mstype.float16)
+    for _, cell in net.cells_and_names():
+        if isinstance(cell, nn.Dense):
+            cell.add_flags_recursive(fp32=True)
 
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size)
     step_size = dataset.get_dataset_size()
