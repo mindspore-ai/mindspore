@@ -69,19 +69,19 @@ class TestSGD():
 class TestNullParam():
     """ TestNullParam definition """
     def test_optim_init(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             Optimizer(0.1, None)
 
     def test_AdamWightDecay_init(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             AdamWeightDecay(None)
 
     def test_AdamWeightDecayDynamicLR_init(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             AdamWeightDecayDynamicLR(None, 10)
 
     def test_Sgd_init(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             SGD(None)
 
 class TestUnsupportParam():
