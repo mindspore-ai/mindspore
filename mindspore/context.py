@@ -548,7 +548,7 @@ def set_context(**kwargs):
         >>> context.set_context(enable_reduce_precision=True)
         >>> context.set_context(save_ms_model=True, save_ms_model_path=".")
         >>> context.set_context(enable_gpu_summary=False)
-        >>> context.set_context(enable_dump=False, save_dump_path=".")
+        >>> context.set_context(enable_dump=True, save_dump_path=".")
         >>> context.set_context(reserve_class_name_in_scope=True)
         >>> context.set_context(enable_dynamic_memory=True)
         >>> context.set_context(graph_memory_max_size="25GB")
