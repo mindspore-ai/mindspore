@@ -797,7 +797,7 @@ void update_shape_flatten(const std::vector<DLTensor *> &tensors, int64_t *shape
 }
 
 std::string GetEltwiseMode(const OpCommonAttr &opAttr, const mindspore::predict::OpDef &opdef) {
-  auto &optype = opAttr.optype;
+  const auto optype = opAttr.optype;
   std::string mode = "add";
   if (optype == "Eltwise") {
     auto op_mode = opdef.attr_as_Eltwise()->mode();
