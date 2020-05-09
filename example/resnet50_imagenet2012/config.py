@@ -18,22 +18,24 @@ network config setting, will be used in train.py and eval.py
 from easydict import EasyDict as ed
 
 config = ed({
-    "class_num": 10,
+    "class_num": 1001,
     "batch_size": 32,
     "loss_scale": 1024,
     "momentum": 0.9,
     "weight_decay": 1e-4,
     "epoch_size": 90,
-    "buffer_size": 100,
+    "buffer_size": 1000,
     "image_height": 224,
     "image_width": 224,
     "save_checkpoint": True,
-    "save_checkpoint_steps": 195,
+    "save_checkpoint_epochs": 1,
     "keep_checkpoint_max": 10,
     "save_checkpoint_path": "./",
-    "warmup_epochs": 5,
-    "lr_decay_mode": "poly",
-    "lr_init": 0.01,
-    "lr_end": 0.00001,
+    "warmup_epochs": 0,
+    "lr_decay_mode": "cosine",
+    "use_label_smooth": True,
+    "label_smooth_factor": 0.1,
+    "lr_init": 0,
     "lr_max": 0.1
+
 })

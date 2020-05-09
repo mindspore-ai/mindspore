@@ -23,13 +23,15 @@ from mindspore import Tensor
 from mindspore.model_zoo.resnet import resnet50
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 
 from mindspore.train.model import Model, ParallelMode
 
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.communication.management import init
+import mindspore.nn as nn
+import mindspore.common.initializer as weight_init
+from crossentropy import CrossEntropy
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
@@ -49,14 +51,27 @@ context.set_context(enable_mem_reuse=True)
 if __name__ == '__main__':
     if not args_opt.do_eval and args_opt.run_distribute:
         context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          mirror_mean=True)
+                                          mirror_mean=True, parameter_broadcast=True)
         auto_parallel_context().set_all_reduce_fusion_split_indices([107, 160])
         init()
 
     epoch_size = config.epoch_size
     net = resnet50(class_num=config.class_num)
-    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
 
+    # weight init
+    for _, cell in net.cells_and_names():
+        if isinstance(cell, nn.Conv2d):
+            cell.weight.default_input = weight_init.initializer(weight_init.XavierUniform(),
+                                                                cell.weight.default_input.shape(),
+                                                                cell.weight.default_input.dtype())
+        if isinstance(cell, nn.Dense):
+            cell.weight.default_input = weight_init.initializer(weight_init.TruncatedNormal(),
+                                                                cell.weight.default_input.shape(),
+                                                                cell.weight.default_input.dtype())
+    if not config.use_label_smooth:
+        config.label_smooth_factor = 0.0
+
+    loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
 
     if args_opt.do_train:
         dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
@@ -64,20 +79,20 @@ if __name__ == '__main__':
         step_size = dataset.get_dataset_size()
 
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-        lr = Tensor(get_lr(global_step=0, lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max,
+        lr = Tensor(get_lr(global_step=0, lr_init=config.lr_init, lr_end=0.0, lr_max=config.lr_max,
                            warmup_epochs=config.warmup_epochs, total_epochs=epoch_size, steps_per_epoch=step_size,
-                           lr_decay_mode='poly'))
+                           lr_decay_mode='cosine'))
+
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                        config.weight_decay, config.loss_scale)
 
-        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'}, amp_level="O2",
-                      keep_batchnorm_fp32=False)
+        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'})
 
         time_cb = TimeMonitor(data_size=step_size)
         loss_cb = LossMonitor()
         cb = [time_cb, loss_cb]
         if config.save_checkpoint:
-            config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
+            config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs*step_size,
                                          keep_checkpoint_max=config.keep_checkpoint_max)
             ckpt_cb = ModelCheckpoint(prefix="resnet", directory=config.save_checkpoint_path, config=config_ck)
             cb += [ckpt_cb]
