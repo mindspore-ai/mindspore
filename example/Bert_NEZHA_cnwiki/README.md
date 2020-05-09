@@ -4,8 +4,8 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 
 ## Requirements
 - Install [MindSpore](https://www.mindspore.cn/install/en).
-- Download the zhwiki dataset from <https://dumps.wikimedia.org/zhwiki> for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wiliextractor). Convert the dataset to TFRecord format and move the files to a specified path.
-- Download the CLUE dataset from <https://www.cluebenchmarks.com> for fine-tuning and evaluation.
+- Download the zhwiki dataset for pre-training. Extract and clean text in the dataset with [WikiExtractor](https://github.com/attardi/wikiextractor). Convert the dataset to TFRecord format and move the files to a specified path.
+- Download the CLUE dataset for fine-tuning and evaluation.
 >  Notes:
    If you are running a fine-tuning or evaluation task, prepare the corresponding checkpoint file.
 
