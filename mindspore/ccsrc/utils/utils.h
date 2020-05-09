@@ -204,6 +204,7 @@ constexpr auto kOpFormat_FRAC_Z = "FracZ";
 constexpr auto kOpFormat_FRAC_NZ = "FRACTAL_NZ";
 constexpr auto kOpFormat_C1HWNCoC0 = "C1HWNCoC0";
 constexpr auto kOpFormat_NC1HWC0_C04 = "NC1HWC0_C04";
+constexpr auto kOpFormat_FRACTAL_Z_C04 = "FRACTAL_Z_C04";
 const std::set<std::string> k1DSupportFormat = {kOpFormat_DEFAULT,  kOpFormat_NCHW,        kOpFormat_NHWC,
                                                 kOpFormat_FRAC_Z,   kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
                                                 kOpFormat_C1HWNCoC0};
@@ -225,8 +226,9 @@ const std::set<std::string> kOptOperatorSet = {
   kApplyRMSPropOpName,
 };
 
-const std::set<std::string> kNeedTransFormatSet = {kOpFormat_FRAC_Z, kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
-                                                   kOpFormat_FRAC_NZ, kOpFormat_C1HWNCoC0};
+const std::set<std::string> kNeedTransFormatSet = {kOpFormat_FRAC_Z,       kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
+                                                   kOpFormat_FRAC_NZ,      kOpFormat_C1HWNCoC0,   kOpFormat_NC1HWC0_C04,
+                                                   kOpFormat_FRACTAL_Z_C04};
 
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   if (access(file_name.c_str(), F_OK) != 0) {

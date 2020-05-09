@@ -26,14 +26,14 @@ bn_training_update_op_info = TBERegOp("BNTrainingUpdate") \
     .attr("factor", "optional", "float", "all") \
     .attr("epsilon", "optional", "float", "all") \
     .attr("isRef", "optional", "bool", "all", "true") \
-    .input(0, "x", False, "required", "all") \
+    .input(0, "x", False, "required", "all", reshape_type="NC") \
     .input(1, "sum", False, "required", "all") \
     .input(2, "square_sum", False, "required", "all") \
     .input(3, "scale", False, "required", "all") \
     .input(4, "offset", False, "required", "all") \
     .input(5, "mean", False, "required", "all") \
     .input(6, "variance", False, "required", "all") \
-    .output(0, "y", False, "required", "all") \
+    .output(0, "y", False, "required", "all", reshape_type="NC") \
     .output(1, "mean", False, "required", "all") \
     .output(2, "variance", False, "required", "all") \
     .output(3, "batch_mean", False, "required", "all") \

@@ -24,14 +24,14 @@ bn_training_reduce_grad_op_info = TBERegOp("BNTrainingReduceGrad") \
     .kernel_name("bn_training_reduce_grad") \
     .partial_flag(True) \
     .attr("epsilon", "optional", "float", "all") \
-    .input(0, "grads", False, "required", "all") \
-    .input(1, "x_norm", False, "required", "all") \
+    .input(0, "grads", False, "required", "all", reshape_type="NC") \
+    .input(1, "x_norm", False, "required", "all", reshape_type="NC") \
     .input(2, "diff_scale", False, "required", "all") \
     .input(3, "diff_offset", False, "required", "all") \
     .input(4, "scale", False, "required", "all") \
     .input(5, "batch_mean", False, "required", "all") \
     .input(6, "batch_variance", False, "required", "all") \
-    .output(0, "y", False, "required", "all") \
+    .output(0, "y", False, "required", "all", reshape_type="NC") \
     .dtype_format(DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
