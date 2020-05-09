@@ -136,6 +136,9 @@ constexpr auto kPadOpName = "Pad";
 constexpr auto kConv2DBackpropInputOpName = "Conv2DBackpropInput";
 constexpr auto kFusionOpConv2DBackpropInputReluGradV2Name = "FusionOp_Conv2DBackpropInput_ReluGradV2";
 constexpr auto kFusionOpConv2DBackpropInputAddNReluGradV2Name = "FusionOp_Conv2DBackpropInput_AddN_ReluGradV2";
+constexpr auto kLabelSetOpName = "LabelSet";
+constexpr auto kLabelSwitchOpName = "LabelSwitch";
+constexpr auto kLabelGotoOpName = "LabelGoto";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -174,6 +177,8 @@ constexpr auto kAttrGroup = "group";
 constexpr auto kAttrOp = "op";
 constexpr auto kAttrIsTraining = "is_training";
 constexpr auto kAttrFusionId = "fusion_id";
+constexpr auto kAttrLabelIndex = "label_index";
+constexpr auto kAttrLabelSwitchList = "label_switch_list";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
