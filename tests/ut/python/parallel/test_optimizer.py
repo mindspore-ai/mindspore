@@ -58,6 +58,6 @@ def test_dense_gen_graph():
 
     predict = Tensor(np.ones([64, 512]).astype(np.float32) * 0.01)
     label = Tensor(np.zeros([64, 32]).astype(np.float32))
-
+    network.set_auto_parallel()
     _executor.compile(network, predict, label)
-    
+

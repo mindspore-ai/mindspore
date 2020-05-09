@@ -40,6 +40,12 @@ class GradWrap(nn.Cell):
     def construct(self, x, y, z, w, b):
         return C.grad_all(self.network)(x, y, z, w, b)
 
+
+def compile(net, x, y, z, w, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, z, w, b)
+
+
     # model_parallel test
 def test_four_matmul_linear():
     class Net(nn.Cell):
@@ -67,7 +73,7 @@ def test_four_matmul_linear():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, z, w, b)
+    compile(net, x, y, z, w, b)
 
 
 def test_four_matmul1():
@@ -93,7 +99,7 @@ def test_four_matmul1():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, z, w, b)
+    compile(net, x, y, z, w, b)
 
 
 def test_four_matmul2():
@@ -120,4 +126,4 @@ def test_four_matmul2():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    _executor.compile(net, x, y, z, w, b)
+    compile(net, x, y, z, w, b)

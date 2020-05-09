@@ -66,4 +66,5 @@ def test_auto_parallel_bn_with_prelu():
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net.set_auto_parallel()
     _executor.compile(net, x)

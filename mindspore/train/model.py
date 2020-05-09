@@ -22,7 +22,7 @@ from .._checkparam import check_input_data, check_output_data, check_int_positiv
 from .callback import _InternalCallbackParam, RunContext, _build_callbacks
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
-    _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _callback_wrapper
+    _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check
 from ..nn.metrics import Loss
 from .. import nn
 from ..nn.wrap.cell_wrapper import _VirtualDatasetCell
@@ -144,6 +144,9 @@ class Model:
         elif self._loss_fn:
             network = nn.WithLossCell(network, self._loss_fn)
         # If need to check if loss_fn is not None, but optimizer is None
+
+        if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            network.set_auto_parallel()
         return network
 
     def _build_eval_network(self, metrics, eval_network, eval_indexes):
@@ -165,11 +168,15 @@ class Model:
             self._eval_network = nn.WithEvalCell(self._network, self._loss_fn, self._amp_level == "O2")
             self._eval_indexes = [0, 1, 2]
 
+        if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            self._eval_network.set_auto_parallel()
+
     def _build_predict_network(self):
         """Build the network for prediction."""
         self._predict_network = self._network
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             self._predict_network = _VirtualDatasetCell(self._network)
+            self._predict_network.set_auto_parallel()
 
     def _clear_metrics(self):
         """Clear metrics local values."""
@@ -287,28 +294,28 @@ class Model:
         cb_params.cur_step_num = 0
         loop_size = dataset_helper.loop_size()
         run_context = RunContext(cb_params)
-        _callback_wrapper(list_callback, run_context, "begin")
+        list_callback.begin(run_context)
 
         # used to stop training for early stop, such as stopAtTIme or stopATStep
         should_stop = False
         for i in range(epoch):
             cb_params.cur_epoch_num = i + 1
-            _callback_wrapper(list_callback, run_context, "epoch_begin")
+            list_callback.epoch_begin(run_context)
 
             # for data sink dataset_helper only iter once, other wise iter epoch_size times.
             for inputs in dataset_helper:
                 cb_params.cur_step_num += loop_size
-                _callback_wrapper(list_callback, run_context, "step_begin")
+                list_callback.step_begin(run_context)
                 outputs = self._train_network(*inputs)
                 cb_params.net_outputs = outputs
-                _callback_wrapper(list_callback, run_context, "step_end")
+                list_callback.step_end(run_context)
 
-            _callback_wrapper(list_callback, run_context, "epoch_end")
+            list_callback.epoch_end(run_context)
             should_stop = should_stop or run_context.get_stop_requested()
             if should_stop:
                 break
 
-        _callback_wrapper(list_callback, run_context, "end")
+        list_callback.end(run_context)
 
     def _train_process(self, epoch, train_dataset, list_callback=None, cb_params=None):
         """
@@ -327,14 +334,14 @@ class Model:
         dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
         cb_params.cur_step_num = 0
         run_context = RunContext(cb_params)
-        _callback_wrapper(list_callback, run_context, "begin")
+        list_callback.begin(run_context)
         # used to stop training for early stop, such as stopAtTIme or stopATStep
         should_stop = False
 
         for i in range(epoch):
             cb_params.cur_epoch_num = i + 1
 
-            _callback_wrapper(list_callback, run_context, "epoch_begin")
+            list_callback.epoch_begin(run_context)
 
             for next_element in dataset_helper:
                 len_element = len(next_element)
@@ -342,7 +349,7 @@ class Model:
                     raise ValueError("when loss_fn is not None, train_dataset should"
                                      "return two elements, but got {}".format(len_element))
                 cb_params.cur_step_num += 1
-                _callback_wrapper(list_callback, run_context, "step_begin")
+                list_callback.step_begin(run_context)
 
                 overflow = False
                 if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():
@@ -356,19 +363,19 @@ class Model:
                     overflow = np.all(overflow.asnumpy())
                     self._loss_scale_manager.update_loss_scale(overflow)
 
-                _callback_wrapper(list_callback, run_context, "step_end")
+                list_callback.step_end(run_context)
                 should_stop = should_stop or run_context.get_stop_requested()
                 if should_stop:
                     break
 
             train_dataset.reset()
 
-            _callback_wrapper(list_callback, run_context, "epoch_end")
+            list_callback.epoch_end(run_context)
             should_stop = should_stop or run_context.get_stop_requested()
             if should_stop:
                 break
 
-        _callback_wrapper(list_callback, run_context, "end")
+        list_callback.end(run_context)
 
     def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True):
         """

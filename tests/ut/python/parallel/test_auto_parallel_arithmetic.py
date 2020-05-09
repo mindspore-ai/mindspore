@@ -43,6 +43,12 @@ class GradWrap(nn.Cell):
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
 
+
+def compile(net, x, y, b, phase):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, b, phase=phase)
+
+
 def test_auto_parallel_arithmetic():
     class Net(nn.Cell):
         def __init__(self):
@@ -63,7 +69,7 @@ def test_auto_parallel_arithmetic():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
     b = Tensor(np.ones([64, 128]), dtype=ms.float32)
-    _executor.compile(net, x, y, b, phase='train')
+    compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[2, 4], [2, 4]],
                      'Default/network-Net/MatMul-op1': [[2, 1], [1, 4]]}
@@ -89,7 +95,7 @@ def test_auto_parallel_arithmetic_broadcast_both():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
     b = Tensor(np.ones([1, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b, phase='train')
+    compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[8, 1], [1, 1]],
                            'Default/network-Net/MatMul-op1': [[8, 1], [1, 1]]}
@@ -116,7 +122,7 @@ def test_auto_parallel_arithmetic_broadcast_right():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 32]), dtype=ms.float32)
     b = Tensor(np.ones([32]), dtype=ms.float32)
-    _executor.compile(net, x, y, b, phase='train')
+    compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[4, 2], [2]],
                            'Default/network-Net/MatMul-op1': [[4, 1], [1, 2]]}
@@ -143,7 +149,7 @@ def test_auto_parallel_arithmetic_broadcast_left():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 32]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64, 32]), dtype=ms.float32)
-    _executor.compile(net, x, y, b, phase="train")
+    compile(net, x, y, b, phase="train")
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[4, 2], [1, 4, 2]],
                            'Default/network-Net/MatMul-op1': [[4, 1], [1, 2]]}

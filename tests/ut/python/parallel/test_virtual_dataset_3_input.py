@@ -70,6 +70,7 @@ def test_virtual_dataset_3_input():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 2048]), dtype=ms.float32)
+    net.set_auto_parallel()
     _executor.compile(net, x, y, b)
 
 

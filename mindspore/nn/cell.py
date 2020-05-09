@@ -25,7 +25,6 @@ from ..common.parameter import Parameter, ParameterTuple
 from .._c_expression import init_backend
 from ..ops.primitive import Primitive
 from ..parallel._tensor import _load_tensor_by_layout
-from ..parallel._utils import _get_parallel_mode
 from ..common.tensor import Tensor
 
 
@@ -71,8 +70,7 @@ class Cell:
         gc.collect()
         self._construct_inputs_num = 0
         self._construct_inputs_names = []
-        if _get_parallel_mode() in ["auto_parallel", "semi_auto_parallel"]:
-            self._get_construct_inputs_number_and_name()
+        self._auto_parallel_mode = False
         self._parallel_inputs_run = None
         if flags:
             self.add_flags(**flags)
@@ -298,9 +296,10 @@ class Cell:
         Returns:
             Object, the result of executing.
         """
-        _, compile_flag = _executor.compile(self, *inputs, phase=self.phase)
+        _, compile_flag = _executor.compile(self, *inputs, phase=self.phase,
+                                            auto_parallel_mode=self._auto_parallel_mode)
 
-        if _get_parallel_mode() in ["auto_parallel", "semi_auto_parallel"]:
+        if self._auto_parallel_mode:
             if inputs and isinstance(inputs[0], Tensor) and inputs[0].virtual_flag and (not compile_flag):
                 parallel_inputs_run = self._parallel_inputs_run
             else:
@@ -665,3 +664,15 @@ class Cell:
         """
         self.add_flags_recursive(broadcast_flag=mode)
         return self
+
+    def set_auto_parallel(self):
+        """
+        Set the cell to auto parallel mode.
+
+        Note:
+            If a cell needs to use auto parallel or semi auto parallel mode for training, evaluation or prediction,
+            this interface needs to be called for the cell.
+        """
+        self._auto_parallel_mode = True
+        self.add_flags(auto_parallel=True)
+        self._get_construct_inputs_number_and_name()

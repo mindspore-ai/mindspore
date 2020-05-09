@@ -64,6 +64,7 @@ class Net(nn.Cell):
 
 def compile_graph(strategy1, strategy2, strategy3, strategy4, auto=False, onthot_axis=-1):
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2), strategy3, strategy4, axis=onthot_axis))
+    net.set_auto_parallel()
     if auto:
         context.set_auto_parallel_context(parallel_mode="auto_parallel")
     else:

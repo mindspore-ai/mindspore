@@ -31,6 +31,12 @@ class GradWrap(nn.Cell):
     def construct(self, x, y, bias):
         return C.grad_all(self.network)(x, y, bias)
 
+
+def compile(net, x, y, bias):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, bias)
+
+
 def test_sum_as_loss():
     class Net(nn.Cell):
         def __init__(self, strategy0, strategy1):
@@ -53,7 +59,7 @@ def test_sum_as_loss():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
-    _executor.compile(net, x, y, bias)
+    compile(net, x, y, bias)
 
 
 def test_sum_as_loss2():
@@ -78,4 +84,4 @@ def test_sum_as_loss2():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
-    _executor.compile(net, x, y, bias)
+    compile(net, x, y, bias)

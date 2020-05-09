@@ -76,6 +76,7 @@ def test_common_parameter():
 
     net = NetWithLoss(Net())
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net.set_auto_parallel()
     reset_op_id()
 
     _executor.compile(net, x, y, z, w, phase='train')

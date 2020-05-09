@@ -92,6 +92,7 @@ class AddReluFactory:
     def forward_mindspore_parallel_impl(self):
         net = AddRelu(strategy0=self.strategy0, strategy1=self.strategy1)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        net.set_auto_parallel()
         x = Tensor(self.input_np1)
         y = Tensor(self.input_np2, ms.float32)
         inputs_x = self.get_parallel_blocks(self.input_np1, self.strategy0[1])
@@ -118,6 +119,7 @@ class AddReluFactory:
         net = AddRelu(strategy0=self.strategy0, strategy1=self.strategy1)
         grad_net = Grad(net)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        grad_net.set_auto_parallel()
         grad_net.set_train()
         inputs_x = self.get_parallel_blocks(self.input_np1, self.strategy0[1])
         x1 = Tensor(inputs_x[self.x_id])

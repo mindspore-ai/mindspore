@@ -25,5 +25,5 @@ def test_SoftmaxCrossEntropy():
     logit = Tensor(np.ones([64, 512]), dtype=mstype.float32)
     label = Tensor(np.ones([64]), dtype=mstype.int32)
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    
+    net.set_auto_parallel()
     _executor.compile(net, logit, label)

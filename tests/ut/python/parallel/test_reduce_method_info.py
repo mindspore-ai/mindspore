@@ -42,6 +42,12 @@ class GradWrap(nn.Cell):
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
 
+
+def compile(net, x, y, b):
+    net.set_auto_parallel()
+    _executor.compile(net, x, y, b)
+
+
 # model_parallel test
 def test_sum_mul():
     class Net(nn.Cell):
@@ -67,7 +73,8 @@ def test_sum_mul():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
+
 
 def test_sum_mul2():
     class Net(nn.Cell):
@@ -93,7 +100,8 @@ def test_sum_mul2():
     x = Tensor(np.ones([128, 128, 64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 128, 64, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
+
 
 def test_sum_mul3():
     class Net(nn.Cell):
@@ -119,7 +127,8 @@ def test_sum_mul3():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
+
 
 def test_sum_mul4():
     class Net(nn.Cell):
@@ -145,7 +154,7 @@ def test_sum_mul4():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 32, 1]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_sum_mul5():
@@ -169,7 +178,7 @@ def test_sum_mul5():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([1, 32, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_sum_mul6():
@@ -193,7 +202,7 @@ def test_sum_mul6():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 1, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_sum_mul7():
@@ -217,7 +226,7 @@ def test_sum_mul7():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([1, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_max_mul():
@@ -244,7 +253,7 @@ def test_max_mul():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_min_mul():
@@ -271,7 +280,7 @@ def test_min_mul():
     x = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_reduce_mean_mul_float32():
@@ -299,7 +308,7 @@ def test_reduce_mean_mul_float32():
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([32, 64]), dtype=ms.float32)
     
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 class ArgMaxWithValueNet(nn.Cell):
@@ -334,7 +343,7 @@ def gen_inputs_and_compile(net):
     x = Tensor(np.ones([128, 64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([128, 64, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def tobefixed_test_arg_max_with_value_mul_semi_axis_parallel():
@@ -467,7 +476,7 @@ def test_cross_batch():
     x = Tensor(np.ones([32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_cross_batch2():
@@ -495,7 +504,7 @@ def test_cross_batch2():
     x = Tensor(np.ones([32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_cross_batch_auto():
@@ -515,12 +524,11 @@ def test_cross_batch_auto():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    
 
     x = Tensor(np.ones([32, 64]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)
 
 
 def test_max_empty_tuple():
@@ -548,4 +556,4 @@ def test_max_empty_tuple():
     y = Tensor(np.ones([128, 32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 32]), dtype=ms.float32)
     
-    _executor.compile(net, x, y, b)
+    compile(net, x, y, b)

@@ -271,6 +271,7 @@ def test_bn_reshape_dense_bn_train_loss():
 
     net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net.set_auto_parallel()
     
     _executor.compile(net, input, label)
 
@@ -284,6 +285,7 @@ def test_semi_one_hot_net_batch():
     net = SemiAutoOneHotNet(args=Args(), strategy=StrategyBatch())
     net = GradWrap(NetWithLoss(net))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    net.set_auto_parallel()
     
     _executor.compile(net, input, label)
 

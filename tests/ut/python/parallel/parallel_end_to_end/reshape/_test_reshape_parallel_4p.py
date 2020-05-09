@@ -121,6 +121,7 @@ class ReshapeFactory:
         y1 = Tensor(inputs_y[self.y_id]) 
         net = Reshape(self.target_shape, strategy0=self.strategy0, strategy1=self.strategy1)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        net.set_auto_parallel()
         out = net(x, y, parallel_inputs_compile=[x, y], parallel_inputs_run=[x1, y1])
         return out.asnumpy()
 
@@ -147,6 +148,7 @@ class ReshapeFactory:
         net = Reshape(self.target_shape, strategy0=self.strategy0, strategy1=self.strategy1)
         grad_net = Grad(net)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        grad_net.set_auto_parallel()
         grad_net.set_train()
         input_grad = grad_net(x, y, output_grad, parallel_inputs_compile=[x, y, output_grad1], parallel_inputs_run=[x1, y1, output_grad1])
         return input_grad

@@ -88,6 +88,7 @@ def test_double_subgraphs():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     net = TrainStepWarp(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net.set_auto_parallel()
 
     x = Tensor(np.ones([8, 8, 8, 8]), dtype=ms.float32)
     reset_op_id()

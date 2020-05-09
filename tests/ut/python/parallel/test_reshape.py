@@ -303,6 +303,11 @@ class ReshapeNet6(nn.Cell):
         return matmul2_o
 
 
+def compile(net, input):
+    net.set_auto_parallel()
+    _executor.compile(net, input)
+
+
 def reshape_net2(backbone):
     batch_size = 16
     device_num = 16
@@ -312,7 +317,7 @@ def reshape_net2(backbone):
     net = GradWrap(NetWithLoss(backbone))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     
-    _executor.compile(net, input)
+    compile(net, input)
 
 
 def test_reshape_net1_1():
@@ -475,7 +480,7 @@ def test_batchnorm_reshape_train():
 
     net = GradWrap(NetWithLoss(BatchNormReshapeNet()))
     
-    _executor.compile(net, input)
+    compile(net, input)
 
 
 def bn_with_initialize(out_channels):
@@ -513,7 +518,7 @@ def test_bn_reshape_dense_bn_train():
     net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     
-    _executor.compile(net, input)
+    compile(net, input)
 
 
 class ParallelReduceMeanNet(nn.Cell):

@@ -95,6 +95,7 @@ class DropoutFactory:
         x1 = Tensor(inputs_x[self.x_id])
         net = Net(0.4, 0, 0, strategy=self.strategy0)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        net.set_auto_parallel()
         out = net(x, parallel_inputs_compile=[x], parallel_inputs_run=[x1])
         return out.asnumpy()
     
