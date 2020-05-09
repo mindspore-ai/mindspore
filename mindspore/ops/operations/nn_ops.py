@@ -2762,3 +2762,68 @@ class ConfusionMulGrad(PrimitiveWithInfer):
         validator.check_subclass("input1_dtype", input1_dtype, mstype.tensor, self.name)
         validator.check_subclass("input2_dtype", input2_dtype, mstype.tensor, self.name)
         return input0_dtype, input1_dtype
+
+
+class Dropout(PrimitiveWithInfer):
+    """
+    During training, randomly zeroes some of the elements of the input tensor with probability.
+
+    Args:
+        drop_prob (float): probability of an element to be zeroed. Default: 0.
+
+    Inputs:
+        - **shape** (tuple[int]) - The shape of target mask.
+
+    Outputs:
+        Tensor, the value of generated mask for input shape.
+
+    Examples:
+        >>> dropout = P.Dropout(drop_prob=0.5)
+        >>> in = Tensor((20, 16, 50, 50))
+        >>> out = dropout(in)
+    """
+    @prim_attr_register
+    def __init__(self, drop_prob=0):
+        self.drop_prob = validator.check_number_range("drop_prob", drop_prob, 0, 1, Rel.INC_BOTH, self.name)
+
+    def infer_shape(self, x_shape):
+        validator.check_integer("x_shape", len(x_shape), 1, Rel.GE, self.name)
+        mask_shape = x_shape
+        return x_shape, mask_shape
+
+    def infer_dtype(self, x_dtype):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same({"x_dtype": x_dtype}, valid_types, self.name)
+        return x_dtype, x_dtype
+
+
+class DropoutGrad(PrimitiveWithInfer):
+    """
+    The gradient of Dropout. During training, randomly zeroes some of the elements
+    of the input tensor with probability.
+
+    Args:
+        drop_prob (float): probability of an element to be zeroed. Default: 0.
+
+    Inputs:
+        - **shape** (tuple[int]) - The shape of target mask.
+
+    Outputs:
+        Tensor, the value of generated mask for input shape.
+
+    Examples:
+        >>> dropout_grad = P.DropoutGrad(drop_prob=0.5)
+        >>> in = Tensor((20, 16, 50, 50))
+        >>> out = dropout_grad(in)
+    """
+    @prim_attr_register
+    def __init__(self, drop_prob=0):
+        self.drop_prob = validator.check_number_range("drop_prob", drop_prob, 0, 1, Rel.INC_BOTH, self.name)
+
+    def infer_shape(self, dy_shape, mask_shape):
+        return dy_shape
+
+    def infer_dtype(self, dy_dtype, mask_dtype):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same({"dy_dtype": dy_dtype}, valid_types, self.name)
+        return dy_dtype
