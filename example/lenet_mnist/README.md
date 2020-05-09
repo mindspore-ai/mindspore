@@ -10,7 +10,7 @@ This is the simple and basic tutorial for constructing a network in MindSpore.
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the MNIST dataset at <http://yann.lecun.com/exdb/mnist/>. The directory structure is as follows:
+- Download the MNIST dataset, the directory structure is as follows:
 
 ```
 └─MNIST_Data

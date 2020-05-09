@@ -10,7 +10,7 @@ This is the simple tutorial for training AlexNet in MindSpore.
 
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
-- Download the CIFAR-10 dataset at <http://www.cs.toronto.edu/~kriz/cifar-10-binary.tar.gz>. The directory structure is as follows:
+- Download the CIFAR-10 dataset, the directory structure is as follows:
 
 ```
 ├─cifar-10-batches-bin
