@@ -163,6 +163,8 @@ class MetaTensor : public Value {
   //
   // All the types are defined in "ir/dtype.h".
   TypePtr Dtype() const;
+  abstract::AbstractBasePtr ToAbstract() override;
+  py::tuple GetPyTupleShape() const;
   TypeId data_type() const { return data_type_; }
   std::string ToString() const override;
   std::string DumpText() const override;
@@ -230,6 +232,7 @@ class MetaTensor : public Value {
       return false;
     }
   }
+  const bool parse_info_ = true;
 
  protected:
   // brief Data type of the tensor.
@@ -348,11 +351,6 @@ class Tensor : public MetaTensor {
   // return The total number of elements of the tensor data.
   int DataSize() const;
 
-  // brief Get tensor's shape
-  //
-  // return [py::tuple] The tensor's shape
-  py::tuple GetPyTupleShape() const;
-
   // brief Tensor's data value.
   //
   // return [py::array] The tensor's data in py::array.
@@ -423,6 +421,7 @@ class Tensor : public MetaTensor {
 };
 
 using TensorPtr = std::shared_ptr<Tensor>;
+using MetaTensorPtr = std::shared_ptr<MetaTensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
 
 }  // namespace tensor

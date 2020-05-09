@@ -14,9 +14,10 @@
 # ============================================================================
 
 """Parameter for cell."""
+import numbers
 from copy import copy, deepcopy
-from .initializer import initializer
-from .tensor import Tensor
+from .initializer import initializer, Initializer
+from .tensor import Tensor, MetaTensor
 from .._checkparam import _check_str_by_regular
 from ..parallel._utils import _set_clone_info, _CloneInfo
 
@@ -41,7 +42,8 @@ class Parameter:
         Each parameter of Cell is represented by Parameter class.
 
     Args:
-        default_input (Tensor): A parameter tensor.
+        default_input (Union[Tensor, Initializer]): Parameter data, when `default_input` is` Initializer`,
+            the data stored by Parameter is `MetaTensor`, otherwise it is `Tensor`.
         name (str): Name of the child parameter.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): A kind of model parallel mode. When layerwise_parallel is true in paralle mode,
@@ -123,7 +125,11 @@ class Parameter:
         if init != 'same':
             shape = self.default_input.shape()
             dtype = self.default_input.dtype()
-            x.default_input = initializer(init, shape=shape, dtype=dtype)
+            if isinstance(init, (str, Initializer, numbers.Number)):
+                x.init_mode = initializer(init, shape=shape, dtype=dtype)
+                x.default_input = MetaTensor(dtype, shape)
+            else:
+                x.default_input = initializer(init, shape=shape, dtype=dtype)
 
         x.clone_info = copy(self.clone_info)
         _set_clone_info(self.clone_info, x.clone_info)
@@ -181,9 +187,19 @@ class Parameter:
         if isinstance(data, Tensor):
             # make a copy of Tensor to init the parameter
             data = Tensor(data.asnumpy().copy())
+        elif isinstance(data, Initializer):
+            self.init_mode = data
+            data = MetaTensor(self.init_mode.dtype, self.init_mode.shape)
         else:
             data = Tensor(data)
         self.default_input = data
+
+
+    def init_data(self):
+        if not isinstance(self.default_input, MetaTensor):
+            return
+        self.default_input = self.init_mode.to_tensor()
+        self.init_mode = None
 
 
 class ParameterTuple(tuple):

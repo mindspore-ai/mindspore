@@ -22,6 +22,7 @@ namespace mindspore {
 extern const char PYTHON_PRIMITIVE_FLAG[];
 extern const char PYTHON_METAFUNCGRAPH_FLAG[];
 extern const char PYTHON_TENSOR_FLAG[];
+extern const char PYTHON_META_TENSOR_FLAG[];
 extern const char PYTHON_ENVINSTANCE_FLAG[];
 extern const char PYTHON_DTYPE_FLAG[];
 extern const char PYTHON_CELL_AS_LIST[];

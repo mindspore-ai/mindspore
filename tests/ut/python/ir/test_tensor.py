@@ -223,6 +223,7 @@ def test_div():
 @non_graph_engine
 def test_parameter():
     x = Parameter(initializer(1, [1], ms.float32), name="beta1_power")
+    x.init_data()
     z = x / 2
     print(z)
 

@@ -471,6 +471,9 @@ class LayerNorm(Cell):
                  beta_init='zeros',
                  ):
         super(LayerNorm, self).__init__()
+        if not isinstance(normalized_shape, (tuple, list)):
+            raise TypeError("The type of 'normalized_shape' should be tuple[int] or list[int], but '{}' type is {}."
+                            .format(normalized_shape, type(normalized_shape)))
         self.normalized_shape = normalized_shape
         self.begin_norm_axis = begin_norm_axis
         self.begin_params_axis = begin_params_axis

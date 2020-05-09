@@ -264,6 +264,7 @@ def test_grad_inline_bprop_multi_input():
     net = InlineMutilTwoInputParameterCell()
     input1 = Tensor(np.ones([2, 2]).astype(np.float32))
     input2 = Tensor(np.ones([2, 2]).astype(np.float32))
+    net.init_parameters_data()
     grads = C.grad_all(net)(input1, input2)
     assert (grads[0].asnumpy() == np.array([[12, 12], [12, 12]]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([[19, 19], [19, 19]]).astype(np.float32)).all()

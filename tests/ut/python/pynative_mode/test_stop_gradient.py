@@ -151,7 +151,7 @@ def test_softmaxloss_grad():
     predict = Tensor(np.ones([1, 64]))
     label = Tensor(np.zeros([1, 10]).astype(np.float32))
     print("pynative run")
-    out = net.construct(predict, label)
+    out = net(predict, label)
     print("out:", out)
 
 def test_stop_gradient_1():

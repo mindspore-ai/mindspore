@@ -133,6 +133,6 @@ def test_lenet_grad():
             print("fail to run optimizer")
         # verification
         if i == verification_step:
-            fw_output = net.construct(input_data)
-            loss_output = loss.construct(fw_output, label)
+            fw_output = net(input_data)
+            loss_output = loss(fw_output, label)
             print("The loss of %s-th iteration is %s" % (i, loss_output.asnumpy()))

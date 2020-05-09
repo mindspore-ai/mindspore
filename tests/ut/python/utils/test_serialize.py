@@ -198,6 +198,7 @@ def test_load_param_into_net_error_dict():
 
 def test_load_param_into_net_erro_dict_param():
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -210,6 +211,7 @@ def test_load_param_into_net_erro_dict_param():
 def test_load_param_into_net_has_more_param():
     """ test_load_param_into_net_has_more_param """
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -225,6 +227,7 @@ def test_load_param_into_net_has_more_param():
 
 def test_load_param_into_net_param_type_and_shape_error():
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -236,6 +239,7 @@ def test_load_param_into_net_param_type_and_shape_error():
 
 def test_load_param_into_net_param_type_error():
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -248,6 +252,7 @@ def test_load_param_into_net_param_type_error():
 
 def test_load_param_into_net_param_shape_error():
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}
@@ -260,6 +265,7 @@ def test_load_param_into_net_param_shape_error():
 
 def test_load_param_into_net():
     net = Net(10)
+    net.init_parameters_data()
     assert net.conv1.weight.default_input.asnumpy()[0][0][0][0] == 0
 
     parameter_dict = {}

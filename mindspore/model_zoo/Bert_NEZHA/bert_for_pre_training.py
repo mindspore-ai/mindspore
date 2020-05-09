@@ -92,7 +92,7 @@ class GetMaskedLMOutput(nn.Cell):
                               config.hidden_size,
                               weight_init=weight_init,
                               activation=config.hidden_act).to_float(config.compute_type)
-        self.layernorm = nn.LayerNorm(config.hidden_size).to_float(config.compute_type)
+        self.layernorm = nn.LayerNorm((config.hidden_size,)).to_float(config.compute_type)
         self.output_bias = Parameter(
             initializer(
                 'zero',

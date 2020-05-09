@@ -22,6 +22,10 @@ from scipy import stats
 
 import mindspore as ms
 import mindspore.common.initializer as init
+import mindspore.nn as nn
+from mindspore.common.tensor import Tensor
+from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
 from mindspore import context
 from mindspore.nn import Conv2d
 from ..ut_filter import non_graph_engine
@@ -55,8 +59,8 @@ def _check_uniform(tensor, boundary_a, boundary_b):
 
 def test_init_Initializer():
     tensor = init.initializer(InitTwo(), [2, 2], ms.int32)
-    assert tensor.shape() == (2, 2)
-    _check_value(tensor, 2, 2)
+    assert tensor.shape == (2, 2)
+    _check_value(tensor.to_tensor(), 2, 2)
 
 
 def test_init_tensor():
@@ -67,71 +71,71 @@ def test_init_tensor():
 
 def test_init_zero_default_dtype():
     tensor = init.initializer(init.Zero(), [2, 2])
-    assert tensor.dtype() == ms.float32
-    _check_value(tensor, 0, 0)
+    assert tensor.dtype == ms.float32
+    _check_value(tensor.to_tensor(), 0, 0)
 
 
 def test_init_zero():
     tensor = init.initializer(init.Zero(), [2, 2], ms.float32)
-    _check_value(tensor, 0, 0)
+    _check_value(tensor.to_tensor(), 0, 0)
 
 
 def test_init_zero_alias_default_dtype():
     tensor = init.initializer('zeros', [1, 2])
-    assert tensor.dtype() == ms.float32
-    _check_value(tensor, 0, 0)
+    assert tensor.dtype == ms.float32
+    _check_value(tensor.to_tensor(), 0, 0)
 
 
 def test_init_zero_alias():
     tensor = init.initializer('zeros', [1, 2], ms.float32)
-    _check_value(tensor, 0, 0)
+    _check_value(tensor.to_tensor(), 0, 0)
 
 
 def test_init_one():
     tensor = init.initializer(init.One(), [2, 2], ms.float32)
-    _check_value(tensor, 1, 1)
+    _check_value(tensor.to_tensor(), 1, 1)
 
 
 def test_init_one_alias():
     tensor = init.initializer('ones', [1, 2], ms.float32)
-    _check_value(tensor, 1, 1)
+    _check_value(tensor.to_tensor(), 1, 1)
 
 
 def test_init_constant():
     tensor = init.initializer(init.Constant(1), [2, 2], ms.float32)
-    _check_value(tensor, 1, 1)
+    _check_value(tensor.to_tensor(), 1, 1)
 
 
 def test_init_uniform():
     scale = 10
     tensor = init.initializer(init.Uniform(scale=scale), [5, 4], ms.float32)
-    _check_value(tensor, -scale, scale)
+    _check_value(tensor.to_tensor(), -scale, scale)
 
 
 def test_init_uniform_alias():
     scale = 100
     tensor = init.initializer('uniform', [5, 4], ms.float32)
-    _check_value(tensor, -scale, scale)
+    _check_value(tensor.to_tensor(), -scale, scale)
 
 
 def test_init_normal():
     tensor = init.initializer(init.Normal(), [5, 4], ms.float32)
-    assert isinstance(tensor, ms.Tensor), 'tensor init failed!'
+    assert isinstance(tensor, init.Normal), 'Normal init failed!'
 
 
 def test_init_truncated_normal():
     tensor = init.initializer(init.TruncatedNormal(), [5, 4], ms.float32)
-    assert isinstance(tensor, ms.Tensor), 'tensor init failed!'
+    assert isinstance(tensor, init.TruncatedNormal), 'TruncatedNormal init failed!'
 
 
 def test_init_normal_alias():
     tensor = init.initializer('normal', [5, 4], ms.float32)
-    assert isinstance(tensor, ms.Tensor), 'tensor init failed!'
+    assert isinstance(tensor, init.Normal), 'Normal init failed!'
 
 
 def test_init_truncatednormal_alias():
     tensor = init.initializer('truncatednormal', [5, 4], ms.float32)
-    assert isinstance(tensor, ms.Tensor), 'tensor init failed!'
+    assert isinstance(tensor, init.TruncatedNormal), 'TruncatedNormal init failed!'
 
 
 def test_init_abnormal():
@@ -142,12 +146,12 @@ def test_init_abnormal():
 def test_init_xavier_uniform():
     """ test_init_xavier_uniform """
     gain = 1.2
-    tensor1 = init.initializer(init.XavierUniform(gain=gain), [20, 22], ms.float32)
-    tensor2 = init.initializer(init.XavierUniform(), [20, 22], ms.float32)
-    tensor3 = init.initializer(init.XavierUniform(gain=gain), [20, 22, 5, 5], ms.float32)
-    tensor4 = init.initializer(init.XavierUniform(), [20, 22, 5, 5], ms.float32)
-    tensor5 = init.initializer('xavier_uniform', [20, 22, 5, 5], ms.float32)
-    tensor6 = init.initializer('xavier_uniform', [20, 22], ms.float32)
+    tensor1 = init.initializer(init.XavierUniform(gain=gain), [20, 22], ms.float32).to_tensor()
+    tensor2 = init.initializer(init.XavierUniform(), [20, 22], ms.float32).to_tensor()
+    tensor3 = init.initializer(init.XavierUniform(gain=gain), [20, 22, 5, 5], ms.float32).to_tensor()
+    tensor4 = init.initializer(init.XavierUniform(), [20, 22, 5, 5], ms.float32).to_tensor()
+    tensor5 = init.initializer('xavier_uniform', [20, 22, 5, 5], ms.float32).to_tensor()
+    tensor6 = init.initializer('xavier_uniform', [20, 22], ms.float32).to_tensor()
     tensor_dict = {tensor1: gain, tensor2: None, tensor3: gain, tensor4: None, tensor5: None, tensor6: None}
 
     for tensor, gain_value in tensor_dict.items():
@@ -167,7 +171,7 @@ def test_init_xavier_uniform():
 
 def test_init_xavier_uniform_error():
     with py.raises(ValueError):
-        init.initializer(init.XavierUniform(), [6], ms.float32)
+        init.initializer(init.XavierUniform(), [6], ms.float32).to_tensor()
 
 
 def test_init_he_uniform():
@@ -176,7 +180,7 @@ def test_init_he_uniform():
     tensor2 = init.initializer(init.HeUniform(), [20, 22, 5, 5], ms.float32)
     tensor3 = init.initializer('he_uniform', [20, 22, 5, 5], ms.float32)
     tensor4 = init.initializer('he_uniform', [20, 22], ms.float32)
-    tensors = [tensor1, tensor2, tensor3, tensor4]
+    tensors = [tensor1.to_tensor(), tensor2.to_tensor(), tensor3.to_tensor(), tensor4.to_tensor()]
 
     for tensor in tensors:
         shape = tensor.asnumpy().shape
@@ -192,7 +196,7 @@ def test_init_he_uniform():
 
 def test_init_he_uniform_error():
     with py.raises(ValueError):
-        init.initializer(init.HeUniform(), [6], ms.float32)
+        init.initializer(init.HeUniform(), [6], ms.float32).to_tensor()
 
 
 def test_conv2d_abnormal_kernel_negative():
@@ -216,9 +220,30 @@ def test_conv2d_abnormal_kernel_normal():
 
 @non_graph_engine
 def test_conv2d_abnormal_kernel_truncated_normal():
-    input_data = init.initializer(init.TruncatedNormal(), [64, 3, 7, 7], ms.float32)
+    input_data = init.initializer(init.TruncatedNormal(), [64, 3, 7, 7], ms.float32).to_tensor()
     context.set_context(mode=context.GRAPH_MODE)
     model = ms.Model(
         Conv2d(in_channels=3, out_channels=64, kernel_size=7, stride=3,
                padding=0, weight_init="truncatednormal"))
     model.predict(input_data)
+
+
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.add = P.TensorAdd()
+        self.t1 = Parameter(init.initializer('uniform', [5, 4], ms.float32), name="w1")
+        self.t2 = Parameter(init.initializer(init.TruncatedNormal(), [5, 4], ms.float32), name="w2")
+
+    def construct(self, x):
+        z = self.add(x, self.t1)
+        z = self.add(z, self.t2)
+        return z
+
+def test_weight_shape():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    a = np.arange(20).reshape(5, 4)
+    t = Tensor(a, dtype=ms.float32)
+    net = Net()
+    out = net(t)
+    print(out)
