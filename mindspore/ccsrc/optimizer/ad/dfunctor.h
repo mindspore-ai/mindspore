@@ -62,9 +62,11 @@ class DFunctor {
   // Map one morphism.
   AdjointPtr MapMorphism(const AnfNodePtr &morph);
   bool IsFreeMorphism(const AnfNodePtr &node);
+  bool IsInScope(const AnfNodePtr &node);
   // Map morphism that's not attached to output.
   void MapFreeMorphism();
   void BackPropagateFv(const AnfNodePtr &fv, const AnfNodePtr &din);
+  void BackPropagateSwitchLayer(const CNodePtr &cnode_morph, const CNodePtr &env);
   void BackPropagate(const CNodePtr &cnode_morph, const CNodePtr &k_app, const AdjointPtr &node_adjoint);
   AnfNodePtr AttachFvDoutToTape(const AnfNodePtr &grad_fv);
   AnfNodePtr AttachIndirectFvDoutToTape(const AnfNodePtr &grad_fv);
@@ -101,6 +103,7 @@ class DFunctor {
   bool is_top_;
   static std::unordered_map<FuncGraphPtr, std::shared_ptr<DFunctor>> func_graph_to_functor_;
   static std::unordered_map<AnfNodePtr, AdjointPtr> anfnode_to_adjoin_definition_;
+  static FuncGraphSet scope_;
 };
 
 // D Functor's rules to map primitive object.
@@ -120,6 +123,7 @@ class KPrim {
 
  private:
   FuncGraphPtr GetBprop(const PrimitivePtr &prim);
+  FuncGraphPtr GetFprop(const PrimitivePtr &prim);
   FuncGraphPtr FakeBprop(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
   // Given a bprop rule, do the K mapping.
   template <typename T>

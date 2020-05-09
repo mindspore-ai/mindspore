@@ -19,6 +19,9 @@ from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.common.parameter import Parameter, ParameterTuple
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -358,3 +361,33 @@ def test_if_compile_true():
 def test_if_compile_false():
     output = if_compile_test(8, 3)
     print("test_if_compile_false:", output)
+
+
+def test_switch_layer():
+    class Layer1(nn.Cell):
+        def __init__(self):
+            super(Layer1, self).__init__()
+            self.z1 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
+        def construct(self, x):
+            return x * self.z1
+
+    class Layer2(nn.Cell):
+        def __init__(self):
+            super(Layer2, self).__init__()
+            self.z2 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
+        def construct(self, x):
+            return x * self.z2
+
+    class SwitchLayerCell(nn.Cell):
+        def __init__(self):
+            super(SwitchLayerCell, self).__init__()
+            self.layers = (Layer1(), Layer2())
+            self.z3 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
+        def construct(self, index, x):
+            ret = F.switch_layer(index, self.layers)(x) * self.z3
+            return ret
+
+    net = SwitchLayerCell()
+    net(1, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(0, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    C.grad_all(net)(0, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))

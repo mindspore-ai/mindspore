@@ -59,6 +59,7 @@ const PrimitivePtr kPrimHasType = std::make_shared<Primitive>("hastype");
 
 // Statements
 const PrimitivePtr kPrimSwitch = std::make_shared<Primitive>("switch");
+const PrimitivePtr kPrimSwitchLayer = std::make_shared<Primitive>("switch_layer");
 const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("return");
 const PrimitivePtr kPrimAssign = std::make_shared<Primitive>("Assign");
 const PrimitivePtr kPrimAssignAdd = std::make_shared<Primitive>("AssignAdd");
