@@ -56,6 +56,7 @@ if (ENABLE_MINDDATA)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/libtiff.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/opencv.cmake)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/sqlite.cmake)
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/tinyxml2.cmake)
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/external_libs/gtest.cmake)

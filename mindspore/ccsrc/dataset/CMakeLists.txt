@@ -90,7 +90,7 @@ else()
     target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl mindspore::protobuf ${SECUREC_LIBRARY})
 endif()
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::opencv_core mindspore::opencv_imgcodecs
-        mindspore::opencv_imgproc)
+        mindspore::opencv_imgproc mindspore::tinyxml2)
 if (ENABLE_GPUQUE)
     target_link_libraries(_c_dataengine PRIVATE gpu_queue
                                      ${CUDNN_PATH}/lib64/libcudnn.so

@@ -15,8 +15,10 @@
  */
 #include "dataset/engine/datasetops/source/voc_op.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
+#include "./tinyxml2.h"
 #include "common/utils.h"
 #include "dataset/core/config_manager.h"
 #include "dataset/core/tensor_shape.h"
@@ -24,8 +26,24 @@
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
 
+using tinyxml2::XMLDocument;
+using tinyxml2::XMLElement;
+using tinyxml2::XMLError;
 namespace mindspore {
 namespace dataset {
+const char kColumnImage[] = "image";
+const char kColumnTarget[] = "target";
+const char kColumnAnnotation[] = "annotation";
+const char kJPEGImagesFolder[] = "/JPEGImages/";
+const char kSegmentationClassFolder[] = "/SegmentationClass/";
+const char kAnnotationsFolder[] = "/Annotations/";
+const char kImageSetsSegmentation[] = "/ImageSets/Segmentation/";
+const char kImageSetsMain[] = "/ImageSets/Main/";
+const char kImageExtension[] = ".jpg";
+const char kSegmentationExtension[] = ".png";
+const char kAnnotationExtension[] = ".xml";
+const char kImageSetsExtension[] = ".txt";
+
 VOCOp::Builder::Builder() : builder_decode_(false), builder_num_samples_(0), builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
@@ -39,13 +57,21 @@ Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
     builder_sampler_ = std::make_shared<SequentialSampler>();
   }
   builder_schema_ = std::make_unique<DataSchema>();
-  RETURN_IF_NOT_OK(
-    builder_schema_->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-  RETURN_IF_NOT_OK(
-    builder_schema_->AddColumn(ColDescriptor("target", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-  *ptr = std::make_shared<VOCOp>(builder_num_workers_, builder_rows_per_buffer_, builder_dir_,
-                                 builder_op_connector_size_, builder_num_samples_, builder_decode_,
-                                 std::move(builder_schema_), std::move(builder_sampler_));
+  if (builder_task_type_ == TaskType::Segmentation) {
+    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
+      ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
+    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
+      ColDescriptor(std::string(kColumnTarget), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
+  } else if (builder_task_type_ == TaskType::Detection) {
+    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
+      ColDescriptor(std::string(kColumnImage), DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
+    RETURN_IF_NOT_OK(builder_schema_->AddColumn(
+      ColDescriptor(std::string(kColumnAnnotation), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+  }
+  *ptr = std::make_shared<VOCOp>(builder_task_type_, builder_task_mode_, builder_dir_, builder_labels_to_read_,
+                                 builder_num_workers_, builder_rows_per_buffer_, builder_op_connector_size_,
+                                 builder_num_samples_, builder_decode_, std::move(builder_schema_),
+                                 std::move(builder_sampler_));
   return Status::OK();
 }
 
@@ -58,8 +84,9 @@ Status VOCOp::Builder::SanityCheck() {
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
-VOCOp::VOCOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &folder_path, int32_t queue_size,
-             int64_t num_samples, bool decode, std::unique_ptr<DataSchema> data_schema,
+VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
+             const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t rows_per_buffer,
+             int32_t queue_size, int64_t num_samples, bool decode, std::unique_ptr<DataSchema> data_schema,
              std::shared_ptr<Sampler> sampler)
     : ParallelOp(num_workers, queue_size),
       decode_(decode),
@@ -67,7 +94,10 @@ VOCOp::VOCOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &fo
       buf_cnt_(0),
       num_rows_(0),
       num_samples_(num_samples),
+      task_type_(task_type),
+      task_mode_(task_mode),
       folder_path_(folder_path),
+      class_index_(class_index),
       rows_per_buffer_(rows_per_buffer),
       sampler_(std::move(sampler)),
       data_schema_(std::move(data_schema)) {
@@ -167,12 +197,25 @@ Status VOCOp::GetNumSamples(int64_t *num) const {
 }
 
 Status VOCOp::LoadTensorRow(const std::string &image_id, TensorRow *trow) {
-  std::shared_ptr<Tensor> image, target;
-  const std::string kImageDir = folder_path_ + "/JPEGImages/" + image_id + ".jpg";
-  const std::string kTargetDir = folder_path_ + "/SegmentationClass/" + image_id + ".png";
-  RETURN_IF_NOT_OK(ReadImageToTensor(kImageDir, data_schema_->column(0), &image));
-  RETURN_IF_NOT_OK(ReadImageToTensor(kTargetDir, data_schema_->column(1), &target));
-  (*trow) = {std::move(image), std::move(target)};
+  if (task_type_ == TaskType::Segmentation) {
+    std::shared_ptr<Tensor> image, target;
+    const std::string kImageFile =
+      folder_path_ + std::string(kJPEGImagesFolder) + image_id + std::string(kImageExtension);
+    const std::string kTargetFile =
+      folder_path_ + std::string(kSegmentationClassFolder) + image_id + std::string(kSegmentationExtension);
+    RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
+    RETURN_IF_NOT_OK(ReadImageToTensor(kTargetFile, data_schema_->column(1), &target));
+    (*trow) = {std::move(image), std::move(target)};
+  } else if (task_type_ == TaskType::Detection) {
+    std::shared_ptr<Tensor> image, annotation;
+    const std::string kImageFile =
+      folder_path_ + std::string(kJPEGImagesFolder) + image_id + std::string(kImageExtension);
+    const std::string kAnnotationFile =
+      folder_path_ + std::string(kAnnotationsFolder) + image_id + std::string(kAnnotationExtension);
+    RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
+    RETURN_IF_NOT_OK(ReadAnnotationToTensor(kAnnotationFile, data_schema_->column(1), &annotation));
+    (*trow) = {std::move(image), std::move(annotation)};
+  }
   return Status::OK();
 }
 
@@ -213,8 +256,13 @@ Status VOCOp::WorkerEntry(int32_t worker_id) {
 }
 
 Status VOCOp::ParseImageIds() {
-  const std::string kImageSets = "/ImageSets/Segmentation/train.txt";
-  std::string image_sets_file = folder_path_ + kImageSets;
+  std::string image_sets_file;
+  if (task_type_ == TaskType::Segmentation) {
+    image_sets_file =
+      folder_path_ + std::string(kImageSetsSegmentation) + task_mode_ + std::string(kImageSetsExtension);
+  } else if (task_type_ == TaskType::Detection) {
+    image_sets_file = folder_path_ + std::string(kImageSetsMain) + task_mode_ + std::string(kImageSetsExtension);
+  }
   std::ifstream in_file;
   in_file.open(image_sets_file);
   if (in_file.fail()) {
@@ -228,6 +276,84 @@ Status VOCOp::ParseImageIds() {
   image_ids_.shrink_to_fit();
   num_rows_ = image_ids_.size();
   num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
+  return Status::OK();
+}
+
+Status VOCOp::ParseAnnotationIds() {
+  std::vector<std::string> new_image_ids;
+  for (auto id : image_ids_) {
+    const std::string kAnnotationName =
+      folder_path_ + std::string(kAnnotationsFolder) + id + std::string(kAnnotationExtension);
+    RETURN_IF_NOT_OK(ParseAnnotationBbox(kAnnotationName));
+    if (label_map_.find(kAnnotationName) != label_map_.end()) {
+      new_image_ids.push_back(id);
+    }
+  }
+
+  if (image_ids_.size() != new_image_ids.size()) {
+    image_ids_.clear();
+    image_ids_.insert(image_ids_.end(), new_image_ids.begin(), new_image_ids.end());
+  }
+  uint32_t count = 0;
+  for (auto &label : label_index_) {
+    label.second = count++;
+  }
+
+  num_rows_ = image_ids_.size();
+  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
+  return Status::OK();
+}
+
+Status VOCOp::ParseAnnotationBbox(const std::string &path) {
+  if (!Path(path).Exists()) {
+    RETURN_STATUS_UNEXPECTED("File is not found : " + path);
+  }
+  Bbox bbox;
+  XMLDocument doc;
+  XMLError e = doc.LoadFile(common::SafeCStr(path));
+  if (e != XMLError::XML_SUCCESS) {
+    RETURN_STATUS_UNEXPECTED("Xml load failed");
+  }
+  XMLElement *root = doc.RootElement();
+  if (root == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Xml load root element error");
+  }
+  XMLElement *object = root->FirstChildElement("object");
+  if (object == nullptr) {
+    RETURN_STATUS_UNEXPECTED("No object find in " + path);
+  }
+  while (object != nullptr) {
+    std::string label_name;
+    uint32_t xmin = 0, ymin = 0, xmax = 0, ymax = 0, truncated = 0, difficult = 0;
+    XMLElement *name_node = object->FirstChildElement("name");
+    if (name_node != nullptr) label_name = name_node->GetText();
+    XMLElement *truncated_node = object->FirstChildElement("truncated");
+    if (truncated_node != nullptr) truncated = truncated_node->UnsignedText();
+    XMLElement *difficult_node = object->FirstChildElement("difficult");
+    if (difficult_node != nullptr) difficult = difficult_node->UnsignedText();
+
+    XMLElement *bbox_node = object->FirstChildElement("bndbox");
+    if (bbox_node != nullptr) {
+      XMLElement *xmin_node = bbox_node->FirstChildElement("xmin");
+      if (xmin_node != nullptr) xmin = xmin_node->UnsignedText();
+      XMLElement *ymin_node = bbox_node->FirstChildElement("ymin");
+      if (ymin_node != nullptr) ymin = ymin_node->UnsignedText();
+      XMLElement *xmax_node = bbox_node->FirstChildElement("xmax");
+      if (xmax_node != nullptr) xmax = xmax_node->UnsignedText();
+      XMLElement *ymax_node = bbox_node->FirstChildElement("ymax");
+      if (ymax_node != nullptr) ymax = ymax_node->UnsignedText();
+    } else {
+      RETURN_STATUS_UNEXPECTED("bndbox dismatch in " + path);
+    }
+    if (label_name != "" && (class_index_.empty() || class_index_.find(label_name) != class_index_.end()) && xmin > 0 &&
+        ymin > 0 && xmax > xmin && ymax > ymin) {
+      std::vector<uint32_t> bbox_list = {xmin, ymin, xmax - xmin, ymax - ymin, truncated, difficult};
+      bbox.emplace_back(std::make_pair(label_name, bbox_list));
+      label_index_[label_name] = 0;
+    }
+    object = object->NextSiblingElement("object");
+  }
+  if (bbox.size() > 0) label_map_[path] = bbox;
   return Status::OK();
 }
 
@@ -245,6 +371,9 @@ Status VOCOp::LaunchThreadsAndInitOp() {
   RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&VOCOp::WorkerEntry, this, std::placeholders::_1)));
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(this->ParseImageIds());
+  if (task_type_ == TaskType::Detection) {
+    RETURN_IF_NOT_OK(this->ParseAnnotationIds());
+  }
   RETURN_IF_NOT_OK(this->InitSampler());
   return Status::OK();
 }
@@ -270,6 +399,34 @@ Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &co
   return Status::OK();
 }
 
+Status VOCOp::ReadAnnotationToTensor(const std::string &path, const ColDescriptor &col,
+                                     std::shared_ptr<Tensor> *tensor) {
+  Bbox bbox_info = label_map_[path];
+  std::vector<uint32_t> bbox_row;
+  dsize_t bbox_column_num = 0, bbox_num = 0;
+  for (auto box : bbox_info) {
+    if (label_index_.find(box.first) != label_index_.end()) {
+      std::vector<uint32_t> bbox;
+      if (class_index_.find(box.first) != class_index_.end()) {
+        bbox.emplace_back(class_index_[box.first]);
+      } else {
+        bbox.emplace_back(label_index_[box.first]);
+      }
+      bbox.insert(bbox.end(), box.second.begin(), box.second.end());
+      bbox_row.insert(bbox_row.end(), bbox.begin(), bbox.end());
+      if (bbox_column_num == 0) {
+        bbox_column_num = static_cast<dsize_t>(bbox.size());
+      }
+      bbox_num++;
+    }
+  }
+
+  std::vector<dsize_t> bbox_dim = {bbox_num, bbox_column_num};
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, col.tensorImpl(), TensorShape(bbox_dim), col.type(),
+                                        reinterpret_cast<unsigned char *>(&bbox_row[0])));
+  return Status::OK();
+}
+
 // Derived from RandomAccessOp
 Status VOCOp::GetNumRowsInDataset(int64_t *num) const {
   if (num == nullptr || num_rows_ == 0) {
@@ -278,6 +435,31 @@ Status VOCOp::GetNumRowsInDataset(int64_t *num) const {
       "validation first.");
   }
   (*num) = num_rows_;
+  return Status::OK();
+}
+
+Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
+                               const py::dict &dict, int64_t numSamples,
+                               std::map<std::string, int32_t> *output_class_indexing) {
+  std::map<std::string, int32_t> input_class_indexing;
+  for (auto p : dict) {
+    (void)input_class_indexing.insert(std::pair<std::string, int32_t>(py::reinterpret_borrow<py::str>(p.first),
+                                                                      py::reinterpret_borrow<py::int_>(p.second)));
+  }
+
+  if (!input_class_indexing.empty()) {
+    *output_class_indexing = input_class_indexing;
+  } else {
+    std::shared_ptr<VOCOp> op;
+    RETURN_IF_NOT_OK(
+      Builder().SetDir(dir).SetTask(task_type).SetMode(task_mode).SetClassIndex(input_class_indexing).Build(&op));
+    RETURN_IF_NOT_OK(op->ParseImageIds());
+    RETURN_IF_NOT_OK(op->ParseAnnotationIds());
+    for (const auto label : op->label_index_) {
+      (*output_class_indexing).insert(std::make_pair(label.first, label.second));
+    }
+  }
+
   return Status::OK();
 }
 }  // namespace dataset

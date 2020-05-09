@@ -455,16 +455,43 @@ def check_vocdataset(method):
 
         nreq_param_int = ['num_samples', 'num_parallel_workers', 'num_shards', 'shard_id']
         nreq_param_bool = ['shuffle', 'decode']
+        nreq_param_dict = ['class_indexing']
 
         # check dataset_dir; required argument
         dataset_dir = param_dict.get('dataset_dir')
         if dataset_dir is None:
             raise ValueError("dataset_dir is not provided.")
         check_dataset_dir(dataset_dir)
+        # check task; required argument
+        task = param_dict.get('task')
+        if task is None:
+            raise ValueError("task is not provided.")
+        if not isinstance(task, str):
+            raise ValueError("task is not str type.")
+        # check mode; required argument
+        mode = param_dict.get('mode')
+        if mode is None:
+            raise ValueError("mode is not provided.")
+        if not isinstance(mode, str):
+            raise ValueError("mode is not str type.")
+
+        imagesets_file = ""
+        if task == "Segmentation":
+            imagesets_file = os.path.join(dataset_dir, "ImageSets", "Segmentation", mode + ".txt")
+            if param_dict.get('class_indexing') is not None:
+                raise ValueError("class_indexing is invalid in Segmentation task")
+        elif task == "Detection":
+            imagesets_file = os.path.join(dataset_dir, "ImageSets", "Main", mode + ".txt")
+        else:
+            raise ValueError("Invalid task : " + task)
+
+        check_dataset_file(imagesets_file)
 
         check_param_type(nreq_param_int, param_dict, int)
 
         check_param_type(nreq_param_bool, param_dict, bool)
+
+        check_param_type(nreq_param_dict, param_dict, dict)
 
         check_sampler_shuffle_shard_options(param_dict)
 

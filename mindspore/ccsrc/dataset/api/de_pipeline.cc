@@ -898,6 +898,8 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
 
   std::shared_ptr<VOCOp::Builder> builder = std::make_shared<VOCOp::Builder>();
   (void)builder->SetDir(ToString(args["dataset_dir"]));
+  (void)builder->SetTask(ToString(args["task"]));
+  (void)builder->SetMode(ToString(args["mode"]));
   for (auto arg : args) {
     std::string key = py::str(arg.first);
     py::handle value = arg.second;
@@ -912,6 +914,8 @@ Status DEPipeline::ParseVOCOp(const py::dict &args, std::shared_ptr<DatasetOp> *
         (void)builder->SetSampler(std::move(sampler));
       } else if (key == "decode") {
         (void)builder->SetDecode(ToBool(value));
+      } else if (key == "class_indexing") {
+        (void)builder->SetClassIndex(ToStringMap(value));
       }
     }
   }

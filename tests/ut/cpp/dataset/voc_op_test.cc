@@ -50,17 +50,170 @@ std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
 
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
-std::shared_ptr<VOCOp> CreateVOC(int64_t num_wrks, int64_t rows, int64_t conns, std::string path,
-                                 bool shuf = false, std::unique_ptr<Sampler> sampler = nullptr,
-                                 int64_t num_samples = 0, bool decode = false) {
-  std::shared_ptr<VOCOp> so;
-  VOCOp::Builder builder;
-  Status rc = builder.SetNumWorkers(num_wrks).SetDir(path).SetRowsPerBuffer(rows)
-                     .SetOpConnectorSize(conns).SetSampler(std::move(sampler))
-                     .SetNumSamples(num_samples).SetDecode(decode).Build(&so);
-  return so;
-}
-
-class MindDataTestVOCSampler : public UT::DatasetOpTesting {
+class MindDataTestVOCOp : public UT::DatasetOpTesting {
  protected:
 };
+
+TEST_F(MindDataTestVOCOp, TestVOCDetection) {
+  // Start with an empty execution tree
+  auto my_tree = std::make_shared<ExecutionTree>();
+  std::string dataset_path;
+  dataset_path = datasets_root_path_ + "/testVOC2012";
+
+  std::string task_type("Detection");
+  std::string task_mode("train");
+  std::shared_ptr<VOCOp> my_voc_op;
+  VOCOp::Builder builder;
+  Status rc = builder.SetDir(dataset_path)
+                     .SetTask(task_type)
+                     .SetMode(task_mode)
+                     .Build(&my_voc_op);
+  ASSERT_TRUE(rc.IsOk());
+
+  rc = my_tree->AssociateNode(my_voc_op);
+  ASSERT_TRUE(rc.IsOk());
+  rc = my_tree->AssignRoot(my_voc_op);
+  ASSERT_TRUE(rc.IsOk());
+
+  MS_LOG(DEBUG) << "Launch tree and begin iteration.";
+  rc = my_tree->Prepare();
+  ASSERT_TRUE(rc.IsOk());
+
+  rc = my_tree->Launch();
+  ASSERT_TRUE(rc.IsOk());
+
+  // Start the loop of reading tensors from our pipeline
+  DatasetIterator di(my_tree);
+  TensorRow tensor_list;
+  rc = di.FetchNextTensorRow(&tensor_list);
+  ASSERT_TRUE(rc.IsOk());
+
+  int row_count = 0;
+  while (!tensor_list.empty()) {
+    MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
+
+    //Display the tensor by calling the printer on it
+    for (int i = 0; i < tensor_list.size(); i++) {
+      std::ostringstream ss;
+      ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
+      MS_LOG(DEBUG) << "Tensor print: " << ss.str() << ".";
+    }
+
+    rc = di.FetchNextTensorRow(&tensor_list);
+    ASSERT_TRUE(rc.IsOk());
+    row_count++;
+  }
+
+  ASSERT_EQ(row_count, 9);
+}
+
+TEST_F(MindDataTestVOCOp, TestVOCSegmentation) {
+  // Start with an empty execution tree
+  auto my_tree = std::make_shared<ExecutionTree>();
+  std::string dataset_path;
+  dataset_path = datasets_root_path_ + "/testVOC2012";
+
+  std::string task_type("Segmentation");
+  std::string task_mode("train");
+  std::shared_ptr<VOCOp> my_voc_op;
+  VOCOp::Builder builder;
+  Status rc = builder.SetDir(dataset_path)
+                     .SetTask(task_type)
+                     .SetMode(task_mode)
+                     .Build(&my_voc_op);
+  ASSERT_TRUE(rc.IsOk());
+
+  rc = my_tree->AssociateNode(my_voc_op);
+  ASSERT_TRUE(rc.IsOk());
+  rc = my_tree->AssignRoot(my_voc_op);
+  ASSERT_TRUE(rc.IsOk());
+
+  MS_LOG(DEBUG) << "Launch tree and begin iteration.";
+  rc = my_tree->Prepare();
+  ASSERT_TRUE(rc.IsOk());
+
+  rc = my_tree->Launch();
+  ASSERT_TRUE(rc.IsOk());
+
+  // Start the loop of reading tensors from our pipeline
+  DatasetIterator di(my_tree);
+  TensorRow tensor_list;
+  rc = di.FetchNextTensorRow(&tensor_list);
+  ASSERT_TRUE(rc.IsOk());
+
+  int row_count = 0;
+  while (!tensor_list.empty()) {
+    MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
+
+    //Display the tensor by calling the printer on it
+    for (int i = 0; i < tensor_list.size(); i++) {
+      std::ostringstream ss;
+      ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
+      MS_LOG(DEBUG) << "Tensor print: " << ss.str() << ".";
+    }
+
+    rc = di.FetchNextTensorRow(&tensor_list);
+    ASSERT_TRUE(rc.IsOk());
+    row_count++;
+  }
+
+  ASSERT_EQ(row_count, 10);
+}
+
+TEST_F(MindDataTestVOCOp, TestVOCClassIndex) {
+  // Start with an empty execution tree
+  auto my_tree = std::make_shared<ExecutionTree>();
+  std::string dataset_path;
+  dataset_path = datasets_root_path_ + "/testVOC2012";
+
+  std::string task_type("Detection");
+  std::string task_mode("train");
+  std::map<std::string, int32_t> class_index;
+  class_index["car"] = 0;
+  class_index["cat"] = 1;
+  class_index["train"] = 5;
+  std::shared_ptr<VOCOp> my_voc_op;
+  VOCOp::Builder builder;
+  Status rc = builder.SetDir(dataset_path)
+                     .SetTask(task_type)
+                     .SetMode(task_mode)
+                     .SetClassIndex(class_index)
+                     .Build(&my_voc_op);
+  ASSERT_TRUE(rc.IsOk());
+
+  rc = my_tree->AssociateNode(my_voc_op);
+  ASSERT_TRUE(rc.IsOk());
+  rc = my_tree->AssignRoot(my_voc_op);
+  ASSERT_TRUE(rc.IsOk());
+
+  MS_LOG(DEBUG) << "Launch tree and begin iteration.";
+  rc = my_tree->Prepare();
+  ASSERT_TRUE(rc.IsOk());
+
+  rc = my_tree->Launch();
+  ASSERT_TRUE(rc.IsOk());
+
+  // Start the loop of reading tensors from our pipeline
+  DatasetIterator di(my_tree);
+  TensorRow tensor_list;
+  rc = di.FetchNextTensorRow(&tensor_list);
+  ASSERT_TRUE(rc.IsOk());
+
+  int row_count = 0;
+  while (!tensor_list.empty()) {
+    MS_LOG(DEBUG) << "Row display for row #: " << row_count << ".";
+
+    //Display the tensor by calling the printer on it
+    for (int i = 0; i < tensor_list.size(); i++) {
+      std::ostringstream ss;
+      ss << "(" << tensor_list[i] << "): " << *tensor_list[i] << std::endl;
+      MS_LOG(DEBUG) << "Tensor print: " << ss.str() << ".";
+    }
+
+    rc = di.FetchNextTensorRow(&tensor_list);
+    ASSERT_TRUE(rc.IsOk());
+    row_count++;
+  }
+
+  ASSERT_EQ(row_count, 6);
+}
