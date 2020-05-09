@@ -139,16 +139,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_save_ms_model_flag", &mindspore::MsContext::set_save_ms_model_flag, "Set whether to save ms model.")
     .def("get_save_ms_model_path", &mindspore::MsContext::save_ms_model_path, "Get path to save ms model.")
     .def("set_save_ms_model_path", &mindspore::MsContext::set_save_ms_model_path, "Set path to save ms model")
-    .def("get_enable_gpu_summary", &mindspore::MsContext::enable_gpu_summary, "Get whether to enable gpu summary.")
-    .def("set_enable_gpu_summary", &mindspore::MsContext::set_enable_gpu_summary, "Set whether to enable gpu summary.")
     .def("get_enable_dump", &mindspore::MsContext::enable_dump, "Get whether to enable dump.")
     .def("set_enable_dump", &mindspore::MsContext::set_enable_dump, "Set whether to enable dump.")
     .def("get_save_dump_path", &mindspore::MsContext::save_dump_path, "Get path to dump.")
     .def("set_save_dump_path", &mindspore::MsContext::set_save_dump_path, "Set path to dump.")
-    .def("get_enable_dynamic_mem_pool", &mindspore::MsContext::enable_dynamic_mem_pool,
-         "Get whether to enable dynamic mem pool.")
-    .def("set_enable_dynamic_mem_pool", &mindspore::MsContext::set_enable_dynamic_mem_pool,
-         "Set whether to enable dynamic mem pool.")
     .def("set_graph_memory_max_size", &mindspore::MsContext::set_graph_memory_max_size, "set graph memory max size.")
     .def("set_variable_memory_max_size", &mindspore::MsContext::set_variable_memory_max_size,
          "set variable memory max size");

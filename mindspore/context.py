@@ -266,14 +266,6 @@ class _Context:
         self._context_handle.set_save_ms_model_path(save_ms_model_path)
 
     @property
-    def enable_gpu_summary(self):
-        return self._context_handle.get_enable_gpu_summary()
-
-    @enable_gpu_summary.setter
-    def enable_gpu_summary(self, enable_gpu_summary):
-        self._context_handle.set_enable_gpu_summary(enable_gpu_summary)
-
-    @property
     def enable_auto_mixed_precision(self):
         return self._context_handle.get_auto_mixed_precision_flag()
 
@@ -314,14 +306,6 @@ class _Context:
     def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
         """Sets whether to save the network class name in the scope."""
         self._thread_local_info.reserve_class_name_in_scope = reserve_class_name_in_scope
-
-    @property
-    def enable_dynamic_memory(self):
-        return self._context_handle.get_enable_dynamic_mem_pool()
-
-    @enable_dynamic_memory.setter
-    def enable_dynamic_memory(self, enable_dynamic_memory):
-        self._context_handle.set_enable_dynamic_mem_pool(enable_dynamic_memory)
 
     @property
     def graph_memory_max_size(self):
@@ -485,9 +469,9 @@ def reset_auto_parallel_context():
 @args_type_check(mode=int, precompile_only=bool, device_target=str,
                  device_id=int, enable_ir_fusion=bool, save_graphs=bool,
                  enable_task_sink=bool, save_graphs_path=str, enable_loop_sink=bool,
-                 enable_mem_reuse=bool, save_ms_model=bool, save_ms_model_path=str, enable_gpu_summary=bool,
+                 enable_mem_reuse=bool, save_ms_model=bool, save_ms_model_path=str,
                  enable_auto_mixed_precision=bool, enable_dump=bool, save_dump_path=str,
-                 enable_reduce_precision=bool, enable_dynamic_memory=bool, graph_memory_max_size=str,
+                 enable_reduce_precision=bool, graph_memory_max_size=str,
                  variable_memory_max_size=str)
 def set_context(**kwargs):
     """
@@ -521,7 +505,6 @@ def set_context(**kwargs):
         enable_mem_reuse (bool): Whether to enable memory reuse. Default: True.
         save_ms_model (bool): Whether to save lite model converted by graph. Default: False.
         save_ms_model_path (str): Path to save converted lite model. Default: "."
-        enable_gpu_summary (bool): Whether to enable gpu summary. Default: True.
         save_graphs_path (str): Path to save graphs. Default: "."
         enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: True.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
@@ -530,7 +513,6 @@ def set_context(**kwargs):
         save_dump_path (str): When the program is executed on Ascend, operators can dump data here.
             The root dump path is configured in /home/HwHiAiUser/ide_daemon/ide_daemon.cfg.
             So the real dump path is "{configured root dump path}/{`save_dump_path`}". Default: ".".
-        enable_dynamic_memory (bool): Whether to enable dynamic memory. Default: False.
         graph_memory_max_size (str): Sets graph memory max size. Default: "26GB".
         variable_memory_max_size (str): Sets variable memory max size. Default: "5GB".
 
@@ -547,10 +529,8 @@ def set_context(**kwargs):
         >>> context.set_context(enable_mem_reuse=True)
         >>> context.set_context(enable_reduce_precision=True)
         >>> context.set_context(save_ms_model=True, save_ms_model_path=".")
-        >>> context.set_context(enable_gpu_summary=False)
         >>> context.set_context(enable_dump=True, save_dump_path=".")
         >>> context.set_context(reserve_class_name_in_scope=True)
-        >>> context.set_context(enable_dynamic_memory=True)
         >>> context.set_context(graph_memory_max_size="25GB")
         >>> context.set_context(variable_memory_max_size="6GB")
         >>> context.set_context(mode=context.GRAPH_MODE,
