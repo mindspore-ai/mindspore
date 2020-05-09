@@ -122,6 +122,11 @@ class ELU(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
+        >>> elu = nn.ELU()
+        >>> elu(input_x)
+
     """
     def __init__(self, alpha=1.0):
         super(ELU, self).__init__()
@@ -343,10 +348,15 @@ class PReLU(Cell):
         w (float): The initial value of w. Default: 0.25.
 
     Inputs:
-        - **input_data** (Tensor) - The input of Tanh.
+        - **input_data** (Tensor) - The input of PReLU.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
+        >>> prelu = nn.PReLU()
+        >>> prelu(input_x)
 
     """
     @cell_attr_register(attrs="")
@@ -394,6 +404,11 @@ class HSwish(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> hswish = nn.HSwish()
+        >>> hswish(input_x)
+
     """
     def __init__(self):
         super(HSwish, self).__init__()
@@ -421,6 +436,11 @@ class HSigmoid(Cell):
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> hsigmoid = nn.HSigmoid()
+        >>> hsigmoid(input_x)
 
     """
     def __init__(self):
