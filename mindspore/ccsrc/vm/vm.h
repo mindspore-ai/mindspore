@@ -125,17 +125,22 @@ class FinalVM {
   void Popp();
   void Pushsp();
   void Popsp();
+  void PushStatus(bool is_switch_call);
+  bool PopStatus();
   void DoJmp(const BaseRef &jmp);
   void MergeJmpArgs(const BaseRef &jmp, const BaseRef &c);
+  BaseRef MergeArgs(const BaseRef &first, const BaseRef &second);
 
  private:
   InstSet insts_;
   std::deque<BaseRef> insts_stack_;
   std::stack<int> retp_;
   std::stack<int> retsp_;
+  std::stack<bool> ret_status_;
   int pc_;
   int sp_;
   std::unordered_map<BaseRef, BaseRef, BaseRefHash> cond_jmp_;
+  std::unordered_map<BaseRef, BaseRef, BaseRefHash> cond_out_;
   BackendPtr backend_;
   const InstFunctionMap inst_function_map = {
     {Instruction::kCall, [this](const VectorRef &args) { InstCall(args); }},
