@@ -31,7 +31,8 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
-
+from mindspore import context
+context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 
 def conv3x3(in_channels, out_channels, stride=1, padding=1):
     """3x3 convolution """
@@ -377,6 +378,21 @@ class StateNet(nn.Cell):
         return x
 
 
+def test_conv2d_same_primitive():
+    class Conv2DSameNet(nn.Cell):
+        def __init__(self):
+            super(Conv2DSameNet, self).__init__()
+            self.conv1 = nn.Conv2d(16, 64, (1, 41), (1,4), "same", 0, 1, has_bias=True)
+            self.conv2 = nn.Conv2d(16, 64, (1, 41), (1,4), "same", 0, 1, has_bias=True)
+        def construct(self, x, y):
+            r1 = self.conv1(x)
+            r2 = self.conv2(y)
+            return (r1, r2)
+    t1 = Tensor(np.ones([1,16,1,1918]).astype(np.float32))
+    t2 = Tensor(np.ones([1,16,1,3840]).astype(np.float32))
+    net = Conv2DSameNet()
+    out = net(t1, t2)
+    
 class ComparisonNet(nn.Cell):
     def __init__(self):
         """ ComparisonNet definition """

@@ -163,7 +163,7 @@ TEST_F(TestInfer, test_inferred_scalar_add) {
 
   auto prim_scalar_add = std::make_shared<Primitive>("scalar_add");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_add);
-  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).inferred;
+  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(abs_base_got.get() == abstract_v1.get());
 }
 
@@ -261,7 +261,7 @@ TEST_F(TestInferGraph, test_inferred) {
   MS_LOG(INFO) << "" << graph_f_->get_return()->ToString();
   AbstractBasePtr abstract_v1 = FromValue(1, false);
   args_spec_list.push_back(abstract_v1);
-  AbstractBasePtr abs_base_got = engine_->Run(graph_f_, args_spec_list).inferred;
+  AbstractBasePtr abs_base_got = engine_->Run(graph_f_, args_spec_list).inferred->abstract();
   ASSERT_TRUE(abs_base_got.get() == abstract_v1.get());
 
   // now this test case failed randomly, have to debug.
@@ -272,7 +272,7 @@ TEST_F(TestInferGraph, test_inferred) {
   args_spec_list.clear();
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
-  abs_base_got = engine_->Run(graph_alpha_, args_spec_list).inferred;
+  abs_base_got = engine_->Run(graph_alpha_, args_spec_list).inferred->abstract();
   ASSERT_TRUE(abs_base_got.get() == abstract_v1.get());
 }
 
@@ -358,7 +358,7 @@ TEST_F(TestInferMetaGraph, test_inferred) {
   AbstractBasePtr abstract_v2 = FromValue(v1, false);
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
-  AbstractBasePtr abs_base_got = engine_->Run(func_graph_, args_spec_list).inferred;
+  AbstractBasePtr abs_base_got = engine_->Run(func_graph_, args_spec_list).inferred->abstract();
   ASSERT_TRUE(abs_base_got.get() == abstract_v1.get());
 }
 
@@ -390,7 +390,7 @@ TEST_F(TestInferUniform, test_inferred_scalar_add) {
 
   auto prim_scalar_add = std::make_shared<Primitive>("scalar_add");
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_add);
-  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec).inferred;
+  AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec).inferred->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_v1->GetTypeTrack()));
   ASSERT_TRUE(abs_base_got->GetTypeTrack()->type_id() == kNumberTypeInt32);
 }
@@ -418,7 +418,7 @@ TEST_F(TestEvalOnePrim, test_scalar_add) {
   AbstractBasePtr base1 = FromValue(x1, false);
   AbstractBasePtr base2 = FromValue(x2, false);
   AbstractBasePtrList base_list = {base1, base2};
-  auto res = EvalOnePrim(std::make_shared<Primitive>("scalar_add"), base_list);
+  auto res = EvalOnePrim(std::make_shared<Primitive>("scalar_add"), base_list)->abstract();
   MS_LOG(INFO) << "result spec: " << res->ToString();
   AbstractBasePtr exp = FromValue(x3, false);
   MS_LOG(INFO) << "result exp: " << exp->ToString();
@@ -446,7 +446,7 @@ void TestGraphEval::TearDown() {
 TEST_F(TestGraphInfer, test_graph_infer_defaults) {
   FuncGraphPtr graph = getPyFun.CallAndParseRet("test_graph_infer_defaults");
   AbstractBasePtrList args_spec_list = {};
-  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred->abstract();
   AbstractBasePtr expect = FromValue(MakeValue(50), false);
   ASSERT_EQ(*res, *expect);
 }
@@ -454,7 +454,7 @@ TEST_F(TestGraphInfer, test_graph_infer_defaults) {
 TEST_F(TestGraphInfer, test_graph_infer_vararg_0) {
   FuncGraphPtr graph = getPyFun.CallAndParseRet("test_graph_infer_vararg_0");
   AbstractBasePtrList args_spec_list = {};
-  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred->abstract();
   AbstractBasePtr expect = FromValue(MakeValue(1), false);
   ASSERT_EQ(*res, *expect);
 }
@@ -462,7 +462,7 @@ TEST_F(TestGraphInfer, test_graph_infer_vararg_0) {
 TEST_F(TestGraphInfer, test_graph_infer_vararg) {
   FuncGraphPtr graph = getPyFun.CallAndParseRet("test_graph_infer_vararg");
   AbstractBasePtrList args_spec_list = {};
-  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred->abstract();
   AbstractBasePtr expect = FromValue(MakeValue(9), false);
   ASSERT_EQ(*res, *expect);
 }
@@ -470,7 +470,7 @@ TEST_F(TestGraphInfer, test_graph_infer_vararg) {
 TEST_F(TestGraphInfer, test_graph_infer_vararg_kwonlyargs) {
   FuncGraphPtr graph = getPyFun.CallAndParseRet("test_graph_infer_vararg_kwonlyargs");
   AbstractBasePtrList args_spec_list = {};
-  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred->abstract();
   AbstractBasePtr expect = FromValue(MakeValue(48), false);
   ASSERT_EQ(*res, *expect);
 }
@@ -478,7 +478,7 @@ TEST_F(TestGraphInfer, test_graph_infer_vararg_kwonlyargs) {
 TEST_F(TestGraphInfer, test_graph_infer_kwarg) {
   FuncGraphPtr graph = getPyFun.CallAndParseRet("test_graph_infer_kwarg");
   AbstractBasePtrList args_spec_list = {};
-  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred->abstract();
   AbstractBasePtr expect = FromValue(MakeValue(7), false);
   ASSERT_EQ(*res, *expect);
 }
@@ -486,7 +486,7 @@ TEST_F(TestGraphInfer, test_graph_infer_kwarg) {
 TEST_F(TestGraphInfer, test_graph_infer_vararg_kwonlyargs_kwarg) {
   FuncGraphPtr graph = getPyFun.CallAndParseRet("test_graph_infer_vararg_kwonlyargs_kwarg");
   AbstractBasePtrList args_spec_list = {};
-  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred->abstract();
   AbstractBasePtr expect = FromValue(MakeValue(46), false);
   ASSERT_EQ(*res, *expect);
 }
@@ -494,7 +494,7 @@ TEST_F(TestGraphInfer, test_graph_infer_vararg_kwonlyargs_kwarg) {
 TEST_F(TestGraphInfer, test_graph_infer_vararg_kwonlyargs_kwarg_defaults) {
   FuncGraphPtr graph = getPyFun.CallAndParseRet("test_graph_infer_vararg_kwonlyargs_kwarg_defaults");
   AbstractBasePtrList args_spec_list = {};
-  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred;
+  AbstractBasePtr res = engine_->Run(graph, args_spec_list).inferred->abstract();
   AbstractBasePtr expect = FromValue(MakeValue(57), false);
   ASSERT_EQ(*res, *expect);
 }

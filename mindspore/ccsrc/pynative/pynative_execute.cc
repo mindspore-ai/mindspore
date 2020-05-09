@@ -116,7 +116,7 @@ void PynativeInfer(const PrimitivePyPtr &prim, const py::tuple &py_args, OpExecI
       args_spec_list.emplace_back(abstract::FromValueInside(input_value, false));
     }
   }
-  AbstractBasePtr infer_res = EvalOnePrim(prim, args_spec_list);
+  AbstractBasePtr infer_res = EvalOnePrim(prim, args_spec_list)->abstract();
   op_exec_info->abstract = infer_res;
 }
 
