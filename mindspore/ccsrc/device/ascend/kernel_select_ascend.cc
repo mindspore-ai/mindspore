@@ -464,14 +464,12 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecis
 }
 }  // namespace
 
-int SelectKernelInfo(const CNodePtr &kernel_node) {
-  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
-  int status = kStatusAllMatched;
+std::shared_ptr<kernel::KernelBuildInfo> CanHitKernelInfo(
+  int *status, const CNodePtr &kernel_node,
+  const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   bool precision_reduce = false;
   std::shared_ptr<kernel::KernelBuildInfo> selected_kernel_info = nullptr;
-  kernel::KernelQuery(kernel_node, &kernel_info_list);
-  // filter kernel info matched with me infered type
   auto filtered_kernel_info_list = GetAllMatchedFilteredKernelInfo(kernel_node, kernel_info_list);
   if (!filtered_kernel_info_list.empty()) {
     selected_kernel_info = ChooseMatchedKernelInfo(kernel_node, filtered_kernel_info_list);
@@ -481,14 +479,33 @@ int SelectKernelInfo(const CNodePtr &kernel_node) {
       FilterRaisedOrReducePrecisionMatchedKernelInfo(kernel_node, kernel_info_list, &precision_reduce);
     selected_kernel_info = ChooseMatchedKernelInfo(kernel_node, filtered_kernel_info_list);
     if (selected_kernel_info == nullptr) {
-      std::ostringstream buffer;
-      PrintInputAndOutputInferType(buffer, kernel_node);
-      MS_EXCEPTION(TypeError) << "The node [" << kernel_node->DebugString()
-                              << "] cannot find valid kernel info, not supported the type" << buffer.str();
+      return nullptr;
     } else {
       PrintRaiseOrReducePrecisionSelectedInfo(kernel_node, selected_kernel_info, precision_reduce);
-      status = precision_reduce ? kStatusReducePrecision : kStatusRaisePrecision;
+      *status = precision_reduce ? kStatusReducePrecision : kStatusRaisePrecision;
     }
+  }
+  return selected_kernel_info;
+}
+
+int SelectKernelInfo(const CNodePtr &kernel_node) {
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
+  int status = kStatusAllMatched;
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel::KernelQuery(kernel_node, &kernel_info_list);
+  // filter kernel info matched with me infered type
+  auto selected_kernel_info = CanHitKernelInfo(&status, kernel_node, kernel_info_list);
+  if (selected_kernel_info == nullptr) {
+    MS_LOG(WARNING) << "The node [" << kernel_node->DebugString()
+                    << "] cannot find valid TBE kernel info, try to get aicpu kernel info";
+    kernel::AicpuQuery(kernel_node, &kernel_info_list);
+    selected_kernel_info = CanHitKernelInfo(&status, kernel_node, kernel_info_list);
+  }
+  if (selected_kernel_info == nullptr) {
+    std::ostringstream buffer;
+    PrintInputAndOutputInferType(buffer, kernel_node);
+    MS_EXCEPTION(TypeError) << "The node [" << kernel_node->DebugString()
+                            << "] cannot find valid kernel info, not supported the type " << buffer.str();
   }
   AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info, kernel_node.get());
   // Set format and data type for input tensor.
