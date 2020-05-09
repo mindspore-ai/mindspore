@@ -50,9 +50,19 @@ class ReshapeInfo : public OperatorInfo {
     output_layout_ = output_layout;
     output_layout_set_flag_ = true;
   }
+  void SetCostForReshape(const mindspore::parallel::StrategyPtr &strategy);
+  void SetCostForReshapeWithParameter();
+  void set_pre_operator_name(const std::string &pre_name) { pre_operator_name_ = pre_name; }
+  void set_next_operator_name(const std::string &next_name) { next_operator_name_ = next_name; }
+  void set_pre_operator_index(int32_t pre_index) { pre_operator_index_ = pre_index; }
+  void set_next_operator_index(int32_t next_index) { next_operator_index_ = next_index; }
   Status InitForCostModel(const StrategyPtr &strategy) override;
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  std::string pre_operator_name() const { return pre_operator_name_; }
+  std::string next_operator_name() const { return next_operator_name_; }
+  int32_t pre_operator_index() const { return pre_operator_index_; }
+  int32_t next_operator_index() const { return next_operator_index_; }
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
@@ -73,12 +83,17 @@ class ReshapeInfo : public OperatorInfo {
   Status InferDefaultLayout(const Shape &shape, TensorLayout *const layout);
 
   int32_t dev_num_;
+  int32_t pre_operator_index_;
+  int32_t next_operator_index_;
   std::vector<int32_t> parameter_input_v_;
+  std::vector<StrategyPtr> sp_vector_;
   Dimensions input_strategy_;
   TensorLayout input_layout_;
   TensorLayout output_layout_;
   bool input_layout_set_flag_;
   bool output_layout_set_flag_;
+  std::string pre_operator_name_;
+  std::string next_operator_name_;
 };
 }  // namespace parallel
 }  // namespace mindspore

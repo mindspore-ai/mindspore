@@ -87,11 +87,9 @@ class CostGraph {
   void RemoveOperator(const OperatorInfoPtr &op);
   bool IsOperatorInCostGraph(const OperatorInfoPtr &op);
   // the edge is in the form: u --> v
-  void AddEdge(OperatorInfoPtr u_node, OperatorInfoPtr v_node, const EdgePtr &edge) {
-    std::vector<EdgePtr> curr_edges(edges_[{u_node, v_node}]);
-    curr_edges.push_back(edge);
-    edges_[{u_node, v_node}] = curr_edges;
-  }
+  void AddEdge(OperatorInfoPtr u_node, OperatorInfoPtr v_node, const EdgePtr &edge);
+  std::vector<std::shared_ptr<Edge>> GetOriginalPrevEdges(OperatorInfoPtr v_node) { return in_edges_[v_node]; }
+  std::vector<std::shared_ptr<Edge>> GetOriginalNextEdges(OperatorInfoPtr u_node) { return out_edges_[u_node]; }
   // An edge is uniquely identified by its name, and its output index and input index.
   bool IsEdgeInCostGraph(const std::string &, size_t, size_t);
 
@@ -219,6 +217,8 @@ class CostGraph {
   std::vector<OperatorInfoPtr> ops_;
   std::map<std::pair<OperatorInfoPtr, OperatorInfoPtr>, std::vector<EdgePtr>> edges_;
   std::vector<std::shared_ptr<CostGraph>> connected_compoents_;
+  std::map<OperatorInfoPtr, std::vector<EdgePtr>> out_edges_;
+  std::map<OperatorInfoPtr, std::vector<EdgePtr>> in_edges_;
 };
 }  // namespace parallel
 }  // namespace mindspore

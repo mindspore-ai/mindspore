@@ -51,6 +51,8 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes);
 
 void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes);
 
+void InferStraByTensorInfo(const TensorInfo &pre_out_tensor_info, Dimensions *stra);
+
 Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);
 
 Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);

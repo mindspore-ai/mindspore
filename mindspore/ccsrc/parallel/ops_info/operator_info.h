@@ -111,6 +111,7 @@ class OperatorInfo {
   Shape dev_matrix_shape() const { return dev_matrix_shape_; }
   std::vector<TensorInfo> inputs_tensor_info() const { return inputs_tensor_info_; }
   std::vector<TensorInfo> outputs_tensor_info() const { return outputs_tensor_info_; }
+  std::vector<std::shared_ptr<StrategyWithCost>> strategy_cost() const { return strategy_cost_; }
   const std::string &name() const { return name_; }
   void set_name(const std::string &name) { name_ = name; }
   RankList global_device_list() const { return global_device_list_; }

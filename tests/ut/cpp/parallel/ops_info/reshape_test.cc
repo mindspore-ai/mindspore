@@ -219,22 +219,5 @@ TEST_F(TestReshapeInfo, CheckStrategy3) {
   Status ret = reshape->Init(strategy);
   ASSERT_EQ(ret, SUCCESS);
 }
-
-TEST_F(TestReshapeInfo, AutoStrategy1) {
-  ASSERT_EQ(reshape->GenerateStrategies(0), Status::SUCCESS);
-  std::vector<std::shared_ptr<StrategyWithCost>> sc = reshape->GetStrategyCost();
-
-  Shapes splittable_inputs = {{1, 0, 0, 0}};
-  std::vector<StrategyPtr> sp_vector;
-  Shapes inputs_shape = {{32, 512, 7, 7}};
-  GenerateStrategiesForIndependentInputs(0, inputs_shape, splittable_inputs, &sp_vector);
-  ASSERT_EQ(sc.size(), sp_vector.size());
-  for (auto stra : sp_vector) {
-    auto stra0 = stra->GetInputDim()[0];
-    ASSERT_EQ(stra0[1], 1);
-    ASSERT_EQ(stra0[2], 1);
-    ASSERT_EQ(stra0[3], 1);
-  }
-}
 }  // namespace parallel
 }  // namespace mindspore

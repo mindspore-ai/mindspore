@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "parallel/auto_parallel/graph_costmodel.h"
-
 #include <algorithm>
 #include <cstdlib>
 #include <iterator>
@@ -23,6 +20,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "parallel/auto_parallel/graph_costmodel.h"
+#include "parallel/ops_info/reshape_info.h"
+#include "parallel/step_auto_parallel.h"
 
 namespace mindspore {
 namespace parallel {
@@ -40,6 +41,7 @@ bool FULLY_USE_DEVICES = DEFAULT_FULLY_USE_DEVICES;
 bool ELEMENTWISE_OP_STRA_FOLLOW = DEFAULT_ELEMENTWISE_OP_STRA_FOLLOW;
 bool MULTI_SUBGRAPHS = DEFAULT_IS_MULTI_SUBGRAPHS;
 int32_t RUN_PHASE = DEFAULT_RUN_PHASE;
+constexpr char RESHAPEINFO[] = "ReshapeInfo";
 
 void CostGraph::SetDeviceMemoryAndCostParameter() {
   MS_EXCEPTION_IF_NULL(CostModelContext::GetInstance());
@@ -180,6 +182,20 @@ bool CostGraph::IsOperatorInCostGraph(const OperatorInfoPtr &op_test) {
     bool operator()(const OperatorInfoPtr &in) const { return (test_ == in); }
   };
   return std::any_of(ops_.begin(), ops_.end(), IsInGraph(op_test));
+}
+
+void CostGraph::AddEdge(OperatorInfoPtr u_node, OperatorInfoPtr v_node, const EdgePtr &edge) {
+  std::vector<EdgePtr> curr_edges(edges_[{u_node, v_node}]);
+  curr_edges.push_back(edge);
+  edges_[{u_node, v_node}] = curr_edges;
+
+  std::vector<EdgePtr> curr_out_edges(out_edges_[u_node]);
+  curr_out_edges.push_back(edge);
+  out_edges_[u_node] = curr_out_edges;
+
+  std::vector<EdgePtr> curr_in_edges(in_edges_[v_node]);
+  curr_in_edges.push_back(edge);
+  in_edges_[v_node] = curr_in_edges;
 }
 
 bool CostGraph::IsEdgeInCostGraph(const std::string &test_edge_name, size_t output_index, size_t input_index) {
@@ -1338,9 +1354,49 @@ std::vector<std::shared_ptr<Edge>> CostGraph::EliminationStar(const OperatorInfo
 Status CostGraph::InitSelectedStrategy() {
   for (auto &op : ops_) {
     MS_EXCEPTION_IF_NULL(op);
+    if (op->name().find(RESHAPEINFO) != std::string::npos) {
+      continue;
+    }
     auto result = op->InitSelectedStrategy(op->selected_strategy());
     if (result != SUCCESS) {
       return result;
+    }
+  }
+  // reshape init should be apply after the init of it's previous node and next node.
+  for (size_t i = 0; i < ops_.size(); ++i) {
+    if (ops_[i]->name().find(RESHAPEINFO) != std::string::npos) {
+      auto reshape_info = std::dynamic_pointer_cast<ReshapeInfo>(ops_[i]);
+      auto in_edges = GetOriginalPrevEdges(ops_[i]);
+      auto pre_iter = std::find_if(in_edges.begin(), in_edges.end(), [&](std::shared_ptr<Edge> edge) {
+        return edge->prev_operator()->name() == reshape_info->pre_operator_name();
+      });
+      auto out_edges = GetOriginalNextEdges(ops_[i]);
+      auto next_iter = std::find_if(out_edges.begin(), out_edges.end(), [&](std::shared_ptr<Edge> edge) {
+        return edge->next_operator()->name() == reshape_info->next_operator_name();
+      });
+      if (pre_iter != in_edges.end()) {
+        MS_LOG(DEBUG) << "Set reshape input layout by " << reshape_info->pre_operator_name();
+        int32_t pre_index = reshape_info->pre_operator_index();
+        Dimensions stra;
+        TensorInfo pre_info;
+        if (ops_[i]->name() == (*pre_iter)->prev_operator()->name()) {
+          pre_info = (*pre_iter)->prev_operator()->inputs_tensor_info()[pre_index];
+        } else {
+          pre_info = (*pre_iter)->prev_operator()->outputs_tensor_info()[pre_index];
+        }
+        reshape_info->SetInputLayout(pre_info.tensor_layout());
+        InferStraByTensorInfo(pre_info, &stra);
+        std::vector<Dimensions> stra_inputs = {stra};
+        StrategyPtr reshape_stra =
+          std::make_shared<Strategy>((*pre_iter)->prev_operator()->strategy()->GetInputStage(), stra_inputs);
+        reshape_info->set_strategy(reshape_stra);
+      }
+      if (next_iter != out_edges.end()) {
+        MS_LOG(DEBUG) << "Set reshape output layout by " << reshape_info->next_operator_name();
+        int32_t next_index = reshape_info->next_operator_index();
+        reshape_info->SetOutputLayout((*next_iter)->next_operator()->inputs_tensor_info()[next_index].tensor_layout());
+      }
+      return reshape_info->Init(nullptr);
     }
   }
   return SUCCESS;
