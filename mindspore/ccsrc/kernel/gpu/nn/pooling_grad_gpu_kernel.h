@@ -85,7 +85,7 @@ class PoolingGradGpuFwdKernel : public GpuKernel {
                              padded_descriptor_, padded, &beta, padded_descriptor_, padded_dx),
         "cudnnPoolingBackward failed");
 
-      CalPadGrad(padded_size_ / sizeof(T), padded_dx, n_, c_, old_height_, old_width_, old_height_ + pad_height_,
+      CalPadGrad(output_size_ / sizeof(T), padded_dx, n_, c_, old_height_, old_width_, old_height_ + pad_height_,
                  old_width_ + pad_width_, pad_top_, pad_left_, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT(

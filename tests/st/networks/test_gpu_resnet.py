@@ -34,6 +34,8 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn import Dense
 from mindspore import amp
 
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
 
 def random_normal_init(shape, mean=0.0, stddev=0.01, seed=None):
     init_value = np.ones(shape).astype(np.float32) * 0.01
@@ -324,7 +326,6 @@ def resnet50(num_classes):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = resnet50(num_classes)
     lr = 0.1
     momentum = 0.9
@@ -345,8 +346,6 @@ def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_trainTensor_amp(num_classes=10, epoch=18, batch_size=16):
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", enable_mem_reuse=False,
-                        enable_dynamic_memory=False)
     net = resnet50(num_classes)
     lr = 0.1
     momentum = 0.9
