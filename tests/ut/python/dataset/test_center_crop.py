@@ -13,12 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-from util import diff_mse, visualize, save_and_check_md5
-
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
+from util import diff_mse, visualize, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -101,8 +100,8 @@ def test_center_crop_comp(height=375, width=375, plot=False):
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         # Note: The images aren't exactly the same due to rounding error
         assert diff_mse(py_image, c_image) < 0.001
-        image_cropped.append(item1["image"].copy())
-        image.append(item2["image"].copy())
+        image_cropped.append(c_image.copy())
+        image.append(py_image.copy())
     if plot:
         visualize(image, image_cropped)
 
@@ -141,9 +140,9 @@ def test_crop_grayscale(height=375, width=375):
 
 
 if __name__ == "__main__":
-    test_center_crop_op(600, 600)
+    test_center_crop_op(600, 600, True)
     test_center_crop_op(300, 600)
     test_center_crop_op(600, 300)
     test_center_crop_md5()
-    test_center_crop_comp()
+    test_center_crop_comp(True)
     test_crop_grayscale()
