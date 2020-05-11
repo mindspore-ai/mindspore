@@ -93,10 +93,9 @@ void MemCpyAsyncKernel::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   output_size_list_.emplace_back(total_size);
 }
 
-std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const vector<mindspore::kernel::AddressPtr> &inputs,
-                                                    const vector<mindspore::kernel::AddressPtr> & /*workspace*/,
-                                                    const vector<mindspore::kernel::AddressPtr> &outputs,
-                                                    uint32_t stream_id) {
+std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr> &inputs,
+                                                    const std::vector<AddressPtr> &,
+                                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (inputs.size() != 1) {
     MS_LOG(EXCEPTION) << "MemCpyAsync op inputs is not one";
   }
@@ -105,6 +104,7 @@ std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const vector<mindspore::kern
     MS_LOG(EXCEPTION) << "MemCpyAsync op output is not one";
   }
 
+  stream_id_ = stream_id;
   std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr = std::make_shared<MemcpyAsyncTaskInfo>(
     stream_id, outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size, RT_MEMCPY_DEVICE_TO_DEVICE);
   MS_EXCEPTION_IF_NULL(task_info_ptr);

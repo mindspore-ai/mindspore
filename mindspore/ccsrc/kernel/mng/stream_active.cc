@@ -67,6 +67,7 @@ std::vector<TaskInfoPtr> StreamActiveKernel::GenTask(const std::vector<AddressPt
                                                      const std::vector<AddressPtr> &, uint32_t stream_id) {
   MS_LOG(INFO) << "StreamActiveKernel GenTask active stream size:" << active_streams_index_.size()
                << ", stream id:" << stream_id;
+  stream_id_ = stream_id;
   std::vector<TaskInfoPtr> task_info_list;
   for (auto &index : active_streams_index_) {
     std::shared_ptr<StreamActiveTaskInfo> task_info_ptr = std::make_shared<StreamActiveTaskInfo>(stream_id, index);

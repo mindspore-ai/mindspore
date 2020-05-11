@@ -124,11 +124,13 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
 
 const std::vector<size_t> &HcclKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                        const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
+std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &workspace,
+                                             const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << "inputs or outputs is empty";
   }
+  stream_id_ = stream_id;
   std::string hccl_type = AnfAlgo::GetCNodeName(anf_node_);
   MS_EXCEPTION_IF_NULL(inputs.at(0));
   auto input_data_addr = inputs.at(0)->addr;

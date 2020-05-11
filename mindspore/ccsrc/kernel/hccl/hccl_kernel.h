@@ -38,8 +38,8 @@ class HcclKernel : public AscendKernelMod {
   const std::vector<size_t> &GetInputSizeList() const override;
   const std::vector<size_t> &GetOutputSizeList() const override;
   const std::vector<size_t> &GetWorkspaceSizeList() const override;
-  vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                              const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
  protected:
   std::vector<std::vector<size_t>> hccl_kernel_input_shape_list_;

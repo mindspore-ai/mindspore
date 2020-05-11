@@ -52,13 +52,13 @@ bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vect
   return true;
 }
 
-std::vector<TaskInfoPtr> AssignKernel::GenTask(const vector<mindspore::kernel::AddressPtr> &inputs,
-                                               const vector<mindspore::kernel::AddressPtr> &workspace,
-                                               const vector<mindspore::kernel::AddressPtr> &outputs,
-                                               uint32_t stream_id) {
+std::vector<TaskInfoPtr> AssignKernel::GenTask(const std::vector<AddressPtr> &inputs,
+                                               const std::vector<AddressPtr> &workspace,
+                                               const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (inputs.size() != 2) {
     MS_LOG(EXCEPTION) << "inputs size is not two";
   }
+  stream_id_ = stream_id;
 
   std::shared_ptr<MemcpyAsyncTaskInfo> task_info_ptr = std::make_shared<MemcpyAsyncTaskInfo>(
     stream_id, inputs[0]->addr, inputs[0]->size, inputs[1]->addr, inputs[1]->size, RT_MEMCPY_DEVICE_TO_DEVICE);

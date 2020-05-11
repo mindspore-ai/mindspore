@@ -62,6 +62,7 @@ std::vector<TaskInfoPtr> ProfilingKernelMod::GenTask(const std::vector<AddressPt
                                                      const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   MS_LOG(INFO) << "gen task inputs size:" << inputs.size() << ", workspace size:" << workspace.size()
                << ", outputs size:" << outputs.size();
+  stream_id_ = stream_id;
   std::shared_ptr<ProfilerTraceTaskInfo> task_info_ptr =
     std::make_shared<ProfilerTraceTaskInfo>(stream_id, log_id_, notify_, flags_);
   return {task_info_ptr};

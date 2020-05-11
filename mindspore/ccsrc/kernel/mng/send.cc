@@ -54,6 +54,7 @@ bool SendKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
 std::vector<TaskInfoPtr> SendKernel::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                              const std::vector<AddressPtr> &, uint32_t stream_id) {
   MS_LOG(INFO) << "SendKernel GenTask event id:" << event_id_ << ", stream id:" << stream_id;
+  stream_id_ = stream_id;
   EventRecordTaskInfoPtr task_info_ptr = std::make_shared<EventRecordTaskInfo>(stream_id, event_id_);
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};

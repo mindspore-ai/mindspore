@@ -83,7 +83,6 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
 
 bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_id,
                                  std::vector<TaskInfoPtr> *task_info_list) {
-  MS_LOG(INFO) << "LaunchKernel start...";
   MS_EXCEPTION_IF_NULL(task_info_list);
   MS_EXCEPTION_IF_NULL(anf_node_ptr);
   AddressPtrList kernel_inputs;
@@ -132,6 +131,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
 bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
                                     std::vector<TaskInfoPtr> *task_info_list, uint32_t graph_id) {
   uint32_t current_op_index = 0;
+  std::vector<CNodePtr> profiling_cnode_list;
   std::vector<std::string> kernel_name_list;
   for (const auto &anf_node_ptr : anf_node_list) {
     size_t old_size = task_info_list->size();
@@ -143,11 +143,16 @@ bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
       return false;
     }
     for (size_t i = old_size; i < task_info_list->size(); ++i) {
+      profiling_cnode_list.emplace_back(anf_node_ptr);
       kernel_name_list.emplace_back(anf_node_ptr->fullname_with_scope());
     }
     current_op_index++;
   }
+
   ProfilingUtils::SetGraphKernelName(graph_id, kernel_name_list);
+  if (ProfilingManager::GetInstance().IsProfiling()) {
+    ProfilingUtils::SetGraphProfilingCNode(graph_id, profiling_cnode_list);
+  }
   return true;
 }
 }  // namespace tasksink
