@@ -67,7 +67,7 @@ class MatMulGpuKernel : public GpuKernel {
     CHECK_CUBLAS_RET_WITH_EXCEPT(
       cublasGemmStridedBatchedEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_),
                                  &alpha, input2_addr, dtype_b_, ldb, stride_b, input1_addr, dtype_a_, lda, stride_a,
-                                 &beta, output_addr, dtype_c_, ldc, stride_c, batch_, dtype_c_, algo_),
+                                 &beta, output_addr, dtype_c_, ldc, stride_c, batch_, CUDA_R_32F, algo_),
       "cublasSgemm Call Fail");
     return true;
   }
