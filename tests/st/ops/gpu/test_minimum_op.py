@@ -18,17 +18,19 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.nn import Cell
 from mindspore.common.tensor import Tensor
+import mindspore.common.dtype as mstype
 import mindspore.context as context
 import numpy as np
 
-
-class Net(Cell):
+class MinimumNet(Cell):
     def __init__(self):
-        super(Net, self).__init__()
-        self.max = P.Maximum()
+        super(MinimumNet, self).__init__()
+        self.min = P.Minimum()
 
-    def construct(self, x, y):
-        return self.max(x, y)
+    def construct(self, x1, x2):
+        x = self.min(x1, x2)
+        return x
+
 
 class Grad(Cell):
     def __init__(self, network):
@@ -40,28 +42,23 @@ class Grad(Cell):
         gout = self.grad(self.network)(x1, x2, sens)
         return gout
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_maximum():
-    x = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
-    y = Tensor(np.array([[2]]).astype(np.float32))
-    expect = [[2, 2, 3]]
-    error = np.ones(shape=[1, 3]) * 1.0e-5
+def test_nobroadcast():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True, device_target='GPU')
 
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    max = Net()
-    output = max(x, y)
-    diff = output.asnumpy() - expect
-    assert np.all(diff < error)
-    assert np.all(-diff < error)
+    x1_np = np.random.rand(3, 4).astype(np.float32)
+    x2_np = np.random.rand(3, 4).astype(np.float32)
+    dy_np = np.random.rand(3, 4).astype(np.float32)
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    max = Net()
-    output = max(x, y)
-    diff = output.asnumpy() - expect
-    assert np.all(diff < error)
-    assert np.all(-diff < error)
+    net = Grad(MinimumNet())
+    output_ms = net(Tensor(x1_np), Tensor(x2_np), Tensor(dy_np))
+    output0_np = np.where(x1_np < x2_np, dy_np, 0)
+    output1_np = np.where(x1_np < x2_np, 0, dy_np)
+    assert np.allclose(output_ms[0].asnumpy(), output0_np)
+    assert np.allclose(output_ms[1].asnumpy(), output1_np)
 
 
 @pytest.mark.level0
@@ -163,31 +160,32 @@ def test_broadcast():
                         [0.6137464,  0.54751194, 0.9037335,  0.23134394, 0.61411524, 0.26583543],
                         [0.70770144, 0.01813207, 0.24718016, 0.70329237, 0.7062925,  0.14399007]]]]).astype(np.float32)
 
-    expect_dx1 = np.array([[[[ 6.6534014 ],
-                             [ 5.649811  ],
-                             [10.071739  ],
-                             [ 6.6798244 ],
-                             [ 3.0426278 ]]],
-                           [[[ 4.2183976 ],
-                             [ 0.8096436 ],
-                             [ 0.6019127 ],
-                             [ 0.11872514],
-                             [ 0.09701069]]],
-                           [[[ 9.573029  ],
-                             [ 0.60534775],
-                             [ 3.917112  ],
-                             [ 5.9021177 ],
-                             [ 2.263672  ]]]]).astype(np.float32)
+    expect_dx1 = np.array([[[[ 5.7664223],
+                             [ 6.981018 ],
+                             [ 2.6029902],
+                             [ 2.7598202],
+                             [ 6.763105 ]]],
+                           [[[10.06558  ],
+                             [12.077246 ],
+                             [ 9.338394 ],
+                             [11.52271  ],
+                             [ 8.889048 ]]],
+                           [[[ 3.5789769],
+                             [13.424448 ],
+                             [ 8.732746 ],
+                             [ 6.9677467],
+                             [ 9.635765 ]]]]).astype(np.float32)
 
-    expect_dx2 = np.array([[[[6.4205275, 2.941831 , 5.492452 ,   4.3212175, 2.4262471, 0.       ]],
-                            [[7.991917 , 2.3792431, 4.9190216,   5.2013817, 6.348791 , 8.351772 ]],
-                            [[5.518505 , 8.401285 , 4.691043 ,   6.463884 , 7.504318 , 7.620938 ]],
-                            [[5.2708025, 1.2835244, 4.1031275,   1.9843934, 4.9320035, 4.537787 ]]]]).astype(np.float32)
+    expect_dx2 = np.array([[[[0.        , 4.250458  , 2.5030296 , 3.623167  , 6.4171505 , 7.2115746 ]],
+                            [[0.        , 4.367449  , 2.803152  , 2.5352    , 0.        , 0.        ]],
+                            [[0.7087075 , 0.        , 2.040332  , 2.1372325 , 0.        , 2.9222295 ]],
+                            [[1.0278877 , 5.247942  , 2.6855955 , 5.494814  , 3.5657988 , 0.66265094]]]]).astype(np.float32)
 
-    net = Grad(Net())
+    net = Grad(MinimumNet())
     output_ms = net(Tensor(x1_np), Tensor(x2_np), Tensor(dy_np))
     assert np.allclose(output_ms[0].asnumpy(), expect_dx1)
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -208,15 +206,15 @@ def test_broadcast_diff_dims():
                      [[0.5391046,  0.8443047,  0.4174708 ],
                         [0.57513475, 0.9225578,  0.46760973]]]).astype(np.float32)
 
-    expect_dx1 = np.array([[[0.3897645 , 0.        , 0.33675498],
-                            [0.        , 0.        , 0.        ]],
-                           [[0.5391046 , 0.8443047 , 0.4174708 ],
-                            [0.        , 0.9225578 , 0.        ]]]).astype(np.float32)
+    expect_dx1 = np.array([[[0.        , 0.61152864, 0.        ],
+                            [0.5303635 , 0.84893036, 0.4959739 ]],
+                          [[0.        , 0.        , 0.        ],
+                            [0.57513475, 0.        , 0.46760973]]]).astype(np.float32)
 
-    expect_dx2 = np.array([[0.        , 0.61152864, 0.        ],
-                           [1.1054983 , 0.84893036, 0.96358365]]).astype(np.float32)
+    expect_dx2 = np.array([[0.92886907, 0.8443047 , 0.7542258 ],
+                          [0.        , 0.9225578 , 0.        ]]).astype(np.float32)
 
-    net = Grad(Net())
+    net = Grad(MinimumNet())
     output_ms = net(Tensor(x1_np), Tensor(x2_np), Tensor(dy_np))
     assert np.allclose(output_ms[0].asnumpy(), expect_dx1)
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
