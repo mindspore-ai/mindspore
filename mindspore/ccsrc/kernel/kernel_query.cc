@@ -67,5 +67,13 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   }
   FilterInvalidKernelInfo(kernel_node, kernel_info_list);
 }
+
+void AicpuQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(kernel_info_list);
+  kernel_info_list->clear();
+  AicpuMetadataInfo(kernel_node, kernel_info_list);
+  FilterInvalidKernelInfo(kernel_node, kernel_info_list);
+}
 }  // namespace kernel
 }  // namespace mindspore
