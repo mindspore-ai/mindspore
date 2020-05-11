@@ -42,7 +42,8 @@ py::dict GetParameterLayout(const FuncGraphPtr &graph) {
     } else {
       auto device_arrangement = tensor_layout->device_arrangement().array();
       auto tensor_map = tensor_layout->tensor_map().array();
-      std::pair<std::vector<int32_t>, std::vector<int32_t>> layout(device_arrangement, tensor_map);
+      auto slice_shape = tensor_layout->slice_shape().array();
+      std::vector<std::vector<int32_t>> layout = {device_arrangement, tensor_map, slice_shape};
       dict[py::str(name)] = layout;
       MS_LOG(INFO) << "GetParameterLayout name = " << name << ", layout " << tensor_layout->ToString();
     }

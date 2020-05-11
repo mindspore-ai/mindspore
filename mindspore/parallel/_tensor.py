@@ -203,19 +203,19 @@ def _load_tensor_by_layout(tensor, layout):
 
     Args:
         tensor (Tensor): The input tensor.
-        layout (tuple): The tensor layout in auto parallel.
+        layout (list): The tensor layout in auto parallel.
 
     Returns:
-        Tensor, the sliced tensor..
+        Tensor, the sliced tensor.
 
     Raises:
-        TypeError: If layout is not tuple.
-        ValueError: If the length of layout is not 2.
+        TypeError: If layout is not list.
+        ValueError: If the length of layout is not 3.
     """
-    if not isinstance(layout, tuple):
-        raise TypeError("layout should be tuple! layout is {}".format(layout))
-    if len(layout) != 2:
-        raise ValueError("The length of layout must be 2! layout is {}".format(layout))
+    if not isinstance(layout, list):
+        raise TypeError("The layout should be list! layout is {}".format(layout))
+    if len(layout) != 3:
+        raise ValueError("The length of layout must be 3! layout is {}".format(layout))
     dev_mat = layout[0]
     tensor_map = layout[1]
     if tensor.size() == 1:
