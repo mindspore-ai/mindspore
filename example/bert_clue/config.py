@@ -30,6 +30,7 @@ cfg = edict({
         'power': 5.0,
         'weight_decay': 1e-5,
         'eps': 1e-6,
+        'warmup_steps': 10000,
     }),
     'Lamb': edict({
         'start_learning_rate': 3e-5,

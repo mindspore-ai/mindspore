@@ -84,7 +84,6 @@ def run_pretrain():
     if args_opt.distribute == "true":
         device_num = args_opt.device_num
         context.reset_auto_parallel_context()
-        context.set_context(enable_hccl=True)
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
                                           device_num=device_num)
         D.init()
@@ -103,7 +102,7 @@ def run_pretrain():
         optimizer = Lamb(netwithloss.trainable_params(), decay_steps=ds.get_dataset_size() * ds.get_repeat_count(),
                          start_learning_rate=cfg.Lamb.start_learning_rate, end_learning_rate=cfg.Lamb.end_learning_rate,
                          power=cfg.Lamb.power, warmup_steps=cfg.Lamb.warmup_steps, weight_decay=cfg.Lamb.weight_decay,
-                         eps=cfg.Lamb.eps, decay_filter=cfg.Lamb.decay_filter)
+                         eps=cfg.Lamb.eps)
     elif cfg.optimizer == 'Momentum':
         optimizer = Momentum(netwithloss.trainable_params(), learning_rate=cfg.Momentum.learning_rate,
                              momentum=cfg.Momentum.momentum)
@@ -114,7 +113,8 @@ def run_pretrain():
                                              end_learning_rate=cfg.AdamWeightDecayDynamicLR.end_learning_rate,
                                              power=cfg.AdamWeightDecayDynamicLR.power,
                                              weight_decay=cfg.AdamWeightDecayDynamicLR.weight_decay,
-                                             eps=cfg.AdamWeightDecayDynamicLR.eps)
+                                             eps=cfg.AdamWeightDecayDynamicLR.eps,
+                                             warmup_steps=cfg.AdamWeightDecayDynamicLR.warmup_steps)
     else:
         raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecayDynamicLR]".
                          format(cfg.optimizer))
