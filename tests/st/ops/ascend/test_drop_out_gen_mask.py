@@ -17,6 +17,7 @@ from mindspore.ops import operations as P
 import mindspore.nn as nn
 import numpy as np
 import mindspore.context as context
+
 context.set_context(mode=context.GRAPH_MODE,
                     device_target="Ascend")
 

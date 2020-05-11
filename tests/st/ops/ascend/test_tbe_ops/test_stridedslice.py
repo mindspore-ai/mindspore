@@ -19,7 +19,10 @@ from mindspore.nn import Cell
 from mindspore.train.model import Model
 import pytest
 import mindspore.context as context
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+
 class Net(Cell):
     def __init__(self, begin, end, stride):
         super(Net, self).__init__()
@@ -32,6 +35,7 @@ class Net(Cell):
         x = self.stridedslice(input, self.begin, self.end, self.stride)
         return x
 
+
 def me_stridedslice(input1, begin, end, stride):
     input_me = Tensor(input1)
     net = Net(begin, end, stride)
@@ -40,17 +44,19 @@ def me_stridedslice(input1, begin, end, stride):
     output = model.predict(input_me)
     print(output.asnumpy())
 
+
 def test_stridedslice_input_2d():
     input = np.random.randn(5, 5).astype(np.int32)
-    begin = (0,0)
-    end = (2,2)
-    stride = (1,1)
+    begin = (0, 0)
+    end = (2, 2)
+    stride = (1, 1)
 
     me_stridedslice(input, begin, end, stride)
 
+
 def test_stridedslice_input_3d():
     input = np.random.randn(5, 5, 5).astype(np.float32)
-    begin = (0,0,0)
-    end = (3,3,3)
-    stride = (1,1,1)
+    begin = (0, 0, 0)
+    end = (3, 3, 3)
+    stride = (1, 1, 1)
     me_stridedslice(input, begin, end, stride)

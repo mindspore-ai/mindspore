@@ -22,13 +22,15 @@ from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")
 
+
 class Max(nn.Cell):
-    def __init__(self,dtype):
+    def __init__(self, dtype):
         super(Max, self).__init__()
         self.max = P.Maximum()
 
     def construct(self, inputa, inputb):
         return self.max(inputa, inputb)
+
 
 def me_max(inputa, inputb, dtype=ms.float32):
     context.set_context(mode=context.GRAPH_MODE)
@@ -44,14 +46,16 @@ def me_max(inputa, inputb, dtype=ms.float32):
     print(out)
     return out.asnumpy()
 
-def cmp_max(a,b):
+
+def cmp_max(a, b):
     out = np.maximum(a, b)
     out_ms = me_max(a, b)
     print("-------ms------")
     print("numpy out :{}".format(out))
     print("ms out :{}".format(out_ms))
 
+
 def test_maximum_2_2():
     a = np.random.randn(2, 2).astype(np.float32)
     b = np.random.randn(2, 2).astype(np.float32)
-    cmp_max(a,b)
+    cmp_max(a, b)

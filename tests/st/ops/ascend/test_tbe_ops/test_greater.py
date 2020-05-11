@@ -20,7 +20,9 @@ from mindspore.common.tensor import Tensor
 from mindspore.train.model import Model
 from mindspore import log as logger
 from mindspore import context
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 class Greater(Cell):
     def __init__(self):
@@ -29,6 +31,7 @@ class Greater(Cell):
 
     def construct(self, inputa, inputb):
         return self.greater(inputa, inputb)
+
 
 def me_greater(inputa, inputb):
     net = Greater()
@@ -41,6 +44,7 @@ def me_greater(inputa, inputb):
     logger.info("Check input b: ")
     logger.info(inputb)
     return out.asnumpy()
+
 
 @pytest.mark.ssd_tbe
 def test_greater_2d_scalar0():

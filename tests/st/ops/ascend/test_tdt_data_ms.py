@@ -95,7 +95,7 @@ if __name__ == '__main__':
     net.set_train()
 
     _executor.init_dataset(ds1.queue_name, 39, batch_size,
-                              dataset_types, dataset_shapes, (), 'dataset')
+                           dataset_types, dataset_shapes, (), 'dataset')
     ds1.send()
 
     for data in data_set.create_tuple_iterator():
@@ -113,4 +113,3 @@ if __name__ == '__main__':
             (data[0] == d).all()), "TDT test execute failed, please check current code commit"
     print(
         "+++++++++++++++++++++++++++++++++++[INFO] Success+++++++++++++++++++++++++++++++++++++++++++")
-

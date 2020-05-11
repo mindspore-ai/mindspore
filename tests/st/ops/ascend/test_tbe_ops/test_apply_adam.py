@@ -19,6 +19,7 @@ from mindspore.nn import Dense, SoftmaxCrossEntropyWithLogits
 from mindspore.nn import TrainOneStepCell, WithLossCell
 
 import mindspore.context as context
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", impl_type="tbe")
 context.set_context(enable_task_sink=True)
 
@@ -44,16 +45,16 @@ class Adam:
         label = Tensor(label_np_onehot)
 
         ms_dense = Dense(in_channels=self.input_channels,
-                        out_channels=self.output_channels,
-                        weight_init=weight_np,
-                        bias_init=bias, has_bias=True)
+                         out_channels=self.output_channels,
+                         weight_init=weight_np,
+                         bias_init=bias, has_bias=True)
         criterion = SoftmaxCrossEntropyWithLogits()
         optimizer = nn.Adam(ms_dense.trainable_params(),
-                         learning_rate=1e-3,
-                         beta1=0.9, beta2=0.999, eps=self.epsilon,
-                         use_locking=False,
-                         use_nesterov=False, weight_decay=0.0,
-                         loss_scale=1.0)
+                            learning_rate=1e-3,
+                            beta1=0.9, beta2=0.999, eps=self.epsilon,
+                            use_locking=False,
+                            use_nesterov=False, weight_decay=0.0,
+                            loss_scale=1.0)
 
         net_with_criterion = WithLossCell(ms_dense, criterion)
         train_network = TrainOneStepCell(net_with_criterion, optimizer)
@@ -68,5 +69,5 @@ class Adam:
 
 
 def test_adam():
-    fact = Adam(batch_num=8, input_channels=20, output_channels=5, epoch=5, lr=0.1, weight_decay=0.0, epsilon= 1e-8)
+    fact = Adam(batch_num=8, input_channels=20, output_channels=5, epoch=5, lr=0.1, weight_decay=0.0, epsilon=1e-8)
     fact.train_mindspore_impl()

@@ -20,11 +20,13 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self,
                  output_channels,
                  bias_init='zeros',
@@ -51,4 +53,3 @@ def test_compile():
     # enable it when staging function is ready
     output = net(input_data)
     print(output.asnumpy())
-

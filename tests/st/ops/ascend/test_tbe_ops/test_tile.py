@@ -20,6 +20,7 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 

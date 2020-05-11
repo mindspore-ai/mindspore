@@ -18,7 +18,9 @@ import mindspore.nn as nn
 from mindspore.common.api import ms_function
 import numpy as np
 import mindspore.context as context
+
 context.set_context(device_target="Ascend")
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -28,6 +30,7 @@ class Net(nn.Cell):
     @ms_function
     def construct(self, x):
         return self.sigmoid(x)
+
 
 def test_net():
     x = np.random.random(size=(2, 3)).astype(np.float32)

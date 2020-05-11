@@ -21,16 +21,19 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(device_target="Ascend")
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.bias_add_grad = G.BiasAddGrad()
-    
 
     @ms_function
     def construct(self, dout):
         return self.bias_add_grad(dout)
+
 
 def test_net():
     dout = np.random.rand(1, 1001).astype(np.float32)

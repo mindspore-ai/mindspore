@@ -31,6 +31,7 @@ class Net(nn.Cell):
     def construct(self, pred, gt):
         return self.SmoothL1Loss(pred, gt)
 
+
 class Grad(nn.Cell):
     def __init__(self, network):
         super(Grad, self).__init__()

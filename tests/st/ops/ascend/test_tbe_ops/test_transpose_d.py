@@ -21,6 +21,7 @@ from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")
 
+
 class Net(nn.Cell):
     def __init__(self, perm_in):
         super(Net, self).__init__()
@@ -30,6 +31,7 @@ class Net(nn.Cell):
     def construct(self, input):
         x = self.transpose(input, self.perm)
         return x
+
 
 def ms_transpose(input, perm_in):
     context.set_context(mode=context.GRAPH_MODE)
@@ -41,6 +43,7 @@ def ms_transpose(input, perm_in):
     print("-------------ms------------------")
     print(output.asnumpy().dtype)
     print(output.asnumpy())
+
 
 def test_net():
     input = np.random.randn(8, 24, 1, 1).astype(np.float16)

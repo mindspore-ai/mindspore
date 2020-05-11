@@ -23,7 +23,9 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 import mindspore as ms
 from mindspore.train.model import Model
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 class PowMe(Cell):
     def __init__(self):
@@ -33,12 +35,14 @@ class PowMe(Cell):
     def construct(self, input, exp):
         return self.pow(input, exp)
 
+
 def pow_forward_me_impl(input, exp):
     n = PowMe()
     n.set_train()
     m = Model(n)
     out = m.predict(input, exp)
     return out.asnumpy()
+
 
 def pow_forward_cmp(input_shape, exp_shape):
     if len(input_shape) == 0:
@@ -54,14 +58,14 @@ def pow_forward_cmp(input_shape, exp_shape):
         exp_np = np.absolute(np.random.randn(*exp_shape).astype(np.float32))
     exp_tf = exp_np
     exp_me = Tensor(exp_np, dtype=ms.float32)
-	
+
     out_me = pow_forward_me_impl(input_me, exp_me)
     print(input_me)
     print(exp_me)
     print(out_me)
-	
+
+
 def test_pow_input_scalar_exp_scalar():
     input_shape = []
     exp_shape = []
     pow_forward_cmp(input_shape, exp_shape)
-

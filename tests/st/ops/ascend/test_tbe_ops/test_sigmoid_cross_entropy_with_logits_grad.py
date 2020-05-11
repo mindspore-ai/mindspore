@@ -22,6 +22,7 @@ import mindspore.context as context
 
 context.set_context(device_target="Ascend")
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()

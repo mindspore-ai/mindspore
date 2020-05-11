@@ -20,11 +20,12 @@ import numpy as np
 import mindspore.context as context
 
 context.set_context(device_target="Ascend")
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.maxpool = P.MaxPool(pad_mode="SAME", window=3, stride=2)
-
 
     @ms_function
     def construct(self, x):
@@ -33,7 +34,7 @@ class Net(nn.Cell):
 
 
 def test_net():
-    x = np.random.randn(32,64,112,112).astype(np.float32)
+    x = np.random.randn(32, 64, 112, 112).astype(np.float32)
     maxpool = Net()
     output = maxpool(Tensor(x))
     print(output.asnumpy())

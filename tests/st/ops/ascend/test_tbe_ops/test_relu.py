@@ -20,7 +20,10 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(device_target="Ascend")
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -30,8 +33,9 @@ class Net(nn.Cell):
     def construct(self, x):
         return self.relu(x)
 
+
 def test_net():
-    x = np.random.randn(2,3,3,4).astype(np.float32)
+    x = np.random.randn(2, 3, 3, 4).astype(np.float32)
     relu = Net()
     output = relu(Tensor(x))
     print(x)

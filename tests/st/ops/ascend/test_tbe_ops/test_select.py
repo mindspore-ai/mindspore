@@ -23,7 +23,10 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 import mindspore as ms
 from mindspore.train.model import Model
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+
 class Select(Cell):
     def __init__(self, dtype):
         super(Select, self).__init__()
@@ -31,6 +34,7 @@ class Select(Cell):
 
     def construct(self, cond, inputa, inputb):
         return self.select(cond, inputa, inputb)
+
 
 def me_select(cond, inputa, inputb, dtype=ms.float32):
     net = Select(dtype)
@@ -45,9 +49,10 @@ def me_select(cond, inputa, inputb, dtype=ms.float32):
 
     out = model.predict(Tensor(cond), inputa, inputb)
     return out.asnumpy()
-	
-def cmp_select(input_cond,inputa,inputb):
-    cond =  input_cond > 0.5
+
+
+def cmp_select(input_cond, inputa, inputb):
+    cond = input_cond > 0.5
     out_me = me_select(cond, inputa, inputb)
     print(input_cond)
     print(cond)
@@ -55,9 +60,9 @@ def cmp_select(input_cond,inputa,inputb):
     print(inputb)
     print(out_me)
 
+
 def test_select_2_2():
     input_cond = np.random.rand(2, 2)
-    inputa = np.random.randn(2,2).astype(np.float32)
-    inputb = np.random.randn(2,2).astype(np.float32)
-    cmp_select(input_cond,inputa,inputb)
-
+    inputa = np.random.randn(2, 2).astype(np.float32)
+    inputb = np.random.randn(2, 2).astype(np.float32)
+    cmp_select(input_cond, inputa, inputb)

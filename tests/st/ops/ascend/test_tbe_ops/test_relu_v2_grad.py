@@ -21,7 +21,9 @@ import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops.composite import GradOperation
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 class Grad(nn.Cell):
     def __init__(self, network):
@@ -33,6 +35,7 @@ class Grad(nn.Cell):
     def construct(self, input):
         return self.grad(self.network)(input)
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -41,8 +44,9 @@ class Net(nn.Cell):
     def construct(self, x):
         return self.relu_v2(x)
 
+
 def test_net():
-    x = Tensor(np.ones((2,3,3,4)).astype(np.float32))
+    x = Tensor(np.ones((2, 3, 3, 4)).astype(np.float32))
     relu_net = Net()
     relu_output = relu_net(x)
     net = Grad(Net())

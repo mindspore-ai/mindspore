@@ -18,18 +18,22 @@ import mindspore.nn as nn
 from mindspore.common.api import ms_function
 import numpy as np
 import mindspore.context as context
+
 context.set_context(device_target="Ascend")
+
+
 class Net(nn.Cell):
-  def __init__(self):
-    super(Net, self).__init__()
-    self.reshape = P.Reshape()
-  @ms_function
-  def construct(self, tensor):
-    return self.reshape(tensor, (1,16))
+    def __init__(self):
+        super(Net, self).__init__()
+        self.reshape = P.Reshape()
+
+    @ms_function
+    def construct(self, tensor):
+        return self.reshape(tensor, (1, 16))
 
 
 def test_net():
-  x = np.random.randn(1, 16, 1, 1).astype(np.float16)
-  reshape = Net()
-  output = reshape(Tensor(x))
-  print(output.asnumpy())
+    x = np.random.randn(1, 16, 1, 1).astype(np.float16)
+    reshape = Net()
+    output = reshape(Tensor(x))
+    print(output.asnumpy())

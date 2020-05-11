@@ -21,6 +21,7 @@ import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -35,7 +36,7 @@ class Net(nn.Cell):
 
 
 def test_net():
-    x = np.random.randn(1,64,112,112).astype(np.float32)
+    x = np.random.randn(1, 64, 112, 112).astype(np.float32)
     # mean = np.random.randn(1,16,1,1).astype(np.float32)
     # variance = np.random.randn(1,16,1,1).astype(np.float32)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -55,4 +56,3 @@ def test_net():
 
     print("***********output y*********")
     print(output.asnumpy())
-

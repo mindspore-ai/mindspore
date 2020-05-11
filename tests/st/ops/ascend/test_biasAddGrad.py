@@ -21,22 +21,25 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(device_target="Ascend")
+
+
 class Net(nn.Cell):
-  def __init__(self):
-    super(Net, self).__init__()
-    self.bias_add_grad = G.BiasAddGrad()
-    #self.dout = Parameter(initializer(
-                #'normal', [2, 3, 3, 4]), name='dout')
+    def __init__(self):
+        super(Net, self).__init__()
+        self.bias_add_grad = G.BiasAddGrad()
+        # self.dout = Parameter(initializer(
+        # 'normal', [2, 3, 3, 4]), name='dout')
+
+    @ms_function
+    def construct(self, dout):
+        return self.bias_add_grad(dout)
 
 
-  @ms_function
-  def construct(self, dout):
-    return self.bias_add_grad(dout)
-
-dout = np.ones([2,3,4,4]).astype(np.float32)
+dout = np.ones([2, 3, 4, 4]).astype(np.float32)
 bias_add_grad = Net()
 output = bias_add_grad(Tensor(dout))
-expect_output = np.array([32.,32.,32.]).astype(np.float32)
-assert np.all(output.asnumpy()==expect_output), "bias_add_grad execute failed, please check current code commit"
+expect_output = np.array([32., 32., 32.]).astype(np.float32)
+assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 print(output.asnumpy())
