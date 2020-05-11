@@ -65,14 +65,19 @@ class BroadcastOpGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "Broadcast operation not support dim greater than 4";
     }
 
-    for (size_t i = 0; i < shape1.size(); i++) {
-      lhs_shape_[i] = shape1[i];
-      rhs_shape_[i] = shape2[i];
+    for (size_t i = 0; i < shape3.size(); i++) {
       output_shape_[i] = shape3[i];
-
-      input1_num_ *= shape1[i];
-      input2_num_ *= shape2[i];
       output_num_ *= shape3[i];
+    }
+    int offset = shape3.size() - shape1.size();
+    for (size_t i = 0; i < shape1.size(); i++) {
+      lhs_shape_[i + offset] = shape1[i];
+      input1_num_ *= shape1[i];
+    }
+    offset = shape3.size() - shape2.size();
+    for (size_t i = 0; i < shape2.size(); i++) {
+      rhs_shape_[i + offset] = shape2[i];
+      input2_num_ *= shape2[i];
     }
 
     InitSizeLists();
@@ -105,6 +110,9 @@ class BroadcastOpGpuKernel : public GpuKernel {
   }
 
   bool IsBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
+    if (lhs.size() != rhs.size()) {
+      return true;
+    }
     for (size_t i = 0; i < lhs.size(); i++) {
       if (lhs[i] != rhs[i]) {
         return true;
