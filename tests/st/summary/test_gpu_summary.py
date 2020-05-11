@@ -91,15 +91,14 @@ def train_summary_record_scalar_for_1(test_writer, steps, fwd_x, fwd_y):
 
 
 def me_scalar_summary(steps, tag=None, value=None):
-    test_writer = SummaryRecord(SUMMARY_DIR_ME_TEMP)
+    with SummaryRecord(SUMMARY_DIR_ME_TEMP) as test_writer:
 
-    x = Tensor(np.array([1.1]).astype(np.float32))
-    y = Tensor(np.array([1.2]).astype(np.float32))
+        x = Tensor(np.array([1.1]).astype(np.float32))
+        y = Tensor(np.array([1.2]).astype(np.float32))
 
-    out_me_dict = train_summary_record_scalar_for_1(test_writer, steps, x, y)
+        out_me_dict = train_summary_record_scalar_for_1(test_writer, steps, x, y)
 
-    test_writer.close()
-    return out_me_dict
+        return out_me_dict
 
 
 @pytest.mark.level0

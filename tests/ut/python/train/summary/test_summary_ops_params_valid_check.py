@@ -126,23 +126,21 @@ class HistogramSummaryNet(nn.Cell):
 def run_case(net):
     """ run_case """
     # step 0: create the thread
-    test_writer = SummaryRecord(SUMMARY_DIR)
+    with SummaryRecord(SUMMARY_DIR) as test_writer:
 
-    # step 1: create the network for summary
-    x = Tensor(np.array([1.1]).astype(np.float32))
-    y = Tensor(np.array([1.2]).astype(np.float32))
-    net.set_train()
+        # step 1: create the network for summary
+        x = Tensor(np.array([1.1]).astype(np.float32))
+        y = Tensor(np.array([1.2]).astype(np.float32))
+        net.set_train()
 
-    # step 2: create the Event
-    steps = 100
-    for i in range(1, steps):
-        x = Tensor(np.array([1.1 + random.uniform(1, 10)]).astype(np.float32))
-        y = Tensor(np.array([1.2 + random.uniform(1, 10)]).astype(np.float32))
-        net(x, y)
-        test_writer.record(i)
+        # step 2: create the Event
+        steps = 100
+        for i in range(1, steps):
+            x = Tensor(np.array([1.1 + random.uniform(1, 10)]).astype(np.float32))
+            y = Tensor(np.array([1.2 + random.uniform(1, 10)]).astype(np.float32))
+            net(x, y)
+            test_writer.record(i)
 
-    # step 3: close the writer
-    test_writer.close()
 
 
 # Test 1: use the repeat tag
