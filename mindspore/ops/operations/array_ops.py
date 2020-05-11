@@ -1956,7 +1956,7 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         use_locking (bool): Whether protect the assignment by a lock. Default: True.
 
     Inputs:
-        - **input_x** (Tensor) - The target tensor.
+        - **input_x** (Parameter) - The target tensor, with data type of Parameter.
         - **indices** (Tensor) - The index of input tensor.
         - **update** (Tensor) - The tensor to add to the input tensor, has the same type as input.
 
@@ -1964,7 +1964,7 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         Tensor, has the same shape and type as `input_x`.
 
     Examples:
-        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> input_x = mindspore.Parameter(Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32))
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
         >>> op = P.ScatterNdUpdate()
