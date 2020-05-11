@@ -1136,9 +1136,30 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
   AnfNodePtr target_node = ParseExprNode(block, targ);
   MS_EXCEPTION_IF_NULL(target_node);
 
+  std::string attr_name = targ.attr("attr").cast<std::string>();
   std::string var_name = "self.";
-  (void)var_name.append(targ.attr("attr").cast<std::string>());
+  (void)var_name.append(attr_name);
   MS_LOG(DEBUG) << "assign " << var_name;
+
+  // Get targ location info for error printing
+  py::list location = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, targ);
+  if (location.size() < 2) {
+    MS_LOG(EXCEPTION) << "List size should not be less than 2.";
+  }
+  auto filename = location[0].cast<std::string>();
+  auto line_no = location[1].cast<int>();
+  // Now only support the self.xxx = yyy, where self.xxx must be a defined Parameter type
+  if (!py::hasattr(ast()->obj(), attr_name.c_str())) {
+    MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but not defined, at " << filename << ":"
+                            << line_no;
+  }
+  auto obj = ast()->obj().attr(attr_name.c_str());
+  auto obj_type = obj.attr("__class__").attr("__name__");
+  if (!py::hasattr(obj, "__parameter__")) {
+    MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but got '"
+                            << py::str(obj).cast<std::string>() << "' with type '"
+                            << py::str(obj_type).cast<std::string>() << "' at " << filename << ":" << line_no;
+  }
 
   MS_EXCEPTION_IF_NULL(block);
   block->WriteVariable(var_name, assigned_node);
