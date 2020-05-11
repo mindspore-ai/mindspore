@@ -616,8 +616,8 @@ using GatherV2CostPtr = std::shared_ptr<GatherV2Cost>;
 
 class GatherV2PCost : public OperatorCost {
  public:
-  explicit GatherV2PCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  GatherV2PCost() : OperatorCost(true) {}
+  explicit GatherV2PCost(bool is_inputs_related) : OperatorCost(is_inputs_related), axis_(0) {}
+  GatherV2PCost() : OperatorCost(true), axis_(0) {}
   ~GatherV2PCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
