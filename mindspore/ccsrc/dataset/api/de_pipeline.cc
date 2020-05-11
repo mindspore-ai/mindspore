@@ -53,6 +53,7 @@ static std::unordered_map<uint32_t, pFunction> g_parse_op_func_ = {{kStorage, &D
                                                                    {kRepeat, &DEPipeline::ParseRepeatOp},
                                                                    {kSkip, &DEPipeline::ParseSkipOp},
                                                                    {kZip, &DEPipeline::ParseZipOp},
+                                                                   {kConcat, &DEPipeline::ParseConcatOp},
                                                                    {kRename, &DEPipeline::ParseRenameOp},
                                                                    {kDeviceQueue, &DEPipeline::ParseDeviceQueueOp},
                                                                    {kGenerator, &DEPipeline::ParseGeneratorOp},
@@ -752,6 +753,14 @@ Status DEPipeline::ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> 
 Status DEPipeline::ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
   std::shared_ptr<ZipOp::Builder> builder = std::make_shared<ZipOp::Builder>();
   std::shared_ptr<ZipOp> op;
+  RETURN_IF_NOT_OK(builder->Build(&op));
+  *ptr = op;
+  return Status::OK();
+}
+
+Status DEPipeline::ParseConcatOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr) {
+  std::shared_ptr<ConcatOp::Builder> builder = std::make_shared<ConcatOp::Builder>();
+  std::shared_ptr<ConcatOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;
   return Status::OK();

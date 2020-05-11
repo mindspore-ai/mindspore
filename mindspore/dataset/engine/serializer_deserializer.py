@@ -335,6 +335,10 @@ def create_node(node):
         # Create ZipDataset instance, giving dummy input dataset that will be overrided in the caller.
         pyobj = de.ZipDataset((de.Dataset(), de.Dataset()))
 
+    elif dataset_op == 'ConcatDataset':
+        # Create ConcatDataset instance, giving dummy input dataset that will be overrided in the caller.
+        pyobj = de.ConcatDataset((de.Dataset(), de.Dataset()))
+
     elif dataset_op == 'RenameDataset':
         pyobj = de.Dataset().rename(node['input_columns'], node['output_columns'])
 

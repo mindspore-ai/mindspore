@@ -468,6 +468,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("SKIP", OpName::kSkip)
     .value("TAKE", OpName::kTake)
     .value("ZIP", OpName::kZip)
+    .value("CONCAT", OpName::kConcat)
     .value("MAP", OpName::kMap)
     .value("FILTER", OpName::kFilter)
     .value("DEVICEQUEUE", OpName::kDeviceQueue)

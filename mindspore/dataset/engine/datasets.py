@@ -44,7 +44,7 @@ from .validators import check, check_batch, check_shuffle, check_map, check_filt
     check_rename, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
-    check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset
+    check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -146,6 +146,9 @@ class Dataset:
         self._num_classes = None
         self._repeat_count = None
         self._sync = False
+
+    def __add__(self, datasets):
+        return self.concat(datasets)
 
     def get_args(self):
         """
@@ -559,6 +562,37 @@ class Dataset:
         else:
             raise TypeError("The zip function %s type error!" % (datasets))
         return ZipDataset(datasets)
+
+    @check_concat
+    def concat(self, datasets):
+        """
+        Concat the datasets in the input list of datasets, supported using "+" to reload concat operation.
+
+        Note:
+        The column name，column data type and rank of column data should be the same in input datasets.
+
+        Args:
+            datasets (list or class Dataset): A list of datasets or a single class Dataset
+                to be concated together with this dataset.
+
+        Returns:
+            ConcatDataset, dataset concated.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> # ds1 and ds2 are instances of Dataset object
+            >>> # creates a dataset by concating ds1 and ds2 with "+" operation
+            >>> data1 = ds1 + ds2
+            >>> # creates a dataset by concating ds1 and ds2 with concat operation
+            >>> data1 = ds1.concat(ds2)
+        """
+        if isinstance(datasets, Dataset):
+            datasets = [self] + [datasets]
+        elif isinstance(datasets, list):
+            datasets = [self] + datasets
+        else:
+            raise TypeError("The concat_dataset function %s type error!" % (datasets))
+        return ConcatDataset(datasets)
 
     @check_rename
     def rename(self, input_columns, output_columns):
@@ -1656,6 +1690,39 @@ class ZipDataset(DatasetOp):
     def get_args(self):
         args = super().get_args()
         return args
+
+
+class ConcatDataset(DatasetOp):
+    """
+    The result of applying concat dataset operator to the input Dataset.
+
+    Args:
+        datasets (list): A list of datasets to be concated together.
+
+    Raises:
+        TypeError: If dataset is not an instance of Dataset.
+    """
+
+    def __init__(self, datasets):
+        super().__init__()
+        for dataset in datasets:
+            if not isinstance(dataset, Dataset):
+                raise TypeError("The parameter %s of concat has type error!" % (dataset))
+        self.datasets = datasets
+        for data in datasets:
+            self.input.append(data)
+            data.output.append(self)
+
+    def get_dataset_size(self):
+        """
+        Get the number of batches in an epoch.
+
+        Return:
+            Number, number of batches.
+        """
+        children_sizes = [c.get_dataset_size() for c in self.input]
+        dataset_size = np.sum(children_sizes)
+        return dataset_size
 
 
 class RenameDataset(DatasetOp):

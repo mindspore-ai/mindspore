@@ -66,6 +66,7 @@ SET(DE_UT_SRCS
     take_op_test.cc
     text_file_op_test.cc
     filter_op_test.cc
+    concat_op_test.cc
     )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})
