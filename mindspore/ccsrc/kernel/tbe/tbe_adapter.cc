@@ -84,7 +84,11 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"resize_bilinear_grad", "resize_bilinear_v2_grad"},
   {"adam", "apply_adam_d"},
   {"r_oi_align", "roi_align"},
-  {"r_oi_align_grad", "roi_align_grad"}};
+  {"r_oi_align_grad", "roi_align_grad"},
+  {"i_ou", "iou"},
+  {"s_gd", "sgd"},
+  {"l_ars_update", "lars_v2_update"},
+  {"n_ms_with_mask", "nms_with_mask"}};
 
 void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   if (func_name == nullptr) {

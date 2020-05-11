@@ -171,3 +171,11 @@ from .resize_bilinear_grad import _resize_bilinear_grad_tbe
 from .flatten import _flatten_tbe
 from .roi_align import _roi_align_tbe
 from .roi_align_grad import _roi_align_grad_tbe
+from .bounding_box_decode import _bounding_box_decode_tbe
+from .bounding_box_encode import _bounding_box_encode_tbe
+from .check_valid import _check_valid_tbe
+from .iou import _iou_tbe
+from .nms_with_mask import nms_with_mask_op_info
+from .random_choice_with_mask import random_choice_with_mask_op_info
+from .sgd import sgd_op_info
+from .lars_update import lars_update_op_info

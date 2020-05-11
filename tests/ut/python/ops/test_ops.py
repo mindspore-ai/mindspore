@@ -951,6 +951,17 @@ test_case_nn_ops = [
         'desc_inputs': [[1, 1, 2, 2], [1, 5]],
         'desc_bprop': [[1, 1, 2, 2]],
         'skip': ['backward']}),
+    ('LARSUpdate', {
+        'block': P.LARSUpdate(1e-05, 0.001, False),
+        'desc_const': [0.0, 0.001],
+        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
+        'desc_bprop': [3, 3],
+        'skip': ['backward']}),
+    ('SGD', {
+       'block': P.SGD(0.0, 0.0, False),
+        'desc_inputs': [[3, 3], [3, 3], Tensor(0.001, mstype.float32), [3, 3], Tensor(0.1, mstype.float32), [3, 3]],
+        'desc_bprop': [3, 3],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [
