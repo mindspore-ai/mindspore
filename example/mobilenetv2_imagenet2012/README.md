@@ -8,7 +8,7 @@ This is an example of training MobileNetV2 with ImageNet2012 dataset in MindSpor
 
 * Install [MindSpore](https://www.mindspore.cn/install/en). 
 
-* Download the dataset [ImageNet2012](http://www.image-net.org/). 
+* Download the dataset [ImageNet2012]. 
 
 > Unzip the ImageNet2012 dataset to any path you want and the folder structure should be as follows:
 > ```
