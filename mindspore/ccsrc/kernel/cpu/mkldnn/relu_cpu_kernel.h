@@ -33,7 +33,7 @@ class ReluCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(ReLU, ReluCPUKernel);
+MS_REG_CPU_KERNEL(ReLU, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), ReluCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

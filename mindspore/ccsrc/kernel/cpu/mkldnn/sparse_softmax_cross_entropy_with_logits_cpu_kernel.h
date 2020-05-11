@@ -43,7 +43,10 @@ class SparseSoftmaxCrossEntropyWithLogitsCPUKernel : public MKLCPUKernel {
   size_t batch_size_{0};
 };
 
-MS_REG_CPU_KERNEL(SparseSoftmaxCrossEntropyWithLogits, SparseSoftmaxCrossEntropyWithLogitsCPUKernel);
+MS_REG_CPU_KERNEL(
+  SparseSoftmaxCrossEntropyWithLogits,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
+  SparseSoftmaxCrossEntropyWithLogitsCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

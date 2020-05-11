@@ -37,7 +37,10 @@ class BiasAddCPUKernel : public CPUKernel {
   std::vector<size_t> input_shape_;
   std::vector<size_t> bias_shape_;
 };
-MS_REG_CPU_KERNEL(BiasAdd, BiasAddCPUKernel);
+MS_REG_CPU_KERNEL(
+  BiasAdd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  BiasAddCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_CPU_BIAS_ADD_CPU_KERNEL_H_

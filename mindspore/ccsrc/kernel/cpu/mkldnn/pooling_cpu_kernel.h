@@ -33,7 +33,8 @@ class PoolingCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 };
 
-MS_REG_CPU_KERNEL(MaxPool, PoolingCPUKernel);
+MS_REG_CPU_KERNEL(MaxPool, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  PoolingCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

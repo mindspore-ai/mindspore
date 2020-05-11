@@ -40,7 +40,10 @@ class MatMulCPUKernel : public MKLCPUKernel {
   dnnl_dim_t dim_k_{0};
 };
 
-MS_REG_CPU_KERNEL(MatMul, MatMulCPUKernel);
+MS_REG_CPU_KERNEL(
+  MatMul,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  MatMulCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
