@@ -34,20 +34,26 @@ const std::map<std::string, OperatorType> DictOpType{
   {MAXPOOL, OperatorType::kRecPooling},
   {MAXPOOLV2, OperatorType::kRecPooling},
   {SIMPLE_MEAN, OperatorType::kRecPooling},
-  {TENSOR_ADD, OperatorType::kRecTensorAdd},
+  {TENSOR_ADD, OperatorType::kRecElmWiseOp},
   {RESHAPE, OperatorType::kRecReshape},
   {BIAS_ADD, OperatorType::kRecBiasAdd},
   {RELU, OperatorType::kRecReLU},
   {BATCH_NORM, OperatorType::kRecBatchNorm},
+  {FUSE_BATCH_NORM, OperatorType::kRecBatchNorm},
+  {SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits},
   {SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits},
   {ONEHOT, OperatorType::kRecOneHot},
   {LOG, OperatorType::kRecLog},
   {EXP, OperatorType::kRecExp},
-  {SUB, OperatorType::kRecSub},
-  {MUL, OperatorType::kRecMul},
-  {DIV, OperatorType::kRecDiv},
+  {SUB, OperatorType::kRecElmWiseOp},
+  {MUL, OperatorType::kRecElmWiseOp},
+  {DIV, OperatorType::kRecElmWiseOp},
   {SQUEEZE, OperatorType::kRecSqueeze},
-  {CAST, OperatorType::kRecCast}};
+  {CAST, OperatorType::kRecCast},
+  {REDUCE_SUM, OperatorType::kRecCast},
+  {REDUCE_MAX, OperatorType::kRecCast},
+  {REDUCE_MIN, OperatorType::kRecCast},
+  {REDUCE_MEAN, OperatorType::kRecCast}};
 
 const TensorParam MakeTensor(int n, int c, int h, int w);
 

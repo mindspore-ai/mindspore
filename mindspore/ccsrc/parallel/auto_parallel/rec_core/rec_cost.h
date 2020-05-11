@@ -78,7 +78,7 @@ class CostConvolution {
  public:
   StrategyRec GetOptimalStr(const Graph::NodeType &node,
                             const std::vector<std::pair<std::string, StrategyRec>> &node_name_to_strategy,
-                            const Graph &graph);
+                            const Graph &graph, bool channel_partition);
 
   double GetMinCostIn(const Graph::NodeType &node);
 

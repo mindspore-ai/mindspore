@@ -21,18 +21,16 @@
 #include <vector>
 
 #include "ir/value.h"
+#include "parallel/auto_parallel/rec_core/rec_parse_graph.h"
 #include "parallel/auto_parallel/rec_core/rec_partition.h"
 #include "parallel/ops_info/operator_info.h"
 #include "parallel/strategy.h"
 
 namespace mindspore {
 namespace parallel {
-void GenerateStrategy(std::shared_ptr<Graph> graph, bool mask_special_ops,
-                      const std::vector<std::shared_ptr<OperatorInfo>> &ops) {
+void GenerateStrategy(std::shared_ptr<Graph> graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops) {
   MS_EXCEPTION_IF_NULL(graph);
-  if (mask_special_ops) {
-    MaskSpecialOps(graph);
-  }
+
   for (size_t iter_ops = 0; iter_ops < ops.size(); iter_ops++) {
     std::vector<std::vector<int32_t>> stra;
     for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
@@ -69,102 +67,61 @@ std::vector<int32_t> PrepareMatMul(const std::shared_ptr<Graph> &graph,
   return s;
 }
 
-std::vector<int32_t> PrepareConv2D(const std::shared_ptr<Graph> &graph, const size_t iter_nodes,
-                                   size_t iter_op_inputs) {
-  std::vector<int32_t> s;
-  if (iter_op_inputs == 0) {
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[0].tensor_str.str_n));
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[0].tensor_str.str_c));
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[0].tensor_str.str_h));
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[0].tensor_str.str_w));
-  } else {
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[1].tensor_str.str_n));
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[1].tensor_str.str_c));
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[1].tensor_str.str_h));
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[1].tensor_str.str_w));
-  }
-  return s;
-}
-
-std::vector<int32_t> PrepareBiasAdd(const std::shared_ptr<Graph> &graph, const size_t iter_nodes,
-                                    const size_t iter_op_inputs) {
-  std::vector<int32_t> s;
-  if (iter_op_inputs == 0) {
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[iter_op_inputs].tensor_str.str_h));
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[iter_op_inputs].tensor_str.str_w));
-  } else {
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[iter_op_inputs].tensor_str.str_w));
-  }
-  return s;
-}
-
-std::vector<int32_t> PrepareBN(const std::shared_ptr<Graph> &graph, const size_t iter_nodes,
-                               const size_t iter_op_inputs) {
-  std::vector<int32_t> s;
-  if (iter_op_inputs == 0) {
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[0].tensor_str.str_n));
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[0].tensor_str.str_c));
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[0].tensor_str.str_h));
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[0].tensor_str.str_w));
-  } else {
-    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_nodes].apply.arguments[1].tensor_str.str_w));
-  }
-  return s;
-}
-
-std::vector<int32_t> PrepareSparse(const size_t iter_op_inputs) {
-  std::vector<int32_t> s;
-  if (iter_op_inputs == 0) {
-    s.push_back(g_device_manager->DeviceNum());
-    s.push_back(1);
-  } else {
-    s.push_back(g_device_manager->DeviceNum());
-  }
-  return s;
-}
-
-std::vector<int32_t> MakeOriginalStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                          const size_t iter_op_inputs) {
-  std::vector<int32_t> s;
+std::vector<int32_t> MakeRecSearchStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                           const std::shared_ptr<Graph> &graph, const size_t iter_ops,
+                                           const size_t iter_op_inputs) {
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
   if (iter_ops >= ops.size()) {
     MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
   }
-  if (iter_op_inputs >= ops[iter_ops]->strategy()->GetInputDim().size()) {
+
+  StrategyPtr origin_strategy = ops[iter_ops]->strategy();
+
+  if (iter_op_inputs >= origin_strategy->GetInputDim().size()) {
     MS_LOG(EXCEPTION) << "Failure: Strategy's InputDim out of range.";
   }
-  size_t input_size = ops[iter_ops]->strategy()->GetInputDim()[iter_op_inputs].size();
-  for (size_t dim = 0; dim < input_size; dim++) {
-    s.push_back(1);
-  }
-  return s;
-}
 
-std::vector<int32_t> MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph, const size_t iter_ops,
-                                           const size_t iter_op_inputs) {
-  std::vector<int32_t> s;
-  s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_n));
-  s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_c));
-  s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_h));
-  s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_w));
+  // size_t output_size = ops[iter_ops]->outputs_tensor_info()[0].shape().size();
+  size_t output_size = origin_strategy->GetInputDim()[iter_op_inputs].size();
+
+  std::vector<int32_t> s = {};
+  if (output_size == 4) {
+    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_n));
+    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_c));
+    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_h));
+    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_w));
+  } else if (output_size == 2) {
+    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_h));
+    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_w));
+  } else if (output_size == 1) {
+    s.push_back(static_cast<int32_t>(1.0 / graph->nodes[iter_ops].apply.arguments[iter_op_inputs].tensor_str.str_w));
+  } else if (output_size == 0) {
+    return s;
+  } else {
+    MS_LOG(ERROR) << "Tensor's output size is unexcepted.";
+  }
+
   return s;
 }
 
 std::vector<int32_t> MakeDataParallelStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                               const size_t iter_ops, const size_t iter_op_inputs) {
-  std::vector<int32_t> s;
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
   if (iter_ops >= ops.size()) {
     MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
   }
+
   StrategyPtr origin_strategy = ops[iter_ops]->strategy();
+
   if (iter_op_inputs >= origin_strategy->GetInputDim().size()) {
     MS_LOG(EXCEPTION) << "Failure: Strategy's InputDim out of range.";
   }
+
+  std::vector<int32_t> s;
   size_t input_size = origin_strategy->GetInputDim()[iter_op_inputs].size();
   for (size_t dim = 0; dim < input_size; dim++) {
     if (dim == 0 && input_size == 4) {
@@ -175,6 +132,7 @@ std::vector<int32_t> MakeDataParallelStrategy(const std::vector<std::shared_ptr<
       s.push_back(1);
     }
   }
+
   return s;
 }
 
@@ -187,47 +145,23 @@ std::vector<int32_t> PrepareStrategy(const std::shared_ptr<Graph> &graph,
   if (iter_ops >= ops.size()) {
     MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
   }
+
   auto type = ops[iter_ops]->type();
-  if (type == MATMUL) {
-    return PrepareMatMul(graph, ops, iter_ops, iter_op_inputs);
-  } else if ((type == MAXPOOL) || (type == SIMPLE_MEAN) || (type == TENSOR_ADD)) {
-    return MakeRecSearchStrategy(graph, iter_ops, iter_op_inputs);
-  } else if (type == CONV2D) {
-    return PrepareConv2D(graph, iter_ops, iter_op_inputs);
-  } else if (type == BIAS_ADD) {
-    return PrepareBiasAdd(graph, iter_ops, iter_op_inputs);
-  } else if (type == RESHAPE) {
-    return MakeOriginalStrategy(ops, iter_ops, iter_op_inputs);
-  } else if (type == RELU) {
-    return MakeRecSearchStrategy(graph, iter_ops, iter_op_inputs);
-  } else if ((type == BATCH_NORM) || (type == FUSE_BATCH_NORM)) {
-    return PrepareBN(graph, iter_ops, iter_op_inputs);
-  } else if (type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) {
-    return PrepareSparse(iter_op_inputs);
-  } else {
+  auto idx = DictOpType.find(type);
+  if (idx == DictOpType.end()) {
     return MakeDataParallelStrategy(ops, iter_ops, iter_op_inputs);
   }
-}
 
-// use to respect strategy checks of auto parallel
-void MaskSpecialOps(std::shared_ptr<Graph> graph) {
-  size_t iter_nodes = graph->nodes.size();
-  for (size_t i = 0; i < iter_nodes; i++) {
-    Graph::NodeType &node = graph->nodes[i];
-
-    if (node.apply.op_type == kRecConvolution) {  // For convolution
-      // cover input tensor strategy
-      node.apply.arguments[0].tensor_str.str_n = 1.0 / static_cast<float>(g_device_manager->DeviceNum());
-      node.apply.arguments[0].tensor_str.str_c = 1;
-      node.apply.arguments[0].tensor_str.str_h = 1;
-      node.apply.arguments[0].tensor_str.str_w = 1;
-      // cover filter tensor strategy
-      node.apply.arguments[1].tensor_str.str_n = 1;
-      node.apply.arguments[1].tensor_str.str_c = 1;
-      node.apply.arguments[1].tensor_str.str_h = 1;
-      node.apply.arguments[1].tensor_str.str_w = 1;
-    }
+  if (type == MATMUL) {
+    return PrepareMatMul(graph, ops, iter_ops, iter_op_inputs);
+  } else if (type == RESHAPE) {
+    return MakeDataParallelStrategy(ops, iter_ops, iter_op_inputs);
+  } else if (type == DIV || type == SUB || type == MUL) {
+    return MakeDataParallelStrategy(ops, iter_ops, iter_op_inputs);
+  } else {
+    return MakeRecSearchStrategy(ops, graph, iter_ops, iter_op_inputs);
   }
 }
+
 }  // namespace parallel
 }  // namespace mindspore

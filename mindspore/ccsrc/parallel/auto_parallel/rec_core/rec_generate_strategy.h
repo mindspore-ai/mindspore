@@ -27,28 +27,18 @@
 
 namespace mindspore {
 namespace parallel {
-void GenerateStrategy(std::shared_ptr<Graph> graph, bool mask_special_ops,
-                      const std::vector<std::shared_ptr<OperatorInfo>> &ops);
+void GenerateStrategy(std::shared_ptr<Graph> graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops);
 std::vector<int32_t> PrepareMatMul(const std::shared_ptr<Graph> &graph,
                                    const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_nodes,
                                    const size_t iter_op_inputs);
-std::vector<int32_t> PrepareConv2D(const std::shared_ptr<Graph> &graph, const size_t iter_nodes,
-                                   const size_t iter_op_inputs);
-std::vector<int32_t> PrepareBiasAdd(const std::shared_ptr<Graph> &graph, const size_t iter_nodes,
-                                    const size_t iter_op_inputs);
-std::vector<int32_t> PrepareBN(const std::shared_ptr<Graph> &graph, const size_t iter_nodes,
-                               const size_t iter_op_inputs);
-std::vector<int32_t> PrepareSparse(const size_t iter_op_inputs);
-std::vector<int32_t> MakeOriginalStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                          const size_t iter_op_inputs);
-std::vector<int32_t> MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph, const size_t iter_ops,
+std::vector<int32_t> MakeRecSearchStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                           const std::shared_ptr<Graph> &graph, const size_t iter_ops,
                                            const size_t iter_op_inputs);
 std::vector<int32_t> MakeDataParallelStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                               const size_t iter_ops, const size_t iter_op_inputs);
 std::vector<int32_t> PrepareStrategy(const std::shared_ptr<Graph> &graph,
                                      const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                      const size_t iter_op_inputs);
-void MaskSpecialOps(std::shared_ptr<Graph> graph);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_REC_GENERATE_STRATEGY_H_
