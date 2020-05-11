@@ -22,5 +22,9 @@ MS_REG_GPU_KERNEL_ONE(Softmax, KernelAttr().AddInputAttr(kNumberTypeFloat32).Add
                       SoftmaxGpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(Softmax, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       SoftmaxGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(LogSoftmax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                      SoftmaxGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(LogSoftmax, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+                      SoftmaxGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
