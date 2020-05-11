@@ -114,7 +114,7 @@ constexpr char BE_CLONED_INDEX[] = "be_cloned_index";
 constexpr char GROUP_RANKS[] = "group_ranks";
 constexpr char IS_IN_FORWARD[] = "is_in_forward";
 constexpr char DEFAULT_INPUT[] = "default_input";
-constexpr char DTYPE[] = "dtype";
+constexpr char DTYPE[] = "DType";
 constexpr char DEV_NUM[] = "dev_num";
 constexpr char MEAN_FLAG[] = "mean_flag";
 constexpr char TYPES[] = "types";
@@ -124,6 +124,7 @@ constexpr char SHARED_NAME[] = "shared_name";
 constexpr char MIRROR_OP[] = "mirror_op";
 constexpr char FORWARD_OP[] = "forward_op";
 constexpr char REDISTRIBUTION_OP[] = "redistribution_op";
+constexpr char DARA_PARALLEL[] = "data_parallel";
 
 // Operator
 constexpr char VIRTUAL_DIV[] = "_VirtualDiv";

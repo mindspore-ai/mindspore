@@ -605,8 +605,7 @@ bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name) {
   return (prim->name() == name);
 }
 
-void StepReplaceGraph(const std::shared_ptr<std::pair<std::vector<AnfNodePtr>, AnfNodePtr>> &replace_graph,
-                      const CNodePtr &node) {
+void StepReplaceGraph(const ReplaceGraphPtr &replace_graph, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(replace_graph);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(replace_graph->second);
@@ -616,20 +615,10 @@ void StepReplaceGraph(const std::shared_ptr<std::pair<std::vector<AnfNodePtr>, A
   if (manager == nullptr) {
     MS_LOG(EXCEPTION) << "Failure:AddNode error since manager is nullptr";
   }
-  if (!IsSomePrimitive(node, ONEHOT)) {
-    MS_LOG(EXCEPTION) << "Failure:Only OneHot Primitive will enter StepReplaceGraph!";
-  }
-  if (node->inputs().size() != 5) {
-    MS_LOG(EXCEPTION) << "Failure:There is 5 inputs for the CNode corresponding to OneHot Primitive!";
-  }
-  auto pre_node = node->input(1);
-  if (replace_graph->first.size() != 2) {
-    MS_LOG(EXCEPTION) << "Failure:replace_graph->first.size() must be 2 for OneHot Primitive!";
-  }
   for (auto &replace_input : replace_graph->first) {
-    MS_EXCEPTION_IF_NULL(replace_input);
-    manager->SetEdge(replace_input, 1, pre_node);
-    CNodePtr replace_input_cnode = replace_input->cast<CNodePtr>();
+    auto pre_node = node->input(IntToSize(replace_input.second));
+    manager->SetEdge(replace_input.first, 1, pre_node);
+    auto replace_input_cnode = replace_input.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(replace_input_cnode);
     (void)replace_input_cnode->set_operator_info(node->operator_info());
     replace_input_cnode->set_in_forward_flag(true);  // mark this new cnode is forward node
@@ -943,6 +932,20 @@ OperatorInfoPtr OperatorInstanceByName(const std::string &name, const PrimitiveA
     MS_LOG(EXCEPTION) << "Length of name is zero!";
   }
   std::string distribute_opname = GetDisOpName(name);
+  if (name == GATHERV2) {
+    distribute_opname = name + "PInfo";
+    auto data_parallel_iter = attrs.find(DATA_PARALLEL);
+    if (data_parallel_iter != attrs.end()) {
+      MS_EXCEPTION_IF_NULL(data_parallel_iter->second);
+      if (!data_parallel_iter->second->isa<BoolImm>()) {
+        MS_LOG(EXCEPTION) << ": data_parallel flag's type is not a bool.";
+      }
+      bool data_parallel = data_parallel_iter->second->cast<BoolImmPtr>()->value();
+      if (data_parallel) {
+        distribute_opname = name + "Info";
+      }
+    }
+  }
   OperatorInfoPtr operator_ =
     (OperatorInfoPtr)DynCreator::Instance().Creat(distribute_opname, shape_list[0], shape_list[1], attrs, TOTAL_OPS);
   if (operator_ == nullptr) {
