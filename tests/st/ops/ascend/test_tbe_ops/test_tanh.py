@@ -21,6 +21,7 @@ from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -29,9 +30,12 @@ class Net(nn.Cell):
     def construct(self, x):
         return self.tanh(x)
 
+
 input_shape = [1]
 input_np = np.random.randn(*input_shape).astype(np.float32)
 input_me = Tensor(input_np)
+
+
 def test_net():
     context.set_context(mode=context.GRAPH_MODE)
     tanh = Net()

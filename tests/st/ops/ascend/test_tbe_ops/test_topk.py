@@ -20,7 +20,10 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+
 class Net(nn.Cell):
     def __init__(self, k):
         super(Net, self).__init__()
@@ -32,7 +35,7 @@ class Net(nn.Cell):
 
 
 def test_net():
-    x = np.random.randn(4,4).astype(np.float16)
+    x = np.random.randn(4, 4).astype(np.float16)
     k = 2
     TopK = Net(k)
     output = TopK(Tensor(x))
@@ -41,4 +44,3 @@ def test_net():
 
     print("***********output y*********")
     print(output[0].asnumpy())
-

@@ -20,7 +20,10 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -29,7 +32,8 @@ class Net(nn.Cell):
     def construct(self, x):
         return self.split(x)
 
-x = np.random.randn(2,4).astype(np.float32)
+
+x = np.random.randn(2, 4).astype(np.float32)
 
 
 def test_net():

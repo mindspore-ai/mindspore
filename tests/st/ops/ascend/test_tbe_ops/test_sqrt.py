@@ -20,16 +20,21 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.sqrt = P.Sqrt()
-        
+
     def construct(self, x):
         return self.sqrt(x)
 
+
 x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
+
 
 def test_net():
     sqrt = Net()

@@ -18,6 +18,7 @@ import mindspore.nn as nn
 from mindspore.common.api import ms_function
 import numpy as np
 import mindspore.context as context
+
 context.set_context(device_target="Ascend")
 
 
@@ -36,4 +37,4 @@ def test_net():
     labels = np.random.randn(32, 1001).astype(np.float16)
     SoftmaxCrossEntropyWithLogits = Net()
     output = SoftmaxCrossEntropyWithLogits(Tensor(features), Tensor(labels))
-    #print(output.asnumpy())
+    # print(output.asnumpy())

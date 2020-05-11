@@ -19,6 +19,7 @@ from mindspore.ops.composite import GradOperation
 from mindspore.common.api import ms_function
 import numpy as np
 import mindspore.context as context
+
 context.set_context(device_target="Ascend")
 
 
@@ -42,6 +43,7 @@ class Grad(nn.Cell):
     def construct(self, x, y):
         return self.grad(self.network)(x, y)
 
+
 def test_net():
     x = np.random.random(size=(2, 3, 4, 5, 6)).astype(np.float32)
     y = np.random.random(size=(2, 3, 4, 5, 6)).astype(np.float32)
@@ -49,4 +51,3 @@ def test_net():
     output = net(Tensor(x), Tensor(y))
     print("=================output====================")
     print(output.asnumpy())
-

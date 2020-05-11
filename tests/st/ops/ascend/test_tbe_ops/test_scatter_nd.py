@@ -20,6 +20,7 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
@@ -29,11 +30,12 @@ class Net(nn.Cell):
         self.scatternd = P.ScatterNd()
 
     def construct(self, indices, update):
-        return self.scatternd(indices, update, (3,3))
+        return self.scatternd(indices, update, (3, 3))
 
 
 indices = np.array([[0, 1], [1, 1]]).astype(np.int32)
 update = np.array([3.2, 1.1]).astype(np.float32)
+
 
 def test_net():
     scatternd = Net()

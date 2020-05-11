@@ -21,7 +21,9 @@ import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops.composite import GradOperation
+
 context.set_context(device_target="Ascend")
+
 
 class Grad(nn.Cell):
     def __init__(self, network):
@@ -33,6 +35,7 @@ class Grad(nn.Cell):
     def construct(self, input, output_grad):
         return self.grad(self.network)(input, output_grad)
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -43,8 +46,9 @@ class Net(nn.Cell):
 
     @ms_function
     def construct(self, x):
-            output = self.maxpool(x)
-            return output[0]
+        output = self.maxpool(x)
+        return output[0]
+
 
 def test_net():
     x = np.random.randn(32, 64, 112, 112).astype(np.float32)

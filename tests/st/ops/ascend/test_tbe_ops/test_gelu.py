@@ -21,6 +21,7 @@ import math
 import pytest
 from mindspore import context
 from mindspore import log as logger
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
@@ -51,6 +52,7 @@ def test_gelu_input_dim_0():
     input_shape = [0]
     with pytest.raises(ValueError):
         gelu_forward_cmp(input_shape)
+
 
 def test_gelu_input_dim_10240_1024():
     input_shape = [10240, 1024]
@@ -95,6 +97,7 @@ def test_gelu_input_dim_128_3072():
 def test_gelu_input_dim_128_4096():
     input_shape = [128, 4096]
     gelu_forward_cmp(input_shape)
+
 
 @pytest.mark.lower_bs
 def test_gelu_input_dim_160_1024():

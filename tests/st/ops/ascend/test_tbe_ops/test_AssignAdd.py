@@ -20,11 +20,13 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self):
         super(Net, self).__init__()
         self.AssignAdd = P.AssignAdd()
@@ -39,7 +41,7 @@ class Net(nn.Cell):
 def test_net():
     """test AssignAdd"""
     net = Net()
-    x = Tensor(np.ones([1]).astype(np.float32)*100)
+    x = Tensor(np.ones([1]).astype(np.float32) * 100)
 
     print("MyPrintResult dataX:", x)
     result = net(x)

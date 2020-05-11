@@ -20,11 +20,12 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__( self):
+    def __init__(self):
         super(Net, self).__init__()
 
         self.cat = P.Concat(axis=1)
@@ -46,4 +47,4 @@ def test_net():
     print(np.arange(2 * 2).reshape(2, 2))
     print(np.arange(2 * 3).reshape(2, 3))
     print(output)
-    assert(output.asnumpy() == expect).all()
+    assert (output.asnumpy() == expect).all()

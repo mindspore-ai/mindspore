@@ -18,97 +18,110 @@ import mindspore.nn as nn
 from mindspore.common.api import ms_function
 import numpy as np
 import mindspore.context as context
-context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-class Net(nn.Cell):
-  def __init__(self):
-    super(Net, self).__init__()
-    self.expand_dims = P.ExpandDims()
 
-  def construct(self, tensor, dim):
-    return self.expand_dims(tensor, dim)
+context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+
+
+class Net(nn.Cell):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.expand_dims = P.ExpandDims()
+
+    def construct(self, tensor, dim):
+        return self.expand_dims(tensor, dim)
 
 
 def test_net_bool():
-  x = np.random.randn(1, 16, 1, 1).astype(np.bool)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.bool)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
 
 def test_net_int8():
-  x = np.random.randn(1, 16, 1, 1).astype(np.int8)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
-  
+    x = np.random.randn(1, 16, 1, 1).astype(np.int8)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
+
 def test_net_uint8():
-  x = np.random.randn(1, 16, 1, 1).astype(np.uint8)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.uint8)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
 
 def test_net_int16():
-  x = np.random.randn(1, 16, 1, 1).astype(np.int16)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.int16)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
 
 def test_net_uint16():
-  x = np.random.randn(1, 16, 1, 1).astype(np.uint16)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.uint16)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
 
 def test_net_int32():
-  x = np.random.randn(1, 16, 1, 1).astype(np.int32)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
 
 def test_net_uint32():
-  x = np.random.randn(1, 16, 1, 1).astype(np.uint32)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.uint32)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
 
 def test_net_int64():
-  x = np.random.randn(1, 16, 1, 1).astype(np.int64)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.int64)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
 
 def test_net_uint64():
-  x = np.random.randn(1, 16, 1, 1).astype(np.uint64)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.uint64)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
 
 def test_net_float16():
-  x = np.random.randn(1, 16, 1, 1).astype(np.float16)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.float16)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
 
 def test_net_float32():
-  x = np.random.randn(1, 16, 1, 1).astype(np.float32)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
+    x = np.random.randn(1, 16, 1, 1).astype(np.float32)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))
+
 
 def test_net_float64():
-  x = np.random.randn(1, 16, 1, 1).astype(np.float64)
-  net = Net()
-  output = net(Tensor(x), -1)
-  print(output.asnumpy())
-  assert(np.all(output.asnumpy() == np.expand_dims(x, -1)))
-  
+    x = np.random.randn(1, 16, 1, 1).astype(np.float64)
+    net = Net()
+    output = net(Tensor(x), -1)
+    print(output.asnumpy())
+    assert (np.all(output.asnumpy() == np.expand_dims(x, -1)))

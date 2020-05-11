@@ -20,16 +20,21 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.Softmax = P.Softmax()
-        
+
     def construct(self, x):
         return self.Softmax(x)
 
+
 x = np.array([[5, 1]]).astype(np.float32)
+
 
 def test_net():
     softmax = Net()

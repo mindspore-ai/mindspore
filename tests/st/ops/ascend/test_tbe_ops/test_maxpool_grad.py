@@ -19,6 +19,7 @@ from mindspore.common.api import ms_function
 import numpy as np
 import mindspore.context as context
 from mindspore.ops.composite import GradOperation
+
 context.set_context(device_target="Ascend")
 
 

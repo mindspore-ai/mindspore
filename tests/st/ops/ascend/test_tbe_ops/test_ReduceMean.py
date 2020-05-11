@@ -20,7 +20,10 @@ import numpy as np
 import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+
 context.set_context(device_target="Ascend")
+
+
 class Net(nn.Cell):
     def __init__(self, keep_dims, axis):
         super(Net, self).__init__()
@@ -31,7 +34,9 @@ class Net(nn.Cell):
     def construct(self, inputs):
         return self.reduce_mean(inputs, self.axis)
 
+
 x1 = np.random.randn(64).astype(np.float32)
+
 
 def test_net():
     keepdims = False

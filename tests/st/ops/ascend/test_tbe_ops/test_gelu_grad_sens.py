@@ -25,6 +25,7 @@ from mindspore import log as logger
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
+
 class Grad(Cell):
     def __init__(self, network):
         super(Grad, self).__init__()
@@ -55,6 +56,7 @@ def gelu_backward_cmp(input_shape):
     logger.info("---------me--------")
     logger.info(output_grad_me)
 
+
 # ----------    LARGE INPUT  ---------------
 
 class MEGeluLargeIn(Cell):
@@ -66,6 +68,7 @@ class MEGeluLargeIn(Cell):
     def construct(self, x1, x2):
         x = self.matmul(x1, x2)
         return self.gelu(x)
+
 
 class GradLargeIn(Cell):
     def __init__(self, network):
@@ -86,5 +89,5 @@ def gelu_backward_me_large_in_impl(x1, x2, output_grad):
 
 
 def test_grad_gelu_input_10240_1024():
-    input_shape = [10240,1024]
+    input_shape = [10240, 1024]
     gelu_backward_cmp(input_shape)

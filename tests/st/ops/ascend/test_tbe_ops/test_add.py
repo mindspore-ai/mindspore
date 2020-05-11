@@ -21,6 +21,7 @@ import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -29,8 +30,9 @@ class Net(nn.Cell):
     def construct(self, x, y):
         return self.add(x, y)
 
-x = np.random.randn(1,3,3,4).astype(np.float32)
-y = np.random.randn(1,3,3,4).astype(np.float32)
+
+x = np.random.randn(1, 3, 3, 4).astype(np.float32)
+y = np.random.randn(1, 3, 3, 4).astype(np.float32)
 
 
 def test_net():
