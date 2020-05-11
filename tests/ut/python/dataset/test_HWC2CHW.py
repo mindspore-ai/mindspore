@@ -69,8 +69,8 @@ def test_HWC2CHW_md5():
     data1 = data1.map(input_columns=["image"], operations=decode_op)
     data1 = data1.map(input_columns=["image"], operations=hwc2chw_op)
 
-    # expected md5 from images
-    filename = "test_HWC2CHW_01_result.npz"
+    # Compare with expected md5 from images
+    filename = "HWC2CHW_01_result.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
@@ -103,9 +103,9 @@ def test_HWC2CHW_comp(plot=False):
         c_image = item1["image"]
         py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
 
-        # compare images between that applying c_transform and py_transform
+        # Compare images between that applying c_transform and py_transform
         mse = diff_mse(py_image, c_image)
-        # the images aren't exactly the same due to rounding error
+        # Note: The images aren't exactly the same due to rounding error
         assert mse < 0.001
 
         image_c_transposed.append(item1["image"].copy())
