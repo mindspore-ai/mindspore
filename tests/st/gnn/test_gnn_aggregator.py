@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.common.api import _executor
 import mindspore.ops.composite as C
-from aggregator import MeanAggregator
+from aggregator import MeanAggregator, AttentionHead, AttentionAggregator
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -51,3 +51,22 @@ def test_MeanAggregator_grad():
     sens = Tensor(np.ones([32, 64]).astype(np.float32))
     grad_op = MeanAggregatorGrad(aggregator)
     _executor.compile(grad_op, input_data, sens)
+
+
+def test_AttentionHead():
+    """Compile AttentionHead forward graph"""
+    head = AttentionHead(1433,
+                         8,
+                         in_drop_ratio=0.6,
+                         coef_drop_ratio=0.6,
+                         residual=False)
+    input_data = Tensor(np.array(np.random.rand(1, 2708, 1433), dtype=np.float32))
+    biases = Tensor(np.array(np.random.rand(1, 2708, 2708), dtype=np.float32))
+    _executor.compile(head, input_data, biases)
+
+
+def test_AttentionAggregator():
+    input_data = Tensor(np.array(np.random.rand(1, 2708, 1433), dtype=np.float32))
+    biases = Tensor(np.array(np.random.rand(1, 2708, 2708), dtype=np.float32))
+    net = AttentionAggregator(1433, 8, 8)
+    _executor.compile(net, input_data, biases)
