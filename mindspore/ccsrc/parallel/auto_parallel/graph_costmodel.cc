@@ -1377,7 +1377,6 @@ Status CostGraph::InitSelectedStrategy() {
       if (pre_iter != in_edges.end()) {
         MS_LOG(DEBUG) << "Set reshape input layout by " << reshape_info->pre_operator_name();
         int32_t pre_index = reshape_info->pre_operator_index();
-        Dimensions stra;
         TensorInfo pre_info;
         if (ops_[i]->name() == (*pre_iter)->prev_operator()->name()) {
           pre_info = (*pre_iter)->prev_operator()->inputs_tensor_info()[pre_index];
@@ -1385,7 +1384,10 @@ Status CostGraph::InitSelectedStrategy() {
           pre_info = (*pre_iter)->prev_operator()->outputs_tensor_info()[pre_index];
         }
         reshape_info->SetInputLayout(pre_info.tensor_layout());
-        InferStraByTensorInfo(pre_info, &stra);
+        Dimensions stra = pre_info.InferStrategy();
+        if (stra.empty()) {
+          MS_LOG(EXCEPTION) << "Infer strategy by tensor_info failed";
+        }
         std::vector<Dimensions> stra_inputs = {stra};
         StrategyPtr reshape_stra =
           std::make_shared<Strategy>((*pre_iter)->prev_operator()->strategy()->GetInputStage(), stra_inputs);
