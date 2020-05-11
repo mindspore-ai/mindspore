@@ -40,5 +40,31 @@ void CPUKernel::Init(const CNodePtr &kernel_node) {
   InitInputOutputSize(kernel_node);
   InitKernel(kernel_node);
 }
+
+void CPUKernelUtils::ExpandDimsTo4(std::vector<size_t> *shape) {
+  auto len = shape->size();
+  if (len < 4) {
+    for (size_t i = 0; i < 4 - len; ++i) {
+      shape->insert(shape->begin(), 1);
+    }
+  }
+}
+
+size_t CPUKernelUtils::CalcOffset(const std::vector<size_t> &shape, size_t dim0, size_t dim1, size_t dim2,
+                                  size_t dim3) {
+  size_t offset = dim0 * shape[1] * shape[2] * shape[3] + dim1 * shape[2] * shape[3] + dim2 * shape[3] + dim3;
+  return offset;
+}
+
+size_t CPUKernelUtils::GetElementNumOnAxis(const std::vector<size_t> &shape, int axis) {
+  if (axis < 0) {
+    axis = axis + SizeToInt(shape.size());
+  }
+  size_t result = 1;
+  for (int j = 3; j > axis; --j) {
+    result *= shape[j];
+  }
+  return result;
+}
 }  // namespace kernel
 }  // namespace mindspore
