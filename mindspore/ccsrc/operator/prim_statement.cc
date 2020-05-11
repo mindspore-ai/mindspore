@@ -129,22 +129,27 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
 AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_spec_list) {
   // Inputs: index, branch
-  if (args_spec_list.size() != 2) {
-    MS_LOG(EXCEPTION) << "SwitchLayer evaluator requires 2 parameters, while the input size is "
-                      << args_spec_list.size() << ".";
-  }
-  AbstractTuplePtr branches_abs = CheckArg<AbstractTuple>(primitive->name(), args_spec_list, 1);
+  const std::string op_name = primitive->name();
+  abstract::CheckArgsSize(op_name, args_spec_list, 2);
+  (void)CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  AbstractTuplePtr branches_abs = CheckArg<AbstractTuple>(op_name, args_spec_list, 1);
   AbstractBasePtrList branches = branches_abs->elements();
   const size_t maximum_layer_num = 1000;
   if (branches.size() < 0 || branches.size() > maximum_layer_num) {
-    MS_EXCEPTION(ValueError) << "SwitchLayer support at least 1 and at most " << maximum_layer_num << " but got "
+    MS_EXCEPTION(ValueError) << op_name << " support at least 1 and at most " << maximum_layer_num << " but got "
                              << branches.size() << " branches.";
   }
 
-  MS_EXCEPTION_IF_NULL(branches[0]);
+  for (size_t i = 0; i < branches.size(); i++) {
+    MS_EXCEPTION_IF_NULL(branches[i]);
+    if (!branches[i]->isa<AbstractFunction>()) {
+      MS_LOG(EXCEPTION) << op_name << " requires that the 2th arg be tuple of functions, but got "
+                        << branches[i]->ToString() << " as the " << i << "th element.";
+    }
+  }
+
   auto b = branches[0];
   for (size_t i = 1; i < branches.size(); i++) {
-    MS_EXCEPTION_IF_NULL(branches[i]);
     b = b->Join(branches[i]);
   }
   return b;

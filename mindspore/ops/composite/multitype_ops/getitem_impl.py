@@ -72,6 +72,28 @@ _tensor_slice = _TensorSlice('tensor_slice')
 """_tensor_slice is an metafuncgraph object which will slice a tensor."""
 
 
+class _TupleGetItemTensor(base.TupleGetItemTensor_):
+    """
+    Getting item of tuple by tensor index.
+
+    Inputs:
+        data (tuple): A tuple of items.
+        index (Tensor): The index in tensor.
+    Outputs:
+        Type, is same as the element type of data.
+    """
+
+    def __init__(self, name):
+        base.TupleGetItemTensor_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+
+_tuple_get_item_tensor = _TupleGetItemTensor('tuple_get_item_tensor')
+"""_tuple_get_item_tensor is an metafuncgraph object which will select indexed item."""
+
+
 @getitem.register("Tuple", "Number")
 def _tuple_getitem_by_number(data, number_index):
     """
@@ -100,6 +122,21 @@ def _tuple_getitem_by_slice(data, slice_index):
         Tuple, element type is same as the element type of data.
     """
     return _tuple_slice(data, slice_index)
+
+
+@getitem.register("Tuple", "Tensor")
+def _tuple_getitem_by_tensor(data, tensor_index):
+    """
+    Getting item out of tuple by tensor index.
+
+    Inputs:
+        data (tuple): A tuple of items to index.
+        tensor_index (Tensor): Index to select item.
+
+    Outputs:
+        Type, is same as the element type of data.
+    """
+    return _tuple_get_item_tensor(data, tensor_index)
 
 
 @getitem.register("List", "Number")

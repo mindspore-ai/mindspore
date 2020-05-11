@@ -18,13 +18,13 @@
 """Basic composite operations."""
 
 from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, MultitypeFuncGraph_, Tail_, TensorSlice_, \
-                             TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_
+                             TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_
 from ...common import dtype as mstype
 from ...common.api import ms_function
 from .. import functional as F
 from .. import operations as P
 
-__all__ = [EnvInstance_, TensorSlice_, TupleAdd_, TupleSlice_, UnpackCall_]
+__all__ = [EnvInstance_, TensorSlice_, TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
 
 
 def add_flags(fn, **flags):

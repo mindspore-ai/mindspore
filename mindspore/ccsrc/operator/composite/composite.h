@@ -210,6 +210,18 @@ class TensorSlice : public MetaFuncGraph {
   FuncGraphPtr ExpandADim(const FuncGraphPtr &ret_graph, const AnfNodePtr &tensor_node) const;
 };
 using TensorSlicePtr = std::shared_ptr<TensorSlice>;
+
+class TupleGetItemTensor : public MetaFuncGraph {
+ public:
+  explicit TupleGetItemTensor(const std::string &name) : MetaFuncGraph(name) {}
+  ~TupleGetItemTensor() override = default;
+  MS_DECLARE_PARENT(TupleGetItemTensor, MetaFuncGraph)
+  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
+  friend bool operator==(const TupleGetItemTensor &lhs, const TupleGetItemTensor &rhs) {
+    return lhs.name_ == rhs.name_;
+  }
+};
+using TupleGetItemTensorPtr = std::shared_ptr<TupleGetItemTensor>;
 }  // namespace prim
 }  // namespace mindspore
 
