@@ -351,6 +351,15 @@ class AssignAdd(nn.Cell):
         self.inputdata = input_
         return self.op(self.inputdata, input_)
 
+class FloorNet(nn.Cell):
+    def __init__(self):
+        super(FloorNet, self).__init__()
+        self.floor = P.Floor()
+
+    def construct(self, x):
+        return self.floor(x)
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -388,6 +397,11 @@ test_case_math_ops = [
         'skip': ['backward']}),
     ('Sign', {
         'block': SignNet(),
+        'desc_inputs': [Tensor(np.array([[1., 0., -2.]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[1., 0., -2.]], np.float32))],
+        'skip': ['backward']}),
+    ('Floor', {
+        'block': FloorNet(),
         'desc_inputs': [Tensor(np.array([[1., 0., -2.]], np.float32))],
         'desc_bprop': [Tensor(np.array([[1., 0., -2.]], np.float32))],
         'skip': ['backward']}),
