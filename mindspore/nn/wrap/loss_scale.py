@@ -249,7 +249,9 @@ class TrainOneStepWithLossScaleCell(Cell):
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
-        grads = self.grad(self.network, weights)(data, label, F.cast(scaling_sens, F.dtype(loss)))
+
+        scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
+        grads = self.grad(self.network, weights)(data, label, scaling_sens_filled)
         grads = self.hyper_map(F.partial(_grad_scale, scaling_sens), grads)
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
