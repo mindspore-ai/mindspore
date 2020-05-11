@@ -97,14 +97,44 @@ constexpr std::ostream &operator<<(std::ostream &stream, const T &value) {
 
 enum MsLogLevel : int { DEBUG = 0, INFO, WARNING, ERROR, EXCEPTION };
 
+enum SubModuleId : int {
+  SM_UNKNOWN = 0,  // unknown submodule
+  SM_ANALYZER,     // static analyzer
+  SM_COMMON,       // common
+  SM_DEBUG,        // debug
+  SM_DEVICE,       // device
+  SM_GE_ADPT,      // ge adapter
+  SM_IR,           // IR
+  SM_KERNEL,       // kernel
+  SM_MD,           // MindData
+  SM_ME,           // MindExpression
+  SM_ONNX,         // ONNX
+  SM_OPTIMIZER,    // optimzer
+  SM_PARALLEL,     // parallel
+  SM_PARSER,       // parser
+  SM_PIPELINE,     // ME pipeline
+  SM_PRE_ACT,      // pre-activate
+  SM_PYNATIVE,     // PyNative
+  SM_SESSION,      // session
+  SM_UTILS,        // utils
+  SM_VM,           // VM
+  NUM_SUBMODUES    // number of submodules
+};
+
+#ifndef SUBMODULE_ID
+#define SUBMODULE_ID mindspore::SubModuleId::SM_ME
+#endif
+
 #ifndef USE_GLOG
 extern int g_mslog_level;
 #endif
+extern int g_ms_submodule_log_levels[] __attribute__((visibility("default")));
 
 class LogWriter {
  public:
-  LogWriter(const LocationInfo &location, MsLogLevel log_level, ExceptionType excp_type = NoExceptionType)
-      : location_(location), log_level_(log_level), exception_type_(excp_type) {}
+  LogWriter(const LocationInfo &location, MsLogLevel log_level, SubModuleId submodule,
+            ExceptionType excp_type = NoExceptionType)
+      : location_(location), log_level_(log_level), submodule_(submodule), exception_type_(excp_type) {}
   ~LogWriter() = default;
 
   void operator<(const LogStream &stream) const noexcept __attribute__((visibility("default")));
@@ -115,6 +145,7 @@ class LogWriter {
 
   LocationInfo location_;
   MsLogLevel log_level_;
+  SubModuleId submodule_;
   ExceptionType exception_type_;
 };
 
@@ -122,16 +153,13 @@ class LogWriter {
   static_cast<void>(0), !(condition)                                                                                \
                           ? void(0)                                                                                 \
                           : mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), level, \
-                                                 excp_type) < mindspore::LogStream()
-#define MSLOG_THROW(excp_type)                                                                                        \
-  mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::EXCEPTION, excp_type) ^ \
+                                                 SUBMODULE_ID, excp_type) < mindspore::LogStream()
+#define MSLOG_THROW(excp_type)                                                                                         \
+  mindspore::LogWriter(mindspore::LocationInfo(FILE_NAME, __LINE__, __FUNCTION__), mindspore::EXCEPTION, SUBMODULE_ID, \
+                       excp_type) ^                                                                                    \
     mindspore::LogStream()
 
-#ifdef USE_GLOG
-#define IS_OUTPUT_ON(level) (level) >= FLAGS_v
-#else
-#define IS_OUTPUT_ON(level) (level) >= mindspore::g_mslog_level
-#endif
+#define IS_OUTPUT_ON(level) (level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID]
 
 #define MS_LOG(level) MS_LOG_##level
 

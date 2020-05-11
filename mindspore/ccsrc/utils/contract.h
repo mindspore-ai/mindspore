@@ -56,7 +56,7 @@ class Ensures : public EnsuresAccess<T, R> {
     if (!R::Check(value_)) {
       LogStream contract_stream;
       contract_stream << "contract error: " << signatory.extra_info << R::Desc();
-      LogWriter(signatory.location_info, EXCEPTION, ArgumentError) ^ contract_stream;
+      LogWriter(signatory.location_info, EXCEPTION, SUBMODULE_ID, ArgumentError) ^ contract_stream;
     }
   }
   template <class O, typename = std::enable_if_t<std::is_convertible_v<O, T>>>

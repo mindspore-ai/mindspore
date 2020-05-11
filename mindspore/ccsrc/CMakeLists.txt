@@ -116,6 +116,7 @@ foreach (_comp ${SUB_COMP})
     endif ()
 endforeach ()
 
+set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 target_link_libraries(mindspore proto_input)
 target_link_libraries(mindspore securec mindspore::flatbuffers)
