@@ -243,7 +243,7 @@ class Adam(Optimizer):
         self.beta1_power = beta1_power
         beta2_power = self.beta2_power * self.beta2
         self.beta2_power = beta2_power
-        if self.is_group:
+        if self.is_group_lr:
             success = self.hyper_map(F.partial(adam_opt, self.opt, beta1_power, beta2_power, self.beta1,
                                                self.beta2, self.eps),
                                      lr, gradients, params, moment1, moment2)

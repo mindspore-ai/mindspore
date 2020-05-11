@@ -111,7 +111,7 @@ class Momentum(Optimizer):
         gradients = self.decay_weight(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
-        if self.is_group:
+        if self.is_group_lr:
             success = self.hyper_map(F.partial(momentum_opt, self.opt, self.momentum), lr, gradients, params, moments)
         else:
             success = self.hyper_map(F.partial(momentum_opt, self.opt, self.momentum, lr), gradients, params, moments)
