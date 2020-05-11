@@ -1233,6 +1233,27 @@ FuncGraphPtr TensorSlice::ExpandADim(const FuncGraphPtr &ret_graph, const AnfNod
   return ret_graph;
 }
 
+FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  // select indexed item
+  // args: tuple of items, index
+  const std::string op_name = std::string("TupleGetItemTensor");
+  abstract::CheckArgsSize(op_name, args_spec_list, 2);
+  AbstractTuplePtr branches_abs = abstract::CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+  AbstractBasePtrList branches = branches_abs->elements();
+
+  if (branches.size() > 0 && branches[0] != nullptr && branches[0]->isa<AbstractFunction>()) {
+    FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
+    ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+    AnfNodePtr functions = ret_graph->add_parameter();
+    auto index = ret_graph->add_parameter();
+
+    ret_graph->set_output(ret_graph->NewCNode({NewValueNode(prim::kPrimSwitchLayer), index, functions}));
+    return ret_graph;
+  }
+
+  MS_LOG(EXCEPTION) << "TupleGetItemTensor does not support to index " << branches_abs->ToString() << ".";
+}
+
 REGISTER_PYBIND_DEFINE(TupleAdd_, ([](const py::module *m) {
                          (void)py::class_<TupleAdd, MetaFuncGraph, std::shared_ptr<TupleAdd>>(*m, "TupleAdd_")
                            .def(py::init<std::string &>());
@@ -1245,6 +1266,12 @@ REGISTER_PYBIND_DEFINE(TupleSlice_, ([](const py::module *m) {
 
 REGISTER_PYBIND_DEFINE(TensorSlice_, ([](const py::module *m) {
                          (void)py::class_<TensorSlice, MetaFuncGraph, std::shared_ptr<TensorSlice>>(*m, "TensorSlice_")
+                           .def(py::init<std::string &>());
+                       }));
+
+REGISTER_PYBIND_DEFINE(TupleGetItemTensor_, ([](const py::module *m) {
+                         (void)py::class_<TupleGetItemTensor, MetaFuncGraph, std::shared_ptr<TupleGetItemTensor>>(
+                           *m, "TupleGetItemTensor_")
                            .def(py::init<std::string &>());
                        }));
 }  // namespace prim
