@@ -22,6 +22,7 @@
 #include <iostream>
 #include <functional>
 #include <map>
+#include <vector>
 #include <string>
 #include <memory>
 #include "device/gpu/blocking_queue.h"
@@ -80,20 +81,18 @@ class GpuBufferMgr {
   EXPORT static GpuBufferMgr &GetInstance() noexcept;
 
   EXPORT BlockQueueStatus_T Create(unsigned int device_id, const std::string &channel_name, void *addr,
-                                   const size_t &feature_len, const size_t &label_size, const size_t &capacity);
+                                   const std::vector<size_t> &shape, const size_t &capacity);
 
   // call for Push thread
-  EXPORT unsigned int Open(unsigned int device_id, const std::string &channel_name, const size_t &feature_len,
-                           const size_t &label_size, std::function<void(void *)> func);
+  EXPORT unsigned int Open(unsigned int device_id, const std::string &channel_name, const std::vector<size_t> &shape,
+                           std::function<void(void *)> func);
 
   // call for Front/Pop thread
-  EXPORT unsigned int Open(unsigned int device_id, const std::string &channel_name, const size_t &feature_len,
-                           const size_t &label_size);
+  EXPORT unsigned int Open(unsigned int device_id, const std::string &channel_name, const std::vector<size_t> &shape);
 
-  EXPORT BlockQueueStatus_T Push(unsigned int handle, void *feature_addr, size_t feature_size, void *label_addr,
-                                 size_t label_size, unsigned int timeout_in_sec);
-  EXPORT BlockQueueStatus_T Front(unsigned int handle, void **feature_addr, size_t *feature_size, void **label_addr,
-                                  size_t *label_size);
+  EXPORT BlockQueueStatus_T Push(unsigned int handle, const std::vector<DataItemGpu> &data,
+                                 unsigned int timeout_in_sec);
+  EXPORT BlockQueueStatus_T Front(unsigned int handle, void **addr, size_t *len);
   EXPORT BlockQueueStatus_T Pop(unsigned int handle);
 
   EXPORT void set_device_id(int device_id);
