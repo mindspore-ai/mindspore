@@ -55,12 +55,13 @@ class BatchNormFoldGpuKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
     (void)workspace;
-    auto x = reinterpret_cast<T *>(inputs[0]->addr);
-    auto mean = reinterpret_cast<T *>(inputs[1]->addr);
-    auto variance = reinterpret_cast<T *>(inputs[2]->addr);
-    int *current_step = reinterpret_cast<int *>(inputs[3]->addr);
+    auto x = GetDeviceAddress<T>(inputs, 0);
+    auto mean = GetDeviceAddress<T>(inputs, 1);
+    auto variance = GetDeviceAddress<T>(inputs, 2);
+    int *current_step = GetDeviceAddress<int>(inputs, 3);
     int current_step_host[1];
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpy(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost),
+    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(current_step_host, current_step, sizeof(int), cudaMemcpyDeviceToHost,
+                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Copy gpu memoy failed.");
     if (x == nullptr) {
       MS_LOG(ERROR) << "BatchNormFoldGpuKernel x is null.";
@@ -78,15 +79,17 @@ class BatchNormFoldGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "BatchNormFoldGpuKernel current_step is null.";
       return false;
     }
-    auto batch_mean = reinterpret_cast<T *>(outputs[0]->addr);
-    auto batch_std = reinterpret_cast<T *>(outputs[1]->addr);
-    auto running_mean = reinterpret_cast<T *>(outputs[2]->addr);
-    auto running_std = reinterpret_cast<T *>(outputs[3]->addr);
-    auto y = reinterpret_cast<T *>(workspace[0]->addr);
+    auto batch_mean = GetDeviceAddress<T>(outputs, 0);
+    auto batch_std = GetDeviceAddress<T>(outputs, 1);
+    auto running_mean = GetDeviceAddress<T>(outputs, 2);
+    auto running_std = GetDeviceAddress<T>(outputs, 3);
+    auto y = GetDeviceAddress<T>(workspace, 0);
 
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpy(running_mean, mean, output_size_, cudaMemcpyDeviceToDevice),
+    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(running_mean, mean, output_size_, cudaMemcpyDeviceToDevice,
+                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy gpu memory.");
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpy(running_std, variance, output_size_, cudaMemcpyDeviceToDevice),
+    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(running_std, variance, output_size_, cudaMemcpyDeviceToDevice,
+                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy gpu memory.");
     CalUpdateRunningStd(channel_, epsilon_, running_std, reinterpret_cast<cudaStream_t>(stream_ptr));
     if (!is_training_ || current_step_host[0] >= freeze_bn_) {

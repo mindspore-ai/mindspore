@@ -93,7 +93,6 @@ void FakeQuantGradGpuKernel::InitSizeLists() {
 
 bool FakeQuantGradGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
-  (void)workspace;
   float *output = GetDeviceAddress<float>(outputs, 0);
   float *gradient = GetDeviceAddress<float>(inputs, 0);
   float *input = GetDeviceAddress<float>(inputs, 1);
@@ -133,8 +132,9 @@ bool FakeQuantGradGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const
     CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_nudge_min), "Free gpu memory failed");
     CHECK_CUDA_RET_WITH_ERROR(cudaFree(d_nudge_max), "Free gpu memory failed");
   } else {
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpy(output, gradient, input_size_, cudaMemcpyDeviceToDevice),
-                              "Copy gpu memory failed.");
+    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output, gradient, input_size_, cudaMemcpyDeviceToDevice,
+                                              reinterpret_cast<cudaStream_t>(stream_ptr)),
+                              "Copy gpu memory failed");
   }
   global_step_++;
   return true;
