@@ -223,8 +223,8 @@ class BatchNormFold(PrimitiveWithInfer):
 
     Args:
         momentum (float): Momentum value should be [0, 1]. Default: 0.1.
-        epsilon (float): A small float number to avoid dividing by 0. 1e-12 if dtype in
-            float32 else 1e-3. Default: 1e-12.
+        epsilon (float): A small float number to avoid dividing by 0. 1e-5 if dtype in
+            float32 else 1e-3. Default: 1e-5.
         is_training (bool): In training mode set True, else set False. Default: True.
         freeze_bn (int): Delay in steps at which computation switches from regular batch
             norm to frozen mean and std. Default: 0.
@@ -247,7 +247,7 @@ class BatchNormFold(PrimitiveWithInfer):
     channel = 1
 
     @prim_attr_register
-    def __init__(self, momentum=0.1, epsilon=1e-12, is_training=True, freeze_bn=0):
+    def __init__(self, momentum=0.1, epsilon=1e-5, is_training=True, freeze_bn=0):
         """init batch norm fold layer"""
         self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
         self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
@@ -277,7 +277,7 @@ class BatchNormFoldGrad(PrimitiveWithInfer):
     channel = 1
 
     @prim_attr_register
-    def __init__(self, epsilon=1e-12, is_training=True, freeze_bn=0):
+    def __init__(self, epsilon=1e-5, is_training=True, freeze_bn=0):
         """init BatchNormGrad layer"""
         self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
         self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
