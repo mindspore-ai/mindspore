@@ -245,7 +245,10 @@ void ParallelBuildManager::ResetTaskInfo() {
   }
   task_map_.clear();
   same_op_list_.clear();
-  (void)PyObject_CallMethod(tbe_parallel_compiler_, kResetTaskInfo, "O");
+  if (tbe_parallel_compiler_ != nullptr) {
+    PyObject *pArg = Py_BuildValue("()");
+    (void)PyObject_CallMethod(tbe_parallel_compiler_, kResetTaskInfo, "O", pArg);
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore
