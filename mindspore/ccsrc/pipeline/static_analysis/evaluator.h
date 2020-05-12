@@ -47,6 +47,10 @@ class Evaluator : public Base {
 
   virtual AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_spec_list) const { return args_spec_list; }
 
+  virtual AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_spec_list) {
+    return args_spec_list;
+  }
+
   std::string ToString() const override { return identifier_; }
 
   virtual AnfNodePtr bound_node() const { return bound_node_.lock(); }
@@ -181,12 +185,14 @@ class FuncGraphEvaluator : public BaseFuncGraphEvaluator {
   FuncGraphPtr func_graph() { return func_graph_; }
 
   AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_spec_list) const override;
+  AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_spec_list) override;
   std::string ToString() const override { return identifier_ + "_" + func_graph_->ToString(); }
 
  private:
   FuncGraphPtr func_graph_;
   std::unordered_map<AbstractBasePtrList, FuncGraphPtr, AbstractBasePtrListHasher, AbstractBasePtrListEqual>
     func_graph_cache_;
+  std::vector<AbstractBasePtrList> trace_;
 };
 using FuncGraphEvaluatorPtr = std::shared_ptr<FuncGraphEvaluator>;
 

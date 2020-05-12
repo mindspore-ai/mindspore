@@ -39,7 +39,6 @@ from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
 
-
 @ms_function
 def while_upper_bound(upper):
     rval = 2
@@ -391,6 +390,58 @@ def test_factorial():
 def test_grad_factorial():
     res = C.grad(factorial)(3)
     assert res == 11
+
+@ms_function
+def factorial2(n):
+    """ factorial """
+    if n != 0:
+        return n * factorial2(n-1)
+    elif n == 1:
+        return 1 * factorial2(n-1)
+    else:
+        return 1
+def test_factorial2():
+    res = factorial2(3)
+    assert res == 6
+
+@ms_function
+def foo(n):
+    if n <= 1:
+        if n == 1:
+            return foo(n-1)
+        else:
+            return 1
+    else:
+        return foo(n-1)
+def test_foo():
+    res = foo(5)
+    assert res == 1
+
+@ms_function
+def double_nested_loop(x):
+    i = 0
+    s = 0
+    while(i < x):
+        j = 0
+        i = i + 1
+        while(j < 3):
+            j = j + 1
+            s = s + j
+    return s
+def test_nested_loop():
+    res = double_nested_loop(3)
+    assert res == 18
+
+@ms_function
+def double_nested_loop2(x):
+    s = 0
+    for i in range(x):
+        for j in range(3):
+            s = s + j
+    return s
+def test_nested_loop2():
+    res = double_nested_loop(1)
+    assert res == 6
 
 def _for(x):
     """ _for """
