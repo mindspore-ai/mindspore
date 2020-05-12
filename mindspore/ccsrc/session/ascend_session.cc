@@ -329,9 +329,9 @@ void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
   size_t reduce_precision_count = 0;
   for (const auto &cnode : kernel_graph.execution_order()) {
     auto status = device::ascend::SelectKernelInfo(cnode);
-    if (status == kStatusRaisePrecision) {
+    if (status == device::ascend::kStatusRaisePrecision) {
       raise_precision_count++;
-    } else if (status == kStatusReducePrecision) {
+    } else if (status == device::ascend::kStatusReducePrecision) {
       reduce_precision_count++;
     }
     MS_LOG(INFO) << "Select ApplyKernel: " << cnode->DebugString();

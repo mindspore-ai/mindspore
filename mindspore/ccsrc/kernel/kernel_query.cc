@@ -35,14 +35,18 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
                        return AnfAlgo::GetOutputTensorNum(kernel_node) == kernel_build_info->GetOutputNum() &&
                               AnfAlgo::GetInputTensorNum(kernel_node) == kernel_build_info->GetInputNum();
                      });
-  kernel_info_list->clear();
   if (!filtered_list.empty()) {
+    kernel_info_list->clear();
     (void)std::copy(filtered_list.begin(), filtered_list.end(), std::back_inserter(*kernel_info_list));
   } else {
-    MS_LOG(EXCEPTION) << "node" << kernel_node->DebugString() << "'s output size : ["
-                      << AnfAlgo::GetOutputTensorNum(kernel_node) << "]"
-                      << "input size : [" << AnfAlgo::GetInputTensorNum(kernel_node)
-                      << "] cannot match any kernelInfo !";
+    MS_LOG(WARNING) << "All kernel Info list does not match any kernel info ";
+    for (size_t index; index < kernel_info_list->size(); ++index) {
+      MS_EXCEPTION_IF_NULL(kernel_info_list->at(index));
+      MS_LOG(WARNING) << "kernel [ " << index << " ] :" << kernel_info_list->at(index)->ToString();
+    }
+    MS_LOG(WARNING) << "node" << kernel_node->DebugString() << "'s output size : ["
+                    << AnfAlgo::GetOutputTensorNum(kernel_node) << "]"
+                    << "input size : [" << AnfAlgo::GetInputTensorNum(kernel_node) << "] cannot match any kernelInfo !";
   }
 }
 }  // namespace
@@ -50,7 +54,6 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   TbeMetadataInfo(kernel_node, kernel_info_list);
-
   if (kernel_info_list->empty()) {
     AicpuMetadataInfo(kernel_node, kernel_info_list);
   }
@@ -68,12 +71,41 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   FilterInvalidKernelInfo(kernel_node, kernel_info_list);
 }
 
-void AicpuQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
+void AICpuQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   kernel_info_list->clear();
   AicpuMetadataInfo(kernel_node, kernel_info_list);
   FilterInvalidKernelInfo(kernel_node, kernel_info_list);
+}
+bool IsSupportedByAiCpu(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(select_kernel_build_info);
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
+  auto cnode = kernel_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  AicpuMetadataInfo(cnode, &kernel_info_list);
+  FilterInvalidKernelInfo(cnode, &kernel_info_list);
+  return std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
+                     [&select_kernel_build_info](const kernel::KernelBuildInfoPtr item) {
+                       MS_EXCEPTION_IF_NULL(item);
+                       return *item == *select_kernel_build_info;
+                     });
+}
+
+bool IsSupportedByAiCore(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  MS_EXCEPTION_IF_NULL(select_kernel_build_info);
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
+  auto cnode = kernel_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  TbeMetadataInfo(cnode, &kernel_info_list);
+  FilterInvalidKernelInfo(cnode, &kernel_info_list);
+  return std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
+                     [&select_kernel_build_info](const kernel::KernelBuildInfoPtr item) {
+                       MS_EXCEPTION_IF_NULL(item);
+                       return *item == *select_kernel_build_info;
+                     });
 }
 }  // namespace kernel
 }  // namespace mindspore

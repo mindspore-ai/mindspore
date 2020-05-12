@@ -85,7 +85,7 @@ const std::map<TypeId, size_t> type_map = {{kNumberTypeBool, 1},    {kNumberType
   } while (0)
 
 template <typename T>
-T Ceil(T n1, T n2) {
+T DivCeil(T n1, T n2) {
   return (n2 != 0) ? (n1 - 1) / n2 + 1 : 0;
 }
 
@@ -371,15 +371,48 @@ std::vector<size_t> C1hwncoc0DeviceShape(const std::vector<size_t> &shape) {
   device_shape.push_back(kCubeSize);
   return device_shape;
 }
+
+std::vector<size_t> FracZc04DeviceShape(const std::vector<size_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  std::vector<size_t> device_shape;
+  size_t c0 = 4;
+  size_t first_dim = DivCeil(c0 * shape[2] * shape[3], kCubeSize);
+  size_t no = DivCeil(DivCeil(shape[0], kCubeSize) * kCubeSize, kCubeSize);
+  device_shape.push_back(first_dim);
+  device_shape.push_back(no);
+  device_shape.push_back(kCubeSize);
+  device_shape.push_back(kCubeSize);
+  return device_shape;
+}
+
+std::vector<size_t> Nc1hwc04DeviceShape(const std::vector<size_t> &shape) {
+  if (!CheckDims(shape)) {
+    MS_LOG(EXCEPTION) << "Check dims failed.";
+  }
+  std::vector<size_t> device_shape;
+  size_t C1 = 1;
+  size_t C0 = 4;
+  device_shape.push_back(shape[0]);
+  device_shape.push_back(C1);
+  device_shape.push_back(shape[2]);
+  device_shape.push_back(shape[3]);
+  device_shape.push_back(C0);
+  return device_shape;
+}
 }  // namespace
 
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format) {
   using DeviceShapeTransfer = std::function<std::vector<size_t>(const std::vector<size_t> &)>;
-  const std::map<std::string, DeviceShapeTransfer> device_shape_map{
-    {kOpFormat_NCHW, NchwDeviceShape},       {kOpFormat_NHWC, NhwcDeviceShape},
-    {kOpFormat_HWCN, HwchDeviceShape},       {kOpFormat_FRAC_Z, FracZDeviceShape},
-    {kOpFormat_NC1HWC0, Nc1hwc0DeviceShape}, {kOpFormat_C1HWNCoC0, C1hwncoc0DeviceShape},
-  };
+  const std::map<std::string, DeviceShapeTransfer> device_shape_map{{kOpFormat_NCHW, NchwDeviceShape},
+                                                                    {kOpFormat_NHWC, NhwcDeviceShape},
+                                                                    {kOpFormat_HWCN, HwchDeviceShape},
+                                                                    {kOpFormat_FRAC_Z, FracZDeviceShape},
+                                                                    {kOpFormat_NC1HWC0, Nc1hwc0DeviceShape},
+                                                                    {kOpFormat_C1HWNCoC0, C1hwncoc0DeviceShape},
+                                                                    {kOpFormat_FRACTAL_Z_C04, FracZc04DeviceShape},
+                                                                    {kOpFormat_NC1HWC0_C04, Nc1hwc04DeviceShape}};
 
   if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
     return shape;
@@ -506,13 +539,13 @@ bool NchwToFracZ(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Illegal dtype.";
     return false;
   }
-  size_t c1 = Ceil(c, c0);
+  size_t c1 = DivCeil(c, c0);
   size_t hw = h * w;
   size_t chw = c * hw;
   size_t hwc0 = hw * c0;
   size_t nchw = n * chw;
 
-  size_t hf_cnt = Ceil(n, kCubeSize);
+  size_t hf_cnt = DivCeil(n, kCubeSize);
   size_t vf_cnt = c1 * hw;
   size_t fractal_ele_cnt = c0 * kCubeSize;
   size_t total_ele_cnt = hf_cnt * vf_cnt * fractal_ele_cnt;
@@ -775,7 +808,7 @@ bool NchwToNc1hwc0(const FormatArgs &args, void *result) {
     MS_LOG(ERROR) << "Illegal dtype.";
     return false;
   }
-  size_t c1 = Ceil(c, c0);
+  size_t c1 = DivCeil(c, c0);
   size_t hw = h * w;
   size_t chw = c * hw;
   size_t c1hwc0 = c1 * hw * c0;
