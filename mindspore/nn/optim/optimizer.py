@@ -94,6 +94,7 @@ class Optimizer(Cell):
         validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, None)
 
         self.is_group = False
+        self.is_group_lr = False
         self.loss_scale = loss_scale
         if isinstance(learning_rate, float):
             self.dynamic_lr = False
@@ -116,14 +117,17 @@ class Optimizer(Cell):
             self.group_weight_decay = []
             self._init_group_params(parameters, learning_rate, weight_decay)
 
-        if self.is_group:
+        if self.is_group_lr:
             self.learning_rate = ParameterTuple(self.group_lr)
+        else:
+            self.learning_rate = Parameter(learning_rate, name="learning_rate")
+
+        if self.is_group:
             self.parameters = ParameterTuple(self.params)
             self.weight_decay = tuple(self.group_weight_decay)
             decay_filter = lambda x: x > 0
             self.decay_flags = tuple(decay_filter(x) for x in self.weight_decay)
         else:
-            self.learning_rate = Parameter(learning_rate, name="learning_rate")
             self.parameters = ParameterTuple(parameters)
             self.weight_decay = weight_decay * loss_scale
             decay_filter = lambda x: 'beta' not in x.name and 'gamma' not in x.name
@@ -207,6 +211,7 @@ class Optimizer(Cell):
         for group_param in parameters:
             lr_length = dynamic_lr_length
             if 'lr' in group_param.keys():
+                self.is_group_lr = True
                 self._get_single_lr(group_param['lr'])
                 if isinstance(group_param['lr'], Iterable):
                     lr_length = len(group_param['lr'])
@@ -247,6 +252,10 @@ class Optimizer(Cell):
             else:
                 weight_decay_ = weight_decay * self.loss_scale
 
+            for key in group_param.keys():
+                if key not in ('params', 'lr', 'weight_decay'):
+                    logger.warning(f"The optimizer cannot parse '{key}' when setting parameter groups.")
+
             for param in group_param['params']:
                 if param in params_store:
                     raise RuntimeError(f"The {param.name} parameter has appeared in parameter groups.")
@@ -261,7 +270,7 @@ class Optimizer(Cell):
         Returns:
             float, the learning rate of current step.
         """
-        if self.is_group:
+        if self.is_group_lr:
             lr = self.learning_rate
             if self.dynamic_lr:
                 lr = ()

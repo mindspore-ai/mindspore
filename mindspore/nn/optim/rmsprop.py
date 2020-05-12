@@ -176,7 +176,7 @@ class RMSProp(Optimizer):
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()
         if self.centered:
-            if self.is_group:
+            if self.is_group_lr:
                 success = self.hyper_map(F.partial(centered_rmsprop_opt, self.opt, self.decay, self.epsilon,
                                                    self.momentum), lr, params, self.mg, self.ms, self.moment, gradients)
             else:
@@ -184,7 +184,7 @@ class RMSProp(Optimizer):
                                                    self.momentum, lr), params, self.mg, self.ms, self.moment, gradients)
 
         else:
-            if self.is_group:
+            if self.is_group_lr:
                 success = self.hyper_map(F.partial(rmsprop_opt, self.opt, self.decay, self.epsilon,
                                                    self.momentum), lr, params, self.ms, self.moment, gradients)
             else:
