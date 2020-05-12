@@ -61,7 +61,7 @@ class Cell:
         self._cells = OrderedDict()
         self.training = False
         self.pynative = False
-        self._param_perfix = ''
+        self._param_prefix = ''
         self._auto_prefix = auto_prefix
         self._scope = None
         self._phase = 'train'
@@ -87,22 +87,22 @@ class Cell:
         return self._cell_init_args
 
     @property
-    def param_perfix(self):
+    def param_prefix(self):
         """
-        Param perfix is the prfix of curent cell's direct child parameter.
+        Param prefix is the prefix of current cell's direct child parameter.
         """
-        return self._param_perfix
+        return self._param_prefix
 
     def update_cell_prefix(self):
         """
         Update the all child cells' self.param_prefix.
 
-        After invoked, can get all the cell's children's name perfix by '_param_perfix'.
+        After invoked, can get all the cell's children's name prefix by '_param_prefix'.
         """
         cells = self.cells_and_names
 
         for cell_name, cell in cells:
-            cell._param_perfix = cell_name
+            cell._param_prefix = cell_name
 
     @cell_init_args.setter
     def cell_init_args(self, value):
