@@ -425,9 +425,8 @@ OpAdapterPtr DfGraphConvertor::FindAdapter(const AnfNodePtr node, bool train) {
     auto it_adpt = get_adpt_map().find(name);
     if (it_adpt != get_adpt_map().end()) {
       return it_adpt->second->Get(train);
-    } else {
-      MS_LOG(ERROR) << "Can't find OpAdapter for " << name;
     }
+    MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
   }
 
   if (node->isa<ValueNode>()) {
@@ -517,8 +516,7 @@ OpAdapterPtr DfGraphConvertor::FindAdapter(const std::string &name, bool train) 
   if (it != get_adpt_map().end()) {
     return it->second->Get(train);
   }
-  MS_LOG(ERROR) << "Can't find OpAdapter for " << name;
-  return transform::OpAdapterPtr(nullptr);
+  MS_LOG(EXCEPTION) << "Can't find OpAdapter for " << name;
 }
 
 void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfNodePtr &it) {
