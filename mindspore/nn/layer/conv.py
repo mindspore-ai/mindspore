@@ -274,7 +274,7 @@ class Conv2dTranspose(_Conv):
                                       be greater or equal to 1 and bounded by the height and width of the
                                       input. Default: 1.
         group (int): Split filter into groups, `in_channels` and `out_channels` should be
-            divisible by the number of groups. Default: 1.
+            divisible by the number of groups. This is not support for Davinci devices when group > 1. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the convolution kernel.
             It can be a Tensor, a string, an Initializer or a numbers.Number. When a string is specified,
