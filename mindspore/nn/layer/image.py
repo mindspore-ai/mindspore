@@ -23,6 +23,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from ..cell import Cell
 
+__all__ = ['ImageGradients', 'SSIM', 'PSNR']
 
 class ImageGradients(Cell):
     r"""

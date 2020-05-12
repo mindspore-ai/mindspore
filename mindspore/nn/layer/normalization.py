@@ -29,6 +29,8 @@ from mindspore._checkparam import check_int_positive
 from ..cell import Cell
 
 
+__all__ = ['BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'GroupNorm', 'GlobalBatchNorm']
+
 class _BatchNorm(Cell):
     """Batch Normalization base class."""
     @cell_attr_register

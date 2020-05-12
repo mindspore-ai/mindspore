@@ -21,6 +21,7 @@ from mindspore._checkparam import check_bool, twice, check_int_positive, check_i
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
+__all__ = ['Conv2d', 'Conv2dTranspose']
 
 class _Conv(Cell):
     """

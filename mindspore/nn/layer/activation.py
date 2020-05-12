@@ -22,6 +22,21 @@ from mindspore.common.tensor import Tensor
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
+__all__ = ['Softmax',
+           'LogSoftmax',
+           'ReLU',
+           'ReLU6',
+           'Tanh',
+           'GELU',
+           'Sigmoid',
+           'PReLU',
+           'get_activation',
+           'LeakyReLU',
+           'HSigmoid',
+           'HSwish',
+           'ELU',
+           ]
+
 
 class Softmax(Cell):
     r"""
@@ -49,6 +64,7 @@ class Softmax(Cell):
         Tensor, which has the same type and shape as `x` with values in the range[0,1].
 
     """
+
     def __init__(self, axis=-1):
         super(Softmax, self).__init__()
         self.softmax = P.Softmax(axis)
@@ -112,6 +128,7 @@ class ELU(Cell):
         Tensor, with the same type and shape as the `input_data`.
 
     """
+
     def __init__(self, alpha=1.0):
         super(ELU, self).__init__()
         self.elu = P.Elu(alpha)
@@ -135,6 +152,7 @@ class ReLU(Cell):
         Tensor, with the same type and shape as the `input_data`.
 
     """
+
     def __init__(self):
         super(ReLU, self).__init__()
         self.relu = P.ReLU()
@@ -158,6 +176,7 @@ class ReLU6(Cell):
         Tensor, which has the same type with `input_data`.
 
     """
+
     def __init__(self):
         super(ReLU6, self).__init__()
         self.relu6 = P.ReLU6()
@@ -189,6 +208,7 @@ class LeakyReLU(Cell):
         Tensor, has the same type and shape with the `input_x`.
 
     """
+
     def __init__(self, alpha=0.2):
         super(LeakyReLU, self).__init__()
         self.greater_equal = P.GreaterEqual()
@@ -225,6 +245,7 @@ class Tanh(Cell):
         Tensor, with the same type and shape as the `input_data`.
 
     """
+
     def __init__(self):
         super(Tanh, self).__init__()
         self.tanh = P.Tanh()
@@ -250,6 +271,7 @@ class GELU(Cell):
         Tensor, with the same type and shape as the `input_data`.
 
     """
+
     def __init__(self):
         super(GELU, self).__init__()
         self.gelu = P.Gelu()
@@ -274,6 +296,7 @@ class Sigmoid(Cell):
         Tensor, with the same type and shape as the `input_data`.
 
     """
+
     def __init__(self):
         super(Sigmoid, self).__init__()
         self.sigmoid = P.Sigmoid()
@@ -352,6 +375,7 @@ class HSwish(Cell):
         Tensor, with the same type and shape as the `input_data`.
 
     """
+
     def __init__(self):
         super(HSwish, self).__init__()
         self.hswish = P.HSwish()
@@ -380,6 +404,7 @@ class HSigmoid(Cell):
         Tensor, with the same type and shape as the `input_data`.
 
     """
+
     def __init__(self):
         super(HSigmoid, self).__init__()
         self.hsigmoid = P.HSigmoid()
