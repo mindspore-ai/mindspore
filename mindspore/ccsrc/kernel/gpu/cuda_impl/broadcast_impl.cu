@@ -49,6 +49,21 @@ struct PowerFunc<half, half> {
   }
 };
 
+template <typename T, typename S>
+struct RealDivFunc {
+  __device__ __forceinline__ S operator()(const T &lhs, const T &rhs) { return (lhs / rhs); }
+};
+
+template <typename T, typename S>
+struct MulFunc {
+  __device__ __forceinline__ S operator()(const T &lhs, const T &rhs) { return (lhs * rhs); }
+};
+
+template <typename T, typename S>
+struct SubFunc {
+  __device__ __forceinline__ S operator()(const T &lhs, const T &rhs) { return (lhs - rhs); }
+};
+
 template <>
 struct PowerFunc<half, bool> {
   // invalid branch
@@ -94,6 +109,15 @@ __global__ void BroadcastKernel(const int l0, const int l1, const int l2, const 
     case BROADCAST_TYPE_POWER:
       return BroadcastOperator<T, S, PowerFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
                                                       output);
+    case BROADCAST_TYPE_REALDIV:
+      return BroadcastOperator<T, S, RealDivFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
+                                                      output);
+    case BROADCAST_TYPE_MUL:
+      return BroadcastOperator<T, S, MulFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
+                                                      output);
+    case BROADCAST_TYPE_SUB:
+      return BroadcastOperator<T, S, SubFunc<T, S>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, input0, input1,
+                                                      output);
   }
 }
 
@@ -127,6 +151,12 @@ __global__ void NoBroadcastKernel(const int nums, enum BroadcastOpType op, const
       return NoBroadcastOperator<T, S, MaximumFunc<T, S>>(nums, input0, input1, output);
     case BROADCAST_TYPE_POWER:
       return NoBroadcastOperator<T, S, PowerFunc<T, S>>(nums, input0, input1, output);
+    case BROADCAST_TYPE_REALDIV:
+      return NoBroadcastOperator<T, S, RealDivFunc<T, S>>(nums, input0, input1, output);
+    case BROADCAST_TYPE_MUL:
+      return NoBroadcastOperator<T, S, MulFunc<T, S>>(nums, input0, input1, output);
+    case BROADCAST_TYPE_SUB:
+      return NoBroadcastOperator<T, S, SubFunc<T, S>>(nums, input0, input1, output);
   }
 }
 

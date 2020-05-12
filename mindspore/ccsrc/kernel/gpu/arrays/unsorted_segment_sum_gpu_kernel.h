@@ -69,9 +69,8 @@ class UnsortedSegmentSumGpuKernel : public GpuKernel {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_dim0_ * input_dim1_ * sizeof(T));
-    input_size_list_.push_back(output_dim0_ * sizeof(S));
-    input_size_list_.push_back(output_dim0_ * sizeof(int));
-    output_size_list_.push_back(output_dim0_ * output_dim1_ * sizeof(S));
+    input_size_list_.push_back(input_dim0_ * sizeof(S));
+    output_size_list_.push_back(output_dim0_ * output_dim1_ * sizeof(T));
   }
 
  private:
