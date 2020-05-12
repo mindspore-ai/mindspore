@@ -23,6 +23,18 @@
 
 namespace mindspore {
 namespace opt {
+namespace {
+bool CheckShapeDimInfo(const std::vector<size_t> &shape) {
+  if (shape.empty()) {
+    return false;
+  }
+  if (shape.size() == 1 && shape[0] % kCubeSize != 0) {
+    return false;
+  }
+  return !(shape.size() >= 2 && (shape[shape.size() - 1] % kCubeSize != 0 || shape[shape.size() - 2] % kCubeSize != 0));
+}
+}  // namespace
+
 const BaseRef ReshapeTransposeFusion::DefinePattern() const {
   const auto prim_reshape = std::make_shared<Primitive>(prim::kPrimReshape->name());
   VectorRef reshape({prim_reshape, input_varptr_});
@@ -38,6 +50,11 @@ const AnfNodePtr ReshapeTransposeFusion::Process(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(transpose_cnode);
   auto reshape_cnode = CheckAnfNodeIfCNodeAndInputSize(transpose_cnode->input(1), kBackendReshapeInputNum);
   MS_EXCEPTION_IF_NULL(reshape_cnode);
+  std::vector<size_t> reshape_input0_shape = AnfAlgo::GetPrevNodeOutputInferShape(reshape_cnode, 0);
+  std::vector<size_t> transpose_input0_shape = AnfAlgo::GetPrevNodeOutputInferShape(transpose_cnode, 0);
+  if (!CheckShapeDimInfo(reshape_input0_shape) || !CheckShapeDimInfo(transpose_input0_shape)) {
+    return nullptr;
+  }
   auto prim = std::make_shared<Primitive>(kConfusionTransposeDOpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), utils::cast<AnfNodePtr>((*equiv)[input_varptr_])};
   auto new_node = func_graph->NewCNode(inputs);
