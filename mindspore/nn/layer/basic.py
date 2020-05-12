@@ -30,6 +30,7 @@ from ..cell import Cell
 from .activation import get_activation
 from ..._checkparam import Validator as validator
 
+__all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold']
 
 class Dropout(Cell):
     r"""

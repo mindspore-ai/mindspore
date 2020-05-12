@@ -21,6 +21,7 @@ from ... import context
 from ..cell import Cell
 from ..._checkparam import Rel
 
+__all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d']
 
 class _PoolNd(Cell):
     """N-D  AvgPool"""

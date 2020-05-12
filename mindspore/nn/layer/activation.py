@@ -22,6 +22,21 @@ from mindspore.common.tensor import Tensor
 from mindspore._extends import cell_attr_register
 from ..cell import Cell
 
+__all__ = ['Softmax',
+           'LogSoftmax',
+           'ReLU',
+           'ReLU6',
+           'Tanh',
+           'GELU',
+           'Sigmoid',
+           'PReLU',
+           'get_activation',
+           'LeakyReLU',
+           'HSigmoid',
+           'HSwish',
+           'ELU',
+           ]
+
 
 class Softmax(Cell):
     r"""
@@ -54,6 +69,7 @@ class Softmax(Cell):
         >>> softmax(input_x)
         [0.03168  0.01166  0.0861  0.636  0.2341]
     """
+
     def __init__(self, axis=-1):
         super(Softmax, self).__init__()
         self.softmax = P.Softmax(axis)
@@ -128,6 +144,7 @@ class ELU(Cell):
         >>> elu(input_x)
 
     """
+
     def __init__(self, alpha=1.0):
         super(ELU, self).__init__()
         self.elu = P.Elu(alpha)
@@ -156,6 +173,7 @@ class ReLU(Cell):
         >>> relu(input_x)
         [0.  2.  0.  2.  0.]
     """
+
     def __init__(self):
         super(ReLU, self).__init__()
         self.relu = P.ReLU()
@@ -184,6 +202,7 @@ class ReLU6(Cell):
         >>> relu6(input_x)
         [0.  0.  0.  2.  1.]
     """
+
     def __init__(self):
         super(ReLU6, self).__init__()
         self.relu6 = P.ReLU6()
@@ -221,6 +240,7 @@ class LeakyReLU(Cell):
         [[-0.2  4.  -1.6]
          [ 2   -1.   9.]]
     """
+
     def __init__(self, alpha=0.2):
         super(LeakyReLU, self).__init__()
         self.greater_equal = P.GreaterEqual()
@@ -262,6 +282,7 @@ class Tanh(Cell):
         >>> tanh(input_x)
         [0.7617  0.964  0.995  0.964 0.7617]
     """
+
     def __init__(self):
         super(Tanh, self).__init__()
         self.tanh = P.Tanh()
@@ -293,6 +314,7 @@ class GELU(Cell):
         [[-1.5880802e-01  3.9999299e+00 -3.1077917e-21]
          [ 1.9545976e+00 -2.2918017e-07  9.0000000e+00]]
     """
+
     def __init__(self):
         super(GELU, self).__init__()
         self.gelu = P.Gelu()
@@ -322,6 +344,7 @@ class Sigmoid(Cell):
         >>> sigmoid(input_x)
         [0.2688  0.11914  0.5  0.881  0.7305]
     """
+
     def __init__(self):
         super(Sigmoid, self).__init__()
         self.sigmoid = P.Sigmoid()
@@ -410,6 +433,7 @@ class HSwish(Cell):
         >>> hswish(input_x)
 
     """
+
     def __init__(self):
         super(HSwish, self).__init__()
         self.hswish = P.HSwish()
@@ -443,6 +467,7 @@ class HSigmoid(Cell):
         >>> hsigmoid(input_x)
 
     """
+
     def __init__(self):
         super(HSigmoid, self).__init__()
         self.hsigmoid = P.HSigmoid()

@@ -19,6 +19,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore._checkparam import Validator as validator
 
+__all__ = ['LSTM']
 
 class LSTM(Cell):
     r"""
