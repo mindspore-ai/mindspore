@@ -193,6 +193,14 @@ class TraceForAfter : public TraceInfo {
   TraceInfoPtr clone() override { return std::make_shared<TraceForAfter>(*shared_from_base<TraceForAfter>()); }
 };
 
+class TraceLoopEnd : public TraceInfo {
+ public:
+  explicit TraceLoopEnd(const DebugInfoPtr &info) : TraceInfo(info, "loop_end", "↓↓") {}
+  MS_DECLARE_PARENT(TraceLoopEnd, TraceInfo);
+  ~TraceLoopEnd() override = default;
+  TraceInfoPtr clone() override { return std::make_shared<TraceLoopEnd>(*shared_from_base<TraceLoopEnd>()); }
+};
+
 class TraceEquiv : public TraceInfo {
  public:
   explicit TraceEquiv(const DebugInfoPtr &info) : TraceInfo(info, "equiv", "equiv") {}

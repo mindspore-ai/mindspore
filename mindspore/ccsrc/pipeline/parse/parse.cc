@@ -89,6 +89,9 @@ void Parser::BuildMethodMap() {
   stmt_method_map_["FunctionDef"] = &Parser::ParseFunctionDef;
   stmt_method_map_["AugAssign"] = &Parser::ParseAugAssign;
   stmt_method_map_["Global"] = &Parser::ParseGlobal;
+  stmt_method_map_["Break"] = &Parser::ParseBreak;
+  stmt_method_map_["Continue"] = &Parser::ParseContinue;
+  stmt_method_map_["Pass"] = &Parser::ParsePass;
   expr_method_map_["NoneType"] = &Parser::ParseNone;
   expr_method_map_["BinOp"] = &Parser::ParseBinOp;
   expr_method_map_["Name"] = &Parser::ParseName;
@@ -270,6 +273,8 @@ FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr fn_block, const py::ob
     // insert appropriate depended items for the function block if it has a return node
     if (fn_block->func_graph()->get_return() != nullptr) {
       fn_block->InsertDependItemsBeforeReturn();
+      // Skip statements after 'return' (or 'break', 'continue').
+      break;
     }
   }
   return fn_block;
@@ -966,13 +971,24 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   body_block->Mature();
   header_block->ConditionalJump(condition_node, body_block, after_block);
 
+  // Parse loop body statements with loop context.
+  LoopContext loop_context{&loops_, header_block, nullptr};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body = ParseStatements(body_block, body_node);
   if (after_body->func_graph()->get_return() == nullptr) {
     after_body->Jump(header_block, nullptr);
   }
+
   header_block->Mature();
   after_block->Mature();
+  auto &end_block = loop_context.EndBlock();
+  if (end_block) {
+    // end_block exists if we encounter 'break' in loop body.
+    after_block->Jump(end_block, nullptr);
+    end_block->Mature();
+    return end_block;
+  }
+  // No 'break', no end_block.
   return after_block;
 }
 
@@ -1049,13 +1065,24 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   body_block->Mature();
   header_block->ConditionalJump(cond_apply, body_block, after_block);
 
+  // Parse loop body statements with loop context.
+  LoopContext loop_context{&loops_, header_block, iter2_app};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body_block = ParseStatements(body_block, body_node);
   if (after_body_block->func_graph()->get_return() == nullptr) {
     after_body_block->Jump(header_block, iter2_app);
   }
+
   header_block->Mature();
   after_block->Mature();
+  auto &end_block = loop_context.EndBlock();
+  if (end_block) {
+    // end_block exists if we encounter 'break' in loop body.
+    after_block->Jump(end_block, nullptr);
+    end_block->Mature();
+    return end_block;
+  }
+  // No 'break', no end_block.
   return after_block;
 }
 AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &node) {
@@ -1219,6 +1246,52 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
     WriteAssignVars(block, target_node, value_node);
   }
 
+  return block;
+}
+
+FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::object &node) {
+  if (loops_.empty()) {
+    // Report error if loop context not set for the 'break' statement.
+    py::list location = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
+    if (location.size() < 2) {
+      MS_LOG(EXCEPTION) << "List size should not be less than 2.";
+    }
+    auto filename = location[0].cast<std::string>();
+    auto line_no = location[1].cast<int>();
+    MS_LOG(EXCEPTION) << "Unexpected 'break' at " << filename << ":" << line_no;
+  }
+  // Get current loop.
+  Loop &loop = loops_.top();
+  if (loop.end == nullptr) {
+    // Create end_block if it is not existed.
+    TraceManager::DebugTrace(std::make_shared<TraceLoopEnd>(block->func_graph()->debug_info()));
+    loop.end = MakeFunctionBlock(*this);
+    TraceManager::EndTrace();
+  }
+  // Jump to the end_block.
+  block->Jump(loop.end, nullptr);
+  return block;
+}
+
+FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::object &node) {
+  if (loops_.empty()) {
+    // Report error if loop context not set for the 'continue' statement.
+    py::list location = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
+    if (location.size() < 2) {
+      MS_LOG(EXCEPTION) << "List size should not be less than 2.";
+    }
+    auto filename = location[0].cast<std::string>();
+    auto line_no = location[1].cast<int>();
+    MS_LOG(EXCEPTION) << "Unexpected 'continue' at " << filename << ":" << line_no;
+  }
+  // Jump to the header of the loop with iterator called.
+  Loop &loop = loops_.top();
+  block->Jump(loop.header, loop.iterator);
+  return block;
+}
+
+FunctionBlockPtr Parser::ParsePass(const FunctionBlockPtr &block, const py::object &node) {
+  // We just bypass 'pass' statement.
   return block;
 }
 
