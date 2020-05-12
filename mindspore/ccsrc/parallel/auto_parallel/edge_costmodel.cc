@@ -300,5 +300,20 @@ Status Edge::CalculateMemoryCost() {
 
   return SUCCESS;
 }
+
+Status Edge::CalculateMemoryCostForInference() {
+  // Currently, memory cost is NOT calculated for redistribution
+  if ((is_output_critical_ != 0) && (is_output_critical_ != 1)) {
+    MS_LOG(ERROR) << "Failure: unexpected output critical flag value: " << is_output_critical_;
+    return FAILED;
+  }
+  for (auto &cost_kv : cost_map_) {
+    auto &cost_v = cost_kv.second;
+    if (!cost_v.empty()) {
+      cost_v[0]->memory_with_reuse_ = 0;
+    }
+  }
+  return SUCCESS;
+}
 }  // namespace parallel
 }  // namespace mindspore

@@ -70,6 +70,7 @@ class OperatorCost {
   void set_is_parameter(const std::vector<bool> &is_parameter);
   void set_is_parameter_involve(const std::vector<bool> &);
   void set_output_parameter_involve(int);
+  void set_output_critical(int);
   void SetInputAndOutputTypeLength(const std::vector<size_t> &input_lengths, const std::vector<size_t> &output_lengths);
   std::vector<size_t> inputs_type_lengths() const { return inputs_type_lengths_; }
   std::vector<size_t> outputs_type_lengths() const { return outputs_type_lengths_; }
@@ -92,6 +93,8 @@ class OperatorCost {
   // Typically, the PEAK memory cost contributed by an operator is its output (if the output is parameter-invovled),
   // plus necessary inputs.
   virtual double GetMemoryCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs) const;
+  // per device memory cost in a inference phase
+  double GetMemoryCostForInference(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &) const;
 
  protected:
   // For each input in 'inputs_', a bool variable is true if the corresponding one is a parameter or a output of
@@ -106,6 +109,9 @@ class OperatorCost {
   // for each input and output, the followings record the number of bytes of each element
   std::vector<size_t> inputs_type_lengths_;
   std::vector<size_t> outputs_type_lengths_;
+  // Whether the output is critical, which means that this output is included in calculating peak memory cost
+  // in the inference phase.
+  int is_outputs_critical_ = -1;
 };
 
 using OperatorCostPtr = std::shared_ptr<OperatorCost>;

@@ -1055,6 +1055,9 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   // Step 1: Traverse the ANF graph, and create NODEs for costgraph:
   //      create the OperatorInfo object for each primitive, and enumerate the parallelization strategies
   //      for each OperatorInfo;
+  // Step 1.1: Deal with 'Reshape':
+  //      For 'Reshape', it takes its previous operator's layout as its input layout, and takes its next operator's
+  //      layout as its output layout.
   // Step 2: Traverse the ANF graph, and create EDGES for costgraph:
   //      create the Edge object for each pair of OperatorInfo, and enumerate the parallelization strategies
   //      for each edge, based on the strategies of two OperatorInfos;
@@ -1062,7 +1065,8 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
   //      taking care for the case of a single Parameter being used by multiple operators. Create a TmpIdentity
   //      operator for this Parameter, and add an edge for the use of this Parameter by each
   //      subsequent operator;
-  // Step 3.1: Calculate memory usage
+  // Step 3.1: Calculate memory usage:
+  //      note the memory usage calculation is different in training phase and inference phase.
   // Step 4: Run the Dynamic Programming algorithm:
   //      in this process, cost is calculated based on not only the operators, but also the edges. Here, the edge
   //      cost is caused by the redistribution of a operator's output tensor layout to the next operator's input
@@ -1087,35 +1091,21 @@ Status ParallelStrategySearch(const std::vector<AnfNodePtr> &all_nodes, const Fu
       MS_LOG(EXCEPTION) << "Constructing nodes for cost graph failed.";
     }
   }
-  // reshape operator needs the next node's input_layout as its output_layout.
-  // and needs the previous node's output_layout as its input_layout.
+  // Step 1.1
   ReshapeCostCompute(all_nodes);
   // Step 2
   ConstructCostGraphEdges(all_nodes);
   MS_LOG(INFO) << "Constructing edges for cost graph succeeded. There are " << entire_costgraph->GetOperators().size()
-               << " operators, and " << entire_costgraph->GetNumPairs() << " edges.",
+               << " operators, and " << entire_costgraph->GetNumEdges() << " edges.";
 
-    // Step 3: Augment the costgraph.
-    AugmentCostGraph(all_nodes);
+  // Step 3: Augment the costgraph.
+  AugmentCostGraph(all_nodes);
   MS_LOG(INFO) << "After the augmenting procedure, there are " << entire_costgraph->GetOperators().size()
-               << " operators, and " << entire_costgraph->GetNumPairs() << " edges.";
+               << " operators, and " << entire_costgraph->GetNumEdges() << " edges.";
 
   // Step 3.1: Calculate the memory usage
-  if (entire_costgraph->ComputeOpsAndEdgesParameterInvolved() == SUCCESS) {
-    // Calculate operators' memory usage
-    if (entire_costgraph->CalculateOpsMemoryCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Calculating operators' cost for memory cost failed.";
-    }
-    // Calculate edges' memory usage
-    if (entire_costgraph->CalculateEdgesMemoryCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Calculating edges' cost for memory cost failed.";
-    }
-    // Correct memory usage caused by TmpIdentity
-    if (entire_costgraph->CorrectOpsMemoryCost() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Correcting operators' cost for memory cost failed.";
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "Computing operators' parameter_involved failed.";
+  if (entire_costgraph->CalculateMemoryCost() != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Calculating memory cost failed.";
   }
 
   // Step 4: run DP algorithm on the costgraph.

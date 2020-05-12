@@ -37,6 +37,8 @@ void OperatorCost::SetInputAndOutputTypeLength(const std::vector<size_t> &input_
   outputs_type_lengths_ = output_lengths;
 }
 
+void OperatorCost::set_output_critical(int critical) { is_outputs_critical_ = critical; }
+
 double OperatorCost::GetMemoryCost(const std::vector<TensorInfo> &inputs,
                                    const std::vector<TensorInfo> &outputs) const {
   double result = 0.0;
@@ -60,6 +62,20 @@ double OperatorCost::GetMemoryCost(const std::vector<TensorInfo> &inputs,
     }
   }
 
+  return result;
+}
+
+double OperatorCost::GetMemoryCostForInference(const std::vector<TensorInfo> &,
+                                               const std::vector<TensorInfo> &outputs) const {
+  double result = 0.0;
+  if (is_outputs_critical_ == -1) {
+    MS_LOG(EXCEPTION) << "The critical flag is not set.";
+  }
+  if (is_outputs_critical_ == 1) {
+    for (size_t i = 0; i < outputs.size(); ++i) {
+      result += ListProduct(outputs[i].slice_shape()) * static_cast<double>(outputs_type_lengths_[i]);
+    }
+  }
   return result;
 }
 

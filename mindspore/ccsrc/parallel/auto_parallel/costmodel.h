@@ -53,7 +53,7 @@ struct Cost {
     communication_redis_backward_ = 0.0;
     communication_forward_ = 0.0;
   }
-  // 'memory_with_reuse_' calculates the peak memory usage in a training phase
+  // 'memory_with_reuse_' calculates the peak memory usage in a training (or inference) phase
   double memory_with_reuse_;
   // 'computation_cost_'  models the training time of an iteration in a training phase. Currently, this is calculated
   // by ONLY forward phase
