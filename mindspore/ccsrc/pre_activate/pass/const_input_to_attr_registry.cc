@@ -39,6 +39,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(prim::kPrimTranspose->name(), {1});
   Register(prim::kPrimUnsortedSegmentSum->name(), {2});
   Register(prim::kPrimOneHot->name(), {1});
+  Register(prim::kPrimConcat->name(), {0});
   Register(kUnsortedSegmentProdOpName, {2});
   Register(kUnsortedSegmentMinOpName, {2});
   Register(kSimpleMeanGradOpName, {1});
@@ -55,7 +56,17 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(kSplitOpName, {0});
   Register(kErfOpName, {1});
   Register(kSparseApplyAdagradOpName, {2});
-  Register(kResizeNearestNeighborGrad, {1});
+  Register(kResizeNearestNeighborGradOpName, {1});
+  Register(kResizeNearestNeighborV2OpName, {1});
+  Register(kResizeNearestNeighborV2GradOpName, {1});
+  Register(kApplyRMSPropOpname, {4, 5, 6});
+  Register(kCumsumOpName, {1});
+  Register(kResizeBilinearV2OpName, {1});
+  Register(kReduceProdOpName, {1});
+  Register(kCumprodOpName, {1});
+  Register(kSpaceToBatchOpName, {1});
+  Register(kBatchToSpaceOpName, {1});
+  Register(kPadOpName, {1});
 }
 
 ConstInputToAttrInfoRegistry &ConstInputToAttrInfoRegistry::Instance() {
