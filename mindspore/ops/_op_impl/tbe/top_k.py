@@ -19,14 +19,16 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 top_k_op_info = TBERegOp("TopK") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("top_k.so") \
+    .binfile_name("top_k_d.so") \
     .compute_cost(10) \
-    .kernel_name("top_k") \
+    .kernel_name("top_k_d") \
     .partial_flag(True) \
-    .attr("k", "required", "int", "all")\
-    .attr("sorted", "required", "bool", "all")\
+    .attr("dim", "optional", "int", "all") \
+    .attr("k", "required", "int", "all") \
+    .attr("largest", "optional", "bool", "all") \
+    .attr("sorted", "optional", "bool", "true")\
     .input(0, "x", False, "required", "all") \
-    .input(1, "input_indices", False, "optional", "all") \
+    .input(1, "assist_seq", False, "required", "all") \
     .output(0, "values", False, "required", "all") \
     .output(1, "indices", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.I32_Default) \
