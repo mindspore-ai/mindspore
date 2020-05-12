@@ -112,7 +112,8 @@ def run_pretrain():
                                              end_learning_rate=cfg.AdamWeightDecayDynamicLR.end_learning_rate,
                                              power=cfg.AdamWeightDecayDynamicLR.power,
                                              weight_decay=cfg.AdamWeightDecayDynamicLR.weight_decay,
-                                             eps=cfg.AdamWeightDecayDynamicLR.eps)
+                                             eps=cfg.AdamWeightDecayDynamicLR.eps,
+                                             warmup_steps=cfg.AdamWeightDecayDynamicLR.warmup_steps)
     else:
         raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecayDynamicLR]".
                          format(cfg.optimizer))
