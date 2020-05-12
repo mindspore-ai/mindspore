@@ -88,6 +88,22 @@ AnfNodePtr Substitution::operator()(const OptimizerPtr &optimizer, const AnfNode
   return result;
 }
 
+inline bool isTraversable(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+
+  if (node->isa<CNode>() || node->isa<Parameter>()) {
+    return true;
+  }
+
+  if (IsValueNode<FuncGraph>(node) || IsValueNode<RefKey>(node)) {
+    return true;
+  }
+
+  return false;
+}
+
 bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNodePtr &root_node,
                                       const SubstitutionPtr &transform) const {
 #ifdef ENABLE_PROFILE
@@ -106,7 +122,7 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNo
     todo.pop_front();
 
     // check whether this node has been matched.
-    if (node == nullptr || node->seen_ == seen || !all_nodes.contains(node)) {
+    if (node == nullptr || node->seen_ == seen || !isTraversable(node) || !all_nodes.contains(node)) {
       continue;
     }
     node->seen_ = seen;
