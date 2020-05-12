@@ -16,13 +16,14 @@
 import numpy as np
 import pytest
 
-from mindspore import Tensor
+from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore import dtype as mstype
 from mindspore.nn import Cell
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
-    import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
+    import pipeline_for_compile_forward_ge_graph_for_case_by_case_config, \
+    pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
 
 
 class NetWorkSlicePositive(Cell):
@@ -143,6 +144,160 @@ class TensorAssignWithSlice(Cell):
         a[2:3:, 0:, 4:1:-1] = self.c
         z = a + ck
         return z
+
+
+class TensorIndexByOneTensor(Cell):
+    def __init__(self):
+        super(TensorIndexByOneTensor, self).__init__()
+        self.const = Tensor(np.ones((5, 4, 7, 8)), mstype.int32)
+
+    def construct(self, x, index):
+        ret = x[index] + self.const
+        return ret
+
+
+class TensorIndexByTwoTensors(Cell):
+    def __init__(self):
+        super(TensorIndexByTwoTensors, self).__init__()
+        self.const = Tensor(np.ones((3, 4, 5, 8)), mstype.int32)
+
+    def construct(self, x, index_0, index_1):
+        ret = x[index_0, index_1] + self.const
+        return ret
+
+
+class TensorIndexByThreeTensors(Cell):
+    def __init__(self):
+        super(TensorIndexByThreeTensors, self).__init__()
+        self.const = Tensor(np.ones((5, 3, 4, 5)), mstype.int32)
+
+    def construct(self, x, index_0, index_1, index_2):
+        ret = x[index_0, index_1, index_2] + self.const
+        return ret
+
+
+class TensorSetItemByOneTensorWithNumber(Cell):
+    def __init__(self, value):
+        super(TensorSetItemByOneTensorWithNumber, self).__init__()
+        self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
+        self.param = Parameter(Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.float32), name="x")
+        self.value = value
+
+    def construct(self, index):
+        self.param[index] = self.value
+        ret = self.param + self.const
+        return ret
+
+
+class TensorSetItemByOneTensorWithTensor(Cell):
+    def __init__(self):
+        super(TensorSetItemByOneTensorWithTensor, self).__init__()
+        self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
+        self.param = Parameter(Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.float32), name="x")
+
+    def construct(self, index, value):
+        self.param[index] = value
+        ret = self.param + self.const
+        return ret
+
+
+class TensorSetItemByOneTensorWithTupleOfNumber(Cell):
+    def __init__(self, value):
+        super(TensorSetItemByOneTensorWithTupleOfNumber, self).__init__()
+        self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
+        self.param = Parameter(Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.float32), name="x")
+        self.value = value
+
+    def construct(self, index):
+        self.param[index] = self.value
+        ret = self.param + self.const
+        return ret
+
+
+class TensorSetItemByOneTensorWithTupleOfTensor(Cell):
+    def __init__(self):
+        super(TensorSetItemByOneTensorWithTupleOfTensor, self).__init__()
+        self.const = Tensor(np.ones((6, 3, 8)), mstype.float32)
+        self.param = Parameter(Tensor(np.arange(6*3*8).reshape((6, 3, 8)), mstype.float32), name="x")
+
+    def construct(self, index, value_0, value_1, value_2):
+        self.param[index] = (value_0, value_1, value_2)
+        ret = self.param + self.const
+        return ret
+
+
+class TensorSetItemByTensorsWithNumber(Cell):
+    def __init__(self, value):
+        super(TensorSetItemByTensorsWithNumber, self).__init__()
+        self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
+        self.param = Parameter(Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.float32), name="x")
+        self.value = value
+
+    def construct(self, index_0, index_1, index_2):
+        self.param[index_0, index_1, index_2] = self.value
+        ret = self.param + self.const
+        return ret
+
+
+class TensorSetItemByTensorsWithTensor(Cell):
+    def __init__(self):
+        super(TensorSetItemByTensorsWithTensor, self).__init__()
+        self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
+        self.param = Parameter(Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.float32), name="x")
+
+    def construct(self, index_0, index_1, index_2, value):
+        self.param[index_0, index_1, index_2] = value
+        ret = self.param + self.const
+        return ret
+
+
+class TensorSetItemByTensorsWithTensorNumberError(Cell):
+    def __init__(self):
+        super(TensorSetItemByTensorsWithTensorNumberError, self).__init__()
+        self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
+        self.param = Parameter(Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.float32), name="x")
+
+    def construct(self, index_0, index_1, index_2, index_3, value):
+        self.param[index_0, index_1, index_2, index_3] = value
+        ret = self.param + self.const
+        return ret
+
+
+class TensorSetItemByTensorsWithTupleOfNumber(Cell):
+    def __init__(self, value):
+        super(TensorSetItemByTensorsWithTupleOfNumber, self).__init__()
+        self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
+        self.param = Parameter(Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.float32), name="x")
+        self.value = value
+
+    def construct(self, index_0, index_1, index_2):
+        self.param[index_0, index_1, index_2] = self.value
+        ret = self.param + self.const
+        return ret
+
+
+class TensorSetItemByTensorsWithTupleOfTensor(Cell):
+    def __init__(self):
+        super(TensorSetItemByTensorsWithTupleOfTensor, self).__init__()
+        self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
+        self.param = Parameter(Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.float32), name="x")
+
+    def construct(self, index_0, index_1, index_2, value_0, value_1, value_2):
+        self.param[index_0, index_1, index_2] = (value_0, value_1, value_2)
+        ret = self.param + self.const
+        return ret
+
+
+class TensorSetItemByTensorsWithTupleOfTensorNumberError(Cell):
+    def __init__(self):
+        super(TensorSetItemByTensorsWithTupleOfTensorNumberError, self).__init__()
+        self.const = Tensor(np.ones((6, 7, 8)), mstype.float32)
+        self.param = Parameter(Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.float32), name="x")
+
+    def construct(self, index_0, index_1, index_2, value_0, value_1):
+        self.param[index_0, index_1, index_2] = (value_0, value_1)
+        ret = self.param + self.const
+        return ret
 
 
 def test_tensor_assign():
@@ -441,13 +596,204 @@ test_cases = [
         'block': NetWorkSliceEllipsis(),
         'desc_inputs': [Tensor(np.ones([6, 7, 8, 9], np.int32))],
     }),
+    ('TensorIndexByOneTensor', {
+        'block': TensorIndexByOneTensor(),
+        'desc_inputs': [Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.int32),
+                        Tensor(np.random.randint(6, size=(5, 4)), mstype.int32)],
+    }),
+    ('TensorIndexByTwoTensors', {
+        'block': TensorIndexByTwoTensors(),
+        'desc_inputs': [Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.int32),
+                        Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32)],
+    }),
+    ('TensorIndexByThreeTensors', {
+        'block': TensorIndexByThreeTensors(),
+        'desc_inputs': [Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.int32),
+                        Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32)],
+    }),
+    ('TensorSetItemByOneTensorWithNumber', {
+        'block': TensorSetItemByOneTensorWithNumber(value=0.0),
+        'desc_inputs': [Tensor(np.random.randint(4, size=(5, 4)), mstype.int32)],
+    }),
+    ('TensorSetItemByOneTensorWithTensor', {
+        'block': TensorSetItemByOneTensorWithTensor(),
+        'desc_inputs': [Tensor(np.random.randint(3, size=(5, 4)), mstype.int32),
+                        Tensor(np.zeros((4, 7, 8)), mstype.float32)],
+    }),
+    ('TensorSetItemByOneTensorWithTupleOfNumber', {
+        'block': TensorSetItemByOneTensorWithTupleOfNumber(value=(0.0, 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7)),
+        'desc_inputs': [Tensor(np.random.randint(5, size=(5, 4)), mstype.int32)],
+    }),
+    ('TensorSetItemByOneTensorWithTupleOfTensor', {
+        'block': TensorSetItemByOneTensorWithTupleOfTensor(),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(5, 4)), mstype.int32),
+                        Tensor(np.zeros((8,), np.float32)),
+                        Tensor(np.ones((8,), np.float32)),
+                        Tensor(np.ones((8,), np.float32) * 2)],
+    }),
+    ('TensorSetItemByTensorsWithNumber', {
+        'block': TensorSetItemByTensorsWithNumber(value=0.0),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32)],
+    }),
+    ('TensorSetItemByTensorsWithTensor', {
+        'block': TensorSetItemByTensorsWithTensor(),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32),
+                        Tensor(np.zeros((4, 5)), mstype.float32)],
+    }),
+    ('TensorSetItemByTensorsWithTupleOfNumber', {
+        'block': TensorSetItemByTensorsWithTupleOfNumber(value=(0.0, 1.1, 2.2, 3.3, 4.4)),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32)],
+    }),
+    ('TensorSetItemByTensorsWithTupleOfTensor', {
+        'block': TensorSetItemByTensorsWithTupleOfTensor(),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32),
+                        Tensor(np.zeros((4, 5)), mstype.float32),
+                        Tensor(np.ones((4, 5)), mstype.float32),
+                        Tensor(np.ones((4, 5)) * 2, mstype.float32)],
+    })
+]
+
+raise_error_set = [
+    ('TensorIndexByOneTensorDtypeError', {
+        'block': (TensorIndexByOneTensor(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.int32),
+                        Tensor(np.random.randint(6, size=(5, 4)), mstype.int8)],
+    }),
+    ('TensorIndexByTwoTensorsShapeError', {
+        'block': (TensorIndexByTwoTensors(), {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.int32),
+                        Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(2, 3, 5)), mstype.int32)],
+    }),
+    ('TensorIndexByTwoTensorsDtypeError', {
+        'block': (TensorIndexByTwoTensors(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.int32),
+                        Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.float32)],
+    }),
+    ('TensorIndexByThreeTensorsShapeError', {
+        'block': (TensorIndexByThreeTensors(), {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.int32),
+                        Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 2, 4, 5)), mstype.int32)],
+    }),
+    ('TensorIndexByThreeTensorsDtypeError', {
+        'block': (TensorIndexByThreeTensors(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.arange(6*7*8).reshape((6, 7, 8)), mstype.int32),
+                        Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(3, 4, 5)), mstype.int64),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32)],
+    }),
+    ('TensorSetItemByOneTensorWithNumberTypeError', {
+        'block': (TensorSetItemByOneTensorWithNumber(value=0), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.random.randint(4, size=(5, 4)), mstype.int32)],
+    }),
+    ('TensorSetItemByOneTensorWithTensorShapeError', {
+        'block': (TensorSetItemByOneTensorWithTensor(), {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.random.randint(3, size=(5, 4)), mstype.int32),
+                        Tensor(np.zeros((6, 7, 8)), mstype.float32)],
+    }),
+    ('TensorSetItemByOneTensorWithTensorDtypeError', {
+        'block': (TensorSetItemByOneTensorWithTensor(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.random.randint(3, size=(5, 4)), mstype.int32),
+                        Tensor(np.zeros((6, 7, 8)), mstype.int32)],
+    }),
+    ('TensorSetItemByOneTensorWithTupleOfNumberTypeError', {
+        'block': (TensorSetItemByOneTensorWithTupleOfNumber(value=(0, 1, 2, 3, 4, 5, 6, 7)), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.random.randint(5, size=(5, 4)), mstype.int32)],
+    }),
+    ('TensorSetItemByOneTensorWithTupleOfNumberNumberError', {
+        'block': (TensorSetItemByOneTensorWithTupleOfNumber(value=(0.0, 1.1, 2.2)), {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.random.randint(5, size=(5, 4)), mstype.int32)],
+    }),
+    ('TensorSetItemByOneTensorWithTupleOfTensorDtyeError', {
+        'block': (TensorSetItemByOneTensorWithTupleOfTensor(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(5, 4)), mstype.int32),
+                        Tensor(np.zeros((8,), np.int32)),
+                        Tensor(np.ones((8,), np.int32)),
+                        Tensor(np.ones((8,), np.float32) * 2)],
+    }),
+    ('TensorSetItemByTensorsWithNumberTypeError', {
+        'block': (TensorSetItemByTensorsWithNumber(value=0), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32)],
+    }),
+    ('TensorSetItemByTensorsWithTensorShapeError', {
+        'block': (TensorSetItemByTensorsWithTensor(),  {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32),
+                        Tensor(np.zeros((2, 5)), mstype.float32)],
+    }),
+    ('TensorSetItemByTensorsWithTensorTypeError', {
+        'block': (TensorSetItemByTensorsWithTensor(),  {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32),
+                        Tensor(np.zeros((4, 5)), mstype.int32)],
+    }),
+    ('TensorSetItemByTensorsWithTensorNumberError', {
+        'block': (TensorSetItemByTensorsWithTensorNumberError(),  {'exception': IndexError}),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(1, 3, 4, 5)), mstype.int32),
+                        Tensor(np.zeros((2, 5)), mstype.float32)],
+    }),
+    ('TensorSetItemByTensorsWithTupleOfNumberTypeError', {
+        'block': (TensorSetItemByTensorsWithTupleOfNumber(value=(0, 1, 2, 3, 4)),  {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32)],
+    }),
+    ('TensorSetItemByTensorsWithTupleOfNumberNumberError', {
+        'block': (TensorSetItemByTensorsWithTupleOfNumber(value=(0.0, 1.0, 2.0, 3.0)),  {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32)],
+    }),
+    ('TensorSetItemByTensorsWithTupleOfTensorNumberError', {
+        'block': (TensorSetItemByTensorsWithTupleOfTensorNumberError(),  {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32),
+                        Tensor(np.zeros((4, 5)), mstype.float32),
+                        Tensor(np.ones((4, 5)), mstype.float32)],
+    }),
+    ('TensorSetItemByTensorsWithTupleOfTensorTypeError', {
+        'block': (TensorSetItemByTensorsWithTupleOfTensor(),  {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.random.randint(6, size=(3, 4, 5)), mstype.int32),
+                        Tensor(np.random.randint(7, size=(4, 5)), mstype.int32),
+                        Tensor(np.random.randint(8, size=(5, 3, 4, 5)), mstype.int32),
+                        Tensor(np.zeros((4, 5)), mstype.float32),
+                        Tensor(np.ones((4, 5)), mstype.int32),
+                        Tensor(np.ones((4, 5)) * 2, mstype.int32)],
+    })
 ]
 
 
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
-def test_compile():
-    context.set_context(mode=context.GRAPH_MODE)
+def test_exec():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     return test_cases
+
+
+@mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception)
+def test_check_exception():
+    return raise_error_set
 
 
 def test_tensor_slice_reduce_out_of_bounds_neg():

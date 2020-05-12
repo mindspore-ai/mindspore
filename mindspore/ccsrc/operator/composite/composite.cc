@@ -1172,6 +1172,12 @@ int GenerateStridedSliceParametersFromNumber(const AbstractScalarPtr &scalar, co
   return 1;
 }
 
+FuncGraphPtr ExpandADim(const FuncGraphPtr &ret_graph, const AnfNodePtr &tensor_node) {
+  auto PrimExpandDims = GetPythonOps("expand_dims", "mindspore.ops.functional");
+  ret_graph->set_output(NewCNode({NewValueNode(PrimExpandDims), tensor_node, NewValueNode(0)}, ret_graph));
+  return ret_graph;
+}
+
 FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   // slice a tensor
   // args: tensor, slice or slice tuple
@@ -1226,12 +1232,6 @@ FuncGraphPtr TensorSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec
                                                NewValueNode(0), NewValueNode(0), NewValueNode(shrink_axis_mask)});
   ret_graph->set_output(ret_graph->NewCNode(
     {PrimStridedSlice, tensor_node, NewValueNode(begin), NewValueNode(end), NewValueNode(strides)}));
-  return ret_graph;
-}
-
-FuncGraphPtr TensorSlice::ExpandADim(const FuncGraphPtr &ret_graph, const AnfNodePtr &tensor_node) const {
-  auto PrimExpandDims = GetPythonOps("expand_dims", "mindspore.ops.functional");
-  ret_graph->set_output(NewCNode({NewValueNode(PrimExpandDims), tensor_node, NewValueNode(0)}, ret_graph));
   return ret_graph;
 }
 

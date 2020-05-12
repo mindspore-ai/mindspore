@@ -19,7 +19,8 @@ from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 
-def _get_broadcast_shape(x_shape, y_shape, prim_name):
+
+def get_broadcast_shape(x_shape, y_shape, prim_name):
     """
     Doing broadcast between tensor x and tensor y.
 
@@ -37,7 +38,7 @@ def _get_broadcast_shape(x_shape, y_shape, prim_name):
     Examples:
         >>> x_shape = [1, 2, 3]
         >>> y_shape = [1, 2]
-        >>> broadcast_shape = _get_broadcast_shape(x_shape, y_shape)
+        >>> broadcast_shape = get_broadcast_shape(x_shape, y_shape)
     """
     if x_shape == y_shape:
         return x_shape
@@ -54,15 +55,14 @@ def _get_broadcast_shape(x_shape, y_shape, prim_name):
         elif x_shape[i] == y_shape[i]:
             broadcast_shape_back.append(x_shape[i])
         else:
-            raise ValueError("For '{}' the x_shape {} and y_shape {} can not broadcast.".format(
-                prim_name, x_shape, y_shape))
+            raise ValueError(f"For '{prim_name}', the x_shape {x_shape} and y_shape {y_shape} can not broadcast.")
 
     broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
-    broadcast_shape = broadcast_shape_front + broadcast_shape_back
+    broadcast_shape = list(broadcast_shape_front) + broadcast_shape_back
     return broadcast_shape
 
 
-def _get_concat_offset(x_shp, x_type, axis, prim_name):
+def get_concat_offset(x_shp, x_type, axis, prim_name):
     """for concat and concatoffset check args and compute offset"""
     validator.check_value_type("shape", x_shp, [tuple], prim_name)
     validator.check_integer("input_x rank", len(x_shp), 0, Rel.GT, prim_name)
@@ -73,7 +73,7 @@ def _get_concat_offset(x_shp, x_type, axis, prim_name):
     if axis < 0:
         axis = axis + rank_base
     all_shp = x_shp[0][axis]
-    offset = [0,]
+    offset = [0]
     for i in range(1, len(x_shp)):
         v = x_shp[i]
         validator.check('len of x_shp[%d]' % i, len(v), 'len of x_shp[0]', len(x_shp[0]), Rel.EQ, prim_name)

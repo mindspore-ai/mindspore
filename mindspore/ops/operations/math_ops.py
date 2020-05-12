@@ -24,7 +24,7 @@ from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
-from .._utils import _get_broadcast_shape
+from .._utils import get_broadcast_shape
 from ..primitive import PrimitiveWithInfer, prim_attr_register, _run_op
 
 
@@ -75,7 +75,7 @@ class _BinaryOp(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_shape(self, x_shape, y_shape):
-        return _get_broadcast_shape(x_shape, y_shape, self.name)
+        return get_broadcast_shape(x_shape, y_shape, self.name)
 
 
 class _MathBinaryOp(_BinaryOp):

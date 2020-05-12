@@ -1297,7 +1297,7 @@ raise_set = [
     ('ScatterNdUpdate', {
         'block': (P.ScatterNdUpdate(), {'exception': TypeError}),
         'desc_inputs': (Tensor(np.ones((2, 3), np.float32)),
-                        Tensor(np.ones((2, 2), np.int32)),
+                        Tensor(np.ones((2, 2), np.float32)),
                         Tensor(np.ones((2,), np.float32))),
         'desc_bprop': [[2, 3]]}),
     ('Pack', {

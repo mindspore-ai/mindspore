@@ -27,9 +27,15 @@ class IdentityEC(IExectorComponent):
     def __call__(self):
         result_id = self.function[keyword.id] + '-' + self.inputs[keyword.id]
         group = self.function[keyword.group] + '-' + self.inputs[keyword.group]
-        return {
+        ret = {
             keyword.id: result_id,
             keyword.group: group,
             keyword.desc_inputs: self.inputs[keyword.desc_inputs],
             keyword.result: self.function[keyword.block](*self.inputs[keyword.desc_inputs])
         }
+        print("buxue------------------------------------------------")
+        print("inputs")
+        print(ret[keyword.desc_inputs])
+        print("outputs")
+        print(ret[keyword.result])
+        return ret

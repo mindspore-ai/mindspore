@@ -24,15 +24,14 @@ import itertools
 import numbers
 import numpy as np
 
-from ..._c_expression import signature_rw as sig_rw
-from ..._c_expression import signature_kind as sig_kind
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ..operations.math_ops import _infer_shape_reduce
-from .._utils import _get_concat_offset
+from .._utils import get_concat_offset
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+
 
 def _check_infer_attr_reduce(axis, keep_dims, prim_name):
     validator.check_value_type('keep_dims', keep_dims, [bool], prim_name)
@@ -931,7 +930,7 @@ class InvertPermutation(PrimitiveWithInfer):
         z = [x_value[i] for i in range(len(x_value))]
         z.sort()
 
-        y = [None]*len(x_value)
+        y = [None] * len(x_value)
         for i, value in enumerate(x_value):
             validator.check_value_type("input[%d]" % i, value, [int], self.name)
             validator.check(f'value', z[i], f'index', i, Rel.EQ, self.name)
@@ -1111,6 +1110,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         >>> input_x = Tensor(np.random.rand(5))
         >>> index, output = P.ArgMinWithValue()(input_x)
     """
+
     @prim_attr_register
     def __init__(self, axis=0, keep_dims=False):
         """init ArgMinWithValue"""
@@ -1352,7 +1352,7 @@ class Concat(PrimitiveWithInfer):
         axis = self.axis
         x_shp = input_x['shape']
         x_type = input_x['dtype']
-        _, all_shp, _ = _get_concat_offset(x_shp, x_type, axis, self.name)
+        _, all_shp, _ = get_concat_offset(x_shp, x_type, axis, self.name)
         self.add_prim_attr('T', x_type[0].element_type())
         self.add_prim_attr('inputNums', len(x_shp))
         ret_shp = x_shp[0].copy()
@@ -1376,14 +1376,12 @@ def _get_pack_shape(x_shape, x_type, axis, prim_name):
     if axis < 0:
         axis = axis + rank_base + 1
     for i in range(1, N):
-        v = x_shape[i]
-        validator.check('len of x_shape[%d]' % i, len(v), 'len of rank_base', rank_base, Rel.EQ, prim_name)
         validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, prim_name, TypeError)
-        for j in range(rank_base):
-            if v[j] != x_shape[0][j]:
-                raise ValueError(f"For \'{prim_name}\' element {i} shape in input can not pack with first element")
+        if x_shape[i] != x_shape[0]:
+            raise ValueError(f"For \'{prim_name}\' element {i} shape in input can not pack with first element")
     out_shape.insert(axis, N)
     return out_shape
+
 
 class Pack(PrimitiveWithInfer):
     r"""
@@ -1831,7 +1829,7 @@ class DiagPart(PrimitiveWithInfer):
         return x_type
 
     def infer_shape(self, x_shape):
-        if len(x_shape)%2 != 0 or \
+        if len(x_shape) % 2 != 0 or \
                 not x_shape:
             raise ValueError(f"For \'{self.name}\' input rank must be non-zero and even, but got rank {len(x_shape)}, "
                              f"with shapes {x_shape}")
@@ -2004,6 +2002,49 @@ class GatherNd(PrimitiveWithInfer):
         return x_dtype
 
 
+class ScatterUpdate(PrimitiveWithInfer):
+    """
+    Update tensor value by using input indices and value.
+
+    Using given values to update tensor value, along with the input indices.
+
+    Args:
+        use_locking (bool): Whether protect the assignment by a lock. Default: True.
+
+    Inputs:
+        - **input_x** (Parameter) - The target tensor, with data type of Parameter.
+        - **indices** (Tensor) - The index of input tensor.
+        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and update.shape = indices.shape + input_x.shape[1:].
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Examples:
+        >>> input_x = mindspore.Parameter(Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32))
+        >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
+        >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> op = P.ScatterNdUpdate()
+        >>> output = op(input_x, indices, update)
+    """
+
+    @prim_attr_register
+    def __init__(self, use_locking=True):
+        """Init ScatterNdUpdate"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+
+    def infer_shape(self, x_shape, indices_shape, value_shape):
+        if indices_shape + x_shape[1:] != value_shape:
+            raise ValueError('Input value are not match with input indices.')
+        return x_shape
+
+    def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
+        validator.check_tensor_type_same({'indices': indices_dtype}, mstype.int_type, self.name)
+        args = {"x": x_dtype, "value": value_dtype}
+        validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
+        return x_dtype
+
+
 class ScatterNdUpdate(PrimitiveWithInfer):
     """
     Update tensor value by using input indices and value.
@@ -2028,11 +2069,6 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         >>> op = P.ScatterNdUpdate()
         >>> output = op(input_x, indices, update)
     """
-    __mindspore_signature__ = (
-        ('input_x', sig_rw.RW_WRITE, sig_kind.KIND_POSITIONAL_KEYWORD),
-        ('indices', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD),
-        ('value', sig_rw.RW_READ, sig_kind.KIND_POSITIONAL_KEYWORD)
-    )
 
     @prim_attr_register
     def __init__(self, use_locking=True):
@@ -2142,10 +2178,10 @@ class SpaceToDepth(PrimitiveWithInfer):
         validator.check('x dimension', len(x_shape), '', 4, Rel.EQ)
         out_shape = copy.deepcopy(x_shape)
         for i in range(2):
-            if out_shape[i+2] % self.block_size != 0:
-                raise ValueError(f'For \'{self.name}\' input shape[{i+2}] {out_shape[i+2]} should be '
+            if out_shape[i + 2] % self.block_size != 0:
+                raise ValueError(f'For \'{self.name}\' input shape[{i + 2}] {out_shape[i + 2]} should be '
                                  f'fully divided by block_size {self.block_size}')
-            out_shape[i+2] //= self.block_size
+            out_shape[i + 2] //= self.block_size
 
         out_shape[1] *= self.block_size * self.block_size
         return out_shape
@@ -2199,9 +2235,10 @@ class DepthToSpace(PrimitiveWithInfer):
         validator.check('x dimension', len(x_shape), '', 4, Rel.EQ)
         out_shape = copy.deepcopy(x_shape)
         for i in range(2):
-            out_shape[i+2] *= self.block_size
+            out_shape[i + 2] *= self.block_size
 
-        validator.check_integer('x_shape[1] % (block_size*block_size)', x_shape[1] % (self.block_size*self.block_size),
+        validator.check_integer('x_shape[1] % (block_size*block_size)',
+                                x_shape[1] % (self.block_size * self.block_size),
                                 0, Rel.EQ, self.name)
         out_shape[1] //= self.block_size * self.block_size
         return out_shape
@@ -2251,6 +2288,7 @@ class SpaceToBatch(PrimitiveWithInfer):
         [[[[1.]]], [[[2.]]], [[[3.]]], [[[4.]]]]
 
     """
+
     @prim_attr_register
     def __init__(self, block_size, paddings):
         """Init SpaceToBatch"""
@@ -2271,12 +2309,12 @@ class SpaceToBatch(PrimitiveWithInfer):
         validator.check_integer('rank of input_x', len(x_shape), 4, Rel.EQ, self.name)
         out_shape = copy.deepcopy(x_shape)
         for i in range(2):
-            padded = out_shape[i+2] + self.paddings[i][0] + \
+            padded = out_shape[i + 2] + self.paddings[i][0] + \
                      self.paddings[i][1]
             if padded % self.block_size != 0:
                 raise ValueError(f'For \'{self.name}\' padded[{i}] {padded} should be divisible by '
                                  f'block_size {self.block_size}')
-            out_shape[i+2] = padded // self.block_size
+            out_shape[i + 2] = padded // self.block_size
         out_shape[0] *= self.block_size * self.block_size
         return out_shape
 
@@ -2319,6 +2357,7 @@ class BatchToSpace(PrimitiveWithInfer):
         [[[[1., 2.], [3., 4.]]]]
 
     """
+
     @prim_attr_register
     def __init__(self, block_size, crops):
         """Init BatchToSpace"""
@@ -2339,10 +2378,10 @@ class BatchToSpace(PrimitiveWithInfer):
         validator.check('rank of input_x', len(x_shape), '', 4)
         out_shape = copy.deepcopy(x_shape)
         for i in range(2):
-            x_block_prod = out_shape[i+2] * self.block_size
+            x_block_prod = out_shape[i + 2] * self.block_size
             crops_sum = self.crops[i][0] + self.crops[i][1]
             validator.check("x block shape prod", x_block_prod, 'crops sum', crops_sum, Rel.GT, self.name)
-            out_shape[i+2] = x_block_prod - crops_sum
+            out_shape[i + 2] = x_block_prod - crops_sum
         block_size_prod = self.block_size * self.block_size
         if out_shape[0] % block_size_prod != 0:
             raise ValueError(f'For \'{self.name}\' input_x dimension 0 {out_shape[0]}  should be divisible by '
