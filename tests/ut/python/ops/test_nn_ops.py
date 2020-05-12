@@ -198,6 +198,18 @@ class ScalarSummaryNet(nn.Cell):
         return out
 
 
+class L2NormalizeNet(nn.Cell):
+    """ L2NormalizeNet definition """
+
+    def __init__(self):
+        super(L2NormalizeNet, self).__init__()
+        self.l2_normalize = P.L2Normalize()
+
+    def construct(self, x):
+        out = self.l2_normalize(x)
+        return out
+
+
 class HistogramSummaryNet(nn.Cell):
     """HistogramSummaryNet definition"""
 
@@ -449,6 +461,10 @@ test_cases = [
     ('ScalarSummary', {
         'block': ScalarSummaryNet(),
         'desc_inputs': [2.2],
+    }),
+    ('L2Normalize', {
+        'block': L2NormalizeNet(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2, 3], [4.0, 5, 6], [7.0, 8, 9]]), mindspore.float32)],
     }),
     ('HistogramSummary', {
         'block': HistogramSummaryNet(),

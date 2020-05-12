@@ -657,6 +657,15 @@ test_case_nn_ops = [
         'desc_inputs': [[16, 1234], [16, 1234]],
         'desc_bprop': [[64, 2]],
         'skip': ['backward']}),
+    ('L2Normalize', {
+        'block': P.L2Normalize(),
+        'desc_inputs': [[2, 2]],
+        'desc_bprop': [[2, 2]]}),
+    ('L2NormalizeGrad', {
+        'block': G.L2NormalizeGrad(),
+        'desc_inputs': [[2, 2], [2, 2], [2, 2]],
+        'desc_bprop': [[2, 2]],
+        'skip': ['backward']}),
     ('LayerNorm', {
         'block': P.LayerNorm(),
         'desc_inputs': [[2, 16], [16], [16]],
