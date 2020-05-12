@@ -33,7 +33,10 @@ class GatherV2PInfo : public OperatorInfo {
  public:
   GatherV2PInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                 const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherV2PCost>()) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherV2PCost>()),
+        axis_(0),
+        bias_(0),
+        slice_size_(0) {}
   ~GatherV2PInfo() override = default;
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;

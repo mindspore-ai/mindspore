@@ -38,6 +38,8 @@ class ReshapeInfo : public OperatorInfo {
               const PrimitiveAttrs &attrs)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReshapeCost>(false)),
         dev_num_(0),
+        pre_operator_index_(0),
+        next_operator_index_(0),
         input_layout_set_flag_(false),
         output_layout_set_flag_(false) {}
   ~ReshapeInfo() override = default;
