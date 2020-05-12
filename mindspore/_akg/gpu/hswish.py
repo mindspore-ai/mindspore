@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""hswish"""
+"""HSwish"""
 import _akg.topi as topi
 import _akg.tvm as tvm
 from _akg.topi import tag
 
 
 @tvm.tag_scope(tag=tag.ELEMWISE)
-def topi_nn_hswish(x):
+def topi_nn_HSwish(x):
     """
-    topi hswish
+    topi HSwish
     Args:
         x:
 
@@ -42,7 +42,7 @@ def HSwish(x):
     Returns:
 
     """
-    return topi_nn_hswish(x)
+    return topi_nn_HSwish(x)
 
 
 def gpu_schedule_HSwish(outs):
