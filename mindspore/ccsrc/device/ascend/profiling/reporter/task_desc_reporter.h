@@ -29,6 +29,7 @@ class TaskDescReporter : public DescReporter {
  public:
   TaskDescReporter(int device_id, const std::string &file_name, std::vector<CNodePtr> cnode_list)
       : DescReporter(device_id, file_name, std::move(cnode_list)) {}
+  ~TaskDescReporter() override = default;
   void ReportData() override;
   void set_task_ids(const std::vector<uint32_t> &task_ids) { task_ids_ = task_ids; }
 

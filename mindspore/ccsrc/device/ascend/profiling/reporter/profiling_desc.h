@@ -27,6 +27,7 @@ namespace ascend {
 class ProfDesc {
  public:
   explicit ProfDesc(std::string op_name) : op_name_(std::move(op_name)) {}
+  virtual ~ProfDesc() = default;
   virtual std::string ToString() = 0;
 
  protected:
@@ -37,6 +38,7 @@ class TaskDesc : public ProfDesc {
  public:
   TaskDesc(std::string op_name, uint32_t task_id, uint32_t block_dim, uint32_t stream_id)
       : ProfDesc(std::move(op_name)), task_id_(task_id), block_dim_(block_dim), stream_id_(stream_id) {}
+  ~TaskDesc() override = default;
   std::string ToString() override;
 
  private:
@@ -60,6 +62,7 @@ class GraphDesc : public ProfDesc {
         op_type_(std::move(op_type)),
         input_data_list_(std::move(input_data_list)),
         output_data_list_(std::move(output_data_list)) {}
+  ~GraphDesc() override = default;
   std::string ToString() override;
 
  private:
