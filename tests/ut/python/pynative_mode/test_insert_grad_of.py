@@ -124,9 +124,9 @@ def test_cell_assign():
     class Mul(nn.Cell):
         def __init__(self):
             super(Mul, self).__init__()
-            self.get_g = P.InsertGradientOf(self.save_gradient)
             self.matrix_w = mindspore.Parameter(Tensor(np.ones([2, 2], np.float32)), name="matrix_w")
             self.matrix_g = mindspore.Parameter(Tensor(np.ones([2, 2], np.float32)), name="matrix_g")
+            self.get_g = P.InsertGradientOf(self.save_gradient)
 
         def save_gradient(self, dout):
             self.matrix_g = dout + self.matrix_g
