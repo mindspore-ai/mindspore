@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -76,10 +77,10 @@ class ParallelContext {
   bool global_rank_is_set() const { return global_rank_is_set_; }
   bool parameter_broadcast_is_set() const { return parameter_broadcast_is_set_; }
 
-  void set_all_reduce_fusion_split_indices(const std::vector<uint32_t> indices);
-  const std::vector<uint32_t> all_reduce_fusion_split_indices() const;
-  void set_all_reduce_fusion_split_sizes(const std::vector<uint32_t> sizes);
-  const std::vector<uint32_t> all_reduce_fusion_split_sizes() const;
+  void SetAllReduceFusionSplitIndices(const std::vector<uint32_t> indices, const std::string &group);
+  const std::vector<uint32_t> GetAllReduceFusionSplitIndices(const std::string &group) const;
+  void SetAllReduceFusionSplitSizes(const std::vector<uint32_t> sizes, const std::string &group);
+  const std::vector<uint32_t> GetAllReduceFusionSplitSizes(const std::string &group) const;
   void set_enable_all_reduce_fusion(bool enable_all_reduce_fusion) {
     enable_all_reduce_fusion_ = enable_all_reduce_fusion;
   }
@@ -108,8 +109,8 @@ class ParallelContext {
   bool global_rank_is_set_;
   bool parameter_broadcast_is_set_;
   bool enable_all_reduce_fusion_;
-  std::vector<uint32_t> all_reduce_fusion_split_indices_;
-  std::vector<uint32_t> all_reduce_fusion_split_sizes_;
+  std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_indices_;
+  std::map<std::string, std::vector<uint32_t>> all_reduce_fusion_split_sizes_;
   std::string strategy_ckpt_load_file_;
   std::string strategy_ckpt_save_file_;
 };

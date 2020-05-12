@@ -92,7 +92,7 @@ std::string GetFusionGroupKey(const AnfNodePtr &node) {
 }  // namespace
 
 bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communication_op_info, size_t *segment_num,
-                                             std::vector<size_t> *segment_index) const {
+                                             std::vector<size_t> *segment_index, const std::string &group) const {
   MS_EXCEPTION_IF_NULL(segment_num);
   MS_EXCEPTION_IF_NULL(segment_index);
   size_t communication_op_node_size = communication_op_info.communication_op_nodes.size();
@@ -100,7 +100,7 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
 
   auto parallel_context = parallel::ParallelContext::GetInstance();
   MS_EXCEPTION_IF_NULL(parallel_context);
-  const std::vector<uint32_t> split_indices = parallel_context->all_reduce_fusion_split_indices();
+  const auto &split_indices = parallel_context->GetAllReduceFusionSplitIndices(group);
 
   size_t segments = 0;
   if (split_indices.size() != 0) {
@@ -255,7 +255,7 @@ bool CommunicationOpFusion::Run(const FuncGraphPtr &func_graph) {
     }
     size_t segment_num = 0;
     std::vector<size_t> segment_index;
-    if (GetSplitSegments(it.second, &segment_num, &segment_index)) {
+    if (GetSplitSegments(it.second, &segment_num, &segment_index, it.first)) {
       if (DoFusion(func_graph, it.second, segment_num, segment_index)) {
         changed = true;
       }
