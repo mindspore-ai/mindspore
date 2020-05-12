@@ -32,6 +32,7 @@ __all__ = ["build_train_network"]
 
 class OutputTo16(nn.Cell):
     "Wrap cell for amp. Cast network output back to float16"
+
     def __init__(self, op):
         super(OutputTo16, self).__init__(auto_prefix=False)
         self._op = op
@@ -53,7 +54,7 @@ def _do_keep_batchnorm_fp32(network):
             change = True
         else:
             _do_keep_batchnorm_fp32(subcell)
-    if  isinstance(network, nn.SequentialCell) and change:
+    if isinstance(network, nn.SequentialCell) and change:
         network.cell_list = list(network.cells())
 
 
@@ -72,7 +73,7 @@ def _check_kwargs(key_words):
     """Check kwargs."""
     for arg in key_words:
         if arg not in ['cast_model_type', 'keep_batchnorm_fp32', 'loss_scale_manager']:
-            raise  ValueError(f"Unsupported arg '{arg}'")
+            raise ValueError(f"Unsupported arg '{arg}'")
 
     if 'cast_model_type' in key_words:
         validator.check_type_name('cast_model_type', key_words['cast_model_type'],
