@@ -31,7 +31,7 @@ def AKGAddPath():
 class AKGMetaPathFinder:
     """class AKGMetaPath finder."""
 
-    def find_module(self, fullname, path=None):
+    def find_module(self, fullname):
         """method _akg find module."""
         if fullname.startswith("_akg.tvm"):
             rname = fullname[5:]
