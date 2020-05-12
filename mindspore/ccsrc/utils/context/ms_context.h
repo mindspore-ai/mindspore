@@ -138,6 +138,12 @@ class MsContext {
     variable_memory_max_size_ = variable_memory_max_size;
   }
 
+  void set_enable_profiling(bool flag) { profiling_mode_ = flag; }
+  bool enable_profiling() const { return profiling_mode_; }
+
+  void set_profiling_options(const std::string &options) { profiling_options_ = options; }
+  std::string profiling_options() const { return profiling_options_; }
+
  private:
   MsContext(const std::string &backend_policy, const std::string &target);
   void GetGeOptions(std::map<std::string, std::string> *ge_options) const;
@@ -174,6 +180,8 @@ class MsContext {
   std::string graph_memory_max_size_;
   std::string variable_memory_max_size_;
   std::thread tdt_print_;
+  bool profiling_mode_;
+  std::string profiling_options_;
 };
 
 }  // namespace mindspore

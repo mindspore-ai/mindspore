@@ -26,7 +26,6 @@ from mindspore._checkparam import args_type_check
 from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context, _get_auto_parallel_context, \
     _reset_auto_parallel_context
 
-
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_auto_parallel_context',
            'get_auto_parallel_context', 'reset_auto_parallel_context']
 
@@ -298,6 +297,26 @@ class _Context:
         self._context_handle.set_save_dump_path(save_dump_path)
 
     @property
+    def enable_profiling(self):
+        return self._context_handle.get_enable_profiling()
+
+    @enable_profiling.setter
+    def enable_profiling(self, flag):
+        self._context_handle.set_enable_profiling(flag)
+
+    @property
+    def profiling_options(self):
+        return self._context_handle.get_profiling_options()
+
+    @profiling_options.setter
+    def profiling_options(self, option):
+        options = ["training_trace", "task_trace", "task_trace:training_trace", "training_trace:task_trace", "op_trace"]
+        if option not in options:
+            raise ValueError("Profiling options must be in 'training_trace' 'task_trace' "
+                             "'task_trace:training_trace' 'training_trace:task_trace' or 'op_trace'.")
+        self._context_handle.set_profiling_options(option)
+
+    @property
     def reserve_class_name_in_scope(self):
         """Gets whether to save the network class name in the scope."""
         return self._thread_local_info.reserve_class_name_in_scope
@@ -472,7 +491,7 @@ def reset_auto_parallel_context():
                  enable_mem_reuse=bool, save_ms_model=bool, save_ms_model_path=str,
                  enable_auto_mixed_precision=bool, enable_dump=bool, save_dump_path=str,
                  enable_reduce_precision=bool, graph_memory_max_size=str,
-                 variable_memory_max_size=str)
+                 variable_memory_max_size=str, enable_profiling=bool, profiling_options=str)
 def set_context(**kwargs):
     """
     Sets context for running environment.
@@ -515,6 +534,21 @@ def set_context(**kwargs):
             So the real dump path is "{configured root dump path}/{`save_dump_path`}". Default: ".".
         graph_memory_max_size (str): Sets graph memory max size. Default: "26GB".
         variable_memory_max_size (str): Sets variable memory max size. Default: "5GB".
+        enable_profiling (bool): Whether to open profiling. Default: False.
+        profiling_options (str): Sets profiling collection options, operators can profiling data here.
+            Profiling collection options, the values are as follows, supporting the collection of multiple data.
+
+            - training_trace: collect iterative trajectory data, that is, the training task and software information of
+              the AI software stack, to achieve performance analysis of the training task, focusing on data
+              enhancement, forward and backward calculation, gradient aggregation update and other related data.
+
+            - task_trace: collect task trajectory data, that is, the hardware information of the HWTS/AICore of
+              the Ascend 910 processor, and analyze the information of start and end of the task.
+
+            - op_trace: collect single operator performance data.
+            The profiling can choose training_trace, task_trace, training_trace and task_trace combination and
+            separated by colons; single operator can choose op_trace, op_trace cannot be combined with
+            training_trace and task_trace. Default: "training_trace".
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -536,6 +570,7 @@ def set_context(**kwargs):
         >>> context.set_context(mode=context.GRAPH_MODE,
         >>>                     device_target="Ascend",device_id=0, save_graphs=True,
         >>>                     save_graphs_path="/mindspore")
+        >>> context.set_context(enable_profiling=True, profiling_options="training_trace")
     """
     for key, value in kwargs.items():
         if not hasattr(_context(), key):
