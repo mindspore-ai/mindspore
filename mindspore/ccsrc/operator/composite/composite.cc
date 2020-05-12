@@ -23,6 +23,7 @@
 #include <sstream>
 
 #include "ir/anf.h"
+#include "ir/func_graph.h"
 #include "pipeline/static_analysis/abstract_value.h"
 #include "pipeline/static_analysis/abstract_function.h"
 #include "pipeline/static_analysis/dshape.h"
@@ -334,6 +335,7 @@ ArgsPairList HyperMap::Harmonize(const FuncGraphPtr &func_graph, const ArgsPairL
 FuncGraphPtr HyperMap::GenerateFromTypes(const TypePtrList &args_spec_list) {
   FuncGraphPtr ptrGraph = std::make_shared<FuncGraph>();
   ptrGraph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  ptrGraph->set_flags(FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER, true);
   ptrGraph->debug_info()->set_name("hyper_map");
 
   AnfNodePtr ptrFnArg = nullptr;

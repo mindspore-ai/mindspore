@@ -278,9 +278,11 @@ AnfNodePtr ConvertValueListNodeToValueTupleNode(const ValueNodePtr &node) {
 // Convert class to Tuple
 // Convert getattr to getitem
 // Convert make_record to make_tuple
-void SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
+bool SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(root);
+
+  bool changed = false;
 
   // Since `manager->Replace(...);` will modify member `all_nodes_`, so `all_node` can't be a ref var
   AnfNodeSet all_node = manager->all_nodes();
@@ -316,7 +318,9 @@ void SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
 
     if (new_node != nullptr) {
       new_node->set_abstract(node->abstract());
+      MS_LOG(DEBUG) << "Replace node: " << node->DebugString() << " with new_node: " << new_node->DebugString();
       (void)manager->Replace(node, new_node);
+      changed = true;
     }
   }
 
@@ -324,6 +328,7 @@ void SimplifyDataStructures(const FuncGraphPtr &root, const FuncGraphManagerPtr 
     auto ret = Reabs(node->abstract());
     node->set_abstract(ret);
   }
+  return changed;
 }
 
 // expand tuples in graph parameters

@@ -951,8 +951,19 @@ class PartialEvaluator : public Evaluator {
     if (args_conf_list.size() == 0) {
       MS_LOG(EXCEPTION) << "Args size should be greater than 0";
     }
+    MS_EXCEPTION_IF_NULL(out_conf);
+    MS_EXCEPTION_IF_NULL(out_conf->node());
+
     auto arg0_value = args_conf_list[0]->GetEvaluatedValue();
     AbstractBasePtrList args_spec_list{arg0_value};
+    // Func in hypermap(partial(Func, arg0), arg1, arg2) may become Poly Node.
+    if (arg0_value->isa<AbstractError>()) {
+      auto ret = std::make_shared<AbstractError>(arg0_value->GetValueTrack()->cast<StringImmPtr>(), out_conf->node());
+      MS_LOG(DEBUG) << "AbstractError for node: " << out_conf->node()->DebugString()
+                    << " as func is: " << arg0_value->ToString();
+      (*cache_)[args_spec_list] = ret;
+      return ret;
+    }
     auto func = CheckArg<AbstractFunction>("partial", args_spec_list, 0);
     // Sometimes, node[0] in out_conf becomes phi0;
     if (func->isa<PrimitiveAbstractClosure>()) {
@@ -962,19 +973,26 @@ class PartialEvaluator : public Evaluator {
         return HandleDoSignature(engine, do_signature_prim->function(), out_conf);
       }
     }
-    (void)std::transform(args_conf_list.begin() + 1, args_conf_list.end(), std::back_inserter(args_spec_list),
-                         [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue(); });
 
+    (void)std::transform(args_conf_list.begin() + 1, args_conf_list.end(), std::back_inserter(args_spec_list),
+                         [](const ConfigPtr &config) -> AbstractBasePtr { return config->GetEvaluatedValue(); });
     AbstractBasePtrList args(args_spec_list.begin() + 1, args_spec_list.end());
 
-    AbstractFuncAtomPtrList partialPtrList;
-    auto build_partial = [args, &partialPtrList](const AbstractFuncAtomPtr &atom_func) {
-      auto new_func = std::make_shared<PartialAbstractClosure>(atom_func, args);
-      partialPtrList.push_back(new_func);
+    auto cnode = out_conf->node()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->size() != (args_conf_list.size() + 1)) {
+      MS_LOG(EXCEPTION) << "Out_conf node: " << cnode->DebugString()
+                        << ", args_conf_list: " << mindspore::ToString(args_conf_list);
+    }
+
+    AbstractFuncAtomPtrList partial_funcs_list;
+    auto build_partial = [args, cnode, &partial_funcs_list](const AbstractFuncAtomPtr &atom_func) {
+      auto new_func = std::make_shared<PartialAbstractClosure>(atom_func, args, cnode);
+      partial_funcs_list.push_back(new_func);
     };
     func->Visit(build_partial);
 
-    auto ret = AbstractFunction::MakeAbstractFunction(partialPtrList);
+    auto ret = AbstractFunction::MakeAbstractFunction(partial_funcs_list);
     (*cache_)[args_spec_list] = ret;
     return ret;
   }
