@@ -122,7 +122,6 @@ class RepeatOp : public PipelineOp {
   int32_t max_repeats_;                              // The number of repeats that the user requested
   int32_t repeat_count_;                             // A counter for the current number of executed repeats
   std::vector<std::shared_ptr<DatasetOp>> eoe_ops_;  // List of operators that can generate EOE underneath this repeat.
-  bool first_fetch_;                                 // Track the first fetch from this op
 };
 }  // namespace dataset
 }  // namespace mindspore
