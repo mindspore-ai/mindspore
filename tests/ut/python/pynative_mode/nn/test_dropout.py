@@ -19,26 +19,26 @@ from mindspore.common.api import _executor
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import dtype as mstype
+from mindspore import context
+
+context.set_context(device_target="Ascend")
 
 def test_check_dropout_1():
     x = Tensor(np.ones([20, 16, 50]), mstype.float32)
     m = nn.Dropout(0.8)
-    with pytest.raises(NotImplementedError):
-        m(x)
+    m(x)
 
 
 def test_check_dropout_2():
     x = Tensor(np.ones([20, 16, 50]), mstype.float32)
     m = nn.Dropout(0.3, seed0=1)
-    with pytest.raises(NotImplementedError):
-        m(x)
+    m(x)
 
 
 def test_check_dropout_3():
     x = Tensor(np.ones([20, 16, 50]), mstype.float32)
     m = nn.Dropout(0.3, seed0=1, seed1=1)
-    with pytest.raises(NotImplementedError):
-        m(x)
+    m(x)
 
 
 class Net_Dropout(nn.Cell):

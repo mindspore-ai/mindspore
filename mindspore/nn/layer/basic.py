@@ -25,6 +25,7 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.parameter import Parameter
 from mindspore._extends import cell_attr_register
 from mindspore.common.api import ms_function
+from mindspore import context
 from ..cell import Cell
 from .activation import get_activation
 from ..._checkparam import Validator as validator
@@ -84,8 +85,19 @@ class Dropout(Cell):
         self.dropout_gen_mask = P.DropoutGenMask(Seed0=seed0, Seed1=seed1)
         self.dropout_do_mask = P.DropoutDoMask()
         self.cast = P.Cast()
+        self.is_gpu = context.get_context('device_target') in ["GPU"]
+
+        if self.is_gpu:
+            self.dropout = P.Dropout(keep_prob)
 
     def construct(self, x):
+        if not self.training:
+            return x
+
+        if self.is_gpu:
+            out, _ = self.dropout(x)
+            return out
+
         shape = self.get_shape(x)
         dtype = P.DType()(x)
         keep_prob = self.cast(self.keep_prob, dtype)

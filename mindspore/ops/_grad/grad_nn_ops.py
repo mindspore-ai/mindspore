@@ -642,3 +642,17 @@ def get_bprop_binary_cross_entropy(self):
         return dx, zeros_like(y), zeros_like(weight)
 
     return bprop
+
+
+@bprop_getters.register(P.Dropout)
+def get_bprop_dropout(self):
+    """Grad definition for `Dropout` operation."""
+    grad = P.DropoutGrad(self.drop_prob)
+
+    def bprop(x, out, dout):
+        _, mask = out
+        dy, _ = dout
+        dx = grad(dy, mask)
+        return (dx,)
+
+    return bprop
