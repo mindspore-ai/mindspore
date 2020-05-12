@@ -326,6 +326,18 @@ def get_bprop_log_softmax(self):
     return bprop
 
 
+@bprop_getters.register(P.Softplus)
+def get_bprop_softplus(self):
+    """Grad definition for `Softplus` operation."""
+    softplus_grad = G.SoftplusGrad()
+
+    def bprop(x, out, dout):
+        dx = softplus_grad(dout, x)
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.Tanh)
 def get_bprop_tanh(self):
     """Grad definition for `Tanh` operation."""

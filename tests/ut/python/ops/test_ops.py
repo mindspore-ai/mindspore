@@ -185,6 +185,22 @@ class ScatterMax(nn.Cell):
         out = self.scatter_max(self.ref, indices, updates)
         return out
 
+class ApplyFtrlNet(nn.Cell):
+    def __init__(self):
+        super(ApplyFtrlNet, self).__init__()
+        self.apply_ftrl = P.ApplyFtrl()
+        self.lr = 0.001
+        self.l1 = 0.0
+        self.l2 = 0.0
+        self.lr_power = -0.5
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        self.linear = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="linear")
+
+    def construct(self, grad):
+        out = self.apply_ftrl(self.var, self.accum, self.linear, grad, self.lr, self.l1, self.l2, self.lr_power)
+        return out
+
 
 test_case_math_ops = [
     ('Neg', {
@@ -602,6 +618,14 @@ test_case_nn_ops = [
         'block': G.ReluGrad(),
         'desc_inputs': [[1, 3, 4, 4], [1, 3, 4, 4]],
         'skip': ['backward']}),
+    ('Softplus', {
+        'block': P.Softplus(),
+        'desc_inputs': [[1, 3, 4, 4]],
+        'desc_bprop': [[1, 3, 4, 4]]}),
+    ('SoftplusGrad', {
+        'block': G.SoftplusGrad(),
+        'desc_inputs': [[1, 3, 4, 4], [1, 3, 4, 4]],
+        'skip': ['backward']}),
     ('Elu', {
         'block': P.Elu(),
         'desc_inputs': [[2, 3, 4]],
@@ -869,9 +893,8 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 2]],
         'desc_bprop': [[3, 2]]}),
     ('ApplyFtrl', {
-        'block': P.ApplyFtrl(),
-        'desc_const': [0.001, 0.0, 0.0, -0.5],
-        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
+        'block': ApplyFtrlNet(),
+        'desc_inputs': [[3, 3]],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
     ('ApplyRMSProp', {

@@ -1176,11 +1176,11 @@ ATTR_MAP(Round) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Round) = {{0, OUTPUT_DESC(y)}};
 
 // ApplyFtrl
-INPUT_MAP(ApplyFtrl) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INPUT_DESC(linear)},
-                        {4, INPUT_DESC(grad)}, {5, INPUT_DESC(lr)},      {6, INPUT_DESC(l1)},
-                        {7, INPUT_DESC(l2)},   {8, INPUT_DESC(lr_power)}};
-ATTR_MAP(ApplyFtrl) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
-OUTPUT_MAP(ApplyFtrl) = {{0, OUTPUT_DESC(var)}};
+INPUT_MAP(ApplyFtrlD) = {{1, INPUT_DESC(var)},  {2, INPUT_DESC(accum)},   {3, INPUT_DESC(linear)},
+                         {4, INPUT_DESC(grad)}, {5, INPUT_DESC(lr)},      {6, INPUT_DESC(l1)},
+                         {7, INPUT_DESC(l2)},   {8, INPUT_DESC(lr_power)}};
+ATTR_MAP(ApplyFtrlD) = {{"use_locking", ATTR_DESC(use_locking, AnyTraits<bool>())}};
+OUTPUT_MAP(ApplyFtrlD) = {{0, OUTPUT_DESC(var)}, {1, OUTPUT_DESC(accum)}, {2, OUTPUT_DESC(linear)}};
 
 // Diag
 INPUT_MAP(Diag) = {{1, INPUT_DESC(x)}};
