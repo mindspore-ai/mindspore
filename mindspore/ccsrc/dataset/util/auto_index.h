@@ -18,6 +18,7 @@
 
 #include <atomic>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "dataset/util/btree.h"
@@ -25,19 +26,20 @@
 
 namespace mindspore {
 namespace dataset {
-// This is a B+ tree with generated uint64_t value as key.
-// Use minKey() function to query the min key.
-// Use maxKey() function to query the max key.
-// @tparam T
-template <typename T>
-class AutoIndexObj : public BPlusTree<uint64_t, T> {
+/// This is a B+ tree with generated int64_t value as key.
+/// Use minKey() function to query the min key.
+/// Use maxKey() function to query the max key.
+/// @tparam T
+template <typename T, typename A = std::allocator<T>>
+class AutoIndexObj : public BPlusTree<int64_t, T, A> {
  public:
-  using my_tree = BPlusTree<uint64_t, T>;
+  using my_tree = BPlusTree<int64_t, T, A>;
   using key_type = typename my_tree::key_type;
   using value_type = typename my_tree::value_type;
 
-  explicit AutoIndexObj(const typename my_tree::value_allocator &alloc = Allocator<T>{std::make_shared<SystemPool>()})
-      : my_tree::BPlusTree(alloc), inx_(kMinKey) {}
+  AutoIndexObj() : my_tree::BPlusTree(), inx_(kMinKey) {}
+
+  explicit AutoIndexObj(const Allocator<T> &alloc) : my_tree::BPlusTree(alloc), inx_(kMinKey) {}
 
   ~AutoIndexObj() = default;
 
@@ -50,6 +52,14 @@ class AutoIndexObj : public BPlusTree<uint64_t, T> {
       *key = my_inx;
     }
     return my_tree::DoInsert(my_inx, val);
+  }
+
+  Status insert(std::unique_ptr<value_type> &&val, key_type *key = nullptr) {
+    key_type my_inx = inx_.fetch_add(1);
+    if (key) {
+      *key = my_inx;
+    }
+    return my_tree::DoInsert(my_inx, std::move(val));
   }
 
   // Insert a vector of objects into the tree.

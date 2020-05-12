@@ -50,7 +50,7 @@ class MindDataTestBPlusTree : public UT::Common {
 // Test serial insert.
 TEST_F(MindDataTestBPlusTree, Test1) {
   Allocator<std::string> alloc(std::make_shared<SystemPool>());
-  BPlusTree<uint64_t, std::string, std::less<uint64_t>, mytraits> btree(alloc);
+  BPlusTree<uint64_t, std::string, Allocator<std::string>, std::less<uint64_t>, mytraits> btree(alloc);
   Status rc;
   for (int i = 0; i < 100; i++) {
     uint64_t key = 2 * i;
@@ -92,16 +92,16 @@ TEST_F(MindDataTestBPlusTree, Test1) {
     }
   }
 
-  // Test nearch
+  // Test search
   {
     MS_LOG(INFO) << "Locate key " << 100 << " Expect found.";
     auto it = btree.Search(100);
-    EXPECT_FALSE(it == btree.cend());
+    EXPECT_FALSE(it == btree.end());
     EXPECT_EQ(it.key(), 100);
     EXPECT_EQ(it.value(), "Hello World. I am 100");
     MS_LOG(INFO) << "Locate key " << 300 << " Expect not found.";
     it = btree.Search(300);
-    EXPECT_TRUE(it == btree.cend());
+    EXPECT_TRUE(it == btree.end());
   }
 
   // Test duplicate key
@@ -114,7 +114,7 @@ TEST_F(MindDataTestBPlusTree, Test1) {
 // Test concurrent insert.
 TEST_F(MindDataTestBPlusTree, Test2) {
   Allocator<std::string> alloc(std::make_shared<SystemPool>());
-  BPlusTree<uint64_t, std::string, std::less<uint64_t>, mytraits> btree(alloc);
+  BPlusTree<uint64_t, std::string, Allocator<std::string>, std::less<uint64_t>, mytraits> btree(alloc);
   TaskGroup vg;
   auto f = [&](int k) -> Status {
     TaskManager::FindMe()->Post();
@@ -127,9 +127,21 @@ TEST_F(MindDataTestBPlusTree, Test2) {
       }
       return Status::OK();
   };
-  // Spawn two threads. One insert the odd numbers and the other insert the even numbers just like Test1
+  auto g = [&](int k) -> Status {
+    TaskManager::FindMe()->Post();
+    for (int i = 0; i < 1000; i++) {
+      uint64_t key = rand() % 10000;;
+      auto it = btree.Search(key);
+    }
+    return Status::OK();
+  };
+  // Spawn multiple threads to do insert.
   for (int k = 0; k < 100; k++) {
     vg.CreateAsyncTask("Concurrent Insert", std::bind(f, k));
+  }
+  // Spawn a few threads to do random search.
+  for (int k = 0; k < 2; k++) {
+    vg.CreateAsyncTask("Concurrent search", std::bind(g, k));
   }
   vg.join_all();
   EXPECT_EQ(btree.size(), 10000);
@@ -158,7 +170,7 @@ TEST_F(MindDataTestBPlusTree, Test2) {
     MS_LOG(INFO) << "Locating key from 0 to 9999. Expect found.";
     for (int i = 0; i < 10000; i++) {
       auto it = btree.Search(i);
-      bool eoS = (it == btree.cend());
+      bool eoS = (it == btree.end());
       EXPECT_FALSE(eoS);
       if (!eoS) {
         EXPECT_EQ(it.key(), i);
@@ -168,7 +180,7 @@ TEST_F(MindDataTestBPlusTree, Test2) {
     }
     MS_LOG(INFO) << "Locate key " << 10000 << ". Expect not found";
     auto it = btree.Search(10000);
-    EXPECT_TRUE(it == btree.cend());
+    EXPECT_TRUE(it == btree.end());
   }
 
   // Test to retrieve key at certain position.
@@ -182,11 +194,11 @@ TEST_F(MindDataTestBPlusTree, Test2) {
 
 TEST_F(MindDataTestBPlusTree, Test3) {
   Allocator<std::string> alloc(std::make_shared<SystemPool>());
-  AutoIndexObj<std::string> ai(alloc);
+  AutoIndexObj<std::string, Allocator<std::string>> ai(alloc);
   Status rc;
   rc = ai.insert("Hello World");
   EXPECT_TRUE(rc.IsOk());
-  ai.insert({"a", "b", "c"});
+  rc = ai.insert({"a", "b", "c"});
   EXPECT_TRUE(rc.IsOk());
   uint64_t min = ai.min_key();
   uint64_t max = ai.max_key();
@@ -197,5 +209,32 @@ TEST_F(MindDataTestBPlusTree, Test3) {
   MS_LOG(INFO) << "Dump all the values using [] operator.";
   for (uint64_t i = min; i <= max; i++) {
     MS_LOG(DEBUG) << ai[i] << std::endl;
+  }
+}
+
+TEST_F(MindDataTestBPlusTree, Test4) {
+  Allocator<int64_t> alloc(std::make_shared<SystemPool>());
+  AutoIndexObj<int64_t, Allocator<int64_t>> ai(alloc);
+  Status rc;
+  for (int i = 0; i < 1000; i++) {
+    rc = ai.insert(std::make_unique<int64_t>(i));
+    EXPECT_TRUE(rc.IsOk());
+  }
+  // Test iterator
+  {
+    int cnt = 0;
+    auto it = ai.begin();
+    uint64_t prev = it.key();
+    ++it;
+    ++cnt;
+    while (it != ai.end()) {
+      uint64_t cur = it.key();
+      EXPECT_TRUE(prev < cur);
+      EXPECT_EQ(it.value(), cnt);
+      prev = cur;
+      ++it;
+      ++cnt;
+    }
+    EXPECT_EQ(cnt, 1000);
   }
 }

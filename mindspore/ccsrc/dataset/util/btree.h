@@ -44,12 +44,14 @@ struct BPlusTreeTraits {
   static constexpr bool kAppendMode = false;
 };
 
-// Implementation of B+ tree
-// @tparam K
-// @tparam V
-// @tparam C
-// @tparam T
-template <typename K, typename V, typename C = std::less<K>, typename T = BPlusTreeTraits>
+/// Implementation of B+ tree
+/// @tparam K -- the type of key
+/// @tparam V -- the type of value
+/// @tparam A -- allocator
+/// @tparam C -- comparison class
+/// @tparam T -- trait
+template <typename K, typename V, typename A = std::allocator<V>, typename C = std::less<K>,
+          typename T = BPlusTreeTraits>
 class BPlusTree {
  public:
   enum class IndexRc : char {
@@ -87,11 +89,13 @@ class BPlusTree {
   using key_compare = C;
   using slot_type = typename T::slot_type;
   using traits = T;
-  using key_allocator = Allocator<key_type>;
-  using value_allocator = Allocator<value_type>;
-  using slot_allocator = Allocator<slot_type>;
+  using value_allocator = A;
+  using key_allocator = typename value_allocator::template rebind<key_type>::other;
+  using slot_allocator = typename value_allocator::template rebind<slot_type>::other;
 
-  explicit BPlusTree(const value_allocator &alloc);
+  BPlusTree();
+
+  explicit BPlusTree(const Allocator<V> &alloc);
 
   ~BPlusTree() noexcept;
 
@@ -109,10 +113,15 @@ class BPlusTree {
 
   bool empty() const { return (size() == 0); }
 
-  // @param key
-  // @param value
-  // @return
+  /// @param key
+  /// @param value
+  /// @return
   Status DoInsert(const key_type &key, const value_type &value);
+  Status DoInsert(const key_type &key, std::unique_ptr<value_type> &&value);
+
+  // Update a new value for a given key.
+  std::unique_ptr<value_type> DoUpdate(const key_type &key, const value_type &new_value);
+  std::unique_ptr<value_type> DoUpdate(const key_type &key, std::unique_ptr<value_type> &&new_value);
 
   void PopulateNumKeys();
 
@@ -144,7 +153,7 @@ class BPlusTree {
     virtual ~BaseNode() = default;
 
    protected:
-    RWLock rw_lock_;
+    mutable RWLock rw_lock_;
     value_allocator alloc_;
 
    private:
@@ -267,7 +276,7 @@ class BPlusTree {
     // 50/50 split
     IndexRc Split(LeafNode *to);
 
-    IndexRc InsertIntoSlot(LockPathCB *insCB, slot_type slot, const key_type &key, std::shared_ptr<value_type> value);
+    IndexRc InsertIntoSlot(LockPathCB *insCB, slot_type slot, const key_type &key, std::unique_ptr<value_type> &&value);
 
     explicit LeafNode(const value_allocator &alloc) : BaseNode::BaseNode(alloc), slotuse_(0) {}
 
@@ -275,11 +284,11 @@ class BPlusTree {
 
     slot_type slot_dir_[traits::kLeafSlots];
     key_type keys_[traits::kLeafSlots];
-    std::shared_ptr<value_type> data_[traits::kLeafSlots];
+    std::unique_ptr<value_type> data_[traits::kLeafSlots];
     slot_type slotuse_;
   };
 
-  RWLock rw_lock_;
+  mutable RWLock rw_lock_;
   value_allocator alloc_;
   // All the leaf nodes. Used by the iterator to traverse all the key/values.
   List<LeafNode> leaf_nodes_;
@@ -319,8 +328,8 @@ class BPlusTree {
     return lo;
   }
 
-  IndexRc LeafInsertKeyValue(LockPathCB *ins_cb, LeafNode *node, const key_type &key, std::shared_ptr<value_type> value,
-                             key_type *split_key, LeafNode **split_node);
+  IndexRc LeafInsertKeyValue(LockPathCB *ins_cb, LeafNode *node, const key_type &key,
+                             std::unique_ptr<value_type> &&value, key_type *split_key, LeafNode **split_node);
 
   IndexRc InnerInsertKeyChild(InnerNode *node, const key_type &key, BaseNode *ptr, key_type *split_key,
                               InnerNode **split_node);
@@ -335,10 +344,11 @@ class BPlusTree {
     return child;
   }
 
-  IndexRc InsertKeyValue(LockPathCB *ins_cb, BaseNode *n, const key_type &key, std::shared_ptr<value_type> value,
+  IndexRc InsertKeyValue(LockPathCB *ins_cb, BaseNode *n, const key_type &key, std::unique_ptr<value_type> &&value,
                          key_type *split_key, BaseNode **split_node);
 
-  IndexRc Locate(BaseNode *top, const key_type &key, LeafNode **ln, slot_type *s) const;
+  IndexRc Locate(RWLock *parent_lock, bool forUpdate, BaseNode *top, const key_type &key, LeafNode **ln,
+                 slot_type *s) const;
 
  public:
   class Iterator : public std::iterator<std::bidirectional_iterator_tag, value_type> {
@@ -346,19 +356,27 @@ class BPlusTree {
     using reference = BPlusTree::value_type &;
     using pointer = BPlusTree::value_type *;
 
-    explicit Iterator(BPlusTree *btree) : cur_(btree->leaf_nodes_.head), slot_(0) {}
+    explicit Iterator(BPlusTree *btree) : cur_(btree->leaf_nodes_.head), slot_(0), locked_(false) {}
 
-    Iterator(LeafNode *leaf, slot_type slot) : cur_(leaf), slot_(slot) {}
+    Iterator(LeafNode *leaf, slot_type slot, bool locked = false) : cur_(leaf), slot_(slot), locked_(locked) {}
 
-    ~Iterator() = default;
+    ~Iterator();
+
+    explicit Iterator(const Iterator &);
+
+    Iterator &operator=(const Iterator &lhs);
+
+    Iterator(Iterator &&);
+
+    Iterator &operator=(Iterator &&lhs);
 
     pointer operator->() const { return cur_->data_[cur_->slot_dir_[slot_]].get(); }
 
     reference operator*() const { return *(cur_->data_[cur_->slot_dir_[slot_]].get()); }
 
-    const key_type &key() { return cur_->keys_[cur_->slot_dir_[slot_]]; }
+    const key_type &key() const { return cur_->keys_[cur_->slot_dir_[slot_]]; }
 
-    const value_type &value() { return *(cur_->data_[cur_->slot_dir_[slot_]].get()); }
+    value_type &value() const { return *(cur_->data_[cur_->slot_dir_[slot_]].get()); }
 
     // Prefix++
     Iterator &operator++();
@@ -379,6 +397,7 @@ class BPlusTree {
    private:
     typename BPlusTree::LeafNode *cur_;
     slot_type slot_;
+    bool locked_;
   };
 
   class ConstIterator : public std::iterator<std::bidirectional_iterator_tag, value_type> {
@@ -386,11 +405,20 @@ class BPlusTree {
     using reference = BPlusTree::value_type &;
     using pointer = BPlusTree::value_type *;
 
-    explicit ConstIterator(const BPlusTree *btree) : cur_(btree->leaf_nodes_.head), slot_(0) {}
+    explicit ConstIterator(const BPlusTree *btree) : cur_(btree->leaf_nodes_.head), slot_(0), locked_(false) {}
 
-    ~ConstIterator() = default;
+    ~ConstIterator();
 
-    ConstIterator(const LeafNode *leaf, slot_type slot) : cur_(leaf), slot_(slot) {}
+    ConstIterator(const LeafNode *leaf, slot_type slot, bool locked = false)
+        : cur_(leaf), slot_(slot), locked_(locked) {}
+
+    explicit ConstIterator(const ConstIterator &);
+
+    ConstIterator &operator=(const ConstIterator &lhs);
+
+    ConstIterator(ConstIterator &&);
+
+    ConstIterator &operator=(ConstIterator &&lhs);
 
     pointer operator->() const { return cur_->data_[cur_->slot_dir_[slot_]].get(); }
 
@@ -398,7 +426,7 @@ class BPlusTree {
 
     const key_type &key() const { return cur_->keys_[cur_->slot_dir_[slot_]]; }
 
-    const value_type &value() const { return *(cur_->data_[cur_->slot_dir_[slot_]].get()); }
+    value_type &value() const { return *(cur_->data_[cur_->slot_dir_[slot_]].get()); }
 
     // Prefix++
     ConstIterator &operator++();
@@ -419,6 +447,7 @@ class BPlusTree {
    private:
     const typename BPlusTree::LeafNode *cur_;
     slot_type slot_;
+    bool locked_;
   };
 
   Iterator begin();
@@ -435,6 +464,7 @@ class BPlusTree {
 
   // Locate the entry with key
   ConstIterator Search(const key_type &key) const;
+  Iterator Search(const key_type &key);
 
   value_type operator[](key_type key);
 };
