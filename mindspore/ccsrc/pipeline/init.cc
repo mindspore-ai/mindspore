@@ -115,12 +115,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_device_id", &mindspore::MsContext::set_device_id, "Set device id.")
     .def("open_tsd", &mindspore::MsContext::OpenTsd, "Open tdt dataset client.")
     .def("close_tsd", &mindspore::MsContext::CloseTsd, "Close tdt dataset client.")
-    .def("set_task_sink_flag", &mindspore::MsContext::set_enable_task_sink, "Set enable task sink.")
-    .def("get_task_sink_flag", &mindspore::MsContext::enable_task_sink, "Get whether to enable task sink.")
     .def("get_save_graphs_flag", &mindspore::MsContext::save_graphs_flag, "Get whether to save graphs.")
     .def("set_save_graphs_flag", &mindspore::MsContext::set_save_graphs_flag, "Set whether to save graphs.")
-    .def("get_ir_fusion_flag", &mindspore::MsContext::ir_fusion_flag, "Get whether to enable ir fusion.")
-    .def("set_ir_fusion_flag", &mindspore::MsContext::set_ir_fusion_flag, "Set whether to enable ir fusion.")
     .def("get_auto_mixed_precision_flag", &mindspore::MsContext::auto_mixed_precision_flag,
          "Get whether to enable auto mixed precision.")
     .def("set_auto_mixed_precision_flag", &mindspore::MsContext::set_auto_mixed_precision_flag,

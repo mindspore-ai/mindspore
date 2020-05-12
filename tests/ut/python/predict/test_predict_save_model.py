@@ -64,7 +64,6 @@ parser.add_argument('--path', default='./lenet_model.ms', type=str, help='model 
 
 if __name__ == '__main__':
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_task_sink=True)
 
     print("test lenet predict start")
     seed = 0

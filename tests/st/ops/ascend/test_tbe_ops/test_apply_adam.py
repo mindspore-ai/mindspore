@@ -21,7 +21,6 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 import mindspore.context as context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", impl_type="tbe")
-context.set_context(enable_task_sink=True)
 
 
 class Adam:

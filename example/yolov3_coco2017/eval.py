@@ -82,7 +82,7 @@ if __name__ == '__main__':
     args_opt = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
-    context.set_context(enable_task_sink=True, enable_loop_sink=True, enable_mem_reuse=True)
+    context.set_context(enable_loop_sink=True, enable_mem_reuse=True)
 
     # It will generate mindrecord file in args_opt.mindrecord_dir,
     # and the file name is yolo.mindrecord0, 1, ... file_num.

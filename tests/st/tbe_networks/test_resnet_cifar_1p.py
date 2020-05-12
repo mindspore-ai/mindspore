@@ -137,7 +137,7 @@ def train_process(device_id, epoch_size, num_classes, device_num, batch_size):
     os.system("mkdir " + str(device_id))
     os.chdir(str(device_id))
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_task_sink=True, device_id=device_id)
+    context.set_context(device_id=device_id)
     context.set_context(enable_loop_sink=True)
     context.set_context(enable_mem_reuse=True)
     context.set_context(mode=context.GRAPH_MODE)
@@ -159,7 +159,7 @@ def train_process(device_id, epoch_size, num_classes, device_num, batch_size):
 
 def eval(batch_size, num_classes):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_task_sink=True, device_id=0)
+    context.set_context(device_id=0)
     context.set_context(enable_loop_sink=True)
     context.set_context(enable_mem_reuse=True)
 

@@ -29,7 +29,6 @@ python run_pretrain.py  \
     --distribute="false" \
     --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \
-    --enable_task_sink="true" \
     --enable_loop_sink="true" \
     --enable_mem_reuse="true" \
     --enable_save_ckpt="true" \

@@ -32,6 +32,7 @@ from mindspore.communication.management import init
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from resnet import resnet50
 import random
+
 random.seed(1)
 np.random.seed(1)
 ds.config.set_seed(1)
@@ -53,7 +54,7 @@ device_id = int(os.getenv('DEVICE_ID'))
 data_home = args_opt.dataset_path
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(enable_task_sink=True, device_id=device_id)
+context.set_context(device_id=device_id)
 context.set_context(enable_loop_sink=True)
 context.set_context(enable_mem_reuse=True)
 

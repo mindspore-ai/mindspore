@@ -33,9 +33,7 @@ def setup_module():
     global rank_id
     np.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_task_sink=True,
-                        device_id=device_id)
-    context.set_context(enable_ir_fusion=True)
+    context.set_context(device_id=device_id)
     context.set_context(enable_loop_sink=False)
     distributedTool.init()
     device_num = distributedTool.get_group_size()
@@ -86,15 +84,15 @@ class DataGenerator():
         return data
 
     def input_data(self, shape):
-        data = (self.generate_data(shape)*2).astype(np.float32)
-        stra = [1]*len(shape)
+        data = (self.generate_data(shape) * 2).astype(np.float32)
+        stra = [1] * len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
         return Tensor(data), Tensor(datas[rank_id])
 
     def label_data(self, shape, classes):
-        data = (self.generate_data(shape)*(classes-1)).astype(np.int32)
-        stra = [1]*len(shape)
+        data = (self.generate_data(shape) * (classes - 1)).astype(np.int32)
+        stra = [1] * len(shape)
         stra[0] = device_num
         datas = self.get_parallel_blocks(data, stra)
         return Tensor(data), Tensor(datas[rank_id])

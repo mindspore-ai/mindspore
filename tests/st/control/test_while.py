@@ -31,7 +31,6 @@ def t1_while(x, y, z):
 
 def test_net():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(enable_task_sink=True)
     c1 = Tensor([2], mstype.int32)
     c2 = Tensor([14], mstype.int32)
     c3 = Tensor([1], mstype.int32)

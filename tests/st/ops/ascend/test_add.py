@@ -15,14 +15,10 @@
 from mindspore import Tensor
 from mindspore.ops import operations as P
 import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
 import mindspore.context as context
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(enable_task_sink=True)
 
 
 class Net(nn.Cell):
