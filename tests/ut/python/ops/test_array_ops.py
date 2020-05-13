@@ -227,6 +227,23 @@ class SpaceToBatchNet(Cell):
         return self.space_to_batch(x)
 
 
+class PackNet(Cell):
+    def __init__(self):
+        super(PackNet, self).__init__()
+        self.pack = P.Pack()
+
+    def construct(self, x):
+        return self.pack((x, x))
+
+
+class UnpackNet(Cell):
+    def __init__(self):
+        super(UnpackNet, self).__init__()
+        self.unpack = P.Unpack()
+
+    def construct(self, x):
+        return self.unpack(x)
+
 test_case_array_ops = [
     ('CustNet1', {
         'block': CustNet1(),
@@ -249,6 +266,12 @@ test_case_array_ops = [
     ('SpaceToBatchNet', {
         'block': SpaceToBatchNet(),
         'desc_inputs': [Tensor(np.array([[[[1, 2], [3, 4]]]]).astype(np.float16))]}),
+    ('PackNet', {
+        'block': PackNet(),
+        'desc_inputs': [Tensor(np.array([[[1, 2], [3, 4]]]).astype(np.float16))]}),
+    ('UnpackNet', {
+        'block': UnpackNet(),
+        'desc_inputs': [Tensor(np.array([[1, 2], [3, 4]]).astype(np.float16))]}),
 ]
 
 test_case_lists = [test_case_array_ops]
