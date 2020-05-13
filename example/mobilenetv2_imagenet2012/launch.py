@@ -130,9 +130,11 @@ def main():
     log_files = []
     env = os.environ.copy()
     env['RANK_SIZE'] = str(args.nproc_per_node)
+    cur_path = os.getcwd()
     for rank_id in range(0, args.nproc_per_node):
+        os.chdir(cur_path)
         device_id = visible_devices[rank_id]
-        device_dir = os.path.join(os.getcwd(), 'device{}'.format(rank_id))
+        device_dir = os.path.join(cur_path, 'device{}'.format(rank_id))
         env['RANK_ID'] = str(rank_id)
         env['DEVICE_ID'] = str(device_id)
         if args.nproc_per_node > 1:
@@ -141,11 +143,12 @@ def main():
         if os.path.exists(device_dir):
             shutil.rmtree(device_dir)
         os.mkdir(device_dir)
+        os.chdir(device_dir)
         cmd = [sys.executable, '-u']
         cmd.append(args.training_script)
         cmd.extend(args.training_script_args)
         log_file = open('{dir}/log{id}.log'.format(dir=device_dir, id=rank_id), 'w')
-        process = subprocess.Popen(cmd, stdout=log_file, env=env)
+        process = subprocess.Popen(cmd, stdout=log_file, stderr=log_file, env=env)
         processes.append(process)
         cmds.append(cmd)
         log_files.append(log_file)
