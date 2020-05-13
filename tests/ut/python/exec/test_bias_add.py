@@ -14,14 +14,17 @@
 # ============================================================================
 """ test BiasAdd """
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.common.initializer import initializer
 from mindspore import Tensor, Parameter
+from mindspore.common.initializer import initializer
+from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
+
 
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self,
                  output_channels,
                  bias_init='zeros',

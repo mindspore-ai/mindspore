@@ -16,15 +16,15 @@
 train step wrap
 """
 import mindspore.nn as nn
-from mindspore.ops import functional as F
+from mindspore import ParameterTuple
 from mindspore.ops import composite as C
-from mindspore.ops import operations as P
-from mindspore import Parameter, ParameterTuple
+
 
 class TrainStepWrap(nn.Cell):
     """
     TrainStepWrap definition
     """
+
     def __init__(self, network):
         super(TrainStepWrap, self).__init__()
         self.network = network
@@ -39,10 +39,12 @@ class TrainStepWrap(nn.Cell):
         grads = self.grad(self.network, weights)(x, label)
         return self.optimizer(grads)
 
+
 class NetWithLossClass(nn.Cell):
     """
     NetWithLossClass definition
     """
+
     def __init__(self, network):
         super(NetWithLossClass, self).__init__(auto_prefix=False)
         self.loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -61,6 +63,7 @@ class TrainStepWrap2(nn.Cell):
     """
     TrainStepWrap2 definition
     """
+
     def __init__(self, network, sens):
         super(TrainStepWrap2, self).__init__()
         self.network = network
@@ -76,13 +79,16 @@ class TrainStepWrap2(nn.Cell):
         grads = self.grad(self.network, weights)(x, self.sens)
         return self.optimizer(grads)
 
+
 def train_step_with_sens(network, sens):
     return TrainStepWrap2(network, sens)
+
 
 class TrainStepWrapWithoutOpt(nn.Cell):
     """
     TrainStepWrapWithoutOpt definition
     """
+
     def __init__(self, network):
         super(TrainStepWrapWithoutOpt, self).__init__()
         self.network = network
@@ -92,6 +98,7 @@ class TrainStepWrapWithoutOpt(nn.Cell):
     def construct(self, x, label):
         grads = self.grad(self.network, self.weights)(x, label)
         return grads
+
 
 def train_step_without_opt(network):
     return TrainStepWrapWithoutOpt(NetWithLossClass(network))

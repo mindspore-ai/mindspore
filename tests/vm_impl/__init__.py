@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Vm implementation."""
+from . import array_ops_vm_impl
 from . import math_ops_vm_impl
 from . import nn_ops_vm_impl
-from . import array_ops_vm_impl
 from .vm_interface import vm

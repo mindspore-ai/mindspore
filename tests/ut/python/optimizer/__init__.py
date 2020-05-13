@@ -13,4 +13,3 @@
 # limitations under the License.
 # ============================================================================
 """ init vm impl """
-from ....vm_impl import vm

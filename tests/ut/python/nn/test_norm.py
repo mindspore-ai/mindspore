@@ -14,6 +14,7 @@
 # ============================================================================
 """ test norm """
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import _executor

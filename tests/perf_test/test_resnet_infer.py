@@ -17,9 +17,10 @@
 
 import numpy as np
 
-from mindspore.common.api import _executor
 from mindspore import Tensor
+from mindspore.common.api import _executor
 from .resnet_example import resnet50
+
 
 def test_compile():
     net = resnet50()

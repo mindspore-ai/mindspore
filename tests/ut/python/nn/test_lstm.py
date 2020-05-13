@@ -14,6 +14,7 @@
 # ============================================================================
 """ test lstm """
 import pytest
+
 import mindspore.context as context
 from mindspore import nn
 from ..ut_filter import run_on_gpu
@@ -22,6 +23,7 @@ from ....ops_common import convert
 
 class LstmTestNet(nn.Cell):
     """ LstmTestNet definition """
+
     def __init__(self, input_size, hidden_size, num_layers, has_bias, batch_first, bidirectional):
         super(LstmTestNet, self).__init__()
         self.lstm = nn.LSTM(input_size=input_size,
@@ -31,7 +33,6 @@ class LstmTestNet(nn.Cell):
                             batch_first=batch_first,
                             bidirectional=bidirectional,
                             dropout=0.0)
-
 
     def construct(self, inp, h0, c0):
         return self.lstm(inp, (h0, c0))
@@ -85,6 +86,7 @@ def test_compile(args):
     inputs = [convert(shp) for shp in shapes]
     out = net(*inputs)
     print(f"out: {out}")
+
 
 @run_on_gpu
 @pytest.mark.parametrize('args', test_case_cell_ops, ids=lambda x: x[0])

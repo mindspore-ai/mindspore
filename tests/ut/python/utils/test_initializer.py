@@ -15,19 +15,24 @@
 """ test_initializer """
 import math
 from functools import reduce
+
 import numpy as np
-from scipy import stats
 import pytest as py
-import mindspore.common.initializer as init
+from scipy import stats
+
 import mindspore as ms
+import mindspore.common.initializer as init
 from mindspore import context
 from mindspore.nn import Conv2d
 from ..ut_filter import non_graph_engine
+
+
 # pylint: disable=W0212
 # W0212: protected-access
 
 class InitTwo(init.Initializer):
     """Initialize the array to two."""
+
     def _initialize(self, arr):
         init._assignment(arr, 2)
 
@@ -44,7 +49,7 @@ def _check_value(tensor, value_min, value_max):
 def _check_uniform(tensor, boundary_a, boundary_b):
     samples = tensor.asnumpy().reshape((-1))
     _, p = stats.kstest(samples, 'uniform', (boundary_a, (boundary_b - boundary_a)))
-    print("p-value is %f"%p)
+    print("p-value is %f" % p)
     return p > 0.0001
 
 

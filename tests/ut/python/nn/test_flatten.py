@@ -16,9 +16,10 @@
 test flatten api
 """
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore.common.api import _executor
 from mindspore import Tensor
+from mindspore.common.api import _executor
 
 
 class Net(nn.Cell):

@@ -15,6 +15,7 @@
 """ test_checkparam """
 import numpy as np
 import pytest
+
 import mindspore
 import mindspore.nn as nn
 from mindspore import Model, context
@@ -23,6 +24,7 @@ from mindspore.common.tensor import Tensor
 
 class LeNet5(nn.Cell):
     """ LeNet5 definition """
+
     def __init__(self):
         super(LeNet5, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5, pad_mode="valid")

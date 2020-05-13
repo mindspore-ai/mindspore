@@ -20,9 +20,9 @@
 import numpy as np
 
 from mindspore import Tensor
-from ..train_step_wrap import train_step_without_opt
 from .resnet_example import resnet50
-from ..vm_impl import *
+from ..train_step_wrap import train_step_without_opt
+
 
 def test_resnet50_pynative():
     net = train_step_without_opt(resnet50())

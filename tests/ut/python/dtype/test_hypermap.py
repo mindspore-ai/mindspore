@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
 from mindspore import Tensor, context
 from mindspore.nn import Cell

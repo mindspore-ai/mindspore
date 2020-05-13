@@ -14,20 +14,22 @@
 # ============================================================================
 import numpy as np
 import pytest
+
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-from mindspore.nn.optim import Momentum, SGD, RMSProp, Adam
 from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.common.tensor import Tensor
-from mindspore.ops import operations as P
 from mindspore.nn import TrainOneStepCell, WithLossCell
+from mindspore.nn.optim import Momentum, SGD, RMSProp, Adam
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
 class LeNet5(nn.Cell):
     """ LeNet5 definition """
+
     def __init__(self):
         super(LeNet5, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')

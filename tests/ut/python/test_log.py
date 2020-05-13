@@ -15,12 +15,13 @@
 """
 log test
 """
+import logging
 import os
-import sys
-import time
 import re
 import shutil
-import logging
+import sys
+import time
+
 
 def test_log_stdout():
     # Clean up environment variables
@@ -50,8 +51,8 @@ def test_log_setlevel():
     _rm_env_config()
     os.environ['GLOG_v'] = '0'
     from mindspore import log as logger
-    #logger_instance = logger._get_logger()
-    #del logger_instance
+    # logger_instance = logger._get_logger()
+    # del logger_instance
     loglevel = logger.get_level()
     log_str = 'print debug informations'
     logger.debug("5 test log message debug:%s", log_str)
@@ -87,7 +88,7 @@ def test_log_file():
               "\[.*:.*[0-9]\] test log message warning"
     match_obj = re.match(pattern, result)
 
-    #Clear test file
+    # Clear test file
     if os.path.exists(file_path):
         shutil.rmtree(file_path)
 
@@ -100,7 +101,7 @@ def test_log_backup_count():
     """
     test backup count
     """
-    #logger.reset_log_config(level=logging.INFO, console=False,
+    # logger.reset_log_config(level=logging.INFO, console=False,
     #                        filepath=file_path, maxBytes=1000, backupCount=10)
     _rm_env_config()
     file_path = '/tmp/log/mindspore_test'
@@ -141,12 +142,12 @@ def test_log_verify_envconfig():
     # level is not a number
     _rm_env_config()
     os.environ['GLOG_v'] = 'test'
-    verify_dict_0  = logger._get_env_config()
+    verify_dict_0 = logger._get_env_config()
 
     # level is not in range
     _rm_env_config()
     os.environ['GLOG_v'] = '100'
-    verify_dict_1  = logger._get_env_config()
+    verify_dict_1 = logger._get_env_config()
 
     # console is not a number
     _rm_env_config()
@@ -236,7 +237,6 @@ def test_log_repeated_print():
     logger._global_logger = None
 
 
-
 def test_log_getconfig():
     _rm_env_config()
     os.environ['GLOG_v'] = '3'
@@ -307,7 +307,7 @@ def test_log_ms_import():
     targetdict = {'GLOG_v': '2', 'GLOG_logtostderr': '1'}
     level = ms.get_level()
     assert configdict == targetdict and level == '2'
-	
+
 
 def _rm_env_config():
     envlist = ['GLOG_v', 'GLOG_logtostderr', 'GLOG_log_dir', 'logger_maxBytes', 'logger_backupCount']

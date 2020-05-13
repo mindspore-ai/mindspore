@@ -19,12 +19,12 @@
 @Desc  : test mindspore compile method
 """
 import logging
-import numpy as np
-import mindspore.nn as nn
-from mindspore import Tensor, Parameter, Model
-from mindspore.ops import operations as P
-from ..ut_filter import non_graph_engine
 
+import numpy as np
+
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
+from mindspore.ops import operations as P
 
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
@@ -104,6 +104,7 @@ class ResidualBlock(nn.Cell):
 
 class ResNet(nn.Cell):
     """ ResNet definition """
+
     def __init__(self, tensor):
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
@@ -118,6 +119,7 @@ class ResNet(nn.Cell):
 
 class LeNet(nn.Cell):
     """ LeNet definition """
+
     def __init__(self):
         super(LeNet, self).__init__()
         self.relu = nn.ReLU()
@@ -165,4 +167,3 @@ class Net(nn.Cell):
 
     def construct(self, input_x):
         return self.softmax(input_x)
-

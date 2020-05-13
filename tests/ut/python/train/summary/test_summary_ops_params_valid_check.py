@@ -18,16 +18,17 @@
 @Date  : 2019-08-5
 @Desc  : test summary function of ops params valid check
 """
-import os
 import logging
+import os
 import random
+
 import numpy as np
 import pytest
-from mindspore.train.summary.summary_record import SummaryRecord
-from mindspore.common.tensor import Tensor
-import mindspore.nn as nn
-from mindspore.ops import operations as P
 
+import mindspore.nn as nn
+from mindspore.common.tensor import Tensor
+from mindspore.ops import operations as P
+from mindspore.train.summary.summary_record import SummaryRecord
 
 CUR_DIR = os.getcwd()
 SUMMARY_DIR = CUR_DIR + "/test_temp_summary_event_file/"
@@ -38,6 +39,7 @@ log.setLevel(level=logging.ERROR)
 
 class SummaryDemoTag(nn.Cell):
     """ SummaryDemoTag definition """
+
     def __init__(self, tag1, tag2, tag3):
         super(SummaryDemoTag, self).__init__()
         self.s = P.ScalarSummary()
@@ -58,6 +60,7 @@ class SummaryDemoTag(nn.Cell):
 
 class SummaryDemoTagForSet(nn.Cell):
     """ SummaryDemoTagForSet definition """
+
     def __init__(self, tag_tuple):
         super(SummaryDemoTagForSet, self).__init__()
         self.s = P.ScalarSummary()
@@ -75,6 +78,7 @@ class SummaryDemoTagForSet(nn.Cell):
 
 class SummaryDemoValue(nn.Cell):
     """ SummaryDemoValue definition """
+
     def __init__(self, value):
         super(SummaryDemoValue, self).__init__()
         self.s = P.ScalarSummary()
@@ -88,8 +92,10 @@ class SummaryDemoValue(nn.Cell):
         self.s("y", self.v)
         return z
 
+
 class SummaryDemoValueForSet(nn.Cell):
     """ SummaryDemoValueForSet definition """
+
     def __init__(self, value, tag_tuple):
         super(SummaryDemoValueForSet, self).__init__()
         self.s = P.ScalarSummary()
@@ -106,11 +112,12 @@ class SummaryDemoValueForSet(nn.Cell):
 
 class HistogramSummaryNet(nn.Cell):
     "HistogramSummaryNet definition"
+
     def __init__(self, value):
         self.histogram_summary = P.HistogramSummary()
         self.add = P.TensorAdd()
         self.value = value
-    
+
     def construct(self, tensors1, tensor2):
         self.histogram_summary("value", self.value)
         return self.add(tensors1, tensor2)
@@ -246,7 +253,7 @@ def test_histogram_summary_use_valid_value():
     """Test histogram summary with valid value"""
     log.debug("Begin test_histogram_summary_use_valid_value")
     try:
-        net = HistogramSummaryNet(Tensor(np.array([1,2,3])))
+        net = HistogramSummaryNet(Tensor(np.array([1, 2, 3])))
         run_case(net)
     except:
         assert True

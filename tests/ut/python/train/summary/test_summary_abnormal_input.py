@@ -18,11 +18,13 @@
 @Date  : 2019-08-5
 @Desc  : test summary function of abnormal input
 """
-import os
 import logging
+import os
+
 import numpy as np
-from mindspore.train.summary.summary_record import SummaryRecord
+
 from mindspore.common.tensor import Tensor
+from mindspore.train.summary.summary_record import SummaryRecord
 
 CUR_DIR = os.getcwd()
 SUMMARY_DIR = CUR_DIR + "/test_temp_summary_event_file/"
@@ -65,6 +67,7 @@ def test_summaryrecord_input_null_string():
         assert False
     log.debug("finished test_summaryrecord_input_null_string")
 
+
 def test_summaryrecord_input_None():
     log.debug("begin test_summaryrecord_input_None")
     # step 0: create the thread
@@ -75,6 +78,7 @@ def test_summaryrecord_input_None():
     else:
         assert False
     log.debug("finished test_summaryrecord_input_None")
+
 
 def test_summaryrecord_input_relative_dir_1():
     log.debug("begin test_summaryrecord_input_relative_dir_1")

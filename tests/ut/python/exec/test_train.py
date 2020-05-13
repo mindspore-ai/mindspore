@@ -14,29 +14,33 @@
 # ============================================================================
 """ test model train """
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.common.initializer import initializer
 from mindspore import Tensor, Parameter, Model
+from mindspore.common.initializer import initializer
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
+
 
 # fn is a funcation use i as input
 def lr_gen(fn, epoch_size):
     for i in range(epoch_size):
         yield fn(i)
 
+
 def me_train_tensor(net, input_np, label_np, epoch_size=2):
     """me_train_tensor"""
     loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
-    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr_gen(lambda i: 0.1, epoch_size), 0.9, 0.01, 1024)
+    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr_gen(lambda i: 0.1, epoch_size), 0.9,
+                   0.01, 1024)
     Model(net, loss, opt)
     _network = nn.WithLossCell(net, loss)
     _train_net = nn.TrainOneStepCell(_network, opt)
     _train_net.set_train()
     label_np = np.argmax(label_np, axis=-1).astype(np.int32)
     for epoch in range(0, epoch_size):
-        print(f"epoch %d"%(epoch))
+        print(f"epoch %d" % (epoch))
         _train_net(Tensor(input_np), Tensor(label_np))
 
 
@@ -52,6 +56,7 @@ def test_bias_add(test_with_simu):
 
     class Net(nn.Cell):
         """Net definition"""
+
         def __init__(self,
                      output_channels,
                      bias_init='zeros',
@@ -87,6 +92,7 @@ def test_conv(test_with_simu):
 
     class Net(nn.Cell):
         "Net definition"""
+
         def __init__(self,
                      cin,
                      cout,
@@ -116,6 +122,7 @@ def test_net():
 
     class Net(nn.Cell):
         """Net definition"""
+
         def __init__(self):
             super(Net, self).__init__()
             Tensor(np.ones([64, 3, 7, 7]).astype(np.float32) * 0.01)
@@ -141,6 +148,7 @@ def test_net():
     label_np = np.ones([32, 12]).astype(np.int32)
     me_train_tensor(net, input_np, label_np)
 
+
 def test_bn():
     """test_bn"""
     import mindspore.context as context
@@ -151,6 +159,7 @@ def test_bn():
 
     class Net(nn.Cell):
         """Net definition"""
+
         def __init__(self, cin, cout):
             super(Net, self).__init__()
             self.bn = nn.BatchNorm2d(cin)

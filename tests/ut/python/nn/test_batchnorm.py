@@ -17,8 +17,8 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
-from mindspore.common.api import _executor
 from mindspore import Tensor, Parameter
+from mindspore.common.api import _executor
 
 
 def test_bn_pars_valid1():
@@ -62,11 +62,12 @@ class GroupNet(nn.Cell):
     def __init__(self):
         super(GroupNet, self).__init__()
         self.group_bn = nn.GroupNorm()
+
     def construct(self, x):
         return self.group_bn(x)
 
 
 def test_compile_groupnorm():
     net = nn.GroupNorm(16, 64)
-    input_data = Tensor(np.random.rand(1,64,256,256).astype(np.float32))
+    input_data = Tensor(np.random.rand(1, 64, 256, 256).astype(np.float32))
     _executor.compile(net, input_data)

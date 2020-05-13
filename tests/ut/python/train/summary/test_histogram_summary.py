@@ -21,8 +21,8 @@ import tempfile
 import numpy as np
 
 from mindspore.common.tensor import Tensor
-from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
 from mindspore.train.summary._summary_adapter import _calc_histogram_bins
+from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
 from .summary_reader import SummaryReader
 
 CUR_DIR = os.getcwd()
