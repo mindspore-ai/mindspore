@@ -21,6 +21,7 @@
 #include "dataset/engine/datasetops/repeat_op.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
+#include "dataset/engine/opt/pass.h"
 
 #include "utils/log_adapter.h"
 
@@ -186,6 +187,12 @@ int32_t RepeatOp::num_producers() const {
   } else {
     return child_[0]->num_producers();
   }
+}
+
+// Visitor accept method for NodePass
+Status RepeatOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<RepeatOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

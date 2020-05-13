@@ -192,6 +192,12 @@ class BatchOp : public ParallelOp {
   Status PadTensor(std::shared_ptr<Tensor> src, std::shared_ptr<Tensor> *dst, const std::vector<dsize_t> &pad_shape,
                    float pad_val);
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   // recursive helper function. This function could be very expensive if called on a multi-dimensional tensor
   // it is only meant to be called by PadTensor.

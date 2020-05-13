@@ -222,6 +222,12 @@ class TFReaderOp : public ParallelOp {
   static Status CountTotalRows(int64_t *out_total_rows, const std::vector<std::string> &filenames, int64_t threads = 1,
                                bool estimate = false);
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   // The entry point for when workers are launched.
   // @param worker_id - the id of the worker that is executing this function.

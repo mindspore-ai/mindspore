@@ -74,6 +74,12 @@ class SkipOp : public PipelineOp {
   // @param worker_id - The worker id
   Status EofReceived(int32_t worker_id) override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   int32_t max_skips_;   // The number of skips that the user requested
   int32_t skip_count_;  // A counter for the current number of executed skips

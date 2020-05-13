@@ -1,4 +1,5 @@
 add_subdirectory(datasetops)
+add_subdirectory(opt)
 if (ENABLE_TDTQUE)
   add_subdirectory(tdt)
 endif ()
@@ -14,7 +15,7 @@ add_library(engine OBJECT
 target_include_directories(engine PRIVATE ${pybind11_INCLUDE_DIRS})
 
 if (ENABLE_TDTQUE)
-  add_dependencies(engine engine-datasetops engine-datasetops-source engine-tdt)
+  add_dependencies(engine engine-datasetops engine-datasetops-source engine-tdt engine-opt)
 else()
-  add_dependencies(engine engine-datasetops engine-datasetops-source)
+  add_dependencies(engine engine-datasetops engine-datasetops-source engine-opt)
 endif ()

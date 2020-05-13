@@ -30,6 +30,7 @@
 #include "dataset/engine/dataset_iterator.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
+#include "dataset/engine/opt/pass.h"
 #include "dataset/util/random.h"
 #include "dataset/util/status.h"
 
@@ -295,6 +296,12 @@ Status ShuffleOp::InitShuffleBuffer() {
 Status ShuffleOp::EoeReceived(int32_t worker_id) {
   state_ = OpState::kDeOpIdle;
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status ShuffleOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<ShuffleOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

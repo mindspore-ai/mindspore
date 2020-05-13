@@ -29,6 +29,7 @@
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -683,6 +684,12 @@ Status MindRecordOp::CountTotalRows(const std::vector<std::string> dataset_path,
     RETURN_STATUS_UNEXPECTED("MindRecordOp count total rows failed.");
   }
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status MindRecordOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<MindRecordOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

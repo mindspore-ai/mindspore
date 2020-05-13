@@ -24,6 +24,7 @@
 #include "dataset/engine/dataset_iterator.h"
 #include "dataset/util/status.h"
 #include "dataset/util/task_manager.h"
+#include "dataset/engine/opt/pass.h"
 
 #ifdef ENABLE_TDTQUE
 #include "tdt/tsd_client.h"
@@ -265,5 +266,12 @@ void DeviceQueueOp::Print(std::ostream &out, bool show_all) const {
     out << "\nChannel name: " << channel_name_ << "\nPrefetch size: " << prefetch_size_ << "\n\n";
   }
 }
+
+// Visitor accept method for NodePass
+Status DeviceQueueOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<DeviceQueueOp>(shared_from_this()), modified);
+}
+
 }  // namespace dataset
 }  // namespace mindspore

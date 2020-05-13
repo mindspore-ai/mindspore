@@ -32,6 +32,8 @@ class ExecutionTree;
 
 class DataBuffer;
 
+class NodePass;
+
 // The base class DatasetOp is the main tree node.  It is an abstract class, so
 // the actual implementation of the operators will be derived from here.
 class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
@@ -208,6 +210,16 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // gives a string output for the column map for handy debug printing
   // @return - the column name map as a string
   std::string ColumnNameMapAsString() const;
+
+  // Children Getter
+  // @return Vector or Children
+  std::vector<std::shared_ptr<DatasetOp>> Children() const { return child_; }
+
+  // Base method for NodePass visit.
+  // Subclass needs to override this if it requires special node visit access.
+  // Check "dataset/engine/opt/pass.h" for more details.
+  // @return Statue of the node visit
+  virtual Status Accept(NodePass *p, bool *modified);
 
  protected:
   // Adds a parent operator to this operator

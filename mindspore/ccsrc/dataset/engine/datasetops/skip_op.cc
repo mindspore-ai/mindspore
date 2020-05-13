@@ -22,6 +22,7 @@
 #include "dataset/engine/datasetops/skip_op.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 
 #include "utils/log_adapter.h"
 
@@ -127,6 +128,12 @@ Status SkipOp::operator()() {
 Status SkipOp::EofReceived(int32_t worker_id) {
   MS_LOG(DEBUG) << "Skip operator EOF received, do nothing now.";
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status SkipOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<SkipOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -225,6 +225,12 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
                                     const std::set<std::string> &exts, int64_t *num_rows, int64_t *num_classes,
                                     int64_t dev_id = 0, int64_t num_dev = 1);
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   // Initialize Sampler, calls sampler->Init() within
   // @return Status - The error code return

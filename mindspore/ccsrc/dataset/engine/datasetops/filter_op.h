@@ -121,6 +121,12 @@ class FilterOp : public ParallelOp {
   // @param show_all A bool to control if you want to show all info or just a summary.
   void Print(std::ostream &out, bool show_all) const override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   // predicate_func python callable which returns a boolean value.
   py::function predicate_func_;

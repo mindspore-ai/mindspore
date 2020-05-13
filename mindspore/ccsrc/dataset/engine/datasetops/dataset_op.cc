@@ -25,6 +25,7 @@
 #include "dataset/engine/datasetops/device_queue_op.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
+#include "dataset/engine/opt/pass.h"
 
 #include "utils/log_adapter.h"
 
@@ -248,6 +249,12 @@ Status DatasetOp::AssignColMapFromChild() {
     MS_LOG(INFO) << "Setting column map after first fetch:\n" << DatasetOp::ColumnNameMapAsString();
   }
   return Status::OK();
+}
+
+Status DatasetOp::Accept(NodePass *p, bool *modified) {
+  // DatasetOp is the base class of visitor target.
+  // This method will only be called if its derived class does not implement one.
+  return p->RunOnNode(shared_from_this(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

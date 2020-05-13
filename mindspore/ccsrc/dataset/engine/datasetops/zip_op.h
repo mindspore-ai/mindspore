@@ -104,6 +104,12 @@ class ZipOp : public PipelineOp {
   // @return Status - The error code return
   Status operator()() override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   // Handles preprocessing of the main loop, used when starting new epoch
   Status prepare(TensorQTable *const table);
