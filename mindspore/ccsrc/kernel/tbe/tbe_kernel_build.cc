@@ -722,8 +722,8 @@ size_t TbeKernelBuild::GetOptionalInput(const mindspore::CNodePtr &cnode, bool i
 }
 
 std::string TbeKernelBuild::GetRealOpType(const std::string &origin_type) {
-  static std::map<std::string, std::string> TbeKernelBuild::buffer_fussion_op_map = {
-    {"DepthwiseConv2dNative", "DepthwiseConv2D"}, {"TensorAdd", "Add"}};
+  static std::map<std::string, std::string> buffer_fussion_op_map = {{"DepthwiseConv2dNative", "DepthwiseConv2D"},
+                                                                     {"TensorAdd", "Add"}};
   string result = origin_type;
   if (buffer_fussion_op_map.find(origin_type) != buffer_fussion_op_map.end()) {
     result = buffer_fussion_op_map[origin_type];
