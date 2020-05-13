@@ -48,6 +48,10 @@ void DescReporter::ReportByLine(const std::string &data, const std::string &file
     if (report_ret != 0) {
       MS_LOG(EXCEPTION) << "report data failed";
     }
+    if (report_size == 0) {
+      MS_LOG(WARNING) << "report_size is 0";
+      break;
+    }
     cur_size += report_size;
   }
 }
@@ -58,7 +62,6 @@ void DescReporter::ReportData() {
     ReportByLine(data, file_name_);
   }
 }
-
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore
