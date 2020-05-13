@@ -546,7 +546,8 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
   if (cnode->inputs().size() != 2) {
     MS_LOG(EXCEPTION) << "Atomic Addr clean Node Input nodes not equal 2.";
   }
-  auto pre_node = cnode->inputs()[1];
+  MS_EXCEPTION_IF_NULL(cnode->inputs()[1]);
+  auto pre_node = (cnode->inputs()[1])->cast<CNodePtr>();
   // set clean output address
   if (AnfAlgo::HasNodeAttr(kAttrAutomicOutputIndexs, pre_node)) {
     auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAutomicOutputIndexs);

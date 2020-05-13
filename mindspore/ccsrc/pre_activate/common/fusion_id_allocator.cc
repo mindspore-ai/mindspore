@@ -29,7 +29,14 @@ int32_t FusionIdAllocator::AllocateFusionId() {
   return fusion_id;
 }
 
-bool FusionIdAllocator::HasFusionIdAttr(const AnfNodePtr &node) { return AnfAlgo::HasNodeAttr(kAttrFusionId, node); }
+bool FusionIdAllocator::HasFusionIdAttr(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  return AnfAlgo::HasNodeAttr(kAttrFusionId, cnode);
+}
 
 int32_t FusionIdAllocator::GetFusionId(const AnfNodePtr &node) {
   if (HasFusionIdAttr(node)) {

@@ -347,9 +347,13 @@ void GetFusionScopeComputeNodeList(session::KernelGraph *kernel_graph,
   auto nodes = TopoSort(kernel_graph->get_return());
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    if (AnfAlgo::IsRealCNodeKernel(node) && AnfAlgo::HasNodeAttr(kOpAttrFusionId, node)) {
-      auto fusion_id = AnfAlgo::GetNodeAttr<int32_t>(node, kOpAttrFusionId);
-      (*buffer_fusion_infos)[fusion_id].anf_nodes.push_back(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (AnfAlgo::IsRealCNodeKernel(cnode) && AnfAlgo::HasNodeAttr(kOpAttrFusionId, cnode)) {
+      auto fusion_id = AnfAlgo::GetNodeAttr<int32_t>(cnode, kOpAttrFusionId);
+      (*buffer_fusion_infos)[fusion_id].anf_nodes.push_back(cnode);
     }
   }
 }

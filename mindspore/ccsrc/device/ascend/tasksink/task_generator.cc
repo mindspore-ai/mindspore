@@ -45,7 +45,8 @@ void TaskGenerator::LaunchAddrCleanKernel(const CNodePtr &anf_node_ptr, AddressP
   if (anf_node_ptr->inputs().size() != 2) {
     MS_LOG(EXCEPTION) << "atomic Addr clean Node Input nodes not equal 2.";
   }
-  auto pre_node = anf_node_ptr->inputs()[1];
+  MS_EXCEPTION_IF_NULL(anf_node_ptr->inputs()[1]);
+  auto pre_node = (anf_node_ptr->inputs()[1])->cast<CNodePtr>();
   // set clean output addr
   if (AnfAlgo::HasNodeAttr(kAttrAutomicOutputIndexs, pre_node)) {
     auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAutomicOutputIndexs);

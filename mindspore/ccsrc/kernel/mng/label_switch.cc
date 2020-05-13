@@ -38,7 +38,8 @@ LabelSwitchKernel::~LabelSwitchKernel() {}
 bool LabelSwitchKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_LOG(INFO) << "LabelSwitchKernel init";
-  if (!AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, anf_node)) {
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (!AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cnode)) {
     MS_LOG(EXCEPTION) << "LabelSwitchKernel has no attr label_switch_list";
   }
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
