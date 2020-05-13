@@ -1792,8 +1792,8 @@ class LayerNorm(Primitive):
 
         - **output_x** (Tensor) - The normalized input, has the same type and shape as the `input_x`.
           The shape is :math:`(N, C)`.
-        - **updated_gamma** (Tensor) - Tensor of shape :math:`(C,)`.
-        - **updated_beta** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **mean** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **variance** (Tensor) - Tensor of shape :math:`(C,)`.
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [1, 2, 3]]), mindspore.float32)

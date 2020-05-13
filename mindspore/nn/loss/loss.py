@@ -18,6 +18,8 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
+from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel
 from ... import context
 
 
@@ -215,6 +217,8 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         sparse (bool): Specifies whether labels use sparse format or not. Default: False.
         reduction (Union[str, None]): Type of reduction to apply to loss. Support 'sum' or 'mean' If None,
             do not reduction. Default: None.
+        smooth_factor (float): Label smoothing factor. It is a optional input. Default: 0.
+        num_classes (int): The number of classes in the task. It is a optional input Default: 2.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
@@ -235,14 +239,20 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
     def __init__(self,
                  is_grad=True,
                  sparse=False,
-                 reduction=None):
+                 reduction=None,
+                 smooth_factor=0,
+                 num_classes=2):
         super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
         self.is_grad = is_grad
         self.sparse = sparse
+        validator.check_integer("num_classes", num_classes, 1, Rel.GT, self.cls_name)
+        validator.check_number_range("smooth_factor", smooth_factor, 0, 1, Rel.INC_BOTH, self.cls_name)
+        self.smooth_factor = smooth_factor
+        self.num_classes = num_classes
         self.softmax_cross_entropy = P.SoftmaxCrossEntropyWithLogits()
         self.one_hot = P.OneHot()
-        self.on_value = Tensor(1.0, mstype.float32)
-        self.off_value = Tensor(0.0, mstype.float32)
+        self.on_value = Tensor(1.0 - self.smooth_factor, mstype.float32)
+        self.off_value = Tensor(1.0 * self.smooth_factor / (self.num_classes - 1), mstype.float32)
         self.is_cpugpu = context.get_context('device_target') in ["CPU", "GPU"]
 
         if self.is_cpugpu:
