@@ -196,6 +196,8 @@ const char kNameBatchToSpace[] = "BatchToSpace";
 const char kNameAtan2[] = "Atan2";
 const char kNameApplyRMSProp[] = "ApplyRMSProp";
 const char kNameApplyCenteredRMSProp[] = "ApplyCenteredRMSProp";
+const char kNameL2Loss[] = "L2Loss";
+const char kNameCTCLoss[] = "CTCLoss";
 
 // -----------------OpAdapter initialization--------------
 std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_map() {
@@ -391,7 +393,9 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameBatchToSpace), ADPT_DESC(BatchToSpaceD)},
     {string(kNameAtan2), ADPT_DESC(Atan2)},
     {string(kNameApplyRMSProp), ADPT_DESC(ApplyRMSPropD)},
-    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)}};
+    {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)},
+    {string(kNameL2Loss), ADPT_DESC(L2Loss)},
+    {string(kNameCTCLoss), ADPT_DESC(CTCLoss)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);
   adpt_map[string(kNameApplyAdam)] = ADPT_DESC(ApplyAdamD);

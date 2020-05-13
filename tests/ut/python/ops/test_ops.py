@@ -909,6 +909,13 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3], [3, 3]],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
+    ('CTCLoss', {
+        'block': P.CTCLoss(),
+        'desc_inputs': [Tensor(np.ones([6, 4, 6]).astype(np.float32)),
+                        Tensor(np.array([[0, 1], [1, 0], [2, 3], [3, 2]]).astype(np.int64)),
+                        Tensor(np.array([1, 2, 3, 4]).astype(np.int32)),
+                        Tensor(np.array([6, 6, 6, 6]).astype(np.int32))],
+        'desc_bprop': [[4], [6, 4, 6]]}),
     ('L2Loss_1', {
         'block': P.L2Loss(),
         'desc_inputs': [Tensor(np.array([1, 2, 3, 4]), mstype.float32)],
