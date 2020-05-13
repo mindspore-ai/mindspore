@@ -34,6 +34,7 @@ class KernelBuildInfo {
     kernel_type_ = AUTO_DIFF_KERNEL;
     fusion_type_ = OPAQUE;
     processor_ = AICORE;
+    op_pattern_ = kCommonPattern;
     input_reshape_type_ = {};
     output_reshape_type_ = {};
     inputs_format_ = {};
@@ -70,6 +71,8 @@ class KernelBuildInfo {
 
   std::vector<TypeId> GetAllOutputDeviceTypes() const;
 
+  OpPattern op_pattern() const { return op_pattern_; }
+
   FusionType fusion_type() const { return fusion_type_; }
 
   Processor processor() const { return processor_; }
@@ -88,6 +91,7 @@ class KernelBuildInfo {
  private:
   KernelType kernel_type_;
   std::vector<std::string> inputs_format_;
+  OpPattern op_pattern_;
   std::vector<std::string> outputs_format_;
   std::vector<std::vector<Axis>> input_reshape_type_;
   std::vector<std::vector<Axis>> output_reshape_type_;
@@ -124,6 +128,8 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
   void SetFusionType(FusionType fusion_type);
 
   void SetProcessor(Processor processor);
+
+  void SetOpPattern(OpPattern pattern);
 
   std::shared_ptr<KernelBuildInfo> Build();
 

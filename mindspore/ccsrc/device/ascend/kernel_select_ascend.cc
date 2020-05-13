@@ -425,7 +425,7 @@ std::shared_ptr<kernel::KernelBuildInfo> ChooseMatchedKernelInfo(
   return kernel_info_list[selected_index];
 }
 
-std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetAllMatchedFilteredKernelInfo(
+std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilteredKernelInfoByDtype(
   const CNodePtr &cnode, const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> result;
   for (const auto &kernel_build_info : kernel_info_list) {
@@ -474,7 +474,7 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
   std::shared_ptr<kernel::KernelBuildInfo> selected_kernel_info = nullptr;
   // Matched kernel info
   // Filter kernel info matched with me infered type
-  auto filtered_kernel_info_list = GetAllMatchedFilteredKernelInfo(kernel_node, kernel_info_list);
+  auto filtered_kernel_info_list = FilteredKernelInfoByDtype(kernel_node, kernel_info_list);
   if (!filtered_kernel_info_list.empty()) {
     selected_kernel_info = ChooseMatchedKernelInfo(kernel_node, filtered_kernel_info_list);
     select_status = kStatusAllMatched;
@@ -508,6 +508,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node) {
                     << "] cannot find valid TBE kernel info, try to get aicpu kernel info";
     kernel::AICpuQuery(kernel_node, &kernel_info_list);
     select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
+    AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), kernel_node);
   }
   // The kernel info not finded both in the aicpu kernel list & aicore kernel list
   if (select_status == kNoMatched) {

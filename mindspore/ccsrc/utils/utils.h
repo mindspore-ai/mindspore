@@ -142,6 +142,7 @@ constexpr auto kLabelGotoOpName = "LabelGoto";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
+constexpr auto kAttrIsAICPUKernel = "is_ai_cpu_kernel";
 constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";
 constexpr auto kAttrVisited = "visited";
@@ -215,10 +216,11 @@ constexpr auto kOpFormat_FRAC_NZ = "FRACTAL_NZ";
 constexpr auto kOpFormat_C1HWNCoC0 = "C1HWNCoC0";
 constexpr auto kOpFormat_NC1HWC0_C04 = "NC1HWC0_C04";
 constexpr auto kOpFormat_FRACTAL_Z_C04 = "FRACTAL_Z_C04";
-const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT, kOpFormat_NC1KHKWHWC0, kOpFormat_ND,
-                                             kOpFormat_NCHW,    kOpFormat_NHWC,        kOpFormat_HWCN,
-                                             kOpFormat_NC1HWC0, kOpFormat_FRAC_Z,      kOpFormat_C1HWNCoC0,
-                                             kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
+constexpr auto kOpFormat_NDHWC = "NDHWC";
+const std::set<std::string> kOpFormatList = {
+  kOpFormat_DEFAULT,     kOpFormat_NC1KHKWHWC0,   kOpFormat_ND,     kOpFormat_NCHW,      kOpFormat_NHWC,
+  kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z, kOpFormat_C1HWNCoC0, kOpFormat_FRAC_NZ,
+  kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDHWC};
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
 const std::set<std::string> kOptOperatorSet = {
   kMomentumOpName,       kApplyMomentumOpName,        kApplyAdadeltaOpName,

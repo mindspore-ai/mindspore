@@ -47,6 +47,13 @@ enum FusionType {
   OPAQUE,
   UNKNOWN_FUSION_TYPE = -1,
 };
+enum OpPattern {
+  kCommonPattern = 0,
+  kFormatAgnosticPattern = 1,
+  kBroadcastPattern = 2,
+  kReducePattern = 3,
+  kDynamicFormatPattern = 4,
+};
 
 // Backend processor
 enum Processor {
