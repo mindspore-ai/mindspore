@@ -14,17 +14,14 @@
 # ============================================================================
 """ test_multigraph_sink """
 import pytest
-import numpy as np
-import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.common import ms_function
-from mindspore.ops import operations as P
 
 
 def setup_module(module):
-    context.set_context(mode = context.PYNATIVE_MODE, device_target = "Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
 
 c1 = Tensor([2], mstype.int32)
@@ -208,4 +205,3 @@ def test_while_in_while_in_while():
     output = while_in_while_in_while(c1, c2, c3)
     expect = Tensor([2534], mstype.int32)
     assert output == expect
-

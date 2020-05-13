@@ -142,15 +142,6 @@ class _Context:
             raise ValueError("Context handle is none in context!!!")
         return value
 
-    # For Ascend task sink mode execution
-    @property
-    def enable_task_sink(self):
-        return self._context_handle.get_task_sink_flag()
-
-    @enable_task_sink.setter
-    def enable_task_sink(self, task_sink):
-        self._context_handle.set_task_sink_flag(task_sink)
-
     @property
     def mode(self):
         return self._context_handle.get_execution_mode()
@@ -223,14 +214,6 @@ class _Context:
         success = self._context_handle.set_device_id(device_id)
         if not success:
             raise RuntimeError("Device id set failed!!!")
-
-    @property
-    def enable_ir_fusion(self):
-        return self._context_handle.get_ir_fusion_flag()
-
-    @enable_ir_fusion.setter
-    def enable_ir_fusion(self, enable_ir_fusion):
-        self._context_handle.set_ir_fusion_flag(enable_ir_fusion)
 
     @property
     def enable_loop_sink(self):
@@ -485,11 +468,9 @@ def reset_auto_parallel_context():
     _reset_auto_parallel_context()
 
 
-@args_type_check(mode=int, precompile_only=bool, device_target=str,
-                 device_id=int, enable_ir_fusion=bool, save_graphs=bool,
-                 enable_task_sink=bool, save_graphs_path=str, enable_loop_sink=bool,
-                 enable_mem_reuse=bool, save_ms_model=bool, save_ms_model_path=str,
-                 enable_auto_mixed_precision=bool, enable_dump=bool, save_dump_path=str,
+@args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
+                 save_graphs_path=str, enable_loop_sink=bool, enable_mem_reuse=bool, save_ms_model=bool,
+                 save_ms_model_path=str, enable_auto_mixed_precision=bool, enable_dump=bool, save_dump_path=str,
                  enable_reduce_precision=bool, graph_memory_max_size=str,
                  variable_memory_max_size=str, enable_profiling=bool, profiling_options=str)
 def set_context(**kwargs):
@@ -517,10 +498,8 @@ def set_context(**kwargs):
         device_target (str): The target device to run, support "Ascend", "GPU", "CPU". Default: "Ascend".
         device_id (int): Id of target device, the value must be in [0, device_num_per_host-1],
                     while device_num_per_host should no more than 4096. Default: 0.
-        enable_ir_fusion (bool): Whether to enable ir fusion. Default: True.
         save_graphs (bool): Whether to save graphs. Default: False.
         enable_loop_sink (bool): Whether to enable loop sink. Default: True.
-        enable_task_sink (bool): Whether to enable task sink. Default: True.
         enable_mem_reuse (bool): Whether to enable memory reuse. Default: True.
         save_ms_model (bool): Whether to save lite model converted by graph. Default: False.
         save_ms_model_path (str): Path to save converted lite model. Default: "."
@@ -559,7 +538,6 @@ def set_context(**kwargs):
         >>> context.set_context(device_target="Ascend")
         >>> context.set_context(device_id=0)
         >>> context.set_context(save_graphs=True, save_graphs_path="./model.ms")
-        >>> context.set_context(enable_task_sink=True)
         >>> context.set_context(enable_mem_reuse=True)
         >>> context.set_context(enable_reduce_precision=True)
         >>> context.set_context(save_ms_model=True, save_ms_model_path=".")

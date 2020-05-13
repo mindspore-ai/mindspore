@@ -13,19 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """ test_multigraph_sink """
-import pytest
-import numpy as np
-import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.common import ms_function
-from mindspore.ops import operations as P
 
 
 def setup_module(module):
     context.set_context(mode = context.PYNATIVE_MODE, save_graphs = False, device_target = "Ascend")
-    context.set_context(enable_task_sink = True, device_id = 0)
+    context.set_context(device_id=0)
 
 
 c1 = Tensor([2], mstype.int32)
@@ -86,6 +82,8 @@ def while_by_while(x, y, z):
         x = x + 1
     x = x + 1
     return x
+
+
 @ms_function
 def while_in_while(x, y, z):
     out = c4
@@ -97,6 +95,7 @@ def while_in_while(x, y, z):
         x = x + 1
     out = out + x
     return out
+
 
 def test_simple_if():
     output = simple_if(c1, c2, c3)
@@ -126,6 +125,7 @@ def test_while_by_while():
     output = while_by_while(c1, c2, c3)
     expect = Tensor([28], mstype.int32)
     assert output == expect
+
 
 def test_while_in_while():
     output = while_in_while(c1, c2, c3)

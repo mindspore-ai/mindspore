@@ -127,7 +127,6 @@ class ModelCallback(Callback):
 def test_bert_tdt():
     """test bert tdt"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
-    context.set_context(enable_task_sink=True)
     context.set_context(enable_loop_sink=True)
     context.set_context(enable_mem_reuse=True)
     ds = me_de_train_dataset()

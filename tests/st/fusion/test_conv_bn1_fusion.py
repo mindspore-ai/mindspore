@@ -21,7 +21,7 @@ from mindspore.common.initializer import initializer
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim import Momentum
 
-context.set_context(device_target="Ascend", enable_task_sink=True)
+context.set_context(device_target="Ascend")
 
 input_channel = 2048
 output_channel = 512

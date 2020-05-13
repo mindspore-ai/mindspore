@@ -24,8 +24,7 @@ import mindspore.common.dtype as mstype
 import os
 import numpy as np
 import mindspore.ops.functional as F
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.train.callback import Callback
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as vision
@@ -34,8 +33,6 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from resnet import resnet50
 import random
 from multiprocessing import Process, Queue
-from multiprocessing import Pool
-import time
 
 random.seed(1)
 np.random.seed(1)
@@ -150,7 +147,7 @@ def train_process(q, device_id, epoch_size, num_classes, device_num, batch_size,
     os.chdir(str(device_id))
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend", save_graphs=False)
-    context.set_context(enable_task_sink=True, device_id=device_id)
+    context.set_context(device_id=device_id)
     context.set_context(enable_loop_sink=True)
     context.set_context(enable_mem_reuse=True)
     os.environ['MINDSPORE_HCCL_CONFIG_PATH'] = MINDSPORE_HCCL_CONFIG_PATH
@@ -206,9 +203,9 @@ def test_resnet_cifar_8p():
     loss = 0.0
     for i in range(device_num):
         loss += q.get()
-    loss = loss/device_num
+    loss = loss / device_num
 
     for i in range(device_num):
         os.system("rm -rf " + str(i))
     print("End training...")
-    assert(loss < 2.0)
+    assert (loss < 2.0)

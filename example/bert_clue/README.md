@@ -58,7 +58,6 @@ options:
     --epoch_size               epoch size: N, default is 1
     --device_num               number of used devices: N, default is 1
     --device_id                device id: N, default is 0
-    --enable_task_sink         enable task sink: "true" | "false", default is "true"
     --enable_loop_sink         enable loop sink: "true" | "false", default is "true"
     --enable_mem_reuse         enable memory reuse: "true" | "false", default is "true"
     --enable_save_ckpt         enable save checkpoint: "true" | "false", default is "true"

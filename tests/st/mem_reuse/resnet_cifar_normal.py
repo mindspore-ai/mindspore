@@ -36,7 +36,6 @@ random.seed(1)
 np.random.seed(1)
 de.config.set_seed(1)
 
-
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
 parser.add_argument('--device_num', type=int, default=1, help='Device num.')
@@ -54,7 +53,7 @@ device_id = int(os.getenv('DEVICE_ID'))
 data_home = args_opt.dataset_path
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-context.set_context(enable_task_sink=True, device_id=device_id)
+context.set_context(device_id=device_id)
 context.set_context(enable_loop_sink=True)
 context.set_context(enable_mem_reuse=False)
 
