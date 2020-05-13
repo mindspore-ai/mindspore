@@ -447,6 +447,17 @@ class UnfoldNetSame(nn.Cell):
         return self.unfold(x)
 
 
+class FlattenNet(nn.Cell):
+    """ FlattenNet definition """
+
+    def __init__(self):
+        super(FlattenNet, self).__init__()
+        self.flatten = P.Flatten()
+
+    def construct(self, x):
+        return self.flatten(x)
+
+
 test_cases = [
     ('SoftMaxGrad', {
         'block': SoftMaxGrad(VirtualNetWithLoss(P.Softmax())),
@@ -532,6 +543,10 @@ test_cases = [
         'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([1, 2, 3, 4]).astype(np.float32))],
         'skip': ['backward']}),
+    ('FlattenNet', {
+        'block': FlattenNet(),
+        'desc_inputs': [Tensor(np.ones([1, 2, 3, 4], np.float32))],
+    }),
 ]
 
 test_cases_for_verify_exception = [
