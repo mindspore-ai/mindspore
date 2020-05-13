@@ -40,14 +40,9 @@ class DatasetIteratorKernel : public GpuKernel {
   void InitSizeLists() override;
 
  private:
-  size_t TensorSize(std::vector<int> &) const;
-
   std::string queue_name_;
-  int output_num_;
   unsigned int handle_;
-
-  size_t feature_size_;
-  size_t label_size_;
+  size_t total_bytes_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

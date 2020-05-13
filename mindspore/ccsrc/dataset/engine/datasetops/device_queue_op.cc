@@ -141,19 +141,19 @@ Status DeviceQueueOp::SendDataToGPU() {
       for (int row_id = 0;
            row_id < current_buffer->NumRows() && !is_break_loop && !GpuBufferMgr::GetInstance().IsClosed(); row_id++) {
         RETURN_IF_NOT_OK(current_buffer->GetRow(row_id, &curr_row));
-        if (curr_row.size() < 2) {
-          return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Invalid tensor size");
+
+        std::vector<size_t> data_size;
+        for (int i = 0; i < curr_row.size(); i++) {
+          data_size.push_back(static_cast<size_t>(curr_row[i]->SizeInBytes()));
         }
-        uint32_t feature_size = static_cast<uint32_t>(curr_row[0]->SizeInBytes());
-        uint32_t label_size = static_cast<uint32_t>(curr_row[1]->SizeInBytes());
         if (!is_open) {
-          handle = GpuBufferMgr::GetInstance().Open(0, channel_name_, feature_size, label_size, ReleaseData);
+          handle = GpuBufferMgr::GetInstance().Open(0, channel_name_, data_size, ReleaseData);
           if (handle == INVALID_HANDLE) {
             return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "open failed");
           }
           is_open = true;
         }
-        RETURN_IF_NOT_OK(RetryPushGPUData(feature_size, label_size, curr_row, handle));
+        RETURN_IF_NOT_OK(RetryPushGPUData(data_size, curr_row, handle));
         total_batch++;
         if (num_batch_ > 0 && total_batch == num_batch_) {
           is_break_loop = true;
@@ -173,16 +173,23 @@ Status DeviceQueueOp::SendDataToGPU() {
   return Status::OK();
 }
 
-Status DeviceQueueOp::RetryPushGPUData(uint32_t feature_size, uint32_t label_size, const TensorRow &curr_row,
+Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, const TensorRow &curr_row,
                                        uint32_t handle) {
-  unsigned char *feature_addr = nullptr;
-  unsigned char *label_addr = nullptr;
-  while (true && !GpuBufferMgr::GetInstance().IsClosed()) {
-    RETURN_IF_NOT_OK(MallocForGPUData(&feature_addr, feature_size, &label_addr, label_size, curr_row));
-    auto ret = GpuBufferMgr::GetInstance().Push(handle, feature_addr, feature_size, label_addr, label_size, WAIT_TIME);
+  std::vector<device::DataItemGpu> items;
+  for (int i = 0; i < data_size.size(); i++) {
+    device::DataItemGpu data_item;
+    data_item.data_len_ = data_size[i];
+    data_item.data_ptr_ = nullptr;
+    items.push_back(data_item);
+  }
+
+  while (!GpuBufferMgr::GetInstance().IsClosed()) {
+    RETURN_IF_NOT_OK(MallocForGPUData(&items, curr_row));
+    auto ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
     if (ret) {
-      free(feature_addr);
-      free(label_addr);
+      for (int i = 0; i < items.size(); i++) {
+        free(items[i].data_ptr_);
+      }
       MS_LOG(WARNING) << "Retry pushing data...";
       continue;
     } else {
@@ -192,29 +199,20 @@ Status DeviceQueueOp::RetryPushGPUData(uint32_t feature_size, uint32_t label_siz
   return Status::OK();
 }
 
-Status DeviceQueueOp::MallocForGPUData(unsigned char **feature_addr, uint32_t feature_size, unsigned char **label_addr,
-                                       uint32_t label_size, const TensorRow &curr_row) {
-  *feature_addr = (unsigned char *)malloc(feature_size);
-  if (*feature_addr == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "feature memory malloc failed.");
-  }
-  (void)memset_s(*feature_addr, feature_size, 0, feature_size);
-  unsigned char *feature = curr_row[0]->StartAddr();
-  if (memcpy_s(*feature_addr, feature_size, feature, static_cast<uint32_t>(curr_row[0]->SizeInBytes())) != 0) {
-    MS_LOG(ERROR) << "Feature memcpy_s failed!";
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "feature memcpy_s failed.");
-  }
-
-  *label_addr = (unsigned char *)malloc(label_size);
-  if (*label_addr == nullptr) {
-    free(*feature_addr);
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "label memory malloc failed.");
-  }
-  (void)memset_s(*label_addr, label_size, 0, label_size);
-  unsigned char *label = curr_row[1]->StartAddr();
-  if (memcpy_s(*label_addr, label_size, label, static_cast<uint32_t>(curr_row[1]->SizeInBytes())) != 0) {
-    MS_LOG(ERROR) << "Label memcpy_s failed!";
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "label memcpy_s failed.");
+Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, const TensorRow &curr_row) {
+  int i = 0;
+  for (auto &sub_item : *items) {
+    sub_item.data_ptr_ = (unsigned char *)malloc(sub_item.data_len_);
+    if (sub_item.data_ptr_ == nullptr) {
+      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "memory malloc failed.");
+    }
+    (void)memset_s(sub_item.data_ptr_, sub_item.data_len_, 0, sub_item.data_len_);
+    unsigned char *column_data = curr_row[i]->StartAddr();
+    if (memcpy_s(sub_item.data_ptr_, sub_item.data_len_, column_data,
+                 static_cast<uint32_t>(curr_row[i++]->SizeInBytes())) != 0) {
+      MS_LOG(ERROR) << "memcpy_s failed!";
+      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "memcpy_s failed.");
+    }
   }
 
   return Status::OK();

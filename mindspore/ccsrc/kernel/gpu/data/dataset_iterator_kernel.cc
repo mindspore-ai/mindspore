@@ -15,21 +15,19 @@
  */
 
 #include "kernel/gpu/data/dataset_iterator_kernel.h"
-
 #include <cuda_runtime_api.h>
 #include <string>
 #include <vector>
-
 #include "device/gpu/gpu_buffer_mgr.h"
 #include "device/gpu/gpu_common.h"
+#include "kernel/gpu/data/dataset_utils.h"
 
 namespace mindspore {
 namespace kernel {
 using mindspore::device::GpuBufferMgr;
 using mindspore::device::HandleMgr;
 
-DatasetIteratorKernel::DatasetIteratorKernel()
-    : output_num_(0), handle_(HandleMgr::INVALID_HANDLE), feature_size_(0), label_size_(0) {}
+DatasetIteratorKernel::DatasetIteratorKernel() : handle_(HandleMgr::INVALID_HANDLE), total_bytes_(0) {}
 
 DatasetIteratorKernel::~DatasetIteratorKernel() { GpuBufferMgr::GetInstance().Close(handle_); }
 
@@ -39,65 +37,40 @@ const std::vector<size_t> &DatasetIteratorKernel::GetOutputSizeList() const { re
 
 const std::vector<size_t> &DatasetIteratorKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-size_t DatasetIteratorKernel::TensorSize(std::vector<int> &shape) const {
-  if (shape.size() == 0) {
-    return 0;
-  }
-
-  int size = 1;
-  for (size_t i = 0; i < shape.size(); i++) {
-    size *= shape[i];
-  }
-
-  return IntToSize(size);
-}
-
 bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
-  output_num_ = GetAttr<int>(kernel_node, "output_num");
   queue_name_ = GetAttr<std::string>(kernel_node, "shared_name");
   auto shapes = GetAttr<const std::vector<std::vector<int>>>(kernel_node, "shapes");
-  auto data_num = shapes.size();
-  if (data_num != 2) {
-    MS_LOG(EXCEPTION) << "Invalid Shapes " << data_num;
-  }
-
-  auto &feature_Shapes = shapes[0];
-  auto size = TensorSize(feature_Shapes);
-  feature_size_ = size * sizeof(float);
-
   auto types = GetAttr<const std::vector<TypePtr>>(kernel_node, "types");
-  if ((types[1]->type_id() != kNumberTypeInt32) && (types[1]->type_id() != kNumberTypeInt64)) {
-    MS_LOG(EXCEPTION) << "Invalid types " << types[1]->type_id();
+  if (shapes.size() != types.size()) {
+    MS_LOG(EXCEPTION) << "Invalid shapes: " << shapes << ", types: " << types;
   }
 
-  size_t label_unit = (types[1]->type_id() == kNumberTypeInt32) ? sizeof(int32_t) : sizeof(int64_t);
-  size = TensorSize(shapes[1]);
-  label_size_ = size * label_unit;
+  for (size_t i = 0; i < shapes.size(); i++) {
+    int unit = UnitSizeInBytes(types[i]->type_id());
+    int nums = ElementNums(shapes[i]);
+    int bytes = unit * nums;
+    output_size_list_.push_back(bytes);
+    total_bytes_ += bytes;
+  }
 
-  InitSizeLists();
-
-  handle_ = GpuBufferMgr::GetInstance().Open(0, queue_name_, feature_size_, label_size_);
+  handle_ = GpuBufferMgr::GetInstance().Open(0, queue_name_, output_size_list_);
   if (handle_ == HandleMgr::INVALID_HANDLE) {
-    MS_LOG(EXCEPTION) << "Gpu Queue(" << queue_name_ << ") Open Failed: feature_size(" << feature_size_
-                      << "), label_size(" << label_size_ << ")";
+    MS_LOG(EXCEPTION) << "Gpu Queue(" << queue_name_ << ") Open Failed";
   }
 
   return true;
 }
 
-void DatasetIteratorKernel::InitSizeLists() {
-  output_size_list_.push_back(feature_size_);
-  output_size_list_.push_back(label_size_);
-}
+void DatasetIteratorKernel::InitSizeLists() { return; }
 
 bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &outputs, uintptr_t) {
-  void *feature_addr{nullptr}, *label_addr{nullptr};
-  size_t feature_size{0}, label_size{0};
+  void *addr = nullptr;
+  size_t len = 0;
 
   int repeat = 0;
   while (true) {
-    auto ret = GpuBufferMgr::GetInstance().Front(handle_, &feature_addr, &feature_size, &label_addr, &label_size);
+    auto ret = GpuBufferMgr::GetInstance().Front(handle_, &addr, &len);
     if (ret == device::SUCCESS) {
       break;
     }
@@ -117,19 +90,18 @@ bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::v
     return false;
   }
 
-  if (feature_size != feature_size_ || label_size != label_size_) {
-    MS_LOG(ERROR) << "DatasetIteratorKernel: Front Error: " << feature_addr << ", " << feature_size << ", "
-                  << label_addr << ", " << label_size;
+  if (total_bytes_ != len) {
+    MS_LOG(ERROR) << "Dataset front error. read: " << len << ", expect: " << total_bytes_ << ", ";
     return false;
   }
 
-  CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(outputs[0]->addr, feature_addr, feature_size, cudaMemcpyDeviceToDevice),
-                             "Cuda Memcpy Failed");
-  CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(outputs[1]->addr, label_addr, label_size, cudaMemcpyDeviceToDevice),
-                             "Cuda Memcpy Failed");
+  for (size_t i = 0; i < output_size_list_.size(); i++) {
+    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpy(outputs[i]->addr, addr, output_size_list_[i], cudaMemcpyDeviceToDevice),
+                               "Cuda Memcpy Failed");
+    addr = reinterpret_cast<unsigned char *>(addr) + output_size_list_[i];
+  }
 
   (void)GpuBufferMgr::GetInstance().Pop(handle_);
-
   return true;
 }
 }  // namespace kernel

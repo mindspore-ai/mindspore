@@ -24,6 +24,7 @@
 #include <mutex>
 #include <cstring>
 #include <string>
+#include <vector>
 #include <condition_variable>
 #include <functional>
 
@@ -31,9 +32,14 @@ namespace mindspore {
 namespace device {
 enum BlockQueueStatus_T : int { SUCCESS = 0, QUEUE_NOT_EXIST, HANDLE_NOT_EXIST, ERROR_INPUT, INTERNAL_ERROR, TIMEOUT };
 
+struct DataItemGpu {
+  size_t data_len_;
+  void *data_ptr_;
+};
+
 class GpuQueue {
  public:
-  GpuQueue(void *addr, size_t feature_size, size_t label_size, size_t capacity);
+  GpuQueue(void *addr, const std::vector<size_t> &shape, const size_t &capacity);
   virtual ~GpuQueue();
 
   void RegisterRelease(const std::function<void(void *)> &func) { host_release_ = func; }
@@ -41,23 +47,22 @@ class GpuQueue {
   inline bool IsEmpty() const { return head_ == tail_; }
   inline bool IsFull() const { return head_ == ((tail_ + 1) % (capacity_)); }
 
-  BlockQueueStatus_T Push(void *feature_addr, size_t feature_size, void *label_addr, size_t label_size);
-  BlockQueueStatus_T Front(void **feature_addr, size_t *feature_size, void **label_addr, size_t *label_size) const;
+  BlockQueueStatus_T Push(const std::vector<DataItemGpu> &data);
+  BlockQueueStatus_T Front(void **ptr, size_t *len) const;
   BlockQueueStatus_T Pop();
   bool Destroy();
 
  private:
   struct NodeInfo {
     std::unique_ptr<cudaEvent_t> event_;
-    void *host_feature_addr_;
-    void *host_label_addr_;
+    std::vector<DataItemGpu> data_;
   };
 
   void *buffer_;
   size_t head_;
   size_t tail_;
-  size_t feature_size_;
-  size_t label_size_;
+  std::vector<size_t> shape_;
+  size_t len_;
   size_t capacity_;
   cudaStream_t stream_;
   std::unique_ptr<NodeInfo[]> node_info_;
@@ -72,11 +77,10 @@ class BlockingQueue {
   BlockingQueue() : queue_(nullptr) {}
   ~BlockingQueue() = default;
 
-  BlockQueueStatus_T Create(void *addr, size_t feature_size, size_t label_size, size_t capacity);
+  BlockQueueStatus_T Create(void *addr, const std::vector<size_t> &shape, const size_t &capacity);
   void RegisterRelease(const std::function<void(void *)> &func);
-  BlockQueueStatus_T Push(void *feature_addr, size_t feature_size, void *label_addr, size_t label_size,
-                          unsigned int timeout_in_sec);
-  BlockQueueStatus_T Front(void **feature_addr, size_t *feature_size, void **label_addr, size_t *label_size);
+  BlockQueueStatus_T Push(const std::vector<DataItemGpu> &data, unsigned int timeout_in_sec);
+  BlockQueueStatus_T Front(void **ptr, size_t *len);
   BlockQueueStatus_T Pop();
   bool Destroy();
 

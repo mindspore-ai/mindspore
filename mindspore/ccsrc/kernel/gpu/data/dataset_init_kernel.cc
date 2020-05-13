@@ -15,6 +15,7 @@
  */
 
 #include "kernel/gpu/data/dataset_init_kernel.h"
+#include "kernel/gpu/data/dataset_utils.h"
 #include "device/gpu/gpu_buffer_mgr.h"
 #include "device/gpu/gpu_memory_allocator.h"
 #include "utils/convert_utils.h"
@@ -23,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 using mindspore::device::GpuBufferMgr;
 
-DatasetInitKernel::DatasetInitKernel() : feature_size_(0), label_size_(0) {}
+DatasetInitKernel::DatasetInitKernel() : total_bytes_(0) {}
 
 const std::vector<size_t> &DatasetInitKernel::GetInputSizeList() const { return input_size_list_; }
 
@@ -31,39 +32,21 @@ const std::vector<size_t> &DatasetInitKernel::GetOutputSizeList() const { return
 
 const std::vector<size_t> &DatasetInitKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
-size_t DatasetInitKernel::TensorSize(std::vector<int> &shape) const {
-  if (shape.size() == 0) {
-    return 0;
-  }
-
-  int size = 1;
-  for (size_t i = 0; i < shape.size(); i++) {
-    size *= shape[i];
-  }
-
-  return IntToSize(size);
-}
-
 bool DatasetInitKernel::Init(const CNodePtr &kernel_node) {
   queue_name_ = GetAttr<std::string>(kernel_node, "queue_name");
   auto shapes = GetAttr<const std::vector<std::vector<int>>>(kernel_node, "shapes");
-  auto data_num = shapes.size();
-  if (data_num != 2) {
-    MS_LOG(EXCEPTION) << "Invalid Shapes " << data_num;
-  }
-
-  auto &feature_Shapes = shapes[0];
-  auto size = TensorSize(feature_Shapes);
-  feature_size_ = size * sizeof(float);
-
   auto types = GetAttr<const std::vector<TypePtr>>(kernel_node, "types");
-  if ((types[1]->type_id() != kNumberTypeInt32) && (types[1]->type_id() != kNumberTypeInt64)) {
-    MS_LOG(EXCEPTION) << "Invalid types " << types[1]->type_id();
+  if (shapes.size() != types.size()) {
+    MS_LOG(EXCEPTION) << "Invalid shapes: " << shapes << ", types: " << types;
   }
 
-  size_t label_unit = (types[1]->type_id() == kNumberTypeInt32) ? sizeof(int32_t) : sizeof(int64_t);
-  size = TensorSize(shapes[1]);
-  label_size_ = size * label_unit;
+  for (size_t i = 0; i < shapes.size(); i++) {
+    int unit = UnitSizeInBytes(types[i]->type_id());
+    int nums = ElementNums(shapes[i]);
+    int bytes = unit * nums;
+    shapes_.push_back(bytes);
+    total_bytes_ += bytes;
+  }
   return true;
 }
 
@@ -72,17 +55,15 @@ void DatasetInitKernel::InitSizeLists() { return; }
 bool DatasetInitKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                const std::vector<AddressPtr> &, uintptr_t) {
   void *addr = nullptr;
-  size_t len = (feature_size_ + label_size_) * buffer_q_capacity_;
+  size_t len = total_bytes_ * buffer_q_capacity_;
 
   if (!device::gpu::GPUMemoryAllocator::GetInstance().AllocBufferQueueMem(len, &addr)) {
     MS_LOG(EXCEPTION) << "Memory not enough: failed to allocate GPU buffer queue memory[" << len << "].";
   }
 
-  auto status =
-    GpuBufferMgr::GetInstance().Create(0, queue_name_, addr, feature_size_, label_size_, buffer_q_capacity_);
+  auto status = GpuBufferMgr::GetInstance().Create(0, queue_name_, addr, shapes_, buffer_q_capacity_);
   if (status) {
-    MS_LOG(EXCEPTION) << "Init Dataset Failed: " << queue_name_ << ", " << feature_size_ << ", " << label_size_ << ", "
-                      << status;
+    MS_LOG(EXCEPTION) << "Init Dataset Failed. len: " << len << ", status:" << status;
   }
 
   return true;
