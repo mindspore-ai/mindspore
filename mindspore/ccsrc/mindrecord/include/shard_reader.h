@@ -68,23 +68,25 @@ class ShardReader {
   virtual ~ShardReader();
 
   /// \brief open files and initialize reader, c++ API
-  /// \param[in] file_path the path of ONE file, any file in dataset is fine
+  /// \param[in] file_paths the path of ONE file, any file in dataset is fine or file list
+  /// \param[in] load_dataset load dataset from single file or not
   /// \param[in] n_consumer number of threads when reading
   /// \param[in] selected_columns column list to be populated
   /// \param[in] operators operators applied to data, operator type is shuffle, sample or category
   /// \param[in] block_reader block-reader mode if true, otherwise row-reader mode
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus Open(const std::string &file_path, int n_consumer = 4,
+  MSRStatus Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer = 4,
                  const std::vector<std::string> &selected_columns = {},
                  const std::vector<std::shared_ptr<ShardOperator>> &operators = {}, const bool &block_reader = false);
 
   /// \brief open files and initialize reader, python API
-  /// \param[in] file_path the path of ONE file, any file in dataset is fine
+  /// \param[in] file_paths the path of ONE file, any file in dataset is fine or file list
+  /// \param[in] load_dataset load dataset from single file or not
   /// \param[in] n_consumer number of threads when reading
   /// \param[in] selected_columns column list to be populated
   /// \param[in] operators operators applied to data, operator type is shuffle, sample or category
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus OpenPy(const std::string &file_path, const int &n_consumer = 4,
+  MSRStatus OpenPy(const std::vector<std::string> &file_paths, bool load_dataset, const int &n_consumer = 4,
                    const std::vector<std::string> &selected_columns = {},
                    const std::vector<std::shared_ptr<ShardOperator>> &operators = {});
 
@@ -114,11 +116,13 @@ class ShardReader {
   int GetShardCount() const;
 
   /// \brief get the number of rows in database
-  /// \param[in] file_path the path of ONE file, any file in dataset is fine
+  /// \param[in] file_paths the path of ONE file, any file in dataset is fine or file list
+  /// \param[in] load_dataset load dataset from single file or not
   /// \param[in] op smart pointer refer to ShardCategory or ShardSample object
   /// \param[out] count # of rows
   /// \return MSRStatus the status of MSRStatus
-  MSRStatus CountTotalRows(const std::string &file_path, const std::shared_ptr<ShardOperator> &op, int64_t *count);
+  MSRStatus CountTotalRows(const std::vector<std::string> &file_paths, bool load_dataset,
+                           const std::shared_ptr<ShardOperator> &op, int64_t *count);
 
   /// \brief shuffle task with incremental seed
   /// \return void
@@ -220,7 +224,7 @@ class ShardReader {
                                std::vector<std::vector<json>> &column_values);
 
   /// \brief initialize reader
-  MSRStatus Init(const std::string &file_path);
+  MSRStatus Init(const std::vector<std::string> &file_paths, bool load_dataset);
 
   /// \brief validate column list
   MSRStatus CheckColumnList(const std::vector<std::string> &selected_columns);
@@ -292,8 +296,9 @@ class ShardReader {
   void GetClassesInShard(sqlite3 *db, int shard_id, const std::string sql, std::set<std::string> &categories);
 
   /// \brief get number of classes
-  int64_t GetNumClasses(const std::string &file_path, const std::string &category_field);
+  int64_t GetNumClasses(const std::string &category_field);
 
+  std::pair<MSRStatus, std::vector<std::string>> GetMeta(const std::string &file_path, json &meta_data);
   /// \brief get exactly blob fields data by indices
   std::vector<uint8_t> ExtractBlobFieldBySelectColumns(std::vector<uint8_t> &blob_fields_bytes,
                                                        std::vector<uint32_t> &ordered_selected_columns_index);

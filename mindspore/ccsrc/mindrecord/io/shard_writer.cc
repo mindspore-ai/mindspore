@@ -174,12 +174,25 @@ MSRStatus ShardWriter::OpenForAppend(const std::string &path) {
   if (!IsLegalFile(path)) {
     return FAILED;
   }
-  ShardHeader sh = ShardHeader();
-  if (sh.Build(path) == FAILED) {
+  auto ret1 = ShardHeader::BuildSingleHeader(path);
+  if (ret1.first != SUCCESS) {
     return FAILED;
   }
-  shard_header_ = std::make_shared<ShardHeader>(sh);
-  auto paths = shard_header_->GetShardAddresses();
+  auto json_header = ret1.second;
+  auto ret2 = GetParentDir(path);
+  if (SUCCESS != ret2.first) {
+    return FAILED;
+  }
+  std::vector<std::string> real_addresses;
+  for (const auto &path : json_header["shard_addresses"]) {
+    std::string abs_path = ret2.second + string(path);
+    real_addresses.emplace_back(abs_path);
+  }
+  ShardHeader header = ShardHeader();
+  if (header.BuildDataset(real_addresses) == FAILED) {
+    return FAILED;
+  }
+  shard_header_ = std::make_shared<ShardHeader>(header);
   MSRStatus ret = SetHeaderSize(shard_header_->GetHeaderSize());
   if (ret == FAILED) {
     return FAILED;
@@ -188,7 +201,7 @@ MSRStatus ShardWriter::OpenForAppend(const std::string &path) {
   if (ret == FAILED) {
     return FAILED;
   }
-  ret = Open(paths, true);
+  ret = Open(json_header["shard_addresses"], true);
   if (ret == FAILED) {
     MS_LOG(ERROR) << "Open file failed";
     return FAILED;

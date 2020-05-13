@@ -35,8 +35,9 @@ namespace mindrecord {
 std::atomic<bool> thread_status(false);
 ShardHeader::ShardHeader() : shard_count_(0), header_size_(0), page_size_(0) { index_ = std::make_shared<Index>(); }
 
-MSRStatus ShardHeader::InitializeHeader(const std::vector<json> &headers) {
+MSRStatus ShardHeader::InitializeHeader(const std::vector<json> &headers, bool load_dataset) {
   shard_count_ = headers.size();
+  int shard_index = 0;
   bool first = true;
   for (const auto &header : headers) {
     if (first) {
@@ -54,7 +55,8 @@ MSRStatus ShardHeader::InitializeHeader(const std::vector<json> &headers) {
       header_size_ = header["header_size"].get<uint64_t>();
       page_size_ = header["page_size"].get<uint64_t>();
     }
-    ParsePage(header["page"]);
+    ParsePage(header["page"], shard_index, load_dataset);
+    shard_index++;
   }
   return SUCCESS;
 }
@@ -136,40 +138,39 @@ std::pair<MSRStatus, json> ShardHeader::ValidateHeader(const std::string &path) 
   return {SUCCESS, json_header};
 }
 
-MSRStatus ShardHeader::Build(const std::string &file_path) {
+std::pair<MSRStatus, json> ShardHeader::BuildSingleHeader(const std::string &file_path) {
   auto ret = ValidateHeader(file_path);
   if (SUCCESS != ret.first) {
-    return FAILED;
+    return {FAILED, json()};
   }
-  json main_header = ret.second;
-  json addresses = main_header["shard_addresses"];
-  vector<string> real_addresses;
-  auto ret1 = GetParentDir(file_path);
-  if (SUCCESS != ret1.first) {
-    return FAILED;
-  }
-  std::string parent_dir = ret1.second;
+  json raw_header = ret.second;
+  json header = {{"shard_addresses", raw_header["shard_addresses"]},
+                 {"header_size", raw_header["header_size"]},
+                 {"page_size", raw_header["page_size"]},
+                 {"index_fields", raw_header["index_fields"]},
+                 {"blob_fields", raw_header["schema"][0]["blob_fields"]},
+                 {"schema", raw_header["schema"][0]["schema"]},
+                 {"version", raw_header["version"]}};
+  return {SUCCESS, header};
+}
 
-  for (const auto &addr : addresses) {
-    std::string absolute_path = parent_dir + string(addr);
-    real_addresses.emplace_back(absolute_path);
-  }
+MSRStatus ShardHeader::BuildDataset(const std::vector<std::string> &file_paths, bool load_dataset) {
   uint32_t thread_num = std::thread::hardware_concurrency();
   if (thread_num == 0) thread_num = kThreadNumber;
   uint32_t work_thread_num = 0;
-  uint32_t addr_count = real_addresses.size();
-  int group_num = ceil(addr_count * 1.0 / thread_num);
+  uint32_t shard_count = file_paths.size();
+  int group_num = ceil(shard_count * 1.0 / thread_num);
   std::vector<std::thread> thread_set(thread_num);
-  std::vector<json> headers(addr_count);
+  std::vector<json> headers(shard_count);
   for (uint32_t x = 0; x < thread_num; ++x) {
     int start_num = x * group_num;
-    int end_num = ((x + 1) * group_num > addr_count) ? addr_count : (x + 1) * group_num;
+    int end_num = ((x + 1) * group_num > shard_count) ? shard_count : (x + 1) * group_num;
     if (start_num >= end_num) {
       continue;
     }
 
     thread_set[x] =
-      std::thread(&ShardHeader::GetHeadersOneTask, this, start_num, end_num, std::ref(headers), real_addresses);
+      std::thread(&ShardHeader::GetHeadersOneTask, this, start_num, end_num, std::ref(headers), file_paths);
     work_thread_num++;
   }
 
@@ -180,7 +181,7 @@ MSRStatus ShardHeader::Build(const std::string &file_path) {
     thread_status = false;
     return FAILED;
   }
-  if (SUCCESS != InitializeHeader(headers)) {
+  if (SUCCESS != InitializeHeader(headers, load_dataset)) {
     return FAILED;
   }
   return SUCCESS;
@@ -247,7 +248,8 @@ MSRStatus ShardHeader::ParseIndexFields(const json &index_fields) {
   return SUCCESS;
 }
 
-void ShardHeader::ParsePage(const json &pages) {
+void ShardHeader::ParsePage(const json &pages, int shard_index, bool load_dataset) {
+  // set shard_index when load_dataset is false
   if (pages_.empty() && shard_count_ <= kMaxShardCount) {
     pages_.resize(shard_count_);
   }
@@ -267,7 +269,11 @@ void ShardHeader::ParsePage(const json &pages) {
 
     std::shared_ptr<Page> parsed_page = std::make_shared<Page>(page_id, shard_id, page_type, page_type_id, start_row_id,
                                                                end_row_id, row_group_ids, page_size);
-    pages_[shard_id].push_back(std::move(parsed_page));
+    if (load_dataset == true) {
+      pages_[shard_id].push_back(std::move(parsed_page));
+    } else {
+      pages_[shard_index].push_back(std::move(parsed_page));
+    }
   }
 }
 
@@ -709,7 +715,7 @@ MSRStatus ShardHeader::FileToPages(const std::string dump_file_name) {
 
   std::string line;
   while (std::getline(page_in_handle, line)) {
-    ParsePage(json::parse(line));
+    ParsePage(json::parse(line), -1, true);
   }
 
   page_in_handle.close();

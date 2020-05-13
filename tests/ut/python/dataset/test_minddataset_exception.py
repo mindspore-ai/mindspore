@@ -22,6 +22,7 @@ import mindspore.dataset as ds
 from mindspore.mindrecord import FileWriter
 
 CV_FILE_NAME = "./imagenet.mindrecord"
+CV1_FILE_NAME = "./imagenet1.mindrecord"
 
 
 def create_cv_mindrecord(files_num):
@@ -36,6 +37,31 @@ def create_cv_mindrecord(files_num):
     writer.write_raw_data(data)
     writer.commit()
 
+
+def create_diff_schema_cv_mindrecord(files_num):
+    """tutorial for cv dataset writer."""
+    os.remove(CV1_FILE_NAME) if os.path.exists(CV1_FILE_NAME) else None
+    os.remove("{}.db".format(CV1_FILE_NAME)) if os.path.exists("{}.db".format(CV1_FILE_NAME)) else None
+    writer = FileWriter(CV1_FILE_NAME, files_num)
+    cv_schema_json = {"file_name_1": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
+    data = [{"file_name_1": "001.jpg", "label": 43, "data": bytes('0xffsafdafda', encoding='utf-8')}]
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name_1", "label"])
+    writer.write_raw_data(data)
+    writer.commit()
+
+def create_diff_page_size_cv_mindrecord(files_num):
+    """tutorial for cv dataset writer."""
+    os.remove(CV1_FILE_NAME) if os.path.exists(CV1_FILE_NAME) else None
+    os.remove("{}.db".format(CV1_FILE_NAME)) if os.path.exists("{}.db".format(CV1_FILE_NAME)) else None
+    writer = FileWriter(CV1_FILE_NAME, files_num)
+    writer.set_page_size(1<< 26) #64MB
+    cv_schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
+    data = [{"file_name": "001.jpg", "label": 43, "data": bytes('0xffsafdafda', encoding='utf-8')}]
+    writer.add_schema(cv_schema_json, "img_schema")
+    writer.add_index(["file_name", "label"])
+    writer.write_raw_data(data)
+    writer.commit()
 
 def test_cv_lack_json():
     """tutorial for cv minderdataset."""
@@ -111,3 +137,34 @@ def test_cv_minddataset_pk_sample_exclusive_shuffle():
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
 
+def test_cv_minddataset_reader_different_schema():
+    create_cv_mindrecord(1)
+    create_diff_schema_cv_mindrecord(1)
+    columns_list = ["data", "label"]
+    num_readers = 4
+    with pytest.raises(Exception, match="MindRecordOp init failed"):
+        data_set = ds.MindDataset([CV_FILE_NAME, CV1_FILE_NAME], columns_list,
+                num_readers)
+        num_iter = 0
+        for item in data_set.create_dict_iterator():
+            num_iter += 1
+    os.remove(CV_FILE_NAME)
+    os.remove("{}.db".format(CV_FILE_NAME))
+    os.remove(CV1_FILE_NAME)
+    os.remove("{}.db".format(CV1_FILE_NAME))
+
+def test_cv_minddataset_reader_different_page_size():
+    create_cv_mindrecord(1)
+    create_diff_page_size_cv_mindrecord(1)
+    columns_list = ["data", "label"]
+    num_readers = 4
+    with pytest.raises(Exception, match="MindRecordOp init failed"):
+        data_set = ds.MindDataset([CV_FILE_NAME, CV1_FILE_NAME], columns_list,
+                num_readers)
+        num_iter = 0
+        for item in data_set.create_dict_iterator():
+            num_iter += 1
+    os.remove(CV_FILE_NAME)
+    os.remove("{}.db".format(CV_FILE_NAME))
+    os.remove(CV1_FILE_NAME)
+    os.remove("{}.db".format(CV1_FILE_NAME))

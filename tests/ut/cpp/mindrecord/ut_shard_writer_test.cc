@@ -60,7 +60,7 @@ TEST_F(TestShardWriter, TestShardWriterOneSample) {
   std::string filename = "./OneSample.shard01";
 
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(filename, 4);
+  MSRStatus ret = dataset.Open({filename}, true, 4);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 
@@ -756,7 +756,7 @@ TEST_F(TestShardWriter, TestShardReaderStringAndNumberColumnInIndex) {
   filename = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"label", "file_name", "data"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(filename, 4, column_list);
+  MSRStatus ret = dataset.Open({filename}, true, 4, column_list);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 
@@ -842,7 +842,7 @@ TEST_F(TestShardWriter, TestShardNoBlob) {
   filename = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"label", "file_name"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(filename, 4, column_list);
+  MSRStatus ret = dataset.Open({filename}, true, 4, column_list);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 
@@ -936,7 +936,7 @@ TEST_F(TestShardWriter, TestShardReaderStringAndNumberNotColumnInIndex) {
   filename = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"label", "data"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(filename, 4, column_list);
+  MSRStatus ret = dataset.Open({filename}, true, 4, column_list);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 
@@ -1043,7 +1043,7 @@ TEST_F(TestShardWriter, TestShardWriter10Sample40Shard) {
 
   filename = "./TenSampleFortyShard.shard01";
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(filename, 4);
+  MSRStatus ret = dataset.Open({filename}, true, 4);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 

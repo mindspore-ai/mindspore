@@ -36,9 +36,23 @@ ShardIndexGenerator::ShardIndexGenerator(const std::string &file_path, bool appe
       write_success_(true) {}
 
 MSRStatus ShardIndexGenerator::Build() {
+  auto ret = ShardHeader::BuildSingleHeader(file_path_);
+  if (ret.first != SUCCESS) {
+    return FAILED;
+  }
+  auto json_header = ret.second;
+
+  auto ret2 = GetParentDir(file_path_);
+  if (SUCCESS != ret2.first) {
+    return FAILED;
+  }
+  std::vector<std::string> real_addresses;
+  for (const auto &path : json_header["shard_addresses"]) {
+    std::string abs_path = ret2.second + string(path);
+    real_addresses.emplace_back(abs_path);
+  }
   ShardHeader header = ShardHeader();
-  if (header.Build(file_path_) != SUCCESS) {
-    MS_LOG(ERROR) << "Build shard schema failed.";
+  if (header.BuildDataset(real_addresses) == FAILED) {
     return FAILED;
   }
   shard_header_ = header;

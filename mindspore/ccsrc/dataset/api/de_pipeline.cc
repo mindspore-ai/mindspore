@@ -408,8 +408,13 @@ Status DEPipeline::ParseMindRecordOp(const py::dict &args, std::shared_ptr<Datas
   }
 
   std::shared_ptr<MindRecordOp::Builder> builder = std::make_shared<MindRecordOp::Builder>();
-  (void)builder->SetDatasetFile(ToString(args["dataset_file"]));
-
+  bool load_dataset = ToBool(args["load_dataset"]);
+  if (load_dataset == true) {
+    (void)builder->SetDatasetFile({ToString(args["dataset_file"])});
+  } else {
+    (void)builder->SetDatasetFile(ToStringVector(args["dataset_file"]));
+  }
+  (void)builder->SetLoadDataset(load_dataset);
   std::vector<std::string> in_col_names;
   if (!args["columns_list"].is_none()) {
     in_col_names = ToStringVector(args["columns_list"]);
