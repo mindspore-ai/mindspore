@@ -83,12 +83,6 @@ class _DatasetIter:
         self.dataset = dataset
         dataset_types, dataset_shapes = _get_types_and_shapes(dataset)
         self.dataset_types, self.dataset_shapes = dataset_types, dataset_shapes
-        # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, use a complete tensor to
-        # compile, and slice tensor to run. The batch dimension of tensors for compile is device_number
-        # times the batch dimension of tensors for run
-        if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            device_num = _get_device_num()
-            self.dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
 
     def __iter__(self):
         self.ind = 0
@@ -119,6 +113,12 @@ class _DatasetIterMSLoopSink(_DatasetIter):
     def __init__(self, dataset):
         super(_DatasetIterMSLoopSink, self).__init__(dataset)
         self.loop_count = self.get_loop_count(dataset)
+        # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, use a complete tensor to
+        # compile, and slice tensor to run. The batch dimension of tensors for compile is device_number
+        # times the batch dimension of tensors for run. Now only support LoopSink.
+        if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            device_num = _get_device_num()
+            self.dataset_shapes = _to_full_shapes(self.dataset_shapes, device_num)
 
         def op():
             return tuple()

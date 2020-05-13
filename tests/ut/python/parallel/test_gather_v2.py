@@ -170,4 +170,3 @@ def test_gatherv2_auto1():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64, 64]), dtype=ms.float32)
     _executor.compile(net, x, y)
-
