@@ -23,6 +23,7 @@
 #include <queue>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -31,6 +32,7 @@
 #include "dataset/engine/datasetops/source/io_block.h"
 #include "dataset/util/queue.h"
 #include "dataset/util/status.h"
+#include "mindrecord/include/shard_column.h"
 #include "mindrecord/include/shard_error.h"
 #include "mindrecord/include/shard_reader.h"
 #include "mindrecord/include/common/shard_utils.h"
@@ -193,8 +195,6 @@ class MindRecordOp : public ParallelOp {
 
   Status Init();
 
-  Status SetColumnsBlob();
-
   // Base-class override for NodePass visitor acceptor.
   // @param p - Pointer to the NodePass to be accepted.
   // @param modified - Whether this node visit modified the pipeline.
@@ -205,56 +205,11 @@ class MindRecordOp : public ParallelOp {
   Status GetBufferFromReader(std::unique_ptr<DataBuffer> *fetched_buffer, int64_t buffer_id, int32_t worker_id);
 
   // Parses a single cell and puts the data into a tensor
-  // @param tensor - the tensor to put the parsed data in
-  // @param i_col - the id of column to parse
+  // @param tensor_row - the tensor row to put the parsed data in
   // @param columns_blob - the blob data received from the reader
   // @param columns_json - the data for fields received from the reader
-  template <typename T>
-  Status LoadFeature(std::shared_ptr<Tensor> *tensor, int32_t i_col, const std::vector<uint8_t> &columns_blob,
-                     const mindrecord::json &columns_json) const;
-
-  Status SwitchLoadFeature(const DataType &type, std::shared_ptr<Tensor> *tensor, int32_t i_col,
-                           const std::vector<uint8_t> &columns_blob, const mindrecord::json &columns_json) const;
-
-  static Status LoadBlob(TensorShape *new_shape, const unsigned char **data, const std::vector<uint8_t> &columns_blob,
-                         const int32_t pos, const ColDescriptor &column);
-
-  // Get shape and data (scalar or array) for tensor to be created (for floats and doubles)
-  // @param new_shape - the shape of tensor to be created.
-  // @param array_data - the array where data should be put in
-  // @param column_name - name of current column to be processed
-  // @param columns_json - the data for fields received from the reader
-  // @param column - description of current column from schema
-  // @param use_double - boolean to choose between float32 and float64
-  template <typename T>
-  static Status LoadFloat(TensorShape *new_shape, std::unique_ptr<T[]> *array_data, const std::string &column_name,
-                          const mindrecord::json &columns_json, const ColDescriptor &column, bool use_double);
-
-  // Get shape and data (scalar or array) for tensor to be created (for integers)
-  // @param new_shape - the shape of tensor to be created.
-  // @param array_data - the array where data should be put in
-  // @param column_name - name of current column to be processed
-  // @param columns_json - the data for fields received from the reader
-  // @param column - description of current column from schema
-  template <typename T>
-  static Status LoadInt(TensorShape *new_shape, std::unique_ptr<T[]> *array_data, const std::string &column_name,
-                        const mindrecord::json &columns_json, const ColDescriptor &column);
-
-  static Status LoadByte(TensorShape *new_shape, std::string *string_data, const std::string &column_name,
-                         const mindrecord::json &columns_json);
-
-  // Get a single float value from the given json
-  // @param value - the float to put the value in
-  // @param arrayData - the given json containing the float
-  // @param use_double - boolean to choose between float32 and float64
-  template <typename T>
-  static Status GetFloat(T *value, const mindrecord::json &data, bool use_double);
-
-  // Get a single integer value from the given json
-  // @param value - the integer to put the value in
-  // @param arrayData - the given json containing the integer
-  template <typename T>
-  static Status GetInt(T *value, const mindrecord::json &data);
+  Status LoadTensorRow(TensorRow *tensor_row, const std::vector<uint8_t> &columns_blob,
+                       const mindrecord::json &columns_json);
 
   Status FetchBlockBuffer(const int32_t &buffer_id);
 

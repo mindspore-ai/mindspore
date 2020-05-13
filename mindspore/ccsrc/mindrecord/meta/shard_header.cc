@@ -201,9 +201,9 @@ void ShardHeader::GetHeadersOneTask(int start, int end, std::vector<json> &heade
     json header;
     header = ret.second;
     header["shard_addresses"] = realAddresses;
-    if (header["version"] != version_) {
+    if (std::find(kSupportedVersion.begin(), kSupportedVersion.end(), header["version"]) == kSupportedVersion.end()) {
       MS_LOG(ERROR) << "Version wrong, file version is: " << header["version"].dump()
-                    << ", lib version is: " << version_;
+                    << ", lib version is: " << kVersion;
       thread_status = true;
       return;
     }
@@ -339,7 +339,7 @@ std::vector<std::string> ShardHeader::SerializeHeader() {
       s += "\"shard_addresses\":" + address + ",";
       s += "\"shard_id\":" + std::to_string(shardId) + ",";
       s += "\"statistics\":" + stats + ",";
-      s += "\"version\":\"" + version_ + "\"";
+      s += "\"version\":\"" + std::string(kVersion) + "\"";
       s += "}";
       header.emplace_back(s);
     }

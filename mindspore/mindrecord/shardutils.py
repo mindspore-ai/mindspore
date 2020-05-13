@@ -97,16 +97,13 @@ def populate_data(raw, blob, columns, blob_fields, schema):
     if not blob_fields:
         return raw
 
-    # Get the order preserving sequence of columns in blob
-    ordered_columns = []
+    loaded_columns = []
     if columns:
-        for blob_field in blob_fields:
-            if blob_field in columns:
-                ordered_columns.append(blob_field)
+        for column in columns:
+            if column in blob_fields:
+                loaded_columns.append(column)
     else:
-        ordered_columns = blob_fields
-
-    blob_bytes = bytes(blob)
+        loaded_columns = blob_fields
 
     def _render_raw(field, blob_data):
         data_type = schema[field]['type']
@@ -119,24 +116,6 @@ def populate_data(raw, blob, columns, blob_fields, schema):
         else:
             raw[field] = blob_data
 
-    if len(blob_fields) == 1:
-        if len(ordered_columns) == 1:
-            _render_raw(blob_fields[0], blob_bytes)
-            return raw
-        return raw
-
-    def _int_from_bytes(xbytes: bytes) -> int:
-        return int.from_bytes(xbytes, 'big')
-
-    def _blob_at_position(pos):
-        start = 0
-        for _ in range(pos):
-            n_bytes = _int_from_bytes(blob_bytes[start : start + 8])
-            start += 8 + n_bytes
-        n_bytes = _int_from_bytes(blob_bytes[start : start + 8])
-        start += 8
-        return blob_bytes[start : start + n_bytes]
-
-    for i, blob_field in enumerate(ordered_columns):
-        _render_raw(blob_field, _blob_at_position(i))
+    for i, blob_field in enumerate(loaded_columns):
+        _render_raw(blob_field, bytes(blob[i]))
     return raw

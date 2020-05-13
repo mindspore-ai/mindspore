@@ -43,6 +43,7 @@
 #include <vector>
 #include "mindrecord/include/common/shard_utils.h"
 #include "mindrecord/include/shard_category.h"
+#include "mindrecord/include/shard_column.h"
 #include "mindrecord/include/shard_error.h"
 #include "mindrecord/include/shard_index_generator.h"
 #include "mindrecord/include/shard_operator.h"
@@ -110,6 +111,10 @@ class ShardReader {
   /// \brief aim to get the meta data
   /// \return the metadata
   std::shared_ptr<ShardHeader> GetShardHeader() const;
+
+  /// \brief aim to get columns context
+  /// \return the columns
+  std::shared_ptr<ShardColumn> get_shard_column() const;
 
   /// \brief get the number of shards
   /// \return # of shards
@@ -185,7 +190,7 @@ class ShardReader {
 
   /// \brief return a batch, given that one is ready, python API
   /// \return a batch of images and image data
-  std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>> GetNextPy();
+  std::vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>> GetNextPy();
 
   /// \brief  get blob filed list
   /// \return blob field list
@@ -295,16 +300,18 @@ class ShardReader {
   /// \brief get number of classes
   int64_t GetNumClasses(const std::string &category_field);
 
+  /// \brief get meta of header
   std::pair<MSRStatus, std::vector<std::string>> GetMeta(const std::string &file_path, json &meta_data);
-  /// \brief get exactly blob fields data by indices
-  std::vector<uint8_t> ExtractBlobFieldBySelectColumns(std::vector<uint8_t> &blob_fields_bytes,
-                                                       std::vector<uint32_t> &ordered_selected_columns_index);
+
+  /// \brief extract uncompressed data based on column list
+  std::pair<MSRStatus, std::vector<std::vector<uint8_t>>> UnCompressBlob(const std::vector<uint8_t> &raw_blob_data);
 
  protected:
   uint64_t header_size_;                       // header size
   uint64_t page_size_;                         // page size
   int shard_count_;                            // number of shards
   std::shared_ptr<ShardHeader> shard_header_;  // shard header
+  std::shared_ptr<ShardColumn> shard_column_;  // shard column
 
   std::vector<sqlite3 *> database_paths_;                                        // sqlite handle list
   std::vector<string> file_paths_;                                               // file paths

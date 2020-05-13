@@ -133,6 +133,12 @@ MSRStatus ShardReader::Init(const std::vector<std::string> &file_paths, bool loa
   shard_header_ = std::make_shared<ShardHeader>(sh);
   header_size_ = shard_header_->GetHeaderSize();
   page_size_ = shard_header_->GetPageSize();
+  // version < 3.0
+  if (first_meta_data["version"] < kVersion) {
+    shard_column_ = std::make_shared<ShardColumn>(shard_header_, false);
+  } else {
+    shard_column_ = std::make_shared<ShardColumn>(shard_header_, true);
+  }
   num_rows_ = 0;
   auto row_group_summary = ReadRowGroupSummary();
   for (const auto &rg : row_group_summary) {
@@ -225,6 +231,8 @@ void ShardReader::Close() {
 }
 
 std::shared_ptr<ShardHeader> ShardReader::GetShardHeader() const { return shard_header_; }
+
+std::shared_ptr<ShardColumn> ShardReader::get_shard_column() const { return shard_column_; }
 
 int ShardReader::GetShardCount() const { return shard_header_->GetShardCount(); }
 
@@ -1059,36 +1067,6 @@ MSRStatus ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, u
   return SUCCESS;
 }
 
-std::vector<uint8_t> ShardReader::ExtractBlobFieldBySelectColumns(
-  std::vector<uint8_t> &blob_fields_bytes, std::vector<uint32_t> &ordered_selected_columns_index) {
-  std::vector<uint8_t> exactly_blob_fields_bytes;
-
-  auto uint64_from_bytes = [&](int64_t pos) {
-    uint64_t result = 0;
-    for (uint64_t n = 0; n < kInt64Len; n++) {
-      result = (result << 8) + blob_fields_bytes[pos + n];
-    }
-    return result;
-  };
-
-  // get the exactly blob fields
-  uint32_t current_index = 0;
-  uint64_t current_offset = 0;
-  uint64_t data_len = uint64_from_bytes(current_offset);
-  while (current_offset < blob_fields_bytes.size()) {
-    if (std::any_of(ordered_selected_columns_index.begin(), ordered_selected_columns_index.end(),
-                    [&current_index](uint32_t &index) { return index == current_index; })) {
-      exactly_blob_fields_bytes.insert(exactly_blob_fields_bytes.end(), blob_fields_bytes.begin() + current_offset,
-                                       blob_fields_bytes.begin() + current_offset + kInt64Len + data_len);
-    }
-    current_index++;
-    current_offset += kInt64Len + data_len;
-    data_len = uint64_from_bytes(current_offset);
-  }
-
-  return exactly_blob_fields_bytes;
-}
-
 TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_id) {
   // All tasks are done
   if (task_id >= static_cast<int>(tasks_.Size())) {
@@ -1126,40 +1104,10 @@ TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_
     return std::make_pair(FAILED, std::vector<std::tuple<std::vector<uint8_t>, json>>());
   }
 
-  // extract the exactly blob bytes by selected columns
-  std::vector<uint8_t> images_with_exact_columns;
-  if (selected_columns_.size() == 0) {
-    images_with_exact_columns = images;
-  } else {
-    auto blob_fields = GetBlobFields();
-
-    std::vector<uint32_t> ordered_selected_columns_index;
-    uint32_t index = 0;
-    for (auto &blob_field : blob_fields.second) {
-      for (auto &field : selected_columns_) {
-        if (field.compare(blob_field) == 0) {
-          ordered_selected_columns_index.push_back(index);
-          break;
-        }
-      }
-      index++;
-    }
-
-    if (ordered_selected_columns_index.size() != 0) {
-      // extract the images
-      if (blob_fields.second.size() == 1) {
-        if (ordered_selected_columns_index.size() == 1) {
-          images_with_exact_columns = images;
-        }
-      } else {
-        images_with_exact_columns = ExtractBlobFieldBySelectColumns(images, ordered_selected_columns_index);
-      }
-    }
-  }
-
   // Deliver batch data to output map
   std::vector<std::tuple<std::vector<uint8_t>, json>> batch;
-  batch.emplace_back(std::move(images_with_exact_columns), std::move(std::get<2>(task)));
+  batch.emplace_back(std::move(images), std::move(std::get<2>(task)));
+
   return std::make_pair(SUCCESS, std::move(batch));
 }
 
@@ -1369,16 +1317,41 @@ std::vector<std::tuple<std::vector<uint8_t>, json>> ShardReader::GetNextById(con
   return std::move(ret.second);
 }
 
-std::vector<std::tuple<std::vector<uint8_t>, pybind11::object>> ShardReader::GetNextPy() {
+std::pair<MSRStatus, std::vector<std::vector<uint8_t>>> ShardReader::UnCompressBlob(
+  const std::vector<uint8_t> &raw_blob_data) {
+  auto loaded_columns = selected_columns_.size() == 0 ? shard_column_->GetColumnName() : selected_columns_;
+  auto blob_fields = GetBlobFields().second;
+  std::vector<std::vector<uint8_t>> blob_data;
+  for (uint32_t i_col = 0; i_col < loaded_columns.size(); ++i_col) {
+    if (std::find(blob_fields.begin(), blob_fields.end(), loaded_columns[i_col]) == blob_fields.end()) continue;
+    const unsigned char *data = nullptr;
+    std::unique_ptr<unsigned char[]> data_ptr;
+    uint64_t n_bytes = 0;
+    auto ret = shard_column_->GetColumnFromBlob(loaded_columns[i_col], raw_blob_data, &data, &data_ptr, &n_bytes);
+    if (ret != SUCCESS) {
+      MS_LOG(ERROR) << "Error when get data from blob, column name is " << loaded_columns[i_col] << ".";
+      return {FAILED, std::vector<std::vector<uint8_t>>(blob_fields.size(), std::vector<uint8_t>())};
+    }
+    if (data == nullptr) {
+      data = reinterpret_cast<const unsigned char *>(data_ptr.get());
+    }
+    std::vector<uint8_t> column(data, data + (n_bytes / sizeof(unsigned char)));
+    blob_data.push_back(column);
+  }
+  return {SUCCESS, blob_data};
+}
+
+std::vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>> ShardReader::GetNextPy() {
   auto res = GetNext();
-  vector<std::tuple<std::vector<uint8_t>, pybind11::object>> jsonData;
-  std::transform(res.begin(), res.end(), std::back_inserter(jsonData),
-                 [](const std::tuple<std::vector<uint8_t>, json> &item) {
+  vector<std::tuple<std::vector<std::vector<uint8_t>>, pybind11::object>> data;
+  std::transform(res.begin(), res.end(), std::back_inserter(data),
+                 [this](const std::tuple<std::vector<uint8_t>, json> &item) {
                    auto &j = std::get<1>(item);
                    pybind11::object obj = nlohmann::detail::FromJsonImpl(j);
-                   return std::make_tuple(std::get<0>(item), std::move(obj));
+                   auto ret = UnCompressBlob(std::get<0>(item));
+                   return std::make_tuple(ret.second, std::move(obj));
                  });
-  return jsonData;
+  return data;
 }
 
 void ShardReader::Reset() {

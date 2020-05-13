@@ -118,8 +118,6 @@ class ShardHeader {
 
   void SetPageSize(const uint64_t &page_size) { page_size_ = page_size; }
 
-  const string GetVersion() { return version_; }
-
   std::vector<std::string> SerializeHeader();
 
   MSRStatus PagesToFile(const std::string dump_file_name);
@@ -175,7 +173,6 @@ class ShardHeader {
   uint32_t shard_count_;
   uint64_t header_size_;
   uint64_t page_size_;
-  string version_ = "2.0";
 
   std::shared_ptr<Index> index_;
   std::vector<std::string> shard_addresses_;
