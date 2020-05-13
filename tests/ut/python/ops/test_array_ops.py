@@ -243,6 +243,25 @@ class UnpackNet(Cell):
 
     def construct(self, x):
         return self.unpack(x)
+class SpaceToDepthNet(Cell):
+    def __init__(self):
+        super(SpaceToDepthNet, self).__init__()
+        block_size = 2
+        self.space_to_depth = P.SpaceToDepth(block_size)
+
+    def construct(self, x):
+        return self.space_to_depth(x)
+
+
+class DepthToSpaceNet(Cell):
+    def __init__(self):
+        super(DepthToSpaceNet, self).__init__()
+        block_size = 2
+        self.depth_to_space = P.DepthToSpace(block_size)
+
+    def construct(self, x):
+        return self.depth_to_space(x)
+
 
 test_case_array_ops = [
     ('CustNet1', {
@@ -272,6 +291,12 @@ test_case_array_ops = [
     ('UnpackNet', {
         'block': UnpackNet(),
         'desc_inputs': [Tensor(np.array([[1, 2], [3, 4]]).astype(np.float16))]}),
+    ('SpaceToDepthNet', {
+        'block': SpaceToDepthNet(),
+        'desc_inputs': [Tensor(np.random.rand(1,3,2,2).astype(np.float16))]}),
+    ('DepthToSpaceNet', {
+        'block': DepthToSpaceNet(),
+        'desc_inputs': [Tensor(np.random.rand(1,12,1,1).astype(np.float16))]}),
 ]
 
 test_case_lists = [test_case_array_ops]

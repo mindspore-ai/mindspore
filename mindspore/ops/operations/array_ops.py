@@ -2127,7 +2127,6 @@ class SpaceToDepth(PrimitiveWithInfer):
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check('block_size', block_size, '', 2, Rel.GE)
         self.block_size = block_size
-        self.add_prim_attr("data_format", "NCHW")
 
     def infer_shape(self, x_shape):
         validator.check('x dimension', len(x_shape), '', 4, Rel.EQ)
@@ -2185,7 +2184,6 @@ class DepthToSpace(PrimitiveWithInfer):
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
         self.block_size = block_size
-        self.add_prim_attr("data_format", "NCHW")
 
     def infer_shape(self, x_shape):
         validator.check('x dimension', len(x_shape), '', 4, Rel.EQ)
