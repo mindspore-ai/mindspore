@@ -725,8 +725,9 @@ std::string TbeKernelBuild::GetRealOpType(const std::string &origin_type) {
   static std::map<std::string, std::string> buffer_fussion_op_map = {{"DepthwiseConv2dNative", "DepthwiseConv2D"},
                                                                      {"TensorAdd", "Add"}};
   string result = origin_type;
-  if (buffer_fussion_op_map.find(origin_type) != buffer_fussion_op_map.end()) {
-    result = buffer_fussion_op_map[origin_type];
+  std::map<std::string, std::string> iter = buffer_fussion_op_map.find(origin_type);
+  if (iter != buffer_fussion_op_map.end()) {
+    result = iter->second;
   }
   return result;
 }
