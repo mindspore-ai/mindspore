@@ -53,14 +53,13 @@ def me_train_tensor(net, input_np, label_np, epoch_size=2):
     _network = wrap.WithLossCell(net, loss)
     _train_net = MsWrapper(wrap.TrainOneStepCell(_network, opt))
     _train_net.set_train()
-    summary_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=_train_net)
-    for epoch in range(0, epoch_size):
-        print(f"epoch %d" % (epoch))
-        output = _train_net(Tensor(input_np), Tensor(label_np))
-        summary_writer.record(i)
-        print("********output***********")
-        print(output.asnumpy())
-    summary_writer.close()
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_GRAPH", network=_train_net) as summary_writer:
+        for epoch in range(0, epoch_size):
+            print(f"epoch %d" % (epoch))
+            output = _train_net(Tensor(input_np), Tensor(label_np))
+            summary_writer.record(i)
+            print("********output***********")
+            print(output.asnumpy())
 
 
 def me_infer_tensor(net, input_np):

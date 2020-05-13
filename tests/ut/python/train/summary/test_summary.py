@@ -65,22 +65,21 @@ def test_scalar_summary_sample():
     """ test_scalar_summary_sample """
     log.debug("begin test_scalar_summary_sample")
     # step 0: create the thread
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR")
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
 
-    # step 1: create the test data for summary
+        # step 1: create the test data for summary
 
-    # step 2: create the Event
-    for i in range(1, 500):
-        test_data = get_test_data(i)
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(i)
+        # step 2: create the Event
+        for i in range(1, 500):
+            test_data = get_test_data(i)
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(i)
 
-    # step 3: send the event to mq
+        # step 3: send the event to mq
 
-    # step 4: accept the event and write the file
-    test_writer.close()
+        # step 4: accept the event and write the file
 
-    log.debug("finished test_scalar_summary_sample")
+        log.debug("finished test_scalar_summary_sample")
 
 
 def get_test_data_shape_1(step):
@@ -110,22 +109,21 @@ def test_scalar_summary_sample_with_shape_1():
     """ test_scalar_summary_sample_with_shape_1 """
     log.debug("begin test_scalar_summary_sample_with_shape_1")
     # step 0: create the thread
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR")
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
 
-    # step 1: create the test data for summary
+        # step 1: create the test data for summary
 
-    # step 2: create the Event
-    for i in range(1, 100):
-        test_data = get_test_data_shape_1(i)
-        _cache_summary_tensor_data(test_data)
-        test_writer.record(i)
+        # step 2: create the Event
+        for i in range(1, 100):
+            test_data = get_test_data_shape_1(i)
+            _cache_summary_tensor_data(test_data)
+            test_writer.record(i)
 
-    # step 3: send the event to mq
+        # step 3: send the event to mq
 
-    # step 4: accept the event and write the file
-    test_writer.close()
+        # step 4: accept the event and write the file
 
-    log.debug("finished test_scalar_summary_sample")
+        log.debug("finished test_scalar_summary_sample")
 
 
 # Test: test with ge
@@ -152,26 +150,24 @@ def test_scalar_summary_with_ge():
     log.debug("begin test_scalar_summary_with_ge")
 
     # step 0: create the thread
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR")
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
 
-    # step 1: create the network for summary
-    x = Tensor(np.array([1.1]).astype(np.float32))
-    y = Tensor(np.array([1.2]).astype(np.float32))
-    net = SummaryDemo()
-    net.set_train()
+        # step 1: create the network for summary
+        x = Tensor(np.array([1.1]).astype(np.float32))
+        y = Tensor(np.array([1.2]).astype(np.float32))
+        net = SummaryDemo()
+        net.set_train()
 
-    # step 2: create the Event
-    steps = 100
-    for i in range(1, steps):
-        x = Tensor(np.array([1.1 + random.uniform(1, 10)]).astype(np.float32))
-        y = Tensor(np.array([1.2 + random.uniform(1, 10)]).astype(np.float32))
-        net(x, y)
-        test_writer.record(i)
+        # step 2: create the Event
+        steps = 100
+        for i in range(1, steps):
+            x = Tensor(np.array([1.1 + random.uniform(1, 10)]).astype(np.float32))
+            y = Tensor(np.array([1.2 + random.uniform(1, 10)]).astype(np.float32))
+            net(x, y)
+            test_writer.record(i)
 
-    # step 3: close the writer
-    test_writer.close()
 
-    log.debug("finished test_scalar_summary_with_ge")
+        log.debug("finished test_scalar_summary_with_ge")
 
 
 # test the problem of two consecutive use cases going wrong
@@ -180,55 +176,52 @@ def test_scalar_summary_with_ge_2():
     log.debug("begin test_scalar_summary_with_ge_2")
 
     # step 0: create the thread
-    test_writer = SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR")
+    with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
 
-    # step 1: create the network for summary
-    x = Tensor(np.array([1.1]).astype(np.float32))
-    y = Tensor(np.array([1.2]).astype(np.float32))
-    net = SummaryDemo()
-    net.set_train()
-
-    # step 2: create the Event
-    steps = 100
-    for i in range(1, steps):
+        # step 1: create the network for summary
         x = Tensor(np.array([1.1]).astype(np.float32))
         y = Tensor(np.array([1.2]).astype(np.float32))
-        net(x, y)
-        test_writer.record(i)
+        net = SummaryDemo()
+        net.set_train()
 
-    # step 3: close the writer
-    test_writer.close()
+        # step 2: create the Event
+        steps = 100
+        for i in range(1, steps):
+            x = Tensor(np.array([1.1]).astype(np.float32))
+            y = Tensor(np.array([1.2]).astype(np.float32))
+            net(x, y)
+            test_writer.record(i)
 
-    log.debug("finished test_scalar_summary_with_ge_2")
+
+        log.debug("finished test_scalar_summary_with_ge_2")
 
 
 def test_validate():
-    sr = SummaryRecord(SUMMARY_DIR)
+    with SummaryRecord(SUMMARY_DIR) as sr:
 
-    with pytest.raises(ValueError):
-        SummaryStep(sr, 0)
-    with pytest.raises(ValueError):
-        SummaryStep(sr, -1)
-    with pytest.raises(ValueError):
-        SummaryStep(sr, 1.2)
-    with pytest.raises(ValueError):
-        SummaryStep(sr, True)
-    with pytest.raises(ValueError):
-        SummaryStep(sr, "str")
-    sr.record(1)
-    with pytest.raises(ValueError):
-        sr.record(False)
-    with pytest.raises(ValueError):
-        sr.record(2.0)
-    with pytest.raises(ValueError):
-        sr.record((1, 3))
-    with pytest.raises(ValueError):
-        sr.record([2, 3])
-    with pytest.raises(ValueError):
-        sr.record("str")
-    with pytest.raises(ValueError):
-        sr.record(sr)
-    sr.close()
+        with pytest.raises(ValueError):
+            SummaryStep(sr, 0)
+        with pytest.raises(ValueError):
+            SummaryStep(sr, -1)
+        with pytest.raises(ValueError):
+            SummaryStep(sr, 1.2)
+        with pytest.raises(ValueError):
+            SummaryStep(sr, True)
+        with pytest.raises(ValueError):
+            SummaryStep(sr, "str")
+        sr.record(1)
+        with pytest.raises(ValueError):
+            sr.record(False)
+        with pytest.raises(ValueError):
+            sr.record(2.0)
+        with pytest.raises(ValueError):
+            sr.record((1, 3))
+        with pytest.raises(ValueError):
+            sr.record([2, 3])
+        with pytest.raises(ValueError):
+            sr.record("str")
+        with pytest.raises(ValueError):
+            sr.record(sr)
 
     SummaryStep(sr, 1)
     with pytest.raises(ValueError):
