@@ -19,6 +19,7 @@
 #include <chrono>
 #include <exception>
 #include <functional>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -106,7 +107,7 @@ class Task : public IntrpResource {
   std::function<Status()> fnc_obj_;
   // Misc fields used by TaskManager.
   TaskGroup *task_group_;
-  std::thread thrd_;
+  std::future<void> thrd_;
   std::thread::id id_;
   bool is_master_;
   volatile bool running_;
