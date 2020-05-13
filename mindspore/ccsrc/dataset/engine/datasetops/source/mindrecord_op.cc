@@ -40,7 +40,7 @@ using mindrecord::ShardOperator;
 using mindrecord::ShardReader;
 
 // Builder constructor.  Creates the builder object.
-MindRecordOp::Builder::Builder() : build_dataset_file_("") {
+MindRecordOp::Builder::Builder() : build_dataset_file_({}) {
   // Some arguments to the MindRecordOp constructor have a default argument that is taken
   // from the client config.
   // The user may choose to change these values for the construction of the StorageOp by
@@ -63,9 +63,9 @@ Status MindRecordOp::Builder::Build(std::shared_ptr<MindRecordOp> *ptr) {
                   "Building a MindRecordOp that has not provided a file.");
   }
 
-  new_mind_record_op = std::make_shared<MindRecordOp>(build_num_mind_record_workers_, build_rows_per_buffer_,
-                                                      build_dataset_file_, build_op_connector_queue_size_,
-                                                      build_columns_to_load_, build_operators_, build_block_reader_);
+  new_mind_record_op = std::make_shared<MindRecordOp>(
+    build_num_mind_record_workers_, build_rows_per_buffer_, build_dataset_file_, build_load_dataset_,
+    build_op_connector_queue_size_, build_columns_to_load_, build_operators_, build_block_reader_);
 
   RETURN_IF_NOT_OK(new_mind_record_op->Init());
 
@@ -76,12 +76,14 @@ Status MindRecordOp::Builder::Build(std::shared_ptr<MindRecordOp> *ptr) {
 Status MindRecordOp::Builder::SanityCheck() const { return Status::OK(); }
 
 // Constructor of the MindRecordOp.
-MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer, std::string dataset_file,
-                           int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
+MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer,
+                           std::vector<std::string> dataset_file, bool load_dataset, int32_t op_connector_queue_size,
+                           const std::vector<std::string> &columns_to_load,
                            const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader)
     : ParallelOp(num_mind_record_workers, op_connector_queue_size),
       rows_per_buffer_(rows_per_buffer),
       dataset_file_(dataset_file),
+      load_dataset_(load_dataset),
       columns_to_load_(columns_to_load),
       operators_(operators),
       num_mind_record_workers_(num_mind_record_workers),
@@ -101,9 +103,10 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buf
 // Private helper method to encapsulate some common construction/reset tasks
 Status MindRecordOp::Init() {
   shard_reader_ = std::make_unique<ShardReader>();
-  auto rc = shard_reader_->Open(dataset_file_, num_mind_record_workers_, columns_to_load_, operators_, block_reader_);
+  auto rc = shard_reader_->Open(dataset_file_, load_dataset_, num_mind_record_workers_, columns_to_load_, operators_,
+                                block_reader_);
 
-  CHECK_FAIL_RETURN_UNEXPECTED(rc != MSRStatus::FAILED,
+  CHECK_FAIL_RETURN_UNEXPECTED(rc == MSRStatus::SUCCESS,
                                "MindRecordOp init failed. Error message: " + ErrnoToMessage(rc));
 
   data_schema_ = std::make_unique<DataSchema>();
@@ -201,8 +204,12 @@ void MindRecordOp::Print(std::ostream &out, bool show_all) const {
     // Call the super class for displaying any common detailed info
     ParallelOp::Print(out, show_all);
     // Then show any custom derived-internal stuff
-    out << "\n1 Dataset file : " << dataset_file_ << "\nNumber of rows : " << num_rows_
-        << "\nRows per buffer : " << rows_per_buffer_ << "\nNumber of buffers : " << buffers_needed_
+    out << "\n Dataset file : ";
+    for (auto &file : dataset_file_) {
+      out << file << " ";
+    }
+    out << "\nNumber of rows : " << num_rows_ << "\nRows per buffer : " << rows_per_buffer_
+        << "\nNumber of buffers : " << buffers_needed_
         << "\nNumber of ShardReader workers : " << num_mind_record_workers_ << "\n\n";
   }
 }
@@ -668,10 +675,10 @@ Status MindRecordOp::LaunchThreadAndInitOp() {
   return Status::OK();
 }
 
-Status MindRecordOp::CountTotalRows(const std::string dataset_path, const std::shared_ptr<ShardOperator> &op,
-                                    int64_t *count) {
+Status MindRecordOp::CountTotalRows(const std::vector<std::string> dataset_path, bool load_dataset,
+                                    const std::shared_ptr<ShardOperator> &op, int64_t *count) {
   std::unique_ptr<ShardReader> shard_reader = std::make_unique<ShardReader>();
-  MSRStatus rc = shard_reader->CountTotalRows(dataset_path, op, count);
+  MSRStatus rc = shard_reader->CountTotalRows(dataset_path, load_dataset, op, count);
   if (rc == MSRStatus::FAILED) {
     RETURN_STATUS_UNEXPECTED("MindRecordOp count total rows failed.");
   }

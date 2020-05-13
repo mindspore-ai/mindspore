@@ -18,13 +18,13 @@
 # pylint: disable=missing-docstring, arguments-differ, W0612
 
 import os
+
 import mindspore.common.dtype as mstype
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.nn.optim import AdamWeightDecayDynamicLR
 from mindspore.model_zoo.Bert_NEZHA import BertConfig, BertNetworkWithLoss, BertTrainOneStepCell, \
     BertTrainOneStepWithLossScaleCell
-from mindspore.nn.wrap.loss_scale import FixedLossScaleUpdateCell
+from mindspore.nn.optim import AdamWeightDecayDynamicLR
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from ...dataset_mock import MindData
 from ...ops_common import nn, np, batch_tuple_tensor, build_construct_graph

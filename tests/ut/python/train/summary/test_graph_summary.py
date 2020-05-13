@@ -13,15 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """ test_graph_summary """
-import os
 import logging
+import os
+
 import numpy as np
-import pytest
+
 import mindspore.nn as nn
-from mindspore.nn.optim import Momentum
 from mindspore import Model, context
-from mindspore.train.summary.summary_record import SummaryRecord
+from mindspore.nn.optim import Momentum
 from mindspore.train.callback import SummaryStep
+from mindspore.train.summary.summary_record import SummaryRecord
 from .....dataset_mock import MindData
 
 CUR_DIR = os.getcwd()

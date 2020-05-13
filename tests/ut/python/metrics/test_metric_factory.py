@@ -14,9 +14,11 @@
 # ============================================================================
 """test_metric_factory"""
 import math
+
 import numpy as np
-from mindspore.nn.metrics import get_metric_fn
+
 from mindspore import Tensor
+from mindspore.nn.metrics import get_metric_fn
 
 
 def test_classification_accuracy():
@@ -26,7 +28,7 @@ def test_classification_accuracy():
     metric.clear()
     metric.update(x, y)
     accuracy = metric.eval()
-    assert math.isclose(accuracy, 2/3)
+    assert math.isclose(accuracy, 2 / 3)
 
 
 def test_classification_accuracy_by_alias():
@@ -36,7 +38,7 @@ def test_classification_accuracy_by_alias():
     metric.clear()
     metric.update(x, y)
     accuracy = metric.eval()
-    assert math.isclose(accuracy, 2/3)
+    assert math.isclose(accuracy, 2 / 3)
 
 
 def test_classification_precision():

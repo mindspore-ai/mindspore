@@ -2189,7 +2189,7 @@ class MindDataset(SourceDataset):
     A source dataset that reads from shard files and database.
 
     Args:
-        dataset_file (str): one of file names in dataset.
+        dataset_file (str, list[str]): One of file names or file list in dataset.
         columns_list (list[str], optional): List of columns to be read (default=None).
         num_parallel_workers (int, optional): The number of readers (default=None).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
@@ -2214,6 +2214,10 @@ class MindDataset(SourceDataset):
                  shuffle=None, num_shards=None, shard_id=None,
                  block_reader=False, sampler=None):
         super().__init__(num_parallel_workers)
+        if isinstance(dataset_file, list):
+            self.load_dataset = False
+        else:
+            self.load_dataset = True
         self.dataset_file = dataset_file
         self.columns_list = columns_list
         self.global_shuffle = shuffle
@@ -2256,6 +2260,7 @@ class MindDataset(SourceDataset):
     def get_args(self):
         args = super().get_args()
         args["dataset_file"] = self.dataset_file
+        args["load_dataset"] = self.load_dataset
         args["columns_list"] = self.columns_list
         args["global_shuffle"] = self.global_shuffle
         args["partitions"] = self.partitions
@@ -2272,8 +2277,11 @@ class MindDataset(SourceDataset):
         Return:
             Number, number of batches.
         """
-
-        num_rows = MindRecordOp.get_num_rows(self.dataset_file, self.sampler)
+        if self.load_dataset:
+            dataset_file = [self.dataset_file]
+        else:
+            dataset_file = self.dataset_file
+        num_rows = MindRecordOp.get_num_rows(dataset_file, self.load_dataset, self.sampler)
         if self.partitions is not None and self.partitions[0] > 0:
             if num_rows % self.partitions[0] == 0:
                 num_rows = num_rows // self.partitions[0]
@@ -2294,11 +2302,11 @@ def _iter_fn(dataset, num_samples):
             except StopIteration:
                 return
             # convert output tensors to ndarrays
-            yield tuple([np.array(x) for x in val])
+            yield tuple([np.array(x, copy=False) for x in val])
     else:
         for val in dataset:
             # convert output tensors to ndarrays
-            yield tuple([np.array(x) for x in val])
+            yield tuple([np.array(x, copy=False) for x in val])
 
 
 def _generator_fn(generator, num_samples):
@@ -2332,12 +2340,12 @@ def _py_sampler_fn(sampler, num_samples, dataset):
                 return
             val = dataset[idx]
             # convert output tensors to ndarrays
-            yield tuple([np.array(x) for x in val])
+            yield tuple([np.array(x, copy=False) for x in val])
     else:
         for i in sampler:
             val = dataset[i]
             # convert output tensors to ndarrays
-            yield tuple([np.array(x) for x in val])
+            yield tuple([np.array(x, copy=False) for x in val])
 
 
 def _cpp_sampler_fn(sampler, dataset):
@@ -2348,7 +2356,7 @@ def _cpp_sampler_fn(sampler, dataset):
     for i in indices:
         val = dataset[i]
         # convert output tensors to ndarrays
-        yield tuple([np.array(x) for x in val])
+        yield tuple([np.array(x, copy=False) for x in val])
 
 
 def _cpp_sampler_fn_mp(sampler, dataset, num_worker):
@@ -2437,7 +2445,7 @@ def _sampler_fn_mp(indices, dataset, num_worker):
         # Set eoe event once all indices are sent
         if idx_cursor == len(indices) and not eoe.is_set():
             eoe.set()
-        yield tuple([np.array(x) for x in result])
+        yield tuple([np.array(x, copy=False) for x in result])
 
 
 def _generator_worker_loop(dataset, idx_queue, result_queue, eoe):
@@ -2549,35 +2557,35 @@ class GeneratorDataset(SourceDataset):
             when num_shards is also specified. Random accessible input is required.
 
     Examples:
-        >>> import mindspore.dataengine as de
+        >>> import mindspore.dataset as ds
         >>> # 1) Multidimensional generator function as callable input
         >>> def generator_md():
         >>>     for i in range(64):
         >>>         yield (np.array([[i, i + 1], [i + 2, i + 3]]),)
         >>> # create multi_dimension_generator_dataset with GeneratorMD and column name "multi_dimensional_data"
-        >>> multi_dimension_generator_dataset = de.GeneratorDataset(generator_md, ["multi_dimensional_data"])
+        >>> multi_dimension_generator_dataset = ds.GeneratorDataset(generator_md, ["multi_dimensional_data"])
         >>> # 2) Multi-column generator function as callable input
         >>> def generator_mc(maxid = 64):
         >>>     for i in range(maxid):
         >>>         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]]))
         >>> # create multi_column_generator_dataset with GeneratorMC and column names "col1" and "col2"
-        >>> multi_column_generator_dataset = de.GeneratorDataset(generator_mc, ["col1", "col2"])
+        >>> multi_column_generator_dataset = ds.GeneratorDataset(generator_mc, ["col1", "col2"])
         >>> # 3) Iterable dataset as iterable input
         >>> class MyIterable():
         >>>     def __iter__(self):
         >>>         return # User implementation
         >>> # create iterable_generator_dataset with MyIterable object
-        >>> iterable_generator_dataset = de.GeneratorDataset(MyIterable(), ["col1"])
+        >>> iterable_generator_dataset = ds.GeneratorDataset(MyIterable(), ["col1"])
         >>> # 4) Random accessible dataset as Random accessible input
         >>> class MyRA():
         >>>     def __getitem__(self, index):
         >>>         return # User implementation
         >>> # create ra_generator_dataset with MyRA object
-        >>> ra_generator_dataset = de.GeneratorDataset(MyRA(), ["col1"])
+        >>> ra_generator_dataset = ds.GeneratorDataset(MyRA(), ["col1"])
         >>> # List/Dict/Tuple is also random accessible
-        >>> list_generator = de.GeneratorDataset([(np.array(0),), (np.array(1)), (np.array(2))], ["col1"])
+        >>> list_generator = ds.GeneratorDataset([(np.array(0),), (np.array(1)), (np.array(2))], ["col1"])
         >>> # 5) Built-in Sampler
-        >>> my_generator = de.GeneratorDataset(my_ds, ["img", "label"], sampler=samplers.RandomSampler())
+        >>> my_generator = ds.GeneratorDataset(my_ds, ["img", "label"], sampler=samplers.RandomSampler())
         >>>
     """
 

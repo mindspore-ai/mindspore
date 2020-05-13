@@ -22,6 +22,8 @@ cast_op_info = AkgRegOp("Cast") \
     .attr("dst_type", "required", "str") \
     .dtype_format(DataType.F16_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_Default, DataType.F16_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.F32_Default) \
     .get_op_info()
 
 

@@ -17,12 +17,14 @@
 
 import numpy as np
 
-from mindspore.common.api import _executor
 import mindspore.context as context
 from mindspore import Tensor
-from ..train_step_wrap import train_step_with_loss_warp
+from mindspore.common.api import _executor
 from .resnet_example import resnet50
+from ..train_step_wrap import train_step_with_loss_warp
+
 context.set_context(mode=context.GRAPH_MODE)
+
 
 def test_train_step():
     net = train_step_with_loss_warp(resnet50())

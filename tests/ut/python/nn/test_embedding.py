@@ -14,11 +14,10 @@
 # ============================================================================
 """ test_embedding """
 import numpy as np
-import pytest
 
-from mindspore.model_zoo.Bert_NEZHA import EmbeddingLookup, EmbeddingPostprocessor
 from mindspore import Tensor
 from mindspore import dtype as mstype
+from mindspore.model_zoo.Bert_NEZHA import EmbeddingLookup, EmbeddingPostprocessor
 from ..ut_filter import non_graph_engine
 
 
@@ -39,6 +38,7 @@ def test_check_embedding_lookup_2():
                         use_one_hot_embeddings=True)
     m(Tensor(np.ones([128]), mstype.int32))
 
+
 @non_graph_engine
 def test_check_embedding_lookup_3():
     m = EmbeddingLookup(vocab_size=32000,
@@ -48,11 +48,12 @@ def test_check_embedding_lookup_3():
                         initializer_range=0.01)
     m(Tensor(np.ones([128]), mstype.int32))
 
+
 @non_graph_engine
 def test_embedding_post_1():
     m = EmbeddingPostprocessor(embedding_size=768,
-                                embedding_shape=[1, 128, 768],
-                                use_token_type=True)
+                               embedding_shape=[1, 128, 768],
+                               use_token_type=True)
     m(Tensor(np.ones([128]), mstype.int32), Tensor(np.ones([1, 128, 768]), mstype.float32))
 
 

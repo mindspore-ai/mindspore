@@ -27,6 +27,8 @@
 namespace mindspore {
 namespace session {
 namespace {
+constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
+constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 void PushNoVisitedNode(const AnfNodePtr &node, std::queue<AnfNodePtr> *que,
                        std::unordered_set<AnfNodePtr> *visited_nodes) {
   MS_EXCEPTION_IF_NULL(que);
@@ -180,11 +182,24 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   cnode->set_abstract(std::make_shared<abstract::AbstractNone>());
   // create kernel_info from new parameter
   auto kernel_info = std::make_shared<device::KernelInfo>();
+  std::vector<size_t> feature_map_input_indexs;
   // if the node only has the primitive(such as getNext) or the node's input has a feature map input
   // then the node's output is a feature map output
-  if (inputs.size() == 1 || std::any_of(inputs.begin() + 1, inputs.end(),
-                                        [&](const AnfNodePtr &node) { return AnfAlgo::IsFeatureMapOutput(node); })) {
+  for (size_t index = 1; index < inputs.size(); ++index) {
+    auto node = inputs[index];
+    if (AnfAlgo::IsFeatureMapOutput(node)) {
+      feature_map_input_indexs.push_back(index);
+    }
+  }
+  if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimCast->name()) {
+    AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(false), cnode);
+  }
+  if (inputs.size() == 1 || !feature_map_input_indexs.empty()) {
     kernel_info->SetFeatureMapFlag(true);
+    AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(true), cnode);
+    AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), cnode);
+  } else {
+    AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(false), cnode);
   }
   cnode->set_kernel_info(kernel_info);
   AnfAlgo::SetGraphId(graph_id_, cnode.get());

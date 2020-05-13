@@ -14,9 +14,9 @@
 # ============================================================================
 """ test checkparameter """
 import pytest
+
 from mindspore._checkparam import check_int, check_int_positive, \
     check_input_format, check_bool, twice
-
 
 kernel_size = 5
 kernel_size1 = twice(kernel_size)

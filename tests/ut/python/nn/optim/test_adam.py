@@ -15,16 +15,18 @@
 """ test adam """
 import numpy as np
 import pytest
+
 import mindspore.nn as nn
-from mindspore.common.api import _executor
 from mindspore import Tensor, Parameter
+from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.ops import operations as P
 from mindspore.nn.optim import AdamWeightDecay, AdamWeightDecayDynamicLR
+from mindspore.ops import operations as P
 
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self):
         super(Net, self).__init__()
         self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name="weight")

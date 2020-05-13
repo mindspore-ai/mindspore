@@ -18,16 +18,18 @@
 @Date  : 2019-07-4
 @Desc  : test summary function
 """
-import os
 import logging
+import os
+
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore.train.summary.summary_record import SummaryRecord, \
-    _cache_summary_tensor_data
+from mindspore import Model, context
 from mindspore import Tensor
 from mindspore.nn.optim import Momentum
-from mindspore import Model, context
 from mindspore.train.callback import SummaryStep
+from mindspore.train.summary.summary_record import SummaryRecord, \
+    _cache_summary_tensor_data
 from .....dataset_mock import MindData
 
 CUR_DIR = os.getcwd()

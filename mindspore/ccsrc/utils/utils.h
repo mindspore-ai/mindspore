@@ -142,6 +142,7 @@ constexpr auto kLabelGotoOpName = "LabelGoto";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
+constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";
 constexpr auto kAttrVisited = "visited";
 constexpr auto kAttrShape = "shape";
@@ -201,10 +202,6 @@ constexpr auto kControlDependBehindIndex = 2;
 // index define of depend
 constexpr auto kRealInputIndexInDepend = 1;
 constexpr auto kDependAttachNodeIndex = 2;
-// status of kernel select result
-const int kStatusReducePrecision = -1;
-const int kStatusRaisePrecision = 1;
-const int kStatusAllMatched = 0;
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
 constexpr auto kOpFormat_NC1KHKWHWC0 = "NC1KHKWHWC0";
@@ -218,18 +215,11 @@ constexpr auto kOpFormat_FRAC_NZ = "FRACTAL_NZ";
 constexpr auto kOpFormat_C1HWNCoC0 = "C1HWNCoC0";
 constexpr auto kOpFormat_NC1HWC0_C04 = "NC1HWC0_C04";
 constexpr auto kOpFormat_FRACTAL_Z_C04 = "FRACTAL_Z_C04";
-const std::set<std::string> k1DSupportFormat = {kOpFormat_DEFAULT,  kOpFormat_NCHW,        kOpFormat_NHWC,
-                                                kOpFormat_FRAC_Z,   kOpFormat_NC1KHKWHWC0, kOpFormat_NC1HWC0,
-                                                kOpFormat_C1HWNCoC0};
-
-const std::set<std::string> k2DSupportFormat = {kOpFormat_DEFAULT, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_FRAC_Z,
-                                                kOpFormat_NC1KHKWHWC0};
-const std::set<std::string> k3DSupportFormat = {kOpFormat_DEFAULT, kOpFormat_NC1KHKWHWC0};
-const std::set<std::string> k4DSupportFormat = k1DSupportFormat;
-const std::vector<std::set<std::string>> kShapeSupportFormatMap = {k1DSupportFormat, k2DSupportFormat, k3DSupportFormat,
-                                                                   k4DSupportFormat};
+const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT, kOpFormat_NC1KHKWHWC0, kOpFormat_ND,
+                                             kOpFormat_NCHW,    kOpFormat_NHWC,        kOpFormat_HWCN,
+                                             kOpFormat_NC1HWC0, kOpFormat_FRAC_Z,      kOpFormat_C1HWNCoC0,
+                                             kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
 const std::set<std::string> kDefaultCompatibleFormat = {kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_HWCN};
-
 const std::set<std::string> kOptOperatorSet = {
   kMomentumOpName,       kApplyMomentumOpName,        kApplyAdadeltaOpName,
   kApplyAdagradOpName,   kApplyAdagradDAName,         kApplyAdamOpName,

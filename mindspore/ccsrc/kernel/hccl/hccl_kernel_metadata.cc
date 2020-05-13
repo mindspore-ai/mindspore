@@ -35,7 +35,7 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   std::vector<std::string> input_format, output_format;
   std::vector<TypeId> input_type, output_type;
   for (const auto &data_type : data_type_list) {
-    for (const auto &format : k4DSupportFormat) {
+    for (const auto &format : kOpFormatList) {
       auto builder = std::make_shared<KernelBuildInfo::KernelBuildInfoBuilder>();
       input_format.clear();
       input_format.push_back(format);

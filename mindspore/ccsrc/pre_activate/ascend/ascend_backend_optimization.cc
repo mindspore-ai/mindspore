@@ -54,6 +54,7 @@
 #include "pre_activate/pass/optimize_dependence.h"
 #include "pre_activate/pass/erase_visit_attr.h"
 #include "pre_activate/ascend/format_type/insert_cast.h"
+#include "pre_activate/ascend/format_type/convert_unsupported_transnode_to_aicpu.h"
 #include "pre_activate/pass/eliminate_redundant_op.h"
 #include "pre_activate/pass/common_subexpression_elimination.h"
 #include "pre_activate/ascend/format_type/merge_cast_to_op.h"
@@ -172,6 +173,7 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   mixed_precision_pm->AddPass(std::make_shared<MergeCastToOp>());
   mixed_precision_pm->AddPass(std::make_shared<LayerNormBetaGammaBackpropFusion>());
   mixed_precision_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  mixed_precision_pm->AddPass(std::make_shared<ConvertUnSupportNodeToAICPU>());
   optimizer->AddPassManager(mixed_precision_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
@@ -274,6 +276,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
   other_pm->AddPass(std::make_shared<AllGatherFusion>());
+  other_pm->AddPass(std::make_shared<BroadcastFusion>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
   other_pm->AddPass(std::make_shared<BufferFusion>());

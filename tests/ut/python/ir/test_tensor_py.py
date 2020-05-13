@@ -14,10 +14,11 @@
 # ============================================================================
 """test tensor py"""
 import numpy as np
+
+import mindspore as ms
+from mindspore.common.api import _executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
-from mindspore.common.api import _executor
-import mindspore as ms
 from ..ut_filter import non_graph_engine
 
 
@@ -93,6 +94,7 @@ def test_float():
 
 def test_tensor_method_sub():
     """test_tensor_method_sub"""
+
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -111,6 +113,7 @@ def test_tensor_method_sub():
 
 def test_tensor_method_mul():
     """test_tensor_method_mul"""
+
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -129,6 +132,7 @@ def test_tensor_method_mul():
 
 def test_tensor_method_div():
     """test_tensor_method_div"""
+
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()

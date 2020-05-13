@@ -15,10 +15,11 @@
 """ test nn.Dense """
 import numpy as np
 import pytest
-import mindspore.nn as nn
-from mindspore.common.api import _executor
+
 import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.common.api import _executor
 from ..ut_filter import non_graph_engine
 
 
@@ -68,6 +69,7 @@ def test_dense_channels_error():
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self,
                  input_channels,
                  output_channels,

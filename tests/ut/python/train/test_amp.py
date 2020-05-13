@@ -15,12 +15,11 @@
 """ auto mixed precision """
 import numpy as np
 import pytest
+
+import mindspore.context as context
+from mindspore import Tensor
 from mindspore import amp
 from mindspore import nn
-from mindspore import Tensor
-from mindspore.common import dtype as mstype
-import mindspore.context as context
-from mindspore.model_zoo.resnet import resnet50
 from mindspore.train import Model
 from ....dataset_mock import MindData
 
@@ -96,6 +95,7 @@ class MindDataSet(MindData):
                                           np_types=dataset_types,
                                           output_shapes=dataset_shapes,
                                           input_indexs=(0, 1))
+
     def __next__(self):
         if self._size < self._iter_num:
             raise StopIteration
@@ -121,6 +121,7 @@ def test_compile_model_train_O0():
     with pytest.raises(ValueError):
         # not actual run, the metrics step will fail, check if compile ok.
         model.eval(dataset)
+
 
 def test_compile_model_train_O2():
     dataset_types = (np.float32, np.float32)

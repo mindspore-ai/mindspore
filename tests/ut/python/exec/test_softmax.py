@@ -16,8 +16,10 @@
 test softmax api
 """
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import Tensor
+
 
 class Net(nn.Cell):
     def __init__(self, dim):

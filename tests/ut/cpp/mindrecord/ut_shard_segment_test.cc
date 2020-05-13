@@ -59,7 +59,7 @@ TEST_F(TestShardSegment, TestShardSegment) {
   std::string file_name = "./imagenet.shard01";
 
   ShardSegment dataset;
-  dataset.Open(file_name, 4);
+  dataset.Open({file_name}, true, 4);
 
   auto x = dataset.GetCategoryFields();
   for (const auto &fields : x.second) {
@@ -97,7 +97,7 @@ TEST_F(TestShardSegment, TestReadAtPageByNameOfCategoryName) {
   std::string file_name = "./imagenet.shard01";
 
   ShardSegment dataset;
-  dataset.Open(file_name, 4);
+  dataset.Open({file_name}, true, 4);
 
   auto x = dataset.GetCategoryFields();
   for (const auto &fields : x.second) {
@@ -121,7 +121,7 @@ TEST_F(TestShardSegment, TestReadAtPageByIdOfCategoryId) {
   std::string file_name = "./imagenet.shard01";
 
   ShardSegment dataset;
-  dataset.Open(file_name, 4);
+  dataset.Open({file_name}, true,  4);
 
   auto x = dataset.GetCategoryFields();
   for (const auto &fields : x.second) {
@@ -143,7 +143,7 @@ TEST_F(TestShardSegment, TestReadAtPageByIdOfPageNo) {
   std::string file_name = "./imagenet.shard01";
 
   ShardSegment dataset;
-  dataset.Open(file_name, 4);
+  dataset.Open({file_name}, true, 4);
 
   auto x = dataset.GetCategoryFields();
   for (const auto &fields : x.second) {
@@ -165,7 +165,7 @@ TEST_F(TestShardSegment, TestReadAtPageByIdOfPageRows) {
   std::string file_name = "./imagenet.shard01";
 
   ShardSegment dataset;
-  dataset.Open(file_name, 4);
+  dataset.Open({file_name}, true, 4);
 
   auto x = dataset.GetCategoryFields();
   for (const auto &fields : x.second) {

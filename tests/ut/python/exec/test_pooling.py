@@ -15,12 +15,12 @@
 """
 test pooling api
 """
-import numpy as np
 import mindspore.nn as nn
-from mindspore import Tensor
+
 
 class MaxNet(nn.Cell):
     """MaxNet definition"""
+
     def __init__(self,
                  kernel_size,
                  stride=None):

@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from collections import Counter
+
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
+from mindspore.common import dtype as mstype
 from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import LARS, Momentum
 from mindspore.ops import operations as P
-from mindspore.common import dtype as mstype 
-from collections import Counter
 
 
 def multisteplr(total_steps, milestone, base_lr=0.9, gamma=0.1, dtype=mstype.float32):
@@ -56,7 +58,7 @@ def test_lars_multi_step_lr():
     lr = multisteplr(10, [2, 6])
     SGD = Momentum(net.trainable_params(), lr, 0.9)
     optimizer = LARS(SGD, epsilon=1e-08, hyperpara=0.02, decay_filter=lambda x: 'bn' not in x.name,
-                       lars_filter=lambda x: 'bn' not in x.name)
+                     lars_filter=lambda x: 'bn' not in x.name)
 
     net_with_loss = WithLossCell(net, loss)
     train_network = TrainOneStepCell(net_with_loss, optimizer)

@@ -35,10 +35,11 @@ class ShardHeader {
  public:
   ShardHeader();
 
-  MSRStatus Build(const std::string &file_path);
-
   ~ShardHeader() = default;
 
+  MSRStatus BuildDataset(const std::vector<std::string> &file_paths, bool load_dataset = true);
+
+  static std::pair<MSRStatus, json> BuildSingleHeader(const std::string &file_path);
   /// \brief add the schema and save it
   /// \param[in] schema the schema needs to be added
   /// \return the last schema's id
@@ -126,7 +127,7 @@ class ShardHeader {
   MSRStatus FileToPages(const std::string dump_file_name);
 
  private:
-  MSRStatus InitializeHeader(const std::vector<json> &headers);
+  MSRStatus InitializeHeader(const std::vector<json> &headers, bool load_dataset);
 
   /// \brief get the headers from all the shard data
   /// \param[in] the shard data real path
@@ -137,9 +138,9 @@ class ShardHeader {
   MSRStatus ValidateField(const std::vector<std::string> &field_name, json schema, const uint64_t &schema_id);
 
   /// \brief check the binary file status
-  MSRStatus CheckFileStatus(const std::string &path);
+  static MSRStatus CheckFileStatus(const std::string &path);
 
-  std::pair<MSRStatus, json> ValidateHeader(const std::string &path);
+  static std::pair<MSRStatus, json> ValidateHeader(const std::string &path);
 
   void ParseHeader(const json &header);
 
@@ -149,7 +150,7 @@ class ShardHeader {
 
   MSRStatus CheckIndexField(const std::string &field, const json &schema);
 
-  void ParsePage(const json &page);
+  void ParsePage(const json &page, int shard_index, bool load_dataset);
 
   MSRStatus ParseStatistics(const json &statistics);
 

@@ -16,29 +16,30 @@
 import os
 import stat
 import time
+
 import numpy as np
 import pytest
 
-import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
-from mindspore.ops import operations as P
-from mindspore.nn import SoftmaxCrossEntropyWithLogits
-from mindspore.nn.optim.momentum import Momentum
-from mindspore.nn import WithLossCell, TrainOneStepCell
-from mindspore.train.callback import _CheckpointManager
-from mindspore.train.serialization import save_checkpoint, load_checkpoint,load_param_into_net, \
-                                          _exec_save_checkpoint, export, _save_graph
-from ..ut_filter import run_on_onnxruntime, non_graph_engine
+import mindspore.nn as nn
 from mindspore import context
-
+from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor
+from mindspore.nn import SoftmaxCrossEntropyWithLogits
+from mindspore.nn import WithLossCell, TrainOneStepCell
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import operations as P
+from mindspore.train.callback import _CheckpointManager
+from mindspore.train.serialization import save_checkpoint, load_checkpoint, load_param_into_net, \
+    _exec_save_checkpoint, export, _save_graph
+from ..ut_filter import run_on_onnxruntime, non_graph_engine
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net(nn.Cell):
     """Net definition."""
+
     def __init__(self, num_classes=10):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, weight_init="zeros")
@@ -46,7 +47,7 @@ class Net(nn.Cell):
         self.relu = nn.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2)
         self.flatten = nn.Flatten()
-        self.fc = nn.Dense(int(224*224*64/16), num_classes)
+        self.fc = nn.Dense(int(224 * 224 * 64 / 16), num_classes)
 
     def construct(self, x):
         x = self.conv1(x)
@@ -289,13 +290,14 @@ def test_load_checkpoint_empty_file():
 
 class MYNET(nn.Cell):
     """ NET definition """
+
     def __init__(self):
         super(MYNET, self).__init__()
         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal', pad_mode='valid')
         self.bn = nn.BatchNorm2d(64)
         self.relu = nn.ReLU()
         self.flatten = nn.Flatten()
-        self.fc = nn.Dense(64*222*222, 3)  # padding=0
+        self.fc = nn.Dense(64 * 222 * 222, 3)  # padding=0
 
     def construct(self, x):
         x = self.conv(x)
@@ -310,11 +312,12 @@ class MYNET(nn.Cell):
 def test_export():
     net = MYNET()
     input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]).astype(np.float32))
-    export(net, input_data,  file_name="./me_export.pb", file_format="GEIR")
+    export(net, input_data, file_name="./me_export.pb", file_format="GEIR")
 
 
 class BatchNormTester(nn.Cell):
     "used to test exporting network in training mode in onnx format"
+
     def __init__(self, num_features):
         super(BatchNormTester, self).__init__()
         self.bn = nn.BatchNorm2d(num_features)
@@ -339,6 +342,7 @@ class DepthwiseConv2dAndReLU6(nn.Cell):
         x = self.relu6(x)
         return x
 
+
 def test_batchnorm_train_onnx_export():
     input = Tensor(np.ones([1, 3, 32, 32]).astype(np.float32) * 0.01)
     net = BatchNormTester(3)
@@ -352,6 +356,7 @@ def test_batchnorm_train_onnx_export():
 
 class LeNet5(nn.Cell):
     """LeNet5 definition"""
+
     def __init__(self):
         super(LeNet5, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')
@@ -378,8 +383,10 @@ def test_lenet5_onnx_export():
     net = LeNet5()
     export(net, input, file_name='lenet5.onnx', file_format='ONNX')
 
+
 class DefinedNet(nn.Cell):
     """simple Net definition with maxpoolwithargmax."""
+
     def __init__(self, num_classes=10):
         super(DefinedNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, weight_init="zeros")
@@ -387,7 +394,7 @@ class DefinedNet(nn.Cell):
         self.relu = nn.ReLU()
         self.maxpool = P.MaxPoolWithArgmax(padding="same", ksize=2, strides=2)
         self.flatten = nn.Flatten()
-        self.fc = nn.Dense(int(56*56*64), num_classes)
+        self.fc = nn.Dense(int(56 * 56 * 64), num_classes)
 
     def construct(self, x):
         x = self.conv1(x)
@@ -397,6 +404,7 @@ class DefinedNet(nn.Cell):
         x = self.flatten(x)
         x = self.fc(x)
         return x
+
 
 def test_net_onnx_maxpoolwithargmax_export():
     input = Tensor(np.ones([1, 3, 224, 224]).astype(np.float32) * 0.01)
@@ -426,7 +434,7 @@ def test_lenet5_onnx_load_run():
 
     print('------------------ onnxruntime run ------------------')
     ort_session = ort.InferenceSession(onnx_file)
-    input_map = {'x' : input.asnumpy()}
+    input_map = {'x': input.asnumpy()}
     # provide only input x to run model
     outputs = ort_session.run(None, input_map)
     print(outputs[0])
@@ -459,7 +467,7 @@ def test_depthwiseconv_relu6_onnx_load_run():
 
     print('------------------ onnxruntime run ------------------')
     ort_session = ort.InferenceSession(onnx_file)
-    input_map = {'x' : input.asnumpy()}
+    input_map = {'x': input.asnumpy()}
     # provide only input x to run model
     outputs = ort_session.run(None, input_map)
     print(outputs[0])
@@ -468,6 +476,7 @@ def test_depthwiseconv_relu6_onnx_load_run():
         input_map[item.name] = np.ones(item.default_input.asnumpy().shape, dtype=np.float32)
     outputs = ort_session.run(None, input_map)
     print(outputs[0])
+
 
 def teardown_module():
     files = ['parameters.ckpt', 'new_ckpt.ckpt', 'lenet5.onnx', 'batch_norm.onnx', 'empty.ckpt']

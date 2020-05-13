@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
+import pytest
+
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
+from mindspore.common import dtype as mstype
 from mindspore.common.api import _executor
 from mindspore.nn import TrainOneStepCell, WithLossCell, ParameterUpdate
 from mindspore.nn.optim import Momentum
-from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
 

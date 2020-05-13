@@ -34,7 +34,7 @@ class TransposeTransDataFusion : public PatternProcessPass {
   explicit TransposeTransDataFusion(bool multigraph = true)
       : PatternProcessPass("transpose_transdata_fusion", multigraph) {
     input_varptr_ = std::make_shared<Var>();
-    kernel_select_ = std::make_shared<KernelSelect>();
+    supported_checker_ = std::make_shared<SupportedChecker>();
   }
   ~TransposeTransDataFusion() override = default;
   const BaseRef DefinePattern() const override;
@@ -42,7 +42,9 @@ class TransposeTransDataFusion : public PatternProcessPass {
 
  private:
   VarPtr input_varptr_;
-  KernelSelectPtr kernel_select_;
+
+ private:
+  SupportedCheckerPtr supported_checker_;
 };
 }  // namespace opt
 }  // namespace mindspore

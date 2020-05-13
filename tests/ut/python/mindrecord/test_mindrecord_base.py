@@ -202,6 +202,16 @@ def test_cv_file_reader_tutorial():
     assert count == 10
     reader.close()
 
+def test_cv_file_reader_file_list():
+    """tutorial for cv file partial reader."""
+    reader = FileReader([CV_FILE_NAME + str(x) for x in range(FILES_NUM)])
+    count = 0
+    for index, x in enumerate(reader.get_next()):
+        assert len(x) == 3
+        count = count + 1
+        logger.info("#item{}: {}".format(index, x))
+    assert count == 10
+
 def test_cv_file_reader_partial_tutorial():
     """tutorial for cv file partial reader."""
     reader = FileReader(CV_FILE_NAME + "0")

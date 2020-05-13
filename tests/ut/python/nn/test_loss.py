@@ -14,12 +14,12 @@
 # ============================================================================
 """ test loss """
 import numpy as np
-import pytest
+
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import _executor
 from ..ut_filter import non_graph_engine
-import mindspore
+
 
 def test_L1Loss():
     loss = nn.L1Loss()
@@ -60,5 +60,5 @@ def test_SoftmaxCrossEntropyExpand():
     loss = nn.SoftmaxCrossEntropyExpand()
 
     logits = Tensor(np.random.randint(0, 9, [100, 10]).astype(np.float32))
-    labels = Tensor(np.random.randint(0, 9, [10,]).astype(np.float32))
+    labels = Tensor(np.random.randint(0, 9, [10, ]).astype(np.float32))
     _executor.compile(loss, logits, labels)

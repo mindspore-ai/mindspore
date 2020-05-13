@@ -18,16 +18,18 @@
 @Date  : 2019-07-4
 @Desc  : test summary function
 """
-import os
 import logging
+import os
 import random
+
 import numpy as np
 import pytest
-from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
-from mindspore.train.callback import SummaryStep
-from mindspore.common.tensor import Tensor
+
 import mindspore.nn as nn
+from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore.train.callback import SummaryStep
+from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
 
 CUR_DIR = os.getcwd()
 SUMMARY_DIR = CUR_DIR + "/test_temp_summary_event_file/"
@@ -129,7 +131,8 @@ def test_scalar_summary_sample_with_shape_1():
 # Test: test with ge
 class SummaryDemo(nn.Cell):
     """ SummaryDemo definition """
-    def __init__(self,):
+
+    def __init__(self, ):
         super(SummaryDemo, self).__init__()
         self.s = P.ScalarSummary()
         self.histogram_summary = P.HistogramSummary()
@@ -218,9 +221,9 @@ def test_validate():
     with pytest.raises(ValueError):
         sr.record(2.0)
     with pytest.raises(ValueError):
-        sr.record((1,3))
+        sr.record((1, 3))
     with pytest.raises(ValueError):
-        sr.record([2,3])
+        sr.record([2, 3])
     with pytest.raises(ValueError):
         sr.record("str")
     with pytest.raises(ValueError):
@@ -235,8 +238,8 @@ def test_validate():
     with pytest.raises(ValueError):
         SummaryStep(sr, "str")
     with pytest.raises(ValueError):
-        SummaryStep(sr, (1,2))
+        SummaryStep(sr, (1, 2))
     with pytest.raises(ValueError):
-        SummaryStep(sr, [3,4])
+        SummaryStep(sr, [3, 4])
     with pytest.raises(ValueError):
         SummaryStep(sr, sr)

@@ -15,11 +15,10 @@
 """ test cell """
 import numpy as np
 import pytest
-import mindspore.context as context
+
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.common.api import _executor
-from ..ut_filter import non_graph_engine
 
 
 class ModA(nn.Cell):
@@ -90,7 +89,7 @@ class ConvNet(nn.Cell):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
         self.flatten = nn.Flatten()
         self.fc = nn.Dense(
-            int(ConvNet.image_h*ConvNet.image_w*ConvNet.output_ch/(4*4)),
+            int(ConvNet.image_h * ConvNet.image_w * ConvNet.output_ch / (4 * 4)),
             num_classes)
 
     def construct(self, x):

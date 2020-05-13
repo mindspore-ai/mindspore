@@ -17,10 +17,10 @@ resnet50 example
 """
 import numpy as np
 
-from mindspore.common.api import _executor
+import mindspore.nn as nn  # pylint: disable=C0414
 from mindspore import Tensor
+from mindspore.common.api import _executor
 from mindspore.ops.operations import TensorAdd
-import mindspore.nn as nn # pylint: disable=C0414
 from ...train_step_wrap import train_step_with_loss_warp
 
 

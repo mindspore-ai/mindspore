@@ -18,14 +18,13 @@
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore.common.api import _executor
-from mindspore import Tensor
-from mindspore.model_zoo.lenet import LeNet
-from mindspore import context
 import mindspore.ops.composite as C
+from mindspore import Tensor
+from mindspore import context
+from mindspore.common.api import _executor
+from mindspore.model_zoo.lenet import LeNet
 
 context.set_context(mode=context.GRAPH_MODE)
-
 
 batch_size = 1
 channel = 1
@@ -36,6 +35,7 @@ num_class = 10
 
 class LeNetGrad(nn.Cell):
     """Backward of LeNet"""
+
     def __init__(self, network):
         super(LeNetGrad, self).__init__()
         self.grad_op = C.grad_all_with_sens

@@ -14,12 +14,15 @@
 # ============================================================================
 """ test Dense """
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import Tensor
 from ..ut_filter import non_graph_engine
 
+
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self,
                  input_channels,
                  output_channels,

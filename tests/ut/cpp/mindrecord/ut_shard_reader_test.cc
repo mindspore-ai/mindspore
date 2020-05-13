@@ -55,7 +55,7 @@ TEST_F(TestShardReader, TestShardReaderGeneral) {
   auto column_list = std::vector<std::string>{"file_name"};
 
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list);
+  dataset.Open({file_name}, true, 4, column_list);
   dataset.Launch();
 
   while (true) {
@@ -78,7 +78,7 @@ TEST_F(TestShardReader, TestShardReaderSample) {
   std::vector<std::shared_ptr<ShardOperator>> ops;
   ops.push_back(std::make_shared<ShardSample>(17));
   ShardReader dataset;
-  dataset.Open(file_name, 4, column_list, ops);
+  dataset.Open({file_name}, true, 4, column_list, ops);
   dataset.Launch();
 
   while (true) {
@@ -103,7 +103,7 @@ TEST_F(TestShardReader, TestShardReaderBlock) {
   ops.push_back(std::make_shared<ShardSample>(3));
   ShardReader dataset;
   const bool kBlockReader = true;
-  dataset.Open(file_name, 4, column_list, ops, kBlockReader);
+  dataset.Open({file_name}, true, 4, column_list, ops, kBlockReader);
   dataset.Launch();
 
   while (true) {
@@ -123,7 +123,7 @@ TEST_F(TestShardReader, TestShardReaderEasy) {
   MS_LOG(INFO) << FormatInfo("Test read imageNet");
   std::string file_name = "./imagenet.shard01";
   ShardReader dataset;
-  dataset.Open(file_name);
+  dataset.Open({file_name}, true);
   dataset.Launch();
 
   while (true) {
@@ -143,7 +143,7 @@ TEST_F(TestShardReader, TestShardReaderColumnNotInIndex) {
   std::string file_name = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"label"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(file_name, 4, column_list);
+  MSRStatus ret = dataset.Open({file_name}, true,  4, column_list);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 
@@ -164,7 +164,7 @@ TEST_F(TestShardReader, TestShardReaderColumnNotInSchema) {
   std::string file_name = "./imagenet.shard01";
   auto column_list = std::vector<std::string>{"file_namex"};
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(file_name, 4, column_list);
+  MSRStatus ret = dataset.Open({file_name}, true, 4, column_list);
   ASSERT_EQ(ret, ILLEGAL_COLUMN_LIST);
 }
 
@@ -172,7 +172,7 @@ TEST_F(TestShardReader, TestShardVersion) {
   MS_LOG(INFO) << FormatInfo("Test shard version");
   std::string file_name = "./imagenet.shard01";
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(file_name, 4);
+  MSRStatus ret = dataset.Open({file_name}, true,  4);
   ASSERT_EQ(ret, SUCCESS);
   dataset.Launch();
 
@@ -195,7 +195,7 @@ TEST_F(TestShardReader, TestShardReaderDir) {
   auto column_list = std::vector<std::string>{"file_name"};
 
   ShardReader dataset;
-  MSRStatus ret = dataset.Open(file_name, 4, column_list);
+  MSRStatus ret = dataset.Open({file_name}, true,  4, column_list);
   ASSERT_EQ(ret, FAILED);
 }
 
@@ -205,7 +205,7 @@ TEST_F(TestShardReader, TestShardReaderConsumer) {
   auto column_list = std::vector<std::string>{"file_name"};
 
   ShardReader dataset;
-  dataset.Open(file_name, -481565535, column_list);
+  dataset.Open({file_name}, true,  -481565535, column_list);
   dataset.Launch();
 
   while (true) {

@@ -14,6 +14,7 @@
 # ============================================================================
 """ test_run_config """
 import pytest
+
 from mindspore.train.callback import CheckpointConfig
 
 

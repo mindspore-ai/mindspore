@@ -77,8 +77,8 @@ class MindRecordOp : public ParallelOp {
       return *this;
     }
 
-    Builder &SetDatasetFile(const std::string &file) {
-      build_dataset_file_ = file;
+    Builder &SetDatasetFile(const std::vector<std::string> &files) {
+      build_dataset_file_ = files;
       return *this;
     }
 
@@ -97,6 +97,11 @@ class MindRecordOp : public ParallelOp {
       return *this;
     }
 
+    Builder &SetLoadDataset(bool load_dataset) {
+      build_load_dataset_ = load_dataset;
+      return *this;
+    }
+
     Status SanityCheck() const;
 
     static int32_t num_mind_record_workers() { return kDefaultMindRecordWorkers; }
@@ -109,7 +114,8 @@ class MindRecordOp : public ParallelOp {
     int32_t builder_num_workers_;
     int32_t build_rows_per_buffer_;
     int32_t build_op_connector_queue_size_;
-    std::string build_dataset_file_;
+    std::vector<std::string> build_dataset_file_;
+    bool build_load_dataset_;
     std::vector<std::string> build_columns_to_load_;
     std::vector<std::shared_ptr<ShardOperator>> build_operators_;
     bool build_block_reader_;
@@ -119,12 +125,12 @@ class MindRecordOp : public ParallelOp {
   // @note The builder class should be used to call it
   // @param num_mind_record_workers - The number of workers for the op (run by ShardReader)
   // @param rows_per_buffer - The requested number of rows per buffer
-  // @param dataset_file - A shard file
+  // @param dataset_file - dataset files
   // @param op_connector_queue_size - The output connector queue size
   // @param columns_to_load - The list of columns to use (column name)
   // @param operators - ShardOperators for Shuffle, Category, Sample
-  MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer, std::string dataset_file,
-               int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
+  MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buffer, std::vector<std::string> dataset_file,
+               bool load_dataset, int32_t op_connector_queue_size, const std::vector<std::string> &columns_to_load,
                const std::vector<std::shared_ptr<ShardOperator>> &operators, const bool &block_reader);
 
   // Destructor
@@ -169,20 +175,21 @@ class MindRecordOp : public ParallelOp {
   // Getter method
   int32_t num_rows() const { return num_rows_; }
 
-  // Getter method
-  static Status CountTotalRows(const std::string dataset_path, const std::shared_ptr<ShardOperator> &op,
-                               int64_t *count);
+  static Status CountTotalRows(const std::vector<std::string> dataset_path, bool load_dataset,
+                               const std::shared_ptr<ShardOperator> &op, int64_t *count);
 
   // Getter method
   int32_t rows_per_buffer() const { return rows_per_buffer_; }
 
   // Getter method
-  std::string dataset_file() const { return dataset_file_; }
+  std::vector<std::string> dataset_file() const { return dataset_file_; }
 
   // Getter method
   std::vector<std::string> columns_to_load() const { return columns_to_load_; }
 
   bool block_reader() const { return block_reader_; }
+
+  bool load_dataset() const { return load_dataset_; }
 
   Status Init();
 
@@ -246,7 +253,8 @@ class MindRecordOp : public ParallelOp {
   Status FetchBlockBuffer(const int32_t &buffer_id);
 
   int32_t rows_per_buffer_;                                // The number of requested rows per buffer.
-  std::string dataset_file_;                               // A dataset file
+  std::vector<std::string> dataset_file_;                  // dataset files
+  bool load_dataset_;                                      // load dataset from single file or not
   std::vector<std::string> columns_to_load_;               // Columns to load from dataset
   std::vector<std::shared_ptr<ShardOperator>> operators_;  // ShardOperators to use
   int32_t num_mind_record_workers_;                        // number of workers to be spawned by ShardReader

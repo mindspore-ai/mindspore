@@ -14,10 +14,11 @@
 # ============================================================================
 """ test nn embedding """
 import numpy as np
+
 from mindspore import Tensor
 from mindspore.common import dtype
-from mindspore.nn import Embedding
 from mindspore.common.api import _executor
+from mindspore.nn import Embedding
 from ..ut_filter import non_graph_engine
 
 
@@ -40,6 +41,7 @@ def test_check_embedding_3():
     net = Embedding(20000, 768, True, "zeros")
     input_data = Tensor(np.ones([8, 128]), dtype.int32)
     _executor.compile(net, input_data)
+
 
 @non_graph_engine
 def test_print_embedding():

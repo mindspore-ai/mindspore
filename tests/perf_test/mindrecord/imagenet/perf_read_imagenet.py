@@ -14,16 +14,19 @@
 # ============================================================================
 """test dataset performance about mindspore.MindDataset, mindspore.TFRecordDataset, tf.data.TFRecordDataset"""
 import time
-import mindspore.dataset as ds
-from mindspore.mindrecord import FileReader
 
 import tensorflow as tf
 
+import mindspore.dataset as ds
+from mindspore.mindrecord import FileReader
+
 print_step = 5000
+
 
 def print_log(count):
     if count % print_step == 0:
         print("Read {} rows ...".format(count))
+
 
 def use_filereader(mindrecord):
     start = time.time()
@@ -38,6 +41,7 @@ def use_filereader(mindrecord):
     end = time.time()
     print("Read by FileReader - total rows: {}, cost time: {}s".format(num_iter, end - start))
 
+
 def use_minddataset(mindrecord):
     start = time.time()
     columns_list = ["data", "label"]
@@ -50,6 +54,7 @@ def use_minddataset(mindrecord):
         print_log(num_iter)
     end = time.time()
     print("Read by MindDataset - total rows: {}, cost time: {}s".format(num_iter, end - start))
+
 
 def use_tfrecorddataset(tfrecord):
     start = time.time()
@@ -66,8 +71,10 @@ def use_tfrecorddataset(tfrecord):
     end = time.time()
     print("Read by TFRecordDataset - total rows: {}, cost time: {}s".format(num_iter, end - start))
 
+
 def use_tensorflow_tfrecorddataset(tfrecord):
     start = time.time()
+
     def _parse_record(example_photo):
         features = {
             'file_name': tf.io.FixedLenFeature([], tf.string),
@@ -86,6 +93,7 @@ def use_tensorflow_tfrecorddataset(tfrecord):
         print_log(num_iter)
     end = time.time()
     print("Read by TensorFlow TFRecordDataset - total rows: {}, cost time: {}s".format(num_iter, end - start))
+
 
 if __name__ == '__main__':
     # use MindDataset

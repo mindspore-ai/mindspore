@@ -17,9 +17,9 @@ test_structure_output
 """
 import numpy as np
 
+import mindspore.ops.operations as P
 from mindspore import Tensor, context
 from mindspore.nn import Cell
-import mindspore.ops.operations as P
 from mindspore.ops.functional import depend
 
 context.set_context(mode=context.GRAPH_MODE)

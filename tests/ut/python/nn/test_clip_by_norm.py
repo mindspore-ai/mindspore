@@ -14,10 +14,11 @@
 # ============================================================================
 """ test clip_by_norm """
 import numpy as np
-import pytest
+
 import mindspore.nn as nn
 from mindspore import Tensor
 from ..ut_filter import non_graph_engine
+
 
 @non_graph_engine
 def test_clip_by_norm():

@@ -14,10 +14,12 @@
 # ============================================================================
 """test_precision"""
 import math
+
 import numpy as np
 import pytest
-from mindspore.nn.metrics import Precision
+
 from mindspore import Tensor
+from mindspore.nn.metrics import Precision
 
 
 def test_classification_precision():
@@ -43,7 +45,7 @@ def test_multilabel_precision():
     metric.update(x, y)
     precision = metric.eval()
 
-    assert np.equal(precision, np.array([1, 2/3, 1])).all()
+    assert np.equal(precision, np.array([1, 2 / 3, 1])).all()
 
 
 def test_average_precision():
@@ -54,7 +56,7 @@ def test_average_precision():
     metric.update(x, y)
     precision = metric.eval(True)
 
-    assert math.isclose(precision, (1 + 2/3 + 1) / 3)
+    assert math.isclose(precision, (1 + 2 / 3 + 1) / 3)
 
 
 def test_num_precision():
