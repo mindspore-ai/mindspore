@@ -14,33 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_MNG_RECV_H
-#define MINDSPORE_CCSRC_KERNEL_MNG_RECV_H
+#ifndef MINDSPORE_CCSRC_KERNEL_RTS_LABEL_GOTO_H
+#define MINDSPORE_CCSRC_KERNEL_RTS_LABEL_GOTO_H
 
 #include <memory>
 #include <vector>
-#include "kernel/mng/rt_kernel.h"
-#include "kernel/mng/rt_kernel_info.h"
+#include "kernel/rts/rt_kernel.h"
+#include "kernel/rts/rt_kernel_info.h"
 
 namespace mindspore {
 namespace kernel {
-class RecvKernel : public RtKernel {
+class LabelGotoKernel : public RtKernel {
  public:
-  RecvKernel();
-  ~RecvKernel() override;
+  LabelGotoKernel();
+  ~LabelGotoKernel() override;
 
   bool Init(const AnfNodePtr &anf_node) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
  private:
-  uint32_t event_id_;
+  uint32_t label_;
 };
 
-MS_REG_RTKERNEL(recv, RecvKernel);
+MS_REG_RTKERNEL(labelgoto, LabelGotoKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_MNG_RECV_H
+#endif  // MINDSPORE_CCSRC_KERNEL_RTS_LABEL_GOTO_H

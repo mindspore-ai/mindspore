@@ -28,7 +28,7 @@
 #include "kernel/tbe/tbe_kernel_parallel_build.h"
 #include "kernel/aicpu/aicpu_kernel_build.h"
 #include "kernel/hccl/hccl_kernel_build.h"
-#include "kernel/mng/rt_kernel_build.h"
+#include "kernel/rts/rt_kernel_build.h"
 #include "kernel/tbe/tbe_utils.h"
 #include "operator/ops.h"
 #include "session/anf_runtime_algorithm.h"

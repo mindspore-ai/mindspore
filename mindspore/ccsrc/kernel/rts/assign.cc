@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/assign.h"
+#include "kernel/rts/assign.h"
 
 #include <memory>
 

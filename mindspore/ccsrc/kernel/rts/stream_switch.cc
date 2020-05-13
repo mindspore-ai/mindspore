@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/stream_switch.h"
+#include "kernel/rts/stream_switch.h"
 
 #include <memory>
 #include <vector>

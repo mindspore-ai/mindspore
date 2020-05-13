@@ -14,43 +14,28 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_MNG_MEMCPY_ASYNC_H
-#define MINDSPORE_CCSRC_KERNEL_MNG_MEMCPY_ASYNC_H
+#ifndef MINDSPORE_CCSRC_KERNEL_RTS_ASSIGN_H
+#define MINDSPORE_CCSRC_KERNEL_RTS_ASSIGN_H
 
 #include <vector>
-#include <memory>
-#include "kernel/mng/rt_kernel.h"
-#include "kernel/mng/rt_kernel_info.h"
+#include "kernel/rts/rt_kernel.h"
+#include "kernel/rts/rt_kernel_info.h"
 
 namespace mindspore {
 namespace kernel {
-class MemCpyAsyncKernel : public RtKernel {
+class AssignKernel : public RtKernel {
  public:
-  MemCpyAsyncKernel();
-  ~MemCpyAsyncKernel() override;
+  AssignKernel();
+  ~AssignKernel() override;
 
-  bool Init(const AnfNodePtr &anf_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
-
- private:
-  void GetInputOutputDataType(const AnfNodePtr &anf_node);
-  void GetInputOutputTotalCount(const AnfNodePtr &anf_node);
-  TypeId input_type_id_{};
 };
 
-class MemCpyAsyncDesc : public RtKerDesc {
- public:
-  MemCpyAsyncDesc();
-  ~MemCpyAsyncDesc() override;
-  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetKernelInfo() override;
-};
-
-MS_REG_RTKERNEL_DESC(memcpy_async, MemCpyAsyncDesc);
-MS_REG_RTKERNEL(memcpy_async, MemCpyAsyncKernel);
+MS_REG_RTKERNEL(assign, AssignKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_MNG_MEMCPY_ASYNC_H
+#endif  // MINDSPORE_CCSRC_KERNEL_RTS_ASSIGN_H

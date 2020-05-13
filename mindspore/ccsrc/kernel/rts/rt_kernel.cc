@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/rt_kernel.h"
+#include "kernel/rts/rt_kernel.h"
 
 namespace mindspore {
 namespace kernel {

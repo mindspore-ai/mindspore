@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_MNG_STREAM_SWITCH_H
-#define MINDSPORE_CCSRC_KERNEL_MNG_STREAM_SWITCH_H
+#ifndef MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SWITCH_H
+#define MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SWITCH_H
 
 #include <memory>
 #include <vector>
-#include "kernel/mng/rt_kernel.h"
-#include "kernel/mng/rt_kernel_info.h"
+#include "kernel/rts/rt_kernel.h"
+#include "kernel/rts/rt_kernel_info.h"
 
 namespace mindspore {
 namespace kernel {
-class StreamSwitchKernel : public RtKernel {
+class LabelSwitchKernel : public RtKernel {
  public:
-  StreamSwitchKernel();
-  ~StreamSwitchKernel() override;
+  LabelSwitchKernel();
+  ~LabelSwitchKernel() override;
 
   bool Init(const AnfNodePtr &anf_node) override;
 
@@ -37,13 +37,13 @@ class StreamSwitchKernel : public RtKernel {
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
  private:
-  rtCondition_t cond_;
-  uint32_t true_stream_index_;
-  rtSwitchDataType_t data_type_;
+  std::vector<uint32_t> label_list_;
+  uint32_t label_size_;
+  void *cond_;
 };
 
-MS_REG_RTKERNEL(streamswitch, StreamSwitchKernel);
+MS_REG_RTKERNEL(labelswitch, LabelSwitchKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_MNG_STREAM_SWITCH_H
+#endif  // MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SWITCH_H

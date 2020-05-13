@@ -13,29 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CCSRC_KERNEL_MNG_ASSIGN_H
-#define MINDSPORE_CCSRC_KERNEL_MNG_ASSIGN_H
-
+#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_RTS_PROFILING_KERNEL_MOD_H_
+#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_RTS_PROFILING_KERNEL_MOD_H_
 #include <vector>
-#include "kernel/mng/rt_kernel.h"
-#include "kernel/mng/rt_kernel_info.h"
-
+#include "kernel/rts/rt_kernel.h"
 namespace mindspore {
 namespace kernel {
-class AssignKernel : public RtKernel {
+class ProfilingKernelMod : public RtKernel {
  public:
-  AssignKernel();
-  ~AssignKernel() override;
-
+  ProfilingKernelMod() = default;
+  ~ProfilingKernelMod() override = default;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
-};
+  bool Init(const AnfNodePtr &anf_node) override;
 
-MS_REG_RTKERNEL(assign, AssignKernel);
+ private:
+  uint64_t log_id_{0};
+  bool notify_{true};
+  uint32_t flags_{0};
+};
+MS_REG_RTKERNEL(profiling, ProfilingKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_KERNEL_MNG_ASSIGN_H
+#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_RTS_PROFILING_KERNEL_MOD_H_

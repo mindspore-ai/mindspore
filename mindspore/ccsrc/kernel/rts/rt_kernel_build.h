@@ -14,31 +14,16 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/rt_kernel_build.h"
+#ifndef MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_BUILD_H
+#define MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_BUILD_H
 
-#include <string>
+#include <vector>
 #include <memory>
-#include <utility>
-#include <algorithm>
-
-#include "kernel/mng/rt_kernel.h"
-#include "session/anf_runtime_algorithm.h"
-
+#include "kernel/kernel.h"
 namespace mindspore {
 namespace kernel {
-KernelModPtr RtOpBuild(const AnfNodePtr &anf_node) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  std::string op_name = AnfAlgo::GetCNodeName(anf_node);
-  (void)std::transform(op_name.begin(), op_name.end(), op_name.begin(), ::tolower);
-  MS_LOG(INFO) << "Op Name(tolower)[" << op_name << "]";
-  auto ker_ptr = RtKernelFactory::Create(op_name);
-  MS_EXCEPTION_IF_NULL(ker_ptr);
-  if (!ker_ptr->Init(anf_node)) {
-    MS_LOG(ERROR) << "Rt Op initialize failed!";
-    return nullptr;
-  }
-
-  return ker_ptr;
-}
+KernelModPtr RtOpBuild(const AnfNodePtr &anf_node);
 }  // namespace kernel
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_BUILD_H

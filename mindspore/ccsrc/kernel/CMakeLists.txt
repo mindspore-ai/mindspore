@@ -11,7 +11,7 @@ if (ENABLE_D)
 		"kernel_fusion.cc"
 		"tbe/*.cc"
 		"aicpu/*.cc"
-		"mng/*.cc"
+		"rts/*.cc"
 		"hccl/*.cc"
 	)
 	add_compile_definitions(ENABLE_D)

@@ -14,51 +14,48 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/recv.h"
+#include "kernel/rts/send.h"
 #include <memory>
-#include "runtime/stream.h"
-#include "utils/context/ms_context.h"
-#include "device/ascend/ascend_stream_assign.h"
+#include "runtime/event.h"
 #include "framework/ge_runtime/task_info.h"
 #include "session/anf_runtime_algorithm.h"
 #include "common/utils.h"
 
+using ge::model_runner::EventRecordTaskInfo;
+using EventRecordTaskInfoPtr = std::shared_ptr<EventRecordTaskInfo>;
+
 namespace mindspore {
 namespace kernel {
-using ge::model_runner::EventWaitTaskInfo;
-using mindspore::device::ascend::AscendStreamAssign;
-using EventWaitTaskInfoPtr = std::shared_ptr<EventWaitTaskInfo>;
+SendKernel::SendKernel() { event_id_ = 0; }
 
-RecvKernel::RecvKernel() { event_id_ = 0; }
+SendKernel::~SendKernel() {}
 
-RecvKernel::~RecvKernel() {}
-
-bool RecvKernel::Init(const AnfNodePtr &anf_node) {
+bool SendKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
-  MS_LOG(INFO) << "recv op event_id_:" << event_id_;
+  MS_LOG(INFO) << "send op event id:" << event_id_;
   return true;
 }
 
-bool RecvKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+bool SendKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                         const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
-  rtEvent_t stream_event{};
+  rtEvent_t event{};
   auto stream = reinterpret_cast<rtStream_t>(stream_ptr);
-  auto status = rtStreamWaitEvent(stream, stream_event);
+  rtError_t status = rtEventRecord(event, stream);
   if (status != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "Recv rtStreamWaitEvent failed!";
+    MS_LOG(ERROR) << "Send op rtEventRecord failed!";
     return false;
   }
   return true;
 }
 
-std::vector<TaskInfoPtr> RecvKernel::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+std::vector<TaskInfoPtr> SendKernel::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                              const std::vector<AddressPtr> &, uint32_t stream_id) {
-  MS_LOG(INFO) << "RecvKernel GenTask event_id_:" << event_id_ << ", stream_id_:" << stream_id;
+  MS_LOG(INFO) << "SendKernel GenTask event id:" << event_id_ << ", stream id:" << stream_id;
   stream_id_ = stream_id;
-  EventWaitTaskInfoPtr task_info_ptr = std::make_shared<EventWaitTaskInfo>(stream_id, event_id_);
+  EventRecordTaskInfoPtr task_info_ptr = std::make_shared<EventRecordTaskInfo>(stream_id, event_id_);
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
 }

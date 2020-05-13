@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_MNG_SEND_H
-#define MINDSPORE_CCSRC_KERNEL_MNG_SEND_H
+#ifndef MINDSPORE_CCSRC_KERNEL_RTS_SEND_H
+#define MINDSPORE_CCSRC_KERNEL_RTS_SEND_H
 #include <memory>
 #include <vector>
-#include "kernel/mng/rt_kernel.h"
-#include "kernel/mng/rt_kernel_info.h"
+#include "kernel/rts/rt_kernel.h"
+#include "kernel/rts/rt_kernel_info.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,4 +41,4 @@ MS_REG_RTKERNEL(send, SendKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_MNG_SEND_H
+#endif  // MINDSPORE_CCSRC_KERNEL_RTS_SEND_H

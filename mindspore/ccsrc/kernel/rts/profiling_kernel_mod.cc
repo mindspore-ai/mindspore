@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/profiling_kernel_mod.h"
+#include "kernel/rts/profiling_kernel_mod.h"
 
 #include <vector>
 #include <string>
