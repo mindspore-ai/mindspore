@@ -261,11 +261,18 @@ def test_case_invalid_files():
 
 if __name__ == '__main__':
     test_case_tf_shape()
+    test_case_tf_read_all_dataset()
+    test_case_num_samples()
+    test_case_num_samples2()
+    test_case_tf_shape_2()
     test_case_tf_file()
     test_case_tf_file_no_schema()
     test_case_tf_file_pad()
     test_tf_files()
     test_tf_record_schema()
     test_tf_record_shuffle()
+    #test_tf_record_shard()
     test_tf_shard_equal_rows()
+    test_case_tf_file_no_schema_columns_list()
+    test_tf_record_schema_columns_list()
     test_case_invalid_files()
