@@ -15,9 +15,8 @@
 """ test bert cell """
 import numpy as np
 import pytest
-from mindspore import Model
-from mindspore.nn.optim import AdamWeightDecay
-from mindspore.model_zoo.Bert_NEZHA import BertConfig, BertModel, BertNetworkWithLoss, BertTrainOneStepCell
+
+from mindspore.model_zoo.Bert_NEZHA import BertConfig, BertModel
 from ....dataset_mock import MindData
 
 

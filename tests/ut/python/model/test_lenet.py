@@ -15,16 +15,19 @@
 """test lenet"""
 import numpy as np
 
-import mindspore.nn as nn
-from mindspore.common.api import _executor
-from mindspore import Tensor
-from mindspore.ops import operations as P
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import _executor
+from mindspore.ops import operations as P
 from ....train_step_wrap import train_step_with_loss_warp, train_step_with_sens
 
 context.set_context(mode=context.GRAPH_MODE)
+
+
 class LeNet5(nn.Cell):
     """LeNet5 definition"""
+
     def __init__(self):
         super(LeNet5, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')

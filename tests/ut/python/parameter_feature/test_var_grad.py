@@ -13,14 +13,14 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore import context
+
+import mindspore.ops.composite as C
 from mindspore import Tensor, Parameter
+from mindspore import context
+from mindspore.common import dtype as mstype
+from mindspore.common.parameter import ParameterTuple
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
-import mindspore.ops.composite as C
-from mindspore.common.api import _executor
-from mindspore.common.parameter import ParameterTuple
-from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -34,6 +34,7 @@ def test_net_vargs_expand():
 
         def construct(self, x, y):
             return x + y
+
     x = Tensor(np.random.normal(0, 1, [3, 4, 5]).astype(np.float32))
     y = Tensor(np.random.normal(0, 1, [3, 4, 5]).astype(np.float32))
     sens = Tensor(np.random.normal(0, 1, [3, 4, 5]).astype(np.float32))
@@ -51,7 +52,7 @@ class VarNet(Cell):
         self.net = net
 
     def construct(self, *args):
-        return self.net(*args)*self.w + self.b
+        return self.net(*args) * self.w + self.b
 
 
 class SecondNet(Cell):
@@ -95,6 +96,7 @@ class Bprop(Cell):
 
 def test_all_var_args_grad_with_sens():
     """"test grad_by_list_with_sens with all var args input"""
+
     class GradNet(Cell):
         def __init__(self, net):
             super(GradNet, self).__init__()
@@ -103,6 +105,7 @@ def test_all_var_args_grad_with_sens():
 
         def construct(self, *inputs):
             return C.grad_by_list_with_sens(self.net, self.weights)(*inputs)
+
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     sens = Tensor(1.0, dtype=mstype.float32)
@@ -120,6 +123,7 @@ def test_grad_list_var_args():
 
         def construct(self, *inputs):
             return C.grad_by_list(self.net, self.weights)(*inputs)
+
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     net = VarNet(SecondNet())
@@ -136,6 +140,7 @@ def test_grad_all_var_args():
 
         def construct(self, *inputs):
             return C.grad_all(self.net)(*inputs)
+
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     net = VarNet(SecondNet())
@@ -152,6 +157,7 @@ def test_grad_all_var_args_with_sens():
 
         def construct(self, *inputs):
             return C.grad_all_with_sens(self.net)(*inputs)
+
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     sens = Tensor(1.0, dtype=mstype.float32)
@@ -169,6 +175,7 @@ def test_grad_var_args_with_sens():
 
         def construct(self, *inputs):
             return C.grad_with_sens(self.net)(*inputs)
+
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     sens = Tensor(1.0, dtype=mstype.float32)
@@ -206,6 +213,7 @@ def test_var_args_grad():
 
         def construct(self, x, y, sens):
             return C.grad_by_list_with_sens(self.net, self.weights)(x, y, sens)
+
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     sens = Tensor(1.0, dtype=mstype.float32)
@@ -216,13 +224,14 @@ def test_var_args_grad():
 
 def test_var_args_positional():
     """"test grad_all with var args in inner graph"""
+
     class VarNet(Cell):
         def __init__(self, net):
             super(VarNet, self).__init__()
             self.net = net
 
         def construct(self, x, y):
-            return self.net(x, y)*x
+            return self.net(x, y) * x
 
     class SecondNet(Cell):
         def __init__(self):
@@ -239,6 +248,7 @@ def test_var_args_positional():
 
         def construct(self, x, y):
             return C.grad_all(self.net)(x, y)
+
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     net = VarNet(SecondNet())
@@ -258,6 +268,7 @@ def test_grad_within_if_else():
 
         def construct(self, *inputs):
             return self.grad(*inputs)
+
     x = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     y = Tensor(np.ones([3, 4, 5]), dtype=mstype.float32)
     sens = Tensor(1.0, dtype=mstype.float32)
@@ -309,6 +320,7 @@ def test_grad_for_concat():
 
         def grad_cmp(self):
             input_grad_mindspore = self.grad_mindspore_impl()
+
     fact = ConcatFactory(input_shape=(
         (2, 184320, 1), (2, 46080, 1), (2, 11520, 1), (2, 2880, 1), (2, 720, 1)), axis=1)
     fact.grad_cmp()

@@ -13,23 +13,24 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.common.api import ms_function
-from mindspore.common.tensor import Tensor
-from mindspore.ops import operations as P
-import mindspore.ops.functional as F
+
 import mindspore.context as context
-from mindspore.ops import composite as C
-from mindspore.ops.composite import core
-from mindspore.common import dtype as mstype
 import mindspore.nn as nn
+import mindspore.ops.functional as F
+from mindspore.common import dtype as mstype
+from mindspore.common.tensor import Tensor
+from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
 add1 = P.TensorAdd()
 mul1 = P.MatMul()
 add2 = P.TensorAdd()
 
+
 def add(x, y):
     return add1(x, y)
+
 
 class Func(nn.Cell):
     def __init__(self):
@@ -48,7 +49,10 @@ class Func(nn.Cell):
         out = F.depend(out, clear)
         return out
 
+
 grad_s = C.GradOperation('grad_with_sens', get_all=True, sens_param=True)
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -69,12 +73,14 @@ class Net(nn.Cell):
         out = F.depend(out, clear)
         return out
 
+
 def test_add():
     x = Tensor(np.ones([3, 3]).astype(np.float32))
     y = Tensor(np.ones([3, 3]).astype(np.float32))
     func = Func()
     func.add_flags(has_effect=True)
     func(x, y)
+
 
 def test_sens():
     x = Tensor(np.ones([3, 3]).astype(np.float32))
@@ -83,6 +89,7 @@ def test_sens():
     net = Net()
     net.add_flags(has_effect=True)
     out = net(x, y, sens)
+
 
 class Net_hyper(nn.Cell):
     def __init__(self):
@@ -105,6 +112,7 @@ class Net_hyper(nn.Cell):
         out = F.depend(out, clear)
         return out
 
+
 def test_hyper_add():
     x = Tensor(np.ones([3, 3]).astype(np.float32))
     y = Tensor(np.ones([3, 3]).astype(np.float32))
@@ -113,10 +121,11 @@ def test_hyper_add():
     net.add_flags(has_effect=True)
     out = net(x, y, sens)
 
+
 def test_keep_order_io_effect_exception_return_dtype():
     class Net(nn.Cell):
         def __init__(self):
-            super().__init__()	
+            super().__init__()
             self.alloc_status = P.NPUAllocFloatStatus()
             self.get_status = P.NPUGetFloatStatus()
             self.clear_status = P.NPUClearFloatStatus()
@@ -126,15 +135,15 @@ def test_keep_order_io_effect_exception_return_dtype():
             self.neg = P.Neg()
             self.add_flags(has_effect=True)
 
-        def construct(self, x):  
+        def construct(self, x):
             init = self.alloc_status()
             self.clear_status(init)
-            res = self.sub(x, self.neg(x))             
+            res = self.sub(x, self.neg(x))
             self.get_status(init)
             dtype = self.dtype(res)
             return dtype
 
-    value = 655 
+    value = 655
     data = np.full((8, 5, 3, 1), value, dtype=np.float16)
     x = Tensor(data, dtype=mstype.float16)
     net = Net()

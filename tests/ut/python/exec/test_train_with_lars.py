@@ -23,6 +23,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 
+
 def get_reordered_parameters(parameters):
     """get_reordered_parameters"""
     # put the bias parameter to the end
@@ -36,12 +37,15 @@ def get_reordered_parameters(parameters):
     reordered_params = tuple(non_bias_param + bias_param)
     return len(non_bias_param), len(reordered_params), reordered_params
 
+
 def get_net_trainable_reordered_params(net):
     params = net.trainable_params()
     return get_reordered_parameters(params)
 
+
 class TrainOneStepWithLarsCell(nn.Cell):
     """TrainOneStepWithLarsCell definition"""
+
     def __init__(self, network, optimizer, sens=1.0):
         super(TrainOneStepWithLarsCell, self).__init__(auto_prefix=False)
         self.network = network
@@ -66,10 +70,12 @@ class TrainOneStepWithLarsCell(nn.Cell):
         new_grads = lars_grads + bias_grads
         return F.depend(loss, self.optimizer(new_grads))
 
+
 # fn is a funcation use i as input
 def lr_gen(fn, epoch_size):
     for i in range(epoch_size):
         yield fn(i)
+
 
 def me_train_tensor(net, input_np, label_np, epoch_size=2):
     """me_train_tensor"""

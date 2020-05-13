@@ -14,19 +14,17 @@
 # ============================================================================
 """ test_lr_schedule """
 import numpy as np
-from mindspore.nn import Cell
-from mindspore.ops.operations import BiasAdd, MatMul
+
 from mindspore import Parameter, ParameterTuple, Tensor
-from mindspore.nn import WithLossCell
-from mindspore.nn.optim import Momentum
-from mindspore.nn import SoftmaxCrossEntropyWithLogits
-from mindspore.ops.composite import grad_by_list
-from mindspore.ops import functional as F
+from mindspore.nn import Cell
 from mindspore.nn.optim import Optimizer
+from mindspore.ops.composite import grad_by_list
+from mindspore.ops.operations import BiasAdd, MatMul
 
 
 class Net(Cell):
     """ Net definition """
+
     def __init__(self):
         super(Net, self).__init__()
         self.weight = Parameter(Tensor(np.ones([64, 10])), name="weight")
@@ -41,6 +39,7 @@ class Net(Cell):
 
 class _TrainOneStepCell(Cell):
     """ _TrainOneStepCell definition """
+
     def __init__(self, network, optimizer):
         """
         Append an optimizer to the training network after that the construct
@@ -67,4 +66,3 @@ class _TrainOneStepCell(Cell):
         if self.lr_schedule:
             self.schedule.update_lr(*args)
         return self.optimizer(grads)
-

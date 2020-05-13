@@ -15,11 +15,13 @@
 """ Test Dropout """
 import numpy as np
 import pytest
+
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 
 context.set_context(device_target="Ascend")
+
 
 def test_check_dropout_3():
     Tensor(np.ones([20, 16, 50]).astype(np.int32))

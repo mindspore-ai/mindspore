@@ -25,24 +25,26 @@ import mindspore as ms
 import mindspore.common.api as me
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
+from mindspore.common.parameter import Parameter
 from ..ut_filter import non_graph_engine
-
 
 ndarr = np.ones((2, 3))
 
+
 def test_tensor_flatten():
     with pytest.raises(AttributeError):
-        lst = [1, 2, 3, 4,]
+        lst = [1, 2, 3, 4, ]
         tensor_list = ms.Tensor(lst, ms.float32)
         tensor_list = tensor_list.Flatten()
         print(tensor_list)
+
 
 def test_tensor_list():
     lst = [[1.0, 2.0, 1.0], [1.0, 10.0, 9.0]]
     tensor_list = ms.Tensor(lst, ms.float32)
     print(tensor_list)
+
 
 def test_tensor():
     """test_tensor"""
@@ -62,6 +64,7 @@ def test_tensor():
     t4 = ms.Tensor(1)
     assert isinstance(t4, ms.Tensor)
     assert t4.dtype() == ms.int64
+
 
 def test_tensor_type_float16():
     t_float16 = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float16))
@@ -107,6 +110,7 @@ def test_tensor_type_float64_user_define():
     assert t_float64.shape() == (2, 3)
     assert t_float64.dtype() == ms.float64
 
+
 def test_tensor_type_bool():
     # init a tensor with bool type
     ts_bool_array = ms.Tensor(np.zeros([2, 3], np.bool), ms.bool_)
@@ -121,6 +125,7 @@ def test_tensor_type_bool():
     assert isinstance(t_bool_array, ms.Tensor)
     assert t_bool_array.shape() == (2, 3)
     assert t_bool_array.dtype() == ms.bool_
+
 
 def test_tensor_type_int8():
     t_int8_array = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.int8))
@@ -154,6 +159,7 @@ def test_tensor_type_int64():
     assert t_int64.shape() == (2, 3)
     assert t_int64.dtype() == ms.int64
 
+
 def test_tensor_type_uint8():
     t_uint8_array = ms.Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype=np.uint8))
     assert isinstance(t_uint8_array, ms.Tensor)
@@ -181,6 +187,7 @@ def test_tensor_type_uint64():
     assert t_uint64.shape() == (2, 3)
     assert t_uint64.dtype() == ms.uint64
 
+
 def test_set_type():
     t = ms.Tensor(ndarr)
     t.set_dtype(ms.float32)
@@ -202,14 +209,16 @@ def test_sub():
     z = x - y
     assert isinstance(z, ms.Tensor)
 
+
 @non_graph_engine
 def test_div():
-    x = ms.Tensor(np.array([[2,6,10],[12, 4, 8]]).astype(np.float32))
-    y = ms.Tensor(np.array([[2,2,5],[6, 1, 2]]).astype(np.float32))
+    x = ms.Tensor(np.array([[2, 6, 10], [12, 4, 8]]).astype(np.float32))
+    y = ms.Tensor(np.array([[2, 2, 5], [6, 1, 2]]).astype(np.float32))
     z = x / y
     z2 = x / 2
     assert isinstance(z, ms.Tensor)
     assert isinstance(z2, ms.Tensor)
+
 
 @non_graph_engine
 def test_parameter():
@@ -220,6 +229,7 @@ def test_parameter():
 
 class Net(nn.Cell):
     """Net definition"""
+
     def __init__(self, dim):
         super(Net, self).__init__()
         self.dim = dim
@@ -266,6 +276,7 @@ def test_tensor_contiguous():
     assert True, rt_f.flags['C_CONTIGUOUS']
     print("rt_f flags = ", rt_f.flags)
 
+
 def test_tensor_contiguous2():
     input_data = np.random.randn(32, 112, 112, 3).astype(np.float32)
     input_me = input_data.transpose(0, 3, 1, 2)
@@ -274,35 +285,42 @@ def test_tensor_contiguous2():
     out_f = tensor_f_float32.asnumpy()
     print("out_f flags = ", out_f.flags)
 
+
 def test_tensor_input_string():
     with pytest.raises(TypeError):
         input_data = 'ccc'
         ms.Tensor(input_data)
+
 
 def test_tensor_input_tuple_string():
     with pytest.raises(TypeError):
         input_data = (2, 3, '4', 5)
         ms.Tensor(input_data)
 
+
 def test_tensor_input_list_string():
     with pytest.raises(TypeError):
         input_data = [[2, 3, '4', 5], [1, 2, 3, 4]]
         ms.Tensor(input_data)
+
 
 def test_tensor_input_none():
     with pytest.raises(TypeError):
         input_data = None
         ms.Tensor(input_data, np.int64)
 
+
 # pylint: disable=no-value-for-parameter
 def test_tensor_input_empty():
     with pytest.raises(TypeError):
         ms.Tensor()
 
+
 def test_tensor_input_ndarray_str():
     with pytest.raises(TypeError):
         inp = np.array(["88", 2, 4])
         ms.Tensor(inp)
+
 
 def test_tensor_input_ndarray_bool():
     inp = np.array([True, 2, 4])
@@ -311,85 +329,102 @@ def test_tensor_input_ndarray_bool():
     inp = np.array([False, 2, 4])
     ms.Tensor(inp)
 
+
 def test_tensor_input_ndarray_complex():
     with pytest.raises(TypeError):
         inp = np.array([20j, 2, 4])
         ms.Tensor(inp)
+
 
 def test_tensor_input_ndarray_none():
     with pytest.raises(TypeError):
         inp = np.array([None, 2, 4])
         ms.Tensor(inp)
 
+
 def test_tensor_input_ndarray_dict():
     with pytest.raises(TypeError):
         inp = {'a': 6, 'b': 7}
         ms.Tensor(inp)
+
 
 def test_tensor_input_np_nan():
     with pytest.raises(TypeError):
         input_data = (1, 2, 3, np.nan)
         ms.Tensor(input_data, np.int64)
 
+
 def test_tensor_input_tuple_inf():
     with pytest.raises(TypeError):
         input_data = (1, 2, 3, float("inf"))
         ms.Tensor(input_data, np.int64)
+
 
 def test_tensor_input_dict():
     with pytest.raises(TypeError):
         input_data = {'a': 6, 'b': 7}
         ms.Tensor(input_data, np.int64)
 
+
 def test_tensor_input_complex():
     with pytest.raises(TypeError):
         input_data = (1, 2j, 3)
         ms.Tensor(input_data, np.int64)
+
 
 def test_tensor_dtype_np_float():
     with pytest.raises(TypeError):
         input_data = np.random.randn(32, 112, 112, 3).astype(np.float)
         ms.Tensor(input_data, np.float)
 
+
 def test_tensor_dtype_np_float16():
     with pytest.raises(TypeError):
         input_data = np.random.randn(32, 112, 112, 3).astype(np.float16)
         ms.Tensor(input_data, np.float16)
+
 
 def test_tensor_dtype_np_float32():
     with pytest.raises(TypeError):
         input_data = np.random.randn(32, 112, 112, 3).astype(np.float32)
         ms.Tensor(input_data, np.float32)
 
+
 def test_tensor_dtype_np_float64():
     with pytest.raises(TypeError):
         input_data = np.random.randn(32, 112, 112, 3).astype(np.float64)
         ms.Tensor(input_data, np.float64)
+
 
 def test_tensor_dtype_np_int():
     with pytest.raises(TypeError):
         input_data = np.random.randn(32, 112, 112, 3).astype(np.int)
         ms.Tensor(input_data, np.int)
 
+
 def test_tensor_dtype_np_int8():
     with pytest.raises(TypeError):
         input_data = np.random.randn(32, 112, 112, 3).astype(np.int8)
         ms.Tensor(input_data, np.int8)
+
 
 def test_tensor_dtype_np_int16():
     with pytest.raises(TypeError):
         input_data = np.random.randn(32, 112, 112, 3).astype(np.int16)
         ms.Tensor(input_data, np.int16)
 
+
 def test_tensor_dtype_np_int32():
     with pytest.raises(TypeError):
         input_data = np.random.randn(32, 112, 112, 3).astype(np.int32)
         ms.Tensor(input_data, np.int32)
 
+
 def test_tensor_dtype_np_int64():
     with pytest.raises(TypeError):
         input_data = np.random.randn(32, 112, 112, 3).astype(np.int64)
         ms.Tensor(input_data, np.int64)
+
 
 def test_tensor_dtype_fp32_to_bool():
     with pytest.raises(RuntimeError):
@@ -399,7 +434,7 @@ def test_tensor_dtype_fp32_to_bool():
 
 
 def test_tensor_operation():
-    x = Tensor(np.ones((3,3)) * 4)
+    x = Tensor(np.ones((3, 3)) * 4)
     res = x + 1
     assert np.all(res.asnumpy() == np.ones((3, 3)) * 5)
     res = 1 + x

@@ -18,13 +18,15 @@
 @Date  : 2019-07-4
 @Desc  : test summary function
 """
-import os
 import logging
+import os
+
 import numpy as np
-from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
-from mindspore.common.tensor import Tensor
+
 import mindspore.nn as nn
+from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary_tensor_data
 
 CUR_DIR = os.getcwd()
 SUMMARY_DIR = CUR_DIR + "/test_temp_summary_event_file/"
@@ -93,7 +95,6 @@ def test_tensor_summary_sample():
     log.debug("finished test_tensor_summary_sample")
 
 
-
 def get_test_data_check(step):
     """ get_test_data_check """
     test_data_list = []
@@ -111,7 +112,8 @@ def get_test_data_check(step):
 # Test: test with ge
 class SummaryDemo(nn.Cell):
     """ SummaryDemo definition """
-    def __init__(self,):
+
+    def __init__(self, ):
         super(SummaryDemo, self).__init__()
         self.s = P.TensorSummary()
         self.add = P.TensorAdd()
@@ -122,6 +124,7 @@ class SummaryDemo(nn.Cell):
         self.s("z1", z)
         self.s("y1", y)
         return z
+
 
 def test_tensor_summary_with_ge():
     """ test_tensor_summary_with_ge """
@@ -140,7 +143,7 @@ def test_tensor_summary_with_ge():
     steps = 100
     for i in range(1, steps):
         x = Tensor(np.array([[i], [i]]).astype(np.float32))
-        y = Tensor(np.array([[i+1], [i+1]]).astype(np.float32))
+        y = Tensor(np.array([[i + 1], [i + 1]]).astype(np.float32))
         net(x, y)
         test_writer.record(i)
 

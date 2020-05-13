@@ -14,11 +14,13 @@
 # ============================================================================
 """test_dtype"""
 from dataclasses import dataclass
+
 import numpy as np
 import pytest
 
 import mindspore as ms
 from mindspore.common import dtype
+
 
 def test_dtype_to_nptype():
     """test_dtype2nptype"""
@@ -59,6 +61,7 @@ def test_dtype_to_pytype():
 @dataclass
 class Foo:
     x: int
+
     def inf(self):
         return self.x
 

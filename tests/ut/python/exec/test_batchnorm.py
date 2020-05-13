@@ -14,6 +14,7 @@
 # ============================================================================
 """ut for batchnorm layer"""
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import Tensor
 from ..ut_filter import non_graph_engine

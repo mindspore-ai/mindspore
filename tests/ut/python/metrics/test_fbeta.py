@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 # """test_fbeta"""
-import math
 import numpy as np
 import pytest
-from mindspore.nn.metrics import get_metric_fn, Fbeta
+
 from mindspore import Tensor
+from mindspore.nn.metrics import get_metric_fn, Fbeta
 
 
 def test_classification_fbeta():
@@ -32,9 +32,9 @@ def test_classification_fbeta():
     fbeta_mean = metric.eval(True)
     fbeta2 = metric(x, y2)
 
-    assert np.allclose(fbeta, np.array([2/3, 2/3]))
-    assert np.allclose(fbeta2, np.array([2/3, 2/3]))
-    assert np.allclose(fbeta_mean, 2/3)
+    assert np.allclose(fbeta, np.array([2 / 3, 2 / 3]))
+    assert np.allclose(fbeta2, np.array([2 / 3, 2 / 3]))
+    assert np.allclose(fbeta_mean, 2 / 3)
 
 
 def test_fbeta_update1():
@@ -45,6 +45,7 @@ def test_fbeta_update1():
 
     with pytest.raises(ValueError):
         metric.update(x, y)
+
 
 def test_fbeta_update2():
     x1 = Tensor(np.array([[0.2, 0.5, 0.7], [0.3, 0.1, 0.2], [0.9, 0.6, 0.5]]))

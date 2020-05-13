@@ -14,12 +14,14 @@
 # ============================================================================
 """ test_initializer_fuzz """
 import pytest
+
 import mindspore.nn as nn
-from mindspore import Model, context
+from mindspore import Model
 
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self, in_str):
         a, b, c, d, e, f, g, h = in_str.strip().split()
         a = int(a)
@@ -56,6 +58,7 @@ def test_shape_error():
 
 class LeNet5(nn.Cell):
     """ LeNet5 definition """
+
     def __init__(self, in_str):
         super(LeNet5, self).__init__()
 

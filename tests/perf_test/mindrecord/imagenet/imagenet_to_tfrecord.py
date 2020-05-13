@@ -15,12 +15,14 @@
 """generate tfrecord"""
 import collections
 import os
+
 import tensorflow as tf
 
 IMAGENET_MAP_FILE = "../../../ut/data/mindrecord/testImageNetDataWhole/labels_map.txt"
 IMAGENET_IMAGE_DIR = "../../../ut/data/mindrecord/testImageNetDataWhole/images"
 TFRECORD_FILE = "./imagenet.tfrecord"
 PARTITION_NUMBER = 16
+
 
 def get_imagenet_filename_label_pic(map_file, image_dir):
     """
@@ -69,17 +71,21 @@ def get_imagenet_filename_label_pic(map_file, image_dir):
                 continue
             yield str(file_name), int(label), image_bytes
 
+
 def create_int_feature(values):
     feature = tf.train.Feature(int64_list=tf.train.Int64List(value=[values]))
     return feature
+
 
 def create_string_feature(values):
     feature = tf.train.Feature(bytes_list=tf.train.BytesList(value=[bytes(values, encoding='utf-8')]))
     return feature
 
+
 def create_bytes_feature(values):
     feature = tf.train.Feature(bytes_list=tf.train.BytesList(value=[values]))
     return feature
+
 
 def imagenet_to_tfrecord():
     writers = []
@@ -108,6 +114,7 @@ def imagenet_to_tfrecord():
         writer.close()
 
     print("Write {} total examples".format(total_written))
+
 
 if __name__ == '__main__':
     imagenet_to_tfrecord()

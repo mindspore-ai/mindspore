@@ -13,19 +13,20 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore import context
 from mindspore import Tensor, Parameter
+from mindspore import context
+from mindspore.common import dtype as mstype
+from mindspore.nn.optim import Lamb
+from mindspore.nn.optim import Momentum, Adam
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore.nn.wrap.loss_scale import TrainOneStepWithLossScaleCell
-from mindspore.train.loss_scale_manager import FixedLossScaleManager, DynamicLossScaleManager
-from mindspore.ops import operations as P
-from mindspore.nn.optim import Momentum, Adam
 from mindspore.ops import functional as F
-from mindspore.common import dtype as mstype
+from mindspore.ops import operations as P
 from mindspore.train import Model
+from mindspore.train.loss_scale_manager import FixedLossScaleManager, DynamicLossScaleManager
 from ....dataset_mock import MindData
-from mindspore.nn.optim import Lamb
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -36,6 +37,7 @@ class MindDataSet(MindData):
                                           np_types=dataset_types,
                                           output_shapes=dataset_shapes,
                                           input_indexs=(0, 1))
+
     def __next__(self):
         if self._size < self._iter_num:
             raise StopIteration
@@ -44,6 +46,7 @@ class MindDataSet(MindData):
         for shape, type in zip(self._output_shapes, self._np_types):
             next.append(Tensor(np.ones(shape).astype(type)))
         return tuple(next)
+
 
 class Net(nn.Cell):
     def __init__(self, in_features, out_features):
@@ -57,6 +60,7 @@ class Net(nn.Cell):
         output = self.add(self.matmul(input, self.weight), self.bias)
         return output
 
+
 class NetFP16(nn.Cell):
     def __init__(self, in_features, out_features):
         super(NetFP16, self).__init__()
@@ -67,9 +71,11 @@ class NetFP16(nn.Cell):
         self.cast = P.Cast()
 
     def construct(self, input):
-        output = self.cast(self.add(self.matmul(self.cast(input, mstype.float16), self.cast(self.weight, mstype.float16)),
-                          self.cast(self.bias, mstype.float16)), mstype.float32)
+        output = self.cast(
+            self.add(self.matmul(self.cast(input, mstype.float16), self.cast(self.weight, mstype.float16)),
+                     self.cast(self.bias, mstype.float16)), mstype.float32)
         return output
+
 
 def get_axis(x):
     shape_op = P.Shape()
@@ -77,6 +83,7 @@ def get_axis(x):
     length = F.tuple_len(shape)
     perm = F.make_range(0, length)
     return perm
+
 
 class MSELoss(nn.Cell):
     def __init__(self):
@@ -88,6 +95,7 @@ class MSELoss(nn.Cell):
     def construct(self, data, label):
         diff = data - label
         return self.reduce_mean(self.square(diff), get_axis(diff))
+
 
 def test_momentum_compile():
     inputs = Tensor(np.ones([15, 1]).astype(np.float32))
@@ -104,6 +112,7 @@ def test_momentum_compile():
     output = train_network(inputs, label, scaling_sens)
     print("the result is ", output)
 
+
 def test_compile_fp16_not_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
@@ -118,6 +127,7 @@ def test_compile_fp16_not_overflow():
     train_network.set_train()
     output = train_network(inputs, label, scaling_sens)
     print("the result is ", output)
+
 
 def test_compile_fp16_lr_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
@@ -134,6 +144,7 @@ def test_compile_fp16_lr_overflow():
     output = train_network(inputs, label, scaling_sens)
     print("the result is ", output)
 
+
 def test_compile_fp16_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
@@ -147,6 +158,7 @@ def test_compile_fp16_overflow():
     train_network.set_train()
     output = train_network(inputs, label, scaling_sens)
     print("the result is ", output)
+
 
 def test_compile_fp16_lr_overflow_with_lossscale_update():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
@@ -164,6 +176,7 @@ def test_compile_fp16_lr_overflow_with_lossscale_update():
     train_network.set_train()
     output = train_network(inputs, label, scaling_sens)
     print("the result is ", output)
+
 
 def test_compile_f16_model_train():
     dataset_types = (np.float32, np.float32)
@@ -205,10 +218,11 @@ def test_compile_fp16_lr_overflow_fixed_feed():
     net_with_loss = WithLossCell(net, loss)
     scale_manager = FixedLossScaleManager()
     update_cell = scale_manager.get_update_cell()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell = update_cell)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=update_cell)
     train_network.set_train()
     output = train_network(inputs, label, scaling_sens)
     print("the result is ", output)
+
 
 def test_compile_fp16_lr_overflow_dynamic_feed():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
@@ -222,10 +236,11 @@ def test_compile_fp16_lr_overflow_dynamic_feed():
     net_with_loss = WithLossCell(net, loss)
     scale_manager = DynamicLossScaleManager()
     update_cell = scale_manager.get_update_cell()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell = update_cell)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=update_cell)
     train_network.set_train()
     output = train_network(inputs, label, scaling_sens)
     print("the result is ", output)
+
 
 def test_compile_fp16_lr_overflow_fixed_graph():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
@@ -238,10 +253,11 @@ def test_compile_fp16_lr_overflow_fixed_graph():
     net_with_loss = WithLossCell(net, loss)
     scale_manager = FixedLossScaleManager(drop_overflow_update=True)
     update_cell = scale_manager.get_update_cell()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell = update_cell)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=update_cell)
     train_network.set_train()
     output = train_network(inputs, label)
     print("the result is ", output)
+
 
 def test_compile_fp16_lr_overflow_dynamic_graph():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
@@ -254,10 +270,11 @@ def test_compile_fp16_lr_overflow_dynamic_graph():
     net_with_loss = WithLossCell(net, loss)
     scale_manager = DynamicLossScaleManager()
     update_cell = scale_manager.get_update_cell()
-    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell = update_cell)
+    train_network = TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_update_cell=update_cell)
     train_network.set_train()
     output = train_network(inputs, label)
     print("the result is ", output)
+
 
 def test_adam_compile():
     inputs = Tensor(np.ones([15, 1]).astype(np.float32))
