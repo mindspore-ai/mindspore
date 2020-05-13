@@ -551,11 +551,6 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
 }
 
 bool IsShapeMatchFormat(const std::vector<size_t> &shape, const std::string &format) {
-  const std::set<std::string> kOpFormatList = {kOpFormat_DEFAULT, kOpFormat_NC1KHKWHWC0, kOpFormat_ND,
-                                               kOpFormat_NCHW,    kOpFormat_NHWC,        kOpFormat_HWCN,
-                                               kOpFormat_NC1HWC0, kOpFormat_FRAC_Z,      kOpFormat_C1HWNCoC0,
-                                               kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
-
   // if format is default, it remarkes support all format
   if (kOpFormatList.find(format) == kOpFormatList.end()) {
     MS_LOG(EXCEPTION) << "Got the unknown format " << format;

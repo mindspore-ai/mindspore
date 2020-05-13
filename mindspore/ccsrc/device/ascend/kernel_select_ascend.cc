@@ -34,6 +34,7 @@ namespace ascend {
 namespace {
 const float kWegihtBaseScore = 1;
 const float kFeatureMapBaseScore = 10;
+constexpr auto kPriChoosenFormat = "pri_format";
 enum MatchCountPriority : int {
   MATCH_COUNT_PRIORITY_BEGIN = 0,
   MATCH_DTYPE_COUNT = MATCH_COUNT_PRIORITY_BEGIN,
@@ -85,6 +86,7 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
   if (need_change_nd) {
     priority_matched_format = kOpFormat_DEFAULT;
   }
+  AnfAlgo::SetNodeAttr(kPriChoosenFormat, MakeValue(priority_matched_format), cnode);
   return priority_matched_format;
 }
 /**
@@ -394,9 +396,9 @@ void PrintRaiseOrReducePrecisionSelectedInfo(const CNodePtr &cnode,
   std::ostringstream buffer;
   buffer << cnode->DebugString();
   if (precision_reduce) {
-    buffer << " reduce precision, node datatype: ";
+    buffer << " reduce precision, node datatype: \n";
   } else {
-    buffer << " raise precision, node datatype: ";
+    buffer << " raise precision, node datatype: \n";
   }
   PrintInputAndOutputInferType(buffer, cnode);
   buffer << ", select kernel:" << selected_kernel_build_info->ToString();
@@ -464,66 +466,57 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> FilterRaisedOrReducePrecis
 }
 }  // namespace
 
-std::shared_ptr<kernel::KernelBuildInfo> CanHitKernelInfo(
-  int *status, const CNodePtr &kernel_node,
-  const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
+KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
+                                        const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  KernelSelectStatus select_status = kNoMatched;
   bool precision_reduce = false;
   std::shared_ptr<kernel::KernelBuildInfo> selected_kernel_info = nullptr;
+  // Matched kernel info
+  // Filter kernel info matched with me infered type
   auto filtered_kernel_info_list = GetAllMatchedFilteredKernelInfo(kernel_node, kernel_info_list);
   if (!filtered_kernel_info_list.empty()) {
     selected_kernel_info = ChooseMatchedKernelInfo(kernel_node, filtered_kernel_info_list);
+    select_status = kStatusAllMatched;
   } else {
     // selected kernel info using raised precision or reduce precision
     filtered_kernel_info_list =
       FilterRaisedOrReducePrecisionMatchedKernelInfo(kernel_node, kernel_info_list, &precision_reduce);
     selected_kernel_info = ChooseMatchedKernelInfo(kernel_node, filtered_kernel_info_list);
     if (selected_kernel_info == nullptr) {
-      return nullptr;
+      return select_status;
     } else {
       PrintRaiseOrReducePrecisionSelectedInfo(kernel_node, selected_kernel_info, precision_reduce);
-      *status = precision_reduce ? kStatusReducePrecision : kStatusRaisePrecision;
+      select_status = precision_reduce ? kStatusReducePrecision : kStatusRaisePrecision;
     }
   }
-  return selected_kernel_info;
+  // Set kernel info to the anfnode
+  AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info, kernel_node.get());
+  // Set format and data type for input tensor.
+  SetTensorDeviceInfo(*selected_kernel_info, kernel_node);
+  return select_status;
 }
 
-int SelectKernelInfo(const CNodePtr &kernel_node) {
+KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
-  int status = kStatusAllMatched;
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel::KernelQuery(kernel_node, &kernel_info_list);
-  // filter kernel info matched with me infered type
-  auto selected_kernel_info = CanHitKernelInfo(&status, kernel_node, kernel_info_list);
-  if (selected_kernel_info == nullptr) {
+  auto select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
+  // If aicore not find valid kernel info reloading aicpu kernel info list to find it
+  if (select_status == kNoMatched) {
     MS_LOG(WARNING) << "The node [" << kernel_node->DebugString()
                     << "] cannot find valid TBE kernel info, try to get aicpu kernel info";
-    kernel::AicpuQuery(kernel_node, &kernel_info_list);
-    selected_kernel_info = CanHitKernelInfo(&status, kernel_node, kernel_info_list);
+    kernel::AICpuQuery(kernel_node, &kernel_info_list);
+    select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
   }
-  if (selected_kernel_info == nullptr) {
+  // The kernel info not finded both in the aicpu kernel list & aicore kernel list
+  if (select_status == kNoMatched) {
     std::ostringstream buffer;
     PrintInputAndOutputInferType(buffer, kernel_node);
     MS_EXCEPTION(TypeError) << "The node [" << kernel_node->DebugString()
                             << "] cannot find valid kernel info, not supported the type " << buffer.str();
   }
-  AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info, kernel_node.get());
-  // Set format and data type for input tensor.
-  SetTensorDeviceInfo(*selected_kernel_info, kernel_node);
-  return status;
-}
-
-bool CheckKernelAccuracySupported(const CNodePtr &kernel_node,
-                                  const kernel::KernelBuildInfoPtr &new_kernel_build_info) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
-  kernel::KernelQuery(kernel_node, &kernel_info_list);
-  auto result = std::find_if(kernel_info_list.begin(), kernel_info_list.end(),
-                             [&new_kernel_build_info](const kernel::KernelBuildInfoPtr item) {
-                               MS_EXCEPTION_IF_NULL(item);
-                               return *item == *new_kernel_build_info;
-                             });
-  return result != kernel_info_list.end();
+  return select_status;
 }
 }  // namespace ascend
 }  // namespace device

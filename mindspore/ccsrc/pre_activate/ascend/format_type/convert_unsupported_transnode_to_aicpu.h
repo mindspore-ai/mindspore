@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_FORMAT_TYPE_INSERT_CAST_FOR_RUNOP_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_FORMAT_TYPE_INSERT_CAST_FOR_RUNOP_H_
-#include <string>
-
+#include <memory>
 #include "pre_activate/common/optimizer.h"
-#include "pre_activate/common/pattern_engine.h"
-#include "ir/anf.h"
+#include "pre_activate/ascend/ascend_helper.h"
+#ifndef MINDSPORE_CONVERT_UNSUPPORTED_NODE_TO_AICPU_H
+#define MINDSPORE_CONVERT_UNSUPPORTED_NODE_TO_AICPU_H
 namespace mindspore {
 namespace opt {
-class RunOpInsertCast : public PatternProcessPass {
+class ConvertUnSupportNodeToAICPU : public PatternProcessPass {
  public:
-  explicit RunOpInsertCast(bool multigraph = true) : PatternProcessPass("insert_cast_for_runop", multigraph) {}
-  ~RunOpInsertCast() override = default;
+  explicit ConvertUnSupportNodeToAICPU(bool multigraph = true)
+      : PatternProcessPass("convert_unsupported_node_to_aicpu", multigraph),
+        supported_checker_(std::make_shared<SupportedChecker>()) {}
+  ~ConvertUnSupportNodeToAICPU() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  SupportedCheckerPtr supported_checker_;
 };
 }  // namespace opt
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_FORMAT_TYPE_INSERT_CAST_FOR_RUNOP_H_
+#endif  // MINDSPORE_CONVERT_UNSUPPORTED_NODE_TO_AICPU_H

@@ -37,6 +37,15 @@ class TestHWTransposeTransdataFusion : public BackendCommon {
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
+class MockSupportedChecker : public SupportedChecker {
+ public:
+  MockSupportedChecker() = default;
+  ~MockSupportedChecker() override = default;
+  bool CheckAiCoreSupported(const AnfNodePtr &anf_node, const kernel::KernelBuildInfoPtr &select_kernel_build_info) override {
+    return true;
+  }
+};
+
 class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
  public:
   MockInsertTransOpKernelSelectTrans4Dto5D() = default;
@@ -57,37 +66,6 @@ class MockInsertTransOpKernelSelectTrans4Dto5D : public KernelSelect {
       builder.SetOutputsDeviceType({kFloat16->type_id()});
       AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
     }
-  }
-};
-
-class MockTransposeTransdataFusionKernelSelect : public KernelSelect {
- public:
-  MockTransposeTransdataFusionKernelSelect() = default;
-  ~MockTransposeTransdataFusionKernelSelect() override = default;
-  bool CheckKernelAccuracySupported(const CNodePtr &kernel_node,
-                                    const kernel::KernelBuildInfoPtr &new_kernel_build_info) override {
-    std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
-    kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-    builder.SetInputsFormat({kOpFormat_NCHW});
-    builder.SetOutputsFormat({kOpFormat_DEFAULT});
-    builder.SetInputsDeviceType({kNumberTypeFloat16});
-    builder.SetOutputsDeviceType({kNumberTypeFloat16});
-    builder.SetKernelType(KernelType::AUTO_DIFF_KERNEL);
-    builder.SetFusionType(kernel::FusionType::OPAQUE);
-    builder.SetProcessor(kernel::Processor::AICORE);
-    kernel_info_list.push_back(builder.Build());
-    MS_LOG(INFO) << "transpose transdata fusion success";
-    MS_LOG(INFO) << "new transdata build info input format:" << new_kernel_build_info->GetInputFormat(0)
-                 << ",outputformat:" << new_kernel_build_info->GetOutputFormat(0)
-                 << ",kerneltype:" << new_kernel_build_info->kernel_type()
-                 << ",fusiontype:" << new_kernel_build_info->fusion_type()
-                 << ",process:" << new_kernel_build_info->processor();
-    auto result = std::find_if(kernel_info_list.begin(), kernel_info_list.end(),
-                               [&new_kernel_build_info](kernel::KernelBuildInfoPtr item) {
-                                 MS_EXCEPTION_IF_NULL(item);
-                                 return *item == *new_kernel_build_info;
-                               });
-    return result != kernel_info_list.end();
   }
 };
 
@@ -128,7 +106,7 @@ TEST_F(TestHWTransposeTransdataFusion, test_transpose_transdata_fusion) {
   insert_trans_op_pass->kernel_select_ = std::make_shared<MockInsertTransOpKernelSelectTrans4Dto5D>();
   pm->AddPass(insert_trans_op_pass);
   auto transpose_transdata_pass = std::make_shared<opt::TransposeTransDataFusion>();
-  transpose_transdata_pass->kernel_select_ = std::make_shared<MockTransposeTransdataFusionKernelSelect>();
+  transpose_transdata_pass->supported_checker_ = std::make_shared<MockSupportedChecker>();
   pm->AddPass(transpose_transdata_pass);
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
