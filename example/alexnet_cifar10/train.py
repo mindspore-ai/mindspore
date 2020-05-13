@@ -47,10 +47,10 @@ if __name__ == "__main__":
     model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})  # test
 
     print("============== Starting Training ==============")
-    ds_train = create_dataset(data_path=args.data_path,
-                              batch_size=cfg.batch_size,
-                              repeat_size=cfg.epoch_size,
-                              status="train")
+    ds_train = create_dataset(args.data_path,
+                              cfg.batch_size,
+                              cfg.epoch_size,
+                              "train")
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix="checkpoint_alexnet", directory=args.ckpt_path, config=config_ck)

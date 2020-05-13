@@ -50,9 +50,9 @@ if __name__ == "__main__":
     print("============== Starting Testing ==============")
     param_dict = load_checkpoint(args.ckpt_path)
     load_param_into_net(network, param_dict)
-    ds_eval = create_dataset(data_path=args.data_path,
-                             batch_size=cfg.batch_size,
-                             repeat_size=1,
-                             status="test")
+    ds_eval = create_dataset(args.data_path,
+                             cfg.batch_size,
+                             1,
+                             "test")
     acc = model.eval(ds_eval, dataset_sink_mode=args.dataset_sink_mode)
     print("============== Accuracy:{} ==============".format(acc))
