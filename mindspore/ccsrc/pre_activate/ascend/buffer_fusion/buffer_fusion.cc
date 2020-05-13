@@ -551,7 +551,6 @@ void BufferFusion::MatchDepthwiseConvRelu(const CNodePtr &cnode, const session::
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
-  
   if (is_order) {
     // DepthwiseConvolution--->Elemwise
     auto depthwise_conv = cnode->input(1);
@@ -596,7 +595,8 @@ void BufferFusion::MatchOpNamePattern(const session::KernelGraph &kernel_graph, 
         MatchBnupdateAddRelu(cnode, relu_input, kernel_graph, candidate_fusion);
       } else if (relu_input->isa<CNode>() && AnfAlgo::GetCNodeName(relu_input) == prim::kPrimTupleGetItem->name()) {
         MatchBnupdateRelu(cnode, relu_input, kernel_graph, candidate_fusion);
-      } else if (relu_input->isa<CNode>() && AnfAlgo::GetCNodeName(relu_input) == prim::kPrimDepthwiseConv2dNative->name()) {
+      } else if (relu_input->isa<CNode>() && 
+                 AnfAlgo::GetCNodeName(relu_input) == prim::kPrimDepthwiseConv2dNative->name()) {
         MatchDepthwiseConvRelu(cnode, kernel_graph, candidate_fusion, true);
       }
     } else if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimDepthwiseConv2dNative->name()) {
