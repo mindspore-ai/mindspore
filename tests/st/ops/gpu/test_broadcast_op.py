@@ -50,6 +50,19 @@ def test_nobroadcast():
     output_np = np.power(x1_np, x2_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
+    output_ms = P.RealDiv()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np / x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Mul()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np * x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Sub()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np - x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -80,6 +93,17 @@ def test_broadcast():
     output_np = np.power(x1_np, x2_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
 
+    output_ms = P.RealDiv()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np / x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Mul()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np * x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Sub()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np - x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -108,4 +132,16 @@ def test_broadcast_diff_dims():
 
     output_ms = P.Pow()(Tensor(x1_np), Tensor(x2_np))
     output_np = np.power(x1_np, x2_np)
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.RealDiv()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np / x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Mul()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np * x2_np
+    assert np.allclose(output_ms.asnumpy(), output_np)
+
+    output_ms = P.Sub()(Tensor(x1_np), Tensor(x2_np))
+    output_np = x1_np - x2_np
     assert np.allclose(output_ms.asnumpy(), output_np)
