@@ -51,6 +51,8 @@ class BufferFusion : public Pass {
                          FusedNodeRecord *candidate_fusion);
   void MatchBnupdateAddRelu(const CNodePtr &cnode, const AnfNodePtr &relu_input,
                             const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion);
+  void MatchDepthwiseConvRelu(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
+                              FusedNodeRecord *candidate_fusion, bool is_order);
   void MatchOpNamePattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion);
   void MatchFusionTypePattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion);
 

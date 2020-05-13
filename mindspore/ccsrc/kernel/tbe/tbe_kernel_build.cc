@@ -38,6 +38,11 @@ constexpr auto kFusionKernelNamePrfix = "te_fusion";
 constexpr auto kOptional = "optional_";
 constexpr auto kOpFormat_FRACTAL_Z = "FRACTAL_Z";
 
+std::map<std::string, std::string> TbeKernelBuild::buffer_fussion_op_map_ = {
+  {"DepthwiseConv2dNative", "DepthwiseConv2D"},
+  {"TensorAdd", "Add"}
+};
+
 std::string NormalizeFullScopeName(const string &full_scope_name) {
   // exp:Default/ReLU-op0 -->Default_ReLU_op0
   string normal_ret = full_scope_name;
@@ -825,8 +830,9 @@ bool TbeKernelBuild::GenFusionComputeJson(const mindspore::AnfNodePtr &compute_n
   (*compute_op_str)["output_desc"] = output_desc_list;
   // gen others
   auto type = AnfAlgo::GetCNodeName(cnode);
-  if (type == "TensorAdd") {
-    type = "Add";
+  // replace special op type for buffer fusion op
+  if (buffer_fussion_op_map_.find(type) != buffer_fussion_op_map_.end()) {
+    type = buffer_fussion_op_map_[type];
   }
   (*compute_op_str)["type"] = type;
   tbe::TbeAdapter::NormalizeFuncName(&type);
