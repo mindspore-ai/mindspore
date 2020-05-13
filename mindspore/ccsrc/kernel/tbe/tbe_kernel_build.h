@@ -76,6 +76,7 @@ class TbeKernelBuild {
                              std::map<const AnfNodePtr, FusionDataType> *spec_data_input);
   static bool IsDynamicInput(const CNodePtr &cnode);
   static size_t GetOptionalInput(const CNodePtr &cnode, bool is_dynamic_input);
+  static std::string GetRealOpType(const std::string &origin_type);
 };
 
 class TbeKernelJsonCreator {
