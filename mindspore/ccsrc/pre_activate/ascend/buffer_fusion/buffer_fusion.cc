@@ -555,7 +555,7 @@ void BufferFusion::MatchDepthwiseConvRelu(const CNodePtr &cnode, const session::
     // DepthwiseConvolution--->Elemwise
     auto depthwise_conv = cnode->input(1);
     MS_EXCEPTION_IF_NULL(depthwise_conv);
-    if (cnode->isa<CNode>() && AnfAlgo::GetCNodeName(depthwise_conv) == prim::kPrimDepthwiseConv2dNative->name()) {
+    if (cnode->isa<CNode>() && IsPrimitiveCNode(depthwise_conv, prim::kPrimDepthwiseConv2dNative)) {
       std::vector<int> output_used_num{SizeToInt(manager->node_users()[depthwise_conv].size())};
       AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), depthwise_conv);
       std::unordered_set<AnfNodePtr> record{cnode, depthwise_conv};
@@ -566,8 +566,7 @@ void BufferFusion::MatchDepthwiseConvRelu(const CNodePtr &cnode, const session::
     // Elemwise-->DepthwiseConvolution
     auto relu = cnode->input(1);
     MS_EXCEPTION_IF_NULL(relu);
-    if (cnode->isa<CNode>() &&
-        (AnfAlgo::GetCNodeName(relu) == prim::kPrimRelu->name() || AnfAlgo::GetCNodeName(relu) == kReluV2OpName)) {
+    if (cnode->isa<CNode>() && (IsPrimitiveCNode(relu, prim::kPrimRelu) || IsPrimitiveCNode(relu, prim::kPrimReluV2))) {
       std::vector<int> output_used_num{SizeToInt(manager->node_users()[relu].size())};
       AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), relu);
       std::unordered_set<AnfNodePtr> record{cnode, relu};

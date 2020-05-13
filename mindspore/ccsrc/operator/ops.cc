@@ -200,6 +200,7 @@ const PrimitivePtr kPrimOneHot = std::make_shared<Primitive>("OneHot");
 const PrimitivePtr kPrimGelu = std::make_shared<Primitive>("Gelu");
 const PrimitivePtr kPrimGeluGrad = std::make_shared<Primitive>("GeluGrad");
 const PrimitivePtr kPrimRelu = std::make_shared<Primitive>("ReLU");
+const PrimitivePtr kPrimReluV2 = std::make_shared<Primitive>("ReLUV2");
 const PrimitivePtr kPrimZerosLikeTensor = std::make_shared<Primitive>("zeros_like_tensor");
 const PrimitivePtr kPrimFakeBprop = std::make_shared<Primitive>("fake_bprop");
 

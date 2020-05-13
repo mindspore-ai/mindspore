@@ -38,11 +38,6 @@ constexpr auto kFusionKernelNamePrfix = "te_fusion";
 constexpr auto kOptional = "optional_";
 constexpr auto kOpFormat_FRACTAL_Z = "FRACTAL_Z";
 
-std::map<std::string, std::string> TbeKernelBuild::buffer_fussion_op_map_ = {
-  {"DepthwiseConv2dNative", "DepthwiseConv2D"},
-  {"TensorAdd", "Add"}
-};
-
 std::string NormalizeFullScopeName(const string &full_scope_name) {
   // exp:Default/ReLU-op0 -->Default_ReLU_op0
   string normal_ret = full_scope_name;
@@ -726,6 +721,16 @@ size_t TbeKernelBuild::GetOptionalInput(const mindspore::CNodePtr &cnode, bool i
   return (op_info->inputs_ptr().size() + 1 - cnode->inputs().size());
 }
 
+std::string TbeKernelBuild::GetRealOpType(const std::string &origin_type) {
+  static std::map<std::string, std::string> TbeKernelBuild::buffer_fussion_op_map = {
+    {"DepthwiseConv2dNative", "DepthwiseConv2D"}, {"TensorAdd", "Add"}};
+  string result = origin_type;
+  if (buffer_fussion_op_map.find(origin_type) != buffer_fussion_op_map.end()) {
+    result = buffer_fussion_op_map[origin_type];
+  }
+  return result;
+}
+
 bool TbeKernelBuild::GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
                                                std::vector<std::vector<mindspore::AnfNodePtr>>::iterator *layer_iter,
                                                std::vector<nlohmann::json> *input_desc_list, size_t *index) {
@@ -831,9 +836,7 @@ bool TbeKernelBuild::GenFusionComputeJson(const mindspore::AnfNodePtr &compute_n
   // gen others
   auto type = AnfAlgo::GetCNodeName(cnode);
   // replace special op type for buffer fusion op
-  if (buffer_fussion_op_map_.find(type) != buffer_fussion_op_map_.end()) {
-    type = buffer_fussion_op_map_[type];
-  }
+  type = GetRealOpType(type);
   (*compute_op_str)["type"] = type;
   tbe::TbeAdapter::NormalizeFuncName(&type);
   (*compute_op_str)["func_name"] = type;
