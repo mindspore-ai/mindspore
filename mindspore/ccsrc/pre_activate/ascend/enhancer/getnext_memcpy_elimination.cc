@@ -39,7 +39,7 @@ const AnfNodePtr GetnextMemcpyElimination::Process(const FuncGraphPtr &graph, co
   }
 
   // 1. memcpy has attr kAttrLabelForInsertStreamActive
-  if (!AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, node)) {
+  if (!AnfAlgo::HasNodeAttr(kAttrLabelForInsertStreamActive, memcpy_cnode)) {
     MS_LOG(DEBUG) << "node has no label_for_insert_stream_active attr";
     return nullptr;
   }

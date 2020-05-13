@@ -63,13 +63,14 @@ const AnfNodePtr InsertMemcpyAsyncForGetNext::Process(const FuncGraphPtr &func_g
     return nullptr;
   }
 
-  if (AnfAlgo::HasNodeAttr(kAttrVisited, node)) {
+  auto cnode = node->cast<CNodePtr>();
+  if (AnfAlgo::HasNodeAttr(kAttrVisited, cnode)) {
     MS_LOG(DEBUG) << "Node op_name[" << kGetNextOpName << "] has visited.";
     return nullptr;
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
+  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), cnode);
 
-  return InsertMemcpyAsyncForGetNextOutputs(func_graph, node);
+  return InsertMemcpyAsyncForGetNextOutputs(func_graph, cnode);
 }
 }  // namespace opt
 }  // namespace mindspore

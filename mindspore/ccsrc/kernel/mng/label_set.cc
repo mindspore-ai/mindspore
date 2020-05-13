@@ -34,7 +34,8 @@ LabelSetKernel::~LabelSetKernel() {}
 bool LabelSetKernel::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_LOG(INFO) << "LabelSetKernel init";
-  if (!AnfAlgo::HasNodeAttr(kAttrLabelIndex, anf_node)) {
+  auto cnode = anf_node->cast<CNodePtr>();
+  if (!AnfAlgo::HasNodeAttr(kAttrLabelIndex, cnode)) {
     MS_LOG(EXCEPTION) << "LabelSetKernel has no attr label_index";
   }
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);

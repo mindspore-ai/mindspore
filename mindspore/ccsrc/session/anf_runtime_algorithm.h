@@ -80,7 +80,7 @@ class AnfRuntimeAlgorithm {
   // set all attrs from 'from' node to 'to' node
   static void CopyNodeAttrs(const AnfNodePtr &from, const AnfNodePtr &to);
   // check whether a cnode has the specified attr.
-  static bool HasNodeAttr(const std::string &key, const AnfNodePtr &node);
+  static bool HasNodeAttr(const std::string &key, const CNodePtr &node);
   // delete attr of anf node
   static void EraseNodeAttr(const std::string &key, AnfNodePtr node);
   // get the num of input real_kernel(which can be build and run in device)
