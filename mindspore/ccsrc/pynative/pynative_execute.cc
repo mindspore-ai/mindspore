@@ -213,22 +213,22 @@ bool RunOpConvertConstInputToAttr(const py::object &input_object, size_t input_i
 }
 
 void PlantTensorTupleToVector(const py::tuple &tuple_inputs, const PrimitivePtr &op_prim,
-                              std::vector<tensor::TensorPtr> *input_tensor) {
+                              std::vector<tensor::TensorPtr> *input_tensors) {
   MS_EXCEPTION_IF_NULL(op_prim);
-  MS_EXCEPTION_IF_NULL(input_tensor);
+  MS_EXCEPTION_IF_NULL(input_tensors);
   for (const auto &input_object : tuple_inputs) {
     if (!py::isinstance<tensor::Tensor>(input_object)) {
       MS_LOG(EXCEPTION) << "The input object is not a tensor!";
     }
     auto tensor = py::cast<tensor::TensorPtr>(input_object);
     MS_EXCEPTION_IF_NULL(tensor);
-    input_tensor->push_back(tensor);
+    input_tensors->push_back(tensor);
   }
   op_prim->set_attr(kAttrDynInputSizes, MakeValue(std::vector<int>{SizeToInt(tuple_inputs.size())}));
 }
 
-void ConvertValueTupleToTensor(const py::object &input_object, std::vector<tensor::TensorPtr> *input_tensor) {
-  MS_EXCEPTION_IF_NULL(input_tensor);
+void ConvertValueTupleToTensor(const py::object &input_object, std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
   ValuePtr input_value = parse::data_converter::PyDataToValue(input_object);
   MS_EXCEPTION_IF_NULL(input_value);
   if (!input_value->isa<ValueTuple>()) {
@@ -238,20 +238,23 @@ void ConvertValueTupleToTensor(const py::object &input_object, std::vector<tenso
   MS_EXCEPTION_IF_NULL(value_tuple);
   tensor::TensorPtr tensor_ptr = opt::CreateTupleTensor(value_tuple);
   MS_EXCEPTION_IF_NULL(tensor_ptr);
-  input_tensor->push_back(tensor_ptr);
+  input_tensors->push_back(tensor_ptr);
 }
 
 void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr &op_prim,
-                             std::vector<tensor::TensorPtr> *input_tensor) {
+                             std::vector<tensor::TensorPtr> *input_tensors, int *tensor_mask) {
   MS_EXCEPTION_IF_NULL(op_prim);
-  MS_EXCEPTION_IF_NULL(input_tensor);
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  MS_EXCEPTION_IF_NULL(tensor_mask);
   tensor::TensorPtr tensor_ptr = nullptr;
   if (py::isinstance<tensor::Tensor>(input_object)) {
     tensor_ptr = py::cast<tensor::TensorPtr>(input_object);
   } else if (py::isinstance<py::float_>(input_object)) {
     tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::float_>(input_object), kFloat32);
+    *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::int_>(input_object)) {
-    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::int_>(input_object), nullptr);
+    tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::int_>(input_object), kInt32);
+    *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::list>(input_object)) {
     tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<py::list>(input_object), nullptr);
   } else if (py::isinstance<py::array>(input_object)) {
@@ -261,20 +264,22 @@ void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr 
   } else if (py::isinstance<py::tuple>(input_object)) {
     auto tuple_inputs = py::cast<py::tuple>(input_object);
     if (py::isinstance<tensor::Tensor>(tuple_inputs[0])) {
-      PlantTensorTupleToVector(tuple_inputs, op_prim, input_tensor);
+      PlantTensorTupleToVector(tuple_inputs, op_prim, input_tensors);
     } else {
-      ConvertValueTupleToTensor(input_object, input_tensor);
+      ConvertValueTupleToTensor(input_object, input_tensors);
+      *tensor_mask = kValueNodeTensorMask;
     }
     return;
   } else {
     MS_LOG(EXCEPTION) << "Run op inputs type is invalid!";
   }
   MS_EXCEPTION_IF_NULL(tensor_ptr);
-  input_tensor->push_back(tensor_ptr);
+  input_tensors->push_back(tensor_ptr);
 }
 
-void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<bool> *tensors_mask,
+void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int> *tensors_mask,
                           std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
   MS_EXCEPTION_IF_NULL(tensors_mask);
   MS_EXCEPTION_IF_NULL(input_tensors);
   PrimitivePtr op_prim = op_run_info->py_primitive;
@@ -295,12 +300,27 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<bool> *t
       continue;
     }
     // convert const and tuple input to tensor
-    ConvertPyObjectToTensor(op_run_info->op_inputs[index], op_prim, input_tensors);
-    // make tensors, weight : 1, data : 0
-    std::vector<bool> new_mask(input_tensors->size() - tensors_mask->size(),
-                               py::cast<bool>(op_run_info->inputs_mask[index]));
+    int tensor_mask = py::cast<int>(op_run_info->inputs_mask[index]);
+    ConvertPyObjectToTensor(op_run_info->op_inputs[index], op_prim, input_tensors, &tensor_mask);
+    // mark tensors, data : 0, weight : 1, valuenode: 2
+    std::vector<int> new_mask(input_tensors->size() - tensors_mask->size(), tensor_mask);
     tensors_mask->insert(tensors_mask->end(), new_mask.begin(), new_mask.end());
   }
+}
+
+void EraseValueNodeTensor(const std::vector<int> &tensors_mask, std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  if (input_tensors->size() != tensors_mask.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors->size() << " should be equal to tensors mask size "
+                      << tensors_mask.size();
+  }
+  std::vector<tensor::TensorPtr> new_input_tensors;
+  for (size_t index = 0; index < tensors_mask.size(); ++index) {
+    if (tensors_mask[index] != kValueNodeTensorMask) {
+      new_input_tensors.push_back(input_tensors->at(index));
+    }
+  }
+  *input_tensors = new_input_tensors;
 }
 
 py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status) {
@@ -323,9 +343,10 @@ py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
 
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info);
   std::vector<tensor::TensorPtr> input_tensors;
-  std::vector<bool> tensors_mask;
+  std::vector<int> tensors_mask;
   ConstructInputTensor(op_exec_info, &tensors_mask, &input_tensors);
   session->BuildOp(*op_exec_info, graph_info, input_tensors, tensors_mask);
+  EraseValueNodeTensor(tensors_mask, &input_tensors);
   py::tuple result = session->RunOp(*op_exec_info, graph_info, input_tensors);
   ms_context->set_enable_pynative_infer(false);
   *status = PYNATIVE_SUCCESS;
