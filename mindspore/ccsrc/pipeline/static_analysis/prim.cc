@@ -470,16 +470,16 @@ AbstractBasePtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const 
     }
   }
 
-  ValuePtr inferred_value = RunImpl(value_list);
-  if (!(*inferred_value == *kAnyValue)) {
-    ret_value_type = inferred_value->type();
+  ValuePtr evaluated_value = RunImpl(value_list);
+  if (!(*evaluated_value == *kAnyValue)) {
+    ret_value_type = evaluated_value->type();
   }
   // for comparison primitives , return type shall have be specified to be bool.
   if (specify_out_type_ != nullptr) {
     ret_value_type = specify_out_type_;
   }
 
-  AbstractScalarPtr abs_base = std::make_shared<AbstractScalar>(inferred_value, ret_value_type);
+  AbstractScalarPtr abs_base = std::make_shared<AbstractScalar>(evaluated_value, ret_value_type);
   return abs_base;
 }
 
@@ -997,8 +997,8 @@ class PartialEvaluator : public Evaluator {
     return ret;
   }
 
-  AbstractBasePtr Infer(AnalysisEnginePtr, const AbstractBasePtrList &) override {
-    MS_LOG(EXCEPTION) << "Infer() should not be called, Run() method should be called";
+  AbstractBasePtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+    MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 
   AbstractBasePtr HandleDoSignature(const AnalysisEnginePtr &engine, const ValuePtr &signature_value,

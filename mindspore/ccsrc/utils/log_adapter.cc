@@ -216,8 +216,8 @@ void LogWriter::operator^(const LogStream &stream) const {
   }
   oss << msg.str();
 
-  trace::TraceGraphInfer();
-  trace::GetInferStackInfo(oss);
+  trace::TraceGraphEval();
+  trace::GetEvalStackInfo(oss);
 
   if (exception_type_ == IndexError) {
     throw pybind11::index_error(oss.str());
