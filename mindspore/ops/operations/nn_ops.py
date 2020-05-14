@@ -2030,7 +2030,7 @@ class OneHot(PrimitiveWithInfer):
         depth_val = depth['value']
         validator.check_integer("depth", depth_val, 0, Rel.GE, self.name)
         # create new dimension at end if self.axis is -1
-        indices_shp.insert(self.axis, depth_val) if self.axis >= 0 else indices_shp.append(depth_val)
+        _ = indices_shp.insert(self.axis, depth_val) if self.axis >= 0 else indices_shp.append(depth_val)
 
         return {'shape': indices_shp,
                 'dtype': on_value['dtype'],

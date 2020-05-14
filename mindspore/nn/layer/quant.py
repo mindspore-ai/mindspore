@@ -208,6 +208,7 @@ class Conv2dBatchNormQuant(Cell):
                  symmetric=False,
                  narrow_range=False):
         super(Conv2dBatchNormQuant, self).__init__()
+        _ = dilation
         self.stride = stride
         self.conv = P.Conv2D(out_channel=out_channels,
                              kernel_size=kernel_size,
