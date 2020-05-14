@@ -40,7 +40,7 @@ void FilterInvalidKernelInfo(const CNodePtr &kernel_node,
     (void)std::copy(filtered_list.begin(), filtered_list.end(), std::back_inserter(*kernel_info_list));
   } else {
     MS_LOG(WARNING) << "All kernel Info list does not match any kernel info ";
-    for (size_t index; index < kernel_info_list->size(); ++index) {
+    for (size_t index = 0; index < kernel_info_list->size(); ++index) {
       MS_EXCEPTION_IF_NULL(kernel_info_list->at(index));
       MS_LOG(WARNING) << "kernel [ " << index << " ] :" << kernel_info_list->at(index)->ToString();
     }

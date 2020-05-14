@@ -492,6 +492,7 @@ void SetKernelBuildCommonInfo(const std::shared_ptr<KernelBuildInfo::KernelBuild
   if (tbe::GetFusionType(fusion_type) != UNKNOWN_FUSION_TYPE) {
     builder->SetFusionType(tbe::GetFusionType(fusion_type));
   }
+  builder->SetOpPattern(op_info_ptr->op_pattern());
   builder->SetKernelType(TBE_KERNEL);
 }
 
@@ -509,7 +510,7 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
   if (primitive->GetAttr("dyn_input_sizes") != nullptr) {
     dyn_input_sizes = GetValue<std::vector<int>>(primitive->GetAttr("dyn_input_sizes"));
   }
-  if (inputs.size() > 0) {
+  if (!inputs.empty()) {
     MS_EXCEPTION_IF_NULL(inputs[0]);
     size_t kernel_info_cnt = inputs[0]->dtypes().size();
     for (size_t j = 0; j < kernel_info_cnt; j++) {
@@ -624,21 +625,17 @@ void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<Ke
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  for (auto parse_info : parse_info_list) {
-    if (context_ptr->execution_mode() == kPynativeMode) {
-      kernel_info_list->push_back(parse_info);
-    } else {
-      if (IsValidKernelInfo(kernel_node, *(parse_info))) {
-        if (CheckSupported(kernel_node, parse_info)) {
-          kernel_info_list->push_back(parse_info);
-        } else {
-          MS_LOG(INFO) << "CheckSupported Failed for TBE op" << op_name << " kernel info.";
-        }
+  for (const auto &parse_info : parse_info_list) {
+    if (IsValidKernelInfo(kernel_node, *(parse_info))) {
+      if (CheckSupported(kernel_node, parse_info)) {
+        kernel_info_list->push_back(parse_info);
+      } else {
+        MS_LOG(INFO) << "CheckSupported Failed for TBE op" << op_name << " kernel info.";
       }
     }
-  }
-  if (kernel_info_list->empty()) {
-    MS_LOG(DEBUG) << "Tbe dose not have op [" << op_name << "].";
+    if (kernel_info_list->empty()) {
+      MS_LOG(DEBUG) << "Tbe dose not have op [" << op_name << "].";
+    }
   }
 }
 }  // namespace kernel

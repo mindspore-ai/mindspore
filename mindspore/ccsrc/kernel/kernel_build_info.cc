@@ -162,5 +162,10 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputReshapeType(
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->output_reshape_type_ = output_reshape_type;
 }
+
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOpPattern(OpPattern pattern) {
+  MS_EXCEPTION_IF_NULL(kernel_build_info_);
+  kernel_build_info_->op_pattern_ = pattern;
+}
 }  // namespace kernel
 }  // namespace mindspore

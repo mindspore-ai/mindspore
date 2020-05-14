@@ -21,6 +21,7 @@
 #include <memory>
 #include <unordered_map>
 #include "ir/dtype.h"
+#include "kernel/kernel.h"
 
 namespace mindspore {
 namespace kernel {
@@ -100,7 +101,7 @@ class OpInfo {
   std::string kernel_name() const { return kernel_name_; }
   bool partial_flag() const { return partial_flag_; }
   bool dynamic_format() const { return dynamic_format_; }
-  std::string op_pattern() const { return op_pattern_; }
+  OpPattern op_pattern() const { return op_pattern_; }
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr() const { return attrs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr() const { return inputs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr() const { return outputs_ptr_; }
@@ -116,7 +117,7 @@ class OpInfo {
   void set_kernel_name(const std::string &kernel_name) { kernel_name_ = kernel_name; }
   void set_partial_flag(const bool partial_flag) { partial_flag_ = partial_flag; }
   void set_dynamic_format(const bool dynamic_format) { dynamic_format_ = dynamic_format; }
-  void set_op_pattern(const std::string op_pattern) { op_pattern_ = op_pattern; }
+  void set_op_pattern(const OpPattern op_pattern) { op_pattern_ = op_pattern; }
   void add_attrs_ptr(const std::shared_ptr<OpAttr> &attr) { attrs_ptr_.push_back(attr); }
   void add_inputs_ptr(const std::shared_ptr<OpIOInfo> &input) { inputs_ptr_.push_back(input); }
   void add_outputs_ptr(const std::shared_ptr<OpIOInfo> &output) { outputs_ptr_.push_back(output); }
@@ -137,7 +138,7 @@ class OpInfo {
   std::string kernel_name_;
   bool partial_flag_ = false;
   bool dynamic_format_ = false;
-  std::string op_pattern_;
+  OpPattern op_pattern_ = kCommonPattern;
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr_;
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr_;
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr_;

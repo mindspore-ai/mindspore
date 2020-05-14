@@ -44,6 +44,7 @@ const AnfNodePtr ConvertUnSupportNodeToAICPU::Process(const mindspore::FuncGraph
     auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(kernel_builder_info);
     builder->SetKernelType(AICPU_KERNEL);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
+    AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), node);
   } else {
     MS_LOG(EXCEPTION) << " kernel " << kernel_builder_info->ToString() << "is not supported in AiCPU & AiCore : node ["
                       << node->DebugString() << "]";

@@ -138,6 +138,8 @@ class AnfRuntimeAlgorithm {
   static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
                                          const std::vector<std::vector<size_t>> &shapes, AnfNode *node);
   static void CopyAbstract(const AnfNodePtr &from_node, AnfNode *to_node);
+  // get op pattern of the node
+  static kernel::OpPattern GetOpPattern(const AnfNodePtr &node);
   // get KernelBuildType of node ,such as ATT,RT,FWK and so on
   static KernelType GetKernelType(const AnfNodePtr &node);
   // get processor type:AICORE,AICPU...
