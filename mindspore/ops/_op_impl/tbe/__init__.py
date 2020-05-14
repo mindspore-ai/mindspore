@@ -71,6 +71,8 @@ from .bn_training_reduce import _bn_training_reduce_tbe
 from .bn_training_reduce_grad import _bn_training_reduce_grad_tbe
 from .bn_training_update import _bn_training_update_tbe
 from .bn_training_update_grad import _bn_training_update_grad_tbe
+from .bn_infer import _bn_infer_tbe
+from .bn_infer_grad import _bn_infer_grad_tbe
 from .reciprocal import _reciprocal_tbe
 from .strided_slice_d import _strided_slice_d_tbe
 from .strided_slice_grad_d import _strided_slice_grad_d_tbe
