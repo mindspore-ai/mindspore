@@ -139,6 +139,7 @@ constexpr auto kFusionOpConv2DBackpropInputAddNReluGradV2Name = "FusionOp_Conv2D
 constexpr auto kLabelSetOpName = "LabelSet";
 constexpr auto kLabelSwitchOpName = "LabelSwitch";
 constexpr auto kLabelGotoOpName = "LabelGoto";
+constexpr auto kBNInferGradOpName = "BNInferGrad";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
