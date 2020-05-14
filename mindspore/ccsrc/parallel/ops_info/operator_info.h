@@ -140,6 +140,7 @@ class OperatorInfo {
   CostPtr selected_cost() const { return selected_cost_; }
   Status InitSelectedStrategy(const StrategyPtr &s_strategy) { return Init(s_strategy); }
   void set_input_value(const std::vector<ValuePtr> &input_value) { input_value_ = input_value; }
+  const std::vector<ValuePtr> &input_value() const { return input_value_; }
   void set_outputs_dtype(const TypePtr &dtype) { outputs_dtype_ = dtype; }
   void set_cnode(const CNodePtr &cnode) { cnode_ = cnode; }
   bool is_alive() const { return is_alive_; }
