@@ -319,7 +319,8 @@ class AttentionHead(nn.Cell):
             else:
                 ret = ret + input_feature
         # activation
-        ret = self.activation(ret)
+        if self.activation is not None:
+            ret = self.activation(ret)
         return ret
 
 
@@ -336,6 +337,8 @@ class AttentionAggregator(nn.Cell):
         coef_drop_ratio (float): Coefficient dropout ratio, default 0.0.
         activation (Cell): The output activation function, default nn.ELU().
         residual (bool): Whether to use residual connection, default False.
+        output_transform (str['concat', 'sum']): output transform for a layer,
+            default 'concat'
 
     Inputs:
         - **input_feature** (Tensor) - Tensor of shape : (batch_size, num_nodes, feature_dim).
@@ -356,7 +359,8 @@ class AttentionAggregator(nn.Cell):
                  in_drop=0.0,
                  coef_drop=0.0,
                  activation=nn.ELU(),
-                 residual=False):
+                 residual=False,
+                 output_transform='concat'):
         super(AttentionAggregator, self).__init__()
         self.num_heads = num_heads
         self.attns = []
@@ -368,9 +372,15 @@ class AttentionAggregator(nn.Cell):
                                             activation=activation,
                                             residual=residual))
         self.attns = nn.layer.CellList(self.attns)
+        if output_transform == 'concat':
+            self.out_trans = P.Concat(-1)
+        elif output_transform == 'sum':
+            self.out_trans = P.AddN()
+        else:
+            raise ValueError
 
     def construct(self, input_data, bias_mat):
         res = ()
         for i in range(self.num_heads):
             res += (self.attns[i](input_data, bias_mat),)
-        return P.Concat(-1)(res)
+        return self.out_trans(res)
