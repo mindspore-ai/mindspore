@@ -64,7 +64,7 @@ SET(DE_UT_SRCS
     cifar_op_test.cc
     celeba_op_test.cc
     take_op_test.cc
-    text_file_op_test.cc)
+    text_file_op_test.cc
     filter_op_test.cc
     )
 
