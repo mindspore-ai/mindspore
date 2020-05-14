@@ -128,7 +128,7 @@ def test_cv_minddataset_pk_sample_exclusive_shuffle():
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     sampler = ds.PKSampler(2)
-    with pytest.raises(Exception, match="shuffle not allowed when use sampler"):
+    with pytest.raises(Exception, match="sampler and shuffle cannot be specified at the same time."):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers,
                 sampler=sampler, shuffle=False)
         num_iter = 0
@@ -168,3 +168,46 @@ def test_cv_minddataset_reader_different_page_size():
     os.remove("{}.db".format(CV_FILE_NAME))
     os.remove(CV1_FILE_NAME)
     os.remove("{}.db".format(CV1_FILE_NAME))
+
+def test_minddataset_invalidate_num_shards():
+    create_cv_mindrecord(1)
+    columns_list = ["data", "label"]
+    num_readers = 4
+    with pytest.raises(Exception, match="shard_id is invalid, "):
+        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 0, 1)
+        num_iter = 0
+        for item in data_set.create_dict_iterator():
+            num_iter += 1
+    os.remove(CV_FILE_NAME)
+    os.remove("{}.db".format(CV_FILE_NAME))
+
+def test_minddataset_invalidate_shard_id():
+    create_cv_mindrecord(1)
+    columns_list = ["data", "label"]
+    num_readers = 4
+    with pytest.raises(Exception, match="shard_id is invalid, "):
+        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 1, -1)
+        num_iter = 0
+        for item in data_set.create_dict_iterator():
+            num_iter += 1
+    os.remove(CV_FILE_NAME)
+    os.remove("{}.db".format(CV_FILE_NAME))
+
+def test_minddataset_shard_id_bigger_than_num_shard():
+    create_cv_mindrecord(1)
+    columns_list = ["data", "label"]
+    num_readers = 4
+    with pytest.raises(Exception, match="shard_id is invalid, "):
+        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 2, 2)
+        num_iter = 0
+        for item in data_set.create_dict_iterator():
+            num_iter += 1
+
+    with pytest.raises(Exception, match="shard_id is invalid, "):
+        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 2, 5)
+        num_iter = 0
+        for item in data_set.create_dict_iterator():
+            num_iter += 1
+
+    os.remove(CV_FILE_NAME)
+    os.remove("{}.db".format(CV_FILE_NAME))

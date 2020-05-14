@@ -534,6 +534,7 @@ def check_minddataset(method):
                 check_dataset_file(f)
         else:
             check_dataset_file(dataset_file)
+
         check_param_type(nreq_param_int, param_dict, int)
 
         check_param_type(nreq_param_list, param_dict, list)
@@ -543,6 +544,8 @@ def check_minddataset(method):
         num_shards, shard_id = param_dict.get('num_shards'), param_dict.get('shard_id')
         if (num_shards is not None and shard_id is None) or (num_shards is None and shard_id is not None):
             raise ValueError("num_shards and shard_id need to be set or not set at the same time")
+
+        check_sampler_shuffle_shard_options(param_dict)
 
         return method(*args, **kwargs)
 
