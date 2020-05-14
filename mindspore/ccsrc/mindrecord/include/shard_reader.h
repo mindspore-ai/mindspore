@@ -280,9 +280,6 @@ class ShardReader {
   /// \brief read one row by one task
   TASK_RETURN_CONTENT ConsumerOneTask(int task_id, uint32_t consumer_id);
 
-  /// \brief get all the column names by schema
-  vector<std::string> GetAllColumns();
-
   /// \brief get one row from buffer in block-reader mode
   std::shared_ptr<std::vector<std::tuple<std::vector<uint8_t>, json>>> GetRowFromBuffer(int bufId, int rowId);
 
@@ -308,7 +305,6 @@ class ShardReader {
   uint64_t page_size_;                         // page size
   int shard_count_;                            // number of shards
   std::shared_ptr<ShardHeader> shard_header_;  // shard header
-  bool nlp_ = false;                           // NLP data
 
   std::vector<sqlite3 *> database_paths_;                                        // sqlite handle list
   std::vector<string> file_paths_;                                               // file paths

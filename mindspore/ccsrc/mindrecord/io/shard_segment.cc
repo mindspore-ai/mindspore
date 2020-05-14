@@ -296,8 +296,7 @@ std::pair<MSRStatus, std::vector<std::tuple<std::vector<uint8_t>, json>>> ShardS
         if (SUCCESS != ret1.first) {
           return {FAILED, std::vector<std::tuple<std::vector<uint8_t>, json>>{}};
         }
-        auto imageLabel = GetImageLabel(ret1.second, labels[i]);
-        page.emplace_back(std::move(std::get<0>(imageLabel)), std::move(std::get<1>(imageLabel)));
+        page.emplace_back(std::move(ret1.second), std::move(labels[i]));
       }
     }
   }
@@ -371,35 +370,7 @@ std::pair<ShardType, std::vector<std::string>> ShardSegment::GetBlobFields() {
     blob_fields.assign(fields.begin(), fields.end());
     break;
   }
-  return std::make_pair(GetNlpFlag() ? kNLP : kCV, blob_fields);
-}
-
-std::tuple<std::vector<uint8_t>, json> ShardSegment::GetImageLabel(std::vector<uint8_t> images, json label) {
-  if (GetNlpFlag()) {
-    vector<std::string> columns;
-    for (auto &p : GetShardHeader()->GetSchemas()) {
-      auto schema = p->GetSchema()["schema"];  // make sure schema is not reference since error occurred in arm.
-      auto schema_items = schema.items();
-      using it_type = decltype(schema_items.begin());
-      std::transform(schema_items.begin(), schema_items.end(), std::back_inserter(columns),
-                     [](it_type item) { return item.key(); });
-    }
-
-    json blob_fields = json::from_msgpack(images);
-    json merge;
-    if (columns.size() > 0) {
-      for (auto &col : columns) {
-        if (blob_fields.find(col) != blob_fields.end()) {
-          merge[col] = blob_fields[col];
-        }
-      }
-    } else {
-      merge = blob_fields;
-    }
-    merge.update(label);
-    return std::make_tuple(std::vector<uint8_t>{}, merge);
-  }
-  return std::make_tuple(images, label);
+  return std::make_pair(kCV, blob_fields);
 }
 
 std::string ShardSegment::CleanUp(std::string field_name) {
