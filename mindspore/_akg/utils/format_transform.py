@@ -15,9 +15,9 @@
 """format transform function"""
 import _akg
 
-def refine_reduce_axis(input, axis):
+def refine_reduce_axis(input_content, axis):
     """make reduce axis legal."""
-    shape = get_shape(input)
+    shape = get_shape(input_content)
     if axis is None:
         axis = [i for i in range(len(shape))]
     elif isinstance(axis, int):
