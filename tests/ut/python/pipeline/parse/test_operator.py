@@ -200,6 +200,3 @@ def test_in_dict():
     z = Tensor(np.random.randint(low=20, high=30, size=(2, 3, 4), dtype=np.int32))
     context.set_context(mode=context.GRAPH_MODE)
     net(x, y, z)
-
-
-

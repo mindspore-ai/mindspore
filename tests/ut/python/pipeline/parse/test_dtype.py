@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_dtype """
-import pytest
 from mindspore._c_expression import typing
 from mindspore.common.api import ms_function
 

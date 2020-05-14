@@ -17,7 +17,6 @@ import numpy as np
 
 from mindspore.common.api import ms_function
 from mindspore import Tensor
-from mindspore import context
 from mindspore.ops import Primitive
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P

@@ -19,8 +19,6 @@ import mindspore.nn as nn
 from mindspore import context
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
-from mindspore.common.api import ms_function
 context.set_context(mode=context.GRAPH_MODE)
 
 

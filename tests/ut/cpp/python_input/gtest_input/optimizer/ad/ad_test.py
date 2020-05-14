@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from dataclasses import dataclass
 import numpy as np
 
 import mindspore as ms
-from dataclasses import dataclass
 from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
 from mindspore.model_zoo.resnet import resnet50
@@ -106,7 +106,7 @@ def test_closure(a):
     def x1(b):
 
         def x4(c):
-            return b
+            return c * b
         return x4
     x2 = x1(a)
     x3 = x2(1.0)
@@ -117,21 +117,18 @@ def test_if(a, b):
     # if statement, so I prefer to name the test 'test_if'
     if a > b:
         return a
-    else:
-        return b
+    return b
 
 def test_if2(a, b):
     if a > b:
         return a * a
-    else:
-        return b + b
+    return b + b
 
 def test_fact(x):
     def fact(n):
         if n <= 1:
             return 1
-        else:
-            return n * fact(n - 1)
+        return n * fact(n - 1)
     return fact(x)
 
 def test_while(x):
