@@ -25,7 +25,7 @@ from dataset import create_dataset
 import mindspore.nn as nn
 from mindspore.model_zoo.lenet import LeNet5
 from mindspore import context
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 
@@ -40,19 +40,20 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, enable_mem_reuse=False)
+    ds_train = create_dataset(os.path.join(args.data_path, "train"),
+                              cfg.batch_size,
+                              cfg.epoch_size)
 
     network = LeNet5(cfg.num_classes)
     net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
     net_opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
+    time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix="checkpoint_lenet", config=config_ck)
     model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
 
-    ds_train = create_dataset(os.path.join(args.data_path, "train"),
-                              cfg.batch_size,
-                              cfg.epoch_size)
     print("============== Starting Training ==============")
-    model.train(cfg['epoch_size'], ds_train, callbacks=[ckpoint_cb, LossMonitor()],
+    model.train(cfg['epoch_size'], ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()],
                 dataset_sink_mode=args.dataset_sink_mode)

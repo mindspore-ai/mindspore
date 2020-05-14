@@ -21,12 +21,14 @@ python train.py --data_path /YourDataPath
 import argparse
 from config import alexnet_cfg as cfg
 from dataset import create_dataset
+from generator_lr import get_lr
 import mindspore.nn as nn
 from mindspore import context
+from mindspore import Tensor
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
 from mindspore.model_zoo.alexnet import AlexNet
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 
 
 if __name__ == "__main__":
@@ -43,16 +45,17 @@ if __name__ == "__main__":
 
     network = AlexNet(cfg.num_classes)
     loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
-    opt = nn.Momentum(network.trainable_params(), cfg.learning_rate, cfg.momentum)
+    lr = Tensor(get_lr(0, cfg.learning_rate, cfg.epoch_size, cfg.save_checkpoint_steps))
+    opt = nn.Momentum(network.trainable_params(), lr, cfg.momentum)
     model = Model(network, loss, opt, metrics={"Accuracy": Accuracy()})  # test
 
     print("============== Starting Training ==============")
     ds_train = create_dataset(args.data_path,
                               cfg.batch_size,
-                              cfg.epoch_size,
-                              "train")
+                              cfg.epoch_size)
+    time_cb = TimeMonitor(data_size=ds_train.get_dataset_size())
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix="checkpoint_alexnet", directory=args.ckpt_path, config=config_ck)
-    model.train(cfg.epoch_size, ds_train, callbacks=[ckpoint_cb, LossMonitor()],
+    model.train(cfg.epoch_size, ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()],
                 dataset_sink_mode=args.dataset_sink_mode)
