@@ -54,6 +54,7 @@ class HcclKernel : public AscendKernelMod {
   mutable std::vector<size_t> workspace_size_list_;
   AnfNodePtr anf_node_;
   std::string op_name_;
+  std::string group_;
 };
 
 using HcclKernelCreater = std::function<std::shared_ptr<HcclKernel>()>;

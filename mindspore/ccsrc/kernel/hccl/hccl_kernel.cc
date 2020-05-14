@@ -90,6 +90,7 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
       return false;
     }
   }
+  HcomUtil::GetHcomGroup(NOT_NULL(anf_node), NOT_NULL(&group_));
   anf_node_ = anf_node;
   return true;
 }
@@ -147,7 +148,7 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
 
   HcclTaskInfoPtr task_info_ptr = std::make_shared<HcclTaskInfo>(
     stream_id, hccl_type, input_data_addr, output_data_addr, workspace_address, workspace_num, 0, private_def, nullptr,
-    hccl_count_, root_id_, op_type_, data_type, RuntimeUtils::HcomBindModel, RuntimeUtils::HcomUnbindModel,
+    hccl_count_, root_id_, op_type_, data_type, group_, RuntimeUtils::HcomBindModel, RuntimeUtils::HcomUnbindModel,
     RuntimeUtils::HcomDistribute);
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
