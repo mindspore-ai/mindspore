@@ -16,13 +16,13 @@
 This example is used to read data from aclImdb dataset and generate mindrecord. It just transfers the aclImdb dataset to mindrecord without any data preprocessing. You can modify the example or follow the example to implement your own example.
 
 1.  run.sh: generate MindRecord entry script.
-    - gen_mindrecord.py : read the aclImdb data and tranfer it to mindrecord.
+    - gen_mindrecord.py : read the aclImdb data and transfer it to mindrecord.
 2.  run_read.py: create MindDataset by MindRecord entry script.
     - create_dataset.py: use MindDataset to read MindRecord to generate dataset.
 
 ## How to use the example to generate MindRecord
 
-Download aclImdb dataset, tranfer it to mindrecord, use MindDataset to read mindrecord.
+Download aclImdb dataset, transfer it to mindrecord, use MindDataset to read mindrecord.
 
 ### Download aclImdb dataset and unzip
 
