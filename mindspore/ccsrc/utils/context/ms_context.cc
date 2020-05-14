@@ -135,7 +135,6 @@ bool MsContext::set_device_target(const std::string &target) {
   } else {
     device_target_ = target;
   }
-  enable_loop_sink_ = device_target_ == kAscendDevice;
   MS_LOG(INFO) << "ms set context device target:" << target;
   return true;
 }
