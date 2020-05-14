@@ -39,7 +39,6 @@ class GpuKernel : public KernelMod {
   virtual void InitSizeLists() = 0;
 
   template <typename T>
-
   inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
     if (index >= addr_list.size()) {
       MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
@@ -61,6 +60,24 @@ class GpuKernel : public KernelMod {
       MS_LOG(EXCEPTION) << "The attr(" << key << ") of kernel(" << prim_name << ") not exist";
     }
     return GetValue<T>(attr);
+  }
+  // expand Nd Shape to 4d (N in [0,4])
+  void ShapeNdTo4d(const std::vector<size_t> &src, std::vector<int> *dst) {
+    dst->push_back(src.size() < 4 ? 1 : SizeToInt(src[src.size() - 4]));
+    dst->push_back(src.size() < 3 ? 1 : SizeToInt(src[src.size() - 3]));
+    dst->push_back(src.size() < 2 ? 1 : SizeToInt(src[src.size() - 2]));
+    dst->push_back(src.size() == 0 ? 1 : SizeToInt(src[src.size() - 1]));
+  }
+
+  inline void CheckBroadcast4TensorOp(const std::vector<int> &A, const std::vector<int> &B,
+                                      const std::vector<int> &Out) {
+    if (A != Out && B != Out) {
+      MS_EXCEPTION(ValueError)
+        << "Double-sided broadcast was not supported in cudnn of cudnnOpTensor:\n"
+           "InputA must match the corresponding dimension of the destination tensor outC, and each "
+           "dimension of the inputB "
+           "must match the corresponding dimension of outC or must be equal to 1.";
+    }
   }
 };
 }  // namespace kernel

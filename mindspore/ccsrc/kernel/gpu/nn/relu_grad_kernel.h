@@ -31,7 +31,7 @@ class ReluGradGpuFwdKernel : public GpuKernel {
       : cudnn_handle_(nullptr),
         activation_desc_(nullptr),
         mode_(CUDNN_ACTIVATION_RELU),
-        input_descriptor_(nullptr),
+        data_descriptor_(nullptr),
         is_null_input_(false),
         cudnn_data_type_(CUDNN_DATA_FLOAT),
         input_size_(0) {}
@@ -52,8 +52,8 @@ class ReluGradGpuFwdKernel : public GpuKernel {
     const float alpha = 1;
     const float beta = 0;
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnActivationBackward(cudnn_handle_, activation_desc_, &alpha, input_descriptor_, y, input_descriptor_, dy,
-                              input_descriptor_, y, &beta, input_descriptor_, dx),
+      cudnnActivationBackward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, y, data_descriptor_, dy,
+                              data_descriptor_, y, &beta, data_descriptor_, dx),
       "cudnnActivationBackward failed");
 
     return true;
@@ -74,14 +74,12 @@ class ReluGradGpuFwdKernel : public GpuKernel {
       InitSizeLists();
       return true;
     }
-    int batch_size = input_shape.size() < 4 ? 1 : SizeToInt(input_shape[input_shape.size() - 4]);
-    int channel_size = input_shape.size() < 3 ? 1 : SizeToInt(input_shape[input_shape.size() - 3]);
-    int height = input_shape.size() < 2 ? 1 : SizeToInt(input_shape[input_shape.size() - 2]);
-    int width = input_shape.size() == 0 ? 1 : SizeToInt(input_shape[input_shape.size() - 1]);
+    std::vector<int> shape;
+    ShapeNdTo4d(input_shape, &shape);
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_PROPAGATE_NAN, 0.0),
                                 "SetActivationDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(input_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
-                                                           batch_size, channel_size, height, width),
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
+                                                           shape[0], shape[1], shape[2], shape[3]),
                                 "SetTensor4dDescriptor failed");
 
     InitSizeLists();
@@ -91,13 +89,13 @@ class ReluGradGpuFwdKernel : public GpuKernel {
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&input_descriptor_), "cudnnCreateTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&data_descriptor_), "cudnnCreateTensorDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateActivationDescriptor(&activation_desc_),
                                 "cudnnCreateActivationDescriptor failed");
   }
   void InitSizeLists() override {
     if (!is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(input_descriptor_, &input_size_),
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(data_descriptor_, &input_size_),
                                   "cudnnGetTensorSizeInBytes failed");
     }
     input_size_list_.push_back(input_size_);
@@ -109,13 +107,13 @@ class ReluGradGpuFwdKernel : public GpuKernel {
   void DestroyResource() noexcept {
     CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyActivationDescriptor(activation_desc_),
                                "cudnnDestroyActivationDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(input_descriptor_), "cudnnDestroyTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(data_descriptor_), "cudnnDestroyTensorDescriptor failed");
   }
 
   cudnnHandle_t cudnn_handle_;
   cudnnActivationDescriptor_t activation_desc_;
   cudnnActivationMode_t mode_;
-  cudnnTensorDescriptor_t input_descriptor_;
+  cudnnTensorDescriptor_t data_descriptor_;
   bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

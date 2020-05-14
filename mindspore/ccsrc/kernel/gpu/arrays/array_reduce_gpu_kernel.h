@@ -178,46 +178,33 @@ class ArrayReduceGpuKernel : public GpuKernel {
     return;
   }
   void InferInAndOutDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape) {
-    std::vector<size_t> inputA_shape = input_shape;
+    std::vector<int> inputA;
     std::vector<size_t> outputC_shape = output_shape;
-    std::vector<int> real_input_shape;
-    int shapeA_n, shapeA_c, shapeA_h, shapeA_w;
-    shapeA_n = inputA_shape.size() < 4 ? 1 : SizeToInt(inputA_shape[inputA_shape.size() - 4]);
-    shapeA_c = inputA_shape.size() < 3 ? 1 : SizeToInt(inputA_shape[inputA_shape.size() - 3]);
-    shapeA_h = inputA_shape.size() < 2 ? 1 : SizeToInt(inputA_shape[inputA_shape.size() - 2]);
-    shapeA_w = inputA_shape.size() == 0 ? 1 : SizeToInt(inputA_shape[inputA_shape.size() - 1]);
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, shapeA_n,
-                                                           shapeA_c, shapeA_h, shapeA_w),
+    ShapeNdTo4d(input_shape, &inputA);
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, inputA[0],
+                                                           inputA[1], inputA[2], inputA[3]),
                                 "cudnnSetTensor4dDescriptor failed");
 
-    int shapeC_n, shapeC_c, shapeC_h, shapeC_w;
     if (axis_[0] == -1) {
-      shapeC_n = 1;
-      shapeC_c = 1;
-      shapeC_h = 1;
-      shapeC_w = 1;
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
-                                                             shapeC_n, shapeC_c, shapeC_h, shapeC_w),
-                                  "cudnnSetTensor4dDescriptor failed");
-      if (shapeA_n == shapeC_n && shapeA_c == shapeC_c && shapeA_h == shapeC_h && shapeA_w == shapeC_w) {
+      CHECK_CUDNN_RET_WITH_EXCEPT(
+        cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, 1, 1, 1, 1),
+        "cudnnSetTensor4dDescriptor failed");
+      if (inputA[0] == 1 && inputA[1] == 1 && inputA[2] == 1 && inputA[3] == 1) {
         all_match_ = true;
       }
       return;
     }
-
     if (!keep_dims_) {
       for (auto i : axis_) {
         (void)(outputC_shape.insert(outputC_shape.begin() + i, 1));
       }
     }
-    shapeC_n = outputC_shape.size() < 4 ? 1 : SizeToInt(outputC_shape[outputC_shape.size() - 4]);
-    shapeC_c = outputC_shape.size() < 3 ? 1 : SizeToInt(outputC_shape[outputC_shape.size() - 3]);
-    shapeC_h = outputC_shape.size() < 2 ? 1 : SizeToInt(outputC_shape[outputC_shape.size() - 2]);
-    shapeC_w = outputC_shape.size() == 0 ? 1 : SizeToInt(outputC_shape[outputC_shape.size() - 1]);
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, shapeC_n,
-                                                           shapeC_c, shapeC_h, shapeC_w),
+    std::vector<int> outputC;
+    ShapeNdTo4d(outputC_shape, &outputC);
+    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_,
+                                                           outputC[0], outputC[1], outputC[2], outputC[3]),
                                 "cudnnSetTensor4dDescriptor failed");
-    if (shapeA_n == shapeC_n && shapeA_c == shapeC_c && shapeA_h == shapeC_h && shapeA_w == shapeC_w) {
+    if (inputA == outputC) {
       all_match_ = true;
     }
     return;

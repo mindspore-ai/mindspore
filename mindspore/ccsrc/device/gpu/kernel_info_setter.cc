@@ -184,10 +184,17 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
 
   if (!result) {
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-
+    std::string build_type = "in [";
+    std::for_each(std::begin(inputs_type), std::end(inputs_type),
+                  [&build_type](auto i) { build_type += mindspore::kernel::TypeId2String(i) + " "; });
+    build_type += "] out [";
+    std::for_each(std::begin(outputs_type), std::end(outputs_type),
+                  [&build_type](auto i) { build_type += mindspore::kernel::TypeId2String(i) + " "; });
+    build_type += "]";
     auto supported_type_lists = SupportedTypeList(kernel_node);
-    MS_LOG(EXCEPTION) << "Select GPU kernel op[" << kernel_name
-                      << "] fail! Incompatible data type!\nThe supported data types are " << supported_type_lists;
+    MS_EXCEPTION(TypeError) << "Select GPU kernel op[" << kernel_name
+                            << "] fail! Incompatible data type!\nThe supported data types are " << supported_type_lists
+                            << ", but get " << build_type;
   }
   builder->SetKernelType(kernel_type);
   builder->SetProcessor(kernel::Processor::CUDA);
