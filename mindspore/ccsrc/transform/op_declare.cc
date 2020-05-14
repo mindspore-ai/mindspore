@@ -1048,6 +1048,12 @@ INPUT_ATTR_MAP(UnsortedSegmentSumD) = {{3, ATTR_DESC(num_segments, AnyTraits<int
 ATTR_MAP(UnsortedSegmentSumD) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(UnsortedSegmentSumD) = {{0, OUTPUT_DESC(y)}};
 
+// UnsortedSegmentMin
+INPUT_MAP(UnsortedSegmentMinD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(segment_ids)}};
+INPUT_ATTR_MAP(UnsortedSegmentMinD) = {{3, ATTR_DESC(num_segments, AnyTraits<int64_t>())}};
+ATTR_MAP(UnsortedSegmentMinD) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(UnsortedSegmentMinD) = {{0, OUTPUT_DESC(y)}};
+
 // ExpandDims
 INPUT_MAP(ExpandDims) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(axis)}};
 ATTR_MAP(ExpandDims) = EMPTY_ATTR_MAP;

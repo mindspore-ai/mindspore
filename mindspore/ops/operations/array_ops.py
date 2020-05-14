@@ -1253,6 +1253,54 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         return out
 
 
+class UnsortedSegmentMin(PrimitiveWithInfer):
+    """
+    Computes the minimum along segments of a tensor.
+
+    If the given segment_ids is negative, the value will be ignored.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is a prefix of `x_shape`.
+        - **num_segments** (int) - The value spcifies the number of distinct `segment_ids`.
+
+    Outputs:
+        Tensor, Set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
+        >>> segment_ids = Tensor(np.array([0, 1, 1]).np.int32)
+        >>> num_segments = 2
+        >>> unsorted_segment_min = P.UnsortedSegmentMin()
+        >>> unsorted_segment_min(input_x, segment_ids, num_segments)
+        [[1., 2., 3.], [4., 2., 1.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init UnsortedSegmentMin"""
+        self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
+
+    def __infer__(self, x, segment_ids, num_segments):
+        x_type = x['dtype']
+        x_shape = x['shape']
+        segment_ids_shape = segment_ids['shape']
+        valid_type = [mstype.float16, mstype.float32, mstype.int32]
+        validator.check_tensor_type_same({"x": x['dtype']}, valid_type, self.name)
+        validator.check_tensor_type_same({"segment_ids": segment_ids['dtype']}, [mstype.int32], self.name)
+        validator.check_integer("rank of segment_ids_shape", len(segment_ids_shape), 1, Rel.EQ, self.name)
+        num_segments_v = num_segments['value']
+        validator.check_value_type('num_segments', num_segments_v, [int], self.name)
+        validator.check_integer("num_segments", num_segments_v, 0, Rel.GT, self.name)
+        segment_ids_shape_len = len(segment_ids_shape)
+        out_shape = [num_segments_v]
+        out_shape += x_shape[segment_ids_shape_len:]
+        out = {'shape': out_shape,
+               'dtype': x_type,
+               'value': None}
+        return out
+
+
 class Concat(PrimitiveWithInfer):
     r"""
     Concat tensor in specified axis.
