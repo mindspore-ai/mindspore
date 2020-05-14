@@ -84,6 +84,10 @@ extern const PrimitivePtr kPrimEmbed;
 extern const PrimitivePtr kPrimRefToEmbed;
 extern const PrimitivePtr kPrimCreateInstance;
 
+extern const PrimitivePtr kPrimLabelGoto;
+extern const PrimitivePtr kPrimLabelSwitch;
+extern const PrimitivePtr kPrimLabelSet;
+
 // Structure
 extern const PrimitivePtr kPrimStringEqual;
 extern const PrimitivePtr kPrimStringConcat;

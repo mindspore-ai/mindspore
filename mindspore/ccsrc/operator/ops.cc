@@ -78,6 +78,10 @@ const PrimitivePtr kPrimEmbed = std::make_shared<Primitive>("embed");
 const PrimitivePtr kPrimRefToEmbed = std::make_shared<Primitive>("RefToEmbed");
 const PrimitivePtr kPrimCreateInstance = std::make_shared<Primitive>("create_instance");
 
+const PrimitivePtr kPrimLabelGoto = std::make_shared<Primitive>("LabelGoto");
+const PrimitivePtr kPrimLabelSwitch = std::make_shared<Primitive>("LabelSwitch");
+const PrimitivePtr kPrimLabelSet = std::make_shared<Primitive>("LabelSet");
+
 // Structure
 const PrimitivePtr kPrimStringEqual = std::make_shared<Primitive>("string_equal");
 const PrimitivePtr kPrimStringConcat = std::make_shared<Primitive>("string_concat");
