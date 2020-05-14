@@ -99,6 +99,14 @@ class KernelGraph : public FuncGraph {
   uint32_t stream_distinction_label() { return stream_distinction_label_; }
   // refresh execute kernel stream label
   void UpdateExecuteKernelStreamLabel();
+  // calculate the leaf graph order of root graph
+  std::vector<std::shared_ptr<KernelGraph>> GetLeafGraphOrder();
+  // update the child graph order of graph
+  void UpdateChildGraphOrder();
+  // get the child graph of current graph
+  std::vector<std::shared_ptr<KernelGraph>> child_graph_order() const { return child_graph_order_; }
+  // checkout whether current graph is leaf graph
+  bool IsLeafGraph() const;
 
  private:
   // remove value node form graph
@@ -136,6 +144,12 @@ class KernelGraph : public FuncGraph {
   bool executable_;
   // valid inputs
   std::vector<bool> valid_inputs_;
+
+  // new members for control sink process
+  // all child grahs refers to partial node
+  std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> node_to_child_graphs_;
+  // child graph execute order in root graph
+  std::vector<std::shared_ptr<KernelGraph>> child_graph_order_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
