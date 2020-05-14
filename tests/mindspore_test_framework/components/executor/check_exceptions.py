@@ -32,11 +32,11 @@ class CheckExceptionsEC(IExectorComponent):
             'error_keywords': ['TensorAdd', 'shape']
         }
     """
-    def run_function(self, function, inputs, verification_set):
-        f = function[keyword.block]
-        args = inputs[keyword.desc_inputs]
-        e = function.get(keyword.exception, Exception)
-        error_kws = function.get(keyword.error_keywords, None)
+    def __call__(self):
+        f = self.function[keyword.block]
+        args = self.inputs[keyword.desc_inputs]
+        e = self.function.get(keyword.exception, Exception)
+        error_kws = self.function.get(keyword.error_keywords, None)
         try:
             with pytest.raises(e) as exec_info:
                 f(*args)

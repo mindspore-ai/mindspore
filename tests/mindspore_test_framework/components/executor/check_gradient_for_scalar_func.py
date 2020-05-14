@@ -26,8 +26,8 @@ class CheckGradientForScalarFunctionEC(IExectorComponent):
     Examples:
         'block': scalar_function
     """
-    def run_function(self, function, inputs, verification_set):
+    def __call__(self):
         f, args, delta, max_error, input_selector, output_selector, sampling_times, _ = \
-            get_grad_checking_options(function, inputs)
+            get_grad_checking_options(self.function, self.inputs)
         check_gradient(f, *args, delta=delta, max_error=max_error, grad_checker_class=ScalarGradChecker,
                        input_selector=input_selector, output_selector=output_selector, sampling_times=sampling_times)

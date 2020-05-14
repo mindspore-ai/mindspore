@@ -22,12 +22,12 @@ class IdentityEC(IExectorComponent):
     """
     Execute function/inputs.
     """
-    def run_function(self, function, inputs, verification_set):
-        result_id = function[keyword.id] + '-' + inputs[keyword.id]
-        group = function[keyword.group] + '-' + inputs[keyword.group]
+    def __call__(self):
+        result_id = self.function[keyword.id] + '-' + self.inputs[keyword.id]
+        group = self.function[keyword.group] + '-' + self.inputs[keyword.group]
         return {
             keyword.id: result_id,
             keyword.group: group,
-            keyword.desc_inputs: inputs[keyword.desc_inputs],
-            keyword.result: function[keyword.block](*inputs[keyword.desc_inputs])
+            keyword.desc_inputs: self.inputs[keyword.desc_inputs],
+            keyword.result: self.function[keyword.block](*self.inputs[keyword.desc_inputs])
         }

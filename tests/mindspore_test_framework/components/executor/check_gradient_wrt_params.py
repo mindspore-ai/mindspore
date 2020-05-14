@@ -35,9 +35,9 @@ class CheckGradientWrtParamsEC(IExectorComponent):
                                           key_act=None,
                                           initializer_range=0.02)
     """
-    def run_function(self, function, inputs, verification_set):
+    def __call__(self):
         f, args, delta, max_error, input_selector, output_selector, \
-        sampling_times, reduce_output = get_grad_checking_options(function, inputs)
+        sampling_times, reduce_output = get_grad_checking_options(self.function, self.inputs)
         check_gradient(f, *args, delta=delta, max_error=max_error, grad_checker_class=NNGradChecker,
                        input_selector=input_selector, output_selector=output_selector, sampling_times=sampling_times,
                        reduce_output=reduce_output)

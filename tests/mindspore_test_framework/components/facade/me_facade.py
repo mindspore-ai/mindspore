@@ -47,9 +47,9 @@ class MeFacadeFC(IFacadeComponent):
         }
     })
     """
-    def adapt(self, verification_set):
+    def __call__(self):
         ret = get_block_config()
-        for config in verification_set:
+        for config in self.verification_set:
             tid = config[0]
             group = 'default'
             m = config[1]

@@ -26,5 +26,5 @@ class IdentityDC(IDataComponent):
             np.array([[2, 2], [2, 2]]).astype(np.float32)
         ]
     """
-    def create_inputs(self, verification_set):
-        return verification_set['inputs']
+    def __call__(self):
+        return self.verification_set['inputs']

@@ -42,5 +42,5 @@ class RunBlockWithRandParamBC(IBuilderComponent):
                                dtype=mstype.float32,
                                compute_type=mstype.float32)
     """
-    def build_sut(self, verification_set):
-        return create_funcs(verification_set, gen_net, run_block, default_rand_func=get_uniform_with_shape)
+    def __call__(self):
+        return create_funcs(self.verification_set, gen_net, run_block, default_rand_func=get_uniform_with_shape)

@@ -61,14 +61,13 @@ def mindspore_test(verification_pipeline):
 
         for component in facade_components:
             fc = component(verification_set)
-            fc.run()
-            verification_set = fc.get_result()
+            verification_set = fc()
 
         inputs = []
         for component in data_components:
             dc = component(verification_set)
-            dc.run()
-            inputs.extend(dc.get_result())
+            item = dc()
+            inputs.extend(item)
 
         if not inputs:
             logging.warning("Inputs set is empty.")
@@ -76,8 +75,8 @@ def mindspore_test(verification_pipeline):
         functions = []
         for component in builder_components:
             bc = component(verification_set)
-            bc.run()
-            functions.extend(bc.get_result())
+            f = bc()
+            functions.extend(f)
 
         if not functions:
             logging.warning("Function set is empty.")
@@ -85,8 +84,8 @@ def mindspore_test(verification_pipeline):
         fis = []
         for component in fi_policy_components:
             fipc = component(verification_set, functions, inputs)
-            fipc.run()
-            fis.extend(fipc.get_result())
+            result = fipc()
+            fis.extend(result)
 
         if not fis:
             logging.warning("Function inputs pair set is empty.")
@@ -97,8 +96,8 @@ def mindspore_test(verification_pipeline):
             results = []
             for component in executor_components:
                 ec = component(verification_set, sut, inputs)
-                ec.run()
-                results.append(ec.get_result())
+                result = ec()
+                results.append(result)
 
             if not results:
                 logging.warning("Result set is empty.")
@@ -106,8 +105,8 @@ def mindspore_test(verification_pipeline):
             expect_actuals = []
             for component in er_policy_components:
                 erpc = component(verification_set, verification_set['expect'], results)
-                erpc.run()
-                expect_actuals.extend(erpc.get_result())
+                result = erpc()
+                expect_actuals.extend(result)
 
             if not expect_actuals:
                 logging.warning("Expect Result pair set is empty.")
@@ -115,11 +114,11 @@ def mindspore_test(verification_pipeline):
             for ea in expect_actuals:
                 for component in verifier_components:
                     vc = component(verification_set, *ea)
-                    vc.run()
+                    vc()
 
         def get_tc_name(f, inputs):
-            tc_id = f[keyword.id]+'-'+inputs[keyword.id]
-            group = f[keyword.group]+'-'+inputs[keyword.group]
+            tc_id = f[keyword.id] + '-' + inputs[keyword.id]
+            group = f[keyword.group] + '-' + inputs[keyword.group]
             return 'Group_' + group + '-' + 'Id_' + tc_id
 
         if fis:

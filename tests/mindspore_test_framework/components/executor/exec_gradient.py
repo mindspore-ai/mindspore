@@ -22,15 +22,15 @@ class IdentityBackwardEC(IExectorComponent):
     """
     Execute function/inputs, with all bprops attached, the bprop function created by BC should handle these bprops.
     """
-    def run_function(self, function, inputs, verification_set):
-        result_id = function[keyword.id] + '-' + inputs[keyword.id]
-        group = function[keyword.group] + '-' + inputs[keyword.group]
+    def __call__(self):
+        result_id = self.function[keyword.id] + '-' + self.inputs[keyword.id]
+        group = self.function[keyword.group] + '-' + self.inputs[keyword.group]
         i = []
-        i.extend(inputs[keyword.desc_inputs])
-        i.extend(inputs[keyword.desc_bprop])
+        i.extend(self.inputs[keyword.desc_inputs])
+        i.extend(self.inputs[keyword.desc_bprop])
         return {
             keyword.id: result_id,
             keyword.group: group,
             keyword.desc_inputs: i,
-            keyword.result: function[keyword.block](*i)
+            keyword.result: self.function[keyword.block](*i)
         }
