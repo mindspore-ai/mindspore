@@ -24,10 +24,12 @@ Reduce = P.ReduceOp()
 Biasadd = P.BiasAdd()
 Biasaddgrad = G.BiasAddGrad()
 Cast = P.Cast()
+MatMul = P.MatMul()
 
 Fusion_relu_relu = Primitive('FusionOp_ReLU_ReLU')
 Fusion_biasadd = Primitive('FusionOp_ReLU_ReLU_ReLU_BiasAdd_ReLU_ReLU_ReLU')
 Fusion_biasaddgrad = Primitive('FusionOp_ReLU_ReLU_ReLU_BiasAddGrad_ReLU_ReLU_ReLU')
+Fusion_matmul_relu = Primitive('FusionOp_MatMul_ReLU')
 
 Add = P.TensorAdd()
 Sub = P.Sub()
@@ -128,6 +130,26 @@ def test_conv_singlein_fusion(tag):
     @fns
     def after(x, y):
         fusion = Fusion(x, y)
+        res = Cast(fusion)
+        tuple = make_tuple(res)
+        return tuple
+
+    return fns[tag]
+
+
+def test_tbe_matmul_eltwise_fusion(tag):
+    fns = FnDict()
+
+    @fns
+    def before(x, y):
+        matmul = MatMul(x, y)
+        relu = Relu(matmul)
+        res = Cast(relu, mstype.float16)
+        return res
+
+    @fns
+    def after(x, y):
+        fusion = Fusion_matmul_relu(x, y)
         res = Cast(fusion)
         tuple = make_tuple(res)
         return tuple
