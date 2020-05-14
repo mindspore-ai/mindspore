@@ -580,27 +580,43 @@ void BufferFusion::MatchDepthwiseConvRelu(const CNodePtr &cnode, const session::
   }
 }
 
+void BufferFusion::MatchMatmulEltwise(const CNodePtr &cnode, const AnfNodePtr &relu_input,
+                                      const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(candidate_fusion);
+  auto manager = kernel_graph.manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  std::vector<int> output_used_num{SizeToInt(manager->node_users()[relu_input].size())};
+  AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(output_used_num), relu_input);
+  std::unordered_set<AnfNodePtr> record{cnode, relu_input};
+  candidate_fusion->push_back(record);
+  SetRecordFusionId(record);
+}
+
 void BufferFusion::MatchOpNamePattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
-    if (!AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator.HasFusionIdAttr(node)) {
+    if (!AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator.HasFusionIdAttr(node) ||
+        AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetCNodeName(cnode) == kBNTrainingReduceOpName) {
       MatchConvBnreduce(cnode, kernel_graph, candidate_fusion);
-    } else if (AnfAlgo::GetCNodeName(cnode) == kReluV2OpName ||
-               AnfAlgo::GetCNodeName(cnode) == prim::kPrimRelu->name()) {
-      auto relu_input = cnode->input(1);
-      if (relu_input->isa<CNode>() && AnfAlgo::GetCNodeName(relu_input) == prim::kPrimTensorAdd->name()) {
-        MatchBnupdateAddRelu(cnode, relu_input, kernel_graph, candidate_fusion);
-      } else if (relu_input->isa<CNode>() && AnfAlgo::GetCNodeName(relu_input) == prim::kPrimTupleGetItem->name()) {
-        MatchBnupdateRelu(cnode, relu_input, kernel_graph, candidate_fusion);
-      } else if (relu_input->isa<CNode>() &&
-                 AnfAlgo::GetCNodeName(relu_input) == prim::kPrimDepthwiseConv2dNative->name()) {
-        MatchDepthwiseConvRelu(cnode, kernel_graph, candidate_fusion, true);
+    } else if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
+               AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE) {
+      auto eltwise_input = cnode->input(1);
+      if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimMatMul)) {
+        MatchMatmulEltwise(cnode, eltwise_input, kernel_graph, candidate_fusion);
+      }
+      if (AnfAlgo::GetCNodeName(cnode) == kReluV2OpName || AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimRelu)) {
+        if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimTensorAdd)) {
+          MatchBnupdateAddRelu(cnode, eltwise_input, kernel_graph, candidate_fusion);
+        } else if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimTupleGetItem)) {
+          MatchBnupdateRelu(cnode, eltwise_input, kernel_graph, candidate_fusion);
+        }
       }
     } else if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimDepthwiseConv2dNative->name()) {
       MatchDepthwiseConvRelu(cnode, kernel_graph, candidate_fusion, false);

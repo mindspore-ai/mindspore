@@ -26,15 +26,15 @@
 namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
-class TestHWBufferFusionPy : public BackendCommon {
+class TestHWBufferFusion : public BackendCommon {
  public:
-  TestHWBufferFusionPy() : get_py_fun_("gtest_input.pre_activate.buffer_fusion_test", true) {}
-  ~TestHWBufferFusionPy() override = default;
+  TestHWBufferFusion() : get_py_fun_("gtest_input.pre_activate.buffer_fusion_test", true) {}
+  ~TestHWBufferFusion() override = default;
 
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-TEST_F(TestHWBufferFusionPy, test_tbe_eltwise_fusion_1) {
+TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_1) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_tbe_eltwise_fusion_1", "before");
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
@@ -90,7 +90,7 @@ TEST_F(TestHWBufferFusionPy, test_tbe_eltwise_fusion_1) {
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestHWBufferFusionPy, test_tbe_eltwise_fusion_2) {
+TEST_F(TestHWBufferFusion, test_tbe_eltwise_fusion_2) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_tbe_eltwise_fusion_2", "before");
   std::vector<int> shp{32, 10};
   std::vector<int> shp_bias{10};
@@ -179,7 +179,7 @@ TEST_F(TestHWBufferFusionPy, test_tbe_eltwise_fusion_2) {
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestHWBufferFusionPy, test_tbe_reduce_eltwise_fusion) {
+TEST_F(TestHWBufferFusion, test_tbe_reduce_eltwise_fusion) {
   FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_tbe_reduce_eltwise_fusion", "before");
   std::vector<int> shp{32, 10};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
@@ -263,6 +263,72 @@ TEST_F(TestHWBufferFusionPy, test_tbe_reduce_eltwise_fusion) {
   FuncGraphPtr new_graph = optimizer->Optimize(kg);
 
   FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_tbe_reduce_eltwise_fusion", "after");
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+}
+
+TEST_F(TestHWBufferFusion, test_tbe_matmul_eltwise_fusion) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_tbe_matmul_eltwise_fusion", "before");
+  std::vector<int> x_shp{2048, 768};
+  std::vector<int> y_shp{768, 768};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, x_shp);
+  auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, y_shp);
+  AbstractBasePtrList args_spec_list{x_abstract, y_abstract};
+  auto kg = GetKernelGraph(g, args_spec_list);
+
+  auto ret = kg->get_return();
+  EXPECT_NE(ret->input(1), nullptr);
+  auto tuple = ret->input(1);
+  EXPECT_NE(tuple, nullptr);
+  auto cast = tuple->cast<CNodePtr>()->input(1);
+  EXPECT_NE(cast, nullptr);
+  auto relu = cast->cast<CNodePtr>()->input(1);
+  EXPECT_NE(relu, nullptr);
+  auto matmul = relu->cast<CNodePtr>()->input(1);
+
+  KernelBuildInfoBuilder builder;
+  builder.SetInputsFormat({"NC1HWC0"});
+  builder.SetOutputsFormat({"NC1HWC0"});
+  builder.SetInputsDeviceType({kFloat32->type_id()});
+  builder.SetOutputsDeviceType({kFloat32->type_id()});
+  builder.SetKernelType(KernelType::TBE_KERNEL);
+  builder.SetFusionType(kernel::FusionType::ELEMWISE);
+  builder.SetProcessor(kernel::Processor::AICORE);
+  builder.SetKernelType(KernelType::TBE_KERNEL);
+  relu->set_kernel_info(std::make_shared<device::KernelInfo>());
+  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), relu.get());
+
+  KernelBuildInfoBuilder builder2;
+  builder2.SetInputsFormat({"NC1HWC0", "NC1HWC0"});
+  builder2.SetOutputsFormat({"NC1HWC0"});
+  builder2.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id()});
+  builder2.SetOutputsDeviceType({kFloat32->type_id()});
+  builder2.SetKernelType(KernelType::TBE_KERNEL);
+  builder2.SetFusionType(kernel::FusionType::OPAQUE);
+  builder2.SetProcessor(kernel::Processor::AICORE);
+  builder2.SetKernelType(KernelType::TBE_KERNEL);
+  matmul->set_kernel_info(std::make_shared<device::KernelInfo>());
+  AnfAlgo::SetSelectKernelBuildInfo(builder2.Build(), matmul.get());
+
+  KernelBuildInfoBuilder builder1;
+  builder1.SetInputsFormat({"NC1HWC0"});
+  builder1.SetOutputsFormat({"NC1HWC0"});
+  builder1.SetInputsDeviceType({kFloat32->type_id()});
+  builder1.SetOutputsDeviceType({kFloat16->type_id()});
+  builder1.SetKernelType(KernelType::TBE_KERNEL);
+  builder1.SetFusionType(kernel::FusionType::OPAQUE);
+  builder1.SetProcessor(kernel::Processor::AICORE);
+  builder1.SetKernelType(KernelType::TBE_KERNEL);
+  cast->set_kernel_info(std::make_shared<device::KernelInfo>());
+  AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), cast.get());
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  auto buffer_fusion_pass = std::make_shared<opt::BufferFusion>();
+  pm->AddPass(buffer_fusion_pass);
+  optimizer->AddPassManager(pm);
+  FuncGraphPtr new_graph = optimizer->Optimize(kg);
+
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_tbe_matmul_eltwise_fusion", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 }  // namespace opt
