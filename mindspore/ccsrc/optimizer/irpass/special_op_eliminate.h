@@ -35,11 +35,13 @@ class SpecialOpEliminater {
  public:
   SpecialOpEliminater()
       : insert_gradient_of_(prim::kPrimInsertGradientOf),
+        hook_backward_(prim::kPrimHookBackward),
         print_shape_type_(prim::kPrimPrintShapeType),
         get_ref_value_(prim::kPrimGetRefValue),
         mirror_(prim::kPrimMirror),
         virtual_div_(prim::kPrimVirtualDiv) {
     eliminaters_.emplace_back(insert_gradient_of_);
+    eliminaters_.emplace_back(hook_backward_);
     eliminaters_.emplace_back(print_shape_type_);
     eliminaters_.emplace_back(get_ref_value_);
     eliminaters_.emplace_back(mirror_);
@@ -59,7 +61,7 @@ class SpecialOpEliminater {
   }
 
  private:
-  PrimEliminater insert_gradient_of_, print_shape_type_, get_ref_value_, mirror_, virtual_div_;
+  PrimEliminater insert_gradient_of_, hook_backward_, print_shape_type_, get_ref_value_, mirror_, virtual_div_;
   std::vector<TransformFuncType> eliminaters_{};
 };
 

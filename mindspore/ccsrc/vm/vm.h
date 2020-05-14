@@ -115,6 +115,7 @@ class FinalVM {
   void InstPushPrim(const VectorRef &args);
   void InstSwitchReturn(const VectorRef &args);
   void set_insts(const InstSet &value) { insts_ = value; }
+  BaseRef RunHook(const PrimitivePtr &prim, const VectorRef &args);
 
  protected:
   BaseRef Ref(int i);
@@ -156,6 +157,7 @@ class FinalVM {
     {Instruction::kPrim, [this](const VectorRef &args) { InstPushPrim(args); }},
     {Instruction::kSwitchReturn, [this](const VectorRef &args) { InstSwitchReturn(args); }},
   };
+  std::map<std::string, py::object> _hook_grad;
 };
 
 using FinalVMPtr = std::shared_ptr<FinalVM>;

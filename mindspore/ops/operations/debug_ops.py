@@ -14,6 +14,7 @@
 # ============================================================================
 
 """debug_ops"""
+from types import FunctionType
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
 from ..primitive import Primitive, prim_attr_register, PrimitiveWithInfer
@@ -191,6 +192,65 @@ class InsertGradientOf(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type):
         return x_type
+
+
+class HookBackward(PrimitiveWithInfer):
+    """
+    Used as tag to hook gradient in intermediate variables.
+
+    Note:
+        The hook function should have one input of gradient of the variable.
+        hook function will be executed in python environment, while callback
+        of InsertGradientOf will be parsed and added to the graph.
+
+    Args:
+        hook_fn (Function): Python function. hook function.
+
+    Inputs:
+        - **inputs** (Tensor) - The variable to hook.
+
+    Examples:
+        >>> def hook_fn(grad_out):
+        >>>     print(grad_out)
+        >>>
+        >>> hook = P.HookBackward(hook_fn)
+        >>>
+        >>> def hook_test(x, y):
+        >>>     z = x * y
+        >>>     z = hook(z)
+        >>>     z = z * y
+        >>>     return z
+        >>>
+        >>> def backward(x, y):
+        >>>     return C.grad_all(hook_test)(x, y)
+        >>>
+        >>> backward(1, 2)
+    """
+
+    def __init__(self, hook_fn, cell_id=""):
+        super(HookBackward, self).__init__(self.__class__.__name__)
+        self.add_prim_attr("cell_id", cell_id)
+        self.init_attrs["cell_id"] = cell_id
+        if not isinstance(hook_fn, FunctionType):
+            raise TypeError("Hook function should be python function type.")
+        self.register_hook(hook_fn)
+        self.cell_id = cell_id
+
+    def __call__(self, *inputs):
+        """run in PyNative mode."""
+        if len(inputs) == 1:
+            return inputs[0]
+        return inputs
+
+    def infer_shape(self, *inputs_shape):
+        if len(inputs_shape) == 1:
+            return inputs_shape[0]
+        return inputs_shape
+
+    def infer_dtype(self, *inputs_type):
+        if len(inputs_type) == 1:
+            return inputs_type[0]
+        return inputs_type
 
 
 class Print(PrimitiveWithInfer):

@@ -24,6 +24,9 @@
 #include <tuple>
 
 #include "ir/dtype/type.h"
+#include "pybind11/pybind11.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 // Supported meta type
@@ -73,6 +76,9 @@ class Primitive : public Named {
     return iter == attrs_.cend() ? nullptr : iter->second;
   }
 
+  void set_hook(const py::function &hook) { hook_ = hook; }
+  py::function hook() const { return hook_; }
+
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
 
   // if Primitive has any attribute, for Primitives like scalar_add, return, etc, don't have any attribute.
@@ -103,6 +109,7 @@ class Primitive : public Named {
 
  private:
   std::string instance_name_;
+  py::function hook_;
   bool is_base_;
   bool has_signature_;
   PrimType prim_type_;

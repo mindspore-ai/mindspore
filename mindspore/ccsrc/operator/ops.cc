@@ -211,6 +211,7 @@ const PrimitivePtr kPrimRelu = std::make_shared<Primitive>("ReLU");
 const PrimitivePtr kPrimReluV2 = std::make_shared<Primitive>("ReLUV2");
 const PrimitivePtr kPrimZerosLikeTensor = std::make_shared<Primitive>("zeros_like_tensor");
 const PrimitivePtr kPrimFakeBprop = std::make_shared<Primitive>("fake_bprop");
+const PrimitivePtr kPrimBpropCut = std::make_shared<Primitive>("bprop_cut");
 
 // Other miscellaneous
 const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("identity");
@@ -224,6 +225,7 @@ const PrimitivePtr kPrimGetRefKey = std::make_shared<Primitive>("get_ref_key");
 const PrimitivePtr kPrimGetRefValue = std::make_shared<Primitive>("get_ref_value");
 const PrimitivePtr kPrimGetRefOrigin = std::make_shared<Primitive>("get_ref_origin");
 const PrimitivePtr kPrimInsertGradientOf = std::make_shared<Primitive>("InsertGradientOf");
+const PrimitivePtr kPrimHookBackward = std::make_shared<Primitive>("HookBackward");
 const PrimitivePtr kPrimPrintShapeType = std::make_shared<Primitive>("PrintShapeType");
 const PrimitivePtr kPrimSameTypeShape = std::make_shared<Primitive>("SameTypeShape");
 const PrimitivePtr kPrimCheckBprop = std::make_shared<Primitive>("CheckBprop");

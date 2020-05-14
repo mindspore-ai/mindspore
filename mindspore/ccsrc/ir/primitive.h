@@ -23,15 +23,12 @@
 #include <string>
 #include <tuple>
 
-#include "pybind11/pybind11.h"
 #include "pipeline/static_analysis/abstract_value.h"
 #include "utils/misc.h"
 #include "utils/log_adapter.h"
 #include "ir/primitive_base.h"
 #include "ir/signature.h"
 #include "parallel/ops_info/operator_info.h"
-
-namespace py = pybind11;
 
 namespace mindspore {
 class PrimitivePy : public Primitive {

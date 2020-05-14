@@ -40,9 +40,10 @@ using MapPrimTypeFuncGraph = std::map<PrimTypePair, FuncGraphPtr>;
 using TypedPrimitiveAbstractClosurePtr = std::shared_ptr<abstract::TypedPrimitiveAbstractClosure>;
 
 std::vector<PrimitivePtr> nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
-                                           prim::kPrimMakeTuple};
+                                           prim::kPrimMakeTuple, prim::kPrimBpropCut};
 const std::vector<PrimitivePtr> &GetMsNonlinearOps() {
-  static const std::vector<PrimitivePtr> ms_nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch};
+  static const std::vector<PrimitivePtr> ms_nonlinear_ops = {prim::kPrimReturn, prim::kPrimPartial, prim::kPrimSwitch,
+                                                             prim::kPrimBpropCut};
   return ms_nonlinear_ops;
 }
 
@@ -646,8 +647,13 @@ BackendPtr CreateBackend() {
     auto backend = std::make_shared<MsBackend>(name, target, device_id);
     std::string device_target = MsContext::GetInstance()->device_target();
     if (device_target == kAscendDevice) {
-      backend->set_is_multi_graph_sink(true);
-      context_ptr->set_is_multi_graph_sink(true);
+      if (MsContext::GetInstance()->execution_mode() == kPynativeMode) {
+        backend->set_is_multi_graph_sink(false);
+        context_ptr->set_is_multi_graph_sink(false);
+      } else {
+        backend->set_is_multi_graph_sink(true);
+        context_ptr->set_is_multi_graph_sink(true);
+      }
     }
     return backend;
   }

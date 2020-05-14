@@ -33,7 +33,7 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice)
-from .debug_ops import (ImageSummary, InsertGradientOf, ScalarSummary,
+from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSummary,
                         TensorSummary, HistogramSummary, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
@@ -155,6 +155,7 @@ __all__ = [
     'HistogramSummary',
     "Print",
     'InsertGradientOf',
+    'HookBackward',
     'InvertPermutation',
     'Shape',
     'DropoutDoMask',

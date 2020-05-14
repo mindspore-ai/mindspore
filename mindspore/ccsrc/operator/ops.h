@@ -216,6 +216,7 @@ extern const PrimitivePtr kPrimReluV2;
 extern const PrimitivePtr kPrimActivation;
 extern const PrimitivePtr kPrimZerosLikeTensor;
 extern const PrimitivePtr kPrimFakeBprop;
+extern const PrimitivePtr kPrimBpropCut;
 
 // Other Miscellaneous
 extern const PrimitivePtr kPrimIdentity;
@@ -230,6 +231,7 @@ extern const PrimitivePtr kPrimGetRefKey;
 extern const PrimitivePtr kPrimGetRefValue;
 extern const PrimitivePtr kPrimGetRefOrigin;
 extern const PrimitivePtr kPrimInsertGradientOf;
+extern const PrimitivePtr kPrimHookBackward;
 extern const PrimitivePtr kPrimPrintShapeType;
 extern const PrimitivePtr kPrimPrint;
 extern const PrimitivePtr kPrimSameTypeShape;

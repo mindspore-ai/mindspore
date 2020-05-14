@@ -587,14 +587,64 @@ void FinalVM::InstPushPrim(const VectorRef &args) {
   VectorRef tuple;
   auto prim = utils::cast<PrimitivePtr>(args[0]);
   for (size_t i = 1; i < args.size(); ++i) {
-    auto index = utils::cast<int>(args[1]);
+    auto index = utils::cast<int>(args[i]);
     tuple.push_back(Ref(index));
   }
 
-  auto outs = RunOperation(prim, tuple);
-  Push(outs);
+  if (prim->name() == "bprop_cut") {
+    auto outs = RunHook(prim, tuple);
+    Push(outs);
+  } else {
+    auto outs = RunOperation(prim, tuple);
+    Push(outs);
+  }
 
   MS_LOG(DEBUG) << "End";
+}
+
+BaseRef FinalVM::RunHook(const PrimitivePtr &prim, const VectorRef &args) {
+  py::tuple py_args = py::tuple(args.size());
+  MS_LOG(DEBUG) << "input for operation:";
+  size_t i = 0;
+  for (auto &arg : args) {
+    py_args[i] = BaseRefToPyData(arg);
+    MS_LOG(DEBUG) << "arg: " << i << ":";
+    i++;
+  }
+  py::object obj;
+  bool is_bprop = prim->HasAttr("bprop");
+  if (is_bprop) {
+    py::function fn_bprop = prim->hook();
+    obj = fn_bprop(*py_args);
+    return obj;
+  }
+  bool is_cell = prim->HasAttr("cell_hook");
+  if (is_cell) {
+    std::string cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
+    if (_hook_grad.find(cell_id) != _hook_grad.end()) {
+      py::tuple hook_args = py::tuple(3);
+      hook_args[0] = cell_id;
+      hook_args[1] = _hook_grad[cell_id];
+      hook_args[2] = py_args[2];
+      py::function fn_hook = prim->hook();
+      obj = fn_hook(*hook_args);
+      if (py::isinstance<py::none>(obj)) {
+        obj = py_args[2];
+      }
+      _hook_grad.erase(cell_id);
+    } else {
+      _hook_grad[cell_id] = py_args[2];
+      obj = py_args[2];
+    }
+  } else {
+    py::function fn_hook = prim->hook();
+    obj = fn_hook(py_args[2]);
+    if (py::isinstance<py::none>(obj)) {
+      obj = py_args[2];
+    }
+  }
+  obj = py::make_tuple(obj);
+  return obj;
 }
 
 }  // namespace compile
