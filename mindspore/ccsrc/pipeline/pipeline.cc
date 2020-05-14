@@ -244,13 +244,13 @@ void ExecutorPy::DelNetRes(const std::string &id) {
     auto tmp_info = info_;
     for (auto &item : tmp_info) {
       if (item.first.find(id) != string::npos) {
-        MS_LOG(INFO) << "Delete network res:" << item.first;
+        MS_LOG(DEBUG) << "Delete network res:" << item.first;
         (void)info_.erase(item.first);
         flag = true;
       }
     }
 
-    MS_LOG(INFO) << "Delete flag:" << flag;
+    MS_LOG(DEBUG) << "Delete flag:" << flag;
 #ifdef ENABLE_GE
     if (flag && info_.size() == 0) {
       // because Ge only support one Session exist at the same time ,so we delete the old one
