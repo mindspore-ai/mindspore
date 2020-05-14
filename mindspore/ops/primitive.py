@@ -111,6 +111,7 @@ class Primitive(Primitive_):
 
         Note:
             Valid only in semi auto parallel or auto parallel mode.
+            In other parallel modes, strategies will be ignored if set.
 
         Args:
             strategy (tuple): Strategy describes the distributed parallel mode of the current primitive.

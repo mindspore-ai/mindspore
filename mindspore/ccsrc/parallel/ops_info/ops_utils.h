@@ -48,6 +48,7 @@ constexpr double INF = 1e20;
 
 constexpr char AUTO_PARALLEL_RUN_ONCE_ONLY[] = "auto_parallel_run_once_only";
 constexpr char SEMI_AUTO_PARALLEL_RUN_ONCE_ONLY[] = "semi_auto_parallel_run_once_only";
+constexpr char CHECK_SET_STRATEGY_VALID_ONCE_ONLY[] = "check_set_strategy_valid_once_only";
 constexpr char STRATEGY[] = "strategy";
 constexpr char GEN_STRATEGY[] = "gen_strategy";
 constexpr char REDUCE_OP_SUM[] = "sum";
