@@ -580,5 +580,23 @@ void KernelGraph::UpdateExecuteKernelStreamLabel() {
     AnfAlgo::SetStreamDistinctionLabel(stream_distinction_label_, kernel.get());
   }
 }
+
+void KernelGraph::UpdateChildGraphOrder() {}
+
+std::vector<std::shared_ptr<KernelGraph>> KernelGraph::GetLeafGraphOrder() {
+  std::vector<std::shared_ptr<KernelGraph>> leaf_graph_order;
+  if (IsLeafGraph()) {
+    leaf_graph_order.push_back(shared_from_this()->cast<KernelGraphPtr>());
+  } else {
+    for (const auto &child_graph : child_graph_order_) {
+      MS_EXCEPTION_IF_NULL(child_graph);
+      auto child_leaf_graph_order = child_graph->GetLeafGraphOrder();
+      std::copy(child_leaf_graph_order.begin(), child_leaf_graph_order.end(), std::back_inserter(leaf_graph_order));
+    }
+  }
+  return leaf_graph_order;
+}
+
+bool KernelGraph::IsLeafGraph() const { return child_graph_order_.empty(); }
 }  // namespace session
 }  // namespace mindspore

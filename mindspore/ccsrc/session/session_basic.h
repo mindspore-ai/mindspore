@@ -57,6 +57,7 @@ class SessionBasic {
   virtual ~SessionBasic() { summary_callback_ = nullptr; }
 
   virtual GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) = 0;
+  virtual GraphId CompileGraph(const FuncGraphPtr &) { return kInvalidGraphId; }
   // build graph, used to handle multiple child graphs
   virtual void BuildGraph(GraphId) {}
 
@@ -72,6 +73,7 @@ class SessionBasic {
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs);
+  std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph);
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, bool valid_input, KernelGraph *graph, bool *from_other_graph,
                           std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);

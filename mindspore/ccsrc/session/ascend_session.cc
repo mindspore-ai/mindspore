@@ -138,6 +138,43 @@ GraphId AscendSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrL
   return graph_id;
 }
 
+GraphId AscendSession::CompileGraph(const FuncGraphPtr &func_graph) {
+  MS_LOG(INFO) << "start";
+  auto graph = ConstructKernelGraph(func_graph);
+  // split switch
+  SplitSwitch(graph.get());
+  // insert goto labels and label_sets
+  LinkChildGraphs(graph.get());
+  // resource initialize
+  InitRuntimeResource();
+  // ir fusion
+  IRFusion(graph);
+  // kernel select
+  SelectKernelGraphKernel(*graph);
+  // convert model of predict module
+  ConvertPredictModel(graph);
+  // hardware optimize
+  HardwareOptimizeGraphs(graph);
+  // adjust kernel
+  AdjustKernel(graph);
+  // root graph valiate,include genearte execute order and so on
+  RootGraphExecutorValidate(graph.get());
+  // assign stream
+  AssignStream(graph);
+  // build kernel if node is cnode
+  BuildKernel(graph);
+  // alloc mem
+  MemoryAlloc(graph.get());
+  // task generate
+  GenerateTaskInfo(graph);
+  // load task into device
+  LoadTask(graph);
+  // return the graph id to backend
+  auto graph_id = graph->graph_id();
+  MS_LOG(INFO) << "Compile graph " << graph_id << " success";
+  return graph_id;
+}
+
 void AscendSession::BuildGraph(GraphId graph_id) {
   MS_LOG(INFO) << "start";
   auto graph = GetGraph(graph_id);

@@ -42,6 +42,7 @@ class AscendSession : public SessionBasic {
     context_ = std::make_shared<Context>(kAscendDevice, device_id);
   }
   GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
+  GraphId CompileGraph(const FuncGraphPtr &func_graph) override;
   void RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   void BuildGraph(GraphId) override;
   void BuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
@@ -91,6 +92,14 @@ class AscendSession : public SessionBasic {
   void SetFinalGraphOutput(const AnfNodePtr &node);
   void SetFinalGraphOutput(const ValuePtr &value);
   void SetFinalGraphOutput(const VectorRef &vec_output);
+
+  void SplitSwitch(KernelGraph *graph) {}
+  void LinkChildGraphs(KernelGraph *graph) {}
+  void IRFusion(const KernelGraphPtr &graph) {}
+  void SelectKernelGraphKernel(const KernelGraph &graph) {}
+  void ConvertPredictModel(const KernelGraphPtr graph) {}
+  void HardwareOptimizeGraphs(const KernelGraphPtr graph) {}
+  void RootGraphExecutorValidate(KernelGraph *graph) {}
 
   // merge execution order list of child graphs
   void MergeGraphExecOrder();
