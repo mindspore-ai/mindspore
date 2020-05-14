@@ -154,12 +154,12 @@ def test_lambda(x, y):
     return t
 
 def test_funcdef(x, y):
-    def max(a, b):
+    def mymax(a, b):
         if a > b:
             return a
         else:
             return b
-    t = max(x, y)
+    t = mymax(x, y)
     return t
 
 def test_tuple_fn(x, y):
@@ -225,7 +225,7 @@ def test_simple_closure(a, b):
         return b + 2.0
     return f() * g()
 
-def test_assign_tuple(x,y):
+def test_assign_tuple(x, y):
     a = 1
     b = 2
     t = a, b
@@ -282,8 +282,8 @@ def test_subscript_setitem():
     return t
 
 def test_dict():
-    dict = {"a": 1, "b": 2}
-    return dict
+    ret = {"a": 1, "b": 2}
+    return ret
 
 def func_call(x, y, *var, a=0, b=1, **kwargs):
     return x + y + var[0] + a + b + kwargs["z"]

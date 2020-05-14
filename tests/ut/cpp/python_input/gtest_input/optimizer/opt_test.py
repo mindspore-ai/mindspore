@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """ opt_test """
+import numpy as np
 from mindspore.ops import Primitive, PrimitiveWithInfer
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore import Tensor
-import numpy as np
 
 # pylint: disable=unused-variable
 
@@ -790,9 +790,9 @@ def test_convert_switch_ops(tag):
         return z
     @fns
     def after(cond, x, y):
-        sw1 =ge_switch(x, cond)
-        sw2 =ge_switch(y, cond)
-        sw3 =ge_switch(y, cond)
+        sw1 = ge_switch(x, cond)
+        sw2 = ge_switch(y, cond)
+        sw3 = ge_switch(y, cond)
         sw1_t = tuple_getitem(sw1, 1)
         sw2_t = tuple_getitem(sw2, 1)
         sw3_f = tuple_getitem(sw3, 0)

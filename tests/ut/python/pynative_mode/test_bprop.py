@@ -19,8 +19,8 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.common import Tensor
-from ....mindspore_test_framework.utils.bprop_util import bprop
 from mindspore.common.api import ms_function
+from ....mindspore_test_framework.utils.bprop_util import bprop
 
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)

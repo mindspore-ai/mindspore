@@ -57,6 +57,3 @@ def test_maxpool2d():
     output = max_pool(input_data)
     output_np = output.asnumpy()
     assert isinstance(output_np[0][0][0][0], (np.float32, np.float64))
-
-
-

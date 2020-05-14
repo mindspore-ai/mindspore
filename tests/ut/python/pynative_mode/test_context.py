@@ -68,9 +68,9 @@ def test_dump_target():
     with pytest.raises(TypeError):
         context.set_context(save_dump_path=1)
     context.set_context(enable_dump=False)
-    assert context.get_context("enable_dump") == False
+    assert not context.get_context("enable_dump")
     context.set_context(enable_dump=True)
-    assert context.get_context("enable_dump") == True
+    assert context.get_context("enable_dump")
     assert context.get_context("save_dump_path") == "."
 
 

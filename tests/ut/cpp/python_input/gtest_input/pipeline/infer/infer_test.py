@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore.nn as nn
 from dataclasses import dataclass
+import mindspore.nn as nn
 from mindspore.ops import Primitive
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P

@@ -88,7 +88,7 @@ class WithNoBprop(nn.Cell):
 
 def test_with_no_bprop():
     with_no_bprop = WithNoBprop()
-    C.grad_all(with_no_bprop)(1, 2) == (2, 1)
+    assert C.grad_all(with_no_bprop)(1, 2) == (2, 1)
 
 def test_grad_in_bprop_1():
     class GradInBprop_1(nn.Cell):
@@ -189,8 +189,8 @@ class OneInputBprop(nn.Cell):
 
 def test_grad_one_input_bprop():
     net = OneInputBprop()
-    input = Tensor(np.ones([2, 2]).astype(np.float32))
-    grad = C.grad_all(net)(input)
+    input1 = Tensor(np.ones([2, 2]).astype(np.float32))
+    grad = C.grad_all(net)(input1)
     assert (grad[0].asnumpy() == np.array([5, 5]).astype(np.float32)).all()
 
 

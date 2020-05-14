@@ -14,7 +14,6 @@
 # ============================================================================
 """ test_dropout """
 import numpy as np
-import pytest
 from mindspore.common.api import _executor
 import mindspore.nn as nn
 from mindspore import Tensor

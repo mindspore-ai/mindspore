@@ -14,7 +14,7 @@
 # ============================================================================
 import mindspore.nn as nn
 from mindspore.common import dtype
-from mindspore.ops import Primitive, prim_attr_register, PrimitiveWithInfer
+from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops import operations as P
 
 def get_add(a, b):
@@ -55,15 +55,15 @@ def get_tensor_to_scalar(logits, labels):
 
 
 conv2d = P.Conv2D(64,
-                (3, 3),
-                pad_mode="pad",
-                pad=1,
-                stride=2)
+                  (3, 3),
+                  pad_mode="pad",
+                  pad=1,
+                  stride=2)
 
 def get_conv2d(x, w):
     return conv2d(x, w)
 
-conv2dNative = P.DepthwiseConv2dNative(3, (3,3), pad_mode="pad", pad=1, stride=2)
+conv2dNative = P.DepthwiseConv2dNative(3, (3, 3), pad_mode="pad", pad=1, stride=2)
 
 def get_conv2d_native(x, w):
     return conv2dNative(x, w)
@@ -74,8 +74,8 @@ def get_bias_add(x, b):
 
 
 def test_conv2d(out_channel, kernel_size, pad, stride, dilation):
-    conv = P.Conv2D(out_channel=out_channel, kernel_size=kernel_size, pad_mode= "pad", pad=pad,
-                  stride=stride, dilation= dilation)
+    conv = P.Conv2D(out_channel=out_channel, kernel_size=kernel_size, pad_mode="pad", pad=pad,
+                    stride=stride, dilation=dilation)
     def get_conv(x, w):
         return conv(x, w)
     return get_conv
@@ -83,7 +83,7 @@ def test_conv2d(out_channel, kernel_size, pad, stride, dilation):
 
 def test_dropout():
     dropOutGenMask = P.DropoutGenMask()
-    dropoutDoMask  = P.DropoutDoMask()
+    dropoutDoMask = P.DropoutDoMask()
     shape = P.Shape()
     def get_dropout(x, prob):
         mask = dropOutGenMask(shape(x), prob)

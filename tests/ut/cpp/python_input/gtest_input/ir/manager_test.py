@@ -44,7 +44,7 @@ def test_calls(x):
 # pylint: disable=unused-argument
 def test_unused_param(x, y):
     return x * x
-    
+
 
 def test_cannot_replace_return(x):
     return x * x
