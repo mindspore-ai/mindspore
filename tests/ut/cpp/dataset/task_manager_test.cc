@@ -19,35 +19,19 @@
 #include "dataset/util/task_manager.h"
 
 using namespace mindspore::dataset;
-using namespace std::placeholders;
 
 class MindDataTestTaskManager : public UT::Common {
  public:
-    MindDataTestTaskManager() {}
+  MindDataTestTaskManager() {}
 
-    void SetUp() { Services::CreateInstance();
-    }
+  void SetUp() { Services::CreateInstance(); }
 };
-
-std::atomic<int> v(0);
-
-Status f(TaskGroup &vg){
-  for (int i = 0; i < 1; i++) {
-    RETURN_IF_NOT_OK(vg.CreateAsyncTask("Infinity", [&]() -> Status {
-        TaskManager::FindMe()->Post();
-        int a = v.fetch_add(1);
-        MS_LOG(DEBUG) << a << std::endl;
-        return f(vg);
-    }));
-  }
-  return Status::OK();
-}
 
 TEST_F(MindDataTestTaskManager, Test1) {
   // Clear the rc of the master thread if any
-  (void) TaskManager::GetMasterThreadRc();
+  (void)TaskManager::GetMasterThreadRc();
   TaskGroup vg;
-  Status vg_rc = vg.CreateAsyncTask("Test error", [this]() -> Status {
+  Status vg_rc = vg.CreateAsyncTask("Test error", []() -> Status {
     TaskManager::FindMe()->Post();
     throw std::bad_alloc();
   });
@@ -55,6 +39,46 @@ TEST_F(MindDataTestTaskManager, Test1) {
   ASSERT_TRUE(vg.join_all().IsOk());
   ASSERT_TRUE(vg.GetTaskErrorIfAny().IsOutofMemory());
   // Test the error is passed back to the master thread.
-  Status rc = TaskManager::GetMasterThreadRc();
-  ASSERT_TRUE(rc.IsOutofMemory());
+  // Some compiler may choose to run the next line in parallel with the above 3 lines
+  // and this will cause some mismatch once a while.
+  // To block this racing condition, we need to create a dependency that the next line
+  // depends on previous lines.
+  if (vg.GetTaskErrorIfAny().IsError()) {
+    Status rc = TaskManager::GetMasterThreadRc();
+    ASSERT_TRUE(rc.IsOutofMemory());
+  }
+}
+
+TEST_F(MindDataTestTaskManager, Test2) {
+  // This testcase will spawn about 10 threads and block on a conditional variable.
+  // The master thread will try to interrupt them almost at the same time. This can
+  // cause a racing condition that some threads may miss the interrupt and blocked.
+  // The new logic of Task::Join() will do a time-out join and wake up all those
+  // threads that miss the interrupt.
+  // Clear the rc of the master thread if any
+  (void)TaskManager::GetMasterThreadRc();
+  TaskGroup vg;
+  CondVar cv;
+  Status rc;
+  rc = cv.Register(vg.GetIntrpService());
+  EXPECT_TRUE(rc.IsOk());
+  auto block_forever = [&cv]() -> Status {
+    std::mutex mux;
+    std::unique_lock<std::mutex> lck(mux);
+    TaskManager::FindMe()->Post();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    RETURN_IF_NOT_OK(cv.Wait(&lck, []() -> bool { return false; }));
+    return Status::OK();
+  };
+  auto f = [&vg, &block_forever]() -> Status {
+    for (auto i = 0; i < 10; ++i) {
+      RETURN_IF_NOT_OK(vg.CreateAsyncTask("Spawn block threads", block_forever));
+    }
+    return Status::OK();
+  };
+  rc = f();
+  vg.interrupt_all();
+  EXPECT_TRUE(rc.IsOk());
+  // Now we test the async Join
+  ASSERT_TRUE(vg.join_all().IsOk());
 }

@@ -77,6 +77,7 @@ Status IntrpService::Deregister(const std::string &name) noexcept {
 }
 
 Status IntrpService::InterruptAll() noexcept {
+  std::lock_guard<std::mutex> lck(mutex_);
   Status rc;
   for (auto const &it : all_intrp_resources_) {
     std::string kName = it.first;
