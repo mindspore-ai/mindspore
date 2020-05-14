@@ -241,28 +241,6 @@ static std::string GetEnv(const std::string &envvar) {
   return std::string(value);
 }
 
-#ifndef USE_GLOG
-// set default log warning to WARNING
-int g_mslog_level = WARNING;
-
-static void InitMsLogLevel() {
-  int log_level = WARNING;  // set default log level to WARNING
-  auto str_level = GetEnv("GLOG_v");
-  if (str_level.size() == 1) {
-    int ch = str_level.c_str()[0];
-    ch = ch - '0';  // substract ASCII code of '0', which is 48
-    if (ch >= DEBUG && ch <= ERROR) {
-      log_level = ch;
-    }
-  }
-  g_mslog_level = log_level;
-}
-
-#endif
-
-// set default log level to WARNING for all sub modules
-int g_ms_submodule_log_levels[NUM_SUBMODUES] = {WARNING};
-
 enum LogConfigToken {
   INVALID,      // indicate invalid token
   LEFT_BRACE,   // '{'
@@ -449,7 +427,16 @@ static MsLogLevel GetGlobalLogLevel() {
 #ifdef USE_GLOG
   return static_cast<MsLogLevel>(FLAGS_v);
 #else
-  return static_cast<MsLogLevel>(g_mslog_level);
+  int log_level = WARNING;  // set default log level to WARNING
+  auto str_level = GetEnv("GLOG_v");
+  if (str_level.size() == 1) {
+    int ch = str_level.c_str()[0];
+    ch = ch - '0';  // substract ASCII code of '0', which is 48
+    if (ch >= DEBUG && ch <= ERROR) {
+      log_level = ch;
+    }
+  }
+  return static_cast<MsLogLevel>(log_level);
 #endif
 }
 
@@ -521,10 +508,7 @@ void mindspore_log_init(void) {
     FLAGS_logtostderr = true;
     MS_LOG(WARNING) << "`GLOG_log_dir` is not set, output log to screen.";
   }
-
-  mindspore::InitSubModulesLogLevel();
-#else
-  mindspore::InitMsLogLevel();
 #endif
+  mindspore::InitSubModulesLogLevel();
 }
 }

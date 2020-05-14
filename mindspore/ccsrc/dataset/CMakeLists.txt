@@ -82,11 +82,10 @@ set_target_properties(_c_dataengine PROPERTIES
 ######################################################################
 
 ################# Link with external libraries ########################
+target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    target_link_libraries(_c_dataengine PRIVATE mindspore)
     target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} mindspore::protobuf ${SECUREC_LIBRARY})
 else()
-    target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
     target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl mindspore::protobuf ${SECUREC_LIBRARY})
 endif()
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::opencv_core mindspore::opencv_imgcodecs
