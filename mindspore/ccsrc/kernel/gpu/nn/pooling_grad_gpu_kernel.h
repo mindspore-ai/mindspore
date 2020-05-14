@@ -101,8 +101,8 @@ class PoolingGradGpuFwdKernel : public GpuKernel {
       return false;
     }
     auto window = GetAttr<std::vector<int>>(kernel_node, "ksize");
-    int window_height = window[3];
-    int window_width = window[2];
+    int window_height = window[2];
+    int window_width = window[3];
     SetPoolingMode(kernel_node);
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto input_mask = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);

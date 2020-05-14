@@ -52,15 +52,7 @@ class SliceGpuFwdKernel : public GpuKernel {
       return false;
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    int shape_n = input_shape.size() < 4 ? 1 : SizeToInt(input_shape[input_shape.size() - 4]);
-    int shape_c = input_shape.size() < 3 ? 1 : SizeToInt(input_shape[input_shape.size() - 3]);
-    int shape_h = input_shape.size() < 2 ? 1 : SizeToInt(input_shape[input_shape.size() - 2]);
-    int shape_w = SizeToInt(input_shape[input_shape.size() - 1]);
-    input_shape_.push_back(shape_n);
-    input_shape_.push_back(shape_c);
-    input_shape_.push_back(shape_h);
-    input_shape_.push_back(shape_w);
-
+    ShapeNdTo4d(input_shape, &input_shape_);
     auto strides = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides");
     if (strides) {
       strides_ = GetAttr<std::vector<int>>(kernel_node, "strides");
@@ -89,7 +81,7 @@ class SliceGpuFwdKernel : public GpuKernel {
       }
     }
 
-    input_size_ = IntToSize(shape_n * shape_c * shape_h * shape_w) * sizeof(T);
+    input_size_ = IntToSize(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3]) * sizeof(T);
     auto out_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
 
     output_size_ = sizeof(T);

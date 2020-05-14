@@ -107,8 +107,8 @@ class PoolingGpuFwdKernel : public GpuKernel {
                                  SizeToInt(output_shape[1]), SizeToInt(output_shape[2]), SizeToInt(output_shape[3])),
       "cudnnSetTensor4dDescriptor failed");
     auto window = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("ksize"));
-    int window_height = window[3];
-    int window_width = window[2];
+    int window_height = window[2];
+    int window_width = window[3];
     stride_ = GetValue<std::vector<int>>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("strides"));
     SetPoolingMode(kernel_node);
     if (pad_mode_ == kSamePadModeUpperCase || pad_mode_ == kSamePadModeLowerCase) {

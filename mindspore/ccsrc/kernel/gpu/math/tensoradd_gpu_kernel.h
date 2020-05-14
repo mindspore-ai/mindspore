@@ -87,32 +87,24 @@ class TensorAddGpuFwdKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto input_shapeB = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-    if (input_shape != output_shape && input_shapeB != output_shape) {
-      MS_LOG(ERROR) << "Double-sided broadcast was not supported in cudnn of cudnnOpTensor:\n"
-                       "InputA must match the corresponding dimension of the destination tensor outC, and each "
-                       "dimension of the inputB "
-                       "must match the corresponding dimension of outC or must be equal to 1.";
-      return false;
-    }
     is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(input_shapeB);
     if (is_null_input_) {
       MS_LOG(WARNING) << "TensorAddGpuFwdKernel input is null";
       InitSizeLists();
       return true;
     }
-    int shape_n = input_shape.size() < 4 ? 1 : SizeToInt(input_shape[input_shape.size() - 4]);
-    int shape_c = input_shape.size() < 3 ? 1 : SizeToInt(input_shape[input_shape.size() - 3]);
-    int shape_h = input_shape.size() < 2 ? 1 : SizeToInt(input_shape[input_shape.size() - 2]);
-    int shape_w = input_shape.size() == 0 ? 1 : SizeToInt(input_shape[input_shape.size() - 1]);
+    std::vector<int> shapeA;
+    std::vector<int> shapeB;
+    std::vector<int> shapeOut;
+    ShapeNdTo4d(input_shape, &shapeA);
+    ShapeNdTo4d(input_shapeB, &shapeB);
+    ShapeNdTo4d(output_shape, &shapeOut);
+    CheckBroadcast4TensorOp(shapeA, shapeB, shapeOut);
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
-                                                           shape_n, shape_c, shape_h, shape_w),
+                                                           shapeA[0], shapeA[1], shapeA[2], shapeA[3]),
                                 "cudnnSetTensor4dDescriptor failed");
-    int shapeB_n = input_shapeB.size() < 4 ? 1 : SizeToInt(input_shapeB[input_shapeB.size() - 4]);
-    int shapeB_c = input_shapeB.size() < 3 ? 1 : SizeToInt(input_shapeB[input_shapeB.size() - 3]);
-    int shapeB_h = input_shapeB.size() < 2 ? 1 : SizeToInt(input_shapeB[input_shapeB.size() - 2]);
-    int shapeB_w = input_shapeB.size() == 0 ? 1 : SizeToInt(input_shapeB[input_shapeB.size() - 1]);
     CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(inputB_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
-                                                           shapeB_n, shapeB_c, shapeB_h, shapeB_w),
+                                                           shapeB[0], shapeB[1], shapeB[2], shapeB[3]),
                                 "cudnnSetTensor4dDescriptor failed");
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
