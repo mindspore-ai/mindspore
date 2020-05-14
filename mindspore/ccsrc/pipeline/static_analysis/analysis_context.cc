@@ -166,7 +166,6 @@ AnalysisContextPtr AnalysisContext::SpecializeKey() const {
                            if (val->isa<SymbolicKeyInstance>()) {
                              auto scalar_spec = dyn_cast<AbstractScalar>(arg);
                              auto ret_spec = scalar_spec->Broaden();
-                             ret_spec->set_value(kAnyValue);
                              return ret_spec;
                            }
                          }
