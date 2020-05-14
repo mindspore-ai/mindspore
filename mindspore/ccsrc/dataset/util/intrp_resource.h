@@ -29,16 +29,20 @@ class IntrpResource {
 
   virtual ~IntrpResource() = default;
 
-  virtual Status Interrupt() {
-    st_ = State::kInterrupted;
-    return Status::OK();
-  }
+  virtual void Interrupt() { st_ = State::kInterrupted; }
 
   virtual void ResetIntrpState() { st_ = State::kRunning; }
 
   State CurState() const { return st_; }
 
   bool Interrupted() const { return CurState() == State::kInterrupted; }
+
+  virtual Status GetInterruptStatus() const {
+    if (Interrupted()) {
+      return Status(StatusCode::kInterrupted);
+    }
+    return Status::OK();
+  }
 
  protected:
   std::atomic<State> st_;

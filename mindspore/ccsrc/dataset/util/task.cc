@@ -72,7 +72,7 @@ void Task::ShutdownGroup() {  // Wake up watch dog and shutdown the engine.
   }
 }
 
-Status Task::GetTaskErrorIfAny() {
+Status Task::GetTaskErrorIfAny() const {
   std::lock_guard<std::mutex> lk(mux_);
   if (caught_severe_exception_) {
     return rc_;
@@ -141,5 +141,13 @@ TaskGroup *Task::MyTaskGroup() { return task_group_; }
 void Task::set_task_group(TaskGroup *vg) { task_group_ = vg; }
 
 Task::~Task() { task_group_ = nullptr; }
+Status Task::OverrideInterruptRc(const Status &rc) {
+  if (rc.IsInterrupted() && this_thread::is_master_thread()) {
+    // If we are interrupted, override the return value if this is the master thread.
+    // Master thread is being interrupted mostly because of some thread is reporting error.
+    return TaskManager::GetMasterThreadRc();
+  }
+  return rc;
+}
 }  // namespace dataset
 }  // namespace mindspore
