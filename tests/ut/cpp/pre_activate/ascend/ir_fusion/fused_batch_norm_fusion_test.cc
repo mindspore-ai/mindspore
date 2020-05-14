@@ -50,5 +50,28 @@ TEST_F(TestHWFusedBatchNormFusion, test_fused_batch_norm_fusion) {
   FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_fused_batch_norm_fusion", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
+
+TEST_F(TestHWFusedBatchNormFusion, test_fused_batch_norm_mix_precision_fusion) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_fused_batch_norm_fusion", "before_mix_precision");
+  EXPECT_NE(g, nullptr);
+  std::vector<int> shp_x{32, 64, 112, 112};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
+  std::vector<int> shp_y{64};
+  auto y_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_y);
+  AbstractBasePtrList args_spec_list{x_abstract};
+  for (size_t i = 0; i < 6; ++i) {
+    args_spec_list.push_back(y_abstract);
+  }
+  auto kg = GetKernelGraph(g, args_spec_list);
+
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  pm->AddPass(std::make_shared<opt::FusedBatchNormMixPrecisionFusion>());
+  optimizer->AddPassManager(pm);
+  FuncGraphPtr new_graph = optimizer->Optimize(kg);
+
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_fused_batch_norm_fusion", "after");
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+}
 }  // namespace opt
 }  // namespace mindspore
