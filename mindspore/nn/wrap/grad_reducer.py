@@ -141,7 +141,7 @@ class DistributedGradReducer(Cell):
         >>>         super(TrainingWrapper, self).__init__(auto_prefix=False)
         >>>         self.network = network
         >>>         self.network.add_flags(defer_inline=True)
-        >>>         self.weights = ParameterTuple(network.trainable_params())
+        >>>         self.weights = optimizer.parameters
         >>>         self.optimizer = optimizer
         >>>         self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
         >>>         self.sens = sens
