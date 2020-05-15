@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_OPTIMIZER_IRPASS_SPECIAL_OP_ELIMINATE_H_
 #define MINDSPORE_CCSRC_OPTIMIZER_IRPASS_SPECIAL_OP_ELIMINATE_H_
 
+#include <securec.h>
 #include <vector>
 #include <memory>
 #include <algorithm>
@@ -30,7 +31,6 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-
 class SpecialOpEliminater {
  public:
   SpecialOpEliminater()
@@ -172,7 +172,7 @@ class ZeroLikeFillZero : public AnfVisitor {
     tensor::TensorPtr new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
     size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
     char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c(true));
-    std::memset(data, 0, mem_size);
+    (void)memset_s(data, mem_size, 0, mem_size);
 
     auto new_cnode = NewValueNode(new_tensor_ptr);
     new_cnode->set_abstract(new_tensor_ptr->ToAbstract());

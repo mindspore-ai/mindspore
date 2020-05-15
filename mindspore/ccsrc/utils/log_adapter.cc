@@ -343,6 +343,7 @@ class LogConfigLexer {
 class LogConfigParser {
  public:
   explicit LogConfigParser(const std::string &cfg) : lexer(cfg) {}
+  ~LogConfigParser() = default;
 
   bool Expect(LogConfigToken expected, LogConfigToken tok) {
     if (expected != tok) {
