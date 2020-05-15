@@ -34,7 +34,7 @@ import copy
 import numpy as np
 
 from mindspore._c_dataengine import DataType, TFReaderOp, ImageFolderOp, CifarOp, MnistOp, ManifestOp, \
-    MindRecordOp, TextFileOp, CBatchInfo
+    MindRecordOp, TextFileOp, VOCOp, CBatchInfo
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
@@ -3462,6 +3462,12 @@ class VOCDataset(SourceDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
+        task (str): Set the task type of reading voc data, now only support "Segmentation" or "Detection"
+            (default="Segmentation")
+        mode(str): Set the data list txt file to be readed (default="train")
+        class_indexing (dict, optional): A str-to-int mapping from label name to index
+            (default=None, the folder names will be sorted alphabetically and each
+            class will be given a unique index starting from 0).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, all images).
         num_parallel_workers (int, optional): Number of workers to read the data
@@ -3477,27 +3483,41 @@ class VOCDataset(SourceDataset):
             argument should be specified only when num_shards is also specified.
 
     Raises:
+        RuntimeError: If xml of Annotations is a invalid format
+        RuntimeError: If xml of Annotations loss attribution of "object"
+        RuntimeError: If xml of Annotations loss attribution of "bndbox"
         RuntimeError: If sampler and shuffle are specified at the same time.
         RuntimeError: If sampler and sharding are specified at the same time.
         RuntimeError: If num_shards is specified but shard_id is None.
         RuntimeError: If shard_id is specified but num_shards is None.
+        ValueError: If task is not equal 'Segmentation' or 'Detection'.
+        ValueError: If task equal 'Segmentation' but class_indexing is not None.
+        ValueError: If txt related to mode is not exist.
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
         >>> import mindspore.dataset as ds
         >>> dataset_dir = "/path/to/voc_dataset_directory"
-        >>> # 1) read all VOC dataset samples in dataset_dir with 8 threads in random order:
-        >>> voc_dataset = ds.VOCDataset(dataset_dir, num_parallel_workers=8)
-        >>> # 2) read then decode all VOC dataset samples in dataset_dir in sequence:
-        >>> voc_dataset = ds.VOCDataset(dataset_dir, decode=True, shuffle=False)
-        >>> # in VOC dataset, each dictionary has keys "image" and "target"
+        >>> # 1) read VOC data for segmenatation train
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Segmentation", mode="train")
+        >>> # 2) read VOC data for detection train
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", mode="train")
+        >>> # 3) read all VOC dataset samples in dataset_dir with 8 threads in random order:
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", mode="train", num_parallel_workers=8)
+        >>> # 4) read then decode all VOC dataset samples in dataset_dir in sequence:
+        >>> voc_dataset = ds.VOCDataset(dataset_dir, task="Detection", mode="train", decode=True, shuffle=False)
+        >>> # in VOC dataset, if task='Segmentation', each dictionary has keys "image" and "target"
+        >>> # in VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation"
     """
 
     @check_vocdataset
-    def __init__(self, dataset_dir, num_samples=None, num_parallel_workers=None,
-                 shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
+    def __init__(self, dataset_dir, task="Segmentation", mode="train", class_indexing=None, num_samples=None,
+                 num_parallel_workers=None, shuffle=None, decode=False, sampler=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers)
         self.dataset_dir = dataset_dir
+        self.task = task
+        self.mode = mode
+        self.class_indexing = class_indexing
         self.sampler = _select_sampler(num_samples, sampler, shuffle, num_shards, shard_id)
         self.num_samples = num_samples
         self.decode = decode
@@ -3508,6 +3528,9 @@ class VOCDataset(SourceDataset):
     def get_args(self):
         args = super().get_args()
         args["dataset_dir"] = self.dataset_dir
+        args["task"] = self.task
+        args["mode"] = self.mode
+        args["class_indexing"] = self.class_indexing
         args["num_samples"] = self.num_samples
         args["sampler"] = self.sampler
         args["decode"] = self.decode
@@ -3524,6 +3547,28 @@ class VOCDataset(SourceDataset):
             Number, number of batches.
         """
         return self.num_samples
+
+    def get_class_indexing(self):
+        """
+        Get the class index.
+
+        Return:
+            Dict, A str-to-int mapping from label name to index.
+        """
+        if self.task != "Detection":
+            raise NotImplementedError()
+
+        if self.num_samples is None:
+            num_samples = 0
+        else:
+            num_samples = self.num_samples
+
+        if self.class_indexing is None:
+            class_indexing = dict()
+        else:
+            class_indexing = self.class_indexing
+
+        return VOCOp.get_class_indexing(self.dataset_dir, self.task, self.mode, class_indexing, num_samples)
 
 
 class CelebADataset(SourceDataset):

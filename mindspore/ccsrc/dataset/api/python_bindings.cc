@@ -55,6 +55,7 @@
 #include "dataset/engine/datasetops/source/tf_reader_op.h"
 #include "dataset/engine/jagged_connector.h"
 #include "dataset/engine/datasetops/source/text_file_op.h"
+#include "dataset/engine/datasetops/source/voc_op.h"
 #include "dataset/kernels/data/to_float16_op.h"
 #include "dataset/util/random.h"
 #include "mindrecord/include/shard_operator.h"
@@ -193,6 +194,13 @@ void bindDatasetOps(py::module *m) {
       }
       THROW_IF_ERROR(TextFileOp::CountAllFileRows(filenames, &count));
       return count;
+    });
+  (void)py::class_<VOCOp, DatasetOp, std::shared_ptr<VOCOp>>(*m, "VOCOp")
+    .def_static("get_class_indexing", [](const std::string &dir, const std::string &task_type,
+                                         const std::string &task_mode, const py::dict &dict, int64_t numSamples) {
+      std::map<std::string, int32_t> output_class_indexing;
+      THROW_IF_ERROR(VOCOp::GetClassIndexing(dir, task_type, task_mode, dict, numSamples, &output_class_indexing));
+      return output_class_indexing;
     });
 }
 void bindTensor(py::module *m) {

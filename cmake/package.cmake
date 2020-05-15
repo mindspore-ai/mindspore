@@ -39,6 +39,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(opencv_LIBPATH ${opencv_LIBPATH}/../bin/)
     set(jpeg_turbo_LIBPATH ${jpeg_turbo_LIBPATH}/../bin/)
     set(sqlite_LIBPATH ${sqlite_LIBPATH}/../bin/)
+    set(tinyxml2_LIBPATH ${tinyxml2_LIBPATH}/../bin/)
 else ()
     set(INSTALL_LIB_DIR "lib")
 endif ()
@@ -82,6 +83,15 @@ if (ENABLE_MINDDATA)
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
+    file(GLOB_RECURSE TINYXML2_LIB_LIST
+	    ${tinyxml2_LIBPATH}/libtinyxml2*
+    )
+    install(
+	FILES ${TINYXML2_LIB_LIST}
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
+
 endif ()
 
 if (ENABLE_CPU)
