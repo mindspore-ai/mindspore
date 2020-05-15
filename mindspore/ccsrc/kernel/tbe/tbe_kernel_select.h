@@ -20,12 +20,12 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "kernel/oplib/opinfo.h"
 #include "kernel/kernel_build_info.h"
 
 namespace mindspore {
 namespace kernel {
 void TbeMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list);
-bool CheckSupported(const AnfNodePtr &anf_node, const KernelBuildInfoPtr &select_kernel_build_info);
 }  // namespace kernel
 }  // namespace mindspore
 

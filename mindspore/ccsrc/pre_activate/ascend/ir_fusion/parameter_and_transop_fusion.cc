@@ -114,8 +114,8 @@ bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
         auto param_dtype = AnfAlgo::GetOutputDeviceDataType(final_node, 0);
 
         auto cast = trans_road[1];
-        AnfAlgo::SetSelectKernelBuildInfo(GetKernelBuildInfo(cast, format, param_dtype, dtype), cast.get());
         if (param_format == format && param_dtype != dtype) {
+          AnfAlgo::SetSelectKernelBuildInfo(GetKernelBuildInfo(cast, format, param_dtype, dtype), cast.get());
           manager->Replace(trans_road[2], final_node);
           manager->Replace(cur_transop, cast);
         }

@@ -71,21 +71,20 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   FilterInvalidKernelInfo(kernel_node, kernel_info_list);
 }
 
-void AICpuQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
+void AICPUQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_info_list);
   kernel_info_list->clear();
   AicpuMetadataInfo(kernel_node, kernel_info_list);
   FilterInvalidKernelInfo(kernel_node, kernel_info_list);
 }
-bool IsSupportedByAiCpu(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
+bool IsSupportedByAICPU(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(select_kernel_build_info);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   auto cnode = kernel_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  AicpuMetadataInfo(cnode, &kernel_info_list);
-  FilterInvalidKernelInfo(cnode, &kernel_info_list);
+  AICPUQuery(cnode, &kernel_info_list);
   return std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
                      [&select_kernel_build_info](const kernel::KernelBuildInfoPtr item) {
                        MS_EXCEPTION_IF_NULL(item);
@@ -93,7 +92,7 @@ bool IsSupportedByAiCpu(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr 
                      });
 }
 
-bool IsSupportedByAiCore(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
+bool IsSupportedByAICore(const AnfNodePtr &kernel_node, const KernelBuildInfoPtr &select_kernel_build_info) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(select_kernel_build_info);
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
