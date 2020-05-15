@@ -138,7 +138,7 @@ GraphId AscendSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrL
   return graph_id;
 }
 
-GraphId AscendSession::CompileGraph(const FuncGraphPtr &func_graph) {
+GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   MS_LOG(INFO) << "start";
   auto graph = ConstructKernelGraph(func_graph);
   // split switch

@@ -28,6 +28,7 @@
 #include "ir/meta_tensor.h"
 #include "utils/any.h"
 #include "utils/base_ref.h"
+#include "utils/contract.h"
 #include "pynative/pynative_execute.h"
 #include "device/kernel_info.h"
 
@@ -57,7 +58,7 @@ class SessionBasic {
   virtual ~SessionBasic() { summary_callback_ = nullptr; }
 
   virtual GraphId CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) = 0;
-  virtual GraphId CompileGraph(const FuncGraphPtr &) { return kInvalidGraphId; }
+  virtual GraphId CompileGraph(NotNull<FuncGraphPtr> func_graph) { return kInvalidGraphId; }
   // build graph, used to handle multiple child graphs
   virtual void BuildGraph(GraphId) {}
 

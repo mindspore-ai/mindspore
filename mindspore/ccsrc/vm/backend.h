@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "utils/contract.h"
 #include "ir/anf.h"
 #include "vm/segment_runner.h"
 #include "vm/vm.h"
@@ -49,7 +50,7 @@ class Backend {
   virtual void SetSwitchActive(const BaseRef &, bool) {}
   virtual void RecallGraphInput(const FuncGraphPtr &, const VectorRef &, const BaseRef &) {}
   virtual void SetGraphUserInputs(const FuncGraphPtr &, const FuncGraphPtr &, const AnfNodePtrList &) {}
-
+  virtual GraphId CompileGraph(NotNull<FuncGraphPtr> fg) { return kInvalidGraphId; }
   void set_curr_switch(const BaseRef &value) {
     curr_switch_ = value;
     is_switch_call_ = true;
@@ -104,6 +105,8 @@ class MsBackend : public Backend {
   void Link(GraphId) override;
   AnfNodePtr ConvertGraphInput(const FuncGraphPtr &, const AnfNodePtr &);
   LinConvertResult GetMultiGraphRun(const FuncGraphPtr &g) override;
+  GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
+  VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
 
  private:
   session::SessionPtr sess_;
