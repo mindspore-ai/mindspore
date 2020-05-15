@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "pre_activate/common/optimizer.h"
 #include "utils/utils.h"
 
@@ -25,8 +26,8 @@ namespace mindspore {
 namespace opt {
 class FusedBatchNormFusion : public PatternProcessPass {
  public:
-  explicit FusedBatchNormFusion(bool multigraph = true)
-      : PatternProcessPass("fused_batch_norm_fusion", multigraph),
+  explicit FusedBatchNormFusion(const std::string &name = "fused_batch_norm_fusion", bool multigraph = true)
+      : PatternProcessPass(name, multigraph),
         data_input0_var_(std::make_shared<Var>()),
         data_input1_var_(std::make_shared<Var>()),
         data_input2_var_(std::make_shared<Var>()),
@@ -39,7 +40,7 @@ class FusedBatchNormFusion : public PatternProcessPass {
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
- private:
+ protected:
   AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                     const EquivPtr &equiv) const;
   void GetBNTrainingUpdateInputs(const EquivPtr &equiv, const std::vector<AnfNodePtr> &bn_training_reduce_outputs,
@@ -58,6 +59,15 @@ class FusedBatchNormFusion : public PatternProcessPass {
   VarPtr constant_input0_var_;
   VarPtr constant_input1_var_;
   VarPtr batch_norm_var_;
+};
+
+class FusedBatchNormMixPrecisionFusion : public FusedBatchNormFusion {
+ public:
+  explicit FusedBatchNormMixPrecisionFusion(bool multigraph = true)
+      : FusedBatchNormFusion("fused_batch_norm_mix_precision_fusion", multigraph) {}
+
+  ~FusedBatchNormMixPrecisionFusion() override = default;
+  const BaseRef DefinePattern() const override;
 };
 }  // namespace opt
 }  // namespace mindspore
