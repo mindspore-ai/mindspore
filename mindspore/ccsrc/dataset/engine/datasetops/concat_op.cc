@@ -79,7 +79,7 @@ Status ConcatOp::operator()() {
       if (buf->eof() || buf->eoe()) {
         RETURN_IF_NOT_OK(child_[i]->GetNextBuffer(&buf));
       }
-      // 2. Do varification as for column name, column data type and rank of column data
+      // 2. Do verification as for column name, column data type and rank of column data
       RETURN_IF_NOT_OK(Verify(i, buf));
 
       // 3. Put the data into output_connector
