@@ -108,6 +108,7 @@ constexpr auto kLambNextMVOpName = "LambNextMV";
 constexpr auto kConfusionTransposeDOpName = "ConfusionTransposeD";
 constexpr auto kAdamApplyOneWithDecayOpName = "AdamApplyOneWithDecay";
 constexpr auto kBatchNormGradOpName = "BatchNormGrad";
+constexpr auto kBNInferOpName = "BNInfer";
 constexpr auto kAdamApplyOneOpName = "AdamApplyOne";
 constexpr auto kResizeNearestNeighborGradOpName = "ResizeNearestNeighborGrad";
 constexpr auto kFusedMulAddOpName = "FusedMulAdd";
