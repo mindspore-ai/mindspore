@@ -393,6 +393,10 @@ class HSwish(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> hswish = P.HSwish()
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> result = hswish(input_x)
     """
     @prim_attr_register
     def __init__(self):
@@ -404,7 +408,6 @@ class HSwish(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         validator.check_tensor_type_same({"x": x_dtype}, (mstype.float16, mstype.float32), self.name)
         return x_dtype
-
 
 
 class Sigmoid(PrimitiveWithInfer):
@@ -462,6 +465,10 @@ class HSigmoid(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Examples:
+        >>> hsigmoid = P.HSigmoid()
+        >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> result = hsigmoid(input_x)
     """
 
     @prim_attr_register
@@ -883,7 +890,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             h_out = math.ceil(x_shape[2] / stride_h)
             w_out = math.ceil(x_shape[3] / stride_w)
 
-            pad_needed_h = max(0, (h_out - 1) * stride_h+ dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
+            pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape[2])
             pad_top = math.floor(pad_needed_h / 2)
             pad_bottom = pad_needed_h - pad_top
 
@@ -1138,6 +1145,33 @@ class AvgPool(_Pool):
 
     Outputs:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.avgpool_op = P.AvgPool(padding="VALID", ksize=2, strides=1)
+        >>>
+        >>>     def construct(self, x):
+        >>>         result = self.avgpool_op(x)
+        >>>         return result
+        >>>
+        >>> input_x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
+        >>> net = Net()
+        >>> result = net(input_x)
+        [[[[ 2.5   3.5   4.5]
+           [ 6.5   7.5   8.5]]
+
+          [[ 14.5  15.5  16.5]
+           [ 18.5  19.5  20.5]]
+
+          [[ 26.5  27.5  28.5]
+           [ 30.5  31.5  32.5]]]]
     """
 
     @prim_attr_register
@@ -1590,6 +1624,16 @@ class SGD(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be updated.
+
+    Examples:
+        >>> sgd = P.SGD()
+        >>> parameters = Tensor(np.array([2, -0.5, 1.7, 4]), mindspore.float32)
+        >>> gradient = Tensor(np.array([1, -1, 0.5, 2]), mindspore.float32)
+        >>> learning_rate = Tensor(0.01, mindspore.float32)
+        >>> accum = Tensor(np.array([0.1, 0.3, -0.2, -0.1]), mindspore.float32)
+        >>> momentum = Tensor(0.1, mindspore.float32)
+        >>> stat = Tensor(np.array([1.5, -0.3, 0.2, -0.7]), mindspore.float32)
+        >>> result = sgd(parameters, gradient, learning_rate, accum, momentum, stat)
     """
 
     @prim_attr_register
@@ -1619,6 +1663,7 @@ class SGD(PrimitiveWithInfer):
         validator.check_tensor_type_same({"momentum": momentum_dtype}, valid_types, self.name)
         validator.check_tensor_type_same({"stat": stat_dtype}, valid_types, self.name)
         return parameters_dtype
+
 
 class ApplyRMSProp(PrimitiveWithInfer):
     """
@@ -1659,6 +1704,18 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be update.
+
+    Examples:
+        >>> apply_rms = P.ApplyRMSProp()
+        >>> input_x = Tensor(np.random.randint(0, 256, (3, 3)),mindspore.float32)
+        >>> mean_square = Tensor(np.random.randint(0, 256, (3, 3)), mindspore.float32)
+        >>> moment = Tensor(np.random.randn(3, 3), mindspore.float32)
+        >>> grad = Tensor(np.random.randint(-32, 16, (3, 3)), mindspore.float32 )
+        >>> learning_rate = 0.9
+        >>> decay = 0.0
+        >>> momentum = 1e-10
+        >>> epsilon = 0.001
+        >>> result = apply_rms(input_x, mean_square, moment, grad, learning_rate, decay, momentum, epsilon)
     """
 
     @prim_attr_register
@@ -1729,6 +1786,20 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be update.
+
+    Examples:
+        >>> centered_rms_prop = P.ApplyCenteredRMSProp()
+        >>> input_x = Tensor(np.random.randint(0, 256, (3, 3)),mindspore.float32)
+        >>> mean_grad = Tensor(np.random.randint(-8, 8, (3, 3)), mindspore.float32)
+        >>> mean_square = Tensor(np.random.randint(0, 256, (3, 3)), mindspore.float32)
+        >>> moment = Tensor(np.random.randn(3, 3), mindspore.float32)
+        >>> grad = Tensor(np.random.randint(-32, 16, (3, 3)), mindspore.float32 )
+        >>> learning_rate = 0.9
+        >>> decay = 0.0
+        >>> momentum = 1e-10
+        >>> epsilon = 0.001
+        >>> result = centered_rms_prop(input_x, mean_grad, mean_square, moment, grad,
+        >>>                    learning_rate, decay, momentum, epsilon)
     """
 
     @prim_attr_register
@@ -1827,6 +1898,18 @@ class L2Normalize(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the input.
+
+    Examples:
+        >>> l2_normalize = P.L2Normalize()
+        >>> input_x = Tensor(np.random.randint(-256, 256, (2, 3, 4)), mindspore.float32)
+        >>> result = l2_normalize(input_x)
+        [[[-0.47247353   -0.30934513   -0.4991462   0.8185567 ]
+          [-0.08070751   -0.9961299    -0.5741758   0.09262337]
+          [-0.9916556    -0.3049123     0.5730487  -0.40579924]
+
+         [[-0.88134485    0.9509498    -0.86651784  0.57442576]
+          [ 0.99673784    0.08789381   -0.8187321   0.9957012 ]
+          [ 0.12891524   -0.9523804    -0.81952125  0.91396334]]]
     """
 
     @prim_attr_register
@@ -2138,6 +2221,32 @@ class PReLU(PrimitiveWithInfer):
         Tensor, with the same type as `input_x`.
 
     Detailed information, please refer to `nn.PReLU`.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.prelu = P.PReLU()
+        >>>     def construct(self, input_x, weight):
+        >>>         result = self.prelu(input_x, weight)
+        >>>         return result
+        >>>
+        >>> input_x = Tensor(np.random.randint(-3, 3, (2, 3, 2)), mindspore.float32)
+        >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
+        >>> net = Net()
+        >>> result = net(input_x, weight)
+        [[[-0.1      1.        ]
+          [ 0.       2.        ]
+          [0.        0.        ]]
+
+         [[-0.2     -0.1      ]
+          [2.       -1.8000001]
+          [0.6       0.6       ]]]
     """
 
     @prim_attr_register
@@ -2547,6 +2656,27 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
     Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and same shape as `input_x`.
         Otherwise it is a scalar.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.binary_cross_entropy = P.BinaryCrossEntropy()
+        >>>     def construct(self, x, y, weight):
+        >>>         result = self.binary_cross_entropy(x, y, weight)
+        >>>         return result
+        >>>
+        >>> net = Net()
+        >>> input_x = Tensor(np.array([0.2, 0.7, 0.1]), mindspore.float32)
+        >>> input_y = Tensor(np.array([0., 1., 0.]), mindspore.float32)
+        >>> weight = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> result = net(input_x, input_y, weight)
+        0.38240486
     """
 
     @prim_attr_register
@@ -2726,6 +2856,37 @@ class ApplyFtrl(PrimitiveWithInfer):
 
     Outputs:
         Tensor, representing the updated var.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class ApplyFtrlNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(ApplyFtrlNet, self).__init__()
+        >>>         self.apply_ftrl = P.ApplyFtrl()
+        >>>         self.lr = 0.001
+        >>>         self.l1 = 0.0
+        >>>         self.l2 = 0.0
+        >>>         self.lr_power = -0.5
+        >>>         self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        >>>         self.accum = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="accum")
+        >>>         self.linear = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="linear")
+        >>>
+        >>>     def construct(self, grad):
+        >>>         out = self.apply_ftrl(self.var, self.accum, self.linear, grad, self.lr, self.l1, self.l2,
+        >>>                               self.lr_power)
+        >>>         return out
+        >>>
+        >>> net = ApplyFtrlNet()
+        >>> input_x = Tensor(np.random.randint(-4, 4, (3, 3)), mindspore.float32)
+        >>> result = net(input_x)
+        [[0.67455846   0.14630564   0.160499  ]
+         [0.16329421   0.00415689   0.05202988]
+         [0.18672481   0.17418946   0.36420345]]
     """
 
     @prim_attr_register
@@ -2780,6 +2941,18 @@ class ConfusionMulGrad(PrimitiveWithInfer):
               the shape of output is :math:`(x_1,x_3,...,x_R)`.
             - If axis is tuple(int), set as (2,3), and keep_dims is false,
               the shape of output is :math:`(x_1,x_4,...x_R)`.
+
+    Examples:
+        >>> confusion_mul_grad = P.ConfusionMulGrad()
+        >>> input_0 = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
+        >>> input_1 = Tensor(np.random.randint(0, 4, (2, 3)), mindspore.float32)
+        >>> input_2 = Tensor(np.random.randint(-4, 0, (2, 3)), mindspore.float32)
+        >>> output_0, output_1 = confusion_mul_grad(input_0, input_1, input_2)
+        output_0:
+            [[ 3.   1.   0.]
+             [-6.   2.  -2.]]
+        output_1:
+            -3.0
     """
 
     @prim_attr_register

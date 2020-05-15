@@ -1156,6 +1156,16 @@ class Tile(PrimitiveWithInfer):
           Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
           then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(1*y_1, ..., x_S*y_R)`.
+
+    Examples:
+        >>> tile = P.Tile()
+        >>> input_x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)
+        >>> multiples = (2, 3)
+        >>> result = tile(input_x, multiples)
+        [[1.  2.  1.  2.  1.  2.]
+         [3.  4.  3.  4.  3.  4.]
+         [1.  2.  1.  2.  1.  2.]
+         [3.  4.  3.  4.  3.  4.]]
     """
 
     @prim_attr_register

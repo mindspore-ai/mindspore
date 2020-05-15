@@ -168,6 +168,26 @@ class CheckValid(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the valided tensor.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> class Net(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(Net, self).__init__()
+        >>>         self.check_valid = P.CheckValid()
+        >>>     def construct(self, x, y):
+        >>>         valid_result = self.check_valid(x, y)
+        >>>         return valid_result
+        >>>
+        >>> bboxes = Tensor(np.linspace(0, 6, 12).reshape(3, 4), mindspore.float32)
+        >>> img_metas = Tensor(np.array([2, 1, 3]), mindspore.float32)
+        >>> net = Net()
+        >>> result = net(bboxes, img_metas)
+        [True   False   False]
     """
 
     @prim_attr_register

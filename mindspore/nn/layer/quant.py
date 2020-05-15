@@ -62,6 +62,10 @@ class FakeQuantWithMinMax(Cell):
     Outputs:
         Tensor, with the same type and shape as the `x`.
 
+    Examples:
+        >>> fake_quant = nn.FakeQuantWithMinMax()
+        >>> input_x = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> result = fake_quant(input_x)
     """
 
     def __init__(self,
@@ -182,6 +186,12 @@ class Conv2dBatchNormQuant(Cell):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+   Examples:
+        >>> batchnorm_quant = nn.Conv2dBatchNormQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
+        >>>                                           dilation=(1, 1))
+        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
+        >>> result = batchnorm_quant(input_x)
     """
 
     def __init__(self,
@@ -339,6 +349,11 @@ class Conv2dQuant(_Conv):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Examples:
+        >>> conv2d_quant = nn.Conv2dQuant(1, 6, kernel_size= (2, 2), stride=(1, 1), pad_mode="valid",
+        >>>                               dilation=(1, 1))
+        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 1, 1, 3)), mindspore.float32)
+        >>> result = conv2d_quant(input_x)
     """
 
     def __init__(self,
@@ -412,6 +427,11 @@ class DenseQuant(Cell):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Examples:
+        >>> dense_quant = nn.DenseQuant(3, 6)
+        >>> input_x = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
+        >>> result = dense_quant(input_x)
     """
 
     def __init__(
@@ -503,6 +523,10 @@ class ReLUQuant(Cell):
     Outputs:
         Tensor, with the same type and shape as the `x`.
 
+    Examples:
+        >>> relu_quant = nn.ReLUQuant()
+        >>> input_x = Tensor(np.array([[1, 2, 0], [-1, -2, 1]]), mindspore.float32)
+        >>> result = relu_quant(input_x)
     """
 
     def __init__(self,
@@ -546,6 +570,10 @@ class ReLU6Quant(Cell):
     Outputs:
         Tensor, with the same type and shape as the `x`.
 
+    Examples:
+        >>> relu6_quant = nn.ReLU6Quant(4, 1)
+        >>> input_x = Tensor(np.array([[1, 2, -1], [-2, 0, -1]]), mindspore.float32)
+        >>> result = relu6_quant(input_x)
     """
 
     def __init__(self, num_bits=8, quant_delay=0, symmetric=False,
@@ -584,6 +612,10 @@ class HSwishQuant(Cell):
     Outputs:
         Tensor, with the same type and shape as the `x`.
 
+    Examples:
+        >>> hswish_quant = nn.HSwishQuant(4, 1)
+        >>> input_x = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> result = hswish_quant(input_x)
     """
 
     def __init__(self,
@@ -633,6 +665,10 @@ class HSigmoidQuant(Cell):
     Outputs:
         Tensor, with the same type and shape as the `x`.
 
+    Examples:
+        >>> hsigmoid_quant = nn.HSigmoidQuant(4, 1)
+        >>> input_x = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> result = hsigmoid_quant(input_x)
     """
 
     def __init__(self,
@@ -682,6 +718,11 @@ class TensorAddQuant(Cell):
     Outputs:
         Tensor, with the same type and shape as the `x`.
 
+    Examples:
+        >>> add_quant = nn.TensorAddQuant()
+        >>> input_x = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
+        >>> input_y = Tensor(np.random.randint(-2, 2, (2, 3)), mindspore.float32)
+        >>> result = add_quant(input_x, input_y)
     """
 
     def __init__(self,

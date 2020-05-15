@@ -713,6 +713,12 @@ class Neg(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as input.
+
+    Examples:
+        >>> neg = P.Neg()
+        >>> input_x = Tensor(np.array([1, 2, -1, 2, 0, -3.5]), mindspore.float32)
+        >>> result = neg(input_x)
+        [-1.  -2.   1.  -2.   0.   3.5]
     """
 
     @prim_attr_register
@@ -1623,6 +1629,7 @@ class LogicalOr(_LogicBinaryOp):
     def infer_dtype(self, x_dtype, y_dtype):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, (mstype.bool_,), self.name)
 
+
 class IsNan(PrimitiveWithInfer):
     """
     Judging which elements are nan for each position
@@ -1632,6 +1639,11 @@ class IsNan(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
+
+    Examples:
+        >>> is_nan = P.IsNan()
+        >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+        >>> result = is_nan(input_x)
     """
 
     @prim_attr_register
@@ -1645,6 +1657,7 @@ class IsNan(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         return mstype.bool_
 
+
 class IsInf(PrimitiveWithInfer):
     """
     Judging which elements are inf or -inf for each position
@@ -1654,6 +1667,11 @@ class IsInf(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
+
+    Examples:
+        >>> is_inf = P.IsInf()
+        >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+        >>> result = is_inf(input_x)
     """
 
     @prim_attr_register
@@ -1667,6 +1685,7 @@ class IsInf(PrimitiveWithInfer):
     def infer_dtype(self, x_dtype):
         return mstype.bool_
 
+
 class IsFinite(PrimitiveWithInfer):
     """
     Judging which elements are finite for each position
@@ -1676,6 +1695,12 @@ class IsFinite(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
+
+    Examples:
+        >>> is_finite = P.IsFinite()
+        >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+        >>> result = is_finite(input_x)
+        [False   True   False]
     """
 
     @prim_attr_register
@@ -1691,6 +1716,7 @@ class IsFinite(PrimitiveWithInfer):
         validator.check_tensor_type_same({'x': x_dtype}, mstype.number_type + (mstype.bool_,), self.name)
         return mstype.bool_
 
+
 class FloatStatus(PrimitiveWithInfer):
     """
     Determine if the elements contains nan, inf or -inf. `0` for normal, `1` for overflow.
@@ -1701,6 +1727,11 @@ class FloatStatus(PrimitiveWithInfer):
     Outputs:
         Tensor, has the shape of `(1,)`, and has the same dtype of input `mindspore.dtype.float32` or
         `mindspore.dtype.float16`.
+
+    Examples:
+        >>> float_status = P.FloatStatus()
+        >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
+        >>> result = float_status(input_x)
     """
 
     @prim_attr_register
@@ -1713,6 +1744,7 @@ class FloatStatus(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         return x_dtype
+
 
 class NPUAllocFloatStatus(PrimitiveWithInfer):
     """
