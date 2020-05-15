@@ -43,6 +43,7 @@ class GatherV2PInfo : public OperatorInfo {
 
   Status GenerateStrategies(int32_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
   std::shared_ptr<std::vector<std::vector<int32_t>>> GenerateBatchStrategies() override;
 
  protected:

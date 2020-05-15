@@ -258,14 +258,18 @@ Status GatherV2PInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   return SUCCESS;
 }
 
+ReplaceGraphPtr GatherV2PInfo::replace_graph(const CNodePtr &cnode) {
+  auto param_strategy = strategy_->GetInputDim().at(0);
+  if (param_strategy.at(IntToSize(axis_)) != 1 && ComputeReplaceGraph(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << ": ComputeReplaceGraph failed.";
+    return nullptr;
+  }
+  return replace_graph_;
+}
+
 Status GatherV2PInfo::Init(const StrategyPtr &strategy) {
-  auto param_strategy = strategy->GetInputDim().at(0);
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
-    return FAILED;
-  }
-  if (param_strategy.at(IntToSize(axis_)) != 1 && ComputeReplaceGraph(cnode_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": ComputeReplaceGraph failed.";
     return FAILED;
   }
   MS_LOG(INFO) << name_ << ": Init success.";
