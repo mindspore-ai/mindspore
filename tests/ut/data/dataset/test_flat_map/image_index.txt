@@ -1,0 +1,2 @@
+../data/dataset/test_flat_map/images1.txt
+../data/dataset/test_flat_map/images2.txt

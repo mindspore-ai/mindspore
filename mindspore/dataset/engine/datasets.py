@@ -268,6 +268,50 @@ class Dataset:
         """
         return ShuffleDataset(self, buffer_size)
 
+    def flat_map(self, func):
+        """
+        Maps `func` to each row in dataset and flatten the result.
+
+        The specified `func` is a function that must take one 'Ndarray' as input
+        and return a 'Dataset'.
+
+        Args:
+            func (function): A function that must take one 'Ndarray' as an argument and
+                return a 'Dataset'.
+
+        Returns:
+            Dataset, applied by the function.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>> import mindspore.dataset.transforms.nlp.utils as nlp
+            >>> # declare a function which returns a Dataset object
+            >>> def flat_map_func(x):
+            >>>     data_dir = nlp.as_text(x[0])
+            >>>     d = ds.ImageFolderDatasetV2(data_dir)
+            >>>     return d
+            >>> # data is a Dataset object
+            >>> data = ds.TextFileDataset(DATA_FILE)
+            >>> data = data.flat_map(flat_map_func)
+
+        Raises:
+            TypeError: If `func` is not a function.
+            TypeError: If `func` doesn't return a Dataset.
+        """
+        dataset = None
+        if not hasattr(func, '__call__'):
+            raise TypeError("func must be a function.")
+
+        for row_data in self:
+            if dataset is None:
+                dataset = func(row_data)
+            else:
+                dataset += func(row_data)
+
+        if not isinstance(dataset, Dataset):
+            raise TypeError("flat_map must return a Dataset object.")
+        return dataset
+
     @check_map
     def map(self, input_columns=None, operations=None, output_columns=None, columns_order=None,
             num_parallel_workers=None, python_multiprocessing=False):
