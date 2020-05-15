@@ -66,17 +66,17 @@ def test_lamb_next_mv_rule(tag):
     def after(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
               constant_mul2_x, constant_mul3_sub1, constant_mul4_x, constant_add2_y):
         lamb_next_mv = LambNextMV(input0, input1, input2, input3, input4, input5, input6,
-                                                      constant_mul0_x, constant_mul1_sub,
-                                                      constant_mul2_x, constant_mul3_sub1, constant_mul4_x,
-                                                      constant_add2_y)
+                                  constant_mul0_x, constant_mul1_sub, constant_mul2_x, constant_mul3_sub1,
+                                  constant_mul4_x, constant_add2_y)
         outputs = make_tuple(tuple_getitem(lamb_next_mv, 0), tuple_getitem(lamb_next_mv, 1),
                              tuple_getitem(lamb_next_mv, 2), tuple_getitem(lamb_next_mv, 3))
         output = tuple_getitem(outputs, 0)
         return make_tuple(output)
 
     @fns
-    def before_unmatched_real_div4(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
-               constant_mul2_x, constant_mul3_sub1, constant_mul4_x, constant_add2_y):
+    def before_unmatched_real_div4(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
+                                   constant_mul1_sub, constant_mul2_x, constant_mul3_sub1, constant_mul4_x,
+                                   constant_add2_y):
         mul0 = Mul(constant_mul0_x, input4)
         mul1 = Mul(constant_mul1_sub, input3)
         add0 = Add(mul0, mul1)
@@ -98,8 +98,9 @@ def test_lamb_next_mv_rule(tag):
         return output
 
     @fns
-    def before_unmatched_real_div0(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
-               constant_mul2_x, constant_mul3_sub1, constant_mul4_x, constant_add2_y):
+    def before_unmatched_real_div0(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
+                                   constant_mul1_sub, constant_mul2_x, constant_mul3_sub1, constant_mul4_x,
+                                   constant_add2_y):
         mul0 = Mul(constant_mul0_x, input4)
         mul1 = Mul(constant_mul1_sub, input3)
         add0 = Add(mul0, mul1)
@@ -121,8 +122,9 @@ def test_lamb_next_mv_rule(tag):
         return output
 
     @fns
-    def before_unmatched_real_div1(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
-               constant_mul2_x, constant_mul3_sub1, constant_mul4_x, constant_add2_y):
+    def before_unmatched_real_div1(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
+                                   constant_mul1_sub, constant_mul2_x, constant_mul3_sub1, constant_mul4_x,
+                                   constant_add2_y):
         mul0 = Mul(constant_mul0_x, input4)
         mul1 = Mul(constant_mul1_sub, input3)
         add0 = Add(mul0, mul1)
@@ -144,8 +146,9 @@ def test_lamb_next_mv_rule(tag):
         return output
 
     @fns
-    def before_unmatched_real_div2(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
-               constant_mul2_x, constant_mul3_sub1, constant_mul4_x, constant_add2_y):
+    def before_unmatched_real_div2(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
+                                   constant_mul1_sub, constant_mul2_x, constant_mul3_sub1, constant_mul4_x,
+                                   constant_add2_y):
         mul0 = Mul(constant_mul0_x, input4)
         mul1 = Mul(constant_mul1_sub, input3)
         add0 = Add(mul0, mul1)

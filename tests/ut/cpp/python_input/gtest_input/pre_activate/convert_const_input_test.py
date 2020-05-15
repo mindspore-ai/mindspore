@@ -38,6 +38,7 @@ depth = Tensor(2, mstype.int32)
 shape = (2, 4, 2, 2)
 dropout_gen_mask = P.DropoutGenMask()
 
+
 class FnDict:
     def __init__(self):
         self.fnDict = {}
@@ -114,7 +115,7 @@ def test_convert_strided_slice_grad_input_to_attr(tag):
 
     @fns
     def before(x):
-        return stridedslicegrad(x, (16, 128, 1024), (0, 0 , 0), (16, 1, 1024), (1, 1,1))
+        return stridedslicegrad(x, (16, 128, 1024), (0, 0, 0), (16, 1, 1024), (1, 1, 1))
 
     @fns
     def after(x):

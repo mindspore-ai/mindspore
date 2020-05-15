@@ -37,13 +37,13 @@ def test_transpose_transdata_fusion(tag):
     fns = FnDict()
 
     @fns
-    def before(input):
-        res = Transpose(input, (1, 0, 2, 3))
+    def before(x):
+        res = Transpose(x, (1, 0, 2, 3))
         return res
 
     @fns
-    def after(input):
-        output = transdata(input)
+    def after(x):
+        output = transdata(x)
         res = make_tuple(output)
         return res
 
