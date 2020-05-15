@@ -47,7 +47,7 @@ def test_get_parameter_layout():
     net = Net(strategy1, strategy2, weight)
     net.set_auto_parallel()
     exe = me._executor
-    exe.compile(net, x, auto_parallel_mode=True)
+    exe.compile(net, x, phase='train', auto_parallel_mode=True)
     x_layout = [[2, 4], [1, -1], [16, 32]]  # device_arrangement = [2, 4], tensor_map = [1, -1]
     weight_layout = [[2, 4], [0, -1], [16, 32]]  # device_arrangement = [2, 4], tensor_map = [0, -1]
     expect_dict = {'x': x_layout, 'w1': weight_layout}

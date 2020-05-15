@@ -25,6 +25,7 @@
 
 #include "ir/func_graph_cloner.h"
 #include "parallel/costmodel_context.h"
+#include "parallel/context.h"
 #include "pipeline/pass.h"
 #include "pipeline/parse/parse_base.h"
 #include "pipeline/parse/data_converter.h"
@@ -217,6 +218,8 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   abstract::AbstractBasePtrList args_spec = res->args_spec();
 
+  parallel::ParallelParameterContextInit(func_graph);
+
   // suppose that there is not KeywordArgument for the top graph
   // get the hyper parameter
   for (const auto &param : func_graph->parameters()) {
@@ -224,7 +227,10 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
     if (param_node->has_default()) {
       AbstractBasePtr ptr =
         abstract::FromValue(parse::data_converter::PyDataToValue(param_node->default_param()), true);
+
+      parallel::ParallelParameterContextRestoreInNoTraining(func_graph, param_node, ptr);
       args_spec.push_back(ptr);
+      parallel::ParallelParameterContextCkptInTraining(func_graph, param_node, ptr);
     }
   }
   // Analyze
