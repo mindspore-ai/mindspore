@@ -38,6 +38,7 @@ class EventWriter(Process):
 
     def __init__(self, filepath: str, flush_interval: int) -> None:
         super().__init__()
+        _ = flush_interval
         with open(filepath, 'w'):
             os.chmod(filepath, stat.S_IWUSR | stat.S_IRUSR)
         self._writer = EventWriter_(filepath)

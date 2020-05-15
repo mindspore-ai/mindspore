@@ -82,6 +82,8 @@ def get_dataset(batch_size=1, repeat_count=1, distribute_file=''):
     '''
     get dataset
     '''
+    _ = distribute_file
+
     ds = de.TFRecordDataset([cfg.data_file], cfg.schema_file, columns_list=["input_ids", "input_mask",
                                                                             "segment_ids", "label_ids"])
     type_cast_op = C.TypeCast(mstype.int32)
