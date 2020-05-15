@@ -50,6 +50,7 @@
 #include "pre_activate/ascend/ir_fusion/remove_reshape_pair.h"
 #include "pre_activate/ascend/ir_fusion/derelu_fusion.h"
 #include "pre_activate/ascend/ir_fusion/batchnorm_to_bninfer.h"
+#include "pre_activate/ascend/ir_fusion/batchnormgrad_to_bninfergrad.h"
 #include "pre_activate/ascend/format_type/insert_trans_op.h"
 #include "pre_activate/pass/getitem_tuple.h"
 #include "pre_activate/pass/optimize_dependence.h"
@@ -102,6 +103,7 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
 }
 }  // namespace
 
