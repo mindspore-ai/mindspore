@@ -461,11 +461,11 @@ class Transpose(PrimitiveWithInfer):
         x_shape = x['shape']
         p_value = perm['value']
         x_type = x['dtype']
-        if len(x_shape) != len(p_value):
-            raise ValueError('The dimension of x and perm must be equal.')
-
         validator.check_value_type("p_value", p_value, [tuple], self.name)
         validator.check_subclass("x_type", x_type, mstype.tensor, self.name)
+
+        if len(x_shape) != len(p_value):
+            raise ValueError('The dimension of x and perm must be equal.')
 
         tmp = list(p_value)
         for i, dim in enumerate(p_value):
@@ -2165,7 +2165,7 @@ class SpaceToBatch(PrimitiveWithInfer):
     of the input are zero padded according to paddings if necessary.
 
     Args:
-        block_size (int): The block size of dividing block with value >= 1.
+        block_size (int): The block size of dividing block with value >= 2.
         paddings (list): The padding value for H and W dimension, containing 2 sub list, each containing 2 int value.
             All values must be >= 0. paddings[i] specifies the paddings for spatial dimension i, which corresponds to
             input dimension i+2. It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1] is divisible
@@ -2199,10 +2199,11 @@ class SpaceToBatch(PrimitiveWithInfer):
     def __init__(self, block_size, paddings):
         """Init SpaceToBatch"""
         validator.check_value_type('block_size', block_size, [int], self.name)
-        validator.check('block_size', block_size, '', 1, Rel.GT, self.name)
+        validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
         self.block_size = block_size
         validator.check('paddings shape', np.array(paddings).shape, '', (2, 2), Rel.EQ, self.name)
         for elem in itertools.chain(*paddings):
+            validator.check_integer('paddings element', elem, 0, Rel.GE, self.name)
             validator.check_value_type('paddings element', elem, [int], self.name)
         self.paddings = paddings
 
@@ -2266,10 +2267,11 @@ class BatchToSpace(PrimitiveWithInfer):
     def __init__(self, block_size, crops):
         """Init BatchToSpace"""
         validator.check_value_type('block_size', block_size, [int], self.name)
-        validator.check('block_size', block_size, '', 1, Rel.GT, self.name)
+        validator.check('block_size', block_size, '', 1, Rel.GE, self.name)
         self.block_size = block_size
         validator.check('crops shape', np.array(crops).shape, '', (2, 2))
         for elem in itertools.chain(*crops):
+            validator.check_integer('crops element', elem, 0, Rel.GE, self.name)
             validator.check_value_type('crops element', elem, [int], self.name)
         self.crops = crops
 
