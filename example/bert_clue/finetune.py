@@ -83,8 +83,7 @@ def test_train():
     pytest -s finetune.py::test_train
     '''
     devid = int(os.getenv('DEVICE_ID'))
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=devid,
-                        enable_mem_reuse=True, enable_task_sink=True)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=devid)
     #BertCLSTrain for classification
     #BertNERTrain for sequence labeling
     if cfg.task == 'NER':

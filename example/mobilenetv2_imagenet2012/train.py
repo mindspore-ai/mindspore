@@ -56,8 +56,6 @@ rank_size = int(os.getenv('RANK_SIZE'))
 run_distribute = rank_size > 1
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id, save_graphs=False)
-context.set_context(enable_loop_sink=True)
-context.set_context(enable_mem_reuse=True)
 
 class CrossEntropyWithLabelSmooth(_Loss):
     """

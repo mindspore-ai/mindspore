@@ -141,7 +141,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train_and_eval_lenet():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", enable_mem_reuse=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     network = LeNet5(10)
     net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
     net_opt = nn.Momentum(network.trainable_params(), 0.01, 0.9)

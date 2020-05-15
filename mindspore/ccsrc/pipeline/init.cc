@@ -117,20 +117,12 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("close_tsd", &mindspore::MsContext::CloseTsd, "Close tdt dataset client.")
     .def("get_save_graphs_flag", &mindspore::MsContext::save_graphs_flag, "Get whether to save graphs.")
     .def("set_save_graphs_flag", &mindspore::MsContext::set_save_graphs_flag, "Set whether to save graphs.")
-    .def("get_auto_mixed_precision_flag", &mindspore::MsContext::auto_mixed_precision_flag,
-         "Get whether to enable auto mixed precision.")
-    .def("set_auto_mixed_precision_flag", &mindspore::MsContext::set_auto_mixed_precision_flag,
-         "Set whether to enable auto mixed precision.")
     .def("get_enable_reduce_precision_flag", &mindspore::MsContext::enable_reduce_precision,
          "Get whether to enable reduce precision.")
     .def("set_enable_reduce_precision_flag", &mindspore::MsContext::set_enable_reduce_precision,
          "Set whether to enable reduce precision.")
     .def("get_save_graphs_path", &mindspore::MsContext::save_graphs_path, "Get save graphs path.")
     .def("set_save_graphs_path", &mindspore::MsContext::set_save_graphs_path, "Set save graphs path.")
-    .def("get_loop_sink_flag", &mindspore::MsContext::loop_sink_flag, "Get whether to enable loop sink.")
-    .def("set_loop_sink_flag", &mindspore::MsContext::set_loop_sink_flag, "Set whether to enable loop sink.")
-    .def("get_enable_mem_reuse", &mindspore::MsContext::enable_mem_reuse, "Get whether to enable mem reuse.")
-    .def("set_enable_mem_reuse", &mindspore::MsContext::set_enable_mem_reuse, "Set whether to enable mem reuse.")
     .def("get_save_ms_model_flag", &mindspore::MsContext::save_ms_model_flag, "Get whether to save ms model.")
     .def("set_save_ms_model_flag", &mindspore::MsContext::set_save_ms_model_flag, "Set whether to save ms model.")
     .def("get_save_ms_model_path", &mindspore::MsContext::save_ms_model_path, "Get path to save ms model.")

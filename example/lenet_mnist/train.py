@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, enable_mem_reuse=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
     network = LeNet5(cfg.num_classes)
     net_loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")

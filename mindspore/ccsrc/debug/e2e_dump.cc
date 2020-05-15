@@ -107,6 +107,10 @@ bool Dump::IsConfigValid(const nlohmann::json &dumpSettings) {
   }
 
   dump_enable_ = enable;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  // dump_enable_ is true, close mem reuse
+  context_ptr->set_enable_mem_reuse(!dump_enable_);
   trans_flag_ = trans_flag;
   dump_mode_ = mode;
   dump_path_ = path;

@@ -32,7 +32,6 @@ from mindspore.parallel import set_algo_parameters
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(device_id=int(os.getenv('DEVICE_ID')))
-context.set_context(enable_loop_sink=False)
 init()
 context.set_auto_parallel_context(mirror_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL)
 

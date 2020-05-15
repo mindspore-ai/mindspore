@@ -32,7 +32,6 @@ from mindspore.parallel import _cost_model_context as cost_model_context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(device_id=0)
-context.set_context(enable_loop_sink=False)
 init()
 
 

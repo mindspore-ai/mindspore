@@ -102,6 +102,21 @@ def test_profiling_options():
     assert context.get_context("profiling_options") == "training_trace:task_trace"
 
 
+def test_variable_memory_max_size():
+    """test_variable_memory_max_size"""
+    with pytest.raises(TypeError):
+        context.set_context(variable_memory_max_size=True)
+    with pytest.raises(TypeError):
+        context.set_context(variable_memory_max_size=1)
+    with pytest.raises(ValueError):
+        context.set_context(variable_memory_max_size="")
+    with pytest.raises(ValueError):
+        context.set_context(variable_memory_max_size="1G")
+    with pytest.raises(ValueError):
+        context.set_context(variable_memory_max_size="31GB")
+    context.set_context(variable_memory_max_size="3GB")
+
+
 def test_set_context():
     """ test_set_context """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
