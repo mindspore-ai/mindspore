@@ -902,6 +902,26 @@ def check_zip_dataset(method):
     return new_method
 
 
+def check_concat(method):
+    """check the input arguments of concat_dataset method in `Dataset`."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check datasets; required argument
+        ds = param_dict.get("datasets")
+        if ds is None:
+            raise ValueError("datasets is not provided.")
+
+        if not isinstance(ds, (list, datasets.Dataset)):
+            raise ValueError("datasets is not list or of type Dataset.")
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
 def check_rename(method):
     """check the input arguments of rename."""
 

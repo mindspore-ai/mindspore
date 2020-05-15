@@ -46,6 +46,7 @@ enum OpName {
   kSkip,
   kTake,
   kZip,
+  kConcat,
   kMap,
   kFilter,
   kDeviceQueue,
@@ -126,6 +127,8 @@ class DEPipeline {
   Status ParseTakeOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseZipOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
+
+  Status ParseConcatOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
   Status ParseDeviceQueueOp(const py::dict &args, std::shared_ptr<DatasetOp> *ptr);
 
