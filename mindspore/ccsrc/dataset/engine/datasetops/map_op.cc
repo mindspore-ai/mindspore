@@ -292,7 +292,7 @@ Status MapOp::WorkerEntryInit(const DataBuffer *in_buf) {
 
       // Before we continue, issue a sanity check to make sure the input columns from user and the incoming
       // columns from child are correct
-      this->ValidateInColumns(current_name_id_map);
+      RETURN_IF_NOT_OK(this->ValidateInColumns(current_name_id_map));
 
       // initialize keep_input_columns, true means to keep the column.
       keep_input_columns_.resize(num_cols, true);
