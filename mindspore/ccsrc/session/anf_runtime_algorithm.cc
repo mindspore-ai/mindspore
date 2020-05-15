@@ -292,6 +292,9 @@ std::string AnfRuntimeAlgorithm::GetOutputFormat(const AnfNodePtr &node, size_t 
                       << " is out of the node output range :" << GetOutputTensorNum(node) << " #node ["
                       << node->DebugString() << "]";
   }
+  if (!AnfAlgo::IsRealKernel(node)) {
+    return AnfAlgo::GetPrevNodeOutputFormat(node, output_idx);
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -310,6 +313,9 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
     MS_LOG(EXCEPTION) << "Input index :" << input_idx
                       << " is out of the number node Input range :" << GetInputTensorNum(node) << "#node ["
                       << node->DebugString() << "]";
+  }
+  if (!IsRealKernel(node)) {
+    GetPrevNodeOutputFormat(node, input_idx);
   }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -367,8 +373,8 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputInferShape(const AnfNodePtr &n
     } else if (b_shp->isa<abstract::NoShape>()) {
       return std::vector<size_t>();
     } else {
-      MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
-                        << base_shape->ToString();
+      MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
+                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString();
     }
   } else if (base_shape->isa<abstract::NoShape>()) {
     return std::vector<size_t>();
@@ -415,6 +421,9 @@ std::vector<kernel::Axis> AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNode
                       << " is out of range of the node's input size : " << GetInputTensorNum(node) << "#node["
                       << node->DebugString() << "]";
   }
+  if (!IsRealKernel(node)) {
+    return GetPrevNodeOutputReshapeType(node, input_idx);
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -430,6 +439,9 @@ std::vector<kernel::Axis> AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNod
   if (output_idx > GetOutputTensorNum(node)) {
     MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
                       << GetOutputTensorNum(node) << "#node[ " << node->DebugString() << "]";
+  }
+  if (!IsRealKernel(node)) {
+    return GetPrevNodeOutputReshapeType(node, output_idx);
   }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -488,6 +500,9 @@ TypeId AnfRuntimeAlgorithm::GetOutputDeviceDataType(const AnfNodePtr &node, size
     MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
                       << GetOutputTensorNum(node) << "#node [ " << node->DebugString() << "]";
   }
+  if (!IsRealKernel(node)) {
+    return GetPrevNodeOutputDeviceDataType(node, output_idx);
+  }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
@@ -505,6 +520,9 @@ TypeId AnfRuntimeAlgorithm::GetInputDeviceDataType(const AnfNodePtr &node, size_
   if (input_idx > GetInputTensorNum(node)) {
     MS_LOG(EXCEPTION) << "The index [" << input_idx << "] is out of range of the node's input size [ "
                       << GetInputTensorNum(node) << "#node [ " << node->DebugString() << "]";
+  }
+  if (!IsRealKernel(node)) {
+    return GetPrevNodeOutputDeviceDataType(node, 0);
   }
   auto kernel_info = node->kernel_info();
   MS_EXCEPTION_IF_NULL(kernel_info);

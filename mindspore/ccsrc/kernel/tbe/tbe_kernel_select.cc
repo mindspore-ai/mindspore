@@ -559,6 +559,9 @@ bool IsShapeMatchFormat(const std::vector<size_t> &shape, const std::string &for
   if (format == kOpFormat_DEFAULT) {
     return true;
   }
+  if (format == kOpFormat_NDHWC && shape.size() != kShape5dDims) {
+    return false;
+  }
   // if shape size is 0, the shape will be a scalar
   if (shape.empty()) {
     return true;
@@ -574,21 +577,28 @@ bool IsShapeMatchFormat(const std::vector<size_t> &shape, const std::string &for
 
 bool IsValidKernelInfo(const std::shared_ptr<CNode> &kernel_node, const kernel::KernelBuildInfo &kernel_build_info) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  auto check_function = [](const std::vector<size_t> &shape, const std::string &format) -> bool {
-    if (!IsShapeMatchFormat(shape, format)) {
-      return false;
-    }
-    return true;
-  };
+  const size_t kCAxis = 1;
   for (size_t index = 0; index < kernel_build_info.GetOutputNum(); ++index) {
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, index);
-    if (!check_function(output_shape, kernel_build_info.GetOutputFormat(index))) {
+    if (kernel_build_info.GetOutputFormat(index) == kOpFormat_FRACTAL_Z_C04) {
+      if (output_shape.size() != kShape4dDims || output_shape[kCAxis] > 4) {
+        return false;
+      }
+      return false;
+    }
+    if (!IsShapeMatchFormat(output_shape, kernel_build_info.GetOutputFormat(index))) {
       return false;
     }
   }
   for (size_t index = 0; index < kernel_build_info.GetInputNum(); ++index) {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
-    if (!check_function(input_shape, kernel_build_info.GetInputFormat(index))) {
+    if (!IsShapeMatchFormat(input_shape, kernel_build_info.GetInputFormat(index))) {
+      return false;
+    }
+    if (kernel_build_info.GetInputFormat(index) == kOpFormat_FRACTAL_Z_C04) {
+      if (input_shape.size() != kShape4dDims || input_shape[kCAxis] > 4) {
+        return false;
+      }
       return false;
     }
   }
