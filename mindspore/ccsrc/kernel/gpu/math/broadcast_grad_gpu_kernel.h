@@ -1,4 +1,3 @@
-
 /**
  * Copyright 2020 Huawei Technologies Co., Ltd
  *
@@ -28,7 +27,6 @@
 #include "kernel/gpu/kernel_constants.h"
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 class BroadcastOpGradGpuKernel : public GpuKernel {
  public:

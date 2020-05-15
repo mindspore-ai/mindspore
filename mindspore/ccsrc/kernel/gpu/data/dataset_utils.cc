@@ -18,7 +18,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 size_t UnitSizeInBytes(const mindspore::TypeId &t) {
   size_t bytes = 0;
   switch (t) {
@@ -65,6 +64,5 @@ int ElementNums(const std::vector<int> &shape) {
 
   return nums;
 }
-
 }  // namespace kernel
 }  // namespace mindspore
