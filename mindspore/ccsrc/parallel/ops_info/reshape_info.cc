@@ -138,9 +138,9 @@ Status ReshapeInfo::ComputeReplaceOp() {
     MS_LOG(ERROR) << name_ << ": tensor_redistribution init failed.";
     return FAILED;
   }
-  MS_LOG(INFO) << name_ << ": input " << input_layout_.ToString();
-  MS_LOG(INFO) << name_ << ": output " << output_layout_.ToString();
-  MS_LOG(INFO) << name_ << ": dev_list " << dev_list.size();
+  MS_LOG(DEBUG) << name_ << ": input " << input_layout_.ToString();
+  MS_LOG(DEBUG) << name_ << ": output " << output_layout_.ToString();
+  MS_LOG(DEBUG) << name_ << ": dev_list " << dev_list.size();
   RedistributionOpListPtr redistribution_oplist_ptr = tensor_redistribution.InferTensorRedistributionOperatorList();
   if (redistribution_oplist_ptr == nullptr) {
     MS_LOG(ERROR) << name_ << "InferTensorRedistribution failed.";
@@ -148,7 +148,7 @@ Status ReshapeInfo::ComputeReplaceOp() {
   }
   replace_op_ = redistribution_oplist_ptr->first;
   replace_op_info_ = redistribution_oplist_ptr->second;
-  MS_LOG(INFO) << name_ << ": replace op size = " << replace_op_.size();
+  MS_LOG(DEBUG) << name_ << ": replace op size = " << replace_op_.size();
   return SUCCESS;
 }
 
