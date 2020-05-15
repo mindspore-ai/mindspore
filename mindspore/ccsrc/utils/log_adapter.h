@@ -125,10 +125,11 @@ enum SubModuleId : int {
 #define SUBMODULE_ID mindspore::SubModuleId::SM_ME
 #endif
 
-#ifndef USE_GLOG
-extern int g_mslog_level;
-#endif
+#if defined(_WIN32) || defined(_WIN64)
+extern int g_ms_submodule_log_levels[] __attribute__((dllexport));
+#else
 extern int g_ms_submodule_log_levels[] __attribute__((visibility("default")));
+#endif
 
 class LogWriter {
  public:
