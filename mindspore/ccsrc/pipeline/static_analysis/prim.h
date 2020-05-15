@@ -79,8 +79,8 @@ class DoSignatureEvaluator : public Evaluator {
   AbstractBasePtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
                       AnfNodeConfigPtr out_config = nullptr) override;
 
-  AbstractBasePtr Infer(AnalysisEnginePtr, const AbstractBasePtrList &) override {
-    MS_LOG(EXCEPTION) << "Infer() should not be called, Run() method should be called";
+  AbstractBasePtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+    MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 
  private:
@@ -94,8 +94,8 @@ class UnpackGraphEvaluator : public Evaluator {
   AbstractBasePtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
                       AnfNodeConfigPtr out_config = nullptr) override;
 
-  AbstractBasePtr Infer(AnalysisEnginePtr, const AbstractBasePtrList &) override {
-    MS_LOG(EXCEPTION) << "Infer() should not be called, Run() method should be called";
+  AbstractBasePtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+    MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 
  private:

@@ -430,8 +430,8 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
   } catch (const py::error_already_set &ex) {
     // print function call stack info before release
     std::ostringstream oss;
-    trace::TraceGraphInfer();
-    trace::GetInferStackInfo(oss);
+    trace::TraceGraphEval();
+    trace::GetEvalStackInfo(oss);
     // call py::print to output function call stack to STDOUT, in case of output the log to file, the user can see
     // these info from screen, no need to open log file to find these info
     py::print(oss.str());

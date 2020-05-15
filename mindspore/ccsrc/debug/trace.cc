@@ -182,7 +182,7 @@ void DumpInferStack(std::ostringstream &oss) {
   }
 }
 
-void TraceGraphInfer() {
+void TraceGraphEval() {
   auto &infer_stack = GetCurrenGraphInferStack();
   std::ostringstream oss;
   if (infer_stack.empty()) {
@@ -296,7 +296,7 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
   ofs.close();
 }
 
-void GetInferStackInfo(std::ostringstream &oss) {
+void GetEvalStackInfo(std::ostringstream &oss) {
   MS_LOG(INFO) << "Get graph analysis information begin";
   auto stack = GetCNodeDebugStack();
   if (stack.empty()) {
@@ -336,7 +336,7 @@ void GetInferStackInfo(std::ostringstream &oss) {
 static std::stack<std::pair<abstract::EvaluatorPtr, abstract::AnfNodeConfigPtr>> graph_infer_stack;
 // trace the cnode infer debug info
 static std::vector<abstract::AnfNodeConfigPtr> cnode_debug_stack{};
-void TraceGraphInferEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node) {
+void TraceGraphEvalEnter(const abstract::EvaluatorPtr &eval, const abstract::AnfNodeConfigPtr &node) {
   if (eval == nullptr) {
     MS_LOG(EXCEPTION) << "GraphInferEnter got null eval";
   }
@@ -345,7 +345,7 @@ void TraceGraphInferEnter(const abstract::EvaluatorPtr &eval, const abstract::An
   }
 }
 
-void TraceGraphInferLeave(const abstract::EvaluatorPtr &eval) {
+void TraceGraphEvalLeave(const abstract::EvaluatorPtr &eval) {
   if (eval == nullptr) {
     MS_LOG(EXCEPTION) << "GraphInferEnter got null eval";
   }
@@ -354,9 +354,9 @@ void TraceGraphInferLeave(const abstract::EvaluatorPtr &eval) {
   }
 }
 
-void TraceInferCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg) { cnode_debug_stack.push_back(node_cfg); }
+void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_cfg) { cnode_debug_stack.push_back(node_cfg); }
 
-void TraceInferCNodeLeave() { cnode_debug_stack.pop_back(); }
+void TraceEvalCNodeLeave() { cnode_debug_stack.pop_back(); }
 
 std::vector<abstract::AnfNodeConfigPtr> &GetCNodeDebugStack() { return cnode_debug_stack; }
 

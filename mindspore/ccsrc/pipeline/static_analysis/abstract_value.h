@@ -38,7 +38,7 @@ namespace abstract {
 class AbstractBase;
 using AbstractBasePtrList = std::vector<AbstractBasePtr>;
 
-// The base class for abstract value. The abstract value is used in inferring
+// The base class for abstract value. The abstract value is used in evaluating
 // to express the type, shape, and value of the real value.
 class AbstractBase : public Base {
  public:

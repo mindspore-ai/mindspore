@@ -183,11 +183,11 @@ AbstractBasePtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
     ret_abstract = EvalValueNode(value_node, conf);
   } else if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
-    trace::TraceInferCNodeEnter(conf);
-    ret_abstract = InferCNode(cnode, conf);
-    trace::TraceInferCNodeLeave();
+    trace::TraceEvalCNodeEnter(conf);
+    ret_abstract = EvalCNode(cnode, conf);
+    trace::TraceEvalCNodeLeave();
   } else {
-    MS_LOG(EXCEPTION) << "Illegal AnfNode for inferring, " << node->DebugString()
+    MS_LOG(EXCEPTION) << "Illegal AnfNode for evaluating, " << node->DebugString()
                       << ". NodeInfo: " << trace::GetDebugInfo(node->debug_info());
   }
 
@@ -208,7 +208,7 @@ AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, co
   return ToAbstract(value_node->value(), conf->context(), conf);
 }
 
-AbstractBasePtr AnalysisEngine::InferCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
+AbstractBasePtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(cnode);
   auto &inputs = cnode->inputs();
@@ -496,7 +496,7 @@ AbstractBasePtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Eval
     auto current_inf = std::make_pair(eval, args_spec_list);
     MS_LOG(DEBUG) << "Check Evaluator " << eval->ToString();
 
-    // If current evaluator is under tracing, then skip current evaluator to avoid recursively inferring.
+    // If current evaluator is under tracing, then skip current evaluator to avoid recursively evaluating.
     auto it = std::find(eval_trace_.rbegin(), eval_trace_.rend(), current_inf);
     if (it == eval_trace_.rend()) {
       eval_trace_.push_back(current_inf);
@@ -607,7 +607,7 @@ AbstractBasePtr FromValueInside(const ValuePtr &value, bool broaden) {
   return a;
 }
 
-AbstractBasePtr InferOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs) {
+AbstractBasePtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrList &arg_specs) {
   auto evaluator = GetPrimEvaluator(primitive, nullptr);
   MS_EXCEPTION_IF_NULL(evaluator);
   if (!evaluator->isa<TrivialPrimEvaluator>()) {
