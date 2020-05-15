@@ -1242,7 +1242,6 @@ FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &ar
   abstract::CheckArgsSize(op_name, args_spec_list, 2);
   AbstractTuplePtr branches_abs = abstract::CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
   AbstractBasePtrList branches = branches_abs->elements();
-
   if (branches.size() > 0 && branches[0] != nullptr && branches[0]->isa<AbstractFunction>()) {
     FuncGraphPtr ret_graph = std::make_shared<FuncGraph>();
     ret_graph->set_flags(FUNC_GRAPH_FLAG_CORE, true);
