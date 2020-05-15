@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/rt_kernel_info.h"
+#include "kernel/rts/rt_kernel_info.h"
 #include <unordered_map>
 #include <algorithm>
 #include "utils/convert_utils.h"

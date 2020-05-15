@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/memcpy_async.h"
+#include "kernel/rts/memcpy_async.h"
 
 #include <memory>
 #include <string>

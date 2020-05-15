@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/label_set.h"
+#include "kernel/rts/label_set.h"
 #include <asm-generic/param.h>
 #include <memory>
 #include "runtime/stream.h"

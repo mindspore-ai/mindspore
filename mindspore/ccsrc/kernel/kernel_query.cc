@@ -18,7 +18,7 @@
 #include <memory>
 #include <algorithm>
 #include "kernel/aicpu/aicpu_kernel_metadata.h"
-#include "kernel/mng/rt_kernel_info.h"
+#include "kernel/rts/rt_kernel_info.h"
 #include "kernel/hccl/hccl_kernel_metadata.h"
 #include "kernel/tbe/tbe_kernel_select.h"
 #include "session/anf_runtime_algorithm.h"

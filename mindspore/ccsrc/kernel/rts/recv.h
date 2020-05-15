@@ -14,36 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_MNG_LABEL_SWITCH_H
-#define MINDSPORE_CCSRC_KERNEL_MNG_LABEL_SWITCH_H
+#ifndef MINDSPORE_CCSRC_KERNEL_RTS_RECV_H
+#define MINDSPORE_CCSRC_KERNEL_RTS_RECV_H
 
 #include <memory>
 #include <vector>
-#include "kernel/mng/rt_kernel.h"
-#include "kernel/mng/rt_kernel_info.h"
+#include "kernel/rts/rt_kernel.h"
+#include "kernel/rts/rt_kernel_info.h"
 
 namespace mindspore {
 namespace kernel {
-class LabelSwitchKernel : public RtKernel {
+class RecvKernel : public RtKernel {
  public:
-  LabelSwitchKernel();
-  ~LabelSwitchKernel() override;
+  RecvKernel();
+  ~RecvKernel() override;
 
   bool Init(const AnfNodePtr &anf_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
  private:
-  std::vector<uint32_t> label_list_;
-  uint32_t label_size_;
-  void *cond_;
+  uint32_t event_id_;
 };
 
-MS_REG_RTKERNEL(labelswitch, LabelSwitchKernel);
+MS_REG_RTKERNEL(recv, RecvKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_MNG_LABEL_SWITCH_H
+#endif  // MINDSPORE_CCSRC_KERNEL_RTS_RECV_H

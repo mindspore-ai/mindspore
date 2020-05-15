@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_MNG_LABEL_GOTO_H
-#define MINDSPORE_CCSRC_KERNEL_MNG_LABEL_GOTO_H
-
+#ifndef MINDSPORE_CCSRC_KERNEL_RTS_STREAM_ACTIVE_H
+#define MINDSPORE_CCSRC_KERNEL_RTS_STREAM_ACTIVE_H
 #include <memory>
 #include <vector>
-#include "kernel/mng/rt_kernel.h"
-#include "kernel/mng/rt_kernel_info.h"
+#include "kernel/rts/rt_kernel.h"
+#include "kernel/rts/rt_kernel_info.h"
 
 namespace mindspore {
 namespace kernel {
-class LabelGotoKernel : public RtKernel {
+class StreamActiveKernel : public RtKernel {
  public:
-  LabelGotoKernel();
-  ~LabelGotoKernel() override;
+  StreamActiveKernel();
+  ~StreamActiveKernel() override;
 
   bool Init(const AnfNodePtr &anf_node) override;
 
@@ -37,11 +36,11 @@ class LabelGotoKernel : public RtKernel {
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
  private:
-  uint32_t label_;
+  std::vector<uint32_t> active_streams_index_;
 };
 
-MS_REG_RTKERNEL(labelgoto, LabelGotoKernel);
+MS_REG_RTKERNEL(streamactive, StreamActiveKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_MNG_LABEL_GOTO_H
+#endif  // MINDSPORE_CCSRC_KERNEL_RTS_STREAM_ACTIVE_H

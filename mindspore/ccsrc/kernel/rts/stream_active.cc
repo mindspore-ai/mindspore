@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/stream_active.h"
+#include "kernel/rts/stream_active.h"
 #include <asm-generic/param.h>
 #include <memory>
 #include "runtime/stream.h"

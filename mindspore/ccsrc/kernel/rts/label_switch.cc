@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/mng/label_switch.h"
+#include "kernel/rts/label_switch.h"
 #include <asm-generic/param.h>
 #include <memory>
 #include "runtime/stream.h"

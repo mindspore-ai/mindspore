@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_MNG_RT_KERNEL_H
-#define MINDSPORE_CCSRC_KERNEL_MNG_RT_KERNEL_H
+#ifndef MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_H
+#define MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_H
 
 #include <vector>
 #include <utility>
@@ -74,4 +74,4 @@ class _RtKernelRegister {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_MNG_RT_KERNEL_H
+#endif  // MINDSPORE_CCSRC_KERNEL_RTS_RT_KERNEL_H

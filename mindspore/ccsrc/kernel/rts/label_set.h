@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_MNG_LABEL_SET_H
-#define MINDSPORE_CCSRC_KERNEL_MNG_LABEL_SET_H
+#ifndef MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SET_H
+#define MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SET_H
 
 #include <memory>
 #include <vector>
-#include "kernel/mng/rt_kernel.h"
-#include "kernel/mng/rt_kernel_info.h"
+#include "kernel/rts/rt_kernel.h"
+#include "kernel/rts/rt_kernel_info.h"
 
 namespace mindspore {
 namespace kernel {
@@ -44,4 +44,4 @@ MS_REG_RTKERNEL(labelset, LabelSetKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_KERNEL_MNG_LABEL_SET_H
+#endif  // MINDSPORE_CCSRC_KERNEL_RTS_LABEL_SET_H

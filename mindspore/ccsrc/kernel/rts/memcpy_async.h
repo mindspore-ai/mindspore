@@ -13,28 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_MINDSPORE_CCSRC_KERNEL_PROFILING_PROFILING_KERNEL_MOD_H_
-#define MINDSPORE_MINDSPORE_CCSRC_KERNEL_PROFILING_PROFILING_KERNEL_MOD_H_
+
+#ifndef MINDSPORE_CCSRC_KERNEL_RTS_MEMCPY_ASYNC_H
+#define MINDSPORE_CCSRC_KERNEL_RTS_MEMCPY_ASYNC_H
+
 #include <vector>
-#include "kernel/mng/rt_kernel.h"
+#include <memory>
+#include "kernel/rts/rt_kernel.h"
+#include "kernel/rts/rt_kernel_info.h"
+
 namespace mindspore {
 namespace kernel {
-class ProfilingKernelMod : public RtKernel {
+class MemCpyAsyncKernel : public RtKernel {
  public:
-  ProfilingKernelMod() = default;
-  ~ProfilingKernelMod() override = default;
+  MemCpyAsyncKernel();
+  ~MemCpyAsyncKernel() override;
+
+  bool Init(const AnfNodePtr &anf_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
-  bool Init(const AnfNodePtr &anf_node) override;
 
  private:
-  uint64_t log_id_{0};
-  bool notify_{true};
-  uint32_t flags_{0};
+  void GetInputOutputDataType(const AnfNodePtr &anf_node);
+  void GetInputOutputTotalCount(const AnfNodePtr &anf_node);
+  TypeId input_type_id_{};
 };
-MS_REG_RTKERNEL(profiling, ProfilingKernelMod);
+
+class MemCpyAsyncDesc : public RtKerDesc {
+ public:
+  MemCpyAsyncDesc();
+  ~MemCpyAsyncDesc() override;
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetKernelInfo() override;
+};
+
+MS_REG_RTKERNEL_DESC(memcpy_async, MemCpyAsyncDesc);
+MS_REG_RTKERNEL(memcpy_async, MemCpyAsyncKernel);
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_KERNEL_PROFILING_PROFILING_KERNEL_MOD_H_
+
+#endif  // MINDSPORE_CCSRC_KERNEL_RTS_MEMCPY_ASYNC_H
