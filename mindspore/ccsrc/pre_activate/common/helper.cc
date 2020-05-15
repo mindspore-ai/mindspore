@@ -18,6 +18,9 @@
 #include <string>
 #include <unordered_set>
 #include <algorithm>
+#include <map>
+#include <set>
+#include <deque>
 #include "utils/utils.h"
 #include "utils/base_ref.h"
 #include "session/anf_runtime_algorithm.h"
@@ -33,6 +36,56 @@ std::vector<int> Convert2Int(const std::vector<size_t> &v) {
   std::vector<int> result;
   (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToInt);
   return result;
+}
+
+bool IsDepend(const FuncGraphPtr &graph, const AnfNodePtr &node1, const AnfNodePtr &node2) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node1);
+  MS_EXCEPTION_IF_NULL(node2);
+  std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
+  std::map<AnfNodePtr, std::set<AnfNodePtr>> control_depend_map;
+  for (auto &nd : node_list) {
+    if (AnfAlgo::CheckPrimitiveType(nd, prim::kPrimControlDepend)) {
+      auto control_depend = nd->cast<CNodePtr>();
+      auto prior_node = control_depend->input(kControlDependPriorIndex);
+      auto behind_node = control_depend->input(kControlDependBehindIndex);
+      auto it = control_depend_map.find(behind_node);
+      if (it == control_depend_map.end()) {
+        control_depend_map[behind_node] = std::set<AnfNodePtr>{prior_node};
+      } else {
+        it->second.insert(prior_node);
+      }
+    }
+  }
+
+  FuncGraphManagerPtr manager = graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+
+  std::unordered_set<AnfNodePtr> seen_node;
+  std::deque<AnfNodePtr> todo{node1};
+  while (!todo.empty()) {
+    AnfNodePtr node = todo.front();
+    todo.pop_front();
+    if (seen_node.count(node) > 0 || !manager->all_nodes().contains(node)) {
+      continue;
+    }
+    (void)seen_node.insert(node);
+
+    if (node == node2) {
+      return true;
+    }
+    if (node->isa<CNode>()) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto inputs = cnode->inputs();
+      (void)todo.insert(todo.end(), inputs.begin(), inputs.end());
+    }
+    auto it = control_depend_map.find(node);
+    if (it != control_depend_map.end()) {
+      (void)todo.insert(todo.end(), it->second.begin(), it->second.end());
+    }
+  }
+  return false;
 }
 
 bool UnVisited(const BaseRef &n) {
