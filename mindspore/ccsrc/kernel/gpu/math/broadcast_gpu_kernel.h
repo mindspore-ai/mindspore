@@ -27,7 +27,6 @@
 #include "kernel/gpu/kernel_constants.h"
 namespace mindspore {
 namespace kernel {
-
 template <typename T, typename S>
 class BroadcastOpGpuKernel : public GpuKernel {
  public:
@@ -70,14 +69,14 @@ class BroadcastOpGpuKernel : public GpuKernel {
       output_num_ *= shape3[i];
     }
     int offset = shape3.size() - shape1.size();
-    for (size_t i = 0; i < shape1.size(); i++) {
-      lhs_shape_[i + offset] = shape1[i];
-      input1_num_ *= shape1[i];
+    for (size_t j = 0; j < shape1.size(); j++) {
+      lhs_shape_[j + offset] = shape1[j];
+      input1_num_ *= shape1[j];
     }
     offset = shape3.size() - shape2.size();
-    for (size_t i = 0; i < shape2.size(); i++) {
-      rhs_shape_[i + offset] = shape2[i];
-      input2_num_ *= shape2[i];
+    for (size_t k = 0; k < shape2.size(); k++) {
+      rhs_shape_[k + offset] = shape2[k];
+      input2_num_ *= shape2[k];
     }
 
     InitSizeLists();

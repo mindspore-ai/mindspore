@@ -36,8 +36,8 @@ class LayerNormGradGpuKernel : public GpuKernel {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
-    auto dy = GetDeviceAddress<T>(inputs, 0);
-    auto x = GetDeviceAddress<T>(inputs, 1);
+    auto x = GetDeviceAddress<T>(inputs, 0);
+    auto dy = GetDeviceAddress<T>(inputs, 1);
     auto var = GetDeviceAddress<T>(inputs, 2);
     auto mean = GetDeviceAddress<T>(inputs, 3);
     auto gamma = GetDeviceAddress<T>(inputs, 4);

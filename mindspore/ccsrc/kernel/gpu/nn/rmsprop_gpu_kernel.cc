@@ -44,6 +44,5 @@ MS_REG_GPU_KERNEL_ONE(ApplyCenteredRMSProp,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       RMSPropGpuKernel, float)
-
 }  // namespace kernel
 }  // namespace mindspore

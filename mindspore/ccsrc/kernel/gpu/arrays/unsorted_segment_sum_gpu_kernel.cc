@@ -37,6 +37,5 @@ MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentSum,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
   UnsortedSegmentSumGpuKernel, int, int64_t)
-
 }  // namespace kernel
 }  // namespace mindspore

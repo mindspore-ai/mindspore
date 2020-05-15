@@ -80,7 +80,7 @@ def test_layernormgrad0():
     gamma_ms = Tensor(gamma_np)
 
     net = LayerNormGradNet(begin_norm_axis, begin_params_axis)
-    dx_ms, dg_ms, db_ms = net(dy_ms, x_ms, var_ms, mean_ms, gamma_ms)
+    dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
 
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)
@@ -107,7 +107,7 @@ def test_layernormgrad1():
     gamma_ms = Tensor(gamma_np)
 
     net = LayerNormGradNet(begin_norm_axis, begin_params_axis)
-    dx_ms, dg_ms, db_ms = net(dy_ms, x_ms, var_ms, mean_ms, gamma_ms)
+    dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
 
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)
@@ -133,7 +133,7 @@ def test_layernormgrad2():
     gamma_ms = Tensor(gamma_np)
 
     net = LayerNormGradNet(begin_norm_axis, begin_params_axis)
-    dx_ms, dg_ms, db_ms = net(dy_ms, x_ms, var_ms, mean_ms, gamma_ms)
+    dx_ms, dg_ms, db_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms)
 
     assert np.allclose(dx_ms.asnumpy(), dx_np, rtol=1e-6, atol=1e-6)
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)
