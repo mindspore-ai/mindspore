@@ -39,14 +39,14 @@ def test_optimize_dependence(tag):
     def before(x, y, z):
         new_z = TransData(z)
         depend_intput = depend(y, new_z)
-        sum = add(x, depend_intput)
-        return sum
+        sum_add = add(x, depend_intput)
+        return sum_add
 
     @fns
     def after(x, y, z):
         depend_intput = depend(y, z)
-        sum = add(x, depend_intput)
-        return sum
+        sum_add = add(x, depend_intput)
+        return sum_add
 
     return fns[tag]
 
@@ -58,14 +58,14 @@ def test_optimize_dependence_with_make_tuple(tag):
     def before(x, y, a, b):
         z = make_tuple(TransData(a), TransData(b))
         depend_intput = depend(y, z)
-        sum = add(x, depend_intput)
-        return sum
+        sum_add = add(x, depend_intput)
+        return sum_add
 
     @fns
     def after(x, y, a, b):
         z = make_tuple(a, b)
         depend_intput = depend(y, z)
-        sum = add(x, depend_intput)
-        return sum
+        sum_add = add(x, depend_intput)
+        return sum_add
 
     return fns[tag]

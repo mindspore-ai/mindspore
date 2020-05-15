@@ -61,8 +61,8 @@ def test_tbe_eltwise_fusion_1(tag):
     def after(x):
         fusion = Fusion_relu_relu(x)
         res = Cast(fusion)
-        tuple = make_tuple(res)
-        return tuple
+        output = make_tuple(res)
+        return output
 
     return fns[tag]
 
@@ -86,8 +86,8 @@ def test_tbe_eltwise_fusion_2(tag):
     def after(x, y):
         fusion = Fusion_biasadd(x, y)
         res = Cast(fusion)
-        tuple = make_tuple(res)
-        return tuple
+        output = make_tuple(res)
+        return output
 
     return fns[tag]
 
@@ -111,8 +111,8 @@ def test_tbe_reduce_eltwise_fusion(tag):
     def after(x):
         fusion = Fusion_biasaddgrad(x)
         res = Cast(fusion)
-        tuple = make_tuple(res)
-        return tuple
+        output = make_tuple(res)
+        return output
 
     return fns[tag]
 
@@ -131,8 +131,8 @@ def test_conv_singlein_fusion(tag):
     def after(x, y):
         fusion = Fusion(x, y)
         res = Cast(fusion)
-        tuple = make_tuple(res)
-        return tuple
+        output = make_tuple(res)
+        return output
 
     return fns[tag]
 
@@ -151,7 +151,7 @@ def test_tbe_matmul_eltwise_fusion(tag):
     def after(x, y):
         fusion = Fusion_matmul_relu(x, y)
         res = Cast(fusion)
-        tuple = make_tuple(res)
-        return tuple
+        output = make_tuple(res)
+        return output
 
     return fns[tag]

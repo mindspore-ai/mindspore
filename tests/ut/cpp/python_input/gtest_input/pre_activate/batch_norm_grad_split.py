@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import Primitive
 

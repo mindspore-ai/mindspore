@@ -22,8 +22,9 @@ make_tuple = Primitive('make_tuple')
 four2five = Primitive('Four2Five')
 five2four = Primitive('Five2Four')
 transdata = Primitive("TransData")
-transpose =  Primitive("Transpose")
+transpose = Primitive("Transpose")
 Transpose = P.Transpose()
+
 
 class FnDict:
     def __init__(self):
@@ -40,31 +41,33 @@ def test_transdata_split_fraz_nchw(tag):
     fns = FnDict()
 
     @fns
-    def before(input):
-        res = Transpose(input, (1, 0, 2, 3))
+    def before(x):
+        res = Transpose(x, (1, 0, 2, 3))
         return res
 
     @fns
-    def after(input):
-        res = transpose(input)
-        output =  transdata(res)
+    def after(x):
+        res = transpose(x)
+        output = transdata(res)
         output = transpose(output)
         res = make_tuple(output)
         return res
 
     return fns[tag]
+
+
 def test_transdata_split_nchw_fraz(tag):
     fns = FnDict()
 
     @fns
-    def before(input):
-        res = Transpose(input, (1, 0, 2, 3))
+    def before(x):
+        res = Transpose(x, (1, 0, 2, 3))
         return res
 
     @fns
-    def after(input):
-        res = transpose(input)
-        output =  transdata(res)
+    def after(x):
+        res = transpose(x)
+        output = transdata(res)
         output = transpose(output)
         res = make_tuple(output)
         return res

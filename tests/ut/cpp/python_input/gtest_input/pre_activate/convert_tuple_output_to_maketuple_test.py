@@ -14,15 +14,12 @@
 # ============================================================================
 from mindspore.ops import operations as P
 from mindspore.ops import Primitive
-import mindspore as ms
-import mindspore.common.dtype as mstype
-from mindspore.common.tensor import Tensor
-import numpy as np
 
 make_tuple = Primitive('make_tuple')
-tuple_get_item = Primitive("tuple_getitem");
-LSTM = P.LSTM(input_size=10,hidden_size=2,num_layers=1,has_bias=True,bidirectional=False,dropout=0.0)
+tuple_get_item = Primitive("tuple_getitem")
+LSTM = P.LSTM(input_size=10, hidden_size=2, num_layers=1, has_bias=True, bidirectional=False, dropout=0.0)
 add = P.TensorAdd()
+
 
 class FnDict:
     def __init__(self):
@@ -48,7 +45,7 @@ def test_convert_tuple_output_to_maketuple(tag):
         res = LSTM(x, h, c, w)
         res = make_tuple(
             make_tuple(tuple_get_item(res, 0), tuple_get_item(res, 1), tuple_get_item(res, 2), tuple_get_item(res, 3),
-                       tuple_get_item(res, 4)));
+                       tuple_get_item(res, 4)))
         return res
 
     return fns[tag]

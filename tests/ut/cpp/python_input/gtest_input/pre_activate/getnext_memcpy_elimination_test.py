@@ -40,14 +40,14 @@ def test_getnext_memcpy_elimination(tag):
     fns = FnDict()
 
     @fns
-    def before(x):
+    def before():
         res = get_next()
         res = memcpy_async_attr(res)
         res = cast(res)
         return res
 
     @fns
-    def after(x):
+    def after():
         res = get_next()
         res = cast(res)
         return res
@@ -59,14 +59,14 @@ def test_getnext_memcpy_elimination_no_attr(tag):
     fns = FnDict()
 
     @fns
-    def before(x):
+    def before():
         res = get_next()
         res = memcpy_async(res)
         res = cast(res)
         return res
 
     @fns
-    def after(x):
+    def after():
         res = get_next()
         res = memcpy_async(res)
         res = cast(res)
@@ -79,7 +79,7 @@ def test_getnext_memcpy_elimination_memcpy_multi_users(tag):
     fns = FnDict()
 
     @fns
-    def before(x):
+    def before():
         res = get_next()
         memcpy_out = memcpy_async_attr(res)
         res = cast(memcpy_out)
@@ -87,7 +87,7 @@ def test_getnext_memcpy_elimination_memcpy_multi_users(tag):
         return res
 
     @fns
-    def after(x):
+    def after():
         res = get_next()
         memcpy_out = memcpy_async_attr(res)
         res = cast(memcpy_out)
@@ -101,14 +101,14 @@ def test_getnext_memcpy_elimination_next_multi_inputs(tag):
     fns = FnDict()
 
     @fns
-    def before(x):
+    def before():
         res = get_next()
         memcpy_out = memcpy_async_attr(res)
         res = add(memcpy_out, res)
         return res
 
     @fns
-    def after(x):
+    def after():
         res = get_next()
         memcpy_out = memcpy_async_attr(res)
         res = add(memcpy_out, res)
