@@ -35,6 +35,7 @@ def get_uniform_with_shape(shape):
 def set_block_param_with_rand(net, rand_func=None):
     if not isinstance(net, nn.Cell) or rand_func is None:
         return
+    net.init_parameters_data()
     for param in net.trainable_params():
         param.default_input = Tensor(rand_func(param.default_input.asnumpy().shape))
 

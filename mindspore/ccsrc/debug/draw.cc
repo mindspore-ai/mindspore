@@ -319,6 +319,10 @@ void BaseDigraph::FuncGraphParameters(const FuncGraphPtr &key) {
         std::shared_ptr<tensor::Tensor> m_tensor = py_p.cast<std::shared_ptr<tensor::Tensor>>();
         py::tuple shape = m_tensor->GetPyTupleShape();
         buffer_ << "[" << std::string(py::str(shape)) << "]";
+      } else if (py::hasattr(py_p, PYTHON_META_TENSOR_FLAG)) {
+        std::shared_ptr<tensor::MetaTensor> m_tensor = py_p.cast<std::shared_ptr<tensor::MetaTensor>>();
+        py::tuple shape = m_tensor->GetPyTupleShape();
+        buffer_ << "[" << std::string(py::str(shape)) << "]";
       }
     }
     buffer_ << "</td></tr>";

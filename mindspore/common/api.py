@@ -326,6 +326,12 @@ class _Executor:
             raise TypeError('Parameters need OrderedDict type, but got {}'.
                             format(type(params)))
 
+    def _params_init_data(self, obj, params):
+        if params is not None:
+            for _, param in params.items():
+                param.init_data()
+        obj.init_parameters_data()
+
     def compile(self, obj, *args, phase='predict', params=None, do_convert=True, auto_parallel_mode=False):
         """
         Compiles graph.
@@ -371,6 +377,7 @@ class _Executor:
         if not do_convert:
             return phase, True
 
+        self._params_init_data(obj, params)
         if not enable_debug_runtime or enable_ge:
             if auto_parallel_mode:
                 obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)

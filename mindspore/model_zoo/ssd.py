@@ -29,7 +29,7 @@ from .mobilenet import InvertedResidual, ConvBNReLU
 
 def _conv2d(in_channel, out_channel, kernel_size=3, stride=1, pad_mod='same'):
     weight_shape = (out_channel, in_channel, kernel_size, kernel_size)
-    weight = initializer('XavierUniform', shape=weight_shape, dtype=mstype.float32)
+    weight = initializer('XavierUniform', shape=weight_shape, dtype=mstype.float32).to_tensor()
     return nn.Conv2d(in_channel, out_channel, kernel_size=kernel_size, stride=stride,
                      padding=0, pad_mode=pad_mod, weight_init=weight)
 

@@ -34,7 +34,7 @@ def test_dense_str_activation():
     assert isinstance(dense.activation, nn.ReLU)
 
     input_data = Tensor(np.random.randint(0, 255, [1, 1]).astype(np.float32))
-    dense.construct(input_data)
+    dense(input_data)
 
 
 def test_dense_weight_error():

@@ -40,8 +40,10 @@ class ParameterNet(nn.Cell):
 def test_using_same_seed_for_initializer():
     np.random.seed(0)
     net1 = ParameterNet()
+    net1.init_parameters_data()
     np.random.seed(0)
     net2 = ParameterNet()
+    net2.init_parameters_data()
     for key in net1.parameters_dict():
         if key not in net2.parameters_dict():
             assert False
@@ -52,8 +54,10 @@ def test_using_same_seed_for_initializer():
 def test_using_diffserent_seed_for_initializer():
     np.random.seed(0)
     net1 = ParameterNet()
+    net1.init_parameters_data()
     np.random.seed(1)
     net2 = ParameterNet()
+    net2.init_parameters_data()
     for key in net1.parameters_dict():
         if key not in net2.parameters_dict():
             assert False

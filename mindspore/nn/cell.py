@@ -163,6 +163,7 @@ class Cell:
         if context.get_context("mode") == context.GRAPH_MODE:
             out = self.compile_and_run(*inputs)
             return out
+        self.init_parameters_data()
         output = self.construct(*inputs)
         if isinstance(output, Parameter):
             output = output.data
@@ -394,6 +395,10 @@ class Cell:
             Tensor, returns the computed result.
         """
         raise NotImplementedError
+
+    def init_parameters_data(self, recurse=True):
+        for param in self.get_parameters(expand=recurse):
+            param.init_data()
 
     def parameters_dict(self, recurse=True):
         """

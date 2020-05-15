@@ -20,6 +20,7 @@ namespace mindspore {
 const char PYTHON_PRIMITIVE_FLAG[] = "__primitive_flag__";
 const char PYTHON_METAFUNCGRAPH_FLAG[] = "__metafuncgraph_flag__";
 const char PYTHON_TENSOR_FLAG[] = "__tensor_flag__";
+const char PYTHON_META_TENSOR_FLAG[] = "__meta_tensor_flag__";
 const char PYTHON_ENVINSTANCE_FLAG[] = "__envinstance_flag__";
 const char PYTHON_DTYPE_FLAG[] = "__dtype_flag__";
 const char PYTHON_CELL_AS_LIST[] = "__cell_as_list__";

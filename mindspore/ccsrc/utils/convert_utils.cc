@@ -71,6 +71,11 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
     py::tuple v(1);
     v[0] = value->cast<tensor::TensorPtr>();
     ret = v[0];
+  } else if (value->isa<tensor::MetaTensor>()) {
+    MS_LOG(DEBUG) << "MetaTensor";
+    py::tuple v(1);
+    v[0] = value->cast<tensor::MetaTensorPtr>();
+    ret = v[0];
   } else if (value->isa<RefKey>()) {
     MS_LOG(DEBUG) << "RefKey";
     py::tuple v(1);

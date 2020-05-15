@@ -36,6 +36,8 @@ namespace mindspore {
 namespace parse {
 using Tensor = mindspore::tensor::Tensor;
 using TensorPtr = mindspore::tensor::TensorPtr;
+using MetaTensor = mindspore::tensor::MetaTensor;
+using MetaTensorPtr = mindspore::tensor::MetaTensorPtr;
 
 namespace {
 bool ConvertTuple(const py::object &obj, ValuePtr *const data, bool use_signature) {
@@ -181,6 +183,18 @@ bool ConvertDataType(const py::object &obj, ValuePtr *const data) {
   return true;
 }
 
+bool ConvertMetaTensor(const py::object &obj, ValuePtr *const data) {
+  MS_LOG(DEBUG) << "Converting MetaTensor object.";
+
+  auto m_tensor = obj.cast<MetaTensorPtr>();
+  if (m_tensor == nullptr) {
+    MS_LOG(ERROR) << "Resolve MetaTensor error, get ptr is null.";
+    return false;
+  }
+  *data = m_tensor;
+  return true;
+}
+
 bool ConvertTensor(const py::object &obj, ValuePtr *const data) {
   MS_LOG(DEBUG) << "Converting tensor object";
 
@@ -283,6 +297,8 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
     ret = ConvertDataType(obj, &converted);
   } else if (py::hasattr(obj, PYTHON_TENSOR_FLAG)) {
     ret = ConvertTensor(obj, &converted);
+  } else if (py::hasattr(obj, PYTHON_META_TENSOR_FLAG)) {
+    ret = ConvertMetaTensor(obj, &converted);
   } else if (py::hasattr(obj, PYTHON_ENVINSTANCE_FLAG)) {
     std::shared_ptr<EnvInstance> env = obj.cast<std::shared_ptr<EnvInstance>>();
     converted = env;
