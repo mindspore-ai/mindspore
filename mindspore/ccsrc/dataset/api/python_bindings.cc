@@ -40,6 +40,8 @@
 #include "dataset/kernels/data/type_cast_op.h"
 #include "dataset/kernels/text/jieba_tokenizer_op.h"
 #include "dataset/kernels/text/unicode_char_tokenizer_op.h"
+#include "dataset/nlp/vocab.h"
+#include "dataset/nlp/kernels/lookup_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/io_block.h"
@@ -414,10 +416,13 @@ void bindTensorOps5(py::module *m) {
          py::arg("mode") = JiebaMode::kMix)
     .def("add_word",
          [](JiebaTokenizerOp &self, const std::string word, int freq) { THROW_IF_ERROR(self.AddWord(word, freq)); });
-
   (void)py::class_<UnicodeCharTokenizerOp, TensorOp, std::shared_ptr<UnicodeCharTokenizerOp>>(
     *m, "UnicodeCharTokenizerOp", "Tokenize a scalar tensor of UTF-8 string to Unicode characters.")
     .def(py::init<>());
+  (void)py::class_<LookupOp, TensorOp, std::shared_ptr<LookupOp>>(*m, "LookupOp",
+                                                                  "Tensor operation to LookUp each word")
+    .def(py::init<std::shared_ptr<Vocab>, WordIdType>(), py::arg("vocab"), py::arg("unknown"))
+    .def(py::init<std::shared_ptr<Vocab>>(), py::arg("vocab"));
 }
 
 void bindSamplerOps(py::module *m) {
@@ -477,6 +482,27 @@ void bindInfoObjects(py::module *m) {
     .def(py::init<int64_t, int64_t, int64_t>())
     .def("get_epoch_num", &BatchOp::CBatchInfo::get_epoch_num)
     .def("get_batch_num", &BatchOp::CBatchInfo::get_batch_num);
+}
+
+void bindVocabObjects(py::module *m) {
+  (void)py::class_<Vocab, std::shared_ptr<Vocab>>(*m, "Vocab")
+    .def_static("from_list",
+                [](const py::list &words) {
+                  std::shared_ptr<Vocab> v;
+                  THROW_IF_ERROR(Vocab::BuildFromPyList(words, &v));
+                  return v;
+                })
+    .def_static("from_file",
+                [](const std::string &path, const std::string &dlm, int32_t vocab_size) {
+                  std::shared_ptr<Vocab> v;
+                  THROW_IF_ERROR(Vocab::BuildFromFile(path, dlm, vocab_size, &v));
+                  return v;
+                })
+    .def_static("from_dict", [](const py::dict &words) {
+      std::shared_ptr<Vocab> v;
+      THROW_IF_ERROR(Vocab::BuildFromPyDict(words, &v));
+      return v;
+    });
 }
 
 // This is where we externalize the C logic as python modules
@@ -543,6 +569,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
   bindSamplerOps(&m);
   bindDatasetOps(&m);
   bindInfoObjects(&m);
+  bindVocabObjects(&m);
 }
 }  // namespace dataset
 }  // namespace mindspore
