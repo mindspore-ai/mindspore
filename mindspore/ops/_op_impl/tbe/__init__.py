@@ -168,3 +168,4 @@ from .floor import _floor_tbe
 from .log1p import _log1p_tbe
 from .resize_bilinear import _resize_bilinear_tbe
 from .resize_bilinear_grad import _resize_bilinear_grad_tbe
+from .flatten import _flatten_tbe
