@@ -159,6 +159,11 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
                                            const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  if (input_tensors.size() != graph->inputs().size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size()
+                      << " should be equal to graph input parameter size " << graph->inputs().size();
+  }
+
   for (size_t input_index = 0; input_index < graph->inputs().size(); ++input_index) {
     auto item = graph->inputs()[input_index];
     MS_EXCEPTION_IF_NULL(item);
@@ -416,6 +421,8 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   MS_EXCEPTION_IF_NULL(value_node);
   MS_EXCEPTION_IF_NULL(node_value);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   auto tensor = node_value->cast<TensorPtr>();
   if (tensor == nullptr) {
     MS_LOG(WARNING) << "Tensor is null";
@@ -423,13 +430,23 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   }
   size_t tensor_size = tensor->data().nbytes();
   auto node_size = CountNodeDeviceMemorySize(value_node, output_idx);
-  auto ptr = mem_manager_->MallocMem(kStaticMem, node_size);
   TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
   if (output_type_id == kTypeUnknown) {
     output_type_id = AnfAlgo::GetOutputInferDataType(value_node, output_idx);
   }
-  auto address = CreateDeviceAddress(ptr, node_size, AnfAlgo::GetOutputFormat(value_node, output_idx), output_type_id);
-  MS_EXCEPTION_IF_NULL(address);
+  auto output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
+  DeviceAddressPtr address = nullptr;
+  if (ms_context->enable_pynative_infer()) {
+    address = CreateDeviceAddress(nullptr, node_size, output_format, output_type_id);
+    MS_EXCEPTION_IF_NULL(address);
+    if (!mem_manager_->MallocMemFromMemPool(address, node_size)) {
+      MS_LOG(EXCEPTION) << "Malloc value node device memory failed !";
+    }
+  } else {
+    auto ptr = mem_manager_->MallocMem(kStaticMem, node_size);
+    address = CreateDeviceAddress(ptr, node_size, output_format, output_type_id);
+    MS_EXCEPTION_IF_NULL(address);
+  }
   AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
   if (!address->SyncHostToDevice(trans::GetRuntimePaddingShape(value_node, 0), tensor_size, tensor->data_type(),
                                  tensor->data_c(false))) {
@@ -442,6 +459,8 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
 void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(mem_manager_);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
   for (auto &value_node : graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node);
     if (AnfAlgo::OutputAddrExist(value_node, 0)) {
@@ -455,9 +474,18 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
     } else if (node_value->isa<StringImm>()) {
       auto value = GetValue<std::string>(node_value);
       size_t tensor_size = value.size();
-      auto ptr = mem_manager_->MallocMem(kStaticMem, tensor_size);
-      auto address = CreateDeviceAddress(ptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8);
-      MS_EXCEPTION_IF_NULL(address);
+      DeviceAddressPtr address = nullptr;
+      if (ms_context->enable_pynative_infer()) {
+        address = CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8);
+        MS_EXCEPTION_IF_NULL(address);
+        if (!mem_manager_->MallocMemFromMemPool(address, tensor_size)) {
+          MS_LOG(EXCEPTION) << "Malloc value node device memory failed !";
+        }
+      } else {
+        auto ptr = mem_manager_->MallocMem(kStaticMem, tensor_size);
+        address = CreateDeviceAddress(ptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8);
+        MS_EXCEPTION_IF_NULL(address);
+      }
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
       std::vector<int> shape = {1, SizeToInt(tensor_size)};
       if (!address->SyncHostToDevice(shape, tensor_size, kNumberTypeUInt8, value.data())) {

@@ -312,11 +312,22 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<Context> &context, std::vector<
   return inputs_params->size();
 }
 
+ValueNodePtr ConstructRunOpValueNode(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  auto abstract = std::make_shared<abstract::AbstractTensor>(input_tensor);
+  auto value_node = std::make_shared<ValueNode>(input_tensor);
+  value_node->set_abstract(abstract);
+  auto input_value_node = graph->NewValueNode(value_node);
+  graph->AddValueNodeToGraph(input_value_node);
+  return input_value_node;
+}
+
 ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor,
-                                     bool is_weight) {
+                                     int tensor_mask) {
   auto param = graph->NewParameter();
   MS_EXCEPTION_IF_NULL(param);
-  if (is_weight) {
+  if (tensor_mask == 1) {
     py::object obj;
     param->set_default_param(obj);
   }
@@ -675,7 +686,7 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
 
 std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInfo &op_run_info,
                                                                   const std::vector<tensor::TensorPtr> &input_tensors,
-                                                                  const std::vector<bool> &tensors_mask) {
+                                                                  const std::vector<int> &tensors_mask) {
   auto graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
   // set input[0]
@@ -689,7 +700,12 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
                       << tensors_mask.size();
   }
   for (size_t i = 0; i < input_tensors.size(); ++i) {
-    auto parameter = ConstructRunOpParameter(graph, input_tensors.at(i), tensors_mask[i]);
+    if (tensors_mask[i] == kValueNodeTensorMask) {
+      auto value_node = ConstructRunOpValueNode(graph, input_tensors[i]);
+      inputs.push_back(value_node);
+      continue;
+    }
+    auto parameter = ConstructRunOpParameter(graph, input_tensors[i], tensors_mask[i]);
     inputs.push_back(parameter);
     graph->MutableInputs()->push_back(parameter);
   }

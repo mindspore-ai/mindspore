@@ -172,7 +172,8 @@ class Parameter:
 
     def __mul__(self, other):
         res = deepcopy(self)
-        res.default_input = res.default_input * other
+        default_input = res.default_input * other
+        res.default_input = Tensor(default_input.asnumpy().copy())
         return res
 
     def __truediv__(self, other):

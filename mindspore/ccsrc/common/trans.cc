@@ -575,7 +575,7 @@ bool NchwToFracZ(const FormatArgs &args, void *result) {
           auto src_ni = hfi * kCubeSize + col;
           auto src_idx = src_row_offset + chw * col;
           auto dst_idx = gfi * fractal_ele_cnt + col * c0 + row;
-          auto pad_zero = src_ni >= n || src_idx >= nchw || src_ci >= c;
+          auto pad_zero = (src_ni >= n || src_idx >= nchw || src_ci >= c) ? 1 : 0;
           SetDataBysize(size, pad_zero);
         }
       }
@@ -770,9 +770,11 @@ bool NchwToFracNz(const FormatArgs &args, void *result) {
       auto h1h0_head = times_head + h1h0_idx * w0;
       auto src_h_head = src_times_head + h1h0_idx * w;
       for (size_t w1_idx = 0; w1_idx < num_w1; w1_idx++) {
-        size_t dst_idx = h1h0_head + w1_idx * h1h0w0;
-        size_t src_idx = src_h_head + w1_idx * w0;
-        SetDataBysize(size, 0);
+        for (size_t i = 0; i < w0; ++i) {
+          size_t src_idx = src_h_head + w1_idx * w0 + i;
+          size_t dst_idx = h1h0_head + w1_idx * h1h0w0 + i;
+          SetDataBysize(size, 0);
+        }
       }
       auto w1_head = num_w1 * w0;
       for (size_t w0_idx = 0; w1_head + w0_idx < w; w0_idx++) {
@@ -830,9 +832,11 @@ bool FracNzToNchw(const FormatArgs &args, void *result) {
       auto h1h0_head = times_head + h1h0_idx * w0;
       auto src_h_head = src_times_head + h1h0_idx * w;
       for (size_t w1_idx = 0; w1_idx < num_w1; w1_idx++) {
-        size_t src_idx = h1h0_head + w1_idx * h1h0w0;
-        size_t dst_idx = src_h_head + w1_idx * w0;
-        SetDataBysize(size, 0);
+        for (size_t i = 0; i < w0; ++i) {
+          size_t src_idx = h1h0_head + w1_idx * h1h0w0 + i;
+          size_t dst_idx = src_h_head + w1_idx * w0 + i;
+          SetDataBysize(size, 0);
+        }
       }
       auto w1_head = num_w1 * w0;
       for (size_t w0_idx = 0; w1_head + w0_idx < w; w0_idx++) {
