@@ -301,9 +301,13 @@ size_t LoadCtrlInputTensor(const std::shared_ptr<Context> &context, std::vector<
 ValueNodePtr ConstructRunOpValueNode(const std::shared_ptr<KernelGraph> &graph, const tensor::TensorPtr &input_tensor) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input_tensor);
-  auto abstract = std::make_shared<abstract::AbstractTensor>(input_tensor);
   auto value_node = std::make_shared<ValueNode>(input_tensor);
+  // construct abstract of value node
+  auto type_of_tensor = input_tensor->Dtype();
+  auto shape_of_tensor = input_tensor->shape();
+  auto abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, shape_of_tensor);
   value_node->set_abstract(abstract);
+  // add value node to graph
   auto input_value_node = graph->NewValueNode(value_node);
   graph->AddValueNodeToGraph(input_value_node);
   return input_value_node;
@@ -313,7 +317,7 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
                                      int tensor_mask) {
   auto param = graph->NewParameter();
   MS_EXCEPTION_IF_NULL(param);
-  if (tensor_mask == 1) {
+  if (tensor_mask == kParameterWeightTensorMask) {
     py::object obj;
     param->set_default_param(obj);
   }
@@ -329,8 +333,10 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
     kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{input_tensor->device_address()->type_id()});
   }
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
-  // ftruct abstract of parameter
-  auto abstract = std::make_shared<abstract::AbstractTensor>(input_tensor);
+  // construct abstract of parameter
+  auto type_of_tensor = input_tensor->Dtype();
+  auto shape_of_tensor = input_tensor->shape();
+  auto abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, shape_of_tensor);
   param->set_abstract(abstract);
   return param;
 }

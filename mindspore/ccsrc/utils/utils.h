@@ -199,6 +199,8 @@ const size_t kShape4dDims = 4;
 const size_t kShape5dDims = 5;
 const size_t kCubeSize = 16;
 const size_t kMemAlignSize = 512;
+const int kParameterDataTensorMask = 0;
+const int kParameterWeightTensorMask = 1;
 const int kValueNodeTensorMask = 2;
 
 // define special index in special node
