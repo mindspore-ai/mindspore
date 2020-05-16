@@ -65,6 +65,7 @@ const PrimitivePtr kPrimAssign = std::make_shared<Primitive>("Assign");
 const PrimitivePtr kPrimAssignAdd = std::make_shared<Primitive>("AssignAdd");
 const PrimitivePtr kPrimAssignSub = std::make_shared<Primitive>("AssignSub");
 const PrimitivePtr kPrimSelect = std::make_shared<Primitive>("Select");
+const PrimitivePtr kPrimCall = std::make_shared<Primitive>("call");
 
 const PrimitivePtr kPrimDistribute = std::make_shared<Primitive>("distribute");
 const PrimitivePtr kPrimDot = std::make_shared<Primitive>("dot");

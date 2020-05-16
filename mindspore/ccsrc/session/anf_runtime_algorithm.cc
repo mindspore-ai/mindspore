@@ -271,7 +271,9 @@ size_t AnfRuntimeAlgorithm::GetInputTensorNum(const AnfNodePtr &node) {
 size_t AnfRuntimeAlgorithm::GetOutputTensorNum(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   TypePtr type = node->Type();
-  MS_EXCEPTION_IF_NULL(type);
+  if (type == nullptr) {
+    return 0;
+  }
   if (type->isa<Tuple>()) {
     auto tuple_type = type->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_type);
@@ -913,11 +915,66 @@ bool AnfRuntimeAlgorithm::IsGetNext(const NotNull<AnfNodePtr> &node) {
 FuncGraphPtr AnfRuntimeAlgorithm::GetValueNodeFuncGraph(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto value_node = node->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(value_node);
+  if (value_node == nullptr) {
+    return nullptr;
+  }
   auto value = value_node->value();
-  MS_EXCEPTION_IF_NULL(value);
+  if (value == nullptr) {
+    return nullptr;
+  }
   auto func_graph = value->cast<FuncGraphPtr>();
   return func_graph;
+}
+
+std::vector<KernelGraphPtr> AnfRuntimeAlgorithm::GetCallNodeKernelGraph(const CNodePtr &call_node) {
+  if (!AnfAlgo::CheckPrimitiveType(call_node, std::make_shared<Primitive>("call"))) {
+    MS_LOG(EXCEPTION) << "anf node: " << call_node->DebugString() << "is not a call node.";
+  }
+  MS_EXCEPTION_IF_NULL(call_node);
+  auto input1 = call_node->input(1);
+  MS_EXCEPTION_IF_NULL(input1);
+  if (input1->isa<ValueNode>()) {
+    auto value_node = input1->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    auto kernel_graph = value_node->value();
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    return {kernel_graph->cast<KernelGraphPtr>()};
+  } else if (input1->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input1, prim::kPrimSwitch)) {
+    auto switch_node = input1->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(switch_node);
+    MS_LOG(INFO) << "switch : " << switch_node->DebugString();
+    auto get_switch_kernel_graph = [&](size_t input_index) -> KernelGraphPtr {
+      auto partial = switch_node->input(input_index);
+      MS_EXCEPTION_IF_NULL(partial);
+      auto partial_cnode = partial->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(partial_cnode);
+      auto graph_node = partial_cnode->input(1);
+      MS_EXCEPTION_IF_NULL(graph_node);
+      MS_LOG(INFO) << graph_node->DebugString();
+      auto graph_value_node = graph_node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(graph_value_node);
+      auto graph_value = graph_value_node->value();
+      MS_EXCEPTION_IF_NULL(graph_value);
+      auto child_graph = graph_value->cast<KernelGraphPtr>();
+      return child_graph;
+    };
+    return {get_switch_kernel_graph(2), get_switch_kernel_graph(3)};
+  }
+  return {};
+}
+
+bool AnfRuntimeAlgorithm::IsSwitchCall(const CNodePtr &call_node) {
+  MS_EXCEPTION_IF_NULL(call_node);
+  if (!CheckPrimitiveType(call_node, prim::kPrimCall)) {
+    MS_LOG(EXCEPTION) << "call node should be a 'call', but is a " << call_node->DebugString();
+  }
+  auto input1 = call_node->input(1);
+  if (input1->isa<ValueNode>()) {
+    return false;
+  } else if (input1->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input1, prim::kPrimSwitch)) {
+    return true;
+  }
+  MS_LOG(EXCEPTION) << "Unexpected input1 of call node,input1:" << input1->DebugString();
 }
 }  // namespace session
 }  // namespace mindspore

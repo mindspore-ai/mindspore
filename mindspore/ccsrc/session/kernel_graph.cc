@@ -16,9 +16,8 @@
 #include "session/kernel_graph.h"
 #include <algorithm>
 #include <queue>
-#include <stack>
 #include <unordered_set>
-#include "common/utils.h"
+#include <set>
 #include "operator/ops.h"
 #include "ir/param_value_py.h"
 #include "session/anf_runtime_algorithm.h"
@@ -311,9 +310,10 @@ ValueNodePtr KernelGraph::NewValueNode(const ValueNodePtr &value_node) {
   // create kernel_build_info for new value node
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   // set the format of value_node to DEFAULT_FORMAT
-  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
+  auto output_tensor_num = AnfAlgo::GetOutputTensorNum(value_node);
+  kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>(output_tensor_num, kOpFormat_DEFAULT));
   // set value node initial device data type = infer data type
-  std::vector<TypeId> types = std::vector<TypeId>(AnfAlgo::GetOutputTensorNum(value_node), kTypeUnknown);
+  std::vector<TypeId> types = std::vector<TypeId>(output_tensor_num, kTypeUnknown);
   kernel_build_info_builder->SetOutputsDeviceType(types);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), new_value_node.get());
   AnfAlgo::SetGraphId(graph_id_, new_value_node.get());
@@ -584,7 +584,25 @@ void KernelGraph::UpdateExecuteKernelStreamLabel() {
   }
 }
 
-void KernelGraph::UpdateChildGraphOrder() {}
+void KernelGraph::UpdateChildGraphOrder() {
+  MS_LOG(INFO) << "graph id:" << graph_id_;
+  auto call_nodes = FindNodeByPrimitive(std::make_shared<Primitive>(prim::kPrimCall->name()));
+  child_graph_order_.clear();
+  for (auto &call_node : call_nodes) {
+    MS_EXCEPTION_IF_NULL(call_node);
+    auto call_child_graphs = AnfAlgo ::GetCallNodeKernelGraph(call_node->cast<CNodePtr>());
+    for (const auto &child_graph : call_child_graphs) {
+      MS_EXCEPTION_IF_NULL(child_graph);
+      if (child_graph != parent_graph()) {
+        child_graph->set_parent_graph(shared_from_this()->cast<std::shared_ptr<KernelGraph>>());
+        child_graph_order_.push_back(child_graph);
+      }
+    }
+  }
+  for (size_t i = 0; i < child_graph_order_.size(); i++) {
+    MS_LOG(INFO) << "child graph[" << i << "][id:" << child_graph_order_[i]->graph_id() << "]";
+  }
+}
 
 std::vector<std::shared_ptr<KernelGraph>> KernelGraph::GetLeafGraphOrder() {
   std::vector<std::shared_ptr<KernelGraph>> leaf_graph_order;
@@ -601,5 +619,36 @@ std::vector<std::shared_ptr<KernelGraph>> KernelGraph::GetLeafGraphOrder() {
 }
 
 bool KernelGraph::IsLeafGraph() const { return child_graph_order_.empty(); }
+
+std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const PrimitivePtr &primitive) const {
+  auto anf_list = TopoSort(get_return());
+  std::vector<CNodePtr> result;
+  for (const auto &anf : anf_list) {
+    if (AnfAlgo::CheckPrimitiveType(anf, primitive) && AnfAlgo::GetGraphId(anf.get()) == graph_id_) {
+      result.push_back(anf->cast<CNodePtr>());
+    }
+  }
+  return result;
+}
+
+std::set<AnfNodePtr> KernelGraph::GetRealInput(const AnfNodePtr &parameter) {
+  MS_EXCEPTION_IF_NULL(parameter);
+  if (real_inputs_.find(parameter) == real_inputs_.end()) {
+    return {};
+  }
+  return real_inputs_[parameter];
+}
+
+void KernelGraph::SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg) {
+  MS_EXCEPTION_IF_NULL(parameter);
+  MS_EXCEPTION_IF_NULL(arg);
+  if (real_inputs_.find(parameter) == real_inputs_.end()) {
+    real_inputs_[parameter] = std::set<AnfNodePtr>();
+  }
+  auto &args = real_inputs_[parameter];
+  (void)args.insert(arg);
+}
+
+std::string KernelGraph::ToString() const { return std::string("kernel_graph_").append(std::to_string(graph_id_)); }
 }  // namespace session
 }  // namespace mindspore

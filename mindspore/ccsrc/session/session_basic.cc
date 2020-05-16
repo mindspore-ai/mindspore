@@ -247,27 +247,6 @@ std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, bool va
   return parameters;
 }
 
-AnfNodePtr CreateNewParameterFromCNode(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph) {
-  MS_EXCEPTION_IF_NULL(anf);
-  if (!anf->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Anf[" << anf->DebugString() << "] is not a cnode";
-  }
-  MS_LOG(INFO) << "Create a new parameter from cnode[" << anf->DebugString() << "]";
-  auto parameters = CreateParameterFromTuple(anf, valid_input, graph);
-  if (parameters.empty()) {
-    MS_LOG(EXCEPTION) << "No parameter exist!!";
-  }
-  if (parameters.size() == 1) {
-    return parameters[0];
-  }
-  std::vector<AnfNodePtr> make_tuple_input = {NewValueNode(prim::kPrimMakeTuple)};
-  (void)std::copy(parameters.begin(), parameters.end(), std::back_inserter(make_tuple_input));
-  auto make_tuple = graph->NewCNode(make_tuple_input);
-  MS_EXCEPTION_IF_NULL(make_tuple);
-  MS_LOG(INFO) << "New make tuple [" << make_tuple->DebugString() << "] of parameters";
-  return make_tuple;
-}
-
 size_t LoadCtrlInputTensor(const std::shared_ptr<KernelGraph> &graph, std::vector<tensor::TensorPtr> *inputs) {
   MS_LOG(INFO) << "Load kInputCtrlTensors";
   auto inputs_params = graph->input_ctrl_tensors();
@@ -390,6 +369,24 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
   return new_parameter;
 }
 
+AnfNodePtr SessionBasic::CreateNewParameterFromCNode(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(anf);
+  MS_LOG(INFO) << "Create a new parameter from cnode[" << anf->DebugString() << "]";
+  auto parameters = CreateParameterFromTuple(anf, valid_input, graph);
+  if (parameters.empty()) {
+    MS_LOG(EXCEPTION) << "No parameter exist!!";
+  }
+  if (parameters.size() == 1) {
+    return parameters[0];
+  }
+  std::vector<AnfNodePtr> make_tuple_input = {NewValueNode(prim::kPrimMakeTuple)};
+  (void)std::copy(parameters.begin(), parameters.end(), std::back_inserter(make_tuple_input));
+  auto make_tuple = graph->NewCNode(make_tuple_input);
+  MS_EXCEPTION_IF_NULL(make_tuple);
+  MS_LOG(INFO) << "New make tuple [" << make_tuple->DebugString() << "] of parameters";
+  return make_tuple;
+}
+
 CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, bool valid_input, KernelGraph *graph,
                                       bool *from_other_graph,
                                       std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
@@ -454,7 +451,7 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
   MS_EXCEPTION_IF_NULL(attr_input);
   if (IsValueNode<FuncGraph>(attr_input)) {
     // create primitive of cnode:call
-    cnode_inputs = {std::make_shared<ValueNode>(std::make_shared<Primitive>(kCallOpName))};
+    cnode_inputs = {graph->NewValueNode(NewValueNode(std::make_shared<Primitive>(prim::kPrimCall->name())))};
     // create a ValueNode<KernelGraph> as input of cnode:call
     if (graph->GetBackendAnfByFrontAnf(attr_input) != nullptr) {
       cnode_inputs.emplace_back(graph->GetBackendAnfByFrontAnf(attr_input));
@@ -466,12 +463,10 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
     }
   } else if (attr_input->isa<CNode>()) {
     // create primitive of cnode:call(switch)
-    cnode_inputs = {std::make_shared<ValueNode>(std::make_shared<Primitive>(kCallOpName))};
+    cnode_inputs = {graph->NewValueNode(NewValueNode(std::make_shared<Primitive>(prim::kPrimCall->name())))};
     if (graph->GetBackendAnfByFrontAnf(attr_input) != nullptr) {
       auto cnode_input = graph->GetBackendAnfByFrontAnf(attr_input);
-      auto prim = GetCNodePrimitive(cnode_input);
-      MS_EXCEPTION_IF_NULL(prim);
-      if (prim->name() != kSwitchOpName) {
+      if (!AnfAlgo::CheckPrimitiveType(cnode_input, prim::kPrimSwitch)) {
         MS_LOG(EXCEPTION) << "CNode input[0] must be switch.";
       }
       cnode_inputs.emplace_back(cnode_input);
@@ -484,7 +479,7 @@ CNodePtr SessionBasic::CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph)
     auto prim = AnfAlgo::GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(prim);
     // push attr to inputs[0] of new cnode
-    cnode_inputs = {std::make_shared<ValueNode>(std::make_shared<Primitive>(*prim))};
+    cnode_inputs = {graph->NewValueNode(NewValueNode(std::make_shared<Primitive>(*prim)))};
   }
 
   for (size_t input_idx = 1; input_idx < cnode->inputs().size(); input_idx++) {
@@ -545,7 +540,6 @@ ValueNodePtr SessionBasic::CreateValueNodeKernelGraph(const AnfNodePtr &anf, Ker
   AnfAlgo::SetGraphId(graph->graph_id(), new_value_node.get());
 
   graph->FrontBackendlMapAdd(anf, new_value_node);
-  graph->AddValueNodeToGraph(new_value_node);
 
   return new_value_node;
 }
@@ -555,11 +549,11 @@ ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph
   if (!anf->isa<Parameter>()) {
     MS_LOG(EXCEPTION) << "anf[" << anf->DebugString() << "] is not a parameter";
   }
-
   auto graph_inputs = graph->MutableInputs();
   MS_EXCEPTION_IF_NULL(graph_inputs);
-
+  TraceManager::DebugTrace(std::make_shared<TraceCopy>(anf->debug_info()));
   auto new_parameter = graph->NewParameter(anf->cast<ParameterPtr>());
+  TraceManager::EndTrace();
   graph_inputs->push_back(new_parameter);
   graph->FrontBackendlMapAdd(anf, new_parameter);
 
