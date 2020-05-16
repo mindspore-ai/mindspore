@@ -942,6 +942,15 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32), Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32)],
         'desc_bprop': [Tensor([[[[1, 2, 3, 4, 5]]]], mstype.float32)],
         'skip': ['backward']}),
+    ('ROIAlign', {
+        'block': P.ROIAlign(7, 7, 0.03125, 2),
+        'desc_inputs': [[2, 256, 192, 320], [1024, 5]],
+        'desc_bprop': [[7,7]]}),
+    ('ROIAlignGrad', {
+        'block': G.ROIAlignGrad((1, 1, 1, 1), 2, 2, 0.5, 2),
+        'desc_inputs': [[1, 1, 2, 2], [1, 5]],
+        'desc_bprop': [[1, 1, 2, 2]],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [
