@@ -823,7 +823,7 @@ OUTPUT_MAP(RealDiv) = {{0, OUTPUT_DESC(y)}};
 // Cast
 INPUT_MAP(Cast) = {{1, INPUT_DESC(x)}};
 INPUT_ATTR_MAP(Cast) = {{2, ATTR_DESC(dst_type, AnyTraits<GEType>())}};
-ATTR_MAP(Cast) = {{"Truncate", ATTR_DESC(truncate, AnyTraits<bool>())}};
+ATTR_MAP(Cast) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Cast) = {{0, OUTPUT_DESC(y)}};
 
 // Reciprocal
