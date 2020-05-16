@@ -909,5 +909,15 @@ bool AnfRuntimeAlgorithm::IsGetNext(const NotNull<AnfNodePtr> &node) {
   auto kernel_name = AnfAlgo::GetCNodeName(node);
   return kernel_name == kGetNextOpName;
 }
+
+FuncGraphPtr AnfRuntimeAlgorithm::GetValueNodeFuncGraph(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto value_node = node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  auto func_graph = value->cast<FuncGraphPtr>();
+  return func_graph;
+}
 }  // namespace session
 }  // namespace mindspore

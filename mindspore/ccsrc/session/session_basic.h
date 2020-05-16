@@ -78,6 +78,7 @@ class SessionBasic {
 
   CNodePtr CreateNewCNode(const CNodePtr &cnode, bool valid_input, KernelGraph *graph, bool *from_other_graph,
                           std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
+  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraph *graph);
 
   // set parameters of final graph
   virtual GraphId SetFinalGraphInput(const std::vector<AnfNodePtr> &) { return kInvalidGraphId; }
@@ -111,9 +112,12 @@ class SessionBasic {
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
   ParameterPtr CreateNewParameterFromParameter(const AnfNodePtr &anf, bool valid_input, KernelGraph *graph);
+  ValueNodePtr CreateValueNodeKernelGraph(const AnfNodePtr &anf, KernelGraph *graph);
+  ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph);
 
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
+  std::unordered_map<FuncGraphPtr, KernelGraphPtr> front_backend_graph_map_;
   std::shared_ptr<Context> context_;
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;
