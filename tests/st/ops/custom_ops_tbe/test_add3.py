@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 import pytest
-from cus_square import CusSquare
-
-import mindspore.context as context
+import numpy as np
 import mindspore.nn as nn
+import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import composite as C
+from cus_add3 import CusAdd3
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 class Net(nn.Cell):
@@ -27,31 +26,19 @@ class Net(nn.Cell):
 
     def __init__(self):
         super(Net, self).__init__()
-        self.square = CusSquare()
+        self.add3 = CusAdd3(1.0)
 
-    def construct(self, data):
-        return self.square(data)
-
+    def construct(self, input1, input2):
+        return self.add3(input1, input2)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_net():
-    x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
-    square = Net()
-    output = square(Tensor(x))
-    expect = np.array([1.0, 16.0, 81.0]).astype(np.float32)
+    input1 = np.array([1.0, 4.0, 9.0]).astype(np.float32)
+    input2 = np.array([1.0, 2.0, 3.0]).astype(np.float32)
+    add3_net = Net()
+    output = add3_net(Tensor(input1), Tensor(input2))
+    expect = np.array([3.0, 7.0, 13.0]).astype(np.float32)
     assert (output.asnumpy() == expect).all()
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
-def test_grad_net():
-    x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
-    sens = np.array([1.0, 1.0, 1.0]).astype(np.float32)
-    square = Net()
-    dx = C.grad_with_sens(square)(Tensor(x), Tensor(sens))
-    expect = np.array([2.0, 8.0, 18.0]).astype(np.float32)
-    assert (dx.asnumpy() == expect).all()
