@@ -41,6 +41,7 @@ class MindDataTestTensorDE : public UT::Common {
 
 TEST_F(MindDataTestTensorDE, Basics) {
   std::shared_ptr<Tensor> t = std::make_shared<Tensor>(TensorShape({2, 3}), DataType(DataType::DE_UINT64));
+  ASSERT_TRUE((t->AllocateBuffer(t->SizeInBytes())).IsOk());
   ASSERT_EQ(t->shape(), TensorShape({2, 3}));
   ASSERT_EQ(t->type(), DataType::DE_UINT64);
   ASSERT_EQ(t->SizeInBytes(), 2 * 3 * 8);

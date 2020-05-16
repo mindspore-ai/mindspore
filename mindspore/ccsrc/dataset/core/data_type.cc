@@ -25,14 +25,14 @@ namespace dataset {
 
 uint8_t DataType::SizeInBytes() const {
   if (type_ < DataType::NUM_OF_TYPES)
-    return SIZE_IN_BYTES[type_];
+    return kTypeInfo[type_].sizeInBytes_;
   else
     return 0;
 }
 
 py::dtype DataType::AsNumpyType() const {
   if (type_ < DataType::NUM_OF_TYPES)
-    return py::dtype(PYBIND_TYPES[type_]);
+    return py::dtype(kTypeInfo[type_].pybindType_);
   else
     return py::dtype("unknown");
 }
@@ -40,7 +40,7 @@ py::dtype DataType::AsNumpyType() const {
 uint8_t DataType::AsCVType() const {
   uint8_t res = kCVInvalidType;
   if (type_ < DataType::NUM_OF_TYPES) {
-    res = CV_TYPES[type_];
+    res = kTypeInfo[type_].cvType_;
   }
 
   if (res == kCVInvalidType) {
@@ -108,7 +108,7 @@ DataType::DataType(const std::string &type_str) {
 
 std::string DataType::ToString() const {
   if (type_ < DataType::NUM_OF_TYPES)
-    return TO_STRINGS[type_];
+    return kTypeInfo[type_].name_;
   else
     return "unknown";
 }
@@ -149,7 +149,7 @@ DataType DataType::FromNpArray(const py::array &arr) {
 std::string DataType::GetPybindFormat() const {
   std::string res;
   if (type_ < DataType::NUM_OF_TYPES) {
-    res = PYBIND_FORMAT_DESCRIPTOR[type_];
+    res = kTypeInfo[type_].pybindFormatDescriptor_;
   }
 
   if (res.empty()) {
