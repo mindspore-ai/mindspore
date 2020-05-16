@@ -1158,10 +1158,11 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
   for (auto it = tuple_getitem_list.begin(); it != tuple_getitem_list.end();) {
     input_tensor_names = RecInputTensorNames(it++, input_tensor_names);
   }
-
-  std::shared_ptr<std::vector<size_t>> ops_nodes_list(new std::vector<size_t>);
-
   std::shared_ptr<Graph> graph = ParseGraph(ops, input_tensor_names);
+
+  std::shared_ptr<std::vector<std::vector<size_t>>> eli_list(new std::vector<std::vector<size_t>>);
+  std::shared_ptr<std::vector<size_t>> index_list(new std::vector<size_t>);
+  graph = EliminateGraph(graph, eli_list, index_list);
 
   size_t num_device = g_device_manager->DeviceNum();
   double device_memory = entire_costgraph->GetDeviceMemory();
@@ -1172,7 +1173,7 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     return FAILED;
   }
 
-  GenerateStrategy(graph, ops);
+  GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list);
 
   if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
     MS_LOG(INFO) << "Init selected strategy succeeded.";
