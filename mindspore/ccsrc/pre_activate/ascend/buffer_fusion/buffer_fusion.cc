@@ -616,6 +616,9 @@ void BufferFusion::MatchOpNamePattern(const session::KernelGraph &kernel_graph, 
           MatchBnupdateAddRelu(cnode, eltwise_input, kernel_graph, candidate_fusion);
         } else if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimTupleGetItem)) {
           MatchBnupdateRelu(cnode, eltwise_input, kernel_graph, candidate_fusion);
+        } else if (eltwise_input->isa<CNode>() &&
+                   AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimDepthwiseConv2dNative)) {
+          MatchDepthwiseConvRelu(cnode, kernel_graph, candidate_fusion, true);
         }
       }
     } else if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimDepthwiseConv2dNative->name()) {

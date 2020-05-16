@@ -62,6 +62,10 @@
 #include "pre_activate/ascend/format_type/merge_cast_to_op.h"
 #include "pre_activate/ascend/format_type/check_consistency.h"
 #include "pre_activate/ascend/buffer_fusion/buffer_fusion.h"
+#include "pre_activate/ascend/buffer_fusion/tbe_buffer_fusion.h"
+#include "pre_activate/ascend/buffer_fusion/pass/depthwiseconv_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/pass/bnupdate_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/pass/fusion_type_fusion_pass.h"
 #include "pre_activate/ascend/format_type/deal_ref_trans_and_cast.h"
 #include "pre_activate/ascend/enhancer/add_memcpy_async.h"
 #include "pre_activate/ascend/format_type/insert_cast_for_runop.h"
@@ -299,6 +303,40 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
       save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph, true);
     DumpIRProto(kernel_graph, "after_hwopt");
+  }
+}
+
+void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  if (!context_ptr->ir_fusion_flag()) {
+    MS_LOG(INFO) << "UBFusion is not enable, skip";
+    return;
+  }
+  bool save_graphs = context_ptr->save_graphs_flag();
+  auto save_graphs_path = context_ptr->save_graphs_path();
+  if (save_graphs_path.empty()) {
+    save_graphs_path = ".";
+  }
+  if (save_graphs) {
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_ub_fusion_before.ir";
+    DumpIR(file_path, kernel_graph);
+  }
+  auto fusion_id_allocator = std::make_shared<FusionIdAllocator>();
+  MS_EXCEPTION_IF_NULL(fusion_id_allocator);
+  fusion_id_allocator->Init();
+  auto optimizer = std::make_shared<GraphOptimizer>();
+  auto ub_fusion_pm = std::make_shared<PassManager>("ub_fusion_pm");
+  ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<DepthwiseConvEltwiseFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<FusionTypeFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<TbeBufferFusion>());
+  optimizer->AddPassManager(ub_fusion_pm);
+  (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
+  if (save_graphs) {
+    std::string file_path = save_graphs_path + "/" + "hwopt_d_ub_fusion_after.ir";
+    DumpIR(file_path, kernel_graph);
   }
 }
 }  // namespace opt
