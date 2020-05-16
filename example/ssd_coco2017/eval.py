@@ -71,7 +71,6 @@ if __name__ == '__main__':
     args_opt = parser.parse_args()
 
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
-    context.set_context(enable_loop_sink=True, enable_mem_reuse=True)
 
     config = ConfigSSD()
     prefix = "ssd_eval.mindrecord"

@@ -47,7 +47,6 @@ def setup_module():
     np.random.seed(0)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(device_id=device_id)
-    context.set_context(enable_loop_sink=False)
     distributedTool.init()
     rank_id = distributedTool.get_rank()
     device_num = distributedTool.get_group_size()

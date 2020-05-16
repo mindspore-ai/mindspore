@@ -91,7 +91,6 @@ class MsContext {
 
   bool ir_fusion_flag() const { return ir_fusion_flag_; }
 
-  void set_loop_sink_flag(bool loop_sink_flag) { enable_loop_sink_ = loop_sink_flag; }
   bool loop_sink_flag() const { return enable_loop_sink_; }
 
   void set_enable_mem_reuse(bool enable_mem_reuse) { enable_mem_reuse_ = enable_mem_reuse; }
@@ -105,11 +104,6 @@ class MsContext {
 
   void set_enable_gpu_summary(bool enable_gpu_summary) { enable_gpu_summary_ = enable_gpu_summary; }
   bool enable_gpu_summary() const { return enable_gpu_summary_; }
-
-  void set_auto_mixed_precision_flag(bool auto_mixed_precision_flag) {
-    auto_mixed_precision_flag_ = auto_mixed_precision_flag;
-  }
-  bool auto_mixed_precision_flag() const { return auto_mixed_precision_flag_; }
 
   void set_enable_reduce_precision(bool flag) { enable_reduce_precision_ = flag; }
   bool enable_reduce_precision() const { return enable_reduce_precision_; }

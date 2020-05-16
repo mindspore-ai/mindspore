@@ -54,8 +54,6 @@ data_home = args_opt.dataset_path
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(device_id=device_id)
-context.set_context(enable_loop_sink=True)
-context.set_context(enable_mem_reuse=True)
 
 
 def create_dataset(repeat_num=1, training=True):

@@ -46,8 +46,7 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 ### Pre-Training
 ``` 
 usage: run_pretrain.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [--device_id N] 
-                        [--enable_task_sink ENABLE_TASK_SINK] [--enable_loop_sink ENABLE_LOOP_SINK]
-                        [--enable_mem_reuse ENABLE_MEM_REUSE] [--enable_save_ckpt ENABLE_SAVE_CKPT]
+                        [--enable_save_ckpt ENABLE_SAVE_CKPT]
                         [--enable_lossscale ENABLE_LOSSSCALE] [--do_shuffle DO_SHUFFLE]
                         [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N] [--checkpoint_path CHECKPOINT_PATH]
                         [--save_checkpoint_steps N] [--save_checkpoint_num N] 
@@ -58,8 +57,6 @@ options:
     --epoch_size               epoch size: N, default is 1
     --device_num               number of used devices: N, default is 1
     --device_id                device id: N, default is 0
-    --enable_loop_sink         enable loop sink: "true" | "false", default is "true"
-    --enable_mem_reuse         enable memory reuse: "true" | "false", default is "true"
     --enable_save_ckpt         enable save checkpoint: "true" | "false", default is "true"
     --enable_lossscale         enable lossscale: "true" | "false", default is "true"
     --do_shuffle               enable shuffle: "true" | "false", default is "true"

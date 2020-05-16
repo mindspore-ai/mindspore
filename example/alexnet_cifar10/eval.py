@@ -39,7 +39,7 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_sink_mode', type=bool, default=False, help='dataset_sink_mode is False or True')
     args = parser.parse_args()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, enable_mem_reuse=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
     network = AlexNet(cfg.num_classes)
     loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")

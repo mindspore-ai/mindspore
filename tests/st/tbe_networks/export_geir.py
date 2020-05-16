@@ -20,7 +20,7 @@ from mindspore import Tensor
 from mindspore.train.serialization import save, load, _check_filedir_or_create, _chg_model_file_name_if_same_exist, \
     _read_file_last_line, context, export
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", enable_loop_sink=True)
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 def test_resnet50_export(batch_size=1, num_classes=5):

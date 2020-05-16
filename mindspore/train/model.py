@@ -279,7 +279,7 @@ class Model:
         """
         # remove later to deal with loop sink
         need_wrap = False
-        if not hasattr(train_dataset, '__ME_INITED__') and context.get_context("enable_loop_sink") \
+        if not hasattr(train_dataset, '__ME_INITED__') and context.get_context("device_target") == "Ascend" \
                 and not context.get_context("enable_ge"):
             need_wrap = True
 
@@ -420,9 +420,6 @@ class Model:
         _device_number_check(self._parallel_mode, self._device_number)
         _parameter_broadcast_check(self._parallel_mode, self._parameter_broadcast)
 
-        if context.get_context("device_target") in ["CPU", "GPU"] and context.get_context("enable_loop_sink"):
-            raise ValueError("CPU and GPU can't support loop sink, please set enable_loop_sink=False.")
-
         self._train(epoch,
                     train_dataset,
                     callbacks=callbacks,
@@ -446,7 +443,7 @@ class Model:
 
         # remove later to deal with loop sink
         need_wrap = False
-        if not hasattr(valid_dataset, '__ME_INITED__') and context.get_context("enable_loop_sink") \
+        if not hasattr(valid_dataset, '__ME_INITED__') and context.get_context("device_target") == "Ascend" \
                 and not context.get_context("enable_ge"):
             need_wrap = True
 

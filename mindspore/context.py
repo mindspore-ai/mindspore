@@ -31,6 +31,8 @@ __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'set_context', 'get_context', 'set_aut
 
 GRAPH_MODE = 0
 PYNATIVE_MODE = 1
+# The max memory size of graph plus variable.
+_DEVICE_APP_MEMORY_SIZE = 31
 
 
 def _make_directory(path):
@@ -216,22 +218,6 @@ class _Context:
             raise RuntimeError("Device id set failed!!!")
 
     @property
-    def enable_loop_sink(self):
-        return self._context_handle.get_loop_sink_flag()
-
-    @enable_loop_sink.setter
-    def enable_loop_sink(self, enable_loop_sink):
-        self._context_handle.set_loop_sink_flag(enable_loop_sink)
-
-    @property
-    def enable_mem_reuse(self):
-        return self._context_handle.get_enable_mem_reuse()
-
-    @enable_mem_reuse.setter
-    def enable_mem_reuse(self, enable_mem_reuse):
-        self._context_handle.set_enable_mem_reuse(enable_mem_reuse)
-
-    @property
     def save_ms_model(self):
         return self._context_handle.get_save_ms_model_flag()
 
@@ -246,14 +232,6 @@ class _Context:
     @save_ms_model_path.setter
     def save_ms_model_path(self, save_ms_model_path):
         self._context_handle.set_save_ms_model_path(save_ms_model_path)
-
-    @property
-    def enable_auto_mixed_precision(self):
-        return self._context_handle.get_auto_mixed_precision_flag()
-
-    @enable_auto_mixed_precision.setter
-    def enable_auto_mixed_precision(self, enable_auto_mixed_precision):
-        self._context_handle.set_auto_mixed_precision_flag(enable_auto_mixed_precision)
 
     @property
     def enable_reduce_precision(self):
@@ -310,28 +288,20 @@ class _Context:
         self._thread_local_info.reserve_class_name_in_scope = reserve_class_name_in_scope
 
     @property
-    def graph_memory_max_size(self):
-        return None
-
-    @graph_memory_max_size.setter
-    def graph_memory_max_size(self, graph_memory_max_size):
-        if check_input_format(graph_memory_max_size):
-            graph_memory_max_size_ = graph_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
-            self._context_handle.set_graph_memory_max_size(graph_memory_max_size_)
-        else:
-            raise ValueError("Context param graph_memory_max_size should be in correct format! Such as \"26GB\"")
-
-    @property
     def variable_memory_max_size(self):
         return None
 
     @variable_memory_max_size.setter
     def variable_memory_max_size(self, variable_memory_max_size):
-        if check_input_format(variable_memory_max_size):
-            variable_memory_max_size_ = variable_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
-            self._context_handle.set_variable_memory_max_size(variable_memory_max_size_)
-        else:
+        if not check_input_format(variable_memory_max_size):
             raise ValueError("Context param variable_memory_max_size should be in correct format! Such as \"5GB\"")
+        if int(variable_memory_max_size[:-2]) >= _DEVICE_APP_MEMORY_SIZE:
+            raise ValueError("Context param variable_memory_max_size should be less than 31GB.")
+        variable_memory_max_size_ = variable_memory_max_size[:-2] + " * 1024 * 1024 * 1024"
+        graph_memory_max_size = _DEVICE_APP_MEMORY_SIZE - int(variable_memory_max_size[:-2])
+        graph_memory_max_size_ = str(graph_memory_max_size) + " * 1024 * 1024 * 1024"
+        self._context_handle.set_variable_memory_max_size(variable_memory_max_size_)
+        self._context_handle.set_graph_memory_max_size(graph_memory_max_size_)
 
     @property
     def enable_ge(self):
@@ -469,10 +439,9 @@ def reset_auto_parallel_context():
 
 
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
-                 save_graphs_path=str, enable_loop_sink=bool, enable_mem_reuse=bool, save_ms_model=bool,
-                 save_ms_model_path=str, enable_auto_mixed_precision=bool, enable_dump=bool, save_dump_path=str,
-                 enable_reduce_precision=bool, graph_memory_max_size=str,
-                 variable_memory_max_size=str, enable_profiling=bool, profiling_options=str)
+                 save_graphs_path=str, save_ms_model=bool, save_ms_model_path=str, enable_dump=bool,
+                 save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
+                 enable_profiling=bool, profiling_options=str)
 def set_context(**kwargs):
     """
     Sets context for running environment.
@@ -490,8 +459,6 @@ def set_context(**kwargs):
     Note:
         Attribute name is required for setting attributes.
         If need to config graph max memory size and variable max memory size, one must make sure:
-            The sum of graph_memory_max_size and variable_memory_max_size should be less than total memory size of
-            a device, while the total memory is supposed to be no more than 256GB.
 
     Args:
         mode (int): Running in GRAPH_MODE(0) or PYNATIVE_MODE(1). Default: PYNATIVE_MODE.
@@ -499,19 +466,15 @@ def set_context(**kwargs):
         device_id (int): Id of target device, the value must be in [0, device_num_per_host-1],
                     while device_num_per_host should no more than 4096. Default: 0.
         save_graphs (bool): Whether to save graphs. Default: False.
-        enable_loop_sink (bool): Whether to enable loop sink. Default: True.
-        enable_mem_reuse (bool): Whether to enable memory reuse. Default: True.
         save_ms_model (bool): Whether to save lite model converted by graph. Default: False.
         save_ms_model_path (str): Path to save converted lite model. Default: "."
         save_graphs_path (str): Path to save graphs. Default: "."
-        enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: True.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         enable_dump (bool): Whether to enable dump. Default: False.
         save_dump_path (str): When the program is executed on Ascend, operators can dump data here.
             The root dump path is configured in /home/HwHiAiUser/ide_daemon/ide_daemon.cfg.
             So the real dump path is "{configured root dump path}/{`save_dump_path`}". Default: ".".
-        graph_memory_max_size (str): Sets graph memory max size. Default: "26GB".
         variable_memory_max_size (str): Sets variable memory max size. Default: "5GB".
         enable_profiling (bool): Whether to open profiling. Default: False.
         profiling_options (str): Sets profiling collection options, operators can profiling data here.
@@ -538,12 +501,10 @@ def set_context(**kwargs):
         >>> context.set_context(device_target="Ascend")
         >>> context.set_context(device_id=0)
         >>> context.set_context(save_graphs=True, save_graphs_path="./model.ms")
-        >>> context.set_context(enable_mem_reuse=True)
         >>> context.set_context(enable_reduce_precision=True)
         >>> context.set_context(save_ms_model=True, save_ms_model_path=".")
         >>> context.set_context(enable_dump=True, save_dump_path=".")
         >>> context.set_context(reserve_class_name_in_scope=True)
-        >>> context.set_context(graph_memory_max_size="25GB")
         >>> context.set_context(variable_memory_max_size="6GB")
         >>> context.set_context(mode=context.GRAPH_MODE,
         >>>                     device_target="Ascend",device_id=0, save_graphs=True,
