@@ -903,7 +903,7 @@ def check_zip_dataset(method):
 
 
 def check_concat(method):
-    """check the input arguments of concat_dataset method in `Dataset`."""
+    """check the input arguments of concat method in `Dataset`."""
 
     @wraps(method)
     def new_method(*args, **kwargs):
