@@ -613,14 +613,14 @@ class Dataset:
         Concat the datasets in the input list of datasets, supported using "+" to reload concat operation.
 
         Note:
-        The column name，column data type and rank of column data should be the same in input datasets.
+            The column name，column data type and rank of column data should be the same in input datasets.
 
         Args:
             datasets (list or class Dataset): A list of datasets or a single class Dataset
-                to be concated together with this dataset.
+                to be concatenated together with this dataset.
 
         Returns:
-            ConcatDataset, dataset concated.
+            ConcatDataset, dataset concatenated.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1741,7 +1741,7 @@ class ConcatDataset(DatasetOp):
     The result of applying concat dataset operator to the input Dataset.
 
     Args:
-        datasets (list): A list of datasets to be concated together.
+        datasets (list): A list of datasets to be concatenated together.
 
     Raises:
         TypeError: If dataset is not an instance of Dataset.
