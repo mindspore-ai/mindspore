@@ -33,7 +33,7 @@ def cond_data_test(x_init, y_init):
             super(Net, self).__init__()
             self.square = P.Square()
             self.add = P.TensorAdd()
-            self.value = Tensor(np.full((1), 3, dtype=np.float32))
+            self.value = Tensor(3, dtype=ms.float32)
             self.switch = P.GeSwitch()
             self.merge = P.Merge()
             self.less = P.Less()
