@@ -324,6 +324,7 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids,
 
   GraphDescReporter graph_reporter(context->device_id(), "vm.graph_desc_info_" + std::to_string(graph->graph_id()),
                                    ret->second);
+  graph_profiling_cnode_.erase(ret);
   graph_reporter.ReportData();
 }
 }  // namespace ascend
