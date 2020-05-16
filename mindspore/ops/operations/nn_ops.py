@@ -2084,7 +2084,7 @@ class GetNext(PrimitiveWithInfer):
     Note:
         GetNext op needs to be associated with network and also depends on the init_dataset interface,
         it can't be used directly as a single op.
-        For details, please refer to `nn.cell_wrapper.DataWrapper` source code.
+        For details, please refer to `nn.DataWrapper` source code.
 
     Args:
         types (list[:class:`mindspore.dtype`]): The type of the outputs.
