@@ -234,6 +234,14 @@ class _Context:
         self._context_handle.set_save_ms_model_path(save_ms_model_path)
 
     @property
+    def enable_auto_mixed_precision(self):
+        return self._context_handle.get_auto_mixed_precision_flag()
+
+    @enable_auto_mixed_precision.setter
+    def enable_auto_mixed_precision(self, enable_auto_mixed_precision):
+        self._context_handle.set_auto_mixed_precision_flag(enable_auto_mixed_precision)
+
+    @property
     def enable_reduce_precision(self):
         return self._context_handle.get_enable_reduce_precision_flag()
 
@@ -441,7 +449,7 @@ def reset_auto_parallel_context():
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
                  save_graphs_path=str, save_ms_model=bool, save_ms_model_path=str, enable_dump=bool,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
-                 enable_profiling=bool, profiling_options=str)
+                 enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool)
 def set_context(**kwargs):
     """
     Sets context for running environment.
@@ -469,6 +477,7 @@ def set_context(**kwargs):
         save_ms_model (bool): Whether to save lite model converted by graph. Default: False.
         save_ms_model_path (str): Path to save converted lite model. Default: "."
         save_graphs_path (str): Path to save graphs. Default: "."
+        enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: True.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
         enable_reduce_precision (bool): Whether to enable precision reduction. Default: True.
         enable_dump (bool): Whether to enable dump. Default: False.
