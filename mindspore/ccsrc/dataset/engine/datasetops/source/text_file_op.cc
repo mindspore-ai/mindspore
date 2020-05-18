@@ -146,10 +146,7 @@ Status TextFileOp::LoadTensor(const std::string &line, std::unique_ptr<TensorQTa
   (*tensor_table)->push_back(std::move(tRow));
 
   std::shared_ptr<Tensor> tensor;
-  RETURN_IF_NOT_OK(
-    Tensor::CreateTensor(&tensor, data_schema_->column(0).tensorImpl(),
-                         TensorShape(std::vector<dsize_t>(1, line.size())), data_schema_->column(0).type(),
-                         const_cast<unsigned char *>(reinterpret_cast<const unsigned char *>(common::SafeCStr(line)))));
+  RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, {line}, TensorShape::CreateScalar()));
   (**tensor_table)[row][0] = std::move(tensor);
   return Status::OK();
 }

@@ -388,7 +388,7 @@ Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &co
   (void)fs.seekg(0, std::ios::beg);
   RETURN_IF_NOT_OK(
     Tensor::CreateTensor(tensor, col.tensorImpl(), TensorShape(std::vector<dsize_t>(1, num_elements)), col.type()));
-  (void)fs.read(reinterpret_cast<char *>((*tensor)->StartAddr()), num_elements);
+  (void)fs.read(reinterpret_cast<char *>((*tensor)->GetMutableBuffer()), num_elements);
   fs.close();
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);

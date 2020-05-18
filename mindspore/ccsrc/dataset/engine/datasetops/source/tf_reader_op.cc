@@ -759,7 +759,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
   RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, current_col.tensorImpl(), current_shape, current_col.type()));
 
   // Tensors are lazily allocated, this eagerly allocates memory for the tensor.
-  unsigned char *current_tensor_addr = (*tensor)->StartAddr();
+  unsigned char *current_tensor_addr = (*tensor)->GetMutableBuffer();
   int64_t tensor_bytes_remaining = (*num_elements) * pad_size;
 
   if (current_tensor_addr == nullptr) {
@@ -878,7 +878,7 @@ Status TFReaderOp::LoadIntList(const ColDescriptor &current_col, const dataengin
   RETURN_IF_NOT_OK(Tensor::CreateTensor(tensor, current_col.tensorImpl(), current_shape, current_col.type()));
 
   // Tensors are lazily allocated, this eagerly allocates memory for the tensor.
-  (void)(*tensor)->StartAddr();
+  (void)(*tensor)->GetMutableBuffer();
 
   int64_t i = 0;
   auto it = (*tensor)->begin<T>();

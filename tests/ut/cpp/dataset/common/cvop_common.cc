@@ -60,7 +60,7 @@ void CVOpCommon::GetInputImage(std::string filename) {
     TensorShape in_shape({file_size});
     raw_input_tensor_ = std::make_shared<Tensor>(in_shape, DataType(DataType::DE_UINT8));
 
-    file.read(reinterpret_cast<char *>(raw_input_tensor_->StartAddr()), raw_input_tensor_->SizeInBytes());
+    file.read(reinterpret_cast<char *>(raw_input_tensor_->GetMutableBuffer()), raw_input_tensor_->SizeInBytes());
     raw_cv_image_ = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
     input_tensor_ = std::dynamic_pointer_cast<Tensor>(std::make_shared<CVTensor>(raw_cv_image_));
     SwapRedAndBlue(input_tensor_, &input_tensor_);

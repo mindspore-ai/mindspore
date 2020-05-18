@@ -74,7 +74,7 @@ Status Create1DTensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements,
   RETURN_IF_NOT_OK(
     Tensor::CreateTensor(sample_ids, TensorImpl::kFlexible, shape, DataType(data_type), data));
   if (data == nullptr) {
-    (*sample_ids)->StartAddr();  // allocate memory in case user forgets!
+    (*sample_ids)->GetMutableBuffer();  // allocate memory in case user forgets!
   }
   return Status::OK();
 }

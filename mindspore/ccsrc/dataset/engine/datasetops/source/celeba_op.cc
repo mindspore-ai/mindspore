@@ -407,7 +407,7 @@ Status CelebAOp::LoadTensorRow(const std::pair<std::string, std::vector<int32_t>
   RETURN_IF_NOT_OK(Tensor::CreateTensor(&image, data_schema_->column(0).tensorImpl(),
                                         TensorShape(std::vector<dsize_t>(1, num_elements)),
                                         data_schema_->column(0).type()));
-  (void)handle.read(reinterpret_cast<char *>(image->StartAddr()), num_elements);
+  (void)handle.read(reinterpret_cast<char *>(image->GetMutableBuffer()), num_elements);
   if (decode_ == true) {
     Status rc = Decode(image, &image);
     if (rc.IsError()) {

@@ -38,7 +38,7 @@ Status RandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
     std::shared_ptr<Tensor> sampleIds;
     int64_t last_id = samples_per_buffer_ + next_id_ > num_samples_ ? num_samples_ : samples_per_buffer_ + next_id_;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, last_id - next_id_));
-    int64_t *id_ptr = reinterpret_cast<int64_t *>(sampleIds->StartAddr());
+    int64_t *id_ptr = reinterpret_cast<int64_t *>(sampleIds->GetMutableBuffer());
     for (int64_t i = 0; i < (last_id - next_id_); i++) {
       *(id_ptr + i) = replacement_ ? (*dist)(rnd_) : shuffled_ids_[static_cast<size_t>(i + next_id_)];
     }

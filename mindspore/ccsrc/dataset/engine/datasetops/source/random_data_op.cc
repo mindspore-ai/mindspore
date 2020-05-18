@@ -127,7 +127,7 @@ Status RandomDataOp::GenerateSchema() {
     // For each column:
     // - choose a datatype
     // - generate a shape that randomly chooses the number of dimensions and the dimension values.
-    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(0, kMaxDataType));
+    DataType::Type newType = static_cast<DataType::Type>(GenRandomInt(0, DataType::NUM_OF_TYPES - 2));
     int32_t rank = GenRandomInt(1, kMaxRank);
     std::vector<dsize_t> dims;
     for (int32_t d = 0; d < rank; d++) {

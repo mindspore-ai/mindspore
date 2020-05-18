@@ -156,6 +156,8 @@ class TensorShape {
 
   TensorShape Squeeze() const;
 
+  std::vector<dsize_t> Strides();
+
  private:
   // True if known and valid shape, false otherwise
   bool known_;

@@ -31,7 +31,7 @@ Status SequentialSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer)
     std::shared_ptr<Tensor> sampleIds;
     int64_t lastId = (samples_per_buffer_ + next_id_ > num_samples_) ? num_samples_ : samples_per_buffer_ + next_id_;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, lastId - next_id_));
-    int64_t *idPtr = reinterpret_cast<int64_t *>(sampleIds->StartAddr());
+    int64_t *idPtr = reinterpret_cast<int64_t *>(sampleIds->GetMutableBuffer());
     while (next_id_ < lastId) {
       *(idPtr++) = next_id_++;
     }

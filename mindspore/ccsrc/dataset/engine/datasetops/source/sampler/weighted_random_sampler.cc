@@ -111,7 +111,7 @@ Status WeightedRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buf
     RETURN_IF_NOT_OK(CreateSamplerTensor(&outputIds, last_id - sample_id_));
 
     // Initialize tensor.
-    int64_t *id_ptr = reinterpret_cast<int64_t *>(outputIds->StartAddr());
+    int64_t *id_ptr = reinterpret_cast<int64_t *>(outputIds->GetMutableBuffer());
     // Assign the data to tensor element.
     while (sample_id_ < last_id) {
       int64_t genId;

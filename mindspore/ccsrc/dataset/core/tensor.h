@@ -47,8 +47,6 @@ using TensorRow = std::vector<std::shared_ptr<Tensor>>;     // A row is a set of
 using TensorTable = std::vector<TensorRow>;                 // The table of tensors is a vector of rows
 using TensorQTable = std::deque<TensorRow>;  // A different flavour of tensor table, this one has queue functionality
 
-// Tensor base class which holds the data in an unsigned char* buffer.
-
 class Tensor {
  public:
   Tensor() = delete;
@@ -74,6 +72,27 @@ class Tensor {
 
   Tensor &operator=(Tensor &&other) noexcept;
 
+  // type of offest values to store strings information
+  using offset_t = uint32_t;
+  // const of the size of the offset variable
+  static constexpr uint8_t kOffsetSize = sizeof(offset_t);
+  // Tensor base class which holds the data in an unsigned char* buffer.
+
+  // Construct  a scalar string Tensor
+  explicit Tensor(const std::string &str) : Tensor(std::vector<std::string>{str}, TensorShape::CreateScalar()) {}
+
+  // Construct a tensor from  a list of strings. Reshape the tensor with `shape` if given, otherwise assume the shape is
+  // the size of the vector `strings`.
+  // The memory layout of a Tensor of strings consists of the Offset_array followed by the strings.
+  // OFFSET1, OFFSET2, ... String1, String2, ...
+  // The value of each offset is the end index of the corresponding string
+  // Offsets is of type offest_t
+  // strings will ne null-terminated
+  // example: Tensor(['abc', 'de'], shape={2}, type=DE_STRING)
+  // 3 6 a b c \0 d e \0
+  explicit Tensor(const std::vector<std::string> &strings,
+                  const TensorShape &shape = TensorShape::CreateUnknownRankShape());
+
   // A static factory method to create the given flavour of derived Tensor
   // Returns the base class reference for the Tensor.
   // @param ptr output argument to hold the created Tensor of given tensor_impl
@@ -90,6 +109,17 @@ class Tensor {
   // @param arr py::array
   // @return Status Code
   static Status CreateTensor(std::shared_ptr<Tensor> *ptr, py::array arr);
+
+  // Helper function to create a tensor from Numpy of strings
+  static Status CreateTensorFromNumpyString(std::shared_ptr<Tensor> *ptr, py::array arr);
+
+  // A static factory method to create a Tensor from a given list of strings.
+  // @param ptr output argument to hold the created Tensor
+  // @param strings elements of the tensor
+  // @param shape shape of the tensor
+  // @return Status Code
+  static Status CreateTensor(std::shared_ptr<Tensor> *ptr, const std::vector<std::string> &strings,
+                             const TensorShape &shape = TensorShape::CreateUnknownRankShape());
 
   // Copy raw data of a array based on shape and strides to the destination pointer
   // @param dst Pointer to the destination array where the content is to be copied
@@ -116,6 +146,11 @@ class Tensor {
   template <typename T>
   Status GetItemAt(T *o, const std::vector<dsize_t> &index) const;
 
+  // Get string located at `index`.
+  // @param index vector<dsize_t>
+  // @return return std::string_view specified at index
+  Status GetItemAt(std::string_view *o, const std::vector<dsize_t> &index) const;
+
   template <typename T>
   Status GetUnsignedIntAt(T *o, const std::vector<dsize_t> &index) const;
 
@@ -131,26 +166,44 @@ class Tensor {
   // @param value of type `T`
   template <typename T>
   Status SetItemAt(const std::vector<dsize_t> &index, const T &value) {
-    static_cast<void>(StartAddr());
+    static_cast<void>(GetMutableBuffer());
     T *ptr = nullptr;
     RETURN_IF_NOT_OK(GetItemPtr<T>(&ptr, index));
     *ptr = value;
     return Status::OK();
   }
 
-  // fill tensor with Zeros
+  // set string item at location specified by index
+  // @param index
+  // @param value of type std::string
+  Status SetItemAt(const std::vector<dsize_t> &index, const std::string &value) {
+    RETURN_UNEXPECTED_IF_NULL(data_);
+    uchar *ptr = nullptr;
+    offset_t length = 0;
+    RETURN_IF_NOT_OK(GetItemPtr(&ptr, index, &length));
+    if (value.length() != length) {
+      RETURN_STATUS_UNEXPECTED("Length of the new string does not match the item.");
+    }
+    memcpy_s(reinterpret_cast<char *>(ptr), length, value.c_str(), length);
+
+    return Status::OK();
+  }
+  // fill tensor with Zeros. Does not support strings.
   Status Zero() {
+    CHECK_FAIL_RETURN_UNEXPECTED(type_ != DataType::DE_STRING, "Cannot use Zero on tensor of strings..");
     dsize_t size = SizeInBytes();
-    CHECK_FAIL_RETURN_UNEXPECTED(memset_sp(StartAddr(), size, 0, size) == 0, "Failed to fill tensor with zeroes.");
+    CHECK_FAIL_RETURN_UNEXPECTED(memset_sp(GetMutableBuffer(), size, 0, size) == 0,
+                                 "Failed to fill tensor with zeroes.");
     return Status::OK();
   }
 
-  // Fill all elements in the Tensor with the given value of type `T`
+  // Fill all elements in the Tensor with the given value of type `T`.  Does not support strings.
   // @tparam T
   // @param value
   template <typename T>
   Status Fill(const T &value) {
-    static_cast<void>(StartAddr());
+    CHECK_FAIL_RETURN_UNEXPECTED(type_ != DataType::DE_STRING, "Cannot use fill on tensor of strings.");
+    static_cast<void>(GetMutableBuffer());
     int64_t cellSize = type_.SizeInBytes();
     if ((data_ != nullptr) && type_.IsCompatible<T>()) {
       for (dsize_t i = 0; i < Size(); i++) {
@@ -177,7 +230,10 @@ class Tensor {
   dsize_t Size() const { return shape().NumOfElements(); }
 
   // @return the number of bytes this tensor is needs
-  dsize_t SizeInBytes() const { return Size() * type_.SizeInBytes(); }
+  dsize_t SizeInBytes() const {
+    if (data_end_ == nullptr) return type_.SizeInBytes() * shape_.NumOfElements();
+    return data_end_ - data_;
+  }
 
   // @return the rank of the tensor
   dsize_t Rank() const { return shape().Rank(); }
@@ -185,12 +241,12 @@ class Tensor {
   // Get the starting memory address as a constant for the data of the tensor.  This potentially
   // drives an allocation if the data area.
   // @return const unsigned char*
-  const unsigned char *StartAddr() const;
+  const unsigned char *GetBuffer() const;
 
   // Get the starting memory address for the data of the tensor.  This potentially
   // drives an allocation if the data area.
   // @return unsigned char*
-  unsigned char *StartAddr();
+  unsigned char *GetMutableBuffer();
 
   // Getter of the type
   // @return
@@ -236,12 +292,12 @@ class Tensor {
 
   virtual void Squeeze();
 
-  // Calculates the strides of the Tensor
-  // Ex: Tensor of shape <4,2,2> and type DE_UINT8 (1 byte)
-  // The strides will be {6,2,1}.
-  // Ex: Tensor of shape <4,2,2> and type DE_UINT32 (4 byte)
-  // The strides will be {24,8,4}.
-  // @return vector of integers
+  /// Calculates the strides of the Tensor
+  /// Ex: Tensor of shape <4,2,2> and type DE_UINT8 (1 byte)
+  /// The strides will be {6,2,1}.
+  /// Ex: Tensor of shape <4,2,2> and type DE_UINT32 (4 byte)
+  /// The strides will be {24,8,4}.
+  /// @return vector of integers
   std::vector<dsize_t> Strides();
 
   std::string ToString() {
@@ -255,12 +311,14 @@ class Tensor {
   // @return Status code
   Status GetDataAsNumpy(py::array *data);
 
+  Status GetDataAsNumpyStrings(py::array *data);
+
   static Status GetBufferInfo(Tensor &t, py::buffer_info *out);
 
   // TensorIterator is a linear iterator that can be used to iterate over the elements of the Tensor
   // The order  elements  is as the memory layout (i.e., row-major) [[1,2,3],[4,5,6] --> 1,2,3,4,5,6
   // @tparam T type of values in the Tensor Iterator
-  template <typename T>
+  template <typename T, bool = true>
   class TensorIterator {
    public:
     using iterator_category = std::random_access_iterator_tag;
@@ -271,11 +329,14 @@ class Tensor {
 
     explicit TensorIterator(uchar *ptr = nullptr) { ptr_ = reinterpret_cast<T *>(ptr); }
 
-    TensorIterator(const TensorIterator<T> &raw_iterator) = default;
+    TensorIterator(const TensorIterator<T> &raw_iterator) { ptr_ = raw_iterator.ptr_; }
 
     ~TensorIterator() = default;
 
-    TensorIterator<T> &operator=(const TensorIterator<T> &rhs) = default;
+    TensorIterator<T> &operator=(const TensorIterator<T> &rhs) {
+      ptr_ = rhs.ptr_;
+      return *this;
+    }
 
     TensorIterator<T> &operator=(T *rhs) {
       ptr_ = rhs;
@@ -346,6 +407,99 @@ class Tensor {
     T *ptr_;
   };
 
+  // Specialization of TensorIterator for strings. It returns std::string_view for every item.
+  // @tparam DUMMY, used to mbe able to specialize the inner class
+  template <bool DUMMY>
+  class TensorIterator<std::string_view, DUMMY> {
+   public:
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type = std::string_view;
+    using difference_type = ptrdiff_t;
+    using pointer = std::string_view *;
+    using reference = std::string_view &;
+
+    explicit TensorIterator(uchar *offset = nullptr, const uchar *buf = nullptr, dsize_t index = 0) {
+      offset_ = reinterpret_cast<offset_t *>(offset);
+      buf_ = reinterpret_cast<const char *>(buf);
+      index_ = index;
+    }
+
+    TensorIterator(const TensorIterator<std::string_view, DUMMY> &raw_iterator) {
+      offset_ = raw_iterator.offset_;
+      buf_ = raw_iterator.buf_;
+      index_ = raw_iterator.index_;
+    }
+
+    ~TensorIterator() = default;
+
+    bool operator==(const TensorIterator<std::string_view> &rhs) {
+      return buf_ == rhs.buf_ && offset_ == rhs.offset_ && index_ == rhs.index_;
+    }
+
+    bool operator!=(const TensorIterator<std::string_view> &rhs) { return !(*this == rhs); }
+
+    operator bool() const { return offset_ != nullptr; }
+
+    std::string_view operator*() const {
+      offset_t start = 0;
+      if (index_ != 0) start = offset_[index_ - 1] + 1;
+      return std::string_view{buf_ + start};
+    }
+
+    TensorIterator<std::string_view> &operator+=(const dsize_t &inc) {
+      index_ += inc;
+      return *this;
+    }
+
+    TensorIterator<std::string_view> &operator-=(const dsize_t &inc) {
+      index_ -= inc;
+      return *this;
+    }
+
+    TensorIterator<std::string_view> &operator++() {
+      ++index_;
+      return *this;
+    }
+
+    TensorIterator<std::string_view> &operator--() {
+      --index_;
+      return *this;
+    }
+
+    TensorIterator<std::string_view> operator++(int) {
+      auto temp(*this);
+      ++index_;
+      return temp;
+    }
+
+    TensorIterator<std::string_view> operator--(int) {
+      auto temp(*this);
+      --index_;
+      return temp;
+    }
+
+    TensorIterator<std::string_view> operator+(const dsize_t &inc) {
+      auto oldPtr = index_;
+      index_ += inc;
+      auto temp(*this);
+      index_ = oldPtr;
+      return temp;
+    }
+
+    TensorIterator<std::string_view> operator-(const dsize_t &inc) {
+      auto oldPtr = index_;
+      index_ -= inc;
+      auto temp(*this);
+      index_ = oldPtr;
+      return temp;
+    }
+
+   protected:
+    dsize_t index_;
+    offset_t *offset_;
+    const char *buf_;
+  };
+
   // Return a TensorIterator that points to the start of the Tensor.
   // It's the user responsibility to use the correct type that matches the Tensor type
   // @tparam T The type of values in the Tensor
@@ -391,6 +545,22 @@ class Tensor {
   template <typename T>
   Status GetItemPtr(T **, const std::vector<dsize_t> &index) const;
 
+  // Get pointer to string located at `index` and the length of string
+  // @param index vector<dsize_t>
+  // @return return a pointer to the string specified at index and the length of the string
+  Status GetItemPtr(uchar **, const std::vector<dsize_t> &index, offset_t *length = nullptr) const;
+
+  // Given a flat index of an item string, return the start and length of the item
+  // @param index flat index of the item
+  // @return start address of the ths string
+  // @return length of the string
+  Status GetStringAt(dsize_t index, uchar **string_start, offset_t *length) const;
+
+  // Skip the offsets and returns the start of the buffer where the real strings is stored. Caller needs to check if the
+  // tensor's type is a string, otherwise undefined address would be returned.
+  // @return address of the first string of the tensor.
+  uchar *GetStringsBuffer() const { return data_ + kOffsetSize * shape_.NumOfElements(); }
+
   // all access to shape_ should be via shape
   TensorShape shape_;
   // data type of tensor
@@ -402,6 +572,16 @@ class Tensor {
   // pointer to the end of the physical data
   unsigned char *data_end_ = nullptr;
 };
+template <>
+inline Tensor::TensorIterator<std::string_view> Tensor::begin<std::string_view>() {
+  uchar *buf = GetStringsBuffer();
+  return TensorIterator<std::string_view>(data_, buf);
+}
+template <>
+inline Tensor::TensorIterator<std::string_view> Tensor::end<std::string_view>() {
+  uchar *buf = GetStringsBuffer();
+  return TensorIterator<std::string_view>(data_, buf, shape_.NumOfElements());
+}
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // DATASET_CORE_TENSOR_H_
