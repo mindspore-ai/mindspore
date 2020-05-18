@@ -16,6 +16,7 @@
 #include "device/ascend/ascend_device_address.h"
 #include <memory>
 #include <vector>
+#include <set>
 #include <algorithm>
 #include "runtime/mem.h"
 #include "device/kernel_runtime_manager.h"
@@ -34,6 +35,10 @@ namespace device {
 namespace ascend {
 const int FLOAT_LEN = sizeof(float);
 const int FLOAT16_LEN = 2;  // sizeof(float16);
+const std::set<std::string> kOpNeedTransFormat = {kOpFormat_NHWC,        kOpFormat_HWCN,         kOpFormat_NC1HWC0,
+                                                  kOpFormat_FRAC_Z,      kOpFormat_C1HWNCoC0,    kOpFormat_FRAC_NZ,
+                                                  kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
+
 void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) {
   auto ret_rt_memcpy = rtMemcpy(dst, size, src, size, kind);
   if (ret_rt_memcpy != RT_ERROR_NONE) {
@@ -97,7 +102,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const std::vector<int> &shape, size_t
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
-  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT) {
+  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NDHWC) {
     if (type_id_ == type) {
       SyncMemory(host_ptr, ptr_, size, RT_MEMCPY_DEVICE_TO_HOST);
       sync_ok = true;
@@ -115,9 +120,11 @@ bool AscendDeviceAddress::SyncDeviceToHost(const std::vector<int> &shape, size_t
       }
     }
   } else {
-    auto iter = kNeedTransFormatSet.find(format_);
-    if (iter != kNeedTransFormatSet.end()) {
+    auto iter = kOpNeedTransFormat.find(format_);
+    if (iter != kOpNeedTransFormat.end()) {
       sync_ok = SyncDeviceToHostAndConvertFormat(shape, size, type, host_ptr);
+    } else {
+      MS_LOG(INFO) << "Can not find format transfer for :" << format_;
     }
   }
   if (!sync_ok) {
@@ -141,7 +148,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const std::vector<int
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
-  if (format_ == kOpFormat_FRAC_NZ) {
+  if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NDHWC) {
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
     host_shape = trans::PaddingShapeTo4d(host_shape);
@@ -185,7 +192,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const std::vector<int> &shape, size_t
   if (host_shape.empty()) {
     host_shape.emplace_back(1);
   }
-  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT) {
+  if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NDHWC) {
     if (type_id_ == type) {
       SyncMemory(ptr_, host_ptr, size_, RT_MEMCPY_HOST_TO_DEVICE);
       sync_ok = true;
@@ -203,9 +210,11 @@ bool AscendDeviceAddress::SyncHostToDevice(const std::vector<int> &shape, size_t
       SyncMemory(ptr_, host_tmp.data(), size_, RT_MEMCPY_HOST_TO_DEVICE);
     }
   } else {
-    auto iter = kNeedTransFormatSet.find(format_);
-    if (iter != kNeedTransFormatSet.end()) {
+    auto iter = kOpNeedTransFormat.find(format_);
+    if (iter != kOpNeedTransFormat.end()) {
       sync_ok = ConvertFormatAndSyncHostToDevice(shape, size, type, host_ptr);
+    } else {
+      MS_LOG(INFO) << "Can not find format transfer for :" << format_;
     }
   }
   if (!sync_ok) {
@@ -227,7 +236,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const std::vector<int
     host_shape.emplace_back(1);
   }
   std::vector<size_t> device_shape;
-  if (format_ == kOpFormat_FRAC_NZ) {
+  if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NDHWC) {
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
     host_shape = trans::PaddingShapeTo4d(host_shape);
