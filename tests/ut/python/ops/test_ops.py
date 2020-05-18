@@ -573,7 +573,12 @@ test_case_math_ops = [
         'block': P.Atan2(),
         'desc_inputs': [Tensor(np.array([0, 1]).astype(np.float32)),
                         Tensor(np.array([1, 1]).astype(np.float32))],
-        'desc_bprop': [[2]]})
+        'desc_bprop': [[2]]}),
+    ('SquareSumAll', {
+        'block': P.SquareSumAll(),
+        'desc_inputs': [Tensor(np.array([0, 1, 4, 5]).astype(np.float32)),
+                        Tensor(np.array([1, 1, 3, 7]).astype(np.float32))],
+        'skip': ['backward']}),
 ]
 
 test_case_nn_ops = [

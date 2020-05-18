@@ -2091,3 +2091,38 @@ class Atan2(_MathBinaryOp):
          >>> atan2(input_x, input_y)
          [[0. 0.7853982]]
     """
+
+
+class SquareSumAll(PrimitiveWithInfer):
+    """
+    Returns square sum all of a tensor element-wise
+
+    Inputs:
+        - **input_x1** (Tensor) - The input tensor.
+        - **input_x2** (Tensor) - The input tensor same type and shape as the `input_x1`.
+
+    Note:
+        SquareSumAll only supports float16 and float32 data type.
+
+    Outputs:
+        - **output_y1** (Tensor) - The same type as the `input_x1`.
+        - **output_y2** (Tensor) - The same type as the `input_x1`.
+
+    Examples:
+         >>> input_x1 = Tensor(np.random.randint([3, 2, 5,7]), mindspore.float32)
+         >>> input_x2 = Tensor(np.random.randint([3, 2, 5,7]), mindspore.float32)
+         >>> square_sum_all = P.SquareSumAll()
+         >>> square_sum_all(input_x1, input_x2)
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init SquareSumAll"""
+    def infer_shape(self, x_shape, y_shape):
+        validator.check("x1_shape", x_shape, "x2_shape", y_shape, Rel.EQ, self.name)
+        return [], []
+
+    def infer_dtype(self, x_type, y_type):
+        validator.check_tensor_type_same({'x1_type': x_type}, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensor_type_same({'x2_type': y_type}, [mstype.float16, mstype.float32], self.name)
+        return x_type, y_type

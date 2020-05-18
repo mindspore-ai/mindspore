@@ -889,6 +889,11 @@ INPUT_MAP(Square) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Square) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Square) = {{0, OUTPUT_DESC(y)}};
 
+// SquareSumAll
+INPUT_MAP(SquareSumAll) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(SquareSumAll) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SquareSumAll) = {{0, OUTPUT_DESC(y1)}, {1, OUTPUT_DESC(y2)}};
+
 // Tanh
 INPUT_MAP(Tanh) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Tanh) = EMPTY_ATTR_MAP;
