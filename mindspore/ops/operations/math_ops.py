@@ -475,6 +475,7 @@ class CumProd(PrimitiveWithInfer):
         cls_name = self.name
         self.exclusive = validator.check_value_type("exclusive", exclusive, [bool], cls_name)
         self.reverse = validator.check_value_type("reverse", reverse, [bool], cls_name)
+        self.init_prim_io_names(inputs=['x', 'axis'], outputs=['y'])
 
     def infer_shape(self, x_shape, axis_shape):
         return x_shape
@@ -2022,8 +2023,10 @@ class NMSWithMask(PrimitiveWithInfer):
         validator.check_integer("bboxes.shape()[0]", bboxes_shape[0], 0, Rel.GT, cls_name)
         if not self.is_ge:
             validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 8, Rel.EQ, cls_name)
-        else:
-            validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
+            num = bboxes_shape[0]
+            return ((num, 5), (num,), (num,))
+
+        validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
         num = bboxes_shape[0]
         return (bboxes_shape, (num,), (num,))
 
@@ -2171,8 +2174,8 @@ class SquareSumAll(PrimitiveWithInfer):
         - **output_y2** (Tensor) - The same type as the `input_x1`.
 
     Examples:
-         >>> input_x1 = Tensor(np.random.randint([3, 2, 5,7]), mindspore.float32)
-         >>> input_x2 = Tensor(np.random.randint([3, 2, 5,7]), mindspore.float32)
+         >>> input_x1 = Tensor(np.random.randint([3, 2, 5, 7]), mindspore.float32)
+         >>> input_x2 = Tensor(np.random.randint([3, 2, 5, 7]), mindspore.float32)
          >>> square_sum_all = P.SquareSumAll()
          >>> square_sum_all(input_x1, input_x2)
     """

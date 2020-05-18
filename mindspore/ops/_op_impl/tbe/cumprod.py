@@ -13,29 +13,30 @@
 # limitations under the License.
 # ============================================================================
 
-"""RandomChoiceWithMask op"""
+"""CumProd op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-random_choice_with_mask_op_info = TBERegOp("RandomChoiceWithMask") \
+cumprop_op_info = TBERegOp("CumProd") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("random_choice_with_mask.so") \
+    .binfile_name("cumprod_d.so") \
     .compute_cost(10) \
-    .kernel_name("random_choice_with_mask") \
+    .kernel_name("cumprod_d") \
     .partial_flag(True) \
-    .attr("max_shape", "optional", "listInt", "all") \
-    .attr("means", "optional", "listFloat", "all") \
-    .attr("stds", "optional", "listFloat", "all") \
-    .attr("wh_ratio_clip", "optional", "float", "all") \
-    .input(0, "rois", False, "required", "all") \
-    .input(1, "deltas", False, "required", "all") \
-    .output(0, "bboxes", False, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .attr("axis", "optional", "int", "all") \
+    .attr("exclusive", "optional", "bool", "all") \
+    .attr("reverse", "optional", "bool", "all") \
+    .input(0, "x", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
+    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
     .get_op_info()
 
 
-@op_info_register(random_choice_with_mask_op_info)
-def _random_choice_with_mask_tbe():
-    """RandomChoiceWithMask TBE register"""
+@op_info_register(cumprop_op_info)
+def _cumprop_tbe():
+    """CumProd TBE register"""
     return

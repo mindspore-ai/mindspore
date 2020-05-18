@@ -92,7 +92,10 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"l_ars_update", "lars_v2_update"},
   {"n_ms_with_mask", "nms_with_mask"},
   {"square_sum_all", "square_sum_all"},
-  {"cum_sum", "cumsum_d"}};
+  {"cum_sum", "cumsum_d"},
+  {"apply_rms_prop", "apply_rms_prop_d"},
+  {"cum_prod", "cumprod_d"},
+  {"reduce_prod", "reduce_prod_d"}};
 
 void TbeAdapter::NormalizeFuncName(std::string *func_name) {
   if (func_name == nullptr) {

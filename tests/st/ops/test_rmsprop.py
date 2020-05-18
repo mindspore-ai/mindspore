@@ -37,7 +37,7 @@ class NetRMSProp(nn.Cell):
         if self.use_centered:
             return self.rms_opt(var, mg, rms, mom, g, lr, decay, momentum, epsilon)
         else:
-            return self.rms_opt(var, rms, mom, g, lr, decay, momentum, epsilon)
+            return self.rms_opt(var, rms, mom, lr, g, decay, momentum, epsilon)
 
 
 def rmsprop_numpy(variable, gradients, mean_square, moment,
