@@ -43,6 +43,8 @@ class CSE {
 
   virtual bool CheckReplace(const AnfNodePtr &main, const AnfNodePtr &node) const;
 
+  virtual bool CheckRandomEffect(const AnfNodePtr &main, const AnfNodePtr &node) const;
+
   bool Cse(const FuncGraphPtr root, const FuncGraphManagerPtr manager) const;
 
  private:

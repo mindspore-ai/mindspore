@@ -162,7 +162,7 @@ def test_bert_tdt():
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)
-    expect_loss_value = [12.1918125, 11.966035, 11.972114, 11.982188, 11.974092, 12.610916, 12.17565, 12.840416, 12.40291, 12.621661]
+    expect_loss_value = [12.1918125, 11.966035, 11.972114, 11.982189, 11.973948, 12.610932, 12.17564, 12.840248, 12.40294, 12.621653]
     print("loss value: {}".format(loss_value))
     assert np.allclose(loss_value, expect_loss_value, 0.00001, 0.00001)
     
