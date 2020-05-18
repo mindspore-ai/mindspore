@@ -176,11 +176,22 @@ bool HcomUtil::GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id) {
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (primitive->GetAttr("root_rank") != nullptr) {
-    *root_id = GetValue<const vector<uint32_t>>(primitive->GetAttr("root_rank"))[0];
+    *root_id = (uint32_t)GetValue<int>(primitive->GetAttr("root_rank"));
   } else {
     MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_ROOT_INDEX fail, not support!";
     return false;
   }
   return true;
+}
+
+void HcomUtil::GetHcomGroup(NotNull<const AnfNodePtr &> anf_node, NotNull<std::string *> group) {
+  auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto attr = primitive->GetAttr("group");
+  if (attr != nullptr) {
+    *group = GetValue<std::string>(attr);
+  } else {
+    MS_LOG(EXCEPTION) << "Get Hcom Group Attr of Op:" << anf_node->fullname_with_scope() << " failed";
+  }
 }
 }  // namespace mindspore

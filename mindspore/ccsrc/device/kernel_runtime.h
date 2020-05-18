@@ -73,9 +73,12 @@ class KernelRuntime {
   void AssignNodeOutputMem(int flag, const AnfNodePtr &node, int index);
   void AssignWorkSpaceMem(int flag, const AnfNodePtr &node);
   void AssignReuseWorkSpaceMem(const AnfNodePtr &node);
-  void AssignCommunicationNodeOutputMem(int flag, const AnfNodePtr &node);
+
   void UpdateRefNodeOutputMem(const session::KernelGraph *graph);
-  void UpdateCommunicationOpInputMem(const AnfNodePtr &node);
+
+  void AssignCommunicationNodeOutputMem(int flag, const AnfNodePtr &node);
+  void AssignCommunicationNodeInputMem(const AnfNodePtr &node);
+  void AssignCommunicationNodeMem(int flag, const AnfNodePtr &node);
 #ifdef ENABLE_DUMP_E2E
   bool SetDumpConf();
 #endif
@@ -91,6 +94,7 @@ class KernelRuntime {
   void RunOpAssignOutputMemory(const AnfNodePtr &kernel);
   void RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel);
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);
+  DeviceAddressPtr PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index);
 
  protected:
   uint32_t device_id_{0};

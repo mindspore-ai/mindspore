@@ -173,6 +173,19 @@ const BaseRef DealRefTransAndCast::DefinePattern() const {
   return VectorRef({V, Xs});
 }
 
+void DealBroadCastAsRef(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  if (AnfAlgo::GetCNodeName(cnode) == kBroadcastOpName) {
+    auto input_size = AnfAlgo::GetInputTensorNum(cnode);
+    for (size_t i = 0; i < input_size; ++i) {
+      auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(cnode, i);
+      auto input_node = input_node_with_index.first;
+      MS_EXCEPTION_IF_NULL(input_node);
+      MS_LOG(INFO) << "origin node:" << input_node->fullname_with_scope();
+      AddRefPairToKernelGraph(func_graph, cnode, nullptr, cnode, i, input_node_with_index);
+    }
+  }
+}
+
 const AnfNodePtr DealRefTransAndCast::Process(const FuncGraphPtr &graph, const AnfNodePtr &node,
                                               const EquivPtr &) const {
   if (node == nullptr || !node->isa<CNode>()) {
@@ -184,6 +197,9 @@ const AnfNodePtr DealRefTransAndCast::Process(const FuncGraphPtr &graph, const A
   if (!AnfAlgo::IsRealCNodeKernel(cnode)) {
     return nullptr;
   }
+
+  DealBroadCastAsRef(graph, cnode);
+
   auto op_name = AnfAlgo::GetCNodeName(cnode);
   auto op_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::kTBE);
   if (op_info == nullptr || !op_info->is_ref()) {

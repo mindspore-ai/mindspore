@@ -66,8 +66,7 @@ const AnfNodePtr AddMemcpyAsync::Process(const FuncGraphPtr &func_graph, const A
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
-  auto op_name = AnfAlgo::GetCNodeName(cnode);
-  if (op_name != kAllReduceOpName && op_name != kAllGatherOpName && op_name != kReduceScatterOpName) {
+  if (!AnfAlgo::IsCommunicationOp(node)) {
     return nullptr;
   }
   return AddMemcpyAsyncIfInputIsUsedByOthers(func_graph, cnode);

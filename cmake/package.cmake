@@ -153,7 +153,7 @@ if (NOT ENABLE_GE)
             FILES
                 ${CMAKE_BINARY_DIR}/graphengine/src/common/graph/libgraph.so
                 ${CMAKE_SOURCE_DIR}/graphengine/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR}/libslog.so
-                ${CMAKE_SOURCE_DIR}/graphengine/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR}/libc_sec.so
+                ${CMAKE_SOURCE_DIR}/build/graphengine/libc_sec.so
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )

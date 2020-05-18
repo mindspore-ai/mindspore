@@ -23,6 +23,7 @@
 #include <memory>
 #include "ir/dtype.h"
 #include "hccl/base.h"
+#include "utils/contract.h"
 
 namespace mindspore {
 using std::map;
@@ -61,6 +62,7 @@ class HcomUtil {
                            const vector<vector<size_t>> &shape_list, uint64_t *total_count);
   static bool GetHcomOperationType(const AnfNodePtr &anf_node, hcclRedOp_t *op_type);
   static bool GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id);
+  static void GetHcomGroup(NotNull<const AnfNodePtr &> anf_node, NotNull<std::string *> group);
 };
 }  // namespace mindspore
 
