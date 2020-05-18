@@ -24,14 +24,15 @@ from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
+
 class NetEqualCount(nn.Cell):
-    def __init__( self):
+    def __init__(self):
         super(NetEqualCount, self).__init__()
         self.equalcount = P.EqualCount()
         x = Tensor(np.array([1, 20, 5]).astype(np.int32))
         y = Tensor(np.array([2, 20, 5]).astype(np.int32))
-        self.x = Parameter(initializer(x, x.shape()), name ='x')
-        self.y = Parameter(initializer(y, y.shape()), name ='y')
+        self.x = Parameter(initializer(x, x.shape()), name='x')
+        self.y = Parameter(initializer(y, y.shape()), name='y')
 
     def construct(self):
         return self.equalcount(self.x, self.y)
@@ -41,11 +42,9 @@ class NetEqualCount(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_equalcount():
-    
     EqualCount = NetEqualCount()
     output = EqualCount()
     print("================================")
     expect = np.array([2]).astype(np.int32)
     print(output)
     assert (output.asnumpy() == expect).all()
-    

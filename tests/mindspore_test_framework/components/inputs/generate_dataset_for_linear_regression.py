@@ -19,6 +19,7 @@ from ...components.icomponent import IDataComponent
 from ...utils.dataset_util import generate_dataset_for_linear_regression
 from ...utils import keyword
 
+
 class GenerateDataSetForLRDC(IDataComponent):
     """
     Create dataset for linear regression, with salt from normal distribution.
@@ -30,6 +31,7 @@ class GenerateDataSetForLRDC(IDataComponent):
             'batch_size': 20,
         }
     """
+
     def __call__(self):
         result = []
         for config in self.verification_set[keyword.inputs]:

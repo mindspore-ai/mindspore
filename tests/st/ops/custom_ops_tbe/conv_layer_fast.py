@@ -17,11 +17,13 @@ from te import tvm
 from te.platform import CUBE_MKN
 from topi import generic
 from topi.cce import util
+
 # pylint: disable=R0913,R0914,R0915,E1101
 # the dim of shape in conv must be 4
 PAD_SHAPE_DIM = 2
 
 NoneType = type(None)
+
 
 @util.check_input_type((list, tuple), (list, tuple), str, str, str,
                        (list, int), (list, int), int, int, bool, str)
@@ -40,7 +42,7 @@ def conv_layer_fast_cce_para_check(shape_in, shape_w, in_dtype, w_dtype, res_dty
 
     if isinstance(padh, list):
         if len(padh) != PAD_SHAPE_DIM:
-            raise RuntimeError("Dimension must be %d when padh is a list."%PAD_SHAPE_DIM)
+            raise RuntimeError("Dimension must be %d when padh is a list." % PAD_SHAPE_DIM)
         pad_top = padh[0]
         pad_bottom = padh[1]
     else:
@@ -49,7 +51,7 @@ def conv_layer_fast_cce_para_check(shape_in, shape_w, in_dtype, w_dtype, res_dty
 
     if isinstance(padw, list):
         if len(padw) != PAD_SHAPE_DIM:
-            raise RuntimeError("Dimension must be %d when padw is a list."%PAD_SHAPE_DIM)
+            raise RuntimeError("Dimension must be %d when padw is a list." % PAD_SHAPE_DIM)
         pad_left = padw[0]
         pad_right = padw[1]
     else:
@@ -61,6 +63,7 @@ def conv_layer_fast_cce_para_check(shape_in, shape_w, in_dtype, w_dtype, res_dty
                                                      in_dtype, w_dtype, res_dtype)
 
     return shape_in, shape_w
+
 
 @util.check_input_type((list, tuple), (list, tuple), str, str, str,
                        (list, int), (list, int), int, int,
@@ -112,7 +115,7 @@ def conv_layer_fast_cce(shape_in, shape_w, in_dtype, w_dtype, res_dtype,
     shape_w = list(shape_w)
 
     shape_in, shape_w = conv_layer_fast_cce_para_check(shape_in, shape_w, in_dtype, w_dtype, res_dtype,
-                                        padh, padw, strideh, stridew, bias, kernel_name)
+                                                       padh, padw, strideh, stridew, bias, kernel_name)
 
     batch_size = shape_in[0]
     in_channel = shape_in[1]

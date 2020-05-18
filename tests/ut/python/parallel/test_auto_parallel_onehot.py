@@ -26,7 +26,6 @@ from tests.dataset_mock import MindData
 from mindspore.train import Model, ParallelMode
 from mindspore.nn.optim.momentum import Momentum
 
-
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -69,6 +68,7 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
+
 
 def test_auto_parallel_arithmetic():
     class Net(nn.Cell):

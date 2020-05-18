@@ -31,6 +31,7 @@ def generator_10():
     for i in range(3, 10):
         yield np.array([i]),
 
+
 # In generator_20 dataset: Number of rows is 10, its value is 10, 11, 12 ... 20
 def generator_20():
     for i in range(10, 20):
@@ -320,7 +321,7 @@ def test_concat_14():
     data2 = ds.ImageFolderDatasetV2(DATA_DIR2, num_samples=2)
 
     transforms1 = F.ComposeOp([F.Decode(),
-                               F.Resize((224,224)),
+                               F.Resize((224, 224)),
                                F.ToTensor()])
 
     data1 = data1.map(input_columns=["image"], operations=transforms1())

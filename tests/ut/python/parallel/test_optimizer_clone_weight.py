@@ -53,9 +53,9 @@ def test_optimizer_clone_weight():
             return out
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
-    
+
     strategy1 = ((2, 1), (2, 1))
-    strategy2 = ((4, 1), )
+    strategy2 = ((4, 1),)
     strategy3 = ((4, 1), (4, 1))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -71,7 +71,7 @@ def test_optimizer_clone_weight():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x,  b)
+    compile(train_net, x, b)
 
 
 def test_optimizer_clone_weight2():
@@ -88,9 +88,9 @@ def test_optimizer_clone_weight2():
             return out
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
-    
+
     strategy1 = ((2, 1), (2, 1))
-    strategy2 = ((4, 1), )
+    strategy2 = ((4, 1),)
     strategy3 = ((4, 1), (4, 1))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -106,4 +106,4 @@ def test_optimizer_clone_weight2():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x,  b)
+    compile(train_net, x, b)

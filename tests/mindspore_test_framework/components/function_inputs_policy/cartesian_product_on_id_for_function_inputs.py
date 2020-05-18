@@ -18,10 +18,12 @@
 from ...components.icomponent import IFIPolicyComponent
 from ...utils import keyword
 
+
 class IdCartesianProductFIPC(IFIPolicyComponent):
     """
     Combine function/inputs by do cartesian product on id.
     """
+
     def __call__(self):
         ret = [(s1, s2) for s1 in self.function for s2 in self.inputs if s1[keyword.id] == s2[keyword.id]]
         return ret

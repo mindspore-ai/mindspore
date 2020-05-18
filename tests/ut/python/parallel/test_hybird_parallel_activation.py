@@ -47,6 +47,7 @@ def compile(net, x, y, b):
     net.set_auto_parallel()
     _executor.compile(net, x, y, b)
 
+
 def test_matmul_tanh():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
@@ -62,7 +63,7 @@ def test_matmul_tanh():
 
     strategy1 = ((16, 1), (1, 1))
     strategy2 = ((1, 1), (1, 16))
-    strategy3 = ((4, 4), )
+    strategy3 = ((4, 4),)
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_auto_parallel_context(device_num=16, global_rank=0)
@@ -88,7 +89,7 @@ def test_matmul_activation():
 
     strategy1 = ((16, 1), (1, 1))
     strategy2 = ((1, 1), (1, 16))
-    strategy3 = ((4, 4), )
+    strategy3 = ((4, 4),)
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_auto_parallel_context(device_num=16, global_rank=0)
@@ -114,7 +115,7 @@ def test_matmul_softmax():
 
     strategy1 = ((16, 1), (1, 1))
     strategy2 = ((1, 1), (1, 16))
-    strategy3 = ((16, 1), )
+    strategy3 = ((16, 1),)
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_auto_parallel_context(device_num=16, global_rank=0)
@@ -140,7 +141,7 @@ def test_matmul_logsoftmax():
 
     strategy1 = ((4, 2), (2, 2))
     strategy2 = ((2, 4), (4, 2))
-    strategy3 = ((16, 1), )
+    strategy3 = ((16, 1),)
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_auto_parallel_context(device_num=16, global_rank=0)
@@ -169,7 +170,7 @@ def test_activations():
 
     strategy1 = ((1, 2), (2, 2))
     strategy2 = ((2, 2), (2, 1))
-    strategy3 = ((4, 1), )
+    strategy3 = ((4, 1),)
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_auto_parallel_context(device_num=4, global_rank=0)
@@ -178,6 +179,7 @@ def test_activations():
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     compile(net, x, y, b)
+
 
 def test_activations_repeated_calculation():
     class Net(nn.Cell):
@@ -197,10 +199,10 @@ def test_activations_repeated_calculation():
 
     strategy1 = ((2, 4), (4, 8))
     strategy2 = ((2, 2), (2, 1))
-    strategy3 = ((2, 1), )
-    strategy4 = ((2, 2), )
-    strategy5 = ((4, 1), )
-    strategy6 = ((8, 1), )
+    strategy3 = ((2, 1),)
+    strategy4 = ((2, 2),)
+    strategy5 = ((4, 1),)
+    strategy6 = ((8, 1),)
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3, strategy4, strategy5, strategy6)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_auto_parallel_context(device_num=64, global_rank=0)
@@ -229,10 +231,10 @@ def test_activations_axis_tuple():
 
     strategy1 = ((2, 4), (4, 8))
     strategy2 = ((2, 2), (2, 1))
-    strategy3 = ((2, 1), )
-    strategy4 = ((2, 2), )
-    strategy5 = ((1, 1), )
-    strategy6 = ((8, 1), )
+    strategy3 = ((2, 1),)
+    strategy4 = ((2, 2),)
+    strategy5 = ((1, 1),)
+    strategy6 = ((8, 1),)
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3, strategy4, strategy5, strategy6)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_auto_parallel_context(device_num=64, global_rank=0)

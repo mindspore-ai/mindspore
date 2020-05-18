@@ -59,9 +59,11 @@ def test_cond_data_true():
     output = cond_data_test(3, 8)
     print("test_cond_data_true:", output)
 
+
 def test_cond_data_false():
     output = cond_data_test(8, 3)
     print("test_cond_data_false:", output)
+
 
 def if_compile_test(x_init, y_init):
     class Net(nn.Cell):
@@ -368,6 +370,7 @@ def test_switch_layer():
         def __init__(self):
             super(Layer1, self).__init__()
             self.z1 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
+
         def construct(self, x):
             return x * self.z1
 
@@ -375,6 +378,7 @@ def test_switch_layer():
         def __init__(self):
             super(Layer2, self).__init__()
             self.z2 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
+
         def construct(self, x):
             return x * self.z2
 
@@ -383,6 +387,7 @@ def test_switch_layer():
             super(SwitchLayerCell, self).__init__()
             self.layers = (Layer1(), Layer2())
             self.z3 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
+
         def construct(self, index, x):
             ret = F.switch_layer(index, self.layers)(x) * self.z3
             return ret
@@ -390,14 +395,17 @@ def test_switch_layer():
     index = Tensor(0)
     net = SwitchLayerCell()
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
+                                                                Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
     C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+
 
 def test_index_to_switch_layer():
     class Layer1(nn.Cell):
         def __init__(self):
             super(Layer1, self).__init__()
             self.z1 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z1')
+
         def construct(self, x):
             return x * self.z1
 
@@ -405,6 +413,7 @@ def test_index_to_switch_layer():
         def __init__(self):
             super(Layer2, self).__init__()
             self.z2 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z2')
+
         def construct(self, x):
             return x * self.z2
 
@@ -413,6 +422,7 @@ def test_index_to_switch_layer():
             super(SwitchLayerCell, self).__init__()
             self.layers = (Layer1(), Layer2())
             self.z3 = Parameter(Tensor(np.full([128, 96], 0.6, dtype=np.float32)), name='z3')
+
         def construct(self, index, x):
             ret = self.layers[index](x) * self.z3
             return ret
@@ -420,5 +430,6 @@ def test_index_to_switch_layer():
     index = Tensor(0)
     net = SwitchLayerCell()
     net(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
-    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+    C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
+                                                                Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
     C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))

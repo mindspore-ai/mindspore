@@ -21,7 +21,7 @@ import pytest
 @pytest.mark.env_single
 def test_nccl_lenet():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_lenet.py")
-    assert(return_code == 0)
+    assert (return_code == 0)
 
 
 @pytest.mark.level0
@@ -29,7 +29,7 @@ def test_nccl_lenet():
 @pytest.mark.env_single
 def test_nccl_all_reduce_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_all_reduce_op.py")
-    assert(return_code == 0)
+    assert (return_code == 0)
 
 
 @pytest.mark.level0
@@ -37,7 +37,7 @@ def test_nccl_all_reduce_op():
 @pytest.mark.env_single
 def test_nccl_all_gather_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_all_gather_op.py")
-    assert(return_code == 0)
+    assert (return_code == 0)
 
 
 @pytest.mark.level0
@@ -45,4 +45,4 @@ def test_nccl_all_gather_op():
 @pytest.mark.env_single
 def test_nccl_reduce_scatter_op():
     return_code = os.system("mpirun -n 8 pytest -s test_nccl_reduce_scatter_op.py")
-    assert(return_code == 0)
+    assert (return_code == 0)

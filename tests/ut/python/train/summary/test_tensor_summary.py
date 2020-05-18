@@ -81,7 +81,6 @@ def test_tensor_summary_sample():
     log.debug("begin test_tensor_summary_sample")
     # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_TENSOR") as test_writer:
-
         # step 1: create the Event
         for i in range(1, 100):
             test_data = get_test_data(i)
@@ -131,7 +130,6 @@ def test_tensor_summary_with_ge():
 
     # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR) as test_writer:
-
         # step 1: create the network for summary
         x = Tensor(np.array([1.1]).astype(np.float32))
         y = Tensor(np.array([1.2]).astype(np.float32))

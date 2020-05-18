@@ -53,7 +53,6 @@ def test_histogram_summary():
     """Test histogram summary."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
-
             test_data = _wrap_test_data(Tensor([[1, 2, 3], [4, 5, 6]]))
             _cache_summary_tensor_data(test_data)
             test_writer.record(step=1)
@@ -91,7 +90,6 @@ def test_histogram_summary_scalar_tensor():
     """Test histogram summary, input is a scalar tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
-
             test_data = _wrap_test_data(Tensor(1))
             _cache_summary_tensor_data(test_data)
             test_writer.record(step=1)
@@ -106,7 +104,6 @@ def test_histogram_summary_empty_tensor():
     """Test histogram summary, input is an empty tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
-
             test_data = _wrap_test_data(Tensor([]))
             _cache_summary_tensor_data(test_data)
             test_writer.record(step=1)
@@ -121,7 +118,6 @@ def test_histogram_summary_same_value():
     """Test histogram summary, input is an ones tensor."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
-
             dim1 = 100
             dim2 = 100
 
@@ -161,7 +157,6 @@ def test_histogram_summary_nan_inf():
     """Test histogram summary, input tensor has nan."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
-
             dim1 = 100
             dim2 = 100
 
@@ -186,7 +181,6 @@ def test_histogram_summary_all_nan_inf():
     """Test histogram summary, input tensor has no valid number."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         with SummaryRecord(tmp_dir, file_suffix="_MS_HISTOGRAM") as test_writer:
-
             test_data = _wrap_test_data(Tensor(np.array([np.nan, np.nan, np.nan, np.inf, -np.inf])))
             _cache_summary_tensor_data(test_data)
             test_writer.record(step=1)

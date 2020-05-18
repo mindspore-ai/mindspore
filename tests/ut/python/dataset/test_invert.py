@@ -21,6 +21,7 @@ import mindspore.dataset.transforms.vision.py_transforms as F
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
+
 def visualize(image_original, image_invert):
     """
     visualizes the image using DE op and Numpy op
@@ -36,65 +37,64 @@ def visualize(image_original, image_invert):
         plt.title("DE Color Inverted image")
 
     plt.show()
-    
+
 
 def test_invert(plot=False):
     """
     Test Invert
     """
     logger.info("Test Invert")
-    
+
     # Original Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)    
-    
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+
     transforms_original = F.ComposeOp([F.Decode(),
-                                       F.Resize((224,224)),
-                                       F.ToTensor()])    
-    
+                                       F.Resize((224, 224)),
+                                       F.ToTensor()])
+
     ds_original = ds.map(input_columns="image",
                          operations=transforms_original())
-    
+
     ds_original = ds_original.batch(512)
-            
-    for idx, (image,label) in enumerate(ds_original):
+
+    for idx, (image, label) in enumerate(ds_original):
         if idx == 0:
-            images_original = np.transpose(image, (0, 2,3,1))
+            images_original = np.transpose(image, (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
-                                        np.transpose(image, (0, 2,3,1)),
-                                        axis=0)    
+                                        np.transpose(image, (0, 2, 3, 1)),
+                                        axis=0)
 
-    # Color Inverted Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)    
-    
+            # Color Inverted Images
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+
     transforms_invert = F.ComposeOp([F.Decode(),
-                                     F.Resize((224,224)),
+                                     F.Resize((224, 224)),
                                      F.Invert(),
-                                     F.ToTensor()])    
-    
+                                     F.ToTensor()])
+
     ds_invert = ds.map(input_columns="image",
-                                 operations=transforms_invert())
-    
-    ds_invert = ds_invert.batch(512)    
-      
-    for idx, (image,label) in enumerate(ds_invert):
+                       operations=transforms_invert())
+
+    ds_invert = ds_invert.batch(512)
+
+    for idx, (image, label) in enumerate(ds_invert):
         if idx == 0:
-            images_invert = np.transpose(image, (0, 2,3,1))
+            images_invert = np.transpose(image, (0, 2, 3, 1))
         else:
             images_invert = np.append(images_invert,
-                                      np.transpose(image, (0, 2,3,1)),
+                                      np.transpose(image, (0, 2, 3, 1)),
                                       axis=0)
-    
+
     num_samples = images_original.shape[0]
     mse = np.zeros(num_samples)
     for i in range(num_samples):
-        mse[i] = np.mean((images_invert[i]-images_original[i])**2)
+        mse[i] = np.mean((images_invert[i] - images_original[i]) ** 2)
     logger.info("MSE= {}".format(str(np.mean(mse))))
-    
+
     if plot:
         visualize(images_original, images_invert)
-        
+
 
 if __name__ == "__main__":
     test_invert(plot=True)
-    

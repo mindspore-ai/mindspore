@@ -33,6 +33,7 @@ class Net(nn.Cell):
     def construct(self, x, y, z):
         return self.add((x, y, z))
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

@@ -156,7 +156,7 @@ def test_batch_07():
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, shuffle=ds.Shuffle.FILES)
     data1 = data1.batch(num_parallel_workers=num_parallel_workers, drop_remainder=drop_remainder,
-                    batch_size=batch_size)
+                        batch_size=batch_size)
 
     assert sum([1 for _ in data1]) == 3
     filename = "batch_07_result.npz"
@@ -259,7 +259,6 @@ def test_batch_12():
     assert sum([1 for _ in data1]) == 12
     filename = "batch_12_result.npz"
     save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
-
 
 
 def test_batch_exception_01():

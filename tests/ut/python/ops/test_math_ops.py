@@ -341,6 +341,7 @@ class SignNet(nn.Cell):
     def construct(self, x):
         return self.sign(x)
 
+
 class AssignAdd(nn.Cell):
     def __init__(self):
         super().__init__()
@@ -351,6 +352,7 @@ class AssignAdd(nn.Cell):
         self.inputdata = input_
         return self.op(self.inputdata, input_)
 
+
 class FloorNet(nn.Cell):
     def __init__(self):
         super(FloorNet, self).__init__()
@@ -358,6 +360,7 @@ class FloorNet(nn.Cell):
 
     def construct(self, x):
         return self.floor(x)
+
 
 class Log1pNet(nn.Cell):
     def __init__(self):

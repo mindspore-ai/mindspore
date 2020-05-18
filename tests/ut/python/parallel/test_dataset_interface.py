@@ -25,7 +25,6 @@ from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.ops import composite as C, functional as F, operations as P
 from mindspore.common.parameter import Parameter, ParameterTuple
 
-
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -95,7 +94,7 @@ def loss_scale_manager_common(strategy1):
 
 def fixme_test_dataset_interface_sens_scalar():
     # With error: "The type of sens node is not Tensor or Parameter, it is unsupported now."
-    strategy1 = ((8, 1), )
+    strategy1 = ((8, 1),)
     loss_scale_manager_common(strategy1)
 
 
@@ -131,7 +130,7 @@ def loss_scale_manager_sens(strategy1, sens):
 
 
 def test_dataset_interface_sens_shape_not_equal_loss():
-    strategy1 = ((8, 1), )
+    strategy1 = ((8, 1),)
     sens = Tensor(np.ones([256, 1024]), dtype=ms.float32)
     try:
         loss_scale_manager_sens(strategy1, sens)
@@ -140,7 +139,7 @@ def test_dataset_interface_sens_shape_not_equal_loss():
 
 
 def test_dataset_interface_sens_shape_equal_loss():
-    strategy1 = ((4, 2), )
+    strategy1 = ((4, 2),)
     sens = Tensor(np.ones([256, 256]), dtype=ms.float32)
     loss_scale_manager_sens(strategy1, sens)
 
@@ -158,7 +157,7 @@ def test_input_not_in_parameter_layotu_dict():
             x = self.transpose1(x, (1, 0))
             return x
 
-    strategy1 = ((8, 1), )
+    strategy1 = ((8, 1),)
     device_num = 8
     context.reset_auto_parallel_context()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL, device_num=device_num)
@@ -167,6 +166,3 @@ def test_input_not_in_parameter_layotu_dict():
     net = Net(strategy1)
     net.set_train()
     net(predict, b)
-
-
-

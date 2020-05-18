@@ -16,7 +16,7 @@ import numpy as np
 from mindspore import context
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter 
+from mindspore import Tensor, Parameter
 import mindspore as ms
 import mindspore.common.api as me
 
@@ -38,7 +38,7 @@ def test_get_parameter_layout():
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 1), (4, 1))
-    strategy2 = ((2, 4), )
+    strategy2 = ((2, 4),)
     context.set_context(mode=context.GRAPH_MODE)
 
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
@@ -57,4 +57,3 @@ def test_get_parameter_layout():
 
 if __name__ == '__main__':
     test_get_parameter_layout()
-

@@ -19,6 +19,7 @@ from ...components.icomponent import IDataComponent
 from ...utils.npy_util import load_data_from_npy_or_shape
 from ...utils import keyword
 
+
 class LoadFromNpyDC(IDataComponent):
     """
     Load inputs from npy data, inputs could be shape/tensor/np.ndarray/file path.
@@ -43,6 +44,7 @@ class LoadFromNpyDC(IDataComponent):
             ([2, 2], np.float32, 6)
         ]
     """
+
     def __call__(self):
         result = []
         for config in self.verification_set[keyword.inputs]:

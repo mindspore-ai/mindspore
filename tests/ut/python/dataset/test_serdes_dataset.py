@@ -28,6 +28,7 @@ import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore.dataset.transforms.vision import Inter
 from mindspore import log as logger
 
+
 def test_imagefolder(remove_json_files=True):
     """
     Test simulating resnet50 dataset pipeline.
@@ -140,9 +141,9 @@ def test_zip_dataset(remove_json_files=True):
     data2 = ds.TFRecordDataset(files, schema=schema_file, shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(10000)
     data2 = data2.rename(input_columns=["col_sint16", "col_sint32", "col_sint64", "col_float",
-                                    "col_1d", "col_2d", "col_3d", "col_binary"],
-                     output_columns=["column_sint16", "column_sint32", "column_sint64", "column_float",
-                                     "column_1d", "column_2d", "column_3d", "column_binary"])
+                                        "col_1d", "col_2d", "col_3d", "col_binary"],
+                         output_columns=["column_sint16", "column_sint32", "column_sint64", "column_float",
+                                         "column_1d", "column_2d", "column_3d", "column_binary"])
     data3 = ds.zip((data1, data2))
     ds.serialize(data3, "zip_dataset_pipeline.json")
     assert (validate_jsonfile("zip_dataset_pipeline.json") is True)
@@ -168,6 +169,7 @@ def test_zip_dataset(remove_json_files=True):
 
     if remove_json_files:
         delete_json_files()
+
 
 def test_random_crop():
     logger.info("test_random_crop")
@@ -198,6 +200,7 @@ def test_random_crop():
         assert (np.array_equal(item1['image'], item1_1['image']))
         image2 = item2["image"]
 
+
 def validate_jsonfile(filepath):
     try:
         file_exist = os.path.exists(filepath)
@@ -216,9 +219,11 @@ def delete_json_files():
         except IOError:
             logger.info("Error while deleting: {}".format(f))
 
+
 # Test save load minddataset
 from test_minddataset_sampler import add_and_remove_cv_file, get_data, CV_DIR_NAME, CV_FILE_NAME, FILES_NUM, \
     FileWriter, Inter
+
 
 def test_minddataset(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""

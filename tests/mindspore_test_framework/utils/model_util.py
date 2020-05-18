@@ -24,8 +24,10 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
+
 class SquaredLoss(nn.Cell):
     """Squared loss function."""
+
     def __init__(self):
         super(SquaredLoss, self).__init__()
         self.reshape = P.Reshape()
@@ -37,7 +39,10 @@ class SquaredLoss(nn.Cell):
         ret = y_hat - self.reshape(y, self.shape(y_hat))
         return self.reduce_sum((ret * ret) / self.two, (0,))
 
+
 opt_step = C.MultitypeFuncGraph("opt_step")
+
+
 @opt_step.register("Tensor", "Tensor",
                    "Tensor", "Tensor")
 def update_opt_step(learning_rate, batch_size, parameter, gradient):
@@ -56,8 +61,10 @@ def update_opt_step(learning_rate, batch_size, parameter, gradient):
     F.assign(parameter, next_param)
     return next_param
 
+
 class SGD(nn.Cell):
     """SGD optimizer."""
+
     def __init__(self, parameters, learning_rate=0.001, batch_size=1):
         super(SGD, self).__init__()
         self.parameters = ParameterTuple(parameters)
@@ -73,8 +80,10 @@ class SGD(nn.Cell):
                                  self.parameters, gradients)
         return success
 
+
 class Linreg(nn.Cell):
     """Linear regression model."""
+
     def __init__(self, num_features):
         super(Linreg, self).__init__()
         self.matmul = P.MatMul()
@@ -84,8 +93,10 @@ class Linreg(nn.Cell):
     def construct(self, x):
         return self.matmul(x, self.w) + self.b
 
+
 class Model:
     """Simplified model."""
+
     def __init__(self, network, loss_fn, optimizer):
         self.optimizer = optimizer
         self.step = nn.TrainOneStepCell(nn.WithLossCell(network, loss_fn), self.optimizer)

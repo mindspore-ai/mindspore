@@ -28,12 +28,11 @@ from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from tests.dataset_mock import MindData
 
-
 dev_num = 8
-strategy_no_weight = ((dev_num, 1, 1, 1), )
+strategy_no_weight = ((dev_num, 1, 1, 1),)
 strategy_weight = ((dev_num, 1, 1, 1), (1, 1, 1, 1))
-strategy_bn = ((dev_num, 1, 1, 1), (1, ), (1, ))
-strategy_fc_weight_bias = ((dev_num, 1), (1, 1), (1, ))
+strategy_bn = ((dev_num, 1, 1, 1), (1,), (1,))
+strategy_fc_weight_bias = ((dev_num, 1), (1, 1), (1,))
 
 
 class DatasetLenet(MindData):
@@ -94,7 +93,7 @@ class ResNet(Cell):
 
     def __init__(self, num_classes=100):
         super(ResNet, self).__init__()
-        strategy_no_weight = ((dev_num, 1, 1, 1), )
+        strategy_no_weight = ((dev_num, 1, 1, 1),)
         self.conv1 = conv7x7(3, 64, stride=2, padding=3)
         self.bn1 = bn_with_initialize(64)
         self.relu = ReLU()

@@ -37,37 +37,42 @@ def setup_module(module):
 
 def stop_func(x, y):
     """ stop_func"""
-    c = x*y
+    c = x * y
     c_s = x + y
     return c_s, c
 
+
 def stop_test1(x, y):
     """ stop_test1 """
-    c = x*y
+    c = x * y
     c_s = stop_gradient(c)
     return c_s
 
+
 def stop_test2(x, y):
     """ stop_test2 """
-    c = x*y
+    c = x * y
     c_s = stop_gradient(c)
-    d = c_s+x*y
+    d = c_s + x * y
     return d * y
+
 
 def stop_test3(x, y):
     """ stop_test3 """
-    x = x*y
+    x = x * y
     z = stop_test1(x, y)
     k = z * y
     return k
 
+
 def stop_test5(x, y):
     """ stop_test3 """
-    x = x+y
-    o1, o2= stop_func(x, y)
+    x = x + y
+    o1, o2 = stop_func(x, y)
     c = stop_gradient(o1)
-    c = o2+c
+    c = o2 + c
     return c
+
 
 def stop_test4(x, y):
     """ stop_test4 """
@@ -76,28 +81,35 @@ def stop_test4(x, y):
     e = c + c_s
     return e
 
+
 def grad_stop_test(x, y):
     """ grad_stop_test """
     return C.grad_all(stop_test2)(x, y)
+
 
 def grad_stop_test1(x, y):
     """ grad_stop_test1 """
     return C.grad_all(stop_test3)(x, y)
 
+
 def test_stop():
     """ test_stop """
     print("test_stop:", grad_stop_test(1, 1))
+
 
 def test_stop1():
     """ test_stop1 """
     print("test_stop1:", grad_stop_test1(2, 3))
 
+
 def test_stop5():
     """ test_stop1 """
     print("test_stop5:", C.grad_all(stop_test5)(2, 3))
 
+
 class GradWrap(nn.Cell):
     """ GradWrap definition """
+
     def __init__(self, network):
         super(GradWrap, self).__init__()
         self.network = network
@@ -112,8 +124,10 @@ class GradWrap(nn.Cell):
 @non_graph_engine
 def test_softmaxloss_grad():
     """ test_softmaxloss_grad """
+
     class NetWithLossClass(nn.Cell):
         """ NetWithLossClass definition """
+
         def __init__(self, network):
             super(NetWithLossClass, self).__init__()
             self.loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -126,6 +140,7 @@ def test_softmaxloss_grad():
 
     class Net(nn.Cell):
         """ Net definition """
+
         def __init__(self):
             super(Net, self).__init__()
             self.weight = Parameter(Tensor(np.ones([64, 10])), name="weight")
@@ -154,6 +169,7 @@ def test_softmaxloss_grad():
     out = net(predict, label)
     print("out:", out)
 
+
 def test_stop_gradient_1():
     class Mul(nn.Cell):
         def __init__(self):
@@ -164,11 +180,13 @@ def test_stop_gradient_1():
             ret = x * y
             ret = stop_gradient(ret)
             return ret
+
     dx, dy = bprop(Mul(), Tensor(np.ones([2, 2]).astype(np.float32)),
                    Tensor(np.ones([2, 2]).astype(np.float32)), wrt=['inputs'])
     expect = np.zeros([2, 2])
     assert (dx.asnumpy() == expect).all()
     assert (dy.asnumpy() == expect).all()
+
 
 def test_stop_gradient_2():
     class Mul(nn.Cell):
@@ -180,6 +198,7 @@ def test_stop_gradient_2():
             c = x * y
             z = x * y
             return c, z
+
     class MulAdd(nn.Cell):
         def __init__(self):
             super(MulAdd, self).__init__()
@@ -194,10 +213,12 @@ def test_stop_gradient_2():
             ret1 = c + x + y
             ret2 = z + y + y
             return ret1, ret2
+
     dx = bprop(MulAdd(), Tensor(np.ones([2, 2]).astype(np.float32)),
                Tensor(np.ones([2, 2]).astype(np.float32)))
     expect = np.array([[3.0, 3.0], [3.0, 3.0]])
     assert (dx.asnumpy() == expect).all()
+
 
 def test_stop_gradient_3():
     class TupleGetItem(nn.Cell):
@@ -212,19 +233,23 @@ def test_stop_gradient_3():
             z2 = t[1]
             z2 = stop_gradient(z2)
             return z1, z2, x3, x4, x5
+
     dx = bprop(TupleGetItem(),
-          Tensor(np.ones([2]).astype(np.float32)),
-          Tensor(np.ones([2]).astype(np.float32)),
-          Tensor(np.ones([2]).astype(np.float32)),
-          Tensor(np.ones([2]).astype(np.float32)),
-          Tensor(np.ones([2]).astype(np.float32)))
+               Tensor(np.ones([2]).astype(np.float32)),
+               Tensor(np.ones([2]).astype(np.float32)),
+               Tensor(np.ones([2]).astype(np.float32)),
+               Tensor(np.ones([2]).astype(np.float32)),
+               Tensor(np.ones([2]).astype(np.float32)))
     expect = np.array([[2.0, 2.0], [2.0, 2.0]])
     assert (dx.asnumpy() == expect).all()
+
 
 def test_stop_gradient_4():
     def stop_test(x):
         return stop_gradient(x)
+
     assert C.grad_all(stop_test)(1) == (0,)
+
 
 def test_stop_gradient_5():
     def stop_test(x):
@@ -232,30 +257,40 @@ def test_stop_gradient_5():
         y = stop_gradient(y)
         ret = x + y
         return ret
+
     assert C.grad_all(stop_test)(1) == (1,)
+
 
 def test_stop_gradient_6():
     def stop_test(x, y):
         ret = x * y
         ret = stop_gradient(ret)
         return ret
+
     assert C.grad_all(stop_test)(1, 3) == (0, 0)
+
 
 class PrimWithMultiOutputs(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init"""
+
     def __call__(self, x, y):
         """Implement by vm mode."""
         return x, y
+
     def infer_shape(self, x_shape, y_shape):
         return x_shape, y_shape
+
     def infer_dtype(self, x_type, y_type):
         return x_type, y_type
+
     def get_bprop(self):
         def bprop(x, y, out, dout):
             return (dout[0], dout[1])
+
         return bprop
+
 
 def test_stop_gradient_7():
     class PrimWithMultiOutputs_(nn.Cell):
@@ -268,12 +303,14 @@ def test_stop_gradient_7():
             x1, x2 = self.prim_with_multi_outputs(x1, x2)
             x1 = stop_gradient(x1)
             return x1, x2
+
     dx, dy = bprop(PrimWithMultiOutputs_(), Tensor(np.ones([2]).astype(np.float32)),
                    Tensor(np.ones([2]).astype(np.float32)), wrt=['inputs'])
     expect_dx = np.zeros([2])
     expect_dy = np.ones([2])
     assert (dx.asnumpy() == expect_dx).all()
     assert (dy.asnumpy() == expect_dy).all()
+
 
 def test_stop_gradient_8():
     class PrimWithMultiOutputs_(nn.Cell):
@@ -285,12 +322,14 @@ def test_stop_gradient_8():
         def construct(self, x1, x2):
             x1, x2 = stop_gradient(self.prim_with_multi_output(x1, x2))
             return x1, x2
+
     dx, dy = bprop(PrimWithMultiOutputs_(), Tensor(np.ones([2]).astype(np.float32)),
                    Tensor(np.ones([2]).astype(np.float32)), wrt=['inputs'])
     expect_dx = np.zeros([2])
     expect_dy = np.zeros([2])
     assert (dx.asnumpy() == expect_dx).all()
     assert (dy.asnumpy() == expect_dy).all()
+
 
 def test_stop_gradient_9():
     class Mul(nn.Cell):
@@ -302,6 +341,7 @@ def test_stop_gradient_9():
             c = x * y
             z = x * y
             return c, z
+
     class MulAdd(nn.Cell):
         def __init__(self):
             super(MulAdd, self).__init__()
@@ -317,22 +357,28 @@ def test_stop_gradient_9():
             ret1 = c1 + x + y + c2
             ret2 = z + y + y
             return ret1, ret2
+
     dx = bprop(MulAdd(), Tensor(np.ones([2, 2]).astype(np.float32)),
-                         Tensor(np.ones([2, 2]).astype(np.float32)))
+               Tensor(np.ones([2, 2]).astype(np.float32)))
     expect = np.array([[5.0, 5.0], [5.0, 5.0]])
     assert (dx.asnumpy() == expect).all()
+
 
 class PrimWithNoBprop(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init"""
+
     def __call__(self, x, y):
         """Implement by vm mode."""
         return x, y
+
     def infer_shape(self, x_shape, y_shape):
         return x_shape, y_shape
+
     def infer_dtype(self, x_type, y_type):
         return x_type, y_type
+
 
 def test_stop_gradient_10():
     class PrimWithNoBprop_(nn.Cell):
@@ -347,10 +393,12 @@ def test_stop_gradient_10():
             x = stop_gradient(x)
             y = stop_gradient(y)
             return x, y
+
     dx = bprop(PrimWithNoBprop_(), Tensor(np.ones([2]).astype(np.float32)),
                Tensor(np.ones([2]).astype(np.float32)))
     expect_dx = np.zeros([2])
     assert (dx.asnumpy() == expect_dx).all()
+
 
 def test_stop_gradient_11():
     class PrimWithNoBprop_(nn.Cell):
@@ -363,18 +411,22 @@ def test_stop_gradient_11():
             x, y = self.prim_with_no_bprop(x, y)
             x = stop_gradient(x)
             return x, y
+
     with pytest.raises(RuntimeError):
         bprop(PrimWithNoBprop_(), Tensor(np.ones([2]).astype(np.float32)),
               Tensor(np.ones([2]).astype(np.float32)))
+
 
 def test_stop_print():
     class StopPrint(nn.Cell):
         def __init__(self):
             super(StopPrint, self).__init__()
             self.printm = P.Print()
+
         def construct(self, x, y):
             self.printm("StopPrint", x)
             self.printm(y)
             return x, y
+
     C.grad_all(StopPrint())(Tensor(np.ones([2]).astype(np.float32)),
                             Tensor(np.ones([2]).astype(np.float32)))

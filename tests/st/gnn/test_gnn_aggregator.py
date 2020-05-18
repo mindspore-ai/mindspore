@@ -27,6 +27,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 class MeanAggregatorGrad(nn.Cell):
     """Backward of MeanAggregator"""
+
     def __init__(self, network):
         super(MeanAggregatorGrad, self).__init__()
         self.grad_op = C.grad_all_with_sens

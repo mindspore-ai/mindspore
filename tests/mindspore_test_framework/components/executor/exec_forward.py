@@ -18,10 +18,12 @@
 from ...components.icomponent import IExectorComponent
 from ...utils import keyword
 
+
 class IdentityEC(IExectorComponent):
     """
     Execute function/inputs.
     """
+
     def __call__(self):
         result_id = self.function[keyword.id] + '-' + self.inputs[keyword.id]
         group = self.function[keyword.group] + '-' + self.inputs[keyword.group]

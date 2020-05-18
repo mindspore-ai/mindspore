@@ -10,6 +10,7 @@ from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 import re
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -20,6 +21,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x)
         return self.loss(predict)
 
+
 class Blockcell(nn.Cell):
     def __init__(self):
         super(Blockcell, self).__init__()
@@ -29,8 +31,10 @@ class Blockcell(nn.Cell):
         out = self.bn(x)
         return out
 
+
 def getBlock():
     return Blockcell()
+
 
 def test_two_bn():
     class Net(nn.Cell):

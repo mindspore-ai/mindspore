@@ -72,6 +72,7 @@ def test_sum_mul():
     b = Tensor(np.ones([32, 64]), dtype=ms.float32)
     compile(net, x, y, b)
 
+
 def test_sum_mul2():
     class Net(nn.Cell):
         def __init__(self):
@@ -94,6 +95,7 @@ def test_sum_mul2():
     y = Tensor(np.ones([128, 128, 64, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     compile(net, x, y, b)
+
 
 def test_sum_mul3():
     class Net(nn.Cell):

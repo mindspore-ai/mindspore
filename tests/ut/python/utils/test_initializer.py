@@ -240,6 +240,7 @@ class Net(nn.Cell):
         z = self.add(z, self.t2)
         return z
 
+
 def test_weight_shape():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     a = np.arange(20).reshape(5, 4)

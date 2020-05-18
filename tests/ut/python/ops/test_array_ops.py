@@ -108,6 +108,7 @@ def test_argmin_invalid_output_type():
     with pytest.raises(TypeError):
         P.Argmin(-1, mstype.bool_)
 
+
 class CustomOP(PrimitiveWithInfer):
     __mindspore_signature__ = (sig_dtype.T, sig_dtype.T, sig_dtype.T1,
                                sig_dtype.T1, sig_dtype.T2, sig_dtype.T2,
@@ -146,9 +147,9 @@ class CustNet1(Cell):
         self.float1 = 5.1
 
     def construct(self):
-        x =self.op(self.t1, self.t1, self.int1,
-                   self.float1, self.int1, self.float1,
-                   self.t2, self.t1, self.int1)
+        x = self.op(self.t1, self.t1, self.int1,
+                    self.float1, self.int1, self.float1,
+                    self.t2, self.t1, self.int1)
         return x
 
 
@@ -257,6 +258,7 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 
 
 import mindspore.context as context
+
 
 @non_graph_engine
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)

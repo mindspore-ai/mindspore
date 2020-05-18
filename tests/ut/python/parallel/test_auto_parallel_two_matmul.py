@@ -25,6 +25,7 @@ from mindspore.parallel import _cost_model_context as cost_model_context
 from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -35,6 +36,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, y, b)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -44,6 +46,8 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, b)
 
     # model_parallel test
+
+
 def test_two_matmul():
     class Net(nn.Cell):
         def __init__(self):
@@ -58,7 +62,7 @@ def test_two_matmul():
 
     size = 16
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    cost_model_context.set_cost_model_context(device_memory_capacity= 32.0 * 1024.0 * 1024.0 * 1024.0,
+    cost_model_context.set_cost_model_context(device_memory_capacity=32.0 * 1024.0 * 1024.0 * 1024.0,
                                               costmodel_alpha=1.0,
                                               costmodel_beta=60.0,
                                               costmodel_gamma=0.1,
@@ -96,7 +100,6 @@ def test_two_matmul():
     costmodel_communi_bias = cost_model_context.get_cost_model_context("costmodel_communi_bias")
     assert costmodel_communi_bias == 1024.0
 
-
     set_algo_parameters(tensor_slice_align_enable=False, tensor_slice_align_size=32,
                         fully_use_devices=False, elementwise_op_strategy_follow=False)
     para_slice_align_enable = get_algo_parameters("tensor_slice_align_enable")
@@ -126,9 +129,9 @@ def test_two_matmul():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     reset_op_id()
-    
+
     _executor.compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/MatMul-op0': [[16, 1], [1, 1]],
-                     'Default/network-Net/MatMul-op1': [[16, 1], [1, 1]]}
+                           'Default/network-Net/MatMul-op1': [[16, 1], [1, 1]]}
     assert strategies == expected_strategies

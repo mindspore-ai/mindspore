@@ -42,6 +42,7 @@ def test_cv_minddataset_reader_two_png_tutorial():
         num_iter += 1
     assert num_iter == 5
 
+
 def test_cv_minddataset_reader_two_png_tutorial_just_image2():
     """tutorial for cv minderdataset."""
     columns_list = ["img_data", "label_data"]
@@ -58,4 +59,3 @@ def test_cv_minddataset_reader_two_png_tutorial_just_image2():
         logger.info("-------------- item[label_data][500:520] is {} -------".format(item["label_data"][500:520]))
         num_iter += 1
     assert num_iter == 5
-

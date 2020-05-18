@@ -21,6 +21,7 @@ import mindspore as ms
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops.operations.comm_ops import _VirtualDataset
+
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -79,7 +80,7 @@ def compile_graph(strategy1, strategy2, strategy3, strategy4, auto=False, onthot
 def test_onehot_model_parallel():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((1, 16), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4)
@@ -88,7 +89,7 @@ def test_onehot_model_parallel():
 def test_onehot_batch_parallel():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((16, 1), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4)
@@ -97,8 +98,8 @@ def test_onehot_batch_parallel():
 def test_onehot_batch_parallel_invalid_strategy():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
-    strategy3 = ((16, ), (), ())
+    strategy2 = ((2, 8),)
+    strategy3 = ((16,), (), ())
     strategy4 = ((16, 1), (16, 1))
     try:
         compile_graph(strategy1, strategy2, strategy3, strategy4)
@@ -109,7 +110,7 @@ def test_onehot_batch_parallel_invalid_strategy():
 def test_onehot_repeated_calculation():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((4, 1), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4)
@@ -127,7 +128,7 @@ def test_onehot_auto():
 def test_onehot_model_parallel():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((1, 16), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4)
@@ -136,7 +137,7 @@ def test_onehot_model_parallel():
 def test_onehot_batch_parallel_axis0():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((16, 1), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4, onthot_axis=0)
@@ -146,7 +147,7 @@ def test_onehot_batch_parallel_axis0():
 def test_onehot_batch_parallel_invalid_strategy_axis0():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = None
     strategy4 = ((16, 1), (16, 1))
     try:
@@ -158,7 +159,7 @@ def test_onehot_batch_parallel_invalid_strategy_axis0():
 def test_onehot_repeated_calculation_axis0():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8), )
+    strategy2 = ((2, 8),)
     strategy3 = ((4, 1), (), ())
     strategy4 = ((16, 1), (16, 1))
     compile_graph(strategy1, strategy2, strategy3, strategy4, onthot_axis=0)

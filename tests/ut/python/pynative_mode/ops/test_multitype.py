@@ -23,7 +23,6 @@ from mindspore.ops import operations as P
 from mindspore import Tensor
 from ...ut_filter import non_graph_engine
 
-
 tensor_add = P.TensorAdd()
 op_add = P.AddN()
 scala_add = Primitive('scalar_add')

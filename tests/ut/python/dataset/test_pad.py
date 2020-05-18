@@ -27,6 +27,7 @@ from util import diff_mse
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
+
 def test_pad_op():
     """
     Test Pad op
@@ -69,11 +70,12 @@ def test_pad_op():
         assert mse < 0.01
 
 
-def test_pad_grayscale(): 
+def test_pad_grayscale():
     """
     Tests that the pad works for grayscale images 
     """
-    def channel_swap(image): 
+
+    def channel_swap(image):
         """
         Py func hack for our pytransforms to work with c transforms
         """
@@ -81,7 +83,7 @@ def test_pad_grayscale():
 
     transforms = [
         py_vision.Decode(),
-        py_vision.Grayscale(1), 
+        py_vision.Grayscale(1),
         py_vision.ToTensor(),
         (lambda image: channel_swap(image))
     ]

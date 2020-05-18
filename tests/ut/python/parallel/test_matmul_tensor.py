@@ -62,7 +62,7 @@ def test_two_matmul():
             self.fill = P.Fill()
 
         def construct(self, x, y):
-            fill = self.diag(self.fill(mstype.float32, (128, ), 1.0))
+            fill = self.diag(self.fill(mstype.float32, (128,), 1.0))
             out1 = self.matmul1(fill, x)
             out2 = self.matmul2(y, fill)
             out = self.matmul3(out1, out2)
@@ -77,7 +77,7 @@ def test_two_matmul():
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 128]), dtype=ms.float32)
-    
+
     compile(net, x, y)
 
 
@@ -116,7 +116,7 @@ def test_two_matmul1():
             self.fill = P.Fill()
 
         def construct(self, x, y):
-            fill = self.diag(self.fill(mstype.float32, (128, ), 1.0))
+            fill = self.diag(self.fill(mstype.float32, (128,), 1.0))
             out1 = self.matmul1(fill, x)
             out2 = self.matmul2(fill, y)
             out = self.matmul3(out1, out2)
@@ -131,7 +131,7 @@ def test_two_matmul1():
 
     x = Tensor(np.ones([128, 128]), dtype=ms.float32)
     y = Tensor(np.ones([128, 128]), dtype=ms.float32)
-    
+
     compile(net, x, y)
 
 
@@ -156,5 +156,5 @@ def test_matmul_add_tensor():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    
+
     compile(net, x, y)

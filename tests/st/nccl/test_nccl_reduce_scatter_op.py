@@ -20,6 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import init, NCCL_WORLD_COMM_GROUP, get_rank, get_group_size
+
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
 init('nccl')

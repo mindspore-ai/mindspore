@@ -57,14 +57,14 @@ def compile(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
-    _executor.compile(train_net, _x,  _b)
+    _executor.compile(train_net, _x, _b)
     context.reset_auto_parallel_context()
 
 
 def test_expand_dims_data_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((16, 1, 1), (16, 1, 1))
-    strategy2 = ((16, 1, 1), )
+    strategy2 = ((16, 1, 1),)
     strategy3 = ((16, 1, 1, 1), (16, 1, 1, 1))
     net = Net(_w1, strategy1, strategy2, strategy3)
     compile(net)
@@ -73,7 +73,7 @@ def test_expand_dims_data_parallel():
 def test_expand_dims_model_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((1, 1, 16), (1, 1, 16))
-    strategy2 = ((1, 1, 16), )
+    strategy2 = ((1, 1, 16),)
     strategy3 = ((1, 1, 16, 1), (1, 1, 16, 1))
     net = Net(_w1, strategy1, strategy2, strategy3)
     compile(net)
@@ -82,7 +82,7 @@ def test_expand_dims_model_parallel():
 def test_expand_dims_hybrid_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 4), (2, 2, 4))
-    strategy2 = ((2, 2, 4), )
+    strategy2 = ((2, 2, 4),)
     strategy3 = ((2, 2, 4, 1), (2, 2, 4, 1))
     net = Net(_w1, strategy1, strategy2, strategy3)
     compile(net)
@@ -97,7 +97,7 @@ def test_expand_dims_auto_parallel():
 def test_expand_dims_repeat_calc():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 4), (2, 2, 4))
-    strategy2 = ((1, 2, 2), )
+    strategy2 = ((1, 2, 2),)
     strategy3 = ((2, 2, 4, 1), (2, 2, 4, 1))
     net = Net(_w1, strategy1, strategy2, strategy3)
     compile(net)
@@ -105,7 +105,7 @@ def test_expand_dims_repeat_calc():
 
 def test_expand_dims_parameter():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((1, 2, 2), )
+    strategy1 = ((1, 2, 2),)
     strategy2 = ((2, 2, 4, 1), (2, 2, 4, 1))
     net = Net2(_w1, strategy1, strategy2)
     compile(net)

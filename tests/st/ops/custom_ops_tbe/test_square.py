@@ -18,7 +18,9 @@ import mindspore.context as context
 from mindspore import Tensor
 from cus_square import CusSquare
 import pytest
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 class Net(nn.Cell):
     """Net definition"""
@@ -30,6 +32,7 @@ class Net(nn.Cell):
     def construct(self, data):
         return self.square(data)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
@@ -40,5 +43,5 @@ def test_net():
     output = square(Tensor(x))
     print(x)
     print(output.asnumpy())
-    expect = np.array([1.0,16.0,81.0]).astype(np.float32)
+    expect = np.array([1.0, 16.0, 81.0]).astype(np.float32)
     assert (output.asnumpy() == expect).all()

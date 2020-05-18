@@ -154,7 +154,7 @@ def test_matmul_maximum_broadcast():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), (2, ))
+    strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -223,7 +223,7 @@ def test_matmul_minimum_broadcast():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), (2, ))
+    strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)

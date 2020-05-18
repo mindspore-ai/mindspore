@@ -26,6 +26,7 @@ from mindspore import Tensor
 from mindspore import context
 import mindspore
 
+
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -34,9 +35,13 @@ def stop_gradient(dx):
     """ stop_gradient """
     return C.zeros_like(dx)
 
+
 stop = P.InsertGradientOf(stop_gradient)
+
+
 def test_InsertGradientOf_1():
     """ test_InsertGradientOf_1 """
+
     def stop_test(x, y):
         x = stop(x)
         c = x * y
@@ -44,7 +49,9 @@ def test_InsertGradientOf_1():
 
     def f(x, y):
         return C.grad_all(stop_test)(x, y)
+
     print("stop_gradient:", f(1, 2))
+
 
 def clip_gradient(dx):
     """ clip_gradient """
@@ -57,9 +64,13 @@ def clip_gradient(dx):
 
     return ret
 
+
 clip = P.InsertGradientOf(clip_gradient)
+
+
 def test_InsertGradientOf_2():
     """ test_InsertGradientOf_2 """
+
     def clip_test(x, y):
         x = clip(x)
         y = clip(y)
@@ -76,15 +87,22 @@ def test_InsertGradientOf_2():
     print("forward: ", f(1.1, 0.1))
     print("clip_gradient:", fd(1.1, 0.1))
 
+
 summary = P.ScalarSummary()
+
+
 def debug_gradient(dx):
     """ debug_gradient """
     summary("dx: ", dx)
     return dx
 
+
 debug = P.InsertGradientOf(debug_gradient)
+
+
 def test_InsertGradientOf_3():
     """ test_InsertGradientOf_3 """
+
     def debug_test(x, y):
         x = debug(x)
         y = debug(y)
@@ -93,7 +111,9 @@ def test_InsertGradientOf_3():
 
     def f(x, y):
         return C.grad_all(debug_test)(x, y)
+
     print("debug_gradient:", f(1, 2))
+
 
 def test_print_shape_type():
     class Mul(nn.Cell):
@@ -101,18 +121,23 @@ def test_print_shape_type():
             super(Mul, self).__init__()
             self.print_shape_type = PrintShapeTypeCell()
             self.print_shape_type_gradient = PrintGradShapeTypeCell("Gradients")
+
         def construct(self, x, y):
             z = x * y
             self.print_shape_type("Forward", z)
             self.print_shape_type_gradient(z)
             return z
+
     bprop(Mul(), Tensor(np.ones([2, 2]).astype(np.float32)),
           Tensor(np.ones([2, 2]).astype(np.float32)))
 
+
 def test_cell_assign():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+
     class GradNetWrap(nn.Cell):
         """ GradNetWrap definition """
+
         def __init__(self, net):
             super(GradNetWrap, self).__init__()
             self.net = net

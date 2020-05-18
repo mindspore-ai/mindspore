@@ -12,6 +12,7 @@ from mindspore.common.api import _executor
 from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -19,11 +20,13 @@ class Net(nn.Cell):
         self.relu = P.ReLU()
         self.wd = Parameter(Tensor(np.ones([8, 8, 8, 8]).astype(np.float32)), name="wide")
         self.wt = Parameter(Tensor(np.ones([8, 8, 8, 8]).astype(np.float32)), name="l")
+
     def construct(self, x):
         out = self.mul(x, self.wd)
         out = self.mul(out, self.wt)
         out = self.relu(out)
         return out
+
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
@@ -38,6 +41,7 @@ class NetWithLoss(nn.Cell):
         loss2 = self.mean(predict, -1)
         return loss1, loss2
 
+
 class IthOutputCell(nn.Cell):
     def __init__(self, network, output_index):
         super(IthOutputCell, self).__init__()
@@ -47,6 +51,7 @@ class IthOutputCell(nn.Cell):
     def construct(self, x):
         predict = self.network(x)[self.output_index]
         return predict
+
 
 class TrainStepWarp(nn.Cell):
     def __init__(self, network, sens=1000.0):
@@ -81,6 +86,7 @@ class TrainStepWarp(nn.Cell):
         grads_w = self.grad_w(self.loss_net_w, weights_w)(x, sens_w)
         grads_d = self.grad_d(self.loss_net_d, weights_d)(x, sens_d)
         return F.depend(loss_w, self.optimizer_w(grads_w)), F.depend(loss_d, self.optimizer_d(grads_d))
+
 
 def test_double_subgraphs():
     cost_model_context.set_cost_model_context(multi_subgraphs=True)

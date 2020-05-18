@@ -17,7 +17,6 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
 
-
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
@@ -32,6 +31,7 @@ def test_exception_01():
     with pytest.raises(ValueError) as info:
         data = data.map(input_columns=["image"], operations=vision.Resize(100, 100))
     assert "Invalid interpolation mode." in str(info.value)
+
 
 def test_exception_02():
     """

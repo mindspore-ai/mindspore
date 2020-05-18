@@ -21,10 +21,12 @@ from mindspore.nn import Cell
 from mindspore.common import ParameterTuple
 from mindspore.common.api import ms_function
 
+
 class Bprop(Cell):
     """
     The gradient wraper.
     """
+
     def __init__(self, func, wrt_params, params, grad_op, sens):
         super(Bprop, self).__init__(auto_prefix=False)
         self.func = func
@@ -49,6 +51,7 @@ class Bprop(Cell):
             return self.grad(self.func)(*inputs, self.sens)
         else:
             return self.grad(self.func)(*inputs)
+
 
 def bprop(func, *inputs, grads_wrt_outputs=None, wrt: list = None, params: list = None):
     """
@@ -90,6 +93,8 @@ def bprop(func, *inputs, grads_wrt_outputs=None, wrt: list = None, params: list 
             @ms_function
             def _func_pynative(*inputs):
                 return grad(*inputs)
+
             return _func_pynative(*inputs)
+
         return func_pynative(*inputs)
     return grad(*inputs)

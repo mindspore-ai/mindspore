@@ -22,6 +22,7 @@ import mindspore as ms
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -32,6 +33,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, y)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -41,6 +43,8 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y)
 
     # model_parallel test
+
+
 def test_four_matmul_linear():
     class Net(nn.Cell):
         def __init__(self, strategy1):

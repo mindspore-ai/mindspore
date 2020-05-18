@@ -28,6 +28,7 @@ from mindspore.common.api import ms_function, _executor
 from mindspore.ops.composite import core
 from mindspore.ops.functional import tensor_add
 from ...ut_filter import non_graph_engine
+
 # pylint: disable=W0613
 # W0613: unused-argument
 
@@ -35,9 +36,11 @@ from ...ut_filter import non_graph_engine
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
 
+
 # Test case: use the parse obj interface use default parameter
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self, dim):
         super(Net, self).__init__()
         self.softmax1 = nn.Softmax(dim)
@@ -64,10 +67,10 @@ def test_parse_defalut_parameter_case2():
     log.debug("output value = %r", value)
 
 
-
 # Test case: use the variable parameter for parse object
 class Net1(nn.Cell):
     """ Net1 definition """
+
     def __init__(self):
         super(Net1, self).__init__()
 
@@ -93,9 +96,9 @@ def test_var_parameter_case2():
     _executor.compile(net, input_data, input1, input2)
 
 
-
 # Test case: test the global flag
 g_x = Tensor(np.ones([3, 3]).astype(np.float32))
+
 
 @ms_function
 def tensor_add_global(x):
@@ -116,6 +119,7 @@ def test_global_flag():
 
 class NetWithNDarray(nn.Cell):
     """ NetWithNDarray definition """
+
     def __init__(self, dim):
         super(NetWithNDarray, self).__init__()
         self.softmax = nn.Softmax(dim)
@@ -123,6 +127,7 @@ class NetWithNDarray(nn.Cell):
 
     def construct(self, input_data):
         return self.softmax(input_data) * self.x
+
 
 @non_graph_engine
 def test_net_with_ndarray():

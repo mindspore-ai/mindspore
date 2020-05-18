@@ -30,46 +30,58 @@ scalar_mul = Primitive('scalar_mul')
 tuple_getitem = Primitive('tuple_getitem')
 switch = Primitive('switch')
 
+
 def test_sexp_conversion():
     """ test_sexp_conversion """
     return scalar_mul(10, scalar_add(5, 4))
 
+
 class FnDict:
     def __init__(self):
         self.fnDict = {}
+
     def __call__(self, fn):
         self.fnDict[fn.__name__] = fn
+
     def __getitem__(self, name):
         return self.fnDict[name]
+
 
 def test_add_zero(tag):
     """ test_add_zero """
     fns = FnDict()
+
     @fns
     def before_1(x):
         return scalar_add(x, 0)
+
     @fns
     def before_2(x):
         return scalar_add(scalar_add(x, 0), 0)
+
     @fns
     def after(x):
         return x
 
     return fns[tag]
+
 
 def test_elimR(tag):
     """ test_elimR """
     R = Primitive('R')
 
     fns = FnDict()
+
     @fns
     def before_1(x):
         return R(x)
+
     @fns
     def after(x):
         return x
 
     return fns[tag]
+
 
 def test_idempotent(tag):
     """ test_idempotent """
@@ -77,17 +89,21 @@ def test_idempotent(tag):
     R = Primitive('R')
 
     fns = FnDict()
+
     @fns
     def before_1(x):
         return P(P(x))
+
     @fns
     def before_2(x):
         return P(P(P(P(P(x)))))
+
     @fns
     def after(x):
         return P(x)
 
     return fns[tag]
+
 
 def test_constant_variable(tag):
     """ test_constant_variable """
@@ -95,24 +111,30 @@ def test_constant_variable(tag):
     Q = Primitive('Q')
 
     fns = FnDict()
+
     @fns
     def before_1(x):
         return Q(15) + Q(x)
+
     @fns
     def after(x):
         return P(15) + Q(x)
 
     return fns[tag]
 
+
 def cost(x):
     """ cost """
     return x * 10
 
+
 J = Primitive('J')
+
 
 def test_expendJ(x):
     """ test_expendJ """
     return J(cost)(x)
+
 
 def test_elim_jinv_j(tag):
     """ test_elim_jinv_j """
@@ -120,50 +142,63 @@ def test_elim_jinv_j(tag):
     Jinv = Primitive('Jinv')
 
     fns = FnDict()
+
     @fns
     def before_1(x):
         return J(Jinv(x))
+
     @fns
     def before_2(x):
         return Jinv(J(x))
+
     @fns
     def after(x):
         return x
 
     return fns[tag]
 
+
 def test_simplify_always_true_false(tag):
     """ test_simplify_always_true_false """
     fns = FnDict()
+
     @fns
     def before_1(x, y):
         return switch(True, x, y)
+
     @fns
     def before_2(x, y):
         return switch(False, y, x)
+
     @fns
     def after(x, y):
         return x
 
     return fns[tag]
+
 
 def test_inline(tag):
     """ test_inline """
     fns = FnDict()
+
     @fns
     def before(x, y):
         def fn1(x1):
             return x1
+
         return fn1(x)
+
     @fns
     def after(x, y):
         return x
 
     return fns[tag]
 
+
 def test_inline_successively(tag):
     """ test_inline_successively """
     fns = FnDict()
+
     def one(x):
         return x + 1
 
@@ -183,15 +218,18 @@ def test_inline_successively(tag):
 
     return fns[tag]
 
+
 def test_inline_closure(tag):
     """ test_inline_closure """
     fns = FnDict()
+
     @fns
     def before(x, y, z):
         c = z * z
 
         def f(x):
             return x + c
+
         return f(x * y)
 
     @fns
@@ -201,20 +239,26 @@ def test_inline_closure(tag):
 
     return fns[tag]
 
+
 def test_inline_deep_closure(tag):
     """ test_inline_deep_closure """
     fns = FnDict()
+
     def f(x):
         w = x * x
 
         def g():
             def h():
                 return w
+
             return h()
+
         return g
+
     @fns
     def before(x, y):
         return f(x)() - f(y)()
+
     @fns
     def after(x, y):
         w1 = x * x
@@ -223,30 +267,38 @@ def test_inline_deep_closure(tag):
 
     return fns[tag]
 
+
 def test_inline_new_closure(tag):
     """ test_inline_new_closure """
     fns = FnDict()
+
     def q(x):
         return x * x
 
     def f(x):
         def g():
             return q(x)
+
         return g
+
     @fns
     def before(x):
         return f(x)
+
     @fns
     def after(x):
         def g():
             return x * x
+
         return g
 
     return fns[tag]
 
+
 def test_inline_recursive_direct(tag):
     """ test_inline_recursive_direct """
     fns = FnDict()
+
     @fns
     def before1(x):
         return before1(x - 1)
@@ -258,13 +310,16 @@ def test_inline_recursive_direct(tag):
 
         def helper2(x):
             return before1(x - 1)
+
         return helper1(x)
 
     return fns[tag]
 
+
 def test_inline_recursive(tag):
     """ test_inline_recursive """
     fns = FnDict()
+
     @fns
     def before(x):
         if x <= 0:
@@ -273,27 +328,33 @@ def test_inline_recursive(tag):
 
     return fns[tag]
 
+
 def test_inline_while(tag):
     """ test_inline_while """
     fns = FnDict()
+
     @fns
     def before(x):
         rval = x
         while rval < 100:
             rval = rval * rval
         return rval
+
     return fns[tag]
+
 
 def test_cse(tag):
     """ test_cse """
     fns = FnDict()
     scalar_div = Primitive('scalar_div')
+
     @fns
     def test_f1(x, y):
         a = scalar_add(x, y)
         b = scalar_add(x, y)
         c = scalar_mul(a, b)
         return c
+
     @fns
     def test_f2(x, y):
         a = scalar_add(x, y)
@@ -301,41 +362,53 @@ def test_cse(tag):
         c = scalar_add(scalar_mul(a, y), scalar_div(scalar_add(x, y), x))
         d = scalar_add(b, c)
         return d
+
     return fns[tag]
+
 
 def test_arithmetic(tag):
     """ test_arithmetic """
     fns = FnDict()
     identity = Primitive('identity')
+
     @fns
     def multiply_by_zero_l(x):
         return scalar_mul(x, 0)
+
     @fns
     def multiply_by_zero_r(x):
         return scalar_mul(0, x)
+
     @fns
     def after_0(x):
         return 0
+
     @fns
     def multiply_by_one_l(x):
         return scalar_mul(x, 1)
+
     @fns
     def multiply_by_one_r(x):
         return scalar_mul(1, x)
+
     @fns
     def add_zero_l(x):
         return scalar_add(x, 0)
+
     @fns
     def add_zero_r(x):
         return scalar_add(0, x)
+
     @fns
     def elim_identity(x):
         return identity(x)
+
     @fns
     def after(x):
         return x
 
     return fns[tag]
+
 
 def test_elim_cast_same_dtype(tag):
     """ test_elim_cast_same_dtype """
@@ -345,6 +418,7 @@ def test_elim_cast_same_dtype(tag):
     @fns
     def fp32_cast_fp32(x, y):
         return cast(x, y)
+
     @fns
     def after(x, y):
         return x
@@ -357,14 +431,17 @@ def elim_reshape_same_shape(tag):
     fns = FnDict()
     reshape = P.Reshape()
     shape = (2, 3)
+
     @fns
     def reshape_to_2_3(x):
         return reshape(x, shape)
+
     @fns
     def after(x):
         return x
 
     return fns[tag]
+
 
 def elim_two_reshape(tag):
     """ elim_two_reshape """
@@ -372,14 +449,17 @@ def elim_two_reshape(tag):
     reshape = P.Reshape()
     shape = (2, 3)
     shape_2 = (3, 2)
+
     @fns
     def before(x):
         return reshape(reshape(x, shape_2), shape)
+
     @fns
     def after(x):
         return reshape(x, shape)
 
     return fns[tag]
+
 
 def elim_two_cast(tag):
     """ elim_two_cast """
@@ -389,11 +469,13 @@ def elim_two_cast(tag):
     @fns
     def before(x, a, b):
         return cast(cast(x, a), b)
+
     @fns
     def after(x, a, b):
         return cast(x, b)
 
     return fns[tag]
+
 
 def test_elim_transpose(tag):
     """ test_elim_transpose """
@@ -404,11 +486,13 @@ def test_elim_transpose(tag):
     @fns
     def before(x):
         return transpose(x, perm)
+
     @fns
     def after(x):
         return x
 
     return fns[tag]
+
 
 def test_elim_tile_multiply_one(tag):
     """ test_elim_tile_multiply_one """
@@ -419,11 +503,13 @@ def test_elim_tile_multiply_one(tag):
     @fns
     def before(x):
         return tile(x, all_one)
+
     @fns
     def after(x):
         return x
 
     return fns[tag]
+
 
 def test_elim_reduce_mean_shape_one(tag):
     """ test_elim_reduce_mean_shape_one """
@@ -433,11 +519,13 @@ def test_elim_reduce_mean_shape_one(tag):
     @fns
     def before(x, y):
         return reduce_mean(x, 0)
+
     @fns
     def after(x, y):
         return x
 
     return fns[tag]
+
 
 def test_elim_all_shape_one(tag):
     """ test_elim_all_shape_one """
@@ -447,11 +535,13 @@ def test_elim_all_shape_one(tag):
     @fns
     def before(x, y):
         return all_(x, 0)
+
     @fns
     def after(x, y):
         return x
 
     return fns[tag]
+
 
 def test_elim_sum_shape_one(tag):
     """ test_elim_sum_shape_one """
@@ -461,11 +551,13 @@ def test_elim_sum_shape_one(tag):
     @fns
     def before(x, y):
         return sum_(x, 0)
+
     @fns
     def after(x, y):
         return x
 
     return fns[tag]
+
 
 def test_tuple_getitem(tag):
     """ test_tuple_getitem """
@@ -479,14 +571,17 @@ def test_tuple_getitem(tag):
     @fns
     def make_get_1(x, y):
         return tuple_getitem(make_tuple(x, y), 1)
+
     @fns
     def after_0(x, y):
         return x
+
     @fns
     def after_1(x, y):
         return y
 
     return fns[tag]
+
 
 def test_tuple_setitem(tag):
     """ test_tuple_setitem """
@@ -501,14 +596,17 @@ def test_tuple_setitem(tag):
     @fns
     def before_1(x, y, z):
         return tuple_setitem(make_tuple(x, y), 1, z)
+
     @fns
     def after_0(x, y, z):
         return make_tuple(z, y)
+
     @fns
     def after_1(x, y, z):
         return make_tuple(x, z)
 
     return fns[tag]
+
 
 def test_tuple_get_set_item(tag):
     """ test_tuple_get_set_item """
@@ -533,6 +631,7 @@ def test_tuple_get_set_item(tag):
 
     return fns[tag]
 
+
 def test_partial(tag):
     """ test_partial """
     fns = FnDict()
@@ -550,6 +649,7 @@ def test_partial(tag):
         return f(x, y)
 
     return fns[tag]
+
 
 def test_replace_applicator(tag):
     """ test_replace_applicator """
@@ -583,6 +683,7 @@ def test_replace_applicator(tag):
 
     return fns[tag]
 
+
 def test_specialize_on_graph_arguments(tag):
     """ test_specialize_on_graph_arguments """
     fns = FnDict()
@@ -600,8 +701,11 @@ def test_specialize_on_graph_arguments(tag):
     def after(x, y):
         def helper(x, y):
             return scalar_add(f1(x), f2(y))
+
         return helper(x, y)
+
     return fns[tag]
+
 
 def test_incorporate_getitem(tag):
     """ test_incorporate_getitem """
@@ -613,32 +717,38 @@ def test_incorporate_getitem(tag):
     def before1(x, y):
         def fn(x, y):
             return f1(x, y), f2(x, y)
+
         return tuple_getitem(fn(x, y), 0)
 
     @fns
     def after1(x, y):
         def fn(x, y):
             return f1(x, y)
+
         return fn(x, y)
 
     @fns
     def before2(x, y):
         def fn(x, y):
             return x
+
         return tuple_getitem(fn(x, y), 0)
 
     @fns
     def after2(x, y):
         def fn(x, y):
             return tuple_getitem(x, 0)
+
         return fn(x, y)
 
     return fns[tag]
+
 
 def test_incorporate_getitem_through_switch(tag):
     """ test_incorporate_getitem_through_switch """
     fns = FnDict()
     scalar_gt = Primitive('scalar_gt')
+
     @fns
     def before(x, y):
         def f1(x, y):
@@ -663,6 +773,7 @@ def test_incorporate_getitem_through_switch(tag):
 
     return fns[tag]
 
+
 def test_incorporate_call(tag):
     """ test_incorporate_call """
     fns = FnDict()
@@ -673,7 +784,9 @@ def test_incorporate_call(tag):
         def fn(q):
             def subf(z):
                 return f1(q, z)
+
             return subf
+
         return fn(x)(y)
 
     @fns
@@ -681,10 +794,13 @@ def test_incorporate_call(tag):
         def fn(q, y):
             def subf(z):
                 return f1(q, z)
+
             return subf(y)
+
         return fn(x, y)
 
     return fns[tag]
+
 
 def test_incorporate_call_through_switch(tag):
     """ test_incorporate_call_through_switch """
@@ -693,14 +809,18 @@ def test_incorporate_call_through_switch(tag):
     f2 = Primitive('f2')
     scalar_gt = Primitive('scalar_gt')
     identity = Primitive('identity')
+
     @fns
     def before(x, y, z):
         def f1g():
             return f1
+
         def f2g():
             return f2
+
         def fn():
             return switch(scalar_gt(x, 0), f1g, f2g)()
+
         return fn()(y, z)
 
     @fns
@@ -708,9 +828,12 @@ def test_incorporate_call_through_switch(tag):
         def fn(y, z):
             def tb(y, z):
                 return f1(y, z)
+
             def fb(y, z):
                 return f2(y, z)
+
             return switch(scalar_gt(x, 0), tb, fb)(y, z)
+
         return fn(y, z)
 
     return fns[tag]
@@ -720,6 +843,7 @@ def test_float_tuple_getitem_through_switch(tag):
     """ test_float_tuple_getitem_through_switch """
     fns = FnDict()
     scalar_gt = Primitive('scalar_gt')
+
     @fns
     def before(x, y):
         return tuple_getitem(switch(scalar_gt(x, 0), x, y), 0)
@@ -730,11 +854,13 @@ def test_float_tuple_getitem_through_switch(tag):
 
     return fns[tag]
 
+
 def test_merge_addn(tag):
     """ test_merge_addn """
     fns = FnDict()
     addn = P.AddN()
     AddN = P.AddN
+
     @fns
     def before(x, y, z, a):
         return addn((addn((a, x, y)), z))
@@ -745,12 +871,14 @@ def test_merge_addn(tag):
 
     return fns[tag]
 
+
 def test_addn_zero(tag):
     """ test_addn_zero """
     fns = FnDict()
     addn = P.AddN()
     AddN = P.AddN
     zero_tensor = Primitive('zeros_like_tensor')
+
     @fns
     def before_1(x, y, z, a):
         return addn((a, zero_tensor(x), zero_tensor(y), z))
@@ -773,6 +901,7 @@ def test_addn_zero(tag):
 
     return fns[tag]
 
+
 def test_convert_switch_ops(tag):
     fns = FnDict()
     ge_switch = Primitive('GeSwitch')
@@ -781,6 +910,7 @@ def test_convert_switch_ops(tag):
     neg = Primitive('Neg')
     tuple_getitem = Primitive('tuple_getitem')
     make_tuple = Primitive('make_tuple')
+
     @fns
     def before(cond, x, y):
         if cond:
@@ -788,6 +918,7 @@ def test_convert_switch_ops(tag):
         else:
             z = neg(y)
         return z
+
     @fns
     def after(cond, x, y):
         sw1 = ge_switch(x, cond)
@@ -802,6 +933,7 @@ def test_convert_switch_ops(tag):
         merge_res = merge(tup)
         res = tuple_getitem(merge_res, 0)
         return res
+
     return fns[tag]
 
 
@@ -809,6 +941,7 @@ def test_minmax_grad(tag):
     """ test_minmax_grad """
     fns = FnDict()
     min_grad = G.MinimumGrad()
+
     @fns
     def before_11(x, y, dout):
         return tuple_getitem(min_grad(x, y, dout), 0)
@@ -823,6 +956,7 @@ def test_minmax_grad(tag):
         return tuple_getitem(a, 0), tuple_getitem(a, 1)
 
     max_grad = G.MaximumGrad()
+
     @fns
     def before_31(x, y, dout):
         return tuple_getitem(max_grad(x, y, dout), 0)
@@ -879,6 +1013,7 @@ def test_reducesum_one(tag):
 
     return fns[tag]
 
+
 def test_print_tuple_wrapper(tag):
     fns = FnDict()
     print_ = Primitive('Print')
@@ -905,6 +1040,7 @@ def test_print_tuple_wrapper(tag):
         return print_(make_tuple(x, y, z))
 
     return fns[tag]
+
 
 def test_constant_duplicate_mul(tag):
     fns = FnDict()

@@ -19,7 +19,6 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from ....ut_filter import non_graph_engine
 
-
 we = Tensor(np.ones([2, 2]))
 in_channels = 3
 out_channels = 64
@@ -29,8 +28,10 @@ ks = 3
 def get_me_conv_output(input_data, weight, in_channel, out_channel, kernel_size,
                        stride=1, padding=0, has_bias=False, bias=None):
     """ get_me_conv_output """
+
     class Net(nn.Cell):
         """ Net definition """
+
         def __init__(self, weight, in_channel, out_channel, kernel_size,
                      stride=1, padding=0, has_bias=False, bias=None):
             super(Net, self).__init__()
@@ -45,6 +46,7 @@ def get_me_conv_output(input_data, weight, in_channel, out_channel, kernel_size,
 
         def construct(self, input_x):
             return self.conv(input_x)
+
     net = Net(weight, in_channel, out_channel, kernel_size, stride, padding, has_bias, bias)
     out = net.construct(input_data)
     return out.asnumpy()

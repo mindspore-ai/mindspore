@@ -63,6 +63,7 @@ def test_tf_file_distribution_unique():
     logger.info("Number of data in data1: {}".format(num_iter))
     assert num_iter == 4
 
+
 def test_tf_file_distribution_random():
     data1 = ds.StorageDataset(DATA_DIR, SCHEMA_DIR, DISTRIBUTION_RANDOM_DIR)
     data1 = data1.repeat(1)
@@ -73,6 +74,7 @@ def test_tf_file_distribution_random():
     logger.info("Number of data in data1: {}".format(num_iter))
     assert num_iter == 4
 
+
 def test_tf_file_distribution_equal_rows():
     data1 = ds.StorageDataset(DATA_DIR, SCHEMA_DIR, DISTRIBUTION_EQUAL_DIR)
     data1 = data1.repeat(2)
@@ -81,6 +83,7 @@ def test_tf_file_distribution_equal_rows():
         num_iter += 1
 
     assert num_iter == 4
+
 
 if __name__ == '__main__':
     logger.info('=======test normal=======')

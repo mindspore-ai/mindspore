@@ -20,13 +20,16 @@
 import os
 import pytest
 
+
 def is_enable_ge():
     val = os.getenv("ENABLE_GE", "False")
     if val in ('ON', 'on', 'TRUE', 'True', 'true'):
         return True
     return False
 
+
 non_graph_engine = pytest.mark.skipif(is_enable_ge(), reason="Not support running on GE environment")
+
 
 def is_enable_gpu():
     val = os.getenv("ENABLE_GPU", "False")
@@ -34,12 +37,15 @@ def is_enable_gpu():
         return True
     return False
 
+
 run_on_gpu = pytest.mark.skipif(not is_enable_gpu(), reason="Only support running on GPU environment")
+
 
 def is_enable_onnxruntime():
     val = os.getenv("ENABLE_ONNXRUNTIME", "False")
     if val in ('ON', 'on', 'TRUE', 'True', 'true'):
         return True
     return False
+
 
 run_on_onnxruntime = pytest.mark.skipif(not is_enable_onnxruntime(), reason="Only support running on onnxruntime")

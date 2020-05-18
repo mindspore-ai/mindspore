@@ -42,6 +42,7 @@ class GradWrap(nn.Cell):
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
 
+
 # model_parallel test
 def test_l2normalize_matmul():
     class Net(nn.Cell):
@@ -60,7 +61,7 @@ def test_l2normalize_matmul():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    strategy1 = ((1, 1, 4), )
+    strategy1 = ((1, 1, 4),)
     strategy2 = ((1, 1, 4), (1, 1, 4))
     strategy3 = ((1, 1, 8), (1, 1, 8))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))

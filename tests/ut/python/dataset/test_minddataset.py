@@ -37,7 +37,8 @@ CV2_FILE_NAME = "../data/mindrecord/imagenet2.mindrecord"
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"
 NLP_FILE_NAME = "../data/mindrecord/aclImdb.mindrecord"
 NLP_FILE_POS = "../data/mindrecord/testAclImdbData/pos"
-NLP_FILE_VOCAB=  "../data/mindrecord/testAclImdbData/vocab.txt"
+NLP_FILE_VOCAB = "../data/mindrecord/testAclImdbData/vocab.txt"
+
 
 @pytest.fixture
 def add_and_remove_cv_file():
@@ -62,6 +63,7 @@ def add_and_remove_cv_file():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 @pytest.fixture
 def add_and_remove_nlp_file():
     """add/remove nlp file"""
@@ -79,9 +81,9 @@ def add_and_remove_nlp_file():
                        "input_ids": {"type": "int64",
                                      "shape": [-1]},
                        "input_mask": {"type": "int64",
-                                     "shape": [1, -1]},
+                                      "shape": [1, -1]},
                        "segment_ids": {"type": "int64",
-                                     "shape": [2,-1]}
+                                       "shape": [2, -1]}
                        }
     writer.set_header_size(1 << 14)
     writer.set_page_size(1 << 15)
@@ -93,6 +95,7 @@ def add_and_remove_nlp_file():
     for x in paths:
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
+
 
 def test_cv_minddataset_writer_tutorial():
     """tutorial for cv dataset writer."""
@@ -112,6 +115,7 @@ def test_cv_minddataset_writer_tutorial():
     for x in paths:
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
+
 
 def test_cv_minddataset_partition_tutorial(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
@@ -229,6 +233,7 @@ def test_cv_minddataset_blockreader_tutorial(add_and_remove_cv_file):
         num_iter += 1
     assert num_iter == 20
 
+
 def test_cv_minddataset_blockreader_some_field_not_in_index_tutorial(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["id", "data", "label"]
@@ -264,6 +269,7 @@ def test_cv_minddataset_reader_file_list(add_and_remove_cv_file):
         num_iter += 1
     assert num_iter == 10
 
+
 def test_cv_minddataset_reader_one_partition(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
@@ -279,6 +285,7 @@ def test_cv_minddataset_reader_one_partition(add_and_remove_cv_file):
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
     assert num_iter < 10
+
 
 def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
@@ -313,7 +320,8 @@ def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
     writer.commit()
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    data_set = ds.MindDataset([CV_FILE_NAME + str(x) for x in range(FILES_NUM)] + [CV1_FILE_NAME, CV2_FILE_NAME], columns_list, num_readers)
+    data_set = ds.MindDataset([CV_FILE_NAME + str(x) for x in range(FILES_NUM)] + [CV1_FILE_NAME, CV2_FILE_NAME],
+                              columns_list, num_readers)
     assert data_set.get_dataset_size() == 30
     num_iter = 0
     for item in data_set.create_dict_iterator():
@@ -332,7 +340,8 @@ def test_cv_minddataset_reader_two_dataset(add_and_remove_cv_file):
         os.remove(CV2_FILE_NAME)
     if os.path.exists("{}.db".format(CV2_FILE_NAME)):
         os.remove("{}.db".format(CV2_FILE_NAME))
-        
+
+
 def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
     paths = ["{}{}".format(CV1_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
@@ -352,7 +361,8 @@ def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
 
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    data_set = ds.MindDataset([CV_FILE_NAME + str(x) for x in range(2)] + [CV1_FILE_NAME + str(x) for x in range(2, 4)], columns_list, num_readers)
+    data_set = ds.MindDataset([CV_FILE_NAME + str(x) for x in range(2)] + [CV1_FILE_NAME + str(x) for x in range(2, 4)],
+                              columns_list, num_readers)
     assert data_set.get_dataset_size() < 20
     num_iter = 0
     for item in data_set.create_dict_iterator():
@@ -383,6 +393,7 @@ def test_cv_minddataset_reader_basic_tutorial(add_and_remove_cv_file):
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
     assert num_iter == 10
+
 
 def test_nlp_minddataset_reader_basic_tutorial(add_and_remove_nlp_file):
     """tutorial for nlp minderdataset."""
@@ -515,6 +526,7 @@ def get_data(dir_name):
             continue
     return data_list
 
+
 def get_multi_bytes_data(file_name, bytes_num=3):
     """
     Return raw data of multi-bytes dataset.
@@ -548,6 +560,7 @@ def get_multi_bytes_data(file_name, bytes_num=3):
         except FileNotFoundError:
             continue
     return data_list
+
 
 def get_mkv_data(dir_name):
     """
@@ -587,8 +600,9 @@ def get_mkv_data(dir_name):
                              "id": index}
                 data_list.append(data_json)
             index += 1
-    logger.info('{} images are missing'.format(len(file_list)-len(data_list)))
+    logger.info('{} images are missing'.format(len(file_list) - len(data_list)))
     return data_list
+
 
 def get_nlp_data(dir_name, vocab_file, num):
     """
@@ -635,12 +649,14 @@ def get_nlp_data(dir_name, vocab_file, num):
                 }
                 yield data
 
+
 def convert_to_uni(text):
     if isinstance(text, str):
         return text
     if isinstance(text, bytes):
         return text.decode('utf-8', 'ignore')
     raise Exception("The type %s does not convert!" % type(text))
+
 
 def load_vocab(vocab_file):
     """load vocabulary to translate statement."""
@@ -658,14 +674,16 @@ def load_vocab(vocab_file):
             index += 1
     return vocab
 
+
 def inputs(vectors, maxlen=50):
     length = len(vectors)
     if length > maxlen:
-        return vectors[0:maxlen], [1]*maxlen, [0]*maxlen
-    input_ = vectors+[0]*(maxlen-length)
-    mask = [1]*length + [0]*(maxlen-length)
-    segment = [0]*maxlen
+        return vectors[0:maxlen], [1] * maxlen, [0] * maxlen
+    input_ = vectors + [0] * (maxlen - length)
+    mask = [1] * length + [0] * (maxlen - length)
+    segment = [0] * maxlen
     return input_, mask, segment
+
 
 def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
     mindrecord_file_name = "test.mindrecord"
@@ -902,6 +920,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
     os.remove("{}".format(mindrecord_file_name))
     os.remove("{}.db".format(mindrecord_file_name))
 
+
 def test_write_with_multi_bytes_and_MindDataset():
     mindrecord_file_name = "test.mindrecord"
     data = [{"file_name": "001.jpg", "label": 43,
@@ -1069,6 +1088,7 @@ def test_write_with_multi_bytes_and_MindDataset():
 
     os.remove("{}".format(mindrecord_file_name))
     os.remove("{}.db".format(mindrecord_file_name))
+
 
 def test_write_with_multi_array_and_MindDataset():
     mindrecord_file_name = "test.mindrecord"

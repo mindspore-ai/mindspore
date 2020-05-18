@@ -17,6 +17,7 @@ from mindspore.ops import operations as P
 add = P.TensorAdd()
 reshape = P.Reshape()
 
+
 def test_shape_add(x1, x2, y1, y2, z1, z2):
     sum1 = add(x1, x2)
     sum2 = add(y1, y2)

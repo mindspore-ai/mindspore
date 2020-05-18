@@ -71,7 +71,7 @@ def test_no_grad():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    
+
     strategy1 = ((4, 2), (2, 1))
     strategy2 = ((2, 4), (4, 1))
     net = Net(strategy1, strategy2)
@@ -96,7 +96,7 @@ def test_grad_sens_parameter_type():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    
+
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     strategy1 = ((4, 2), (2, 1))
     strategy2 = ((2, 4), (4, 1))
@@ -125,7 +125,7 @@ def test_grad_sens_tensor_type():
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
-    
+
     strategy1 = ((4, 2), (2, 1))
     strategy2 = ((2, 4), (4, 1))
     net = GradWrap2(Net(strategy1, strategy2))
@@ -146,12 +146,12 @@ def test_grad_sens_scalar_broadcast():
 
         def construct(self, x, y, bias):
             out = self.fc_nobias(x, y)
-            out = self.reduce_sum(out, (0,1))
+            out = self.reduce_sum(out, (0, 1))
             return out
 
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy0 = ((4, 1), (4, 1))
-    strategy1 = ((4, 1), )
+    strategy1 = ((4, 1),)
     net = GradWrap3(Net(strategy0, strategy1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 

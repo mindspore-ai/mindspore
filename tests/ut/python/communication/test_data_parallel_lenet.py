@@ -27,8 +27,10 @@ from mindspore.nn.optim import Momentum
 
 _current_dir = os.path.dirname(os.path.realpath(__file__)) + "/../test_data"
 
+
 class LeNet5(nn.Cell):
     """LeNet5 definition"""
+
     def __init__(self):
         super(LeNet5, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, 5)
@@ -52,6 +54,7 @@ class LeNet5(nn.Cell):
 
 class DatasetLenet():
     """DatasetLenet definition"""
+
     def __init__(self, predict, label, length=3):
         self.predict = predict
         self.label = label

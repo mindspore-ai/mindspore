@@ -22,6 +22,7 @@ from mindspore.common.api import _executor
 
 class assignment1_Net(nn.Cell):
     """ assignment1_Net definition """
+
     def __init__(self, number):
         super().__init__()
         self.number = number
@@ -36,6 +37,7 @@ class assignment1_Net(nn.Cell):
 
 class assignment2_Net(nn.Cell):
     """ assignment2_Net definition """
+
     def __init__(self, number):
         super().__init__()
         self.number = number
@@ -72,6 +74,7 @@ def test_ME_assignment_operator_0020():
 
 class unsupported_method_net(nn.Cell):
     """ unsupported_method_net definition """
+
     def __init__(self):
         super().__init__()
         self.relu = nn.ReLU()

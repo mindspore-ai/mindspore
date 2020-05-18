@@ -53,6 +53,7 @@ class SliceNet(nn.Cell):
     def construct(self, x):
         return self.slice(x, (0, 11, 0, 0), (32, 7, 224, 224))
 
+
 def test_slice_4d():
     x_np = np.random.randn(32, 24, 224, 224).astype(np.float32)
     output_np = x_np[:, 11:18, :, :]

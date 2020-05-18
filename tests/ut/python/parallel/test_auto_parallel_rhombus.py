@@ -22,6 +22,7 @@ import mindspore as ms
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -31,6 +32,7 @@ class NetWithLoss(nn.Cell):
     def construct(self, x, y, b):
         predict = self.network(x, y, b)
         return self.loss(predict)
+
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
@@ -71,6 +73,7 @@ def test_rhombus1():
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     compile(net, x, y, b)
 
+
 def test_rhombus2():
     class Net(nn.Cell):
         def __init__(self):
@@ -100,6 +103,7 @@ def test_rhombus2():
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     compile(net, x, y, b)
+
 
 def test_rhombus3():
     class Net(nn.Cell):

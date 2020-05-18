@@ -57,7 +57,7 @@ def test_bn2d():
                         moving_mean_init=moving_mean,
                         moving_var_init=moving_var)
 
-    #3-channel RGB
+    # 3-channel RGB
     input_data = Tensor(np.random.randint(0, 1, [1, 3, 224, 224]).astype(np.float32))
     output = bn(input_data)
     output_np = output.asnumpy()

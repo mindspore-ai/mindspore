@@ -64,7 +64,6 @@ def test_matmul_sub():
     strategy2 = ((4, 2), (4, 2))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
@@ -143,6 +142,7 @@ def test_matmul_div():
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     compile(net, x, y, b)
 
+
 def test_matmul_greater():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
@@ -166,6 +166,7 @@ def test_matmul_greater():
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
     compile(net, x, y, b)
 
+
 def test_matmul_add_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
@@ -180,7 +181,7 @@ def test_matmul_add_broadcast():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), (2, ))
+    strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
@@ -228,7 +229,7 @@ def test_matmul_sub_broadcast():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), (2, ))
+    strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
@@ -276,7 +277,7 @@ def test_matmul_mul_broadcast():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), (2, ))
+    strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
@@ -324,7 +325,7 @@ def test_matmul_div_broadcast():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), (2, ))
+    strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
@@ -357,6 +358,7 @@ def test_matmul_div_broadcast2():
     b = Tensor(np.ones([1, 64]), dtype=ms.float32)
     compile(net, x, y, b)
 
+
 def test_matmul_greater_broadcast():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
@@ -371,7 +373,7 @@ def test_matmul_greater_broadcast():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), (2, ))
+    strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
@@ -403,6 +405,7 @@ def test_matmul_greater_broadcast2():
     y = Tensor(np.ones([32, 1]), dtype=ms.float32)
     b = Tensor(np.ones([1, 64]), dtype=ms.float32)
     compile(net, x, y, b)
+
 
 def test_matmul_floordiv():
     class Net(nn.Cell):
@@ -442,7 +445,7 @@ def test_matmul_floordiv_broadcast():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((2, 2), (2, 2))
-    strategy2 = ((4, 2), (2, ))
+    strategy2 = ((4, 2), (2,))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
@@ -483,10 +486,10 @@ def test_assign_sub():
             self.assign_sub = P.AssignSub()
             self.mul = P.Mul()
             self.mul_weight = Parameter(Tensor(np.full([128, 32],
-                                        0.5, dtype=np.float32)),
+                                                       0.5, dtype=np.float32)),
                                         name="mul_weight")
             self.assignsub_weight = Parameter(Tensor(np.full([128, 32],
-                                              1.1, dtype=np.float32)),
+                                                             1.1, dtype=np.float32)),
                                               name="assignsub_weight")
 
         def construct(self, x, y, z):

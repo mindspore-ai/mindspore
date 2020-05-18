@@ -19,6 +19,7 @@ import random
 import numpy as np
 from mindspore import Tensor
 
+
 def generate_dataset_for_linear_regression(true_w, true_b, num_samples, batch_size):
     features = np.random.normal(scale=1, size=(num_samples, len(true_w)))
     labels = np.matmul(features, np.reshape(np.array(true_w), (-1, 1))) + true_b

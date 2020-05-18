@@ -29,6 +29,7 @@ import mindspore.context as context
 
 class DenseMMNet(nn.Cell):
     """DenseMMNet definition"""
+
     def __init__(self):
         super(DenseMMNet, self).__init__()
         self.fc1 = nn.Dense(128, 768, activation='relu')

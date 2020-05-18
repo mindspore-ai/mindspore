@@ -18,7 +18,6 @@ import pytest
 from mindspore._checkparam import check_int, check_int_positive, \
     check_bool, check_input_format, _expand_tuple
 
-
 once = _expand_tuple(1)
 twice = _expand_tuple(2)
 triple = _expand_tuple(3)

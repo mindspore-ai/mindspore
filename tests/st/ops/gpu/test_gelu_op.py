@@ -22,6 +22,7 @@ import mindspore.context as context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
+
 class GeluNet(nn.Cell):
     def __init__(self):
         super(GeluNet, self).__init__()
@@ -33,6 +34,7 @@ class GeluNet(nn.Cell):
 
 def GeluCompute(x):
     return 0.5 * x * (1.0 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x * x * x)))
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -61,6 +63,7 @@ def test_gelu_2d():
 
     assert np.allclose(y_np, y_ms.asnumpy())
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -73,6 +76,7 @@ def test_gelu_4d():
     y_ms = net(x_ms)
 
     assert np.allclose(y_np, y_ms.asnumpy())
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

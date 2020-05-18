@@ -44,14 +44,14 @@ def compile_net(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
-    _executor.compile(train_net, _x,  _b)
+    _executor.compile(train_net, _x, _b)
     context.reset_auto_parallel_context()
 
 
 def test_square_data_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((16, 1, 1), (16, 1, 1))
-    strategy2 = ((16, 1, 1), )
+    strategy2 = ((16, 1, 1),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net)
 
@@ -59,7 +59,7 @@ def test_square_data_parallel():
 def test_square_model_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((1, 1, 16), (1, 1, 16))
-    strategy2 = ((1, 1, 16), )
+    strategy2 = ((1, 1, 16),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net)
 
@@ -67,7 +67,7 @@ def test_square_model_parallel():
 def test_square_hybrid_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 4), (2, 2, 4))
-    strategy2 = ((2, 2, 4), )
+    strategy2 = ((2, 2, 4),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net)
 
@@ -81,6 +81,6 @@ def test_square_auto_parallel():
 def test_square_repeat_calc():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     strategy1 = ((2, 2, 4), (2, 2, 4))
-    strategy2 = ((1, 2, 2), )
+    strategy2 = ((1, 2, 2),)
     net = Net(_w1, strategy1, strategy2)
     compile_net(net)

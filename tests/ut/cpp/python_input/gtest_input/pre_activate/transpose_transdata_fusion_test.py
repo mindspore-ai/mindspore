@@ -22,6 +22,7 @@ make_tuple = Primitive('make_tuple')
 transdata = Primitive("TransData")
 Transpose = P.Transpose()
 
+
 class FnDict:
     def __init__(self):
         self.fnDict = {}

@@ -41,4 +41,3 @@ def test_virtual_dataset():
     z = Tensor(np.ones([64, 64], dtype=np.float32))
     network = VirtualDatasetNet()
     _executor.compile(network, x, y, z)
-

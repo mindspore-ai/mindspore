@@ -16,7 +16,6 @@ from mindspore.ops import operations as P
 from mindspore.ops import Primitive
 import mindspore as ms
 
-
 addn = P.AddN()
 add = P.TensorAdd()
 reshape = P.Reshape()
@@ -24,10 +23,12 @@ cast = P.Cast()
 tuple_getitem = Primitive('tuple_getitem')
 max_pool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
 
+
 def test_addn_cast(x, y, z):
     mysum = addn((x, y))
     res = cast(mysum, ms.float16)
     return res
+
 
 def test_addn_with_max_pool(x, y):
     mysum = addn((x, y))

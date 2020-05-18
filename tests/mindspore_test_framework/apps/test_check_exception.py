@@ -18,8 +18,10 @@
 from ..mindspore_test import mindspore_test
 from ..pipeline.forward.verify_exception import pipeline_for_verify_exception_for_case_by_case_config
 
+
 def func_raise_exception(x, y):
     raise ValueError()
+
 
 verification_set = [
     ('func_raise_exception', {
@@ -27,6 +29,7 @@ verification_set = [
         'desc_inputs': [[1, 1], [2, 2]],
     })
 ]
+
 
 @mindspore_test(pipeline_for_verify_exception_for_case_by_case_config)
 def test_check_exception():

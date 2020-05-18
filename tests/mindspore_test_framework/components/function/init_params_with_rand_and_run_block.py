@@ -18,6 +18,7 @@
 from ...components.icomponent import IBuilderComponent
 from ...utils.block_util import run_block, get_uniform_with_shape, gen_net, create_funcs
 
+
 class RunBlockWithRandParamBC(IBuilderComponent):
     """
     Build a function with uniformed params that run mindspore pipeline.
@@ -42,5 +43,6 @@ class RunBlockWithRandParamBC(IBuilderComponent):
                                dtype=mstype.float32,
                                compute_type=mstype.float32)
     """
+
     def __call__(self):
         return create_funcs(self.verification_set, gen_net, run_block, default_rand_func=get_uniform_with_shape)

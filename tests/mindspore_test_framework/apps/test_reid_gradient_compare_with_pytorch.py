@@ -53,6 +53,7 @@ verification_set = [
     })
 ]
 
+
 @mindspore_test(pipeline_for_compare_inputs_grad_with_npy_for_case_by_case_config)
 def test_reid_check_gradient():
     context.set_context(mode=context.PYNATIVE_MODE)

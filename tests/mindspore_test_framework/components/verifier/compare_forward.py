@@ -19,6 +19,7 @@ from ...components.icomponent import IVerifierComponent
 from ...utils.compare_util import compare
 from ...utils import keyword
 
+
 class CompareWithVC(IVerifierComponent):
     """
     Compare the result with baseline functions configured in 'compare' config item.
@@ -41,5 +42,6 @@ class CompareWithVC(IVerifierComponent):
         'max_error': 1e-3
     }
     """
+
     def __call__(self):
         compare(self.expect, self.func_result, baseline=keyword.compare_with)

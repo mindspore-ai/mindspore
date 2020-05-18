@@ -36,7 +36,6 @@ def test_six_matmul_save():
             predict = self.network(x1, x6)
             return self.loss(predict)
 
-
     class GradWrap(nn.Cell):
         def __init__(self, network):
             super(GradWrap, self).__init__()
@@ -86,6 +85,7 @@ def test_six_matmul_save():
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     _executor.compile(net, x1, x6)
 
+
 # remove matmul2, add matmul7
 def test_six_matmul_load():
     class NetWithLoss(nn.Cell):
@@ -97,7 +97,6 @@ def test_six_matmul_load():
         def construct(self, x1, x6, x7):
             predict = self.network(x1, x6, x7)
             return self.loss(predict)
-
 
     class GradWrap(nn.Cell):
         def __init__(self, network):
@@ -148,6 +147,7 @@ def test_six_matmul_load():
     x7 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     _executor.compile(net, x1, x6, x7)
 
+
 # model_parallel test
 def test_six_matmul_save_auto():
     class NetWithLoss(nn.Cell):
@@ -159,7 +159,6 @@ def test_six_matmul_save_auto():
         def construct(self, x1, x6):
             predict = self.network(x1, x6)
             return self.loss(predict)
-
 
     class GradWrap(nn.Cell):
         def __init__(self, network):
@@ -204,6 +203,7 @@ def test_six_matmul_save_auto():
     x6 = Tensor(np.ones([128, 32]), dtype=ms.float32)
     _executor.compile(net, x1, x6)
 
+
 # remove matmul2, add matmul7
 def test_six_matmul_load_auto():
     class NetWithLoss(nn.Cell):
@@ -215,7 +215,6 @@ def test_six_matmul_load_auto():
         def construct(self, x1, x6, x7):
             predict = self.network(x1, x6, x7)
             return self.loss(predict)
-
 
     class GradWrap(nn.Cell):
         def __init__(self, network):

@@ -24,6 +24,7 @@ from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
+
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 
 
@@ -63,6 +64,8 @@ test_case_ops = [
 
 test_case_lists = [test_case_ops]
 test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
+
+
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
 

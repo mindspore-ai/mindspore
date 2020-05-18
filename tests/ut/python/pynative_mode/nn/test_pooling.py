@@ -21,6 +21,7 @@ import pytest
 import mindspore.nn as nn
 from mindspore import Tensor
 
+
 def test_avgpool2d():
     """ test_avgpool2d """
     kernel_size = 3
@@ -28,7 +29,7 @@ def test_avgpool2d():
     avg_pool = nn.AvgPool2d(kernel_size, stride)
     assert avg_pool.kernel_size == 3
     assert avg_pool.stride == 2
-    input_data = Tensor(np.random.randint(0, 255, [1, 3, 6, 6])*0.1)
+    input_data = Tensor(np.random.randint(0, 255, [1, 3, 6, 6]) * 0.1)
     output = avg_pool(input_data)
     output_np = output.asnumpy()
     assert isinstance(output_np[0][0][0][0], (np.float32, np.float64))
@@ -42,9 +43,6 @@ def test_avgpool2d_error_input():
         nn.AvgPool2d(kernel_size, stride)
 
 
-
-
-
 def test_maxpool2d():
     """ test_maxpool2d """
     kernel_size = 3
@@ -53,7 +51,7 @@ def test_maxpool2d():
     max_pool = nn.MaxPool2d(kernel_size, stride, pad_mode='SAME')
     assert max_pool.kernel_size == 3
     assert max_pool.stride == 3
-    input_data = Tensor(np.random.randint(0, 255, [1, 3, 6, 6])*0.1)
+    input_data = Tensor(np.random.randint(0, 255, [1, 3, 6, 6]) * 0.1)
     output = max_pool(input_data)
     output_np = output.asnumpy()
     assert isinstance(output_np[0][0][0][0], (np.float32, np.float64))

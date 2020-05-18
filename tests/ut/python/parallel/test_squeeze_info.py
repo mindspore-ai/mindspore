@@ -38,13 +38,13 @@ _b = Tensor(np.ones([64, 32]), dtype=ms.float32)
 
 def compile(net):
     net.set_auto_parallel()
-    _executor.compile(net, _x,  _b)
+    _executor.compile(net, _x, _b)
     context.reset_auto_parallel_context()
 
 
 def test_squeeze_data_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((16, 1, 1, 1), )
+    strategy1 = ((16, 1, 1, 1),)
     strategy2 = ((16, 1), (16, 1))
     net = Net(strategy1, strategy2)
     compile(net)
@@ -52,7 +52,7 @@ def test_squeeze_data_parallel():
 
 def test_squeeze_model_parallel():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((1, 1, 16, 1), )
+    strategy1 = ((1, 1, 16, 1),)
     strategy2 = ((1, 16), (1, 16))
     net = Net(strategy1, strategy2)
     compile(net)
@@ -60,7 +60,7 @@ def test_squeeze_model_parallel():
 
 def test_squeeze_specified_axis():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((4, 1, 4, 1), )
+    strategy1 = ((4, 1, 4, 1),)
     strategy2 = ((8, 2), (8, 2))
     net = Net(strategy1, strategy2, (1, 3))
     compile(net)
@@ -74,7 +74,7 @@ def test_squeeze_auto_parallel():
 
 def test_squeeze_repeat_calc():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
-    strategy1 = ((1, 1, 8, 1), )
+    strategy1 = ((1, 1, 8, 1),)
     strategy2 = ((2, 8), (2, 8))
     net = Net(strategy1, strategy2)
     compile(net)

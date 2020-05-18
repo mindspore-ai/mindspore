@@ -22,6 +22,7 @@ from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3):
         super(NetWithLoss, self).__init__()
@@ -32,16 +33,18 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x)
         return self.loss(predict, b)[0]
 
+
 class OneStepCell(nn.Cell):
     def __init__(self, network):
         super(OneStepCell, self).__init__(auto_prefix=False)
         self.network = network
         self.weights = ParameterTuple(network.network.trainable_params())
 
-    def construct(self, data,  label):
+    def construct(self, data, label):
         weights = self.weights
         grads = C.grad_by_list(self.network, weights)(data, label)
         return grads
+
 
 def test_one_weight_parameter():
     class Net(nn.Cell):

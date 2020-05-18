@@ -25,32 +25,35 @@ from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
+
 class Net4(nn.Cell):
     def __init__(self):
         super(Net4, self).__init__()
         out_channel = 4
         kernel_size = 1
         self.conv_filter = G.Conv2DBackpropFilter(out_channel,
-                                           kernel_size,
-                                           pad_mode="valid",
-                                           pad=0,
-                                           mode=1,
-                                           stride=(1, 1),
-                                           dilation=(1, 1, 1, 1),
-                                           group=1)
-        self.w = Parameter(initializer(Tensor(np.array([[[[1, 0, -1], [1, 0, -1], [1, 0, -1]]]]).astype(np.float32)), [1, 1, 3, 3]), name='w')
+                                                  kernel_size,
+                                                  pad_mode="valid",
+                                                  pad=0,
+                                                  mode=1,
+                                                  stride=(1, 1),
+                                                  dilation=(1, 1, 1, 1),
+                                                  group=1)
+        self.w = Parameter(
+            initializer(Tensor(np.array([[[[1, 0, -1], [1, 0, -1], [1, 0, -1]]]]).astype(np.float32)), [1, 1, 3, 3]),
+            name='w')
         self.x = Parameter(initializer(Tensor(np.array([[[
-                [3, 0, 1, 2, 7, 4],
-                [1, 5, 8, 9, 3, 1],
-                [2, 7, 2, 5, 1, 3],
-                [0, 1, 3, 1, 7, 8],
-                [4, 2, 1, 6, 2, 8],
-                [2, 4, 5, 2, 3, 9]]]]).astype(np.float32)), [1,1,6,6]), name='x')
+            [3, 0, 1, 2, 7, 4],
+            [1, 5, 8, 9, 3, 1],
+            [2, 7, 2, 5, 1, 3],
+            [0, 1, 3, 1, 7, 8],
+            [4, 2, 1, 6, 2, 8],
+            [2, 4, 5, 2, 3, 9]]]]).astype(np.float32)), [1, 1, 6, 6]), name='x')
         self.out = Parameter(initializer(Tensor(np.array([[[
-                [ -5, -4,  0,  8],
-                [-10, -2,  2,  3],
-                [  0, -2, -4, -7],
-                [ -3, -2, -3, -16]]]]).astype(np.float32)),[1,1,4,4]), name='y')
+            [-5, -4, 0, 8],
+            [-10, -2, 2, 3],
+            [0, -2, -4, -7],
+            [-3, -2, -3, -16]]]]).astype(np.float32)), [1, 1, 4, 4]), name='y')
         self.get_shape = P.Shape()
 
     def construct(self):
@@ -70,8 +73,8 @@ def test_conv2d_backprop_filter():
        [-104, -211, -322]
        [-102, -144, -248]]]]
     """
-    expect = np.array([[[[ -60, -142, -265],
-       [-104, -211, -322],
-       [-102, -144, -248]]]]).astype(np.float32)
+    expect = np.array([[[[-60, -142, -265],
+                         [-104, -211, -322],
+                         [-102, -144, -248]]]]).astype(np.float32)
     print(output)
     assert (output.asnumpy() == expect).all()

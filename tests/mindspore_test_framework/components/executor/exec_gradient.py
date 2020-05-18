@@ -18,10 +18,12 @@
 from ...components.icomponent import IExectorComponent
 from ...utils import keyword
 
+
 class IdentityBackwardEC(IExectorComponent):
     """
     Execute function/inputs, with all bprops attached, the bprop function created by BC should handle these bprops.
     """
+
     def __call__(self):
         result_id = self.function[keyword.id] + '-' + self.inputs[keyword.id]
         group = self.function[keyword.group] + '-' + self.inputs[keyword.group]

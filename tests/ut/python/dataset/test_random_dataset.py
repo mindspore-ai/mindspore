@@ -17,6 +17,7 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 from pathlib import Path
 
+
 # just a basic test with parallel random data op
 def test_randomdataset_basic1():
     logger.info("Test randomdataset basic")
@@ -37,14 +38,16 @@ def test_randomdataset_basic1():
         num_iter += 1
 
     logger.info("Number of data in ds1: ", num_iter)
-    assert(num_iter == 200)
+    assert (num_iter == 200)
+
 
 # Another simple test
 def test_randomdataset_basic2():
     logger.info("Test randomdataset basic 2")
 
     schema = ds.Schema()
-    schema.add_column('image', de_type=mstype.uint8, shape=[640,480,3]) # 921600 bytes (a bit less than 1 MB per image)
+    schema.add_column('image', de_type=mstype.uint8,
+                      shape=[640, 480, 3])  # 921600 bytes (a bit less than 1 MB per image)
     schema.add_column('label', de_type=mstype.uint8, shape=[1])
 
     # Make up about 10 samples
@@ -56,16 +59,15 @@ def test_randomdataset_basic2():
     num_iter = 0
     for data in ds1.create_dict_iterator():  # each data is a dictionary
         # in this example, each dictionary has keys "image" and "label"
-        #logger.info(data["image"])
+        # logger.info(data["image"])
         logger.info("printing the label: {}".format(data["label"]))
         num_iter += 1
 
     logger.info("Number of data in ds1: ", num_iter)
-    assert(num_iter == 40)
+    assert (num_iter == 40)
 
 
 if __name__ == '__main__':
     test_randomdataset_basic1()
     test_randomdataset_basic2()
     logger.info('test_randomdataset_basic Ended.\n')
-

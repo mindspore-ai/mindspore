@@ -24,9 +24,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.train.summary.summary_record import SummaryRecord
 
-
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-
 
 CUR_DIR = os.getcwd()
 SUMMARY_DIR_ME = CUR_DIR + "/test_me_summary_event_file/"
@@ -92,7 +90,6 @@ def train_summary_record_scalar_for_1(test_writer, steps, fwd_x, fwd_y):
 
 def me_scalar_summary(steps, tag=None, value=None):
     with SummaryRecord(SUMMARY_DIR_ME_TEMP) as test_writer:
-
         x = Tensor(np.array([1.1]).astype(np.float32))
         y = Tensor(np.array([1.2]).astype(np.float32))
 

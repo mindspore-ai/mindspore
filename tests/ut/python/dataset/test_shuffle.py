@@ -136,7 +136,7 @@ def test_shuffle_06():
     data2 = data2.shuffle(buffer_size=buffer_size)
 
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-        np.testing.assert_equal (item1, item2)
+        np.testing.assert_equal(item1, item2)
 
 
 def test_shuffle_exception_01():

@@ -24,6 +24,7 @@ tuple_getitem = Primitive('tuple_getitem')
 make_tuple = Primitive('make_tuple')
 constant = Tensor(1.0, mstype.float32)
 
+
 class FnDict:
     def __init__(self):
         self.fnDict = {}

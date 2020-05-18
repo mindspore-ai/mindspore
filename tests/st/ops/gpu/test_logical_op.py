@@ -29,6 +29,7 @@ class NetAnd(Cell):
     def construct(self, x, y):
         return self.logicaland(x, y)
 
+
 class NetOr(Cell):
     def __init__(self):
         super(NetOr, self).__init__()
@@ -36,6 +37,7 @@ class NetOr(Cell):
 
     def construct(self, x, y):
         return self.logicalor(x, y)
+
 
 class NetNot(Cell):
     def __init__(self):
@@ -45,8 +47,10 @@ class NetNot(Cell):
     def construct(self, x):
         return self.logicalnot(x)
 
+
 x = np.array([True, False, False]).astype(np.bool)
 y = np.array([False]).astype(np.bool)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -62,6 +66,7 @@ def test_logicaland():
     output = logicaland(Tensor(x), Tensor(y))
     assert np.all(output.asnumpy() == np.logical_and(x, y))
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -76,6 +81,7 @@ def test_logicalor():
     output = logicalor(Tensor(x), Tensor(y))
     assert np.all(output.asnumpy() == np.logical_or(x, y))
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -89,4 +95,3 @@ def test_logicalnot():
     logicalnot = NetNot()
     output = logicalnot(Tensor(x))
     assert np.all(output.asnumpy() == np.logical_not(x))
-

@@ -49,10 +49,9 @@ def test_sum_as_loss():
             out = self.reduce_sum(out, (0, 1))
             return out
 
-    
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy0 = ((4, 1), (4, 1))
-    strategy1 = ((4, 1), )
+    strategy1 = ((4, 1),)
     net = GradWrap(Net(strategy0, strategy1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
@@ -74,10 +73,9 @@ def test_sum_as_loss2():
             out = self.reduce_sum(out, (0, 1))
             return out
 
-    
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy0 = ((4, 1), (4, 1))
-    strategy1 = ((1, 1), )
+    strategy1 = ((1, 1),)
     net = GradWrap(Net(strategy0, strategy1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 

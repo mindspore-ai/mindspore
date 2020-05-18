@@ -30,8 +30,10 @@ class Net(nn.Cell):
     def construct(self, value):
         return self.assign(self.var, value)
 
+
 x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
 value = np.array([[1, 2], [3, 4.0]]).astype(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

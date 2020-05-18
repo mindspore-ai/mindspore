@@ -22,6 +22,7 @@ import mindspore as ms
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()

@@ -37,65 +37,64 @@ def visualize(image_original, image_auto_contrast):
         plt.title("DE AutoContrast image")
 
     plt.show()
-    
+
 
 def test_auto_contrast(plot=False):
     """
     Test AutoContrast
     """
     logger.info("Test AutoContrast")
-    
+
     # Original Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)    
-    
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+
     transforms_original = F.ComposeOp([F.Decode(),
-                                       F.Resize((224,224)),
-                                       F.ToTensor()])    
-    
+                                       F.Resize((224, 224)),
+                                       F.ToTensor()])
+
     ds_original = ds.map(input_columns="image",
                          operations=transforms_original())
-    
+
     ds_original = ds_original.batch(512)
-            
-    for idx, (image,label) in enumerate(ds_original):
+
+    for idx, (image, label) in enumerate(ds_original):
         if idx == 0:
-            images_original = np.transpose(image, (0, 2,3,1))
+            images_original = np.transpose(image, (0, 2, 3, 1))
         else:
             images_original = np.append(images_original,
-                                        np.transpose(image, (0, 2,3,1)),
-                                        axis=0)    
+                                        np.transpose(image, (0, 2, 3, 1)),
+                                        axis=0)
 
-    # AutoContrast Images
-    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)    
-    
+            # AutoContrast Images
+    ds = de.ImageFolderDatasetV2(dataset_dir=DATA_DIR, shuffle=False)
+
     transforms_auto_contrast = F.ComposeOp([F.Decode(),
-                                            F.Resize((224,224)),
+                                            F.Resize((224, 224)),
                                             F.AutoContrast(),
-                                            F.ToTensor()])    
-    
+                                            F.ToTensor()])
+
     ds_auto_contrast = ds.map(input_columns="image",
-                                 operations=transforms_auto_contrast())
-    
-    ds_auto_contrast = ds_auto_contrast.batch(512)    
-      
-    for idx, (image,label) in enumerate(ds_auto_contrast):
+                              operations=transforms_auto_contrast())
+
+    ds_auto_contrast = ds_auto_contrast.batch(512)
+
+    for idx, (image, label) in enumerate(ds_auto_contrast):
         if idx == 0:
-            images_auto_contrast = np.transpose(image, (0, 2,3,1))
+            images_auto_contrast = np.transpose(image, (0, 2, 3, 1))
         else:
             images_auto_contrast = np.append(images_auto_contrast,
-                                      np.transpose(image, (0, 2,3,1)),
-                                      axis=0)
-    
+                                             np.transpose(image, (0, 2, 3, 1)),
+                                             axis=0)
+
     num_samples = images_original.shape[0]
     mse = np.zeros(num_samples)
     for i in range(num_samples):
-        mse[i] = np.mean((images_auto_contrast[i]-images_original[i])**2)
+        mse[i] = np.mean((images_auto_contrast[i] - images_original[i]) ** 2)
     logger.info("MSE= {}".format(str(np.mean(mse))))
-    
+
     if plot:
         visualize(images_original, images_auto_contrast)
-        
+
 
 if __name__ == "__main__":
     test_auto_contrast(plot=True)
-    

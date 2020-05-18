@@ -26,6 +26,7 @@ from mindspore import Tensor, Parameter
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 from mindspore.parallel import set_algo_parameters
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -36,6 +37,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, y, z, w)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -45,6 +47,8 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, z, w)
 
     # model_parallel test
+
+
 def test_common_parameter():
     class Net(nn.Cell):
         def __init__(self):
@@ -56,7 +60,6 @@ def test_common_parameter():
             self.cast1 = P.Cast()
             self.cast2 = P.Cast()
 
-
         def construct(self, x, y, z, w):
             m1_result = self.matmul1(x, self.cast1(self.weight1, mstype.float32))
             m2_result = self.matmul2(z, self.cast2(self.weight1, mstype.float32))
@@ -66,13 +69,12 @@ def test_common_parameter():
 
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    
+
     set_algo_parameters(elementwise_op_strategy_follow=True)
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64]), dtype=ms.float32)
     z = Tensor(np.ones([64, 64]), dtype=ms.float32)
     w = Tensor(np.ones([64, 64]), dtype=ms.float32)
-
 
     net = NetWithLoss(Net())
     context.set_auto_parallel_context(parallel_mode="auto_parallel")

@@ -22,6 +22,7 @@ import mindspore as ms
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -31,6 +32,7 @@ class NetWithLoss(nn.Cell):
     def construct(self, x, y, z, w, b):
         predict = self.network(x, y, z, w, b)
         return self.loss(predict)
+
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
@@ -45,8 +47,9 @@ def compile(net, x, y, z, w, b):
     net.set_auto_parallel()
     _executor.compile(net, x, y, z, w, b)
 
-
     # model_parallel test
+
+
 def test_four_matmul_linear():
     class Net(nn.Cell):
         def __init__(self):
@@ -117,7 +120,7 @@ def test_four_matmul2():
 
     size = 16
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    
+
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     z = Tensor(np.ones([128, 64]), dtype=ms.float32)

@@ -27,6 +27,7 @@ CV_FILE_NAME = "./imagenet.mindrecord"
 NLP_FILE_NAME = "./aclImdb.mindrecord"
 MKV_FILE_NAME = "./vehPer.mindrecord"
 
+
 def test_cv_file_writer_default_shard_num():
     """test cv dataset writer when shard_num is default value."""
     writer = FileWriter(CV_FILE_NAME)
@@ -44,6 +45,7 @@ def test_cv_file_writer_default_shard_num():
 
     os.remove("{}".format(CV_FILE_NAME))
     os.remove("{}.db".format(CV_FILE_NAME))
+
 
 def test_cv_file_writer_shard_num_10():
     """test cv dataset writer when shard_num equals 10."""
@@ -67,6 +69,7 @@ def test_cv_file_writer_shard_num_10():
         os.remove("{}".format(item))
         os.remove("{}.db".format(item))
 
+
 def test_cv_file_writer_file_name_none():
     """test cv dataset writer when file_name is none."""
     with pytest.raises(Exception) as e:
@@ -74,6 +77,7 @@ def test_cv_file_writer_file_name_none():
     assert str(e.value) == "[ParamValueError]: error_code: 1347686402, " \
                            "error_msg: Invalid parameter value." \
                            " File path is not allowed None or empty!"
+
 
 def test_cv_file_writer_file_name_null():
     """test cv dataset writer when file_name is empty string."""
@@ -83,6 +87,7 @@ def test_cv_file_writer_file_name_null():
                            "error_msg: Invalid parameter value." \
                            " File path is not allowed None or empty!"
 
+
 def test_cv_file_writer_shard_number_less_1():
     """test cv dataset writer when shard_num is less than 1."""
     with pytest.raises(Exception) as e:
@@ -91,6 +96,7 @@ def test_cv_file_writer_shard_number_less_1():
            "error_msg: Invalid parameter value. " \
            "Shard number should " in str(e.value)
 
+
 def test_cv_file_writer_shard_number_more_1000():
     """test cv dataset writer when shard_num is greater than 1000."""
     with pytest.raises(Exception) as e:
@@ -98,6 +104,7 @@ def test_cv_file_writer_shard_number_more_1000():
     assert "[ParamValueError]: error_code: 1347686402, " \
            "error_msg: Invalid parameter value. " \
            "Shard number should " in str(e.value)
+
 
 def test_add_empty_schema():
     """test schema add when schema is empty."""
@@ -111,6 +118,7 @@ def test_add_empty_schema():
     assert str(e.value) == "[MRMBuildSchemaError]: error_code: 1347690609, " \
                            "error_msg: Failed to build schema."
 
+
 def test_add_schema_without_desc():
     """test schema add without desc."""
     header = ShardHeader()
@@ -121,22 +129,24 @@ def test_add_schema_without_desc():
     schema_id = header.add_schema(schema)  # add schema
     assert schema_id == 0
 
+
 def test_add_empty_index():
     """test index add when index fields is empty string."""
     schema_json = {"file_name": {"type": "string"}, "label": {"type": "number"}}
     header = ShardHeader()
-    schema = header.build_schema(schema_json, ["data"], "img")    # create schema
-    header.add_schema(schema)    # add schema
+    schema = header.build_schema(schema_json, ["data"], "img")  # create schema
+    header.add_schema(schema)  # add schema
     with pytest.raises(Exception, match="incompatible"):
         header.add_index_fields("")
+
 
 def test_file_writer_fail_add_index():
     """test file writer, read when failed on adding index."""
     data_raw = get_data("../data/mindrecord/testImageNetData/")
     schema_json = {"file_name": {"type": "string"}, "label": {"type": "number"}}
     header = ShardHeader()
-    schema = header.build_schema(schema_json, ["data"], "img")    # create schema
-    schema_id = header.add_schema(schema)    # add schema
+    schema = header.build_schema(schema_json, ["data"], "img")  # create schema
+    schema_id = header.add_schema(schema)  # add schema
     with pytest.raises(TypeError, match="missing 1 "):
         ret = header.add_index_fields()
         assert ret == FAILED
@@ -146,15 +156,15 @@ def test_file_writer_fail_add_index():
         ret = header.add_index_fields(index_fields)
         assert ret == FAILED
 
-    file_name = os.path.join(os.getcwd(), "test_001.mindrecord")   # set output filename
-    writer = ShardWriter()   # test_file_writer
+    file_name = os.path.join(os.getcwd(), "test_001.mindrecord")  # set output filename
+    writer = ShardWriter()  # test_file_writer
     ret = writer.open([file_name])
     assert ret == SUCCESS, 'failed on opening files.'
-    ret = writer.set_shard_header(header)   # write header
+    ret = writer.set_shard_header(header)  # write header
     assert ret == SUCCESS, 'failed on setting header.'
     ret = writer.write_raw_cv_data({schema_id: data_raw})
     assert ret == SUCCESS, 'failed on writing raw data.'
-    ret = writer.commit()    # commit data
+    ret = writer.commit()  # commit data
     assert ret == SUCCESS, "commit failed"
     # ShardIndexGenerator
     generator = ShardIndexGenerator(os.path.realpath(file_name))
@@ -179,6 +189,7 @@ def test_file_writer_fail_add_index():
     os.remove("{}".format(file_name))
     os.remove("{}.db".format(file_name))
 
+
 def test_add_index_with_incorrect_field():
     """test index add with incorrect field(64)."""
     header = ShardHeader()
@@ -189,6 +200,7 @@ def test_add_index_with_incorrect_field():
     with pytest.raises(Exception, match="incompatible function arguments"):
         header.add_index_fields([(-1, "id")])
 
+
 def test_add_index_with_string_list():
     """test index add with list of string(64)."""
     header = ShardHeader()
@@ -198,6 +210,7 @@ def test_add_index_with_string_list():
     header.add_schema(schema)
     ret = header.add_index_fields(["id", "label"])
     assert ret == SUCCESS
+
 
 def test_add_index_with_dict():
     """test index add when index fields' datatype is dict(64)."""
@@ -212,6 +225,7 @@ def test_add_index_with_dict():
     assert str(e.value) == "[ParamTypeError]: error_code: 1347686401, " \
                            "error_msg: Invalid parameter type. " \
                            "'index_fields' expect list type."
+
 
 def test_mkv_file_reader_with_negative_num_consumer():
     """test mkv file reader when the number of consumer is negative."""
@@ -236,6 +250,7 @@ def test_mkv_file_reader_with_negative_num_consumer():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_write_raw_data_with_empty_list():
     """test write raw data with empty list."""
     writer = FileWriter(CV_FILE_NAME, FILES_NUM)
@@ -258,6 +273,7 @@ def test_write_raw_data_with_empty_list():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_issue_38():
     """test cv dataset writer when schema does not match raw data."""
     writer = FileWriter(CV_FILE_NAME, 1)
@@ -273,6 +289,7 @@ def test_issue_38():
                            "error_msg: Failed to define index field. " \
                            "Detail: Could not set blob field " \
                            "'file_name' as index field."
+
 
 def test_issue_39():
     """test cv dataset writer when schema fields' datatype does not match raw data."""
@@ -294,6 +311,7 @@ def test_issue_39():
     os.remove("{}".format(CV_FILE_NAME))
     os.remove("{}.db".format(CV_FILE_NAME))
 
+
 def test_issue_40():
     """test cv dataset when write raw data twice."""
     writer = FileWriter(CV_FILE_NAME, 1)
@@ -309,6 +327,7 @@ def test_issue_40():
 
     os.remove("{}".format(CV_FILE_NAME))
     os.remove("{}.db".format(CV_FILE_NAME))
+
 
 def test_issue_73():
     """test file reader by column name."""
@@ -334,6 +353,7 @@ def test_issue_73():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_issue_117():
     """test add schema when field type is incorrect."""
     writer = FileWriter(__file__, FILES_NUM)
@@ -348,6 +368,7 @@ def test_issue_117():
                              "'items': {'type': 'number'}}' "
                              "contains illegal attributes"):
         writer.add_schema(schema, "img_schema")
+
 
 def test_issue_95():
     """test file reader when failed on file write."""
@@ -373,6 +394,7 @@ def test_issue_95():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_mindrecord_add_index_016():
     """test index add when index fields are incorrect."""
     schema_json = {"id": {"type": "number"}, "name": {"type": "string"},
@@ -384,6 +406,7 @@ def test_mindrecord_add_index_016():
     with pytest.raises(Exception):
         header.add_index_fields(index_fields_list)
 
+
 def test_mindrecord_add_index_011():
     """test index add"""
     schema_json = {"id": {"type": "number"}, "name": {"type": "string"},
@@ -394,6 +417,7 @@ def test_mindrecord_add_index_011():
     index_fields_list = ["id", "name", "label", "key"]
     ret = header.add_index_fields(index_fields_list)
     assert ret == 0, 'failed on adding index fields.'
+
 
 def test_issue_118():
     """test file writer when raw data do not match schema."""
@@ -420,6 +444,7 @@ def test_issue_118():
         os.remove("{}".format(item))
         os.remove("{}.db".format(item))
 
+
 def test_issue_87():
     """test file writer when data(bytes) do not match field type(string)."""
     shard_num = 4
@@ -437,6 +462,7 @@ def test_issue_87():
              for x in range(shard_num)]
     for item in paths:
         os.remove("{}".format(item))
+
 
 def test_issue_84():
     """test file reader when db does not match."""
@@ -462,8 +488,8 @@ def test_issue_84():
                        "segment_ids": {"type": "array",
                                        "items": {"type": "number"}}
                        }
-    writer.set_header_size(1<<14)
-    writer.set_page_size(1<<15)
+    writer.set_header_size(1 << 14)
+    writer.set_page_size(1 << 15)
     writer.add_schema(nlp_schema_json, "nlp_schema")
     writer.add_index(["id", "rating"])
     writer.write_raw_data(data)
@@ -493,6 +519,7 @@ def test_issue_84():
         os.remove("{}".format(item))
         os.remove("{}.db".format(item))
 
+
 def test_issue_65():
     """test file reader when file name is illegal."""
     reader = ShardReader()
@@ -502,6 +529,7 @@ def test_issue_65():
     assert str(e.value) == "[MRMOpenError]: error_code: 1347690596, " \
                            "error_msg: " \
                            "MindRecord File could not open successfully."
+
 
 def skip_test_issue_155():
     """test file writer loop."""
@@ -519,6 +547,7 @@ def skip_test_issue_155():
     for _ in reader.get_next():
         count += 1
     assert count == 10000, "Failed to read mutiple writed data."
+
 
 def test_issue_124():
     """test file writer when data(string) do not match field type(bytes)."""
@@ -544,6 +573,7 @@ def test_issue_124():
         os.remove("{}".format(item))
         os.remove("{}.db".format(item))
 
+
 def test_issue_36():
     """test file writer when shard num is illegal."""
     with pytest.raises(ParamValueError, match="Shard number should between "):
@@ -558,6 +588,7 @@ def test_issue_36():
         writer.add_index(["file_name", "label"])
         writer.write_raw_data(data)
         writer.commit()
+
 
 def test_issue_34():
     """test file writer"""
@@ -574,11 +605,12 @@ def test_issue_34():
     i = 0
     for index, x in enumerate(reader.get_next()):
         logger.info("#item{}: {}".format(index, x))
-        i = i+1
+        i = i + 1
     logger.info("count: {}".format(i))
     reader.close()
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
+
 
 def test_file_writer_raw_data_038():
     """test write raw data without verify."""
@@ -615,6 +647,7 @@ def test_file_writer_raw_data_038():
         if os.path.exists("test_file_writer_raw_data_{}.db".format(n)):
             os.remove("test_file_writer_raw_data_{}.db".format(n))
 
+
 def test_more_than_1_bytes_in_schema():
     """test file writer when schema contains multiple 'bytes' fields."""
     schema_json = {"id": {"type": "string"}, "label": {"type": "number"},
@@ -626,6 +659,7 @@ def test_more_than_1_bytes_in_schema():
                    }
     writer = FileWriter(CV_FILE_NAME, FILES_NUM)
     writer.add_schema(schema_json, "img_schema")
+
 
 def test_shard_4_raw_data_1():
     """test file writer when shard_num equals 4 and number of sample equals 1."""

@@ -20,7 +20,7 @@ from mindspore.common import ms_function
 
 
 def setup_module(module):
-    context.set_context(mode = context.PYNATIVE_MODE, save_graphs = False, device_target = "Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE, save_graphs=False, device_target="Ascend")
     context.set_context(device_id=0)
 
 

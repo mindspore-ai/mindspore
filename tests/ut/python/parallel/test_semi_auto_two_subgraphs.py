@@ -74,7 +74,7 @@ class TrainStepWrap(nn.Cell):
         for params in self.trainable_params:
             weights_w.append(params)
             weights_d.append(params)
-        
+
         self.weights_w = ParameterTuple(weights_w)
         self.weights_d = ParameterTuple(weights_d)
         self.optimizer_w = FTRL(learning_rate=1e-2, params=self.weights_w,

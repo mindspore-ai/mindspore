@@ -22,6 +22,7 @@ from ...utils.npy_util import load_data_from_npy_or_shape
 from ...utils.verifier_util import tolerance_assert
 from ...utils import keyword
 
+
 class LoadFromNpyVC(IVerifierComponent):
     """
     Verify if the results are like expects from npy data, expects could be shape/tensor/np.ndarray/file path.
@@ -37,6 +38,7 @@ class LoadFromNpyVC(IVerifierComponent):
             ([2, 2], np.float32, 6, 1e-3) # (shape, dtype, scale, max_error)
         ]
     """
+
     def __call__(self):
         dpaths = self.expect.get(keyword.desc_expect)
         expects = load_data_from_npy_or_shape(dpaths, False)

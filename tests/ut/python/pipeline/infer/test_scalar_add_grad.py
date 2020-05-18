@@ -23,26 +23,35 @@ from mindspore.ops.operations import TensorAdd
 
 context.set_context(mode=context.GRAPH_MODE)
 grad = C.GradOperation('get_all', get_all=True, sens_param=True)
+
+
 class TensorAddNetMe(Cell):
     """ TensorAddNetMe definition """
+
     def __init__(self):
         super(TensorAddNetMe, self).__init__()
         self.relu = ReLU()
         self.add = TensorAdd()
+
     def construct(self, inputA, inputB):
         inputA = self.relu(inputA)
         inputB = self.relu(inputB)
         x = self.add(inputA, inputB)
         x = self.relu(x)
         return x
+
+
 class GradWrap2(Cell):
     """ GradWrap2 definition """
+
     def __init__(self, network):
         super(GradWrap2, self).__init__()
         self.network = network
+
     def construct(self, inputA, inputB, sens):
         gout = grad(self.network)(inputA, inputB, sens)
         return gout
+
 
 def gen_forwarddata(inputA, inputB):
     """ gen_forwarddata """
@@ -51,6 +60,7 @@ def gen_forwarddata(inputA, inputB):
     output = net_me(Tensor(inputA), Tensor(inputB))
     print(output)
 
+
 def gen_backwarddata(inputA, inputB, inputGrad):
     """ gen_backwarddata """
     net_me = GradWrap2(TensorAddNetMe())
@@ -58,11 +68,13 @@ def gen_backwarddata(inputA, inputB, inputGrad):
     output = net_me(Tensor(inputA), Tensor(inputB), Tensor(inputGrad))
     print(output)
 
+
 def test_scalar_tennsor_add():
     """ test_scalar_tennsor_add """
     inputa = np.array(32).astype(np.float32)
     inputb = np.random.randn(1280, 768).astype(np.float32)
     gen_forwarddata(inputa, inputb)
+
 
 def test_scalar_tennsor_gradadd():
     """ test_scalar_tennsor_gradadd """

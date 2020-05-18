@@ -60,6 +60,7 @@ def add_and_remove_cv_file():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     num_readers = 4
@@ -75,6 +76,8 @@ def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
                 {}------------------------".format("".join([chr(x) for x in item["file_name"]])))
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
+
+
 def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
@@ -92,7 +95,7 @@ def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
 
-    
+
 def test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
@@ -159,7 +162,7 @@ def test_cv_minddataset_subset_random_sample_replica(add_and_remove_cv_file):
     sampler = ds.SubsetRandomSampler(indices)
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
                               sampler=sampler)
-    assert data_set.get_dataset_size() == 6 
+    assert data_set.get_dataset_size() == 6
     num_iter = 0
     for item in data_set.create_dict_iterator():
         logger.info(
@@ -205,7 +208,7 @@ def test_cv_minddataset_subset_random_sample_out_of_range(add_and_remove_cv_file
     sampler = ds.SubsetRandomSampler(indices)
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
                               sampler=sampler)
-    assert data_set.get_dataset_size() == 5 
+    assert data_set.get_dataset_size() == 5
     num_iter = 0
     for item in data_set.create_dict_iterator():
         logger.info(

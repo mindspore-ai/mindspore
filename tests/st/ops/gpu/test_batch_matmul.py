@@ -24,6 +24,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.common import dtype as mstype
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -34,6 +35,7 @@ class BatchMatMulNet(nn.Cell):
 
     def construct(self, x, y):
         return self.batch_matmul(x, y)
+
 
 def test_4D():
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float32)
@@ -42,15 +44,15 @@ def test_4D():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = BatchMatMulNet()
     output = net(input_x, input_y)
-    expect = [[[[  20,   23,   26,   29]],
-              [[ 200,  212,  224,  236]],
-              [[ 596,  617,  638,  659]],
-              [[1208, 1238, 1268, 1298]]],
+    expect = [[[[20, 23, 26, 29]],
+               [[200, 212, 224, 236]],
+               [[596, 617, 638, 659]],
+               [[1208, 1238, 1268, 1298]]],
 
               [[[2036, 2075, 2114, 2153]],
-              [[3080, 3128, 3176, 3224]],
-              [[4340, 4397, 4454, 4511]],
-              [[5816, 5882, 5948, 6014]]]]
+               [[3080, 3128, 3176, 3224]],
+               [[4340, 4397, 4454, 4511]],
+               [[5816, 5882, 5948, 6014]]]]
     assert (output.asnumpy() == expect).all()
 
 
@@ -58,21 +60,21 @@ def test_4D():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_4D_transpose_a():
-    input_x = Tensor(np.arange(2*4*3*1).reshape(2,4,3,1), mstype.float32)
-    input_y = Tensor(np.arange(2*4*3*4).reshape(2,4,3,4), mstype.float32)
+    input_x = Tensor(np.arange(2 * 4 * 3 * 1).reshape(2, 4, 3, 1), mstype.float32)
+    input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float32)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = BatchMatMulNet(transpose_a=True)
     output = net(input_x, input_y)
-    expect = [[[[  20,   23,   26,   29]],
-              [[ 200,  212,  224,  236]],
-              [[ 596,  617,  638,  659]],
-              [[1208, 1238, 1268, 1298]]],
+    expect = [[[[20, 23, 26, 29]],
+               [[200, 212, 224, 236]],
+               [[596, 617, 638, 659]],
+               [[1208, 1238, 1268, 1298]]],
 
               [[[2036, 2075, 2114, 2153]],
-              [[3080, 3128, 3176, 3224]],
-              [[4340, 4397, 4454, 4511]],
-              [[5816, 5882, 5948, 6014]]]]
+               [[3080, 3128, 3176, 3224]],
+               [[4340, 4397, 4454, 4511]],
+               [[5816, 5882, 5948, 6014]]]]
     assert (output.asnumpy() == expect).all()
 
 
@@ -80,21 +82,21 @@ def test_4D_transpose_a():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_4D_transpose_b():
-    input_x = Tensor(np.arange(2*4*1*3).reshape(2,4,1,3), mstype.float32)
-    input_y = Tensor(np.arange(2*4*4*3).reshape(2,4,4,3), mstype.float32)
+    input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float32)
+    input_y = Tensor(np.arange(2 * 4 * 4 * 3).reshape(2, 4, 4, 3), mstype.float32)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = BatchMatMulNet(transpose_b=True)
     output = net(input_x, input_y)
-    expect = [[[[   5,   14,   23,   32]],
-              [[ 158,  194,  230,  266]],
-              [[ 527,  590,  653,  716]],
-              [[1112, 1202, 1292, 1382]]],
+    expect = [[[[5, 14, 23, 32]],
+               [[158, 194, 230, 266]],
+               [[527, 590, 653, 716]],
+               [[1112, 1202, 1292, 1382]]],
 
               [[[1913, 2030, 2147, 2264]],
-              [[2930, 3074, 3218, 3362]],
-              [[4163, 4334, 4505, 4676]],
-              [[5612, 5810, 6008, 6206]]]]
+               [[2930, 3074, 3218, 3362]],
+               [[4163, 4334, 4505, 4676]],
+               [[5612, 5810, 6008, 6206]]]]
     assert (output.asnumpy() == expect).all()
 
 
@@ -102,22 +104,23 @@ def test_4D_transpose_b():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_4D_transpose_ab():
-    input_x = Tensor(np.arange(2*4*3*1).reshape(2,4,3,1), mstype.float32)
-    input_y = Tensor(np.arange(2*4*4*3).reshape(2,4,4,3), mstype.float32)
+    input_x = Tensor(np.arange(2 * 4 * 3 * 1).reshape(2, 4, 3, 1), mstype.float32)
+    input_y = Tensor(np.arange(2 * 4 * 4 * 3).reshape(2, 4, 4, 3), mstype.float32)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = BatchMatMulNet(transpose_a=True, transpose_b=True)
     output = net(input_x, input_y)
-    expect = [[[[   5,   14,   23,  32]],
-              [[ 158,  194,  230,  266]],
-              [[ 527,  590,  653,  716]],
-              [[1112, 1202, 1292, 1382]]],
+    expect = [[[[5, 14, 23, 32]],
+               [[158, 194, 230, 266]],
+               [[527, 590, 653, 716]],
+               [[1112, 1202, 1292, 1382]]],
 
               [[[1913, 2030, 2147, 2264]],
-              [[2930, 3074, 3218, 3362]],
-              [[4163, 4334, 4505, 4676]],
-              [[5612, 5810, 6008, 6206]]]]
+               [[2930, 3074, 3218, 3362]],
+               [[4163, 4334, 4505, 4676]],
+               [[5612, 5810, 6008, 6206]]]]
     assert (output.asnumpy() == expect).all()
+
 
 class BatchMatMulNet(nn.Cell):
     def __init__(self, transpose_a=False, transpose_b=False):
@@ -127,6 +130,7 @@ class BatchMatMulNet(nn.Cell):
     def construct(self, x, y):
         return self.batch_matmul(x, y)
 
+
 def test_4D_fp16():
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float16)
     input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float16)
@@ -134,13 +138,13 @@ def test_4D_fp16():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = BatchMatMulNet()
     output = net(input_x, input_y)
-    expect = [[[[  20,   23,   26,   29]],
-              [[ 200,  212,  224,  236]],
-              [[ 596,  617,  638,  659]],
-              [[1208, 1238, 1268, 1298]]],
+    expect = [[[[20, 23, 26, 29]],
+               [[200, 212, 224, 236]],
+               [[596, 617, 638, 659]],
+               [[1208, 1238, 1268, 1298]]],
 
               [[[2036, 2075, 2114, 2153]],
-              [[3080, 3128, 3176, 3224]],
-              [[4340, 4397, 4454, 4511]],
-              [[5816, 5882, 5948, 6014]]]]
+               [[3080, 3128, 3176, 3224]],
+               [[4340, 4397, 4454, 4511]],
+               [[5816, 5882, 5948, 6014]]]]
     assert (output.asnumpy() == expect).all()

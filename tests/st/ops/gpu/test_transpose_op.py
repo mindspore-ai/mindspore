@@ -25,6 +25,7 @@ import mindspore.context as context
 
 context.set_context(device_target='GPU')
 
+
 class Transpose(nn.Cell):
     def __init__(self):
         super(Transpose, self).__init__()

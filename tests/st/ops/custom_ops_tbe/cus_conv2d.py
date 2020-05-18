@@ -20,6 +20,8 @@ from mindspore import Tensor
 from mindspore._checkparam import ParamValidator as validator
 from mindspore._checkparam import Rel, check_bool, check_int_positive, twice
 from mindspore.common import dtype as mstype
+
+
 class Cus_Conv2D(PrimitiveWithInfer):
     r"""
     Applies 2D convolution for the input.
@@ -92,13 +94,13 @@ class Cus_Conv2D(PrimitiveWithInfer):
         validator.check_type('kernel_size', kernel_size, [int, tuple])
         if isinstance(kernel_size, int) and kernel_size < 1:
             raise ValueError('Attr \'kernel_size\' of \'Conv2D\' Op passed '
-                             + str(self.kernel_size)+', should be a int or tuple and equal to or greater than 1.')
+                             + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
         if isinstance(kernel_size, tuple) and (len(kernel_size) != 2 or
                                                (not isinstance(kernel_size[0], int)) or
                                                (not isinstance(kernel_size[1], int)) or
                                                kernel_size[0] < 1 or kernel_size[1] < 1):
             raise ValueError('Attr \'kernel_size\' of \'Conv2D\' Op passed '
-                             + str(self.kernel_size)+', should be a int or tuple and equal to or greater than 1.')
+                             + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
         self.stride = validator.check_integer('stride', stride, 1, Rel.GE)
         from .cus_conv2d_impl import Cus_Conv2D
 

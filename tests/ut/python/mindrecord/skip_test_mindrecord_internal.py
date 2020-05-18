@@ -19,8 +19,10 @@ from multiprocessing import cpu_count
 
 from mindspore.mindrecord import MAX_CONSUMER_COUNT
 
+
 def test_c_layer_thread_num_with_python_layer():
     assert cpu_count() == MAX_CONSUMER_COUNT()
+
 
 if __name__ == "__main__":
     test_c_layer_thread_num_with_python_layer()

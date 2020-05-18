@@ -114,6 +114,7 @@ def test_axis21():
     assert (output.asnumpy() == expect).all()
     print(output)
 
+
 class Concat3INet(nn.Cell):
     def __init__(self):
         super(Concat3INet, self).__init__()
@@ -121,6 +122,7 @@ class Concat3INet(nn.Cell):
 
     def construct(self, x1, x2, x3):
         return self.cat((x1, x2, x3))
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -137,7 +139,7 @@ def test_concat_3i():
     x2_ms = Tensor(x2_np)
     x3_ms = Tensor(x3_np)
     output_ms = cat(x1_ms, x2_ms, x3_ms)
-    
+
     error = np.ones(shape=output_np.shape) * 10e-6
     diff = output_ms.asnumpy() - output_np
     assert np.all(diff < error)
@@ -150,6 +152,7 @@ class Concat4INet(nn.Cell):
 
     def construct(self, x1, x2, x3, x4):
         return self.cat((x1, x2, x3, x4))
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -168,7 +171,7 @@ def test_concat_4i():
     x3_ms = Tensor(x3_np)
     x4_ms = Tensor(x4_np)
     output_ms = cat(x1_ms, x2_ms, x3_ms, x4_ms)
-    
+
     error = np.ones(shape=output_np.shape) * 10e-6
     diff = output_ms.asnumpy() - output_np
     assert np.all(diff < error)

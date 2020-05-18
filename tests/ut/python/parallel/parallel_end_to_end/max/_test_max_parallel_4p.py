@@ -22,9 +22,10 @@ from mindspore.common.tensor import Tensor
 import mindspore.communication.management as distributedTool
 from mindspore.ops.composite import grad_all_with_sens
 
-device_num=4
+device_num = 4
 device_id = int(os.environ["RANK_ID"])
 path = "./output/"
+
 
 def setup_module():
     print("~~~~~~~~~~~set up~~~~~~~~~~~~~")
@@ -34,8 +35,10 @@ def setup_module():
     distributedTool.create_group("0-3", [0, 1, 2, 3])
     print("~~~~~~~~~~~set up finished~~~~~~~~~~~~~")
 
+
 def teardown_module():
     print("~~~~~~~~~~~~tear down~~~~~~~~~~")
+
 
 class Grad(Cell):
     def __init__(self, network):
@@ -68,48 +71,50 @@ class MaxFactory:
         prefix = ""
         for s in input_shape:
             prefix = prefix + str(s) + "_"
-            input_size = input_size*s
+            input_size = input_size * s
         number_range = min(1000, input_size)
-        self.input_np1 = np.reshape(np.arange(0, input_size)%number_range - number_range/2, input_shape).astype(np.float32)
+        self.input_np1 = np.reshape(np.arange(0, input_size) % number_range - number_range / 2, input_shape).astype(
+            np.float32)
         self.input_np2 = self.input_np1.copy()
         self.out_grad_np = None
         out_shape = list(input_shape)
         out_shape.pop(axis)
-        out_size = input_size/input_shape[axis]
+        out_size = input_size / input_shape[axis]
         number_range_ = min(1000, out_size)
-        self.out_grad_np = np.reshape(np.arange(0, out_size)%number_range_ - number_range_/2, out_shape).astype(np.float32)
+        self.out_grad_np = np.reshape(np.arange(0, out_size) % number_range_ - number_range_ / 2, out_shape).astype(
+            np.float32)
         out_strategy = list(strategy1[1])
         out_strategy.pop(axis)
         self.out_strategy = out_strategy
         need_dev_num = 1
         need_dev_num_ = 1
         for s in strategy0[1]:
-            need_dev_num = need_dev_num*s
+            need_dev_num = need_dev_num * s
         for s in out_strategy:
-            need_dev_num_ = need_dev_num_*s
-        self.x_id = device_id%need_dev_num
-        self.y_id = device_id%need_dev_num
-        self.out_id = device_id%need_dev_num_
-        
+            need_dev_num_ = need_dev_num_ * s
+        self.x_id = device_id % need_dev_num
+        self.y_id = device_id % need_dev_num
+        self.out_id = device_id % need_dev_num_
+
     def get_parallel_blocks(self, input_, strategy):
         blocks = [input_]
         i = 0
         for stra in strategy:
             temp = []
-            while len(blocks)>0:
+            while len(blocks) > 0:
                 block = blocks.pop(0)
                 temp.extend(np.split(block, stra, axis=i))
             blocks.extend(temp)
-            i+=1
+            i += 1
         return blocks
-    
+
     def forward_mindspore_impl(self):
         input1 = Tensor(self.input_np1)
         input2 = Tensor(self.input_np2)
         net = Max(axis=self.axis, keep_dims=self.keep_dims)
         out = net(input1, input2)
         return out.asnumpy()
-    
+
     def forward_mindspore_parallel_impl(self):
         x = Tensor(self.input_np1)
         y = Tensor(self.input_np2)
@@ -122,7 +127,7 @@ class MaxFactory:
         net.set_auto_parallel()
         out = net(x, y, parallel_inputs_compile=[x, y], parallel_inputs_run=[x1, y1])
         return out.asnumpy()
-    
+
     def grad_mindspore_impl(self):
         input1 = Tensor(self.input_np1)
         input2 = Tensor(self.input_np2)
@@ -147,9 +152,10 @@ class MaxFactory:
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
         grad_net.set_auto_parallel()
         grad_net.set_train()
-        input_grad = grad_net(x, y, out_grad, parallel_inputs_compile=[x, y, out_grad], parallel_inputs_run=[x1, y1, out_grad])
+        input_grad = grad_net(x, y, out_grad, parallel_inputs_compile=[x, y, out_grad],
+                              parallel_inputs_run=[x1, y1, out_grad])
         return input_grad
-    
+
     def forward_cmp(self):
         out_mindspore = self.forward_mindspore_impl()
         out_mindspore_parallel = self.forward_mindspore_parallel_impl()
@@ -170,26 +176,38 @@ class MaxFactory:
         assert np.allclose(input_grad_blocks_0[self.x_id], input_grad_mindspore_parallel0, 0.0001, 0.0001)
         assert np.allclose(input_grad_blocks_1[self.y_id], input_grad_mindspore_parallel1, 0.0001, 0.0001)
 
+
 def test_reid_max_forward_input_256_64():
-    fact = MaxFactory(input_shape=(256, 64), axis=1, keep_dims=False, strategy0=(0,(4,1),(4,1)), strategy1=(0,(4,1)))
+    fact = MaxFactory(input_shape=(256, 64), axis=1, keep_dims=False, strategy0=(0, (4, 1), (4, 1)),
+                      strategy1=(0, (4, 1)))
     fact.forward_cmp()
+
 
 def test_reid_max_grad_input_256_64():
-    fact = MaxFactory(input_shape=(256, 64), axis=1, keep_dims=False, strategy0=(0,(4,1),(4,1)), strategy1=(0,(4,1)))
+    fact = MaxFactory(input_shape=(256, 64), axis=1, keep_dims=False, strategy0=(0, (4, 1), (4, 1)),
+                      strategy1=(0, (4, 1)))
     fact.grad_cmp()
-   
+
+
 def test_reid_max_forward_input_128_64_32_32():
-    fact = MaxFactory(input_shape=(128, 64, 32, 32), axis=3, keep_dims=False, strategy0=(0,(2,1,2,1),(2,1,2,1)), strategy1=(0,(2,1,2,1)))
+    fact = MaxFactory(input_shape=(128, 64, 32, 32), axis=3, keep_dims=False, strategy0=(0, (2, 1, 2, 1), (2, 1, 2, 1)),
+                      strategy1=(0, (2, 1, 2, 1)))
     fact.forward_cmp()
+
 
 def test_reid_max_grad_input_128_64_32_32():
-    fact = MaxFactory(input_shape=(128, 64, 32, 32), axis=3, keep_dims=False, strategy0=(0,(2,1,2,1),(2,1,2,1)), strategy1=(0,(2,1,2,1)))
+    fact = MaxFactory(input_shape=(128, 64, 32, 32), axis=3, keep_dims=False, strategy0=(0, (2, 1, 2, 1), (2, 1, 2, 1)),
+                      strategy1=(0, (2, 1, 2, 1)))
     fact.grad_cmp()
-    
+
+
 def test_reid_max_forward_input_256_64_repeat():
-    fact = MaxFactory(input_shape=(256, 64), axis=1, keep_dims=False, strategy0=(0,(2,1),(2,1)), strategy1=(0,(2,1)))
+    fact = MaxFactory(input_shape=(256, 64), axis=1, keep_dims=False, strategy0=(0, (2, 1), (2, 1)),
+                      strategy1=(0, (2, 1)))
     fact.forward_cmp()
 
+
 def test_reid_max_grad_input_256_64_repeat():
-    fact = MaxFactory(input_shape=(256, 64), axis=1, keep_dims=False, strategy0=(0,(2,1),(2,1)), strategy1=(0,(2,1)))
+    fact = MaxFactory(input_shape=(256, 64), axis=1, keep_dims=False, strategy0=(0, (2, 1), (2, 1)),
+                      strategy1=(0, (2, 1)))
     fact.grad_cmp()

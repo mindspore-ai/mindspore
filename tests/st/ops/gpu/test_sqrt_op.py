@@ -35,4 +35,3 @@ def test_sqrt():
     output_ms = P.Rsqrt()(Tensor(x_np))
     output_np = 1 / np.sqrt(x_np)
     assert np.allclose(output_ms.asnumpy(), output_np)
-

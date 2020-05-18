@@ -16,7 +16,6 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 from util import save_and_check
 
-
 DATA_DIR = ["../data/dataset/testTFTestAllTypes/test.data"]
 SCHEMA_DIR = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 COLUMNS = ["col_1d", "col_2d", "col_3d", "col_binary", "col_float",
@@ -159,7 +158,7 @@ def test_2ops_shuffle_batch():
 
 if __name__ == '__main__':
     test_2ops_repeat_shuffle()
-    #test_2ops_shuffle_repeat()
+    # test_2ops_shuffle_repeat()
     test_2ops_repeat_batch()
     test_2ops_batch_repeat()
     test_2ops_batch_shuffle()

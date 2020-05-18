@@ -20,6 +20,7 @@ from mindspore import Tensor
 # y = x^2
 class CusSquare(PrimitiveWithInfer):
     """CusSquare definition"""
+
     @prim_attr_register
     def __init__(self):
         """init CusSquare"""

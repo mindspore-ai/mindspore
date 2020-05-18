@@ -20,6 +20,7 @@ Reshape = P.Reshape()
 ConfusionTransposeD = Primitive('ConfusionTransposeD')
 make_tuple = Primitive('make_tuple')
 
+
 class FnDict:
     def __init__(self):
         self.fnDict = {}

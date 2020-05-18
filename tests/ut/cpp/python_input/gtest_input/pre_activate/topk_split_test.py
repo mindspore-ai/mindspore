@@ -19,6 +19,7 @@ from mindspore.ops import operations as P
 TopK = P.TopK()
 tuple_getitem = Primitive('tuple_getitem')
 
+
 class FnDict:
     def __init__(self):
         self.fnDict = {}

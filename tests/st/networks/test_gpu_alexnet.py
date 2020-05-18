@@ -42,7 +42,7 @@ class AlexNet(nn.Cell):
         self.relu = nn.ReLU()
         self.max_pool2d = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="valid")
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Dense(6*6*256, 4096)
+        self.fc1 = nn.Dense(6 * 6 * 256, 4096)
         self.fc2 = nn.Dense(4096, 4096)
         self.fc3 = nn.Dense(4096, num_classes)
 
@@ -87,4 +87,4 @@ def test_trainTensor(num_classes=10, epoch=15, batch_size=32):
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         loss = train_network(data, label)
         losses.append(loss)
-    assert(losses[-1].asnumpy() < 0.01)
+    assert (losses[-1].asnumpy() < 0.01)

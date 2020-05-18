@@ -21,8 +21,10 @@ import mindspore.ops.operations as P
 from mindspore import Tensor
 from mindspore.common.api import _executor
 
+
 class InputBackward(nn.Cell):
     """ InputBackward definition """
+
     def __init__(self, network, c1=None, c2=None):
         super(InputBackward, self).__init__()
         self.network = network
@@ -58,6 +60,7 @@ class InputBackward(nn.Cell):
 
 class InputOpNet(nn.Cell):
     """ InputOpNet definition """
+
     def __init__(self, op, get_first=False,
                  c1=None, c2=None, c3=None, c4=None):
         super(InputOpNet, self).__init__()
@@ -76,6 +79,7 @@ class InputOpNet(nn.Cell):
         if self.get_first:
             x = x[0]
         return x
+
     def construct0_c1_fack(self, data):
         x = self.op(self.c1) + data
         if self.get_first:
@@ -148,7 +152,6 @@ class InputOpNet(nn.Cell):
             x = x[0]
         return x
 
-
     def construct2_c1(self, x1, x2):
         x = self.op(x1, x2, self.c1)
         if self.get_first:
@@ -203,8 +206,10 @@ class InputOpNet(nn.Cell):
             x = x[0]
         return x
 
+
 class NetOutputAsLoss(nn.Cell):
     """ NetOutputAsLoss definition """
+
     def __init__(self, network, output_index):
         super(NetOutputAsLoss, self).__init__()
         self.network = network
@@ -233,17 +238,20 @@ class NetOutputAsLoss(nn.Cell):
         predict = self.network(x1, x2, x3, x4, x5)[self.output_index]
         return predict
 
+
 def get_loss_fun(construct_net, num_input, output_index):
     net = NetOutputAsLoss(construct_net, output_index)
     f = getattr(net, 'construct%d' % num_input)
     setattr(net, "construct", f)
     return net
 
+
 def build_construct_graph(net, *inputs, execute=True):
     net.set_train()
     _executor.compile(net, *inputs)
     if execute:
         _executor(net, inputs)
+
 
 def build_backward_graph(net, output_shapes, inputs, execute=True):
     inputs = append_sens_to_inputs(output_shapes, inputs)
@@ -253,6 +261,7 @@ def build_backward_graph(net, output_shapes, inputs, execute=True):
     if execute:
         _executor(net, inputs)
 
+
 def convert(shp, dtype=np.float32, scale=6):
     if isinstance(shp, list):
         if not shp:
@@ -260,11 +269,13 @@ def convert(shp, dtype=np.float32, scale=6):
         return Tensor((np.random.rand(*shp) * scale).astype(dtype))
     return shp
 
+
 def gen_inputs(input_shapes, config):
     add_fack_input = config.get('add_fack_input', False)
     if not input_shapes and add_fack_input:
         return [Tensor(np.array([1.0]).astype(config.get('fack_input_type', np.float32)))]
     return [convert(shp) for shp in input_shapes]
+
 
 def gen_backward_inputs(input_shapes, output_shapes, config):
     add_fack_input = config.get('add_fack_input', False)
@@ -276,10 +287,12 @@ def gen_backward_inputs(input_shapes, output_shapes, config):
     sens = convert(sens_shape)
     return inputs + [sens]
 
+
 def append_sens_to_inputs(output_shapes, inputs):
     inputs = inputs
     sens = Tensor(np.random.normal(0, 1, output_shapes).astype(np.float32))
     return inputs + [sens]
+
 
 def gen_net(shapes, config, get_first=False):
     """
@@ -313,14 +326,17 @@ def gen_backward_net(construct_net, input_num):
     setattr(net, "construct", f)
     return net
 
+
 def batch_tuple_tensor(data, batch_size):
     ret = [Tensor(np.tile(d.asnumpy(), (batch_size, 1))) for d in data]
     return tuple(ret)
+
 
 class OutPutWrap(nn.Cell):
     """
     OutPutWrap definition
     """
+
     def __init__(self, network, num_output, output_is_tuple):
         super(OutPutWrap, self).__init__()
         self.network = network
@@ -386,6 +402,7 @@ class OutPutWrap(nn.Cell):
         for i in range(self.num_output):
             ret = ret + F.make_tuple(predict[i] * self.cast(self.one, self.dtype(predict[i])))
         return ret
+
 
 def get_output_wrap(network, num_input, num_output, output_is_tuple=0):
     net = OutPutWrap(network, num_output, output_is_tuple)

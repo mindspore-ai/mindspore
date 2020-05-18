@@ -30,9 +30,11 @@ from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.model_zoo.Bert_NEZHA import BertConfig, BertNetworkWithLoss, BertTrainOneStepWithLossScaleCell
 from mindspore.nn.optim import Momentum
 from mindspore import log as logger
+
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
 SCHEMA_DIR = "/home/workspace/mindspore_dataset/bert/example/datasetSchema.json"
+
 
 def get_config(version='base', batch_size=1):
     """get config"""
@@ -80,13 +82,14 @@ def get_config(version='base', batch_size=1):
         bert_config = BertConfig(batch_size=batch_size)
     return bert_config
 
+
 def me_de_train_dataset():
     """test me de train dataset"""
     # apply repeat operations
     repeat_count = 1
     ds = de.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
-                                                               "next_sentence_labels", "masked_lm_positions",
-                                                               "masked_lm_ids", "masked_lm_weights"], shuffle=False)
+                                                                "next_sentence_labels", "masked_lm_positions",
+                                                                "masked_lm_ids", "masked_lm_weights"], shuffle=False)
     type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
     ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)
@@ -100,11 +103,13 @@ def me_de_train_dataset():
     ds = ds.repeat(repeat_count)
     return ds
 
+
 def weight_variable(shape):
     """weight variable"""
     np.random.seed(1)
     ones = np.random.uniform(-0.1, 0.1, size=shape).astype(np.float32)
     return Tensor(ones)
+
 
 class ModelCallback(Callback):
     def __init__(self):
@@ -120,6 +125,7 @@ class ModelCallback(Callback):
         self.lossscale_list.append(cb_params.net_outputs[2].asnumpy())
         print("epoch: {}, outputs are: {}".format(cb_params.cur_epoch_num, str(cb_params.net_outputs)))
 
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -134,8 +140,9 @@ def test_bert_tdt():
     netwithloss = BertNetworkWithLoss(config, True)
     optimizer = Momentum(netwithloss.trainable_params(), learning_rate=2e-5, momentum=0.9)
     scale_window = 3
-    scale_manager = DynamicLossScaleManager(2**16, 2, scale_window)
-    netwithgrads = BertTrainOneStepWithLossScaleCell(netwithloss, optimizer=optimizer, scale_update_cell=scale_manager.get_update_cell())
+    scale_manager = DynamicLossScaleManager(2 ** 16, 2, scale_window)
+    netwithgrads = BertTrainOneStepWithLossScaleCell(netwithloss, optimizer=optimizer,
+                                                     scale_update_cell=scale_manager.get_update_cell())
     netwithgrads.set_train(True)
     model = Model(netwithgrads)
     callback = ModelCallback()
@@ -162,10 +169,11 @@ def test_bert_tdt():
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)
-    expect_loss_value = [12.1918125, 11.966035, 11.972114, 11.982189, 11.973948, 12.610932, 12.17564, 12.840248, 12.40294, 12.621653]
+    expect_loss_value = [12.1918125, 11.966035, 11.972114, 11.982189, 11.973948, 12.610932, 12.17564, 12.840248,
+                         12.40294, 12.621653]
     print("loss value: {}".format(loss_value))
     assert np.allclose(loss_value, expect_loss_value, 0.00001, 0.00001)
-    
+
     overflow = np.array(callback.overflow_list)
     expect_overflow = [True, True, False, False, False, True, False, False, False, True]
     print("overflow: {}".format(overflow))
@@ -175,6 +183,7 @@ def test_bert_tdt():
     expect_loss_scale = [32768.0, 16384.0, 16384.0, 16384.0, 32768.0, 16384.0, 16384.0, 16384.0, 32768.0, 16384.0]
     print("loss scale: {}".format(loss_scale))
     assert np.allclose(loss_scale, expect_loss_scale, 0.00001, 0.00001)
+
 
 if __name__ == '__main__':
     test_bert_tdt()

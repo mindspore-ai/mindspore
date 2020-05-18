@@ -24,6 +24,7 @@ from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -34,6 +35,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, y, b)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -43,6 +45,8 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, b)
 
     # model_parallel test
+
+
 def test_matmul_prelu():
     class Net(nn.Cell):
         def __init__(self):
@@ -73,5 +77,3 @@ def test_matmul_prelu():
             assert v == [[16, 1, 1, 1], [1]]
         elif re.search('Mul-op', k) is not None:
             assert v == [[16, 1, 1, 1], [16, 1, 1, 1]]
-
-

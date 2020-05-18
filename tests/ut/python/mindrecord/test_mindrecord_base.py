@@ -26,6 +26,7 @@ CV2_FILE_NAME = "./imagenet_loop.mindrecord"
 CV3_FILE_NAME = "./imagenet_append.mindrecord"
 NLP_FILE_NAME = "./aclImdb.mindrecord"
 
+
 def test_write_read_process():
     mindrecord_file_name = "test.mindrecord"
     data = [{"file_name": "001.jpg", "label": 43, "score": 0.8, "mask": np.array([3, 6, 9], dtype=np.int64),
@@ -74,6 +75,7 @@ def test_write_read_process():
 
     os.remove("{}".format(mindrecord_file_name))
     os.remove("{}.db".format(mindrecord_file_name))
+
 
 def test_write_read_process_with_define_index_field():
     mindrecord_file_name = "test.mindrecord"
@@ -125,6 +127,7 @@ def test_write_read_process_with_define_index_field():
     os.remove("{}".format(mindrecord_file_name))
     os.remove("{}.db".format(mindrecord_file_name))
 
+
 def test_cv_file_writer_tutorial():
     """tutorial for cv dataset writer."""
     writer = FileWriter(CV_FILE_NAME, FILES_NUM)
@@ -135,6 +138,7 @@ def test_cv_file_writer_tutorial():
     writer.add_index(["file_name", "label"])
     writer.write_raw_data(data)
     writer.commit()
+
 
 def test_cv_file_append_writer():
     """tutorial for cv dataset append writer."""
@@ -164,6 +168,7 @@ def test_cv_file_append_writer():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_cv_file_writer_loop_and_read():
     """tutorial for cv dataset loop writer."""
     writer = FileWriter(CV2_FILE_NAME, FILES_NUM)
@@ -191,6 +196,7 @@ def test_cv_file_writer_loop_and_read():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_cv_file_reader_tutorial():
     """tutorial for cv file reader."""
     reader = FileReader(CV_FILE_NAME + "0")
@@ -202,6 +208,7 @@ def test_cv_file_reader_tutorial():
     assert count == 10
     reader.close()
 
+
 def test_cv_file_reader_file_list():
     """tutorial for cv file partial reader."""
     reader = FileReader([CV_FILE_NAME + str(x) for x in range(FILES_NUM)])
@@ -211,6 +218,7 @@ def test_cv_file_reader_file_list():
         count = count + 1
         logger.info("#item{}: {}".format(index, x))
     assert count == 10
+
 
 def test_cv_file_reader_partial_tutorial():
     """tutorial for cv file partial reader."""
@@ -224,11 +232,12 @@ def test_cv_file_reader_partial_tutorial():
             reader.finish()
     assert count == 5
 
+
 def test_cv_page_reader_tutorial():
     """tutorial for cv page reader."""
     reader = MindPage(CV_FILE_NAME + "0")
     fields = reader.get_category_fields()
-    assert fields == ['file_name', 'label'],\
+    assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
 
     ret = reader.set_category_field("label")
@@ -247,11 +256,12 @@ def test_cv_page_reader_tutorial():
     assert len(row1[0]) == 3
     assert row1[0]['label'] == 822
 
+
 def test_cv_page_reader_tutorial_by_file_name():
     """tutorial for cv page reader."""
     reader = MindPage(CV_FILE_NAME + "0")
     fields = reader.get_category_fields()
-    assert fields == ['file_name', 'label'],\
+    assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
 
     ret = reader.set_category_field("file_name")
@@ -270,11 +280,12 @@ def test_cv_page_reader_tutorial_by_file_name():
     assert len(row1[0]) == 3
     assert row1[0]['label'] == 13
 
+
 def test_cv_page_reader_tutorial_new_api():
     """tutorial for cv page reader."""
     reader = MindPage(CV_FILE_NAME + "0")
     fields = reader.candidate_fields
-    assert fields == ['file_name', 'label'],\
+    assert fields == ['file_name', 'label'], \
         'failed on getting candidate category fields.'
 
     reader.category_field = "file_name"
@@ -298,6 +309,7 @@ def test_cv_page_reader_tutorial_new_api():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_nlp_file_writer_tutorial():
     """tutorial for nlp file writer."""
     writer = FileWriter(NLP_FILE_NAME, FILES_NUM)
@@ -318,6 +330,7 @@ def test_nlp_file_writer_tutorial():
     writer.write_raw_data(data)
     writer.commit()
 
+
 def test_nlp_file_reader_tutorial():
     """tutorial for nlp file reader."""
     reader = FileReader(NLP_FILE_NAME + "0")
@@ -329,11 +342,12 @@ def test_nlp_file_reader_tutorial():
     assert count == 10
     reader.close()
 
+
 def test_nlp_page_reader_tutorial():
     """tutorial for nlp page reader."""
     reader = MindPage(NLP_FILE_NAME + "0")
     fields = reader.get_category_fields()
-    assert fields == ['id', 'rating'],\
+    assert fields == ['id', 'rating'], \
         'failed on getting candidate category fields.'
 
     ret = reader.set_category_field("rating")
@@ -358,6 +372,7 @@ def test_nlp_page_reader_tutorial():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_cv_file_writer_shard_num_10():
     """test file writer when shard num equals 10."""
     writer = FileWriter(CV_FILE_NAME, 10)
@@ -370,10 +385,11 @@ def test_cv_file_writer_shard_num_10():
     writer.commit()
 
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
-            for x in range(10)]
+             for x in range(10)]
     for x in paths:
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
+
 
 def test_cv_file_writer_absolute_path():
     """test cv file writer when file name is absolute path."""
@@ -393,6 +409,7 @@ def test_cv_file_writer_absolute_path():
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
 
+
 def test_cv_file_writer_without_data():
     """test cv file writer without data."""
     writer = FileWriter(CV_FILE_NAME, 1)
@@ -410,6 +427,7 @@ def test_cv_file_writer_without_data():
     reader.close()
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
+
 
 def test_cv_file_writer_no_blob():
     """test cv file writer without blob data."""
@@ -432,18 +450,19 @@ def test_cv_file_writer_no_blob():
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
 
+
 def test_cv_file_writer_no_raw():
     """test cv file writer without raw data."""
     writer = FileWriter(NLP_FILE_NAME)
     data = list(get_nlp_data("../data/mindrecord/testAclImdbData/pos",
-                         "../data/mindrecord/testAclImdbData/vocab.txt",
-                         10))
+                             "../data/mindrecord/testAclImdbData/vocab.txt",
+                             10))
     nlp_schema_json = {"input_ids": {"type": "int64",
-                                 "shape": [1, -1]},
-                        "input_mask": {"type": "int64",
-                                  "shape": [1, -1]},
-                        "segment_ids": {"type": "int64",
-                                   "shape": [1, -1]}
+                                     "shape": [1, -1]},
+                       "input_mask": {"type": "int64",
+                                      "shape": [1, -1]},
+                       "segment_ids": {"type": "int64",
+                                       "shape": [1, -1]}
                        }
     writer.add_schema(nlp_schema_json, "no_raw_schema")
     writer.write_raw_data(data)
@@ -458,6 +477,7 @@ def test_cv_file_writer_no_raw():
     reader.close()
     os.remove(NLP_FILE_NAME)
     os.remove("{}.db".format(NLP_FILE_NAME))
+
 
 def test_write_read_process_with_multi_bytes():
     mindrecord_file_name = "test.mindrecord"
@@ -582,6 +602,7 @@ def test_write_read_process_with_multi_bytes():
 
     os.remove("{}".format(mindrecord_file_name))
     os.remove("{}.db".format(mindrecord_file_name))
+
 
 def test_write_read_process_with_multi_array():
     mindrecord_file_name = "test.mindrecord"
@@ -725,6 +746,7 @@ def test_write_read_process_with_multi_array():
 
     os.remove("{}".format(mindrecord_file_name))
     os.remove("{}.db".format(mindrecord_file_name))
+
 
 def test_write_read_process_with_multi_bytes_and_array():
     mindrecord_file_name = "test.mindrecord"

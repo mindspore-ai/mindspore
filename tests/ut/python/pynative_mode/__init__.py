@@ -15,6 +15,7 @@
 """setup for pytest"""
 from mindspore import context
 
+
 # pylint: disable=unused-argument
 def setup_module(module):
     context.set_context(mode=context.PYNATIVE_MODE)

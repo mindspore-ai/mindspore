@@ -21,6 +21,8 @@ from topi.cce import util
 from te import platform as cce
 
 Nonetype = type(None)
+
+
 # pylint: disable=unused-argument, no-value-for-parameter, too-many-branches
 @fusion_manager.register("conv2d")
 def conv2d_compute(inputs, weights, bias, outputs, strides, pad_list, dilations,
@@ -102,6 +104,7 @@ def conv2d_compute(inputs, weights, bias, outputs, strides, pad_list, dilations,
         res = te.lang.cce.conv(inputs, weights, para_dict)
 
     return res
+
 
 @util.check_input_type(dict, dict, (dict, Nonetype), dict, (tuple, list), (tuple, list), (tuple, list),
                        str)
@@ -189,7 +192,7 @@ def conv2d(inputs, weights, bias, outputs, strides, pad_list, dilations,
     if cce.CceProductParams().cce_product == "5.10":
         conv_layer_fast_cce(shape_fm, shape_filter, in_dtype, w_dtype, res_dtype,
                             padh, padw, strideh, stridew, bias=use_bias,
-                            kernel_name=kernel_name,  need_build=True, need_print=False)
+                            kernel_name=kernel_name, need_build=True, need_print=False)
     else:
         conv_layer_cce(shape_fm, shape_filter, in_dtype, w_dtype, res_dtype,
                        padh, padw, strideh, stridew,

@@ -30,10 +30,8 @@ from mindspore.ops import Primitive, prim_attr_register
 from mindspore.ops import functional as F
 from mindspore.train.model import Model
 
-
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
-
 
 # use method1: create instance outside function
 relu_test = Primitive('relu_test')
@@ -47,10 +45,10 @@ def test_ops_f1(x, y):
 # use method2: create instance outside function use an operator with parameters
 class Conv_test(Primitive):
     @prim_attr_register
-    def __init__(self, stride = 0, pad = 1):
+    def __init__(self, stride=0, pad=1):
         print('in conv_test init', self.stride)
 
-    def __call__(self, x = 0, y = 1, z= 2):
+    def __call__(self, x=0, y=1, z=2):
         pass
 
 
@@ -70,7 +68,7 @@ class ResNet(nn.Cell):
         self.conv = Conv_test(3, 5)
 
     def construct(self, x, y, train="train"):
-        return x + y*self.weight + self.conv(x)
+        return x + y * self.weight + self.conv(x)
 
     def get_params(self):
         return None
@@ -120,6 +118,7 @@ class SimpleNet_1(nn.Cell):
 def test_primitive_obj_parameter():
     model = SimpleNet_1()
     return model
+
 
 # use method4: call primitive ops with parameters
 class SimpleNet_2(nn.Cell):

@@ -18,7 +18,9 @@ from mindspore.ops import operations as P
 import mindspore.nn as nn
 import numpy as np
 import mindspore.context as context
+
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -28,26 +30,28 @@ class Net(nn.Cell):
     def construct(self, x, b):
         return self.bias_add(x, b)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_bias_add1():
-    x = np.ones([2,3,4,4]).astype(np.float32)
-    b = np.array([1,1,1]).astype(np.float32)
+    x = np.ones([2, 3, 4, 4]).astype(np.float32)
+    b = np.array([1, 1, 1]).astype(np.float32)
     bias_add = Net()
     output = bias_add(Tensor(x), Tensor(b))
-    expect_output = np.ones([2,3,4,4]).astype(np.float32)*2
+    expect_output = np.ones([2, 3, 4, 4]).astype(np.float32) * 2
     print(output)
-    assert np.all(output.asnumpy()==expect_output), "bias_add execute failed, please check current code commit"
+    assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_bias_add2():
-    x = np.ones([2,3]).astype(np.float32)
-    b = np.array([1,1,1]).astype(np.float32)
+    x = np.ones([2, 3]).astype(np.float32)
+    b = np.array([1, 1, 1]).astype(np.float32)
     bias_add = Net()
     output = bias_add(Tensor(x), Tensor(b))
-    expect_output = np.ones([2,3]).astype(np.float32)*2
+    expect_output = np.ones([2, 3]).astype(np.float32) * 2
     print(output)
-    assert np.all(output.asnumpy()==expect_output), "bias_add execute failed, please check current code commit"
+    assert np.all(output.asnumpy() == expect_output), "bias_add execute failed, please check current code commit"

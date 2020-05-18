@@ -25,6 +25,7 @@ CV_FILE_NAME = "./imagenet.mindrecord"
 NLP_FILE_NAME = "./aclImdb.mindrecord"
 MKV_FILE_NAME = "./vehPer.mindrecord"
 
+
 def test_nlp_file_writer():
     """test nlp file writer using shard api"""
     schema_json = {"id": {"type": "string"}, "label": {"type": "number"},
@@ -62,6 +63,7 @@ def test_nlp_file_writer():
     generator.build()
     generator.write_to_db()
 
+
 def test_nlp_file_reader():
     """test nlp file reader using shard api"""
     dataset = ShardReader()
@@ -76,6 +78,7 @@ def test_nlp_file_reader():
             iterator = dataset.get_next()
     dataset.finish()
     dataset.close()
+
 
 def test_nlp_page_reader():
     """test nlp page reader using shard api"""
@@ -102,6 +105,7 @@ def test_nlp_page_reader():
     for x in paths:
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
+
 
 def test_cv_file_writer():
     """test cv file reader using shard api"""
@@ -134,6 +138,7 @@ def test_cv_file_writer():
     generator.build()
     generator.write_to_db()
 
+
 def test_cv_file_reader():
     """test cv file reader using shard api"""
     dataset = ShardReader()
@@ -150,6 +155,7 @@ def test_cv_file_reader():
             iterator = dataset.get_next()
     dataset.finish()
     dataset.close()
+
 
 def test_cv_page_reader():
     """test cv page reader using shard api"""
@@ -175,6 +181,7 @@ def test_cv_page_reader():
     for x in paths:
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
+
 
 def test_mkv_file_writer():
     """test mkv file writer  using shard api"""
@@ -206,6 +213,7 @@ def test_mkv_file_writer():
     generator.build()
     generator.write_to_db()
 
+
 def test_mkv_page_reader():
     """test mkv page reader using shard api"""
     reader = ShardSegment()
@@ -225,6 +233,7 @@ def test_mkv_page_reader():
 
     img2 = reader.read_at_page_by_name("2", 0, 1)
     logger.info("img2 len: {}, img2[0] len: {}, img2[0]: {}".format(len(img2), len(img2[0]), img2[0]))
+
 
 def test_mkv_page_reader_random():
     """test mkv page random reader using shard api"""
@@ -247,6 +256,7 @@ def test_mkv_page_reader_random():
     for x in paths:
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
+
 
 def test_mkv_file_writer_with_exactly_schema():
     """test mkv file writer using shard api"""
@@ -313,6 +323,7 @@ def test_mkv_file_writer_with_exactly_schema():
     generator = ShardIndexGenerator(os.path.realpath(paths[0]))
     generator.build()
     generator.write_to_db()
+
 
 def test_mkv_file_reader_with_exactly_schema():
     """test mkv file reader using shard api"""

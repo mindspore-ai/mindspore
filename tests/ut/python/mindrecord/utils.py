@@ -23,6 +23,7 @@ import numpy as np
 
 from mindspore import log as logger
 
+
 def get_data(dir_name):
     """
     Return raw data of imagenet dataset.
@@ -54,6 +55,7 @@ def get_data(dir_name):
         except FileNotFoundError:
             continue
     return data_list
+
 
 def get_two_bytes_data(file_name):
     """
@@ -91,6 +93,7 @@ def get_two_bytes_data(file_name):
             continue
     return data_list
 
+
 def get_multi_bytes_data(file_name, bytes_num=3):
     """
     Return raw data of multi-bytes dataset.
@@ -124,6 +127,7 @@ def get_multi_bytes_data(file_name, bytes_num=3):
         except FileNotFoundError:
             continue
     return data_list
+
 
 def get_mkv_data(dir_name):
     """
@@ -163,7 +167,7 @@ def get_mkv_data(dir_name):
                              "id": index}
                 data_list.append(data_json)
             index += 1
-    logger.info('{} images are missing'.format(len(file_list)-len(data_list)))
+    logger.info('{} images are missing'.format(len(file_list) - len(data_list)))
     return data_list
 
 
@@ -212,12 +216,14 @@ def get_nlp_data(dir_name, vocab_file, num):
                 }
                 yield data
 
+
 def convert_to_uni(text):
     if isinstance(text, str):
         return text
     if isinstance(text, bytes):
         return text.decode('utf-8', 'ignore')
     raise Exception("The type %s does not convert!" % type(text))
+
 
 def load_vocab(vocab_file):
     """load vocabulary to translate statement."""
@@ -235,11 +241,12 @@ def load_vocab(vocab_file):
             index += 1
     return vocab
 
+
 def inputs(vectors, maxlen=50):
     length = len(vectors)
     if length > maxlen:
-        return vectors[0:maxlen], [1]*maxlen, [0]*maxlen
-    input_ = vectors+[0]*(maxlen-length)
-    mask = [1]*length + [0]*(maxlen-length)
-    segment = [0]*maxlen
+        return vectors[0:maxlen], [1] * maxlen, [0] * maxlen
+    input_ = vectors + [0] * (maxlen - length)
+    mask = [1] * length + [0] * (maxlen - length)
+    segment = [0] * maxlen
     return input_, mask, segment

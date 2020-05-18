@@ -34,6 +34,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -41,6 +42,7 @@ class GradWrap(nn.Cell):
 
     def construct(self, x):
         return C.grad_all(self.network)(x)
+
 
 # core dump, step_auto_parallel should SetInputs for transpose axis
 def test_reshape_matmul():
@@ -58,12 +60,13 @@ def test_reshape_matmul():
 
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    x = Tensor(np.ones([8*size, 28, 1, 1]), dtype=ms.float32)
+    x = Tensor(np.ones([8 * size, 28, 1, 1]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     _executor.compile(net, x)
+
 
 def test_reshape_auto_1():
     class Net(nn.Cell):
@@ -82,12 +85,13 @@ def test_reshape_auto_1():
 
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    x = Tensor(np.ones([8*size, 28, 1, 1]), dtype=ms.float32)
+    x = Tensor(np.ones([8 * size, 28, 1, 1]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     _executor.compile(net, x)
+
 
 def test_reshape_auto_2():
     class Net(nn.Cell):
@@ -96,7 +100,7 @@ def test_reshape_auto_2():
             self.relu = P.ReLU()
             self.reshape = P.Reshape()
             self.matmul = P.MatMul()
-            self.add_weight =  Parameter(Tensor(np.ones([128, 32]), dtype=ms.float32), name="weight1")
+            self.add_weight = Parameter(Tensor(np.ones([128, 32]), dtype=ms.float32), name="weight1")
             self.matmul_weight = Parameter(Tensor(np.ones([28, 64]), dtype=ms.float32), name="weight")
 
         def construct(self, x):
@@ -109,12 +113,13 @@ def test_reshape_auto_2():
 
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    x = Tensor(np.ones([8*size, 28, 1, 1]), dtype=ms.float32)
+    x = Tensor(np.ones([8 * size, 28, 1, 1]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     _executor.compile(net, x)
+
 
 def test_reshape_auto_3():
     class Net(nn.Cell):
@@ -133,12 +138,13 @@ def test_reshape_auto_3():
 
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    x = Tensor(np.ones([8*size, 28]), dtype=ms.float32)
+    x = Tensor(np.ones([8 * size, 28]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     _executor.compile(net, x)
+
 
 def test_reshape_auto_4():
     class Net(nn.Cell):
@@ -147,7 +153,7 @@ def test_reshape_auto_4():
             self.relu = P.ReLU()
             self.reshape = P.Reshape()
             self.matmul = P.MatMul()
-            self.matmul_weight = Parameter(Tensor(np.ones([28*64]), dtype=ms.float32), name="weight")
+            self.matmul_weight = Parameter(Tensor(np.ones([28 * 64]), dtype=ms.float32), name="weight")
 
         def construct(self, x):
             out = self.relu(x)
@@ -158,7 +164,7 @@ def test_reshape_auto_4():
 
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    x = Tensor(np.ones([8*size, 28, 1, 1]), dtype=ms.float32)
+    x = Tensor(np.ones([8 * size, 28, 1, 1]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
@@ -192,28 +198,29 @@ def test_reshape_auto_5():
             self.mul = P.Mul()
             self.reshape = P.Reshape()
             self.reduce_sum = P.ReduceSum()
-            self.wide_w = Parameter(Tensor(np.ones([4, 1024*8, 64]), dtype=ms.float32), name="weight")
+            self.wide_w = Parameter(Tensor(np.ones([4, 1024 * 8, 64]), dtype=ms.float32), name="weight")
 
         def construct(self, x, y):
-            mask = self.reshape(y, (4, 1024*8, 1))
+            mask = self.reshape(y, (4, 1024 * 8, 1))
             w_id = self.relu(x)
             wx = self.mul(w_id, mask)
-            wide_out = self.reshape(self.reduce_sum(wx, 1), (-1,1))
+            wide_out = self.reshape(self.reduce_sum(wx, 1), (-1, 1))
             deep_id = x + self.wide_w
             vx = self.mul(deep_id, mask)
-            deep_in = self.reshape(vx, (-1, 1024*8*64))
+            deep_in = self.reshape(vx, (-1, 1024 * 8 * 64))
             out = wide_out + deep_in
             return out
 
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    x = Tensor(np.ones([4, 1024*size, 1]), dtype=ms.float32)
-    y = Tensor(np.ones([4, 1024*size,]), dtype=ms.float32)
+    x = Tensor(np.ones([4, 1024 * size, 1]), dtype=ms.float32)
+    y = Tensor(np.ones([4, 1024 * size, ]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     _executor.compile(net, x, y)
+
 
 def test_reshape_auto_6():
     class NetWithLoss(nn.Cell):
@@ -245,7 +252,7 @@ def test_reshape_auto_6():
 
         def construct(self, x, y):
             out1 = x + self.wide_w
-            w = self.reshape(self.wide_w, (4,1024))
+            w = self.reshape(self.wide_w, (4, 1024))
             out1 = self.reduce_mean(out1, 1)
             out1 = out1 - w
             out2 = self.mul(y, w)
@@ -255,7 +262,7 @@ def test_reshape_auto_6():
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([4, 1024, 1]), dtype=ms.float32)
-    y = Tensor(np.ones([4, 1024,]), dtype=ms.float32)
+    y = Tensor(np.ones([4, 1024, ]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")

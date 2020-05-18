@@ -18,6 +18,7 @@ from mindspore.nn import Cell
 from mindspore import Tensor, Model, context
 from ...ut_filter import non_graph_engine
 
+
 def run_test(netclass, count):
     context.set_context(mode=context.GRAPH_MODE)
     net = netclass()
@@ -25,11 +26,12 @@ def run_test(netclass, count):
     for _ in range(count):
         input_np = np.random.randn(2, 3).astype(np.float32)
         input_ms = Tensor(input_np)
-        output_np = net.construct(input_np) # run python
-        output_ms = model.predict(input_ms) # run graph
+        output_np = net.construct(input_np)  # run python
+        output_ms = model.predict(input_ms)  # run graph
         assert np.shape(output_np) == np.shape(output_ms.asnumpy())
         # Disable equal assert because UT in CI use fake backend.
         # np.testing.assert_array_almost_equal(output_np, output_ms.asnumpy(), decimal=3)
+
 
 class for_loop_with_break(Cell):
     def __init__(self):
@@ -44,9 +46,11 @@ class for_loop_with_break(Cell):
             pass
         return x
 
+
 @non_graph_engine
 def test_for_loop_with_break():
     run_test(for_loop_with_break, 10)
+
 
 class for_loop_with_continue(Cell):
     def __init__(self):
@@ -60,9 +64,11 @@ class for_loop_with_continue(Cell):
             x = x * 2
         return x
 
+
 @non_graph_engine
 def test_for_loop_with_continue():
     run_test(for_loop_with_continue, 10)
+
 
 class for_loop_with_cont_break(Cell):
     def __init__(self):
@@ -81,9 +87,11 @@ class for_loop_with_cont_break(Cell):
             pass
         return x
 
+
 @non_graph_engine
 def test_for_loop_with_cont_break():
     run_test(for_loop_with_cont_break, 10)
+
 
 class for_nested_loop_with_break(Cell):
     def __init__(self):
@@ -98,9 +106,11 @@ class for_nested_loop_with_break(Cell):
                 x = x * 1.5
         return x
 
+
 @non_graph_engine
 def test_for_nested_loop_with_break():
     run_test(for_nested_loop_with_break, 10)
+
 
 class while_with_break(Cell):
     def __init__(self):
@@ -116,9 +126,11 @@ class while_with_break(Cell):
             i += 1
         return x
 
+
 @non_graph_engine
 def test_while_with_break():
     run_test(while_with_break, 10)
+
 
 class while_with_continue(Cell):
     def __init__(self):
@@ -135,9 +147,11 @@ class while_with_continue(Cell):
             i += 1
         return x
 
+
 @non_graph_engine
 def test_while_with_continue():
     run_test(while_with_continue, 10)
+
 
 class while_for_nested(Cell):
     def __init__(self):
@@ -157,9 +171,11 @@ class while_for_nested(Cell):
             i += 1
         return x
 
+
 @non_graph_engine
 def test_while_for_nested():
     run_test(while_for_nested, 10)
+
 
 class pass_branch(Cell):
     def __init__(self):
@@ -174,6 +190,7 @@ class pass_branch(Cell):
                 x = x * 1.5
             i += 1
         return x
+
 
 @non_graph_engine
 def test_pass_branch():

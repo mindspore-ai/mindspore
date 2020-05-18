@@ -51,7 +51,7 @@ def test_parameter_init():
     weight = Tensor(np.ones([64, 32]), dtype=ms.float32)
 
     net = Net(strategy1, weight)
-    net(x,)
+    net(x, )
 
 
 if __name__ == '__main__':

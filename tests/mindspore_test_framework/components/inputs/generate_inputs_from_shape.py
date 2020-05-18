@@ -23,6 +23,7 @@ from ...utils.other_util import shape2tensor
 from ...utils.config_util import get_input_config
 from ...utils import keyword
 
+
 class GenerateFromShapeDC(IDataComponent):
     """
     Generate inputs from shape, desc_inputs must be configured, desc_bprop is optional.
@@ -41,6 +42,7 @@ class GenerateFromShapeDC(IDataComponent):
             ([1, 16, 128, 64], np.float32, 6), # (inputs, dtype, scale)
         ]
     """
+
     def __call__(self):
         result = []
         for config in self.verification_set[keyword.inputs]:

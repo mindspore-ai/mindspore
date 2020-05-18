@@ -18,6 +18,7 @@ from mindspore.parallel._cost_model_context import reset_cost_model_context
 from mindspore.parallel.algo_parameter_config import reset_algo_parameters
 from mindspore.parallel._utils import _reset_op_id
 
+
 @pytest.fixture(scope="function", autouse="True")
 def reset_test_context():
     context.reset_auto_parallel_context()

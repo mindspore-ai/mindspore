@@ -17,6 +17,7 @@
 
 from ...components.icomponent import IDataComponent
 
+
 class IdentityDC(IDataComponent):
     """
     Return inputs.
@@ -26,5 +27,6 @@ class IdentityDC(IDataComponent):
             np.array([[2, 2], [2, 2]]).astype(np.float32)
         ]
     """
+
     def __call__(self):
         return self.verification_set['inputs']

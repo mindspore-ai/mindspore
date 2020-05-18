@@ -18,9 +18,10 @@
 import logging
 import pytest
 from .components.icomponent import IDataComponent, IBuilderComponent, IExectorComponent, \
-                                   IVerifierComponent, IFIPolicyComponent, IERPolicyComponent, IComponent, \
-                                   IFacadeComponent
+    IVerifierComponent, IFIPolicyComponent, IERPolicyComponent, IComponent, \
+    IFacadeComponent
 from .utils import keyword
+
 
 def mindspore_test(verification_pipeline):
     """
@@ -31,6 +32,7 @@ def mindspore_test(verification_pipeline):
 
     Returns:
     """
+
     def decorate(get_verification_set):
         verification_set = get_verification_set()
 

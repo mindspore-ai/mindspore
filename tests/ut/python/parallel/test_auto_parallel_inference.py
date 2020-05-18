@@ -7,6 +7,7 @@ from mindspore.nn import WithLossCell, TrainOneStepCell
 from mindspore.nn import Momentum
 from mindspore.parallel._cost_model_context import set_cost_model_context
 
+
 class Net(nn.Cell):
     def __init__(self, input_ch, out_ch):
         super(Net, self).__init__()
@@ -17,6 +18,7 @@ class Net(nn.Cell):
         x = self.dense(x)
         x = self.relu(x)
         return x
+
 
 def test_inference_phase():
     context.set_auto_parallel_context(device_num=8, global_rank=0)

@@ -84,7 +84,7 @@ def all_to_all_common():
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, loss, opt)
 
-    model.train(epoch_size, dataset,dataset_sink_mode=False)
+    model.train(epoch_size, dataset, dataset_sink_mode=False)
     strategys = _executor._get_strategy(model._train_network)
     return strategys
 
@@ -99,4 +99,3 @@ def test_one_dev():
             assert v == [[1, 1]]
         elif re.search('MatMul-op', k) is not None:
             assert v == [[1, 1], [1, 1]]
-

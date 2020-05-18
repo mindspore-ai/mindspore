@@ -19,17 +19,18 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore.model_zoo.Bert_NEZHA.bert_model import BertAttention, SaturateCast, \
-                                                            EmbeddingLookup, BertModel, \
-                                                            BertConfig, EmbeddingPostprocessor, \
-                                                            BertTransformer, BertEncoderCell, \
-                                                            BertSelfAttention, CreateAttentionMaskFromInputMask, \
-                                                            RelaPosMatrixGenerator, BertOutput, \
-                                                            RelaPosEmbeddingsGenerator
+    EmbeddingLookup, BertModel, \
+    BertConfig, EmbeddingPostprocessor, \
+    BertTransformer, BertEncoderCell, \
+    BertSelfAttention, CreateAttentionMaskFromInputMask, \
+    RelaPosMatrixGenerator, BertOutput, \
+    RelaPosEmbeddingsGenerator
 
 from ..mindspore_test import mindspore_test
-from ..pipeline.forward.compare_forward import pipeline_for_compare_forward_with_npy_for_group_by_group_config_using_group_policy
+from ..pipeline.forward.compare_forward import \
+    pipeline_for_compare_forward_with_npy_for_group_by_group_config_using_group_policy
 from .bert_attention_submodules import BertAttentionQueryKeyMul, BertAttentionRelativePositionKeys, BertAttentionMask, \
-                                       BertAttentionSoftmax, BertAttentionRelativePositionValues, BertDense
+    BertAttentionSoftmax, BertAttentionRelativePositionValues, BertDense
 
 verification_set = {
     'inputs': [

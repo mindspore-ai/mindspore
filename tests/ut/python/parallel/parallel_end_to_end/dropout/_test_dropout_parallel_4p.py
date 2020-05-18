@@ -21,9 +21,10 @@ from mindspore import context
 from mindspore.nn import Dropout
 from mindspore.common.tensor import Tensor
 
-device_num=4
+device_num = 4
 device_id = int(os.environ["RANK_ID"])
 path = "./output/"
+
 
 def setup_module():
     print("~~~~~~~~~~~set up~~~~~~~~~~~~~")
@@ -32,6 +33,7 @@ def setup_module():
     distributedTool.init()
     distributedTool.create_group("0-3", [0, 1, 2, 3])
     print("~~~~~~~~~~~set up finished~~~~~~~~~~~~~")
+
 
 def teardown_module():
     print("~~~~~~~~~~~~tear down~~~~~~~~~~")
@@ -44,51 +46,52 @@ class Net(Cell):
 
     def construct(self, input):
         x = self.drop(input)
-        return x                         
-                        
+        return x
+
+
 class DropoutFactory:
     def __init__(self, input_shape, keep_prob, seed0, seed1, strategy0=None):
         size = 1
         prefix = ""
         for s in input_shape:
             prefix = prefix + str(s)
-            size = size*s
+            size = size * s
         self.prefix = prefix
         number_range = min(10, size)
-        self.input_np = np.reshape(np.arange(0, size)%number_range, input_shape).astype(np.float32)
+        self.input_np = np.reshape(np.arange(0, size) % number_range, input_shape).astype(np.float32)
         self.keep_prob = keep_prob
         self.seed0 = seed0
         self.seed1 = seed1
         self.strategy0 = strategy0
         need_dev_num = 1
         for s in strategy0[1]:
-            need_dev_num = need_dev_num*s
-        self.x_id = device_id%need_dev_num
-        self.out_id = device_id%need_dev_num
-    
+            need_dev_num = need_dev_num * s
+        self.x_id = device_id % need_dev_num
+        self.out_id = device_id % need_dev_num
+
     def get_parallel_blocks(self, input_, strategy):
         blocks = [input_]
         i = 0
         for stra in strategy:
             temp = []
-            while len(blocks)>0:
+            while len(blocks) > 0:
                 block = blocks.pop(0)
                 temp.extend(np.split(block, stra, axis=i))
             blocks.extend(temp)
-            i+=1
-        return blocks 
-        
+            i += 1
+        return blocks
+
     def d4_tensor_compare(self, input, out_me):
-        [a,b,c,d] = input.shape
+        [a, b, c, d] = input.shape
         for i in range(a):
             for j in range(b):
                 for k in range(c):
                     for e in range(d):
-                        if out_me[i,j,k,e] == 0:
+                        if out_me[i, j, k, e] == 0:
                             assert True == True
                         else:
-                            assert np.allclose(out_me[i,j,k,e], input[i,j,k,e]*(1/0.4), 0.0001, 0.0001)
-    
+                            assert np.allclose(out_me[i, j, k, e], input[i, j, k, e] * (1 / 0.4), 0.0001, 0.0001)
+
     def forward_mindspore_parallel_impl(self):
         x = Tensor(self.input_np)
         inputs_x = self.get_parallel_blocks(self.input_np, self.strategy0[1])
@@ -98,16 +101,18 @@ class DropoutFactory:
         net.set_auto_parallel()
         out = net(x, parallel_inputs_compile=[x], parallel_inputs_run=[x1])
         return out.asnumpy()
-    
+
     def forward_cmp(self):
         out_mindspore_parallel = self.forward_mindspore_parallel_impl()
         input_blocks = self.get_parallel_blocks(self.input_np, self.strategy0[1])
         self.d4_tensor_compare(input_blocks[self.out_id], out_mindspore_parallel)
-                        
+
+
 def test_reid_dropout_forward_seed_F32_64_512_8_8():
-    fact = DropoutFactory(input_shape=(64,512,8,8), keep_prob = 0.4, seed0 = 0, seed1 = 0, strategy0=(0,(4,1,1,1)))
+    fact = DropoutFactory(input_shape=(64, 512, 8, 8), keep_prob=0.4, seed0=0, seed1=0, strategy0=(0, (4, 1, 1, 1)))
     fact.forward_cmp()
 
+
 def test_reid_dropout_forward_seed_F32_64_512_8_8_repeat():
-    fact = DropoutFactory(input_shape=(64,512,8,8), keep_prob = 0.4, seed0 = 0, seed1 = 0, strategy0=(0,(2,1,1,1)))
+    fact = DropoutFactory(input_shape=(64, 512, 8, 8), keep_prob=0.4, seed0=0, seed1=0, strategy0=(0, (2, 1, 1, 1)))
     fact.forward_cmp()

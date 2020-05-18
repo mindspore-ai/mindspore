@@ -127,7 +127,6 @@ def run_case(net):
     """ run_case """
     # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR) as test_writer:
-
         # step 1: create the network for summary
         x = Tensor(np.array([1.1]).astype(np.float32))
         y = Tensor(np.array([1.2]).astype(np.float32))
@@ -140,7 +139,6 @@ def run_case(net):
             y = Tensor(np.array([1.2 + random.uniform(1, 10)]).astype(np.float32))
             net(x, y)
             test_writer.record(i)
-
 
 
 # Test 1: use the repeat tag

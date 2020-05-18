@@ -27,6 +27,7 @@ from mindspore import context
 from mindspore.common.api import _executor
 import mindspore as ms
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -36,6 +37,7 @@ class NetWithLoss(nn.Cell):
     def construct(self, x, y):
         predict = self.network(x, y)
         return self.loss(predict)
+
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
@@ -79,7 +81,7 @@ class MarginCE(_Loss):
 
 def test_marin_loss():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
-    
+
     x = Tensor(np.ones([512, 512]), dtype=ms.float32)
     y = Tensor(np.ones([512, 512]), dtype=ms.float32)
 

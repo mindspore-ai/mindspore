@@ -19,6 +19,7 @@ from ...components.icomponent import IExectorComponent
 from ...utils.check_gradient import check_gradient, NNGradChecker
 from ...utils.config_util import get_grad_checking_options
 
+
 class CheckGradientWrtParamsEC(IExectorComponent):
     """
     Check gradient against numeric with respect to params, execute and verify.
@@ -35,6 +36,7 @@ class CheckGradientWrtParamsEC(IExectorComponent):
                                           key_act=None,
                                           initializer_range=0.02)
     """
+
     def __call__(self):
         f, args, delta, max_error, input_selector, output_selector, \
         sampling_times, reduce_output = get_grad_checking_options(self.function, self.inputs)

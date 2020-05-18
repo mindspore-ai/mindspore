@@ -46,4 +46,3 @@ def test_lessequal():
     lessequal = Net()
     output = lessequal(x, y)
     assert np.all(output.asnumpy() == expect)
-

@@ -75,7 +75,6 @@ def test_image_summary_sample():
     log.debug("begin test_image_summary_sample")
     # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_IMAGE") as test_writer:
-
         # step 1: create the test data for summary
 
         # step 2: create the Event
@@ -173,7 +172,6 @@ def test_image_summary_train():
     log.debug("begin test_image_summary_sample")
     # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_IMAGE") as test_writer:
-
         # step 1: create the test data for summary
 
         # step 2: create the Event
@@ -206,7 +204,6 @@ def test_image_summary_data():
     log.debug("begin test_image_summary_sample")
     # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_IMAGE") as test_writer:
-
         # step 1: create the test data for summary
 
         # step 2: create the Event

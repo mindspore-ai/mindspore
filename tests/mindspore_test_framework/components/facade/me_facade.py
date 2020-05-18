@@ -21,6 +21,7 @@ from ...components.icomponent import IFacadeComponent
 from ...utils.facade_util import get_block_config, fill_block_config
 from ...utils import keyword
 
+
 class MeFacadeFC(IFacadeComponent):
     """
     Transform ME style config to mindspore_test_framework style.
@@ -47,6 +48,7 @@ class MeFacadeFC(IFacadeComponent):
         }
     })
     """
+
     def __call__(self):
         ret = get_block_config()
         for config in self.verification_set:

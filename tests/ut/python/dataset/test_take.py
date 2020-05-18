@@ -126,7 +126,7 @@ def test_take_06():
     """
     logger.info("test_take_06")
     data1 = ds.GeneratorDataset(generator, ["data"])
-    
+
     data1 = data1.repeat(2)
     data1 = data1.take(4)
 
@@ -143,7 +143,7 @@ def test_take_07():
     """
     logger.info("test_take_07")
     data1 = ds.GeneratorDataset(generator, ["data"])
-    
+
     data1 = data1.take(2)
     data1 = data1.batch(2)
     assert sum([1 for _ in data1]) == 1
@@ -167,7 +167,7 @@ def test_take_09():
     """
     logger.info("test_take_09")
     data1 = ds.GeneratorDataset(generator, ["data"])
-    
+
     data1 = data1.repeat(2)
     data1 = data1.take(-1)
 

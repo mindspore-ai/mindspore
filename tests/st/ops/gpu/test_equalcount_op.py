@@ -20,6 +20,7 @@ from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.context as context
 
+
 class NetEqualCount(nn.Cell):
     def __init__(self):
         super(NetEqualCount, self).__init__()
@@ -27,6 +28,7 @@ class NetEqualCount(nn.Cell):
 
     def construct(self, x, y):
         return self.equalcount(x, y)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
