@@ -105,6 +105,11 @@ class MsContext {
   void set_enable_gpu_summary(bool enable_gpu_summary) { enable_gpu_summary_ = enable_gpu_summary; }
   bool enable_gpu_summary() const { return enable_gpu_summary_; }
 
+  void set_auto_mixed_precision_flag(bool auto_mixed_precision_flag) {
+    auto_mixed_precision_flag_ = auto_mixed_precision_flag;
+  }
+  bool auto_mixed_precision_flag() const { return auto_mixed_precision_flag_; }
+
   void set_enable_reduce_precision(bool flag) { enable_reduce_precision_ = flag; }
   bool enable_reduce_precision() const { return enable_reduce_precision_; }
 

@@ -117,6 +117,10 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("close_tsd", &mindspore::MsContext::CloseTsd, "Close tdt dataset client.")
     .def("get_save_graphs_flag", &mindspore::MsContext::save_graphs_flag, "Get whether to save graphs.")
     .def("set_save_graphs_flag", &mindspore::MsContext::set_save_graphs_flag, "Set whether to save graphs.")
+    .def("get_auto_mixed_precision_flag", &mindspore::MsContext::auto_mixed_precision_flag,
+         "Get whether to enable auto mixed precision.")
+    .def("set_auto_mixed_precision_flag", &mindspore::MsContext::set_auto_mixed_precision_flag,
+         "Set whether to enable auto mixed precision.")
     .def("get_enable_reduce_precision_flag", &mindspore::MsContext::enable_reduce_precision,
          "Get whether to enable reduce precision.")
     .def("set_enable_reduce_precision_flag", &mindspore::MsContext::set_enable_reduce_precision,
