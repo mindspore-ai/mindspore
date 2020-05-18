@@ -65,6 +65,7 @@ class Tensor(Tensor_):
         else:
             super(Tensor, self).__init__(input_data, dtype)
         self._virtual_flag = False
+        self._init_flag = False
 
     def __repr__(self):
         return str(self.__str__())
@@ -153,3 +154,16 @@ class Tensor(Tensor_):
         if not isinstance(value, bool):
             raise TypeError("virtual_flag must be bool.")
         self._virtual_flag = value
+
+    @property
+    def init_flag(self):
+        """whether the tensor is init."""
+        return self._init_flag
+
+    @init_flag.setter
+    def init_flag(self, value):
+        """Set the tensor is init_flag."""
+        if not isinstance(value, bool):
+            raise TypeError("init_flag must be bool.")
+        self.set_init_flag(value)
+        self._init_flag = value

@@ -646,7 +646,6 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     if (adpt == nullptr) continue;
     auto param_op = adpt->generate(name + "_data");
     MS_LOG(INFO) << "Add parameter " << name << " as input, index " << index << ".";
-    (void)std::static_pointer_cast<Data>(param_op)->set_attr_index(index++);
 
     if (!training_) {
       auto adpt_const = FindAdapter(kNameConst, training_);
@@ -675,14 +674,17 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
 
     // we need three variable ops for each graph with same name
     // build init subgraph
-    auto init_var = std::make_shared<Variable>(name);
-    auto assign_op = std::make_shared<Assign>("assign_" + name);
-    (void)init_var->update_output_desc_y(*desc);
-    (void)assign_op->set_input_ref(*init_var).set_input_value(*param_op);
-    init_input.push_back(*init_var);
-    init_ops_.push_back(param_op);
-    init_ops_.push_back(assign_op);
-    init_ops_.push_back(init_var);
+    if (it.second->is_init() == 0) {
+      (void)std::static_pointer_cast<Data>(param_op)->set_attr_index(index++);
+      auto init_var = std::make_shared<Variable>(name);
+      auto assign_op = std::make_shared<Assign>("assign_" + name);
+      (void)init_var->update_output_desc_y(*desc);
+      (void)assign_op->set_input_ref(*init_var).set_input_value(*param_op);
+      init_input.push_back(*init_var);
+      init_ops_.push_back(param_op);
+      init_ops_.push_back(assign_op);
+      init_ops_.push_back(init_var);
+    }
 
     auto variable = std::make_shared<Variable>(name);
     (void)variable->update_output_desc_y(*desc);

@@ -374,6 +374,10 @@ TypeId Tensor::set_data_type(const TypeId data_type) {
   return data_type_;
 }
 
+bool Tensor::is_init() { return init_flag_; }
+
+void Tensor::set_init_flag(bool flag) { init_flag_ = flag; }
+
 bool Tensor::convert_data(const py::array &in, const TypeId in_data_type, py::array *const out,
                           const TypeId out_data_type) {
   if (out == nullptr) {
@@ -498,6 +502,24 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data = mindspore.Tensor(np.ones((2, 3)))
                                  >>> data.size()
                                  6
+                             )mydelimiter")
+                           .def("is_init", &Tensor::is_init, R"mydelimiter(
+                             Get tensor init_flag.
+
+                             Returns:
+                                 bool, whether the tensor init.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
+                                 >>> data.is_init()
+                                 False
+                             )mydelimiter")
+                           .def("set_init_flag", &Tensor::set_init_flag, R"mydelimiter(
+                             Set tensor init_flag.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
+                                 >>> data.set_init_flag(True)
                              )mydelimiter")
                            .def("dim", &Tensor::DataDim, R"mydelimiter(
                              Get tensor's data dimension.
