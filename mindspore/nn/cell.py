@@ -97,9 +97,9 @@ class Cell:
 
         After invoked, can get all the cell's children's name prefix by '_param_prefix'.
         """
-        cells = self.cells_and_names()
+        cells_name = self.cells_and_names()
 
-        for cell_name, cell in cells:
+        for cell_name, cell in cells_name:
             cell._param_prefix = cell_name
 
     @cell_init_args.setter
