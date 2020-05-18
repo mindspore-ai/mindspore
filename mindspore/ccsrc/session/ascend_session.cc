@@ -566,7 +566,7 @@ GraphId AscendSession::SetFinalGraphInput(const std::vector<AnfNodePtr> &args) {
     // if function return UINT_MAX,the parameter is not exist in child graph
     auto parameter_belong_graph_id = GetGraphIdByNode(parameter);
     if (parameter_belong_graph_id == kInvalidGraphId) {
-      parameter_backend = final_graph->NewParameter(parameter->cast<ParameterPtr>());
+      parameter_backend = CreateNewParameterFromParameter(parameter, true, final_graph.get());
       final_graph->FrontBackendlMapAdd(parameter, parameter_backend);
       MS_LOG(INFO) << "New parameter" << parameter->DebugString() << "in final_graph";
     } else {
@@ -576,14 +576,14 @@ GraphId AscendSession::SetFinalGraphInput(const std::vector<AnfNodePtr> &args) {
       MS_LOG(INFO) << "Reuse parameter [" << parameter->DebugString() << "] of child graph ["
                    << parameter_belong_graph_id << "]";
       parameter_backend = graph->GetBackendAnfByFrontAnf(parameter);
+      // add parameter in backend to final graph inputs
+      auto final_graph_inputs = final_graph->MutableInputs();
+      MS_EXCEPTION_IF_NULL(final_graph_inputs);
+      final_graph_inputs->push_back(parameter_backend);
     }
     MS_EXCEPTION_IF_NULL(parameter_backend);
     MS_LOG(INFO) << "parameter backend " << parameter_backend->DebugString() << " belong_graph_id "
                  << AnfAlgo::GetGraphId(parameter_backend.get());
-    // add parameter in backend to final graph inputs
-    auto final_graph_inputs = final_graph->MutableInputs();
-    MS_EXCEPTION_IF_NULL(final_graph_inputs);
-    final_graph_inputs->push_back(parameter_backend);
   }
   MS_LOG(INFO) << "End final_graph_id " << final_graph_id_;
   return final_graph_id_;
