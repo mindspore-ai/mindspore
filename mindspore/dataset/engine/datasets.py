@@ -44,7 +44,7 @@ from .validators import check, check_batch, check_shuffle, check_map, check_filt
     check_rename, \
     check_take, check_project, check_imagefolderdatasetv2, check_mnist_cifar_dataset, check_manifestdataset, \
     check_tfrecorddataset, check_vocdataset, check_celebadataset, check_minddataset, check_generatordataset, \
-    check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat
+    check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, check_split
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -581,6 +581,117 @@ class Dataset:
             return self
         return TakeDataset(self, count)
 
+    def _get_absolute_split_sizes(self, sizes):
+        """
+        Internal method called by split to calculate absolute split sizes and to
+        do some error checking after calculating absolute split sizes.
+        """
+        # call get_dataset_size here and check input here because
+        # dont want to call this once in check_split and another time in
+        # here again
+        dataset_size = self.get_dataset_size()
+
+        if(dataset_size is None or dataset_size <= 0):
+            raise RuntimeError("dataset size unknown, unable to split.")
+
+        all_int = all(isinstance(item, int) for item in sizes)
+        if all_int:
+            sizes_sum = sum(sizes)
+            if sizes_sum != dataset_size:
+                raise RuntimeError("sum of split sizes {} is not equal to dataset size {}."
+                                   .format(sizes_sum, dataset_size))
+            return sizes
+
+        absolute_sizes = []
+        for item in sizes:
+            absolute_size = int(round(item * dataset_size))
+            if absolute_size == 0:
+                raise RuntimeError("split percentage {} is too small.".format(item))
+            absolute_sizes.append(absolute_size)
+
+        absolute_sizes_sum = sum(absolute_sizes)
+        if absolute_sizes_sum != dataset_size:
+            raise RuntimeError("sum of calculated split sizes {} is not equal to dataset size {}."
+                               .format(absolute_sizes_sum, dataset_size))
+
+        return absolute_sizes
+
+    @check_split
+    def split(self, sizes, randomize=True):
+        """
+        Splits the dataset into smaller, non-overlapping datasets.
+
+        This is a general purpose split function which can be called from any operator in the pipeline.
+        There is another, optimized split function, which will be called automatically if ds.split is
+        called where ds is a MappableDataset.
+
+        Args:
+            sizes (list of int or list of float): If a list of integers [s1, s2, …, sn] is
+                provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
+                respectively. If the sum of all sizes does not equal the original dataset size, an
+                an error will occur.
+                If a list of floats [f1, f2, …, fn] is provided, the dataset will be split into n
+                Datasets of size f1*K, f2*K, …, fn*K (rounded to nearest integer) where K is the size
+                of the original dataset. If after rounding, any size equals 0, an error will occur.
+                All floats must be between 0 and 1 and must sum to 1, otherwise an error will occur.
+            randomize (bool): determines whether or not to split the data randomly. If true, the data
+                will be randomly split. Otherwise, each split will be created with consecutive rows
+                from the dataset.
+
+        Note:
+            1. Dataset cannot be sharded if split is going to be called.
+            2. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
+            Shuffling the dataset may not be deterministic, which means the data in each split
+            will be different in each epoch.
+
+        Raises:
+            RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
+            RuntimeError: If sizes is list of integers and sum of all elements in sizes does not
+                equal the dataset size.
+            RuntimeError: If sizes is list of float and there is a split with size 0 after calculations.
+            RuntimeError: If the dataset is sharded prior to calling split.
+            ValueError: If sizes is list of float and not all floats are between 0 and 1, or if the
+                floats don’t sum to 1.
+
+        Returns
+            tuple(Dataset), a tuple of datasets that have been split.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> dataset_dir = "/path/to/text_file.txt"
+            >>>
+            >>> # TextFileDataset is not a mappable dataset, so this non optimized split will be called.
+            >>> # many datasets have shuffle on by default, set shuffle to False if split will be called!
+            >>> data = ds.TextFileDataset(dataset_dir, shuffle=False)
+            >>> train, test = data.split([0.9, 0.1])
+        """
+        if self.is_shuffled():
+            logger.warning("dataset is shuffled before split.")
+
+        if self.is_sharded():
+            raise RuntimeError("dataset should not be sharded before split.")
+
+        absolute_sizes = self._get_absolute_split_sizes(sizes)
+        splits = []
+        rows_to_skip = 0
+        for size in absolute_sizes:
+            ds = copy.deepcopy(self)
+            if randomize:
+                # want to shuffle the same way every epoch before split
+                ds = ds.shuffle()
+                ds.reshuffle_each_epoch = False
+
+            if rows_to_skip > 0:
+                ds = ds.skip(rows_to_skip)
+
+            ds = ds.take(size)
+            splits.append(ds)
+
+            rows_to_skip += size
+
+        return tuple(splits)
+
     @check_zip_dataset
     def zip(self, datasets):
         """
@@ -1053,10 +1164,24 @@ class Dataset:
     def reset(self):
         """Reset the dataset for next epoch."""
 
+    def is_shuffled(self):
+        for input_dataset in self.input:
+            if input_dataset.is_shuffled():
+                return True
+
+        return False
+
+    def is_sharded(self):
+        for input_dataset in self.input:
+            if input_dataset.is_sharded():
+                return True
+
+        return False
+
 
 class SourceDataset(Dataset):
     """
-    Abstract class to represent a source dataset  which produces content to the data pipeline.
+    Abstract class to represent a source dataset which produces content to the data pipeline.
     """
 
     # No need for __init__ since it is the same as the super's init
@@ -1092,6 +1217,150 @@ class SourceDataset(Dataset):
         if file_list:  # not empty
             return file_list
         raise ValueError("The list of path names matching the patterns is empty.")
+
+    def is_shuffled(self):
+        raise NotImplementedError("SourceDataset must implement is_shuffled.")
+
+    def is_sharded(self):
+        raise NotImplementedError("SourceDataset must implement is_sharded.")
+
+class MappableDataset(SourceDataset):
+    """
+    Abstract class to represent a source dataset which supports use of samplers.
+    """
+
+    def __init__(self, num_parallel_workers=None):
+        # check if all subclasses use this name
+        super().__init__(num_parallel_workers)
+        self.sampler = None
+
+    def add_sampler(self, new_sampler):
+        # note: by adding a sampler, we mean that the sampled ids will flow to new_sampler
+        # after first passing through the current samplers attached to this dataset.
+        new_sampler.add_child(self.sampler)
+        self.sampler = new_sampler
+
+    def use_sampler(self, new_sampler):
+        """
+        Will make the current dataset use the new_sampler provided.
+
+        Args:
+            new_sampler (Sampler): the sampler to use for the current dataset.
+
+        Returns:
+            Dataset, that uses new_sampler.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> dataset_dir = "/path/to/imagefolder_directory"
+            >>> # a SequentialSampler is created by default
+            >>> data = ds.ImageFolderDatasetV2(dataset_dir)
+            >>>
+            >>> # use a DistributedSampler instead of the SequentialSampler
+            >>> new_sampler = ds.DistributedSampler(10, 2)
+            >>> data.use_sampler(new_sampler)
+        """
+        self.sampler = self.sampler.child_sampler
+        self.add_sampler(new_sampler)
+
+    def is_shuffled(self):
+        raise NotImplementedError("MappableDataset must implement is_shuffled.")
+
+    def is_sharded(self):
+        raise NotImplementedError("MappableDataset must implement is_sharded.")
+
+
+    @check_split
+    def split(self, sizes, randomize=True):
+        """
+        Splits the dataset into smaller, non-overlapping datasets.
+
+        There is the optimized split function, which will be called automatically when the dataset
+        that calls this function is a MappableDataset.
+
+        Args:
+            sizes (list of int or list of float): If a list of integers [s1, s2, …, sn] is
+                provided, the dataset will be split into n datasets of size s1, size s2, …, size sn
+                respectively. If the sum of all sizes does not equal the original dataset size, an
+                an error will occur.
+                If a list of floats [f1, f2, …, fn] is provided, the dataset will be split into n
+                Datasets of size f1*K, f2*K, …, fn*K (rounded to nearest integer) where K is the size
+                of the original dataset. If after rounding, any size equals 0, an error will occur.
+                All floats must be between 0 and 1 and must sum to 1, otherwise an error will occur.
+            randomize (bool): determines whether or not to split the data randomly. If true, the data
+                will be randomly split. Otherwise, each split will be created with consecutive rows
+                from the dataset.
+
+        Note:
+            1. Dataset should not be sharded if split is going to be called. Instead, create a
+            DistributedSampler and specify a split to shard after splitting. If dataset is
+            sharded after a split, it is strongly recommended to set the same seed in each instance
+            of execution, otherwise each shard may not be part of the same split (see Examples)
+            2. It is strongly recommended to not shuffle the dataset, but use randomize=True instead.
+            Shuffling the dataset may not be deterministic, which means the data in each split
+            will be different in each epoch. Furthermore, if sharding occurs after split, each
+            shard may not be part of the same split.
+
+        Raises:
+            RuntimeError: If get_dataset_size returns None or is not supported for this dataset.
+            RuntimeError: If sizes is list of integers and sum of all elements in sizes does not
+                equal the dataset size.
+            RuntimeError: If sizes is list of float and there is a split with size 0 after calculations.
+            RuntimeError: If the dataset is sharded prior to calling split.
+            ValueError: If sizes is list of float and not all floats are between 0 and 1, or if the
+                floats don’t sum to 1.
+
+        Returns
+            tuple(Dataset), a tuple of datasets that have been split.
+
+        Examples:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> dataset_dir = "/path/to/imagefolder_directory"
+            >>>
+            >>> # many datasets have shuffle on by default, set shuffle to False if split will be called!
+            >>> data = ds.ImageFolderDatasetV2(dataset_dir, shuffle=False)
+            >>>
+            >>> # sets the seed, and tells split to use this seed when randomizing. This
+            >>> # is needed because we are sharding later
+            >>> ds.config.set_seed(58)
+            >>> train, test = data.split([0.9, 0.1])
+            >>>
+            >>> # if we want to shard the train dataset, we can use a DistributedSampler
+            >>> train_sampler = ds.DistributedSampler(10, 2)
+            >>> train.use_sampler(train_sampler)
+        """
+        if self.is_shuffled():
+            logger.warning("dataset is shuffled before split.")
+
+        if self.is_sharded():
+            raise RuntimeError("dataset should not be sharded before split.")
+
+        absolute_sizes = self._get_absolute_split_sizes(sizes)
+        splits = []
+        current_split_start_index = 0
+        for size in absolute_sizes:
+            ds = copy.deepcopy(self)
+            if randomize:
+                # want to shuffle the same way every epoch before split, we are assuming
+                # that the user will call set_seed
+                random_sampler = samplers.RandomSampler()
+                random_sampler.reshuffle_each_epoch = False
+                ds.add_sampler(random_sampler)
+
+            subset_sampler = samplers.SubsetSampler(current_split_start_index, size)
+            ds.add_sampler(subset_sampler)
+
+            # add sequential sampler, so that if user calls use_sampler, we will
+            # get rid of the sequential sampler instead of something we need
+            ds.add_sampler(samplers.SequentialSampler())
+
+            splits.append(ds)
+
+            current_split_start_index += size
+
+        return tuple(splits)
 
 
 class DatasetOp(Dataset):
@@ -1334,6 +1603,7 @@ class SyncWaitDataset(DatasetOp):
             flag = flag | SyncWaitDataset._is_ancestor_of_batch(input_dataset)
         return flag
 
+
 class ShuffleDataset(DatasetOp):
     """
     The result of applying Shuffle operator to the input Dataset.
@@ -1350,6 +1620,7 @@ class ShuffleDataset(DatasetOp):
         super().__init__()
         self.buffer_size = buffer_size
         self.input.append(input_dataset)
+        self.reshuffle_each_epoch = None
         input_dataset.output.append(self)
         self._input_indexs = input_dataset.input_indexs
         if self.is_sync():
@@ -1358,7 +1629,13 @@ class ShuffleDataset(DatasetOp):
     def get_args(self):
         args = super().get_args()
         args["buffer_size"] = self.buffer_size
+        if self.reshuffle_each_epoch is not None:
+            args["reshuffle_each_epoch"] = self.reshuffle_each_epoch
+
         return args
+
+    def is_shuffled(self):
+        return True
 
 
 # Pyfunc collection for multiprocess pyfunc
@@ -1989,8 +2266,14 @@ class StorageDataset(SourceDataset):
             self._get_pipeline_info()
         return self._num_classes
 
+    def is_shuffled(self):
+        return False
 
-class RangeDataset(SourceDataset):
+    def is_sharded(self):
+        return False
+
+
+class RangeDataset(MappableDataset):
     """
     A source dataset that reads and parses datasets stored on disk in a range.
 
@@ -2012,6 +2295,12 @@ class RangeDataset(SourceDataset):
         args["stop"] = self.stop
         args["step"] = self.step
         return args
+
+    def is_shuffled(self):
+        return False
+
+    def is_sharded(self):
+        return False
 
 
 def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
@@ -2052,7 +2341,7 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
     return samplers.SequentialSampler()
 
 
-class ImageFolderDatasetV2(SourceDataset):
+class ImageFolderDatasetV2(MappableDataset):
     """
     A source dataset that reads images from a tree of directories.
 
@@ -2190,8 +2479,20 @@ class ImageFolderDatasetV2(SourceDataset):
             num_samples = self.num_samples
         return ImageFolderOp.get_num_rows_and_classes(self.dataset_dir, num_samples)[1]
 
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
 
-class MnistDataset(SourceDataset):
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
+
+class MnistDataset(MappableDataset):
     """
     A source dataset for reading and parsing the Mnist dataset.
 
@@ -2293,6 +2594,18 @@ class MnistDataset(SourceDataset):
         num_rows = MnistOp.get_num_rows(self.dataset_dir, num_samples)
 
         return get_num_rows(num_rows, self.num_shards)
+
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
+
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
 
 
 class MindDataset(SourceDataset):
@@ -2399,6 +2712,18 @@ class MindDataset(SourceDataset):
             else:
                 num_rows = num_rows // self.partitions[0] + 1
         return num_rows
+
+    def is_shuffled(self):
+        if self.global_shuffle is None:
+            return True
+
+        return self.global_shuffle or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
 
 
 def _iter_fn(dataset, num_samples):
@@ -2609,7 +2934,7 @@ class _GeneratorWorker(multiprocessing.Process):
         self.terminate()
 
 
-class GeneratorDataset(SourceDataset):
+class GeneratorDataset(MappableDataset):
     """
     A source dataset that generate data from python by invoking python data source each epoch.
 
@@ -2794,6 +3119,12 @@ class GeneratorDataset(SourceDataset):
 
         return new_op
 
+    def is_shuffled(self):
+        return self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        return self.sampler.is_sharded()
+
 
 class TFRecordDataset(SourceDataset):
     """
@@ -2920,8 +3251,17 @@ class TFRecordDataset(SourceDataset):
         else:
             raise ValueError('set dataset_size with negative value {}'.format(value))
 
+    def is_shuffled(self):
+        return self.shuffle_files
 
-class ManifestDataset(SourceDataset):
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return False
+
+
+class ManifestDataset(MappableDataset):
     """
     A source dataset that reads images from a manifest file.
 
@@ -3088,8 +3428,20 @@ class ManifestDataset(SourceDataset):
 
         return ManifestOp.get_class_indexing(self.dataset_file, num_samples, class_indexing, self.usage)
 
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
 
-class Cifar10Dataset(SourceDataset):
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
+
+class Cifar10Dataset(MappableDataset):
     """
     A source dataset that reads cifar10 data.
 
@@ -3197,8 +3549,20 @@ class Cifar10Dataset(SourceDataset):
 
         return get_num_rows(num_rows, self.num_shards)
 
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
 
-class Cifar100Dataset(SourceDataset):
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
+
+class Cifar100Dataset(MappableDataset):
     """
     A source dataset that reads cifar100 data.
 
@@ -3304,6 +3668,18 @@ class Cifar100Dataset(SourceDataset):
 
         return get_num_rows(num_rows, self.num_shards)
 
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
+
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
 
 class RandomDataset(SourceDataset):
     """
@@ -3355,6 +3731,11 @@ class RandomDataset(SourceDataset):
         """
         return num_samples
 
+    def is_shuffled(self):
+        return True
+
+    def is_sharded(self):
+        return False
 
 class Schema:
     """
@@ -3534,7 +3915,7 @@ class Schema:
         return self.to_json()
 
 
-class VOCDataset(SourceDataset):
+class VOCDataset(MappableDataset):
     """
     A source dataset for reading and parsing VOC dataset.
 
@@ -3681,8 +4062,20 @@ class VOCDataset(SourceDataset):
 
         return VOCOp.get_class_indexing(self.dataset_dir, self.task, self.mode, class_indexing, num_samples)
 
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
 
-class CelebADataset(SourceDataset):
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
+
+
+class CelebADataset(MappableDataset):
     """
     A source dataset for reading and parsing CelebA dataset.Only support list_attr_celeba.txt currently.
 
@@ -3734,6 +4127,18 @@ class CelebADataset(SourceDataset):
         args["num_shards"] = self.num_shards
         args["shard_id"] = self.shard_id
         return args
+
+    def is_shuffled(self):
+        if self.shuffle_level is None:
+            return True
+
+        return self.shuffle_level or self.sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return self.sampler.is_sharded()
 
 
 class TextFileDataset(SourceDataset):
@@ -3814,3 +4219,12 @@ class TextFileDataset(SourceDataset):
                 return num_rows
             return min(self.num_samples, num_rows)
         return self._dataset_size
+
+    def is_shuffled(self):
+        return self.shuffle_files
+
+    def is_sharded(self):
+        if self.num_shards is not None:
+            return self.num_shards > 1
+
+        return False

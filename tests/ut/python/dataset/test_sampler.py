@@ -163,9 +163,36 @@ def test_python_sampler():
     assert list(sp1.get_indices()) == [0, 1, 2, 3, 4]
 
 
+def test_sampler_chain():
+    manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
+    map = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
+
+    def test_config(num_shards, shard_id):
+        sampler = ds.DistributedSampler(num_shards, shard_id, False)
+        child_sampler = ds.SequentialSampler()
+        sampler.add_child(child_sampler)
+
+        data1 = ds.ManifestDataset(manifest_file, num_samples=5, sampler=sampler)
+
+        res = []
+        for item in data1.create_dict_iterator():
+            logger.info("item[image].shape[0]: {}, item[label].item(): {}"
+                        .format(item["image"].shape[0], item["label"].item()))
+            res.append(map[(item["image"].shape[0], item["label"].item())])
+        return res
+
+    assert test_config(2, 0) == [0, 2, 4]
+    assert test_config(2, 1) == [1, 3, 0]
+    assert test_config(5, 0) == [0]
+    assert test_config(5, 1) == [1]
+    assert test_config(5, 2) == [2]
+    assert test_config(5, 3) == [3]
+    assert test_config(5, 4) == [4]
+
 if __name__ == '__main__':
     test_sequential_sampler(True)
     test_random_sampler(True)
     test_random_sampler_multi_iter(True)
     test_sampler_py_api()
     test_python_sampler()
+    test_sampler_chain()

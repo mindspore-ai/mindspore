@@ -364,6 +364,18 @@ Status DEPipeline::ParseShuffleOp(const py::dict &args, std::shared_ptr<DatasetO
     std::string err_msg = "Error: Shuffle buffer size is missing";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
+
+  // Optional arguments
+  for (auto arg : args) {
+    std::string key = py::str(arg.first);
+    py::handle value = arg.second;
+    if (!value.is_none()) {
+      if (key == "reshuffle_each_epoch") {
+        (void)builder->SetReshuffleEachEpoch(ToBool(args["reshuffle_each_epoch"]));
+      }
+    }
+  }
+
   std::shared_ptr<ShuffleOp> op;
   RETURN_IF_NOT_OK(builder->Build(&op));
   *ptr = op;

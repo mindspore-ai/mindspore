@@ -49,6 +49,7 @@
 #include "dataset/engine/datasetops/source/sampler/pk_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
+#include "dataset/engine/datasetops/source/sampler/subset_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
 #include "dataset/engine/datasetops/source/sampler/python_sampler.h"
@@ -411,11 +412,14 @@ void bindSamplerOps(py::module *m) {
     .def("set_num_rows", [](Sampler &self, int64_t rows) { THROW_IF_ERROR(self.SetNumRowsInDataset(rows)); })
     .def("set_num_samples", [](Sampler &self, int64_t samples) { THROW_IF_ERROR(self.SetNumSamples(samples)); })
     .def("initialize", [](Sampler &self) { THROW_IF_ERROR(self.InitSampler()); })
-    .def("get_indices", [](Sampler &self) {
-      py::array ret;
-      THROW_IF_ERROR(self.GetAllIdsThenReset(&ret));
-      return ret;
-    });
+    .def("get_indices",
+         [](Sampler &self) {
+           py::array ret;
+           THROW_IF_ERROR(self.GetAllIdsThenReset(&ret));
+           return ret;
+         })
+    .def("add_child",
+         [](std::shared_ptr<Sampler> self, std::shared_ptr<Sampler> child) { THROW_IF_ERROR(self->AddChild(child)); });
 
   (void)py::class_<mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardOperator>>(*m, "ShardOperator");
 
@@ -427,11 +431,15 @@ void bindSamplerOps(py::module *m) {
     .def(py::init<int64_t, bool>(), py::arg("kVal"), py::arg("shuffle"));
 
   (void)py::class_<RandomSampler, Sampler, std::shared_ptr<RandomSampler>>(*m, "RandomSampler")
-    .def(py::init<bool, int64_t>(), py::arg("replacement"), py::arg("numSamples"))
-    .def(py::init<bool>(), py::arg("replacement"));
+    .def(py::init<bool, bool, int64_t>(), py::arg("replacement"), py::arg("reshuffle_each_epoch"),
+         py::arg("num_samples"))
+    .def(py::init<bool, bool>(), py::arg("replacement"), py::arg("reshuffle_each_epoch"));
 
   (void)py::class_<SequentialSampler, Sampler, std::shared_ptr<SequentialSampler>>(*m, "SequentialSampler")
     .def(py::init<>());
+
+  (void)py::class_<SubsetSampler, Sampler, std::shared_ptr<SubsetSampler>>(*m, "SubsetSampler")
+    .def(py::init<int64_t, int64_t>(), py::arg("start_index"), py::arg("subset_size"));
 
   (void)py::class_<SubsetRandomSampler, Sampler, std::shared_ptr<SubsetRandomSampler>>(*m, "SubsetRandomSampler")
     .def(py::init<std::vector<int64_t>>(), py::arg("indices"));

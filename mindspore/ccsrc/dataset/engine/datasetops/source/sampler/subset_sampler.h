@@ -13,44 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SEQUENTIAL_SAMPLER_H_
-#define DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SEQUENTIAL_SAMPLER_H_
+#ifndef DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SUBSET_SAMPLER_H_
+#define DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SUBSET_SAMPLER_H_
 
-#include <limits>
 #include <memory>
+#include <vector>
 
 #include "dataset/engine/datasetops/source/sampler/sampler.h"
 
 namespace mindspore {
 namespace dataset {
-class SequentialSampler : public Sampler {
+
+class SubsetSampler : public Sampler {
  public:
-  // Constructor
-  // @param int64_t samplesPerBuffer - Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit SequentialSampler(int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+  // Constructor.
+  // @param start_index The index we start sampling from.
+  explicit SubsetSampler(int64_t start_index, int64_t subset_size);
 
   // Destructor.
-  ~SequentialSampler() = default;
+  ~SubsetSampler() = default;
 
-  // init sampler, called by python
+  // Initialize the sampler.
+  // @return Status
   Status InitSampler() override;
 
-  // for next epoch of sampleIds
-  // @return - The error code return
+  // Reset the internal variable to the initial state and reshuffle the indices.
+  // @return Status
   Status Reset() override;
 
-  // Op calls this to get next Buffer that contains all the sampleIds
-  // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to StorageOp
-  // @param int32_t workerId - not meant to be used
-  // @return - The error code return
+  // Get the sample ids.
+  // @param[out] out_buffer The address of a unique_ptr to DataBuffer where the sample ids will be placed.
+  // @note the sample ids (int64_t) will be placed in one Tensor.
   Status GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) override;
 
-  void Print(std::ostream &out, bool show_all) const override;
-
  private:
-  int64_t next_id_;
+  int64_t start_index_;
+  int64_t subset_size_;
+  int64_t current_id_;
 };
+
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SEQUENTIAL_SAMPLER_H_
+#endif  // DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SUBSET_SAMPLER_H_

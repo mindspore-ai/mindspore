@@ -15,6 +15,7 @@
  */
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 
+#include <algorithm>
 #include <memory>
 
 namespace mindspore {
@@ -27,14 +28,26 @@ Status SequentialSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer)
   } else if (next_id_ == num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
+    if (HasChildSampler()) {
+      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+    }
+
     (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sampleIds;
     int64_t lastId = (samples_per_buffer_ + next_id_ > num_samples_) ? num_samples_ : samples_per_buffer_ + next_id_;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, lastId - next_id_));
     int64_t *idPtr = reinterpret_cast<int64_t *>(sampleIds->GetMutableBuffer());
     while (next_id_ < lastId) {
-      *(idPtr++) = next_id_++;
+      int64_t sampled_id = next_id_;
+      if (HasChildSampler()) {
+        RETURN_IF_NOT_OK(GetAssociatedChildId(&sampled_id, sampled_id));
+      }
+
+      *idPtr = sampled_id;
+      next_id_++;
+      idPtr++;
     }
+
     TensorRow row(1, sampleIds);
     (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
   }
@@ -43,6 +56,10 @@ Status SequentialSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer)
 
 Status SequentialSampler::InitSampler() {
   num_samples_ = (num_samples_ <= 0) ? num_rows_ : num_samples_;  // if num_samples < 0, try if num_rows is set
+  if (HasChildSampler()) {
+    num_samples_ = std::min(num_samples_, num_rows_);
+  }
+
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && samples_per_buffer_ > 0, "Fail to init Sequential Sampler");
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
   return Status::OK();
@@ -51,7 +68,15 @@ Status SequentialSampler::InitSampler() {
 Status SequentialSampler::Reset() {
   CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "ERROR Reset() called early/late");
   next_id_ = 0;
+
+  if (HasChildSampler()) {
+    RETURN_IF_NOT_OK(child_[0]->Reset());
+  }
+
   return Status::OK();
 }
+
+void SequentialSampler::Print(std::ostream &out, bool show_all) const { out << "(sampler): SequentialSampler\n"; }
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -55,13 +55,27 @@ Status DistributedSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer
   } else if (cnt_ == samples_per_buffer_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
+    if (HasChildSampler()) {
+      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+    }
+
     (*out_buffer) = std::make_unique<DataBuffer>(cnt_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sample_ids;
     RETURN_IF_NOT_OK(CreateSamplerTensor(&sample_ids, samples_per_buffer_));
     int64_t *id_ptr = reinterpret_cast<int64_t *>(sample_ids->GetMutableBuffer());
     while (cnt_ < samples_per_buffer_) {
-      int64_t next_id = (num_devices_ * (cnt_++) + device_id_) % num_rows_;
-      *(id_ptr++) = shuffle_ ? shuffle_vec_[static_cast<size_t>(next_id)] : next_id;
+      int64_t sampled_id = (num_devices_ * cnt_ + device_id_) % num_rows_;
+      if (shuffle_) {
+        sampled_id = shuffle_vec_[static_cast<size_t>(sampled_id)];
+      }
+
+      if (HasChildSampler()) {
+        RETURN_IF_NOT_OK(GetAssociatedChildId(&sampled_id, sampled_id));
+      }
+
+      *id_ptr = sampled_id;
+      id_ptr++;
+      cnt_++;
     }
     TensorRow row(1, sample_ids);
     (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
@@ -72,11 +86,29 @@ Status DistributedSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer
 Status DistributedSampler::Reset() {
   CHECK_FAIL_RETURN_UNEXPECTED(cnt_ == samples_per_buffer_, "ERROR Reset() called early/late");
   cnt_ = 0;
-  rnd_.seed(seed_++);
+
   if (shuffle_ == true) {
+    rnd_.seed(seed_);
+    seed_++;
     std::shuffle(shuffle_vec_.begin(), shuffle_vec_.end(), rnd_);
   }
+
+  if (HasChildSampler()) {
+    RETURN_IF_NOT_OK(child_[0]->Reset());
+  }
+
   return Status::OK();
 }
+
+void DistributedSampler::Print(std::ostream &out, bool show_all) const {
+  out << "(sampler): DistributedSampler\n";
+  if (show_all) {
+    out << "seed_: " << seed_ << '\n';
+    out << "device_id_: " << device_id_ << '\n';
+    out << "num_devices_: " << num_devices_ << '\n';
+    out << "shuffle_: " << shuffle_ << '\n';
+  }
+}
+
 }  // namespace dataset
 }  // namespace mindspore

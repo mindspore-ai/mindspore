@@ -34,6 +34,8 @@ SubsetRandomSampler::SubsetRandomSampler(const std::vector<int64_t> &indices, in
 Status SubsetRandomSampler::InitSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "num_rows <= 0\n");
 
+  num_samples_ = indices_.size();
+
   // Initialize random generator with seed from config manager
   rand_gen_.seed(GetSeed());
 
@@ -56,6 +58,10 @@ Status SubsetRandomSampler::Reset() {
   rand_gen_.seed(GetSeed());
   std::shuffle(indices_.begin(), indices_.end(), rand_gen_);
 
+  if (HasChildSampler()) {
+    RETURN_IF_NOT_OK(child_[0]->Reset());
+  }
+
   return Status::OK();
 }
 
@@ -65,6 +71,10 @@ Status SubsetRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffe
   if (sample_id_ == indices_.size()) {
     (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
   } else {
+    if (HasChildSampler()) {
+      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+    }
+
     (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> outputIds;
 
@@ -87,7 +97,14 @@ Status SubsetRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffe
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
 
-      *(id_ptr++) = indices_[sample_id_++];
+      int64_t sampled_id = indices_[sample_id_];
+      if (HasChildSampler()) {
+        RETURN_IF_NOT_OK(GetAssociatedChildId(&sampled_id, sampled_id));
+      }
+
+      *id_ptr = sampled_id;
+      id_ptr++;
+      sample_id_++;
     }
 
     // Create a TensorTable from that single tensor and push into DataBuffer

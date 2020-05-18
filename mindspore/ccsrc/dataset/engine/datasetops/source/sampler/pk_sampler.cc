@@ -38,6 +38,7 @@ Status PKSampler::InitSampler() {
   rnd_.seed(seed_++);
   num_pk_samples_ = samples_per_class_ * static_cast<int64_t>(labels_.size());
   samples_per_buffer_ = (samples_per_buffer_ > num_pk_samples_) ? num_pk_samples_ : samples_per_buffer_;
+  num_samples_ = num_pk_samples_;
   if (shuffle_ == true) {
     std::shuffle(labels_.begin(), labels_.end(), rnd_);
   } else {
@@ -53,6 +54,10 @@ Status PKSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
   } else if (next_id_ == num_pk_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
+    if (HasChildSampler()) {
+      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+    }
+
     (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sample_ids;
     int64_t last_id =
@@ -63,8 +68,16 @@ Status PKSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
       int64_t cls_id = next_id_++ / samples_per_class_;
       const std::vector<int64_t> &samples = label_to_ids_[labels_[cls_id]];
       int64_t rnd_ind = std::uniform_int_distribution<int64_t>(0, samples.size() - 1)(rnd_);
-      *(id_ptr++) = samples[rnd_ind];
+      int64_t sampled_id = samples[rnd_ind];
+
+      if (HasChildSampler()) {
+        RETURN_IF_NOT_OK(GetAssociatedChildId(&sampled_id, sampled_id));
+      }
+
+      *id_ptr = sampled_id;
+      id_ptr++;
     }
+
     TensorRow row(1, sample_ids);
     (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
   }
@@ -75,6 +88,11 @@ Status PKSampler::Reset() {
   CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_pk_samples_, "ERROR Reset() called early/late");
   next_id_ = 0;
   rnd_.seed(seed_++);
+
+  if (HasChildSampler()) {
+    RETURN_IF_NOT_OK(child_[0]->Reset());
+  }
+
   return Status::OK();
 }
 
