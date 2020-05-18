@@ -179,3 +179,4 @@ from .nms_with_mask import nms_with_mask_op_info
 from .random_choice_with_mask import random_choice_with_mask_op_info
 from .sgd import sgd_op_info
 from .lars_update import lars_update_op_info
+from .bn_training_update_v2 import _bn_training_update_v2_tbe
