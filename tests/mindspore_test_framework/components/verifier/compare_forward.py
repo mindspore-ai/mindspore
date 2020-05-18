@@ -41,5 +41,5 @@ class CompareWithVC(IVerifierComponent):
         'max_error': 1e-3
     }
     """
-    def verify(self, expect, func_result, verification_set):
-        compare(expect, func_result, baseline=keyword.compare_with)
+    def __call__(self):
+        compare(self.expect, self.func_result, baseline=keyword.compare_with)

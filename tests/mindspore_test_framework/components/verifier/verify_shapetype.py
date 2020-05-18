@@ -33,9 +33,9 @@ class ShapeTypeVC(IVerifierComponent):
             ]
         }
     """
-    def verify(self, expect, func_result, verification_set):
-        results = to_numpy_list(func_result[keyword.result])
-        expects = expect[keyword.desc_expect][keyword.shape_type]
+    def __call__(self):
+        results = to_numpy_list(self.func_result[keyword.result])
+        expects = self.expect[keyword.desc_expect][keyword.shape_type]
         for i, e in enumerate(expects):
             if results[i].shape != e[keyword.shape] or results[i].dtype != e[keyword.type]:
-                raise TypeError(f'Error: expect {expect}, but got {func_result}')
+                raise TypeError(f'Error: expect {self.expect}, but got {self.func_result}')

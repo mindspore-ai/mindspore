@@ -42,5 +42,5 @@ class CompileBlockBC(IBuilderComponent):
                                dtype=mstype.float32,
                                compute_type=mstype.float32)
     """
-    def build_sut(self, verification_set):
-        return create_funcs(verification_set, gen_net, compile_block)
+    def __call__(self):
+        return create_funcs(self.verification_set, gen_net, compile_block)

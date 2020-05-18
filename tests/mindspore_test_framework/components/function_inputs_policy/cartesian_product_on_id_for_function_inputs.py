@@ -22,7 +22,6 @@ class IdCartesianProductFIPC(IFIPolicyComponent):
     """
     Combine function/inputs by do cartesian product on id.
     """
-    def combine(self, function, inputs, verification_set):
-        # pylint: disable=unused-argument
-        ret = [(s1, s2) for s1 in function for s2 in inputs if s1[keyword.id] == s2[keyword.id]]
+    def __call__(self):
+        ret = [(s1, s2) for s1 in self.function for s2 in self.inputs if s1[keyword.id] == s2[keyword.id]]
         return ret

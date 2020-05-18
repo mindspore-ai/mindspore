@@ -22,6 +22,6 @@ class GroupCartesianProductERPC(IERPolicyComponent):
     """
     Combine expect/result by do cartesian product on group.
     """
-    def combine(self, expect, result, verification_set):
-        ret = [(s1, s2) for s1 in expect for s2 in result if s1[keyword.group] == s2[keyword.group]]
+    def __call__(self):
+        ret = [(s1, s2) for s1 in self.expect for s2 in self.result if s1[keyword.group] == s2[keyword.group]]
         return ret

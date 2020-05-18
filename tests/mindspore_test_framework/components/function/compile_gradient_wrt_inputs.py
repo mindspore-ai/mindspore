@@ -43,6 +43,6 @@ class CompileBackwardBlockWrtInputsBC(IBuilderComponent):
                                dtype=mstype.float32,
                                compute_type=mstype.float32)
     """
-    def build_sut(self, verification_set):
+    def __call__(self):
         grad_op = GradOperation('grad', get_all=True, sens_param=True)
-        return create_funcs(verification_set, gen_grad_net, compile_block, grad_op)
+        return create_funcs(self.verification_set, gen_grad_net, compile_block, grad_op)

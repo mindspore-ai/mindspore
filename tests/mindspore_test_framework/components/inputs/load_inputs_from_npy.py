@@ -43,9 +43,9 @@ class LoadFromNpyDC(IDataComponent):
             ([2, 2], np.float32, 6)
         ]
     """
-    def create_inputs(self, verification_set):
+    def __call__(self):
         result = []
-        for config in verification_set[keyword.inputs]:
+        for config in self.verification_set[keyword.inputs]:
             config[keyword.desc_inputs] = load_data_from_npy_or_shape(config[keyword.desc_inputs])
             config[keyword.desc_bprop] = load_data_from_npy_or_shape(config.get(keyword.desc_bprop, []))
             result.append(config)
