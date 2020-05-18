@@ -270,7 +270,11 @@ Status VOCOp::ParseImageIds() {
   }
   std::string id;
   while (getline(in_file, id)) {
-    image_ids_.push_back(id);
+    if (id[id.size() - 1] == '\r') {
+      image_ids_.push_back(id.substr(0, id.size() - 1));
+    } else {
+      image_ids_.push_back(id);
+    }
   }
   in_file.close();
   image_ids_.shrink_to_fit();
