@@ -23,6 +23,7 @@ from ...ut_filter import non_graph_engine
 
 class arithmetic_Net(Cell):
     """ arithmetic_Net definition """
+
     def __init__(self, symbol, loop_count=(1, 3)):
         super().__init__()
         self.symbol = symbol
@@ -68,6 +69,7 @@ class arithmetic_Net(Cell):
 
 class logical_Net(Cell):
     """ logical_Net definition """
+
     def __init__(self, symbol, loop_count=(1, 3)):
         super().__init__()
         self.symbol = symbol

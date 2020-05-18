@@ -19,6 +19,7 @@ from ...components.icomponent import IExectorComponent
 from ...utils.model_util import Model
 from ...utils import keyword
 
+
 class LossVerifierEC(IExectorComponent):
     """
     Verify if the model can converge to expected loss.
@@ -32,6 +33,7 @@ class LossVerifierEC(IExectorComponent):
             'loss_upper_bound': 0.03,
         }
     """
+
     def __call__(self):
         model = self.function[keyword.block][keyword.model]
         loss = self.function[keyword.block][keyword.loss]

@@ -28,10 +28,10 @@ from ..ut_filter import non_graph_engine
 from mindspore.common.api import _executor
 
 from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward\
+from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import (pipeline_for_compile_forward_ge_graph_for_case_by_case_config,
             pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception)
-from ....mindspore_test_framework.pipeline.gradient.compile_gradient\
+from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
 
 
@@ -209,72 +209,79 @@ raise_set = [
     # rank of x is not 4
     ('Conv2D3', {
         'block': (P.Conv2D(2, (5, 5)), {'exception': ValueError, 'error_keywords': ['Conv2D']}),
-        'desc_inputs': [Tensor(np.ones([1, 1]).astype(np.float32)), Tensor(np.ones([1,1,9,9]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1]).astype(np.float32)), Tensor(np.ones([1, 1, 9, 9]).astype(np.float32))],
         'skip': ['backward']}),
     # rank of 2 is not 4
     ('Conv2D4', {
         'block': (P.Conv2D(2, (5, 5)), {'exception': ValueError, 'error_keywords': ['Conv2D']}),
-        'desc_inputs': [Tensor(np.ones([1,1,9,9]).astype(np.float32)), Tensor(np.ones([1,1,9]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1, 9, 9]).astype(np.float32)),
+                        Tensor(np.ones([1, 1, 9]).astype(np.float32))],
         'skip': ['backward']}),
     # x_shape[1] / group != w_shape[1]
     ('Conv2D5', {
         'block': (P.Conv2D(2, (5, 5)), {'exception': ValueError, 'error_keywords': ['Conv2D']}),
-        'desc_inputs': [Tensor(np.ones([1,1,9,9]).astype(np.float32)), Tensor(np.ones([1,2,9,9]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1, 9, 9]).astype(np.float32)),
+                        Tensor(np.ones([1, 2, 9, 9]).astype(np.float32))],
         'skip': ['backward']}),
     # out_channel != w_shape[0]
     ('Conv2D6', {
         'block': (P.Conv2D(2, (5, 5)), {'exception': ValueError, 'error_keywords': ['Conv2D']}),
-        'desc_inputs': [Tensor(np.ones([1,1,9,9]).astype(np.float32)), Tensor(np.ones([1,1,9,9]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1, 9, 9]).astype(np.float32)),
+                        Tensor(np.ones([1, 1, 9, 9]).astype(np.float32))],
         'skip': ['backward']}),
     # kernel_size != w_shape[2:4]
     ('Conv2D7', {
         'block': (P.Conv2D(2, (5, 5)), {'exception': ValueError, 'error_keywords': ['Conv2D']}),
-        'desc_inputs': [Tensor(np.ones([1,1,9,9]).astype(np.float32)), Tensor(np.ones([2,1,5,6]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1, 9, 9]).astype(np.float32)),
+                        Tensor(np.ones([2, 1, 5, 6]).astype(np.float32))],
         'skip': ['backward']}),
-        
+
     # input is scalar
     ('DepthwiseConv2dNative0', {
         'block': (P.DepthwiseConv2dNative(2, (5, 5)),
-                 {'exception': TypeError, 'error_keywords': ['DepthwiseConv2dNative']}),
+                  {'exception': TypeError, 'error_keywords': ['DepthwiseConv2dNative']}),
         'desc_inputs': [5.0, 5.0],
         'skip': ['backward']}),
     # input is Tensor(bool)
     ('DepthwiseConv2dNative1', {
         'block': (P.DepthwiseConv2dNative(2, (5, 5)),
-                 {'exception': TypeError, 'error_keywords': ['DepthwiseConv2dNative']}),
+                  {'exception': TypeError, 'error_keywords': ['DepthwiseConv2dNative']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.bool_)), Tensor(np.ones([5]).astype(np.bool_))],
         'skip': ['backward']}),
     # input x and w type mismatch
     ('DepthwiseConv2dNative2', {
         'block': (P.DepthwiseConv2dNative(2, (5, 5)),
-                 {'exception': TypeError, 'error_keywords': ['DepthwiseConv2dNative']}),
+                  {'exception': TypeError, 'error_keywords': ['DepthwiseConv2dNative']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.float32)), Tensor(np.ones([5]).astype(np.float16))],
         'skip': ['backward']}),
     # rank of x is not 4
     ('DepthwiseConv2dNative3', {
         'block': (P.DepthwiseConv2dNative(2, (5, 5)),
-                 {'exception': ValueError, 'error_keywords': ['DepthwiseConv2dNative']}),
-        'desc_inputs': [Tensor(np.ones([1, 1]).astype(np.float32)), Tensor(np.ones([1,1,9,9]).astype(np.float32))],
+                  {'exception': ValueError, 'error_keywords': ['DepthwiseConv2dNative']}),
+        'desc_inputs': [Tensor(np.ones([1, 1]).astype(np.float32)), Tensor(np.ones([1, 1, 9, 9]).astype(np.float32))],
         'skip': ['backward']}),
     # rank of 2 is not 4
     ('DepthwiseConv2dNative4', {
         'block': (P.DepthwiseConv2dNative(2, (5, 5)),
-                 {'exception': ValueError, 'error_keywords': ['DepthwiseConv2dNative']}),
-        'desc_inputs': [Tensor(np.ones([1,1,9,9]).astype(np.float32)), Tensor(np.ones([1,1,9]).astype(np.float32))],
+                  {'exception': ValueError, 'error_keywords': ['DepthwiseConv2dNative']}),
+        'desc_inputs': [Tensor(np.ones([1, 1, 9, 9]).astype(np.float32)),
+                        Tensor(np.ones([1, 1, 9]).astype(np.float32))],
         'skip': ['backward']}),
     # x_shape[1] != w_shape[1]
     ('DepthwiseConv2dNative5', {
         'block': (P.DepthwiseConv2dNative(2, (5, 5)),
-                 {'exception': ValueError, 'error_keywords': ['DepthwiseConv2dNative']}),
-        'desc_inputs': [Tensor(np.ones([1,1,9,9]).astype(np.float32)), Tensor(np.ones([1,2,9,9]).astype(np.float32))],
+                  {'exception': ValueError, 'error_keywords': ['DepthwiseConv2dNative']}),
+        'desc_inputs': [Tensor(np.ones([1, 1, 9, 9]).astype(np.float32)),
+                        Tensor(np.ones([1, 2, 9, 9]).astype(np.float32))],
         'skip': ['backward']}),
     # kernel_size != w_shape[2:4]
     ('DepthwiseConv2dNative6', {
         'block': (P.DepthwiseConv2dNative(2, (5, 5)),
-                 {'exception': ValueError, 'error_keywords': ['DepthwiseConv2dNative']}),
-        'desc_inputs': [Tensor(np.ones([1,1,9,9]).astype(np.float32)), Tensor(np.ones([2,1,5,6]).astype(np.float32))],
+                  {'exception': ValueError, 'error_keywords': ['DepthwiseConv2dNative']}),
+        'desc_inputs': [Tensor(np.ones([1, 1, 9, 9]).astype(np.float32)),
+                        Tensor(np.ones([2, 1, 5, 6]).astype(np.float32))],
         'skip': ['backward']}),
-    
+
     # input is scalar
     ('MaxPoolWithArgmax0', {
         'block': (P.MaxPoolWithArgmax(), {'exception': TypeError, 'error_keywords': ['MaxPoolWithArgmax']}),
@@ -288,12 +295,12 @@ raise_set = [
     # rank of x is not 4
     ('MaxPoolWithArgmax2', {
         'block': (P.MaxPoolWithArgmax(), {'exception': ValueError, 'error_keywords': ['MaxPoolWithArgmax']}),
-        'desc_inputs': [Tensor(np.ones([1,1,32]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1, 32]).astype(np.float32))],
         'skip': ['backward']}),
     # kernel size is invalid(very large)
     ('MaxPoolWithArgmax3', {
         'block': (P.MaxPoolWithArgmax(ksize=50), {'exception': ValueError, 'error_keywords': ['MaxPoolWithArgmax']}),
-        'desc_inputs': [Tensor(np.ones([1,1,32,32]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))],
         'skip': ['backward']}),
 
     # input is scalar
@@ -304,12 +311,12 @@ raise_set = [
     # rank of x is not 4
     ('MaxPool1', {
         'block': (P.MaxPool(), {'exception': ValueError, 'error_keywords': ['MaxPool']}),
-        'desc_inputs': [Tensor(np.ones([1,1,32]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1, 32]).astype(np.float32))],
         'skip': ['backward']}),
     # rank of x is not 4
     ('MaxPool2', {
         'block': (P.MaxPool(ksize=50, strides=1), {'exception': ValueError, 'error_keywords': ['MaxPool']}),
-        'desc_inputs': [Tensor(np.ones([1,1,32,32]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))],
         'skip': ['backward']}),
 
     # input is scalar
@@ -320,42 +327,42 @@ raise_set = [
     # rank of x is not 4
     ('AvgPool1', {
         'block': (P.AvgPool(), {'exception': ValueError, 'error_keywords': ['AvgPool']}),
-        'desc_inputs': [Tensor(np.ones([1,1,32]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1, 32]).astype(np.float32))],
         'skip': ['backward']}),
     # rank of x is not 4
     ('AvgPool2', {
         'block': (P.AvgPool(ksize=50, strides=1), {'exception': ValueError, 'error_keywords': ['AvgPool']}),
-        'desc_inputs': [Tensor(np.ones([1,1,32,32]).astype(np.float32))],
+        'desc_inputs': [Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))],
         'skip': ['backward']}),
 
     # input is scalar
     ('Conv2DBackpropInput0', {
-        'block': (Conv2DBackpropInputNet(P.Conv2DBackpropInput(2, (5, 5)), (2,3)),
-                 {'exception': TypeError, 'error_keywords': ['Conv2DBackpropInput']}),
+        'block': (Conv2DBackpropInputNet(P.Conv2DBackpropInput(2, (5, 5)), (2, 3)),
+                  {'exception': TypeError, 'error_keywords': ['Conv2DBackpropInput']}),
         'desc_inputs': [5.0, 5.0],
         'skip': ['backward']}),
     # input is Tensor(bool)
     ('Conv2DBackpropInput1', {
-        'block': (Conv2DBackpropInputNet(P.Conv2DBackpropInput(2, (5, 5)), (2,3)),
-                 {'exception': TypeError, 'error_keywords': ['Conv2DBackpropInput']}),
+        'block': (Conv2DBackpropInputNet(P.Conv2DBackpropInput(2, (5, 5)), (2, 3)),
+                  {'exception': TypeError, 'error_keywords': ['Conv2DBackpropInput']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.bool_)), Tensor(np.ones([5]).astype(np.bool_))],
         'skip': ['backward']}),
     # types of doutput and w mismatch
     ('Conv2DBackpropInput2', {
-        'block': (Conv2DBackpropInputNet(P.Conv2DBackpropInput(2, (5, 5)), (2,3)),
-                 {'exception': TypeError, 'error_keywords': ['Conv2DBackpropInput']}),
+        'block': (Conv2DBackpropInputNet(P.Conv2DBackpropInput(2, (5, 5)), (2, 3)),
+                  {'exception': TypeError, 'error_keywords': ['Conv2DBackpropInput']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.int32)), Tensor(np.ones([5]).astype(np.float32))],
         'skip': ['backward']}),
     # types x_size is not tuple
     ('Conv2DBackpropInput3', {
         'block': (Conv2DBackpropInputNet(P.Conv2DBackpropInput(2, (5, 5)), 2),
-                 {'exception': TypeError, 'error_keywords': ['Conv2DBackpropInput']}),
+                  {'exception': TypeError, 'error_keywords': ['Conv2DBackpropInput']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.int32)), Tensor(np.ones([5]).astype(np.float32))],
         'skip': ['backward']}),
     # types x_size is not tuple(int,...)
     ('Conv2DBackpropInput4', {
         'block': (Conv2DBackpropInputNet(P.Conv2DBackpropInput(2, (5, 5)), (2, 3.0)),
-                 {'exception': TypeError, 'error_keywords': ['Conv2DBackpropInput']}),
+                  {'exception': TypeError, 'error_keywords': ['Conv2DBackpropInput']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.int32)), Tensor(np.ones([5]).astype(np.float32))],
         'skip': ['backward']}),
 
@@ -409,50 +416,50 @@ raise_set = [
     # input is scalar
     ('SoftmaxCrossEntropyWithLogits0', {
         'block': (P.SoftmaxCrossEntropyWithLogits(),
-                 {'exception': TypeError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
+                  {'exception': TypeError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [5.0, 5.0],
         'skip': ['backward']}),
     # input is Tensor(bool)
     ('SoftmaxCrossEntropyWithLogits1', {
         'block': (P.SoftmaxCrossEntropyWithLogits(),
-                 {'exception': TypeError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
+                  {'exception': TypeError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.bool_)), Tensor(np.ones([5]).astype(np.bool_))],
         'skip': ['backward']}),
     # types of logits and labels mismatch
     ('SoftmaxCrossEntropyWithLogits2', {
         'block': (P.SoftmaxCrossEntropyWithLogits(),
-                 {'exception': TypeError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
+                  {'exception': TypeError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.float16)), Tensor(np.ones([5]).astype(np.float32))],
         'skip': ['backward']}),
     # shapes of logits and labels mismatch
     ('SoftmaxCrossEntropyWithLogits3', {
         'block': (P.SoftmaxCrossEntropyWithLogits(),
-                 {'exception': ValueError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
+                  {'exception': ValueError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.float32)), Tensor(np.ones([3]).astype(np.float32))],
         'skip': ['backward']}),
 
     # input is scalar
     ('SparseSoftmaxCrossEntropyWithLogits0', {
         'block': (P.SparseSoftmaxCrossEntropyWithLogits(),
-                 {'exception': TypeError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
+                  {'exception': TypeError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [5.0, 5.0],
         'skip': ['backward']}),
     # logits is Tensor(bool)
     ('SparseSoftmaxCrossEntropyWithLogits1', {
         'block': (P.SparseSoftmaxCrossEntropyWithLogits(),
-                 {'exception': TypeError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
+                  {'exception': TypeError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.bool_)), Tensor(np.ones([5]).astype(np.bool_))],
         'skip': ['backward']}),
     # labels is Tensor(bool)
     ('SparseSoftmaxCrossEntropyWithLogits2', {
         'block': (P.SparseSoftmaxCrossEntropyWithLogits(),
-                 {'exception': TypeError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
+                  {'exception': TypeError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.float32)), Tensor(np.ones([5]).astype(np.bool_))],
         'skip': ['backward']}),
     # logits_shape[0] != labels_shape[0]
     ('SparseSoftmaxCrossEntropyWithLogits3', {
         'block': (P.SparseSoftmaxCrossEntropyWithLogits(),
-                 {'exception': ValueError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
+                  {'exception': ValueError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.float32)), Tensor(np.ones([3]).astype(np.int32))],
         'skip': ['backward']}),
 ]

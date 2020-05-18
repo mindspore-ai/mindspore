@@ -146,7 +146,7 @@ def test_python_sampler():
                 for i in range(99, -1, -1):
                     yield i
 
-        data1 = ds.GeneratorDataset([(np.array(i),) for i in range(100)], ["data"], sampler = MySampler())
+        data1 = ds.GeneratorDataset([(np.array(i),) for i in range(100)], ["data"], sampler=MySampler())
         i = 99
         for data in data1:
             assert data[0] == (np.array(i),)

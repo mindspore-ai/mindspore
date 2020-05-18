@@ -41,14 +41,14 @@ def test_one_hot_op():
     transform_label = py_vision.ComposeOp(transforms)
     dataset = dataset.map(input_columns=["label"], operations=transform_label())
 
-    golden_label = np.ones(num_classes)*epsilon_para/num_classes
-    golden_label[1] = 1 - epsilon_para/num_classes
+    golden_label = np.ones(num_classes) * epsilon_para / num_classes
+    golden_label[1] = 1 - epsilon_para / num_classes
 
     for data in dataset.create_dict_iterator():
         label = data["label"]
         logger.info("label is {}".format(label))
         logger.info("golden_label is {}".format(golden_label))
-        assert(label.all() == golden_label.all())
+        assert (label.all() == golden_label.all())
         logger.info("====test one hot op ok====")
 
 
@@ -67,7 +67,7 @@ def test_mix_up_single():
     num_classes = 10
     decode_op = c_vision.Decode()
     resize_op = c_vision.Resize((resize_height, resize_width), c_vision.Inter.LINEAR)
-    one_hot_encode = c.OneHot(num_classes)    # num_classes is input argument
+    one_hot_encode = c.OneHot(num_classes)  # num_classes is input argument
 
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.map(input_columns=["image"], operations=resize_op)
@@ -93,10 +93,10 @@ def test_mix_up_single():
         logger.info("label2 is {}".format(label2))
 
         lam = np.abs(label - label2)
-        for index in range(batch_size-1):
+        for index in range(batch_size - 1):
             if np.square(lam[index]).mean() != 0:
-                lam_value = 1 - np.sum(lam[index])/2
-                img_golden = lam_value * image2[index] + (1-lam_value)*image2[index+1]
+                lam_value = 1 - np.sum(lam[index]) / 2
+                img_golden = lam_value * image2[index] + (1 - lam_value) * image2[index + 1]
                 assert image1[index].all() == img_golden.all()
                 logger.info("====test single batch mixup ok====")
 
@@ -116,7 +116,7 @@ def test_mix_up_multi():
     num_classes = 3
     decode_op = c_vision.Decode()
     resize_op = c_vision.Resize((resize_height, resize_width), c_vision.Inter.LINEAR)
-    one_hot_encode = c.OneHot(num_classes)   # num_classes is input argument
+    one_hot_encode = c.OneHot(num_classes)  # num_classes is input argument
 
     ds1 = ds1.map(input_columns=["image"], operations=decode_op)
     ds1 = ds1.map(input_columns=["image"], operations=resize_op)
@@ -150,8 +150,8 @@ def test_mix_up_multi():
             logger.info("lam value in multi: {}".format(lam))
             for index in range(batch_size):
                 if np.square(lam[index]).mean() != 0:
-                    lam_value = 1 - np.sum(lam[index])/2
-                    img_golden = lam_value * image2[index] + (1-lam_value)*batch1_image1[index]
+                    lam_value = 1 - np.sum(lam[index]) / 2
+                    img_golden = lam_value * image2[index] + (1 - lam_value) * batch1_image1[index]
                     assert image1[index].all() == img_golden.all()
                     logger.info("====test several batch mixup ok====")
             break

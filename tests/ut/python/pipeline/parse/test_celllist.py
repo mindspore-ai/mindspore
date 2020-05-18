@@ -22,6 +22,8 @@ from mindspore.nn import SequentialCell
 from mindspore.nn import AvgPool2d
 from mindspore import context
 from ...ut_filter import non_graph_engine
+
+
 # pylint: disable=W0212
 
 

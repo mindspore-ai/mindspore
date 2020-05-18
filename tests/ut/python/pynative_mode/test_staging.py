@@ -38,6 +38,7 @@ def tensor_add_func_inner(x, y):
     z = F.tensor_add(x, y)
     return z
 
+
 @ms_function
 def tensor_add_func(x, y):
     """ tensor_add_func """
@@ -79,6 +80,7 @@ def tensor_add_test(x, y):
 
 class TensorAddMulNet(nn.Cell):
     """ TensorAddMulNet definition """
+
     def __init__(self):
         super(TensorAddMulNet, self).__init__()
         self.add = P.TensorAdd()
@@ -105,6 +107,7 @@ class TensorAddMulNet(nn.Cell):
 
 class TensorAddNet(nn.Cell):
     """ TensorAddNet definition """
+
     def __init__(self):
         super(TensorAddNet, self).__init__()
         self.add = P.TensorAdd()
@@ -176,6 +179,7 @@ def test_input_signature():
     y3 = Tensor(np.ones([1, 1, 4, 4], dtype=np.float64))
     with pytest.raises(ValueError):
         tensor_add_test(x3, y3)
+
 
 def test_scalar_cast():
     """ test_scalar_cast """

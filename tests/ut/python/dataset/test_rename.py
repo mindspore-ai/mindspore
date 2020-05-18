@@ -35,9 +35,9 @@ def test_rename():
 
     for i, item in enumerate(data.create_dict_iterator()):
         logger.info("item[mask] is {}".format(item["masks"]))
-        np.testing.assert_equal (item["masks"], item["input_ids"])
+        np.testing.assert_equal(item["masks"], item["input_ids"])
         logger.info("item[seg_ids] is {}".format(item["seg_ids"]))
-        np.testing.assert_equal (item["segment_ids"], item["seg_ids"])
+        np.testing.assert_equal(item["segment_ids"], item["seg_ids"])
         # need to consume the data in the buffer
         num_iter += 1
     logger.info("Number of data in data: {}".format(num_iter))

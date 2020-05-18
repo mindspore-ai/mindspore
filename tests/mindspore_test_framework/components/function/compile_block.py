@@ -18,6 +18,7 @@
 from ...components.icomponent import IBuilderComponent
 from ...utils.block_util import compile_block, gen_net, create_funcs
 
+
 class CompileBlockBC(IBuilderComponent):
     """
     Build a function that do mindspore compile.
@@ -42,5 +43,6 @@ class CompileBlockBC(IBuilderComponent):
                                dtype=mstype.float32,
                                compute_type=mstype.float32)
     """
+
     def __call__(self):
         return create_funcs(self.verification_set, gen_net, compile_block)

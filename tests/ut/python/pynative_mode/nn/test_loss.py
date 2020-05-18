@@ -28,6 +28,7 @@ def test_L1Loss():
     with pytest.raises(NotImplementedError):
         loss.construct(input_data, target_data)
 
+
 @non_graph_engine
 def test_SoftmaxCrossEntropyWithLogits():
     """ test_SoftmaxCrossEntropyWithLogits """

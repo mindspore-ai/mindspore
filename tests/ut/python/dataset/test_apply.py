@@ -19,10 +19,12 @@ import numpy as np
 
 DATA_DIR = "../data/dataset/testPK/data"
 
+
 # Generate 1d int numpy array from 0 - 64
 def generator_1d():
     for i in range(64):
         yield (np.array([i]),)
+
 
 def test_apply_generator_case():
     # apply dataset operations
@@ -40,6 +42,7 @@ def test_apply_generator_case():
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
         assert np.array_equal(item1["data"], item2["data"])
 
+
 def test_apply_imagefolder_case():
     # apply dataset map operations
     data1 = ds.ImageFolderDatasetV2(DATA_DIR, num_shards=4, shard_id=3)
@@ -49,18 +52,19 @@ def test_apply_imagefolder_case():
     normalize_op = vision.Normalize([121.0, 115.0, 100.0], [70.0, 68.0, 71.0])
 
     def dataset_fn(ds):
-        ds = ds.map(operations = decode_op)
-        ds = ds.map(operations = normalize_op)
+        ds = ds.map(operations=decode_op)
+        ds = ds.map(operations=normalize_op)
         ds = ds.repeat(2)
         return ds
-    
+
     data1 = data1.apply(dataset_fn)
-    data2 = data2.map(operations = decode_op)
-    data2 = data2.map(operations = normalize_op)
+    data2 = data2.map(operations=decode_op)
+    data2 = data2.map(operations=normalize_op)
     data2 = data2.repeat(2)
-    
+
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
         assert np.array_equal(item1["image"], item2["image"])
+
 
 def test_apply_flow_case_0(id=0):
     # apply control flow operations
@@ -92,6 +96,7 @@ def test_apply_flow_case_0(id=0):
     else:
         assert num_iter == 64
 
+
 def test_apply_flow_case_1(id=1):
     # apply control flow operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
@@ -121,6 +126,7 @@ def test_apply_flow_case_1(id=1):
         assert num_iter == 32
     else:
         assert num_iter == 64
+
 
 def test_apply_flow_case_2(id=2):
     # apply control flow operations
@@ -152,6 +158,7 @@ def test_apply_flow_case_2(id=2):
     else:
         assert num_iter == 64
 
+
 def test_apply_flow_case_3(id=3):
     # apply control flow operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
@@ -181,6 +188,7 @@ def test_apply_flow_case_3(id=3):
         assert num_iter == 32
     else:
         assert num_iter == 64
+
 
 def test_apply_exception_case():
     # apply exception operations
@@ -217,7 +225,8 @@ def test_apply_exception_case():
         assert False
     except ValueError:
         pass
- 
+
+
 if __name__ == '__main__':
     logger.info("Running test_apply.py test_apply_generator_case() function")
     test_apply_generator_case()
@@ -233,4 +242,3 @@ if __name__ == '__main__':
 
     logger.info("Running test_apply.py test_apply_exception_case() function")
     test_apply_exception_case()
-

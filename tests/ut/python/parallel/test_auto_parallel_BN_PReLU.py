@@ -22,6 +22,7 @@ import mindspore as ms
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -37,6 +38,7 @@ def bn_with_initialize(out_channels):
     bn = nn.BatchNorm2d(out_channels, momentum=0.1, eps=1e-5).add_flags_recursive(fp32=True)
     return bn
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -46,6 +48,8 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x)
 
     # model_parallel test
+
+
 def test_auto_parallel_bn_with_prelu():
     class Net(nn.Cell):
         def __init__(self):
@@ -58,11 +62,10 @@ def test_auto_parallel_bn_with_prelu():
             out = self.prelu(out)
             return out
 
-
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    
-    x = Tensor(np.random.rand(16, 16, 32, 64),dtype=ms.float32)
+
+    x = Tensor(np.random.rand(16, 16, 32, 64), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")

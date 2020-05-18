@@ -20,8 +20,9 @@ from mindspore.common.api import ms_function
 import numpy as np
 import mindspore.context as context
 
+
 class NetSparseSoftmaxCrossEntropyWithLogits(nn.Cell):
-    def __init__( self):
+    def __init__(self):
         super(NetSparseSoftmaxCrossEntropyWithLogits, self).__init__()
         self.loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
         self.dlogits = nn.SoftmaxCrossEntropyWithLogits(is_grad=True, sparse=True)
@@ -34,10 +35,10 @@ class NetSparseSoftmaxCrossEntropyWithLogits(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_sparse_softmax_cross_entropy_with_logits():
-    logits = Tensor(np.array([[1,1,10],
-                              [1,10,1],
-                              [10,1,1]]).astype(np.float32))
-    labels = Tensor(np.array([2,1,0]).astype(np.int32))
+    logits = Tensor(np.array([[1, 1, 10],
+                              [1, 10, 1],
+                              [10, 1, 1]]).astype(np.float32))
+    labels = Tensor(np.array([2, 1, 0]).astype(np.int32))
     expect_loss = 0.0002467
     expect_dlogits = np.array([[4.1126452e-05, 4.1126452e-05, -8.2234539e-05],
                                [4.1126452e-05, -8.2234539e-05, 4.1126452e-05],

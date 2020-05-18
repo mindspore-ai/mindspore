@@ -25,9 +25,11 @@ from mindspore.common.api import ms_function
 
 context.set_context(mode=context.GRAPH_MODE)
 
+
 def test_hypermap_specialize_param():
     class Net(nn.Cell):
         """ Net definition """
+
         def __init__(self):
             super(Net, self).__init__()
             self.mul = P.Mul()
@@ -51,4 +53,4 @@ def test_hypermap_specialize_param():
 
     expected_ret = (Tensor(np.full(1, 5).astype(np.int32)), Tensor(np.full(2, 5).astype(np.int32)))
     ret = hypermap_specialize_param()
-    assert(ret == (expected_ret, expected_ret))
+    assert (ret == (expected_ret, expected_ret))

@@ -107,7 +107,7 @@ Example:
         ]
     }
 """
-pipeline_for_compare_forward_with_npy_for_group_by_group_config =\
+pipeline_for_compare_forward_with_npy_for_group_by_group_config = \
     [LoadFromNpyDC, RunBlockWithRandParamBC, IdCartesianProductFIPC,
      IdentityEC, IdCartesianProductERPC, LoadFromNpyVC]
 
@@ -161,7 +161,7 @@ Example:
         ]
     }
 """
-pipeline_for_compare_forward_with_npy_for_group_by_group_config_using_group_policy =\
+pipeline_for_compare_forward_with_npy_for_group_by_group_config_using_group_policy = \
     [LoadFromNpyDC, RunBlockWithRandParamBC,
      GroupCartesianProductFIPC, IdentityEC,
      IdCartesianProductERPC, LoadFromNpyVC]

@@ -22,7 +22,6 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 from util import diff_mse
 
-
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 

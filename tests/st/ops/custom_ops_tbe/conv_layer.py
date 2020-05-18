@@ -18,14 +18,16 @@ from te.platform import CUBE_MKN
 from topi import generic
 from topi.cce import util
 from topi.cce.util import is_v200_version
+
 # pylint: disable=R0912,R0913,R0914,R0915,E1101
 # the dim of shape in conv must be 4
 PAD_SHAPE_DIM = 2
 
 NONETYPE = type(None)
 
+
 @util.check_input_type((list, tuple), (list, tuple), str, str, str, (list, int), (list, int),
-                       int, int,(list, tuple), (list, tuple),
+                       int, int, (list, tuple), (list, tuple),
                        str, str, str,
                        str, str, str,
                        str, bool, str)
@@ -57,9 +59,9 @@ def conv_layer_cce_para_check(shape_in, shape_w, in_dtype, w_dtype, res_dtype, p
 
     if quantize_config[0] == 0:
         if is_v200_version():
-            util.check_dtype_rule(in_dtype, ('int8', ))
-            util.check_dtype_rule(w_dtype, ('int8', ))
-            util.check_dtype_rule(res_dtype, ('int32', ))
+            util.check_dtype_rule(in_dtype, ('int8',))
+            util.check_dtype_rule(w_dtype, ('int8',))
+            util.check_dtype_rule(res_dtype, ('int32',))
         else:
             util.check_dtype_rule(in_dtype, ['float16'])
             util.check_dtype_rule(w_dtype, ['float16'])
@@ -117,7 +119,7 @@ def conv_layer_cce_para_check(shape_in, shape_w, in_dtype, w_dtype, res_dtype, p
 
     if isinstance(padh, list):
         if len(padh) != PAD_SHAPE_DIM:
-            raise RuntimeError("Dimension must be %d when padh is a list."%PAD_SHAPE_DIM)
+            raise RuntimeError("Dimension must be %d when padh is a list." % PAD_SHAPE_DIM)
         pad_top = padh[0]
         pad_bottom = padh[1]
     else:
@@ -126,7 +128,7 @@ def conv_layer_cce_para_check(shape_in, shape_w, in_dtype, w_dtype, res_dtype, p
 
     if isinstance(padw, list):
         if len(padw) != PAD_SHAPE_DIM:
-            raise RuntimeError("Dimension must be %d when padw is a list."%PAD_SHAPE_DIM)
+            raise RuntimeError("Dimension must be %d when padw is a list." % PAD_SHAPE_DIM)
         pad_left = padw[0]
         pad_right = padw[1]
     else:
@@ -134,8 +136,8 @@ def conv_layer_cce_para_check(shape_in, shape_w, in_dtype, w_dtype, res_dtype, p
         pad_right = padw
 
     shape_in, shape_w = te.lang.cce.check_conv_shape(shape_in, shape_w, pad_top, pad_bottom, \
-                                                    pad_left, pad_right, strideh, \
-                                                    stridew, in_dtype, w_dtype, res_dtype)
+                                                     pad_left, pad_right, strideh, \
+                                                     stridew, in_dtype, w_dtype, res_dtype)
 
     return shape_in, shape_w
 
@@ -248,9 +250,12 @@ def conv_layer_cce(shape_in, shape_w, in_dtype, w_dtype, res_dtype, padh, padw, 
     shape_in = list(shape_in)
     shape_w = list(shape_w)
 
-    shape_in, shape_w = conv_layer_cce_para_check(shape_in, shape_w, in_dtype, w_dtype, res_dtype, padh, padw, strideh, stridew,
-                            quantize_config, scale_sqrt, scale_q_dtype, offset_q_dtype, scale_dq_dtype,
-                            scale_rq_dtype, offset_rq_dtype, offset_w_dtype, offset_pad_dtype, bias, kernel_name)
+    shape_in, shape_w = conv_layer_cce_para_check(shape_in, shape_w, in_dtype, w_dtype, res_dtype, padh, padw, strideh,
+                                                  stridew,
+                                                  quantize_config, scale_sqrt, scale_q_dtype, offset_q_dtype,
+                                                  scale_dq_dtype,
+                                                  scale_rq_dtype, offset_rq_dtype, offset_w_dtype, offset_pad_dtype,
+                                                  bias, kernel_name)
 
     # quantize switch on
     if quantize_config[0] == 1:
@@ -338,7 +343,7 @@ def conv_layer_cce(shape_in, shape_w, in_dtype, w_dtype, res_dtype, padh, padw, 
             if is_quantize:
                 scale_q = tvm.placeholder(
                     (CUBE_MKN[scale_q_dtype]['mac'][1],), name='scaleQ', dtype=scale_q_dtype)
-                if quantize_algorithm ==1:
+                if quantize_algorithm == 1:
                     offset_q = tvm.placeholder(
                         (CUBE_MKN[offset_q_dtype]['mac'][1],), name='offsetQ', dtype=offset_q_dtype)
 
@@ -353,13 +358,13 @@ def conv_layer_cce(shape_in, shape_w, in_dtype, w_dtype, res_dtype, padh, padw, 
                     else (out_channel,)
                 scale_rq = tvm.placeholder(
                     scale_rq_shape, name='scaleRq', dtype=scale_rq_dtype)
-                if quantize_algorithm ==1:
+                if quantize_algorithm == 1:
                     offset_rq_shape = (CUBE_MKN[offset_rq_dtype]['mac'][1],)
                     offset_rq = tvm.placeholder(
                         offset_rq_shape, name='offsetRq', dtype=offset_rq_dtype)
 
             # need offset_pad , for half offset
-            if quantize_algorithm ==1:
+            if quantize_algorithm == 1:
                 offset_pad = tvm.placeholder(
                     (CUBE_MKN[offset_pad_dtype]['mac'][1],), name='offset_pad',
                     dtype=offset_pad_dtype)

@@ -18,7 +18,7 @@ import os
 import hashlib
 import numpy as np
 import matplotlib.pyplot as plt
-#import jsbeautifier
+# import jsbeautifier
 from mindspore import log as logger
 
 # These are the column names defined in the testTFTestAllTypes dataset

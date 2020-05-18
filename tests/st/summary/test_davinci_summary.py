@@ -99,4 +99,4 @@ def test_net():
     input_np = np.ones([32, 2048, 14, 14]).astype(np.float32) * 0.01
     label_np = np.ones([32]).astype(np.int32)
     me_train_tensor(net, input_np, label_np)
-    #me_infer_tensor(net, input_np)
+    # me_infer_tensor(net, input_np)

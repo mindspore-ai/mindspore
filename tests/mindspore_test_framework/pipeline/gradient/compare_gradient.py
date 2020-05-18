@@ -49,7 +49,7 @@ Example:
         })
     ]
 """
-pipeline_for_compare_inputs_grad_with_user_defined_for_case_by_case_config =\
+pipeline_for_compare_inputs_grad_with_user_defined_for_case_by_case_config = \
     [MeFacadeFC, GenerateFromShapeDC,
      RunBackwardBlockWrtInputsBC, IdCartesianProductFIPC,
      IdentityBackwardEC, IdCartesianProductERPC,
@@ -89,7 +89,7 @@ Example:
         })
     ]
 """
-pipeline_for_compare_inputs_grad_with_npy_for_case_by_case_config =\
+pipeline_for_compare_inputs_grad_with_npy_for_case_by_case_config = \
     [MeFacadeFC, LoadFromNpyDC, RunBackwardBlockWrtInputsBC,
      IdCartesianProductFIPC, IdentityBackwardEC,
      IdCartesianProductERPC, LoadFromNpyVC]
@@ -128,7 +128,7 @@ Example:
         })
     ]
 """
-pipeline_for_compare_params_grad_with_npy_for_case_by_case_config =\
+pipeline_for_compare_params_grad_with_npy_for_case_by_case_config = \
     [MeFacadeFC, LoadFromNpyDC, RunBackwardBlockWrtParamsBC,
      IdCartesianProductFIPC, IdentityBackwardEC,
      IdCartesianProductERPC, LoadFromNpyVC]
@@ -146,7 +146,7 @@ Example:
         })
     ]
 """
-pipeline_for_compare_inputs_grad_with_numerical_diff_for_case_by_case_config =\
+pipeline_for_compare_inputs_grad_with_numerical_diff_for_case_by_case_config = \
     [MeFacadeFC, GenerateFromShapeDC, IdentityBC,
      IdCartesianProductFIPC,
      CheckGradientWrtInputsEC]
@@ -244,7 +244,7 @@ Example:
         }),
     ]
 """
-pipeline_for_compare_inputs_jacobian_with_numerical_diff_for_case_by_case_config =\
+pipeline_for_compare_inputs_jacobian_with_numerical_diff_for_case_by_case_config = \
     [MeFacadeFC, GenerateFromShapeDC, IdentityBC,
      IdCartesianProductFIPC,
      CheckJacobianWrtInputsEC]

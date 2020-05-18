@@ -22,6 +22,7 @@ from ..pipeline.gradient.compare_gradient import \
     pipeline_for_compare_inputs_grad_with_numerical_diff_for_group_by_group_config, \
     pipeline_for_compare_inputs_jacobian_with_numerical_diff_for_group_by_group_config
 from ..mindspore_test import mindspore_test
+
 # from ...vm_impl import *
 
 

@@ -19,6 +19,7 @@ from mindspore.ops.composite import GradOperation
 from ...components.icomponent import IBuilderComponent
 from ...utils.block_util import run_block, gen_grad_net, create_funcs, get_uniform_with_shape
 
+
 class RunBackwardBlockWrtInputsWithRandParamBC(IBuilderComponent):
     def __call__(self):
         grad_op = GradOperation('grad', get_all=True, sens_param=True)

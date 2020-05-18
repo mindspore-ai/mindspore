@@ -40,6 +40,7 @@ verification_set = [
     })
 ]
 
+
 @mindspore_test(pipeline_for_check_model_loss_for_case_by_case_config)
 def test_model_loss():
     context.set_context(mode=context.GRAPH_MODE)

@@ -27,6 +27,7 @@ from mindspore.nn import ReLU
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn import Momentum
 import mindspore.context as context
+
 # pylint: disable=W0212
 # W0212: protected-access
 
@@ -34,8 +35,10 @@ tag = 0
 
 init("hccl")
 
+
 class AllReduceNet(nn.Cell):
     """AllReduceNet definition"""
+
     def __init__(self, input_channel, out_channel, op):
         super(AllReduceNet, self).__init__()
         self.dense = Dense(input_channel, out_channel)
@@ -47,8 +50,10 @@ class AllReduceNet(nn.Cell):
         x = self.reduce(x)
         return self.relu(x)
 
+
 class BroadCastNet(nn.Cell):
     """BroadCastNet definition"""
+
     def __init__(self, input_channel, out_channel):
         super(BroadCastNet, self).__init__()
         self.dense = Dense(input_channel, out_channel)
@@ -59,8 +64,10 @@ class BroadCastNet(nn.Cell):
         x = self.dense(x)
         return x
 
+
 class AllGatherNet(nn.Cell):
     """AllGatherNet definition"""
+
     def __init__(self, input_channel, out_channel):
         super(AllGatherNet, self).__init__()
         self.dense = Dense(input_channel, out_channel)
@@ -78,8 +85,10 @@ class AllGatherNet(nn.Cell):
         x = self.allgather(x)
         return self.relu(x)
 
+
 class ReduceScatterNet(nn.Cell):
     """ReduceScatterNet definition"""
+
     def __init__(self, input_channel, out_channel, op):
         super(ReduceScatterNet, self).__init__()
         self.dense = Dense(input_channel, out_channel)
@@ -91,8 +100,10 @@ class ReduceScatterNet(nn.Cell):
         x = self.reducescatter(x)
         return self.relu(x)
 
+
 class AlltoAllNet(nn.Cell):
     """AlltoAllNet definition"""
+
     def __init__(self, input_channel, out_channel):
         super(AlltoAllNet, self).__init__()
         self.dense = Dense(input_channel, out_channel)
@@ -103,6 +114,7 @@ class AlltoAllNet(nn.Cell):
         x = self.dense(x)
         x = self.alltoall(x)
         return self.relu(x)
+
 
 def run_allreduce(op):
     """run_allreduce"""
@@ -118,12 +130,14 @@ def run_allreduce(op):
     network = TrainOneStepCell(network, optimizer)
     _executor.compile(network, input_tensor, label_tensor)
 
+
 def test_allreduce():
     """test_allreduce"""
     context.set_context(mode=context.GRAPH_MODE)
     run_allreduce(ReduceOp.SUM)
     run_allreduce(ReduceOp.MAX)
     run_allreduce(ReduceOp.MIN)
+
 
 def test_allgather():
     """test_allgather"""
@@ -139,6 +153,7 @@ def test_allgather():
     network = TrainOneStepCell(network, optimizer)
     _executor.compile(network, input_tensor, label_tensor)
 
+
 def run_reducescatter(op):
     """run_reducescatter"""
     context.set_context(mode=context.GRAPH_MODE)
@@ -153,10 +168,12 @@ def run_reducescatter(op):
     network = TrainOneStepCell(network, optimizer)
     _executor.compile(network, input_tensor, label_tensor)
 
+
 def test_reducescatter():
     """test_reducescatter"""
     context.set_context(mode=context.GRAPH_MODE)
     run_reducescatter(ReduceOp.SUM)
+
 
 def test_broadcast():
     """test_broadcast"""
@@ -171,6 +188,7 @@ def test_broadcast():
     network = WithLossCell(network, loss_fn)
     network = TrainOneStepCell(network, optimizer)
     _executor.compile(network, input_tensor_1, label_tensor)
+
 
 def test_alltoall():
     """test_alltoall"""

@@ -34,6 +34,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, y, b)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -41,6 +42,7 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
+
 
 # core dump, step_auto_parallel should SetInputs for transpose axis
 def test_two_matmul_transpose():

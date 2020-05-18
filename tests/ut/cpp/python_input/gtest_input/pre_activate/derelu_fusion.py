@@ -22,6 +22,7 @@ relu_grad_v2 = Primitive('ReluGradV2')
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
 
+
 class FnDict:
     def __init__(self):
         self.fnDict = {}
@@ -31,6 +32,7 @@ class FnDict:
 
     def __getitem__(self, name):
         return self.fnDict[name]
+
 
 def test_derelu_fusion(tag):
     fns = FnDict()

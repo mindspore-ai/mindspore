@@ -22,6 +22,7 @@ from ...ut_filter import non_graph_engine
 
 class ModA(nn.Cell):
     """ ModA definition """
+
     def __init__(self, tensor):
         super(ModA, self).__init__()
         self.weight = Parameter(tensor, name="weight")
@@ -32,6 +33,7 @@ class ModA(nn.Cell):
 
 class ModB(nn.Cell):
     """ ModB definition """
+
     def __init__(self, tensor):
         super(ModB, self).__init__()
         self.weight = Parameter(tensor, name="weight")
@@ -42,6 +44,7 @@ class ModB(nn.Cell):
 
 class ModC(nn.Cell):
     """ ModC definition """
+
     def __init__(self, ta, tb):
         super(ModC, self).__init__()
         self.mod1 = ModA(ta)
@@ -68,6 +71,7 @@ class Net(nn.Cell):
 
 class Net2(nn.Cell):
     """ Net2 definition """
+
     def __init__(self, ta, tb):
         super(Net2, self).__init__(auto_prefix=False)
         self.mod1 = ModA(ta)
@@ -92,7 +96,7 @@ class ConvNet(nn.Cell):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
         self.flatten = nn.Flatten()
         self.fc = nn.Dense(
-            int(ConvNet.image_h*ConvNet.image_w*ConvNet.output_ch/(4*4)),
+            int(ConvNet.image_h * ConvNet.image_w * ConvNet.output_ch / (4 * 4)),
             num_classes)
 
     def construct(self, x):
@@ -165,6 +169,7 @@ def test_exceptions():
 
     class ModError(nn.Cell):
         """ ModError definition """
+
         def __init__(self, tensor):
             self.weight = Parameter(tensor, name="weight")
             super(ModError, self).__init__()
@@ -177,6 +182,7 @@ def test_exceptions():
 
     class ModError1(nn.Cell):
         """ ModError1 definition """
+
         def __init__(self, tensor):
             super().__init__()
             self.weight = Parameter(tensor, name="weight")
@@ -191,6 +197,7 @@ def test_exceptions():
 
     class ModError2(nn.Cell):
         """ ModError2 definition """
+
         def __init__(self, tensor):
             super().__init__()
             self.mod = ModA(tensor)
@@ -257,6 +264,7 @@ def test_add_attr():
 
     class ModAddCellError(nn.Cell):
         """ ModAddCellError definition """
+
         def __init__(self, tensor):
             self.mod = ModA(tensor)
             super().__init__()

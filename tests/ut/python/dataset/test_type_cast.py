@@ -79,7 +79,7 @@ def test_type_cast_string():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = c_vision.Decode()
 
-    type_cast_op = data_util.TypeCast(mstype.float16 )
+    type_cast_op = data_util.TypeCast(mstype.float16)
 
     ctrans = [decode_op,
               type_cast_op

@@ -22,6 +22,7 @@ make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
 axis = 2
 
+
 class FnDict:
     def __init__(self):
         self.fnDict = {}
@@ -31,6 +32,7 @@ class FnDict:
 
     def __getitem__(self, name):
         return self.fnDict[name]
+
 
 def test_confusion_mul_grad_fusion(tag):
     fns = FnDict()

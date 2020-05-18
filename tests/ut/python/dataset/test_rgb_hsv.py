@@ -27,6 +27,7 @@ import mindspore.dataset.transforms.vision.py_transforms_util as util
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
+
 def generate_numpy_random_rgb(shape):
     # Only generate floating points that are fractions like n / 256, since they
     # are RGB pixels. Some low-precision floating point types in this test can't
@@ -167,4 +168,3 @@ if __name__ == "__main__":
     test_rgb_hsv_chw()
     test_rgb_hsv_batch_chw()
     test_rgb_hsv_pipeline()
-

@@ -14,8 +14,10 @@
 # ============================================================================
 """ Test for GraphCloner """
 from mindspore.ops import Primitive
+
 scala_add = Primitive('scalar_add')
 scalar_mul = Primitive('scalar_mul')
+
 
 def test_clone_simple():
     def f(x, y):
@@ -23,39 +25,53 @@ def test_clone_simple():
         b = scalar_mul(y, y)
         c = scala_add(a, b)
         return c
+
     return f
+
 
 def test_clone_closure(x, y):
     def j(z):
         a = x + y
         b = a + z
         return b
+
     c = j(3)
     return c
+
 
 def test_clone_scoping():
     """ test_clone_scoping """
     print("run python test_clone_scoping")
+
     def f(x, y):
         def h(z):
             # No dependency on f, so not nested and not cloned
             return z * z
+
         def g(z):
             def gg():
                 return z + z
+
             # Depends on f, therefore cloned
             return x + y + gg()
+
         def i(q):
             # Depends on f, therefore cloned
             return g(1) * q
+
         return g(1) + h(x) + i(y)
+
     return f
+
 
 def test_clone_total():
     print("run python test_clone_total")
+
     def clone_total(y):
         return clone_total_sub(y) + 3
+
     return clone_total
+
 
 def clone_total_sub(x):
     return x * x

@@ -19,6 +19,7 @@ from ...components.icomponent import IExectorComponent
 from ...utils.check_gradient import check_gradient, ScalarGradChecker
 from ...utils.config_util import get_grad_checking_options
 
+
 class CheckGradientForScalarFunctionEC(IExectorComponent):
     """
     Check gradient against numeric with respect to inputs for scalar function, execute and verify.
@@ -26,6 +27,7 @@ class CheckGradientForScalarFunctionEC(IExectorComponent):
     Examples:
         'block': scalar_function
     """
+
     def __call__(self):
         f, args, delta, max_error, input_selector, output_selector, sampling_times, _ = \
             get_grad_checking_options(self.function, self.inputs)

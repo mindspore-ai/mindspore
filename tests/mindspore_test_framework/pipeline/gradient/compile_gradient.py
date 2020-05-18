@@ -35,7 +35,7 @@ Example:
         })
     ]
 """
-pipeline_for_compile_grad_anf_graph_for_case_by_case_config =\
+pipeline_for_compile_grad_anf_graph_for_case_by_case_config = \
     [MeFacadeFC, GenerateFromShapeDC, CompileBackwardBlockWrtInputsBC,
      IdCartesianProductFIPC, IdentityBackwardEC]
 
@@ -51,6 +51,6 @@ Example:
         })
     ]
 """
-pipeline_for_compile_grad_ge_graph_for_case_by_case_config =\
+pipeline_for_compile_grad_ge_graph_for_case_by_case_config = \
     [MeFacadeFC, GenerateFromShapeDC, RunBackwardBlockWrtInputsBC,
      IdCartesianProductFIPC, IdentityBackwardEC]

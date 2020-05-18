@@ -19,7 +19,9 @@ from mindspore.ops.operations import _grad_ops as G
 import mindspore.nn as nn
 import numpy as np
 import mindspore.context as context
+
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
 
 class Net(nn.Cell):
     def __init__(self):
@@ -29,24 +31,26 @@ class Net(nn.Cell):
     def construct(self, dout):
         return self.bias_add_grad(dout)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_bias_add_grad1():
-    dout = np.ones([2,3]).astype(np.float32)
+    dout = np.ones([2, 3]).astype(np.float32)
     bias_add_grad = Net()
     output = bias_add_grad(Tensor(dout))
-    expect_output = np.array([2.,2.,2.]).astype(np.float32)
+    expect_output = np.array([2., 2., 2.]).astype(np.float32)
     print(output.asnumpy())
-    assert np.all(output.asnumpy()==expect_output), "bias_add_grad execute failed, please check current code commit"
+    assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_bias_add_grad2():
-    dout = np.ones([2,3,4,4]).astype(np.float32)
+    dout = np.ones([2, 3, 4, 4]).astype(np.float32)
     bias_add_grad = Net()
     output = bias_add_grad(Tensor(dout))
-    expect_output = np.array([32.,32.,32.]).astype(np.float32)
+    expect_output = np.array([32., 32., 32.]).astype(np.float32)
     print(output.asnumpy())
-    assert np.all(output.asnumpy()==expect_output), "bias_add_grad execute failed, please check current code commit"
+    assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"

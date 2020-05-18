@@ -19,6 +19,7 @@ from mindspore.ops.composite import GradOperation
 from ...components.icomponent import IBuilderComponent
 from ...utils.block_util import compile_block, gen_grad_net, create_funcs
 
+
 class CompileBackwardBlockWrtInputsBC(IBuilderComponent):
     """
     Build a function that do mindspore gradient compile with respect to inputs.
@@ -43,6 +44,7 @@ class CompileBackwardBlockWrtInputsBC(IBuilderComponent):
                                dtype=mstype.float32,
                                compute_type=mstype.float32)
     """
+
     def __call__(self):
         grad_op = GradOperation('grad', get_all=True, sens_param=True)
         return create_funcs(self.verification_set, gen_grad_net, compile_block, grad_op)

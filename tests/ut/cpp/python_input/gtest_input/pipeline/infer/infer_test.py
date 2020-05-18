@@ -114,6 +114,7 @@ def test_graph_infer_defaults():
         x = 100
         y = 20
         return func_call(x, y)
+
     return test_call_variable
 
 

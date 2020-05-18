@@ -24,6 +24,7 @@ DIFF_SHAPE_FILE_NAME = "../data/mindrecord/testImageNetData/cityscapes_train_19_
 CV_FILE_NAME = "../data/mindrecord/testTwoImageData/two_bytes.mindrecord"
 FILES_NUM = 1
 
+
 def read(filename, fields_num=5):
     count = 0
     reader = FileReader(filename)
@@ -33,6 +34,7 @@ def read(filename, fields_num=5):
         logger.info("data: {}".format(x))
     assert count == 5
     reader.close()
+
 
 def test_write_two_images_mindrecord():
     """test two images to mindrecord"""
@@ -55,6 +57,7 @@ def test_write_two_images_mindrecord():
     if os.path.exists("{}".format(CV_FILE_NAME)):
         os.remove(CV_FILE_NAME)
 
+
 def test_write_two_images_mindrecord_whole_field():
     """test two images to mindrecord"""
     if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
@@ -63,9 +66,9 @@ def test_write_two_images_mindrecord_whole_field():
         os.remove(CV_FILE_NAME)
     writer = FileWriter(CV_FILE_NAME, FILES_NUM)
     data = get_two_bytes_data(MAP_FILE_NAME)
-    cv_schema_json={"id": {"type": "int32"}, "file_name": {"type": "string"},
-                    "label_name": {"type": "string"}, "img_data": {"type": "bytes"},
-                    "label_data": {"type": "bytes"}}
+    cv_schema_json = {"id": {"type": "int32"}, "file_name": {"type": "string"},
+                      "label_name": {"type": "string"}, "img_data": {"type": "bytes"},
+                      "label_data": {"type": "bytes"}}
     writer.add_schema(cv_schema_json, "two_images_schema")
     writer.write_raw_data(data)
     writer.commit()
@@ -77,6 +80,7 @@ def test_write_two_images_mindrecord_whole_field():
         os.remove(CV_FILE_NAME + ".db")
     if os.path.exists("{}".format(CV_FILE_NAME)):
         os.remove(CV_FILE_NAME)
+
 
 def test_write_two_diff_shape_images_mindrecord():
     """test two different shape images to mindrecord"""
@@ -96,6 +100,7 @@ def test_write_two_diff_shape_images_mindrecord():
     assert os.path.exists(CV_FILE_NAME + ".db")
     read(CV_FILE_NAME, bytes_num)
 
+
 def test_write_multi_images_mindrecord():
     """test multiple images to mindrecord"""
     if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
@@ -113,6 +118,7 @@ def test_write_multi_images_mindrecord():
     assert os.path.exists(CV_FILE_NAME)
     assert os.path.exists(CV_FILE_NAME + ".db")
     read(CV_FILE_NAME, bytes_num)
+
 
 def test_write_two_images_and_array_mindrecord():
     """test two image images and array to mindrecord"""
@@ -138,7 +144,7 @@ def test_write_two_images_and_array_mindrecord():
     writer.commit()
     assert os.path.exists(CV_FILE_NAME)
     assert os.path.exists(CV_FILE_NAME + ".db")
-    read(CV_FILE_NAME, bytes_num+2)
+    read(CV_FILE_NAME, bytes_num + 2)
 
     if os.path.exists("{}".format(CV_FILE_NAME + ".db")):
         os.remove(CV_FILE_NAME + ".db")

@@ -18,7 +18,6 @@ from mindspore import Parameter
 import mindspore.common.initializer as init
 from numpy import allclose
 
-
 parameter_shape = [16, 4]
 
 
@@ -27,9 +26,11 @@ class ParameterNet(nn.Cell):
         super(ParameterNet, self).__init__()
         self.para_xavier_uniform = Parameter(init.initializer('xavier_uniform', parameter_shape), name="xavier_uniform")
         self.para_he_uniform = Parameter(init.initializer('he_uniform', parameter_shape), name="he_uniform")
-        self.para_xavier_uniform2 = Parameter(init.initializer(init.XavierUniform(), parameter_shape), name="xavier_uniform2")
+        self.para_xavier_uniform2 = Parameter(init.initializer(init.XavierUniform(), parameter_shape),
+                                              name="xavier_uniform2")
         self.para_he_uniform2 = Parameter(init.initializer(init.HeUniform(), parameter_shape), name="he_uniform2")
-        self.para_truncated_normal = Parameter(init.initializer(init.TruncatedNormal(), parameter_shape), name="truncated_normal")
+        self.para_truncated_normal = Parameter(init.initializer(init.TruncatedNormal(), parameter_shape),
+                                               name="truncated_normal")
         self.para_normal = Parameter(init.initializer(init.Normal(), parameter_shape), name="normal")
         self.para_uniform = Parameter(init.initializer(init.Uniform(), parameter_shape), name="uniform")
 

@@ -20,7 +20,7 @@ import numpy as np
 from mindspore.model_zoo.Bert_NEZHA import GetNextSentenceOutput, BertNetworkWithLoss
 from mindspore.model_zoo.Bert_NEZHA.bert_model import BertConfig, \
     EmbeddingLookup, EmbeddingPostprocessor, BertOutput, \
-    BertAttention, BertSelfAttention, SaturateCast, TruncatedNormal,\
+    BertAttention, BertSelfAttention, SaturateCast, TruncatedNormal, \
     BertEncoderCell, BertTransformer, CreateAttentionMaskFromInputMask, BertModel
 
 from mindspore import context, nn
@@ -373,9 +373,9 @@ verification_set = {
             'id': 'BertDense_CICase',
             'group': 'bert',
             'block': BertDense(
-                                hidden_size=8,
-                                intermediate_size=8,
-                                initializer_range=0.02),
+                hidden_size=8,
+                intermediate_size=8,
+                initializer_range=0.02),
             'reduce_output': False
         },
         {

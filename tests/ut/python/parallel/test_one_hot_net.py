@@ -28,19 +28,18 @@ import mindspore as ms
 from mindspore.common.api import _executor
 from mindspore import context
 
-
-device_num=16
+device_num = 16
 device_id = 2
 
 
 class StrategyModel():
-    onehot_strategy = ((1, device_num),(),())
-    twod_strategy = ((1, device_num), )
-    twod_strategy_m = ((device_num, 1), )
+    onehot_strategy = ((1, device_num), (), ())
+    twod_strategy = ((1, device_num),)
+    twod_strategy_m = ((device_num, 1),)
     scalar_twod_strategy = ((), (1, device_num))
     twod_scalar_strategy = ((1, device_num), ())
-    scalar_strategy = ((), )
-    oned_strategy = ((1, ), )
+    scalar_strategy = ((),)
+    oned_strategy = ((1,),)
     scalar_scalar_strategy = ((), ())
     twod_twod_strategy = ((1, device_num), (1, device_num))
     twod_twodbc_strategy = ((1, device_num), (1, 1))
@@ -48,13 +47,13 @@ class StrategyModel():
 
 
 class StrategyBatch():
-    onehot_strategy = ((device_num, 1),(),())
-    twod_strategy = ((1, device_num), )
-    twod_strategy_m = ((device_num, 1), )
+    onehot_strategy = ((device_num, 1), (), ())
+    twod_strategy = ((1, device_num),)
+    twod_strategy_m = ((device_num, 1),)
     scalar_twod_strategy = ((), (1, device_num))
     twod_scalar_strategy = ((1, device_num), ())
-    scalar_strategy = ((), )
-    oned_strategy = ((1, ), )
+    scalar_strategy = ((),)
+    oned_strategy = ((1,),)
     scalar_scalar_strategy = ((), ())
     twod_twod_strategy = ((1, device_num), (1, device_num))
     twod_twodbc_strategy = ((1, device_num), (1, 1))
@@ -164,7 +163,7 @@ class SemiAutoOneHotNet(Cell):
         w = self.normalize2(self.weight)
         fc_o = self.fc(input_n, w)
         fc_o_shape = F.shape(fc_o)
-        one_hot_float = self.onehot(label, fc_o_shape[1],self.on_value, self.off_value)
+        one_hot_float = self.onehot(label, fc_o_shape[1], self.on_value, self.off_value)
         local_label = self.cast(one_hot_float, mstype.int32)
 
         exp_o = self.exp(fc_o)
@@ -173,7 +172,8 @@ class SemiAutoOneHotNet(Cell):
         exp2_o = self.exp2(mul_const2_o)
         mul_const3_o = self.mul_const3(exp2_o, self.c_const)
         mul_const4_o = self.mul_const4(F.scalar_to_array(1), local_label)
-        mul6_o = self.mul6(self.mul(mul_const3_o, one_hot_float), self.mul2(fc_o, self.cast2(mul_const4_o, mstype.float32)))
+        mul6_o = self.mul6(self.mul(mul_const3_o, one_hot_float),
+                           self.mul2(fc_o, self.cast2(mul_const4_o, mstype.float32)))
         mul_const5_o = self.mul_const5(mul6_o, self.d_const)
 
         max_o = self.reduce_max(mul_const5_o, -1)
@@ -186,7 +186,8 @@ class SemiAutoOneHotNet(Cell):
         mul3_o = self.mul3(log_o, one_hot_float)
         mul7_o = self.mul7(mul3_o, self.cast3(F.scalar_to_array(-1), mstype.float32))
         sum2_o = self.reduce_sum_2(mul7_o, -1)
-        loss = self.mul8(self.reduce_sum_3(sum2_o, -1), self.cast4(F.scalar_to_array(F.shape(mul_const5_o)[0]), mstype.float32))
+        loss = self.mul8(self.reduce_sum_3(sum2_o, -1),
+                         self.cast4(F.scalar_to_array(F.shape(mul_const5_o)[0]), mstype.float32))
         return loss
 
 
@@ -255,7 +256,7 @@ class BNReshapeDenseBNNet(nn.Cell):
 
     def construct(self, x, label):
         x = self.batch_norm(x)
-        x = self.reshape(x, (16, 2*32*32))
+        x = self.reshape(x, (16, 2 * 32 * 32))
         x = self.fc(x)
         x = self.batch_norm2(x)
         loss = self.loss(x, label)
@@ -272,7 +273,7 @@ def test_bn_reshape_dense_bn_train_loss():
     net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
-    
+
     _executor.compile(net, input, label)
 
 
@@ -286,7 +287,7 @@ def test_semi_one_hot_net_batch():
     net = GradWrap(NetWithLoss(net))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
-    
+
     _executor.compile(net, input, label)
 
 
@@ -307,5 +308,3 @@ def test_semi_one_hot_net_model():
     context.set_context(mode=context.GRAPH_MODE)
     model = Model(net, optimizer=opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
-
-

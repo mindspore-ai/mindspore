@@ -20,6 +20,7 @@
 import pytest
 from _pytest.runner import runtestprotocol
 
+
 def pytest_addoption(parser):
     """
     add runmode option to control running testcase
@@ -36,6 +37,7 @@ def test_with_simu(request):
     run PyNative testcases when compiled with simulator
     """
     return request.config.getoption("--runmode") == "simu"
+
 
 # https://stackoverflow.com/questions/14121657/how-to-get-test-name-and-test-result-during-run-time-in-pytest
 def pytest_runtest_protocol(item, nextitem):

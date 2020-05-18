@@ -19,6 +19,7 @@ MatMul = P.MatMul()
 BiasAdd = P.BiasAdd()
 make_tuple = Primitive('make_tuple')
 
+
 class FnDict:
     def __init__(self):
         self.fnDict = {}

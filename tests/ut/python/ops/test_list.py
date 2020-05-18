@@ -212,6 +212,7 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 
 import mindspore.context as context
 
+
 @non_graph_engine
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
 def test_exec():

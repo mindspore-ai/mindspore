@@ -33,15 +33,15 @@ from mindspore.common.parameter import Parameter
 from mindspore import context
 from tests.dataset_mock import MindData
 
-
 dev_num = 8
-strategy_no_weight = ((dev_num, 1, 1, 1), )
+strategy_no_weight = ((dev_num, 1, 1, 1),)
 strategy_weight = ((dev_num, 1, 1, 1), (1, 1, 1, 1))
 strategy_add = ((dev_num, 1, 1, 1), (dev_num, 1, 1, 1))
-strategy_bn = ((dev_num, 1, 1, 1), (1, ), (1, ))
+strategy_bn = ((dev_num, 1, 1, 1), (1,), (1,))
 
 strategy_fc_weight_nobias = ((1, dev_num), (1, dev_num))
-strategy_tensor_add = ((1, dev_num), (dev_num, ))
+strategy_tensor_add = ((1, dev_num), (dev_num,))
+
 
 class DenseWrap(Cell):
     def __init__(self,
@@ -321,7 +321,7 @@ class ResNet(Cell):
 class ResNetModelParallel(Cell):
     def __init__(self, block, layer_num, num_classes=100):
         super(ResNetModelParallel, self).__init__()
-        self.relu = P.ReLU().set_strategy(((1, dev_num, 1, 1), ))
+        self.relu = P.ReLU().set_strategy(((1, dev_num, 1, 1),))
         self.maxpool = MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
         self.layer1 = MakeLayer0(
             block, layer_num[0], in_channels=64, out_channels=256, stride=1)

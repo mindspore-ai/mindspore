@@ -96,6 +96,7 @@ def test_train_forward():
     bn_net.set_train(False)
     output = bn_net(Tensor(x))
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

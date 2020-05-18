@@ -43,9 +43,11 @@ class GradWrap(nn.Cell):
     def construct(self, x, y, b):
         return C.grad_all(self.network)(x, y, b)
 
+
 def bn_with_initialize(out_channels):
     bn = nn.BatchNorm2d(out_channels, momentum=0.1, eps=1e-5)
     return bn
+
 
 # model_parallel test
 def test_virtual_dataset_3_input():
@@ -64,7 +66,6 @@ def test_virtual_dataset_3_input():
             b = self.bn1(b)
             out = self.matmul2(out, b)
             return out
-
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")

@@ -33,6 +33,7 @@ log.setLevel(level=logging.ERROR)
 
 class Net(nn.Cell):
     """ Net definition """
+
     def __init__(self):
         super(Net, self).__init__()
         self.conv = nn.Conv2d(3, 64, 3, has_bias=False, weight_init='normal')
@@ -63,6 +64,7 @@ def test_build():
 # Test case 2 : test the use different args to run graph
 class Net2(nn.Cell):
     """ Net2 definition """
+
     def __init__(self):
         super(Net2, self).__init__()
         self.relu = nn.ReLU()

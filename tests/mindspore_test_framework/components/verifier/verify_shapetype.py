@@ -19,6 +19,7 @@ from ...components.icomponent import IVerifierComponent
 from ...utils.other_util import to_numpy_list
 from ...utils import keyword
 
+
 class ShapeTypeVC(IVerifierComponent):
     """
     Verify if the result's shape and type are correct.
@@ -33,6 +34,7 @@ class ShapeTypeVC(IVerifierComponent):
             ]
         }
     """
+
     def __call__(self):
         results = to_numpy_list(self.func_result[keyword.result])
         expects = self.expect[keyword.desc_expect][keyword.shape_type]

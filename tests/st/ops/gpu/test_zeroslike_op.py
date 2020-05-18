@@ -24,6 +24,8 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+
+
 class NetZerosLike(nn.Cell):
     def __init__(self):
         super(NetZerosLike, self).__init__()

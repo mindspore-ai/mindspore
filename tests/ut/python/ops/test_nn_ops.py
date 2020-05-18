@@ -479,7 +479,7 @@ test_cases = [
     }),
     ('HistogramSummary', {
         'block': HistogramSummaryNet(),
-        'desc_inputs': [[1,2,3]],
+        'desc_inputs': [[1, 2, 3]],
     }),
     ('FusedBatchNormGrad', {
         'block': FusedBatchNormGrad(nn.BatchNorm2d(num_features=512, eps=1e-5, momentum=0.1)),
@@ -539,7 +539,7 @@ test_cases = [
         'desc_bprop': [Tensor(np.array([1, 2, 3, 4]).astype(np.float32))],
         'skip': ['backward']}),
     ('ReduceLogSumExp', {
-        'block': nn.ReduceLogSumExp((0, ), False),
+        'block': nn.ReduceLogSumExp((0,), False),
         'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([1, 2, 3, 4]).astype(np.float32))],
         'skip': ['backward']}),

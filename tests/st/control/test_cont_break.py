@@ -18,6 +18,7 @@ import numpy as np
 from mindspore.nn import Cell
 from mindspore import Tensor, Model, context
 
+
 def run_test(netclass, count, dev):
     context.set_context(mode=context.GRAPH_MODE, device_target=dev)
     net = netclass()
@@ -25,9 +26,10 @@ def run_test(netclass, count, dev):
     for _ in range(count):
         input_np = np.random.randn(2, 3).astype(np.float32)
         input_ms = Tensor(input_np)
-        output_np = net.construct(input_np) # run python
-        output_ms = model.predict(input_ms) # run graph
+        output_np = net.construct(input_np)  # run python
+        output_ms = model.predict(input_ms)  # run graph
         np.testing.assert_array_almost_equal(output_np, output_ms.asnumpy(), decimal=3)
+
 
 class for_loop_with_break(Cell):
     def __init__(self):
@@ -42,6 +44,7 @@ class for_loop_with_break(Cell):
             pass
         return x
 
+
 class for_loop_with_continue(Cell):
     def __init__(self):
         super().__init__()
@@ -53,6 +56,7 @@ class for_loop_with_continue(Cell):
                 continue
             x = x * 2
         return x
+
 
 class for_loop_with_cont_break(Cell):
     def __init__(self):
@@ -71,6 +75,7 @@ class for_loop_with_cont_break(Cell):
             pass
         return x
 
+
 class for_nested_loop_with_break(Cell):
     def __init__(self):
         super().__init__()
@@ -83,6 +88,7 @@ class for_nested_loop_with_break(Cell):
                     break
                 x = x * 1.5
         return x
+
 
 class while_with_break(Cell):
     def __init__(self):
@@ -98,6 +104,7 @@ class while_with_break(Cell):
             i += 1
         return x
 
+
 class while_with_continue(Cell):
     def __init__(self):
         super().__init__()
@@ -112,6 +119,7 @@ class while_with_continue(Cell):
             x = x * 1.5
             i += 1
         return x
+
 
 class while_for_nested(Cell):
     def __init__(self):
@@ -131,6 +139,7 @@ class while_for_nested(Cell):
             i += 1
         return x
 
+
 class pass_branch(Cell):
     def __init__(self):
         super().__init__()
@@ -144,6 +153,7 @@ class pass_branch(Cell):
                 x = x * 1.5
             i += 1
         return x
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -159,4 +169,3 @@ def test_cont_break():
     run_test(while_with_continue, count, dev)
     run_test(while_for_nested, count, dev)
     run_test(pass_branch, count, dev)
-

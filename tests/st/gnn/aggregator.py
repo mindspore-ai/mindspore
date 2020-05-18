@@ -64,6 +64,7 @@ class GNNFeatureTransform(nn.Cell):
         [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]
          [ 1.0739875   4.0155234   0.94188046 -5.459526  ]]
     """
+
     @cell_attr_register
     def __init__(self,
                  in_channels,
@@ -78,7 +79,7 @@ class GNNFeatureTransform(nn.Cell):
 
         if isinstance(weight_init, Tensor):
             if weight_init.dim() != 2 or weight_init.shape()[0] != out_channels or \
-               weight_init.shape()[1] != in_channels:
+                    weight_init.shape()[1] != in_channels:
                 raise ValueError("weight_init shape error")
 
         self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
@@ -104,7 +105,7 @@ class GNNFeatureTransform(nn.Cell):
 
     def extend_repr(self):
         str_info = 'in_channels={}, out_channels={}, weight={}, has_bias={}' \
-                .format(self.in_channels, self.out_channels, self.weight, self.has_bias)
+            .format(self.in_channels, self.out_channels, self.weight, self.has_bias)
         if self.has_bias:
             str_info = str_info + ', bias={}'.format(self.bias)
 
@@ -136,6 +137,7 @@ class _BaseAggregator(nn.Cell):
         >>>    def construct(self, x):
         >>>        return self.reduce_mean(x, 1)
     """
+
     def __init__(self,
                  feature_in_dim,
                  feature_out_dim,
@@ -191,6 +193,7 @@ class MeanAggregator(_BaseAggregator):
         >>> input_data = Tensor(np.array(np.random.rand(32, 3, 32), dtypy=np.float32))
         >>> output = net(input_data)
     """
+
     def __init__(self,
                  feature_in_dim,
                  feature_out_dim,
@@ -349,6 +352,7 @@ class AttentionAggregator(nn.Cell):
                                       8)
         >>> net(input_data, biases)
     """
+
     def __init__(self,
                  in_channels,
                  out_channels,

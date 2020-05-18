@@ -30,13 +30,15 @@ from mindspore.train.serialization import export
 
 context.set_context(mode=context.GRAPH_MODE)
 
-def is_enable_onnxruntime():                                                                                               
-    val = os.getenv("ENABLE_ONNXRUNTIME", "False")                                                                                                                                                                 
-    if val in ('ON', 'on', 'TRUE', 'True', 'true'):                                                                     
-        return True                                                                                                     
-    return False                                                                                                        
-                                                                                                                        
-run_on_onnxruntime = pytest.mark.skipif(not is_enable_onnxruntime(), reason="Only support running on onnxruntime") 
+
+def is_enable_onnxruntime():
+    val = os.getenv("ENABLE_ONNXRUNTIME", "False")
+    if val in ('ON', 'on', 'TRUE', 'True', 'true'):
+        return True
+    return False
+
+
+run_on_onnxruntime = pytest.mark.skipif(not is_enable_onnxruntime(), reason="Only support running on onnxruntime")
 
 
 def setup_module():
@@ -79,6 +81,7 @@ def test_batchnorm_train_onnx_export():
     assert os.path.exists(onnx_file)
     os.chmod(onnx_file, stat.S_IWRITE)
     os.remove(onnx_file)
+
 
 class LeNet5(nn.Cell):
     """LeNet5 definition"""
@@ -207,4 +210,3 @@ def test_onnx_export_load_run(name, net, inp):
     assert os.path.exists(onnx_file)
     os.chmod(onnx_file, stat.S_IWRITE)
     os.remove(onnx_file)
-

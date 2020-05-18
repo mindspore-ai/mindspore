@@ -24,6 +24,7 @@ IMAGENET_IMAGE_DIR = "../data/mindrecord/testImageNetDataWhole/images"
 MINDRECORD_FILE = "../data/mindrecord/testImageNetDataWhole/imagenet.mindrecord"
 PARTITION_NUMBER = 4
 
+
 def read(filename):
     """test file reade"""
     count = 0
@@ -35,6 +36,7 @@ def read(filename):
             logger.info("data: {}".format(x))
     assert count == 20
     reader.close()
+
 
 def test_imagenet_to_mindrecord():
     """test transform imagenet dataset to mindrecord."""
@@ -48,6 +50,7 @@ def test_imagenet_to_mindrecord():
     for i in range(PARTITION_NUMBER):
         os.remove(MINDRECORD_FILE + str(i))
         os.remove(MINDRECORD_FILE + str(i) + ".db")
+
 
 def test_imagenet_to_mindrecord_default_partition_number():
     """
@@ -63,6 +66,7 @@ def test_imagenet_to_mindrecord_default_partition_number():
     os.remove("{}".format(MINDRECORD_FILE))
     os.remove("{}.db".format(MINDRECORD_FILE))
 
+
 def test_imagenet_to_mindrecord_partition_number_0():
     """
     test transform imagenet dataset to mindrecord
@@ -73,6 +77,7 @@ def test_imagenet_to_mindrecord_partition_number_0():
                                             IMAGENET_IMAGE_DIR,
                                             MINDRECORD_FILE, 0)
         imagenet_transformer.transform()
+
 
 def test_imagenet_to_mindrecord_partition_number_none():
     """
@@ -85,6 +90,7 @@ def test_imagenet_to_mindrecord_partition_number_none():
                                             IMAGENET_IMAGE_DIR,
                                             MINDRECORD_FILE, None)
         imagenet_transformer.transform()
+
 
 def test_imagenet_to_mindrecord_illegal_filename():
     """

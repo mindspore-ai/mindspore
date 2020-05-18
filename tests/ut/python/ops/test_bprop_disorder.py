@@ -28,6 +28,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 
 class DisOrderTest1(nn.Cell):
     """ DisOrderTest1 definition """
+
     def __init__(self):
         super(DisOrderTest1, self).__init__()
         weight = Tensor(np.ones([1], np.float32))
@@ -44,6 +45,7 @@ class DisOrderTest1(nn.Cell):
 
 class DisOrderTest2(nn.Cell):
     """ DisOrderTest2 definition """
+
     def __init__(self):
         super(DisOrderTest2, self).__init__()
         weight = Tensor(np.ones([1], np.float32))
@@ -56,11 +58,12 @@ class DisOrderTest2(nn.Cell):
 
     def construct(self, x):
         return self.mul(x, (self.add(self.add(self.add(self.mul(self.s1, self.s2), self.mul(self.s2, self.s3)),
-                                             self.mul(self.s3, self.s4)), self.mul(self.s4, self.s1))))
+                                              self.mul(self.s3, self.s4)), self.mul(self.s4, self.s1))))
 
 
 class GradNetWrap(nn.Cell):
     """ GradNetWrap definition """
+
     def __init__(self, net):
         super(GradNetWrap, self).__init__()
         self.net = net
@@ -86,6 +89,7 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 
 
 import mindspore.context as context
+
 
 @non_graph_engine
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)

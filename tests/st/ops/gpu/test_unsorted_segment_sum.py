@@ -26,6 +26,7 @@ from mindspore.common import dtype as mstype
 
 context.set_context(device_target='GPU')
 
+
 class UnsortedSegmentSumNet(nn.Cell):
     def __init__(self, num_segments):
         super(UnsortedSegmentSumNet, self).__init__()
@@ -35,38 +36,38 @@ class UnsortedSegmentSumNet(nn.Cell):
     def construct(self, data, ids):
         return self.unsorted_segment_sum(data, ids, self.num_segments)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_1D():
-      input_x = Tensor([1, 2, 3, 4], mstype.float32)
-      segment_ids = Tensor([0, 0, 1, 2], mstype.int32)
-      num_segments = 4
+    input_x = Tensor([1, 2, 3, 4], mstype.float32)
+    segment_ids = Tensor([0, 0, 1, 2], mstype.int32)
+    num_segments = 4
 
-      net = UnsortedSegmentSumNet(num_segments)
-      output = net(input_x, segment_ids)
-      expect = [3, 3, 4, 0]
-      assert (output.asnumpy() == expect).all()
+    net = UnsortedSegmentSumNet(num_segments)
+    output = net(input_x, segment_ids)
+    expect = [3, 3, 4, 0]
+    assert (output.asnumpy() == expect).all()
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_2D():
-      input_x = Tensor([[1, 2, 3, 4],
-                        [5, 6, 7, 8],
-                        [9, 10, 11, 12]], mstype.float32)
-      segment_ids = Tensor([2, 1, 1], mstype.int32)
-      num_segments = 4
+    input_x = Tensor([[1, 2, 3, 4],
+                      [5, 6, 7, 8],
+                      [9, 10, 11, 12]], mstype.float32)
+    segment_ids = Tensor([2, 1, 1], mstype.int32)
+    num_segments = 4
 
-      net = UnsortedSegmentSumNet(num_segments)
-      output = net(input_x, segment_ids)
-      expect = [[ 0,  0,  0,  0],
-                [14, 16, 18, 20],
-                [ 1,  2,  3,  4],
-                [ 0,  0,  0,  0]]
-      assert (output.asnumpy() == expect).all()
-
+    net = UnsortedSegmentSumNet(num_segments)
+    output = net(input_x, segment_ids)
+    expect = [[0, 0, 0, 0],
+              [14, 16, 18, 20],
+              [1, 2, 3, 4],
+              [0, 0, 0, 0]]
+    assert (output.asnumpy() == expect).all()
 
 
 @pytest.mark.level0
@@ -79,11 +80,11 @@ def test_3D():
 
     net = UnsortedSegmentSumNet(num_segments)
     output = net(input_x, segment_ids)
-    expect = [[[ 0.,  0.,  0.],
-               [ 0.,  0.,  0.],
-               [ 0.,  0.,  0.],
-               [ 0.,  0.,  0.],
-               [ 0.,  0.,  0.]],
+    expect = [[[0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.]],
 
               [[45., 47., 49.],
                [51., 53., 55.],
@@ -91,21 +92,21 @@ def test_3D():
                [63., 65., 67.],
                [69., 71., 73.]],
 
-              [[ 0.,  1.,  2.],
-               [ 3.,  4.,  5.],
-               [ 6.,  7.,  8.],
-               [ 9., 10., 11.],
+              [[0., 1., 2.],
+               [3., 4., 5.],
+               [6., 7., 8.],
+               [9., 10., 11.],
                [12., 13., 14.]],
 
-              [[ 0.,  0.,  0.],
-               [ 0.,  0.,  0.],
-               [ 0.,  0.,  0.],
-               [ 0.,  0.,  0.],
-               [ 0.,  0.,  0.]],
+              [[0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.]],
 
-              [[ 0.,  0.,  0.],
-               [ 0.,  0.,  0.],
-               [ 0.,  0.,  0.],
-               [ 0.,  0.,  0.],
-               [ 0.,  0.,  0.]]]
+              [[0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.],
+               [0., 0., 0.]]]
     assert (output.asnumpy() == expect).all()

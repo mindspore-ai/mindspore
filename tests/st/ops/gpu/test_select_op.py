@@ -29,9 +29,11 @@ class Net(nn.Cell):
     def construct(self, cond, x, y):
         return self.select(cond, x, y)
 
+
 cond = np.array([[True, False], [True, False]]).astype(np.bool)
 x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
 y = np.array([[1, 2], [3, 4.0]]).astype(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

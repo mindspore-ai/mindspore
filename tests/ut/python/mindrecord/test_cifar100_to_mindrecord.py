@@ -24,6 +24,7 @@ from mindspore import log as logger
 CIFAR100_DIR = "../data/mindrecord/testCifar100Data"
 MINDRECORD_FILE = "./cifar100.mindrecord"
 
+
 def test_cifar100_to_mindrecord_without_index_fields():
     """test transform cifar100 dataset to mindrecord without index fields."""
     cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, MINDRECORD_FILE)
@@ -38,6 +39,7 @@ def test_cifar100_to_mindrecord_without_index_fields():
     os.remove("{}".format(MINDRECORD_FILE + "_test"))
     os.remove("{}.db".format(MINDRECORD_FILE + "_test"))
 
+
 def test_cifar100_to_mindrecord():
     """test transform cifar100 dataset to mindrecord."""
     cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, MINDRECORD_FILE)
@@ -50,6 +52,7 @@ def test_cifar100_to_mindrecord():
 
     os.remove("{}".format(MINDRECORD_FILE + "_test"))
     os.remove("{}.db".format(MINDRECORD_FILE + "_test"))
+
 
 def read():
     """test file reader"""
@@ -73,6 +76,7 @@ def read():
     assert count == 4
     reader.close()
 
+
 def test_cifar100_to_mindrecord_illegal_file_name():
     """
     test transform cifar100 dataset to mindrecord
@@ -82,6 +86,7 @@ def test_cifar100_to_mindrecord_illegal_file_name():
     with pytest.raises(Exception, match="File name should not contains"):
         cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, filename)
         cifar100_transformer.transform()
+
 
 def test_cifar100_to_mindrecord_filename_start_with_space():
     """
@@ -93,6 +98,7 @@ def test_cifar100_to_mindrecord_filename_start_with_space():
                        match="File name should not start/end with space"):
         cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, filename)
         cifar100_transformer.transform()
+
 
 def test_cifar100_to_mindrecord_filename_contain_space():
     """
@@ -110,6 +116,7 @@ def test_cifar100_to_mindrecord_filename_contain_space():
     os.remove("{}".format(filename + "_test"))
     os.remove("{}.db".format(filename + "_test"))
 
+
 def test_cifar100_to_mindrecord_directory():
     """
     test transform cifar10 dataset to mindrecord
@@ -120,6 +127,7 @@ def test_cifar100_to_mindrecord_directory():
         cifar100_transformer = Cifar100ToMR(CIFAR100_DIR,
                                             CIFAR100_DIR)
         cifar100_transformer.transform()
+
 
 def test_cifar100_to_mindrecord_filename_equals_cifar100():
     """

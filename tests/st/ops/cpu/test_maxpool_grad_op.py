@@ -25,6 +25,7 @@ from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
+
 class Net_Pool_Grad(nn.Cell):
     def __init__(self):
         super(Net_Pool_Grad, self).__init__()
@@ -56,7 +57,6 @@ class Net_Pool_Grad(nn.Cell):
                 [31, 33, 35]
             ]]]).astype(np.float32)), [1, 1, 3, 3]), name='d')
 
-
     def construct(self):
         return self.maxpool_grad_fun(self.x, self.a, self.d)
 
@@ -78,4 +78,3 @@ def test_maxpool2d_grad():
         [0, 31, 0, 33, 0, 35]
     ]]]))
     assert (output.asnumpy() == expect_result).all()
-

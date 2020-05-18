@@ -26,7 +26,6 @@ from mindspore.common.api import _executor
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 
-
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
 
@@ -37,10 +36,11 @@ class ResNet(nn.Cell):
         self.weight = Parameter(tensor, name="weight")
 
     def construct(self, x, y):
-        return x + y*self.weight
+        return x + y * self.weight
 
     def get_params(self):
         return None
+
 
 class SimpleNet(nn.Cell):
     def __init__(self, network, tensor, use_net=False):

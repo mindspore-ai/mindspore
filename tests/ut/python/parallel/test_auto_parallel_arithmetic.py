@@ -23,7 +23,10 @@ from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 from mindspore import context
+
 context.set_context(mode=context.GRAPH_MODE)
+
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -72,8 +75,9 @@ def test_auto_parallel_arithmetic():
     compile(net, x, y, b, phase='train')
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/FloorDiv-op0': [[2, 4], [2, 4]],
-                     'Default/network-Net/MatMul-op1': [[2, 1], [1, 4]]}
+                           'Default/network-Net/MatMul-op1': [[2, 1], [1, 4]]}
     assert strategies == expected_strategies
+
 
 def test_auto_parallel_arithmetic_broadcast_both():
     class Net(nn.Cell):

@@ -17,6 +17,7 @@
 
 import numpy as np
 
+
 def count_unequal_element(expect, result, rtol, atol):
     """
     Count unequal element.
@@ -33,14 +34,15 @@ def count_unequal_element(expect, result, rtol, atol):
         raise ValueError(f'expect.shape {expect.shape}, result.shape {result.shape}')
     total_count = len(expect.flatten())
     error = np.abs(expect - result)
-    count = np.count_nonzero(np.less_equal(error, atol + np.abs(result)*rtol))
-    if ((total_count-count)/total_count) >= rtol:
+    count = np.count_nonzero(np.less_equal(error, atol + np.abs(result) * rtol))
+    if ((total_count - count) / total_count) >= rtol:
         raise ValueError(f'expect {expect}, but got {result}, '
-                         f'{total_count-count} / {total_count} elements out of tolerance, '
+                         f'{total_count - count} / {total_count} elements out of tolerance, '
                          f'absolute_tolerance {atol}, relative_tolerance {rtol}')
     print(f'expect {expect}, got {result}, '
-          f'{total_count-count} / {total_count} elements out of tolerance, '
+          f'{total_count - count} / {total_count} elements out of tolerance, '
           f'absolute_tolerance {atol}, relative_tolerance {rtol}')
+
 
 def tolerance_assert(expect, result, rtol, atol):
     """

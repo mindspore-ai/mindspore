@@ -204,5 +204,3 @@ if __name__ == '__main__':
     logger.info('Map then Shuffle')
     test_case_3()
     logger.info('\n')
-
-

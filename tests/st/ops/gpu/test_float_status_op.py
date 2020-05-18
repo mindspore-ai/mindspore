@@ -20,6 +20,7 @@ import mindspore.nn as nn
 import numpy as np
 import mindspore.context as context
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -27,6 +28,7 @@ class Net(nn.Cell):
 
     def construct(self, x):
         return self.status(x)
+
 
 class Netnan(nn.Cell):
     def __init__(self):
@@ -36,6 +38,7 @@ class Netnan(nn.Cell):
     def construct(self, x):
         return self.isnan(x)
 
+
 class Netinf(nn.Cell):
     def __init__(self):
         super(Netinf, self).__init__()
@@ -44,6 +47,7 @@ class Netinf(nn.Cell):
     def construct(self, x):
         return self.isinf(x)
 
+
 class Netfinite(nn.Cell):
     def __init__(self):
         super(Netfinite, self).__init__()
@@ -51,11 +55,13 @@ class Netfinite(nn.Cell):
 
     def construct(self, x):
         return self.isfinite(x)
-    
+
+
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 x1 = np.array([[1.2, 2, np.nan, 88]]).astype(np.float32)
 x2 = np.array([[np.inf, 1, 88.0, 0]]).astype(np.float32)
 x3 = np.array([[1, 2], [3, 4], [5.0, 88.0]]).astype(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -72,6 +78,7 @@ def test_status():
     assert output2.asnumpy()[0] == expect2
     assert output3.asnumpy()[0] == expect3
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -87,6 +94,7 @@ def test_nan():
     assert (output2.asnumpy() == expect2).all()
     assert (output3.asnumpy() == expect3).all()
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -101,6 +109,7 @@ def test_inf():
     assert (output1.asnumpy() == expect1).all()
     assert (output2.asnumpy() == expect2).all()
     assert (output3.asnumpy() == expect3).all()
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

@@ -29,6 +29,7 @@ class NetReciprocal(nn.Cell):
     def construct(self, x):
         return self.reciprocal(x)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard

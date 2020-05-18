@@ -67,4 +67,3 @@ def test_random_crop_op():
 
 if __name__ == "__main__":
     test_random_crop_op()
-

@@ -19,6 +19,7 @@ import numpy as np
 from .other_util import to_numpy_list
 from . import keyword
 
+
 def compare(expect, func_result, baseline):
     """
     Compare results of function with baseline functions.

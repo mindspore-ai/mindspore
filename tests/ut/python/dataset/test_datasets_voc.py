@@ -20,6 +20,7 @@ DATA_DIR = "../data/dataset/testVOC2012"
 IMAGE_SHAPE = [2268, 2268, 2268, 2268, 642, 607, 561, 596, 612, 2268]
 TARGET_SHAPE = [680, 680, 680, 680, 642, 607, 561, 596, 612, 680]
 
+
 def test_voc_segmentation():
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", decode=True, shuffle=False)
     num = 0
@@ -29,52 +30,56 @@ def test_voc_segmentation():
         num += 1
     assert (num == 10)
 
+
 def test_voc_detection():
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True, shuffle=False)
     num = 0
-    count = [ 0, 0, 0, 0, 0, 0 ]
+    count = [0, 0, 0, 0, 0, 0]
     for item in data1.create_dict_iterator():
         assert (item["image"].shape[0] == IMAGE_SHAPE[num])
         for bbox in item["annotation"]:
             count[bbox[0]] += 1
         num += 1
     assert (num == 9)
-    assert (count == [3,2,1,2,4,3])
+    assert (count == [3, 2, 1, 2, 4, 3])
+
 
 def test_voc_class_index():
-    class_index = { 'car': 0, 'cat': 1, 'train': 5 }
+    class_index = {'car': 0, 'cat': 1, 'train': 5}
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", class_indexing=class_index, decode=True)
     class_index1 = data1.get_class_indexing()
-    assert (class_index1 == { 'car': 0, 'cat': 1, 'train': 5 })
+    assert (class_index1 == {'car': 0, 'cat': 1, 'train': 5})
     data1 = data1.shuffle(4)
     class_index2 = data1.get_class_indexing()
-    assert (class_index2 == { 'car': 0, 'cat': 1, 'train': 5 })
+    assert (class_index2 == {'car': 0, 'cat': 1, 'train': 5})
     num = 0
-    count = [0,0,0,0,0,0]
+    count = [0, 0, 0, 0, 0, 0]
     for item in data1.create_dict_iterator():
         for bbox in item["annotation"]:
             assert (bbox[0] == 0 or bbox[0] == 1 or bbox[0] == 5)
             count[bbox[0]] += 1
         num += 1
     assert (num == 6)
-    assert (count == [3,2,0,0,0,3])
+    assert (count == [3, 2, 0, 0, 0, 3])
+
 
 def test_voc_get_class_indexing():
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True)
     class_index1 = data1.get_class_indexing()
-    assert (class_index1 == { 'car': 0, 'cat': 1, 'chair': 2, 'dog': 3, 'person': 4, 'train': 5 })
+    assert (class_index1 == {'car': 0, 'cat': 1, 'chair': 2, 'dog': 3, 'person': 4, 'train': 5})
     data1 = data1.shuffle(4)
     class_index2 = data1.get_class_indexing()
-    assert (class_index2 == { 'car': 0, 'cat': 1, 'chair': 2, 'dog': 3, 'person': 4, 'train': 5 })
+    assert (class_index2 == {'car': 0, 'cat': 1, 'chair': 2, 'dog': 3, 'person': 4, 'train': 5})
     num = 0
-    count = [0,0,0,0,0,0]
+    count = [0, 0, 0, 0, 0, 0]
     for item in data1.create_dict_iterator():
         for bbox in item["annotation"]:
             assert (bbox[0] == 0 or bbox[0] == 1 or bbox[0] == 2 or bbox[0] == 3 or bbox[0] == 4 or bbox[0] == 5)
             count[bbox[0]] += 1
         num += 1
     assert (num == 9)
-    assert (count == [3,2,1,2,4,3])
+    assert (count == [3, 2, 1, 2, 4, 3])
+
 
 def test_case_0():
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", decode=True)
@@ -93,6 +98,7 @@ def test_case_0():
         num += 1
     assert (num == 20)
 
+
 def test_case_1():
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", mode="train", decode=True)
 
@@ -109,6 +115,7 @@ def test_case_1():
         num += 1
     assert (num == 18)
 
+
 def test_voc_exception():
     try:
         data1 = ds.VOCDataset(DATA_DIR, task="InvalidTask", mode="train", decode=True)
@@ -119,7 +126,7 @@ def test_voc_exception():
         pass
 
     try:
-        data2 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", class_indexing={ "cat":0 }, decode=True)
+        data2 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", class_indexing={"cat": 0}, decode=True)
         for _ in data2.create_dict_iterator():
             pass
         assert False
@@ -157,6 +164,7 @@ def test_voc_exception():
         assert False
     except RuntimeError:
         pass
+
 
 if __name__ == '__main__':
     test_voc_segmentation()

@@ -21,6 +21,7 @@ import pytest
 from ...components.icomponent import IExectorComponent
 from ...utils import keyword
 
+
 class CheckExceptionsEC(IExectorComponent):
     """
     Check if the function raises the expected Exception and the error message contains specified keywords if not None.
@@ -32,6 +33,7 @@ class CheckExceptionsEC(IExectorComponent):
             'error_keywords': ['TensorAdd', 'shape']
         }
     """
+
     def __call__(self):
         f = self.function[keyword.block]
         args = self.inputs[keyword.desc_inputs]

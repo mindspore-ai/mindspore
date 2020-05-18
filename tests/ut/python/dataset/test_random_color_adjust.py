@@ -253,11 +253,12 @@ def test_random_color_adjust_op_hue(plot=False):
             visualize(c_image, mse, py_image)
 
 
-def test_random_color_adjust_grayscale(): 
+def test_random_color_adjust_grayscale():
     """
     Tests that the random color adjust works for grayscale images 
     """
-    def channel_swap(image): 
+
+    def channel_swap(image):
         """
         Py func hack for our pytransforms to work with c transforms
         """
@@ -265,7 +266,7 @@ def test_random_color_adjust_grayscale():
 
     transforms = [
         py_vision.Decode(),
-        py_vision.Grayscale(1), 
+        py_vision.Grayscale(1),
         py_vision.ToTensor(),
         (lambda image: channel_swap(image))
     ]
@@ -276,7 +277,7 @@ def test_random_color_adjust_grayscale():
 
     # if input is grayscale, the output dimensions should be single channel, the following should fail
     random_adjust_op = c_vision.RandomColorAdjust((1, 1), (1, 1), (1, 1), (0.2, 0.2))
-    try: 
+    try:
         data1 = data1.map(input_columns=["image"], operations=random_adjust_op)
         dataset_shape_1 = []
         for item1 in data1.create_dict_iterator():

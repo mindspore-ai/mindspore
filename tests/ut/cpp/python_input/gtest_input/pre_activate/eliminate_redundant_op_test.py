@@ -24,6 +24,7 @@ transdata = Primitive("TransData")
 cast = Primitive('Cast')
 depend = Primitive('depend')
 
+
 class FnDict:
     def __init__(self):
         self.fnDict = {}

@@ -17,7 +17,6 @@ import mindspore.dataset.transforms.c_transforms as C
 from mindspore.common import dtype as mstype
 from util import save_and_check_tuple
 
-
 DATA_DIR_TF = ["../data/dataset/testTFTestAllTypes/test.data"]
 SCHEMA_DIR_TF = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 GENERATE_GOLDEN = False

@@ -19,6 +19,7 @@ from mindspore.common.api import _executor
 from mindspore import context
 import numpy as np
 
+
 def test_SoftmaxCrossEntropy():
     net = SoftmaxCrossEntropyExpand(sparse=True)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")

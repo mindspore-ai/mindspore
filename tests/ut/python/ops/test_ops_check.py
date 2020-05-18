@@ -27,11 +27,13 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
+
 logging.basicConfig(level=logging.WARNING)
 
 
 class NetMissConstruct(nn.Cell):
     """ NetMissConstruct definition """
+
     def __init__(self):
         super(NetMissConstruct, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')
@@ -70,6 +72,7 @@ def test_net_without_construct():
 
 class NetWithRaise(nn.Cell):
     """ NetWithRaise definition """
+
     def __init__(self):
         super(NetWithRaise, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, 5, pad_mode='valid')
@@ -94,6 +97,7 @@ def test_net_with_raise():
 
 class NetAddN(nn.Cell):
     """net for test AddN"""
+
     def __init__(self):
         super(NetAddN, self).__init__()
         self.net = P.AddN()
@@ -104,6 +108,7 @@ class NetAddN(nn.Cell):
 
 class NetSplit(nn.Cell):
     "net for test Split"
+
     def __init__(self):
         super(NetSplit, self).__init__()
         self.net = P.Split(1, 2)
@@ -114,6 +119,7 @@ class NetSplit(nn.Cell):
 
 class NetBatchMatMul(nn.Cell):
     """net for test BatchMatMul"""
+
     def __init__(self):
         super(NetBatchMatMul, self).__init__()
         self.op = P.BatchMatMul()
@@ -214,6 +220,7 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 
 
 import mindspore.context as context
+
 
 @non_graph_engine
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)

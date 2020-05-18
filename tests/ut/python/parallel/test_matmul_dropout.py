@@ -62,7 +62,7 @@ def test_two_matmul_dropout():
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
     strategy1 = ((4, 2), (2, 1))
-    strategy2 = ((8, 1), )
+    strategy2 = ((8, 1),)
     strategy3 = ((1, 8), (8, 1))
     net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")

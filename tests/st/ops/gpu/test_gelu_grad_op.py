@@ -23,6 +23,7 @@ from mindspore.ops import composite as C
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
+
 class GeluNet(nn.Cell):
     def __init__(self):
         super(GeluNet, self).__init__()
@@ -30,6 +31,7 @@ class GeluNet(nn.Cell):
 
     def construct(self, x):
         return self.gelu(x)
+
 
 class Grad(nn.Cell):
     def __init__(self, network):
@@ -46,16 +48,16 @@ class Grad(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gelugrad():
-    x_ms = Tensor(np.array([0.58401114, 0.68800163, 0.9760397,  0.14702141, 0.46563736, 0.9607501,
+    x_ms = Tensor(np.array([0.58401114, 0.68800163, 0.9760397, 0.14702141, 0.46563736, 0.9607501,
                             0.14567593, 0.12261796, 0.37054458, 0.46421242]).astype(np.float32))
-    dy_ms = Tensor(np.array([0.5559598,  0.96994054, 0.24770357, 0.34646875, 0.2984393,  0.03287048,
-                             0.55681044, 0.966908,   0.06015943, 0.6099489 ]).astype(np.float32))
+    dy_ms = Tensor(np.array([0.5559598, 0.96994054, 0.24770357, 0.34646875, 0.2984393, 0.03287048,
+                             0.55681044, 0.966908, 0.06015943, 0.6099489]).astype(np.float32))
 
     net = GeluNet()
     grad = Grad(net)
 
     output = grad(x_ms, dy_ms)
     print(output)
-    expect = [0.50963277, 0.9414753,  0.2667653,  0.21358444, 0.25243032, 0.0352667,
+    expect = [0.50963277, 0.9414753, 0.2667653, 0.21358444, 0.25243032, 0.0352667,
               0.34266686, 0.57757664, 0.04707306, 0.51536125]
     assert np.allclose(output[0].asnumpy(), expect)

@@ -64,7 +64,7 @@ def test_virtual_dataset_3_input():
     strategy0 = ((2, 1), (2, 1), (2, 1))
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((2, 2), (2, 2))
-    strategy3 = ((2, 4), )
+    strategy3 = ((2, 4),)
     net = GradWrap(NetWithLoss(Net(strategy0, strategy1, strategy2, strategy3)))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_auto_parallel_context(device_num=8, global_rank=0)
@@ -73,6 +73,7 @@ def test_virtual_dataset_3_input():
     b = Tensor(np.ones([64, 2048]), dtype=ms.float32)
     net.set_auto_parallel()
     _executor.compile(net, x, y, b)
+
 
 def test_virtualdataset_cell_3_inputs():
     class Net(nn.Cell):

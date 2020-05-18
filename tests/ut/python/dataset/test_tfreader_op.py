@@ -20,7 +20,6 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 import pytest
 
-
 FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"
 SCHEMA_FILE = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
@@ -233,6 +232,7 @@ def test_tf_record_schema_columns_list():
         a = row["col_sint32"]
     assert "col_sint32" in str(info.value)
 
+
 def test_case_invalid_files():
     valid_file = "../data/dataset/testTFTestAllTypes/test.data"
     invalid_file = "../data/dataset/testTFTestAllTypes/invalidFile.txt"
@@ -259,6 +259,7 @@ def test_case_invalid_files():
     assert SCHEMA_FILE not in str(info.value)
     assert nonexistent_file in str(info.value)
 
+
 if __name__ == '__main__':
     test_case_tf_shape()
     test_case_tf_read_all_dataset()
@@ -271,7 +272,7 @@ if __name__ == '__main__':
     test_tf_files()
     test_tf_record_schema()
     test_tf_record_shuffle()
-    #test_tf_record_shard()
+    # test_tf_record_shard()
     test_tf_shard_equal_rows()
     test_case_tf_file_no_schema_columns_list()
     test_tf_record_schema_columns_list()

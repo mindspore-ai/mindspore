@@ -69,9 +69,9 @@ class GatherV2(_Loss):
             emb1_list = emb_list[0::2]
             emb2_list = emb_list[1::2]
         if index_dim == 2:
-            emb_list = np.arange(index_size*16)
-            emb1_list = np.reshape(emb_list[0::2], (int(index_size/2), 16))
-            emb2_list = np.reshape(emb_list[1::2], (int(index_size/2), 16))
+            emb_list = np.arange(index_size * 16)
+            emb1_list = np.reshape(emb_list[0::2], (int(index_size / 2), 16))
+            emb2_list = np.reshape(emb_list[1::2], (int(index_size / 2), 16))
         self.emb1_param = Tensor(emb1_list, dtype=mstype.int32)
         self.emb2_param = Tensor(emb2_list, dtype=mstype.int32)
         self.gatherv2 = P.GatherV2().set_strategy(strategy).add_prim_attr("data_parallel", True)
@@ -199,9 +199,9 @@ class GatherV2Axis1(_Loss):
             emb1_list = emb_list[0::2]
             emb2_list = emb_list[1::2]
         if index_dim == 2:
-            emb_list = np.arange(index_size*index_size)
-            emb1_list = np.reshape(emb_list[0::2], (int(index_size/2), index_size))
-            emb2_list = np.reshape(emb_list[1::2], (int(index_size/2), index_size))
+            emb_list = np.arange(index_size * index_size)
+            emb1_list = np.reshape(emb_list[0::2], (int(index_size / 2), index_size))
+            emb2_list = np.reshape(emb_list[1::2], (int(index_size / 2), index_size))
         self.emb1_param = Tensor(emb1_list, dtype=mstype.int32)
         self.emb2_param = Tensor(emb2_list, dtype=mstype.int32)
         self.gatherv2 = P.GatherV2().set_strategy(strategy)
@@ -231,4 +231,3 @@ def test_axis1_strategy1():
     rank = 17
     criterion = GatherV2Axis1(1, strategy=gather_v2_strategy, index_size=512)
     net_trains(gather_v2_strategy, criterion, rank)
-

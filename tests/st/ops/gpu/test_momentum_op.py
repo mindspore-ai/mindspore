@@ -25,6 +25,8 @@ from mindspore.common.initializer import initializer
 import mindspore.context as context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+
 class NetMomentum(nn.Cell):
     def __init__(self):
         super(NetMomentum, self).__init__()
@@ -37,6 +39,7 @@ class NetMomentum(nn.Cell):
         output = self.reshape(input_x, (self.batch_size, -1))
         output = self.fc1(output)
         return output
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

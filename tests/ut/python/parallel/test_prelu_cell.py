@@ -25,6 +25,7 @@ from tests.dataset_mock import MindData
 from mindspore import context
 from mindspore.ops import functional as F
 from mindspore.common.initializer import initializer
+
 context.set_context(mode=context.GRAPH_MODE)
 
 
@@ -66,11 +67,11 @@ class PReLU(nn.Cell):
         if not isinstance(w, Tensor):
             raise TypeError("w only support np.float32, float or Tensor type.")
 
-        self.w = Parameter(initializer(w, [channel,]), name='a')
+        self.w = Parameter(initializer(w, [channel, ]), name='a')
         self.prelu = P.PReLU()
-        self.relu = P.ReLU().set_strategy(((1, ), ))
-        self.sub = P.Sub().set_strategy(((1, ), (1, )))
-        self.assign_sub = P.AssignSub().set_strategy(((1, ), (1, )))
+        self.relu = P.ReLU().set_strategy(((1,),))
+        self.sub = P.Sub().set_strategy(((1,), (1,)))
+        self.assign_sub = P.AssignSub().set_strategy(((1,), (1,)))
 
     def construct(self, x):
         u = self.relu(self.w)

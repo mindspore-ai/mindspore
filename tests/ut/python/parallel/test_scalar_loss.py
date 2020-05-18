@@ -23,6 +23,7 @@ from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -30,6 +31,7 @@ class GradWrap(nn.Cell):
 
     def construct(self, x, y, bias):
         return C.grad_all(self.network)(x, y, bias)
+
 
 def test_sum_as_loss():
     class Net(nn.Cell):
@@ -41,14 +43,14 @@ def test_sum_as_loss():
 
         def construct(self, x, y, bias):
             out = self.fc_nobias(x, y)
-            out = self.reduce_sum(out, (0,1))
+            out = self.reduce_sum(out, (0, 1))
             out = self.mul(out, F.scalar_to_array(2.0))
             return out
 
     context.set_auto_parallel_context(device_num=16, global_rank=0)
-    
+
     strategy0 = ((4, 1), (4, 1))
-    strategy1 = ((4, 1), )
+    strategy1 = ((4, 1),)
     net = GradWrap(Net(strategy0, strategy1))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()

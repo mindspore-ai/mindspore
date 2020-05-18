@@ -27,7 +27,6 @@ from mindspore.parallel._utils import _reset_op_id
 from mindspore.common.api import _executor
 
 
-
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
         super(Dataset, self).__init__(size=length)
@@ -81,7 +80,7 @@ def all_to_all_common(strategy1):
 
     loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
     loss.softmax_cross_entropy.set_strategy(((8, 1), (8, 1)))
-    loss.one_hot.set_strategy(((8,1), (), ()))
+    loss.one_hot.set_strategy(((8, 1), (), ()))
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, loss, opt)
 
@@ -91,20 +90,22 @@ def all_to_all_common(strategy1):
 
 
 def test_all_to_all():
-    strategy1 = ((8, 1), )
+    strategy1 = ((8, 1),)
     context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
     _reset_op_id()
     strategys = all_to_all_common(strategy1)
     print(strategys)
     expect_dict = {'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits'
                    '/SoftmaxCrossEntropyWithLogits-op3': [[8, 1], [8, 1]],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits/OneHot-op4': [[8, 1], [], []],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/Transpose-op1': [[8, 1]],
-                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/MatMul-op0': [[1, 1], [1, 8]]}
+                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits/OneHot-op4': [
+                       [8, 1], [], []],
+                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/Transpose-op1': [
+                       [8, 1]],
+                   'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/MatMul-op0': [
+                       [1, 1], [1, 8]]}
     assert (strategys == expect_dict)
     context.set_context(save_graphs=False)
 
 
 if __name__ == '__main__':
     test_all_to_all()
-

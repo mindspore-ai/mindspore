@@ -93,4 +93,3 @@ def test_two_matmul():
             net.set_auto_parallel()
             _executor.compile(net, x, y, b)
             count = count + 1
-

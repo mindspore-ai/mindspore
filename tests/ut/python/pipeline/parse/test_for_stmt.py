@@ -34,6 +34,7 @@ class Access:
 
 class access2_net(Cell):
     """ access2_net definition """
+
     def __init__(self, number, loop_count=1):
         super().__init__()
         self.number = number

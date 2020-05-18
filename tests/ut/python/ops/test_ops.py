@@ -185,6 +185,7 @@ class ScatterMax(nn.Cell):
         out = self.scatter_max(self.ref, indices, updates)
         return out
 
+
 class ApplyFtrlNet(nn.Cell):
     def __init__(self):
         super(ApplyFtrlNet, self).__init__()
@@ -944,7 +945,7 @@ test_case_nn_ops = [
     ('ROIAlign', {
         'block': P.ROIAlign(7, 7, 0.03125, 2),
         'desc_inputs': [[2, 256, 192, 320], [1024, 5]],
-        'desc_bprop': [[7,7]]}),
+        'desc_bprop': [[7, 7]]}),
     ('ROIAlignGrad', {
         'block': G.ROIAlignGrad((1, 1, 1, 1), 2, 2, 0.5, 2),
         'desc_inputs': [[1, 1, 2, 2], [1, 5]],
@@ -957,7 +958,7 @@ test_case_nn_ops = [
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
     ('SGD', {
-       'block': P.SGD(0.0, 0.0, False),
+        'block': P.SGD(0.0, 0.0, False),
         'desc_inputs': [[3, 3], [3, 3], Tensor(0.001, mstype.float32), [3, 3], Tensor(0.1, mstype.float32), [3, 3]],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),

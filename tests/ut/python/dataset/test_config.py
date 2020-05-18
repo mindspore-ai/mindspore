@@ -26,9 +26,9 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 
-
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+
 
 def test_basic():
     ds.config.load('../data/dataset/declient.cfg')
@@ -114,7 +114,7 @@ def test_deterministic_run_fail():
 
     try:
         for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-            np.testing.assert_equal (item1["image"], item2["image"])
+            np.testing.assert_equal(item1["image"], item2["image"])
 
     except BaseException as e:
         # two datasets split the number out of the sequence a
@@ -147,7 +147,7 @@ def test_deterministic_run_pass():
     data2 = data2.map(input_columns=["image"], operations=random_crop_op2)
     try:
         for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-            np.testing.assert_equal (item1["image"], item2["image"])
+            np.testing.assert_equal(item1["image"], item2["image"])
     except BaseException as e:
         # two datasets both use numbers from the generated sequence "a"
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -177,7 +177,7 @@ def test_seed_undeterministic():
     data2 = data2.map(input_columns=["image"], operations=random_crop_op2)
 
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-        np.testing.assert_equal (item1["image"], item2["image"])
+        np.testing.assert_equal(item1["image"], item2["image"])
 
 
 def test_deterministic_run_distribution():
@@ -205,7 +205,7 @@ def test_deterministic_run_distribution():
     data2 = data2.map(input_columns=["image"], operations=random_crop_op2)
 
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-        np.testing.assert_equal (item1["image"], item2["image"])
+        np.testing.assert_equal(item1["image"], item2["image"])
 
 
 def test_deterministic_python_seed():
@@ -241,7 +241,7 @@ def test_deterministic_python_seed():
     for data_two in data2.create_dict_iterator():
         data2_output.append(data_two["image"])
 
-    np.testing.assert_equal (data1_output, data2_output)
+    np.testing.assert_equal(data1_output, data2_output)
 
 
 def test_deterministic_python_seed_multi_thread():
@@ -277,7 +277,7 @@ def test_deterministic_python_seed_multi_thread():
         data2_output.append(data_two["image"])
 
     try:
-        np.testing.assert_equal (data1_output, data2_output)
+        np.testing.assert_equal(data1_output, data2_output)
     except BaseException as e:
         # expect output to not match during multi-threaded excution
         logger.info("Got an exception in DE: {}".format(str(e)))

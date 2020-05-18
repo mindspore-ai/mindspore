@@ -18,23 +18,25 @@ from mindspore.ops import operations as P
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
 from mindspore.common.tensor import Tensor
 
+
 def im2col(img, filter_h, filter_w, stride=1, pad=0, dilation=1):
     """Rearranges an image to row vector"""
     batch_num, channel, height, width = img.shape
-    out_h = (height + 2*pad - filter_h - (filter_h - 1) * (dilation[2] - 1))//stride[2] + 1
-    out_w = (width + 2*pad - filter_w - (filter_w - 1) * (dilation[3] - 1))//stride[3] + 1
+    out_h = (height + 2 * pad - filter_h - (filter_h - 1) * (dilation[2] - 1)) // stride[2] + 1
+    out_w = (width + 2 * pad - filter_w - (filter_w - 1) * (dilation[3] - 1)) // stride[3] + 1
 
     img = np.pad(img, [(0, 0), (0, 0), (pad, pad), (pad, pad)], 'constant')
     col = np.zeros((batch_num, channel, filter_h, filter_w, out_h, out_w)).astype(img.dtype)
 
     for y in range(filter_h):
-        y_max = y + stride[2]*out_h
+        y_max = y + stride[2] * out_h
         for x in range(filter_w):
-            x_max = x + stride[2]*out_w
+            x_max = x + stride[2] * out_w
             col[:, :, y, x, :, :] = img[:, :, y:y_max:stride[2], x:x_max:stride[2]]
 
-    col = col.transpose(0, 4, 5, 1, 2, 3).reshape(batch_num*out_h*out_w, -1)
+    col = col.transpose(0, 4, 5, 1, 2, 3).reshape(batch_num * out_h * out_w, -1)
     return col
+
 
 # pylint: disable=unused-argument
 def conv2d(x, weight, bias=None, stride=1, pad=0,
@@ -56,12 +58,14 @@ def conv2d(x, weight, bias=None, stride=1, pad=0,
 @vm_impl_getters.register(P.Conv2D)
 def vm_impl_conv2d(self):
     """Generate vm_impl function for Conv2D"""
+
     def vm_impl(x, w):
         x = x.asnumpy()
         weight = w.asnumpy()
         bias = None
         out = conv2d(x, weight, bias, self.stride, self.pad, self.dilation)
         return Tensor(out)
+
     return vm_impl
 
 

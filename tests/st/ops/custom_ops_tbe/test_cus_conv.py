@@ -20,31 +20,34 @@ import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from .cus_conv2d import Cus_Conv2D
+
 context.set_context(device_target="Ascend")
+
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         out_channel = 64
         kernel_size = 7
         self.conv = Cus_Conv2D(out_channel,
-                             kernel_size,
-                             mode=1,
-                             pad_mode="valid",
-                             pad=0,
-                             stride=1,
-                             dilation=1,
-                             group=1)
+                               kernel_size,
+                               mode=1,
+                               pad_mode="valid",
+                               pad=0,
+                               stride=1,
+                               dilation=1,
+                               group=1)
         self.w = Parameter(initializer(
             'normal', [64, 3, 7, 7]), name='w')
-
 
     @ms_function
     def construct(self, x):
         return self.conv(x, self.w)
 
+
 def test_net():
     np.random.seed(3800)
-    x = np.random.randn(32,3,224,224).astype(np.float32)
+    x = np.random.randn(32, 3, 224, 224).astype(np.float32)
     conv = Net()
     output = conv(Tensor(x))
     print(output.asnumpy())

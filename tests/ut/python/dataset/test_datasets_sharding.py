@@ -15,13 +15,14 @@
 import mindspore.dataset as ds
 from mindspore import log as logger
 
+
 def test_imagefolder_shardings(print_res=False):
     image_folder_dir = "../data/dataset/testPK/data"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, class_index, repeat_cnt=1):
         data1 = ds.ImageFolderDatasetV2(image_folder_dir, num_samples=num_samples, num_shards=num_shards,
-                                      shard_id=shard_id,
-                                      shuffle=shuffle, class_indexing=class_index, decode=True)
+                                        shard_id=shard_id,
+                                        shuffle=shuffle, class_indexing=class_index, decode=True)
         data1 = data1.repeat(repeat_cnt)
         res = []
         for item in data1.create_dict_iterator():  # each data is a dictionary
@@ -48,7 +49,7 @@ def test_manifest_shardings(print_res=False):
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
         data1 = ds.ManifestDataset(manifest_file, num_samples=num_samples, num_shards=num_shards, shard_id=shard_id,
-                                 shuffle=shuffle, decode=True)
+                                   shuffle=shuffle, decode=True)
         data1 = data1.repeat(repeat_cnt)
         res = []
         for item in data1.create_dict_iterator():  # each data is a dictionary
@@ -101,7 +102,7 @@ def test_cifar10_shardings(print_res=False):
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
         data1 = ds.Cifar10Dataset(cifar10_dir, num_shards=num_shards, shard_id=shard_id, num_samples=num_samples,
-                                shuffle=shuffle)
+                                  shuffle=shuffle)
         data1 = data1.repeat(repeat_cnt)
         res = []
         for item in data1.create_dict_iterator():  # each data is a dictionary
@@ -121,7 +122,7 @@ def test_cifar100_shardings(print_res=False):
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
         data1 = ds.Cifar100Dataset(cifar100_dir, num_shards=num_shards, shard_id=shard_id, num_samples=num_samples,
-                                 shuffle=shuffle)
+                                   shuffle=shuffle)
         data1 = data1.repeat(repeat_cnt)
         res = []
         for item in data1.create_dict_iterator():  # each data is a dictionary
@@ -140,7 +141,7 @@ def test_mnist_shardings(print_res=False):
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
         data1 = ds.MnistDataset(mnist_dir, num_shards=num_shards, shard_id=shard_id, num_samples=num_samples,
-                              shuffle=shuffle)
+                                shuffle=shuffle)
         data1 = data1.repeat(repeat_cnt)
         res = []
         for item in data1.create_dict_iterator():  # each data is a dictionary

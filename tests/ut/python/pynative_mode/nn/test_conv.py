@@ -18,7 +18,6 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
 
-
 weight = Tensor(np.ones([2, 2]))
 in_channels = 3
 out_channels = 64

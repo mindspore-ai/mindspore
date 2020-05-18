@@ -70,4 +70,3 @@ def test_auto_parallel_l2normalize():
     y = Tensor(np.ones([128, 64, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64, 64]), dtype=ms.float32)
     _executor.compile(net, x, y, b, phase='train')
-

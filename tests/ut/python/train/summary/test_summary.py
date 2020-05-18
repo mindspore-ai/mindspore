@@ -66,7 +66,6 @@ def test_scalar_summary_sample():
     log.debug("begin test_scalar_summary_sample")
     # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
-
         # step 1: create the test data for summary
 
         # step 2: create the Event
@@ -110,7 +109,6 @@ def test_scalar_summary_sample_with_shape_1():
     log.debug("begin test_scalar_summary_sample_with_shape_1")
     # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
-
         # step 1: create the test data for summary
 
         # step 2: create the Event
@@ -151,7 +149,6 @@ def test_scalar_summary_with_ge():
 
     # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
-
         # step 1: create the network for summary
         x = Tensor(np.array([1.1]).astype(np.float32))
         y = Tensor(np.array([1.2]).astype(np.float32))
@@ -166,7 +163,6 @@ def test_scalar_summary_with_ge():
             net(x, y)
             test_writer.record(i)
 
-
         log.debug("finished test_scalar_summary_with_ge")
 
 
@@ -177,7 +173,6 @@ def test_scalar_summary_with_ge_2():
 
     # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
-
         # step 1: create the network for summary
         x = Tensor(np.array([1.1]).astype(np.float32))
         y = Tensor(np.array([1.2]).astype(np.float32))
@@ -192,13 +187,11 @@ def test_scalar_summary_with_ge_2():
             net(x, y)
             test_writer.record(i)
 
-
         log.debug("finished test_scalar_summary_with_ge_2")
 
 
 def test_validate():
     with SummaryRecord(SUMMARY_DIR) as sr:
-
         with pytest.raises(ValueError):
             SummaryStep(sr, 0)
         with pytest.raises(ValueError):

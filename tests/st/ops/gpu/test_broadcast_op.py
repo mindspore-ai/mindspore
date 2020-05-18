@@ -21,6 +21,7 @@ import mindspore.common.dtype as mstype
 import mindspore.context as context
 import numpy as np
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -63,7 +64,6 @@ def test_nobroadcast():
     assert np.allclose(output_ms.asnumpy(), output_np)
 
 
-
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -104,6 +104,7 @@ def test_broadcast():
     output_ms = P.Sub()(Tensor(x1_np), Tensor(x2_np))
     output_np = x1_np - x2_np
     assert np.allclose(output_ms.asnumpy(), output_np)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

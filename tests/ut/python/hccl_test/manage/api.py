@@ -15,6 +15,7 @@
 """api definition"""
 import threading
 
+
 class Hccl():
     """Hccl definition"""
     _instance_lock = threading.Lock()
@@ -51,6 +52,7 @@ class Hccl():
     def rank_size(self, size):
         self._rank_size = size
 
+
 # pylint: disable=unused-argument
 def get_rank_id(group=None):
     hccl = Hccl()
@@ -65,17 +67,21 @@ def get_rank_size(group=None):
         return int(group.split("-")[0])
     raise ValueError
 
+
 # pylint: disable=unused-argument
 def get_world_rank_from_group_rank(group, group_rank_id):
     return group_rank_id
+
 
 # pylint: disable=unused-argument
 def get_group_rank_from_world_rank(world_rank_id, group):
     return world_rank_id
 
+
 # pylint: disable=unused-argument
 def create_group(group, rank_size, rank_ids):
     pass
+
 
 # pylint: disable=unused-argument
 def destroy_group(group):

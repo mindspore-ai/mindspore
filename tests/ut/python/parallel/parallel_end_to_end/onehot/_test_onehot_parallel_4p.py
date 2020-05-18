@@ -23,9 +23,10 @@ from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 import mindspore.communication.management as distributedTool
 
-device_num=4
+device_num = 4
 device_id = int(os.environ["RANK_ID"])
 path = "./output/"
+
 
 def setup_module():
     print("~~~~~~~~~~~set up~~~~~~~~~~~~~")
@@ -34,6 +35,7 @@ def setup_module():
     distributedTool.init()
     distributedTool.create_group("0-3", [0, 1, 2, 3])
     print("~~~~~~~~~~~set up finished~~~~~~~~~~~~~")
+
 
 def teardown_module():
     print("~~~~~~~~~~~~tear down~~~~~~~~~~")
@@ -57,10 +59,10 @@ class OneHotFactory:
         prefix = ""
         for s in input_shape:
             prefix = prefix + str(s)
-            size = size*s
+            size = size * s
         self.prefix = prefix
         number_range = min(10, size)
-        self.input_np = np.reshape(np.arange(0, size)%number_range, input_shape).astype(np.int32)
+        self.input_np = np.reshape(np.arange(0, size) % number_range, input_shape).astype(np.int32)
         self.depth = depth
         self.on_value = on_value
         self.off_value = off_value
@@ -69,22 +71,22 @@ class OneHotFactory:
         self.strategy0 = strategy0
         need_dev_num = 1
         for s in strategy0[1]:
-            need_dev_num = need_dev_num*s
-        self.x_id = device_id%need_dev_num
-        self.out_id = device_id%need_dev_num
-    
+            need_dev_num = need_dev_num * s
+        self.x_id = device_id % need_dev_num
+        self.out_id = device_id % need_dev_num
+
     def get_parallel_blocks(self, input_, strategy):
         blocks = [input_]
         i = 0
         for stra in strategy:
             temp = []
-            while len(blocks)>0:
+            while len(blocks) > 0:
                 block = blocks.pop(0)
                 temp.extend(np.split(block, stra, axis=i))
             blocks.extend(temp)
-            i+=1
-        return blocks 
-        
+            i += 1
+        return blocks
+
     def grad_mindspore_impl(self):
         output_grad = Tensor(self.output_grad_np)
         x = Tensor(self.input_np1)
@@ -94,23 +96,23 @@ class OneHotFactory:
         grad_net.set_train()
         input_grad = grad_net(x, y, output_grad)
         return input_grad
-        
+
     def forward_mindspore_impl(self):
         indices = Tensor(self.input_np)
-        net = Onehot(axis=self.axis, 
-                     depth=self.depth, 
-                     on_value=self.on_value, 
+        net = Onehot(axis=self.axis,
+                     depth=self.depth,
+                     on_value=self.on_value,
                      off_value=self.off_value)
         out = net(indices)
         return out.asnumpy()
-        
+
     def forward_mindspore_parallel_impl(self):
         x = Tensor(self.input_np)
         inputs_x = self.get_parallel_blocks(self.input_np, self.strategy0[1])
         x1 = Tensor(inputs_x[self.x_id])
-        net = Onehot(axis=self.axis, 
-                     depth=self.depth, 
-                     on_value=self.on_value, 
+        net = Onehot(axis=self.axis,
+                     depth=self.depth,
+                     on_value=self.on_value,
                      off_value=self.off_value, strategy=self.strategy0)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
         net.set_auto_parallel()
@@ -131,7 +133,7 @@ def test_reid_onehot_forward_int32_128_depth13000():
                          off_value=0.000000,
                          axis=-1,
                          dtype="float32",
-                         strategy0=(0,(2,)))
+                         strategy0=(0, (2,)))
     fact.forward_cmp()
 
 
@@ -142,6 +144,5 @@ def test_reid_onehot_forward_int32_131072_depth127():
                          off_value=0.000000,
                          axis=-1,
                          dtype="float32",
-                         strategy0=(0,(4,)))
+                         strategy0=(0, (4,)))
     fact.forward_cmp()
-

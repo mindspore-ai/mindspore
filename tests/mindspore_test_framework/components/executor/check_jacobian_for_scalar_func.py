@@ -19,6 +19,7 @@ from ...components.icomponent import IExectorComponent
 from ...utils.check_gradient import check_jacobian, ScalarGradChecker
 from ...utils.config_util import get_grad_checking_options
 
+
 class CheckJacobianForScalarFunctionEC(IExectorComponent):
     """
     Check jacobian against numeric with respect to inputs for scalar_func, execute and verify.
@@ -26,6 +27,7 @@ class CheckJacobianForScalarFunctionEC(IExectorComponent):
     Examples:
         'block': scalar_function
     """
+
     def __call__(self):
         f, args, delta, max_error, input_selector, output_selector, _, _ = \
             get_grad_checking_options(self.function, self.inputs)

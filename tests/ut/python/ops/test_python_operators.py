@@ -75,7 +75,7 @@ class ScalarCompareNet(nn.Cell):
         else:
             t = t + x
         a = 32.0 * 12
-        b = 12/3.0
+        b = 12 / 3.0
         if a > b:
             t = t * x
         else:

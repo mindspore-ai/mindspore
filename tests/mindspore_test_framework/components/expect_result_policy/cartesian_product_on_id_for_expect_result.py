@@ -18,10 +18,12 @@
 from ...components.icomponent import IERPolicyComponent
 from ...utils import keyword
 
+
 class IdCartesianProductERPC(IERPolicyComponent):
     """
     Combine expect/result by do cartesian product on id.
     """
+
     def __call__(self):
         ret = [(s1, s2) for s1 in self.expect for s2 in self.result if s1[keyword.id] == s2[keyword.id]]
         return ret

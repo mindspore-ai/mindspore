@@ -71,7 +71,7 @@ class LeNet(nn.Cell):
 def multisteplr(total_steps, gap, base_lr=0.9, gamma=0.1, dtype=mstype.float32):
     lr = []
     for step in range(total_steps):
-        lr_ = base_lr * gamma ** (step//gap)
+        lr_ = base_lr * gamma ** (step // gap)
         lr.append(lr_)
     return Tensor(np.array(lr), dtype)
 
@@ -104,4 +104,4 @@ def test_lenet_nccl():
     with open("ms_loss.txt", "w") as fo2:
         fo2.write("loss:")
         fo2.write(str(losses[-5:]))
-    assert(losses[-1] < 0.01)
+    assert (losses[-1] < 0.01)

@@ -100,7 +100,7 @@ class TensorAssignWithSliceError1(Cell):
         super(TensorAssignWithSliceError1, self).__init__()
 
     def construct(self, a, b):
-        a[1:3:-1,::] = b
+        a[1:3:-1, ::] = b
         return a
 
 
@@ -134,14 +134,14 @@ class TensorAssignWithSlice(Cell):
         self.c = 2
 
     def construct(self, a, b, ck):
-        a[1:3,::] = b
-        a[2:3:,3:] = b
+        a[1:3, ::] = b
+        a[2:3:, 3:] = b
         a[::] = b
         a[::] = self.c
-        a[::,::] = b
-        a[::,::] = self.c
-        a[2:3:,0:, 4:1:-1] = b
-        a[2:3:,0:, 4:1:-1] = self.c
+        a[::, ::] = b
+        a[::, ::] = self.c
+        a[2:3:, 0:, 4:1:-1] = b
+        a[2:3:, 0:, 4:1:-1] = self.c
         z = a + ck
         return z
 
@@ -149,18 +149,18 @@ class TensorAssignWithSlice(Cell):
 def test_tensor_assign():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     net = TensorAssignWithSlice()
-    net2= TensorAssignWithSlice2()
+    net2 = TensorAssignWithSlice2()
     net_e1 = TensorAssignWithSliceError1()
     net_e2 = TensorAssignWithSliceError2()
-    a = np.arange(60).reshape(3,4,5)
-    ck = np.arange(60).reshape(3,4,5)
+    a = np.arange(60).reshape(3, 4, 5)
+    ck = np.arange(60).reshape(3, 4, 5)
     b = Tensor([1], dtype=mstype.float32)
     Ta = Tensor(a, dtype=mstype.float32)
     Tck = Tensor(ck, dtype=mstype.float32)
-    Ta4d = Tensor(a.reshape(1,3,4,5), dtype=mstype.float32)
-    Ta4d_ck = Tensor(ck.reshape(1,3,4,5), dtype=mstype.float32)
-    Tb= Tensor([1,3], dtype=mstype.float32)
-    Tc= Tensor([], dtype=mstype.float32)
+    Ta4d = Tensor(a.reshape(1, 3, 4, 5), dtype=mstype.float32)
+    Ta4d_ck = Tensor(ck.reshape(1, 3, 4, 5), dtype=mstype.float32)
+    Tb = Tensor([1, 3], dtype=mstype.float32)
+    Tc = Tensor([], dtype=mstype.float32)
     t = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
     tck = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
     net(Ta, b, Tck)
@@ -219,15 +219,15 @@ def test_tensor_assign():
     with pytest.raises(IndexError):
         net(Ta4d, b, Ta4d_ck)
 
-    #Error for  A[...] = U or A[1:, ...] = u
-    #1. A[...] = scalar/tensor
+    # Error for  A[...] = U or A[1:, ...] = u
+    # 1. A[...] = scalar/tensor
     net = TensorAssignWithEllipsis()
     net(Ta, Ta4d)
     with pytest.raises(ValueError):
         net(Ta, Tc)
     with pytest.raises(ValueError):
         net(Ta, Tb)
-    #2. A[::, 1:, ...] = scalar/tensor
+    # 2. A[::, 1:, ...] = scalar/tensor
     net = TensorAssignWithTupleEllipsis()
     net(Ta, b)
     with pytest.raises(ValueError):
@@ -239,6 +239,7 @@ def test_tensor_assign():
 class TensorAssignWithTupleEllipsis2(Cell):
     def __init__(self):
         super(TensorAssignWithTupleEllipsis2, self).__init__()
+
     def construct(self, a, b):
         a[1:, ..., ::] = b
         return a
@@ -247,6 +248,7 @@ class TensorAssignWithTupleEllipsis2(Cell):
 class TensorAssignWithTupleEllipsis(Cell):
     def __init__(self):
         super(TensorAssignWithTupleEllipsis, self).__init__()
+
     def construct(self, a, b):
         a[:2, ...] = 1
         a[1:, ...] = b
@@ -256,6 +258,7 @@ class TensorAssignWithTupleEllipsis(Cell):
 class TensorAssignWithEllipsis(Cell):
     def __init__(self):
         super(TensorAssignWithEllipsis, self).__init__()
+
     def construct(self, a, b):
         a[...] = 1
         a[...] = b
@@ -272,6 +275,7 @@ class TensorAssignWithInteger(Cell):
         z = a + ck
         return z
 
+
 class TensorAssignWithTupleInteger(Cell):
     def __init__(self):
         super(TensorAssignWithTupleInteger, self).__init__()
@@ -279,15 +283,16 @@ class TensorAssignWithTupleInteger(Cell):
     def construct(self, a, b, ck):
         a[(1)] = 1
         a[(1)] = b
-        a[(1,1)] = b
-        a[(1,1)] = 1
+        a[(1, 1)] = b
+        a[(1, 1)] = 1
         z = a + ck
         return z
+
 
 class TensorAssignWithBoolTensorIndex(Cell):
     def __init__(self):
         super(TensorAssignWithBoolTensorIndex, self).__init__()
-        self.t = Tensor(np.arange(60).reshape([3,4,5]), dtype = mstype.float32)
+        self.t = Tensor(np.arange(60).reshape([3, 4, 5]), dtype=mstype.float32)
         self.u_scalar = 5
 
     def construct(self, a, b, c, u_tensor):
@@ -310,7 +315,7 @@ class TensorAssignWithBoolTensorIndex2(Cell):
     def __init__(self):
         super(TensorAssignWithBoolTensorIndex2, self).__init__()
         self.t = Tensor(np.arange(6).reshape([2, 3]), dtype=mstype.float32)
-        self.t = Tensor(np.arange(60).reshape([3,4,5]), dtype = mstype.float32)
+        self.t = Tensor(np.arange(60).reshape([3, 4, 5]), dtype=mstype.float32)
         self.u_scalar = 5
 
     def construct(self, a, u_tensor):
@@ -349,6 +354,7 @@ t_1d = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
 tck_1d = Tensor([1, 2, 3, 4, 5, 6, 7, 8], dtype=mstype.float32)
 u_scalar = 5
 
+
 def test_tensor_assign_bool_index():
     net1 = TensorAssignWithBoolTensorIndex()
     net2 = TensorAssignWithBoolTensorIndex2()
@@ -378,34 +384,35 @@ def test_tensor_assign_bool_index():
     with pytest.raises(AttributeError):
         net4(Ta, u_scalar)
 
+
 test_cases = [
     ('TensorAssignWithTupleEllipsis2', {
         'block': TensorAssignWithTupleEllipsis2(),
-        'desc_inputs': [Ta4,  u_tensor],
+        'desc_inputs': [Ta4, u_tensor],
     }),
     ('TensorAssignWithTupleEllipsis', {
         'block': TensorAssignWithTupleEllipsis(),
-        'desc_inputs': [Ta,  u_tensor],
+        'desc_inputs': [Ta, u_tensor],
     }),
     ('TensorAssignWithEllipsis', {
         'block': TensorAssignWithEllipsis(),
-        'desc_inputs': [Ta,  u_tensor],
+        'desc_inputs': [Ta, u_tensor],
     }),
     ('TensorAssignWithTupleInteger', {
         'block': TensorAssignWithTupleInteger(),
-        'desc_inputs': [Ta,  u_tensor, Tck],
+        'desc_inputs': [Ta, u_tensor, Tck],
     }),
     ('TensorAssignWithInteger', {
         'block': TensorAssignWithInteger(),
-        'desc_inputs': [Ta,  u_tensor, Tck],
+        'desc_inputs': [Ta, u_tensor, Tck],
     }),
     ('TensorAssignWithSlice', {
         'block': TensorAssignWithSlice(),
-        'desc_inputs': [Ta,  u_tensor, Tck],
+        'desc_inputs': [Ta, u_tensor, Tck],
     }),
     ('TensorAssignWithSlice2', {
         'block': TensorAssignWithSlice2(),
-        'desc_inputs': [t_1d,  u_tensor, tck_1d],
+        'desc_inputs': [t_1d, u_tensor, tck_1d],
     }),
     ('TensorAssignWithBoolTensorIndex', {
         'block': TensorAssignWithBoolTensorIndex(),
@@ -458,7 +465,8 @@ def test_tensor_slice_reduce_out_of_bounds_neg():
     net = NetWork()
     with pytest.raises(ValueError) as ex:
         net(input_tensor)
-    assert "For 'StridedSlice' the `begin[0]` should be an int and must greater or equal to -6, but got `-7`" in str(ex.value)
+    assert "For 'StridedSlice' the `begin[0]` should be an int and must greater or equal to -6, but got `-7`" in str(
+        ex.value)
 
 
 def test_tensor_slice_reduce_out_of_bounds_positive():

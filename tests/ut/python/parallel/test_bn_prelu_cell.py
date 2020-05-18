@@ -53,6 +53,7 @@ class Dataset(MindData):
 
 class FusedBatchNorm(nn.Cell):
     """Batch Normalization base class."""
+
     def __init__(self,
                  num_features,
                  eps=1e-5,
@@ -87,9 +88,9 @@ class FusedBatchNorm(nn.Cell):
                                     epsilon=self.eps)
         self.sub_mean = P.Sub().set_strategy(((1), (1)))
         self.sub_var = P.Sub().set_strategy(((1), (1)))
-        self.mul_mean = P.Mul().set_strategy(((1, ), ()))
-        self.mul_var = P.Mul().set_strategy(((1, ), ()))
-        self.assign_sub_mean = P.AssignSub().set_strategy(((1, ), (1,)))
+        self.mul_mean = P.Mul().set_strategy(((1,), ()))
+        self.mul_var = P.Mul().set_strategy(((1,), ()))
+        self.assign_sub_mean = P.AssignSub().set_strategy(((1,), (1,)))
         self.assign_sub_var = P.AssignSub().set_strategy(((1), (1)))
         self.sub_mean2 = P.Sub().set_strategy(((1), (1)))
         self.sub_var2 = P.Sub().set_strategy(((1), (1)))
@@ -138,7 +139,6 @@ class FusedBatchNorm(nn.Cell):
                     self.moving_variance)
 
 
-
 class PReLU(nn.Cell):
     """
     PReLU activation function.
@@ -158,6 +158,7 @@ class PReLU(nn.Cell):
         input_data = Tensor(np.random.rand(1, 33, 4, 4), ms.float32)
         output = prelu.construct(input_data)
     """
+
     def __init__(self, channel=1, w=0.25):
         super(PReLU, self).__init__()
         if isinstance(w, (np.float32, float)):
@@ -169,7 +170,7 @@ class PReLU(nn.Cell):
 
         if not isinstance(w, Tensor):
             w = Tensor(w)
-        self.w = Parameter(initializer(w, [channel,]), name='a')
+        self.w = Parameter(initializer(w, [channel, ]), name='a')
         self.prelu = P.PReLU()
         self.relu = P.ReLU().set_strategy(((1)))
 
@@ -183,7 +184,6 @@ class BNNet(nn.Cell):
         super(BNNet, self).__init__()
         self.bn = FusedBatchNorm(512)
         self.prelu = PReLU(512)
-
 
     def construct(self, x):
         x = self.bn(x)

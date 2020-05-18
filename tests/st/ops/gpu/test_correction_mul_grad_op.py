@@ -22,7 +22,6 @@ import mindspore.nn as nn
 from mindspore.common.api import ms_function
 import mindspore.context as context
 
-
 context.set_context(device_target='GPU')
 
 

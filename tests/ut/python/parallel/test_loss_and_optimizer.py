@@ -55,7 +55,7 @@ def test_momentum():
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     strategy1 = ((2, 1), (2, 1))
-    strategy2 = ((4, 1), )
+    strategy2 = ((4, 1),)
     strategy3 = ((4, 1), (4, 1))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -71,7 +71,7 @@ def test_momentum():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x,  b)
+    compile(train_net, x, b)
 
 
 def test_momentum_with_loss_scale():
@@ -89,7 +89,7 @@ def test_momentum_with_loss_scale():
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     strategy1 = ((2, 1), (2, 1))
-    strategy2 = ((4, 1), )
+    strategy2 = ((4, 1),)
     strategy3 = ((4, 1), (4, 1))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -105,7 +105,7 @@ def test_momentum_with_loss_scale():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x,  b)
+    compile(train_net, x, b)
 
 
 def test_momentum_with_dynamic_lr():
@@ -123,7 +123,7 @@ def test_momentum_with_dynamic_lr():
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     strategy1 = ((2, 1), (2, 1))
-    strategy2 = ((4, 1), )
+    strategy2 = ((4, 1),)
     strategy3 = ((4, 1), (4, 1))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -140,7 +140,7 @@ def test_momentum_with_dynamic_lr():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x,  b)
+    compile(train_net, x, b)
 
 
 def test_momentum_with_loss_scale_and_dynamic_lr():
@@ -157,9 +157,9 @@ def test_momentum_with_loss_scale_and_dynamic_lr():
             return out
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
-    
+
     strategy1 = ((2, 1), (2, 1))
-    strategy2 = ((4, 1), )
+    strategy2 = ((4, 1),)
     strategy3 = ((4, 1), (4, 1))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -176,7 +176,8 @@ def test_momentum_with_loss_scale_and_dynamic_lr():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x,  b)
+    compile(train_net, x, b)
+
 
 def test_lars():
     class Net(nn.Cell):
@@ -193,7 +194,7 @@ def test_lars():
 
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     strategy1 = ((2, 1), (2, 1))
-    strategy2 = ((4, 1), )
+    strategy2 = ((4, 1),)
     strategy3 = ((4, 1), (4, 1))
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
@@ -210,4 +211,4 @@ def test_lars():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x,  b)
+    compile(train_net, x, b)

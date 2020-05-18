@@ -24,6 +24,7 @@ from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 
+
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
         super(NetWithLoss, self).__init__()
@@ -34,6 +35,7 @@ class NetWithLoss(nn.Cell):
         predict = self.network(x, y, z, w)
         return self.loss(predict)
 
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -43,6 +45,8 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, z, w)
 
     # model_parallel test
+
+
 def test_double_star_graph():
     class Net(nn.Cell):
         def __init__(self):
@@ -53,7 +57,6 @@ def test_double_star_graph():
             self.cast1 = P.Cast()
             self.cast2 = P.Cast()
 
-
         def construct(self, x, y, z, w):
             m1_result = self.matmul1(x, y)
             m2_result = self.matmul2(z, w)
@@ -63,7 +66,7 @@ def test_double_star_graph():
 
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
-    
+
     x = Tensor(np.ones([32, 8]), dtype=ms.float32)
     y = Tensor(np.ones([8, 16]), dtype=ms.float32)
     z = Tensor(np.ones([8, 16]), dtype=ms.float32)

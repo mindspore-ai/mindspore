@@ -340,7 +340,8 @@ def test_trainTensor(num_classes=10, epoch=8, batch_size=1):
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         loss = train_network(data, label)
         losses.append(loss)
-    assert(losses[-1].asnumpy() < 1)
+    assert (losses[-1].asnumpy() < 1)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -359,6 +360,6 @@ def test_trainTensor_amp(num_classes=10, epoch=18, batch_size=16):
         label = Tensor(np.ones([batch_size]).astype(np.int32))
         loss = train_network(data, label)
         losses.append(loss)
-    assert(losses[-1][0].asnumpy() < 1)
-    assert(losses[-1][1].asnumpy() == False)
-    assert(losses[-1][2].asnumpy() > 1)
+    assert (losses[-1][0].asnumpy() < 1)
+    assert (losses[-1][1].asnumpy() == False)
+    assert (losses[-1][2].asnumpy() > 1)

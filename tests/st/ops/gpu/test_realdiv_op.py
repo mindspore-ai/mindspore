@@ -23,6 +23,7 @@ import mindspore.context as context
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
+
 class NetRealDiv(nn.Cell):
     def __init__(self):
         super(NetRealDiv, self).__init__()
