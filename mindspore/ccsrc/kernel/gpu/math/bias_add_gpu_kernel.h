@@ -49,11 +49,15 @@ class BiasAddGpuKernel : public GpuKernel {
     T *b_addr = GetDeviceAddress<T>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-    const float alpha = 1;
-    const float beta = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnOpTensor(cudnn_handle_, op_desc_, &alpha, x_desc_, x_addr, &alpha, b_desc_, b_addr,
-                                              &beta, x_desc_, output_addr),
-                                "cudnnOpTensor Add failed");
+    try {
+      const float alpha = 1;
+      const float beta = 0;
+      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnOpTensor(cudnn_handle_, op_desc_, &alpha, x_desc_, x_addr, &alpha, b_desc_,
+                                                b_addr, &beta, x_desc_, output_addr),
+                                  "cudnnOpTensor failed");
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "Encountered an exception: " << e.what() << " when invoke cudnnOpTensor";
+    }
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
