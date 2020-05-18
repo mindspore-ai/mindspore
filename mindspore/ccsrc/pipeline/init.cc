@@ -159,13 +159,13 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_parallel_mode", &ParallelContext::set_parallel_mode, "Set parallel mode.")
     .def("get_strategy_search_mode", &ParallelContext::strategy_search_mode, "Get strategy search mode.")
     .def("set_strategy_search_mode", &ParallelContext::set_strategy_search_mode, "Set strategy search mode.")
-    .def("set_all_reduce_fusion_split_indices", &ParallelContext::set_all_reduce_fusion_split_indices,
+    .def("set_all_reduce_fusion_split_indices", &ParallelContext::SetAllReduceFusionSplitIndices,
          "Set all reduce fusion split indices.")
-    .def("get_all_reduce_fusion_split_indices", &ParallelContext::all_reduce_fusion_split_indices,
+    .def("get_all_reduce_fusion_split_indices", &ParallelContext::GetAllReduceFusionSplitIndices,
          "Get all reduce fusion split indices.")
-    .def("set_all_reduce_fusion_split_sizes", &ParallelContext::set_all_reduce_fusion_split_sizes,
+    .def("set_all_reduce_fusion_split_sizes", &ParallelContext::SetAllReduceFusionSplitSizes,
          "Set all reduce fusion split sizes.")
-    .def("get_all_reduce_fusion_split_sizes", &ParallelContext::all_reduce_fusion_split_sizes,
+    .def("get_all_reduce_fusion_split_sizes", &ParallelContext::GetAllReduceFusionSplitSizes,
          "Get all reduce fusion split sizes.")
     .def("set_enable_all_reduce_fusion", &ParallelContext::set_enable_all_reduce_fusion,
          "Set enable/disable all reduce fusion.")

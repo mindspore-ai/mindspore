@@ -113,20 +113,28 @@ void ParallelContext::set_strategy_ckpt_save_file(const std::string &strategy_ck
   strategy_ckpt_save_file_ = strategy_ckpt_save_file;
 }
 
-void ParallelContext::set_all_reduce_fusion_split_indices(const std::vector<uint32_t> indices) {
-  all_reduce_fusion_split_indices_ = indices;
+void ParallelContext::SetAllReduceFusionSplitIndices(const std::vector<uint32_t> indices, const std::string &group) {
+  all_reduce_fusion_split_indices_[group] = indices;
 }
 
-const std::vector<uint32_t> ParallelContext::all_reduce_fusion_split_indices() const {
-  return all_reduce_fusion_split_indices_;
+const std::vector<uint32_t> ParallelContext::GetAllReduceFusionSplitIndices(const std::string &group) const {
+  auto iter = all_reduce_fusion_split_indices_.find(group);
+  if (iter != all_reduce_fusion_split_indices_.end()) {
+    return iter->second;
+  }
+  return {};
 }
 
-void ParallelContext::set_all_reduce_fusion_split_sizes(const std::vector<uint32_t> sizes) {
-  all_reduce_fusion_split_sizes_ = sizes;
+void ParallelContext::SetAllReduceFusionSplitSizes(const std::vector<uint32_t> sizes, const std::string &group) {
+  all_reduce_fusion_split_sizes_[group] = sizes;
 }
 
-const std::vector<uint32_t> ParallelContext::all_reduce_fusion_split_sizes() const {
-  return all_reduce_fusion_split_sizes_;
+const std::vector<uint32_t> ParallelContext::GetAllReduceFusionSplitSizes(const std::string &group) const {
+  auto iter = all_reduce_fusion_split_sizes_.find(group);
+  if (iter != all_reduce_fusion_split_sizes_.end()) {
+    return iter->second;
+  }
+  return {};
 }
 }  // namespace parallel
 }  // namespace mindspore

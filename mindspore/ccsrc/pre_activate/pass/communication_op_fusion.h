@@ -46,7 +46,7 @@ class CommunicationOpFusion : public Pass {
                                         const CommunicationOpInfo &communication_op_info, size_t start_index,
                                         size_t end_index) const;
   bool GetSplitSegments(const CommunicationOpInfo &communication_op_info, size_t *segment_num,
-                        std::vector<size_t> *segment_index) const;
+                        std::vector<size_t> *segment_index, const std::string &group) const;
   std::string op_name_;
   size_t groups_ = 1;
 };
