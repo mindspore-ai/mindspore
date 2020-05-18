@@ -92,6 +92,7 @@ constexpr size_t kApplyMomentumInputNum = 6;
 constexpr size_t kBiasAddInputNum = 3;
 constexpr size_t kTopkInputNum = 3;
 constexpr size_t kLarsV2InputNum = 5;
+constexpr size_t kFusedMulApplyMomentumOutputNum = 2;
 
 enum FusedBatchNormInput {
   kX = 1,
