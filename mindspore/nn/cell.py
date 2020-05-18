@@ -249,6 +249,9 @@ class Cell:
                 if key not in self.parameter_layout_dict:
                     logger.info("layout dict does not contain the key %s", key)
                     continue
+                if self.parameters_dict()[key].sliced:
+                    logger.info("Param %s is from initializer, already sliced.", key)
+                    continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
                 self.parameters_dict()[key].set_parameter_data(new_tensor)
@@ -257,6 +260,9 @@ class Cell:
                 tensor = params[key].data
                 if key not in self.parameter_layout_dict:
                     logger.info("layout dict does not contain the key %s", key)
+                    continue
+                if params[key].sliced:
+                    logger.info("Param %s is from initializer, already sliced.", key)
                     continue
                 layout = self.parameter_layout_dict[key]
                 new_tensor = _load_tensor_by_layout(tensor, layout)
@@ -398,7 +404,12 @@ class Cell:
 
     def init_parameters_data(self, recurse=True):
         for param in self.get_parameters(expand=recurse):
-            param.init_data()
+            if param.name not in self.parameter_layout_dict:
+                logger.info("Layout dict does not contain the key %s.", param.name)
+                param.init_data()
+            else:
+                layout = self.parameter_layout_dict[param.name]
+                param.init_data(layout)
 
     def parameters_dict(self, recurse=True):
         """
