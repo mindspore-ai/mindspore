@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """test mnist to mindrecord tool"""
-import os
-import gzip
 import cv2
+import gzip
 import numpy as np
+import os
 
-from mindspore.mindrecord import MnistToMR
-from mindspore.mindrecord import FileReader
 from mindspore import log as logger
+from mindspore.mindrecord import FileReader
+from mindspore.mindrecord import MnistToMR
 
 MNIST_DIR = "../data/mindrecord/testMnistData"
 FILE_NAME = "mnist"

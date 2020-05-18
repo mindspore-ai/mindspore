@@ -16,10 +16,10 @@
 """Pipelines for exception checking."""
 
 from ...components.executor.check_exceptions import CheckExceptionsEC
-from ...components.inputs.get_inputs_from_config import IdentityDC
-from ...components.function.get_function_from_config import IdentityBC
 from ...components.facade.me_facade import MeFacadeFC
+from ...components.function.get_function_from_config import IdentityBC
 from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
+from ...components.inputs.get_inputs_from_config import IdentityDC
 
 # pylint: disable=W0105
 """

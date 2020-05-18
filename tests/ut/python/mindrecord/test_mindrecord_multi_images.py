@@ -14,9 +14,10 @@
 """test write multiple images"""
 import numpy as np
 import os
-from mindspore.mindrecord import FileReader, FileWriter
-from mindspore import log as logger
 from utils import get_two_bytes_data, get_multi_bytes_data
+
+from mindspore import log as logger
+from mindspore.mindrecord import FileReader, FileWriter
 
 MAP_FILE_NAME = "../data/mindrecord/testTwoImageData/cityscapes_train_19.txt"
 MAP_FILE_FAKE_NAME = "../data/mindrecord/testTwoImageData/cityscapes_train_19_fake.txt"

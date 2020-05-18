@@ -13,12 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+import pytest
 from util import save_and_check
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 from mindspore import log as logger
-import pytest
 
 FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"

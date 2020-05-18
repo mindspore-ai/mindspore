@@ -15,12 +15,12 @@
 """ test_multitype """
 import numpy as np
 
+from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.common.parameter import Parameter
 from mindspore.ops import Primitive
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore import Tensor
 from ...ut_filter import non_graph_engine
 
 tensor_add = P.TensorAdd()

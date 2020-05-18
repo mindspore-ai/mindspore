@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License
 
+import numpy as np
+
 import mindspore as ms
 from mindspore import Tensor, Parameter, ParameterTuple, context
 from mindspore import nn
 from mindspore.common.api import _executor
 from mindspore.nn.optim import Adam, FTRL
-from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
-import numpy as np
+from mindspore.ops import operations as P
 
 
 class Net(nn.Cell):

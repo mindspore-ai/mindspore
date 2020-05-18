@@ -13,20 +13,21 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.ops import composite as C
-from mindspore.common.parameter import ParameterTuple
-from mindspore.nn.optim import Momentum
-from mindspore.communication.management import init
-from mindspore.train import Model, ParallelMode
+
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.nn.loss.loss import _Loss
 from mindspore import Tensor
-from mindspore.common import dtype as mstype
-from mindspore.nn import Dense, Cell
 from mindspore import context
+from mindspore.common import dtype as mstype
+from mindspore.common.parameter import ParameterTuple
+from mindspore.communication.management import init
+from mindspore.nn import Dense, Cell
+from mindspore.nn.loss.loss import _Loss
+from mindspore.nn.optim import Momentum
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.train import Model, ParallelMode
 
 context.set_context(mode=context.GRAPH_MODE)
 device_number = 32

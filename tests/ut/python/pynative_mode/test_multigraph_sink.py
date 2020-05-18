@@ -14,9 +14,9 @@
 # ============================================================================
 """ test_multigraph_sink """
 import mindspore.context as context
-from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.common import ms_function
+from mindspore.common.tensor import Tensor
 
 
 def setup_module(module):

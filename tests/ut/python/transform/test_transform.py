@@ -19,7 +19,6 @@
 @Desc  : test mindspore compile method
 """
 import logging
-
 import numpy as np
 
 import mindspore.nn as nn

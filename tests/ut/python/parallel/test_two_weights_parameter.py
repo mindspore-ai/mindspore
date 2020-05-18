@@ -13,14 +13,15 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter, ParameterTuple
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter, ParameterTuple
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 
 
 class NetWithLoss(nn.Cell):

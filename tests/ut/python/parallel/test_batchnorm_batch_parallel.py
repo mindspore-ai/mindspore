@@ -12,20 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.train import Model, ParallelMode
-from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-from mindspore.nn.optim.momentum import Momentum
-import mindspore as ms
 import numpy as np
+
+import mindspore as ms
 from mindspore import context
+from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore.nn.layer.activation import ReLU
 from mindspore.nn.cell import Cell
+from mindspore.nn.layer.activation import ReLU
 from mindspore.nn.layer.conv import Conv2d
 from mindspore.nn.layer.normalization import BatchNorm2d
 from mindspore.nn.layer.pooling import MaxPool2d
+from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
+from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.common.parameter import Parameter
+from mindspore.train import Model, ParallelMode
 from tests.dataset_mock import MindData
 
 dev_num = 8

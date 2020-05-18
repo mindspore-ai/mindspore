@@ -19,12 +19,13 @@ Usage:
     python test_predict_save_model.py --path ./
 """
 
-import os
 import argparse
 import numpy as np
+import os
+
+import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations as P
-import mindspore.context as context
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import export, load_checkpoint, load_param_into_net
 

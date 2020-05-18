@@ -16,8 +16,8 @@
 """Component that verify shape and type."""
 
 from ...components.icomponent import IVerifierComponent
-from ...utils.other_util import to_numpy_list
 from ...utils import keyword
+from ...utils.other_util import to_numpy_list
 
 
 class ShapeTypeVC(IVerifierComponent):

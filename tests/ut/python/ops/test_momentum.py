@@ -15,11 +15,12 @@
 """ test_momentum """
 import functools
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore.ops import functional as F
-from mindspore.ops import composite as C
-from mindspore.ops import operations as P
 from mindspore import Parameter, ParameterTuple, Tensor
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \

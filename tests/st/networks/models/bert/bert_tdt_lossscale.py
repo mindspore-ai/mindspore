@@ -15,21 +15,22 @@
 
 """train bert network without lossscale"""
 
+import numpy as np
 import os
 import pytest
-import numpy as np
 from numpy import allclose
+
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine.datasets as de
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore import context
+from mindspore import log as logger
 from mindspore.common.tensor import Tensor
-from mindspore.train.model import Model
-from mindspore.train.callback import Callback, LossMonitor
-from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.model_zoo.Bert_NEZHA import BertConfig, BertNetworkWithLoss, BertTrainOneStepWithLossScaleCell
 from mindspore.nn.optim import Momentum
-from mindspore import log as logger
+from mindspore.train.callback import Callback, LossMonitor
+from mindspore.train.loss_scale_manager import DynamicLossScaleManager
+from mindspore.train.model import Model
 
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]

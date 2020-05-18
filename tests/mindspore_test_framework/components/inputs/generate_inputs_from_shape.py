@@ -16,12 +16,12 @@
 """Component that generate inputs for specified shape type."""
 
 import numpy as np
-from mindspore.common.tensor import Tensor
 
+from mindspore.common.tensor import Tensor
 from ...components.icomponent import IDataComponent
-from ...utils.other_util import shape2tensor
-from ...utils.config_util import get_input_config
 from ...utils import keyword
+from ...utils.config_util import get_input_config
+from ...utils.other_util import shape2tensor
 
 
 class GenerateFromShapeDC(IDataComponent):

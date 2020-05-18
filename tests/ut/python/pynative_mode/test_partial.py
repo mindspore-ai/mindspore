@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """ test_partial """
-from mindspore.common.api import ms_function
-import mindspore.ops.functional as F
 import mindspore.ops.composite as C
+import mindspore.ops.functional as F
 from mindspore import context
+from mindspore.common.api import ms_function
 
 
 def setup_module(module):

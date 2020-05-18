@@ -15,13 +15,13 @@
 
 """Pipelines for forward computing."""
 
-from ...components.facade.me_facade import MeFacadeFC
-from ...components.inputs.generate_inputs_from_shape import GenerateFromShapeDC
-from ...components.executor.exec_forward import IdentityEC
 from ...components.executor.check_exceptions import CheckExceptionsEC
-from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
+from ...components.executor.exec_forward import IdentityEC
+from ...components.facade.me_facade import MeFacadeFC
 from ...components.function.compile_block import CompileBlockBC
 from ...components.function.run_block import RunBlockBC
+from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
+from ...components.inputs.generate_inputs_from_shape import GenerateFromShapeDC
 
 # pylint: disable=W0105
 """

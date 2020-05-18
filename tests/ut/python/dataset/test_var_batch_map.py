@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import numpy as np
+
 import mindspore.dataset as ds
 from mindspore import log as logger
-import numpy as np
 
 
 def test_batch_corner_cases():

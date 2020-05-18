@@ -12,21 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore import Tensor, Parameter
-from mindspore.common import dtype as mstype
-import mindspore.nn as nn
 import numpy as np
-from mindspore.nn.cell import Cell
-from tests.dataset_mock import MindData
-from mindspore.nn.optim.momentum import Momentum
-from mindspore.train import Model, ParallelMode
-from tests.ut.python.ops.test_math_ops import VirtualLoss
-from mindspore.ops import composite as C
+
 import mindspore as ms
-from mindspore.common.api import _executor
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
 from mindspore import context
+from mindspore.common import dtype as mstype
+from mindspore.common.api import _executor
+from mindspore.nn.cell import Cell
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.train import Model, ParallelMode
+from tests.dataset_mock import MindData
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 device_num = 16
 device_id = 2

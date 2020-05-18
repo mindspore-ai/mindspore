@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import pytest
+
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger

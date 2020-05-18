@@ -12,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.train import Model, ParallelMode
-from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-from mindspore.nn.optim.momentum import Momentum
-from mindspore import Tensor, context
-import mindspore as ms
 import numpy as np
+
+import mindspore as ms
 import mindspore.nn as nn
-from tests.dataset_mock import MindData
+from mindspore import Tensor, context
 from mindspore import context
 from mindspore.common.api import _executor
+from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
+from mindspore.nn.optim.momentum import Momentum
 from mindspore.parallel import _cost_model_context as cost_model_context
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
+from mindspore.train import Model, ParallelMode
+from tests.dataset_mock import MindData
 
 
 class Dataset(MindData):

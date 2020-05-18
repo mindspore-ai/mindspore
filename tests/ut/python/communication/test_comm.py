@@ -14,19 +14,20 @@
 
 """ test Communicate """
 import numpy as np
-from mindspore.ops.operations.comm_ops import AllReduce, AllGather, _AlltoAll, ReduceOp, ReduceScatter
-from mindspore.ops.operations.comm_ops import Broadcast
-from mindspore.communication.management import HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, GlobalComm, init
-from mindspore.communication._comm_helper import Backend
-from mindspore import Tensor
+
+import mindspore.context as context
 import mindspore.nn as nn
-from mindspore.ops.operations import Split
+from mindspore import Tensor
 from mindspore.common.api import _executor
+from mindspore.communication._comm_helper import Backend
+from mindspore.communication.management import HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, GlobalComm, init
 from mindspore.nn import Dense
+from mindspore.nn import Momentum
 from mindspore.nn import ReLU
 from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.nn import Momentum
-import mindspore.context as context
+from mindspore.ops.operations import Split
+from mindspore.ops.operations.comm_ops import AllReduce, AllGather, _AlltoAll, ReduceOp, ReduceScatter
+from mindspore.ops.operations.comm_ops import Broadcast
 
 # pylint: disable=W0212
 # W0212: protected-access

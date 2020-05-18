@@ -13,22 +13,23 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import os
 import pytest
-import numpy as np
-import mindspore as ms
 from numpy import allclose
-from mindspore.nn import Cell
-from mindspore import context
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.common.tensor import Tensor
+
+import mindspore as ms
 import mindspore.communication.management as distributedTool
-from mindspore.common.parameter import ParameterTuple, Parameter
-from mindspore.ops import composite as C
+from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.train import Model, ParallelMode
+from mindspore.common.parameter import ParameterTuple, Parameter
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
 from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.train import Model, ParallelMode
 from mindspore.train.callback import Callback
 
 np.set_printoptions(threshold=np.inf)

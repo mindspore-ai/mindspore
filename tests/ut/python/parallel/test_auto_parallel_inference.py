@@ -2,9 +2,9 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor, context
-from mindspore.ops import operations as P
-from mindspore.nn import WithLossCell, TrainOneStepCell
 from mindspore.nn import Momentum
+from mindspore.nn import WithLossCell, TrainOneStepCell
+from mindspore.ops import operations as P
 from mindspore.parallel._cost_model_context import set_cost_model_context
 
 

@@ -13,10 +13,11 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
+
 import mindspore.nn as nn
-from mindspore.ops import operations as P
 from mindspore import Tensor
+from mindspore import context
+from mindspore.ops import operations as P
 from mindspore.train.model import Model
 
 

@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-from mindspore import Tensor
-import mindspore.nn as nn
 import numpy as np
+import pytest
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
 
 
 class Net_Pool(nn.Cell):

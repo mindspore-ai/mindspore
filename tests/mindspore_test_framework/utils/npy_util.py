@@ -18,9 +18,8 @@
 import numpy as np
 
 from mindspore.common.tensor import Tensor
-
-from .other_util import shape2tensor
 from .config_util import get_expect_config
+from .other_util import shape2tensor
 
 
 def load_npy(p):

@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 from __future__ import absolute_import
+
 import te.lang.cce
+from te import platform as cce
 from te.platform.fusion_manager import fusion_manager
+from topi.cce import util
+
 from .conv_layer import conv_layer_cce
 from .conv_layer_fast import conv_layer_fast_cce
-from topi.cce import util
-from te import platform as cce
 
 Nonetype = type(None)
 

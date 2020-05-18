@@ -17,22 +17,23 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import pytest
 import numpy as np
+import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore import amp
+from mindspore.nn import Dense
+from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.cell import Cell
-from mindspore.nn.layer.conv import Conv2d
 from mindspore.nn.layer.basic import Flatten
+from mindspore.nn.layer.conv import Conv2d
 from mindspore.nn.layer.normalization import BatchNorm2d
 from mindspore.nn.layer.pooling import MaxPool2d
-from mindspore.ops.operations import TensorAdd
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
-from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.nn import Dense
-from mindspore import amp
+from mindspore.ops.operations import TensorAdd
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 

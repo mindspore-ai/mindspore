@@ -13,15 +13,16 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-from mindspore.context import set_auto_parallel_context, reset_auto_parallel_context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
+from mindspore import context
 from mindspore.common.api import _executor
+from mindspore.context import set_auto_parallel_context, reset_auto_parallel_context
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 # model_parallel test

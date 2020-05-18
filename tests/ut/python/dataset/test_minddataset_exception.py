@@ -15,7 +15,6 @@
 # ==============================================================================
 
 import os
-
 import pytest
 
 import mindspore.dataset as ds

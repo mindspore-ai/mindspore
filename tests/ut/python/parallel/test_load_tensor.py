@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.parallel._tensor import _load_tensor
-from mindspore import Tensor
 from hccl_test.manage.api import Hccl
+
+from mindspore import Tensor
+from mindspore.parallel._tensor import _load_tensor
 
 
 def test_load_tensor():

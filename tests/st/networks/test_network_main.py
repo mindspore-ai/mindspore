@@ -18,18 +18,19 @@ Function:
 Usage:
     python test_network_main.py --net lenet --target Ascend
 """
+import argparse
+import numpy as np
 import os
 import time
-import numpy as np
-import argparse
+from models.alexnet import AlexNet
+from models.lenet import LeNet
+from models.resnetv1_5 import resnet50
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
-from models.lenet import LeNet
-from models.resnetv1_5 import resnet50
-from models.alexnet import AlexNet
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 

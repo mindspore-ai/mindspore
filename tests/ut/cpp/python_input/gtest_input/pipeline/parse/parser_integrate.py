@@ -15,16 +15,16 @@
 """
 file: parser_integrate.py
 """
+import mindspore._c_expression as me
 import numpy as np
 
-import mindspore._c_expression as me
 import mindspore.nn as nn
-from mindspore.common.api import ms_function, _executor
 from mindspore.common import dtype
-from mindspore.common.tensor import Tensor
+from mindspore.common.api import ms_function, _executor
 from mindspore.common.parameter import Parameter
-from mindspore.ops import functional as F
+from mindspore.common.tensor import Tensor
 from mindspore.model_zoo.resnet import resnet50
+from mindspore.ops import functional as F
 from mindspore.train.model import Model
 
 

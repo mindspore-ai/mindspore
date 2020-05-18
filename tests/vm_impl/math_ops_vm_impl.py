@@ -14,7 +14,6 @@
 # ============================================================================
 """Generate vm_impl function for math ops"""
 import copy
-
 import numpy as np
 
 from mindspore.common.dtype import dtype_to_nptype

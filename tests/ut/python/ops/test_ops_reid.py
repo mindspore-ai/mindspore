@@ -16,15 +16,14 @@
 import functools
 import numpy as np
 
-from mindspore.ops import operations as P
 import mindspore.nn as nn
-from ....ops_common import convert
-
+from mindspore.ops import operations as P
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
     import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
+from ....ops_common import convert
 
 
 class SeqConvBnRelu(nn.Cell):

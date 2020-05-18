@@ -14,13 +14,14 @@
 # ============================================================================
 """ test_celllist """
 import numpy as np
-from mindspore.nn import Cell
-from mindspore.nn import ReLU
-from mindspore.nn import Flatten
+
 from mindspore import Tensor, Model
-from mindspore.nn import SequentialCell
-from mindspore.nn import AvgPool2d
 from mindspore import context
+from mindspore.nn import AvgPool2d
+from mindspore.nn import Cell
+from mindspore.nn import Flatten
+from mindspore.nn import ReLU
+from mindspore.nn import SequentialCell
 from ...ut_filter import non_graph_engine
 
 

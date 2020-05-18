@@ -20,16 +20,16 @@
 """
 import logging
 import numpy as np
-import mindspore.nn as nn
+import pytest
 from dataclasses import dataclass
+
+import mindspore.nn as nn
+from mindspore import context
+from mindspore._extends.parse.standard_method import ms_len
 from mindspore.common.api import ms_function
 from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import core
-from mindspore._extends.parse.standard_method import ms_len
 from ..ut_filter import non_graph_engine
-import pytest
-
-from mindspore import context
 
 
 def setup_module(module):

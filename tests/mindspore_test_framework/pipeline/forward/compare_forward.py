@@ -15,18 +15,18 @@
 
 """Pipelines for forward comparison."""
 
-from ...components.expect_result_policy.cartesian_product_on_id_for_expect_result import IdCartesianProductERPC
-from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
 from ...components.executor.exec_forward import IdentityEC
-from ...components.function.run_block import RunBlockBC
-from ...components.inputs.generate_inputs_from_shape import GenerateFromShapeDC
-from ...components.verifier.compare_forward import CompareWithVC
+from ...components.expect_result_policy.cartesian_product_on_id_for_expect_result import IdCartesianProductERPC
 from ...components.facade.me_facade import MeFacadeFC
-from ...components.inputs.load_inputs_from_npy import LoadFromNpyDC
-from ...components.verifier.verify_expect_from_npy import LoadFromNpyVC
 from ...components.function.init_params_with_rand_and_run_block import RunBlockWithRandParamBC
+from ...components.function.run_block import RunBlockBC
 from ...components.function_inputs_policy.cartesian_product_on_group_for_function_inputs import \
     GroupCartesianProductFIPC
+from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
+from ...components.inputs.generate_inputs_from_shape import GenerateFromShapeDC
+from ...components.inputs.load_inputs_from_npy import LoadFromNpyDC
+from ...components.verifier.compare_forward import CompareWithVC
+from ...components.verifier.verify_expect_from_npy import LoadFromNpyVC
 
 # pylint: disable=W0105
 """

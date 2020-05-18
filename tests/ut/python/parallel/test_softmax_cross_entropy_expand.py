@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.nn.loss.loss import SoftmaxCrossEntropyExpand
+import numpy as np
+
 from mindspore import Tensor
+from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _executor
-from mindspore import context
-import numpy as np
+from mindspore.nn.loss.loss import SoftmaxCrossEntropyExpand
 
 
 def test_SoftmaxCrossEntropy():

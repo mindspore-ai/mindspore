@@ -16,8 +16,9 @@
 """Utils for baseline comparison test."""
 
 import numpy as np
-from .other_util import to_numpy_list
+
 from . import keyword
+from .other_util import to_numpy_list
 
 
 def compare(expect, func_result, baseline):

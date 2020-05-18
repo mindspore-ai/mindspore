@@ -13,14 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
 import numpy as np
+import pytest
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 from dataclasses import dataclass
+
 import mindspore.nn as nn
 from mindspore.ops import Primitive
 from mindspore.ops import functional as F

@@ -14,6 +14,7 @@
 # ============================================================================
 """ test_dtype """
 from mindspore._c_expression import typing
+
 from mindspore.common.api import ms_function
 
 number = typing.Number()

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+
 import mindspore.dataset as ds
 from mindspore import log as logger
 

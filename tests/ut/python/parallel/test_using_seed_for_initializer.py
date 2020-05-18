@@ -13,10 +13,11 @@
 # limitations under the License.
 
 import numpy as np
+from numpy import allclose
+
+import mindspore.common.initializer as init
 import mindspore.nn as nn
 from mindspore import Parameter
-import mindspore.common.initializer as init
-from numpy import allclose
 
 parameter_shape = [16, 4]
 

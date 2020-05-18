@@ -14,12 +14,13 @@
 # ============================================================================
 import numpy as np
 import pytest
-from mindspore.ops import operations as P
-from mindspore.nn import Cell
-from mindspore.common.tensor import Tensor
-from mindspore.train.model import Model
-from mindspore import log as logger
+
 from mindspore import context
+from mindspore import log as logger
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
+from mindspore.ops import operations as P
+from mindspore.train.model import Model
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 

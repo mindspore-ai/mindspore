@@ -18,8 +18,8 @@
 import numpy as np
 
 from ...components.icomponent import IFacadeComponent
-from ...utils.facade_util import get_block_config, fill_block_config
 from ...utils import keyword
+from ...utils.facade_util import get_block_config, fill_block_config
 
 
 class MeFacadeFC(IFacadeComponent):

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.st.ops.custom_ops_tbe.conv2d import conv2d
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+from tests.st.ops.custom_ops_tbe.conv2d import conv2d
 
 cus_conv2D_op_info = TBERegOp("Cus_Conv2D") \
     .fusion_type("CONVLUTION") \

@@ -13,10 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 import mindspore._c_dataengine as cde
-import mindspore.dataset as ds
+import numpy as np
 import pytest
 
-import numpy as np
+import mindspore.dataset as ds
 
 
 def test_basic():

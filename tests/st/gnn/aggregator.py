@@ -14,13 +14,13 @@
 # ============================================================================
 """Aggregator."""
 import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore._extends import cell_attr_register
 from mindspore import Tensor, Parameter
-from mindspore.common.initializer import initializer
 from mindspore._checkparam import check_int_positive, check_bool
+from mindspore._extends import cell_attr_register
+from mindspore.common.initializer import initializer
 from mindspore.nn.layer.activation import get_activation
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 
 
 class GNNFeatureTransform(nn.Cell):

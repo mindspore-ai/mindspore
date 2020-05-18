@@ -14,10 +14,11 @@
 # ============================================================================
 """ test_operator """
 import numpy as np
-from mindspore.ops import operations as P
-from mindspore.nn import ReLU
-from mindspore.nn import Cell
+
 from mindspore import Tensor, Model, context
+from mindspore.nn import Cell
+from mindspore.nn import ReLU
+from mindspore.ops import operations as P
 from ...ut_filter import non_graph_engine
 
 

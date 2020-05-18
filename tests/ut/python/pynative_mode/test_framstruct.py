@@ -13,21 +13,22 @@
 # limitations under the License.
 # ============================================================================
 """ test_framstruct """
-import pytest
 import numpy as np
+import pytest
+
 import mindspore.nn as nn
 from mindspore import context
+from mindspore.common import dtype as mstype
+from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.common import dtype as mstype
+from mindspore.ops._grad.grad_base import bprop_getters
+from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.utils.check_gradient import (
     ms_function, check_jacobian, Tensor, NNGradChecker,
     OperationGradChecker, check_gradient, ScalarGradChecker)
-from mindspore.ops._grad.grad_base import bprop_getters
-from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 
 
 def setup_module(module):

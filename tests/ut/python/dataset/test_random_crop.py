@@ -16,10 +16,10 @@
 Testing RandomCropAndResize op in DE
 """
 import matplotlib.pyplot as plt
-import mindspore.dataset.transforms.vision.c_transforms as vision
 
-from mindspore import log as logger
 import mindspore.dataset as ds
+import mindspore.dataset.transforms.vision.c_transforms as vision
+from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"

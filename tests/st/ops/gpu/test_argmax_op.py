@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.common import dtype as mstype
-import mindspore.nn as nn
+import pytest
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common import dtype as mstype
+from mindspore.ops import operations as P
 
 
 class NetArgmax(nn.Cell):

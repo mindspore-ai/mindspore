@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import os
 import pytest
-import numpy as np
-import mindspore as ms
 from numpy import allclose
-from mindspore.nn import Cell
-from mindspore import context
-from mindspore.ops import operations as P
-from mindspore.common.tensor import Tensor
+
+import mindspore as ms
 import mindspore.communication.management as distributedTool
+from mindspore import context
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
+from mindspore.ops import operations as P
 
 device_num = 4
 device_id = int(os.environ["RANK_ID"])

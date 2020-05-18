@@ -14,7 +14,6 @@
 # ============================================================================
 """ test bert of graph compile """
 import functools
-
 import numpy as np
 
 import mindspore.common.dtype as mstype

@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore.nn as nn
 import numpy as np
+
 import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import composite as C

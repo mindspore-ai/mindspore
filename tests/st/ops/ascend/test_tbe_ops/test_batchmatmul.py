@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.common.tensor import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn import Cell
-from mindspore.train.model import Model
 import pytest
+
 from mindspore import context
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
+from mindspore.ops import operations as P
+from mindspore.train.model import Model
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 

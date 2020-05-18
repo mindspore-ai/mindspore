@@ -13,9 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import mindspore.nn as nn
-import mindspore.context as context
+
 import mindspore.common.dtype as mstype
+import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 

@@ -14,11 +14,12 @@
 # ============================================================================
 """ test_scalar_add_grad """
 import numpy as np
-from mindspore.nn import Cell
-from mindspore.common.tensor import Tensor
-from mindspore.ops import composite as C
+
 from mindspore import context
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
 from mindspore.nn import ReLU
+from mindspore.ops import composite as C
 from mindspore.ops.operations import TensorAdd
 
 context.set_context(mode=context.GRAPH_MODE)

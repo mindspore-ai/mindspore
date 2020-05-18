@@ -14,11 +14,12 @@
 # ============================================================================
 """ test_dropout """
 import numpy as np
-from mindspore.common.api import _executor
+
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore import dtype as mstype
 from mindspore import context
+from mindspore import dtype as mstype
+from mindspore.common.api import _executor
 
 context.set_context(device_target="Ascend")
 

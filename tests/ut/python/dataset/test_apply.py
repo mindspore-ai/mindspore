@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import mindspore.dataset as ds
-from mindspore import log as logger
-import mindspore.dataset.transforms.vision.c_transforms as vision
 import numpy as np
+
+import mindspore.dataset as ds
+import mindspore.dataset.transforms.vision.c_transforms as vision
+from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testPK/data"
 

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 relu = P.ReLU()
 relu_grad = Primitive('ReluGrad')

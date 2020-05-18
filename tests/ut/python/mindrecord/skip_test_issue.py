@@ -15,12 +15,13 @@
 """test issue"""
 import os
 import pytest
-from mindspore.mindrecord import ShardHeader, SUCCESS, FAILED, ParamValueError
-from mindspore.mindrecord import ShardWriter, ShardIndexGenerator, ShardReader
+from utils import get_data, get_nlp_data, get_mkv_data
+
+from mindspore import log as logger
 from mindspore.mindrecord import FileWriter, FileReader
 from mindspore.mindrecord import MRMAddIndexError
-from mindspore import log as logger
-from utils import get_data, get_nlp_data, get_mkv_data
+from mindspore.mindrecord import ShardHeader, SUCCESS, FAILED, ParamValueError
+from mindspore.mindrecord import ShardWriter, ShardIndexGenerator, ShardReader
 
 FILES_NUM = 4
 CV_FILE_NAME = "./imagenet.mindrecord"

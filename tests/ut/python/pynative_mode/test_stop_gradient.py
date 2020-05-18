@@ -13,22 +13,22 @@
 # limitations under the License.
 # ============================================================================
 """ test_stop_gradient """
-import pytest
 import numpy as np
+import pytest
 
-import mindspore.nn as nn
-from mindspore import context
 import mindspore.common.dtype as mstype
+import mindspore.nn as nn
 from mindspore import Parameter, ParameterTuple, Tensor
+from mindspore import Tensor
+from mindspore import context
+from mindspore import context
+from mindspore.common.api import ms_function
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.functional import stop_gradient
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.utils.bprop_util import bprop
-from mindspore import Tensor
-from mindspore.common.api import ms_function
-from mindspore import context
 
 
 def setup_module(module):

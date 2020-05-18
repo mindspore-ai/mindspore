@@ -19,13 +19,14 @@
 
 import math
 import numpy as np
+
 import mindspore.common.dtype as mstype
 import mindspore.ops.functional as F
 from mindspore import nn
 from mindspore.common.initializer import TruncatedNormal
-from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.model_zoo.Bert_NEZHA.bert_model import SaturateCast, RelaPosEmbeddingsGenerator
+from mindspore.ops import operations as P
 
 
 class BertAttentionQueryKeyMul(nn.Cell):

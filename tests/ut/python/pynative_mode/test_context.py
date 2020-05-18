@@ -15,6 +15,7 @@
 """ test_context """
 import os
 import pytest
+
 from mindspore import context
 
 

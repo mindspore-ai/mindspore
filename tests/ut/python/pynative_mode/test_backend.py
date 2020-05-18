@@ -15,12 +15,13 @@
 """ test_backend """
 import os
 import pytest
-from mindspore.ops import operations as P
+
 import mindspore.nn as nn
 from mindspore import context, ms_function
+from mindspore._checkparam import args_type_check
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-from mindspore._checkparam import args_type_check
+from mindspore.ops import operations as P
 
 
 def setup_module(module):

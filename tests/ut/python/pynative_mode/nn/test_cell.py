@@ -15,6 +15,7 @@
 """ test_cell """
 import numpy as np
 import pytest
+
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from ...ut_filter import non_graph_engine

@@ -16,8 +16,8 @@
 """Component that verify if the model can converge to expected loss."""
 
 from ...components.icomponent import IExectorComponent
-from ...utils.model_util import Model
 from ...utils import keyword
+from ...utils.model_util import Model
 
 
 class LossVerifierEC(IExectorComponent):

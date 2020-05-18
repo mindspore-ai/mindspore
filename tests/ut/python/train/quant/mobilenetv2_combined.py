@@ -1,7 +1,7 @@
 """mobile net v2"""
 from mindspore import nn
-from mindspore.ops import operations as P
 from mindspore.nn.layer import combined
+from mindspore.ops import operations as P
 
 
 def make_divisible(input_x, div_by=8):

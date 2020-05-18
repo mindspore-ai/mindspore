@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
-import mindspore.dataset.transforms.py_transforms as f
+
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
+import mindspore.dataset.transforms.py_transforms as f
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
+import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testImageNetData/train"

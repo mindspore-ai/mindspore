@@ -18,15 +18,15 @@ Testing dataset serialize and deserialize in DE
 import filecmp
 import glob
 import json
+import numpy as np
 import os
 import pytest
-import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
 import mindspore.dataset.transforms.vision.c_transforms as vision
-from mindspore.dataset.transforms.vision import Inter
 from mindspore import log as logger
+from mindspore.dataset.transforms.vision import Inter
 
 
 def test_imagefolder(remove_json_files=True):

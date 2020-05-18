@@ -15,23 +15,24 @@
 """ test math ops """
 import functools
 import numpy as np
+import pytest
+
 import mindspore as ms
-import mindspore.nn as nn
-from mindspore.common.api import _executor
-from mindspore.common import dtype as mstype
-from mindspore.ops import prim_attr_register, PrimitiveWithInfer
-from mindspore import Tensor
-from mindspore.ops import composite as C
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common import dtype as mstype
+from mindspore.common.api import _executor
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ....mindspore_test_framework.pipeline.forward.verify_exception \
     import pipeline_for_verify_exception_for_case_by_case_config
-import pytest
 
 
 # pylint: disable=W0613

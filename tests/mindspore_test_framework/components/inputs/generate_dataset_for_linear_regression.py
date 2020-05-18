@@ -16,8 +16,8 @@
 """Component that generate dataset for linear regression."""
 
 from ...components.icomponent import IDataComponent
-from ...utils.dataset_util import generate_dataset_for_linear_regression
 from ...utils import keyword
+from ...utils.dataset_util import generate_dataset_for_linear_regression
 
 
 class GenerateDataSetForLRDC(IDataComponent):

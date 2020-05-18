@@ -14,9 +14,10 @@
 # ============================================================================
 """ ops_test """
 import numpy as np
+
+from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
-from mindspore.common.tensor import Tensor
 
 
 def im2col(img, filter_h, filter_w, stride=1, pad=0, dilation=1):

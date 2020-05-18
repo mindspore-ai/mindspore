@@ -16,10 +16,9 @@
 import numpy as np
 import pytest
 
+import mindspore.ops.operations as P
 from mindspore import Tensor
 from mindspore.nn import Cell
-import mindspore.ops.operations as P
-
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config

@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 mul = P.Mul()
 add = P.TensorAdd()

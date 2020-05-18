@@ -16,10 +16,11 @@
 # coding: utf-8
 
 from numpy.random import normal
+
 from mindspore import Tensor
-from mindspore.ops.composite import core
-from mindspore.common.api import ms_function
 from mindspore import context
+from mindspore.common.api import ms_function
+from mindspore.ops.composite import core
 
 
 def setup_module(module):

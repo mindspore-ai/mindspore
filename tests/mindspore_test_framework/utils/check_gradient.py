@@ -16,14 +16,15 @@
 """Implementation of Numerical gradients checking."""
 # pylint: disable=missing-docstring
 
-from typing import Callable, List, Any
+import mindspore._c_expression as _c_expression
 import numpy as np
-from mindspore import Tensor
-from mindspore.ops.composite import GradOperation
+from typing import Callable, List, Any
+
 from mindspore import ParameterTuple
+from mindspore import Tensor
 from mindspore import context
 from mindspore.common.api import ms_function
-import mindspore._c_expression as _c_expression
+from mindspore.ops.composite import GradOperation
 from .block_util import get_output_cell, gen_net, gen_grad_net, \
     get_uniform_with_shape, set_block_phase, get_output_reduce_cell, set_block_param_with_rand
 

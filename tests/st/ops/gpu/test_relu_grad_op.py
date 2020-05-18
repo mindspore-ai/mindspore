@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import pytest
+
+import mindspore.context as context
+import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
-import mindspore.nn as nn
-import numpy as np
-import mindspore.context as context
 
 
 class NetReluGrad(nn.Cell):

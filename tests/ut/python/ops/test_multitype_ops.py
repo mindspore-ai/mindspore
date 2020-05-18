@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """multitype_ops directory test case"""
-from functools import partial, reduce
 import numpy as np
+from functools import partial, reduce
+
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import functional as F, composite as C

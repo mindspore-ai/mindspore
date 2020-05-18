@@ -17,9 +17,9 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn.optim import Momentum
 from mindspore.nn import WithGradCell, WithLossCell
+from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
 from ....ut_filter import non_graph_engine
 
 

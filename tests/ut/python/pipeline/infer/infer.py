@@ -13,11 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """ infer """
-from argparse import ArgumentParser
 import numpy as np
+from argparse import ArgumentParser
 
 from mindspore import Tensor
-
 from ....dataset_mock import MindData
 
 __factory = {

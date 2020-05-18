@@ -16,13 +16,13 @@
 Testing RandomColorAdjust op in DE
 """
 import matplotlib.pyplot as plt
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import numpy as np
+from util import diff_mse
 
 import mindspore.dataset as ds
+import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import diff_mse
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"

@@ -15,14 +15,13 @@
 """
 Testing TypeCast op in DE
 """
-import mindspore.dataset.transforms.vision.c_transforms as c_vision
-import mindspore.dataset.transforms.vision.py_transforms as py_vision
-import mindspore.dataset.transforms.c_transforms as data_util
-
 import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
+import mindspore.dataset.transforms.c_transforms as data_util
+import mindspore.dataset.transforms.vision.c_transforms as c_vision
+import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]

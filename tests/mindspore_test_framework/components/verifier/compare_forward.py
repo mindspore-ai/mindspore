@@ -16,8 +16,8 @@
 """Component that comparing forward result with baseline functions."""
 
 from ...components.icomponent import IVerifierComponent
-from ...utils.compare_util import compare
 from ...utils import keyword
+from ...utils.compare_util import compare
 
 
 class CompareWithVC(IVerifierComponent):

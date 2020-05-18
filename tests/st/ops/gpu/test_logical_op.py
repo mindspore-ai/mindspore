@@ -13,12 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-from mindspore.ops import operations as P
-from mindspore.nn import Cell
-from mindspore.common.tensor import Tensor
-import mindspore.context as context
 import numpy as np
+import pytest
+
+import mindspore.context as context
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
+from mindspore.ops import operations as P
 
 
 class NetAnd(Cell):

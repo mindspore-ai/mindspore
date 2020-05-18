@@ -14,7 +14,6 @@
 # ============================================================================
 """test topk"""
 import math
-
 import numpy as np
 import pytest
 

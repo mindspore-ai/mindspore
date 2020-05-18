@@ -15,6 +15,7 @@
 """ test_fix_bug """
 import numpy as np
 import pytest
+
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import _executor

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+
 import mindspore.dataset as ds
 
 DATA_FILE = "../data/dataset/test_flat_map/images1.txt"

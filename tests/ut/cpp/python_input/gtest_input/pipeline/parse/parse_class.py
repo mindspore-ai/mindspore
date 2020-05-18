@@ -23,8 +23,8 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore.common.api import _executor
-from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor
 
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
