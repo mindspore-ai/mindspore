@@ -287,6 +287,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto other_pm = std::make_shared<PassManager>("other_pm");
   other_pm->AddPass(std::make_shared<AllReduceFusion>());
   other_pm->AddPass(std::make_shared<AllGatherFusion>());
+  other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
