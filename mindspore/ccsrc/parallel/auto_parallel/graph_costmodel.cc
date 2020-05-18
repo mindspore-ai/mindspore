@@ -1111,8 +1111,8 @@ void CostGraph::CreateTriangleEliminationSubCostList(StrategyPtr elimi_op_stra, 
           elimi_op_cost->communication_without_parameter_ + left_edge_cost->communication_without_parameter_ +
           left_node_cost->communication_without_parameter_ + right_edge_cost->communication_without_parameter_;
 
-        auto decision = std::make_shared<TriangleEliminationDecision>(elimi_op_stra, elimi_op_cost, left_edge_cost,
-                                                                      right_edge_cost, left_op_stra, left_node_cost);
+        auto decision = std::make_shared<TriangleEliminationDecision>(
+          elimi_op_stra, elimi_op_cost, left_edge_cost, right_edge_cost, left_op_stra, left_node_cost, right_op_stra);
         auto new_cost = std::make_shared<Cost>(new_computation, new_commu_cost, decision);
         new_cost->communication_without_parameter_ = new_commu_without;
         new_cost->communication_with_partial_para_ =

@@ -85,7 +85,9 @@ Status GetStrategy(const CostGraphPtr &graph) {
         right_edge = tmp;
       }
       auto left_node_cpy = graph->EliminationTriangle(eliminated_node, l_r_edge);
-      auto elimi = std::make_shared<TriangleElimination>(eliminated_node, left_edge, left_node_cpy, right_edge);
+      auto right_node = l_r_edge->next_operator();
+      auto elimi =
+        std::make_shared<TriangleElimination>(eliminated_node, left_edge, left_node_cpy, right_edge, right_node);
       eliminations.emplace_back(std::move(elimi));
     }
     auto star_center = graph->CheckStarElimination();
@@ -181,6 +183,7 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
       auto left_edge = elimination->left_edge_;
       auto eliminated_node = elimination->eliminated_node_;
       auto right_edge = elimination->right_edge_;
+      auto right_node = elimination->right_node_;
       auto decision = left_node->selected_cost()->decision_ptr_->cast<TriangleEliminationDecisionPtr>();
 
       eliminated_node->SetSelectedStrategyAndCost(decision->eliminated_op_strategy_, decision->eliminated_op_cost_);
@@ -188,6 +191,7 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
       right_edge->set_selected_cost(decision->right_edge_cost_);
       // Since Triangle is eliminated into 'left_node', only 'left_node' is needed to recover the strategy.
       left_node->SetSelectedStrategyAndCost(decision->left_node_strategy_, decision->left_node_cost_);
+      right_node->CheckSelectedStrategy(decision->right_node_strategy_);
       MS_LOG(INFO) << "Recover triangleElimination succeeded.";
     } else if ((*rit)->isa<StarElimination>()) {
       auto elimination = (*rit)->cast<StarEliminationPtr>();
@@ -206,6 +210,9 @@ Status RecoverStrategy(std::vector<EliminationPtr> eliminations) {
       MS_EXCEPTION_IF_NULL(decision->succ_ops_cost_list_[0]);
       // Since Star is eliminated into 'succ_nodes[0]', only 'succ_nodes[0]' is needed to recover the strategy.
       succ_nodes[0]->SetSelectedStrategyAndCost(decision->succ_ops_stra_list_[0], decision->succ_ops_cost_list_[0]);
+      for (size_t k = 1; k < succ_nodes.size(); ++k) {
+        succ_nodes[k]->CheckSelectedStrategy(decision->succ_ops_stra_list_[k]);
+      }
       MS_LOG(INFO) << "Recover starElimination succeeded.";
     } else {
       MS_LOG(ERROR) << "Unknown Elimination type.";

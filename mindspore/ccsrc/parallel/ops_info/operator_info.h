@@ -138,6 +138,7 @@ class OperatorInfo {
   }
   StrategyPtr selected_strategy() const { return selected_strategy_; }
   CostPtr selected_cost() const { return selected_cost_; }
+  void CheckSelectedStrategy(const StrategyPtr &);
   Status InitSelectedStrategy(const StrategyPtr &s_strategy) { return Init(s_strategy); }
   void set_input_value(const std::vector<ValuePtr> &input_value) { input_value_ = input_value; }
   const std::vector<ValuePtr> &input_value() const { return input_value_; }
