@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 #include "device/ascend/ascend_stream_assign.h"
+#include "device/ascend/ascend_label_assign.h"
 #include "device/ascend/tasksink/task_generator.h"
 #include "device/kernel_adjust.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
+
+void AscendLabelAssign::AssignLabel(NotNull<const std::shared_ptr<session::KernelGraph> &>) {}
+
 void AscendStreamAssign::AssignStreamNew(const KernelGraphPtr &graph) { return; }
 
 uint32_t AscendStreamAssign::GetTotalStreamNum() const { return 1; }
