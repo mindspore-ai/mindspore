@@ -466,7 +466,7 @@ bool KernelGraph::HandleControlDependNode(const AnfNodePtr &node, std::queue<Anf
   }
   // set the control depend visited but don't push it into the que
   if (visited_nodes->find(node) != visited_nodes->end()) {
-    MS_LOG(EXCEPTION) << "control depend[" << node->DebugString() << "] has been handled before";
+    return true;
   }
   (void)visited_nodes->insert(cnode);
   // add a 0 depend num to keep the link relations to prepare for finding zero output nodes
