@@ -188,6 +188,10 @@ class InputOpNet(nn.Cell):
         x = self.op(x1, x2, x3, x4, self.c1)
         return x
 
+    def construct4_c2(self, x1, x2, x3, x4):
+        x = self.op(x1, x2, x3, x4, self.c1, self.c2)
+        return x
+
     def construct4_c4(self, x1, x2, x3, x4):
         x = self.op(x1, x2, x3, x4, self.c1, self.c2, self.c3, self.c4)
         return x

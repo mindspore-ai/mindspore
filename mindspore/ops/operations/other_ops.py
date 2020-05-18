@@ -175,10 +175,10 @@ class CheckValid(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['bboxes', 'img_metas'], outputs=['output'])
 
     def infer_shape(self, bboxes_shape, metas_shape):
-        validator.check_integer("bboxes rank", len(bboxes_shape), 2, Rel.EQ, self.name)
-        validator.check_integer("bboxes_shape[-1]", bboxes_shape[-1], 4, Rel.EQ, self.name)
-        validator.check_integer("img_metas rank", len(metas_shape), 1, Rel.EQ, self.name)
-        validator.check_integer("img_metas shape[0]", metas_shape[0], 3, Rel.EQ, self.name)
+        validator.check("bboxes rank", len(bboxes_shape), "", 2, Rel.EQ, self.name)
+        validator.check("bboxes_shape[-1]", bboxes_shape[-1], "", 4, Rel.EQ, self.name)
+        validator.check("img_metas rank", len(metas_shape), "", 1, Rel.EQ, self.name)
+        validator.check("img_metas shape[0]", metas_shape[0], "", 3, Rel.EQ, self.name)
         return bboxes_shape[:-1]
 
     def infer_dtype(self, bboxes_type, metas_type):

@@ -16,6 +16,7 @@
 """Operators for math."""
 
 import numpy as np
+from ... import context
 from ..._c_expression import signature_rw as sig_rw
 from ..._c_expression import signature_kind as sig_kind
 from ..._c_expression import signature_dtype as sig_dtype
@@ -1950,12 +1951,16 @@ class NMSWithMask(PrimitiveWithInfer):
         """Init NMSWithMask"""
         validator.check_value_type("iou_threshold", iou_threshold, [float], self.name)
         self.init_prim_io_names(inputs=['bboxes'], outputs=['selected_boxes', 'selected_idx', 'selected_mask'])
+        self.is_ge = context.get_context("enable_ge")
 
     def infer_shape(self, bboxes_shape):
         cls_name = self.name
         validator.check_integer("bboxes rank", len(bboxes_shape), 2, Rel.EQ, cls_name)
         validator.check_integer("bboxes.shape()[0]", bboxes_shape[0], 0, Rel.GT, cls_name)
-        validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
+        if not self.is_ge:
+            validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 8, Rel.EQ, cls_name)
+        else:
+            validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
         num = bboxes_shape[0]
         return (bboxes_shape, (num,), (num,))
 

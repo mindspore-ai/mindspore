@@ -114,6 +114,9 @@ def build_op(build_type, json_str):
             return get_op_pattern()
 
         # call function
+        if kernel_name[0:19] == "bounding_box_encode":
+            return op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name_val=kernel_name)
+
         return op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
 
     except Exception as e:

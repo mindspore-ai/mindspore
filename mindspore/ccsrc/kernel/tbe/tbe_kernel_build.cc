@@ -430,6 +430,18 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
       attr_value = GetValue<std::vector<int>>(value);
     }
     (*attr_obj)["value"] = attr_value;
+  } else if (type == "listFloat") {
+    std::vector<float> attr_value;
+    auto value_type = value->type();
+    MS_EXCEPTION_IF_NULL(value_type);
+    auto value_type_str = value_type->ToString();
+    if (value_type_str == "float") {
+      float data = GetValue<float>(value);
+      attr_value.push_back(data);
+    } else {
+      attr_value = GetValue<std::vector<float>>(value);
+    }
+    (*attr_obj)["value"] = attr_value;
   } else if (type == "listListInt") {
     auto attr_value = GetValue<std::vector<std::vector<int>>>(value);
     (*attr_obj)["value"] = attr_value;
