@@ -12,17 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import numpy as np
-import mindspore.communication.management as distributedTool
+import os
 from numpy import allclose
+
+import mindspore.communication.management as distributedTool
 from mindspore import context
-from mindspore.nn import Cell
-from mindspore.ops import operations as P
-from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
 from mindspore._checkparam import check_bool, twice
 from mindspore.common.initializer import initializer
+from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
+from mindspore.ops import operations as P
 from mindspore.ops.composite import grad_all_with_sens
 
 device_num = 4

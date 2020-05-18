@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import mindspore.common.dtype as mstype
+from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops import Primitive
-import mindspore.common.dtype as mstype
 
 Conv = P.Conv2D(out_channel=64, kernel_size=7, mode=1, pad_mode="valid", pad=0, stride=1, dilation=1, group=1)
 Relu = P.ReLU()

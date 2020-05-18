@@ -13,8 +13,9 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.ops import prim_attr_register, PrimitiveWithInfer
+
 from mindspore import Tensor
+from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 
 
 # y = x^2

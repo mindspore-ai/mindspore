@@ -15,8 +15,8 @@
 import mindspore.context as context
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.parallel._cost_model_context import reset_cost_model_context
-from mindspore.parallel.algo_parameter_config import reset_algo_parameters
 from mindspore.parallel._utils import _reset_op_id
+from mindspore.parallel.algo_parameter_config import reset_algo_parameters
 
 
 def setup_module(module):

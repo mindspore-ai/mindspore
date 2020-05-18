@@ -17,10 +17,11 @@ import functools
 import logging
 import numpy as np
 import pytest
-from mindspore import nn
+
 from mindspore import Tensor
-from mindspore.ops import operations as P
+from mindspore import nn
 from mindspore.common.api import _executor
+from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \

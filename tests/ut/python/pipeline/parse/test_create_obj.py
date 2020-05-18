@@ -23,11 +23,12 @@
 """
 import logging
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.ops import operations as P
 from mindspore.common.api import ms_function
 from mindspore.common.tensor import Tensor
+from mindspore.ops import operations as P
 from ...ut_filter import non_graph_engine
 
 log = logging.getLogger("test")

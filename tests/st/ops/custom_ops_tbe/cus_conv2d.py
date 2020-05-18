@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 import math
+import numpy as np
 from functools import reduce
-from mindspore.ops import prim_attr_register, PrimitiveWithInfer
+
 from mindspore import Tensor
 from mindspore._checkparam import ParamValidator as validator
 from mindspore._checkparam import Rel, check_bool, check_int_positive, twice
 from mindspore.common import dtype as mstype
+from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 
 
 class Cus_Conv2D(PrimitiveWithInfer):

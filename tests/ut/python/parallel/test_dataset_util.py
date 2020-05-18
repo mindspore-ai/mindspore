@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore.train._utils import _to_full_shapes, _to_full_tensor
-from mindspore import Tensor
+
 import mindspore as ms
+from mindspore import Tensor
+from mindspore.train._utils import _to_full_shapes, _to_full_tensor
 
 
 def test_to_full_shapes():

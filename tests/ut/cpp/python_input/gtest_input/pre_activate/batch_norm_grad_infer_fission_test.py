@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import Primitive
+from mindspore.ops.operations import _grad_ops as G
 
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')

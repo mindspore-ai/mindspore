@@ -15,11 +15,12 @@
 """ test bprop disorder """
 import functools
 import numpy as np
+
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
+from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.common.parameter import ParameterTuple
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \

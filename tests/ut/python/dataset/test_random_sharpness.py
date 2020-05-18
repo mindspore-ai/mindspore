@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-import numpy as np
 import matplotlib.pyplot as plt
-from mindspore import log as logger
+import numpy as np
+
 import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.py_transforms as F
+from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 

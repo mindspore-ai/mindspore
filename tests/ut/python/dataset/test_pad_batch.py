@@ -13,9 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 
-import mindspore.dataset as ds
 import numpy as np
 import time
+
+import mindspore.dataset as ds
 
 
 # This UT test tests the following cases

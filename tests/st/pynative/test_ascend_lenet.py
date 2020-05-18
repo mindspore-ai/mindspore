@@ -12,20 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
-import numpy as np
-import time
 import math
+import numpy as np
+import pytest
+import time
+
 import mindspore.nn as nn
 from mindspore import context, Tensor, ParameterTuple
-from mindspore.ops import operations as P
-from mindspore.common.initializer import TruncatedNormal
-from mindspore.ops import functional as F
-from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
-
-from mindspore.nn.wrap.cell_wrapper import WithLossCell
+from mindspore.common.initializer import TruncatedNormal
 from mindspore.nn.optim import Momentum
+from mindspore.nn.wrap.cell_wrapper import WithLossCell
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 
 np.random.seed(1)
 

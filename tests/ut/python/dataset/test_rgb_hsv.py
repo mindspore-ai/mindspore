@@ -16,9 +16,9 @@
 Testing RgbToHsv and HsvToRgb op in DE
 """
 
+import colorsys
 import numpy as np
 from numpy.testing import assert_allclose
-import colorsys
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as vision

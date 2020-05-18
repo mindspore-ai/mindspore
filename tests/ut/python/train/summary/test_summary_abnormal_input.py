@@ -19,9 +19,8 @@
 @Desc  : test summary function of abnormal input
 """
 import logging
-import os
-
 import numpy as np
+import os
 
 from mindspore.common.tensor import Tensor
 from mindspore.train.summary.summary_record import SummaryRecord

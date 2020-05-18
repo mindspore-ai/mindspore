@@ -20,7 +20,6 @@ import os
 
 import mindspore.dataset as ds
 from mindspore import log as logger
-
 from mindspore.mindrecord import FileWriter
 
 FILES_NUM = 1

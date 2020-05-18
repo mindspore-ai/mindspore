@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 
-import json
-import os
 import hashlib
-import numpy as np
+import json
 import matplotlib.pyplot as plt
+import numpy as np
+import os
+
 # import jsbeautifier
 from mindspore import log as logger
 

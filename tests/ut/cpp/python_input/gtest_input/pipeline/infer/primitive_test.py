@@ -14,8 +14,8 @@
 # ============================================================================
 import mindspore.nn as nn
 from mindspore.common import dtype
-from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops import operations as P
+from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 
 
 def get_add(a, b):

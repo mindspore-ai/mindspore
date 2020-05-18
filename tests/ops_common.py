@@ -14,6 +14,7 @@
 # ============================================================================
 """ test ops """
 import numpy as np
+
 import mindspore.nn as nn
 import mindspore.ops.composite as C
 import mindspore.ops.functional as F

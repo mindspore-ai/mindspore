@@ -13,22 +13,23 @@
 # limitations under the License.
 # ============================================================================
 
-import os
 import numpy as np
+import os
 import pytest
+
+import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.common.dtype as mstype
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn.optim.momentum import Momentum
-from mindspore.common.initializer import One
-from mindspore.train.model import Model, ParallelMode
-from mindspore.communication.management import init
 import mindspore.ops.functional as F
+from mindspore import Tensor
+from mindspore.common.initializer import One
+from mindspore.communication.management import init
 from mindspore.nn.loss.loss import _Loss
-from mindspore.train.callback import Callback
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import operations as P
 from mindspore.parallel import set_algo_parameters
+from mindspore.train.callback import Callback
+from mindspore.train.model import Model, ParallelMode
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(device_id=int(os.getenv('DEVICE_ID')))

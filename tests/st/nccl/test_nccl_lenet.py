@@ -14,14 +14,15 @@
 # ============================================================================
 import datetime
 import numpy as np
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.nn.optim import Momentum
-from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.ops import operations as P
-from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.common import dtype as mstype
+from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.nn import TrainOneStepCell, WithLossCell
+from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 init('nccl')

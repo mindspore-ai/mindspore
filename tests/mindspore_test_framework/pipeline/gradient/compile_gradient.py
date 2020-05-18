@@ -15,12 +15,12 @@
 
 """Pipelines for gradients."""
 
-from ...components.facade.me_facade import MeFacadeFC
-from ...components.inputs.generate_inputs_from_shape import GenerateFromShapeDC
 from ...components.executor.exec_gradient import IdentityBackwardEC
-from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
+from ...components.facade.me_facade import MeFacadeFC
 from ...components.function.compile_gradient_wrt_inputs import CompileBackwardBlockWrtInputsBC
 from ...components.function.run_gradient_wrt_inputs import RunBackwardBlockWrtInputsBC
+from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
+from ...components.inputs.generate_inputs_from_shape import GenerateFromShapeDC
 
 # pylint: disable=W0105
 """

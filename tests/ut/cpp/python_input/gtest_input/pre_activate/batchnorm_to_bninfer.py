@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
-from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 batch_norm = P.BatchNorm(is_training=False)
 bn_infer = Primitive('BNInfer')

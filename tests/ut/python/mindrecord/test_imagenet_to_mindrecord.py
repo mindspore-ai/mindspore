@@ -15,9 +15,10 @@
 """test imagenet to mindrecord tool"""
 import os
 import pytest
-from mindspore.mindrecord import ImageNetToMR
-from mindspore.mindrecord import FileReader
+
 from mindspore import log as logger
+from mindspore.mindrecord import FileReader
+from mindspore.mindrecord import ImageNetToMR
 
 IMAGENET_MAP_FILE = "../data/mindrecord/testImageNetDataWhole/labels_map.txt"
 IMAGENET_IMAGE_DIR = "../data/mindrecord/testImageNetDataWhole/images"

@@ -18,9 +18,9 @@
 from mindspore import context
 from mindspore.nn.optim import Lamb
 from ..mindspore_test import mindspore_test
+from ..pipeline.gradient.check_training import pipeline_for_check_model_loss_for_case_by_case_config
 from ..utils.model_util import Linreg
 from ..utils.model_util import SquaredLoss
-from ..pipeline.gradient.check_training import pipeline_for_check_model_loss_for_case_by_case_config
 
 network = Linreg(2)
 num_epochs = 1000

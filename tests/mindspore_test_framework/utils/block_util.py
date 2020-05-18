@@ -19,13 +19,13 @@
 
 import numpy as np
 
+from mindspore import ParameterTuple
+from mindspore import nn, context
 from mindspore.common.api import _executor, ms_function
 from mindspore.common.tensor import Tensor
-from mindspore import nn, context
-from mindspore.ops.composite import GradOperation
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore import ParameterTuple
+from mindspore.ops.composite import GradOperation
 from . import keyword
 
 

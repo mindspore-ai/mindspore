@@ -14,7 +14,6 @@
 # ============================================================================
 """test_metric_factory"""
 import math
-
 import numpy as np
 
 from mindspore import Tensor

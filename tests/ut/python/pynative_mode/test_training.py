@@ -16,13 +16,13 @@
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore.common.tensor import Tensor
-from mindspore.ops import operations as P
-from mindspore.nn.optim import Momentum
-from mindspore.train.model import Model
-from mindspore.nn import WithGradCell, WithLossCell
-from ..ut_filter import non_graph_engine
 from mindspore import context
+from mindspore.common.tensor import Tensor
+from mindspore.nn import WithGradCell, WithLossCell
+from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
+from mindspore.train.model import Model
+from ..ut_filter import non_graph_engine
 
 
 def setup_module(module):

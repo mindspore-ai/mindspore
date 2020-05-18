@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 
+import numpy as np
+import time
+
 import mindspore.dataset as ds
 from mindspore import log as logger
-import time
-import numpy as np
 
 
 def gen():

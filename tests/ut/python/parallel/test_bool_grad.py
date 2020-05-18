@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore import Tensor
-import mindspore as ms
 import numpy as np
-from mindspore.ops import operations as P
+
+import mindspore as ms
 import mindspore.nn as nn
-from mindspore.common.parameter import Parameter
-from tests.dataset_mock import MindData
+from mindspore import Tensor
 from mindspore import context
-from mindspore.train import Model, ParallelMode
+from mindspore.common.parameter import Parameter
 from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
+from mindspore.train import Model, ParallelMode
+from tests.dataset_mock import MindData
 
 context.set_context(mode=context.GRAPH_MODE)
 

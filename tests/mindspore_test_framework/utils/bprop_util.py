@@ -15,11 +15,11 @@
 
 """Utils for computing gradients."""
 
-from mindspore.ops.composite.base import GradOperation
 from mindspore import context
-from mindspore.nn import Cell
 from mindspore.common import ParameterTuple
 from mindspore.common.api import ms_function
+from mindspore.nn import Cell
+from mindspore.ops.composite.base import GradOperation
 
 
 class Bprop(Cell):

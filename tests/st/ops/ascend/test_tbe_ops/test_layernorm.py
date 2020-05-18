@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.nn import LayerNorm
+import pytest
+
+from mindspore import context
+from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
+from mindspore.nn import LayerNorm
 from mindspore.train.model import Model
-from mindspore import log as logger
-import pytest
-from mindspore import context
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 

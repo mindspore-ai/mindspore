@@ -13,15 +13,16 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import os
 import pytest
-import numpy as np
+
 import mindspore as ms
+import mindspore.communication.management as distributedTool
+import mindspore.context as context
+from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
-from mindspore.common.tensor import Tensor
-import mindspore.context as context
-import mindspore.communication.management as distributedTool
 
 device_num = 2
 device_id = int(os.getenv('DEVICE_ID'))

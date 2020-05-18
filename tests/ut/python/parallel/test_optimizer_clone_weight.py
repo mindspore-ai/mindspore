@@ -13,14 +13,15 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor, Parameter
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor, Parameter
+from mindspore import context
 from mindspore.common.api import _Executor
-from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn import TrainOneStepCell
+from mindspore.nn.optim import AdamWeightDecay
+from mindspore.ops import operations as P
 
 
 class NetWithLoss(nn.Cell):

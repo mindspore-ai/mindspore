@@ -14,8 +14,9 @@
 # ============================================================================
 """ test_cont_break """
 import numpy as np
-from mindspore.nn import Cell
+
 from mindspore import Tensor, Model, context
+from mindspore.nn import Cell
 from ...ut_filter import non_graph_engine
 
 

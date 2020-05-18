@@ -13,24 +13,25 @@
 # limitations under the License.
 # ============================================================================
 import argparse
-import os
 import numpy as np
-import mindspore.context as context
-import mindspore.nn as nn
+import os
+import random
+from resnet import resnet50
+
 import mindspore.common.dtype as mstype
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.nn.optim.momentum import Momentum
-from mindspore.train.model import Model, ParallelMode
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+import mindspore.context as context
 import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.transforms.vision.c_transforms as vision
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.communication.management import init
-from resnet import resnet50
-import random
+from mindspore.nn.optim.momentum import Momentum
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
+from mindspore.train.model import Model, ParallelMode
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 random.seed(1)
 np.random.seed(1)

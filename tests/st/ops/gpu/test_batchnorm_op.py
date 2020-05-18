@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
-from mindspore.nn import Cell
-from mindspore.nn import BatchNorm2d
-from mindspore.common.tensor import Tensor
-from mindspore.ops import composite as C
+import pytest
+
 import mindspore.context as context
+from mindspore.common.tensor import Tensor
+from mindspore.nn import BatchNorm2d
+from mindspore.nn import Cell
+from mindspore.ops import composite as C
 
 
 class Batchnorm_Net(Cell):

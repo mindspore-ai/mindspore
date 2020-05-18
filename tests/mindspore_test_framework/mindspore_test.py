@@ -17,6 +17,7 @@
 
 import logging
 import pytest
+
 from .components.icomponent import IDataComponent, IBuilderComponent, IExectorComponent, \
     IVerifierComponent, IFIPolicyComponent, IERPolicyComponent, IComponent, \
     IFacadeComponent

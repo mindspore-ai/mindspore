@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.py_transforms as F
-import mindspore.dataset.transforms.c_transforms as C
-import mindspore.common.dtype as mstype
-from mindspore import log as logger
 import numpy as np
+
+import mindspore.common.dtype as mstype
+import mindspore.dataset as ds
+import mindspore.dataset.transforms.c_transforms as C
+import mindspore.dataset.transforms.vision.py_transforms as F
+from mindspore import log as logger
 
 
 # In generator dataset: Number of rows is 3, its value is 0, 1, 2

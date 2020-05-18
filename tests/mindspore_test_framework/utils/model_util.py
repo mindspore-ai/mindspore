@@ -18,11 +18,12 @@
 # pylint: disable=arguments-differ
 
 import numpy as np
-from mindspore import Parameter, ParameterTuple, Tensor
+
 import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
+from mindspore import Parameter, ParameterTuple, Tensor
 from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 
 
 class SquaredLoss(nn.Cell):

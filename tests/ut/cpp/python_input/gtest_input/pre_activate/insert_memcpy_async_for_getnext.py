@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 
-from mindspore.ops import operations as P
-from mindspore.ops import Primitive
 import mindspore as ms
+from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 get_next = P.GetNext([ms.float32, ms.int32], [[32, 64], [32]], 2, "")
 memcpy_async = Primitive('memcpy_async')

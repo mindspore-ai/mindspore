@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from pathlib import Path
+
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 from mindspore import log as logger
-from pathlib import Path
 
 
 # just a basic test with parallel random data op

@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-from mindspore.common.tensor import Tensor
-from mindspore.ops.composite import GradOperation
-from mindspore.nn import Cell, GELU
-from mindspore import context
-import pytest
 import math
-from mindspore.ops import operations as P
+import numpy as np
+import pytest
+
 import mindspore as ms
+from mindspore import context
 from mindspore import log as logger
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell, GELU
+from mindspore.ops import operations as P
+from mindspore.ops.composite import GradOperation
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 

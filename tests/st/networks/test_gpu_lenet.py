@@ -13,26 +13,26 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import os
 import pytest
-import numpy as np
-from mindspore import Tensor
+
 import mindspore.context as context
-from mindspore.ops import operations as P
+import mindspore.dataset as ds
+import mindspore.dataset.transforms.c_transforms as C
+import mindspore.dataset.transforms.vision.c_transforms as CV
 import mindspore.nn as nn
-from mindspore.nn import Dense, TrainOneStepCell, WithLossCell
-from mindspore.nn.optim import Momentum
-from mindspore.nn.metrics import Accuracy
-from mindspore.train import Model
+from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
-from mindspore.model_zoo.lenet import LeNet5
-from mindspore.train.callback import LossMonitor
-
-import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as CV
-import mindspore.dataset.transforms.c_transforms as C
 from mindspore.dataset.transforms.vision import Inter
+from mindspore.model_zoo.lenet import LeNet5
+from mindspore.nn import Dense, TrainOneStepCell, WithLossCell
+from mindspore.nn.metrics import Accuracy
+from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
+from mindspore.train import Model
+from mindspore.train.callback import LossMonitor
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 

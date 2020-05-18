@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
+from mindspore.common.api import _executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
-from mindspore.common.api import _executor
 
 
 class Net(Cell):

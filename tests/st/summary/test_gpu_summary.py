@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
-import os
-import time
-import shutil
-import random
 import numpy as np
-import mindspore.nn as nn
+import os
+import pytest
+import random
+import shutil
+import time
+
 import mindspore.context as context
+import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.train.summary.summary_record import SummaryRecord

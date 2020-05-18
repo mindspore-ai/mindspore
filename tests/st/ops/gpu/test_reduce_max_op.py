@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.api import ms_function
 import numpy as np
+import pytest
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.common.api import ms_function
+from mindspore.ops import operations as P
 
 x0 = np.random.rand(2, 3, 4, 4).astype(np.float32)
 axis0 = 3

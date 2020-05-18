@@ -14,10 +14,11 @@
 # ==============================================================================
 
 import numpy as np
-import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as cde
-import mindspore.dataset.transforms.c_transforms as C
+
 import mindspore.common.dtype as mstype
+import mindspore.dataset as ds
+import mindspore.dataset.transforms.c_transforms as C
+import mindspore.dataset.transforms.vision.c_transforms as cde
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]

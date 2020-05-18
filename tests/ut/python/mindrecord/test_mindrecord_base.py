@@ -16,9 +16,10 @@
 import numpy as np
 import os
 import uuid
-from mindspore.mindrecord import FileWriter, FileReader, MindPage, SUCCESS
-from mindspore import log as logger
 from utils import get_data, get_nlp_data
+
+from mindspore import log as logger
+from mindspore.mindrecord import FileWriter, FileReader, MindPage, SUCCESS
 
 FILES_NUM = 4
 CV_FILE_NAME = "./imagenet.mindrecord"

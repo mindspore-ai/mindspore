@@ -14,6 +14,7 @@
 # ============================================================================
 '''Remove after MindData merge to MindSpore '''
 import numpy as np
+
 from mindspore import Tensor
 
 

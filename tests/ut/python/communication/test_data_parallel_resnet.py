@@ -17,11 +17,11 @@ resnet50 example
 """
 import numpy as np
 
-from mindspore import Tensor, Model, ParallelMode
-from mindspore.ops.operations import TensorAdd
-import mindspore.nn as nn
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor, Model, ParallelMode
 from mindspore.nn.optim import Momentum
+from mindspore.ops.operations import TensorAdd
 from ....dataset_mock import MindData
 
 

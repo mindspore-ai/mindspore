@@ -12,22 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.train.model import Model
+import numpy as np
+
+import mindspore as ms
+import mindspore.common.dtype as DT
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
+from mindspore.common.initializer import initializer
+from mindspore.common.parameter import Parameter
+from mindspore.nn import WithLossCell
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
-from mindspore import Tensor
-import mindspore as ms
-import numpy as np
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer
 from mindspore.ops import functional as F
-from mindspore.nn import WithLossCell
-import mindspore.common.dtype as DT
-from tests.dataset_mock import MindData
+from mindspore.ops import operations as P
+from mindspore.train.model import Model
 from mindspore.train.parallel_utils import ParallelMode
-from mindspore import context
+from tests.dataset_mock import MindData
 
 
 class Dataset(MindData):

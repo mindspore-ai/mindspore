@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import numpy as np
+import os
+
 import mindspore as ms
 import mindspore.communication.management as distributedTool
-from mindspore.nn import Cell
 from mindspore import context
-from mindspore.nn import Dropout
 from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
+from mindspore.nn import Dropout
 
 device_num = 4
 device_id = int(os.environ["RANK_ID"])

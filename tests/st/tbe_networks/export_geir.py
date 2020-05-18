@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import numpy as np
+import os
 from resnet_torch import resnet50
-from mindspore import Tensor
 
+from mindspore import Tensor
 from mindspore.train.serialization import save, load, _check_filedir_or_create, _chg_model_file_name_if_same_exist, \
     _read_file_last_line, context, export
 

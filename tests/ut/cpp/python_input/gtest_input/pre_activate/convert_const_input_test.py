@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops import operations as P
-from mindspore.ops.operations import _grad_ops as G
-from mindspore.ops import Primitive
 import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
+from mindspore.ops import Primitive
+from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
 
 make_tuple = Primitive('make_tuple')
 reshape = P.Reshape()

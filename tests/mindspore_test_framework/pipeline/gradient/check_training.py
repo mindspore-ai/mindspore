@@ -15,11 +15,11 @@
 
 """Pipelines for loss checking."""
 
-from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
+from ...components.executor.exec_and_verify_model_loss import LossVerifierEC
 from ...components.facade.me_facade import MeFacadeFC
 from ...components.function.get_function_from_config import IdentityBC
+from ...components.function_inputs_policy.cartesian_product_on_id_for_function_inputs import IdCartesianProductFIPC
 from ...components.inputs.generate_dataset_for_linear_regression import GenerateDataSetForLRDC
-from ...components.executor.exec_and_verify_model_loss import LossVerifierEC
 
 # pylint: disable=W0105
 """

@@ -14,17 +14,17 @@
 # ============================================================================
 """ test_cell_bprop """
 import numpy as np
+import pytest
+
+import mindspore.common.dtype as mstype
 import mindspore.nn as nn
+from mindspore import Parameter
+from mindspore import context
+from mindspore.common.initializer import initializer
+from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore import Parameter
-from mindspore.common.tensor import Tensor
-import mindspore.common.dtype as mstype
-from mindspore.common.initializer import initializer
-from mindspore import context
 from ....mindspore_test_framework.utils.bprop_util import bprop
-
-import pytest
 
 
 def setup_module(module):

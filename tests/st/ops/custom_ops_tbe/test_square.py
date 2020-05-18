@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import mindspore.nn as nn
-import mindspore.context as context
-from mindspore import Tensor
-from cus_square import CusSquare
 import pytest
+from cus_square import CusSquare
+
+import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 

@@ -16,8 +16,8 @@
 """Component that load inputs from npy file."""
 
 from ...components.icomponent import IDataComponent
-from ...utils.npy_util import load_data_from_npy_or_shape
 from ...utils import keyword
+from ...utils.npy_util import load_data_from_npy_or_shape
 
 
 class LoadFromNpyDC(IDataComponent):

@@ -15,11 +15,12 @@
 """test cifar100 to mindrecord tool"""
 import os
 import pytest
+
+from mindspore import log as logger
 from mindspore.mindrecord import Cifar100ToMR
 from mindspore.mindrecord import FileReader
 from mindspore.mindrecord import MRMOpenError
 from mindspore.mindrecord import SUCCESS
-from mindspore import log as logger
 
 CIFAR100_DIR = "../data/mindrecord/testCifar100Data"
 MINDRECORD_FILE = "./cifar100.mindrecord"

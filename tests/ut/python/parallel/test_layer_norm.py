@@ -14,12 +14,13 @@
 # ============================================================================
 import numpy as np
 import pytest
+
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
-from mindspore.nn import Cell, TrainOneStepCell, Momentum
-from mindspore.ops import operations as P
 from mindspore.common.api import _executor
 from mindspore.common.initializer import initializer
+from mindspore.nn import Cell, TrainOneStepCell, Momentum
+from mindspore.ops import operations as P
 
 
 class Net(Cell):

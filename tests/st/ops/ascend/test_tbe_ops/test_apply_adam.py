@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore import Tensor
-import mindspore.nn as nn
-from mindspore.nn import Dense, SoftmaxCrossEntropyWithLogits
-from mindspore.nn import TrainOneStepCell, WithLossCell
 
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore.nn import Dense, SoftmaxCrossEntropyWithLogits
+from mindspore.nn import TrainOneStepCell, WithLossCell
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", impl_type="tbe")
 

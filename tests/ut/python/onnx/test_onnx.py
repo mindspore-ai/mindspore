@@ -13,12 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """ut for model serialize(save/load)"""
+import numpy as np
 import os
+import pytest
 import stat
 import time
-
-import numpy as np
-import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn

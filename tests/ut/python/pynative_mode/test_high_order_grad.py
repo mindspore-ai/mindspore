@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """ test_high_order_grad """
+from mindspore import context
 from mindspore.common.api import ms_function
 from mindspore.ops.composite import grad, grad_all, grad_all_with_sens
-from mindspore import context
 
 
 def setup_module(module):

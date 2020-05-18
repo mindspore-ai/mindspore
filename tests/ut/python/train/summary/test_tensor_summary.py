@@ -19,9 +19,8 @@
 @Desc  : test summary function
 """
 import logging
-import os
-
 import numpy as np
+import os
 
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor

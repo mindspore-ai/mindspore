@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore.dataset as ds
-import mindspore.dataset.transforms.vision.c_transforms as vision
-from mindspore.dataset.transforms.vision import Inter
 import numpy as np
 import sys
 
 import mindspore.context as context
+import mindspore.dataset as ds
+import mindspore.dataset.transforms.vision.c_transforms as vision
 import mindspore.nn as nn
-from mindspore.common.tensor import Tensor
 from mindspore.common.api import _executor
+from mindspore.common.tensor import Tensor
+from mindspore.dataset.transforms.vision import Inter
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")

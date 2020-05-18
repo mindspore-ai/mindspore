@@ -15,9 +15,10 @@
 """ test_return_const_or_parameter """
 
 import numpy as np
+
+import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import context
-import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 
 context.set_context(mode=context.GRAPH_MODE)

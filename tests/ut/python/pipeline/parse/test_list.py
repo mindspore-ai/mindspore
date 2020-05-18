@@ -14,10 +14,11 @@
 # ============================================================================
 """ test_list """
 import numpy as np
+
 import mindspore.nn as nn
-from mindspore.nn import Cell
 from mindspore import Tensor
 from mindspore.common.api import _executor
+from mindspore.nn import Cell
 
 
 class Net1(Cell):

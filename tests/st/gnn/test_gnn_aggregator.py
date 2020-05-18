@@ -14,13 +14,13 @@
 # ============================================================================
 """test gnn aggregator."""
 import numpy as np
+from aggregator import MeanAggregator, AttentionHead, AttentionAggregator
 
-import mindspore.nn as nn
 import mindspore.context as context
+import mindspore.nn as nn
+import mindspore.ops.composite as C
 from mindspore import Tensor
 from mindspore.common.api import _executor
-import mindspore.ops.composite as C
-from aggregator import MeanAggregator, AttentionHead, AttentionAggregator
 
 context.set_context(mode=context.GRAPH_MODE)
 

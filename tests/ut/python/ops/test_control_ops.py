@@ -14,14 +14,15 @@
 # ============================================================================
 """ test control ops """
 import numpy as np
+
 import mindspore as ms
-from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.ops import operations as P
+from mindspore import nn
+from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
-from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
 

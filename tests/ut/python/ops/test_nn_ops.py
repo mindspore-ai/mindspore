@@ -15,18 +15,16 @@
 """ test nn ops """
 import functools
 import numpy as np
+
 import mindspore
-
-import mindspore.nn as nn
 import mindspore.context as context
-
+import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.common.initializer import initializer
 from mindspore.ops import Primitive
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
-
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \

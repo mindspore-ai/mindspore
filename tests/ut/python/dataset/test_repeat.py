@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import mindspore.dataset.transforms.vision.c_transforms as vision
-import mindspore.dataset as ds
 import numpy as np
-from mindspore import log as logger
 from util import save_and_check
+
+import mindspore.dataset as ds
+import mindspore.dataset.transforms.vision.c_transforms as vision
+from mindspore import log as logger
 
 DATA_DIR_TF = ["../data/dataset/testTFTestAllTypes/test.data"]
 SCHEMA_DIR_TF = "../data/dataset/testTFTestAllTypes/datasetSchema.json"

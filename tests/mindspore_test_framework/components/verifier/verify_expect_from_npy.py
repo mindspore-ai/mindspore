@@ -16,11 +16,12 @@
 """Component that comparing results with expectation serialized as npy file."""
 
 import numpy as np
+
 from ...components.icomponent import IVerifierComponent
-from ...utils.other_util import to_numpy_list, to_numpy
-from ...utils.npy_util import load_data_from_npy_or_shape
-from ...utils.verifier_util import tolerance_assert
 from ...utils import keyword
+from ...utils.npy_util import load_data_from_npy_or_shape
+from ...utils.other_util import to_numpy_list, to_numpy
+from ...utils.verifier_util import tolerance_assert
 
 
 class LoadFromNpyVC(IVerifierComponent):

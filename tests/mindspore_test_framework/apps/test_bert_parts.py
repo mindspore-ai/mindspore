@@ -15,20 +15,20 @@
 
 """Test bert submodules."""
 
-import os
 import numpy as np
+import os
+
+from mindspore import Tensor
+from mindspore import nn, context
 from mindspore.model_zoo.Bert_NEZHA import EmbeddingLookup, GetMaskedLMOutput, \
     BertConfig, BertPreTraining, BertNetworkWithLoss
 from mindspore.model_zoo.Bert_NEZHA.bert_model import BertModel
-
-from mindspore import nn, context
-from mindspore import Tensor
-from ..utils.block_util import get_output_cell
 from ..mindspore_test import mindspore_test
 from ..pipeline.forward.compile_forward import pipeline_for_compile_forward_anf_graph_for_case_by_case_config, \
     pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 from ..pipeline.gradient.compile_gradient import pipeline_for_compile_grad_anf_graph_for_case_by_case_config, \
     pipeline_for_compile_grad_ge_graph_for_case_by_case_config
+from ..utils.block_util import get_output_cell
 from ...dataset_mock import MindData
 
 # pylint: disable=missing-docstring, W0612, arguments-differ

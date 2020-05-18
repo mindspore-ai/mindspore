@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
 import filecmp
+import os
 
 curr_path = os.path.abspath(os.curdir)
 file_memreuse = curr_path + "/mem_reuse_check/memreuse.ir"

@@ -15,13 +15,13 @@
 """ test_hypermap_partial """
 import numpy as np
 
+import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor, context
-import mindspore.common.dtype as mstype
-from mindspore.ops import composite as C
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 from mindspore.common.api import ms_function
+from mindspore.ops import composite as C
+from mindspore.ops import functional as F
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
 

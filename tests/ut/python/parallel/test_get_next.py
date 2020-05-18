@@ -13,17 +13,18 @@
 # limitations under the License.
 
 import numpy as np
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
-from mindspore.common.api import _executor
-from mindspore.ops import composite as C
-from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.ops.operations.comm_ops import _VirtualDataset
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore import context
+from mindspore.common.api import _executor
 from mindspore.common.initializer import initializer
+from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.ops import composite as C
+from mindspore.ops import operations as P
+from mindspore.ops.operations.comm_ops import _VirtualDataset
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 context.set_context(mode=context.GRAPH_MODE)
 

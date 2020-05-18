@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P

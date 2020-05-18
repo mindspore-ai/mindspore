@@ -14,19 +14,19 @@
 # ============================================================================
 """ test array ops """
 import functools
-import pytest
 import numpy as np
+import pytest
+from mindspore._c_expression import signature_dtype as sig_dtype
+from mindspore._c_expression import signature_kind as sig_kind
+from mindspore._c_expression import signature_rw as sig_rw
+
 import mindspore as ms
 from mindspore import Tensor
+from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops import prim_attr_register
-from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer
-from mindspore._c_expression import signature_dtype as sig_dtype
-from mindspore._c_expression import signature_rw as sig_rw
-from mindspore._c_expression import signature_kind as sig_kind
-
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \

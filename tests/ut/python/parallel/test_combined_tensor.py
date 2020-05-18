@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore.parallel._tensor import _reshape_param_data
 from mindspore import Tensor
+from mindspore.parallel._tensor import _reshape_param_data
 
 
 def test_reshape_param_data():

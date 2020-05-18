@@ -13,10 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """ test_cont_break """
-import pytest
 import numpy as np
-from mindspore.nn import Cell
+import pytest
+
 from mindspore import Tensor, Model, context
+from mindspore.nn import Cell
 
 
 def run_test(netclass, count, dev):

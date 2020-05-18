@@ -13,9 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-from mindspore.ops import operations as P
-from mindspore.ops import Primitive
+
 from mindspore.common.tensor import Tensor
+from mindspore.ops import Primitive
+from mindspore.ops import operations as P
 
 make_tuple = Primitive('make_tuple')
 concat = P.Concat()

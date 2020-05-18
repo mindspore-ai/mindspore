@@ -13,16 +13,17 @@
 # limitations under the License.
 
 import numpy as np
-from mindspore import context
-import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore import Tensor
-from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import mindspore as ms
+import mindspore.nn as nn
+from mindspore import Tensor
+from mindspore import context
+from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
-from mindspore import context
+from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 context.set_context(mode=context.GRAPH_MODE)
 

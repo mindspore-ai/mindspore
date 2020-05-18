@@ -13,17 +13,18 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
+import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.nn.optim import Momentum
-from mindspore.ops import operations as P
-from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.nn import Dense
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
+from mindspore.nn import Dense
+from mindspore.nn import TrainOneStepCell, WithLossCell
+from mindspore.nn.optim import Momentum
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 

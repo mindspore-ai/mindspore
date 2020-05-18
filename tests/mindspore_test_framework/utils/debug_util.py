@@ -18,6 +18,7 @@
 # pylint: disable=missing-docstring, unused-argument
 
 import logging
+
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops._grad.grad_base import bprop_getters

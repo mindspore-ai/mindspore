@@ -14,20 +14,19 @@
 # ============================================================================
 """ test_initializer """
 import math
-from functools import reduce
-
 import numpy as np
 import pytest as py
+from functools import reduce
 from scipy import stats
 
 import mindspore as ms
 import mindspore.common.initializer as init
 import mindspore.nn as nn
-from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
-from mindspore.ops import operations as P
 from mindspore import context
+from mindspore.common.parameter import Parameter
+from mindspore.common.tensor import Tensor
 from mindspore.nn import Conv2d
+from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
 
 

@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 import os
 import pytest
-import numpy as np
+from numpy import allclose
+
 import mindspore as ms
 import mindspore.communication.management as distributedTool
-from numpy import allclose
 from mindspore import context
+from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
-from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import grad_all_with_sens
 
 device_num = 4

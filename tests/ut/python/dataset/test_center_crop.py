@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+from util import diff_mse, visualize, save_and_check_md5
+
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
-import mindspore.dataset as ds
 from mindspore import log as logger
-from util import diff_mse, visualize, save_and_check_md5
 
 GENERATE_GOLDEN = False
 

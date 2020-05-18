@@ -20,11 +20,10 @@ import glob
 import numpy as np
 import os
 
-from mindspore import log as logger
-
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
+from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"

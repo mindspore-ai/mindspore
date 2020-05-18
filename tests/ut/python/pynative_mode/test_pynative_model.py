@@ -17,11 +17,11 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Parameter, ParameterTuple, Tensor
+from mindspore import context
+from mindspore.nn.optim import Momentum
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.nn.optim import Momentum
 from ..ut_filter import non_graph_engine
-from mindspore import context
 
 
 def setup_module(module):

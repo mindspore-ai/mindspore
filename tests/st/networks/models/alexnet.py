@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 import mindspore.nn as nn
-from mindspore.ops import operations as P
 from mindspore.nn import Dense
+from mindspore.ops import operations as P
 
 
 class AlexNet(nn.Cell):

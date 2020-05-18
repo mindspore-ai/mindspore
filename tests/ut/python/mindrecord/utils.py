@@ -16,10 +16,10 @@
 
 import collections
 import json
+import numpy as np
 import os
 import re
 import string
-import numpy as np
 
 from mindspore import log as logger
 

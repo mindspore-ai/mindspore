@@ -14,10 +14,11 @@
 # ============================================================================
 """ opt_test """
 import numpy as np
+
+from mindspore import Tensor
 from mindspore.ops import Primitive, PrimitiveWithInfer
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
-from mindspore import Tensor
 
 # pylint: disable=unused-variable
 

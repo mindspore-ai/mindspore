@@ -15,11 +15,12 @@
 """test mindrecord exception"""
 import os
 import pytest
+from utils import get_data
+
+from mindspore import log as logger
 from mindspore.mindrecord import FileWriter, FileReader, MindPage, SUCCESS
 from mindspore.mindrecord import MRMOpenError, MRMGenerateIndexError, ParamValueError, MRMGetMetaError, \
     MRMFetchDataError
-from mindspore import log as logger
-from utils import get_data
 
 CV_FILE_NAME = "./imagenet.mindrecord"
 NLP_FILE_NAME = "./aclImdb.mindrecord"

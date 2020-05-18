@@ -15,8 +15,8 @@
 
 """Component that Check if the function raises the expected Exception."""
 
-import sys
 import pytest
+import sys
 
 from ...components.icomponent import IExectorComponent
 from ...utils import keyword

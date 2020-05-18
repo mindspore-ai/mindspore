@@ -13,14 +13,15 @@
 # limitations under the License.
 # ============================================================================
 
+import numpy as np
 import pytest
-from mindspore.ops import operations as P
-from mindspore.ops import composite as C
-from mindspore.nn import Cell
-from mindspore.common.tensor import Tensor
+
 import mindspore.common.dtype as mstype
 import mindspore.context as context
-import numpy as np
+from mindspore.common.tensor import Tensor
+from mindspore.nn import Cell
+from mindspore.ops import composite as C
+from mindspore.ops import operations as P
 
 
 class MinimumNet(Cell):
