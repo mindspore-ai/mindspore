@@ -141,6 +141,9 @@ constexpr auto kLabelSetOpName = "LabelSet";
 constexpr auto kLabelSwitchOpName = "LabelSwitch";
 constexpr auto kLabelGotoOpName = "LabelGoto";
 constexpr auto kBNInferGradOpName = "BNInferGrad";
+constexpr auto kCallOpName = "call";
+constexpr auto kPartialOpName = "partial";
+constexpr auto kSwitchOpName = "switch";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
@@ -197,6 +200,7 @@ const int kValueNodeTensorMask = 2;
 
 // define special index in special node
 constexpr auto kAnfPrimitiveIndex = 0;
+constexpr auto kAnfPartialFuncGraphIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
 constexpr auto kInputNodeOutputIndexInTupleGetItem = 2;
 constexpr auto kTupleGetItemInputSize = 3;

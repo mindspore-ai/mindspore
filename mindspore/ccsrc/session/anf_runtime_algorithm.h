@@ -181,6 +181,7 @@ class AnfRuntimeAlgorithm {
   static size_t GetRealInputIndex(const AnfNodePtr &anf_node, const size_t cur_index);
   static bool IsCommunicationOp(const AnfNodePtr &node);
   static bool IsGetNext(const NotNull<AnfNodePtr> &node);
+  static FuncGraphPtr GetValueNodeFuncGraph(const AnfNodePtr &node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;
