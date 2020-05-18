@@ -102,6 +102,8 @@ class BestFitMemReuse {
   size_t GetAllocatedSize();
   // If the target stream can be reused by current stream
   bool IsReusableStream(uint32_t curr_stream_id, uint32_t target_stream_id);
+  // return false, when the node output cannot be released
+  bool IsRelease(const std::string &kernel_name);
   // set tensor_def and op_def
   void set_tensor_ptr_list(const std::vector<KernelRefCountPtr> &tensor_ptr_list) {
     tensor_ptr_list_ = tensor_ptr_list;
