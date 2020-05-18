@@ -379,7 +379,7 @@ class _Executor:
 
         self._params_init_data(obj, params)
         if not enable_debug_runtime or enable_ge:
-            if auto_parallel_mode:
+            if auto_parallel_mode and "train" in phase:
                 obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
                 obj.load_parameter_slice(params)
 
