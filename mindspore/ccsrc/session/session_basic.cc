@@ -20,6 +20,7 @@
 #include <unordered_set>
 #include "pipeline/parse/data_converter.h"
 #include "ir/manager.h"
+#include "ir/param_value_py.h"
 #include "operator/ops.h"
 #include "common/trans.h"
 #include "utils/context/ms_context.h"
@@ -44,10 +45,11 @@ tensor::TensorPtr GetParamDefaultInputTensor(const AnfNodePtr &node) {
     return nullptr;
   }
   auto parameter = node->cast<ParameterPtr>();
-  if (parameter == nullptr) {
+  if (parameter == nullptr || !parameter->has_default()) {
     return nullptr;
   }
-  auto py_param = parameter->default_param();
+  auto param_value = std::dynamic_pointer_cast<ParamValuePy>(parameter->default_param());
+  auto py_param = param_value->value();
   if (!py::hasattr(py_param, "default_input")) {
     return nullptr;
   }
@@ -315,7 +317,8 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
   MS_EXCEPTION_IF_NULL(param);
   if (tensor_mask == 1) {
     py::object obj;
-    param->set_default_param(obj);
+    auto param_value_new = std::make_shared<ParamValuePy>(obj);
+    param->set_default_param(param_value_new);
   }
   // set the kernel info of parameter
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();

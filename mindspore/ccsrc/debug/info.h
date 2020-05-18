@@ -24,13 +24,10 @@
 #include <utility>
 #include <vector>
 
-#include "pybind11/pybind11.h"
 #include "ir/base.h"
 #include "debug/trace_info.h"
 
 namespace mindspore {
-namespace py = pybind11;
-
 // namespace to support intermediate representation definition
 enum SourceLineTip { kSourceLineTipDiscard = 0, kSourceLineTipNextLine = 1, kSourceLineTipInLine = 2 };
 

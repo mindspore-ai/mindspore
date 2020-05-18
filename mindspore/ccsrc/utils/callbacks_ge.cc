@@ -16,6 +16,7 @@
 
 #include "utils/callbacks_ge.h"
 #include "pybind11/pybind11.h"
+#include "ir/param_value_py.h"
 #include "transform/df_graph_manager.h"
 #include "transform/util.h"
 #include "pipeline/parse/data_converter.h"
@@ -49,7 +50,11 @@ bool GetParameterShape(const FuncGraphPtr &graph, const std::string &param_name,
       return false;
     }
     if (param_node->name() == param_name) {
-      py::object parameter = param_node->default_param();
+      py::object parameter;
+      if (param_node->has_default()) {
+        auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_node->default_param());
+        parameter = param_value->value();
+      }
       ValuePtr value = parse::data_converter::PyDataToValue(parameter);
       TensorPtr tensor = std::dynamic_pointer_cast<tensor::Tensor>(value);
       if (tensor == nullptr) {

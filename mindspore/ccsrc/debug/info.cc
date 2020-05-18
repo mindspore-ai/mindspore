@@ -18,9 +18,9 @@
 #include <utility>
 #include <fstream>
 #include <sstream>
+#include <climits>
 #include "ir/anf.h"
-#include "pipeline/parse/parse.h"
-#include "pipeline/parse/python_adapter.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore {
 std::string HighLightLine(const std::string &line, int col_begin, int col_end, SourceLineTip tip) {

@@ -16,6 +16,10 @@
 #include <iostream>
 #include "common/common_test.h"
 #include "ir/dtype.h"
+#include "ir/dtype/ref.h"
+#include "ir/dtype/number.h"
+#include "ir/dtype/container.h"
+#include "ir/dtype/empty.h"
 
 namespace mindspore {
 class TestDType : public UT::Common {

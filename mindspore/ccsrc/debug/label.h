@@ -21,7 +21,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "utils/any.h"
 #include "ir/anf.h"
 
 namespace mindspore {

@@ -52,6 +52,7 @@ class AbstractBase;
 }  // namespace abstract
 using BaseShapePtr = std::shared_ptr<abstract::BaseShape>;
 using AbstractBasePtr = std::shared_ptr<abstract::AbstractBase>;
+using AbstractBasePtrList = std::vector<AbstractBasePtr>;
 
 class ValueNode;
 using ValueNodePtr = std::shared_ptr<ValueNode>;
@@ -77,6 +78,13 @@ using KernelInfoDevice = device::KernelInfo;
 using KernelInfoDevicePtr = std::shared_ptr<KernelInfoDevice>;
 
 class AnfVisitor;
+
+class ParamValue {
+ public:
+  ParamValue() = default;
+  virtual ~ParamValue() = default;
+};
+using ParamValuePtr = std::shared_ptr<ParamValue>;
 
 // AnfNode is the basic class of the IR definition derived from Base.
 // Only two types of nodes are derived: CNode and ANode.
@@ -239,11 +247,11 @@ class ANode : public AnfNode {
 
 // Parameter represents the parameter inputs of a function. They have no value.
 // Attributes:
-// default_param_: used to hold the inputting tensor of the model.
+// default_param_value_: used to hold the inputting tensor of the model.
 class Parameter : public ANode {
  public:
   explicit Parameter(const FuncGraphPtr &func_graph)
-      : ANode(func_graph), name_(""), has_default_(false), default_param_(py::none()), tensor_layout_(nullptr) {}
+      : ANode(func_graph), name_(""), has_default_(false), default_param_(nullptr), tensor_layout_(nullptr) {}
   ~Parameter() override = default;
   MS_DECLARE_PARENT(Parameter, ANode);
 
@@ -254,12 +262,11 @@ class Parameter : public ANode {
   std::string fullname_with_scope() override { return name(); };
 
   bool has_default() const { return has_default_; }
-
-  py::object default_param() { return default_param_; }
-  void set_default_param(const py::object &obj) {
-    default_param_ = obj;
+  void set_default_param(ParamValuePtr param) {
+    default_param_ = param;
     has_default_ = true;
   }
+  ParamValuePtr default_param() const { return default_param_; }
 
   std::shared_ptr<parallel::TensorLayout> tensor_layout() const { return tensor_layout_; }
   void set_tensor_layout(const std::shared_ptr<parallel::TensorLayout> &tensor_layout) {
@@ -280,7 +287,7 @@ class Parameter : public ANode {
  private:
   std::string name_;
   bool has_default_;
-  py::object default_param_;
+  ParamValuePtr default_param_;
   std::shared_ptr<parallel::TensorLayout> tensor_layout_;
 };
 using ParameterPtr = std::shared_ptr<Parameter>;

@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <algorithm>
 
+#include "ir/param_value_py.h"
 #include "pipeline/pass.h"
 #include "pipeline/parse/data_converter.h"
 #include "optimizer/ad/dfunctor.h"
@@ -619,7 +620,12 @@ void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, V
     // maybe some default parameter
     for (std::size_t i = (*arg_list).size(); i < graph_params_size; i++) {
       MS_EXCEPTION_IF_NULL(graph_params[i]);
-      py::object obj = dyn_cast<Parameter>(graph_params[i])->default_param();
+      auto param_ptr = (graph_params[i])->cast<ParameterPtr>();
+      if (!param_ptr->has_default()) {
+        MS_LOG(EXCEPTION) << "Parameter[" << i << "] has no default param";
+      }
+      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_ptr->default_param());
+      py::object obj = param_value->value();
       py::object p_value = py::cast<py::object>(parse::python_adapter::GetPyObjAttr(obj, "default_input"));
       (*arg_list).push_back(p_value);
     }

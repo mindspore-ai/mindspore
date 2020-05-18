@@ -17,20 +17,23 @@
 #ifndef MINDSPORE_CCSRC_IR_SCALAR_H_
 #define MINDSPORE_CCSRC_IR_SCALAR_H_
 
-namespace mindspore {
-/* namespace to support inference engine */
-
 #include <type_traits>
 #include <algorithm>
+#include <cmath>
 #include <vector>
 #include <string>
 #include <memory>
 #include <sstream>
 #include <utility>
 #include <cfloat>
+
 #include "ir/base.h"
 #include "ir/dtype.h"
+#include "ir/dtype/number.h"
 
+using std::fabs;
+
+namespace mindspore {
 class Scalar : public Value {
  public:
   Scalar() = default;
