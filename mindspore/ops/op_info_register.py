@@ -156,7 +156,7 @@ class RegOp:
 
     def fusion_type(self, fusion_type):
         """
-        Register fusion type.
+        Fusion type of the operator.
 
         Args:
             fusion_type (str): Value of fusion type.
@@ -167,7 +167,7 @@ class RegOp:
 
     def dtype_format(self, *args):
         """
-        Register dtype and format.
+        A dtype and format supported by the operator.
 
         Args:
             args (tuple): Value of dtype and format.
@@ -206,7 +206,7 @@ class RegOp:
 
 
 class AkgRegOp(RegOp):
-    """Class for Akg op info register"""
+    """Class for Akg op info register."""
 
     def __init__(self, op_name):
         super(AkgRegOp, self).__init__(op_name)
@@ -325,7 +325,7 @@ class AiCPURegOp(RegOp):
 class TBERegOp(RegOp):
     """Class for TBE op info register."""
 
-    def __init__(self, op_name=""):
+    def __init__(self, op_name):
         super(TBERegOp, self).__init__(op_name)
         self.imply_type = "TBE"
         self.async_flag_ = False
@@ -339,10 +339,10 @@ class TBERegOp(RegOp):
 
     def async_flag(self, async_flag):
         """
-        Register async flag.
+        Define the calculation efficiency of operator, whether to support asynchronous calculation.
 
         Args:
-            async_flag (bool): Value of async flag.
+            async_flag (bool): Value of async flag. Default: false.
         """
         self._is_bool(async_flag)
         self.async_flag_ = async_flag
@@ -350,10 +350,10 @@ class TBERegOp(RegOp):
 
     def binfile_name(self, binfile_name):
         """
-        Register binfile name.
+        Binary file name of operator. The option is optional.
 
         Args:
-            binfile_name (str): Name of op binfile.
+            binfile_name (str): File name of operator binary.
         """
         self._is_string(binfile_name)
         self.binfile_name_ = binfile_name
@@ -361,10 +361,10 @@ class TBERegOp(RegOp):
 
     def compute_cost(self, compute_cost):
         """
-        Register compute cost.
+        Define the calculation efficiency of operator, which refers to cost model value of the tiling module.
 
         Args:
-            compute_cost (int): Value of compute cost.
+            compute_cost (int): Value of compute cost. Default: 10.
         """
         self._is_int(compute_cost)
         self.compute_cost_ = compute_cost
@@ -372,10 +372,10 @@ class TBERegOp(RegOp):
 
     def kernel_name(self, kernel_name):
         """
-        Register kernel name.
+        The name of operator kernel.
 
         Args:
-            kernel_name (str): Name of op kernel.
+            kernel_name (str): Name of operator kernel.
         """
         self._is_string(kernel_name)
         self.kernel_name_ = kernel_name
@@ -383,10 +383,10 @@ class TBERegOp(RegOp):
 
     def partial_flag(self, partial_flag):
         """
-        Register partial flag.
+        Define the calculation efficiency of operator, whether to support partial calculation.
 
         Args:
-            partial_flag (bool): Value of partial flag.
+            partial_flag (bool): Value of partial flag. Default: true.
         """
         self._is_bool(partial_flag)
         self.partial_flag_ = partial_flag
@@ -394,7 +394,7 @@ class TBERegOp(RegOp):
 
     def reshape_type(self, reshape_type):
         """
-        Register reshape type.
+        Reshape type of operator.
 
         Args:
             reshape_type (str): Value of reshape type.
@@ -405,10 +405,10 @@ class TBERegOp(RegOp):
 
     def dynamic_format(self, dynamic_format):
         """
-        Register dynamic format.
+        Whether the operator supports dynamic selection of format and dtype.
 
         Args:
-            reshape_type (bool): Value of dynamic format.
+            dynamic_format (bool): Value of dynamic format. Default: false.
         """
         self._is_bool(dynamic_format)
         self.dynamic_format_ = dynamic_format
@@ -416,7 +416,7 @@ class TBERegOp(RegOp):
 
     def op_pattern(self, pattern=None):
         """
-        Register TBE op pattern information.
+        The behavior type of opeator, such as broadcast, reduce and so on.
 
         Args:
             pattern (str): Value of op pattern.
