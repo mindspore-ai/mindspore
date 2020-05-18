@@ -47,7 +47,7 @@ from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul
                        NPUGetFloatStatus, Pow, RealDiv, IsNan, IsInf, IsFinite, FloatStatus,
                        Reciprocal, CumSum,
                        Sin, Sqrt, Rsqrt,
-                       Square, Sub, TensorAdd, Sign, Round)
+                       Square, Sub, TensorAdd, Sign, Round, SquareSumAll)
 from .random_ops import (RandomChoiceWithMask)
 from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
@@ -251,7 +251,8 @@ __all__ = [
     "BatchToSpace",
     "Atan2",
     "ApplyRMSProp",
-    "ApplyCenteredRMSProp"
+    "ApplyCenteredRMSProp",
+    "SquareSumAll"
 ]
 
 __all__.extend(_quant_ops.__all__)

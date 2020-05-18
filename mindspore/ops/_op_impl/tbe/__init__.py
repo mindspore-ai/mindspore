@@ -180,3 +180,4 @@ from .random_choice_with_mask import random_choice_with_mask_op_info
 from .sgd import sgd_op_info
 from .lars_update import lars_update_op_info
 from .bn_training_update_v2 import _bn_training_update_v2_tbe
+from .square_sum_all import square_sum_all_op_info
