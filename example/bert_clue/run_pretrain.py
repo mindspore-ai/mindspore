@@ -25,6 +25,7 @@ from mindspore.train.model import Model
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.train.callback import Callback, ModelCheckpoint, CheckpointConfig
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.model_zoo.Bert_NEZHA import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecayDynamicLR
 from dataset import create_bert_dataset
