@@ -63,7 +63,7 @@ class LSTM(Cell):
         num_layers (int): Number of layers of stacked LSTM . Default: 1.
         has_bias (bool): Specifies whether has bias `b_ih` and `b_hh`. Default: True.
         batch_first (bool): Specifies whether the first dimension of input is batch_size. Default: False.
-        dropout (float): If not 0, append `Dropout` layer on the outputs of each
+        dropout (float, int): If not 0, append `Dropout` layer on the outputs of each
             LSTM layer except the last layer. Default 0. The range of dropout is [0.0, 1.0].
         bidirectional (bool): Specifies whether this is a bidirectional LSTM. If set True,
             number of directions will be 2 otherwise number of directions is 1. Default: False.
