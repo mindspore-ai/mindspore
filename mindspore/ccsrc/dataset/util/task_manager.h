@@ -16,8 +16,10 @@
 #ifndef DATASET_UTIL_TASK_MANAGER_H_
 #define DATASET_UTIL_TASK_MANAGER_H_
 
+#if !defined(_WIN32) && !defined(_WIN64)
 #include <semaphore.h>
 #include <signal.h>  // for sig_atomic_t
+#endif
 #include <condition_variable>
 #include <functional>
 #include <memory>
@@ -81,8 +83,10 @@ class TaskManager : public Service {
   static void InterruptMaster(const Status &rc = Status::OK());
 
   static void WakeUpWatchDog() {
+#if !defined(_WIN32) && !defined(_WIN64)
     TaskManager &tm = TaskManager::GetInstance();
     (void)sem_post(&tm.sem_);
+#endif
   }
 
   void ReturnFreeTask(Task *p) noexcept;
@@ -98,7 +102,9 @@ class TaskManager : public Service {
   std::shared_ptr<Task> master_;
   List<Task> lru_;
   List<Task> free_lst_;
+#if !defined(_WIN32) && !defined(_WIN64)
   sem_t sem_;
+#endif
   TaskGroup *watchdog_grp_;
   std::set<TaskGroup *> grp_list_;
   Task *watchdog_;
