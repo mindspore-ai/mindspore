@@ -123,8 +123,8 @@ void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_g
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   data_layout_pm->AddPass(std::make_shared<EliminateRedundantOp>());
   data_layout_pm->AddPass(std::make_shared<OptimizeDependence>());
-  data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
   data_layout_pm->AddPass(std::make_shared<TransDataSplit>());
+  data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
   optimizer->AddPassManager(data_layout_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
