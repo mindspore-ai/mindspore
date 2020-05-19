@@ -517,7 +517,7 @@ void AscendSession::RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input
 
 void AscendSession::GenerateTaskInfo(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
-  (void)device::KernelAdjust::GetInstance().StepLoadCtrlInputs(context_, kernel_graph);
+  (void)device::KernelAdjust::GetInstance().StepLoadCtrlInputs(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
   bool ret_ok = runtime_instance->GenTask(kernel_graph.get());
