@@ -44,6 +44,7 @@ parser.add_argument('--device_num', type=int, default=1, help='Device num.')
 parser.add_argument('--do_train', type=bool, default=True, help='Do train or not.')
 parser.add_argument('--do_eval', type=bool, default=False, help='Do eval or not.')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
+parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
 args_opt = parser.parse_args()
 
 device_id = int(os.getenv('DEVICE_ID'))
@@ -77,9 +78,13 @@ if __name__ == '__main__':
                                  repeat_num=epoch_size, batch_size=config.batch_size)
         step_size = dataset.get_dataset_size()
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
+        if args_opt.pre_trained:
+            param_dict = load_checkpoint(args_opt.pre_trained)
+            load_param_into_net(net, param_dict)
 
         # learning rate strategy with cosine
-        lr = Tensor(warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size))
+        lr = Tensor(warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, 120,
+                                               config.pretrain_epoch_size*step_size))
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                        config.weight_decay, config.loss_scale)
         model = Model(net, loss_fn=loss, optimizer=opt, amp_level='O2', keep_batchnorm_fp32=False,
