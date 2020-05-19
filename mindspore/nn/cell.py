@@ -288,6 +288,15 @@ class Cell:
                 parallel_inputs_run.append(new_tensor)
         return tuple(parallel_inputs_run)
 
+    def set_parallel_input_with_inputs(self, *inputs):
+        """
+        Slice inputs tensors by parallel strategies, and set the sliced inputs to `_parallel_input_run`
+
+        Args:
+            inputs (tuple): inputs of construct method.
+        """
+        self._parallel_inputs_run = self._load_inputs(*inputs)
+
     def _get_construct_inputs_number_and_name(self):
         """Compute self._construct_inputs_names and self._construct_inputs_num"""
         import inspect
@@ -304,6 +313,15 @@ class Cell:
         self._construct_inputs_names = self._construct_inputs_names[1:self._construct_inputs_num]
         self._construct_inputs_num = self._construct_inputs_num - 1
 
+    def compile(self, *inputs):
+        """
+        Compiles cell.
+
+        Args:
+            inputs (tuple): Input parameters.
+        """
+        _executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
+
     def compile_and_run(self, *inputs):
         """
         Compiles and runs cell.
@@ -314,13 +332,14 @@ class Cell:
         Returns:
             Object, the result of executing.
         """
-        _, compile_flag = _executor.compile(self, *inputs, phase=self.phase,
-                                            auto_parallel_mode=self._auto_parallel_mode)
+        _executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode)
 
         if self._auto_parallel_mode:
-            if inputs and isinstance(inputs[0], Tensor) and inputs[0].virtual_flag and (not compile_flag):
+            if inputs and isinstance(inputs[0], Tensor) and inputs[0].virtual_flag:
+                # get parallel inputs in sink mode, parallel inputs set in _executor.compile
                 parallel_inputs_run = self._parallel_inputs_run
             else:
+                # set parallel inputs in normal mode
                 self._parallel_inputs_run = self._load_inputs(*inputs)
                 parallel_inputs_run = self._parallel_inputs_run
             return _executor(self, *parallel_inputs_run, phase=self.phase)

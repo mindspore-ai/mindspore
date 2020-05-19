@@ -383,6 +383,10 @@ class _Executor:
                 obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
                 obj.load_parameter_slice(params)
 
+        # set parallel inputs in sink mode
+        if auto_parallel_mode and (args and isinstance(args[0], Tensor) and args[0].virtual_flag):
+            obj.set_parallel_input_with_inputs(*args)
+
         # the following GE init process is not needed when use vm or ms backend
         if enable_ge:
             # decide whether to sink based on whether the inputs is virtual or not
