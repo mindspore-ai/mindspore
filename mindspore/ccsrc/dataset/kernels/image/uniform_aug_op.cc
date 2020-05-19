@@ -55,11 +55,11 @@ Status UniformAugOp::Compute(const std::vector<std::shared_ptr<Tensor>> &input,
 
     // apply C++ ops (note: python OPs are not accepted)
     if (count == 1) {
-      (**tensor_op).Compute(input, output);
+      RETURN_IF_NOT_OK((**tensor_op).Compute(input, output));
     } else if (count % 2 == 0) {
-      (**tensor_op).Compute(*output, even_out_ptr);
+      RETURN_IF_NOT_OK((**tensor_op).Compute(*output, even_out_ptr));
     } else {
-      (**tensor_op).Compute(even_out, output);
+      RETURN_IF_NOT_OK((**tensor_op).Compute(even_out, output));
     }
     count++;
   }
