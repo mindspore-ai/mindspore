@@ -23,6 +23,7 @@
 #include "ir/func_graph.h"
 #include "session/kernel_graph.h"
 #include "common/utils.h"
+#include "pre_activate/common/pattern_engine.h"
 
 namespace mindspore {
 namespace opt {
@@ -162,6 +163,19 @@ AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePt
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
 void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &input_attrs);
+
+bool AnfEqual(const BaseRef &a, const BaseRef &b);
+
+bool CNodeTypeEqual(const BaseRef &a, const BaseRef &b);
+
+AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars,
+                      bool multigraph = false);
+
+// Check var_node in two equivs is the same node
+bool IsSameNode(const EquivPtr &equiv1, const EquivPtr &equiv2, const VarPtr &var_node);
+
+// Get anf_node from equiv by var_node
+AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_HELPER_H_
