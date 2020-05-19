@@ -89,8 +89,8 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLRRuleFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
-  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRule>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextRightRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLrV2>());
   ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
@@ -201,7 +201,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_before" + "_graph_" +
                             std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
-    DumpIRProto(kernel_graph, "before_hwopt");
+    DumpIRProto(kernel_graph, "before_hwopt_" + std::to_string(kernel_graph->graph_id()));
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
@@ -305,7 +305,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     std::string file_path =
       save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph, true);
-    DumpIRProto(kernel_graph, "after_hwopt");
+    DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
   }
 }
 
