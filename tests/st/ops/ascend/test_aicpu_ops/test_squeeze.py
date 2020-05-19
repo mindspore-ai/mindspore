@@ -36,7 +36,7 @@ def test_net_bool():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_int8():
@@ -44,7 +44,7 @@ def test_net_int8():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_uint8():
@@ -52,7 +52,7 @@ def test_net_uint8():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_int16():
@@ -60,7 +60,7 @@ def test_net_int16():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_uint16():
@@ -68,7 +68,7 @@ def test_net_uint16():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_int32():
@@ -76,7 +76,7 @@ def test_net_int32():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_uint32():
@@ -84,7 +84,7 @@ def test_net_uint32():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_int64():
@@ -92,7 +92,7 @@ def test_net_int64():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_uint64():
@@ -100,7 +100,7 @@ def test_net_uint64():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_float16():
@@ -108,7 +108,7 @@ def test_net_float16():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_float32():
@@ -116,7 +116,7 @@ def test_net_float32():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())
 
 
 def test_net_float64():
@@ -124,4 +124,4 @@ def test_net_float64():
     net = Net()
     output = net(Tensor(x))
     print(output.asnumpy())
-    assert (np.all(output.asnumpy() == x.squeeze()))
+    assert np.all(output.asnumpy() == x.squeeze())

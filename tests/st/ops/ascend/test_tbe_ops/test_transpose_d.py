@@ -29,14 +29,14 @@ class Net(nn.Cell):
         self.transpose = P.Transpose()
         self.perm = perm_in
 
-    def construct(self, input):
-        x = self.transpose(input, self.perm)
+    def construct(self, input_):
+        x = self.transpose(input_, self.perm)
         return x
 
 
-def ms_transpose(input, perm_in):
+def ms_transpose(input_, perm_in):
     context.set_context(mode=context.GRAPH_MODE)
-    input_me = Tensor(input)
+    input_me = Tensor(input_)
     net = Net(perm_in)
     net.set_train()
     model = Model(net)
@@ -47,6 +47,6 @@ def ms_transpose(input, perm_in):
 
 
 def test_net():
-    input = np.random.randn(8, 24, 1, 1).astype(np.float16)
+    input_ = np.random.randn(8, 24, 1, 1).astype(np.float16)
     perm = (0, 2, 3, 1)
-    ms_transpose(input, perm)
+    ms_transpose(input_, perm)

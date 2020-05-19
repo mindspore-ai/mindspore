@@ -21,7 +21,6 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
@@ -48,7 +47,7 @@ class NetReluGrad(nn.Cell):
 def test_relu_grad():
     relu_grad = NetReluGrad()
     output = relu_grad()
-    expect = np.array([[[[0, 0, 1, ], [0, 0, 0, ], [1, 1, 0.]]]]).astype(np.float32)
+    expect = np.array([[[[0, 0, 1,], [0, 0, 0,], [1, 1, 0.]]]]).astype(np.float32)
     error = np.ones(shape=[3, 3]) * 1.0e-6
     diff = output.asnumpy() - expect
     assert np.all(diff < error)

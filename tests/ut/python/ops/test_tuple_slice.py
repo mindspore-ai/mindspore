@@ -14,7 +14,6 @@
 # ============================================================================
 """ test_tuple_slice """
 import numpy as np
-import pytest
 
 import mindspore.ops.operations as P
 from mindspore import Tensor

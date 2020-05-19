@@ -26,7 +26,8 @@ from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops import prim_attr_register
-from mindspore.ops.primitive import Primitive, PrimitiveWithInfer
+from mindspore.ops.primitive import PrimitiveWithInfer
+import mindspore.context as context
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -304,8 +305,6 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
 
-
-import mindspore.context as context
 
 
 @non_graph_engine

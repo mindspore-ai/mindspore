@@ -39,8 +39,8 @@ def test_image_gradients():
     expected_dx = np.array([[[[1, 0], [1, 0]]]]).astype(np.int32)
     net = Net()
     dy, dx = net(image)
-    assert np.any(dx.asnumpy() - expected_dx) == False
-    assert np.any(dy.asnumpy() - expected_dy) == False
+    assert not np.any(dx.asnumpy() - expected_dx)
+    assert not np.any(dy.asnumpy() - expected_dy)
 
 
 def test_image_gradients_multi_channel_depth():
@@ -61,5 +61,5 @@ def test_image_gradients_multi_channel_depth():
     net = Net()
     dy, dx = net(image)
 
-    assert np.any(dx.asnumpy() - expected_dx.asnumpy()) == False
-    assert np.any(dy.asnumpy() - expected_dy.asnumpy()) == False
+    assert not np.any(dx.asnumpy() - expected_dx.asnumpy())
+    assert not np.any(dy.asnumpy() - expected_dy.asnumpy())

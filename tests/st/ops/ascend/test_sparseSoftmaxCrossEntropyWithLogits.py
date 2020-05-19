@@ -59,7 +59,7 @@ def test_net():
     '''Compare Numpy with MS type is float32'''
     labels_shape = (32,)
     logits_shape = [32, 1001]
-    labels, logits, loss_np, bp_np = np_sparse_softmax_cross_entropy_with_logits(labels_shape, logits_shape, np.float32)
+    labels, logits, loss_np, _ = np_sparse_softmax_cross_entropy_with_logits(labels_shape, logits_shape, np.float32)
     expect = loss_np
     SparseSoftmaxCrossEntropyWithLogits = Net()
     loss_me = SparseSoftmaxCrossEntropyWithLogits(Tensor(logits), Tensor(labels))

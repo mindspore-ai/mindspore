@@ -16,7 +16,6 @@
 import functools
 import numpy as np
 
-import mindspore as ms
 from mindspore import Tensor
 from mindspore import context
 from mindspore import nn
@@ -40,7 +39,7 @@ class ComparisonOpsNet(nn.Cell):
         d = y >= x
         e = x < y
         f = x < 1.0
-        g = 1.0 > y
+        g = y < 1.0
         h = y > x
         i = y == 3.0
         j = x != 4

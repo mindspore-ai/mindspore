@@ -87,8 +87,8 @@ if __name__ == '__main__':
             super(dataiter, self).__init__()
 
         def construct(self):
-            input, label = get_next()
-            return tadd(input)
+            input_, _ = get_next()
+            return tadd(input_)
 
 
     net = dataiter()

@@ -476,10 +476,10 @@ def test_foo():
 def double_nested_loop(x):
     i = 0
     s = 0
-    while (i < x):
+    while i < x:
         j = 0
         i = i + 1
-        while (j < 3):
+        while j < 3:
             j = j + 1
             s = s + j
     return s
@@ -859,7 +859,7 @@ def grad_refactor_14(a, b):
         return a * b
 
     def inner3(x):
-        if (x > 2):
+        if x > 2:
             return a
         return b
 

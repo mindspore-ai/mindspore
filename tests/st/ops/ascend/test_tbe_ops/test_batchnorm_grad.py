@@ -34,8 +34,8 @@ class Grad(nn.Cell):
         self.network = network
 
     @ms_function
-    def construct(self, input, output_grad):
-        return self.grad(self.network)(input, output_grad)
+    def construct(self, input_, output_grad):
+        return self.grad(self.network)(input_, output_grad)
 
 
 class Net(nn.Cell):
@@ -55,4 +55,4 @@ def test_net():
     x = np.random.randn(1, 64, 112, 112).astype(np.float32)
     sens = np.random.randn(1, 64, 112, 112).astype(np.float32)
     net = Grad(Net())
-    output = net(Tensor(x), Tensor(sens))
+    net(Tensor(x), Tensor(sens))

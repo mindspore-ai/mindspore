@@ -13,26 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """ test ops """
-import functools
 import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore import ops
-from mindspore.common import dtype as mstype
-from mindspore.common.api import _executor
-from mindspore.common.parameter import Parameter
-from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _grad_ops as G
-from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
-    import (pipeline_for_compile_forward_ge_graph_for_case_by_case_config,
-            pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception)
-from ....mindspore_test_framework.pipeline.gradient.compile_gradient \
-    import pipeline_for_compile_grad_ge_graph_for_case_by_case_config
+    import pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
 
 
 class Conv2DBackpropInputNet(nn.Cell):

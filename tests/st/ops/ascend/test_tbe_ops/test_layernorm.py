@@ -30,8 +30,8 @@ class Net(Cell):
         super(Net, self).__init__()
         self.layernorm = LayerNorm(input_shape, begin_norm_axis, begin_params_axis, gamma, beta)
 
-    def construct(self, input):
-        x = self.layernorm(input)
+    def construct(self, input_):
+        x = self.layernorm(input_)
         return x
 
 

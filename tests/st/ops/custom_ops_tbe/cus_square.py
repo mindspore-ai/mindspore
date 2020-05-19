@@ -20,12 +20,12 @@ from mindspore.ops import operations as P
 # y = x^2
 class CusSquare(PrimitiveWithInfer):
     """CusSquare definition"""
+    from square_impl import CusSquareImpl
 
     @prim_attr_register
     def __init__(self):
         """init CusSquare"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-        from square_impl import CusSquareImpl
 
     def vm_impl(self, x):
         x = x.asnumpy()

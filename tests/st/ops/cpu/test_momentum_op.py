@@ -57,7 +57,7 @@ def test_momentum():
     train_network = TrainOneStepCell(net_with_criterion, optimizer)  # optimizer
     train_network.set_train()
     losses = []
-    for i in range(epoch):
+    for _ in range(epoch):
         data = Tensor(np.arange(0, 16).reshape(1, 1, 4, 4).astype(np.float32) * 0.01)
         label = Tensor(np.array([0]).astype(np.int32))
         loss = train_network(data, label)
@@ -70,6 +70,5 @@ def test_momentum():
     [[0.04132498 0.00874167 0.00874167 0.00874167 0.00874167
       0.00874167 0.00874167 0.00874167 0.00874167 0.00874167]]
     """
-    error = np.ones(shape=[1, 10]) * 1.0e-6
 
     return losses

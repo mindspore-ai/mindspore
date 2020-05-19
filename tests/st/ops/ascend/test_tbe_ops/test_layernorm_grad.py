@@ -30,8 +30,8 @@ class Grad(Cell):
         self.grad = GradOperation(name="get_all", get_all=True, sens_param=True)
         self.network = network
 
-    def construct(self, input, output_grad, ):
-        gout = self.grad(self.network)(input, output_grad)
+    def construct(self, input_, output_grad,):
+        gout = self.grad(self.network)(input_, output_grad)
         return gout
 
 
@@ -40,8 +40,8 @@ class Net(Cell):
         super(Net, self).__init__()
         self.layernorm = LayerNorm(input_shape, begin_norm_axis, begin_params_axis, gamma, beta)
 
-    def construct(self, input):
-        x = self.layernorm(input)
+    def construct(self, input_):
+        x = self.layernorm(input_)
         return x
 
 
