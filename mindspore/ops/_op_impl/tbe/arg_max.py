@@ -23,8 +23,8 @@ arg_max_op_info = TBERegOp("Argmax") \
     .compute_cost(10) \
     .kernel_name("arg_max_d") \
     .partial_flag(True) \
-    .attr("dimension", "required", "int", "all") \
-    .attr("dtype", "optional", "type", "all") \
+    .attr("axis", "required", "int", "all") \
+    .attr("output_dtype", "optional", "type", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.I32_Default) \
