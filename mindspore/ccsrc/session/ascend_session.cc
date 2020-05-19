@@ -30,6 +30,7 @@
 #include "pre_activate/ascend/ascend_backend_optimization.h"
 #include "device/kernel_adjust.h"
 #include "device/ascend/ascend_stream_assign.h"
+#include "device/ascend/ascend_label_assign.h"
 #include "predict/predict.h"
 #include "session/anf_runtime_algorithm.h"
 #include "ir/scalar.h"
@@ -189,6 +190,8 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   RootGraphExecutorValidate(graph.get());
   // assign stream
   AssignStream(graph);
+  // assign label
+  AssignLabel(NOT_NULL(graph));
   // build kernel if node is cnode
   BuildKernel(graph);
   // alloc mem
@@ -466,6 +469,12 @@ void AscendSession::RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel
 void AscendSession::AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   device::ascend::AscendStreamAssign::GetInstance().AssignStreamNew(kernel_graph);
+  MS_LOG(INFO) << "Finish!";
+}
+
+void AscendSession::AssignLabel(NotNull<const KernelGraphPtr &> kernel_graph) const {
+  MS_LOG(INFO) << "Start!";
+  device::ascend::AscendLabelAssign::GetInstance().AssignLabel(kernel_graph);
   MS_LOG(INFO) << "Finish!";
 }
 
