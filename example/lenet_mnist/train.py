@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, enable_mem_reuse=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
     ds_train = create_dataset(os.path.join(args.data_path, "train"),
                               cfg.batch_size,
                               cfg.epoch_size)
