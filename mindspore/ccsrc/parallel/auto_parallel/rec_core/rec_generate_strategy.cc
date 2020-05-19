@@ -421,6 +421,20 @@ std::vector<std::vector<int32_t>> GenerateStrategiesFromStrategy(const std::vect
   if (ops[iter_ops]->type() == ONEHOT) {
     return PrepareOneHot(s);
   }
+
+  auto dev_num = g_device_manager->DeviceNum();
+  size_t cut_num = 1;
+  for (size_t i = 0; i < s.size(); i++) {
+    cut_num *= s[i];
+  }
+  if (cut_num < dev_num) {
+    size_t diff = dev_num / cut_num;
+    if (s[0] * diff > dev_num) {
+      MS_LOG(EXCEPTION) << "Failure: Can not continue to partition in the N-dimension of the element-wise operator.";
+    }
+    s[0] = s[0] * diff;
+  }
+
   for (size_t i = 0; i < (size_t)ops[iter_ops]->inputs_tensor_info().size(); i++) {
     if (ops[iter_ops]->inputs_tensor_info()[i].shape().size() == 0) {
       stra.push_back(s_empty);
@@ -537,6 +551,11 @@ void GenerateEliminatedOperatorStrategyBackward(const std::vector<std::shared_pt
     auto iter_ops = no_stra_op_list->at(iter_list);
     std::vector<std::vector<int32_t>> stra;
     std::vector<int32_t> s = CopyOutgoingOperatorInputStrategy(ops, input_tensor_names, iter_ops);
+    if (s.size() == 0) {
+      for (size_t i = 0; i < ops[iter_ops]->inputs_tensor_info()[0].shape().size(); i++) {
+        s.push_back(1);
+      }
+    }
     if (ops[iter_ops]->type() == SQUEEZE) {
       s = ModifyStrategyIfSqueezeOutgoing(ops, iter_ops, s);
     }
