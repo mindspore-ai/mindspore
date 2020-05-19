@@ -778,6 +778,11 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 2, 1, 3], Tensor(np.array([[0, 1], [0, 1], [0, 1]]).astype(np.int32))],
         'desc_bprop': [[4, 1, 3]],
         'skip': ['backward']}),
+    ('UnsortedSegmentMin', {
+        'block': P.UnsortedSegmentMin(),
+        'desc_const': [4],
+        'desc_inputs': [[3, 2, 1, 3], Tensor(np.array([1, 2, 3]).astype(np.int32))],
+        'desc_bprop': [[4, 2, 1, 3]]}),
     ('DropoutGenMask', {
         'block': P.DropoutGenMask(),
         'desc_const': [(2, 2), Tensor(0.5, mstype.float32)],

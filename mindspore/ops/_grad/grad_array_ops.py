@@ -22,6 +22,7 @@ from .. import functional as F
 from .grad_base import bprop_getters
 from ..primitive import constexpr
 from ... import context
+from ...common import dtype as mstype
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()
@@ -29,6 +30,7 @@ transpose = P.Transpose()
 shape_op = P.Shape()
 reshape = P.Reshape()
 invert_permutation = P.InvertPermutation()
+logical_and = P.LogicalAnd()
 
 
 @bprop_getters.register(P.Fill)
@@ -453,6 +455,57 @@ def get_bprop_diag_part(self):
     def bprop(x, out, dout):
         return (op(dout),)
 
+    return bprop
+
+
+def _GatherDropNegatives(params,
+                         ids,
+                         zero_clipped_indices=None,
+                         is_positive=None):
+    """Helper function for unsorted segment ops."""
+    maximum = P.Maximum()
+    gather = P.GatherV2()
+    greater_equal = P.GreaterEqual()
+    rank = P.Rank()
+    fill = P.Fill()
+    select = P.Select()
+
+    if zero_clipped_indices is None:
+        zero_clipped_indices = maximum(ids, zeros_like(ids))
+    gathered = gather(params, zero_clipped_indices, 0)
+    if is_positive is None:
+        is_positive = greater_equal(ids, 0)
+        is_positive_shape = shape_op(is_positive)
+        broadcastable_shape = is_positive_shape
+        for _ in range(rank(gathered) - rank(is_positive)):
+            broadcastable_shape += (1,)
+        is_positive = reshape(is_positive, broadcastable_shape)
+        gathered_shape = shape_op(gathered)
+        is_positive = logical_and(is_positive, fill(mstype.bool_, gathered_shape, 1))
+    zero_slice = zeros_like(gathered)
+    return (select(is_positive, gathered, zero_slice), zero_clipped_indices, is_positive)
+
+
+@bprop_getters.register(P.UnsortedSegmentMin)
+def get_bprop_unsorted_segment_min(self):
+    """Generate bprop for UnsortedSegmentMin"""
+    equal = P.Equal()
+    cast = P.Cast()
+    divide = P.RealDiv()
+    get_dtype = P.DType()
+    select = P.Select()
+
+    def bprop(x, segment_ids, num_segments, out, dout):
+        gathered_outputs, zero_clipped_indices, is_positive = _GatherDropNegatives(out, segment_ids)
+        is_selected = equal(x, gathered_outputs)
+        is_selected = logical_and(is_selected, is_positive)
+        num_selected = unsorted_segment_sum(cast(is_selected, get_dtype(dout)),
+                                            segment_ids, num_segments)
+        weighted_grads = divide(dout, num_selected)
+        gathered_grads, _, _ = _GatherDropNegatives(weighted_grads, None,
+                                                    zero_clipped_indices, is_positive)
+        zeros = zeros_like(gathered_grads)
+        return select(is_selected, gathered_grads, zeros), zeros_like(segment_ids), zeros_like(num_segments)
     return bprop
 
 

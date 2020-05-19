@@ -138,6 +138,7 @@ const PrimitivePtr kPrimSize = std::make_shared<Primitive>("Size");
 const PrimitivePtr kPrimArgMax = std::make_shared<Primitive>("Argmax");
 const PrimitivePtr kPrimPack = std::make_shared<Primitive>("Pack");
 const PrimitivePtr kPrimUnsortedSegmentSum = std::make_shared<Primitive>("UnsortedSegmentSum");
+const PrimitivePtr kPrimUnsortedSegmentMin = std::make_shared<Primitive>("UnsortedSegmentMin");
 const PrimitivePtr kPrimConcatOffset = std::make_shared<Primitive>("ConcatOffset");
 const PrimitivePtr kPrimReshape = std::make_shared<Primitive>("Reshape");
 const PrimitivePtr kPrimTile = std::make_shared<Primitive>("Tile");
