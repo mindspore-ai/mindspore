@@ -53,6 +53,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
                                            {prim::kPrimInsertGradientOf, prim::kPrimPrintShapeType,
                                             prim::kPrimGetRefKey, prim::kPrimMirror, prim::kPrimVirtualDiv});
   zero_like_fill_zero_ = MakeSubstitution(ZeroLikeFillZero(), "zero_like_fill_zero", prim::kPrimZerosLikeTensor);
+  adjust_all_reduce_mul_add_ = MakeSubstitution(AdjustAllReduceMulAdd(), "adjust_all_reduce_mul_add", prim::kPrimAddN);
 
   // ops eliminate
   item_tuple_eliminate_ =
