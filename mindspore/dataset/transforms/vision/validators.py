@@ -830,6 +830,9 @@ def check_uniform_augmentation(method):
         else:
             num_ops = 2
 
+        if not isinstance(num_ops, int):
+            raise ValueError("Number of operations should be an integer.")
+
         if num_ops <= 0:
             raise ValueError("num_ops should be greater than zero")
         if num_ops > len(operations):
