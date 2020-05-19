@@ -24,6 +24,7 @@ config = ed({
     "momentum": 0.9,
     "weight_decay": 1e-4,
     "epoch_size": 120,
+    "pretrain_epoch_size": 0,
     "buffer_size": 1000,
     "image_height": 224,
     "image_width": 224,
