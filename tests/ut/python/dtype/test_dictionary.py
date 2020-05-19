@@ -136,3 +136,17 @@ def test_dict_set_or_get_item_3():
 
     net = DictNet()
     assert net() == Tensor(np.ones([4, 2, 3], np.float32))
+
+def test_dict_set_item():
+    class DictSetNet(Cell):
+        def __init__(self):
+            super(DictSetNet, self).__init__()
+            self.attrs = ("abc", "edf", "ghi", "jkl")
+        def construct(self, x):
+            my_dict = {"def": x, "abc":x, "edf":x, "ghi":x, "jkl":x}
+            for i in range(len(self.attrs)):
+                my_dict[self.attrs[i]] = x - i
+            return my_dict["jkl"], my_dict["edf"]
+    x = Tensor(np.ones([2, 2, 3], np.float32))
+    net = DictSetNet()
+    out = net(x)
