@@ -72,7 +72,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   enable_mem_reuse_ = true;
   enable_gpu_summary_ = true;
   precompile_only_ = false;
-  auto_mixed_precision_flag_ = true;
+  auto_mixed_precision_flag_ = false;
   enable_pynative_infer_ = false;
   enable_dynamic_mem_pool_ = true;
   graph_memory_max_size_ = "0";
