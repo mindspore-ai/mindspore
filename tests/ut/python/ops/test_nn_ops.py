@@ -24,6 +24,7 @@ from mindspore.common.initializer import initializer
 from mindspore.ops import Primitive
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
@@ -456,6 +457,28 @@ class FlattenNet(nn.Cell):
         return self.flatten(x)
 
 
+class PReLUNet(nn.Cell):
+    """ PReLUNet definition """
+
+    def __init__(self):
+        super(PReLUNet, self).__init__()
+        self.prelu = P.PReLU()
+        self.w = Tensor(np.ones(3, np.float32))
+
+    def construct(self, x):
+        return self.prelu(x, self.w)
+
+
+class PReLUGradNet(nn.Cell):
+    """ PReLUGradNet definition """
+
+    def __init__(self):
+        super(PReLUGradNet, self).__init__()
+        self.prelu_grad = G.PReLUGrad()
+
+    def construct(self, dout, x, w):
+        return self.prelu_grad(dout, x, w)
+
 test_cases = [
     ('SoftMaxGrad', {
         'block': SoftMaxGrad(VirtualNetWithLoss(P.Softmax())),
@@ -544,6 +567,16 @@ test_cases = [
     ('FlattenNet', {
         'block': FlattenNet(),
         'desc_inputs': [Tensor(np.ones([1, 2, 3, 4], np.float32))],
+    }),
+    ('PReLUNet', {
+        'block': PReLUNet(),
+        'desc_inputs': [Tensor(np.ones([1, 3, 4, 4], np.float32))],
+    }),
+    ('PReLUGradNet', {
+        'block': PReLUGradNet(),
+        'desc_inputs': [Tensor(np.ones([1, 3, 4, 4], np.float32)),
+                        Tensor(np.ones([1, 3, 4, 4], np.float32)),
+                        Tensor(np.ones(3, np.float32))],
     }),
 ]
 
