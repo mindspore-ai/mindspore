@@ -407,7 +407,11 @@ AbstractBasePtr InferImplDropoutGenMask(const AnalysisEnginePtr &, const Primiti
   }
 
   // convert to bytes(8 bits) mask, using round up
-  int bytes_count = (count + 7) / 8;
+  int n128s = count / 128;
+  if ((count % 128) != 0) {
+    n128s++;
+  }
+  int bytes_count = n128s * 16;
   std::vector<int> shape_y{bytes_count};
 
   primitive->set_attr("T", kInt32);
