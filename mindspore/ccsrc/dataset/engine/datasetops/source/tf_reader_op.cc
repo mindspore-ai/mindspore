@@ -918,6 +918,9 @@ Status TFReaderOp::CreateSchema(const std::string tf_file, const std::vector<std
                          [](const auto &it) -> std::string { return it.first; });
   for (const auto &curr_col_name : columns) {
     auto it = feature_map.find(curr_col_name);
+    if (it == feature_map.end()) {
+      RETURN_STATUS_UNEXPECTED("Failed to find column " + curr_col_name);
+    }
     std::string column_name = it->first;
 
     std::string column_type;
