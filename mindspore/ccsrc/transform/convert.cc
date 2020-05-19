@@ -199,6 +199,7 @@ const char kNameApplyRMSProp[] = "ApplyRMSProp";
 const char kNameApplyCenteredRMSProp[] = "ApplyCenteredRMSProp";
 const char kNameL2Loss[] = "L2Loss";
 const char kNameCTCLoss[] = "CTCLoss";
+const char kNameRange[] = "Range";
 const char kNameSquareSumAll[] = "SquareSumAll";
 
 // -----------------OpAdapter initialization--------------
@@ -400,6 +401,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameApplyCenteredRMSProp), ADPT_DESC(ApplyCenteredRMSProp)},
     {string(kNameL2Loss), ADPT_DESC(L2Loss)},
     {string(kNameCTCLoss), ADPT_DESC(CTCLoss)},
+    {string(kNameRange), ADPT_DESC(RangeD)},
     {string(kNameSquareSumAll), ADPT_DESC(SquareSumAll)}};
 #ifdef ENABLE_GE
   adpt_map[string(kNamePrint)] = ADPT_DESC(Print);

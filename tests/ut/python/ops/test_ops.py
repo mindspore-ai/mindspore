@@ -784,6 +784,10 @@ test_case_nn_ops = [
         'desc_const': [0],
         'desc_inputs': [[1152], Tensor(np.array(10).astype(np.int32))],
         'desc_bprop': [Tensor(np.array(10).astype(np.float32))]}),
+    ('Range', {
+        'block': P.Range(1.0, 5.0),
+        'desc_inputs': [Tensor(np.ones([10]).astype(np.float32))],
+        'desc_bprop': [[10]]}),
     ('UnsortedSegmentSum', {
         'block': P.UnsortedSegmentSum(),
         'desc_const': [1280],

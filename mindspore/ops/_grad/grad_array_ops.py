@@ -268,6 +268,15 @@ def get_bprop_gather_v2(self):
     return bprop
 
 
+@bprop_getters.register(P.Range)
+def get_bprop_range(self):
+    """Generate bprop for Range"""
+
+    def bprop(x, out, dout):
+        return (zeros_like(x),)
+    return bprop
+
+
 @bprop_getters.register(P.Pack)
 def get_bprop_pack(self):
     """Generate bprop for Pack"""
