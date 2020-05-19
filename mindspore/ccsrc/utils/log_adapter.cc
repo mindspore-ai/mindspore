@@ -248,8 +248,20 @@ enum LogConfigToken {
   VARIABLE,     // '[A-Za-z][A-Za-z0-9_]*'
   NUMBER,       // [0-9]+
   COMMA,        // ','
-  COLON,        // ';'
+  COLON,        // ':'
   EOS,          // End Of String, '\0'
+  NUM_LOG_CFG_TOKENS
+};
+
+static const char *g_tok_names[NUM_LOG_CFG_TOKENS] = {
+  "invalid",        // indicate invalid token
+  "{",              // '{'
+  "}",              // '}'
+  "variable",       // '[A-Za-z][A-Za-z0-9_]*'
+  "number",         // [0-9]+
+  ",",              // ','
+  ":",              // ':'
+  "end-of-string",  // End Of String, '\0'
 };
 
 static inline bool IsAlpha(char ch) { return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z'); }
@@ -347,7 +359,8 @@ class LogConfigParser {
 
   bool Expect(LogConfigToken expected, LogConfigToken tok) {
     if (expected != tok) {
-      MS_LOG(ERROR) << "Expect " << expected << ", but got " << tok;
+      MS_LOG(WARNING) << "Parse submodule log configuration text error, expect `" << g_tok_names[expected]
+                      << "`, but got `" << g_tok_names[tok] << "`. The whole configuration will be ignored.";
       return false;
     }
     return true;
