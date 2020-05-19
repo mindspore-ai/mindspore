@@ -25,7 +25,7 @@ namespace opt {
 namespace {
 bool InputIsParameterOrValueNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto kernel_with_index = AnfAlgo::VisitKernel(node, 0);
+  auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(node, 0, true);
   return kernel_with_index.first->isa<Parameter>() || kernel_with_index.first->isa<ValueNode>();
 }
 
