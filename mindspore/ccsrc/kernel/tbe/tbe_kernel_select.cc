@@ -100,7 +100,7 @@ std::vector<std::string> SplitStr(const std::string &string, const std::string &
       substr = string.substr(start, index - start);
     }
     (void)substr.erase(0, substr.find_first_not_of(' '));
-    (void)substr.erase(substr.find_last_not_of(" ") + 1);
+    (void)substr.erase(substr.find_last_not_of(' ') + 1);
     auto iter = DYNAMIC_FORMAT_MAP.find(substr);
     if (iter != DYNAMIC_FORMAT_MAP.end()) {
       substr = iter->second;
@@ -113,8 +113,8 @@ std::vector<std::string> SplitStr(const std::string &string, const std::string &
   if (string.size() > start) {
     substr = string.substr(start);
   }
-  (void)substr.erase(0, substr.find_first_not_of(" "));
-  (void)substr.erase(substr.find_last_not_of(" ") + 1);
+  (void)substr.erase(0, substr.find_first_not_of(' '));
+  (void)substr.erase(substr.find_last_not_of(' ') + 1);
   auto iter = DYNAMIC_FORMAT_MAP.find(substr);
   if (iter != DYNAMIC_FORMAT_MAP.end()) {
     substr = iter->second;
@@ -123,7 +123,7 @@ std::vector<std::string> SplitStr(const std::string &string, const std::string &
   return result;
 }
 
-void ConvertFormatDtype(const std::string &format, const std::string &dtype, const std::shared_ptr<OpIOInfo> io_info) {
+void ConvertFormatDtype(const std::string &format, const std::string &dtype, const std::shared_ptr<OpIOInfo> &io_info) {
   MS_EXCEPTION_IF_NULL(io_info);
   std::vector<std::string> format_vec = SplitStr(format, ",");
   std::vector<std::string> dtype_vec = SplitStr(dtype, ",");
@@ -201,7 +201,7 @@ void SetTidyInputsInfo(const std::shared_ptr<AnfNode> &anf_node,
     MS_EXCEPTION_IF_NULL(inputs[i]);
     std::string param_type = inputs[i]->param_type();
     if (i >= real_input_num) {
-      MS_LOG(INFO) << "Input index:" << i << "is out of real_input_num:" << real_input_num;
+      MS_LOG(INFO) << "Input index: " << i << " is out of real_input_num:" << real_input_num;
       continue;
     }
     auto type_id = AnfAlgo::GetPrevNodeOutputInferDataType(anf_node, i);
@@ -239,7 +239,7 @@ void SetTidyOutputsInfo(const std::shared_ptr<AnfNode> &anf_node,
   std::vector<std::string> outputs_format;
   auto real_output_num = AnfAlgo::GetOutputTensorNum(anf_node);
   size_t output_idx = 0;
-  for (const auto output : outputs) {
+  for (const auto &output : outputs) {
     MS_EXCEPTION_IF_NULL(output);
     if (output_idx >= real_output_num) {
       continue;
@@ -280,7 +280,7 @@ void GenTidyKernelBuildInfo(const std::shared_ptr<AnfNode> &anf_node,
 }
 
 void ReplaceByDynamicFormatDtype(const CNodePtr &kernel_node, const std::shared_ptr<const OpInfo> &op_info_ptr,
-                                 const std::shared_ptr<OpInfo> op_info_new_ptr) {
+                                 const std::shared_ptr<OpInfo> &op_info_new_ptr) {
   std::vector<std::shared_ptr<OpIOInfo>> inputs_static = op_info_ptr->inputs_ptr();
   std::vector<std::shared_ptr<OpIOInfo>> outputs_static = op_info_ptr->outputs_ptr();
   std::vector<std::shared_ptr<OpIOInfo>> inputs_dyn;
@@ -523,7 +523,7 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
         return false;
       }
 
-      if (outputs.size() > 0) {
+      if (!outputs.empty()) {
         if (!SetKernelBuilderOutputInfo(outputs, j, real_output_num, builder)) {
           MS_LOG(ERROR) << "Parse kernel metadata, set outputs kernel builder info failed.";
           return false;
@@ -532,7 +532,7 @@ bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpIn
 
       kernel_info_list->push_back(builder->Build());
     }
-  } else if (outputs.size() > 0) {
+  } else if (!outputs.empty()) {
     MS_EXCEPTION_IF_NULL(outputs[0]);
     size_t kernel_info_cnt = outputs[0]->dtypes().size();
     for (size_t j = 0; j < kernel_info_cnt; j++) {

@@ -174,7 +174,7 @@ bool TbeKernelJsonCreator::GenInputList(const shared_ptr<AnfNode> &anf_node, siz
         input_list->emplace_back(input_desc_json);
         continue;
       }
-      MS_LOG(ERROR) << "input num" << *real_input_index << "is not match op inputs";
+      MS_LOG(ERROR) << "input num: " << *real_input_index << " is not match op inputs";
       return false;
     }
     if (op_name == "BatchNorm") {
@@ -436,7 +436,7 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
     MS_EXCEPTION_IF_NULL(value_type);
     auto value_type_str = value_type->ToString();
     if (value_type_str == "float") {
-      float data = GetValue<float>(value);
+      auto data = GetValue<float>(value);
       attr_value.push_back(data);
     } else {
       attr_value = GetValue<std::vector<float>>(value);
