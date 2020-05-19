@@ -43,7 +43,7 @@ def visualize(image_1, image_2):
     plt.show()
 
 
-def skip_test_five_crop_op():
+def test_five_crop_op():
     """
     Test FiveCrop
     """

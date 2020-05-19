@@ -21,19 +21,18 @@ import mindspore.dataset.transforms.vision.py_transforms as F
 from mindspore import log as logger
 
 
-# In generator dataset: Number of rows is 3, its value is 0, 1, 2
+# In generator dataset: Number of rows is 3; its values are 0, 1, 2
 def generator():
     for i in range(3):
         yield np.array([i]),
 
 
-# In generator_10 dataset: Number of rows is 7, its value is 3, 4, 5 ... 10
+# In generator_10 dataset: Number of rows is 7; its values are 3, 4, 5 ... 9
 def generator_10():
     for i in range(3, 10):
         yield np.array([i]),
 
-
-# In generator_20 dataset: Number of rows is 10, its value is 10, 11, 12 ... 20
+# In generator_20 dataset: Number of rows is 10; its values are 10, 11, 12 ... 19
 def generator_20():
     for i in range(10, 20):
         yield np.array([i]),
@@ -135,7 +134,7 @@ def test_concat_05():
 
 def test_concat_06():
     """
-    Test concat: test concat muti datasets in one time
+    Test concat: test concat multi datasets in one time
     """
     logger.info("test_concat_06")
     data1 = ds.GeneratorDataset(generator, ["col1"])

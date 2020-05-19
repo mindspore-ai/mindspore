@@ -153,7 +153,7 @@ def test_tf_record_shuffle():
             assert np.array_equal(t1, t2)
 
 
-def skip_test_tf_record_shard():
+def test_tf_record_shard():
     tf_files = ["../data/dataset/tf_file_dataset/test1.data", "../data/dataset/tf_file_dataset/test2.data",
                 "../data/dataset/tf_file_dataset/test3.data", "../data/dataset/tf_file_dataset/test4.data"]
 
@@ -171,12 +171,14 @@ def skip_test_tf_record_shard():
     # 2. with enough epochs, both workers will get the entire dataset (e,g. ep1_wrkr1: f1&f3, ep2,_wrkr1 f2&f4)
     worker1_res = get_res(0, 16)
     worker2_res = get_res(1, 16)
+    # Confirm each worker gets 3x16=48 rows
+    assert len(worker1_res) == 48
+    assert len(worker1_res) == len(worker2_res)
     # check criteria 1
     for i in range(len(worker1_res)):
         assert (worker1_res[i] != worker2_res[i])
     # check criteria 2
     assert (set(worker2_res) == set(worker1_res))
-    assert (len(set(worker2_res)) == 12)
 
 
 def test_tf_shard_equal_rows():
@@ -198,7 +200,10 @@ def test_tf_shard_equal_rows():
     for i in range(len(worker1_res)):
         assert (worker1_res[i] != worker2_res[i])
         assert (worker2_res[i] != worker3_res[i])
-    assert (len(worker1_res) == 28)
+    # Confirm each worker gets same number of rows
+    assert len(worker1_res) == 28
+    assert len(worker1_res) == len(worker2_res)
+    assert len(worker2_res) == len(worker3_res)
 
     worker4_res = get_res(1, 0, 1)
     assert (len(worker4_res) == 40)
@@ -272,7 +277,7 @@ if __name__ == '__main__':
     test_tf_files()
     test_tf_record_schema()
     test_tf_record_shuffle()
-    # test_tf_record_shard()
+    test_tf_record_shard()
     test_tf_shard_equal_rows()
     test_case_tf_file_no_schema_columns_list()
     test_tf_record_schema_columns_list()
