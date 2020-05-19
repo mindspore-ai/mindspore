@@ -175,6 +175,7 @@ from .bounding_box_decode import _bounding_box_decode_tbe
 from .bounding_box_encode import _bounding_box_encode_tbe
 from .check_valid import _check_valid_tbe
 from .iou import _iou_tbe
+from .arg_max import _arg_max_tbe
 from .nms_with_mask import nms_with_mask_op_info
 from .random_choice_with_mask import random_choice_with_mask_op_info
 from .sgd import sgd_op_info

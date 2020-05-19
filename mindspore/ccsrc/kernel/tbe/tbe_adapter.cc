@@ -77,6 +77,7 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"resize_nearest_neighbor", "resize_nearest_neighbor_v2_d"},
   {"resize_nearest_neighbor_grad", "resize_nearest_neighbor_v2_grad_d"},
   {"pad", "pad_d"},
+  {"argmax", "arg_max_d"},
   {"space_to_batch", "space_to_batch_d"},
   {"batch_to_space", "batch_to_space_d"},
   {"resize_bilinear", "resize_bilinear_v2_d"},
