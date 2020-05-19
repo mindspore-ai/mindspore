@@ -13,12 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-from util import diff_mse, visualize, save_and_check_md5
-
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as c_vision
 import mindspore.dataset.transforms.vision.py_transforms as py_vision
 from mindspore import log as logger
+from util import diff_mse, visualize, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -46,12 +45,14 @@ def test_HWC2CHW(plot=False):
     image_transposed = []
     image = []
     for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
-        image_transposed.append(item1["image"].copy())
-        image.append(item2["image"].copy())
+        transposed_item = item1["image"].copy()
+        original_item = item2["image"].copy()
+        image_transposed.append(transposed_item.transpose(1, 2, 0))
+        image.append(original_item)
 
         # check if the shape of data is transposed correctly
         # transpose the original image from shape (H,W,C) to (C,H,W)
-        mse = diff_mse(item1['image'], item2['image'].transpose(2, 0, 1))
+        mse = diff_mse(transposed_item, original_item.transpose(2, 0, 1))
         assert mse == 0
     if plot:
         visualize(image, image_transposed)
@@ -108,15 +109,13 @@ def test_HWC2CHW_comp(plot=False):
         mse = diff_mse(py_image, c_image)
         # Note: The images aren't exactly the same due to rounding error
         assert mse < 0.001
-
-        image_c_transposed.append(item1["image"].copy())
-        image_py_transposed.append(item2["image"].copy())
-
+        image_c_transposed.append(c_image.transpose(1, 2, 0))
+        image_py_transposed.append(py_image.transpose(1, 2, 0))
     if plot:
         visualize(image_c_transposed, image_py_transposed)
 
 
 if __name__ == '__main__':
-    test_HWC2CHW()
+    test_HWC2CHW(True)
     test_HWC2CHW_md5()
-    test_HWC2CHW_comp()
+    test_HWC2CHW_comp(True)
