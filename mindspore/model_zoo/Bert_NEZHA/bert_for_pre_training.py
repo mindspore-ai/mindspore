@@ -35,7 +35,6 @@ GRADIENT_CLIP_VALUE = 1.0
 _nn_clip_by_norm = nn.ClipByNorm()
 clip_grad = C.MultitypeFuncGraph("clip_grad")
 @clip_grad.register("Number", "Number", "Tensor")
-
 def _clip_grad(clip_type, clip_value, grad):
     """
     Clip gradients.
