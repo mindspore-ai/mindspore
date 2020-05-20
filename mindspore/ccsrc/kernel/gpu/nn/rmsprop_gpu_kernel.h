@@ -35,7 +35,7 @@ class RMSPropGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream) override {
+              const std::vector<AddressPtr> &outputs, void *stream) override {
     if (!use_center_) {
       T *variable = GetDeviceAddress<T>(inputs, 0);
       T *mean_square = GetDeviceAddress<T>(inputs, 1);

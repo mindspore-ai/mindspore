@@ -92,7 +92,7 @@ void FakeQuantGradGpuKernel::InitSizeLists() {
 }
 
 bool FakeQuantGradGpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+                                    const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   float *output = GetDeviceAddress<float>(outputs, 0);
   float *gradient = GetDeviceAddress<float>(inputs, 0);
   float *input = GetDeviceAddress<float>(inputs, 1);

@@ -53,8 +53,9 @@ bool LabelSwitchKernel::Init(const AnfNodePtr &anf_node) {
   return true;
 }
 
-bool LabelSwitchKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                               const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+bool LabelSwitchKernel::Launch(const std::vector<AddressPtr> & /*inputs*/,
+                               const std::vector<AddressPtr> & /*workspace*/,
+                               const std::vector<AddressPtr> & /*outputs*/, void * /*stream_ptr*/) {
   MS_LOG(INFO) << "LabelSwitchKernel launch";
   return true;
 }

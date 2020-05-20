@@ -76,7 +76,7 @@ void DropoutGpuFwdKernel::InitSizeLists() {
 }
 
 bool DropoutGpuFwdKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (is_null_input_) {
     return true;
   }

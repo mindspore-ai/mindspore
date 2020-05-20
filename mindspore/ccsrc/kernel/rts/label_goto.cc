@@ -45,8 +45,8 @@ bool LabelGotoKernel::Init(const AnfNodePtr &anf_node) {
   return true;
 }
 
-bool LabelGotoKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                             const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+bool LabelGotoKernel::Launch(const std::vector<AddressPtr> & /*inputs*/, const std::vector<AddressPtr> & /*workspace*/,
+                             const std::vector<AddressPtr> & /*outputs*/, void * /*stream_ptr*/) {
   MS_LOG(INFO) << "LabelGotoKernel launch";
   return true;
 }

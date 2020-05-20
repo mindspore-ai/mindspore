@@ -34,9 +34,7 @@ MemCpyAsyncKernel::MemCpyAsyncKernel() {}
 MemCpyAsyncKernel::~MemCpyAsyncKernel() {}
 
 bool MemCpyAsyncKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
-                               const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
-  auto stream = reinterpret_cast<rtStream_t>(stream_ptr);
-
+                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (inputs.size() != 1) {
     MS_LOG(ERROR) << "inputs size is not one";
     return false;
@@ -51,7 +49,7 @@ bool MemCpyAsyncKernel::Launch(const std::vector<AddressPtr> &inputs, const std:
     return true;
   }
   rtError_t status = rtMemcpyAsync(outputs[0]->addr, outputs[0]->size, inputs[0]->addr, inputs[0]->size,
-                                   RT_MEMCPY_DEVICE_TO_DEVICE, stream);
+                                   RT_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "MemCpyAsync op rtMemcpyAsync failed!";
     return false;

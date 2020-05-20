@@ -39,7 +39,7 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *x1 = GetDeviceAddress<T>(inputs, 0);
     T *x2 = GetDeviceAddress<T>(inputs, 1);
     T *dy = GetDeviceAddress<T>(inputs, 2);

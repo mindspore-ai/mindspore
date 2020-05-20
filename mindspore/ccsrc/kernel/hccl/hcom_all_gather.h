@@ -31,7 +31,7 @@ class HcomAllGatherKernel : public HcclKernel {
 
   /* Inherit from kernelmod */
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
  private:
 };

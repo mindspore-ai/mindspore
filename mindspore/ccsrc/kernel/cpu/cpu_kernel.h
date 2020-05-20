@@ -56,7 +56,7 @@ class CPUKernel : public kernel::KernelMod {
   void Init(const CNodePtr &kernel_node);
   virtual void InitKernel(const CNodePtr &kernel_node) = 0;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t /*stream_ptr*/) override {
+              const std::vector<AddressPtr> &outputs, void * /*stream_ptr*/) override {
     return Launch(inputs, workspace, outputs);
   };
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

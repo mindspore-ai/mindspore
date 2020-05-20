@@ -33,7 +33,7 @@ class SendGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              uintptr_t) override {
+              void *) override {
     CHECK_CUDA_RET_WITH_EXCEPT(cudaEventRecord(record_event_, record_stream_), "Recording cuda event failed.");
     return true;
   }

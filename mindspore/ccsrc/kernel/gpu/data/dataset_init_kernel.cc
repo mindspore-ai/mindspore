@@ -53,7 +53,7 @@ bool DatasetInitKernel::Init(const CNodePtr &kernel_node) {
 void DatasetInitKernel::InitSizeLists() { return; }
 
 bool DatasetInitKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                               const std::vector<AddressPtr> &, uintptr_t) {
+                               const std::vector<AddressPtr> &, void *) {
   void *addr = nullptr;
   size_t len = total_bytes_ * buffer_q_capacity_;
 

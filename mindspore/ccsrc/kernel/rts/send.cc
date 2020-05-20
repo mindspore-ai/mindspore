@@ -40,10 +40,9 @@ bool SendKernel::Init(const AnfNodePtr &anf_node) {
 }
 
 bool SendKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                        const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   rtEvent_t event{};
-  auto stream = reinterpret_cast<rtStream_t>(stream_ptr);
-  rtError_t status = rtEventRecord(event, stream);
+  rtError_t status = rtEventRecord(event, stream_ptr);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Send op rtEventRecord failed!";
     return false;

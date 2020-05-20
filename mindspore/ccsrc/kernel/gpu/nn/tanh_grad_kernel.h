@@ -37,7 +37,7 @@ class TanhGradKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto y_addr = GetDeviceAddress<T>(inputs, 0);
     auto dy_addr = GetDeviceAddress<T>(inputs, 1);
     auto dx_addr = GetDeviceAddress<T>(outputs, 0);

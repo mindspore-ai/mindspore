@@ -50,10 +50,9 @@ bool ProfilingKernelMod::Init(const AnfNodePtr &anf_node) {
   return true;
 }
 
-bool ProfilingKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
-  MS_LOG(INFO) << "gen task inputs size:" << inputs.size() << ", workspace size:" << workspace.size()
-               << ", outputs size:" << outputs.size() << ", stream_ptr:" << stream_ptr;
+bool ProfilingKernelMod::Launch(const std::vector<AddressPtr> & /*inputs*/,
+                                const std::vector<AddressPtr> & /*workspace*/,
+                                const std::vector<AddressPtr> & /*outputs*/, void * /*stream_ptr*/) {
   return true;
 }
 
