@@ -36,6 +36,8 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"re_lu6_grad", "relu6_grad"},
   {"re_lu", "relu"},
   {"re_luv2", "relu_v2"},
+  {"p_re_lu", "prelu"},
+  {"p_re_lu_grad", "prelu_grad"},
   {"tensor_add", "add"},
   {"reduce_mean", "reduce_mean_d"},
   {"reduce_max", "reduce_max_d"},

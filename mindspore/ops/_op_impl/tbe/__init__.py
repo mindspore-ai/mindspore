@@ -186,3 +186,5 @@ from .bn_training_update_v2 import _bn_training_update_v2_tbe
 from .square_sum_all import square_sum_all_op_info
 from .pack import _pack_tbe
 from .unpack import _unpack_tbe
+from .prelu import _prelu_tbe
+from .prelu_grad import _prelu_grad_tbe
