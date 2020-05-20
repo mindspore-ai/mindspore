@@ -44,7 +44,7 @@ Status PartitionForAllDevices(const size_t num_device, const double device_memor
 
 Graph::NodeType ApplyStrToTensor(Graph::NodeType Node);
 
-Status DevicesMemoryControl(const double device_memory, std::shared_ptr<Graph> graph);
+Status DevicesMemoryControl(const size_t num_device, const double device_memory, std::shared_ptr<Graph> graph);
 
 size_t GetDataTypeSize(const TensorType &type);
 }  // namespace parallel
