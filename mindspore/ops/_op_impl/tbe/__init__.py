@@ -164,6 +164,8 @@ from .avg_pool_grad import _avg_pool_grad_tbe
 from .ones_like import _ones_like_tbe
 from .batch_to_space import _batch_to_space_tbe
 from .space_to_batch import _space_to_batch_tbe
+from .depth_to_space import _depth_to_space_tbe
+from .space_to_depth import _space_to_depth_tbe
 from .floor import _floor_tbe
 from .log1p import _log1p_tbe
 from .resize_bilinear import _resize_bilinear_tbe
