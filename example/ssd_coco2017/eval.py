@@ -31,6 +31,7 @@ def ssd_eval(dataset_path, ckpt_path):
     net = SSD300(ssd_mobilenet_v2(), ConfigSSD(), is_training=False)
     print("Load Checkpoint!")
     param_dict = load_checkpoint(ckpt_path)
+    net.init_parameters_data()
     load_param_into_net(net, param_dict)
 
     net.set_train(False)
