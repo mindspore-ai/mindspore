@@ -1,0 +1,108 @@
+diff -Npur cppjieba/include/cppjieba/Jieba.hpp cppjiebap/include/cppjieba/Jieba.hpp
+--- cppjieba/include/cppjieba/Jieba.hpp	2020-05-07 15:27:16.490147073 +0800
++++ cppjiebap/include/cppjieba/Jieba.hpp	2020-05-07 15:51:15.315931163 +0800
+@@ -10,17 +10,14 @@ class Jieba {
+  public:
+   Jieba(const string& dict_path, 
+         const string& model_path,
+-        const string& user_dict_path, 
+-        const string& idfPath, 
+-        const string& stopWordPath) 
++        const string& user_dict_path) 
+     : dict_trie_(dict_path, user_dict_path),
+       model_(model_path),
+       mp_seg_(&dict_trie_),
+       hmm_seg_(&model_),
+       mix_seg_(&dict_trie_, &model_),
+       full_seg_(&dict_trie_),
+-      query_seg_(&dict_trie_, &model_),
+-      extractor(&dict_trie_, &model_, idfPath, stopWordPath) {
++      query_seg_(&dict_trie_, &model_) {
+   }
+   ~Jieba() {
+   }
+@@ -121,8 +118,6 @@ class Jieba {
+   FullSegment full_seg_;
+   QuerySegment query_seg_;
+ 
+- public:
+-  KeywordExtractor extractor;
+ }; // class Jieba
+ 
+ } // namespace cppjieba
+diff -Npur cppjieba/test/demo.cpp cppjiebap/test/demo.cpp
+--- cppjieba/test/demo.cpp	2020-05-07 15:27:16.490147073 +0800
++++ cppjiebap/test/demo.cpp	2020-05-07 15:53:21.630248552 +0800
+@@ -11,9 +11,7 @@ const char* const STOP_WORD_PATH = "../d
+ int main(int argc, char** argv) {
+   cppjieba::Jieba jieba(DICT_PATH,
+         HMM_PATH,
+-        USER_DICT_PATH,
+-        IDF_PATH,
+-        STOP_WORD_PATH);
++        USER_DICT_PATH);
+   vector<string> words;
+   vector<cppjieba::Word> jiebawords;
+   string s;
+@@ -71,10 +69,5 @@ int main(int argc, char** argv) {
+   cout << tagres << endl;
+ 
+   cout << "[demo] Keyword Extraction" << endl;
+-  const size_t topk = 5;
+-  vector<cppjieba::KeywordExtractor::Word> keywordres;
+-  jieba.extractor.Extract(s, keywordres, topk);
+-  cout << s << endl;
+-  cout << keywordres << endl;
+   return EXIT_SUCCESS;
+ }
+diff -Npur cppjieba/test/unittest/jieba_test.cpp cppjiebap/test/unittest/jieba_test.cpp
+--- cppjieba/test/unittest/jieba_test.cpp	2020-05-07 15:27:16.522146752 +0800
++++ cppjiebap/test/unittest/jieba_test.cpp	2020-05-07 15:59:11.630860061 +0800
+@@ -6,9 +6,7 @@ using namespace cppjieba;
+ TEST(JiebaTest, Test1) {
+   cppjieba::Jieba jieba("../dict/jieba.dict.utf8",
+                         "../dict/hmm_model.utf8",
+-                        "../dict/user.dict.utf8",
+-                        "../dict/idf.utf8",
+-                        "../dict/stop_words.utf8");
++                        "../dict/user.dict.utf8");
+   vector<string> words;
+   string result;
+ 
+@@ -43,9 +41,7 @@ TEST(JiebaTest, Test1) {
+ TEST(JiebaTest, WordTest) {
+   cppjieba::Jieba jieba("../dict/jieba.dict.utf8",
+                         "../dict/hmm_model.utf8",
+-                        "../dict/user.dict.utf8",
+-                        "../dict/idf.utf8",
+-                        "../dict/stop_words.utf8");
++                        "../dict/user.dict.utf8");
+   vector<Word> words;
+   string result;
+ 
+@@ -85,9 +81,7 @@ TEST(JiebaTest, WordTest) {
+ TEST(JiebaTest, InsertUserWord) {
+   cppjieba::Jieba jieba("../dict/jieba.dict.utf8",
+                         "../dict/hmm_model.utf8",
+-                        "../dict/user.dict.utf8",
+-                        "../dict/idf.utf8",
+-                        "../dict/stop_words.utf8");
++                        "../dict/user.dict.utf8");
+   vector<string> words;
+   string result;
+ 
+@@ -120,14 +114,4 @@ TEST(JiebaTest, InsertUserWord) {
+   jieba.Cut("同一个世界，同一个梦想", words);
+   result = Join(words.begin(), words.end(), "/");
+   ASSERT_EQ(result, "同一个世界，同一个梦想");
+-
+-  {
+-    string s("一部iPhone6");
+-    string res;
+-    vector<KeywordExtractor::Word> wordweights;
+-    size_t topN = 5;
+-    jieba.extractor.Extract(s, wordweights, topN);
+-    res << wordweights;
+-    ASSERT_EQ(res, "[{\"word\": \"iPhone6\", \"offset\": [6], \"weight\": 11.7392}, {\"word\": \"\xE4\xB8\x80\xE9\x83\xA8\", \"offset\": [0], \"weight\": 6.47592}]");
+-  }
+ }
