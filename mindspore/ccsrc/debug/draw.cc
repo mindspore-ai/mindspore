@@ -21,11 +21,16 @@
 #include <vector>
 #include <string>
 
+#include "pybind11/pybind11.h"
 #include "ir/meta_func_graph.h"
+#include "ir/param_value_py.h"
+#include "ir/primitive.h"
 #include "utils/graph_utils.h"
 #include "utils/utils.h"
 #include "operator/composite/composite.h"
 #include "ir/meta_tensor.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 
@@ -312,17 +317,21 @@ void BaseDigraph::FuncGraphParameters(const FuncGraphPtr &key) {
   for (auto &parameter : key->parameters()) {
     buffer_ << "<tr><td>";
     buffer_ << parameter->ToString();
-    auto py_p = dyn_cast<Parameter>(parameter)->default_param();
-    if (py::hasattr(py_p, "default_input")) {
-      py_p = py_p.attr("default_input");
-      if (py::hasattr(py_p, PYTHON_TENSOR_FLAG)) {
-        std::shared_ptr<tensor::Tensor> m_tensor = py_p.cast<std::shared_ptr<tensor::Tensor>>();
-        py::tuple shape = m_tensor->GetPyTupleShape();
-        buffer_ << "[" << std::string(py::str(shape)) << "]";
-      } else if (py::hasattr(py_p, PYTHON_META_TENSOR_FLAG)) {
-        std::shared_ptr<tensor::MetaTensor> m_tensor = py_p.cast<std::shared_ptr<tensor::MetaTensor>>();
-        py::tuple shape = m_tensor->GetPyTupleShape();
-        buffer_ << "[" << std::string(py::str(shape)) << "]";
+    auto param = parameter->cast<ParameterPtr>();
+    if (param->has_default()) {
+      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param->default_param());
+      auto py_p = param_value->value();
+      if (py::hasattr(py_p, "default_input")) {
+        py_p = py_p.attr("default_input");
+        if (py::hasattr(py_p, PYTHON_TENSOR_FLAG)) {
+          auto m_tensor = py_p.cast<std::shared_ptr<tensor::Tensor>>();
+          py::tuple shape = m_tensor->GetPyTupleShape();
+          buffer_ << "[" << py::str(shape) << "]";
+        } else if (py::hasattr(py_p, PYTHON_META_TENSOR_FLAG)) {
+          auto m_tensor = py_p.cast<std::shared_ptr<tensor::MetaTensor>>();
+          py::tuple shape = m_tensor->GetPyTupleShape();
+          buffer_ << "[" << py::str(shape) << "]";
+        }
       }
     }
     buffer_ << "</td></tr>";

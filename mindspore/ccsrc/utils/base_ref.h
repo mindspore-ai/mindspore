@@ -25,8 +25,10 @@
 #include <sstream>
 #include <utility>
 #include <iterator>
-
+#include "pybind11/pybind11.h"
 #include "ir/value.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 class BaseRef;

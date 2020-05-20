@@ -18,11 +18,13 @@
 #define PIPELINE_PARSE_PARSE_BASE_H_
 #include <string>
 #include <memory>
+#include "pybind11/pybind11.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/manager.h"
 #include "pybind_api/export_flags.h"
 
+namespace py = pybind11;
 namespace mindspore {
 namespace parse {
 // define the node type

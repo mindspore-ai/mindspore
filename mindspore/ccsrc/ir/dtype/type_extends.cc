@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GET_GRAPH_INFO_H_
-#define MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GET_GRAPH_INFO_H_
+#include "ir/dtype/type.h"
+#include "pipeline/static_analysis/abstract_value.h"
 
-#include "pybind11/stl.h"
-#include "pybind11/pybind11.h"
-#include "ir/anf.h"
-
-namespace py = pybind11;
 namespace mindspore {
-namespace parallel {
-py::dict GetParameterLayout(const FuncGraphPtr &graph);
-py::dict GetCNodeStrategy(const FuncGraphPtr &graph);
-py::dict GetAllreduceFusion(const FuncGraphPtr &graph);
-}  // namespace parallel
+abstract::AbstractBasePtr Type::ToAbstract() {
+  auto ptr = std::make_shared<abstract::AbstractType>(shared_from_base<Type>());
+  return ptr;
+}
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_PARALLEL_GRAPH_UTIL_GET_GRAPH_INFO_H_

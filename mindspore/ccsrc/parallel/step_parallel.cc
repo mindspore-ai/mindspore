@@ -28,6 +28,7 @@
 #include <utility>
 
 #include "ir/meta_tensor.h"
+#include "ir/param_value_py.h"
 #include "operator/ops.h"
 #include "optimizer/optimizer.h"
 #include "parallel/auto_parallel/graph_costmodel.h"
@@ -1292,7 +1293,8 @@ bool ParameterIsCloned(const FuncGraphPtr &root, const AnfNodePtr &parameter_nod
     return false;
   }
 
-  py::object clone_info = parse::python_adapter::GetPyObjAttr(cloned_parameter->default_param(), CLONE_INFO);
+  auto param_value = std::dynamic_pointer_cast<ParamValuePy>(cloned_parameter->default_param());
+  py::object clone_info = parse::python_adapter::GetPyObjAttr(param_value->value(), CLONE_INFO);
   bool cloned = py::cast<bool>(parse::python_adapter::GetPyObjAttr(clone_info, CLONED));
   if (!cloned) {
     return false;
@@ -1314,7 +1316,8 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
     }
 
     // get the cloned index
-    py::object cloned_info = parse::python_adapter::GetPyObjAttr(cloned_parameter->default_param(), CLONE_INFO);
+    auto param_value = std::dynamic_pointer_cast<ParamValuePy>(cloned_parameter->default_param());
+    py::object cloned_info = parse::python_adapter::GetPyObjAttr(param_value->value(), CLONE_INFO);
     int32_t cloned_index = py::cast<int32_t>(parse::python_adapter::GetPyObjAttr(cloned_info, CLONED_INDEX));
 
     // find the be cloned parameter
@@ -1329,7 +1332,8 @@ void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {
         continue;
       }
 
-      py::object be_cloned_info = parse::python_adapter::GetPyObjAttr(be_cloned_parameter->default_param(), CLONE_INFO);
+      auto param_value_cloned = std::dynamic_pointer_cast<ParamValuePy>(be_cloned_parameter->default_param());
+      py::object be_cloned_info = parse::python_adapter::GetPyObjAttr(param_value_cloned->value(), CLONE_INFO);
       if (!py::cast<bool>(parse::python_adapter::GetPyObjAttr(be_cloned_info, BE_CLONED))) {
         continue;
       }
@@ -2072,9 +2076,9 @@ std::string NodeParameterName(const CNodePtr &node) {
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default()) {
-        if (py::cast<bool>(parse::python_adapter::GetPyObjAttr(input_parameter->default_param(), REQUIRES_GRAD))) {
-          return py::cast<std::string>(
-            parse::python_adapter::GetPyObjAttr(input_parameter->default_param(), PARAM_NAME));
+        auto param_value = std::dynamic_pointer_cast<ParamValuePy>(input_parameter->default_param());
+        if (py::cast<bool>(parse::python_adapter::GetPyObjAttr(param_value->value(), REQUIRES_GRAD))) {
+          return py::cast<std::string>(parse::python_adapter::GetPyObjAttr(param_value->value(), PARAM_NAME));
         }
       }
     }

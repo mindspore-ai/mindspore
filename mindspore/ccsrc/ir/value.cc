@@ -19,9 +19,7 @@
 #include <memory>
 #include <cmath>
 #include <cfloat>
-
-#include "pybind_api/api_register.h"
-#include "pipeline/static_analysis/abstract_value.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore {
 const ValuePtr ValueSequeue::operator[](const std::size_t &dim) const {
@@ -208,41 +206,6 @@ bool AnyValue::operator==(const Value &other) const {
   }
 }
 const ValuePtr kAnyValue = std::make_shared<AnyValue>();
-using ContextPtr = abstract::AnalysisContextPtr;
-
-abstract::AbstractBasePtr Scalar::ToAbstract() {
-  return std::make_shared<abstract::AbstractScalar>(shared_from_base<Value>());
-}
-
-abstract::AbstractBasePtr StringImm::ToAbstract() {
-  return std::make_shared<abstract::AbstractScalar>(shared_from_base<Value>(), std::make_shared<String>());
-}
-
-abstract::AbstractBasePtr RefKey::ToAbstract() {
-  auto refkey = std::make_shared<abstract::AbstractRefKey>();
-  refkey->set_value(shared_from_base<Value>());
-  return refkey;
-}
-
-abstract::AbstractBasePtr AnyValue::ToAbstract() { return std::make_shared<abstract::AbstractScalar>(); }
-
-abstract::AbstractBasePtr ValueTuple::ToAbstract() {
-  abstract::AbstractBasePtrList a_list;
-  (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(a_list), [](const ValuePtr &ele) {
-    MS_EXCEPTION_IF_NULL(ele);
-    return ele->ToAbstract();
-  });
-  return std::make_shared<abstract::AbstractTuple>(a_list);
-}
-
-abstract::AbstractBasePtr ValueList::ToAbstract() {
-  abstract::AbstractBasePtrList a_list;
-  (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(a_list), [](const ValuePtr &ele) {
-    MS_EXCEPTION_IF_NULL(ele);
-    return ele->ToAbstract();
-  });
-  return std::make_shared<abstract::AbstractList>(a_list);
-}
 
 std::size_t ValueSlice::hash() const {
   MS_EXCEPTION_IF_NULL(start_);
@@ -280,16 +243,6 @@ std::string ValueSlice::ToString() const {
   return buffer.str();
 }
 
-abstract::AbstractBasePtr ValueSlice::ToAbstract() {
-  MS_EXCEPTION_IF_NULL(start_);
-  MS_EXCEPTION_IF_NULL(stop_);
-  MS_EXCEPTION_IF_NULL(step_);
-  abstract::AbstractBasePtr start = start_->ToAbstract();
-  abstract::AbstractBasePtr end = stop_->ToAbstract();
-  abstract::AbstractBasePtr step = step_->ToAbstract();
-  return std::make_shared<abstract::AbstractSlice>(start, end, step);
-}
-
 std::size_t KeywordArg::hash() const {
   MS_EXCEPTION_IF_NULL(value_);
   return hash_combine({tid(), std::hash<std::string>{}(key_), value_->hash()});
@@ -314,12 +267,6 @@ std::string KeywordArg::ToString() const {
   buffer << "value : " << value_->ToString();
   buffer << "]";
   return buffer.str();
-}
-
-abstract::AbstractBasePtr KeywordArg::ToAbstract() {
-  MS_EXCEPTION_IF_NULL(value_);
-  abstract::AbstractBasePtr argument = value_->ToAbstract();
-  return std::make_shared<abstract::AbstractKeywordArg>(key_, argument);
 }
 
 const ValuePtr ValueDictionary::operator[](const std::string &key) const {
@@ -354,17 +301,4 @@ bool ValueDictionary::operator==(const ValueDictionary &other) const {
   }
   return true;
 }
-
-abstract::AbstractBasePtr ValueDictionary::ToAbstract() {
-  std::vector<std::pair<std::string, abstract::AbstractBasePtr>> kv;
-  (void)std::transform(
-    key_values_.begin(), key_values_.end(), std::back_inserter(kv),
-    [](const std::pair<std::string, ValuePtr> &item) { return std::make_pair(item.first, item.second->ToAbstract()); });
-  return std::make_shared<abstract::AbstractDictionary>(kv);
-}
-
-REGISTER_PYBIND_DEFINE(
-  RefKey, ([](const py::module *m) {
-    (void)py::class_<RefKey, std::shared_ptr<RefKey>>(*m, "RefKey").def(py::init<std::string>(), py::arg("tag"));
-  }));
 }  // namespace mindspore

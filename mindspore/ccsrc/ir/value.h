@@ -29,6 +29,7 @@
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "ir/scalar.h"
+#include "ir/dtype/ref.h"
 #include "utils/hashing.h"
 #include "common/utils.h"
 

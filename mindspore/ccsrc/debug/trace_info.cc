@@ -19,8 +19,6 @@
 #include <fstream>
 #include <sstream>
 #include "ir/anf.h"
-#include "pipeline/parse/parse.h"
-#include "pipeline/parse/python_adapter.h"
 
 namespace mindspore {
 std::string TraceInfo::GetActionBetweenNode(const DebugInfoPtr &info) {

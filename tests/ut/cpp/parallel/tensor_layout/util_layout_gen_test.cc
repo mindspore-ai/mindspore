@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "parallel/tensor_layout/util_layout_gen_test.h"
+#include <cmath>
 #include <map>
 #include <tuple>
 #include <vector>
@@ -22,6 +23,8 @@
 #include <iterator>
 #include "parallel/tensor_layout/shape_util.h"
 #include "common/common_test.h"
+
+using std::pow;
 
 namespace mindspore {
 namespace parallel {

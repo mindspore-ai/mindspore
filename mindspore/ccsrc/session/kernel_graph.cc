@@ -20,6 +20,7 @@
 #include <unordered_set>
 #include "common/utils.h"
 #include "operator/ops.h"
+#include "ir/param_value_py.h"
 #include "session/anf_runtime_algorithm.h"
 #include "device/kernel_info.h"
 #include "kernel/kernel_build_info.h"
@@ -232,7 +233,9 @@ ParameterPtr KernelGraph::NewParameter(const ParameterPtr &parameter) {
     new_parameter->set_abstract(parameter->abstract());
     new_parameter->set_name(parameter->name());
     if (AnfAlgo::IsParameterWeight(parameter)) {
-      new_parameter->set_default_param(parameter->default_param());
+      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(parameter->default_param());
+      auto param_value_new = std::make_shared<ParamValuePy>(param_value->value());
+      new_parameter->set_default_param(param_value_new);
       kernel_info->SetFeatureMapFlag(false);
     } else {
       kernel_info->SetFeatureMapFlag(true);

@@ -25,8 +25,11 @@
 #include "operator/ops.h"
 #include "debug/info.h"
 #include "debug/trace.h"
+#include "pybind11/pybind11.h"
 
 namespace mindspore {
+namespace py = pybind11;
+
 namespace parse {
 FunctionBlock::FunctionBlock(const Parser &parser) : parser_(parser) {
   func_graph_ = std::make_shared<FuncGraph>();

@@ -24,12 +24,9 @@
 #include <utility>
 #include <vector>
 
-#include "pybind11/pybind11.h"
 #include "ir/base.h"
 
 namespace mindspore {
-namespace py = pybind11;
-
 class TraceInfo;
 using TraceInfoPtr = std::shared_ptr<TraceInfo>;
 class Location;

@@ -28,6 +28,7 @@
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ir/manager.h"
 
 namespace mindspore {
 class Cloner;

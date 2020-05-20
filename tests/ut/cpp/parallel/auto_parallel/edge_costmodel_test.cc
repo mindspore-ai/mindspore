@@ -15,6 +15,7 @@
  */
 
 #include "common/common_test.h"
+#include "ir/dtype/number.h"
 #include "parallel/device_manager.h"
 #include "parallel/auto_parallel/edge_costmodel.h"
 #include "parallel/ops_info/matmul_info.h"

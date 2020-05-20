@@ -26,6 +26,7 @@
 #include "debug/anf_ir_utils.h"
 #include "proto/onnx.pb.h"
 #include "operator/ops.h"
+#include "ir/param_value_py.h"
 
 namespace mindspore {
 enum OpMergeMode {
@@ -424,7 +425,8 @@ void OnnxExporter::ExportParameters(const FuncGraphPtr &func_graph, onnx::GraphP
     initializer_proto->set_name(param_ptr->ToString());
     SetTensorProtoInfo(param_ptr, initializer_proto);
     // set value for initializer
-    py::object obj = param_ptr->default_param();
+    auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_ptr->default_param());
+    py::object obj = param_value->value();
     py::object data = obj.attr("data");
     if (py::isinstance<tensor::Tensor>(data)) {
       auto method = data.attr("asnumpy");
