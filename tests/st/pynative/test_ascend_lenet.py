@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import math
+import time
 import numpy as np
 import pytest
-import time
 
 import mindspore.nn as nn
 from mindspore import context, Tensor, ParameterTuple
@@ -152,10 +151,10 @@ def test_ascend_pynative_lenet():
         fw_output = net(inputs)
         loss_output = criterion(fw_output, labels)
         grads = train_network(inputs, labels)
-        success = optimizer(grads)
+        optimizer(grads)
         end_time = time.time()
         cost_time = end_time - start_time
         total_time = total_time + cost_time
 
         print("======epoch: ", epoch, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
-    assert (loss_output.asnumpy() < 0.1)
+    assert loss_output.asnumpy() < 0.1

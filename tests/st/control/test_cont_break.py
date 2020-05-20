@@ -42,7 +42,6 @@ class for_loop_with_break(Cell):
                 x *= 3
                 break
             x = x * 2
-            pass
         return x
 
 
@@ -71,9 +70,7 @@ class for_loop_with_cont_break(Cell):
             if i > 5:
                 x *= 3
                 break
-                x *= 2
             x = x * 2
-            pass
         return x
 
 
@@ -82,7 +79,7 @@ class for_nested_loop_with_break(Cell):
         super().__init__()
 
     def construct(self, x):
-        for i in range(3):
+        for _ in range(3):
             for j in range(5):
                 if j > 3:
                     x *= 2

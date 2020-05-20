@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
 import os
-import pytest
 import random
 import time
+import pytest
+import numpy as np
 from resnet import resnet50
 
 import mindspore.common.dtype as mstype
@@ -134,7 +134,7 @@ class LossGet(Callback):
         return self._loss
 
 
-def train_process(device_id, epoch_size, num_classes, device_num, batch_size):
+def train_process(device_id, epoch_size, num_classes, batch_size):
     os.system("mkdir " + str(device_id))
     os.chdir(str(device_id))
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -181,15 +181,14 @@ def eval(batch_size, num_classes):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_resnet_cifar_1p():
-    device_num = 1
     epoch_size = 1
     num_classes = 10
     batch_size = 32
     device_id = 0
-    train_process(device_id, epoch_size, num_classes, device_num, batch_size)
+    train_process(device_id, epoch_size, num_classes, batch_size)
     time.sleep(3)
     acc = eval(batch_size, num_classes)
     os.chdir("../")
     os.system("rm -rf " + str(device_id))
     print("End training...")
-    assert (acc['acc'] > 0.35)
+    assert acc['acc'] > 0.35

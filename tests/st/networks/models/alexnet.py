@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import mindspore.nn as nn
-from mindspore.nn import Dense
 from mindspore.ops import operations as P
 
 

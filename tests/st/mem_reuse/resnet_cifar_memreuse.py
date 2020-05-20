@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import argparse
-import numpy as np
 import os
 import random
+import argparse
+import numpy as np
 from resnet import resnet50
 
 import mindspore.common.dtype as mstype
@@ -31,7 +31,6 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
 from mindspore.train.model import Model, ParallelMode
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 random.seed(1)
 np.random.seed(1)
@@ -143,11 +142,8 @@ if __name__ == '__main__':
         model.train(epoch_size, dataset, callbacks=[ckpoint_cb, loss_cb])
 
     if args_opt.do_eval:
-        # if args_opt.checkpoint_path:
-        #     param_dict = load_checkpoint(args_opt.checkpoint_path)
-        #     load_param_into_net(net, param_dict)
         eval_dataset = create_dataset(1, training=False)
         res = model.eval(eval_dataset)
         print("result: ", res)
     checker = os.path.exists("./memreuse.ir")
-    assert (checker, True)
+    assert checker == True

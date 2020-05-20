@@ -12,13 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-
 import mindspore.context as context
-import mindspore.nn as nn
 from mindspore import Tensor, ms_function
 from mindspore.common import dtype as mstype
-from mindspore.ops import operations as P
 
 
 @ms_function
@@ -37,7 +33,7 @@ def test_net():
     c3 = Tensor([1], mstype.int32)
     expect = Tensor([21], mstype.int32)
     ret = t1_while(c1, c2, c3)
-    assert (ret == expect)
+    assert ret == expect
 
 
 if __name__ == "__main__":

@@ -15,10 +15,9 @@
 
 """train bert network without lossscale"""
 
-import numpy as np
 import os
 import pytest
-from numpy import allclose
+import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine.datasets as de
@@ -28,7 +27,7 @@ from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.model_zoo.Bert_NEZHA import BertConfig, BertNetworkWithLoss, BertTrainOneStepWithLossScaleCell
 from mindspore.nn.optim import Momentum
-from mindspore.train.callback import Callback, LossMonitor
+from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from mindspore.train.model import Model
 

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import os
+
 from resnet_torch import resnet50
 
 from mindspore import Tensor
