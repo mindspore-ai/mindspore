@@ -63,10 +63,17 @@
 #include "pre_activate/ascend/format_type/merge_cast_to_op.h"
 #include "pre_activate/ascend/format_type/check_consistency.h"
 #include "pre_activate/ascend/buffer_fusion/buffer_fusion.h"
-#include "pre_activate/ascend/buffer_fusion/tbe_buffer_fusion.h"
-#include "pre_activate/ascend/buffer_fusion/pass/depthwiseconv_eltwise_fusion_pass.h"
-#include "pre_activate/ascend/buffer_fusion/pass/bnupdate_eltwise_fusion_pass.h"
-#include "pre_activate/ascend/buffer_fusion/pass/fusion_type_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/ub_pattern_fusion.h"
+#include "pre_activate/ascend/buffer_fusion/eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv_single_in_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv_double_in_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/matmul_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/depthwiseconv_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/bnupdate_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/bnupdate_eltwise_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv_bnreduce_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/reduce_eltwise_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/segment_eltwise_fusion_pass.h"
 #include "pre_activate/ascend/format_type/deal_ref_trans_and_cast.h"
 #include "pre_activate/ascend/enhancer/add_memcpy_async.h"
 #include "pre_activate/ascend/format_type/insert_cast_for_runop.h"
@@ -281,7 +288,6 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   AscendDataLayout(kernel_graph);
   // mixed precision optimization
   AscendMixPrecision(kernel_graph);
-  // buffer fusion
   // other optimization
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto other_pm = std::make_shared<PassManager>("other_pm");
@@ -291,7 +297,6 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
-  other_pm->AddPass(std::make_shared<BufferFusion>());
   other_pm->AddPass(std::make_shared<GetitemTuple>());
   other_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   if (context_ptr->enable_task_sink() && context_ptr->loop_sink_flag() && ConfigManager::GetInstance().iter_num() > 1) {
@@ -307,6 +312,8 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     DumpIR(file_path, kernel_graph, true);
     DumpIRProto(kernel_graph, "after_hwopt");
   }
+  // buffer fusion
+  AscendBackendUBFusionOptimization(kernel_graph);
 }
 
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -330,10 +337,17 @@ void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGrap
   fusion_id_allocator->Init();
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ub_fusion_pm = std::make_shared<PassManager>("ub_fusion_pm");
+  ub_fusion_pm->AddPass(std::make_shared<ConvDoubleInFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<ConvSingleInFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<EltwiseFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<MatmulEltwiseFusionPass>(fusion_id_allocator.get()));
   ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseFusionPass>(fusion_id_allocator.get()));
   ub_fusion_pm->AddPass(std::make_shared<DepthwiseConvEltwiseFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<FusionTypeFusionPass>(fusion_id_allocator.get()));
-  ub_fusion_pm->AddPass(std::make_shared<TbeBufferFusion>());
+  ub_fusion_pm->AddPass(std::make_shared<BnupdateEltwiseEltwiseFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<ConvBnReduceFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<ReduceEltwiseFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<SegmentEltwiseFusionPass>(fusion_id_allocator.get()));
+  ub_fusion_pm->AddPass(std::make_shared<UbPatternFusion>());
   optimizer->AddPassManager(ub_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
