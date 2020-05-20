@@ -15,7 +15,6 @@
  */
 
 #include "dataset/engine/opt/pass.h"
-#include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/datasetops/batch_op.h"
 #include "dataset/engine/datasetops/dataset_op.h"
 #include "dataset/engine/datasetops/device_queue_op.h"
@@ -33,8 +32,6 @@
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/take_op.h"
 #include "dataset/engine/datasetops/zip_op.h"
-#include "dataset/engine/execution_tree.h"
-#include "dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
