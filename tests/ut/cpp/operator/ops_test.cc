@@ -390,7 +390,7 @@ TEST_F(TestOps, Conv2dAttrTest) {
 }
 
 TEST_F(TestOps, CustomOpAttrTest) {
-  Primitive prim("CustomOp", kPrimTypePyInferShape);
+  Primitive prim("CustomOp", true, kPrimTypePyInferShape);
   prim.SetAttrs({
     {"attr1", MakeValue(3)},
     {"attr2", MakeValue(1)},
