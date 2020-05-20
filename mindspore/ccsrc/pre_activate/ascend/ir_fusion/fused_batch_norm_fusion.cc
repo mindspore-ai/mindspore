@@ -274,6 +274,9 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
   MS_EXCEPTION_IF_NULL(manager);
   for (const auto &output : bn_outputs) {
     MS_EXCEPTION_IF_NULL(output);
+    if (!IsPrimitiveCNode(output, prim::kPrimTupleGetItem)) {
+      continue;
+    }
     auto tuple_getitem_cnode = output->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(tuple_getitem_cnode);
     AnfNodePtr index_node = tuple_getitem_cnode->input(kInputNodeOutputIndexInTupleGetItem);
