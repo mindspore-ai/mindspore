@@ -208,7 +208,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     std::string file_path = save_graphs_path + "/" + "hwopt_d_ir_fusion_before" + "_graph_" +
                             std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph);
-    DumpIRProto(kernel_graph, "before_hwopt");
+    DumpIRProto(kernel_graph, "before_hwopt_" + std::to_string(kernel_graph->graph_id()));
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
@@ -310,7 +310,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
     std::string file_path =
       save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph, true);
-    DumpIRProto(kernel_graph, "after_hwopt");
+    DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
   }
   // buffer fusion
   AscendBackendUBFusionOptimization(kernel_graph);
