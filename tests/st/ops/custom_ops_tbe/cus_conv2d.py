@@ -103,7 +103,7 @@ class Cus_Conv2D(PrimitiveWithInfer):
             raise ValueError('Attr \'kernel_size\' of \'Conv2D\' Op passed '
                              + str(self.kernel_size) + ', should be a int or tuple and equal to or greater than 1.')
         self.stride = validator.check_integer('stride', stride, 1, Rel.GE)
-        from .cus_conv2d_impl import Cus_Conv2D
+        from conv2d_impl import Cus_Conv2D
 
     def infer_shape(self, x_shape, w_shape):
         validator.check_integer("weight_shape", len(w_shape), 4, Rel.EQ)
