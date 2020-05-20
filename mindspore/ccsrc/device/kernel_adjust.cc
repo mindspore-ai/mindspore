@@ -375,18 +375,16 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(
   return assign_add_one;
 }
 
-bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::Context> &context,
-                                      const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+bool KernelAdjust::StepLoadCtrlInputs(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
   if (!NeedInsertSwitch()) {
     return true;
   }
-  MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   auto input_nodes = kernel_graph_ptr->inputs();
   std::vector<tensor::TensorPtr> inputs;
   LoadSwitchInputs(&inputs);
   std::shared_ptr<std::vector<tensor::TensorPtr>> inputsPtr = std::make_shared<std::vector<tensor::TensorPtr>>(inputs);
-  context->SetResult(session::kInputCtrlTensors, inputsPtr);
+  kernel_graph_ptr->set_input_ctrl_tensors(inputsPtr);
   size_t input_ctrl_size = inputs.size();
   // inputs_node:include four ctrl nodes in the back. such as:conv,loop_cnt, ites_loop, zero, one.
   // deal four ctrl nodes.

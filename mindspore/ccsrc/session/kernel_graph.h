@@ -107,6 +107,12 @@ class KernelGraph : public FuncGraph {
   std::vector<std::shared_ptr<KernelGraph>> child_graph_order() const { return child_graph_order_; }
   // checkout whether current graph is leaf graph
   bool IsLeafGraph() const;
+  // set input_tensors pointer of control parameter
+  void set_input_ctrl_tensors(const std::shared_ptr<std::vector<tensor::TensorPtr>> &input_tensors_ptr) {
+    input_ctrl_tensors_ = input_tensors_ptr;
+  }
+  // get input_tensors pointer of control parameter
+  std::shared_ptr<std::vector<tensor::TensorPtr>> input_ctrl_tensors() const { return input_ctrl_tensors_; }
 
  private:
   // remove value node form graph
@@ -150,6 +156,8 @@ class KernelGraph : public FuncGraph {
   std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> node_to_child_graphs_;
   // child graph execute order in root graph
   std::vector<std::shared_ptr<KernelGraph>> child_graph_order_;
+  // input_tensors of control parameter
+  std::shared_ptr<std::vector<tensor::TensorPtr>> input_ctrl_tensors_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
