@@ -317,13 +317,11 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids,
 
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  TaskDescReporter task_reporter(context->device_id(), "vm.task_desc_info_" + std::to_string(graph->graph_id()),
-                                 ret->second);
+  TaskDescReporter task_reporter(context->device_id(), "vm.task_desc_info", ret->second);
   task_reporter.set_task_ids(task_ids);
   task_reporter.ReportData();
 
-  GraphDescReporter graph_reporter(context->device_id(), "vm.graph_desc_info_" + std::to_string(graph->graph_id()),
-                                   ret->second);
+  GraphDescReporter graph_reporter(context->device_id(), "vm.graph_desc_info", ret->second);
   graph_profiling_cnode_.erase(ret);
   graph_reporter.ReportData();
 }
