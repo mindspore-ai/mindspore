@@ -169,13 +169,13 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
-  auto fn_rec = std::make_shared<HyperMap>(*this);
+  auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeList));
 
   for (int i = 0; i < SizeToInt(size); ++i) {
     std::vector<AnfNodePtr> inputs2;
-    inputs2.push_back(NewValueNode(fn_rec));
+    inputs2.push_back(fn_rec);
     if (fn_arg != nullptr) {
       inputs2.push_back(fn_arg);
     }
@@ -208,13 +208,13 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
-  auto fn_rec = std::make_shared<HyperMap>(*this);
+  auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
 
   for (int i = 0; i < SizeToInt(size); ++i) {
     std::vector<AnfNodePtr> inputs2;
-    inputs2.push_back(NewValueNode(fn_rec));
+    inputs2.push_back(fn_rec);
     if (fn_arg != nullptr) {
       inputs2.push_back(fn_arg);
     }
@@ -240,11 +240,11 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGrap
 
   // cannot use shared_from_base() also known as this, as it will make a reference cycle on
   // hypermap and graph generated, it will cause memory leak.
-  std::shared_ptr<mindspore::MetaFuncGraph> fn_rec = std::make_shared<HyperMap>(*this);
+  auto fn_rec = NewValueNode(std::make_shared<HyperMap>(*this));
   std::size_t attrSize = type->GetAttributes().size();
   for (std::size_t i = 0; i < attrSize; ++i) {
     std::vector<AnfNodePtr> inputs2;
-    inputs2.push_back(NewValueNode(fn_rec));
+    inputs2.push_back(fn_rec);
     if (fn_arg) {
       inputs2.push_back(fn_arg);
     }
