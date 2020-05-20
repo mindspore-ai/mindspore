@@ -1252,7 +1252,7 @@ class BiasAdd(PrimitiveWithInfer):
     r"""
     Returns sum of input and bias tensor.
 
-    Adds the 1-D bias tensor to the input tensor, and boardcasts the shape on all axis
+    Adds the 1-D bias tensor to the input tensor, and broadcasts the shape on all axis
     except for the channel axis.
 
     Inputs:
