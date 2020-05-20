@@ -19,11 +19,12 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 import mindspore.ops.composite as C
+from mindspore.ops import functional as F
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.common.parameter import ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.model_zoo.Bert_NEZHA import BertPretrainingLoss, GetNextSentenceOutput
-from mindspore.model_zoo.Bert_NEZHA.bert_for_pre_training import ClipGradients
+from mindspore.model_zoo.Bert_NEZHA.bert_for_pre_training import clip_grad
 from mindspore.model_zoo.Bert_NEZHA.bert_model import BertConfig, \
     EmbeddingLookup, EmbeddingPostprocessor, BertOutput, RelaPosMatrixGenerator, \
     RelaPosEmbeddingsGenerator, SaturateCast, BertAttention, BertSelfAttention, \
@@ -80,12 +81,12 @@ class TrainStepWrapForAdam(nn.Cell):
         self.network = network
         self.weights = ParameterTuple(network.get_parameters())
         self.optimizer = AdamWeightDecay(self.weights)
-        self.clip_gradients = ClipGradients()
+        self.hyper_map = C.HyperMap()
 
     def construct(self, x, sens):
         weights = self.weights
         grads = C.grad_by_list_with_sens(self.network, weights)(x, sens)
-        grads = self.clip_gradients(grads, 1, 1.0)
+        grads = self.hyper_map(F.partial(clip_grad, 1, 1.0), grads)
         return self.optimizer(grads)
 
 
@@ -111,9 +112,10 @@ class TempC2Wrap(nn.Cell):
         self.op = op
         self.c1 = c1
         self.c2 = c2
+        self.hyper_map = C.HyperMap()
 
     def construct(self, x1):
-        x = self.op(x1, self.c1, self.c2)
+        x = self.hyper_map(F.partial(self.op, self.c1, self.c2), x1)
         return x
 
 
@@ -405,7 +407,7 @@ test_case_cell_ops = [
         'desc_inputs': [[1, 64]],
         'skip': ['backward']}),
     ('ClipGradients', {
-        'block': TempC2Wrap(ClipGradients(), 1, 1.0),
+        'block': TempC2Wrap(clip_grad, 1, 1.0),
         'desc_inputs': [tuple(convert(shp) for shp in [[1], [1], [1]])],
         'skip': ['backward', 'exec']}),
 ]

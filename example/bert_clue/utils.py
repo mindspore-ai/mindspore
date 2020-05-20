@@ -30,7 +30,7 @@ from mindspore.train.parallel_utils import ParallelMode
 from mindspore.communication.management import get_group_size
 from mindspore import context
 from mindspore.model_zoo.Bert_NEZHA.bert_model import BertModel
-from mindspore.model_zoo.Bert_NEZHA.bert_for_pre_training import ClipGradients
+from mindspore.model_zoo.Bert_NEZHA.bert_for_pre_training import clip_grad
 from CRF import CRF
 
 GRADIENT_CLIP_TYPE = 1
@@ -66,7 +66,6 @@ class BertFinetuneCell(nn.Cell):
             degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
-        self.clip_gradients = ClipGradients()
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
         self.get_status = P.NPUGetFloatStatus()
@@ -110,7 +109,7 @@ class BertFinetuneCell(nn.Cell):
         F.control_depend(loss, init)
         self.depend_parameter_use(clear_before_grad, scaling_sens)
         grads = self.hyper_map(F.partial(grad_scale, scaling_sens), grads)
-        grads = self.clip_gradients(grads, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         if self.reducer_flag:
             grads = self.grad_reducer(grads)
         flag = self.get_status(init)
