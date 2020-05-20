@@ -37,6 +37,7 @@
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
 #include "dataset/engine/jagged_connector.h"
+#include "dataset/engine/opt/pass.h"
 #include "dataset/util/path.h"
 #include "dataset/util/queue.h"
 #include "dataset/util/random.h"
@@ -1036,6 +1037,12 @@ int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &file
   }
 
   return rows_read;
+}
+
+// Visitor accept method for NodePass
+Status TFReaderOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<TFReaderOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -24,6 +24,7 @@
 #include "dataset/core/global_context.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
+#include "dataset/engine/opt/pass.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -169,6 +170,12 @@ Status RenameOp::EofReceived(int32_t) {
 Status RenameOp::EoeReceived(int32_t) {
   state_ = OpState::kDeOpIdle;
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status RenameOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<RenameOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

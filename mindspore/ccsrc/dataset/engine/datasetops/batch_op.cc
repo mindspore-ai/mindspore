@@ -22,6 +22,7 @@
 #include "dataset/core/pybind_support.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
+#include "dataset/engine/opt/pass.h"
 
 using float16 = Eigen::half;
 
@@ -460,6 +461,12 @@ Status BatchOp::PadHelper(std::shared_ptr<Tensor> src, std::shared_ptr<Tensor> d
     }
   }
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status BatchOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<BatchOp>(shared_from_this()), modified);
 }
 
 }  // namespace dataset

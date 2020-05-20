@@ -66,6 +66,7 @@ set(submodules
     $<TARGET_OBJECTS:engine-datasetops-source>
     $<TARGET_OBJECTS:engine-datasetops-source-sampler>
     $<TARGET_OBJECTS:engine-datasetops>
+    $<TARGET_OBJECTS:engine-opt>
     $<TARGET_OBJECTS:engine>
     )
 

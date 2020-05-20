@@ -121,6 +121,12 @@ class GeneratorOp : public PipelineOp {
   // @return Status - The error code return
   Status Reset() override;
 
+  // Base-class override for NodePass visitor acceptor.
+  // @param p - Pointer to the NodePass to be accepted.
+  // @param modified - Whether this node visit modified the pipeline.
+  // @return - Status of the node visit.
+  Status Accept(NodePass *p, bool *modified) override;
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;

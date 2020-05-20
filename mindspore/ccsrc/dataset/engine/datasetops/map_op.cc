@@ -27,6 +27,7 @@
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 #include "dataset/kernels/tensor_op.h"
 #include "utils/log_adapter.h"
 #include "dataset/util/task_manager.h"
@@ -369,6 +370,12 @@ void MapOp::CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name
     // Set the base class final column id map result
     column_name_id_map_ = final_col_name_id_map;
   }
+}
+
+// Visitor accept method for NodePass
+Status MapOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<MapOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

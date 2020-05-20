@@ -152,11 +152,41 @@ class ExecutionTree {
   // @return the prepare flags
   uint32_t PrepareFlags() const { return prepare_flags_; }
 
-  // The driver of the prepare phase of the execution tree. The prepare phase will recursively
+  // The driver of the prepare phase of the execution tree.
+  // Prepare phase consists of three sub phases
+  //
+  // 1. PrepareTreePreAction()
+  //    Compulsory transformation/action pre optimization.
+  //    For example, CacheOp Insertion
+  //
+  // 2. Optimize()
+  //    Optimization transformation/action, optional
+  //    For example, MapOp Fusion
+  //
+  // 3. PrepareTreePostAction()
+  //    Compulsory transformation/action post optimization.
+  //    For example, repeatOp inlining
+  //
+  // @return Status - The error code return
+  Status Prepare();
+
+  // Compulsory transformation/action pre optimization.
+  // @return Status - The error code return
+  Status PrepareTreePreAction();
+
+  // Compulsory transformation/action post optimization.
+  // @return Status - The error code return
+  Status PrepareTreePostAction();
+
+  // Optimization transformation/action, optional.
+  // @return Status - The error code return
+  Status Optimize();
+
+  // The DEPRECATED driver of the prepare phase of the execution tree. The prepare phase will recursively
   // walk the tree to perform modifications to the tree or specific nodes within the tree to get
   // it ready for execution.
   // @return Status - The error code return
-  Status Prepare();
+  Status PrepareDeprecated();
 
   // Recursive function used during prepare phase to visit a node and drive any pre- and post-
   // node actions during a tree walk.

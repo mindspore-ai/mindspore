@@ -22,6 +22,7 @@
 #include "dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "dataset/engine/db_connector.h"
 #include "dataset/engine/execution_tree.h"
+#include "dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -450,6 +451,12 @@ Status ImageFolderOp::CountRowsAndClasses(const std::string &path, const int64_t
   }
   (*num_rows) = (row_cnt / num_dev) + (row_cnt % num_dev == 0 ? 0 : 1);
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status ImageFolderOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<ImageFolderOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -19,6 +19,7 @@
 #include "dataset/core/constants.h"
 #include "dataset/engine/data_buffer.h"
 #include "dataset/engine/db_connector.h"
+#include "dataset/engine/opt/pass.h"
 #include "dataset/core/config_manager.h"
 #include "dataset/core/global_context.h"
 #include "utils/log_adapter.h"
@@ -249,6 +250,12 @@ Status ZipOp::EofReceived(int32_t) {
 Status ZipOp::EoeReceived(int32_t) {
   state_ = OpState::kDeOpIdle;
   return Status::OK();
+}
+
+// Visitor accept method for NodePass
+Status ZipOp::Accept(NodePass *p, bool *modified) {
+  // Downcast shared pointer then call visitor
+  return p->RunOnNode(std::static_pointer_cast<ZipOp>(shared_from_this()), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore
