@@ -127,12 +127,12 @@ void ExportGraph(const std::string &file_name, const std::string &, const std::s
 // init and exec dataset sub graph
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
                      const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
-                     const std::vector<int64_t> &input_indexes, const std::string &phase, bool use_run);
+                     const std::vector<int64_t> &input_indexes, const std::string &phase, bool need_run);
 
 // Build and run dataset subgraph for ms backend
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
-                       const std::vector<int64_t> &input_indexes, bool use_run);
+                       const std::vector<int64_t> &input_indexes, bool need_run);
 
 }  // namespace pipeline
 }  // namespace mindspore
