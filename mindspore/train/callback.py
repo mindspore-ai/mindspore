@@ -143,6 +143,11 @@ class CheckpointConfig:
     """
     The config for model checkpoint.
 
+    Note:
+        During the training process, if dataset is transmitted through the data channel,
+        suggest set save_checkpoint_steps be an integer multiple of loop_size.
+        Otherwise there may be deviation in the timing of saving checkpoint.
+
     Args:
         save_checkpoint_steps (int): Steps to save checkpoint. Default: 1.
         save_checkpoint_seconds (int): Seconds to save checkpoint. Default: 0.
@@ -512,7 +517,7 @@ class ModelCheckpoint(Callback):
 
     Args:
         prefix (str): Checkpoint files names prefix. Default: "CKP".
-        directory (str): Lolder path into which checkpoint files will be saved. Default: None.
+        directory (str): Folder path into which checkpoint files will be saved. Default: None.
         config (CheckpointConfig): Checkpoint strategy config. Default: None.
 
     Raises:
