@@ -20,6 +20,7 @@
 #include "device/gpu/gpu_stream_assign.h"
 #include "pre_activate/common/optimizer.h"
 #include "pre_activate/common/pass_manager.h"
+#include "pre_activate/common/helper.h"
 #include "pre_activate/pass/communication_op_fusion.h"
 #include "device/kernel_runtime_manager.h"
 #include "predict/predict.h"
@@ -69,6 +70,7 @@ void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
+  opt::RemoveNopNode(kernel_graph);
   runtime_instance->AssignMemory(kernel_graph);
 }
 
@@ -77,6 +79,7 @@ void GPUSession::RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
   MS_EXCEPTION_IF_NULL(runtime_instance);
+  opt::RemoveNopNode(kernel_graph);
   runtime_instance->RunOpAssignMemory(input_tensors, kernel_graph);
 }
 
@@ -102,6 +105,8 @@ GraphId GPUSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrList
   Optimize(graph);
   // Assign CUDA streams
   AssignStream(graph);
+  // Remove NoOp from execution graph
+  opt::HideNopNode(graph.get());
   // Build kernel if node is cnode
   BuildKernel(graph);
   // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
