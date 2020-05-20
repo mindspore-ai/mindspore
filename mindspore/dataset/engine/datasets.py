@@ -1301,6 +1301,8 @@ class SyncWaitDataset(DatasetOp):
         self._pair = BlockReleasePair(num_batch, callback)
         if self._condition_name in self.input[0].get_sync_notifiers():
             raise RuntimeError("Condition name is already in use")
+        logger.warning("Please remember to add dataset.sync_update(condition=%s), otherwise will result in hanging",
+                       condition_name)
 
     def get_sync_notifiers(self):
         return {**self.input[0].get_sync_notifiers(), **{self._condition_name: self._pair.release_func}}
