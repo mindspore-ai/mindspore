@@ -172,7 +172,7 @@ py::object AnyToPyData(const Any &value) {
 
 py::object BaseRefToPyData(const BaseRef &value) {
   py::object ret;
-  MS_LOG(DEBUG) << "BaseRefToPyData " << common::SafeCStr(value.ToString());
+  MS_LOG(DEBUG) << "BaseRefToPyData " << value.ToString();
   if (utils::isa<int>(value) || utils::isa<float>(value) || utils::isa<double>(value) || utils::isa<bool>(value)) {
     ret = BuiltinsToPyData(value);
   } else if (utils::isa<ValuePtr>(value)) {
