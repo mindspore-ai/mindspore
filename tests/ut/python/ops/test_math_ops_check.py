@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test ops """
+import functools
 import numpy as np
 
 import mindspore.nn as nn
@@ -22,7 +23,8 @@ from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
-    import pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
+    import pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception, \
+    pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 
 
 class AssignAddNet(nn.Cell):
@@ -77,11 +79,6 @@ class CumSumNet(nn.Cell):
 
 
 raise_set = [
-    # input two tensors, but element types are not same
-    ('TensorAdd1', {
-        'block': (P.TensorAdd(), {'exception': TypeError, 'error_keywords': ['TensorAdd']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, their shapes do not match
     ('TensorAdd2', {
         'block': (P.TensorAdd(), {'exception': ValueError, 'error_keywords': ['TensorAdd']}),
@@ -256,22 +253,12 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.bool_))],
         'skip': ['backward']}),
 
-    # input two tensors, but element types are not same
-    ('Sub1', {
-        'block': (P.Sub(), {'exception': TypeError, 'error_keywords': ['Sub']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, their shapes do not match
     ('Sub2', {
         'block': (P.Sub(), {'exception': ValueError, 'error_keywords': ['Sub']}),
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # input two tensors, but element types are not same
-    ('Mul1', {
-        'block': (P.Mul(), {'exception': TypeError, 'error_keywords': ['Mul']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, their shapes do not match
     ('Mul2', {
         'block': (P.Mul(), {'exception': ValueError, 'error_keywords': ['Mul']}),
@@ -327,55 +314,30 @@ raise_set = [
         'desc_inputs': [5.0],
         'skip': ['backward']}),
 
-    # input two tensors, but element types are not same
-    ('Minimum1', {
-        'block': (P.Minimum(), {'exception': TypeError, 'error_keywords': ['Minimum']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, their shapes do not match
     ('Minimum2', {
         'block': (P.Minimum(), {'exception': ValueError, 'error_keywords': ['Minimum']}),
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # input two tensors, but element types are not same
-    ('Maximum1', {
-        'block': (P.Maximum(), {'exception': TypeError, 'error_keywords': ['Maximum']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, their shapes do not match
     ('Maximum2', {
         'block': (P.Maximum(), {'exception': ValueError, 'error_keywords': ['Maximum']}),
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # input two tensors, but element types are not same
-    ('RealDiv1', {
-        'block': (P.RealDiv(), {'exception': TypeError, 'error_keywords': ['RealDiv']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, their shapes do not match
     ('RealDiv2', {
         'block': (P.RealDiv(), {'exception': ValueError, 'error_keywords': ['RealDiv']}),
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # input two tensors, but element types are not same
-    ('Div1', {
-        'block': (P.Div(), {'exception': TypeError, 'error_keywords': ['Div']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, their shapes do not match
     ('Div2', {
         'block': (P.Div(), {'exception': ValueError, 'error_keywords': ['Div']}),
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # input two tensors, but element types are not same
-    ('FloorDiv1', {
-        'block': (P.FloorDiv(), {'exception': TypeError, 'error_keywords': ['FloorDiv']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, their shapes do not match
     ('FloorDiv2', {
         'block': (P.FloorDiv(), {'exception': ValueError, 'error_keywords': ['FloorDiv']}),
@@ -389,11 +351,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.int32))],
         'skip': ['backward']}),
 
-    # input two tensors, but element types are not same
-    ('FloorMod1', {
-        'block': (P.FloorMod(), {'exception': TypeError, 'error_keywords': ['FloorMod']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, their shapes do not match
     ('FFloorMod2', {
         'block': (P.FloorMod(), {'exception': ValueError, 'error_keywords': ['FloorMod']}),
@@ -407,11 +364,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([2, 3]).astype(np.bool_))],
         'skip': ['backward']}),
 
-    # type of x and y not match
-    ('Equal1', {
-        'block': (P.Equal(), {'exception': TypeError, 'error_keywords': ['Equal']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # shape of x and y not match
     ('Equal2', {
         'block': (P.Equal(), {'exception': ValueError, 'error_keywords': ['Equal']}),
@@ -430,55 +382,30 @@ raise_set = [
         'skip': ['backward']}),
     # shape of x and y not match
 
-    # type of x and y not match
-    ('NotEqual1', {
-        'block': (P.NotEqual(), {'exception': TypeError, 'error_keywords': ['NotEqual']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # shape of x and y not match
     ('NotEqual2', {
         'block': (P.NotEqual(), {'exception': ValueError, 'error_keywords': ['NotEqual']}),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # type of x and y not match
-    ('Greater1', {
-        'block': (P.Greater(), {'exception': TypeError, 'error_keywords': ['Greater']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # shape of x and y not match
     ('Greater2', {
         'block': (P.Greater(), {'exception': ValueError, 'error_keywords': ['Greater']}),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # type of x and y not match
-    ('GreaterEqual1', {
-        'block': (P.GreaterEqual(), {'exception': TypeError, 'error_keywords': ['GreaterEqual']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # shape of x and y not match
     ('GreaterEqual2', {
         'block': (P.GreaterEqual(), {'exception': ValueError, 'error_keywords': ['GreaterEqual']}),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # type of x and y not match
-    ('Less1', {
-        'block': (P.Less(), {'exception': TypeError, 'error_keywords': ['Less']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # shape of x and y not match
     ('Less2', {
         'block': (P.Less(), {'exception': ValueError, 'error_keywords': ['Less']}),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.float32)), Tensor(np.ones([3, 2]).astype(np.float32))],
         'skip': ['backward']}),
 
-    # type of x and y not match
-    ('LessEqual1', {
-        'block': (P.LessEqual(), {'exception': TypeError, 'error_keywords': ['LessEqual']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # shape of x and y not match
     ('LessEqual2', {
         'block': (P.LessEqual(), {'exception': ValueError, 'error_keywords': ['LessEqual']}),
@@ -643,11 +570,6 @@ raise_set = [
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.bool_))],
         'skip': ['backward']}),
 
-    # input two tensors, but element types are not same
-    ('Atan21', {
-        'block': (P.Atan2(), {'exception': TypeError, 'error_keywords': ['Atan2']}),
-        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
-        'skip': ['backward']}),
     # input two tensors, their shapes do not match
     ('Atan22', {
         'block': (P.Atan2(), {'exception': ValueError, 'error_keywords': ['Atan2']}),
@@ -655,7 +577,96 @@ raise_set = [
         'skip': ['backward']}),
 ]
 
+test_case_math_ops = [
+    # input two tensors, but element types are not same
+    ('TensorAdd1', {
+        'block': P.TensorAdd(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # input two tensors, but element types are not same
+    ('Sub1', {
+        'block': P.Sub(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # input two tensors, but element types are not same
+    ('Mul1', {
+        'block': P.Mul(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # input two tensors, but element types are not same
+    ('Minimum1', {
+        'block': P.Minimum(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # input two tensors, but element types are not same
+    ('Maximum1', {
+        'block': P.Maximum(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # input two tensors, but element types are not same
+    ('RealDiv1', {
+        'block': P.RealDiv(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # input two tensors, but element types are not same
+    ('Div1', {
+        'block': P.Div(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # input two tensors, but element types are not same
+    ('FloorDiv1', {
+        'block': P.FloorDiv(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # input two tensors, but element types are not same
+    ('FloorMod1', {
+        'block': P.FloorMod(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # type of x and y not match
+    ('Equal1', {
+        'block': P.Equal(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # type of x and y not match
+    ('NotEqual1', {
+        'block': P.NotEqual(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # type of x and y not match
+    ('Greater1', {
+        'block': P.Greater(), 
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # type of x and y not match
+    ('GreaterEqual1', {
+        'block': P.GreaterEqual(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # type of x and y not match
+    ('Less1', {
+        'block': P.Less(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # type of x and y not match
+    ('LessEqual1', {
+        'block': P.LessEqual(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+    # input two tensors, but element types are not same
+    ('Atan21', {
+        'block': P.Atan2(),
+        'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
+        'skip': ['backward']}),
+]
 
 @mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception)
 def test_check_exception():
     return raise_set
+
+
+@mindspore_test(pipeline_for_compile_forward_ge_graph_for_case_by_case_config)
+def test_exec():
+    import mindspore.context as context
+    context.set_context(mode=context.GRAPH_MODE)
+    return functools.reduce(lambda x, y: x + y, [test_case_math_ops])

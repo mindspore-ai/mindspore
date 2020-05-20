@@ -321,8 +321,8 @@ def initializer(init, shape=None, dtype=mstype.float32):
         dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mindspore.float32.
 
     Returns:
-        Union[Tensor, Initialized], When `init` is Tensor, the return is Tensor object,
-            otherwise the return is Initialize object.
+        Union[Tensor, Initializer], When `init` is Tensor, the return is Tensor object,
+        otherwise the return is Initialize object.
 
     Examples:
         >>> tensor = initializer('ones', [1, 2, 3], mindspore.float32)
