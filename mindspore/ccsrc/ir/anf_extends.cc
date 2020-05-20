@@ -57,9 +57,6 @@ std::string CNode::fullname_with_scope() {
   if (IsApply(prim::kPrimScalarSummary) || IsApply(prim::kPrimTensorSummary) || IsApply(prim::kPrimImageSummary) ||
       IsApply(prim::kPrimHistogramSummary)) {
     std::string tag = GetValue<std::string>(GetValueNode(input(1)));
-    if (tag == "") {
-      MS_LOG(EXCEPTION) << "The tag name is null, should be valid string";
-    }
     std::string name;
     if (IsApply(prim::kPrimScalarSummary)) {
       name = tag + "[:Scalar]";

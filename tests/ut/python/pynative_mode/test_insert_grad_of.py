@@ -112,7 +112,7 @@ def test_InsertGradientOf_3():
     def f(x, y):
         return C.grad_all(debug_test)(x, y)
 
-    print("debug_gradient:", f(1, 2))
+    print("debug_gradient:", f(Tensor(1.0), Tensor(2.0)))
 
 
 def test_print_shape_type():

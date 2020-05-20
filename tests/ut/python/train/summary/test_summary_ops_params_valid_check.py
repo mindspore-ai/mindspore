@@ -12,260 +12,139 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-@File  : test_summary.py
-@Author:
-@Date  : 2019-08-5
-@Desc  : test summary function of ops params valid check
-"""
-import logging
-import numpy as np
+"""Test summary function of ops params valid check."""
 import os
+import tempfile
+import shutil
+from enum import Enum
+
+import numpy as np
 import pytest
-import random
 
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.train.summary.summary_record import SummaryRecord
 
-CUR_DIR = os.getcwd()
-SUMMARY_DIR = CUR_DIR + "/test_temp_summary_event_file/"
 
-log = logging.getLogger("test")
-log.setLevel(level=logging.ERROR)
+class SummaryEnum(Enum):
+    """Summary enum."""
+    IMAGE = P.ImageSummary.__name__
+    SCALAR = P.ScalarSummary.__name__
+    TENSOR = P.TensorSummary.__name__
+    HISTOGRAM = P.HistogramSummary.__name__
 
 
-class SummaryDemoTag(nn.Cell):
-    """ SummaryDemoTag definition """
-
-    def __init__(self, tag1, tag2, tag3):
-        super(SummaryDemoTag, self).__init__()
-        self.s = P.ScalarSummary()
-        self.histogram_summary = P.HistogramSummary()
+class SummaryNet(nn.Cell):
+    """Summary net definition."""
+    def __init__(self, summary_type, tag, data):
+        super(SummaryNet, self).__init__()
+        self.tag = tag
+        self.data = data
+        self.summary_fn = getattr(P, summary_type)()
+        self.one = Tensor(np.array([1]).astype(np.float32))
         self.add = P.TensorAdd()
-        self.tag1 = tag1
-        self.tag2 = tag2
-        self.tag3 = tag3
 
-    def construct(self, x, y):
-        self.s(self.tag1, x)
-        z = self.add(x, y)
-        self.s(self.tag2, z)
-        self.s(self.tag3, y)
-        self.histogram_summary(self.tag1, x)
-        return z
+    def construct(self):
+        self.summary_fn(self.tag, self.data)
+        return self.add(self.one, self.one)
 
 
-class SummaryDemoTagForSet(nn.Cell):
-    """ SummaryDemoTagForSet definition """
+class TestSummaryOps:
+    """Test summary operators."""
+    summary_dir = ''
 
-    def __init__(self, tag_tuple):
-        super(SummaryDemoTagForSet, self).__init__()
-        self.s = P.ScalarSummary()
-        self.histogram_summary = P.HistogramSummary()
-        self.add = P.TensorAdd()
-        self.tag_tuple = tag_tuple
-
-    def construct(self, x, y):
-        z = self.add(x, y)
-        for tag in self.tag_tuple:
-            self.s(tag, x)
-            self.histogram_summary(tag, x)
-        return z
-
-
-class SummaryDemoValue(nn.Cell):
-    """ SummaryDemoValue definition """
-
-    def __init__(self, value):
-        super(SummaryDemoValue, self).__init__()
-        self.s = P.ScalarSummary()
-        self.add = P.TensorAdd()
-        self.v = value
-
-    def construct(self, x, y):
-        self.s("x", self.v)
-        z = self.add(x, y)
-        self.s("z", self.v)
-        self.s("y", self.v)
-        return z
-
-
-class SummaryDemoValueForSet(nn.Cell):
-    """ SummaryDemoValueForSet definition """
-
-    def __init__(self, value, tag_tuple):
-        super(SummaryDemoValueForSet, self).__init__()
-        self.s = P.ScalarSummary()
-        self.add = P.TensorAdd()
-        self.tag_tuple = tag_tuple
-        self.v = value
-
-    def construct(self, x, y):
-        z = self.add(x, y)
-        for tag in self.tag_tuple:
-            self.s(tag, self.v)
-        return z
-
-
-class HistogramSummaryNet(nn.Cell):
-    "HistogramSummaryNet definition"
-
-    def __init__(self, value):
-        self.histogram_summary = P.HistogramSummary()
-        self.add = P.TensorAdd()
-        self.value = value
-
-    def construct(self, tensors1, tensor2):
-        self.histogram_summary("value", self.value)
-        return self.add(tensors1, tensor2)
-
-
-def run_case(net):
-    """ run_case """
-    # step 0: create the thread
-    with SummaryRecord(SUMMARY_DIR) as test_writer:
-        # step 1: create the network for summary
-        x = Tensor(np.array([1.1]).astype(np.float32))
-        y = Tensor(np.array([1.2]).astype(np.float32))
+    @classmethod
+    def run_case(cls, net):
+        """ run_case """
         net.set_train()
+        steps = 10
+        with SummaryRecord(cls.summary_dir) as test_writer:
+            for i in range(1, steps):
+                net()
+                test_writer.record(i)
 
-        # step 2: create the Event
-        steps = 100
-        for i in range(1, steps):
-            x = Tensor(np.array([1.1 + random.uniform(1, 10)]).astype(np.float32))
-            y = Tensor(np.array([1.2 + random.uniform(1, 10)]).astype(np.float32))
-            net(x, y)
-            test_writer.record(i)
+    @classmethod
+    def setup_class(cls):
+        """Run before class."""
+        if not os.path.exists(cls.summary_dir):
+            cls.summary_dir = tempfile.mkdtemp(suffix='_summary')
 
+    @classmethod
+    def teardown_class(cls):
+        """Run after class."""
+        if os.path.exists(cls.summary_dir):
+            shutil.rmtree(cls.summary_dir)
 
-# Test 1: use the repeat tag
-def test_summary_use_repeat_tag():
-    log.debug("begin test_summary_use_repeat_tag")
-    net = SummaryDemoTag("x", "x", "x")
-    try:
-        run_case(net)
-    except:
-        assert False
-    else:
-        assert True
-    log.debug("finished test_summary_use_repeat_tag")
+    @pytest.mark.parametrize(
+        "summary_type, value",
+        [
+            (SummaryEnum.SCALAR.value, Tensor(1)),
+            (SummaryEnum.SCALAR.value, Tensor(np.array([1]))),
+            (SummaryEnum.IMAGE.value, Tensor(np.array([[[[1], [2], [3], [4]]]]))),
+            (SummaryEnum.TENSOR.value, Tensor(np.array([[1], [2], [3], [4]]))),
+            (SummaryEnum.HISTOGRAM.value, Tensor(np.array([[1], [2], [3], [4]]))),
+        ])
+    def test_summary_success(self, summary_type, value):
+        """Test summary success with valid tag and valid data."""
+        net = SummaryNet(summary_type, tag='tag', data=value)
+        TestSummaryOps.run_case(net)
 
-
-# Test 2: repeat tag use for set summary
-def test_summary_use_repeat_tag_for_set():
-    log.debug("begin test_summary_use_repeat_tag_for_set")
-    net = SummaryDemoTagForSet(("x", "x", "x"))
-    try:
-        run_case(net)
-    except:
-        assert False
-    else:
-        assert True
-    log.debug("finished test_summary_use_repeat_tag_for_set")
-
-
-# Test3: test with invalid tag(None, bool, "", int)
-def test_summary_use_invalid_tag_None():
-    log.debug("begin test_summary_use_invalid_tag_None")
-    net = SummaryDemoTag(None, None, None)
-    try:
-        run_case(net)
-    except:
-        assert True
-    else:
-        assert False
-    log.debug("finished test_summary_use_invalid_tag_None")
+    @pytest.mark.parametrize(
+        "summary_type",
+        [
+            SummaryEnum.SCALAR.value,
+            SummaryEnum.IMAGE.value,
+            SummaryEnum.HISTOGRAM.value,
+            SummaryEnum.TENSOR.value
+        ])
+    def test_summary_tag_is_none(self, summary_type):
+        """Test summary tag is None, all summary operator validation rules are consistent."""
+        net = SummaryNet(summary_type, tag=None, data=Tensor(0))
+        with pytest.raises(TypeError):
+            TestSummaryOps.run_case(net)
 
 
-# Test4: test with invalid tag(None, bool, "", int)
-def test_summary_use_invalid_tag_Bool():
-    log.debug("begin test_summary_use_invalid_tag_Bool")
-    net = SummaryDemoTag(True, True, True)
-    with pytest.raises(TypeError):
-        run_case(net)
-    log.debug("finished test_summary_use_invalid_tag_Bool")
+    @pytest.mark.parametrize(
+        "summary_type",
+        [
+            SummaryEnum.SCALAR.value,
+            SummaryEnum.IMAGE.value,
+            SummaryEnum.HISTOGRAM.value,
+            SummaryEnum.TENSOR.value
+        ])
+    def test_summary_tag_is_empty_string(self, summary_type):
+        """Test summary tag is a empty string, all summary operator validation rules are consistent."""
+        net = SummaryNet(summary_type, tag='', data=Tensor(0))
+        with pytest.raises(ValueError):
+            TestSummaryOps.run_case(net)
 
+    @pytest.mark.parametrize("tag", [123, True, Tensor(0)])
+    def test_summary_tag_is_not_string(self, tag):
+        """Test summary tag is not a string, all summary operator validation rules are consistent."""
+        # All summary operator validation rules are consistent, so we only test scalar summary.
+        net = SummaryNet(SummaryEnum.SCALAR.value, tag=tag, data=Tensor(0))
+        with pytest.raises(TypeError):
+            TestSummaryOps.run_case(net)
 
-# Test5: test with invalid tag(None, bool, "", int)
-def test_summary_use_invalid_tag_null():
-    log.debug("begin test_summary_use_invalid_tag_null")
-    net = SummaryDemoTag("", "", "")
-    run_case(net)
-    log.debug("finished test_summary_use_invalid_tag_null")
+    @pytest.mark.parametrize("value", [123, True, 'data'])
+    def test_summary_value_type_invalid(self, value):
+        """Test the type of summary value is invalid, all summary operator validation rules are consistent."""
+        # All summary operator validation rules are consistent, so we only test scalar summary.
+        net = SummaryNet(SummaryEnum.SCALAR.value, tag='tag', data=value)
+        with pytest.raises(TypeError):
+            TestSummaryOps.run_case(net)
 
-
-# Test6: test with invalid tag(None, bool, "", int)
-def test_summary_use_invalid_tag_Int():
-    log.debug("begin test_summary_use_invalid_tag_Int")
-    net = SummaryDemoTag(1, 2, 3)
-    with pytest.raises(TypeError):
-        run_case(net)
-    log.debug("finished test_summary_use_invalid_tag_Int")
-
-
-# Test7: test with invalid value(None, "")
-def test_scalar_summary_use_invalid_value_None():
-    log.debug("begin test_scalar_summary_use_invalid_tag_Int")
-    net = SummaryDemoValue(None)
-    try:
-        run_case(net)
-    except:
-        assert True
-    else:
-        assert False
-    log.debug("finished test_scalar_summary_use_invalid_tag_Int")
-
-
-# Test8: test with invalid value(None, "")
-def test_scalar_summary_use_invalid_value_None_ForSet():
-    log.debug("begin test_scalar_summary_use_invalid_value_None_ForSet")
-    try:
-        net = SummaryDemoValueForSet(None, ("x1", "x2"))
-        run_case(net)
-    except:
-        assert True
-    else:
-        assert False
-    log.debug("finished test_scalar_summary_use_invalid_value_None_ForSet")
-
-
-# Test9: test with invalid value(None, "")
-def test_scalar_summary_use_invalid_value_null():
-    log.debug("begin test_scalar_summary_use_invalid_value_null")
-    try:
-        net = SummaryDemoValue("")
-        run_case(net)
-    except:
-        assert True
-    else:
-        assert False
-    log.debug("finished test_scalar_summary_use_invalid_value_null")
-
-
-def test_histogram_summary_use_valid_value():
-    """Test histogram summary with valid value"""
-    log.debug("Begin test_histogram_summary_use_valid_value")
-    try:
-        net = HistogramSummaryNet(Tensor(np.array([1, 2, 3])))
-        run_case(net)
-    except:
-        assert True
-    else:
-        assert False
-    log.debug("Finished test_histogram_summary_use_valid_value")
-
-
-def test_histogram_summary_use_scalar_value():
-    """Test histogram summary use scalar value"""
-    log.debug("Begin test_histogram_summary_use_scalar_value")
-    try:
-        scalar = Tensor(1)
-        net = HistogramSummaryNet(scalar)
-        run_case(net)
-    except:
-        assert True
-    else:
-        assert False
-    log.debug("Finished test_histogram_summary_use_scalar_value")
+    @pytest.mark.parametrize(
+        "summary_type, value",
+        [
+            (SummaryEnum.IMAGE.value, Tensor(np.array([1, 2]))),
+            (SummaryEnum.SCALAR.value, Tensor(np.array([1, 2]))),
+            (SummaryEnum.TENSOR.value, Tensor(0)),
+            (SummaryEnum.HISTOGRAM.value, Tensor(0))
+        ])
+    def test_value_shape_invalid(self, summary_type, value):
+        """Test invalid shape of every summary operators."""
+        net = SummaryNet(summary_type, tag='tag', data=value)
+        with pytest.raises(ValueError):
+            TestSummaryOps.run_case(net)

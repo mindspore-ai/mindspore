@@ -492,7 +492,7 @@ test_cases = [
     }),
     ('ScalarSummary', {
         'block': ScalarSummaryNet(),
-        'desc_inputs': [2.2],
+        'desc_inputs': [Tensor(2.2)],
     }),
     ('L2Normalize', {
         'block': L2NormalizeNet(),
