@@ -87,7 +87,7 @@ sh run_distribute_train.sh rank_table_8p.json dataset/ilsvrc ./ckpt/pretrained.c
 # standalone training example（1p）
 sh run_standalone_train.sh dataset/ilsvrc
 
-f you want to load pretrained ckpt file,
+If you want to load pretrained ckpt file,
 sh run_standalone_train.sh dataset/ilsvrc ./ckpt/pretrained.ckpt
 ```
  
