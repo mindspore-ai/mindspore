@@ -191,3 +191,6 @@ from .prelu import _prelu_tbe
 from .prelu_grad import _prelu_grad_tbe
 from .binary_cross_entropy import _binary_cross_entropy_tbe
 from .binary_cross_entropy_grad import _binary_cross_entropy_grad_tbe
+from .sin import _sin_tbe
+from .cos import _cos_tbe
+from .cum_sum import _cum_sum_tbe

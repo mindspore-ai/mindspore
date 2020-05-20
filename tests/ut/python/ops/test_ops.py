@@ -504,10 +504,9 @@ test_case_math_ops = [
         'desc_inputs': [[4]],
         'desc_bprop': [[4]]}),
     ('CumSum', {
-        'block': P.CumSum(),
-        'desc_const': [0],
-        'desc_inputs': [Tensor(np.array([[3, 4], [1, 6]]).astype(np.float16))],
-        'desc_bprop': [Tensor(np.array([[3, 4], [4, 10]]).astype(np.float16))]}),
+        'block': CumSumNet(),
+        'desc_inputs': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))]}),
     ('ReduceSum_3', {
         'block': P.ReduceSum(),
         'desc_const': [0],
@@ -579,6 +578,10 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([0, 1, 4, 5]).astype(np.float32)),
                         Tensor(np.array([1, 1, 3, 7]).astype(np.float32))],
         'skip': ['backward']}),
+    ('Cos', {
+        'block': P.Cos(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
 ]
 
 test_case_nn_ops = [
@@ -885,12 +888,6 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor(np.array([[128, 32, 32, 64], [128, 32, 32, 64]]).astype(np.float16))],
         'desc_bprop': [Tensor(np.array([[128, 32, 32, 64], [128, 32, 32, 64]]).astype(np.float16))],
         'skip': ['backward']}),
-    ('CumSumNet', {
-        'block': CumSumNet(),
-        'desc_const': [0],
-        'desc_inputs': [Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float16))],
-        'desc_bprop': [
-            Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float16))]}),
     ('OneHot', {
         'block': P.OneHot(),
         'desc_const': [3, Tensor(1.0, mstype.float32), Tensor(0.0, mstype.float32)],
