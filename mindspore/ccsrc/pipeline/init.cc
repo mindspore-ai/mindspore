@@ -95,7 +95,7 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("verify_inputs_signature", &mindspore::pipeline::VerifyInputSignature, "Verify input signature.");
   (void)m.def("init_exec_dataset", &mindspore::pipeline::InitExecDataset, py::arg("queue_name"), py::arg("size"),
               py::arg("batch_size"), py::arg("types"), py::arg("shapes"), py::arg("input_indexs"),
-              py::arg("phase") = py::str("dataset"), "Init and exec dataset.");
+              py::arg("phase") = py::str("dataset"), py::arg("need_run") = py::bool_(true), "Init and exec dataset.");
   (void)m.def("_set_dataset_mode_config", &mindspore::ConfigManager::SetDatasetModeConfig, "API for set dataset mode.");
   (void)m.def("init_backend", &mindspore::pipeline::InitBackend, "Init Backend.");
 
