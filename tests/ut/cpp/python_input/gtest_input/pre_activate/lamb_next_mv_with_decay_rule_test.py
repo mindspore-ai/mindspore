@@ -24,7 +24,6 @@ make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
 LambNextMVWithDecay = Primitive('LambNextMVWithDecay')
 
-
 class FnDict:
     def __init__(self):
         self.fnDict = {}
@@ -34,7 +33,6 @@ class FnDict:
 
     def __getitem__(self, name):
         return self.fnDict[name]
-
 
 def test_lamb_next_mv_with_decay_rule(tag):
     fns = FnDict()

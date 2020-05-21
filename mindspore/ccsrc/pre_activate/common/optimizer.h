@@ -28,6 +28,7 @@
 #include "pre_activate/common/pattern_engine.h"
 #include "utils/graph_utils.h"
 #include "common/utils.h"
+#include "pre_activate/common/helper.h"
 
 namespace mindspore {
 namespace opt {

@@ -112,7 +112,6 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<MatmulBiasaddFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<DereluFusion>());
-  ir_fusion_pm->AddPass(std::make_shared<ConfusionMulGradFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeTransDataFusion>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());

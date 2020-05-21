@@ -14,7 +14,6 @@
 # ============================================================================
 
 from mindspore.ops import Primitive
-from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 
 batch_norm_grad = G.BatchNormGrad(is_training=False)

@@ -64,6 +64,8 @@ const AnfNodePtr ReshapeTransposeFusion::Process(const FuncGraphPtr &func_graph,
   AnfAlgo::CopyNodeAttrs(reshape_cnode, new_node);
   AnfAlgo::CopyNodeAttr(kAttrPerm, transpose_cnode, new_node);
   AnfAlgo::SetNodeAttr(kAttrTransposeFirst, MakeValue(false), new_node);
+  auto reshape_output_shape = AnfAlgo::GetOutputInferShape(reshape_cnode, 0);
+  AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(Convert2Int(reshape_output_shape)), new_node);
 
   return new_node;
 }
