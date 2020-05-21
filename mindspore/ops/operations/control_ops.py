@@ -140,7 +140,7 @@ class Merge(PrimitiveWithInfer):
     One and only one of the inputs should be selected as the output
 
     Inputs:
-        - **inputs** (Tuple) - The data to be merged. All tuple elements should have same shape.
+        - **inputs** (Tuple) - The data to be merged.
 
     Outputs:
         tuple. Output is tuple(`data`, `output_index`). The `data` has the same shape of `inputs` element.
