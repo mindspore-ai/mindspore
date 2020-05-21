@@ -25,9 +25,13 @@
 #include "dataset/util/status.h"
 #include "dataset/util/task_manager.h"
 #include "dataset/engine/opt/pass.h"
+#include "dataset/util/profiling.h"
 
 namespace mindspore {
 namespace dataset {
+#define DEVICE_QUEUE_PROFILING_DATA(type, subtype, batch_num, value) \
+  std::to_string(type) + " " + std::to_string(subtype) + " " + std::to_string(batch_num) + " " + std::to_string(value)
+
 DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, int32_t prefetch_size,
                              int32_t op_connector_size, int64_t num_batch)
     : PipelineOp(op_connector_size),
@@ -97,7 +101,25 @@ Status DeviceQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Device queue, sending data to Ascend.";
   int64_t total_batch = 0;
   bool is_break_loop = false;
-
+  double batch_start_time, tdt_start_time, end_time;
+  int32_t batch_cost, tdt_cost;
+  int32_t connector_size = 0;
+  int32_t connector_capacity;
+  std::shared_ptr<Profiling> profiling_node;
+  bool isProfilingEnable = ProfilingManager::GetInstance().IsProfilingEnable();
+  if (isProfilingEnable) {
+    std::string file_name = "critical_point_profiling";
+    // Here can determine performance bottleneck is in pipeline or in tdt.
+    // Context format of this file "type subtype batchnum value"
+    // type:0: time,  1: queue depth
+    // subtype:0: pipeline time, 1: push tdt time, 2: all time
+    // batchnum: batch number
+    // value: value of time(ms) or queue depth
+    profiling_node = std::make_shared<Profiling>(file_name, device_id_);
+    RETURN_IF_NOT_OK(ProfilingManager::GetInstance().RegisterProfilingNode(&profiling_node));
+    batch_start_time = ProfilingTime::GetCurMilliSecond();
+    connector_capacity = ChildOpConnectorCapacity();
+  }
   std::unique_ptr<DataBuffer> current_buffer;
   RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
 
@@ -107,20 +129,51 @@ Status DeviceQueueOp::SendDataToAscend() {
       TensorRow currRow;
       for (int row_id = 0; row_id < current_buffer->NumRows() && !is_break_loop; row_id++) {
         RETURN_IF_NOT_OK(current_buffer->GetRow(row_id, &currRow));
+        if (isProfilingEnable) {
+          tdt_start_time = ProfilingTime::GetCurMilliSecond();
+        }
         auto status = tdtInstancePtr->hostPush(currRow, true, channel_name_);
         if (status == TdtStatus::FAILED) {
           return Status(StatusCode::kTDTPushFailure, "TDT Push Failed");
+        }
+
+        if (isProfilingEnable) {
+          end_time = ProfilingTime::GetCurMilliSecond();
+          tdt_cost = (int32_t)(end_time - tdt_start_time);
+          // record push tdt time
+          profiling_node->Record(DEVICE_QUEUE_PROFILING_DATA(TIME, TDT_PUSH_TIME, total_batch + 1, tdt_cost));
+          batch_cost = (int32_t)(end_time - batch_start_time);
+          // record batch time
+          profiling_node->Record(DEVICE_QUEUE_PROFILING_DATA(TIME, BATCH_TIME, total_batch + 1, batch_cost));
+          // record pipeline time
+          profiling_node->Record(
+            DEVICE_QUEUE_PROFILING_DATA(TIME, PIPELINE_TIME, total_batch + 1, batch_cost - tdt_cost));
+          batch_start_time = end_time;
+          // record connector depth
+          profiling_node->Record(
+            DEVICE_QUEUE_PROFILING_DATA(CONNECTOR_DEPTH, connector_capacity, total_batch + 1, connector_size));
         }
         total_batch++;
         if (num_batch_ > 0 && total_batch == num_batch_) {
           is_break_loop = true;
         }
       }
+      if (isProfilingEnable) {
+        connector_size = ChildOpConnectorSize();
+        connector_capacity = ChildOpConnectorCapacity();
+      }
       RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
+    }
+    if (isProfilingEnable) {
+      connector_size = ChildOpConnectorSize();
+      connector_capacity = ChildOpConnectorCapacity();
     }
     RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
   }
 
+  if (isProfilingEnable) {
+    profiling_node->SaveToFile();
+  }
   MS_LOG(INFO) << "Device queue total batch is " << total_batch << ", number of batches is " << num_batch_ << ".";
 
   return Status::OK();
