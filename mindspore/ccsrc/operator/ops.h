@@ -172,6 +172,7 @@ extern const PrimitivePtr kPrimSquare;
 extern const PrimitivePtr kPrimEqual;
 extern const PrimitivePtr kPrimLess;
 extern const PrimitivePtr kPrimLessEqual;
+extern const PrimitivePtr kPrimCumSum;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;
