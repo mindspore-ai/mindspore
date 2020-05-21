@@ -232,6 +232,7 @@ def load_param_into_net(net, parameter_dict):
         raise TypeError(msg)
 
     logger.info("Execute load parameter into net process.")
+    net.init_parameters_data()
     param_not_load = []
     for _, param in net.parameters_and_names():
         if param.name in parameter_dict:
