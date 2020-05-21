@@ -284,10 +284,10 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
-            >>> import mindspore.dataset.transforms.nlp.utils as nlp
+            >>> import mindspore.dataset.transforms.text.utils as text
             >>> # declare a function which returns a Dataset object
             >>> def flat_map_func(x):
-            >>>     data_dir = nlp.as_text(x[0])
+            >>>     data_dir = text.as_text(x[0])
             >>>     d = ds.ImageFolderDatasetV2(data_dir)
             >>>     return d
             >>> # data is a Dataset object

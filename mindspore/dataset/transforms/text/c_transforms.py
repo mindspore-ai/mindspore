@@ -123,3 +123,9 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         if not os.path.exists(model_path):
             raise ValueError(
                 " jieba mode file {} is not exist".format(model_path))
+
+
+class UnicodeCharTokenizer(cde.UnicodeCharTokenizerOp):
+    """
+    Tokenize a scalar tensor of UTF-8 string to Unicode characters.
+    """

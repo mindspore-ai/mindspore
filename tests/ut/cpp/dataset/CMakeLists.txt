@@ -69,6 +69,7 @@ SET(DE_UT_SRCS
     filter_op_test.cc
     concat_op_test.cc
     jieba_tokenizer_op_test.cc
+    tokenizer_op_test.cc
     )
 
 add_executable(de_ut_tests ${DE_UT_SRCS})

@@ -18,3 +18,4 @@ image augmentation module which is developed with c++ opencv. Py_transforms
 provide more kinds of image augmentations which is developed with python PIL.
 """
 from .utils import as_text, JiebaMode
+from . import c_transforms

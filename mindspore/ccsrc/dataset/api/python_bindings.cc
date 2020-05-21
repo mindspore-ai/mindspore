@@ -39,6 +39,7 @@
 #include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
 #include "dataset/kernels/text/jieba_tokenizer_op.h"
+#include "dataset/kernels/text/unicode_char_tokenizer_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/io_block.h"
@@ -407,12 +408,16 @@ void bindTensorOps4(py::module *m) {
          py::arg("fillR") = PadOp::kDefFillR, py::arg("fillG") = PadOp::kDefFillG, py::arg("fillB") = PadOp::kDefFillB);
 }
 
-void bindTensorOps6(py::module *m) {
+void bindTensorOps5(py::module *m) {
   (void)py::class_<JiebaTokenizerOp, TensorOp, std::shared_ptr<JiebaTokenizerOp>>(*m, "JiebaTokenizerOp", "")
     .def(py::init<const std::string, std::string, JiebaMode>(), py::arg("hmm_path"), py::arg("mp_path"),
          py::arg("mode") = JiebaMode::kMix)
     .def("add_word",
          [](JiebaTokenizerOp &self, const std::string word, int freq) { THROW_IF_ERROR(self.AddWord(word, freq)); });
+
+  (void)py::class_<UnicodeCharTokenizerOp, TensorOp, std::shared_ptr<UnicodeCharTokenizerOp>>(
+    *m, "UnicodeCharTokenizerOp", "Tokenize a scalar tensor of UTF-8 string to Unicode characters.")
+    .def(py::init<>());
 }
 
 void bindSamplerOps(py::module *m) {
@@ -534,7 +539,7 @@ PYBIND11_MODULE(_c_dataengine, m) {
   bindTensorOps2(&m);
   bindTensorOps3(&m);
   bindTensorOps4(&m);
-  bindTensorOps6(&m);
+  bindTensorOps5(&m);
   bindSamplerOps(&m);
   bindDatasetOps(&m);
   bindInfoObjects(&m);
