@@ -20,7 +20,7 @@ Pre-defined combination of operators.
 """
 
 
-from .base import GradOperation, HyperMap, MultitypeFuncGraph, add_flags, \
+from .base import GradOperation, HyperMap, Map, MultitypeFuncGraph, add_flags, \
                   grad, grad_all, grad_all_with_sens, grad_by_list, grad_by_list_with_sens, grad_with_sens, \
                   core, env_get, tail, zip_operation
 from .clip_ops import clip_by_value

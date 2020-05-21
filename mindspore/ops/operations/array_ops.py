@@ -526,6 +526,29 @@ class GatherV2(PrimitiveWithInfer):
         return out
 
 
+class SparseGatherV2(GatherV2):
+    """
+    Returns a slice of input tensor based on the specified indices and axis.
+
+    Inputs:
+        - **input_params** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The original Tensor.
+        - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+          Specifies the indices of elements of the original Tensor. Must be in the range
+          `[0, input_param.shape()[axis])`.
+        - **axis** (int) - Specifies the dimension index to gather indices.
+
+    Outputs:
+        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Examples:
+        >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
+        >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
+        >>> axis = 1
+        >>> out = P.GatherV2()(input_params, input_indices, axis)
+    """
+
+
 class Range(PrimitiveWithInfer):
     r"""
     Creates a sequence of numbers.

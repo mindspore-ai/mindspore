@@ -21,7 +21,7 @@ A collection of operators to build nerual networks or computing functions.
 
 from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Diag, DiagPart, DType, ExpandDims, Eye,
-                        Fill, GatherNd, GatherV2, InvertPermutation,
+                        Fill, GatherNd, GatherV2, SparseGatherV2, InvertPermutation,
                         IsInstance, IsSubClass, ArgMaxWithValue, OnesLike, ZerosLike,
                         Rank, Reshape, ResizeNearestNeighbor, ArgMinWithValue, Range,
                         SameTypeShape, ScatterAdd, ScatterMax, ScatterUpdate,
@@ -122,6 +122,7 @@ __all__ = [
     'Transpose',
     'OneHot',
     'GatherV2',
+    'SparseGatherV2',
     'Concat',
     'Pack',
     'Unpack',
