@@ -55,10 +55,12 @@ class CPUKernelRegistrar {
   ~CPUKernelRegistrar() = default;
 };
 
-#define MS_REG_CPU_KERNEL(OPNAME, ATTR, OPCLASS)                                           \
+#define MS_REG_CPU_KERNEL(OPNAME, ATTR, OPCLASS) MS_REG_CPU_KERNEL_(__COUNTER__, OPNAME, ATTR, OPCLASS)
+#define MS_REG_CPU_KERNEL_(COUNT, OPNAME, ATTR, OPCLASS) _MS_REG_CPU_KERNEL_(COUNT, OPNAME, ATTR, OPCLASS)
+#define _MS_REG_CPU_KERNEL_(COUNT, OPNAME, ATTR, OPCLASS)                                  \
   static_assert(std::is_base_of<CPUKernel, OPCLASS>::value, " must be base of CPUKernel"); \
-  static const CPUKernelRegistrar g_cpu_kernel_##OPNAME##_reg(#OPNAME, ATTR,               \
-                                                              []() { return std::make_shared<OPCLASS>(); });
+  static const CPUKernelRegistrar g_cpu_kernel_##COUNT##_reg(#OPNAME, ATTR,                \
+                                                             []() { return std::make_shared<OPCLASS>(); });
 
 #define MS_REG_CPU_KERNEL_T(OPNAME, ATTR, OPCLASS, T)                                         \
   static_assert(std::is_base_of<CPUKernel, OPCLASS<T>>::value, " must be base of CPUKernel"); \
