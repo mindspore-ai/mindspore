@@ -33,6 +33,8 @@ EVENT_FILE_NAME_MARK = ".out.events.summary."
 EVENT_FILE_INIT_VERSION_MARK = "Mindspore.Event:"
 EVENT_FILE_INIT_VERSION = 1
 
+F32_MIN, F32_MAX = np.finfo(np.float32).min, np.finfo(np.float32).max
+
 
 def get_event_file_name(prefix, suffix):
     """
@@ -287,12 +289,22 @@ def _fill_histogram_summary(tag: str, np_value: np.ndarray, summary) -> None:
         if issubclass(np_value.dtype.type, np.floating):
             summary.min = ma_value.min(fill_value=np.PINF)
             summary.max = ma_value.max(fill_value=np.NINF)
+            if summary.min < F32_MIN or summary.max > F32_MAX:
+                logger.warning(
+                    'Values(%r, %r) are too large, '
+                    'you may encounter some undefined behaviours hereafter.', summary.min, summary.max)
         else:
             summary.min = ma_value.min()
             summary.max = ma_value.max()
         summary.sum = ma_value.sum(dtype=np.float64)
         bins = _calc_histogram_bins(valid)
-        bins = np.linspace(summary.min, summary.max, bins + 1, dtype=np_value.dtype)
+        first_edge, last_edge = summary.min, summary.max
+
+        if not first_edge < last_edge:
+            first_edge -= 0.5
+            last_edge += 0.5
+
+        bins = np.linspace(first_edge, last_edge, bins + 1, dtype=np_value.dtype)
         hists, edges = np.histogram(np_value, bins=bins)
 
         for hist, edge1, edge2 in zip(hists, edges, edges[1:]):
