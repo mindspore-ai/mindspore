@@ -372,6 +372,15 @@ class Log1pNet(nn.Cell):
         return self.log1p(x)
 
 
+class ErfcNet(nn.Cell):
+    def __init__(self):
+        super(ErfcNet, self).__init__()
+        self.erfc = P.Erfc()
+
+    def construct(self, x):
+        return self.erfc(x)
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -422,6 +431,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
         'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
         'skip': ['backward']}),
+    ('Erfc', {
+        'block': ErfcNet(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
+    }),
 ]
 
 test_case_lists = [test_case_math_ops]

@@ -361,6 +361,23 @@ def get_bprop_erf(self):
     return bprop
 
 
+@bprop_getters.register(P.Erfc)
+def get_bprop_erfc(self):
+    """Grad definition for `Erfc` operation."""
+    exp = P.Exp()
+    square = P.Square()
+    sqrt = P.Sqrt()
+    cast = P.Cast()
+    dtype = P.DType()
+
+    def bprop(x, out, dout):
+        half_root_pi = cast(2 / sqrt(F.scalar_to_tensor(np.pi)), dtype(x))
+        x_square = square(x)
+        dx = dout * (-half_root_pi * exp(-x_square))
+        return (dx,)
+    return bprop
+
+
 @bprop_getters.register(P.Pow)
 def get_bprop_pow(self):
     """Grad definition for `Pow` operation."""
