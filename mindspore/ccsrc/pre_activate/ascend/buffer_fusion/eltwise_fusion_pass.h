@@ -33,7 +33,7 @@ using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
 
 class EltwiseFusionPass : public FusionBasePass {
  public:
-  explicit EltwiseFusionPass(FusionIdAllocator *idAllocator) : FusionBasePass("EltwiseFusionPass", idAllocator) {}
+  explicit EltwiseFusionPass(FusionIdAllocatorPtr idAllocator) : FusionBasePass("EltwiseFusionPass", idAllocator) {}
   ~EltwiseFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_BUFFER_FUSION_PASS_CONV_DOUBLE_IN_FUSION_PASS_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_BUFFER_FUSION_PASS_CONV_DOUBLE_IN_FUSION_PASS_H_
+#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_BUFFER_FUSION_PASS_CONV2DBACKPROP_ELTWISE_FUSION_PASS_H_
+#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_BUFFER_FUSION_PASS_CONV2DBACKPROP_ELTWISE_FUSION_PASS_H_
 
 #include <unordered_set>
 #include <vector>
@@ -31,17 +31,17 @@ namespace mindspore {
 namespace opt {
 using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
 
-class ConvDoubleInFusionPass : public FusionBasePass {
+class Conv2DBackpropEltwiseFusionPass : public FusionBasePass {
  public:
-  explicit ConvDoubleInFusionPass(FusionIdAllocatorPtr idAllocator)
-      : FusionBasePass("ConvDoubleInFusionPass", idAllocator) {}
-  ~ConvDoubleInFusionPass() override = default;
+  explicit Conv2DBackpropEltwiseFusionPass(FusionIdAllocatorPtr idAllocator)
+      : FusionBasePass("Conv2DBackpropEltwiseFusionPass", idAllocator) {}
+  ~Conv2DBackpropEltwiseFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  void MatchConvDoubleInEltwise(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
-                                FusedNodeRecord *candidate_fusion);
+  void MatchConv2DBackpropInputEltwise(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
+                                       FusedNodeRecord *candidate_fusion);
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_BUFFER_FUSION_PASS_CONV_DOUBLE_IN_FUSION_PASS_H_
+#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_BUFFER_FUSION_PASS_CONV2DBACKPROP_ELTWISE_FUSION_PASS_H_

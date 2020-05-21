@@ -32,13 +32,14 @@ namespace opt {
 const int8_t MAX_ELTWISE_NUM = 3;
 const int8_t MIN_ELTWISE_SIZE = 2;
 const int8_t ELTWISE_INPUT_SIZE = 2;
+const int8_t ELTWISE_DOUBLE_IN_INPUT_SIZE = 3;
 const int8_t ELTWISE_USE = 1;
 const int8_t MAX_ELTWISE_SIZE = 6;
 using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
 
 class FusionBasePass : public Pass {
  public:
-  FusionBasePass(const std::string &name, FusionIdAllocator *idAllocator)
+  FusionBasePass(const std::string &name, FusionIdAllocatorPtr idAllocator)
       : Pass(name), fusion_id_allocator(idAllocator) {}
   ~FusionBasePass() override = default;
   bool Run(const FuncGraphPtr &graph) override;
@@ -49,7 +50,8 @@ class FusionBasePass : public Pass {
                                         FusedNodeRecord *candidate_fusion) = 0;
   void SetRecordFusionId(const std::unordered_set<AnfNodePtr> &record);
   bool CheckEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node);
-  FusionIdAllocator *fusion_id_allocator;
+  bool CheckDoubleInEltWiseNode(FuncGraphManager *manager, const AnfNodePtr &node);
+  FusionIdAllocatorPtr fusion_id_allocator;
 };
 }  // namespace opt
 }  // namespace mindspore
