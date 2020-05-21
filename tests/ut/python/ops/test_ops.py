@@ -972,6 +972,19 @@ test_case_nn_ops = [
         'desc_inputs': [[3, 3], [3, 3], Tensor(0.001, mstype.float32), [3, 3], Tensor(0.1, mstype.float32), [3, 3]],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
+    ('BinaryCrossEntropy', {
+        'block': P.BinaryCrossEntropy(),
+        'desc_inputs': [Tensor([[0.3, 0.8], [0.4, 0.3]], mstype.float16),
+                        Tensor([[0.4, 1.2], [-0.4, -0.9]], mstype.float16),
+                        Tensor([[-1.4, -0.7], [0.9, 0.7]], mstype.float16)],
+        'desc_bprop': []}),
+    ('BinaryCrossEntropyGrad', {
+        'block': G.BinaryCrossEntropyGrad(),
+        'desc_inputs': [Tensor([[0.3, 0.8], [0.4, 0.3]], mstype.float16),
+                        Tensor([[0.4, 1.2], [-0.4, -0.9]], mstype.float16), Tensor(0.85, mstype.float16),
+                        Tensor([[-1.4, -0.7], [0.9, 0.7]], mstype.float16)],
+        'desc_bprop': [],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [
