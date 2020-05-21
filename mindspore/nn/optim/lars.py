@@ -80,6 +80,8 @@ class LARS(Optimizer):
                  decay_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name,
                  lars_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name, loss_scale=1.0):
         super(LARS, self).__init__(0.0, [Parameter(Tensor(0.0), name="trivial")])
+        if optimizer.is_group:
+            raise RuntimeError(f"The {self.cls_name} optimizer cannot support group setting.")
         self.opt = optimizer
         self.parameters = optimizer.parameters
         self.learning_rate = optimizer.learning_rate
