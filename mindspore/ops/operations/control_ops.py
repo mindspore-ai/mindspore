@@ -144,6 +144,12 @@ class Merge(PrimitiveWithInfer):
 
     Outputs:
         tuple. Output is tuple(`data`, `output_index`). The `data` has the same shape of `inputs` element.
+
+    Examples:
+        >>> merge = P.Merge()
+        >>> input_x = Tensor(np.linspace(0, 8, 8).reshape(2, 4), mindspore.float32)
+        >>> input_y = Tensor(np.random.randint(-4, 4, (2, 4)), mindspore.float32)
+        >>> result = merge((input_x, input_y))
     """
 
     @prim_attr_register
