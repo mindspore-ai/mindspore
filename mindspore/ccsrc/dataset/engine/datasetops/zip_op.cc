@@ -111,7 +111,7 @@ Status ZipOp::operator()() {
 
   // 5 handle eof
   // propagate eof here.
-  MS_LOG(INFO) << "Zip operator got EOF, propagating.";
+  MS_LOG(DEBUG) << "Zip operator got EOF, propagating.";
   RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
   return Status::OK();
 }
@@ -188,12 +188,12 @@ Status ZipOp::getNextTensorRow(TensorRow *const new_zip_row) {
     if (new_row.empty()) {
       // If we did not get a row from any of the children, then it's the end of an epoch and we can move
       // to drain state.
-      MS_LOG(INFO) << "Zip operator child iterator produced empty row.";
+      MS_LOG(DEBUG) << "Zip operator child iterator produced empty row.";
       draining_ = true;
       new_zip_row->clear();
       // If we picked up an eof here, then we are completely done.
       if ((child_iterators_[i])->eof_handled()) {
-        MS_LOG(INFO) << "Zip operator iterator got EOF.";
+        MS_LOG(DEBUG) << "Zip operator iterator got EOF.";
         eof_ = true;
       }
       return Status::OK();

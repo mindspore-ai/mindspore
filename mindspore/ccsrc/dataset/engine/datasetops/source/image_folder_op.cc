@@ -333,8 +333,8 @@ Status ImageFolderOp::PrescanWorkerEntry(int32_t worker_id) {
       if (extensions_.empty() || extensions_.find(file.Extension()) != extensions_.end()) {
         (void)imgs.insert(file.toString().substr(dirname_offset_));
       } else {
-        MS_LOG(INFO) << "Image folder operator unsupported file found: " << file.toString()
-                     << ", extension: " << file.Extension() << ".";
+        MS_LOG(WARNING) << "Image folder operator unsupported file found: " << file.toString()
+                        << ", extension: " << file.Extension() << ".";
       }
     }
     FolderImagesPair p = std::make_shared<std::pair<std::string, std::queue<ImageLabelPair>>>();

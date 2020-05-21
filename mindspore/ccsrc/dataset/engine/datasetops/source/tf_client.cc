@@ -49,7 +49,7 @@ Status TFClient::Init() {
   const std::string kExtensionTF = ".tfrecord";
   bool schema_init = false;
   if (!storage_op_->dataset_files_dir().empty()) {
-    MS_LOG(INFO) << "Reading dataset using datasetPath.";
+    MS_LOG(DEBUG) << "Reading dataset using datasetPath.";
     Path data_set_directory(storage_op_->dataset_files_dir());
     auto dirIt = Path::DirIterator::OpenDirectory(&data_set_directory);
     if (dirIt) {
@@ -73,7 +73,7 @@ Status TFClient::Init() {
       RETURN_STATUS_UNEXPECTED("Unable to open directory " + data_set_directory.toString());
     }
   } else {
-    MS_LOG(INFO) << "Reading dataset using dataset files list.";
+    MS_LOG(DEBUG) << "Reading dataset using dataset files list.";
     for (auto filename : storage_op_->dataset_file_list()) {
       const std::vector<uint64_t> recs_lengths = ParseTfFileLines(filename);
       v_total_file_rows_.emplace_back(std::pair<std::string, std::vector<uint64_t>>(filename, std::move(recs_lengths)));
@@ -327,7 +327,7 @@ Status TFClient::ParseTfFileSchema(const std::string &filename) {
   reader.close();
   dataengine::Example tf_file;
   if (!tf_file.ParseFromString(serialized_example)) {
-    std::string err_msg = "parse tf_file failed";
+    std::string err_msg = "parse tf_file failed, file name is " + filename;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   const dataengine::Features &example_features = tf_file.features();

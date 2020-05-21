@@ -120,7 +120,7 @@ Status ExecutionTree::Launch() {
   }
   std::ostringstream ss;
   ss << *this;
-  MS_LOG(INFO) << "Printing the tree before launch tasks:\n" << ss.str();
+  MS_LOG(DEBUG) << "Printing the tree before launch tasks:\n" << ss.str();
   for (auto itr = this->begin(); itr != this->end(); ++itr) {
     // An inlined operator is one that has an output connector size of 0, and it does not
     // require a thread to execute.  Instead, the work of this operator is executed inlined

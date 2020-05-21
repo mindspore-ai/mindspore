@@ -216,8 +216,8 @@ Status CelebAOp::ParseImageAttrInfo() {
       Path path(folder_path_);
       Path file_path = path / split[0];
       if (!extensions_.empty() && extensions_.find(file_path.Extension()) == extensions_.end()) {
-        MS_LOG(INFO) << "Unsupported file found at " << file_path.toString().c_str() << ", its extension is "
-                     << file_path.Extension().c_str() << ".";
+        MS_LOG(WARNING) << "Unsupported file found at " << file_path.toString().c_str() << ", its extension is "
+                        << file_path.Extension().c_str() << ".";
         continue;
       }
       image_labels.first = split[0];

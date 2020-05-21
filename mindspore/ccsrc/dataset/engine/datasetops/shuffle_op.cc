@@ -82,7 +82,7 @@ ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_con
 // Private function to re-init the shuffle op for another epoch.  Shuffle op calls this by
 // itself rather than waiting for the reset driven from operators above it in the pipeline.
 Status ShuffleOp::SelfReset() {
-  MS_LOG(INFO) << "Shuffle operator performing a self-reset.";
+  MS_LOG(DEBUG) << "Shuffle operator performing a self-reset.";
   // If ReshuffleEachEpoch is false, then we always use the same seed for every
   // epoch.
   // If ReshuffleEachEpoch is true, then the first epoch uses the given seed,
@@ -224,7 +224,7 @@ Status ShuffleOp::operator()() {
 
     // Since we overloaded eoeReceived function, we are responsible to flow the EOE up the
     // pipepline manually now that we are done draining the shuffle buffer
-    MS_LOG(INFO) << "Shuffle operator sending EOE.";
+    MS_LOG(DEBUG) << "Shuffle operator sending EOE.";
     auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
     RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
 
@@ -239,7 +239,7 @@ Status ShuffleOp::operator()() {
 // Private function populate the shuffle buffer initially by fetching from the child output
 // connector until the shuffle buffer is full (or there is no more data coming).
 Status ShuffleOp::InitShuffleBuffer() {
-  MS_LOG(INFO) << "Shuffle operator initializing the shuffle buffer.";
+  MS_LOG(DEBUG) << "Shuffle operator initializing the shuffle buffer.";
 
   // The first phase of this operator is to read incoming buffers and then drain those
   // rows from the buffers, putting them into our own local table of tensors (the shuffle
@@ -258,7 +258,7 @@ Status ShuffleOp::InitShuffleBuffer() {
   RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
 
   if (child_iterator_->eof_handled()) {
-    MS_LOG(INFO) << "Shuffle operator init picked up EOF. No more epochs.";
+    MS_LOG(DEBUG) << "Shuffle operator init picked up EOF. No more epochs.";
     return Status::OK();
   }
 
@@ -289,7 +289,7 @@ Status ShuffleOp::InitShuffleBuffer() {
     shuffle_buffer_state_ = kShuffleStateDrain;
   }
 
-  MS_LOG(INFO) << "Shuffle operator finished intializing the shuffle buffer.";
+  MS_LOG(DEBUG) << "Shuffle operator finished intializing the shuffle buffer.";
   return Status::OK();
 }
 

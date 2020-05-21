@@ -112,7 +112,7 @@ Status TFBuffer::ParseSingleExample(dataengine::Example *ptr) {
     cur_reader_.open(cur_f_info_.fileName);
     // Seek to the offset
     (void)cur_reader_.seekg(static_cast<std::streamsize>(cur_f_info_.startOffset));
-    MS_LOG(INFO) << "got new file " << cur_f_info_.fileName << ".";
+    MS_LOG(DEBUG) << "got new file " << cur_f_info_.fileName << ".";
   }
 
   // one record in tf_file looks like:

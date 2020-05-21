@@ -24,9 +24,9 @@ const bool DecodeOp::kDefRgbFormat = true;
 
 DecodeOp::DecodeOp(bool is_rgb_format) : is_rgb_format_(is_rgb_format) {
   if (is_rgb_format_) {  // RGB colour mode
-    MS_LOG(INFO) << "Decode colour mode is RGB.";
+    MS_LOG(DEBUG) << "Decode colour mode is RGB.";
   } else {
-    MS_LOG(INFO) << "Decode colour mode is BGR.";
+    MS_LOG(DEBUG) << "Decode colour mode is BGR.";
   }
 }
 

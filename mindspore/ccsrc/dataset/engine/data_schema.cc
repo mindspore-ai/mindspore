@@ -66,8 +66,8 @@ ColDescriptor::ColDescriptor(const std::string &col_name, DataType col_type, Ten
   // the input rank
   if (in_shape != nullptr && in_shape->known() && in_shape->Size() != rank_) {
     rank_ = in_shape->Size();
-    MS_LOG(INFO) << "Rank does not match the number of dimensions in the provided shape."
-                 << " Overriding rank with the number of dimensions in the provided shape.";
+    MS_LOG(WARNING) << "Rank does not match the number of dimensions in the provided shape."
+                    << " Overriding rank with the number of dimensions in the provided shape.";
   }
 }
 

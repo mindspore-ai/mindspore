@@ -33,7 +33,7 @@ GeneratorOp::Builder::Builder() {
 
 Status GeneratorOp::Builder::SanityCheck() {
   // Update queue size to fit the prefetch requirement
-  MS_LOG(INFO) << "Generator operator sanity check, prefetch size is " << build_prefetch_size_ << ".";
+  MS_LOG(DEBUG) << "Generator operator sanity check, prefetch size is " << build_prefetch_size_ << ".";
   if (build_prefetch_size_ > 0) {
     build_op_connector_size_ = (build_prefetch_size_ + build_buffer_size_ - 1) / build_buffer_size_;
   }
@@ -221,15 +221,15 @@ Status GeneratorOp::operator()() {
     }
     if (eoe) {
       // Push out EOE upon StopIteration exception from generator
-      MS_LOG(INFO) << "Generator operator sends out EOE.";
+      MS_LOG(DEBUG) << "Generator operator sends out EOE.";
       std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
       RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
       if (!BitTest(op_ctrl_flags_, kDeOpRepeated) || BitTest(op_ctrl_flags_, kDeOpLastRepeat)) {
         // If last repeat or not repeated, push out EOF and exit master loop
-        MS_LOG(INFO) << "Generator operator sends out EOF.";
+        MS_LOG(DEBUG) << "Generator operator sends out EOF.";
         std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
         RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
-        MS_LOG(INFO) << "Generator operator main execution loop complete.";
+        MS_LOG(DEBUG) << "Generator operator main execution loop complete.";
         eof = true;
       } else {
         // Waiting for repeatOp to start new epoch
