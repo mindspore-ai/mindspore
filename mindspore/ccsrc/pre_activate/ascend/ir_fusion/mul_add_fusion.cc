@@ -24,6 +24,8 @@
 #include "pre_activate/common/helper.h"
 
 namespace mindspore {
+namespace opt {
+namespace {
 bool GetMul(const FuncGraphPtr &graph, const CNodePtr &add, CNodePtr *mul, size_t *mul_index) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(add);
@@ -36,6 +38,14 @@ bool GetMul(const FuncGraphPtr &graph, const CNodePtr &add, CNodePtr *mul, size_
       MS_EXCEPTION_IF_NULL(cnode);
       if (AnfAlgo::GetCNodeName(cnode) == prim::kPrimMul->name()) {
         if (!opt::IsUsedByOthers(graph, cnode)) {
+          auto full_name = cnode->fullname_with_scope();
+          // exclude lamb and adam, and only work in bert
+          if (std::string::npos != full_name.find("adam") || std::string::npos != full_name.find("lamb") ||
+              std::string::npos == full_name.find("bert")) {
+            MS_LOG(INFO) << "Mul is in adam or lamb or not a bert network, quit fusion";
+            return false;
+          }
+
           *mul = cnode;
           *mul_index = index;
           return true;
@@ -45,8 +55,7 @@ bool GetMul(const FuncGraphPtr &graph, const CNodePtr &add, CNodePtr *mul, size_
   }
   return false;
 }
-
-namespace opt {
+}  // namespace
 const BaseRef MulAddFusion::DefinePattern() const {
   VarPtr x = std::make_shared<Var>();
   VarPtr y = std::make_shared<Var>();
@@ -74,7 +83,12 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
   for (size_t index = 1; index < mul->size(); ++index) {
     inputs.push_back(mul->input(index));
   }
-  inputs.push_back(add->input(add->size() - mul_index));
+  auto another_input_node = add->input(add->size() - mul_index);
+  if (IsUsedByOthers(graph, another_input_node)) {
+    MS_LOG(INFO) << "Add's another input node is used by others, do not fuse";
+    return nullptr;
+  }
+  inputs.push_back(another_input_node);
   auto fusion_node = graph->NewCNode(inputs);
   fusion_node->set_scope(add->scope());
   fusion_node->set_abstract(add->abstract());

@@ -37,6 +37,10 @@ TEST_F(TestHWMulAddFusion, test_mul_add_fusion1) {
     args_spec_list.push_back(x_abstract);
   }
   auto fg = GetKernelGraph(g, args_spec_list);
+  auto scope = std::make_shared<Scope>("bert");
+  for (auto nd : fg->execution_order()) {
+    nd->set_scope(scope);
+  }
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -57,6 +61,10 @@ TEST_F(TestHWMulAddFusion, test_mul_add_fusion2) {
     args_spec_list.push_back(x_abstract);
   }
   auto fg = GetKernelGraph(g, args_spec_list);
+  auto scope = std::make_shared<Scope>("bert");
+  for (auto nd : fg->execution_order()) {
+    nd->set_scope(scope);
+  }
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();

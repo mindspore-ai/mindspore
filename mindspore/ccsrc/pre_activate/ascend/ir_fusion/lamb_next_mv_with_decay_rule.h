@@ -74,6 +74,36 @@ class LambNextMVWithDecayRule : public PatternProcessPass {
   VarPtr add0_var_;
   VarPtr add1_var_;
 };
+
+class LambNextMVWithDecayRuleCond1 : public LambNextMVWithDecayRule {
+ public:
+  explicit LambNextMVWithDecayRuleCond1(bool multigraph = true)
+      : LambNextMVWithDecayRule("lamb_next_mv_with_decay_rule_cond1", multigraph) {}
+
+  ~LambNextMVWithDecayRuleCond1() override = default;
+  const BaseRef DefinePattern() const override;
+  const BaseRef DefineAnotherPattern() const override;
+};
+
+class LambNextMVWithDecayRuleCond2 : public LambNextMVWithDecayRule {
+ public:
+  explicit LambNextMVWithDecayRuleCond2(bool multigraph = true)
+      : LambNextMVWithDecayRule("lamb_next_mv_with_decay_rule_cond2", multigraph) {}
+
+  ~LambNextMVWithDecayRuleCond2() override = default;
+  const BaseRef DefinePattern() const override;
+  const BaseRef DefineAnotherPattern() const override;
+};
+
+class LambNextMVWithDecayRuleCond3 : public LambNextMVWithDecayRule {
+ public:
+  explicit LambNextMVWithDecayRuleCond3(bool multigraph = true)
+      : LambNextMVWithDecayRule("lamb_next_mv_with_decay_rule_cond3", multigraph) {}
+
+  ~LambNextMVWithDecayRuleCond3() override = default;
+  const BaseRef DefinePattern() const override;
+  const BaseRef DefineAnotherPattern() const override;
+};
 }  // namespace opt
 }  // namespace mindspore
 
