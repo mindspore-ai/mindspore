@@ -63,12 +63,11 @@ class Ensures : public EnsuresAccess<T, R> {
   Ensures(const Ensures<O, R> &other) : value_(other.get()) {}
   ~Ensures() = default;
 
-  T get() const { return value_; }
+  const T get() const { return value_; }
   T &get() { return value_; }
 
-  operator T() const { return value_; }
+  operator const T() const { return value_; }
 
- private:
   T value_;
 };
 
