@@ -220,11 +220,18 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> graph,
     }
   }
   std::shared_ptr<Graph> new_graph(new Graph);
-  for (size_t i = 0; i < (size_t)graph->nodes.size(); i++) {
+  for (size_t i = 0; i < graph->nodes.size(); i++) {
     if (index_list->at(i) > SIZE_MAX / 2) {
       continue;
     }
+
     new_graph->nodes.push_back(graph->nodes[i]);
+    for (size_t j = 0; j < new_graph->nodes[index_list->at(i)].node_in.size(); j++) {
+      new_graph->nodes[index_list->at(i)].node_in[j] = index_list->at(new_graph->nodes[index_list->at(i)].node_in[j]);
+    }
+    for (size_t j = 0; j < new_graph->nodes[index_list->at(i)].node_out.size(); j++) {
+      new_graph->nodes[index_list->at(i)].node_out[j] = index_list->at(new_graph->nodes[index_list->at(i)].node_out[j]);
+    }
   }
   return new_graph;
 }
