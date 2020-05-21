@@ -16,10 +16,8 @@ import numpy as np
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor, Parameter, Model, ms_function
-from mindspore.common.initializer import initializer
+from mindspore import Tensor, Model, ms_function
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")

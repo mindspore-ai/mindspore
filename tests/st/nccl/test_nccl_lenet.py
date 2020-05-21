@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.communication.management import init, get_rank, get_group_size
+from mindspore.communication.management import init, get_group_size
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
@@ -94,8 +94,8 @@ def test_lenet_nccl():
     data = Tensor(np.ones([net.batch_size, 3, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([net.batch_size]).astype(np.int32))
     start = datetime.datetime.now()
-    for i in range(epoch):
-        for step in range(mini_batch):
+    for _ in range(epoch):
+        for _ in range(mini_batch):
             loss = train_network(data, label)
             losses.append(loss.asnumpy())
     end = datetime.datetime.now()
@@ -105,4 +105,4 @@ def test_lenet_nccl():
     with open("ms_loss.txt", "w") as fo2:
         fo2.write("loss:")
         fo2.write(str(losses[-5:]))
-    assert (losses[-1] < 0.01)
+    assert losses[-1] < 0.01

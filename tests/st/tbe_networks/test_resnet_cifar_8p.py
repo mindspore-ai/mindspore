@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
 import os
-import pytest
 import random
+import numpy as np
+import pytest
 from multiprocessing import Process, Queue
 from resnet import resnet50
 
@@ -168,7 +168,7 @@ def train_process(q, device_id, epoch_size, num_classes, device_num, batch_size,
     dataset = create_dataset(epoch_size, training=True,
                              batch_size=batch_size, rank_id=device_id, rank_size=device_num,
                              enable_hccl=enable_hccl)
-    batch_num = dataset.get_dataset_size()
+
     loss_cb = LossGet()
     model.train(epoch_size, dataset, callbacks=[loss_cb])
     q.put(loss_cb.get_loss())
@@ -207,4 +207,4 @@ def test_resnet_cifar_8p():
     for i in range(device_num):
         os.system("rm -rf " + str(i))
     print("End training...")
-    assert (loss < 2.0)
+    assert loss < 2.0

@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import argparse
-import numpy as np
 import os
 import random
+import argparse
+import numpy as np
 from resnet import resnet50
 
 import mindspore.common.dtype as mstype
