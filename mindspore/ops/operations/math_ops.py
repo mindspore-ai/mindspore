@@ -1073,6 +1073,36 @@ class Erf(PrimitiveWithInfer):
         return x_type
 
 
+class Erfc(PrimitiveWithInfer):
+    r"""
+    Computes the complementary error function of `input_x` element-wise.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `input_x`.
+
+    Examples:
+        >>> input_x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
+        >>> erfc = P.Erfc()
+        >>> erfc(input_x)
+        [1.8427168, 0., 0.1572832, 0.00469124, 0.00002235]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init Erfc"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_tensor_type_same({"x": x_type}, [mstype.float16, mstype.float32], self.name)
+        return x_type
+
+
 class Minimum(_MathBinaryOp):
     """
     Computes the element-wise minimum of input tensors.
