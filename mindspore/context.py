@@ -324,6 +324,13 @@ class _Context:
         thread_info = self._thread_local_info
         thread_info.debug_runtime = enable
 
+    @property
+    def check_bprop(self):
+        return self._context_handle.get_check_bprop_flag()
+
+    @check_bprop.setter
+    def check_bprop(self, check_bprop_flag):
+        self._context_handle.set_check_bprop_flag(check_bprop_flag)
 
 def check_input_format(x):
     import re
@@ -449,7 +456,8 @@ def reset_auto_parallel_context():
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
                  save_graphs_path=str, save_ms_model=bool, save_ms_model_path=str, enable_dump=bool,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
-                 enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool)
+                 enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
+                 check_bprop=bool)
 def set_context(**kwargs):
     """
     Sets context for running environment.
@@ -500,6 +508,7 @@ def set_context(**kwargs):
             The profiling can choose training_trace, task_trace, training_trace and task_trace combination and
             separated by colons; single operator can choose op_trace, op_trace cannot be combined with
             training_trace and task_trace. Default: "training_trace".
+        check_bprop (bool): Whether to check bprop. Default: False.
 
     Raises:
         ValueError: If input key is not an attribute in context.

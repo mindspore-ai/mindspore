@@ -140,6 +140,8 @@ class MsContext {
 
   void set_profiling_options(const std::string &options) { profiling_options_ = options; }
   std::string profiling_options() const { return profiling_options_; }
+  bool check_bprop_flag() const { return check_bprop_flag_; }
+  void set_check_bprop_flag(bool check_bprop_flag) { check_bprop_flag_ = check_bprop_flag; }
 
  private:
   MsContext(const std::string &backend_policy, const std::string &target);
@@ -179,6 +181,7 @@ class MsContext {
   std::thread tdt_print_;
   bool profiling_mode_;
   std::string profiling_options_;
+  bool check_bprop_flag_;
 };
 
 }  // namespace mindspore
