@@ -389,6 +389,8 @@ class Tensor : public MetaTensor {
   std::string ToStringRepr() const;
   py::array data_;  // < Tensor's data value
   const bool parse_info_ = true;
+  bool is_init();
+  void set_init_flag(bool flag);
 
  private:
   // brief init tensor
@@ -398,7 +400,7 @@ class Tensor : public MetaTensor {
   // return true if succeed, false if failed.
   void init(const py::array &input, const TypeId &data_type);
   void init(const py::array &input, const TypePtr &type_ptr);
-
+  bool init_flag_{false};
   // brief init tensor attribute
   //
   // param data_type [TypeId] Data type of the tensor.

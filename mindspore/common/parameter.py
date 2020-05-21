@@ -188,11 +188,14 @@ class Parameter:
         if isinstance(data, Tensor):
             # make a copy of Tensor to init the parameter
             data = Tensor(data.asnumpy().copy())
+            data.init_flag = False
         elif isinstance(data, Initializer):
             self.init_mode = data
             data = MetaTensor(self.init_mode.dtype, self.init_mode.shape)
         else:
             data = Tensor(data)
+            data.init_flag = False
+
         self.default_input = data
 
 

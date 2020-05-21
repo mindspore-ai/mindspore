@@ -82,14 +82,15 @@ def _wrap_func(fn):
 def _exec_init_graph(obj, init_phase):
     """Execute the parameter initializer graph."""
     inst_executor = Executor_.get_instance()
-    exec_init_graph = False
-    for param in obj.get_parameters():
+    param_dict = OrderedDict()
+    for name, param in obj.parameters_dict().items():
         if not param.is_init:
+            param_dict[name] = param
             param.is_init = True
-            exec_init_graph = True
+            param.data.init_flag = True
 
-    if exec_init_graph:
-        inst_executor.run_init_graph(obj.parameters_dict(), init_phase)
+    if param_dict:
+        inst_executor.run_init_graph(param_dict, init_phase)
 
 
 class _MindSporeFunction:
