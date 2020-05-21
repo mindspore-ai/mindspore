@@ -275,7 +275,6 @@ class AdjustAllReduceMulAdd : public AnfVisitor {
     // If has dynamic loss scale.
     auto &users_map = fg->manager()->node_users();
     auto it = users_map.find(mul_cnode_);
-
     if (it != users_map.end()) {
       auto users = it->second;
       for (auto &user_pair : users) {

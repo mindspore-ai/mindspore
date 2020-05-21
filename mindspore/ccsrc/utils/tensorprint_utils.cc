@@ -86,7 +86,7 @@ bool PrintTensorToString(const char *str_data_ptr, mindspore::tensor::Tensor *co
 }
 
 template <typename T>
-void PrintScalarToString(const char *str_data_ptr, const string &tensor_type, std::ostringstream *buf) {
+void PrintScalarToString(const char *str_data_ptr, const string &tensor_type, std::ostringstream *const buf) {
   MS_EXCEPTION_IF_NULL(str_data_ptr);
   MS_EXCEPTION_IF_NULL(buf);
   const T *data_ptr = reinterpret_cast<const T *>(str_data_ptr);
@@ -95,7 +95,7 @@ void PrintScalarToString(const char *str_data_ptr, const string &tensor_type, st
   *buf << *data_ptr << "\n";
 }
 
-void PrintScalarToBoolString(const char *str_data_ptr, const string &tensor_type, std::ostringstream *buf) {
+void PrintScalarToBoolString(const char *str_data_ptr, const string &tensor_type, std::ostringstream *const buf) {
   MS_EXCEPTION_IF_NULL(str_data_ptr);
   MS_EXCEPTION_IF_NULL(buf);
   const bool *data_ptr = reinterpret_cast<const bool *>(str_data_ptr);
@@ -108,7 +108,7 @@ void PrintScalarToBoolString(const char *str_data_ptr, const string &tensor_type
   }
 }
 
-void convertDataItem2Scalar(const char *str_data_ptr, const string &tensor_type, std::ostringstream *buf) {
+void convertDataItem2Scalar(const char *str_data_ptr, const string &tensor_type, std::ostringstream *const buf) {
   MS_EXCEPTION_IF_NULL(str_data_ptr);
   MS_EXCEPTION_IF_NULL(buf);
   auto type_iter = print_type_map.find(tensor_type);

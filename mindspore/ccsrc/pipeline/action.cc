@@ -287,7 +287,7 @@ static bool IsCtrlSink() {
     return false;
   }
 
-  char *enable_ctrl_sink = std::getenv("ENABLE_CTRL_SINK");
+  const char *enable_ctrl_sink = std::getenv("ENABLE_CTRL_SINK");
   if (enable_ctrl_sink == nullptr) {
     return false;
   }

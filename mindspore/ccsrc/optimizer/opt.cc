@@ -92,15 +92,12 @@ inline bool isTraversable(const AnfNodePtr &node) {
   if (node == nullptr) {
     return false;
   }
-
   if (node->isa<CNode>() || node->isa<Parameter>()) {
     return true;
   }
-
   if (IsValueNode<FuncGraph>(node) || IsValueNode<RefKey>(node)) {
     return true;
   }
-
   return false;
 }
 
