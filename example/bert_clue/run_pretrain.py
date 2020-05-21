@@ -24,7 +24,7 @@ from mindspore import context
 from mindspore.train.model import Model
 from mindspore.train.parallel_utils import ParallelMode
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
-from mindspore.train.callback import Callback, ModelCheckpoint, CheckpointConfig
+from mindspore.train.callback import Callback, ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.model_zoo.Bert_NEZHA import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecayDynamicLR
@@ -87,8 +87,9 @@ def run_pretrain():
         rank = 0
         device_num = 1
 
-    ds = create_bert_dataset(args_opt.epoch_size, device_num, rank, args_opt.do_shuffle, args_opt.enable_data_sink,
-                             args_opt.data_sink_steps, args_opt.data_dir, args_opt.schema_dir)
+    ds, new_repeat_count = create_bert_dataset(args_opt.epoch_size, device_num, rank, args_opt.do_shuffle,
+                                               args_opt.enable_data_sink, args_opt.data_sink_steps,
+                                               args_opt.data_dir, args_opt.schema_dir)
 
     netwithloss = BertNetworkWithLoss(bert_net_cfg, True)
 
@@ -112,7 +113,7 @@ def run_pretrain():
     else:
         raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecayDynamicLR]".
                          format(cfg.optimizer))
-    callback = [LossCallBack()]
+    callback = [TimeMonitor(ds.get_dataset_size()), LossCallBack()]
     if args_opt.enable_save_ckpt == "true":
         config_ck = CheckpointConfig(save_checkpoint_steps=args_opt.save_checkpoint_steps,
                                      keep_checkpoint_max=args_opt.save_checkpoint_num)
@@ -133,6 +134,6 @@ def run_pretrain():
         netwithgrads = BertTrainOneStepCell(netwithloss, optimizer=optimizer)
 
     model = Model(netwithgrads)
-    model.train(ds.get_repeat_count(), ds, callbacks=callback, dataset_sink_mode=(args_opt.enable_data_sink == "true"))
+    model.train(new_repeat_count, ds, callbacks=callback, dataset_sink_mode=(args_opt.enable_data_sink == "true"))
 if __name__ == '__main__':
     run_pretrain()

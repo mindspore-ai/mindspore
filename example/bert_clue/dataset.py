@@ -42,7 +42,7 @@ def create_bert_dataset(epoch_size=1, device_num=1, rank=0, do_shuffle="true", e
     if enable_data_sink == "true":
         new_size = data_sink_steps * bert_net_cfg.batch_size
     ds.set_dataset_size(new_size)
-    repeat_count = int(repeat_count * ori_dataset_size // ds.get_dataset_size())
+    new_repeat_count = int(repeat_count * ori_dataset_size // ds.get_dataset_size())
     type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(input_columns="masked_lm_ids", operations=type_cast_op)
     ds = ds.map(input_columns="masked_lm_positions", operations=type_cast_op)
@@ -55,4 +55,4 @@ def create_bert_dataset(epoch_size=1, device_num=1, rank=0, do_shuffle="true", e
     ds = ds.repeat(repeat_count)
     logger.info("data size: {}".format(ds.get_dataset_size()))
     logger.info("repeatcount: {}".format(ds.get_repeat_count()))
-    return ds
+    return ds, new_repeat_count
