@@ -142,6 +142,7 @@ __all__ = [
     'ReLUV2',
     'Elu',
     'Erf',
+    'Erfc',
     'Sigmoid',
     'HSwish',
     'HSigmoid',

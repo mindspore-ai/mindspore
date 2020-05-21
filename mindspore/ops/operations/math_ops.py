@@ -1397,14 +1397,14 @@ class EqualCount(PrimitiveWithInfer):
     """
     Computes the number of the same elements of two tensors.
 
-    The two input tensors should have same shape.
+    The two input tensors should have same shape and same data type.
 
     Inputs:
         - **input_x** (Tensor) - The first input tensor.
         - **input_y** (Tensor) - The second input tensor.
 
     Outputs:
-        Tensor, with the type as `mindspore.int32` and size as (1,).
+        Tensor, with the type same as input tensor and size as (1,).
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
