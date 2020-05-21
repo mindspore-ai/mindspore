@@ -658,31 +658,10 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
     AddressPtrList kernel_workspaces;
     AddressPtrList kernel_outputs;
     GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
-#if defined(_WIN32) || defined(_WIN64)
-    auto start_time = std::chrono::steady_clock::now();
-#else
-    struct timeval start_time, end_time;
-    (void)gettimeofday(&start_time, nullptr);
-#endif
     auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed.";
       return false;
-    } else {
-      if (AnfAlgo::GetKernelType(kernel) == TBE_KERNEL && !SyncStream()) {
-        MS_LOG(EXCEPTION) << "SyncStream failed.";
-      }
-#if defined(_WIN32) || defined(_WIN64)
-      auto end_time = std::chrono::steady_clock::now();
-      std::chrono::duration<double, std::ratio<1, 1000000>> cost = end_time - start_time;
-      MS_LOG(DEBUG) << "d " << kernel->fullname_with_scope() << " in  " << cost.count() << " us";
-#else
-      (void)gettimeofday(&end_time, nullptr);
-      const uint64_t kUSecondInSecond = 1000000;
-      uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-      cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-      MS_LOG(DEBUG) << "d " << kernel->fullname_with_scope() << " in  " << cost << " us";
-#endif
     }
   }
   return true;
