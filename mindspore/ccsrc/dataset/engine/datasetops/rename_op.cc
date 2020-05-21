@@ -84,13 +84,13 @@ Status RenameOp::operator()() {
     }  // end of while eoe loop
 
     // we got eoe, now try again until we get eof
-    MS_LOG(INFO) << "Rename operator EOE Received.";
+    MS_LOG(DEBUG) << "Rename operator EOE Received.";
     RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
     MS_LOG(DEBUG) << "Rename operator fetching buffer after EOE.";
     RETURN_IF_NOT_OK(GetNextInput(&curr_buffer));
   }  // end of while eof loop
 
-  MS_LOG(INFO) << "Rename opeerator EOF Received.";
+  MS_LOG(DEBUG) << "Rename opeerator EOF Received.";
   RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
   return Status::OK();
 }
@@ -116,18 +116,18 @@ Status RenameOp::RenameColumns() {
       // found
       found += 1;
       int index = std::distance(in_columns_.begin(), it);
-      MS_LOG(INFO) << "Rename operator index found " << index << " value " << id << ".";
+      MS_LOG(DEBUG) << "Rename operator index found " << index << " value " << id << ".";
 
       new_col_name_id_map[out_columns_[index]] = id;
     } else {
       // not found
-      MS_LOG(INFO) << "Rename operator index not found: " << id << " is the column id.";
+      MS_LOG(DEBUG) << "Rename operator index not found: " << id << " is the column id.";
       new_col_name_id_map[name] = id;
     }
   }
   // only checks number of renamed columns have been found, this input check doesn't check everything
   if (found != in_columns_.size()) {
-    MS_LOG(INFO) << "Rename operator column names found: " << found << " out of " << in_columns_.size() << ".";
+    MS_LOG(DEBUG) << "Rename operator column names found: " << found << " out of " << in_columns_.size() << ".";
     std::string err_msg = "Renamed column doesn't exist in dataset";
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -163,7 +163,7 @@ void RenameOp::Print(std::ostream &out,      // In: The output stream to print t
 }
 
 Status RenameOp::EofReceived(int32_t) {
-  MS_LOG(INFO) << "Rename operator EOF received, do nothing now.";
+  MS_LOG(DEBUG) << "Rename operator EOF received, do nothing now.";
   return Status::OK();
 }
 

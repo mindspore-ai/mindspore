@@ -313,7 +313,7 @@ Status MapOp::WorkerEntryInit(const DataBuffer *in_buf) {
     }
   }  // mutex lock will release here
 
-  MS_LOG(INFO) << "Column name map for map op set: " << this->ColumnNameMapAsString();
+  MS_LOG(DEBUG) << "Column name map for map op set: " << this->ColumnNameMapAsString();
   return Status::OK();
 }
 

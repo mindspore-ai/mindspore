@@ -542,7 +542,7 @@ std::unique_ptr<V> BPlusTree<K, V, A, C, T>::DoUpdate(const key_type &key, std::
       leaf->rw_lock_.Unlock();
       return old;
     } else {
-      MS_LOG(INFO) << "Key not found. rc = " << static_cast<int>(rc) << ".";
+      MS_LOG(DEBUG) << "Key not found. rc = " << static_cast<int>(rc) << ".";
       return nullptr;
     }
   } else {

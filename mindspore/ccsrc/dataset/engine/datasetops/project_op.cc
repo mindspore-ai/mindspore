@@ -120,10 +120,10 @@ Status ProjectOp::operator()() { RETURN_STATUS_UNEXPECTED("Logic error. ProjectO
 
 int32_t ProjectOp::num_consumers() const {
   if (parent_.empty()) {
-    MS_LOG(INFO) << "Project operator, no parent node, assuming it's the root and returning 1.";
+    MS_LOG(DEBUG) << "Project operator, no parent node, assuming it's the root and returning 1.";
     return 1;
   } else if (parent_[0] == nullptr) {
-    MS_LOG(INFO) << "Project operator, pointer to the first parent is null. Returning 0.";
+    MS_LOG(DEBUG) << "Project operator, pointer to the first parent is null. Returning 0.";
     return 0;
   } else {
     return parent_[0]->num_consumers();
@@ -132,7 +132,7 @@ int32_t ProjectOp::num_consumers() const {
 
 int32_t ProjectOp::num_producers() const {
   if (child_.empty() || child_[0] == nullptr) {
-    MS_LOG(INFO) << "Project operator, pointer to child node is null. Returning 0.";
+    MS_LOG(DEBUG) << "Project operator, pointer to child node is null. Returning 0.";
     return 0;
   } else {
     return child_[0]->num_producers();

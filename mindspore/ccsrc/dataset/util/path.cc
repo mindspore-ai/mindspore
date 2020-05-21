@@ -112,7 +112,7 @@ bool Path::Exists() {
   struct stat sb;
   int rc = stat(common::SafeCStr(path_), &sb);
   if (rc == -1 && errno != ENOENT) {
-    MS_LOG(INFO) << "Unable to query the status of " << path_ << ". Errno = " << errno << ".";
+    MS_LOG(WARNING) << "Unable to query the status of " << path_ << ". Errno = " << errno << ".";
   }
   return (rc == 0);
 }
@@ -166,10 +166,10 @@ std::string Path::ParentPath() {
 
 Status Path::CreateDirectories() {
   if (IsDirectory()) {
-    MS_LOG(INFO) << "Directory " << toString() << " already exists.";
+    MS_LOG(DEBUG) << "Directory " << toString() << " already exists.";
     return Status::OK();
   } else {
-    MS_LOG(INFO) << "Creating directory " << toString() << ".";
+    MS_LOG(DEBUG) << "Creating directory " << toString() << ".";
     std::string parent = ParentPath();
     if (!parent.empty()) {
       if (Path(parent).CreateDirectories()) {
@@ -207,7 +207,7 @@ Path::DirIterator::~DirIterator() {
 }
 
 Path::DirIterator::DirIterator(Path *f) : dir_(f), dp_(nullptr), entry_(nullptr) {
-  MS_LOG(INFO) << "Open directory " << f->toString() << ".";
+  MS_LOG(DEBUG) << "Open directory " << f->toString() << ".";
   dp_ = opendir(common::SafeCStr(f->toString()));
 }
 

@@ -79,15 +79,15 @@ std::shared_ptr<DatasetOp> DatasetOp::child(int32_t child_index) const {
 
 // Creates the connector within this operator
 void DatasetOp::CreateConnector(int32_t num_producers, int32_t num_consumers) {
-  MS_LOG(INFO) << "Creating connector in tree operator: " << operator_id_ << ". Producer: " << num_producers
-               << ". Consumer: " << num_consumers << ".";
+  MS_LOG(DEBUG) << "Creating connector in tree operator: " << operator_id_ << ". Producer: " << num_producers
+                << ". Consumer: " << num_consumers << ".";
   if (oc_queue_size_ > 0) {
     out_connector_ = std::make_unique<DbConnector>(num_producers,  // The number of producers
                                                    num_consumers,  // Only one consumer (the training App)
                                                    oc_queue_size_);
   } else {
     // Some op's may choose not to have an output connector
-    MS_LOG(INFO) << "Bypassed connector creation for tree operator: " << operator_id_ << ".";
+    MS_LOG(DEBUG) << "Bypassed connector creation for tree operator: " << operator_id_ << ".";
     out_connector_ = nullptr;
   }
 }
@@ -246,7 +246,7 @@ Status DatasetOp::AssignColMapFromChild() {
         RETURN_STATUS_UNEXPECTED("Child column name map cannot be empty!");
       }
     }
-    MS_LOG(INFO) << "Setting column map after first fetch:\n" << DatasetOp::ColumnNameMapAsString();
+    MS_LOG(DEBUG) << "Setting column map after first fetch:\n" << DatasetOp::ColumnNameMapAsString();
   }
   return Status::OK();
 }

@@ -299,7 +299,7 @@ typename BPlusTree<K, V, A, C, T>::ConstIterator BPlusTree<K, V, A, C, T>::Searc
       // on the leaf. The unlock will be handled by the iterator when it goes out of scope.
       return ConstIterator(leaf, slot, true);
     } else {
-      MS_LOG(INFO) << "Key not found. rc = " << static_cast<int>(rc) << ".";
+      MS_LOG(DEBUG) << "Key not found. rc = " << static_cast<int>(rc) << ".";
       return cend();
     }
   } else {
@@ -321,7 +321,7 @@ typename BPlusTree<K, V, A, C, T>::Iterator BPlusTree<K, V, A, C, T>::Search(con
       // on the leaf. The unlock will be handled by the iterator when it goes out of scope.
       return Iterator(leaf, slot, true);
     } else {
-      MS_LOG(INFO) << "Key not found. rc = " << static_cast<int>(rc) << ".";
+      MS_LOG(DEBUG) << "Key not found. rc = " << static_cast<int>(rc) << ".";
       return end();
     }
   } else {

@@ -136,7 +136,7 @@ void DEPipeline::PrintTree() {
   for (auto itr = tree_->begin(); itr != tree_->end(); ++itr) {
     std::stringstream ss;
     ss << *itr;
-    MS_LOG(INFO) << "Operator ID is " << itr->id() << ". Details: " << ss.str().c_str() << ".";
+    MS_LOG(DEBUG) << "Operator ID is " << itr->id() << ". Details: " << ss.str().c_str() << ".";
   }
 }
 

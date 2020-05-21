@@ -68,7 +68,7 @@ Status IntrpService::Deregister(const std::string &name) noexcept {
     if (it != all_intrp_resources_.end()) {
       (void)all_intrp_resources_.erase(it);
     } else {
-      MS_LOG(INFO) << "Key " << name << " not found.";
+      MS_LOG(DEBUG) << "Key " << name << " not found.";
     }
   } catch (std::exception &e) {
     RETURN_STATUS_UNEXPECTED(e.what());

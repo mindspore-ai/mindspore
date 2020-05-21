@@ -106,7 +106,7 @@ TaskManager::TaskManager() try : global_interrupt_(0),
   // Initialize the semaphore for the watchdog
   errno_t rc = sem_init(&sem_, 0, 0);
   if (rc == -1) {
-    MS_LOG(INFO) << "Unable to initialize a semaphore. Errno = " << rc << ".";
+    MS_LOG(ERROR) << "Unable to initialize a semaphore. Errno = " << rc << ".";
     std::terminate();
   }
 #endif

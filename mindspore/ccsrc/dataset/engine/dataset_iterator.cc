@@ -110,7 +110,7 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
     // An eoe buffer will be immediately followed by an eof buffer, which signals the shutdown of
     // all operators.
     if (curr_buffer_->eoe()) {
-      MS_LOG(INFO) << "End of data iteration. Fetch eof and then return empty row.";
+      MS_LOG(DEBUG) << "End of data iteration. Fetch eof and then return empty row.";
 
       // Before returning the last empty vector, fetch the eof buffer which should be the last
       // buffer, and then free it.
@@ -199,13 +199,13 @@ Status ChildIterator::FetchNextTensorRow(TensorRow *out_row) {
     // Instead, if an eoe is picked up here, we simply return an empty vector and it's up to the
     // caller to decide what it wants to do next.
     if (curr_buffer_->eoe()) {
-      MS_LOG(INFO) << "Child iterator picked up EOE.";
+      MS_LOG(DEBUG) << "Child iterator picked up EOE.";
       end_epoch_ = true;
       return Status::OK();
     }
 
     if (curr_buffer_->eof()) {
-      MS_LOG(INFO) << "Child iterator picked up EOF.";
+      MS_LOG(DEBUG) << "Child iterator picked up EOF.";
       eof_handled_ = true;
       return Status::OK();
     }
@@ -226,10 +226,10 @@ Status ChildIterator::Drain() {
     // - drain (will not actually drain because you are already at the end of the iteration)
     // However, the next time after that, it will perform it's normal draining activities.
     end_epoch_ = false;
-    MS_LOG(INFO) << "No operation drain, already at end of epoch.";
+    MS_LOG(DEBUG) << "No operation drain, already at end of epoch.";
     return Status::OK();
   }
-  MS_LOG(INFO) << "Child draining buffers until eoe.";
+  MS_LOG(DEBUG) << "Child draining buffers until eoe.";
   // else we drain until eoe or eof, eof here is for sanity check
   while (!curr_buffer_->eoe() && !curr_buffer_->eof()) {
     RETURN_IF_NOT_OK(current_op_->GetNextInput(&curr_buffer_, worker_id_, child_idx_));

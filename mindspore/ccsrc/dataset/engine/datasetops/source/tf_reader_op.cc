@@ -356,7 +356,7 @@ Status TFReaderOp::WorkerEntry(int32_t worker_id) {
         int64_t start_offset = io_block->GetStartOffset();
         int64_t end_offset = io_block->GetEndOffset();
         RETURN_IF_NOT_OK(LoadFile(filename, start_offset, end_offset, worker_id));
-        MS_LOG(INFO) << "TFReader operator worker " << worker_id << " loaded file " << filename << ".";
+        MS_LOG(DEBUG) << "TFReader operator worker " << worker_id << " loaded file " << filename << ".";
       }
     } else {
       std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(1, DataBuffer::kDeBFlagEOE);

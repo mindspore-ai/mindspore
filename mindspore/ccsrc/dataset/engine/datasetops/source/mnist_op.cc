@@ -387,7 +387,7 @@ Status MnistOp::WalkAllFiles() {
       }
     }
   } else {
-    MS_LOG(INFO) << "Mnist operator unable to open directory " << dir.toString() << ".";
+    MS_LOG(WARNING) << "Mnist operator unable to open directory " << dir.toString() << ".";
   }
 
   std::sort(image_names_.begin(), image_names_.end());

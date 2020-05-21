@@ -502,7 +502,7 @@ Status Tensor::InsertTensor(const std::vector<dsize_t> &ind, const std::shared_p
   err_msg += (!StartAddrOfIndex(ind, &start_addr_of_ind, &remaining_shape).IsOk()) ? "[Tensor] incorrect index\n" : "";
   err_msg += !(remaining_shape == tensor->shape()) ? "[Tensor] memory error\n" : "";
   if (!err_msg.empty()) {
-    MS_LOG(INFO) << "Insert tensor message: " << err_msg;
+    MS_LOG(DEBUG) << "Insert tensor message: " << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   } else {
     if (start_addr_of_ind != nullptr) {
@@ -512,7 +512,7 @@ Status Tensor::InsertTensor(const std::vector<dsize_t> &ind, const std::shared_p
         return Status::OK();
       } else {
         err_msg += "[Tensor] error in memcpy_s when inserting tensor\n";
-        MS_LOG(INFO) << "Tensor message: " << err_msg;
+        MS_LOG(DEBUG) << "Tensor message: " << err_msg;
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
     } else {
