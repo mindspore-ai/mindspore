@@ -17,12 +17,12 @@
 
 import json
 import numpy as np
-from evaluation_config import cfg
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
-from CRF import postprocess
 import tokenization
 from sample_process import label_generation, process_one_example_p
+from .evaluation_config import cfg
+from .CRF import postprocess
 
 vocab_file = "./vocab.txt"
 tokenizer_ = tokenization.FullTokenizer(vocab_file=vocab_file)

@@ -16,12 +16,12 @@ This example implements pre-training, fine-tuning and evaluation of [BERT-base](
 - Run `run_standalone_pretrain.sh` for non-distributed pre-training of BERT-base and BERT-NEZHA model.
 
     ``` bash   
-    sh run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR
+    sh scripts/run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR
     ```
 - Run `run_distribute_pretrain.sh` for distributed pre-training of BERT-base and BERT-NEZHA model.
 
     ``` bash   
-    sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH
+    sh scripts/run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH
     ```  
 
 ### Fine-Tuning

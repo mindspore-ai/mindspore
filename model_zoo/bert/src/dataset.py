@@ -20,7 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.engine.datasets as de
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore import log as logger
-from config import bert_net_cfg
+from .config import bert_net_cfg
 
 
 def create_bert_dataset(epoch_size=1, device_num=1, rank=0, do_shuffle="true", enable_data_sink="true",
@@ -31,8 +31,9 @@ def create_bert_dataset(epoch_size=1, device_num=1, rank=0, do_shuffle="true", e
     files = os.listdir(data_dir)
     data_files = []
     for file_name in files:
-        data_files.append(os.path.join(data_dir, file_name))
-    ds = de.TFRecordDataset(data_files, schema_dir,
+        if "tfrecord" in file_name:
+            data_files.append(os.path.join(data_dir, file_name))
+    ds = de.TFRecordDataset(data_files, schema_dir if schema_dir != "" else None,
                             columns_list=["input_ids", "input_mask", "segment_ids", "next_sentence_labels",
                                           "masked_lm_positions", "masked_lm_ids", "masked_lm_weights"],
                             shuffle=(do_shuffle == "true"), num_shards=device_num, shard_id=rank,

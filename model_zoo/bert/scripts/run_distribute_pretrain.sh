@@ -16,8 +16,8 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH"
-echo "for example: sh run_distribute_pretrain.sh 8 40 /path/zh-wiki/ /path/Schema.json /path/hccl.json"
+echo "bash run_distribute_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR MINDSPORE_HCCL_CONFIG_PATH"
+echo "for example: bash run_distribute_pretrain.sh 8 40 /path/zh-wiki/ /path/Schema.json /path/hccl.json"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
@@ -49,6 +49,10 @@ do
     cp  *.py ./LOG$i
     cd ./LOG$i || exit
     echo "start training for rank $i, device $DEVICE_ID"
+    mkdir -p ms_log
+    CUR_DIR=`pwd`
+    export GLOG_log_dir=${CUR_DIR}/ms_log
+    export GLOG_logtostderr=0
     env > env.log
     taskset -c $cmdopt python ../run_pretrain.py  \
     --distribute="true" \
@@ -59,7 +63,7 @@ do
     --enable_lossscale="true" \
     --do_shuffle="true" \
     --enable_data_sink="true" \
-    --data_sink_steps=1 \
+    --data_sink_steps=100 \
     --checkpoint_path="" \
     --save_checkpoint_steps=10000 \
     --save_checkpoint_num=1 \

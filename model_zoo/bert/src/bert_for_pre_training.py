@@ -357,10 +357,10 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
             self.reducer_flag = True
         self.grad_reducer = F.identity
+        self.degree = 1
         if self.reducer_flag:
-            mean = context.get_auto_parallel_context("mirror_mean")
-            degree = get_group_size()
-            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
+            self.degree = get_group_size()
+            self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
@@ -411,10 +411,10 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
                                                  masked_lm_weights,
                                                  self.cast(scaling_sens,
                                                            mstype.float32))
-        grads = self.hyper_map(F.partial(grad_scale, scaling_sens), grads)
-        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
+        grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         self.get_status(init)
         flag_sum = self.reduce_sum(init, (0,))
         if self.is_distributed:
