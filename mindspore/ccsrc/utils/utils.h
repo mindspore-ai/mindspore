@@ -144,6 +144,7 @@ constexpr auto kBNInferGradOpName = "BNInferGrad";
 constexpr auto kCallOpName = "call";
 constexpr auto kPartialOpName = "partial";
 constexpr auto kSwitchOpName = "switch";
+constexpr auto kReturnOpName = "return";
 constexpr auto kLarsV2OpName = "LarsV2";
 constexpr auto kLarsV2UpdateOpName = "LarsV2Update";
 constexpr auto kSquareSumAllOpName = "SquareSumAll";
