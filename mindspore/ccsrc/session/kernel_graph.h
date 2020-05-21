@@ -127,6 +127,8 @@ class KernelGraph : public FuncGraph {
   void SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg);
   // used to dump ir
   std::string ToString() const override;
+  // update the real input if the node is a call
+  void UpdateCallRealInput();
 
   void set_start_label(const CNodePtr &start_label) { start_label_ = start_label; }
   CNodePtr get_start_label() { return start_label_; }
