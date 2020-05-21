@@ -343,7 +343,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {prim::kPrimGelu->name(), ADPT_DESC(Gelu)},
     {prim::kPrimGeluGrad->name(), ADPT_DESC(GeluGrad)},
     {string(kNameStridedSlice), ADPT_DESC(StridedSlice)},
-    {prim::kPrimUnsortedSegmentMin->name(), ADPT_DESC(UnsortedSegmentMinD)},
+    {prim::kPrimUnsortedSegmentMin->name(), ADPT_DESC(UnsortedSegmentMin)},
     {prim::kPrimUnsortedSegmentSum->name(), ADPT_DESC(UnsortedSegmentSumD)},
     {string(kNameExpandDims), ADPT_DESC(ExpandDims)},
     {prim::kPrimSqueeze->name(), ADPT_DESC(Squeeze)},
