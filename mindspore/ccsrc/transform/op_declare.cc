@@ -1085,7 +1085,8 @@ OUTPUT_MAP(SGD) = {{0, OUTPUT_DESC(parameters)}};
 // LayerNorm
 INPUT_MAP(LayerNorm) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(gamma)}, {3, INPUT_DESC(beta)}};
 ATTR_MAP(LayerNorm) = {{"begin_norm_axis", ATTR_DESC(begin_norm_axis, AnyTraits<int>())},
-                       {"begin_params_axis", ATTR_DESC(begin_params_axis, AnyTraits<int>())}};
+                       {"begin_params_axis", ATTR_DESC(begin_params_axis, AnyTraits<int>())},
+                       {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())}};
 OUTPUT_MAP(LayerNorm) = {{0, OUTPUT_DESC(y)}, {1, OUTPUT_DESC(mean)}, {2, OUTPUT_DESC(variance)}};
 
 // LayerNormGrad
