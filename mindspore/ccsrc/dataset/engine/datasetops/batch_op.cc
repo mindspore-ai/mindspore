@@ -164,7 +164,14 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *source_table,
         if (row[i]->shape() == row_shapes[i]) {  // check the newly popped rows have the same dim as the first
           RETURN_IF_NOT_OK(batched_row[i]->InsertTensor(std::vector<dsize_t>(1, j), row[i]));
         } else {
-          RETURN_STATUS_UNEXPECTED("[Batch ERROR] Inconsistent TensorShapes\n");
+          std::string column_name;
+          for (auto itr : column_name_id_map_) {
+            if (static_cast<size_t>(itr.second) == i) {
+              column_name = itr.first;
+              break;
+            }
+          }
+          RETURN_STATUS_UNEXPECTED("[Batch ERROR] Inconsistent TensorShapes of Column " + column_name);
         }
       }
     }
