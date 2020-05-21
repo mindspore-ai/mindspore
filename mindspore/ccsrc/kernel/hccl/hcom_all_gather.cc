@@ -24,17 +24,16 @@
 
 namespace mindspore {
 namespace kernel {
-bool HcomAllGatherKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                 const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+bool HcomAllGatherKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
+                                 const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->enable_task_sink()) {
     return true;
   }
   const char *tag = "Hccl-AllGather";
-  auto stream = reinterpret_cast<rtStream_t>(stream_ptr);
   hcclResult_t ret =
-    hcom_all_gather(tag, inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0], nullptr, stream);
+    hcom_all_gather(tag, inputs[0]->addr, outputs[0]->addr, hccl_count_, hccl_data_type_list_[0], nullptr, stream_ptr);
   if (ret != HCCL_SUCCESS) {
     MS_LOG(ERROR) << "HcomAllGatherKernelOp : hcom_all_gather fail, return: " << static_cast<int>(ret);
     return false;

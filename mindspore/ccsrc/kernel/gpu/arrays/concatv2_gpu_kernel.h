@@ -34,7 +34,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (inputs.size() == 2) {
       T *input_0 = GetDeviceAddress<T>(inputs, 0);
       T *input_1 = GetDeviceAddress<T>(inputs, 1);

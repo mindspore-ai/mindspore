@@ -30,10 +30,8 @@ AssignKernel::AssignKernel() {}
 
 AssignKernel::~AssignKernel() {}
 
-bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                          const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
-  auto stream = reinterpret_cast<rtStream_t>(stream_ptr);
-
+bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> & /*workspace*/,
+                          const std::vector<AddressPtr> & /*outputs*/, void *stream_ptr) {
   if (inputs.size() != 2) {
     MS_LOG(ERROR) << "inputs size is not two";
     return false;
@@ -44,7 +42,7 @@ bool AssignKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vect
     return true;
   }
   rtError_t status = rtMemcpyAsync(inputs[0]->addr, inputs[0]->size, inputs[1]->addr, inputs[1]->size,
-                                   RT_MEMCPY_DEVICE_TO_DEVICE, stream);
+                                   RT_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Assign op rtMemcpyAsync failed!";
     return false;

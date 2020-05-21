@@ -64,7 +64,7 @@ bool DatasetIteratorKernel::Init(const CNodePtr &kernel_node) {
 void DatasetIteratorKernel::InitSizeLists() { return; }
 
 bool DatasetIteratorKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                   const std::vector<AddressPtr> &outputs, uintptr_t) {
+                                   const std::vector<AddressPtr> &outputs, void *) {
   void *addr = nullptr;
   size_t len = 0;
 

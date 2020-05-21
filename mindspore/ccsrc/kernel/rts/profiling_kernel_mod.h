@@ -24,7 +24,7 @@ class ProfilingKernelMod : public RtKernel {
   ProfilingKernelMod() = default;
   ~ProfilingKernelMod() override = default;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override;
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
   bool Init(const AnfNodePtr &anf_node) override;

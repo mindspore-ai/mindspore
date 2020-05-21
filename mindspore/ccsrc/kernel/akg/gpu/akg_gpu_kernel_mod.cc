@@ -82,7 +82,7 @@ const std::vector<size_t> &GpuKernelMod::GetOutputSizeList() const { return outp
 const std::vector<size_t> &GpuKernelMod::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
 bool GpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                          const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (stream_ptr == 0) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;

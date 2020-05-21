@@ -59,7 +59,7 @@ class PoolingGpuFwdKernel : public GpuKernel {
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     if (is_null_input_) {
       return true;
     }

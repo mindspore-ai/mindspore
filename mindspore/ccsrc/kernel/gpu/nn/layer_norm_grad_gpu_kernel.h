@@ -35,7 +35,7 @@ class LayerNormGradGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     auto x = GetDeviceAddress<T>(inputs, 0);
     auto dy = GetDeviceAddress<T>(inputs, 1);
     auto var = GetDeviceAddress<T>(inputs, 2);

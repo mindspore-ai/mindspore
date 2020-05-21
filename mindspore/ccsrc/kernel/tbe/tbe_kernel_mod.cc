@@ -26,8 +26,8 @@ using TbeTaskInfoPtr = std::shared_ptr<ge::model_runner::TbeTaskInfo>;
 using tbe::KernelManager;
 bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inputs,
                           const std::vector<mindspore::kernel::AddressPtr> &workspace,
-                          const std::vector<mindspore::kernel::AddressPtr> &outputs, uintptr_t stream_ptr) {
-  if (stream_ptr == 0) {
+                          const std::vector<mindspore::kernel::AddressPtr> &outputs, void *stream_ptr) {
+  if (stream_ptr == nullptr) {
     MS_LOG(ERROR) << "stream_ptr should not be nullptr.";
     return false;
   }
@@ -55,10 +55,9 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
                          [](const AddressPtr &addr) -> void * { return addr->addr; });
   }
   rtL2Ctrl_t *l2ctrl = nullptr;
-  auto *stream = reinterpret_cast<rtStream_t *>(stream_ptr);
   const void *stubFunc = reinterpret_cast<void *>(func_stub);
   auto argsSize = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtimeargs.size());
-  if (RT_ERROR_NONE != rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream)) {
+  if (RT_ERROR_NONE != rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream_ptr)) {
     MS_LOG(ERROR) << "Call runtime rtKernelLaunch error.";
     return false;
   }

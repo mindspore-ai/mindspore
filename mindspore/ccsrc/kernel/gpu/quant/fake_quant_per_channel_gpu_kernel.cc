@@ -118,7 +118,7 @@ void FakeQuantPerChannelGpuKernel::InitSizeLists() {
 
 void FakeQuantPerChannelGpuKernel::CalFakeQuantizeForTraining(float *input, float *output, float *input_min,
                                                               float *input_max, float *d_nudge_min, float *d_nudge_max,
-                                                              float *d_scale, uintptr_t stream_ptr) {
+                                                              float *d_scale, void *stream_ptr) {
   // calculate the input min and max according by the parameter ema and ema_decay.
   CalMinMaxPerChannel(input, input_min, input_max, input_size_ / sizeof(float), channel_out_, ema_decay_, ema_,
                       reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -139,7 +139,7 @@ void FakeQuantPerChannelGpuKernel::CalFakeQuantizeForTraining(float *input, floa
 
 void FakeQuantPerChannelGpuKernel::CalFakeQuantizeForInfer(float *input, float *output, float *input_min,
                                                            float *input_max, float *d_nudge_min, float *d_nudge_max,
-                                                           float *d_scale, uintptr_t stream_ptr) {
+                                                           float *d_scale, void *stream_ptr) {
   // real launch
   CalNudgePerChannel(input_min, input_max, quant_min_, quant_max_, d_nudge_min, d_nudge_max, d_scale, channel_out_,
                      reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -149,7 +149,7 @@ void FakeQuantPerChannelGpuKernel::CalFakeQuantizeForInfer(float *input, float *
 
 bool FakeQuantPerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &workspace,
-                                          const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+                                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   (void)workspace;
   float *output = GetDeviceAddress<float>(outputs, 0);
   float *input = GetDeviceAddress<float>(inputs, 0);

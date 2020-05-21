@@ -199,7 +199,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph) {
     AddressPtrList kernel_workspaces;
     AddressPtrList kernel_outputs;
     AllocKernelDynamicRes(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
-    if (!kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, reinterpret_cast<uintptr_t>(stream_))) {
+    if (!kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_)) {
       MS_LOG(ERROR) << "Launch kernel failed.";
       return false;
     }

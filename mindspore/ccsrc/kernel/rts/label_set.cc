@@ -45,8 +45,8 @@ bool LabelSetKernel::Init(const AnfNodePtr &anf_node) {
   return true;
 }
 
-bool LabelSetKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                            const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+bool LabelSetKernel::Launch(const std::vector<AddressPtr> & /*inputs*/, const std::vector<AddressPtr> & /*workspace*/,
+                            const std::vector<AddressPtr> & /*outputs*/, void * /*stream_ptr*/) {
   MS_LOG(INFO) << "LabelSetKernel launch";
   return true;
 }

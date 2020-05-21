@@ -51,7 +51,7 @@ bool StreamSwitchKernel::Init(const AnfNodePtr &anf_node) {
 }
 
 bool StreamSwitchKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   MS_LOG(INFO) << "stream switch op launch start";
   if (inputs.size() != 2) {
     MS_LOG(ERROR) << "Stream switch inputs size is " << inputs.size() << ", only support 2";
@@ -59,9 +59,8 @@ bool StreamSwitchKernel::Launch(const std::vector<AddressPtr> &inputs, const std
 
   void *loop_cnt = inputs[0]->addr;
   void *ites_per_loop = inputs[1]->addr;
-  auto stream = reinterpret_cast<rtStream_t>(stream_ptr);
   rtStream_t true_stream_ = kernel::TaskStream::GetInstance()->gen_stream_list()[true_stream_index_];
-  rtError_t status = rtStreamSwitchEx(loop_cnt, cond_, ites_per_loop, true_stream_, stream, data_type_);
+  rtError_t status = rtStreamSwitchEx(loop_cnt, cond_, ites_per_loop, true_stream_, stream_ptr, data_type_);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Stream switch failed!";
     return false;

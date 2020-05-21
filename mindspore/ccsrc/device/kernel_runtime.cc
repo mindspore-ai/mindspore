@@ -664,8 +664,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
     struct timeval start_time, end_time;
     (void)gettimeofday(&start_time, nullptr);
 #endif
-    auto ret =
-      kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, reinterpret_cast<uintptr_t>(stream_));
+    auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed.";
       return false;

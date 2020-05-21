@@ -41,9 +41,8 @@ bool StreamActiveKernel::Init(const AnfNodePtr &anf_node) {
 }
 
 bool StreamActiveKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   MS_LOG(INFO) << "Stream active op launch start";
-  auto stream = reinterpret_cast<rtStream_t>(stream_ptr);
 
   if (active_streams_index_.empty()) {
     MS_LOG(ERROR) << "activeStreamList_ is empty!";
@@ -54,7 +53,7 @@ bool StreamActiveKernel::Launch(const std::vector<AddressPtr> &inputs, const std
   rtError_t status;
   for (auto index : active_streams_index_) {
     act_stream = kernel::TaskStream::GetInstance()->gen_stream_list()[index];
-    status = rtStreamActive(act_stream, stream);
+    status = rtStreamActive(act_stream, stream_ptr);
     if (status != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "Stream active failed!";
       return false;

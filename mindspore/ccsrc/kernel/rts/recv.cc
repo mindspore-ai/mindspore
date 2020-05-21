@@ -43,10 +43,9 @@ bool RecvKernel::Init(const AnfNodePtr &anf_node) {
 }
 
 bool RecvKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                        const std::vector<AddressPtr> &outputs, uintptr_t stream_ptr) {
+                        const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   rtEvent_t stream_event{};
-  auto stream = reinterpret_cast<rtStream_t>(stream_ptr);
-  auto status = rtStreamWaitEvent(stream, stream_event);
+  auto status = rtStreamWaitEvent(stream_ptr, stream_event);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Recv rtStreamWaitEvent failed!";
     return false;
