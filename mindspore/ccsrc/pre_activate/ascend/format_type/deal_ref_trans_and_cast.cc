@@ -105,8 +105,8 @@ AnfNodePtr AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodeP
   // insert trans
   if (origin_format != cur_format && cur_shape.size() > 1) {
     auto kernel_select = std::make_shared<KernelSelect>();
-    final_node = AddTransOpNodeToGraph(func_graph, final_node, kernel_select, 0, cur_format, origin_format,
-                                       kTransDataOpName, false);
+    final_node = NewTransOpNode(func_graph, final_node, kernel_select, false, prim::KPrimTransData->name());
+    RefreshKernelBuildInfo(cur_format, origin_format, origin_type, final_node);
     final_index = 0;
     MS_EXCEPTION_IF_NULL(final_node);
     MS_LOG(INFO) << "DealRefTransAndCast add trans op, op debug info is " << final_node->DebugString();

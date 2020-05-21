@@ -151,7 +151,7 @@ constexpr auto kSquareSumAllOpName = "SquareSumAll";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";
-constexpr auto kAttrIsAICPUKernel = "is_ai_cpu_kernel";
+constexpr auto kAttrIsAICPUKernel = "is_AICPU_kernel";
 constexpr auto kIsBackendCast = "is_backed_cast";
 constexpr auto kAttrOutputNames = "output_names";
 constexpr auto kAttrVisited = "visited";
