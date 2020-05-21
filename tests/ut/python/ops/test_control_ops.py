@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test control ops """
+import pytest
 import numpy as np
 
 import mindspore as ms
@@ -434,3 +435,11 @@ def test_index_to_switch_layer():
     C.grad_by_list(net, ParameterTuple(net.trainable_params()))(index,
                                                                 Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
     C.grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
+
+def test_control_depend_check():
+    with pytest.raises(TypeError) as e:
+        depend = P.ControlDepend(0.0)
+    with pytest.raises(ValueError) as e:
+        depend = P.ControlDepend(2)
+    with pytest.raises(TypeError) as e:
+        depend = P.ControlDepend((2,))
