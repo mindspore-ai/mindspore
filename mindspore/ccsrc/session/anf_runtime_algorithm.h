@@ -32,6 +32,7 @@
 #include "kernel/kernel_build_info.h"
 #include "operator/ops.h"
 #include "utils/contract.h"
+#include "session/kernel_graph.h"
 
 namespace mindspore {
 namespace session {
@@ -182,6 +183,8 @@ class AnfRuntimeAlgorithm {
   static bool IsCommunicationOp(const AnfNodePtr &node);
   static bool IsGetNext(const NotNull<AnfNodePtr> &node);
   static FuncGraphPtr GetValueNodeFuncGraph(const AnfNodePtr &node);
+  static std::vector<KernelGraphPtr> GetCallNodeKernelGraph(const CNodePtr &call_node);
+  static bool IsSwitchCall(const CNodePtr &call_node);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

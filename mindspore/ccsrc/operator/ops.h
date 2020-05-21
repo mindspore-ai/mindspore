@@ -71,6 +71,7 @@ extern const PrimitivePtr kPrimAssign;
 extern const PrimitivePtr kPrimAssignAdd;
 extern const PrimitivePtr kPrimAssignSub;
 extern const PrimitivePtr kPrimSelect;
+extern const PrimitivePtr kPrimCall;
 
 extern const PrimitivePtr kPrimDistribute;
 extern const PrimitivePtr kPrimDot;
