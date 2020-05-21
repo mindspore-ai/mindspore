@@ -36,8 +36,8 @@ using PatternListType = std::initializer_list<BaseRef>;
 
 const std::vector<Signature> &GetSignature(const ValuePtr &function) {
   static const auto empty = std::vector<Signature>();
-  if (function->isa<Primitive>()) {
-    return function->cast<PrimitivePtr>()->signatures();
+  if (function->isa<Primitive>() && function->cast<PrimitivePtr>()->has_signature()) {
+    return function->cast<PrimitivePyPtr>()->signatures();
   } else if (function->isa<MetaFuncGraph>()) {
     return function->cast<MetaFuncGraphPtr>()->signatures();
   }
