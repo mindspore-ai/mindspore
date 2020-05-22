@@ -26,7 +26,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops._grad.grad_base import bprop_getters
 from mindspore.ops._grad.grad_math_ops import binop_grad_common
-from mindspore.ops._utils import _get_broadcast_shape
+from mindspore.ops._utils import get_broadcast_shape
 from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 
@@ -54,7 +54,7 @@ class MockSub(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_shape(self, x_shape, y_shape):
-        return _get_broadcast_shape(x_shape, y_shape)
+        return get_broadcast_shape(x_shape, y_shape)
 
     def infer_dtype(self, x_dtype, y_dtype):
         return x_dtype

@@ -15,9 +15,10 @@
 
 """Implementation for getitem."""
 
-from ...composite import base
+from . import _utils as multi_utils
+from ..import base
 from ... import functional as F
-
+from ....common import dtype as mstype
 
 getitem = base.MultitypeFuncGraph('getitem')
 """
@@ -214,19 +215,45 @@ def _tensor_getitem_by_slice(data, slice_index):
     return _tensor_slice(data, slice_index)
 
 
+@getitem.register("Tensor", "Tensor")
+def _tensor_getitem_by_tensor(data, tensor_index):
+    """
+    Getting item of tensor by slice.
+
+    Inputs:
+        data (Tensor): A tensor.
+        tensor_index (Tensor): An index expressed by tensor.
+
+    Outputs:
+        Tensor, element type is same as the element type of data.
+    """
+    check_dtypes = multi_utils.check_tensor_dtype_valid(F.dtype(tensor_index), (mstype.int32, mstype.int64))
+    result = None
+    if check_dtypes:
+        result = F.gather(data, tensor_index, 0)
+    return result
+
+
 @getitem.register("Tensor", "Tuple")
-def _tensor_getitem_by_slice_tuple(data, slice_tuple_index):
+def _tensor_getitem_by_tuple(data, tuple_index):
     """
     Getting item of tensor by slice tuple.
 
     Inputs:
         data (Tensor): A tensor.
-        slice_tuple_index (tuple): Index in tuple.
+        tuple_index (tuple): Index in tuple.
 
     Outputs:
         Tensor, element type is same as the element type of data.
     """
-    return _tensor_slice(data, slice_tuple_index)
+    index_types = multi_utils.hyper_map(F.typeof, tuple_index)
+    index_elements_type = multi_utils.tuple_elements_type(index_types)
+    result = None
+    if index_elements_type == multi_utils.NO_TENSOR:
+        result = _tensor_slice(data, tuple_index)
+    if index_elements_type == multi_utils.ALL_TENSOR:
+        result = _tensor_getitem_by_tuple_of_tensor(data, tuple_index)
+    return result
 
 
 @getitem.register("Tensor", "Ellipsis")
@@ -242,3 +269,10 @@ def _tensor_getitem_by_ellipsis(data, ellipsis_index):
         Tensor, same as data.
     """
     return _tensor_slice(data, ellipsis_index)
+
+
+def _tensor_getitem_by_tuple_of_tensor(data, tuple_index):
+    """Tensor getitem by a tuple of tensor."""
+    indices = multi_utils.generate_indeices_from_tuple_of_tensor(data, tuple_index, multi_utils.TENSOR_GETITEM)
+    result = F.gather_nd(data, indices)
+    return result

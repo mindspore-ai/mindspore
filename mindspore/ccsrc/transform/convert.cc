@@ -101,6 +101,7 @@ const char kNameReLU6[] = "ReLU6";
 const char kNameReLU6Grad[] = "ReLU6Grad";
 const char kNameElu[] = "Elu";
 const char kNameEluGrad[] = "EluGrad";
+const char kNameScatterUpdate[] = "ScatterUpdate";
 const char kNameScatterNdUpdate[] = "ScatterNdUpdate";
 const char kNameScatterMax[] = "ScatterMax";
 const char kNameNMSWithMask[] = "NMSWithMask";
@@ -256,6 +257,7 @@ std::unordered_map<std::string, OpAdapterDescPtr> &DfGraphConvertor::get_adpt_ma
     {string(kNameResizeBilinear), ADPT_DESC(ResizeBilinearV2D)},
     {string(kNameZerosLike), ADPT_DESC(ZerosLike)},
     {string(kNameOnesLike), ADPT_DESC(OnesLike)},
+    {string(kNameScatterUpdate), ADPT_DESC(ScatterUpdate)},
     {string(kNameScatterNdUpdate), ADPT_DESC(ScatterNdUpdate)},
     {string(kNameScatterMax), ADPT_DESC(ScatterMax)},
     {string(kNameNMSWithMask), ADPT_DESC(NMSWithMask)},

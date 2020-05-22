@@ -206,8 +206,6 @@ class TensorSlice : public MetaFuncGraph {
   MS_DECLARE_PARENT(TensorSlice, MetaFuncGraph)
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
   friend bool operator==(const TensorSlice &lhs, const TensorSlice &rhs) { return lhs.name_ == rhs.name_; }
-
-  FuncGraphPtr ExpandADim(const FuncGraphPtr &ret_graph, const AnfNodePtr &tensor_node) const;
 };
 using TensorSlicePtr = std::shared_ptr<TensorSlice>;
 
