@@ -254,7 +254,7 @@ def tuple_element_is_int(indexs):
 
 
 @constexpr
-def tuple_elements_type(types):
+def tuple_index_elements_type(types, op_name):
     """Judges the type of all elements of the tuple."""
     tensors_number = 0
     for ele in types:
@@ -264,7 +264,7 @@ def tuple_elements_type(types):
         return ALL_TENSOR
     if tensors_number == 0:
         return NO_TENSOR
-    return CONTAIN_TENSOR
+    raise IndexError(f"For '{op_name}', the index does not support mixed tensor.")
 
 
 @constexpr

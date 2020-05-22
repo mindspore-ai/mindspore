@@ -247,7 +247,7 @@ def _tensor_getitem_by_tuple(data, tuple_index):
         Tensor, element type is same as the element type of data.
     """
     index_types = multi_utils.hyper_map(F.typeof, tuple_index)
-    index_elements_type = multi_utils.tuple_elements_type(index_types)
+    index_elements_type = multi_utils.tuple_index_elements_type(index_types, multi_utils.TENSOR_GETITEM)
     result = None
     if index_elements_type == multi_utils.NO_TENSOR:
         result = _tensor_slice(data, tuple_index)
