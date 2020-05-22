@@ -14,9 +14,9 @@
 """test mnist to mindrecord tool"""
 import gzip
 import os
+import numpy as np
 
 import cv2
-import numpy as np
 import pytest
 
 from mindspore import log as logger

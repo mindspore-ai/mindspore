@@ -14,7 +14,6 @@
 # ==============================================================================
 
 import numpy as np
-import time
 
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -22,7 +21,7 @@ from mindspore import log as logger
 
 def gen():
     for i in range(100):
-        yield np.array(i),
+        yield (np.array(i),)
 
 
 class Augment:
@@ -38,7 +37,7 @@ class Augment:
 
 def test_simple_sync_wait():
     """
-    Test simple sync wait: test sync in dataset pipeline  
+    Test simple sync wait: test sync in dataset pipeline
     """
     logger.info("test_simple_sync_wait")
     batch_size = 4
@@ -51,7 +50,7 @@ def test_simple_sync_wait():
 
     count = 0
     for data in dataset.create_dict_iterator():
-        assert (data["input"][0] == count)
+        assert data["input"][0] == count
         count += batch_size
         data = {"loss": count}
         dataset.sync_update(condition_name="policy", data=data)
@@ -59,7 +58,7 @@ def test_simple_sync_wait():
 
 def test_simple_shuffle_sync():
     """
-    Test simple shuffle sync: test shuffle before sync  
+    Test simple shuffle sync: test shuffle before sync
     """
     logger.info("test_simple_shuffle_sync")
     shuffle_size = 4
@@ -83,7 +82,7 @@ def test_simple_shuffle_sync():
 
 def test_two_sync():
     """
-    Test two sync: dataset pipeline with with two sync_operators  
+    Test two sync: dataset pipeline with with two sync_operators
     """
     logger.info("test_two_sync")
     batch_size = 6
@@ -111,7 +110,7 @@ def test_two_sync():
 
 def test_sync_epoch():
     """
-    Test sync wait with epochs: test sync with epochs in dataset pipeline  
+    Test sync wait with epochs: test sync with epochs in dataset pipeline
     """
     logger.info("test_sync_epoch")
     batch_size = 30
@@ -122,11 +121,11 @@ def test_sync_epoch():
     dataset = dataset.map(input_columns=["input"], operations=[aug.preprocess])
     dataset = dataset.batch(batch_size, drop_remainder=True)
 
-    for epochs in range(3):
+    for _ in range(3):
         aug.update({"loss": 0})
         count = 0
         for data in dataset.create_dict_iterator():
-            assert (data["input"][0] == count)
+            assert data["input"][0] == count
             count += batch_size
             data = {"loss": count}
             dataset.sync_update(condition_name="policy", data=data)
@@ -134,7 +133,7 @@ def test_sync_epoch():
 
 def test_multiple_iterators():
     """
-    Test sync wait with multiple iterators: will start multiple 
+    Test sync wait with multiple iterators: will start multiple
     """
     logger.info("test_sync_epoch")
     batch_size = 30
@@ -153,7 +152,7 @@ def test_multiple_iterators():
     dataset2 = dataset2.batch(batch_size, drop_remainder=True)
 
     for item1, item2 in zip(dataset.create_dict_iterator(), dataset2.create_dict_iterator()):
-        assert (item1["input"][0] == item2["input"][0])
+        assert item1["input"][0] == item2["input"][0]
         data1 = {"loss": item1["input"][0]}
         data2 = {"loss": item2["input"][0]}
         dataset.sync_update(condition_name="policy", data=data1)
@@ -162,7 +161,7 @@ def test_multiple_iterators():
 
 def test_sync_exception_01():
     """
-    Test sync: with shuffle in sync mode 
+    Test sync: with shuffle in sync mode
     """
     logger.info("test_sync_exception_01")
     shuffle_size = 4
@@ -183,7 +182,7 @@ def test_sync_exception_01():
 
 def test_sync_exception_02():
     """
-    Test sync: with duplicated condition name  
+    Test sync: with duplicated condition name
     """
     logger.info("test_sync_exception_02")
     batch_size = 6

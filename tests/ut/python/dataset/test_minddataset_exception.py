@@ -91,7 +91,7 @@ def test_invalid_mindrecord():
     with pytest.raises(Exception, match="MindRecordOp init failed"):
         data_set = ds.MindDataset('dummy.mindrecord', columns_list, num_readers)
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator():
             num_iter += 1
         assert num_iter == 0
     os.remove('dummy.mindrecord')
@@ -105,7 +105,7 @@ def test_minddataset_lack_db():
     with pytest.raises(Exception, match="MindRecordOp init failed"):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers)
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator():
             num_iter += 1
         assert num_iter == 0
     os.remove(CV_FILE_NAME)
@@ -119,7 +119,7 @@ def test_cv_minddataset_pk_sample_error_class_column():
     with pytest.raises(Exception, match="MindRecordOp launch failed"):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, sampler=sampler)
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator():
             num_iter += 1
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))

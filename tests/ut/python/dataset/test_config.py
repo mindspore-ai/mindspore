@@ -15,10 +15,10 @@
 """
 Testing configuration manager
 """
+import os
 import filecmp
 import glob
 import numpy as np
-import os
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
@@ -89,7 +89,7 @@ def test_pipeline():
     ds.serialize(data2, "testpipeline2.json")
 
     # check that the generated output is different
-    assert (filecmp.cmp('testpipeline.json', 'testpipeline2.json'))
+    assert filecmp.cmp('testpipeline.json', 'testpipeline2.json')
 
     # this test passes currently because our num_parallel_workers don't get updated.
 

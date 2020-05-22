@@ -88,7 +88,7 @@ def test_filter_by_generator_with_repeat():
         ret_data.append(item["data"])
     assert num_iter == 44
     for i in range(4):
-        for ii in range(len(expected_rs)):
+        for ii, _ in enumerate(expected_rs):
             index = i * len(expected_rs) + ii
             assert ret_data[index] == expected_rs[ii]
 
@@ -106,7 +106,7 @@ def test_filter_by_generator_with_repeat_after():
         ret_data.append(item["data"])
     assert num_iter == 44
     for i in range(4):
-        for ii in range(len(expected_rs)):
+        for ii, _ in enumerate(expected_rs):
             index = i * len(expected_rs) + ii
             assert ret_data[index] == expected_rs[ii]
 
@@ -167,7 +167,7 @@ def test_filter_by_generator_with_shuffle():
     dataset_s = dataset.shuffle(4)
     dataset_f = dataset_s.filter(predicate=filter_func_shuffle, num_parallel_workers=4)
     num_iter = 0
-    for item in dataset_f.create_dict_iterator():
+    for _ in dataset_f.create_dict_iterator():
         num_iter += 1
     assert num_iter == 21
 
@@ -184,7 +184,7 @@ def test_filter_by_generator_with_shuffle_after():
     dataset_f = dataset.filter(predicate=filter_func_shuffle_after, num_parallel_workers=4)
     dataset_s = dataset_f.shuffle(4)
     num_iter = 0
-    for item in dataset_s.create_dict_iterator():
+    for _ in dataset_s.create_dict_iterator():
         num_iter += 1
     assert num_iter == 21
 
@@ -258,8 +258,7 @@ def filter_func_map(col1, col2):
 def filter_func_map_part(col1):
     if col1 < 3:
         return True
-    else:
-        return False
+    return False
 
 
 def filter_func_map_all(col1, col2):
@@ -276,7 +275,7 @@ def func_map(data_col1, data_col2):
 
 
 def func_map_part(data_col1):
-    return (data_col1)
+    return data_col1
 
 
 # test with  map
@@ -473,7 +472,6 @@ def test_filte_case_dataset_cifar10():
     ds.config.load('../data/dataset/declient_filter.cfg')
     dataset_c = ds.Cifar10Dataset(dataset_dir=DATA_DIR_10, num_samples=100000, shuffle=False)
     dataset_f1 = dataset_c.filter(input_columns=["image", "label"], predicate=filter_func_cifar, num_parallel_workers=1)
-    num_iter = 0
     for item in dataset_f1.create_dict_iterator():
         # in this example, each dictionary has keys "image" and "label"
         assert item["label"] % 3 == 0

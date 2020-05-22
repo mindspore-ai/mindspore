@@ -29,7 +29,7 @@ def test_case_0():
     # apply dataset operations
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    ds1 = ds1.map(input_column_names=col, output_column_names="out", operation=(lambda x: x + x))
+    ds1 = ds1.map(input_columns=col, output_columns="out", operations=(lambda x: x + x))
 
     print("************** Output Tensor *****************")
     for data in ds1.create_dict_iterator():  # each data is a dictionary
@@ -49,7 +49,7 @@ def test_case_1():
     # apply dataset operations
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    ds1 = ds1.map(input_column_names=col, output_column_names=["out0", "out1"], operation=(lambda x: (x, x + x)))
+    ds1 = ds1.map(input_columns=col, output_columns=["out0", "out1"], operations=(lambda x: (x, x + x)))
 
     print("************** Output Tensor *****************")
     for data in ds1.create_dict_iterator():  # each data is a dictionary
@@ -72,7 +72,7 @@ def test_case_2():
     # apply dataset operations
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    ds1 = ds1.map(input_column_names=col, output_column_names="out", operation=(lambda x, y: x + y))
+    ds1 = ds1.map(input_columns=col, output_columns="out", operations=(lambda x, y: x + y))
 
     print("************** Output Tensor *****************")
     for data in ds1.create_dict_iterator():  # each data is a dictionary
@@ -93,8 +93,8 @@ def test_case_3():
     # apply dataset operations
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    ds1 = ds1.map(input_column_names=col, output_column_names=["out0", "out1", "out2"],
-                  operation=(lambda x, y: (x, x + y, x + x + y)))
+    ds1 = ds1.map(input_columns=col, output_columns=["out0", "out1", "out2"],
+                  operations=(lambda x, y: (x, x + y, x + x + y)))
 
     print("************** Output Tensor *****************")
     for data in ds1.create_dict_iterator():  # each data is a dictionary
@@ -119,8 +119,8 @@ def test_case_4():
     # apply dataset operations
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
 
-    ds1 = ds1.map(input_column_names=col, output_column_names=["out0", "out1", "out2"], num_parallel_workers=4,
-                  operation=(lambda x, y: (x, x + y, x + x + y)))
+    ds1 = ds1.map(input_columns=col, output_columns=["out0", "out1", "out2"], num_parallel_workers=4,
+                  operations=(lambda x, y: (x, x + y, x + x + y)))
 
     print("************** Output Tensor *****************")
     for data in ds1.create_dict_iterator():  # each data is a dictionary

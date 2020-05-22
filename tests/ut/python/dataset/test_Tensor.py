@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import mindspore._c_dataengine as cde
-
 import numpy as np
+
+import mindspore._c_dataengine as cde
 
 
 def test_shape():

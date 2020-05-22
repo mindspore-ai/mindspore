@@ -35,7 +35,7 @@ def test_imagefolder_basic():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 44)
+    assert num_iter == 44
 
 
 def test_imagefolder_numsamples():
@@ -55,7 +55,7 @@ def test_imagefolder_numsamples():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 10)
+    assert num_iter == 10
 
 
 def test_imagefolder_numshards():
@@ -75,7 +75,7 @@ def test_imagefolder_numshards():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 11)
+    assert num_iter == 11
 
 
 def test_imagefolder_shardid():
@@ -95,7 +95,7 @@ def test_imagefolder_shardid():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 11)
+    assert num_iter == 11
 
 
 def test_imagefolder_noshuffle():
@@ -115,7 +115,7 @@ def test_imagefolder_noshuffle():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 44)
+    assert num_iter == 44
 
 
 def test_imagefolder_extrashuffle():
@@ -136,7 +136,7 @@ def test_imagefolder_extrashuffle():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 88)
+    assert num_iter == 88
 
 
 def test_imagefolder_classindex():
@@ -157,11 +157,11 @@ def test_imagefolder_classindex():
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
-        assert (item["label"] == golden[num_iter])
+        assert item["label"] == golden[num_iter]
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 22)
+    assert num_iter == 22
 
 
 def test_imagefolder_negative_classindex():
@@ -182,11 +182,11 @@ def test_imagefolder_negative_classindex():
         # in this example, each dictionary has keys "image" and "label"
         logger.info("image is {}".format(item["image"]))
         logger.info("label is {}".format(item["label"]))
-        assert (item["label"] == golden[num_iter])
+        assert item["label"] == golden[num_iter]
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 22)
+    assert num_iter == 22
 
 
 def test_imagefolder_extensions():
@@ -207,7 +207,7 @@ def test_imagefolder_extensions():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 44)
+    assert num_iter == 44
 
 
 def test_imagefolder_decode():
@@ -228,7 +228,7 @@ def test_imagefolder_decode():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 44)
+    assert num_iter == 44
 
 
 def test_sequential_sampler():
@@ -255,7 +255,7 @@ def test_sequential_sampler():
         num_iter += 1
 
     logger.info("Result: {}".format(result))
-    assert (result == golden)
+    assert result == golden
 
 
 def test_random_sampler():
@@ -276,7 +276,7 @@ def test_random_sampler():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 44)
+    assert num_iter == 44
 
 
 def test_distributed_sampler():
@@ -297,7 +297,7 @@ def test_distributed_sampler():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 5)
+    assert num_iter == 5
 
 
 def test_pk_sampler():
@@ -318,7 +318,7 @@ def test_pk_sampler():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 12)
+    assert num_iter == 12
 
 
 def test_subset_random_sampler():
@@ -340,7 +340,7 @@ def test_subset_random_sampler():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 12)
+    assert num_iter == 12
 
 
 def test_weighted_random_sampler():
@@ -362,7 +362,7 @@ def test_weighted_random_sampler():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 11)
+    assert num_iter == 11
 
 
 def test_imagefolder_rename():
@@ -382,7 +382,7 @@ def test_imagefolder_rename():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 10)
+    assert num_iter == 10
 
     data1 = data1.rename(input_columns=["image"], output_columns="image2")
 
@@ -394,7 +394,7 @@ def test_imagefolder_rename():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 10)
+    assert num_iter == 10
 
 
 def test_imagefolder_zip():
@@ -419,7 +419,7 @@ def test_imagefolder_zip():
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))
-    assert (num_iter == 10)
+    assert num_iter == 10
 
 
 if __name__ == '__main__':

@@ -33,9 +33,9 @@ def test_celeba_dataset_label():
         logger.info("----------attr--------")
         logger.info(item["attr"])
         for index in range(len(expect_labels[count])):
-            assert (item["attr"][index] == expect_labels[count][index])
+            assert item["attr"][index] == expect_labels[count][index]
         count = count + 1
-    assert (count == 2)
+    assert count == 2
 
 
 def test_celeba_dataset_op():
@@ -54,7 +54,7 @@ def test_celeba_dataset_op():
         logger.info("----------image--------")
         logger.info(item["image"])
         count = count + 1
-    assert (count == 4)
+    assert count == 4
 
 
 def test_celeba_dataset_ext():
@@ -69,9 +69,9 @@ def test_celeba_dataset_ext():
         logger.info("----------attr--------")
         logger.info(item["attr"])
         for index in range(len(expect_labels[count])):
-            assert (item["attr"][index] == expect_labels[count][index])
+            assert item["attr"][index] == expect_labels[count][index]
         count = count + 1
-    assert (count == 1)
+    assert count == 1
 
 
 def test_celeba_dataset_distribute():
@@ -83,7 +83,7 @@ def test_celeba_dataset_distribute():
         logger.info("----------attr--------")
         logger.info(item["attr"])
         count = count + 1
-    assert (count == 1)
+    assert count == 1
 
 
 if __name__ == '__main__':

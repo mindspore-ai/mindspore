@@ -35,10 +35,10 @@ def test_case_dataset_cifar10():
     data1 = ds.Cifar10Dataset(DATA_DIR_10, 100)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator():
         # in this example, each dictionary has keys "image" and "label"
         num_iter += 1
-    assert (num_iter == 100)
+    assert num_iter == 100
 
 
 def test_case_dataset_cifar100():
@@ -50,10 +50,10 @@ def test_case_dataset_cifar100():
     data1 = ds.Cifar100Dataset(DATA_DIR_100, 100)
 
     num_iter = 0
-    for item in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator():
         # in this example, each dictionary has keys "image" and "label"
         num_iter += 1
-    assert (num_iter == 100)
+    assert num_iter == 100
 
 
 if __name__ == '__main__':

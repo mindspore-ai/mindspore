@@ -13,8 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
-import numpy as np
 import time
+import numpy as np
 
 import mindspore.dataset as ds
 
@@ -117,8 +117,7 @@ def batch_padding_performance_3d():
     data1 = data1.batch(batch_size=24, drop_remainder=True, pad_info=pad_info)
     start_time = time.time()
     num_batches = 0
-    ret = []
-    for data in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator():
         num_batches += 1
     res = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
@@ -134,7 +133,7 @@ def batch_padding_performance_1d():
     data1 = data1.batch(batch_size=24, drop_remainder=True, pad_info=pad_info)
     start_time = time.time()
     num_batches = 0
-    for data in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator():
         num_batches += 1
     res = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
@@ -150,7 +149,7 @@ def batch_pyfunc_padding_3d():
     data1 = data1.batch(batch_size=24, drop_remainder=True)
     start_time = time.time()
     num_batches = 0
-    for data in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator():
         num_batches += 1
     res = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
@@ -165,7 +164,7 @@ def batch_pyfunc_padding_1d():
     data1 = data1.batch(batch_size=24, drop_remainder=True)
     start_time = time.time()
     num_batches = 0
-    for data in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator():
         num_batches += 1
     res = "total number of batch:" + str(num_batches) + " time elapsed:" + str(time.time() - start_time)
     # print(res)
@@ -197,7 +196,7 @@ def test_pad_via_map():
     res_from_map = pad_map_config()
     res_from_batch = pad_batch_config()
     assert len(res_from_batch) == len(res_from_batch)
-    for i in range(len(res_from_map)):
+    for i, _ in enumerate(res_from_map):
         assert np.array_equal(res_from_map[i], res_from_batch[i])
 
 

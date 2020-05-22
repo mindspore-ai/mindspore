@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """test mindrecord base"""
-import numpy as np
 import os
 import uuid
+import numpy as np
 from utils import get_data, get_nlp_data
 
 from mindspore import log as logger

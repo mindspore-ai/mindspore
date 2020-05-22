@@ -320,7 +320,7 @@ def test_cv_minddataset_issue_888(add_and_remove_cv_file):
     data = data.shuffle(2)
     data = data.repeat(9)
     num_iter = 0
-    for item in data.create_dict_iterator():
+    for _ in data.create_dict_iterator():
         num_iter += 1
     assert num_iter == 18
 
@@ -572,7 +572,7 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch(add_and_remove_cv_file):
     num_readers = 4
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
     assert data_set.get_dataset_size() == 10
-    for epoch in range(5):
+    for _ in range(5):
         num_iter = 0
         for data in data_set:
             logger.info("data is {}".format(data))
@@ -603,7 +603,7 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch_with_batch(add_and_remove_
 
     data_set = data_set.batch(2)
     assert data_set.get_dataset_size() == 5
-    for epoch in range(5):
+    for _ in range(5):
         num_iter = 0
         for data in data_set:
             logger.info("data is {}".format(data))

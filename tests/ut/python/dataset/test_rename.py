@@ -34,7 +34,7 @@ def test_rename():
 
     num_iter = 0
 
-    for i, item in enumerate(data.create_dict_iterator()):
+    for _, item in enumerate(data.create_dict_iterator()):
         logger.info("item[mask] is {}".format(item["masks"]))
         np.testing.assert_equal(item["masks"], item["input_ids"])
         logger.info("item[seg_ids] is {}".format(item["seg_ids"]))

@@ -22,11 +22,11 @@ def create_data_cache_dir():
     cwd = os.getcwd()
     target_directory = os.path.join(cwd, "data_cache")
     try:
-        if not (os.path.exists(target_directory)):
+        if not os.path.exists(target_directory):
             os.mkdir(target_directory)
     except OSError:
         print("Creation of the directory %s failed" % target_directory)
-    return target_directory;
+    return target_directory
 
 
 def download_and_uncompress(files, source_url, target_directory, is_tar=False):
@@ -53,13 +53,13 @@ def download_and_uncompress(files, source_url, target_directory, is_tar=False):
 
 
 def download_mnist(target_directory=None):
-    if target_directory == None:
+    if target_directory is None:
         target_directory = create_data_cache_dir()
 
         ##create mnst directory
         target_directory = os.path.join(target_directory, "mnist")
         try:
-            if not (os.path.exists(target_directory)):
+            if not os.path.exists(target_directory):
                 os.mkdir(target_directory)
         except OSError:
             print("Creation of the directory %s failed" % target_directory)
@@ -78,14 +78,14 @@ CIFAR_URL = "https://www.cs.toronto.edu/~kriz/"
 
 
 def download_cifar(target_directory, files, directory_from_tar):
-    if target_directory == None:
+    if target_directory is None:
         target_directory = create_data_cache_dir()
 
     download_and_uncompress([files], CIFAR_URL, target_directory, is_tar=True)
 
     ##if target dir was specify move data from directory created by tar
     ##and put data into target dir
-    if target_directory != None:
+    if target_directory is not None:
         tar_dir_full_path = os.path.join(target_directory, directory_from_tar)
         all_files = os.path.join(tar_dir_full_path, "*")
         cmd = "mv " + all_files + " " + target_directory

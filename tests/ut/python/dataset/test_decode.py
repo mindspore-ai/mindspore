@@ -15,9 +15,8 @@
 """
 Testing Decode op in DE
 """
-import cv2
 import numpy as np
-from util import diff_mse
+import cv2
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """test write multiple images"""
-import numpy as np
 import os
+import numpy as np
 from utils import get_two_bytes_data, get_multi_bytes_data
 
 from mindspore import log as logger
