@@ -50,6 +50,7 @@ class Net(Cell):
         return x
 
 
+# pylint: disable=comparison-with-itself
 class DropoutFactory:
     def __init__(self, input_shape, keep_prob, seed0, seed1, strategy0=None):
         size = 1

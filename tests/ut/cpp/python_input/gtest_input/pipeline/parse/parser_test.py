@@ -201,6 +201,7 @@ def get_resolve_fn(x, y):
 
 
 # Test:no return function
+# pylint: disable=pointless-statement
 def get_no_return_fn(x, y):
     x + y
 
@@ -339,6 +340,7 @@ def func_call(x, y, *var, a=0, b=1, **kwargs):
     return x + y + var[0] + a + b + kwargs["z"]
 
 
+# pylint: disable=repeated-keyword
 def test_call_variable():
     t = (1, 2, 3)
     d = {"z": 10, "e": 11}

@@ -253,6 +253,7 @@ def test_random_color_adjust_op_hue(plot=False):
             visualize(c_image, mse, py_image)
 
 
+# pylint: disable=unnecessary-lambda
 def test_random_color_adjust_grayscale():
     """
     Tests that the random color adjust works for grayscale images 

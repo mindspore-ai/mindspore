@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
-import mindspore.nn as nn
-import mindspore.context as context
-from mindspore import Tensor
-from mindspore.ops import composite as C
+import pytest
 from cus_add3 import CusAdd3
+
+import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
 
 class Net(nn.Cell):
     """Net definition"""
@@ -30,6 +32,7 @@ class Net(nn.Cell):
 
     def construct(self, input1, input2):
         return self.add3(input1, input2)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training

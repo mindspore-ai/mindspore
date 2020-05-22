@@ -38,6 +38,7 @@ def vm_impl_tensor_add(self):
     return vm_impl
 
 
+# pylint: disable=used-before-assignment
 @vm_impl_getters.register(P.LogicalNot)
 def vm_impl_logical_not(self):
     x = x.asnumpy()

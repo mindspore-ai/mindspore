@@ -13,9 +13,9 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
+
 
 # Generate 1d int numpy array from 0 - 63
 def generator_1d():
@@ -33,7 +33,7 @@ def test_case_0():
 
     data1 = data1.shuffle(2)
 
-    data1 = data1.map(["data"], operations=(lambda x : x))
+    data1 = data1.map(["data"], operations=(lambda x: x))
 
     data1 = data1.batch(2)
 

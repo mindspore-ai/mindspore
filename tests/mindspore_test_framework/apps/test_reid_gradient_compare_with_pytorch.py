@@ -21,7 +21,6 @@ from mindspore import context
 from mindspore.ops import operations as P
 from ..mindspore_test import mindspore_test
 from ..pipeline.gradient.compare_gradient import pipeline_for_compare_inputs_grad_with_npy_for_case_by_case_config
-from ...vm_impl import *
 
 verification_set = [
     ('MatMul', {
