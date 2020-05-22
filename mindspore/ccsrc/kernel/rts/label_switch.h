@@ -42,6 +42,14 @@ class LabelSwitchKernel : public RtKernel {
   void *cond_;
 };
 
+class LabelSwitchDesc : public RtKerDesc {
+ public:
+  LabelSwitchDesc() = default;
+  ~LabelSwitchDesc() override = default;
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetKernelInfo() override;
+};
+
+MS_REG_RTKERNEL_DESC(labelswitch, LabelSwitchDesc);
 MS_REG_RTKERNEL(labelswitch, LabelSwitchKernel);
 }  // namespace kernel
 }  // namespace mindspore

@@ -44,6 +44,12 @@ RtKerDescFactory &RtKerDescFactory::Get() {
   return _this;
 }
 
+static bool IsDefaultKernelInfo(const std::string &name) {
+  static const std::set<std::string> white_list = {kStreamSwitchOpName, kStreamActiveOpName, kLabelSetOpName,
+                                                   kLabelGotoOpName};
+  return white_list.find(name) != white_list.end();
+}
+
 void GetRtKelInfo(const CNodePtr &kernel_node,
                   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> *kernel_info_list) {
   MS_EXCEPTION_IF_NULL(kernel_info_list);
@@ -58,7 +64,7 @@ void GetRtKelInfo(const CNodePtr &kernel_node,
   }
   // if can't find kernel info in kernel info database, use the default kernel info
   auto node_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (node_name == "StreamSwitch" || node_name == "StreamActive") {
+  if (IsDefaultKernelInfo(node_name)) {
     auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     // set input infos
     auto input_num = AnfAlgo::GetInputTensorNum(kernel_node);

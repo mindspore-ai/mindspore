@@ -28,6 +28,7 @@
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "utils/graph_utils.h"
+#include "utils/contract.h"
 #include "device/kernel_info.h"
 
 namespace mindspore {
@@ -108,6 +109,7 @@ class KernelGraph : public FuncGraph {
   std::vector<std::shared_ptr<KernelGraph>> child_graph_order() const { return child_graph_order_; }
   // checkout whether current graph is leaf graph
   bool IsLeafGraph() const;
+
   // set input_tensors pointer of control parameter
   void set_input_ctrl_tensors(const std::shared_ptr<std::vector<tensor::TensorPtr>> &input_tensors_ptr) {
     input_ctrl_tensors_ = input_tensors_ptr;
@@ -125,6 +127,9 @@ class KernelGraph : public FuncGraph {
   void SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg);
   // used to dump ir
   std::string ToString() const override;
+
+  void set_start_label(const CNodePtr &start_label) { start_label_ = start_label; }
+  CNodePtr get_start_label() { return start_label_; }
 
  private:
   // remove value node form graph
@@ -168,12 +173,16 @@ class KernelGraph : public FuncGraph {
   std::map<AnfNodePtr, std::shared_ptr<KernelGraph>> node_to_child_graphs_;
   // child graph execute order in root graph
   std::vector<std::shared_ptr<KernelGraph>> child_graph_order_;
+
   // input_tensors of control parameter
   std::shared_ptr<std::vector<tensor::TensorPtr>> input_ctrl_tensors_;
+
   // parameter graph
   std::shared_ptr<KernelGraph> parent_graph_;
   // record real parameters,inputs_ is the formal parameters
   std::map<AnfNodePtr, std::set<AnfNodePtr>> real_inputs_;
+
+  CNodePtr start_label_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;
