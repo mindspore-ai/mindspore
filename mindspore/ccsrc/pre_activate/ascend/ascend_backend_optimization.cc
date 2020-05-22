@@ -81,6 +81,7 @@
 #include "pre_activate/ascend/enhancer/getnext_memcpy_elimination.h"
 #include "pre_activate/ascend/ir_fission/addn_fission.h"
 #include "pre_activate/ascend/enhancer/insert_memcpy_async_for_getnext.h"
+#include "pre_activate/ascend/ir_fission/batch_norm_grad_infer_fission.h"
 #include "utils/context/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -116,6 +117,7 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
 }
 }  // namespace
 
