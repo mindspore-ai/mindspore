@@ -37,13 +37,14 @@ C0 = 16
 
 
 def caculate_device_shape(matrix_dim, channel, is_A):
+    ll = (0)
     if is_A:
         if channel // C0 == 0:
             matrix_dim = (matrix_dim / channel) * C0
-        return (int(matrix_dim // C0), int(matrix_dim // C0), C0, C0), int(matrix_dim)
+        ll = (int(matrix_dim // C0), int(matrix_dim // C0), C0, C0), int(matrix_dim)
     else:
-        return (int(matrix_dim // C0), int(matrix_dim // C0), C0, C0), int(matrix_dim)
-
+        ll = (int(matrix_dim // C0), int(matrix_dim // C0), C0, C0), int(matrix_dim)
+    return ll
 
 class _Conv(Cell):
     r"""Applies a N-D convolution over an input signal composed of several input
@@ -91,7 +92,7 @@ class _Conv(Cell):
                              'attr \'group\' of \'Conv2D\' Op.')
 
         self.weight = Parameter(initializer(
-                                weight_init, [out_channels, in_channels // group, *kernel_size]), name='weight')
+            weight_init, [out_channels, in_channels // group, *kernel_size]), name='weight')
 
         if check_bool(has_bias):
             self.bias = Parameter(_initializer(
@@ -311,18 +312,18 @@ class Conv2d_Thor(_Conv):
             'stride={},  pad_mode={}, padding={}, dilation={}, ' \
             'group={}, data_format={}, has_bias={},' \
             'weight_init={}, bias_init={}'.format(
-                                                  self.in_channels,
-                                                  self.out_channels,
-                                                  self.kernel_size,
-                                                  self.stride,
-                                                  self.pad_mode,
-                                                  self.padding,
-                                                  self.dilation,
-                                                  self.group,
-                                                  self.data_format,
-                                                  self.has_bias,
-                                                  self.weight,
-                                                  self.bias)
+                self.in_channels,
+                self.out_channels,
+                self.kernel_size,
+                self.stride,
+                self.pad_mode,
+                self.padding,
+                self.dilation,
+                self.group,
+                self.data_format,
+                self.has_bias,
+                self.weight,
+                self.bias)
 
         if self.has_bias:
             s += ', bias={}'.format(self.bias)

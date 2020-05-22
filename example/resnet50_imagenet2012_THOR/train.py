@@ -125,7 +125,7 @@ if __name__ == '__main__':
         else:
             lr = Tensor(get_lr(global_step=0, lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max,
                                warmup_epochs=config.warmup_epochs, total_epochs=epoch_size, steps_per_epoch=step_size,
-                               lr_decay_mode='poly'))
+                               ))
         opt = THOR(filter(lambda x: x.requires_grad, net.get_parameters()), lr,
                    config.momentum, damping, config.frequency,
                    filter(lambda x: 'matrix_A' in x.name, net.get_parameters()),
