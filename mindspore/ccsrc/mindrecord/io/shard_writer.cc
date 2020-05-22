@@ -201,7 +201,7 @@ MSRStatus ShardWriter::OpenForAppend(const std::string &path) {
   if (ret == FAILED) {
     return FAILED;
   }
-  ret = Open(json_header["shard_addresses"], true);
+  ret = Open(real_addresses, true);
   if (ret == FAILED) {
     MS_LOG(ERROR) << "Open file failed";
     return FAILED;
