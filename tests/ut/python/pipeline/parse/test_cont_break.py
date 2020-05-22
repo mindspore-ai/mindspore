@@ -34,6 +34,7 @@ def run_test(netclass, count):
         # np.testing.assert_array_almost_equal(output_np, output_ms.asnumpy(), decimal=3)
 
 
+# pylint: disable=unnecessary-pass
 class for_loop_with_break(Cell):
     def __init__(self):
         super().__init__()
@@ -70,7 +71,7 @@ class for_loop_with_continue(Cell):
 def test_for_loop_with_continue():
     run_test(for_loop_with_continue, 10)
 
-
+# pylint: disable=unnecessary-pass
 class for_loop_with_cont_break(Cell):
     def __init__(self):
         super().__init__()

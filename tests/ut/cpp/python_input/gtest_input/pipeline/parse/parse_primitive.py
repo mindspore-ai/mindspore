@@ -19,16 +19,14 @@
 @Desc  : parser class method function.
 """
 import logging
+
 import numpy as np
-import sys
-from collections import *
 
 import mindspore.nn as nn
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive, prim_attr_register
 from mindspore.ops import functional as F
-from mindspore.train.model import Model
 
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)

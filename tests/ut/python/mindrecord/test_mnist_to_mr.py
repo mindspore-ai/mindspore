@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """test mnist to mindrecord tool"""
-import cv2
 import gzip
-import pytest
-import numpy as np
 import os
+
+import cv2
+import numpy as np
+import pytest
 
 from mindspore import log as logger
 from mindspore.mindrecord import FileReader
@@ -144,10 +145,10 @@ def test_mnist_to_mindrecord_compare_data(fixture_file):
         assert np.array(x['label']) == label
     reader.close()
 
+
 def test_mnist_to_mindrecord_multi_partition(fixture_file):
     """test transform mnist dataset to multiple mindrecord files."""
     mnist_transformer = MnistToMR(MNIST_DIR, FILE_NAME, PARTITION_NUM)
     mnist_transformer.transform()
 
     read("mnist_train.mindrecord0", "mnist_test.mindrecord0")
-

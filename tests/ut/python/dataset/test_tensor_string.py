@@ -19,6 +19,7 @@ import pytest
 import mindspore.dataset as ds
 
 
+# pylint: disable=comparison-with-itself
 def test_basic():
     x = np.array([["ab", "cde", "121"], ["x", "km", "789"]], dtype='S')
     # x = np.array(["ab", "cde"], dtype='S')

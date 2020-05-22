@@ -36,6 +36,7 @@ def normalize_np(image):
     return image
 
 
+# pylint: disable=inconsistent-return-statements
 def get_normalized(image_id):
     """
     Reads the image using DE ops and then normalizes using Numpy

@@ -13,13 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
 import numpy as np
+import pytest
+
 import mindspore.context as context
+import mindspore.nn as nn
+from mindspore import Tensor
 from mindspore.common import dtype as mstype
+from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -45,6 +46,6 @@ def test_slice():
     print("output:\n", output)
     assert (output.asnumpy() == expect).all()
 
+
 if __name__ == '__main__':
     test_slice()
-

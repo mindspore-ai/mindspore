@@ -70,6 +70,7 @@ def test_pad_op():
         assert mse < 0.01
 
 
+# pylint: disable=unnecessary-lambda
 def test_pad_grayscale():
     """
     Tests that the pad works for grayscale images 
