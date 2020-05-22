@@ -24,6 +24,7 @@ top_k_op_info = AiCPURegOp("TopK") \
     .output(0, "values", "required") \
     .output(1, "indices", "required") \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default, DataType.I32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
     .get_op_info()
 
 @op_info_register(top_k_op_info)
