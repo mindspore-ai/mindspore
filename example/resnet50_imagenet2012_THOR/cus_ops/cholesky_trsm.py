@@ -59,5 +59,5 @@ from mindspore.ops.op_info_register import op_info_register
    ]
 }""")
 def CusCholeskyTrsm(input_x, output, kernel_name):
-"""CusCholeskyTrsm"""
+    """CusCholeskyTrsm"""
     return

@@ -35,4 +35,3 @@ class CusBatchMatMul(PrimitiveWithInfer):
 
     def infer_dtype(self, data1_dtype, data2_dtype):
         return data1_dtype
-

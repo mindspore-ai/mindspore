@@ -71,5 +71,5 @@ from mindspore.ops.op_info_register import op_info_register
     ]
 }""")
 def CusBatchMatMul(input_x1, input_x2, output, transpose_a=False, transpose_b=True, kernel_name="batchmatmul"):
-"""CusBatchMatMul"""
+    """CusBatchMatMul"""
     return

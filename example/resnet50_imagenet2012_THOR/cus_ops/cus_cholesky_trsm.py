@@ -35,4 +35,3 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
 
     def infer_dtype(self, data1_dtype):
         return data1_dtype
-

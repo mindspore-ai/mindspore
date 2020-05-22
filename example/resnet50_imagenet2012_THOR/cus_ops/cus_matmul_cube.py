@@ -52,4 +52,3 @@ class CusMatMulCube(PrimitiveWithInfer):
 
     def infer_dtype(self, data1_dtype, data2_dtype):
         return ms.common.dtype.tensor_type(getattr(ms, "float32"))
-
