@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pre_activate/ascend/buffer_fusion/conv_double_in_fusion_pass.h"
+#include "pre_activate/ascend/buffer_fusion/conv2dbackprop_eltwise_eltwise_fusion_pass.h"
 #include <vector>
 #include <unordered_set>
 #include <memory>
@@ -27,8 +27,8 @@
 
 namespace mindspore {
 namespace opt {
-void ConvDoubleInFusionPass::MatchConvDoubleInEltwise(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
-                                                      FusedNodeRecord *candidate_fusion) {
+void Conv2DBackpropEltwiseEltwiseFusionPass::MatchConv2DBackpropInputEltwiseEltwise(
+  const CNodePtr &cnode, const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   auto manager = kernel_graph.manager();
@@ -47,16 +47,15 @@ void ConvDoubleInFusionPass::MatchConvDoubleInEltwise(const CNodePtr &cnode, con
       fusion_id_allocator->HasFusionIdAttr(double_in_eltwise_input)) {
     return;
   }
-  if (AnfAlgo::GetKernelType(double_in_eltwise_input) == KernelType::TBE_KERNEL &&
-      AnfAlgo::GetFusionType(double_in_eltwise_input) == kernel::FusionType::CONVLUTION) {
+  if (AnfAlgo::CheckPrimitiveType(double_in_eltwise_input, prim::kPrimConv2DBackpropInput)) {
     (void)record.insert(double_in_eltwise_input);
     candidate_fusion->push_back(record);
     SetRecordFusionId(record);
   }
 }
 
-void ConvDoubleInFusionPass::MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
-                                                      FusedNodeRecord *candidate_fusion) {
+void Conv2DBackpropEltwiseEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGraph &kernel_graph,
+                                                                      FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
   for (auto &node : node_list) {
@@ -67,8 +66,9 @@ void ConvDoubleInFusionPass::MatchSingleFusionPattern(const session::KernelGraph
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (AnfAlgo::GetKernelType(cnode) == KernelType::TBE_KERNEL &&
-        AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE && cnode->inputs().size() == ELTWISE_INPUT_SIZE) {
-      MatchConvDoubleInEltwise(cnode, kernel_graph, candidate_fusion);
+        AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE &&
+        (cnode->inputs().size() == ELTWISE_INPUT_SIZE || cnode->inputs().size() == ELTWISE_DOUBLE_IN_INPUT_SIZE)) {
+      MatchConv2DBackpropInputEltwiseEltwise(cnode, kernel_graph, candidate_fusion);
     }
   }
 }

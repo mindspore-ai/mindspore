@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_FUSION_ID_ALLOCATOR_H_
 #define MINDSPORE_CCSRC_PRE_ACTIVATE_COMMON_FUSION_ID_ALLOCATOR_H_
 
+#include <memory>
 #include "ir/base.h"
 
 namespace mindspore {
@@ -36,6 +37,7 @@ class FusionIdAllocator {
  private:
   int32_t fusion_id;
 };
+using FusionIdAllocatorPtr = std::shared_ptr<FusionIdAllocator>;
 }  // namespace opt
 }  // namespace mindspore
 
