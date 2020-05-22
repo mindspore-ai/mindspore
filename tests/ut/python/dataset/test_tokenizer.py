@@ -17,8 +17,7 @@ Testing UnicodeCharTokenizer op in DE
 """
 import mindspore.dataset as ds
 from mindspore import log as logger
-import mindspore.dataset.transforms.text.c_transforms as nlp
-import mindspore.dataset.transforms.text.utils as nlp_util
+import mindspore.dataset.text as nlp
 
 DATA_FILE = "../data/dataset/testTokenizerData/1.txt"
 
@@ -43,7 +42,7 @@ def test_unicode_char_tokenizer():
     dataset = dataset.map(operations=tokenizer)
     tokens = []
     for i in dataset.create_dict_iterator():
-        text = nlp_util.as_text(i['text']).tolist()
+        text = nlp.to_str(i['text']).tolist()
         tokens.append(text)
     logger.info("The out tokens is : {}".format(tokens))
     assert split_by_unicode_char(input_strs) == tokens

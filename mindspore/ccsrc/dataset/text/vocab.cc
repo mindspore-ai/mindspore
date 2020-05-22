@@ -17,7 +17,7 @@
 #include <map>
 #include <utility>
 
-#include "dataset/nlp/vocab.h"
+#include "dataset/text/vocab.h"
 
 namespace mindspore {
 namespace dataset {
