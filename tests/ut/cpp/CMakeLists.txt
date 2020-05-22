@@ -128,7 +128,7 @@ add_executable(ut_tests ${UT_SRCS} ${MINDSPORE_SRC_LIST} ${UT_SUTB_SRC_LIST})
 
 if (ENABLE_GE)
     if(ENABLE_TRAIN)
-        target_link_libraries(ut_tests PRIVATE graph ge_client_train)
+        target_link_libraries(ut_tests PRIVATE graph ge_runner)
     else()
         target_link_libraries(ut_tests PRIVATE graph ge_client)
     endif()
