@@ -52,6 +52,7 @@ add_subdirectory(core)
 add_subdirectory(kernels)
 add_subdirectory(engine)
 add_subdirectory(api)
+add_subdirectory(nlp)
 ######################################################################
 
 ################### Create _c_dataengine Library ######################
@@ -68,6 +69,8 @@ set(submodules
     $<TARGET_OBJECTS:engine-datasetops>
     $<TARGET_OBJECTS:engine-opt>
     $<TARGET_OBJECTS:engine>
+    $<TARGET_OBJECTS:nlp>
+    $<TARGET_OBJECTS:nlp-kernels>
     )
 
 if (ENABLE_TDTQUE)
