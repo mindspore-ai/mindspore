@@ -94,7 +94,7 @@ class TestUnsupportParam():
     """ TestUnsupportParam definition """
 
     def test_optim_init(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             Optimizer(0.1, (1, 2, 3))
 
     def test_AdamWightDecay_init(self):
