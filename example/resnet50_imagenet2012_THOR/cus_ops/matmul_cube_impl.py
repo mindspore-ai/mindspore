@@ -2,11 +2,11 @@
 # -*- coding:utf-8 -*-
 """
 copyright 2020 Huawei Technologies Co., Ltd
- 
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
@@ -14,7 +14,7 @@ distributed under the License == distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
- 
+
 matmul
 """
 from __future__ import absolute_import
@@ -28,15 +28,27 @@ NoneType = type(None)
 
 
 @op_info_register("""{
-    "op_name": "CusMatMulCubeDenseLeft",
+    "op_name": "CusMatMulCube",
     "imply_type": "TBE",
     "fusion_type": "OPAQUE",
     "async_flag": false,
-    "binfile_name": "matmulcubedenseleft.so",
+    "binfile_name": "matmulcube.so",
     "compute_cost": 10,
-    "kernel_name": "CusMatMulCubeDenseLeft",
+    "kernel_name": "CusMatMulCube",
     "partial_flag": true,
     "attr": [
+        {
+            "name": "transpose_a",
+            "param_type": "required",
+            "type": "bool",
+            "value": "all"
+        },
+        {
+            "name": "transpose_b",
+            "param_type": "required",
+            "type": "bool",
+            "value": "all"
+        }
     ],
     "inputs": [
         {
@@ -45,7 +57,7 @@ NoneType = type(None)
                 "float16"
             ],
             "format": [
-                "DefaultFormat"
+                "FRACTAL_NZ"
             ],
             "name": "x1",
             "need_compile": false,
@@ -83,7 +95,7 @@ NoneType = type(None)
         {
             "index": 0,
             "dtype": [
-                "float16"
+                "float32"
             ],
             "format": [
                 "FRACTAL_NZ"
@@ -95,7 +107,8 @@ NoneType = type(None)
         }
     ]
 }""")
+# pylint: disable=locally-disabled,too-many-arguments, too-many-locals, too-many-statements
 @util.check_input_type(dict, dict, (dict, NoneType), dict, bool, bool, str)
-def CusMatMulCubeDenseLeft(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False,
-                           kernel_name="matmulcube"):
+def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False, kernel_name="matmulcube"):
+    """CusMatMulCube"""
     return

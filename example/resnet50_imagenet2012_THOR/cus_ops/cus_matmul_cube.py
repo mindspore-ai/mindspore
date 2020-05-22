@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""CusMatMulCube"""
 import mindspore as ms
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.composite import multitype_ops as C
@@ -37,11 +38,11 @@ class CusMatMulCube(PrimitiveWithInfer):
     def infer_shape(self, data1_shape, data2_shape):
         # shape = [1, data1_shape[1], data2_shape[2], 16, 16]
         # return shape
-        if self.transpose_a == True:
+        if self.transpose_a:
             k1, m = data1_shape
         else:
             m, k1 = data1_shape
-        if self.transpose_b == True:
+        if self.transpose_b:
             n, k2 = data2_shape
         else:
             k2, n = data2_shape
@@ -51,3 +52,4 @@ class CusMatMulCube(PrimitiveWithInfer):
 
     def infer_dtype(self, data1_dtype, data2_dtype):
         return ms.common.dtype.tensor_type(getattr(ms, "float32"))
+

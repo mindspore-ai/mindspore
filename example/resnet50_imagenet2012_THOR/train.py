@@ -18,7 +18,6 @@ import os
 import random
 
 import mindspore.dataset.engine as de
-import numpy as np
 from mindspore import Tensor
 from mindspore import context
 from mindspore.communication.management import init
@@ -30,6 +29,7 @@ from second_order.model_second_order import Model
 from second_order.resnet import resnet50
 from second_order.thor import THOR
 
+import numpy as np
 from config_imagenet import config
 from crossentropy import CrossEntropy
 from dataset_imagenet import create_dataset
@@ -56,13 +56,14 @@ context.set_context(enable_mem_reuse=True)
 
 
 def get_second_order_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch):
+    """get_second_order_lr"""
     lr_each_step = []
     total_steps = steps_per_epoch * total_epochs
     for i in range(total_steps):
         epoch = (i + 1) / steps_per_epoch
         base = (1.0 - float(epoch) / total_epochs) ** decay
-        lr = lr_init * base
-        lr_each_step.append(lr)
+        lr_local = lr_init * base
+        lr_each_step.append(lr_local)
     current_step = global_step
     lr_each_step = np.array(lr_each_step).astype(np.float32)
     print("learning_rate_is=====", lr_each_step)
@@ -71,12 +72,13 @@ def get_second_order_lr(global_step, lr_init, decay, total_epochs, steps_per_epo
 
 
 def get_second_order_damping(global_step, damping_init, decay_rate, total_epochs, steps_per_epoch):
+    """get_second_order_damping"""
     damping_each_step = []
     total_steps = steps_per_epoch * total_epochs
     for step in range(total_steps):
         epoch = (step + 1) / steps_per_epoch
-        damping = damping_init * (decay_rate ** (epoch / 10))
-        damping_each_step.append(damping)
+        damping_here = damping_init * (decay_rate ** (epoch / 10))
+        damping_each_step.append(damping_here)
 
     current_step = global_step
     damping_each_step = np.array(damping_each_step).astype(np.float32)

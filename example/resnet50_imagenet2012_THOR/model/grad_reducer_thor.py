@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""grad_reducer_thor"""
 import mindspore.common.dtype as mstype
 from mindspore.communication.management import GlobalComm, get_group_size
 from mindspore.nn.cell import Cell

@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""CusMatrixCombine"""
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.composite import multitype_ops as C
 
 
-class CusFusedAbsMax1(PrimitiveWithInfer):
-    """CusCholeskyTrsm definition"""
+class CusMatrixCombine(PrimitiveWithInfer):
+    """CusMatMulCube definition"""
 
     @prim_attr_register
-    def __init__(self, origin_shape=[-1, -1]):
-        """init CusCholeskyTrsm"""
-        self.init_prim_io_names(inputs=['x1'], outputs=['y'])
-        self.origin_shape = origin_shape
+    def __init__(self):
+        """init CusMatMulCube"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def get_bprop(self):
         def bprop(x, out, dout):
@@ -31,11 +31,11 @@ class CusFusedAbsMax1(PrimitiveWithInfer):
 
         return bprop
 
-    def infer_shape(self, data1_shape):
-        if len(data1_shape) == 2:
-            return [1, ]
-        else:
-            return [32, 64]
+    def infer_shape(self, data_shape):
+        a, b, c = data_shape
+        shape = [a * b, a * c]
 
-    def infer_dtype(self, data1_dtype):
-        return data1_dtype
+        return shape
+
+    def infer_dtype(self, data_dtype):
+        return data_dtype

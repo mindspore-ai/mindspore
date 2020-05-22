@@ -126,8 +126,8 @@ def _bn_last(channel):
 def _fc(in_channel, out_channel, damping, loss_scale, frequency):
     weight_shape = (out_channel, in_channel)
     weight = Tensor(kaiming_uniform(weight_shape, a=math.sqrt(5))
-    return Dense_Thor(in_channel, out_channel, has_bias=False, weight_init=weight, bias_init=0,
-                      damping=damping, loss_scale=loss_scale, frequency=frequency)
+    return Dense_Thor(in_channel, out_channel, has_bias=False, weight_init=weight,
+                      bias_init=0, damping=damping, loss_scale=loss_scale, frequency=frequency)
 
 
 class ResidualBlock(nn.Cell):

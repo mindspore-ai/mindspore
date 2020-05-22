@@ -12,40 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""CusMatMulCubeFraczRightMul"""
+import mindspore as ms
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.composite import multitype_ops as C
 
 
-class CusImg2Col(PrimitiveWithInfer):
-    """CusImg2Col definition"""
+class CusMatMulCubeFraczRightMul(PrimitiveWithInfer):
+    """CusMatMulCubeFraczRightMul definition"""
 
     @prim_attr_register
-    def __init__(self, ksizes, strides, dilates=(1, 1, 1, 1), mode="NC1HWC0"):
-        """init CusImg2Col"""
-        self.init_prim_io_names(inputs=['x1'], outputs=['y'])
-        self.ksizes = ksizes
-        self.strides = strides
-        self.dilates = dilates
-        self.mode = mode
+    def __init__(self):
+        """init CusMatMulCubeFraczRightMul"""
+        self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
 
     def get_bprop(self):
-        def bprop(x, out, dout):
-            return (C.zeros_like(x),)
+        def bprop(x1, x2, x3, out, dout):
+            return (C.zeros_like(x1), C.zeros_like(x2), C.zeros_like(x3))
 
         return bprop
 
-    def infer_shape(self, data1_shape):
-        bs, c, h, w = data1_shape
-        _, stride_h, stride_w, _ = self.strides
-        _, k_w, k_h, _ = self.ksizes
-        # assert m == n
-        c0 = 16
-        c1 = c // 16
-        if c1 == 0:
-            c1 = 1
-        shape = [bs * int(h // stride_h) * int(w // stride_w), k_w * k_h * c1 * c0]
-        return shape
+    def infer_shape(self, data1_shape, data2_shape, data3_shape):
+        return data1_shape
 
-    def infer_dtype(self, data1_dtype):
-        return data1_dtype
+    def infer_dtype(self, data1_dtype, data2_dtype, data3_dtype):
+        return ms.common.dtype.tensor_type(getattr(ms, "float32"))

@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """Model."""
-import mindspore.nn as nn
-import numpy as np
 from mindspore import context
 from mindspore import log as logger
 from mindspore._c_expression import init_exec_dataset
@@ -30,16 +28,17 @@ from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_
 from mindspore.train import amp
 from mindspore.train.callback import _InternalCallbackParam, RunContext, _build_callbacks
 from mindspore.train.parallel_utils import ParallelMode
+import mindspore.nn as nn
 from second_order.dataset_helper import DatasetHelper
-
+import numpy as np
 
 def _convert_type(types):
     """
     Convert from numpy type to tensor type.
- 
+
     Args:
         types (list): Numpy type list of element in dataset.
- 
+
     Returns:
         list, list of element in dataset.
     """
@@ -76,9 +75,9 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset'):
 class Model:
     """
     High-Level API for Training or Testing.
- 
+
     `Model` groups layers into an object with training and inference features.
- 
+
     Args:
         network (Cell): The training or testing network.
         loss_fn (Cell): Objective function, if loss_fn is None, the
@@ -96,15 +95,15 @@ class Model:
                              metric. Default: None.
         amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network`, level for mixed
             precision training. Supports [O0, O2]. Default: "O0".
- 
+
             - O0: Do not change.
             - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
- 
+
         loss_scale_manager (Union[None, LossScaleManager]): If None, not scale the loss, or else
             scale the loss by LossScaleManager. If it is set, overwrite the level setting. It's a eyword argument.
             e.g. Use `loss_scale_manager=None` to set the value.
         keep_batchnorm_fp32 (bool): Keep Batchnorm run in `float32`. If set, overwrite the level setting. Default: True.
- 
+
     Examples:
         >>> class Net(nn.Cell):
         >>>     def __init__(self):
@@ -250,7 +249,7 @@ class Model:
     def _train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True):
         """
         Training.
- 
+
         Args:
             epoch (int): Total number of iterations on the data.
             train_dataset (Dataset): A training dataset iterator. If there is no
@@ -296,7 +295,7 @@ class Model:
     def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None):
         """
         Training process. The data would be passed to network through dataset channel.
- 
+
         Args:
             epoch (int): Total number of iterations on the data.
             train_dataset (Dataset): A training dataset iterator. If there is no
@@ -366,7 +365,7 @@ class Model:
     def _train_process(self, epoch, train_dataset, list_callback=None, cb_params=None):
         """
         Training process. The data would be passed to network directly.
- 
+
         Args:
             epoch (int): Total number of iterations on the data.
             train_dataset (Dataset): A training dataset iterator. If there is no
@@ -426,9 +425,9 @@ class Model:
     def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True):
         """
         Training API where the iteration is controlled by python front-end.
- 
+
         When setting pynative mode, the training process will be performed with dataset not sink.
- 
+
         Note:
             CPU is not supported when dataset_sink_mode is true.
             If dataset_sink_mode is True, epoch of training should be equal to the count of repeat
@@ -436,7 +435,7 @@ class Model:
             is not the amount training requires.
             If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
- 
+
         Args:
             epoch (int): Total number of iterations on the data.
             train_dataset (Dataset): A training dataset iterator. If there is no
@@ -448,8 +447,8 @@ class Model:
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
                                       Configure pynative mode, the training process will be performed with
                                       dataset not sink.
- 
- 
+
+
         Examples:
             >>> dataset = get_dataset()
             >>> net = Net()
@@ -477,12 +476,12 @@ class Model:
     def _eval_dataset_sink_process(self, valid_dataset, list_callback=None, cb_params=None):
         """
         Evaluation. The data would be passed to network through dataset channel.
- 
+
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
             list_callback (ListCallback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
- 
+
         Returns:
             Dict, returns the loss value & metrics values for the model in test mode.
         """
@@ -526,7 +525,7 @@ class Model:
     def _eval_process(self, valid_dataset, list_callback=None, cb_params=None):
         """
         Evaluation. The data would be passed to network directly.
- 
+
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
             list_callback (ListCallback): Executor of callback list. Default: None.
@@ -555,23 +554,23 @@ class Model:
     def eval(self, valid_dataset, callbacks=None, dataset_sink_mode=True):
         """
         Evaluation API where the iteration is controlled by python front-end.
- 
+
         Configure to pynative mode, the evaluation will be performed with dataset non-sink mode.
- 
+
         Note:
             CPU is not supported when dataset_sink_mode is true.
             If dataset_sink_mode is True, data will be sent to device. If device is Ascend, features
             of data will be transferred one by one. The limitation of data transmission per time is 256M.
- 
+
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
             callbacks (list): List of callback object. Callbacks which should be excuted
                               while training. Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
- 
+
         Returns:
             Dict, returns the loss value & metrics values for the model in test mode.
- 
+
         Examples:
             >>> dataset = get_dataset()
             >>> net = Net()
@@ -603,18 +602,18 @@ class Model:
     def predict(self, *predict_data):
         """
         Generates output predictions for the input samples.
- 
+
         Data could be single tensor, or list of tensor, tuple of tensor.
- 
+
         Note:
             Batch data should be put together in one tensor.
- 
+
         Args:
            predict_data (Tensor): Tensor of predict data. can be array, list or tuple.
- 
+
         Returns:
             Tensor, array(s) of predictions.
- 
+
         Examples:
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
             >>> model = Model(Net())

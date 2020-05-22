@@ -12,55 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 from mindspore.ops.op_info_register import op_info_register
-
+"""batch_matmul_impl"""
 
 @op_info_register("""{
-    "op_name": "CusImg2ColNC1HWC0",
+    "op_name": "CusBatchMatMul",
     "imply_type": "TBE",
     "fusion_type": "OPAQUE",
     "async_flag": false,
-    "binfile_name": "img2colnc1hwc0.so",
+    "binfile_name": "batchmatmul.so",
     "compute_cost": 10,
-    "kernel_name": "CusImg2ColNC1HWC0",
+    "kernel_name": "CusBatchMatMul",
     "partial_flag": true,
     "attr": [
-        {
-            "name": "ksizes",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "strides",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "dilates",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        },
-        {
-            "name": "padding",
-            "param_type": "required",
-            "type": "str",
-            "value": "all"
-        }
     ],
     "inputs": [
         {
             "index": 0,
             "dtype": [
-                "float16"
+                "float32"
             ],
             "format": [
-                "NC1HWC0"
+                "DefaultFormat"
             ],
             "name": "x1",
+            "need_compile": false,
+            "param_type": "required",
+            "shape": "all"
+        },
+        {
+            "index": 1,
+            "dtype": [
+                "float32"
+            ],
+            "format": [
+                "DefaultFormat"
+            ],
+            "name": "x2",
             "need_compile": false,
             "param_type": "required",
             "shape": "all"
@@ -70,10 +58,10 @@ from mindspore.ops.op_info_register import op_info_register
         {
             "index": 0,
             "dtype": [
-                "float16"
+                "float32"
             ],
             "format": [
-                "FRACTAL_NZ"
+                "DefaultFormat"
             ],
             "name": "y",
             "need_compile": false,
@@ -82,5 +70,6 @@ from mindspore.ops.op_info_register import op_info_register
         }
     ]
 }""")
-def CusImg2ColNC1HWC0(input_x, output, ksizes, strides, dilates, padding, kernel_name="img2col"):
+def CusBatchMatMul(input_x1, input_x2, output, transpose_a=False, transpose_b=True, kernel_name="batchmatmul"):
+"""CusBatchMatMul"""
     return

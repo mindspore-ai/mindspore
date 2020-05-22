@@ -25,17 +25,17 @@ from mindspore.train.parallel_utils import ParallelMode
 class DatasetHelper:
     """
     Help function to use the Minddata dataset.
- 
+
     According to different context, change the iter of dataset, to use the same for loop in different context.
- 
+
     Note:
         The iter of DatasetHelper will give one epoch data.
- 
+
     Args:
         dataset (DataSet): The dataset.
         dataset_sink_mode (bool): If true use GetNext to fetch the data, or else feed the data from host.
             Default: True.
- 
+
     Examples:
         >>> dataset_helper = DatasetHelper(dataset)
         >>> for inputs in dataset_helper:

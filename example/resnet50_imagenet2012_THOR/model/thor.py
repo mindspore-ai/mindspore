@@ -14,8 +14,6 @@
 # ============================================================================
 """momentum"""
 import mindspore.common.dtype as mstype
-from cus_ops.cus_matmul_cube_dense_right import CusMatMulCubeDenseRight
-from cus_ops.cus_matmul_cube_fracz_left_cast import CusMatMulCubeFraczLeftCast
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.parameter import ParameterTuple
@@ -24,6 +22,8 @@ from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.parallel._utils import _get_device_num, _get_mirror_mean
 
+from cus_ops.cus_matmul_cube_dense_right import CusMatMulCubeDenseRight
+from cus_ops.cus_matmul_cube_fracz_left_cast import CusMatMulCubeFraczLeftCast
 from cus_ops.cus_matmul_cube_dense_left import CusMatMulCubeDenseLeft
 from cus_ops.cus_matmul_cube_fracz_right_mul import CusMatMulCubeFraczRightMul
 from model.grad_reducer_thor import DistributedGradReducerThor
@@ -52,6 +52,7 @@ def _tensor_apply_decay(weight_decay, if_apply, weight, gradient):
 
 
 class THOR(Optimizer):
+    """THOR"""
     def __init__(self, params, learning_rate, momentum, matrix_A, matrix_G, A_inv_max, G_inv_max, weight_decay=0.0,
                  loss_scale=1.0,
                  decay_filter=lambda x: x.name not in []):

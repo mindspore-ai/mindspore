@@ -12,17 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""CusImg2Col"""
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.composite import multitype_ops as C
 
 
-class CusMatrixCombine(PrimitiveWithInfer):
-    """CusMatMulCube definition"""
+class CusImg2Col(PrimitiveWithInfer):
+    """CusImg2Col definition"""
 
     @prim_attr_register
-    def __init__(self):
-        """init CusMatMulCube"""
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+    def __init__(self, ksizes, strides, dilates=(1, 1, 1, 1), mode="NC1HWC0"):
+        """init CusImg2Col"""
+        self.init_prim_io_names(inputs=['x1'], outputs=['y'])
+        self.ksizes = ksizes
+        self.strides = strides
+        self.dilates = dilates
+        self.mode = mode
 
     def get_bprop(self):
         def bprop(x, out, dout):
@@ -30,11 +35,18 @@ class CusMatrixCombine(PrimitiveWithInfer):
 
         return bprop
 
-    def infer_shape(self, data_shape):
-        a, b, c = data_shape
-        shape = [a * b, a * c]
-
+    def infer_shape(self, data1_shape):
+        bs, c, h, w = data1_shape
+        _, stride_h, stride_w, _ = self.strides
+        _, k_w, k_h, _ = self.ksizes
+        # assert m == n
+        c0 = 16
+        c1 = c // 16
+        if c1 == 0:
+            c1 = 1
+        shape = [bs * int(h // stride_h) * int(w // stride_w), k_w * k_h * c1 * c0]
         return shape
 
-    def infer_dtype(self, data_dtype):
-        return data_dtype
+    def infer_dtype(self, data1_dtype):
+        return data1_dtype
+

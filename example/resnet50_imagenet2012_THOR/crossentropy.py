@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""CrossEntropy"""
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
@@ -22,6 +22,7 @@ from mindspore.ops import operations as P
 
 
 class CrossEntropy(_Loss):
+    """CrossEntropy"""
     def __init__(self, smooth_factor=0., num_classes=1000):
         super(CrossEntropy, self).__init__()
         self.onehot = P.OneHot()

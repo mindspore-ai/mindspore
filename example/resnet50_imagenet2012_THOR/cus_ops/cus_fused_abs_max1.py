@@ -12,23 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""CusFusedAbsMax1"""
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
+from mindspore.ops.composite import multitype_ops as C
 
 
-class CusCholeskyTrsm(PrimitiveWithInfer):
+class CusFusedAbsMax1(PrimitiveWithInfer):
     """CusCholeskyTrsm definition"""
 
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, origin_shape=[-1, -1]):
         """init CusCholeskyTrsm"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
+        self.origin_shape = origin_shape
+
+    def get_bprop(self):
+        def bprop(x, out, dout):
+            return (C.zeros_like(x),)
+
+        return bprop
 
     def infer_shape(self, data1_shape):
-        m, n = data1_shape
-        if m >= 128:
-            return [m // 128, 128, 128]
+        ll = []
+        if len(data1_shape) == 2:
+            ll = [1,]
         else:
-            return [1, 64, 64]
+            ll = [32, 64]
+        return ll
 
     def infer_dtype(self, data1_dtype):
         return data1_dtype
+

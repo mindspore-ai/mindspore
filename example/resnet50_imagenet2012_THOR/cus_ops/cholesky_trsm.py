@@ -12,26 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
 from mindspore.ops.op_info_register import op_info_register
-
+"""CusCholeskyTrsm"""
 
 @op_info_register("""{
-    "op_name": "CusFusedAbsMax1",
+    "op_name": "CusCholeskyTrsm",
     "imply_type": "TBE",
     "fusion_type": "OPAQUE",
     "async_flag": false,
-    "binfile_name": "fusedabsmax1.so",
+    "binfile_name": "choleskytrsm.so",
     "compute_cost": 10,
-    "kernel_name": "CusFusedAbsMax1",
+    "kernel_name": "CusCholeskyTrsm",
     "partial_flag": true,
     "attr": [
-        {
-            "name": "origin_shape",
-            "param_type": "required",
-            "type": "listInt",
-            "value": "all"
-        }
+ 
     ],
     "inputs": [
         {
@@ -62,7 +56,8 @@ from mindspore.ops.op_info_register import op_info_register
             "param_type": "required",
             "shape": "all"
         }
-    ]
+   ]
 }""")
-def CusFusedAbsMax1(input_x, output, origin_shape=None, kernel_name="fused_abs_max1"):
+def CusCholeskyTrsm(input_x, output, kernel_name):
+"""CusCholeskyTrsm"""
     return

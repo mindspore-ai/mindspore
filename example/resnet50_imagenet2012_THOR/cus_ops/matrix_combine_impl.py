@@ -12,17 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""CusMatrixCombine"""
 from mindspore.ops.op_info_register import op_info_register
 
 
 @op_info_register("""{
-    "op_name": "CusBatchMatMul",
+    "op_name": "CusMatrixCombine",
     "imply_type": "TBE",
     "fusion_type": "OPAQUE",
     "async_flag": false,
-    "binfile_name": "batchmatmul.so",
+    "binfile_name": "matrixcombine.so",
     "compute_cost": 10,
-    "kernel_name": "CusBatchMatMul",
+    "kernel_name": "CusMatrixCombine",
     "partial_flag": true,
     "attr": [
     ],
@@ -36,19 +37,6 @@ from mindspore.ops.op_info_register import op_info_register
                 "DefaultFormat"
             ],
             "name": "x1",
-            "need_compile": false,
-            "param_type": "required",
-            "shape": "all"
-        },
-        {
-            "index": 1,
-            "dtype": [
-                "float32"
-            ],
-            "format": [
-                "DefaultFormat"
-            ],
-            "name": "x2",
             "need_compile": false,
             "param_type": "required",
             "shape": "all"
@@ -70,5 +58,6 @@ from mindspore.ops.op_info_register import op_info_register
         }
     ]
 }""")
-def CusBatchMatMul(input_x1, input_x2, output, transpose_a=False, transpose_b=True, kernel_name="batchmatmul"):
+def CusMatrixCombine(input_x, output, kernel_name="matrix_combine"):
+    """CusMatrixCombine"""
     return

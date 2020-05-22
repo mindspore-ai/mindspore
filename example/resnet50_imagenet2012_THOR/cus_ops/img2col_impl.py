@@ -12,29 +12,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""CusImg2ColNC1HWC0"""
 from mindspore.ops.op_info_register import op_info_register
 
 
 @op_info_register("""{
-    "op_name": "CusCholeskyTrsm",
+    "op_name": "CusImg2ColNC1HWC0",
     "imply_type": "TBE",
     "fusion_type": "OPAQUE",
     "async_flag": false,
-    "binfile_name": "choleskytrsm.so",
+    "binfile_name": "img2colnc1hwc0.so",
     "compute_cost": 10,
-    "kernel_name": "CusCholeskyTrsm",
+    "kernel_name": "CusImg2ColNC1HWC0",
     "partial_flag": true,
     "attr": [
- 
+        {
+            "name": "ksizes",
+            "param_type": "required",
+            "type": "listInt",
+            "value": "all"
+        },
+        {
+            "name": "strides",
+            "param_type": "required",
+            "type": "listInt",
+            "value": "all"
+        },
+        {
+            "name": "dilates",
+            "param_type": "required",
+            "type": "listInt",
+            "value": "all"
+        },
+        {
+            "name": "padding",
+            "param_type": "required",
+            "type": "str",
+            "value": "all"
+        }
     ],
     "inputs": [
         {
             "index": 0,
             "dtype": [
-                "float32"
+                "float16"
             ],
             "format": [
-                "DefaultFormat"
+                "NC1HWC0"
             ],
             "name": "x1",
             "need_compile": false,
@@ -46,17 +70,18 @@ from mindspore.ops.op_info_register import op_info_register
         {
             "index": 0,
             "dtype": [
-                "float32"
+                "float16"
             ],
             "format": [
-                "DefaultFormat"
+                "FRACTAL_NZ"
             ],
             "name": "y",
             "need_compile": false,
             "param_type": "required",
             "shape": "all"
         }
-   ]
+    ]
 }""")
-def CusCholeskyTrsm(input_x, output, kernel_name):
+def CusImg2ColNC1HWC0(input_x, output, ksizes, strides, dilates, padding, kernel_name="img2col"):
+    """CusImg2ColNC1HWC0"""
     return

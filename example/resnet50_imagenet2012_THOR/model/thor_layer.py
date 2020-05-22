@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""thor_layer"""
 import mindspore as ms
 import mindspore.common.dtype as mstype
-import numpy as np
 from mindspore._checkparam import check_bool, twice, check_int_positive
 from mindspore._extends import cell_attr_register
 from mindspore.common.initializer import initializer
@@ -33,6 +32,7 @@ from cus_ops.cus_matmul_cube import CusMatMulCube
 from cus_ops.cus_matrix_combine import CusMatrixCombine
 from cus_ops.cus_transpose02314 import CusTranspose02314
 
+import numpy as np
 C0 = 16
 
 
@@ -91,8 +91,7 @@ class _Conv(Cell):
                              'attr \'group\' of \'Conv2D\' Op.')
 
         self.weight = Parameter(initializer(
-            weight_init, [out_channels, in_channels // group, *kernel_size]),
-            name='weight')
+                                weight_init, [out_channels, in_channels // group, *kernel_size]), name='weight')
 
         if check_bool(has_bias):
             self.bias = Parameter(_initializer(
@@ -107,6 +106,7 @@ class _Conv(Cell):
 
 
 class Conv2d_Thor(_Conv):
+    """Conv2d_Thor"""
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -180,7 +180,7 @@ class Conv2d_Thor(_Conv):
         self.G_inv_max = Parameter(initializer(0, [1], mstype.float32), name="G_inv_max", requires_grad=False)
         self.fake_G = Tensor(
             np.reshape(np.identity(self.matrix_G_device_dim).astype(np.float16), self.matrix_G_device_shape))
-        self.fake_G_inv_max = Tensor(np.zeros([1, ]).astype(np.float32))
+        self.fake_G_inv_max = Tensor(np.zeros([1,]).astype(np.float32))
 
         self.shape = P.Shape()
         self.reshape = P.Reshape()
@@ -196,8 +196,8 @@ class Conv2d_Thor(_Conv):
             self.channels_slice_flag = True
 
         self.padA_flag = False
-        if (
-                self.matrix_A_dim // self.diag_block_dim) * self.diag_block_dim != self.matrix_A_dim and self.matrix_A_dim > self.diag_block_dim:
+        if (self.matrix_A_dim // self.diag_block_dim) * self.diag_block_dim != self.matrix_A_dim
+            and self.matrix_A_dim > self.diag_block_dim:
             self.padA_flag = True
             pad_dim = self.diag_block_dim - self.matrix_A_dim % self.diag_block_dim
             self.padA = P.Pad(((0, pad_dim), (0, pad_dim)))
@@ -228,6 +228,7 @@ class Conv2d_Thor(_Conv):
         self.getG = P.InsertGradientOf(self.save_gradient)
 
     def save_gradient(self, dout):
+        """save_gradient"""
         out = dout
         dout = self.mul(dout, self.loss_scale)
         dout = self.mul(dout, 32.0)
@@ -252,7 +253,6 @@ class Conv2d_Thor(_Conv):
         matrix_G_inv_max = self.fused_abs_max2(matrix_G_inv_max)
         self.G_inv_max = matrix_G_inv_max
         matrix_G_inv = self.matrix_combine(matrix_G_inv)
-        matrix_G_inv_shape = self.shape(matrix_G_inv)
         matrix_G_inv = self.reshape(matrix_G_inv, self.matrix_G_device_temp_shape)
         matrix_G_inv = self.transpose(matrix_G_inv, (2, 0, 1, 3))
         matrix_G = self.cast(matrix_G_inv, mstype.float16)
@@ -287,7 +287,6 @@ class Conv2d_Thor(_Conv):
             self.A_inv_max = matrix_A_inv_max
             matrix_A_inv = self.matrix_combine(matrix_A_inv)
             matrix_A_inv = self.cast(matrix_A_inv, mstype.float16)
-            in_channels = self.in_channels
             if self.padA_flag:
                 matrix_A_inv = self.slice(matrix_A_inv, (0, 0), (self.matrix_A_dim, self.matrix_A_dim))
 
@@ -307,22 +306,23 @@ class Conv2d_Thor(_Conv):
         return out
 
     def extra_repr(self):
+        """extra_repr"""
         s = 'input_channels={}, output_channels={}, kernel_size={},' \
             'stride={},  pad_mode={}, padding={}, dilation={}, ' \
             'group={}, data_format={}, has_bias={},' \
             'weight_init={}, bias_init={}'.format(
-            self.in_channels,
-            self.out_channels,
-            self.kernel_size,
-            self.stride,
-            self.pad_mode,
-            self.padding,
-            self.dilation,
-            self.group,
-            self.data_format,
-            self.has_bias,
-            self.weight,
-            self.bias)
+                                                  self.in_channels,
+                                                  self.out_channels,
+                                                  self.kernel_size,
+                                                  self.stride,
+                                                  self.pad_mode,
+                                                  self.padding,
+                                                  self.dilation,
+                                                  self.group,
+                                                  self.data_format,
+                                                  self.has_bias,
+                                                  self.weight,
+                                                  self.bias)
 
         if self.has_bias:
             s += ', bias={}'.format(self.bias)
@@ -330,6 +330,7 @@ class Conv2d_Thor(_Conv):
 
 
 class Dense_Thor(Cell):
+    """Dense_Thor"""
     @cell_attr_register(attrs=['has_bias', 'activation'])
     def __init__(self,
                  in_channels,
@@ -405,6 +406,7 @@ class Dense_Thor(Cell):
         self.getG = P.InsertGradientOf(self.save_gradient)
 
     def save_gradient(self, dout):
+        """save_gradient"""
         out = dout
         dout = self.mul(dout, self.loss_scale)
         dout = self.mul(dout, 32.0)
@@ -435,6 +437,7 @@ class Dense_Thor(Cell):
         return out
 
     def construct(self, x):
+        """construct"""
         if self.thor:
             inputs = self.cube_matmul(x, x)
             normalizer = 32
@@ -472,6 +475,7 @@ class Dense_Thor(Cell):
         return output
 
     def extend_repr(self):
+        """extend_repr"""
         str_info = 'in_channels={}, out_channels={}, weight={}, has_bias={}' \
             .format(self.in_channels, self.out_channels, self.weight, self.has_bias)
         if self.has_bias:

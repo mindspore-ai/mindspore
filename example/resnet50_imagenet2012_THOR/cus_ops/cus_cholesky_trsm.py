@@ -12,27 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore as ms
+"""CusCholeskyTrsm"""
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
-from mindspore.ops.composite import multitype_ops as C
 
 
-class CusMatMulCubeFraczRightMul(PrimitiveWithInfer):
-    """CusMatMulCubeFraczRightMul definition"""
+class CusCholeskyTrsm(PrimitiveWithInfer):
+    """CusCholeskyTrsm definition"""
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCubeFraczRightMul"""
-        self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
+        """init CusCholeskyTrsm"""
+        self.init_prim_io_names(inputs=['x1'], outputs=['y'])
 
-    def get_bprop(self):
-        def bprop(x1, x2, x3, out, dout):
-            return (C.zeros_like(x1), C.zeros_like(x2), C.zeros_like(x3))
+    def infer_shape(self, data1_shape):
+        ll = []
+        m, _ = data1_shape
+        if m >= 128:
+            ll = [m // 128, 128, 128]
+        else:
+            ll = [1, 64, 64]
+        return ll
 
-        return bprop
+    def infer_dtype(self, data1_dtype):
+        return data1_dtype
 
-    def infer_shape(self, data1_shape, data2_shape, data3_shape):
-        return data1_shape
-
-    def infer_dtype(self, data1_dtype, data2_dtype, data3_dtype):
-        return ms.common.dtype.tensor_type(getattr(ms, "float32"))

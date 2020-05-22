@@ -19,12 +19,14 @@ import numpy as np
 
 
 def linear_warmup_lr(current_step, warmup_steps, base_lr, init_lr):
+    """linear_warmup_lr"""
     lr_inc = (float(base_lr) - float(init_lr)) / float(warmup_steps)
     lr = float(init_lr) + lr_inc * current_step
     return lr
 
 
 def cosine_annealing_lr(lr, steps_per_epoch, warmup_epochs, max_epoch, T_max, eta_min=0, num_periods=0.5):
+    """linear_warmup_lr"""
     base_lr = lr
     warmup_init_lr = 0
     total_steps = int(max_epoch * steps_per_epoch)
@@ -44,6 +46,7 @@ def cosine_annealing_lr(lr, steps_per_epoch, warmup_epochs, max_epoch, T_max, et
 
 
 def warmup_cosine_annealing_lr(lr, steps_per_epoch, warmup_epochs, max_epoch, T_max, eta_min=0, num_periods=0.5):
+    """warmup_cosine_annealing_lr"""
     base_lr = lr
     warmup_init_lr = 0
     total_steps = int(max_epoch * steps_per_epoch * 0.99)

@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""CusMatMulCubeDenseLeft"""
+import mindspore as ms
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.composite import multitype_ops as C
 
 
 # y = x^2
-class CusBatchMatMul(PrimitiveWithInfer):
+class CusMatMulCubeDenseLeft(PrimitiveWithInfer):
     """CusMatMulCube definition"""
 
     @prim_attr_register
@@ -32,7 +34,7 @@ class CusBatchMatMul(PrimitiveWithInfer):
         return bprop
 
     def infer_shape(self, data1_shape, data2_shape):
-        return data1_shape
+        return data2_shape
 
     def infer_dtype(self, data1_dtype, data2_dtype):
-        return data1_dtype
+        return ms.common.dtype.tensor_type(getattr(ms, "float16"))

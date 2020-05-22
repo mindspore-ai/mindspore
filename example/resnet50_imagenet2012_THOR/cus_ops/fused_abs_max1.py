@@ -12,20 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""CusFusedAbsMax1"""
 from mindspore.ops.op_info_register import op_info_register
 
 
 @op_info_register("""{
-    "op_name": "CusMatrixCombine",
+    "op_name": "CusFusedAbsMax1",
     "imply_type": "TBE",
     "fusion_type": "OPAQUE",
     "async_flag": false,
-    "binfile_name": "matrixcombine.so",
+    "binfile_name": "fusedabsmax1.so",
     "compute_cost": 10,
-    "kernel_name": "CusMatrixCombine",
+    "kernel_name": "CusFusedAbsMax1",
     "partial_flag": true,
     "attr": [
+        {
+            "name": "origin_shape",
+            "param_type": "required",
+            "type": "listInt",
+            "value": "all"
+        }
     ],
     "inputs": [
         {
@@ -58,5 +64,6 @@ from mindspore.ops.op_info_register import op_info_register
         }
     ]
 }""")
-def CusMatrixCombine(input_x, output, kernel_name="matrix_combine"):
+def CusFusedAbsMax1(input_x, output, origin_shape=None, kernel_name="fused_abs_max1"):
+    """CusFusedAbsMax1"""
     return

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""CusTranspose02314"""
 from mindspore.ops.op_info_register import op_info_register
 
 
@@ -59,4 +59,5 @@ from mindspore.ops.op_info_register import op_info_register
     ]
 }""")
 def CusTranspose02314(input_x, output, kernel_name="transpose021354"):
+    """CusTranspose02314"""
     return
