@@ -47,7 +47,7 @@ def test_2ops_repeat_shuffle():
     save_and_check(data1, parameters, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def skip_test_2ops_shuffle_repeat():
+def test_2ops_shuffle_repeat():
     """
     Test Shuffle then Repeat
     """
@@ -159,7 +159,7 @@ def test_2ops_shuffle_batch():
 
 if __name__ == '__main__':
     test_2ops_repeat_shuffle()
-    # test_2ops_shuffle_repeat()
+    test_2ops_shuffle_repeat()
     test_2ops_repeat_batch()
     test_2ops_batch_repeat()
     test_2ops_batch_shuffle()
