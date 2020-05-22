@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dataset/kernels/text/jieba_tokenizer_op.h"
+#include "dataset/text/kernels/jieba_tokenizer_op.h"
 
 #include <vector>
 #include <memory>

@@ -27,7 +27,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
 from mindspore.dataset.transforms.vision import Inter
-from mindspore.dataset.transforms.text import as_text
+from mindspore.dataset.text import to_str
 from mindspore.mindrecord import FileWriter
 
 FILES_NUM = 4
@@ -73,7 +73,7 @@ def test_cv_minddataset_pk_sample_no_column(add_and_remove_cv_file):
     for item in data_set.create_dict_iterator():
         logger.info("-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(as_text(item["file_name"])))
+                {}------------------------".format(to_str(item["file_name"])))
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
 
@@ -93,7 +93,7 @@ def test_cv_minddataset_pk_sample_basic(add_and_remove_cv_file):
         logger.info("-------------- item[data]: \
                 {}------------------------".format(item["data"][:10]))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(as_text(item["file_name"])))
+                {}------------------------".format(to_str(item["file_name"])))
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
 
@@ -111,7 +111,7 @@ def test_cv_minddataset_pk_sample_shuffle(add_and_remove_cv_file):
     for item in data_set.create_dict_iterator():
         logger.info("-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(as_text(item["file_name"])))
+                {}------------------------".format(to_str(item["file_name"])))
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
 
@@ -128,7 +128,7 @@ def test_cv_minddataset_pk_sample_out_of_range(add_and_remove_cv_file):
     for item in data_set.create_dict_iterator():
         logger.info("-------------- cv reader basic: {} ------------------------".format(num_iter))
         logger.info("-------------- item[file_name]: \
-                {}------------------------".format(as_text(item["file_name"])))
+                {}------------------------".format(to_str(item["file_name"])))
         logger.info("-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
 

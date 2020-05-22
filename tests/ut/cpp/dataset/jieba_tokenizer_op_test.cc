@@ -18,7 +18,7 @@
 #include <string_view>
 
 #include "common/common.h"
-#include "dataset/kernels/text/jieba_tokenizer_op.h"
+#include "dataset/text/kernels/jieba_tokenizer_op.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 

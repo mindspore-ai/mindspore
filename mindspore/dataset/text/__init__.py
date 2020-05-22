@@ -15,5 +15,5 @@
 """
 mindspore.dataset.text
 """
-
-from .c_transforms import *
+from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer
+from .utils import to_str, to_bytes, JiebaMode, Vocab

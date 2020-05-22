@@ -24,7 +24,7 @@
 #include "dataset/core/tensor.h"
 #include "dataset/kernels/tensor_op.h"
 #include "dataset/util/status.h"
-#include "dataset/nlp/vocab.h"
+#include "dataset/text/vocab.h"
 
 namespace mindspore {
 namespace dataset {

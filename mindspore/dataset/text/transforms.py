@@ -11,20 +11,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
 """
-This module c_transforms provides common nlp operations.
+c transforms for all text related operators
 """
+
 import os
 import re
+
 import mindspore._c_dataengine as cde
+
 from .utils import JiebaMode
-from .validators import check_jieba_add_dict, check_jieba_add_word, check_jieba_init
+from .validators import check_lookup, check_jieba_add_dict, \
+    check_jieba_add_word, check_jieba_init
+
+
+class Lookup(cde.LookupOp):
+    """
+        Lookup operator that looks up a word to an id
+    Args:
+        vocab(Vocab): a Vocab object
+        unknown(None,int): default id to lookup a word that is out of vocab
+    """
+
+    @check_lookup
+    def __init__(self, vocab, unknown=None):
+        if unknown is None:
+            super().__init__(vocab)
+        else:
+            super().__init__(vocab, unknown)
+
 
 DE_C_INTER_JIEBA_MODE = {
-    JiebaMode.MIX: cde.JiebaMode.DE_INTER_JIEBA_MIX,
-    JiebaMode.MP: cde.JiebaMode.DE_INTER_JIEBA_MP,
-    JiebaMode.HMM: cde.JiebaMode.DE_INTER_JIEBA_HMM
+    JiebaMode.MIX: cde.JiebaMode.DE_JIEBA_MIX,
+    JiebaMode.MP: cde.JiebaMode.DE_JIEBA_MP,
+    JiebaMode.HMM: cde.JiebaMode.DE_JIEBA_HMM
 }
 
 
@@ -41,6 +61,7 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
             "HMM" mode will tokenize with Hiddel Markov Model Segment algorithm,
             "MIX" model will tokenize with a mix of MPSegment and HMMSegment algorithm.
     """
+
     @check_jieba_init
     def __init__(self, hmm_path, mp_path, mode=JiebaMode.MIX):
         self.mode = mode

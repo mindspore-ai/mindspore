@@ -38,10 +38,6 @@
 #include "dataset/kernels/image/resize_op.h"
 #include "dataset/kernels/image/uniform_aug_op.h"
 #include "dataset/kernels/data/type_cast_op.h"
-#include "dataset/kernels/text/jieba_tokenizer_op.h"
-#include "dataset/kernels/text/unicode_char_tokenizer_op.h"
-#include "dataset/nlp/vocab.h"
-#include "dataset/nlp/kernels/lookup_op.h"
 #include "dataset/engine/datasetops/source/cifar_op.h"
 #include "dataset/engine/datasetops/source/image_folder_op.h"
 #include "dataset/engine/datasetops/source/io_block.h"
@@ -63,6 +59,10 @@
 #include "dataset/engine/datasetops/source/voc_op.h"
 #include "dataset/engine/gnn/graph.h"
 #include "dataset/kernels/data/to_float16_op.h"
+#include "dataset/text/kernels/jieba_tokenizer_op.h"
+#include "dataset/text/kernels/unicode_char_tokenizer_op.h"
+#include "dataset/text/vocab.h"
+#include "dataset/text/kernels/lookup_op.h"
 #include "dataset/util/random.h"
 #include "mindrecord/include/shard_operator.h"
 #include "mindrecord/include/shard_pk_sample.h"
@@ -577,9 +577,9 @@ PYBIND11_MODULE(_c_dataengine, m) {
     .value("TEXTFILE", OpName::kTextFile);
 
   (void)py::enum_<JiebaMode>(m, "JiebaMode", py::arithmetic())
-    .value("DE_INTER_JIEBA_MIX", JiebaMode::kMix)
-    .value("DE_INTER_JIEBA_MP", JiebaMode::kMp)
-    .value("DE_INTER_JIEBA_HMM", JiebaMode::kHmm)
+    .value("DE_JIEBA_MIX", JiebaMode::kMix)
+    .value("DE_JIEBA_MP", JiebaMode::kMp)
+    .value("DE_JIEBA_HMM", JiebaMode::kHmm)
     .export_values();
 
   (void)py::enum_<InterpolationMode>(m, "InterpolationMode", py::arithmetic())

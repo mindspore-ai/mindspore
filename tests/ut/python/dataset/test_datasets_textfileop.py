@@ -13,7 +13,6 @@
 # limitations under the License.
 # ==============================================================================
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.text.utils as nlp
 from mindspore import log as logger
 
 DATA_FILE = "../data/dataset/testTextFileDataset/1.txt"

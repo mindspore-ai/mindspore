@@ -16,6 +16,8 @@ import mindspore._c_dataengine as cde
 import numpy as np
 import pytest
 
+from mindspore.dataset.text import to_str, to_bytes
+
 import mindspore.dataset as ds
 import mindspore.common.dtype as mstype
 
@@ -65,7 +67,8 @@ def test_map():
     data = ds.GeneratorDataset(gen, column_names=["col"])
 
     def split(b):
-        splits = b.item().decode("utf8").split()
+        s = to_str(b)
+        splits = s.item().split()
         return np.array(splits, dtype='S')
 
     data = data.map(input_columns=["col"], operations=split)
@@ -74,11 +77,20 @@ def test_map():
         np.testing.assert_array_equal(d[0], expected)
 
 
-def as_str(arr):
-    def decode(s): return s.decode("utf8")
+def test_map2():
+    def gen():
+        yield np.array(["ab cde 121"], dtype='S'),
 
-    decode_v = np.vectorize(decode)
-    return decode_v(arr)
+    data = ds.GeneratorDataset(gen, column_names=["col"])
+
+    def upper(b):
+        out = np.char.upper(b)
+        return out
+
+    data = data.map(input_columns=["col"], operations=upper)
+    expected = np.array(["AB CDE 121"], dtype='S')
+    for d in data:
+        np.testing.assert_array_equal(d[0], expected)
 
 
 line = np.array(["This is a text file.",
@@ -106,9 +118,9 @@ def test_tfrecord1():
         assert d["line"].shape == line[i].shape
         assert d["words"].shape == words[i].shape
         assert d["chinese"].shape == chinese[i].shape
-        np.testing.assert_array_equal(line[i], as_str(d["line"]))
-        np.testing.assert_array_equal(words[i], as_str(d["words"]))
-        np.testing.assert_array_equal(chinese[i], as_str(d["chinese"]))
+        np.testing.assert_array_equal(line[i], to_str(d["line"]))
+        np.testing.assert_array_equal(words[i], to_str(d["words"]))
+        np.testing.assert_array_equal(chinese[i], to_str(d["chinese"]))
 
 
 def test_tfrecord2():
@@ -118,9 +130,9 @@ def test_tfrecord2():
         assert d["line"].shape == line[i].shape
         assert d["words"].shape == words[i].shape
         assert d["chinese"].shape == chinese[i].shape
-        np.testing.assert_array_equal(line[i], as_str(d["line"]))
-        np.testing.assert_array_equal(words[i], as_str(d["words"]))
-        np.testing.assert_array_equal(chinese[i], as_str(d["chinese"]))
+        np.testing.assert_array_equal(line[i], to_str(d["line"]))
+        np.testing.assert_array_equal(words[i], to_str(d["words"]))
+        np.testing.assert_array_equal(chinese[i], to_str(d["chinese"]))
 
 
 def test_tfrecord3():
@@ -135,9 +147,9 @@ def test_tfrecord3():
         assert d["line"].shape == line[i].shape
         assert d["words"].shape == words[i].reshape([2, 2]).shape
         assert d["chinese"].shape == chinese[i].shape
-        np.testing.assert_array_equal(line[i], as_str(d["line"]))
-        np.testing.assert_array_equal(words[i].reshape([2, 2]), as_str(d["words"]))
-        np.testing.assert_array_equal(chinese[i], as_str(d["chinese"]))
+        np.testing.assert_array_equal(line[i], to_str(d["line"]))
+        np.testing.assert_array_equal(words[i].reshape([2, 2]), to_str(d["words"]))
+        np.testing.assert_array_equal(chinese[i], to_str(d["chinese"]))
 
 
 def create_text_mindrecord():
@@ -167,16 +179,17 @@ def test_mindrecord():
     for i, d in enumerate(data.create_dict_iterator()):
         assert d["english"].shape == line[i].shape
         assert d["chinese"].shape == chinese[i].shape
-        np.testing.assert_array_equal(line[i], as_str(d["english"]))
-        np.testing.assert_array_equal(chinese[i], as_str(d["chinese"]))
+        np.testing.assert_array_equal(line[i], to_str(d["english"]))
+        np.testing.assert_array_equal(chinese[i], to_str(d["chinese"]))
 
 
 if __name__ == '__main__':
-    # test_generator()
-    # test_basic()
-    # test_batching_strings()
+    test_generator()
+    test_basic()
+    test_batching_strings()
     test_map()
-    # test_tfrecord1()
-    # test_tfrecord2()
-    # test_tfrecord3()
-    # test_mindrecord()
+    test_map2()
+    test_tfrecord1()
+    test_tfrecord2()
+    test_tfrecord3()
+    test_mindrecord()

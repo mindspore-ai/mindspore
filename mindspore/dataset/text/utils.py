@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-c transforms for all text related operators
+Some basic function for nlp
 """
+from enum import IntEnum
 
 import mindspore._c_dataengine as cde
-from .validators import check_lookup, check_from_list, check_from_dict, check_from_file
+import numpy as np
+
+from .validators import check_from_file, check_from_list, check_from_dict
 
 
 class Vocab(cde.Vocab):
@@ -61,17 +64,43 @@ class Vocab(cde.Vocab):
         return super().from_dict(word_dict)
 
 
-class Lookup(cde.LookupOp):
+def to_str(array, encoding='utf8'):
     """
-        Lookup operator that looks up a word to an id
+    Convert numpy array of `bytes` to array of `str` by decoding each element based on charset `encoding`.
+
     Args:
-        vocab(Vocab): a Vocab object
-        unknown(None,int): default id to lookup a word that is out of vocab
+        array (numpy array): Array of type `bytes` representing strings.
+        encoding (string): Indicating the charset for decoding.
+    Returns:
+        Numpy array of `str`.
+
     """
 
-    @check_lookup
-    def __init__(self, vocab, unknown=None):
-        if unknown is None:
-            super().__init__(vocab)
-        else:
-            super().__init__(vocab, unknown)
+    if not isinstance(array, np.ndarray):
+        raise ValueError('input should be a numpy array')
+
+    return np.char.decode(array, encoding)
+
+
+def to_bytes(array, encoding='utf8'):
+    """
+    Convert numpy array of `str` to array of `bytes` by encoding each element based on charset `encoding`.
+
+    Args:
+        array (numpy array): Array of type `str` representing strings.
+        encoding (string): Indicating the charset for encoding.
+    Returns:
+        Numpy array of `bytes`.
+
+    """
+
+    if not isinstance(array, np.ndarray):
+        raise ValueError('input should be a numpy array')
+
+    return np.char.encode(array, encoding)
+
+
+class JiebaMode(IntEnum):
+    MIX = 0
+    MP = 1
+    HMM = 2

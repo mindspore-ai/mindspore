@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dataset/kernels/text/unicode_char_tokenizer_op.h"
+#include "dataset/text/kernels/unicode_char_tokenizer_op.h"
 #include <memory>
 #include <string>
 #include <string_view>
