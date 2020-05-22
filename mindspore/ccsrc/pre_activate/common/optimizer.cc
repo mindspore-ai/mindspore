@@ -62,6 +62,21 @@ AnfNodePtr PatternProcessPass::Run(const FuncGraphPtr &func_graph, const AnfNode
   return nullptr;
 }
 
+bool MultipleOutputPatternProcessPass::MatchAnotherPattern(const AnfNodePtr &node, const EquivPtr &equiv) const {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(equiv);
+  VarPtr fg = std::make_shared<Var>("RootG");
+  auto empty_equiv = std::make_shared<Equiv>();
+  MS_EXCEPTION_IF_NULL(child_primitive_vars_);
+  EquivPtr another_equiv =
+    child_pattern_engine_.Match(SexpToNode(DefineAnotherPattern(), fg, child_primitive_vars_.get(), true), node,
+                                *child_primitive_vars_, empty_equiv);
+  if (another_equiv != nullptr && !another_equiv->empty()) {
+    return IsShareNodes(equiv, another_equiv);
+  }
+  return false;
+}
+
 void GraphOptimizer::AddPassManager(const PassManagerPtr &pass_manager) {
   if (pass_manager != nullptr) {
     pass_managers_.push_back(pass_manager);

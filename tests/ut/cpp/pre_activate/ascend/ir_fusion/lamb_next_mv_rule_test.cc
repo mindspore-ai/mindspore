@@ -30,7 +30,7 @@ class TestHWLambNextMVRule : public BackendCommon {
   UT::PyFuncGraphFetcher get_py_fun_;
 };
 
-TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_matched) {
+TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_cond4_matched) {
   /*
    * def before(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x, constant_mul1_sub,
    *     constant_mul2_x, constant_mul3_sub1, constant_mul4_x, constant_add2_y):
@@ -54,7 +54,7 @@ TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_matched) {
    * output = tuple_getitem(outputs, 0)
    * return output
    */
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule", "before");
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule_cond4", "before");
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
@@ -65,15 +65,15 @@ TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_matched) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::LambNextMVRule>());
+  pm->AddPass(std::make_shared<opt::LambNextMVRuleCond4>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
 
-  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule", "after");
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule_cond4", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 
-TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div4) {
+TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_cond4_unmatched_real_div4) {
   /*
    * def before_unmatched_real_div4(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
    *     constant_mul1_sub, constant_mul2_x, constant_mul3_sub1, constant_mul4_x, constant_add2_y):
@@ -97,7 +97,7 @@ TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div4) {
    * output = tuple_getitem(outputs, 0)
    * return output
    */
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule", "before_unmatched_real_div4");
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule_cond4", "before_unmatched_real_div4");
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
@@ -109,14 +109,14 @@ TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div4) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::LambNextMVRule>());
+  pm->AddPass(std::make_shared<opt::LambNextMVRuleCond4>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
 
   EXPECT_TRUE(CheckEqualGraph(origin_graph, new_graph));
 }
 
-TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div2) {
+TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_cond4_unmatched_real_div2) {
   /*
    * def before_unmatched_real_div2(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
    *     constant_mul1_sub, constant_mul2_x, constant_mul3_sub1, constant_mul4_x, constant_add2_y):
@@ -140,7 +140,7 @@ TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div2) {
    * output = tuple_getitem(outputs, 0)
    * return output
    */
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule", "before_unmatched_real_div2");
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule_cond4", "before_unmatched_real_div2");
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
@@ -152,14 +152,14 @@ TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div2) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::LambNextMVRule>());
+  pm->AddPass(std::make_shared<opt::LambNextMVRuleCond4>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
 
   EXPECT_TRUE(CheckEqualGraph(origin_graph, new_graph));
 }
 
-TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div0) {
+TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_cond4_unmatched_real_div0) {
   /*
    * def before_unmatched_real_div0(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
    *     constant_mul1_sub, constant_mul2_x, constant_mul3_sub1, constant_mul4_x, constant_add2_y):
@@ -183,7 +183,7 @@ TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div0) {
    * output = tuple_getitem(outputs, 0)
    * return output
    */
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule", "before_unmatched_real_div0");
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule_cond4", "before_unmatched_real_div0");
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
@@ -195,14 +195,14 @@ TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div0) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::LambNextMVRule>());
+  pm->AddPass(std::make_shared<opt::LambNextMVRuleCond4>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
 
   EXPECT_TRUE(CheckEqualGraph(origin_graph, new_graph));
 }
 
-TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div1) {
+TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_cond4_unmatched_real_div1) {
   /*
    * def before_unmatched_real_div1(input0, input1, input2, input3, input4, input5, input6, constant_mul0_x,
    *     constant_mul1_sub, constant_mul2_x, constant_mul3_sub1, constant_mul4_x, constant_add2_y):
@@ -226,7 +226,7 @@ TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div1) {
    * output = tuple_getitem(outputs, 0)
    * return output
    */
-  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule", "before_unmatched_real_div1");
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_lamb_next_mv_rule_cond4", "before_unmatched_real_div1");
   std::vector<int> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   AbstractBasePtrList args_spec_list;
@@ -238,7 +238,7 @@ TEST_F(TestHWLambNextMVRule, test_lamb_next_mv_rule_unmatched_real_div1) {
 
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
-  pm->AddPass(std::make_shared<opt::LambNextMVRule>());
+  pm->AddPass(std::make_shared<opt::LambNextMVRuleCond4>());
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(fg);
 
