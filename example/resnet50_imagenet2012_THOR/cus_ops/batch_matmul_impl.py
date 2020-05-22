@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore.ops.op_info_register import op_info_register
 """batch_matmul_impl"""
+from mindspore.ops.op_info_register import op_info_register
 
 @op_info_register("""{
     "op_name": "CusBatchMatMul",

@@ -82,9 +82,9 @@ def get_second_order_damping(global_step, damping_init, decay_rate, total_epochs
 
     current_step = global_step
     damping_each_step = np.array(damping_each_step).astype(np.float32)
-    damping = damping_each_step[current_step:]
-    print("damping_is=========", damping)
-    return damping
+    damping_now = damping_each_step[current_step:]
+    print("damping_is=========", damping_now)
+    return damping_now
 
 
 if __name__ == '__main__':

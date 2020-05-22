@@ -530,7 +530,7 @@ class Model:
             valid_dataset (Dataset): Dataset to evaluate the model.
             list_callback (ListCallback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
- 
+
         Returns:
             Dict, returns the loss value & metrics values for the model in test mode.
         """

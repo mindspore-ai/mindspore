@@ -109,4 +109,5 @@ NoneType = type(None)
 }""")
 def CusMatMulCubeFraczRightMul(input_x1, input_x2, input_x3, bias=None, output_y={}, trans_a=False, trans_b=False,
                                kernel_name="matmulcube"):
+    """CusMatMulCubeFraczRightMul"""
     return

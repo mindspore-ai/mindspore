@@ -196,7 +196,7 @@ class Conv2d_Thor(_Conv):
             self.channels_slice_flag = True
 
         self.padA_flag = False
-        if (self.matrix_A_dim // self.diag_block_dim) * self.diag_block_dim != self.matrix_A_dim
+        if (self.matrix_A_dim // self.diag_block_dim) * self.diag_block_dim != self.matrix_A_dim \
             and self.matrix_A_dim > self.diag_block_dim:
             self.padA_flag = True
             pad_dim = self.diag_block_dim - self.matrix_A_dim % self.diag_block_dim
