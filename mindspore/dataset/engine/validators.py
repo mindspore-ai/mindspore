@@ -1032,6 +1032,7 @@ def check_textfiledataset(method):
 
     return new_method
 
+
 def check_split(method):
     """check the input arguments of split."""
 
@@ -1068,6 +1069,88 @@ def check_split(method):
             epsilon = 0.00001
             if not abs(sum(sizes) - 1) < epsilon:
                 raise ValueError("sizes is a list of float, but the percentages do not sum up to 1.")
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_list_or_ndarray(param, param_name):
+    if (not isinstance(param, list)) and (not hasattr(param, 'tolist')):
+        raise TypeError("Wrong input type for {0}, should be list, got {1}".format(
+            param_name, type(param)))
+
+
+def check_gnn_get_all_nodes(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_all_nodes` function."""
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_type; required argument
+        check_type(param_dict.get("node_type"), 'node_type', int)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_get_all_neighbors(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_all_neighbors` function."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_list; required argument
+        check_list_or_ndarray(param_dict.get("node_list"), 'node_list')
+
+        # check neighbor_type; required argument
+        check_type(param_dict.get("neighbor_type"), 'neighbor_type', int)
+
+        return method(*args, **kwargs)
+
+    return new_method
+
+
+def check_aligned_list(param, param_name):
+    """Check whether the structure of each member of the list is the same."""
+    if not isinstance(param, list):
+        raise TypeError("Parameter {0} is not a list".format(param_name))
+    membor_have_list = None
+    list_len = None
+    for membor in param:
+        if isinstance(membor, list):
+            check_aligned_list(membor, param_name)
+            if membor_have_list not in (None, True):
+                raise TypeError("The type of each member of the parameter {0} is inconsistent".format(
+                    param_name))
+            if list_len is not None and len(membor) != list_len:
+                raise TypeError("The size of each member of parameter {0} is inconsistent".format(
+                    param_name))
+            membor_have_list = True
+            list_len = len(membor)
+        else:
+            if membor_have_list not in (None, False):
+                raise TypeError("The type of each member of the parameter {0} is inconsistent".format(
+                    param_name))
+            membor_have_list = False
+
+
+def check_gnn_get_node_feature(method):
+    """A wrapper that wrap a parameter checker to the GNN `get_node_feature` function."""
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        # check node_list; required argument
+        node_list = param_dict.get("node_list")
+        check_list_or_ndarray(node_list, 'node_list')
+        if isinstance(node_list, list):
+            check_aligned_list(node_list, 'node_list')
+
+        # check feature_types; required argument
+        check_list_or_ndarray(param_dict.get("feature_types"), 'feature_types')
 
         return method(*args, **kwargs)
 

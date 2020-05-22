@@ -25,9 +25,10 @@ from .engine.datasets import StorageDataset, TFRecordDataset, ImageFolderDataset
 from .engine.samplers import DistributedSampler, PKSampler, RandomSampler, SequentialSampler, SubsetRandomSampler, \
     WeightedRandomSampler, Sampler
 from .engine.serializer_deserializer import serialize, deserialize, show
+from .engine.graphdata import GraphData
 
 __all__ = ["config", "ImageFolderDatasetV2", "MnistDataset", "StorageDataset",
            "MindDataset", "GeneratorDataset", "TFRecordDataset",
            "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset",
            "VOCDataset", "TextFileDataset", "Schema", "DistributedSampler", "PKSampler", "RandomSampler",
-           "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler", "zip"]
+           "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler", "zip", "GraphData"]

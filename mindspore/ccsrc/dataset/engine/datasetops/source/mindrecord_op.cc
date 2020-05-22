@@ -112,10 +112,10 @@ Status MindRecordOp::Init() {
 
   data_schema_ = std::make_unique<DataSchema>();
 
-  std::vector<std::string> col_names = shard_reader_->get_shard_column()->GetColumnName();
+  std::vector<std::string> col_names = shard_reader_->GetShardColumn()->GetColumnName();
   CHECK_FAIL_RETURN_UNEXPECTED(!col_names.empty(), "No schema found");
-  std::vector<mindrecord::ColumnDataType> col_data_types = shard_reader_->get_shard_column()->GeColumnDataType();
-  std::vector<std::vector<int64_t>> col_shapes = shard_reader_->get_shard_column()->GetColumnShape();
+  std::vector<mindrecord::ColumnDataType> col_data_types = shard_reader_->GetShardColumn()->GeColumnDataType();
+  std::vector<std::vector<int64_t>> col_shapes = shard_reader_->GetShardColumn()->GetColumnShape();
 
   bool load_all_cols = columns_to_load_.empty();  // if columns_to_load_ is empty it means load everything
   std::map<std::string, int32_t> colname_to_ind;
@@ -296,8 +296,7 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
     std::vector<int64_t> column_shape;
 
     // Get column data
-
-    auto has_column = shard_reader_->get_shard_column()->GetColumnValueByName(
+    auto has_column = shard_reader_->GetShardColumn()->GetColumnValueByName(
       column_name, columns_blob, columns_json, &data, &data_ptr, &n_bytes, &column_data_type, &column_data_type_size,
       &column_shape);
     if (has_column == MSRStatus::FAILED) {
