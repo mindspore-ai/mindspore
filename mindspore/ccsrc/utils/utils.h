@@ -79,6 +79,7 @@ constexpr auto kApplyAdamOpName = "Adam";
 constexpr auto kApplyAdaMaxOpName = "ApplyAdaMax";
 constexpr auto kApplyAddSignOpName = "ApplyAddSign";
 constexpr auto kApplyCenteredRMSPOpName = "ApplyCenteredRMSP";
+constexpr auto kApplyCenteredRMSPropOpName = "ApplyCenteredRMSProp";
 constexpr auto kApplyFtrlOpName = "ApplyFtrl";
 constexpr auto kApplyFtrlV2OpName = "ApplyFtrlV2";
 constexpr auto kApplyGradientDescentOpName = "ApplyGradientDescent";

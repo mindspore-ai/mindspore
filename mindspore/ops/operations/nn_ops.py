@@ -1173,10 +1173,8 @@ class AvgPool(_Pool):
         >>> result = net(input_x)
         [[[[ 2.5   3.5   4.5]
            [ 6.5   7.5   8.5]]
-
           [[ 14.5  15.5  16.5]
            [ 18.5  19.5  20.5]]
-
           [[ 26.5  27.5  28.5]
            [ 30.5  31.5  32.5]]]]
     """
@@ -1718,15 +1716,16 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     Examples:
         >>> apply_rms = P.ApplyRMSProp()
-        >>> input_x = Tensor(np.random.randint(0, 256, (3, 3)),mindspore.float32)
-        >>> mean_square = Tensor(np.random.randint(0, 256, (3, 3)), mindspore.float32)
-        >>> moment = Tensor(np.random.randn(3, 3), mindspore.float32)
-        >>> grad = Tensor(np.random.randint(-32, 16, (3, 3)), mindspore.float32 )
-        >>> learning_rate = 0.9
+        >>> input_x = Tensor(1., mindspore.float32)
+        >>> mean_square = Tensor(2., mindspore.float32)
+        >>> moment = Tensor(1., mindspore.float32)
+        >>> grad = Tensor(2., mindspore.float32 )
+        >>> learning_rate = Tensor(0.9, mindspore.float32)
         >>> decay = 0.0
         >>> momentum = 1e-10
         >>> epsilon = 0.001
         >>> result = apply_rms(input_x, mean_square, moment, grad, learning_rate, decay, momentum, epsilon)
+        (-2.9977674, 0.80999994, 1.9987665)
     """
 
     @prim_attr_register
@@ -1808,17 +1807,18 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
 
     Examples:
         >>> centered_rms_prop = P.ApplyCenteredRMSProp()
-        >>> input_x = Tensor(np.random.randint(0, 256, (3, 3)),mindspore.float32)
-        >>> mean_grad = Tensor(np.random.randint(-8, 8, (3, 3)), mindspore.float32)
-        >>> mean_square = Tensor(np.random.randint(0, 256, (3, 3)), mindspore.float32)
-        >>> moment = Tensor(np.random.randn(3, 3), mindspore.float32)
-        >>> grad = Tensor(np.random.randint(-32, 16, (3, 3)), mindspore.float32 )
-        >>> learning_rate = 0.9
+        >>> input_x = Tensor(1., mindspore.float32)
+        >>> mean_grad = Tensor(2., mindspore.float32)
+        >>> mean_square = Tensor(1., mindspore.float32)
+        >>> moment = Tensor(2., mindspore.float32)
+        >>> grad = Tensor(1., mindspore.float32)
+        >>> learning_rate = Tensor(0.9, mindspore.float32)
         >>> decay = 0.0
         >>> momentum = 1e-10
         >>> epsilon = 0.001
         >>> result = centered_rms_prop(input_x, mean_grad, mean_square, moment, grad,
-        >>>                    learning_rate, decay, momentum, epsilon)
+        >>>                            learning_rate, decay, momentum, epsilon)
+        -27.460497
     """
 
     @prim_attr_register
@@ -1927,7 +1927,6 @@ class L2Normalize(PrimitiveWithInfer):
         [[[-0.47247353   -0.30934513   -0.4991462   0.8185567 ]
           [-0.08070751   -0.9961299    -0.5741758   0.09262337]
           [-0.9916556    -0.3049123     0.5730487  -0.40579924]
-
          [[-0.88134485    0.9509498    -0.86651784  0.57442576]
           [ 0.99673784    0.08789381   -0.8187321   0.9957012 ]
           [ 0.12891524   -0.9523804    -0.81952125  0.91396334]]]

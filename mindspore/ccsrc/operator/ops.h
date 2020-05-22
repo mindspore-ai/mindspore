@@ -181,6 +181,7 @@ extern const PrimitivePtr kPrimCumProd;
 extern const PrimitivePtr kPrimFlatten;
 extern const PrimitivePtr kPrimLogSoftmax;
 extern const PrimitivePtr kPrimLogSoftmaxGrad;
+extern const PrimitivePtr kPrimApplyCenteredRMSProp;
 extern const PrimitivePtr kPrimTanh;
 extern const PrimitivePtr kPrimTanhGrad;
 extern const PrimitivePtr kPrimPooling;
