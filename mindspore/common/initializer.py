@@ -41,12 +41,22 @@ class Initializer:
         self._kwargs = kwargs
         self.shape = None
         self.dtype = None
+        self._seed = None
 
     def _initialize(self, *kwargs):
         raise NotImplementedError('Must be overridden!')
 
     def __call__(self, arr):
         return self._initialize(arr)
+
+    @property
+    def seed(self):
+        return self._seed
+
+    @seed.setter
+    def seed(self, seed_):
+        """set the random seed."""
+        self._seed = seed_
 
     @property
     def shape(self):
@@ -65,6 +75,7 @@ class Initializer:
         self._dtype = dtype
 
     def to_tensor(self):
+        """Get the tensor format data of this Initializer."""
         arr = None
         try:
             arr = np.ndarray(self.shape)
@@ -72,7 +83,10 @@ class Initializer:
             msg = "Error shape={}".format(self.shape)
             logger.error(msg)
             raise ValueError(msg)
+        if self._seed is not None:
+            np.random.seed(self.seed)
         self.__call__(arr)
+        self._seed = None
         return Tensor(arr, dtype=self.dtype)
 
 def _register(*aliases):

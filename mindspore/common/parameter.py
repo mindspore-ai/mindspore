@@ -20,6 +20,7 @@ from .initializer import initializer, Initializer
 from .tensor import Tensor, MetaTensor
 from .._checkparam import _check_str_by_regular
 from ..parallel._utils import _set_clone_info, _CloneInfo
+from ..parallel._tensor import _get_seed
 
 __all__ = ['Parameter', 'ParameterTuple']
 
@@ -55,6 +56,7 @@ class Parameter:
         self.requires_grad = requires_grad
         self.layerwise_parallel = layerwise_parallel
         self._is_init = False
+        self._sliced = False
         self.clone_info = _CloneInfo()
 
     def __repr__(self):
@@ -90,6 +92,11 @@ class Parameter:
         else:
             raise ValueError("The type of the name should be `str` or `None`.")
         self._name = name_
+
+    @property
+    def sliced(self):
+        """Get slice status of the parameter."""
+        return self._sliced
 
     @property
     def is_init(self):
@@ -199,11 +206,31 @@ class Parameter:
         self.default_input = data
 
 
-    def init_data(self):
+    def init_data(self, layout=None):
+        """
+        Init data of the parameter.
+
+        Args:
+            layout (list[list[int]]): parameter slice layout [dev_mat, tensor_map, slice_shape].
+                dev_mat (list[int]): device matrix.
+                tensor_map (list[int]): tensor map.
+                slice_shape (list[int]): shape of slice.
+        """
         if not isinstance(self.default_input, MetaTensor):
             return
+        if layout is not None:
+            if not isinstance(layout, list):
+                raise TypeError("The layout should be list! layout is {}."
+                                .format(layout))
+            if len(layout) != 3:
+                raise ValueError("The length of layout must be 3! layout is {}."
+                                 .format(layout))
+            self.init_mode.shape = layout[2]
+            self.init_mode.seed = int(_get_seed(layout[0], layout[1]))
+
         self.default_input = self.init_mode.to_tensor()
         self.init_mode = None
+        self._sliced = True
 
 
 class ParameterTuple(tuple):

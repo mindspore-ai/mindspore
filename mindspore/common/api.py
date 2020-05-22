@@ -329,8 +329,13 @@ class _Executor:
 
     def _params_init_data(self, obj, params):
         if params is not None:
-            for _, param in params.items():
-                param.init_data()
+            for key, param in params.items():
+                if key not in obj.parameter_layout_dict:
+                    logger.info("Layout dict does not contain the key %s.", key)
+                    param.init_data()
+                else:
+                    layout = obj.parameter_layout_dict[key]
+                    param.init_data(layout)
         obj.init_parameters_data()
 
     def compile(self, obj, *args, phase='predict', params=None, do_convert=True, auto_parallel_mode=False):
@@ -378,10 +383,11 @@ class _Executor:
         if not do_convert:
             return phase, True
 
+        if auto_parallel_mode and "train" in phase:
+            obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
         self._params_init_data(obj, params)
         if not enable_debug_runtime or enable_ge:
             if auto_parallel_mode and "train" in phase:
-                obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
                 obj.load_parameter_slice(params)
 
         # the following GE init process is not needed when use vm or ms backend
