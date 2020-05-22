@@ -47,6 +47,7 @@ class Sampler:
     def __init__(self):
         self.dataset_size = 0
         self.num_samples = 0
+        self.child_sampler = None
 
     def __iter__(self):
         """
@@ -83,7 +84,35 @@ class Sampler:
     # Instance fetcher
     # Do not override this method!
     def create(self):
-        return cde.PythonSampler(self)
+        c_sampler = cde.PythonSampler(self)
+        c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def add_child(self, sampler):
+        self.child_sampler = sampler
+
+    def get_child(self):
+        return self.child_sampler
+
+    def create_child(self):
+        c_child_sampler = None
+        if self.child_sampler is not None:
+            c_child_sampler = self.child_sampler.create()
+
+        return c_child_sampler
+
+    def is_shuffled(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_sharded()
 
 
 class BuiltinSampler:
@@ -93,10 +122,29 @@ class BuiltinSampler:
     User should not extend this class.
     """
     def __init__(self):
-        pass
+        self.child_sampler = None
 
     def create(self):
         pass
+
+    def add_child(self, sampler):
+        self.child_sampler = sampler
+
+    def get_child(self):
+        return self.child_sampler
+
+    def create_child(self):
+        c_child_sampler = None
+        if self.child_sampler is not None:
+            c_child_sampler = self.child_sampler.create()
+
+        return c_child_sampler
+
+    def is_shuffled(self):
+        raise NotImplementedError("Sampler must implement is_shuffled.")
+
+    def is_sharded(self):
+        raise NotImplementedError("Sampler must implement is_sharded.")
 
 
 class DistributedSampler(BuiltinSampler):
@@ -142,7 +190,22 @@ class DistributedSampler(BuiltinSampler):
     def create(self):
         # each time user calls create_dict_iterator() (to do repeat) sampler would get a different seed to shuffle
         self.seed += 1
-        return cde.DistributedSampler(self.num_shards, self.shard_id, self.shuffle, self.seed)
+        c_sampler = cde.DistributedSampler(self.num_shards, self.shard_id, self.shuffle, self.seed)
+        c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def is_shuffled(self):
+        if self.child_sampler is None:
+            return self.shuffle
+
+        return self.child_sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.child_sampler is None:
+            return self.num_shards > 1
+
+        return self.child_sampler.is_sharded()
 
 
 class PKSampler(BuiltinSampler):
@@ -186,7 +249,22 @@ class PKSampler(BuiltinSampler):
         super().__init__()
 
     def create(self):
-        return cde.PKSampler(self.num_val, self.shuffle)
+        c_sampler = cde.PKSampler(self.num_val, self.shuffle)
+        c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def is_shuffled(self):
+        if self.child_sampler is None:
+            return self.shuffle
+
+        return self.child_sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_sharded()
 
     def _create_for_minddataset(self):
         if not self.class_column or not isinstance(self.class_column, str):
@@ -226,15 +304,31 @@ class RandomSampler(BuiltinSampler):
                 raise ValueError("num_samples should be a positive integer "
                                  "value, but got num_samples={}".format(num_samples))
 
+        self.deterministic = False
         self.replacement = replacement
         self.num_samples = num_samples
+        self.reshuffle_each_epoch = True
         super().__init__()
 
     def create(self):
-        # If num_samples is not specified, then call constructor #2
+        c_sampler = None
         if self.num_samples is None:
-            return cde.RandomSampler(self.replacement)
-        return cde.RandomSampler(self.replacement, self.num_samples)
+            c_sampler = cde.RandomSampler(self.replacement, self.reshuffle_each_epoch)
+        else:
+            c_sampler = cde.RandomSampler(self.replacement, self.reshuffle_each_epoch, self.num_samples)
+
+        c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def is_shuffled(self):
+        return True
+
+    def is_sharded(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_sharded()
 
 
 class SequentialSampler(BuiltinSampler):
@@ -252,7 +346,80 @@ class SequentialSampler(BuiltinSampler):
     """
 
     def create(self):
-        return cde.SequentialSampler()
+        c_sampler = cde.SequentialSampler()
+        c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def is_shuffled(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_sharded()
+
+
+class SubsetSampler(BuiltinSampler):
+    """
+    Samples a subset of elements consecutively from a given index.
+
+    Args:
+        start_index (int): Index to start sampling at.
+        subset_size (int): How many samples to include in this subset.
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>>
+        >>> dataset_dir = "path/to/imagefolder_directory"
+        >>>
+        >>> # creates a SubsetSampler, will sample the next 5 images from the 100th image.
+        >>> sampler = ds.SubsetSampler(100, 5)
+        >>> data = ds.ImageFolderDatasetV2(dataset_dir, num_parallel_workers=8, sampler=sampler)
+
+    Raises:
+        ValueError: If start_index is not a positive int.
+        ValueError: If subset_size is not a positive int.
+    """
+
+    def __init__(self, start_index, subset_size):
+        if not isinstance(start_index, int):
+            raise ValueError("start_index should be an int.")
+
+        if start_index < 0:
+            raise ValueError("start_index should not be negative.")
+
+        if not isinstance(subset_size, int):
+            raise ValueError("start_index should be an int")
+
+        if subset_size < 0:
+            raise ValueError("subset_size should not be negative.")
+
+        self.start_index = start_index
+        self.subset_size = subset_size
+        super().__init__()
+
+    def create(self):
+        c_sampler = cde.SubsetSampler(self.start_index, self.subset_size)
+        c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def is_shuffled(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_sharded()
 
 
 class SubsetRandomSampler(BuiltinSampler):
@@ -282,7 +449,19 @@ class SubsetRandomSampler(BuiltinSampler):
         super().__init__()
 
     def create(self):
-        return cde.SubsetRandomSampler(self.indices)
+        c_sampler = cde.SubsetRandomSampler(self.indices)
+        c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def is_shuffled(self):
+        return True
+
+    def is_sharded(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_sharded()
 
     def _create_for_minddataset(self):
         return cde.MindrecordSubsetRandomSampler(self.indices)
@@ -330,4 +509,16 @@ class WeightedRandomSampler(BuiltinSampler):
         super().__init__()
 
     def create(self):
-        return cde.WeightedRandomSampler(self.weights, self.num_samples, self.replacement)
+        c_sampler = cde.WeightedRandomSampler(self.weights, self.num_samples, self.replacement)
+        c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def is_shuffled(self):
+        return True
+
+    def is_sharded(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_sharded()

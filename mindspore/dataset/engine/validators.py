@@ -1031,3 +1031,44 @@ def check_textfiledataset(method):
         return method(*args, **kwargs)
 
     return new_method
+
+def check_split(method):
+    """check the input arguments of split."""
+
+    @wraps(method)
+    def new_method(*args, **kwargs):
+        param_dict = make_param_dict(method, args, kwargs)
+
+        nreq_param_list = ['sizes']
+        nreq_param_bool = ['randomize']
+        check_param_type(nreq_param_list, param_dict, list)
+        check_param_type(nreq_param_bool, param_dict, bool)
+
+        # check sizes: must be list of float or list of int
+        sizes = param_dict.get('sizes')
+
+        if not sizes:
+            raise ValueError("sizes cannot be empty.")
+        all_int = all(isinstance(item, int) for item in sizes)
+        all_float = all(isinstance(item, float) for item in sizes)
+
+        if not (all_int or all_float):
+            raise ValueError("sizes should be list of int or list of float.")
+
+        if all_int:
+            all_positive = all(item > 0 for item in sizes)
+            if not all_positive:
+                raise ValueError("sizes is a list of int, but there should be no negative numbers.")
+
+        if all_float:
+            all_valid_percentages = all(0 < item <= 1 for item in sizes)
+            if not all_valid_percentages:
+                raise ValueError("sizes is a list of float, but there should be no numbers outside the range [0, 1].")
+
+            epsilon = 0.00001
+            if not abs(sum(sizes) - 1) < epsilon:
+                raise ValueError("sizes is a list of float, but the percentages do not sum up to 1.")
+
+        return method(*args, **kwargs)
+
+    return new_method

@@ -40,6 +40,8 @@ WeightedRandomSampler::WeightedRandomSampler(const std::vector<double> &weights,
 Status WeightedRandomSampler::InitSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0 && user_num_samples_, "num_samples & num_rows need to be positive");
   CHECK_FAIL_RETURN_UNEXPECTED(samples_per_buffer_ > 0, "samples_per_buffer<=0\n");
+  num_samples_ = user_num_samples_;
+
   // Initialize random generator with seed from config manager
   rand_gen_.seed(GetSeed());
 
@@ -81,6 +83,11 @@ Status WeightedRandomSampler::Reset() {
   } else {
     discrete_dist_->reset();
   }
+
+  if (HasChildSampler()) {
+    RETURN_IF_NOT_OK(child_[0]->Reset());
+  }
+
   return Status::OK();
 }
 
@@ -98,6 +105,10 @@ Status WeightedRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buf
   if (sample_id_ == user_num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
   } else {
+    if (HasChildSampler()) {
+      RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
+    }
+
     (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> outputIds;
 
@@ -127,7 +138,12 @@ Status WeightedRandomSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buf
         RETURN_STATUS_UNEXPECTED("generated id is bigger than numRows (out of bound).");
       }
 
-      *(id_ptr++) = genId;
+      if (HasChildSampler()) {
+        RETURN_IF_NOT_OK(GetAssociatedChildId(&genId, genId));
+      }
+
+      *id_ptr = genId;
+      id_ptr++;
       sample_id_++;
     }
 
