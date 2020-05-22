@@ -785,6 +785,9 @@ void SessionBasic::Summary(KernelGraph *graph) {
     (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
     tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
     MS_EXCEPTION_IF_NULL(address);
+    if (!address->GetPtr()) {
+      continue;
+    }
     if (!address->SyncDeviceToHost(trans::GetRuntimePaddingShape(node, index), LongToSize(tensor->data().nbytes()),
                                    tensor->data_type(), tensor->data_c(true))) {
       MS_LOG(ERROR) << "Failed to sync output from device to host.";
