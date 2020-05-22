@@ -16,6 +16,8 @@
 import os
 import pytest
 from mindspore import context
+
+
 # pylint: disable=W0212
 # W0212: protected-access
 
@@ -72,6 +74,34 @@ def test_dump_target():
     assert context.get_context("save_dump_path") == "."
 
 
+def test_enable_profiling():
+    """ test_profiling_mode """
+    with pytest.raises(TypeError):
+        context.set_context(enable_profiling=1)
+    with pytest.raises(TypeError):
+        context.set_context(enable_profiling="1")
+    context.set_context(enable_profiling=True)
+    assert context.get_context("enable_profiling") is True
+    context.set_context(enable_profiling=False)
+    assert context.get_context("enable_profiling") is False
+
+
+def test_profiling_options():
+    """ test_profiling_options """
+    with pytest.raises(TypeError):
+        context.set_context(profiling_options=True)
+    with pytest.raises(TypeError):
+        context.set_context(profiling_options=1)
+    with pytest.raises(ValueError):
+        context.set_context(profiling_options="training_")
+    with pytest.raises(ValueError):
+        context.set_context(profiling_options="training_trace:op_trace")
+    context.set_context(profiling_options="training_trace")
+    assert context.get_context("profiling_options") == "training_trace"
+    context.set_context(profiling_options="training_trace:task_trace")
+    assert context.get_context("profiling_options") == "training_trace:task_trace"
+
+
 def test_set_context():
     """ test_set_context """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
@@ -101,4 +131,3 @@ def teardown_module():
             os.rmdir(item_name)
         elif os.path.isfile(item_name):
             os.remove(item_name)
-

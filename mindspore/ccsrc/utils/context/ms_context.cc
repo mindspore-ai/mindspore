@@ -78,6 +78,8 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   graph_memory_max_size_ = "0";
   variable_memory_max_size_ = "0";
   enable_loop_sink_ = target == kAscendDevice || target == kDavinciDevice;
+  profiling_mode_ = false;
+  profiling_options_ = "training_trace";
 }
 
 std::shared_ptr<MsContext> MsContext::GetInstance() {
@@ -279,6 +281,10 @@ void MsContext::GetGeOptions(std::map<std::string, std::string> *ge_options) con
   (*ge_options)["device_id"] = "0";
   (*ge_options)["ge.exec.enableDump"] = std::to_string(enable_dump_);
   (*ge_options)["ge.exec.dumpPath"] = save_dump_path_;
+  (*ge_options)["ge.exec.profilingMode"] = std::to_string(profiling_mode_);
+  if (profiling_mode_) {
+    (*ge_options)["ge.exec.profilingOptions"] = profiling_options_;
+  }
   // only not supported in ge
   auto tbe_plugin_path = common::GetEnv("ME_TBE_PLUGIN_PATH");
   if (!tbe_plugin_path.empty()) {

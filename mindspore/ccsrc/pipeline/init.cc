@@ -151,7 +151,11 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set whether to enable dynamic mem pool.")
     .def("set_graph_memory_max_size", &mindspore::MsContext::set_graph_memory_max_size, "set graph memory max size.")
     .def("set_variable_memory_max_size", &mindspore::MsContext::set_variable_memory_max_size,
-         "set variable memory max size");
+         "set variable memory max size")
+    .def("get_enable_profiling", &mindspore::MsContext::enable_profiling, "Get whether to open profiling.")
+    .def("set_enable_profiling", &mindspore::MsContext::set_enable_profiling, "Set whether to open profiling.")
+    .def("get_profiling_options", &mindspore::MsContext::profiling_options, "Get options to profiling.")
+    .def("set_profiling_options", &mindspore::MsContext::set_profiling_options, "Set options to profiling.");
 
   (void)py::class_<ParallelContext, std::shared_ptr<ParallelContext>>(m, "AutoParallelContext")
     .def_static("get_instance", &ParallelContext::GetInstance, "Get auto parallel context instance.")
