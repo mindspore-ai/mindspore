@@ -926,7 +926,11 @@ class InvertPermutation(PrimitiveWithInfer):
     def __infer__(self, x):
         x_shp = x['shape']
         x_value = x['value']
-        validator.check_value_type("shape", x_shp, [tuple], self.name)
+        validator.check_value_type("shape", x_shp, [tuple, list], self.name)
+        if mstype.issubclass_(x['dtype'], mstype.tensor):
+            validator.check('x dimension', len(x_shp), '', 1, Rel.EQ, self.name)
+            validator.check_type_same({'x dtype': x['dtype']}, mstype.int_type, self.name)
+            x_value = [int(i) for i in x_value.asnumpy()]
         z = [x_value[i] for i in range(len(x_value))]
         z.sort()
 
