@@ -30,10 +30,10 @@ def test_set_auto_parallel_context():
     parameter_broadcast = context.get_auto_parallel_context("parameter_broadcast")
     assert device_num == 4
     assert global_rank == 3
-    assert mirror_mean == True
-    assert cast_before_mirror == False
+    assert mirror_mean
+    assert not cast_before_mirror
     assert parallel_mode == "auto_parallel"
-    assert parameter_broadcast == False
+    assert not parameter_broadcast
 
     auto_parallel_context().set_communication_backend("hccl")
     backend = auto_parallel_context().get_communication_backend()
@@ -43,7 +43,7 @@ def test_set_auto_parallel_context():
     device_num = auto_parallel_context().get_device_num()
     device_num_is_set = auto_parallel_context().get_device_num_is_set()
     assert device_num == 4
-    assert device_num_is_set == True
+    assert device_num_is_set
 
     auto_parallel_context().set_global_rank(4)
     global_rank = auto_parallel_context().get_global_rank()
@@ -51,14 +51,14 @@ def test_set_auto_parallel_context():
 
     auto_parallel_context().set_mirror_mean(True)
     mirror_mean = auto_parallel_context().get_mirror_mean()
-    assert mirror_mean == True
+    assert mirror_mean
 
     auto_parallel_context().set_cast_before_mirror(False)
     cast_before_mirror = auto_parallel_context().get_cast_before_mirror()
-    assert cast_before_mirror == False
+    assert not cast_before_mirror
 
     parameter_broadcast_is_set = auto_parallel_context().get_parameter_broadcast_is_set()
-    assert parameter_broadcast_is_set == True
+    assert parameter_broadcast_is_set
 
     with pytest.raises(ValueError):
         context.set_auto_parallel_context(device_num=0)
@@ -94,9 +94,9 @@ def test_reset_auto_parallel_context():
     parameter_broadcast_is_set = auto_parallel_context().get_parameter_broadcast_is_set()
     assert device_num == 1
     assert global_rank == 0
-    assert mirror_mean == False
-    assert cast_before_mirror == True
+    assert not mirror_mean
+    assert cast_before_mirror
     assert parallel_mode == "stand_alone"
-    assert parameter_broadcast == False
-    assert device_num_is_set == False
-    assert parameter_broadcast_is_set == False
+    assert not parameter_broadcast
+    assert not device_num_is_set
+    assert not parameter_broadcast_is_set

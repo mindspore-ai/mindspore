@@ -20,7 +20,6 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
-from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 

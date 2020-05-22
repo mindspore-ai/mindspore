@@ -44,7 +44,7 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, b)
 
 
-def compile(net, x, y, b):
+def compile_net(net, x, y, b):
     net.set_auto_parallel()
     _executor.compile(net, x, y, b)
 
@@ -72,7 +72,7 @@ def test_matmul_tanh():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_matmul_activation():
@@ -98,7 +98,7 @@ def test_matmul_activation():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_matmul_softmax():
@@ -124,7 +124,7 @@ def test_matmul_softmax():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_matmul_logsoftmax():
@@ -150,7 +150,7 @@ def test_matmul_logsoftmax():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_activations():
@@ -179,7 +179,7 @@ def test_activations():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_activations_repeated_calculation():
@@ -211,7 +211,7 @@ def test_activations_repeated_calculation():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_activations_axis_tuple():
@@ -243,4 +243,4 @@ def test_activations_axis_tuple():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)

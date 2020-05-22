@@ -21,7 +21,6 @@ from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class GradWrap(nn.Cell):
@@ -33,7 +32,7 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, bias)
 
 
-def compile(net, x, y, bias):
+def compile_net(net, x, y, bias):
     net.set_auto_parallel()
     _executor.compile(net, x, y, bias)
 
@@ -59,7 +58,7 @@ def test_sum_as_loss():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
-    compile(net, x, y, bias)
+    compile_net(net, x, y, bias)
 
 
 def test_sum_as_loss2():
@@ -83,4 +82,4 @@ def test_sum_as_loss2():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
-    compile(net, x, y, bias)
+    compile_net(net, x, y, bias)

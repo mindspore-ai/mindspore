@@ -58,7 +58,7 @@ class Net(nn.Cell):
         return out
 
 
-def compile(net, x, y):
+def compile_net(net, x, y):
     net.set_auto_parallel()
     _executor.compile(net, x, y)
 
@@ -69,7 +69,7 @@ def test_reshape_parameter_data_parallel():
     net = GradWrap(NetWithLoss(Net(strategy)))
     x = Tensor(np.ones([10000, 36]), dtype=ms.float32)
     y = Tensor(np.ones([10000, 36, 1]), dtype=ms.float32)
-    compile(net, x, y)
+    compile_net(net, x, y)
 
 
 def test_reshape_parameter_model_parallel():
@@ -78,4 +78,4 @@ def test_reshape_parameter_model_parallel():
     net = GradWrap(NetWithLoss(Net(strategy)))
     x = Tensor(np.ones([10000, 36]), dtype=ms.float32)
     y = Tensor(np.ones([10000, 36, 1]), dtype=ms.float32)
-    compile(net, x, y)
+    compile_net(net, x, y)

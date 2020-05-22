@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import os
-import pytest
+import numpy as np
 
 import mindspore.communication.management as distributedTool
 from mindspore import context

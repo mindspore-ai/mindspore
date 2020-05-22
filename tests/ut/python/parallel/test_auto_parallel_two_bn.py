@@ -1,5 +1,19 @@
-import numpy as np
+# Copyright 2019 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import re
+import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -33,7 +47,7 @@ class Blockcell(nn.Cell):
         return out
 
 
-def getBlock():
+def get_block():
     return Blockcell()
 
 
@@ -41,8 +55,8 @@ def test_two_bn():
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.block1 = getBlock()
-            self.block2 = getBlock()
+            self.block1 = get_block()
+            self.block2 = get_block()
             self.relu = P.ReLU()
             self.add = P.TensorAdd()
             self.bias = Tensor(np.ones([64, 64]), dtype=ms.float32)

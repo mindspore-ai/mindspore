@@ -78,7 +78,7 @@ def test_virtual_dataset_3_input():
 
 def test_virtualdataset_cell_3_inputs():
     class Net(nn.Cell):
-        def __init__(self, strategy0, strategy1, strategy2, strategy3):
+        def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
             self.matmul1 = P.MatMul().set_strategy(strategy1)
             self.matmul2 = P.MatMul().set_strategy(strategy2)
@@ -89,7 +89,7 @@ def test_virtualdataset_cell_3_inputs():
             out = self.matmul2(out, b)
             return out
 
-    net = GradWrap(VirtualDatasetCellTriple(NetWithLoss(Net(None, None, None, None))))
+    net = GradWrap(VirtualDatasetCellTriple(NetWithLoss(Net(None, None, None))))
     context.set_context(save_graphs=True)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     context.set_auto_parallel_context(device_num=8, global_rank=0)

@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import os
-import pytest
+import numpy as np
 from numpy import allclose as allclose_nparray
 
 import mindspore as ms
@@ -129,9 +128,9 @@ class ReduceMeanFactory:
         self.out_id = self.list_to_id(device_index, self.out_strategy)
         print(self.out_id)
 
-    def id_to_list(self, id, shape):
+    def id_to_list(self, id_, shape):
         result = []
-        r = id
+        r = id_
         for i in range(0, len(shape)):
             v = 1
             for j in range(i + 1, len(shape)):

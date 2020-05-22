@@ -22,7 +22,6 @@ from mindspore import context
 from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class GradWrap(nn.Cell):
@@ -54,7 +53,7 @@ class GradWrap3(nn.Cell):
         return C.grad_all(self.network)(x, y, bias)
 
 
-def compile(net, x, y, b):
+def compile_net(net, x, y, b):
     net.set_auto_parallel()
     _executor.compile(net, x, y, b)
 
@@ -81,7 +80,7 @@ def test_no_grad():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_grad_sens_parameter_type():
@@ -135,7 +134,7 @@ def test_grad_sens_tensor_type():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_grad_sens_scalar_broadcast():
@@ -159,4 +158,4 @@ def test_grad_sens_scalar_broadcast():
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
     bias = Tensor(np.ones([64]), dtype=ms.float32)
-    compile(net, x, y, bias)
+    compile_net(net, x, y, bias)

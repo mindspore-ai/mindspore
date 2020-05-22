@@ -159,8 +159,8 @@ class SemiAutoOneHotNet(Cell):
         weight_np = np.zeros(weight_shape, np.float32)
         self.weight = Parameter(Tensor(weight_np), name='model_parallel_weight')
 
-    def construct(self, input, label):
-        input_n = self.normalize(input)
+    def construct(self, input_, label):
+        input_n = self.normalize(input_)
         w = self.normalize2(self.weight)
         fc_o = self.fc(input_n, w)
         fc_o_shape = F.shape(fc_o)
@@ -209,9 +209,8 @@ class Dataset(MindData):
             raise StopIteration
         self.index += 1
         if self.input_num == 2:
-            return self.predict, self.label
-        else:
-            return self.predict,
+            return (self.predict, self.label)
+        return (self.predict,)
 
     def reset(self):
         self.index = 0
@@ -268,20 +267,20 @@ def test_bn_reshape_dense_bn_train_loss():
     batch_size = 16
     device_num = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
-    input = Tensor(np.ones([batch_size, 2, 32, 32]).astype(np.float32) * 0.01)
+    input_ = Tensor(np.ones([batch_size, 2, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
     net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
 
-    _executor.compile(net, input, label)
+    _executor.compile(net, input_, label)
 
 
 def test_semi_one_hot_net_batch():
     batch_size = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
-    input = Tensor(np.ones([batch_size * 1, 512]).astype(np.float32) * 0.01)
+    input_ = Tensor(np.ones([batch_size * 1, 512]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
     net = SemiAutoOneHotNet(args=Args(), strategy=StrategyBatch())
@@ -289,7 +288,7 @@ def test_semi_one_hot_net_batch():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     net.set_auto_parallel()
 
-    _executor.compile(net, input, label)
+    _executor.compile(net, input_, label)
 
 
 def test_semi_one_hot_net_model():

@@ -104,23 +104,23 @@ def test_two_matmul():
     set_algo_parameters(tensor_slice_align_enable=False, tensor_slice_align_size=32,
                         fully_use_devices=False, elementwise_op_strategy_follow=False)
     para_slice_align_enable = get_algo_parameters("tensor_slice_align_enable")
-    assert para_slice_align_enable == False
+    assert not para_slice_align_enable
     para_slice_align_size = get_algo_parameters("tensor_slice_align_size")
     assert para_slice_align_size == 32
     fully_use_devices = get_algo_parameters("fully_use_devices")
-    assert fully_use_devices == False
+    assert not fully_use_devices
     elementwise_op_strategy_follow = get_algo_parameters("elementwise_op_strategy_follow")
-    assert elementwise_op_strategy_follow == False
+    assert not elementwise_op_strategy_follow
 
     reset_algo_parameters()
     para_slice_align_enable = get_algo_parameters("tensor_slice_align_enable")
-    assert para_slice_align_enable == False
+    assert not para_slice_align_enable
     para_slice_align_size = get_algo_parameters("tensor_slice_align_size")
     assert para_slice_align_size == 16
     fully_use_devices = get_algo_parameters("fully_use_devices")
-    assert fully_use_devices == True
+    assert fully_use_devices
     elementwise_op_strategy_follow = get_algo_parameters("elementwise_op_strategy_follow")
-    assert elementwise_op_strategy_follow == False
+    assert not elementwise_op_strategy_follow
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)

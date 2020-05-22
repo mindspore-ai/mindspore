@@ -19,9 +19,8 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common.api import _executor
-from mindspore.nn import TrainOneStepCell, WithLossCell
+from mindspore.nn import TrainOneStepCell
 from mindspore.nn.optim import Momentum, LARS
-from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 
@@ -36,7 +35,7 @@ class NetWithLoss(nn.Cell):
         return self.loss(predict, b)[0]
 
 
-def compile(net, x, b):
+def compile_net(net, x, b):
     net.set_auto_parallel()
     _executor.compile(net, x, b)
 
@@ -72,7 +71,7 @@ def test_momentum():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x, b)
+    compile_net(train_net, x, b)
 
 
 def test_momentum_with_loss_scale():
@@ -106,7 +105,7 @@ def test_momentum_with_loss_scale():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x, b)
+    compile_net(train_net, x, b)
 
 
 def test_momentum_with_dynamic_lr():
@@ -141,7 +140,7 @@ def test_momentum_with_dynamic_lr():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x, b)
+    compile_net(train_net, x, b)
 
 
 def test_momentum_with_loss_scale_and_dynamic_lr():
@@ -177,7 +176,7 @@ def test_momentum_with_loss_scale_and_dynamic_lr():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x, b)
+    compile_net(train_net, x, b)
 
 
 def test_lars():
@@ -205,11 +204,11 @@ def test_lars():
     net = Net(strategy1, strategy2, weight)
 
     lr = Tensor(np.ones([6]), dtype=ms.float32)
-    SGD = Momentum(net.trainable_params(), lr, 0.9)
-    optimizer = LARS(SGD, epsilon=1e-08, hyperpara=0.02, decay_filter=lambda x: 'bn' not in x.name,
+    sgd = Momentum(net.trainable_params(), lr, 0.9)
+    optimizer = LARS(sgd, epsilon=1e-08, hyperpara=0.02, decay_filter=lambda x: 'bn' not in x.name,
                      lars_filter=lambda x: 'bn' not in x.name)
     net_with_loss = NetWithLoss(net, strategy3)
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x, b)
+    compile_net(train_net, x, b)

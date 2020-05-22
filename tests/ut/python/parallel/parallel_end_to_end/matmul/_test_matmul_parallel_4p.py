@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import os
+import numpy as np
 from numpy import allclose
 
 import mindspore.communication.management as distributedTool
@@ -109,7 +109,7 @@ class BatchmatmulFactory:
             inputb_shape[-1] = inputb_shape[-2]
             inputb_shape[-2] = temp
 
-        if (len(inputa_shape) >= len(inputb_shape)):
+        if len(inputa_shape) >= len(inputb_shape):
             out_shape = list(inputa_shape)
             out_shape[-1] = inputb_shape[-1]
         else:
@@ -127,7 +127,7 @@ class BatchmatmulFactory:
             strategy2[-1] = strategy2[-2]
             strategy2[-2] = temp
 
-        if (len(strategy1) >= len(strategy2)):
+        if len(strategy1) >= len(strategy2):
             out_strategy = strategy1.copy()
             out_strategy[-1] = strategy2[-1]
         else:
@@ -189,13 +189,13 @@ class BatchmatmulFactory:
             i += 1
         return blocks
 
-    """
-    shape：每一维的上限，如（2,4,8）
-    """
 
-    def id_to_list(self, id, shape):
+    def id_to_list(self, id_, shape):
+        """
+        shape：每一维的上限，如（2,4,8）
+        """
         result = []
-        r = id
+        r = id_
         for i in range(0, len(shape)):
             v = 1
             for j in range(i + 1, len(shape)):

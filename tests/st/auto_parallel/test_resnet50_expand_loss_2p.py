@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
 import os
+import numpy as np
 import pytest
 
 import mindspore.common.dtype as mstype
@@ -37,31 +37,29 @@ init()
 context.set_auto_parallel_context(mirror_mean=True, parallel_mode=ParallelMode.AUTO_PARALLEL)
 
 
-def weight_variable(shape, factor=0.1):
+def weight_variable():
     return One()
 
 
 def _conv3x3(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
-    init_value = weight_variable((out_channels, in_channels, 3, 3))
+    init_value = weight_variable()
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=3, stride=stride, padding=padding, pad_mode=pad_mode, weight_init=init_value)
 
 
 def _conv1x1(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
-    init_value = weight_variable((out_channels, in_channels, 1, 1))
+    init_value = weight_variable()
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=1, stride=stride, padding=padding, pad_mode=pad_mode, weight_init=init_value)
 
 
 def _conv7x7(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
-    init_value = weight_variable((out_channels, in_channels, 7, 7))
+    init_value = weight_variable()
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=7, stride=stride, padding=padding, pad_mode=pad_mode, weight_init=init_value)
 
 
 def _fused_bn(channels, momentum=0.9):
-    init_weight = weight_variable((channels,))
-    init_bias = weight_variable((channels,))
     return nn.BatchNorm2d(channels, momentum=momentum)
 
 
@@ -210,8 +208,8 @@ class ResNet(nn.Cell):
 
         self.mean = P.ReduceMean(keep_dims=True)
         self.end_point = nn.Dense(2048, num_classes, has_bias=True,
-                                  weight_init=weight_variable((num_classes, 2048)),
-                                  bias_init=weight_variable((num_classes,)))
+                                  weight_init=weight_variable(),
+                                  bias_init=weight_variable())
         self.squeeze = P.Squeeze()
         self.cast = P.Cast()
 
@@ -345,9 +343,8 @@ class Dataset():
             raise StopIteration
         self.index += 1
         if self.input_num == 2:
-            return self.predict, self.label
-        else:
-            return self.predict,
+            return (self.predict, self.label)
+        return (self.predict,)
 
     def reset(self):
         self.index = 0
@@ -364,7 +361,7 @@ class ModelCallback(Callback):
         super(ModelCallback, self).__init__()
         self.loss_list = []
 
-    def epoch_end(self, run_context, *args):
+    def epoch_end(self, run_context):
         cb_params = run_context.original_args()
         result = cb_params.net_outputs
         self.loss_list.append(result.asnumpy().mean())
@@ -376,9 +373,9 @@ class ModelCallback(Callback):
 def test_train_feed(num_classes=8192):
     set_algo_parameters(elementwise_op_strategy_follow=True)
     parallel_callback = ModelCallback()
-    dataGen = DataGenerator()
-    input_full, input_part = dataGen.input_data((32 * 2, 3, 224, 224))
-    label_full, label_part = dataGen.label_data((32 * 2,))
+    data_gen = DataGenerator()
+    _, input_part = data_gen.input_data((32 * 2, 3, 224, 224))
+    _, label_part = data_gen.label_data((32 * 2,))
     dataset = Dataset(input_part, label_part)
     net = resnet50(num_classes)
     loss = SoftmaxCrossEntropyExpand(sparse=True)
@@ -396,9 +393,9 @@ def test_train_feed(num_classes=8192):
 def test_train_feed2(num_classes=1001):
     set_algo_parameters(elementwise_op_strategy_follow=True)
     parallel_callback = ModelCallback()
-    dataGen = DataGenerator()
-    input_full, input_part = dataGen.input_data((32 * 2, 3, 224, 224))
-    label_full, label_part = dataGen.label_data((32 * 2,))
+    data_gen = DataGenerator()
+    _, input_part = data_gen.input_data((32 * 2, 3, 224, 224))
+    _, label_part = data_gen.label_data((32 * 2,))
     dataset = Dataset(input_part, label_part)
     net = resnet50(num_classes)
     loss = SoftmaxCrossEntropyExpand(sparse=True)

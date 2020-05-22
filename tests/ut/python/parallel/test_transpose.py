@@ -17,7 +17,6 @@ import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context
-from mindspore import context
 from mindspore.common.parameter import Parameter
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
@@ -67,7 +66,6 @@ def transpose_net(strategy1, strategy2):
 
 
 def transpose_common(strategy1, strategy2):
-    batch_size = 32
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 2

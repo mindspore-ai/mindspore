@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import os
+import numpy as np
 
 import mindspore as ms
 import mindspore.communication.management as distributedTool
@@ -83,8 +83,8 @@ class Grad(Cell):
 
 class MatmulAllgatherFactory:
     def __init__(self, inputx_shape, inputy_shape, x_stra, y_stra):
-        self.inputx = self.GenValue(inputx_shape, 10)
-        self.inputy = self.GenValue(inputy_shape, 20)
+        self.inputx = self.gen_value(inputx_shape, 10)
+        self.inputy = self.gen_value(inputy_shape, 20)
         self.x_stra = x_stra
         self.y_stra = y_stra
         stra_size = 1
@@ -92,7 +92,7 @@ class MatmulAllgatherFactory:
             stra_size = stra_size * s
         self.stra_size = stra_size
 
-    def GenValue(self, input_shape, delta):
+    def gen_value(self, input_shape, delta):
         size = 1
         for s in input_shape:
             size = size * s

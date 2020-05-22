@@ -120,7 +120,7 @@ class TrainOneStepCell(Cell):
         return F.depend(loss, self.optimizer(grads))
 
 
-def net_trains(gather_v2_strategy, criterion, rank):
+def net_trains(criterion, rank):
     init()
     lr = 0.1
     momentum = 0.9
@@ -151,42 +151,42 @@ def test_auto_batch_parallel():
     gather_v2_strategy = None
     criterion = GatherV2(1, strategy=gather_v2_strategy, index_size=batch_size_per_device * device_number)
     rank = 2
-    net_trains(gather_v2_strategy, criterion, rank)
+    net_trains(criterion, rank)
 
 
 def test_2d_index_auto_batch_parallel():
     gather_v2_strategy = None
     criterion = GatherV2(2, strategy=gather_v2_strategy, index_size=batch_size_per_device * device_number)
     rank = 2
-    net_trains(gather_v2_strategy, criterion, rank)
+    net_trains(criterion, rank)
 
 
 def test_batch_parallel():
     gather_v2_strategy = ((device_number, 1),)
     criterion = GatherV2(1, strategy=gather_v2_strategy, index_size=batch_size_per_device * device_number)
     rank = 2
-    net_trains(gather_v2_strategy, criterion, rank)
+    net_trains(criterion, rank)
 
 
 def test_strategy1():
     gather_v2_strategy = ((16, 2),)
     rank = 2
     criterion = GatherV2(1, strategy=gather_v2_strategy, index_size=batch_size_per_device * device_number)
-    net_trains(gather_v2_strategy, criterion, rank)
+    net_trains(criterion, rank)
 
 
 def test_strategy2():
     gather_v2_strategy = ((1, device_number),)
     rank = 2
     criterion = GatherV2(1, strategy=gather_v2_strategy, index_size=batch_size_per_device * device_number)
-    net_trains(gather_v2_strategy, criterion, rank)
+    net_trains(criterion, rank)
 
 
 def test_strategy3():
     gather_v2_strategy = ((8, 1),)
     rank = 2
     criterion = GatherV2(1, strategy=gather_v2_strategy, index_size=batch_size_per_device * device_number)
-    net_trains(gather_v2_strategy, criterion, rank)
+    net_trains(criterion, rank)
 
 
 class GatherV2Axis1(_Loss):
@@ -217,18 +217,18 @@ def test_axis1_auto_batch_parallel():
     gather_v2_strategy = None
     criterion = GatherV2Axis1(1, strategy=gather_v2_strategy, index_size=512)
     rank = 2
-    net_trains(gather_v2_strategy, criterion, rank)
+    net_trains(criterion, rank)
 
 
 def test_axis1_batch_parallel():
     gather_v2_strategy = ((device_number, 1),)
     criterion = GatherV2Axis1(1, strategy=gather_v2_strategy, index_size=512)
     rank = 2
-    net_trains(gather_v2_strategy, criterion, rank)
+    net_trains(criterion, rank)
 
 
 def test_axis1_strategy1():
     gather_v2_strategy = ((16, 2),)
     rank = 17
     criterion = GatherV2Axis1(1, strategy=gather_v2_strategy, index_size=512)
-    net_trains(gather_v2_strategy, criterion, rank)
+    net_trains(criterion, rank)

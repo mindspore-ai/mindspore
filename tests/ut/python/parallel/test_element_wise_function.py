@@ -44,7 +44,7 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, b)
 
 
-def compile(net, x, y, b):
+def compile_net(net, x, y, b):
     net.set_auto_parallel()
     _executor.compile(net, x, y, b)
 
@@ -72,7 +72,7 @@ def test_matmul_pow():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_matmul_exp():
@@ -98,7 +98,7 @@ def test_matmul_exp():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_matmul_log():
@@ -124,7 +124,7 @@ def test_matmul_log():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_matmul_logical_not():
@@ -151,7 +151,7 @@ def test_matmul_logical_not():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([128, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_matmul_cast():
@@ -178,7 +178,7 @@ def test_matmul_cast():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.int32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_cast_before_mirror():
@@ -202,7 +202,7 @@ def test_cast_before_mirror():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float16)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_cast_before_mirror1():
@@ -226,7 +226,7 @@ def test_cast_before_mirror1():
     x = Tensor(np.ones([128, 32]), dtype=ms.float16)
     y = Tensor(np.ones([32, 64]), dtype=ms.float16)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_cast_before_mirror2():
@@ -250,7 +250,7 @@ def test_cast_before_mirror2():
     x = Tensor(np.ones([128, 32]), dtype=ms.float16)
     y = Tensor(np.ones([32, 64]), dtype=ms.float16)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_cast_before_mirror3():
@@ -274,7 +274,7 @@ def test_cast_before_mirror3():
     x = Tensor(np.ones([128, 32]), dtype=ms.float16)
     y = Tensor(np.ones([32, 64]), dtype=ms.float16)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_mul_two_cast():
@@ -303,4 +303,4 @@ def test_mul_two_cast():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32]), dtype=ms.float32)
     b = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)

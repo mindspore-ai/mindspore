@@ -18,7 +18,6 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common import dtype as mstype
 from mindspore.common.api import _executor
 from mindspore.common.parameter import Parameter
 from mindspore.common.parameter import ParameterTuple
@@ -54,9 +53,8 @@ class Dataset(MindData):
             raise StopIteration
         self.index += 1
         if self.input_num == 2:
-            return self.predict, self.label
-        else:
-            return self.predict,
+            return (self.predict, self.label)
+        return (self.predict,)
 
     def reset(self):
         self.index = 0
@@ -82,7 +80,6 @@ def reshape_net(strategy0, strategy1, strategy2):
 
 
 def reshape_common(parallel_mode, strategy0, strategy1, strategy2, strategy_loss):
-    batch_size = 32
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 2
@@ -306,21 +303,21 @@ class ReshapeNet6(nn.Cell):
         return matmul2_o
 
 
-def compile(net, input):
+def compile_net(net, input_):
     net.set_auto_parallel()
-    _executor.compile(net, input)
+    _executor.compile(net, input_)
 
 
 def reshape_net2(backbone):
     batch_size = 16
     device_num = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
-    input = Tensor(np.ones([batch_size * device_num, 512, 7, 7]).astype(np.float32) * 0.01)
+    input_ = Tensor(np.ones([batch_size * device_num, 512, 7, 7]).astype(np.float32) * 0.01)
 
     net = GradWrap(NetWithLoss(backbone))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(net, input)
+    compile_net(net, input_)
 
 
 def test_reshape_net1_1():
@@ -480,11 +477,11 @@ def test_batchnorm_reshape_train():
     device_num = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    input = Tensor(np.ones([batch_size * device_num, 512]).astype(np.float32) * 0.01)
+    input_ = Tensor(np.ones([batch_size * device_num, 512]).astype(np.float32) * 0.01)
 
     net = GradWrap(NetWithLoss(BatchNormReshapeNet()))
 
-    compile(net, input)
+    compile_net(net, input_)
 
 
 def bn_with_initialize(out_channels):
@@ -517,12 +514,12 @@ def test_bn_reshape_dense_bn_train():
     batch_size = 16
     device_num = 16
     context.set_auto_parallel_context(device_num=device_num, global_rank=0)
-    input = Tensor(np.ones([batch_size, 2, 32, 32]).astype(np.float32) * 0.01)
+    input_ = Tensor(np.ones([batch_size, 2, 32, 32]).astype(np.float32) * 0.01)
 
     net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(net, input)
+    compile_net(net, input_)
 
 
 class ParallelReduceMeanNet(nn.Cell):

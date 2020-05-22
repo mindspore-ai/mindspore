@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import os
+import numpy as np
 import pytest
-from numpy import allclose
 
 import mindspore as ms
 import mindspore.communication.management as distributedTool
@@ -48,6 +47,7 @@ class PReLU(Cell):
         super(PReLU, self).__init__()
         self.add = P.TensorAdd(strategy=strategy1_)
         self.prelu = P.PReLU(strategy=strategy_)
+        self.channel = channel
 
     def construct(self, x, z, w):
         out = self.add(x, z)
@@ -59,8 +59,8 @@ class Grad(Cell):
         super(Grad, self).__init__()
         self.network = network
 
-    def construct(self, input, z, w, output_grad):
-        return grad_all_with_sens(self.network)(input, z, w, output_grad)
+    def construct(self, input_, z, w, output_grad):
+        return grad_all_with_sens(self.network)(input_, z, w, output_grad)
 
 
 class PReLUFactory:
