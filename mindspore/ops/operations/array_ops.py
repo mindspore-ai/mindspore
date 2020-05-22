@@ -905,9 +905,11 @@ class InvertPermutation(PrimitiveWithInfer):
         values can not be negative.
 
     Inputs:
-        - **input_x** (tuple[int]) - The input tuple is constructed by multiple
+        - **input_x** (Union(tuple[int], Tensor[int])) - The input tuple is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)` representing the indices.
           The values must include 0. There can be no duplicate values or negative values.
+          If the input is Tensor, it must be 1-d and the dtype is int.
+
 
     Outputs:
         tuple[int]. the lenth is same as input.
