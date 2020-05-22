@@ -640,52 +640,13 @@ void FuncGraphTransaction::Commit() {
 }
 
 FuncGraphAnalysis::FuncGraphAnalysis(const FuncGraphManager *const manager)
-    : manager_(manager), include_func_graph_none_(false) {
-  manager_->signals()->AddFuncGraph.connect(this, &FuncGraphAnalysis::OnAddFuncGraph);
-  manager_->signals()->DropFuncGraph.connect(this, &FuncGraphAnalysis::OnDropFuncGraph);
-  manager_->signals()->AddEdge.connect(this, &FuncGraphAnalysis::OnAddEdge);
-  manager_->signals()->DropEdge.connect(this, &FuncGraphAnalysis::OnDropEdge);
-  manager_->signals()->MoveAllCNode.connect(this, &FuncGraphAnalysis::OnMoveAllCNode);
-}
-
-NodesCollector::NodesCollector(const FuncGraphManager *const m) : DepCollector(m), nodes_analysis_() {
-  include_func_graph_none_ = true;
-  nodes_analysis_[nullptr] = AnfNodeSet();
-
-  manager_->signals()->AddNode.connect(this, &NodesCollector::OnAddNode);
-  manager_->signals()->DropNode.connect(this, &NodesCollector::OnDropNode);
-}
-
-void NodesCollector::OnAddNode(AnfNodePtr n) {
-  if (nodes_analysis_.find(n->func_graph()) == nodes_analysis_.end()) {
-    nodes_analysis_[n->func_graph()] = AnfNodeSet();
-  }
-  nodes_analysis_[n->func_graph()].add(n);
-}
-
-void NodesCollector::OnDropNode(AnfNodePtr n) {
-  (void)nodes_analysis_[n->func_graph()].erase(n);
-  auto graph = n->func_graph();
-  // Remove the node from order list.
-  if (graph) {
-    graph->EraseUnusedNodeInOrder(n);
-  }
-}
-
-void NodesCollector::OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) {
-  // change the owner of node except for the src's return node
-  for (auto &it : nodes_analysis_[src]) {
-    nodes_analysis_[dst].add(it);
-  }
-  (void)nodes_analysis_.erase(src);
-}
-
-void DepCollector::OnAddEdge(AnfNodePtr node, int index, AnfNodePtr inp) { OnModEdge(node, index, inp, kIncEdge); }
+    : manager_(manager), include_func_graph_none_(false) {}
 
 DepCollector::DepCollector(const FuncGraphManager *const manager) : FuncGraphAnalysis(manager) {
   MS_EXCEPTION_IF_NULL(manager_);
-  manager_->signals()->InvalidateCollector.connect(this, &DepCollector::OnInvalidateCollector);
 }
+
+void DepCollector::OnAddEdge(AnfNodePtr node, int index, AnfNodePtr inp) { OnModEdge(node, index, inp, kIncEdge); }
 
 void DepCollector::OnDropEdge(AnfNodePtr node, int index, AnfNodePtr inp) { OnModEdge(node, index, inp, kDecEdge); }
 
@@ -735,65 +696,6 @@ bool CounterAnfNodeCollector<ValueT, CollectorHash, CollectorEqual>::Mod(const F
   }
 }
 
-void ValueNodesCollector::OnModEdge(AnfNodePtr node, int, AnfNodePtr inp, EdgeProcessDirection direction) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (inp->isa<ValueNode>()) {
-    (void)Mod(node->func_graph(), inp, direction);
-  }
-}
-
-void ValueNodesCollector::OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) {
-  for (auto &it : count_nodes_map_[src]) {
-    (void)Inc(dst, it.first, it.second);
-  }
-  (void)count_nodes_map_.erase(src);
-}
-
-void FuncGraphUsersCNodeIndexCollector::OnModEdge(AnfNodePtr node, int index, AnfNodePtr inp,
-                                                  EdgeProcessDirection direction) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (IsValueNode<FuncGraph>(inp)) {
-    (void)Mod(GetValueNode<FuncGraphPtr>(inp), std::make_shared<CNodeIndexPair>(std::make_pair(node, index)),
-              direction);
-  }
-}
-
-void FuncGraphUsersCNodeIndexCollector::OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) {
-  for (auto &it : count_nodes_map_[src]) {
-    // Ignore the user graph who may own itself.
-    if (dst != it.first->first->func_graph()) {
-      (void)Inc(dst, it.first, it.second);
-    }
-  }
-  (void)count_nodes_map_.erase(src);
-}
-
-void FVDirectCollector::OnModEdge(AnfNodePtr node, int, AnfNodePtr inp, EdgeProcessDirection direction) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(inp);
-  FuncGraphPtr fg1 = node->func_graph();
-  FuncGraphPtr fg2 = inp->func_graph();
-  if (nullptr != fg1 && nullptr != fg2 && fg1 != fg2) {
-    (void)Mod(fg1, inp, direction);
-  }
-}
-
-void FVDirectCollector::OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) {
-  for (auto &it : count_nodes_map_[src]) {
-    FuncGraphPtr fg2 = it.first->func_graph();
-    if (fg2 != dst) {
-      (void)Inc(dst, it.first, it.second);
-    }
-  }
-  (void)count_nodes_map_.erase(src);
-}
-
-static FuncGraphPtr ParentProxy(const FuncGraphPtr &fg) {
-  FuncGraphPtr gn = std::make_shared<FuncGraph>();
-  (void)gn->transforms().insert(std::make_pair("proxy", FuncGraphTransform(fg)));
-  return gn;
-}
-
 bool CounterFuncGraphCollector::Inc(const FuncGraphPtr &func_graph, const FuncGraphPtr &key, int count = 1) {
   auto &d = count_func_graphs_map_[func_graph];
   if (d.count(key) == 0) {
@@ -831,87 +733,6 @@ bool CounterFuncGraphCollector::Mod(const FuncGraphPtr &func_graph, const FuncGr
     MS_LOG(EXCEPTION) << "Count of key '" << key->ToString()
                       << "' cannot be 0. NodeInfo: " << trace::GetDebugInfo(func_graph->debug_info());
   }
-}
-
-void FuncGraphChildDirect::OnModEdge(AnfNodePtr node, int, AnfNodePtr inp, EdgeProcessDirection direction) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(inp);
-  FuncGraphPtr fg1 = node->func_graph();
-  FuncGraphPtr fg2 = inp->func_graph();
-  if (nullptr != fg1 && nullptr != fg2 && fg1 != fg2) {
-    (void)Mod(fg2, fg1, direction);
-  }
-}
-
-void FuncGraphChildDirect::OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) {
-  for (auto &it : count_func_graphs_map_[src]) {
-    FuncGraphPtr fg = it.first;
-    if (fg != dst) {
-      (void)Inc(dst, fg, it.second);
-    }
-  }
-  (void)count_func_graphs_map_.erase(src);
-}
-
-void FuncGraphParentsDirectCollector::OnModEdge(AnfNodePtr node, int, AnfNodePtr inp, EdgeProcessDirection direction) {
-  MS_EXCEPTION_IF_NULL(node);
-  FuncGraphPtr fg1 = node->func_graph();
-  // possible child parent
-  if (IsValueNode<FuncGraph>(inp)) {
-    FuncGraphPtr fg2 = GetValueNode<FuncGraphPtr>(inp);
-    if (Mod(fg1, ParentProxy(fg2), direction)) {
-      manager_->signals()->InvalidateComputer();
-    }
-  }
-  // from fv
-  FuncGraphPtr fg2 = inp->func_graph();
-  if (nullptr != fg1 && nullptr != fg2 && fg1 != fg2) {
-    // node use fv will in here, fg1's node use fg2's node, so fg1 is child and fg2 is parent
-    if (Mod(fg1, fg2, direction)) {
-      manager_->signals()->InvalidateComputer();
-    }
-  }
-}
-
-void FuncGraphParentsDirectCollector::OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) {
-  for (auto &it : count_func_graphs_map_[src]) {
-    if (it.first != dst) {
-      (void)Inc(dst, it.first, it.second);
-    }
-  }
-  (void)count_func_graphs_map_.erase(src);
-}
-
-void FuncGraphsUsedCollector::OnModEdge(AnfNodePtr node, int, AnfNodePtr inp, EdgeProcessDirection direction) {
-  MS_EXCEPTION_IF_NULL(node);
-  if (IsValueNode<FuncGraph>(inp)) {
-    (void)Mod(node->func_graph(), GetValueNode<FuncGraphPtr>(inp), direction);
-  }
-}
-
-void FuncGraphsUsedCollector::OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) {
-  // all graph use in src need to change to dst, so meger the to dst use
-  for (auto &it : count_func_graphs_map_[src]) {
-    (void)Inc(dst, it.first, it.second);
-  }
-  (void)count_func_graphs_map_[dst].erase(src);
-  (void)count_func_graphs_map_.erase(src);
-}
-
-void FuncGraphJDirectCollector::OnModEdge(AnfNodePtr node, int, AnfNodePtr inp, EdgeProcessDirection direction) {
-  if (IsValueNode<FuncGraph>(inp) && IsPrimitiveCNode(node, prim::kPrimJ)) {
-    (void)Mod(node->func_graph(), GetValueNode<FuncGraphPtr>(inp), direction);
-    MS_LOG(DEBUG) << node->func_graph()->ToString() << " users func graph "
-                  << GetValueNode<FuncGraphPtr>(inp)->ToString() << " which contains J(func_graph), dir: " << direction;
-  }
-}
-
-void FuncGraphJDirectCollector::OnMoveAllCNode(FuncGraphPtr src, FuncGraphPtr dst) {
-  // all graph use in src need to change to dst, so meger the to dst use
-  for (auto &it : count_func_graphs_map_[src]) {
-    (void)Inc(dst, it.first, it.second);
-  }
-  (void)count_func_graphs_map_.erase(src);
 }
 
 DepComputer::DepComputer(const FuncGraphManager *const manager) : FuncGraphAnalysis(manager) {
