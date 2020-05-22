@@ -33,7 +33,7 @@ import numpy as np
 from config_imagenet import config
 from crossentropy import CrossEntropy
 from dataset_imagenet import create_dataset
-from lr_generator import get_lr, warmup_cosine_annealing_lr
+from lr_generator import  warmup_cosine_annealing_lr
 
 random.seed(1)
 np.random.seed(1)
