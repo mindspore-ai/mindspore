@@ -148,6 +148,7 @@ constexpr auto kReturnOpName = "return";
 constexpr auto kLarsV2OpName = "LarsV2";
 constexpr auto kLarsV2UpdateOpName = "LarsV2Update";
 constexpr auto kSquareSumAllOpName = "SquareSumAll";
+constexpr auto kNMSWithMaskOpName = "NMSWithMask";
 
 // attr key name
 constexpr auto kAttrInputNames = "input_names";

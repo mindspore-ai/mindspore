@@ -2021,11 +2021,6 @@ class NMSWithMask(PrimitiveWithInfer):
         cls_name = self.name
         validator.check_integer("bboxes rank", len(bboxes_shape), 2, Rel.EQ, cls_name)
         validator.check_integer("bboxes.shape()[0]", bboxes_shape[0], 0, Rel.GT, cls_name)
-        if not self.is_ge:
-            validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 8, Rel.EQ, cls_name)
-            num = bboxes_shape[0]
-            return ((num, 5), (num,), (num,))
-
         validator.check_integer("bboxes.shape()[1]", bboxes_shape[1], 5, Rel.EQ, cls_name)
         num = bboxes_shape[0]
         return (bboxes_shape, (num,), (num,))

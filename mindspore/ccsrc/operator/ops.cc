@@ -145,6 +145,8 @@ const PrimitivePtr kPrimReshape = std::make_shared<Primitive>("Reshape");
 const PrimitivePtr kPrimTile = std::make_shared<Primitive>("Tile");
 const PrimitivePtr kPrimAddN = std::make_shared<Primitive>("AddN");
 const PrimitivePtr KPrimTransData = std::make_shared<Primitive>("TransData");
+const PrimitivePtr kPrimNMSWithMask = std::make_shared<Primitive>("NMSWithMask");
+const PrimitivePtr kPrimPad = std::make_shared<Primitive>("Pad");
 
 // Maths
 const PrimitivePtr kPrimTensorAdd = std::make_shared<Primitive>("TensorAdd");

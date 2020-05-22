@@ -151,6 +151,8 @@ extern const PrimitivePtr kPrimReshape;
 extern const PrimitivePtr kPrimTile;
 extern const PrimitivePtr kPrimAddN;
 extern const PrimitivePtr KPrimTransData;
+extern const PrimitivePtr kPrimNMSWithMask;
+extern const PrimitivePtr kPrimPad;
 
 // Maths
 extern const PrimitivePtr kPrimTensorAdd;
