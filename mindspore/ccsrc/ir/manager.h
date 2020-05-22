@@ -283,7 +283,7 @@ class FuncGraphParentsTotalComputer final : public DepComputer {
   void RealRecompute(FuncGraphPtr fg) override;
 
  private:
-  FuncGraphSetPtr SeekParents(const FuncGraphPtr &fg, const FuncGraphSetPtr &path = std::make_shared<FuncGraphSet>());
+  FuncGraphSetPtr SeekParents(const FuncGraphPtr &fg, size_t seen_num);
 };
 
 using FuncGraphToFuncGraphMap = OrderedMap<FuncGraphPtr, FuncGraphPtr>;
@@ -423,7 +423,7 @@ class FuncGraphJTotalComputer final : public DepComputer {
   void ExtraReset() override { j_total_analysis_.clear(); }
 
   void RealRecompute(FuncGraphPtr fg) override;
-  bool SeekJ(const FuncGraphPtr &fg, const FuncGraphSetPtr &path);
+  bool SeekJ(const FuncGraphPtr &fg, size_t seen_num);
 };
 
 class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {

@@ -47,6 +47,7 @@ FuncGraph::FuncGraph()
     : flags_(),
       transforms_(),
       parameter_default_value_(),
+      seen_(0),
       parameters_(),
       has_vararg_(false),
       has_kwarg_(false),
@@ -979,6 +980,11 @@ void FuncGraph::SetEffectDepends(const std::vector<AnfNodePtr> &depend_inputs) {
   } else {
     return_->set_input(1, new_ret);
   }
+}
+
+size_t NewFgSeenGeneration() {
+  static size_t fg_seen_generation = 0;
+  return ++fg_seen_generation;
 }
 
 const PrimitivePtr FuncGraphTransform::func_graph_prim_ = std::make_shared<Primitive>("FuncGraph");

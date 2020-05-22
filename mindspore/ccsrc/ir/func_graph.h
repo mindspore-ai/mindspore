@@ -289,6 +289,7 @@ class FuncGraph : public FuncGraphBase {
   // parameter default value
   std::map<std::string, AnfNodePtr> parameter_default_value_;
   std::unordered_map<AnfNodePtr, AnfNodePtr> make_ref_params_;
+  size_t seen_;
 
   std::list<CNodePtr> GetOrderedCnodes();
   void EraseUnusedNodeInOrder(const AnfNodePtr &n);
@@ -363,6 +364,8 @@ inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphP
   MS_EXCEPTION_IF_NULL(fg);
   return fg->NewCNode(inputs);
 }
+
+size_t NewFgSeenGeneration();
 
 // Find the root cnodes of a segment of cnodes.
 std::shared_ptr<OrderedSet<CNodePtr>> FindRoots(const std::vector<CNodePtr> &segment);
