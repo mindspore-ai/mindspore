@@ -17,6 +17,7 @@
 #include "kernel/rts/label_switch.h"
 #include <asm-generic/param.h>
 #include <memory>
+#include <string>
 #include "runtime/stream.h"
 #include "framework/ge_runtime/task_info.h"
 #include "session/anf_runtime_algorithm.h"
@@ -66,13 +67,33 @@ std::vector<TaskInfoPtr> LabelSwitchKernel::GenTask(const std::vector<AddressPtr
   MS_LOG(INFO) << "LabelSwitchKernel GenTask label size:" << label_size_ << ", stream id:" << stream_id;
   std::vector<TaskInfoPtr> task_info_list;
   cond_ = inputs[0]->addr;
-  //  std::shared_ptr<LabelSwitchTaskInfo> task_info_ptr =
-  //    std::make_shared<LabelSwitchTaskInfo>(stream_id, label_size_, &label_list_, cond_);
-  // need updata ge task info define
-  std::shared_ptr<LabelSwitchTaskInfo> task_info_ptr = std::make_shared<LabelSwitchTaskInfo>(stream_id, label_size_);
+  // todo: need update ge task info define
+  auto task_info_ptr = std::make_shared<LabelSwitchTaskInfo>(stream_id, 0);
+  // auto task_info_ptr = std::make_shared<LabelSwitchTaskInfo>(stream_id, label_size_, label_list_, cond_);
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   task_info_list.emplace_back(task_info_ptr);
   return task_info_list;
+}
+
+std::vector<std::shared_ptr<kernel::KernelBuildInfo>> LabelSwitchDesc::GetKernelInfo() {
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> label_switch_build_info{};
+
+  vector<string> input_format{kOpFormat_DEFAULT, kOpFormat_DEFAULT};
+  vector<TypeId> input_type{kNumberTypeUInt32, kNumberTypeBool};
+  if (input_format.size() != input_type.size()) {
+    MS_LOG(EXCEPTION) << "Invalid param num, input_format size " << input_format.size() << " input_type size "
+                      << input_type.size();
+  }
+  for (size_t i = 0; i < input_format.size(); ++i) {
+    auto builder = KernelBuildInfo::KernelBuildInfoBuilder();
+    builder.SetInputsFormat({input_format[i]});
+    builder.SetInputsDeviceType({input_type[i]});
+    builder.SetProcessor(AICORE);
+    builder.SetKernelType(RT_KERNEL);
+    builder.SetFusionType(OPAQUE);
+    label_switch_build_info.emplace_back(builder.Build());
+  }
+  return label_switch_build_info;
 }
 }  // namespace kernel
 }  // namespace mindspore

@@ -61,6 +61,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/transform/*.cc"
         "../../../mindspore/ccsrc/session/anf_runtime_algorithm.cc"
         "../../../mindspore/ccsrc/session/ascend_session.cc"
+        "../../../mindspore/ccsrc/session/ascend_control_parser.cc"
         "../../../mindspore/ccsrc/session/kernel_graph.cc"
         "../../../mindspore/ccsrc/session/session_basic.cc"
         "../../../mindspore/ccsrc/session/session_factory.cc"

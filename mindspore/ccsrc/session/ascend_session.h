@@ -28,6 +28,7 @@
 #include "session/kernel_graph.h"
 #include "kernel/kernel.h"
 #include "session/session_factory.h"
+#include "session/ascend_control_parser.h"
 
 namespace mindspore {
 namespace session {
@@ -74,7 +75,7 @@ class AscendSession : public SessionBasic {
   void AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-  void AssignLabel(NotNull<const KernelGraphPtr &> kernel_graph) const;
+  void AssignLabel(NotNull<KernelGraphPtr> kernel_graph) const;
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
   void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
@@ -96,7 +97,8 @@ class AscendSession : public SessionBasic {
   void SetFinalGraphOutput(const VectorRef &vec_output);
 
   void SplitGraph(const KernelGraphPtr &graph);
-  void LinkChildGraphs(KernelGraph *graph) {}
+  void LinkChildGraphs(NotNull<KernelGraphPtr> graph);
+
   void IRFusion(const KernelGraphPtr &graph) {}
   void SelectKernelGraphKernel(const KernelGraph &graph) {}
   void ConvertPredictModel(const KernelGraphPtr graph) {}

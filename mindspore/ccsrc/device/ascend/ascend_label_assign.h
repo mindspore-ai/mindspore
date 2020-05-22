@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_DEVICE_ASCEND_ASCEND_LABEL_ASSIGN_H_
 
 #include <memory>
+#include <map>
 #include "session/kernel_graph.h"
 #include "utils/contract.h"
 
@@ -35,11 +36,16 @@ class AscendLabelAssign {
   AscendLabelAssign(const AscendLabelAssign &) = delete;
   AscendLabelAssign &operator=(const AscendLabelAssign &) = delete;
 
-  void AssignLabel(NotNull<const std::shared_ptr<session::KernelGraph> &> graph);
+  void AssignLabel(NotNull<std::shared_ptr<session::KernelGraph>> graph);
+  uint32_t GetLabelNum(NotNull<const session::KernelGraph *> graph);
+  uint32_t GetLabelNum(NotNull<std::shared_ptr<session::KernelGraph>> graph);
 
  private:
   AscendLabelAssign() = default;
   ~AscendLabelAssign() = default;
+
+  std::map<const session::KernelGraph *, uint32_t> label_num_;
+  std::mutex label_num_mutex_;
 };
 }  // namespace ascend
 }  // namespace device

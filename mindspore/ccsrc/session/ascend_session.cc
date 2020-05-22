@@ -160,14 +160,14 @@ void ClearRunOpMemoryResource(const KernelGraphPtr &kernel_graph) {
 std::vector<CNodePtr> GetCNodes(const std::vector<AnfNodePtr> &anf_nodes) {
   std::vector<CNodePtr> cnodes = {};
   size_t i = 0;
-  for (const auto anf : anf_nodes) {
+  for (auto anf : anf_nodes) {
     MS_LOG(INFO) << "apply_list[" << i++ << "] = " << anf->DebugString();
     MS_EXCEPTION_IF_NULL(anf);
     if (anf->isa<CNode>()) {
       cnodes.push_back(anf->cast<CNodePtr>());
     }
   }
-  return std::move(cnodes);
+  return cnodes;
 }
 
 std::vector<std::vector<CNodePtr>> GetChildList(const KernelGraph &cur_graph, const std::vector<CNodePtr> &cnodes) {
@@ -189,7 +189,7 @@ std::vector<std::vector<CNodePtr>> GetChildList(const KernelGraph &cur_graph, co
       ret.push_back(std::vector<CNodePtr>(cnodes.begin() + after_call_index, cnodes.end()));
     }
   }
-  return std::move(ret);
+  return ret;
 }
 
 void UpdateRealInput(KernelGraph *graph) {
@@ -232,7 +232,7 @@ void UpdateRealInput(KernelGraph *graph) {
         auto ret = std::vector<AnfNodePtr>(partial_cnode->inputs().begin() + 2, partial_cnode->inputs().end());
         partial_cnode->set_inputs(
           std::vector<AnfNodePtr>(partial_cnode->inputs().begin(), partial_cnode->inputs().begin() + 2));
-        return std::move(ret);
+        return ret;
       };
       bind_call_partial_with_parameter(child_graphs[0]->inputs(), get_partial_args(2), child_graphs[0].get());
       bind_call_partial_with_parameter(child_graphs[1]->inputs(), get_partial_args(3), child_graphs[1].get());
@@ -256,27 +256,28 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   // split switch
   SplitGraph(graph);
   // insert goto labels and label_sets
-  LinkChildGraphs(graph.get());
+  LinkChildGraphs(NOT_NULL(graph));
   // resource initialize
   InitRuntimeResource();
-  // ir fusion
-  IRFusion(graph);
-  // kernel select
-  SelectKernelGraphKernel(*graph);
-  // convert model of predict module
-  ConvertPredictModel(graph);
-  // hardware optimize
-  HardwareOptimizeGraphs(graph);
+  // assign label
+  AssignLabel(NOT_NULL(graph));
+  if (!graph->executable()) {
+    return graph->graph_id();
+  }
+  for (auto iter : graphs_) {
+    if (iter.second == graph) {
+      MS_LOG(INFO) << "Entry graph " << graph->ToString() << " graph id " << graph->graph_id();
+      final_graph_id_ = graph->graph_id();
+    }
+    MS_LOG(INFO) << "CompileChildGraph " << iter.second->ToString();
+    CompileChildGraph(iter.second);
+  }
   // adjust kernel
   AdjustKernel(graph);
   // root graph valiate,include genearte execute order and so on
   RootGraphExecutorValidate(graph.get());
   // assign stream
   AssignStream(graph);
-  // assign label
-  AssignLabel(NOT_NULL(graph));
-  // build kernel if node is cnode
-  BuildKernel(graph);
   // alloc mem
   MemoryAlloc(graph.get());
   // task generate
@@ -556,7 +557,7 @@ void AscendSession::AssignStream(const std::shared_ptr<KernelGraph> &kernel_grap
   MS_LOG(INFO) << "Finish!";
 }
 
-void AscendSession::AssignLabel(NotNull<const KernelGraphPtr &> kernel_graph) const {
+void AscendSession::AssignLabel(NotNull<KernelGraphPtr> kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   device::ascend::AscendLabelAssign::GetInstance().AssignLabel(kernel_graph);
   MS_LOG(INFO) << "Finish!";
@@ -1305,29 +1306,13 @@ void AscendSession::InsertStreamActiveToGraph(GraphId graph_id, uint32_t actived
 }
 
 void AscendSession::InsertDependToGraph(GraphId graph_id, const AnfNodePtr &attch_node) {
-  MS_LOG(INFO) << "Insert depend at the end of graph, the attach node is " << attch_node->DebugString();
-  auto graph = GetGraph(graph_id);
-  MS_EXCEPTION_IF_NULL(graph);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>("depend"))};
-  auto return_node = graph->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
-  inputs.push_back(return_node->input(1));
-  inputs.push_back(attch_node);
-  auto depend_node = graph->NewCNode(inputs);
-  return_node->set_input(1, depend_node);
+  AscendControlParser::InsertDependToGraph(NOT_NULL(GetGraph(graph_id)), NOT_NULL(attch_node));
 }
 
 void AscendSession::InsertControlDependToGraph(GraphId graph_id, const AnfNodePtr &first_node,
                                                const AnfNodePtr &second_node) {
-  MS_LOG(INFO) << "Insert control depend at the end of graph, the first node is " << first_node->DebugString()
-               << ", the second node is " << second_node->DebugString();
-  auto graph = GetGraph(graph_id);
-  MS_EXCEPTION_IF_NULL(graph);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>("ControlDepend"))};
-  inputs.push_back(first_node);
-  inputs.push_back(second_node);
-  auto control_depend = graph->NewCNode(inputs);
-  InsertDependToGraph(graph_id, control_depend);
+  AscendControlParser::InsertControlDependToGraph(NOT_NULL(GetGraph(graph_id)), NOT_NULL(first_node),
+                                                  NOT_NULL(second_node));
 }
 
 size_t AscendSession::ExecOrderOfChildGraph(GraphId final_graph, GraphId child_graph) {
@@ -1482,5 +1467,8 @@ void AscendSession::SplitGraph(const KernelGraphPtr &graph) {
     SplitGraph(child_graph);
   }
 }
+
+void AscendSession::LinkChildGraphs(NotNull<KernelGraphPtr> graph) { AscendControlParser::LinkGraph(graph); }
+
 }  // namespace session
 }  // namespace mindspore
