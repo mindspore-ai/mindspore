@@ -648,9 +648,12 @@ AnfNodePtr FuncGraphSpecializer::BuildPossibleValueNode(const AnfNodePtr &origin
     ValuePtr val = ival->BuildValue();
     if (val->isa<AnyValue>()) {
       return nullptr;
-    } else {
-      return BuildValueNode(val, ival);
     }
+    // keep primitive 'depend' not to be optimized
+    if (IsPrimitiveCNode(origin_node, prim::kPrimDepend)) {
+      return nullptr;
+    }
+    return BuildValueNode(val, ival);
   }
 }
 
