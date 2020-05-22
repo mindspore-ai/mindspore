@@ -47,6 +47,8 @@ class GPUMemoryManager;
 
 namespace mindspore {
 namespace device {
+enum class DeviceAddressStatus { kInDevice, kInHost, kInDeviceToHost, kInHostToDevice };
+
 class DeviceAddress {
  public:
   explicit DeviceAddress(void *ptr, size_t size) : ptr_(ptr), size_(size) {}
@@ -60,6 +62,8 @@ class DeviceAddress {
   size_t GetSize() const { return size_; }
   std::string format() const { return format_; }
   TypeId type_id() const { return type_id_; }
+  virtual void set_status(DeviceAddressStatus status) {}
+  virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
 
  protected:
   const void *ptr() const { return ptr_; }

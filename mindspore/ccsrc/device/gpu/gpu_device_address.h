@@ -33,6 +33,11 @@ class GPUDeviceAddress : public DeviceAddress {
 
   bool SyncDeviceToHost(const std::vector<int> &shape, size_t size, TypeId type, void *host_ptr) const override;
   bool SyncHostToDevice(const std::vector<int> &shape, size_t size, TypeId type, const void *host_ptr) const override;
+  void set_status(DeviceAddressStatus status) { status_ = status; }
+  DeviceAddressStatus status() const { return status_; }
+
+ private:
+  DeviceAddressStatus status_{DeviceAddressStatus::kInDevice};
 };
 }  // namespace gpu
 }  // namespace device

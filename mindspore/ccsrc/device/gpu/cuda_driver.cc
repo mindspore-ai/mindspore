@@ -15,9 +15,7 @@
  */
 
 #include "device/gpu/cuda_driver.h"
-
 #include <iostream>
-
 #include "utils/log_adapter.h"
 #include "utils/convert_utils.h"
 
@@ -54,6 +52,27 @@ bool CudaDriver::FreeDeviceMem(const DeviceMemPtr &addr) {
   return true;
 }
 
+size_t CudaDriver::AllocHostPinnedMem(size_t size, void **addr) {
+  if (size == 0) {
+    MS_LOG(EXCEPTION) << "The memory allocate size is 0";
+  }
+  auto ret = cudaHostAlloc(addr, size, cudaHostAllocDefault);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaHostAlloc failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    return 0;
+  }
+  return size;
+}
+
+void CudaDriver::FreeHostPinnedMem(void *addr) {
+  if (addr) {
+    auto ret = cudaFreeHost(addr);
+    if (ret != cudaSuccess) {
+      MS_LOG(EXCEPTION) << "cudaFreeHost failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    }
+  }
+}
+
 bool CudaDriver::CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size) {
   auto ret = cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice);
   if (ret != cudaSuccess) {
@@ -67,6 +86,25 @@ bool CudaDriver::CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &
   auto ret = cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaMemcpy failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    return false;
+  }
+  return true;
+}
+
+bool CudaDriver::CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size, DeviceStream stream) {
+  auto ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, (cudaStream_t)stream);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaMemcpyAsync failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    return false;
+  }
+  return true;
+}
+
+bool CudaDriver::CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
+                                          DeviceStream stream) {
+  auto ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, (cudaStream_t)stream);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaMemcpyAsync failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
     return false;
   }
   return true;
@@ -120,6 +158,55 @@ bool CudaDriver::SyncStream(const DeviceStream &stream) {
     return false;
   }
   return true;
+}
+
+bool CudaDriver::CreateEvent(DeviceEvent *event, unsigned int flag) {
+  auto ret = cudaEventCreateWithFlags(reinterpret_cast<cudaEvent_t *>(event), flag);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaEventCreateWithFlags failed, ret[" << static_cast<int>(ret) << "], "
+                  << cudaGetErrorString(ret);
+    return false;
+  }
+  return true;
+}
+
+bool CudaDriver::DestroyEvent(const DeviceEvent &event) {
+  auto ret = cudaEventDestroy((cudaEvent_t)event);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaEventDestroy failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    return false;
+  }
+  return true;
+}
+
+bool CudaDriver::RecordEvent(DeviceEvent event, DeviceStream stream) {
+  auto ret = cudaEventRecord((cudaEvent_t)event, (cudaStream_t)stream);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaEventRecord failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    return false;
+  }
+  return true;
+}
+
+bool CudaDriver::SyncEvent(const DeviceEvent &event) {
+  auto ret = cudaEventSynchronize((cudaEvent_t)event);
+  if (ret != cudaSuccess) {
+    MS_LOG(ERROR) << "cudaEventSynchronize failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    return false;
+  }
+  return true;
+}
+
+bool CudaDriver::QueryEvent(const DeviceEvent &event) {
+  auto ret = cudaEventQuery((cudaEvent_t)event);
+  if (ret == cudaSuccess) {
+    return true;
+  } else if (ret == cudaErrorNotReady) {
+    return false;
+  } else {
+    MS_LOG(ERROR) << "cudaEventQuery failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    return false;
+  }
 }
 
 int CudaDriver::device_count() {
