@@ -35,18 +35,13 @@ def test_exception_01():
 
 def test_exception_02():
     """
-    Test multiple exceptions with invalid input
+    Test exceptions with invalid input, and test valid input
     """
     logger.info("test_exception_02")
-    num_samples = 0
-    with pytest.raises(ValueError) as info:
-        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)
-    assert "num_samples must be greater than 0" in str(info.value)
-
     num_samples = -1
     with pytest.raises(ValueError) as info:
         data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)
-    assert "num_samples must be greater than 0" in str(info.value)
+    assert "num_samples cannot be less than 0" in str(info.value)
 
     num_samples = 1
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)

@@ -108,14 +108,6 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
     }
 
     // Setter method
-    // @param int64_t num_samples
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumSamples(int64_t num_samples) {
-      builder_num_samples_ = num_samples;
-      return *this;
-    }
-
-    // Setter method
     // @param std::shared_ptr<Sampler> sampler
     // @return Builder setter method returns reference to the builder.
     Builder &SetSampler(std::shared_ptr<Sampler> sampler) {
@@ -153,7 +145,6 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
     bool builder_recursive_;
     std::string builder_dir_;
     int32_t builder_num_workers_;
-    int64_t builder_num_samples_;
     int32_t builder_rows_per_buffer_;
     int32_t builder_op_connector_size_;
     std::set<std::string> builder_extensions_;
@@ -169,10 +160,9 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   // @param int32_t queue_size - connector queue size
   // @param std::set<std::string> exts - set of file extensions to read, if empty, read everything under the dir
   // @param td::unique_ptr<Sampler> sampler - sampler tells ImageFolderOp what to read
-  ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size,
-                int64_t num_samples, bool recursive, bool do_decode, const std::set<std::string> &exts,
-                const std::map<std::string, int32_t> &map, std::unique_ptr<DataSchema>,
-                std::shared_ptr<Sampler> sampler);
+  ImageFolderOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size, bool recursive,
+                bool do_decode, const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
+                std::unique_ptr<DataSchema>, std::shared_ptr<Sampler> sampler);
 
   // Destructor.
   ~ImageFolderOp() = default;
@@ -198,16 +188,6 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   // @return Status - The error code return
   Status operator()() override;
 
-  // Method derived from RandomAccess Op, enable Sampler to get numRows
-  // @param int64_t num - to return numRows
-  // @return Status - The error code return
-  Status GetNumSamples(int64_t *num) const override;
-
-  // Method derived from RandomAccess Op, enable Sampler to get total numRows in dataset
-  // @param int64_t num - to return numRows
-  // @return Status - The error code return
-  Status GetNumRowsInDataset(int64_t *num) const override;
-
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   // @param (std::map<int64_t, std::vector<int64_t >> * map - key label, val all ids for this class
   // @return Status - The error code return
@@ -221,9 +201,8 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   // This function is a hack! It is to return the num_class and num_rows the old storageOp does. The result
   // returned by this function may not be consistent with what image_folder_op is going to return
   // user this at your own risk!
-  static Status CountRowsAndClasses(const std::string &path, const int64_t &num_samples,
-                                    const std::set<std::string> &exts, int64_t *num_rows, int64_t *num_classes,
-                                    int64_t dev_id = 0, int64_t num_dev = 1);
+  static Status CountRowsAndClasses(const std::string &path, const std::set<std::string> &exts, int64_t *num_rows,
+                                    int64_t *num_classes, int64_t dev_id = 0, int64_t num_dev = 1);
 
   // Base-class override for NodePass visitor acceptor.
   // @param p - Pointer to the NodePass to be accepted.
@@ -266,14 +245,12 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
 
   int32_t rows_per_buffer_;
   std::string folder_path_;  // directory of image folder
-  int64_t num_samples_;
   bool recursive_;
   bool decode_;
   std::set<std::string> extensions_;  // extensions allowed
   std::map<std::string, int32_t> class_index_;
   std::unique_ptr<DataSchema> data_schema_;
   std::shared_ptr<Sampler> sampler_;
-  int64_t num_rows_;  // total number of images in ImageFolder
   int64_t row_cnt_;
   int64_t buf_cnt_;
   int64_t sampler_ind_;

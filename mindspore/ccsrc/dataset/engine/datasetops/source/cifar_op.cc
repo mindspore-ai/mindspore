@@ -35,7 +35,7 @@ constexpr uint32_t kCifarImageChannel = 3;
 constexpr uint32_t kCifarBlockImageNum = 5;
 constexpr uint32_t kCifarImageSize = kCifarImageHeight * kCifarImageWidth * kCifarImageChannel;
 
-CifarOp::Builder::Builder() : num_samples_(0), sampler_(nullptr) {
+CifarOp::Builder::Builder() : sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   num_workers_ = cfg->num_parallel_workers();
   rows_per_buffer_ = cfg->rows_per_buffer();
@@ -46,7 +46,9 @@ CifarOp::Builder::Builder() : num_samples_(0), sampler_(nullptr) {
 Status CifarOp::Builder::Build(std::shared_ptr<CifarOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   if (sampler_ == nullptr) {
-    sampler_ = std::make_shared<SequentialSampler>();
+    int64_t num_samples = 0;
+    int64_t start_index = 0;
+    sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
   schema_ = std::make_unique<DataSchema>();
   TensorShape scalar = TensorShape::CreateScalar();
@@ -62,7 +64,7 @@ Status CifarOp::Builder::Build(std::shared_ptr<CifarOp> *ptr) {
       ColDescriptor("fine_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &another_scalar)));
   }
 
-  *ptr = std::make_shared<CifarOp>(cifar_type_, num_workers_, rows_per_buffer_, dir_, op_connect_size_, num_samples_,
+  *ptr = std::make_shared<CifarOp>(cifar_type_, num_workers_, rows_per_buffer_, dir_, op_connect_size_,
                                    std::move(schema_), std::move(sampler_));
   return Status::OK();
 }
@@ -76,16 +78,13 @@ Status CifarOp::Builder::SanityCheck() {
 }
 
 CifarOp::CifarOp(CifarType type, int32_t num_works, int32_t rows_per_buf, const std::string &file_dir,
-                 int32_t queue_size, int64_t num_samples, std::unique_ptr<DataSchema> data_schema,
-                 std::shared_ptr<Sampler> sampler)
+                 int32_t queue_size, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
     : ParallelOp(num_works, queue_size),
       cifar_type_(type),
       rows_per_buffer_(rows_per_buf),
       folder_path_(file_dir),
-      num_samples_(num_samples),
       data_schema_(std::move(data_schema)),
       sampler_(std::move(sampler)),
-      num_rows_(0),
       row_cnt_(0),
       buf_cnt_(0) {
   // set the column name map (base class field)
@@ -112,8 +111,7 @@ Status CifarOp::operator()() {
       for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); itr++) {
         keys.push_back(*itr);
         row_cnt_++;
-        if ((*itr) >= num_rows_) continue;    // index out of bound, skipping
-        if (row_cnt_ >= num_samples_) break;  // enough row read, break for loop
+        if ((*itr) >= num_rows_) continue;  // index out of bound, skipping
         if (row_cnt_ % rows_per_buffer_ == 0) {
           RETURN_IF_NOT_OK(io_block_queues_[buf_cnt_++ % num_workers_]->Add(
             std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
@@ -255,30 +253,6 @@ Status CifarOp::InitSampler() {
   return Status::OK();
 }
 
-// Derived from RandomAccessOp
-Status CifarOp::GetNumSamples(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
-    std::string err_msg = "There is no valid data matching the dataset API " + api +
-                          ".Please check file path or dataset API validation first.";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  (*num) = num_samples_;
-  return Status::OK();
-}
-
-// Derived from RandomAccessOp
-Status CifarOp::GetNumRowsInDataset(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
-    std::string err_msg = "There is no valid data matching the dataset API " + api +
-                          ".Please check file path or dataset API validation first.";
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  (*num) = num_rows_;
-  return Status::OK();
-}
-
 Status CifarOp::ReadCifarBlockDataAsync() {
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(GetCifarFiles());
@@ -404,7 +378,6 @@ Status CifarOp::ParseCifarData() {
   }
   cifar_image_label_pairs_.shrink_to_fit();
   num_rows_ = cifar_image_label_pairs_.size();
-  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   if (num_rows_ == 0) {
     std::string api = cifar_type_ == kCifar10 ? "Cifar10Dataset" : "Cifar100Dataset";
     std::string err_msg = "There is no valid data matching the dataset API " + api +
@@ -432,11 +405,11 @@ Status CifarOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) co
   return Status::OK();
 }
 
-Status CifarOp::CountTotalRows(const std::string &dir, int64_t numSamples, bool isCIFAR10, int64_t *count) {
+Status CifarOp::CountTotalRows(const std::string &dir, bool isCIFAR10, int64_t *count) {
   // the logic of counting the number of samples is copied from ReadCifar100Block() and ReadCifar10Block()
   std::shared_ptr<CifarOp> op;
   *count = 0;
-  RETURN_IF_NOT_OK(Builder().SetCifarDir(dir).SetNumSamples(numSamples).SetCifarType(isCIFAR10).Build(&op));
+  RETURN_IF_NOT_OK(Builder().SetCifarDir(dir).SetCifarType(isCIFAR10).Build(&op));
   RETURN_IF_NOT_OK(op->GetCifarFiles());
   if (op->cifar_type_ == kCifar10) {
     constexpr int64_t num_cifar10_records = 10000;
@@ -448,7 +421,6 @@ Status CifarOp::CountTotalRows(const std::string &dir, int64_t numSamples, bool 
       }
       *count = *count + num_cifar10_records;
     }
-    *count = *count < numSamples || numSamples == 0 ? *count : numSamples;
     return Status::OK();
   } else {
     int64_t num_cifar100_records = 0;
@@ -470,7 +442,7 @@ Status CifarOp::CountTotalRows(const std::string &dir, int64_t numSamples, bool 
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
     }
-    *count = num_cifar100_records < numSamples || numSamples == 0 ? num_cifar100_records : numSamples;
+    *count = num_cifar100_records;
     return Status::OK();
   }
 }

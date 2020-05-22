@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace dataset {
-ManifestOp::Builder::Builder() : builder_sampler_(nullptr), builder_num_samples_(0), builder_decode_(false) {
+ManifestOp::Builder::Builder() : builder_sampler_(nullptr), builder_decode_(false) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_rows_per_buffer_ = cfg->rows_per_buffer();
@@ -39,16 +39,18 @@ ManifestOp::Builder::Builder() : builder_sampler_(nullptr), builder_num_samples_
 Status ManifestOp::Builder::Build(std::shared_ptr<ManifestOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
-    builder_sampler_ = std::make_shared<SequentialSampler>();
+    int64_t num_samples = 0;
+    int64_t start_index = 0;
+    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
   builder_schema_ = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(
     builder_schema_->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
   RETURN_IF_NOT_OK(
     builder_schema_->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
-  *ptr = std::make_shared<ManifestOp>(
-    builder_num_workers_, builder_rows_per_buffer_, builder_file_, builder_op_connector_size_, builder_num_samples_,
-    builder_decode_, builder_labels_to_read_, std::move(builder_schema_), std::move(builder_sampler_), builder_usage_);
+  *ptr = std::make_shared<ManifestOp>(builder_num_workers_, builder_rows_per_buffer_, builder_file_,
+                                      builder_op_connector_size_, builder_decode_, builder_labels_to_read_,
+                                      std::move(builder_schema_), std::move(builder_sampler_), builder_usage_);
   return Status::OK();
 }
 
@@ -59,9 +61,9 @@ Status ManifestOp::Builder::SanityCheck() {
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
-ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size,
-                       int64_t num_samples, bool decode, const std::map<std::string, int32_t> &class_index,
-                       std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler, std::string usage)
+ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string file, int32_t queue_size, bool decode,
+                       const std::map<std::string, int32_t> &class_index, std::unique_ptr<DataSchema> data_schema,
+                       std::shared_ptr<Sampler> sampler, std::string usage)
     : ParallelOp(num_works, queue_size),
       rows_per_buffer_(rows_per_buffer),
       io_block_pushed_(0),
@@ -71,8 +73,6 @@ ManifestOp::ManifestOp(int32_t num_works, int32_t rows_per_buffer, std::string f
       file_(file),
       class_index_(class_index),
       sampler_(std::move(sampler)),
-      num_samples_(num_samples),
-      num_rows_(0),
       decode_(decode),
       usage_(usage),
       buf_cnt_(0) {
@@ -101,8 +101,7 @@ Status ManifestOp::AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer) {
       RETURN_IF_NOT_OK((*sampler_buffer)->PopRow(&sample_row));
       std::shared_ptr<Tensor> sample_ids = sample_row[0];
       for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-        if ((*itr) >= num_rows_) continue;    // index out of bound, skipping
-        if (row_cnt_ >= num_samples_) break;  // enough row read, break for loop
+        if ((*itr) >= num_rows_) continue;  // index out of bound, skipping
         keys.push_back(*itr);
         row_cnt_++;
         if (row_cnt_ % rows_per_buffer_ == 0) {
@@ -270,28 +269,6 @@ Status ManifestOp::InitSampler() {
 }
 
 // Derived from RandomAccessOp
-Status ManifestOp::GetNumSamples(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_samples_;
-  return Status::OK();
-}
-
-// Derived from RandomAccessOp
-Status ManifestOp::GetNumRowsInDataset(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_rows_;
-  return Status::OK();
-}
-
-// Derived from RandomAccessOp
 Status ManifestOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const {
   if (cls_ids == nullptr || !cls_ids->empty() || image_labelname_.empty()) {
     RETURN_STATUS_UNEXPECTED("Class indexing is invalid.");
@@ -408,7 +385,6 @@ Status ManifestOp::CountDatasetInfo() {
   }
 
   num_rows_ = static_cast<int64_t>(image_labelname_.size());
-  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   if (num_rows_ == 0) {
     RETURN_STATUS_UNEXPECTED(
       "There is no valid data matching the dataset API ManifestDataset.Please check file path or dataset API "
@@ -417,8 +393,8 @@ Status ManifestOp::CountDatasetInfo() {
   return Status::OK();
 }
 
-Status ManifestOp::CountTotalRows(const std::string &file, int64_t numSamples, const py::dict &dict,
-                                  const std::string &usage, int64_t *count, int64_t *numClasses) {
+Status ManifestOp::CountTotalRows(const std::string &file, const py::dict &dict, const std::string &usage,
+                                  int64_t *count, int64_t *numClasses) {
   // the logic of counting the number of samples is copied from ParseManifestFile()
   std::map<std::string, int32_t> map;
   for (auto p : dict) {
@@ -428,17 +404,15 @@ Status ManifestOp::CountTotalRows(const std::string &file, int64_t numSamples, c
 
   std::shared_ptr<ManifestOp> op;
   *count = 0;
-  RETURN_IF_NOT_OK(
-    Builder().SetManifestFile(file).SetNumSamples(numSamples).SetClassIndex(map).SetUsage(usage).Build(&op));
+  RETURN_IF_NOT_OK(Builder().SetManifestFile(file).SetClassIndex(map).SetUsage(usage).Build(&op));
   RETURN_IF_NOT_OK(op->ParseManifestFile());
   *numClasses = static_cast<int64_t>(op->label_index_.size());
   *count = static_cast<int64_t>(op->image_labelname_.size());
-  *count = (*count < numSamples || numSamples == 0) ? *count : numSamples;
   return Status::OK();
 }
 
-Status ManifestOp::GetClassIndexing(const std::string &file, int64_t numSamples, const py::dict &dict,
-                                    const std::string &usage, std::map<std::string, int32_t> *output_class_indexing) {
+Status ManifestOp::GetClassIndexing(const std::string &file, const py::dict &dict, const std::string &usage,
+                                    std::map<std::string, int32_t> *output_class_indexing) {
   std::map<std::string, int32_t> input_class_indexing;
   for (auto p : dict) {
     (void)input_class_indexing.insert(std::pair<std::string, int32_t>(py::reinterpret_borrow<py::str>(p.first),
@@ -449,12 +423,7 @@ Status ManifestOp::GetClassIndexing(const std::string &file, int64_t numSamples,
     *output_class_indexing = input_class_indexing;
   } else {
     std::shared_ptr<ManifestOp> op;
-    RETURN_IF_NOT_OK(Builder()
-                       .SetManifestFile(file)
-                       .SetNumSamples(numSamples)
-                       .SetClassIndex(input_class_indexing)
-                       .SetUsage(usage)
-                       .Build(&op));
+    RETURN_IF_NOT_OK(Builder().SetManifestFile(file).SetClassIndex(input_class_indexing).SetUsage(usage).Build(&op));
     RETURN_IF_NOT_OK(op->ParseManifestFile());
     RETURN_IF_NOT_OK(op->CountDatasetInfo());
     uint32_t count = 0;

@@ -23,8 +23,9 @@
 
 namespace mindspore {
 namespace dataset {
-DistributedSampler::DistributedSampler(int64_t num_dev, int64_t dev_id, bool shuffle, uint32_t seed)
-    : Sampler(),
+DistributedSampler::DistributedSampler(int64_t num_samples, int64_t num_dev, int64_t dev_id, bool shuffle,
+                                       uint32_t seed)
+    : Sampler(num_samples, std::numeric_limits<int64_t>::max()),
       cnt_(0),
       seed_(seed == std::numeric_limits<uint32_t>::max() ? GetSeed() : seed),
       device_id_(dev_id),
@@ -32,6 +33,11 @@ DistributedSampler::DistributedSampler(int64_t num_dev, int64_t dev_id, bool shu
       shuffle_(shuffle) {}
 
 Status DistributedSampler::InitSampler() {
+  // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
+  // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
+  if (num_samples_ == 0 || num_samples_ > num_rows_) {
+    num_samples_ = num_rows_;
+  }
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0, "num_samples <= 0\n");
   CHECK_FAIL_RETURN_UNEXPECTED(num_rows_ > 0, "num_rows <= 0\n");
   CHECK_FAIL_RETURN_UNEXPECTED(device_id_ < num_devices_ && device_id_ >= 0 && num_rows_ > 0 && num_samples_ > 0,

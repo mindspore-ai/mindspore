@@ -28,10 +28,11 @@ namespace dataset {
 class SubsetRandomSampler : public Sampler {
  public:
   // Constructor.
+  // @param num_samples The number of samples to draw. 0 for the full amount.
   // @param indices List of indices from where we will randomly draw samples.
   // @param samples_per_buffer The number of ids we draw on each call to GetNextBuffer().
   // When samplesPerBuffer=0, GetNextBuffer() will draw all the sample ids and return them at once.
-  explicit SubsetRandomSampler(const std::vector<int64_t> &indices,
+  explicit SubsetRandomSampler(int64_t num_samples, const std::vector<int64_t> &indices,
                                std::int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
 
   // Destructor.

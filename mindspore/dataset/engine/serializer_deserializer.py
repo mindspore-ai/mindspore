@@ -161,6 +161,20 @@ def traverse(node):
         else:
             node_repr[k] = v
 
+    # If a sampler exists in this node, then the following 4 arguments must be set to None:
+    #    num_samples, shard_id, num_shards, shuffle
+    # These arguments get moved into the sampler itself, so they are no longer needed to
+    # be set at the dataset level.
+    if 'sampler' in node_args.keys():
+        if 'num_samples' in node_repr.keys():
+            node_repr['num_samples'] = None
+        if 'shuffle' in node_repr.keys():
+            node_repr['shuffle'] = None
+        if 'num_shards' in node_repr.keys():
+            node_repr['num_shards'] = None
+        if 'shard_id' in node_repr.keys():
+            node_repr['shard_id'] = None
+
     # Leaf node doesn't have input attribute.
     if not node.input:
         return node_repr

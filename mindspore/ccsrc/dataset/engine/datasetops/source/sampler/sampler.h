@@ -33,23 +33,10 @@ namespace dataset {
 //  must inherit from if those leaf operator wish to support sampling.
 class RandomAccessOp {
  public:
-  // Sampler get numRows from StorageOp
-  // @param int64_t num - return number of rows, normally num of samples
-  // @return - The error code return
-  virtual Status GetNumSamples(int64_t *num_samples) const {
-    // CI complains num_samples not used if the following line is not added
-    CHECK_FAIL_RETURN_UNEXPECTED(num_samples != nullptr, "num_samples == nullptr");
-    RETURN_STATUS_UNEXPECTED("function GetNumSamples needs to overridden to support this sampler");
-  }
-
-  // Sampler get number of rows in the dataset!
+  // Sampler get number of rows in the dataset
   // @param int64_t num - return number of rows for this dataset
   // @return - The error code return
-  virtual Status GetNumRowsInDataset(int64_t *num_rows) const {
-    // CI complains num_rows not used if the following line is not added
-    CHECK_FAIL_RETURN_UNEXPECTED(num_rows != nullptr, "num_rows == nullptr");
-    RETURN_STATUS_UNEXPECTED("function GetNumRowsInDataset needs to overridden to support this sampler");
-  }
+  Status GetNumRowsInDataset(int64_t *num_rows) const;
 
   // sampler gets label , imageIds from storageOp, this function is unique to PK
   // @param std::map<int64_t, std::vector<int64_t>> * map
@@ -60,12 +47,20 @@ class RandomAccessOp {
 
   // default destructor
   virtual ~RandomAccessOp() = default;
+
+ protected:
+  // The amount of rows in the dataset itself. This is the before-sampling value, the
+  // total count of rows.  A sampler may choose to sample less than this amount.
+  int64_t num_rows_;
 };
 
 class Sampler : public DatasetOp {
  public:
+  // Constructor
+  // @param int64_t num_samples: the user-requested number of samples ids to generate. A value of 0
+  //                indicates that the sampler should produce the complete set of ids.
   // @param int64_t samplesPerBuffer: Num of Sampler Ids to fetch via 1 GetNextBuffer call
-  explicit Sampler(int64_t samples_per_buffer = std::numeric_limits<int64_t>::max());
+  explicit Sampler(int64_t num_samples, int64_t samples_per_buffer);
 
   // default destructor
   ~Sampler() = default;
@@ -84,33 +79,36 @@ class Sampler : public DatasetOp {
   // @return - The error code return
   Status Reset() override = 0;
 
-  // setter function for num_rows_
-  Status SetNumRowsInDataset(int64_t num_rows);
-
-  // setter function for num_samples_
-  Status SetNumSamples(int64_t num_samples);
-
-  int64_t num_samples() { return num_samples_; }
-
-  // first handshake between StorageOp and Sampler. This func will call getNumRows and getNumSamples
-  // @param op - StorageOp pointer, pass in so Sampler can call getNumSamples() and get ClassIds()
+  // first handshake between leaf source op and Sampler. This func will determine the amount of data
+  // in the dataset that we can sample from.
+  // @param op - leaf op pointer, pass in so Sampler can ask it about how much data there is
   // @return
   virtual Status HandshakeRandomAccessOp(const RandomAccessOp *op);
 
   // initialize sampler and perform checks on certain vars
   virtual Status InitSampler() { return Status::OK(); }
 
-  // Not meant to be called
+  // setter for num samples
+  // @param num_samples - the number of samples to assign.
+  // @return status error code
+  Status SetNumSamples(int64_t num_samples);
+
+  // setter for num or records in the dataset
+  // @param num_rows - the number of records
+  // @return status error code
+  Status SetNumRowsInDataset(int64_t num_rows);
+
+  // Sampler is an inlined op and has no workers.  Producers and consumers are computed.
   // @return
   int32_t num_workers() const final { return 0; }
 
-  // Not meant to be called
+  // Identify num consumers (inlined op)
   // @return
-  int32_t num_consumers() const final { return 0; }
+  int32_t num_consumers() const final;
 
-  // Not meant to be called
+  // Identify num producers (inlined op)
   // @return
-  int32_t num_producers() const final { return 0; }
+  int32_t num_producers() const final;
 
   // Not meant to be called!
   // @return - The error code return
@@ -151,10 +149,11 @@ class Sampler : public DatasetOp {
   // output. Otherwise, num_rows_ is the number of rows in the dataset.
   int64_t num_rows_;
 
-  // Number of ids this sampler will return.
+  // The user may want to sample less than the full amount of data.  num_samples_ reduces the number
+  // of id's returned as request by the user.  Derived classes will choose how to sample the smaller
+  // amount.
   int64_t num_samples_;
 
-  // The max number of ids a DataBuffer returned by this sampler will contain.
   int64_t samples_per_buffer_;
   std::unique_ptr<ColDescriptor> col_desc_;
   std::unique_ptr<DataBuffer> child_ids_;

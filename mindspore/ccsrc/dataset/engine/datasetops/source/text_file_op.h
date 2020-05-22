@@ -107,8 +107,8 @@ class TextFileOp : public ParallelOp {
 
     // Setter method.
     // @return Builder - setter method returns reference to the builder.
-    Builder &SetNumSamples(int64_t num_samples) {
-      builder_num_samples_ = num_samples;
+    Builder &SetTotalRows(int64_t total_rows) {
+      builder_total_rows_ = total_rows;
       return *this;
     }
 
@@ -118,7 +118,7 @@ class TextFileOp : public ParallelOp {
     int32_t builder_num_workers_;
     int32_t builder_op_connector_size_;
     int64_t builder_rows_per_buffer_;
-    int64_t builder_num_samples_;
+    int64_t builder_total_rows_;
     int32_t builder_worker_connector_size_;
     std::vector<std::string> builder_text_files_list_;
     bool builder_shuffle_files_;
@@ -136,7 +136,7 @@ class TextFileOp : public ParallelOp {
   // @param columns_to_load - the names of the columns to load data from.
   // @param shuffle_files - whether or not to shuffle the files before reading data.
   // @param equal_rows_per_shard - whether or not to get equal rows for each process.
-  TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t num_samples, int32_t worker_connector_size,
+  TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t total_rows, int32_t worker_connector_size,
              std::unique_ptr<DataSchema>, std::vector<std::string> text_files_list, int32_t op_connector_size,
              bool shuffle_files, int32_t num_devices, int32_t device_id);
 
@@ -246,7 +246,7 @@ class TextFileOp : public ParallelOp {
   int32_t device_id_;
   int32_t num_devices_;
   int64_t rows_per_buffer_;
-  int64_t num_samples_;
+  int64_t total_rows_;
   std::vector<std::string> text_files_list_;
   bool shuffle_files_;
   std::unique_ptr<DataSchema> data_schema_;

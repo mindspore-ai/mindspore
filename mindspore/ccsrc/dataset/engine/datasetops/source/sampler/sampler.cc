@@ -19,8 +19,25 @@
 
 namespace mindspore {
 namespace dataset {
-Sampler::Sampler(int64_t samples_per_buffer)
-    : DatasetOp(0), num_rows_(0), num_samples_(0), samples_per_buffer_(samples_per_buffer), col_desc_(nullptr) {}
+Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
+  // The sampler base class itself does not compute it's own num_rows_ value.
+  // Instead, this value is computed by the derived leaf op during it's own initialization
+  // after it has interacted with it's storage layers.
+  // Here, it is just a getter method to return the value.  However, it is invalid if there is
+  // not a value set for this count, so generate a failure if that is the case.
+  if (num == nullptr || num_rows_ == 0) {
+    RETURN_STATUS_UNEXPECTED("RandomAccessOp has not computed it's num rows yet.");
+  }
+  (*num) = num_rows_;
+  return Status::OK();
+}
+
+Sampler::Sampler(int64_t num_samples, int64_t samples_per_buffer)
+    : DatasetOp(0),
+      num_rows_(0),
+      num_samples_(num_samples),
+      samples_per_buffer_(samples_per_buffer),
+      col_desc_(nullptr) {}
 
 Status Sampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   std::shared_ptr<Sampler> child_sampler;
@@ -36,10 +53,10 @@ Status Sampler::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   }
 
   CHECK_FAIL_RETURN_UNEXPECTED(op != nullptr, "RandomAccessOp is nullptr\n");
-  RETURN_IF_NOT_OK(op->GetNumSamples(&num_samples_));
+
+  // If there's a child sampler, set the row count to be it's sample count
   if (HasChildSampler()) {
-    int64_t child_num_samples = child_sampler->num_samples();
-    num_rows_ = child_num_samples;
+    num_rows_ = child_sampler->num_samples_;
   } else {
     RETURN_IF_NOT_OK(op->GetNumRowsInDataset(&num_rows_));
   }
@@ -105,7 +122,7 @@ Status Sampler::GetAllIdsThenReset(py::array *data) {
 }
 
 Status Sampler::SetNumSamples(int64_t num_samples) {
-  CHECK_FAIL_RETURN_UNEXPECTED(num_samples > 0, "num_samples is negative or 0");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples >= 0, "num_samples is negative");
   num_samples_ = num_samples;
   return Status::OK();
 }
@@ -114,6 +131,16 @@ Status Sampler::SetNumRowsInDataset(int64_t num_rows) {
   CHECK_FAIL_RETURN_UNEXPECTED(num_rows > 0, "num_rows is negative or 0");
   num_rows_ = num_rows;
   return Status::OK();
+}
+
+// inline op doesn't have it's own consumer, it's assigned from parent
+int32_t Sampler::num_consumers() const {
+  if (parent_.empty() || parent_[0] == nullptr) {
+    MS_LOG(WARNING) << "Sampler with no parent.  num_consumers is 0.";
+    return 0;
+  } else {
+    return parent_[0]->num_consumers();
+  }
 }
 
 Status Sampler::AddChild(std::shared_ptr<DatasetOp> child) {
@@ -155,5 +182,14 @@ Status Sampler::GetAssociatedChildId(int64_t *out_associated_id, int64_t id) {
   return Status::OK();
 }
 
+// inline op doesn't have it's own producers, it's assigned from child
+int32_t Sampler::num_producers() const {
+  if (child_.empty() || child_[0] == nullptr) {
+    MS_LOG(WARNING) << "Sampler with no child, num_producers is 0.";
+    return 0;
+  } else {
+    return child_[0]->num_producers();
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

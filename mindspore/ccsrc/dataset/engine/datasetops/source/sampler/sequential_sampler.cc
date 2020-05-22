@@ -20,33 +20,41 @@
 
 namespace mindspore {
 namespace dataset {
-SequentialSampler::SequentialSampler(int64_t samples_per_buffer) : Sampler(samples_per_buffer), next_id_(0) {}
+SequentialSampler::SequentialSampler(int64_t num_samples, int64_t start_index, int64_t samples_per_buffer)
+    : Sampler(num_samples, samples_per_buffer), start_index_(start_index), current_id_(start_index), id_count_(0) {}
 
 Status SequentialSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer) {
-  if (next_id_ > num_samples_) {
-    RETURN_STATUS_UNEXPECTED("Sequential Sampler Internal Error");
-  } else if (next_id_ == num_samples_) {
+  if (id_count_ > num_samples_) {
+    RETURN_STATUS_UNEXPECTED("SequentialSampler Internal Error");
+  } else if (id_count_ == num_samples_) {
     (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
   } else {
     if (HasChildSampler()) {
       RETURN_IF_NOT_OK(child_[0]->GetNextBuffer(&child_ids_));
     }
 
-    (*out_buffer) = std::make_unique<DataBuffer>(next_id_, DataBuffer::kDeBFlagNone);
+    (*out_buffer) = std::make_unique<DataBuffer>(current_id_, DataBuffer::kDeBFlagNone);
     std::shared_ptr<Tensor> sampleIds;
-    int64_t lastId = (samples_per_buffer_ + next_id_ > num_samples_) ? num_samples_ : samples_per_buffer_ + next_id_;
-    RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, lastId - next_id_));
+
+    // Compute how many ids are left to pack, and pack this amount into a new buffer.  Respect the setting for
+    // samples per buffer though.
+    int64_t remaining_ids = num_samples_ - id_count_;
+    int64_t num_elements = std::min(remaining_ids, samples_per_buffer_);
+
+    RETURN_IF_NOT_OK(CreateSamplerTensor(&sampleIds, num_elements));
     int64_t *idPtr = reinterpret_cast<int64_t *>(sampleIds->GetMutableBuffer());
-    while (next_id_ < lastId) {
-      int64_t sampled_id = next_id_;
+    for (int64_t i = 0; i < num_elements; i++) {
+      int64_t sampled_id = current_id_;
       if (HasChildSampler()) {
         RETURN_IF_NOT_OK(GetAssociatedChildId(&sampled_id, sampled_id));
       }
 
       *idPtr = sampled_id;
-      next_id_++;
+      current_id_++;  // Move the current id to the next one in the sequence
       idPtr++;
     }
+
+    id_count_ += num_elements;  // Count the packed ids towards our overall sample count
 
     TensorRow row(1, sampleIds);
     (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, row));
@@ -55,19 +63,24 @@ Status SequentialSampler::GetNextBuffer(std::unique_ptr<DataBuffer> *out_buffer)
 }
 
 Status SequentialSampler::InitSampler() {
-  num_samples_ = (num_samples_ <= 0) ? num_rows_ : num_samples_;  // if num_samples < 0, try if num_rows is set
-  if (HasChildSampler()) {
-    num_samples_ = std::min(num_samples_, num_rows_);
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index_ >= 0, "start_index < 0\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index_ < num_rows_, "start_index >= num_rows\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ >= 0, "num_samples < 0\n");
+  // Adjust the num_samples count based on the range of ids we are sequencing.  If num_samples is 0, we sample
+  // the entire set.  If it's non-zero, we will implicitly cap the amount sampled based on available data.
+  int64_t available_row_count = num_rows_ - start_index_;
+  if (num_samples_ == 0 || num_samples_ > available_row_count) {
+    num_samples_ = available_row_count;
   }
-
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ > 0 && samples_per_buffer_ > 0, "Fail to init Sequential Sampler");
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
   return Status::OK();
 }
 
 Status SequentialSampler::Reset() {
-  CHECK_FAIL_RETURN_UNEXPECTED(next_id_ == num_samples_, "ERROR Reset() called early/late");
-  next_id_ = 0;
+  CHECK_FAIL_RETURN_UNEXPECTED(id_count_ == num_samples_, "ERROR Reset() called early/late");
+  current_id_ = start_index_;
+  id_count_ = 0;
 
   if (HasChildSampler()) {
     RETURN_IF_NOT_OK(child_[0]->Reset());

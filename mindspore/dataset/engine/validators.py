@@ -283,8 +283,8 @@ def check_num_parallel_workers(value):
 
 def check_num_samples(value):
     check_type(value, 'num_samples', int)
-    if value <= 0:
-        raise ValueError("num_samples must be greater than 0!")
+    if value < 0:
+        raise ValueError("num_samples cannot be less than 0!")
 
 
 def check_dataset_dir(dataset_dir):

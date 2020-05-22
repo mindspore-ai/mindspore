@@ -31,7 +31,7 @@ const int32_t kMnistLabelFileMagicNumber = 2049;
 const int32_t kMnistImageRows = 28;
 const int32_t kMnistImageCols = 28;
 
-MnistOp::Builder::Builder() : builder_num_samples_(0), builder_sampler_(nullptr) {
+MnistOp::Builder::Builder() : builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_rows_per_buffer_ = cfg->rows_per_buffer();
@@ -41,7 +41,9 @@ MnistOp::Builder::Builder() : builder_num_samples_(0), builder_sampler_(nullptr)
 Status MnistOp::Builder::Build(std::shared_ptr<MnistOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
-    builder_sampler_ = std::make_shared<SequentialSampler>();
+    int64_t num_samples = 0;
+    int64_t start_index = 0;
+    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
   builder_schema_ = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(
@@ -49,9 +51,8 @@ Status MnistOp::Builder::Build(std::shared_ptr<MnistOp> *ptr) {
   TensorShape scalar = TensorShape::CreateScalar();
   RETURN_IF_NOT_OK(builder_schema_->AddColumn(
     ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
-  *ptr =
-    std::make_shared<MnistOp>(builder_num_workers_, builder_rows_per_buffer_, builder_dir_, builder_op_connector_size_,
-                              builder_num_samples_, std::move(builder_schema_), std::move(builder_sampler_));
+  *ptr = std::make_shared<MnistOp>(builder_num_workers_, builder_rows_per_buffer_, builder_dir_,
+                                   builder_op_connector_size_, std::move(builder_schema_), std::move(builder_sampler_));
   return Status::OK();
 }
 
@@ -60,17 +61,14 @@ Status MnistOp::Builder::SanityCheck() {
   std::string err_msg;
   err_msg += dir.IsDirectory() == false ? "MNIST path is invalid or not set\n" : "";
   err_msg += builder_num_workers_ <= 0 ? "Number of parallel workers is set to 0 or negative\n" : "";
-  err_msg += builder_num_samples_ < 0 ? "Number of samples is set to negative\n" : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
 MnistOp::MnistOp(int32_t num_workers, int32_t rows_per_buffer, std::string folder_path, int32_t queue_size,
-                 int64_t num_samples, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
+                 std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
     : ParallelOp(num_workers, queue_size),
       buf_cnt_(0),
       row_cnt_(0),
-      num_rows_(0),
-      num_samples_(num_samples),
       folder_path_(folder_path),
       rows_per_buffer_(rows_per_buffer),
       sampler_(std::move(sampler)),
@@ -84,8 +82,7 @@ MnistOp::MnistOp(int32_t num_workers, int32_t rows_per_buffer, std::string folde
 
 Status MnistOp::TraversalSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::vector<int64_t> *keys) {
   for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-    if ((*itr) >= num_rows_) continue;    // index out of bound, skipping
-    if (row_cnt_ >= num_samples_) break;  // enough row read, break for loop
+    if ((*itr) >= num_rows_) continue;  // index out of bound, skipping
     keys->push_back(*itr);
     row_cnt_++;
     if (row_cnt_ % rows_per_buffer_ == 0) {
@@ -216,17 +213,6 @@ Status MnistOp::Reset() {
 // hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
 Status MnistOp::InitSampler() {
   RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
-  return Status::OK();
-}
-
-// Derived from RandomAccessOp
-Status MnistOp::GetNumSamples(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API MnistDataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_samples_;
   return Status::OK();
 }
 
@@ -364,7 +350,6 @@ Status MnistOp::ParseMnistData() {
   }
   image_label_pairs_.shrink_to_fit();
   num_rows_ = image_label_pairs_.size();
-  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   return Status::OK();
 }
 
@@ -414,11 +399,11 @@ Status MnistOp::LaunchThreadsAndInitOp() {
   return Status::OK();
 }
 
-Status MnistOp::CountTotalRows(const std::string &dir, int64_t numSamples, int64_t *count) {
+Status MnistOp::CountTotalRows(const std::string &dir, int64_t *count) {
   // the logic of counting the number of samples is copied from ParseMnistData() and uses CheckReader()
   std::shared_ptr<MnistOp> op;
   *count = 0;
-  RETURN_IF_NOT_OK(Builder().SetDir(dir).SetNumSamples(numSamples).Build(&op));
+  RETURN_IF_NOT_OK(Builder().SetDir(dir).Build(&op));
 
   RETURN_IF_NOT_OK(op->WalkAllFiles());
 
@@ -440,19 +425,6 @@ Status MnistOp::CountTotalRows(const std::string &dir, int64_t numSamples, int64
     label_reader.close();
   }
 
-  *count = (numSamples == 0 || *count < numSamples) ? *count : numSamples;
-
-  return Status::OK();
-}
-
-// Derived from RandomAccessOp
-Status MnistOp::GetNumRowsInDataset(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API MnistDataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_rows_;
   return Status::OK();
 }
 }  // namespace dataset

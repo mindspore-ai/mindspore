@@ -44,7 +44,7 @@ const char kSegmentationExtension[] = ".png";
 const char kAnnotationExtension[] = ".xml";
 const char kImageSetsExtension[] = ".txt";
 
-VOCOp::Builder::Builder() : builder_decode_(false), builder_num_samples_(0), builder_sampler_(nullptr) {
+VOCOp::Builder::Builder() : builder_decode_(false), builder_sampler_(nullptr) {
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   builder_num_workers_ = cfg->num_parallel_workers();
   builder_rows_per_buffer_ = cfg->rows_per_buffer();
@@ -55,7 +55,9 @@ VOCOp::Builder::Builder() : builder_decode_(false), builder_num_samples_(0), bui
 Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
   RETURN_IF_NOT_OK(SanityCheck());
   if (builder_sampler_ == nullptr) {
-    builder_sampler_ = std::make_shared<SequentialSampler>();
+    int64_t num_samples = 0;
+    int64_t start_index = 0;
+    builder_sampler_ = std::make_shared<SequentialSampler>(start_index, num_samples);
   }
   builder_schema_ = std::make_unique<DataSchema>();
   if (builder_task_type_ == TaskType::Segmentation) {
@@ -71,8 +73,7 @@ Status VOCOp::Builder::Build(std::shared_ptr<VOCOp> *ptr) {
   }
   *ptr = std::make_shared<VOCOp>(builder_task_type_, builder_task_mode_, builder_dir_, builder_labels_to_read_,
                                  builder_num_workers_, builder_rows_per_buffer_, builder_op_connector_size_,
-                                 builder_num_samples_, builder_decode_, std::move(builder_schema_),
-                                 std::move(builder_sampler_));
+                                 builder_decode_, std::move(builder_schema_), std::move(builder_sampler_));
   return Status::OK();
 }
 
@@ -81,20 +82,16 @@ Status VOCOp::Builder::SanityCheck() {
   std::string err_msg;
   err_msg += dir.IsDirectory() == false ? "VOC path is invalid or not set\n" : "";
   err_msg += builder_num_workers_ <= 0 ? "Num of parallel workers is set to 0 or negative\n" : "";
-  err_msg += builder_num_samples_ < 0 ? "num_samples is negative\n" : "";
   return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
 VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std::string &folder_path,
              const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t rows_per_buffer,
-             int32_t queue_size, int64_t num_samples, bool decode, std::unique_ptr<DataSchema> data_schema,
-             std::shared_ptr<Sampler> sampler)
+             int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<Sampler> sampler)
     : ParallelOp(num_workers, queue_size),
       decode_(decode),
       row_cnt_(0),
       buf_cnt_(0),
-      num_rows_(0),
-      num_samples_(num_samples),
       task_type_(task_type),
       task_mode_(task_mode),
       folder_path_(folder_path),
@@ -112,7 +109,6 @@ VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std:
 Status VOCOp::TraverseSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::vector<int64_t> *keys) {
   for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
     if ((*itr) > num_rows_) continue;
-    if (row_cnt_ == num_samples_) break;
     keys->push_back(*itr);
     row_cnt_++;
     if (row_cnt_ % rows_per_buffer_ == 0) {
@@ -184,16 +180,6 @@ Status VOCOp::Reset() {
   RETURN_IF_NOT_OK(sampler_->Reset());
   row_cnt_ = 0;
   wp_.Set();
-  return Status::OK();
-}
-
-Status VOCOp::GetNumSamples(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API VOCDataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_samples_;
   return Status::OK();
 }
 
@@ -280,7 +266,6 @@ Status VOCOp::ParseImageIds() {
   in_file.close();
   image_ids_.shrink_to_fit();
   num_rows_ = image_ids_.size();
-  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   return Status::OK();
 }
 
@@ -305,7 +290,6 @@ Status VOCOp::ParseAnnotationIds() {
   }
 
   num_rows_ = image_ids_.size();
-  num_samples_ = (num_samples_ == 0 || num_samples_ > num_rows_) ? num_rows_ : num_samples_;
   return Status::OK();
 }
 
@@ -432,19 +416,8 @@ Status VOCOp::ReadAnnotationToTensor(const std::string &path, const ColDescripto
   return Status::OK();
 }
 
-// Derived from RandomAccessOp
-Status VOCOp::GetNumRowsInDataset(int64_t *num) const {
-  if (num == nullptr || num_rows_ == 0) {
-    RETURN_STATUS_UNEXPECTED(
-      "There is no valid data matching the dataset API VOCDataset.Please check file path or dataset API "
-      "validation first.");
-  }
-  (*num) = num_rows_;
-  return Status::OK();
-}
-
 Status VOCOp::CountTotalRows(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                             const py::dict &dict, int64_t numSamples, int64_t *count) {
+                             const py::dict &dict, int64_t *count) {
   if (task_type == "Detection") {
     std::map<std::string, int32_t> input_class_indexing;
     for (auto p : dict) {
@@ -464,14 +437,12 @@ Status VOCOp::CountTotalRows(const std::string &dir, const std::string &task_typ
     RETURN_IF_NOT_OK(op->ParseImageIds());
     *count = static_cast<int64_t>(op->image_ids_.size());
   }
-  *count = (numSamples == 0 || *count < numSamples) ? *count : numSamples;
 
   return Status::OK();
 }
 
 Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
-                               const py::dict &dict, int64_t numSamples,
-                               std::map<std::string, int32_t> *output_class_indexing) {
+                               const py::dict &dict, std::map<std::string, int32_t> *output_class_indexing) {
   std::map<std::string, int32_t> input_class_indexing;
   for (auto p : dict) {
     (void)input_class_indexing.insert(std::pair<std::string, int32_t>(py::reinterpret_borrow<py::str>(p.first),
