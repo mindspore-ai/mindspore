@@ -127,8 +127,10 @@ Status MindRecordOp::Init() {
     std::string type_str = mindrecord::ColumnDataTypeNameNormalized[col_data_types[i]];
     DataType t_dtype = DataType(type_str);  // valid types: {"bytes", "string", "int32", "int64", "float32", "float64"}
 
-    if (col_data_types[i] == mindrecord::ColumnBytes || col_data_types[i] == mindrecord::ColumnString) {  // rank = 1
+    if (col_data_types[i] == mindrecord::ColumnBytes) {  // rank = 1
       col_desc = ColDescriptor(colname, t_dtype, TensorImpl::kFlexible, 1);
+    } else if (col_data_types[i] == mindrecord::ColumnString) {  // rank = 0
+      col_desc = ColDescriptor(colname, t_dtype, TensorImpl::kFlexible, 0);
     } else if (col_shapes[i].size() > 0) {
       std::vector<dsize_t> vec(col_shapes[i].size());  // temporary vector to hold shape
       (void)std::copy(col_shapes[i].begin(), col_shapes[i].end(), vec.begin());
@@ -309,7 +311,10 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
 
     // Set shape
     auto num_elements = n_bytes / column_data_type_size;
-    if (column.hasShape()) {
+    if (type == DataType::DE_STRING) {
+      std::string s{data, data + n_bytes};
+      RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, {s}, TensorShape::CreateScalar()));
+    } else if (column.hasShape()) {
       auto new_shape = TensorShape(column.shape());
       RETURN_IF_NOT_OK(column.MaterializeTensorShape(static_cast<int32_t>(num_elements), &new_shape));
       RETURN_IF_NOT_OK(Tensor::CreateTensor(&tensor, column.tensorImpl(), new_shape, type, data));

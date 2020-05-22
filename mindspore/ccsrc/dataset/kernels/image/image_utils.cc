@@ -64,7 +64,8 @@ Status Flip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int 
 
   std::shared_ptr<CVTensor> output_cv = std::make_shared<CVTensor>(input_cv->shape(), input_cv->type());
   RETURN_UNEXPECTED_IF_NULL(output_cv);
-  (void)output_cv->GetMutableBuffer();
+  RETURN_IF_NOT_OK(output_cv->AllocateBuffer(output_cv->SizeInBytes()));
+
   if (input_cv->mat().data) {
     try {
       cv::flip(input_cv->mat(), output_cv->mat(), flip_code);

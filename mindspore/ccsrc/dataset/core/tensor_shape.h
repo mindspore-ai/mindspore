@@ -156,13 +156,20 @@ class TensorShape {
 
   TensorShape Squeeze() const;
 
-  std::vector<dsize_t> Strides();
+  std::vector<dsize_t> Strides() const;
+
+  // Returns the location of the item assuming row major memory layout.
+  // @param index
+  // @return
+  Status ToFlatIndex(const std::vector<dsize_t> &index, dsize_t *flat_index) const;
 
  private:
   // True if known and valid shape, false otherwise
   bool known_;
   // Vector to keep the dims of the shape.
   std::vector<dsize_t, IntAlloc> raw_shape_;
+  // Vector to keep the strides of the shape. The size is rank+1
+  std::vector<dsize_t, IntAlloc> strides_;
 
   // Internal utility function to iterate over a list, check if the dim is valid and then insert it into the shape.
   // @tparam T list

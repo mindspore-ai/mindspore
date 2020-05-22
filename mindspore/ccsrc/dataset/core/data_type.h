@@ -51,56 +51,31 @@ class DataType {
     NUM_OF_TYPES
   };
 
-  inline static constexpr uint8_t SIZE_IN_BYTES[] = {0,   // DE_UNKNOWN
-                                                     1,   // DE_BOOL
-                                                     1,   // DE_INT8
-                                                     1,   // DE_UINT8
-                                                     2,   // DE_INT16
-                                                     2,   // DE_UINT16
-                                                     4,   // DE_INT32
-                                                     4,   // DE_UINT32
-                                                     8,   // DE_INT64
-                                                     8,   // DE_UINT64
-                                                     2,   // DE_FLOAT16
-                                                     4,   // DE_FLOAT32
-                                                     8,   // DE_FLOAT64
-                                                     0};  // DE_STRING
+  struct TypeInfo {
+    const char *name_;                          // name to be represent the type while printing
+    const uint8_t sizeInBytes_;                 // number of bytes needed for this type
+    const char *pybindType_;                    //  Python matching type, used in get_output_types
+    const std::string pybindFormatDescriptor_;  // pybind format used for numpy types
+    const uint8_t cvType_;                      // OpenCv matching type
+  };
 
-  inline static const char *TO_STRINGS[] = {"unknown", "bool",  "int8",   "uint8",   "int16",   "uint16",  "int32",
-                                            "uint32",  "int64", "uint64", "float16", "float32", "float64", "string"};
-
-  inline static const char *PYBIND_TYPES[] = {"object", "bool",  "int8",   "uint8",   "int16",   "uint16", "int32",
-                                              "uint32", "int64", "uint64", "float16", "float32", "double", "bytes"};
-
-  inline static const std::string PYBIND_FORMAT_DESCRIPTOR[] = {"",                                        // DE_UNKNOWN
-                                                                py::format_descriptor<bool>::format(),     // DE_BOOL
-                                                                py::format_descriptor<int8_t>::format(),   // DE_INT8
-                                                                py::format_descriptor<uint8_t>::format(),  // DE_UINT8
-                                                                py::format_descriptor<int16_t>::format(),  // DE_INT16
-                                                                py::format_descriptor<uint16_t>::format(),  // DE_UINT16
-                                                                py::format_descriptor<int32_t>::format(),   // DE_INT32
-                                                                py::format_descriptor<uint32_t>::format(),  // DE_UINT32
-                                                                py::format_descriptor<int64_t>::format(),   // DE_INT64
-                                                                py::format_descriptor<uint64_t>::format(),  // DE_UINT64
-                                                                "e",                                      // DE_FLOAT16
-                                                                py::format_descriptor<float>::format(),   // DE_FLOAT32
-                                                                py::format_descriptor<double>::format(),  // DE_FLOAT64
-                                                                "S"};                                     // DE_STRING
-
-  inline static constexpr uint8_t CV_TYPES[] = {kCVInvalidType,   // DE_UNKNOWN
-                                                CV_8U,            // DE_BOOL
-                                                CV_8S,            // DE_INT8
-                                                CV_8U,            // DE_UINT8
-                                                CV_16S,           // DE_INT16
-                                                CV_16U,           // DE_UINT16
-                                                CV_32S,           // DE_INT32
-                                                kCVInvalidType,   // DE_UINT32
-                                                kCVInvalidType,   // DE_INT64
-                                                kCVInvalidType,   // DE_UINT64
-                                                CV_16F,           // DE_FLOAT16
-                                                CV_32F,           // DE_FLOAT32
-                                                CV_64F,           // DE_FLOAT64
-                                                kCVInvalidType};  // DE_STRING
+  static inline const TypeInfo kTypeInfo[] = {
+    // name, sizeInBytes, pybindTypem formatDescriptor, openCV
+    {"unknown", 0, "object", "", kCVInvalidType},                                        // DE_UNKNOWN
+    {"bool", 1, "bool", py::format_descriptor<bool>::format(), CV_8U},                   // DE_BOOL
+    {"int8", 1, "int8", py::format_descriptor<int8_t>::format(), CV_8S},                 // DE_INT8
+    {"uint8", 1, "uint8", py::format_descriptor<uint8_t>::format(), CV_8U},              // DE_UINT8
+    {"int16", 2, "int16", py::format_descriptor<int16_t>::format(), CV_16S},             // DE_INT16
+    {"uint16", 2, "uint16", py::format_descriptor<uint16_t>::format(), CV_16U},          // DE_UINT16
+    {"int32", 4, "int32", py::format_descriptor<int32_t>::format(), CV_32S},             // DE_INT32
+    {"uint32", 4, "uint32", py::format_descriptor<uint32_t>::format(), kCVInvalidType},  // DE_UINT32
+    {"int64", 8, "int64", py::format_descriptor<int64_t>::format(), kCVInvalidType},     // DE_INT64
+    {"uint64", 8, "uint64", py::format_descriptor<uint64_t>::format(), kCVInvalidType},  // DE_UINT64
+    {"float16", 2, "float16", "e", CV_16F},                                              // DE_FLOAT16
+    {"float32", 4, "float32", py::format_descriptor<float>::format(), CV_32F},           // DE_FLOAT32
+    {"float64", 8, "double", py::format_descriptor<double>::format(), CV_64F},           // DE_FLOAT64
+    {"string", 0, "bytes", "S", kCVInvalidType}                                          // DE_STRING
+  };
 
   // No arg constructor to create an unknown shape
   DataType() : type_(DE_UNKNOWN) {}

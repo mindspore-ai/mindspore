@@ -584,7 +584,7 @@ def test_cv_minddataset_reader_basic_tutorial_5_epoch(add_and_remove_cv_file):
 
 def test_cv_minddataset_reader_basic_tutorial_5_epoch_with_batch(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
-    columns_list = ["data", "file_name", "label"]
+    columns_list = ["data", "label"]
     num_readers = 4
     data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers)
 
@@ -948,8 +948,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
     data_value_to_list = []
     for item in data:
         new_data = {}
-        new_data['file_name'] = np.asarray(
-            list(bytes(item["file_name"], encoding='utf-8')), dtype=np.uint8)
+        new_data['file_name'] = np.asarray(item["file_name"], dtype='S')
         new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
         new_data['image1'] = np.asarray(list(item["image1"]), dtype=np.uint8)
         new_data['image2'] = np.asarray(list(item["image2"]), dtype=np.uint8)
@@ -1153,8 +1152,7 @@ def test_write_with_multi_bytes_and_MindDataset():
     data_value_to_list = []
     for item in data:
         new_data = {}
-        new_data['file_name'] = np.asarray(
-            list(bytes(item["file_name"], encoding='utf-8')), dtype=np.uint8)
+        new_data['file_name'] = np.asarray(item["file_name"], dtype='S')
         new_data['label'] = np.asarray(list([item["label"]]), dtype=np.int32)
         new_data['image1'] = np.asarray(list(item["image1"]), dtype=np.uint8)
         new_data['image2'] = np.asarray(list(item["image2"]), dtype=np.uint8)
