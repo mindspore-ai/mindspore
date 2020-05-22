@@ -389,7 +389,7 @@ bool RemoveValueNodeDuplicationsAction(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   auto manager = res->manager();
   // Remove duplicated value nodes, due to replace operation, can't use reference.
-  auto value_nodes = manager->valuenodes()[func_graph];
+  auto value_nodes = func_graph->value_nodes();
   HashCache hash_cache;
   HashValue hashes;
   for (const auto &value_pair : value_nodes) {

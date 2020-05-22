@@ -367,8 +367,8 @@ class DepComputer : public FuncGraphAnalysis {
 // graph g's all direct or proxy parents
 class FuncGraphParentsTotalComputer final : public DepComputer {
  public:
-  explicit FuncGraphParentsTotalComputer(const FuncGraphManager *m) : DepComputer(m), all_parents_direct_(nullptr) {}
-  ~FuncGraphParentsTotalComputer() override { all_parents_direct_ = nullptr; }
+  explicit FuncGraphParentsTotalComputer(const FuncGraphManager *m) : DepComputer(m) {}
+  ~FuncGraphParentsTotalComputer() override = default;
 
   FuncGraphToFuncGraphSetMap &func_graph_parents_total_analysis() { return func_graph_parents_total_analysis_; }
 
@@ -383,9 +383,6 @@ class FuncGraphParentsTotalComputer final : public DepComputer {
 
  private:
   FuncGraphSetPtr SeekParents(const FuncGraphPtr &fg, const FuncGraphSetPtr &path = std::make_shared<FuncGraphSet>());
-  // when SeekParents calls itself recursively, it can access these variables by class member
-  // other than pass by formal parameters, it can save 1 parameter for SeekParents().
-  FuncGraphToFuncGraphCounterMap *all_parents_direct_;
 };
 
 using FuncGraphToFuncGraphMap = OrderedMap<FuncGraphPtr, FuncGraphPtr>;
@@ -562,30 +559,6 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
 
   NodeUsersMap &node_users() { return node_users_; }
 
-  FuncGraphToAnfNodeMap &nodes() const { return nodes_->nodes_analysis_; }
-
-  FuncGraphToAnfNodeCounterMap<AnfNodePtr> &valuenodes() const { return valuenodes_->count_nodes_map_; }
-
-  FuncGraphToAnfNodeCounterMap<AnfNodePtr> &free_variables_direct() const {
-    return free_variables_direct_->count_nodes_map_;
-  }
-
-  FuncGraphToAnfNodeCounterMap<CNodeIndexPairPtr, CNodeIndexHasher, CNodeIndexEqual> &func_graph_cnodes_index() const {
-    return func_graph_cnodes_index_->count_nodes_map_;
-  }
-
-  FuncGraphToFuncGraphCounterMap &func_graphs_used() const { return func_graphs_used_->count_func_graphs_map_; }
-
-  FuncGraphToFuncGraphCounterMap &func_graph_child_direct() const {
-    return func_graph_child_direct_->count_func_graphs_map_;
-  }
-
-  FuncGraphToFuncGraphCounterMap &func_graph_parents_direct() const {
-    return func_graph_parents_direct_->count_func_graphs_map_;
-  }
-
-  FuncGraphToFuncGraphCounterMap &func_graph_j_direct() const { return func_graph_j_direct_->count_func_graphs_map_; }
-
   FVTotalMap &free_variables_total() const;
 
   FuncGraphSet &func_graph_parents_total(const FuncGraphPtr &fg) const;
@@ -610,14 +583,6 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   // Static Analysis
   NodeUsersMap node_users_;
   AnfNodeSet all_nodes_;  // managed nodes
-  std::shared_ptr<NodesCollector> nodes_;
-  std::shared_ptr<ValueNodesCollector> valuenodes_;
-  std::shared_ptr<FVDirectCollector> free_variables_direct_;
-  std::shared_ptr<FuncGraphUsersCNodeIndexCollector> func_graph_cnodes_index_;
-  std::shared_ptr<FuncGraphsUsedCollector> func_graphs_used_;
-  std::shared_ptr<FuncGraphChildDirect> func_graph_child_direct_;
-  std::shared_ptr<FuncGraphParentsDirectCollector> func_graph_parents_direct_;
-  std::shared_ptr<FuncGraphJDirectCollector> func_graph_j_direct_;
 
   // Dynamic Analysis
   std::shared_ptr<ParentComputer> func_graph_parent_;
@@ -630,6 +595,9 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   FuncGraphSetPtr MaybeDropNodes(const std::vector<AnfNodePtr> &nodes);
   void ParseChanges(const std::vector<Change> &changes, EdgeTupleCounter *add_edges, EdgeTupleCounter *rm_edges,
                     Counter<AnfNodePtr> *adds, Counter<AnfNodePtr> *rms);
+  void AddEdge(AnfNodePtr node, int index, AnfNodePtr input);
+  void DropEdge(AnfNodePtr node, int index, AnfNodePtr input);
+  void MoveAllNodes(FuncGraphPtr source, FuncGraphPtr target);
 
   FuncGraphSet roots_;        // managed roots
   FuncGraphSet func_graphs_;  // managed func graphs

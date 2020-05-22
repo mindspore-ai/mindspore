@@ -487,12 +487,12 @@ void CompileGraph::AddExternal(const LinConvertResult &result) {
 
 void TraverseGraphMap(
   const FuncGraphManagerPtr &manager_ptr, FuncGraphTransaction *const tr,
-  const FuncGraphToAnfNodeCounterMap<AnfNodePtr> &cts,
+  const FuncGraphSet &fgs,
   const std::function<std::shared_ptr<FuncGraph>(const PrimitivePtr, const AbstractFunctionPtr)> &get_prim_graph) {
   MS_EXCEPTION_IF_NULL(manager_ptr);
   MS_EXCEPTION_IF_NULL(tr);
-  for (const auto &ct_graphs : cts) {
-    for (const auto &ct_any : ct_graphs.second) {
+  for (const auto &fg : fgs) {
+    for (const auto &ct_any : fg->value_nodes()) {
       AnfNodePtr const_primitive_node = ct_any.first;
       if (const_primitive_node != nullptr && IsValueNode<Primitive>(const_primitive_node)) {
         auto users = manager_ptr->node_users()[const_primitive_node];
@@ -552,8 +552,8 @@ FuncGraphPtr WrapPrimitives(const FuncGraphPtr &graph) {
   };
 
   FuncGraphTransaction tr = manager_ptr->Transact();
-  auto &cts = manager_ptr->valuenodes();
-  TraverseGraphMap(manager_ptr, &tr, cts, get_prim_graph);
+  auto &fgs = manager_ptr->func_graphs();
+  TraverseGraphMap(manager_ptr, &tr, fgs, get_prim_graph);
 
   return graph;
 }
