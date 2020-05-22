@@ -115,17 +115,12 @@ if __name__ == '__main__':
         step_size = dataset.get_dataset_size()
 
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-        if config.lr_decay_mode == 'cosine':
-            lr = Tensor(warmup_cosine_annealing_lr(0.035,
-                                                   step_size,
-                                                   config.warmup_epochs,
-                                                   50,
-                                                   config.T_max,
-                                                   config.eta_min))
-        else:
-            lr = Tensor(get_lr(global_step=0, lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max,
-                               warmup_epochs=config.warmup_epochs, total_epochs=epoch_size, steps_per_epoch=step_size,
-                               ))
+        lr = Tensor(warmup_cosine_annealing_lr(0.035,
+                                               step_size,
+                                               config.warmup_epochs,
+                                               50,
+                                               config.T_max,
+                                               config.eta_min))
         opt = THOR(filter(lambda x: x.requires_grad, net.get_parameters()), lr,
                    config.momentum, damping, config.frequency,
                    filter(lambda x: 'matrix_A' in x.name, net.get_parameters()),
