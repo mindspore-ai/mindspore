@@ -64,5 +64,23 @@ TEST_F(TestStrategy, GetInputDim) {
   ASSERT_EQ(inputs, inputs_test);
 }
 
+TEST_F(TestStrategy, IsEqual) {
+  int32_t stage1 = 0, stage2 = 0, stage3 = 1, stage4 = 0;
+  std::vector<int32_t> dimension1 = {8, 1};
+  std::vector<int32_t> dimension2 = {1, 8};
+  std::vector<std::vector<int32_t>> inputs1 = {dimension1};
+  std::vector<std::vector<int32_t>> inputs2 = {dimension1};
+  std::vector<std::vector<int32_t>> inputs3 = {dimension2};
+  std::vector<std::vector<int32_t>> inputs4 = {dimension1, dimension2};
+
+  StrategyPtr stra1 = std::make_shared<Strategy>(stage1, inputs1);
+  StrategyPtr stra2 = std::make_shared<Strategy>(stage2, inputs2);
+  StrategyPtr stra3 = std::make_shared<Strategy>(stage3, inputs3);
+  StrategyPtr stra4 = std::make_shared<Strategy>(stage4, inputs4);
+
+  ASSERT_EQ(stra1->IsEqual(stra2), true);
+  ASSERT_EQ(stra1->IsEqual(stra3), false);
+  ASSERT_EQ(stra1->IsEqual(stra4), false);
+}
 }  // namespace parallel
 }  // namespace mindspore
