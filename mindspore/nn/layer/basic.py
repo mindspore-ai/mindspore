@@ -99,6 +99,9 @@ class Dropout(Cell):
             out, _ = self.dropout(x)
             return out
 
+        if self.keep_prob == 1:
+            return x
+
         shape = self.get_shape(x)
         dtype = P.DType()(x)
         keep_prob = self.cast(self.keep_prob, dtype)
