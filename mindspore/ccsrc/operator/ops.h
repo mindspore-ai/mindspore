@@ -173,6 +173,7 @@ extern const PrimitivePtr kPrimEqual;
 extern const PrimitivePtr kPrimLess;
 extern const PrimitivePtr kPrimLessEqual;
 extern const PrimitivePtr kPrimCumSum;
+extern const PrimitivePtr kPrimCumProd;
 
 // NN
 extern const PrimitivePtr kPrimFlatten;

@@ -202,6 +202,21 @@ class ApplyFtrlNet(nn.Cell):
         out = self.apply_ftrl(self.var, self.accum, self.linear, grad, self.lr, self.l1, self.l2, self.lr_power)
         return out
 
+class ApplyRMSNet(nn.Cell):
+    def __init__(self):
+        super(ApplyRMSNet, self).__init__()
+        self.apply_rms = P.ApplyRMSProp()
+        self.lr = 0.001
+        self.rho = 0.0
+        self.momentum= 0.0
+        self.epsilon = 1e-10
+        self.var = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="var")
+        self.ms = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="ms")
+        self.moment = Parameter(Tensor(np.random.rand(3, 3).astype(np.float32)), name="moment")
+
+    def construct(self, grad):
+        out = self.apply_rms(self.var, self.ms, self.moment, self.lr, grad, self.rho, self.momentum, self.epsilon)
+        return out
 
 test_case_math_ops = [
     ('Neg', {
@@ -914,9 +929,8 @@ test_case_nn_ops = [
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
     ('ApplyRMSProp', {
-        'block': P.ApplyRMSProp(),
-        'desc_const': [0.9, 0.0, 1e-10, 0.001],
-        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
+        'block': ApplyRMSNet(),
+        'desc_inputs': [[3, 3]],
         'desc_bprop': [3, 3],
         'skip': ['backward']}),
     ('ApplyCenteredRMSProp', {

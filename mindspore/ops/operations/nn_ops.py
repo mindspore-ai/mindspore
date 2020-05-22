@@ -1721,15 +1721,21 @@ class ApplyRMSProp(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.init_prim_io_names(inputs=['var', 'mean_square', 'moment', 'learning_rate', 'grad',
+                                        'rho', 'momentum', 'epsilon'], outputs=['output'])
+        self.is_ge = context.get_context("enable_ge")
+        self.is_d = context.get_context("device_target") == "Ascend"
 
-    def infer_shape(self, var_shape, mean_square_shape, moment_shape, grad_shape, learning_rate_shape, decay_shape,
+    def infer_shape(self, var_shape, mean_square_shape, moment_shape, learning_rate_shape, grad_shape, decay_shape,
                     momentum_shape, epsilon_shape):
         validator.check("var_shape", var_shape, "mean_square_shape", mean_square_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "moment_shape", moment_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
+        if not self.is_ge and self.is_d:
+            return var_shape, var_shape, var_shape
         return var_shape
 
-    def infer_dtype(self, var_dtype, mean_square_dtype, moment_dtype, grad_dtype, learning_rate_dtype, decay_dtype,
+    def infer_dtype(self, var_dtype, mean_square_dtype, moment_dtype, learning_rate_dtype, grad_dtype, decay_dtype,
                     momentum_dtype, epsilon_dtype):
         args = {"var": var_dtype, "mean_square": mean_square_dtype, "moment": moment_dtype, "grad": grad_dtype}
         validator.check_tensor_type_same(args, mstype.number_type, self.name)
@@ -1739,6 +1745,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
         validator.check_type_same(args_decay, valid_types, self.name)
         args_lr = {"learning_rate": learning_rate_dtype, "decay": decay_dtype}
         validator.check_scalar_or_tensor_type_same(args_lr, valid_types, self.name, allow_mix=True)
+        if not self.is_ge and self.is_d:
+            return var_dtype, var_dtype, var_dtype
         return var_dtype
 
 
