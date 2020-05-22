@@ -221,14 +221,14 @@ def test_axis1_auto_batch_parallel():
 
 
 def test_axis1_batch_parallel():
-    gather_v2_strategy = ((device_number, 1),)
+    gather_v2_strategy = ((device_number, 1), (1, ))
     criterion = GatherV2Axis1(1, strategy=gather_v2_strategy, index_size=512)
     rank = 2
     net_trains(gather_v2_strategy, criterion, rank)
 
 
 def test_axis1_strategy1():
-    gather_v2_strategy = ((16, 2),)
+    gather_v2_strategy = ((16, 2), (1, ))
     rank = 17
     criterion = GatherV2Axis1(1, strategy=gather_v2_strategy, index_size=512)
     net_trains(gather_v2_strategy, criterion, rank)
