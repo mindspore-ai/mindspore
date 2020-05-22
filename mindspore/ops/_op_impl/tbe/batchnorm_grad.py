@@ -31,23 +31,22 @@ batch_norm_grad_op_info = TBERegOp("BatchNormGrad") \
     .input(2, "scale", False, "required", "all") \
     .input(3, "reserve_space_1", False, "required", "all") \
     .input(4, "reserve_space_2", False, "required", "all") \
-    .input(5, "reserve_space_3", False, "required", "all") \
     .output(0, "x_backprop", False, "required", "all") \
     .output(1, "scale_backprop", False, "required", "all") \
     .output(2, "offset_backprop", False, "required", "all") \
     .output(3, "reserve_space_4", False, "optional", "all") \
     .output(4, "reserve_space_5", False, "optional", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F16_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F16_Default, DataType.F32_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F32_5HD, DataType.F32_5HD,
-                  DataType.F32_5HD, DataType.F32_5HD, DataType.F16_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F16_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
-                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
     .get_op_info()
 
