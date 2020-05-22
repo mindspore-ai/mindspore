@@ -191,7 +191,7 @@ def _tensor_setitem_by_tuple_with_number(data, tuple_index, value):
         Tensor, element type and shape is same as data.
     """
     index_types = multi_utils.hyper_map(F.typeof, tuple_index)
-    index_elements_type = multi_utils.tuple_elements_type(index_types)
+    index_elements_type = multi_utils.tuple_index_elements_type(index_types, multi_utils.TENSOR_SETITEM)
     result = None
     if index_elements_type == multi_utils.NO_TENSOR:
         result = _tensor_assgin_number(data, tuple_index, value)
@@ -222,7 +222,7 @@ def _tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
         Tensor, element type and shape is same as data.
     """
     index_types = multi_utils.hyper_map(F.typeof, tuple_index)
-    index_elements_type = multi_utils.tuple_elements_type(index_types)
+    index_elements_type = multi_utils.tuple_index_elements_type(index_types, multi_utils.TENSOR_SETITEM)
     result = None
     if index_elements_type == multi_utils.NO_TENSOR:
         result = _tensor_assgin_tensor(data, tuple_index, value)
@@ -254,7 +254,7 @@ def _tensor_setitem_by_tuple_with_tuple(data, tuple_index, value):
         Tensor, element type and shape is same as data.
     """
     index_types = multi_utils.hyper_map(F.typeof, tuple_index)
-    index_elements_type = multi_utils.tuple_elements_type(index_types)
+    index_elements_type = multi_utils.tuple_index_elements_type(index_types, multi_utils.TENSOR_SETITEM)
     result = None
     if index_elements_type == multi_utils.ALL_TENSOR:
         indices = multi_utils.generate_indeices_from_tuple_of_tensor(data, tuple_index, multi_utils.TENSOR_SETITEM)
