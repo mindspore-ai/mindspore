@@ -168,8 +168,6 @@ class Iterator:
             op_type = OpName.SKIP
         elif isinstance(dataset, de.TakeDataset):
             op_type = OpName.TAKE
-        elif isinstance(dataset, de.StorageDataset):
-            op_type = OpName.STORAGE
         elif isinstance(dataset, de.ImageFolderDatasetV2):
             op_type = OpName.IMAGEFOLDER
         elif isinstance(dataset, de.GeneratorDataset):

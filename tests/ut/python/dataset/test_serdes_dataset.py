@@ -177,7 +177,7 @@ def test_random_crop():
     SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
     # First dataset
-    data1 = ds.StorageDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
     decode_op = vision.Decode()
     random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
     data1 = data1.map(input_columns="image", operations=decode_op)
@@ -192,7 +192,7 @@ def test_random_crop():
     data1_1 = ds.deserialize(input_dict=ds1_dict)
 
     # Second dataset
-    data2 = ds.StorageDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
     data2 = data2.map(input_columns="image", operations=decode_op)
 
     for item1, item1_1, item2 in zip(data1.create_dict_iterator(), data1_1.create_dict_iterator(),
