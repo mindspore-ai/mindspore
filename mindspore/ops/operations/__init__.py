@@ -71,7 +71,7 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
                      ApplyProximalAdagrad, SparseApplyProximalAdagrad,
-                     ApplyRMSProp, ApplyCenteredRMSProp)
+                     ApplyRMSProp, ApplyCenteredRMSProp, BasicLSTMCell)
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey, CheckBprop
 from . import _quant_ops
 from ._quant_ops import *
@@ -285,7 +285,8 @@ __all__ = [
     "BesselI0e",
     "BesselI1e",
     "Atan",
-    "Atanh"
+    "Atanh",
+    "BasicLSTMCell"
 ]
 
 __all__.extend(_quant_ops.__all__)
