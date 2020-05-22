@@ -50,7 +50,7 @@ TEST_F(MindDataTestTaskManager, Test1) {
 }
 
 TEST_F(MindDataTestTaskManager, Test2) {
-  // This testcase will spawn about 10 threads and block on a conditional variable.
+  // This testcase will spawn about 100 threads and block on a conditional variable.
   // The master thread will try to interrupt them almost at the same time. This can
   // cause a racing condition that some threads may miss the interrupt and blocked.
   // The new logic of Task::Join() will do a time-out join and wake up all those
@@ -59,11 +59,11 @@ TEST_F(MindDataTestTaskManager, Test2) {
   (void)TaskManager::GetMasterThreadRc();
   TaskGroup vg;
   CondVar cv;
+  std::mutex mux;
   Status rc;
   rc = cv.Register(vg.GetIntrpService());
   EXPECT_TRUE(rc.IsOk());
-  auto block_forever = [&cv]() -> Status {
-    std::mutex mux;
+  auto block_forever = [&cv, &mux]() -> Status {
     std::unique_lock<std::mutex> lck(mux);
     TaskManager::FindMe()->Post();
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -71,7 +71,7 @@ TEST_F(MindDataTestTaskManager, Test2) {
     return Status::OK();
   };
   auto f = [&vg, &block_forever]() -> Status {
-    for (auto i = 0; i < 10; ++i) {
+    for (auto i = 0; i < 100; ++i) {
       RETURN_IF_NOT_OK(vg.CreateAsyncTask("Spawn block threads", block_forever));
     }
     return Status::OK();
