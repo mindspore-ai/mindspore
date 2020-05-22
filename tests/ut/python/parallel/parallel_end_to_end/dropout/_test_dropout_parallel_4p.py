@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import os
+import numpy as np
 
 import mindspore as ms
 import mindspore.communication.management as distributedTool
@@ -45,8 +45,8 @@ class Net(Cell):
         super(Net, self).__init__()
         self.drop = Dropout(keep_prob, seed0, seed1, dtype=ms.float32, strategy=strategy)
 
-    def construct(self, input):
-        x = self.drop(input)
+    def construct(self, input_):
+        x = self.drop(input_)
         return x
 
 
@@ -83,16 +83,16 @@ class DropoutFactory:
             i += 1
         return blocks
 
-    def d4_tensor_compare(self, input, out_me):
-        [a, b, c, d] = input.shape
+    def d4_tensor_compare(self, input_, out_me):
+        [a, b, c, d] = input_.shape
         for i in range(a):
             for j in range(b):
                 for k in range(c):
                     for e in range(d):
                         if out_me[i, j, k, e] == 0:
-                            assert True == True
+                            assert True
                         else:
-                            assert np.allclose(out_me[i, j, k, e], input[i, j, k, e] * (1 / 0.4), 0.0001, 0.0001)
+                            assert np.allclose(out_me[i, j, k, e], input_[i, j, k, e] * (1 / 0.4), 0.0001, 0.0001)
 
     def forward_mindspore_parallel_impl(self):
         x = Tensor(self.input_np)

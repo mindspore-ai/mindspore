@@ -54,7 +54,7 @@ def test_param_broadcast():
     network.set_train()
 
     predict = Tensor(np.ones([64, 512]).astype(np.float32) * 0.01)
-    out = network(predict)
+    _ = network(predict)
     context.reset_auto_parallel_context()
 
 
@@ -67,5 +67,5 @@ def test_param_not_broadcast():
     network.set_train()
 
     predict = Tensor(np.ones([64, 512]).astype(np.float32) * 0.01)
-    out = network(predict)
+    _ = network(predict)
     context.reset_auto_parallel_context()

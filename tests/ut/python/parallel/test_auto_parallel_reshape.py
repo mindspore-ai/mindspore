@@ -215,7 +215,7 @@ def test_reshape_auto_5():
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([4, 1024 * size, 1]), dtype=ms.float32)
-    y = Tensor(np.ones([4, 1024 * size, ]), dtype=ms.float32)
+    y = Tensor(np.ones([4, 1024 * size,]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
@@ -263,7 +263,7 @@ def test_reshape_auto_6():
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
     x = Tensor(np.ones([4, 1024, 1]), dtype=ms.float32)
-    y = Tensor(np.ones([4, 1024, ]), dtype=ms.float32)
+    y = Tensor(np.ones([4, 1024,]), dtype=ms.float32)
 
     net = GradWrap(NetWithLoss(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")

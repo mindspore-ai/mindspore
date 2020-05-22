@@ -67,7 +67,6 @@ def all_to_all_net(strategy1):
 
 
 def all_to_all_common(strategy1):
-    batch_size = 32
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 2
@@ -104,7 +103,7 @@ def test_all_to_all():
                        [8, 1]],
                    'Default/network-_VirtualDatasetCell/_backbone-WithLossCell/_backbone-AllToAllNet/MatMul-op0': [
                        [1, 1], [1, 8]]}
-    assert (strategys == expect_dict)
+    assert strategys == expect_dict
     context.set_context(save_graphs=False)
 
 

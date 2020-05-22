@@ -54,7 +54,7 @@ class Grad(nn.Cell):
         return C.grad_all(self.network)(x, y)
 
 
-def compile(net, x, y):
+def compile_net(net, x, y):
     net.set_auto_parallel()
     _executor.compile(net, x, y)
 
@@ -69,7 +69,7 @@ def test_add_relu_stride_slice():
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    compile(net, x, y)
+    compile_net(net, x, y)
 
 
 def test_add_relu_all_gather():
@@ -82,4 +82,4 @@ def test_add_relu_all_gather():
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    compile(net, x, y)
+    compile_net(net, x, y)

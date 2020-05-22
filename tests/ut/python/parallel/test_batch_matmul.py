@@ -41,7 +41,7 @@ _w2 = Tensor(np.ones([128, 32, 32]), dtype=ms.float32)
 _b = Tensor(np.ones([128, 64, 16]), dtype=ms.float32)
 
 
-def compile(net):
+def compile_net(net):
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
     train_net = TrainOneStepCell(net, optimizer)
     train_net.set_auto_parallel()
@@ -54,7 +54,7 @@ def test_batch_matmul_data_parallel():
     strategy1 = ((16, 1, 1), (16, 1, 1))
     strategy2 = ((16, 1, 1), (16, 1, 1))
     net = Net(_w1, _w2, False, strategy1, strategy2)
-    compile(net)
+    compile_net(net)
 
 
 def test_batch_matmul_model_parallel():
@@ -62,7 +62,7 @@ def test_batch_matmul_model_parallel():
     strategy1 = ((1, 1, 1), (1, 1, 1))
     strategy2 = ((1, 1, 1), (1, 1, 16))
     net = Net(_w1, _w2, False, strategy1, strategy2)
-    compile(net)
+    compile_net(net)
 
 
 def test_batch_matmul_hybrid_parallel():
@@ -70,13 +70,13 @@ def test_batch_matmul_hybrid_parallel():
     strategy1 = ((2, 2, 2), (2, 2, 2))
     strategy2 = ((2, 2, 2), (2, 2, 2))
     net = Net(_w1, _w2, False, strategy1, strategy2)
-    compile(net)
+    compile_net(net)
 
 
 def test_batch_matmul_auto_parallel():
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16, global_rank=0)
     net = Net(_w1, _w2, False)
-    compile(net)
+    compile_net(net)
 
 
 def test_batch_matmul_repeat_calc():
@@ -84,7 +84,7 @@ def test_batch_matmul_repeat_calc():
     strategy1 = ((2, 2, 4), (2, 2, 4))
     strategy2 = ((1, 2, 2), (1, 2, 2))
     net = Net(_w1, _w2, False, strategy1, strategy2)
-    compile(net)
+    compile_net(net)
 
 
 def test_batch_matmul_transpose_b():
@@ -92,4 +92,4 @@ def test_batch_matmul_transpose_b():
     strategy1 = ((2, 2, 4), (2, 2, 4))
     strategy2 = ((1, 2, 2), (1, 2, 2))
     net = Net(_w1, _w2, True, strategy1, strategy2)
-    compile(net)
+    compile_net(net)

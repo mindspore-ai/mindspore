@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
-
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -23,8 +21,6 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.ops.operations.comm_ops import _VirtualDataset
-from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -56,7 +52,7 @@ class GradWrap(nn.Cell):
         return C.grad_by_list(self.network, self.weights)()
 
 
-def compile(net):
+def compile_net(net):
     net.set_auto_parallel()
     _executor.compile(net)
 
@@ -67,7 +63,7 @@ def test_get_next_single():
             super().__init__()
             self.norm = P.L2Normalize(axis=1)
             self.prelu = P.PReLU()
-            self.w = Parameter(initializer(w, [channel, ]), name='w')
+            self.w = Parameter(initializer(w, [channel,]), name='w')
 
         def construct(self, data):
             x = self.norm(data)
@@ -84,7 +80,7 @@ def test_get_next_semi_auto_parallel():
             super().__init__()
             self.norm = P.L2Normalize().set_strategy(strategy1)
             self.prelu = P.PReLU().set_strategy(strategy2)
-            self.w = Parameter(initializer(w, [channel, ]), name='w')
+            self.w = Parameter(initializer(w, [channel,]), name='w')
 
         def construct(self, data):
             x = self.norm(data)
@@ -99,7 +95,7 @@ def test_get_next_semi_auto_parallel():
                                 strategy4=strategy4)
     net = GradWrap(net_with_loss)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    compile(net)
+    compile_net(net)
 
 
 def test_get_next_semi_auto_parallel1():
@@ -108,7 +104,7 @@ def test_get_next_semi_auto_parallel1():
             super().__init__()
             self.norm = P.L2Normalize().set_strategy(strategy1)
             self.prelu = P.PReLU().set_strategy(strategy2)
-            self.w = Parameter(initializer(w, [channel, ]), name='w')
+            self.w = Parameter(initializer(w, [channel,]), name='w')
 
         def construct(self, data):
             x = self.norm(data)
@@ -123,7 +119,7 @@ def test_get_next_semi_auto_parallel1():
                                 strategy4=strategy4)
     net = GradWrap(net_with_loss)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    compile(net)
+    compile_net(net)
 
 
 def test_get_next_auto_parallel():
@@ -132,7 +128,7 @@ def test_get_next_auto_parallel():
             super().__init__()
             self.norm = P.L2Normalize().set_strategy(strategy1)
             self.prelu = P.PReLU().set_strategy(strategy2)
-            self.w = Parameter(initializer(w, [channel, ]), name='w')
+            self.w = Parameter(initializer(w, [channel,]), name='w')
 
         def construct(self, data):
             x = self.norm(data)
@@ -144,7 +140,7 @@ def test_get_next_auto_parallel():
     net_with_loss = NetWithLoss(network, [ms.float32, ms.int32], [[32, 64], [32]], 2)
     net = GradWrap(net_with_loss)
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
-    compile(net)
+    compile_net(net)
 
 
 def test_only_one_get_next():
@@ -159,4 +155,4 @@ def test_only_one_get_next():
     context.set_auto_parallel_context(device_num=4, global_rank=0)
     net = Net()
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    compile(net)
+    compile_net(net)

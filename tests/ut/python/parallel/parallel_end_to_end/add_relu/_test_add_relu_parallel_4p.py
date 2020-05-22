@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import os
+import numpy as np
 import pytest
 
 import mindspore as ms
@@ -155,9 +155,9 @@ class AddReluFactory:
     def grad_cmp(self):
         input_grad_mindspore = self.grad_mindspore_impl()
         input_grad_mindspore_parallel = self.grad_mindspore_parallel_impl()
-        input_grad_mindspore0 = input_grad_mindspore[0].asnumpy()
+        _ = input_grad_mindspore[0].asnumpy()
         input_grad_mindspore1 = input_grad_mindspore[1].asnumpy()
-        input_grad_mindspore_parallel0 = input_grad_mindspore_parallel[0].asnumpy()
+        _ = input_grad_mindspore_parallel[0].asnumpy()
         input_grad_mindspore_parallel1 = input_grad_mindspore_parallel[1].asnumpy()
         assert np.allclose(input_grad_mindspore1, input_grad_mindspore_parallel1, 0.0001, 0.0001)
 

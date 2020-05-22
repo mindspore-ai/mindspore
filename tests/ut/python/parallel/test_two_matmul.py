@@ -44,7 +44,7 @@ class GradWrap(nn.Cell):
         return C.grad_all(self.network)(x, y, b)
 
 
-def compile(net, x, y, b):
+def compile_net(net, x, y, b):
     net.set_auto_parallel()
     _executor.compile(net, x, y, b)
 
@@ -72,7 +72,7 @@ def test_two_matmul():
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_two_matmul_repeated_calculation1():
@@ -96,7 +96,7 @@ def test_two_matmul_repeated_calculation1():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)
 
 
 def test_two_matmul_repeated_calculation2():
@@ -120,4 +120,4 @@ def test_two_matmul_repeated_calculation2():
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
     b = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    compile(net, x, y, b)
+    compile_net(net, x, y, b)

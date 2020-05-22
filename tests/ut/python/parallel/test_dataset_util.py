@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
-
 import mindspore as ms
 from mindspore import Tensor
 from mindspore.train._utils import _to_full_shapes, _to_full_tensor
@@ -35,7 +33,7 @@ def test_to_full_tensor_1():
     expect = ([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [1, 2, 3], [4, 5, 6], [0, 0, 0], [0, 0, 0]])
     expect_tensor = Tensor(expect, dtype=ms.float32)
 
-    assert (full_tensor[0] == expect_tensor)
+    assert full_tensor[0] == expect_tensor
 
 
 def test_to_full_tensor_2():
@@ -52,7 +50,7 @@ def test_to_full_tensor_2():
     expect_tensor1 = Tensor(expect1, dtype=ms.int32)
     expect_tensors = (expect_tensor0, expect_tensor1)
 
-    assert (full_tensor == expect_tensors)
+    assert full_tensor == expect_tensors
 
 
 def test_to_full_tensor_sens_2():
@@ -70,4 +68,4 @@ def test_to_full_tensor_sens_2():
     expect_tensor_sens = Tensor(0.1, dtype=ms.float32)
     expect_tensors = (expect_tensor0, expect_tensor1, expect_tensor_sens)
 
-    assert (full_tensor == expect_tensors)
+    assert full_tensor == expect_tensors

@@ -35,7 +35,7 @@ class NetWithLoss(nn.Cell):
         return self.loss(predict, b)[0]
 
 
-def compile(net, x, b):
+def compile_net(net, x, b):
     net.set_auto_parallel()
     _Executor().compile(net, x, b)
 
@@ -72,7 +72,7 @@ def test_optimizer_clone_weight():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x, b)
+    compile_net(train_net, x, b)
 
 
 def test_optimizer_clone_weight2():
@@ -107,4 +107,4 @@ def test_optimizer_clone_weight2():
     train_net = TrainOneStepCell(net_with_loss, optimizer)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
-    compile(train_net, x, b)
+    compile_net(train_net, x, b)

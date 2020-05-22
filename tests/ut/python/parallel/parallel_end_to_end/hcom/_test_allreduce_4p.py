@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import os
+import numpy as np
 
 import mindspore as ms
 import mindspore.communication.management as distributedTool
@@ -87,9 +87,9 @@ class Grad(Cell):
 
 class MatmulReduceFactory:
     def __init__(self, inputx_shape, inputy_shape, inputz_shape, x_stra, y_stra, z_stra):
-        self.inputx = self.GenValue(inputx_shape, 10)
-        self.inputy = self.GenValue(inputy_shape, 20)
-        self.inputz = self.GenValue(inputz_shape, 30)
+        self.inputx = self.gen_value(inputx_shape, 10)
+        self.inputy = self.gen_value(inputy_shape, 20)
+        self.inputz = self.gen_value(inputz_shape, 30)
         self.x_stra = x_stra
         self.y_stra = y_stra
         self.z_stra = z_stra
@@ -98,7 +98,7 @@ class MatmulReduceFactory:
             stra_size = stra_size * s
         self.stra_size = stra_size
 
-    def GenValue(self, input_shape, delta):
+    def gen_value(self, input_shape, delta):
         size = 1
         for s in input_shape:
             size = size * s

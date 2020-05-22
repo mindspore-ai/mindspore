@@ -11,9 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import math
+
 import numpy as np
-import os
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -21,10 +20,8 @@ from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _executor
-from mindspore.common.initializer import initializer
 from mindspore.nn.loss.loss import _Loss
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 

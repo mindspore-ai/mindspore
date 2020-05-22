@@ -25,7 +25,6 @@ from mindspore.nn import Dense
 from mindspore.nn import Momentum
 from mindspore.nn import ReLU
 from mindspore.nn import TrainOneStepCell, WithLossCell
-from mindspore.ops.operations import Split
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather, _AlltoAll, ReduceOp, ReduceScatter
 from mindspore.ops.operations.comm_ops import Broadcast
 

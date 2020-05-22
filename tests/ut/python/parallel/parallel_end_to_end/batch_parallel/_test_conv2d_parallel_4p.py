@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import os
+import numpy as np
 from numpy import allclose
 
 import mindspore.communication.management as distributedTool
@@ -273,7 +273,7 @@ class Conv2dFactory:
                          stride=self.stride, pad_mode=self.pad_mode,
                          padding=self.padding, dilation=self.dilation,
                          group=self.group, has_bias=True, weight_init=weight,
-                         bias_init=bias, )
+                         bias_init=bias,)
         else:
             net = Conv2d(in_channels=self.in_c, out_channels=self.out_c,
                          kernel_size=(self.kernel_h, self.kernel_w),

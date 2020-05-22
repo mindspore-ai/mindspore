@@ -126,15 +126,6 @@ def test_onehot_auto():
     compile_graph(strategy1, strategy2, strategy3, strategy4, auto=True)
 
 
-def test_onehot_model_parallel():
-    context.set_auto_parallel_context(device_num=16, global_rank=0)
-    strategy1 = ((2, 4), (4, 2))
-    strategy2 = ((2, 8),)
-    strategy3 = ((1, 16), (), ())
-    strategy4 = ((16, 1), (16, 1))
-    compile_graph(strategy1, strategy2, strategy3, strategy4)
-
-
 def test_onehot_batch_parallel_axis0():
     context.set_auto_parallel_context(device_num=16, global_rank=0)
     strategy1 = ((2, 4), (4, 2))

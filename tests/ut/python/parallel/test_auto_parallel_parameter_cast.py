@@ -16,7 +16,6 @@ import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Tensor
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype as mstype

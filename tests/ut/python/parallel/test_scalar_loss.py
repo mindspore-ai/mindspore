@@ -22,7 +22,6 @@ from mindspore.common.api import _executor
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from tests.ut.python.ops.test_math_ops import VirtualLoss
 
 
 class GradWrap(nn.Cell):

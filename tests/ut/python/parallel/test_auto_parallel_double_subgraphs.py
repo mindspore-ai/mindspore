@@ -10,7 +10,6 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.parallel import _cost_model_context as cost_model_context
-from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
 
 

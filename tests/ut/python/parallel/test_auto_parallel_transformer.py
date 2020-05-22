@@ -105,8 +105,8 @@ def test_dmnet_train_step():
     size = 8
     context.set_auto_parallel_context(device_num=size, global_rank=0)
 
-    input = Tensor(np.ones([4096, 4096]).astype(np.float32) * 0.01)
+    input_ = Tensor(np.ones([4096, 4096]).astype(np.float32) * 0.01)
     net = GradWrap(NetWithLoss(MultiTransformer()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
-    _executor.compile(net, input)
+    _executor.compile(net, input_)
