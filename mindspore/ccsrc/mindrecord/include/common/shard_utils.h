@@ -65,6 +65,9 @@ const int kUnsignedInt4 = 4;
 
 enum LabelCategory { kSchemaLabel, kStatisticsLabel, kIndexLabel };
 
+const char kVersion[] = "3.0";
+const std::vector<std::string> kSupportedVersion = {"2.0", kVersion};
+
 enum ShardType {
   kNLP = 0,
   kCV = 1,

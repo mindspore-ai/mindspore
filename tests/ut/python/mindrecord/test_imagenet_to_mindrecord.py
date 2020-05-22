@@ -25,6 +25,26 @@ IMAGENET_IMAGE_DIR = "../data/mindrecord/testImageNetDataWhole/images"
 MINDRECORD_FILE = "../data/mindrecord/testImageNetDataWhole/imagenet.mindrecord"
 PARTITION_NUMBER = 4
 
+@pytest.fixture
+def fixture_file():
+    """add/remove file"""
+    def remove_one_file(x):
+        if os.path.exists(x):
+            os.remove(x)
+    def remove_file():
+        x = MINDRECORD_FILE
+        remove_one_file(x)
+        x = MINDRECORD_FILE + ".db"
+        remove_one_file(x)
+        for i in range(PARTITION_NUMBER):
+            x = MINDRECORD_FILE + str(i)
+            remove_one_file(x)
+            x = MINDRECORD_FILE + str(i) + ".db"
+            remove_one_file(x)
+
+    remove_file()
+    yield "yield_fixture_data"
+    remove_file()
 
 def read(filename):
     """test file reade"""
@@ -38,8 +58,7 @@ def read(filename):
     assert count == 20
     reader.close()
 
-
-def test_imagenet_to_mindrecord():
+def test_imagenet_to_mindrecord(fixture_file):
     """test transform imagenet dataset to mindrecord."""
     imagenet_transformer = ImageNetToMR(IMAGENET_MAP_FILE, IMAGENET_IMAGE_DIR,
                                         MINDRECORD_FILE, PARTITION_NUMBER)
@@ -48,12 +67,8 @@ def test_imagenet_to_mindrecord():
         assert os.path.exists(MINDRECORD_FILE + str(i))
         assert os.path.exists(MINDRECORD_FILE + str(i) + ".db")
     read(MINDRECORD_FILE + "0")
-    for i in range(PARTITION_NUMBER):
-        os.remove(MINDRECORD_FILE + str(i))
-        os.remove(MINDRECORD_FILE + str(i) + ".db")
 
-
-def test_imagenet_to_mindrecord_default_partition_number():
+def test_imagenet_to_mindrecord_default_partition_number(fixture_file):
     """
     test transform imagenet dataset to mindrecord
     when partition number is default.
@@ -64,11 +79,8 @@ def test_imagenet_to_mindrecord_default_partition_number():
     assert os.path.exists(MINDRECORD_FILE)
     assert os.path.exists(MINDRECORD_FILE + ".db")
     read(MINDRECORD_FILE)
-    os.remove("{}".format(MINDRECORD_FILE))
-    os.remove("{}.db".format(MINDRECORD_FILE))
 
-
-def test_imagenet_to_mindrecord_partition_number_0():
+def test_imagenet_to_mindrecord_partition_number_0(fixture_file):
     """
     test transform imagenet dataset to mindrecord
     when partition number is 0.
@@ -79,8 +91,7 @@ def test_imagenet_to_mindrecord_partition_number_0():
                                             MINDRECORD_FILE, 0)
         imagenet_transformer.transform()
 
-
-def test_imagenet_to_mindrecord_partition_number_none():
+def test_imagenet_to_mindrecord_partition_number_none(fixture_file):
     """
     test transform imagenet dataset to mindrecord
     when partition number is none.
@@ -92,8 +103,7 @@ def test_imagenet_to_mindrecord_partition_number_none():
                                             MINDRECORD_FILE, None)
         imagenet_transformer.transform()
 
-
-def test_imagenet_to_mindrecord_illegal_filename():
+def test_imagenet_to_mindrecord_illegal_filename(fixture_file):
     """
     test transform imagenet dataset to mindrecord
     when file name contains illegal character.

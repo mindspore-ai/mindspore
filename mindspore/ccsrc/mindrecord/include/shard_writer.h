@@ -36,6 +36,7 @@
 #include <utility>
 #include <vector>
 #include "mindrecord/include/common/shard_utils.h"
+#include "mindrecord/include/shard_column.h"
 #include "mindrecord/include/shard_error.h"
 #include "mindrecord/include/shard_header.h"
 #include "mindrecord/include/shard_index.h"
@@ -242,7 +243,8 @@ class ShardWriter {
 
   std::vector<std::string> file_paths_;                      // file paths
   std::vector<std::shared_ptr<std::fstream>> file_streams_;  // file handles
-  std::shared_ptr<ShardHeader> shard_header_;                // shard headers
+  std::shared_ptr<ShardHeader> shard_header_;                // shard header
+  std::shared_ptr<ShardColumn> shard_column_;                // shard columns
 
   std::map<uint64_t, std::map<int, std::string>> err_mg_;  // used for storing error raw_data info
 

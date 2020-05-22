@@ -25,8 +25,24 @@ from mindspore.mindrecord import SUCCESS
 CIFAR100_DIR = "../data/mindrecord/testCifar100Data"
 MINDRECORD_FILE = "./cifar100.mindrecord"
 
+@pytest.fixture
+def fixture_file():
+    """add/remove file"""
+    def remove_file(x):
+        if os.path.exists("{}".format(x)):
+            os.remove("{}".format(x))
+        if os.path.exists("{}.db".format(x)):
+            os.remove("{}.db".format(x))
+        if os.path.exists("{}_test".format(x)):
+            os.remove("{}_test".format(x))
+        if os.path.exists("{}_test.db".format(x)):
+            os.remove("{}_test.db".format(x))
 
-def test_cifar100_to_mindrecord_without_index_fields():
+    remove_file(MINDRECORD_FILE)
+    yield "yield_fixture_data"
+    remove_file(MINDRECORD_FILE)
+
+def test_cifar100_to_mindrecord_without_index_fields(fixture_file):
     """test transform cifar100 dataset to mindrecord without index fields."""
     cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, MINDRECORD_FILE)
     ret = cifar100_transformer.transform()
@@ -34,25 +50,14 @@ def test_cifar100_to_mindrecord_without_index_fields():
     assert os.path.exists(MINDRECORD_FILE)
     assert os.path.exists(MINDRECORD_FILE + "_test")
     read()
-    os.remove("{}".format(MINDRECORD_FILE))
-    os.remove("{}.db".format(MINDRECORD_FILE))
 
-    os.remove("{}".format(MINDRECORD_FILE + "_test"))
-    os.remove("{}.db".format(MINDRECORD_FILE + "_test"))
-
-
-def test_cifar100_to_mindrecord():
+def test_cifar100_to_mindrecord(fixture_file):
     """test transform cifar100 dataset to mindrecord."""
     cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, MINDRECORD_FILE)
     cifar100_transformer.transform(['fine_label', 'coarse_label'])
     assert os.path.exists(MINDRECORD_FILE)
     assert os.path.exists(MINDRECORD_FILE + "_test")
     read()
-    os.remove("{}".format(MINDRECORD_FILE))
-    os.remove("{}.db".format(MINDRECORD_FILE))
-
-    os.remove("{}".format(MINDRECORD_FILE + "_test"))
-    os.remove("{}.db".format(MINDRECORD_FILE + "_test"))
 
 
 def read():
@@ -77,8 +82,7 @@ def read():
     assert count == 4
     reader.close()
 
-
-def test_cifar100_to_mindrecord_illegal_file_name():
+def test_cifar100_to_mindrecord_illegal_file_name(fixture_file):
     """
     test transform cifar100 dataset to mindrecord
     when file name contains illegal character.
@@ -88,8 +92,7 @@ def test_cifar100_to_mindrecord_illegal_file_name():
         cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, filename)
         cifar100_transformer.transform()
 
-
-def test_cifar100_to_mindrecord_filename_start_with_space():
+def test_cifar100_to_mindrecord_filename_start_with_space(fixture_file):
     """
     test transform cifar10 dataset to mindrecord
     when file name starts with space.
@@ -100,8 +103,7 @@ def test_cifar100_to_mindrecord_filename_start_with_space():
         cifar100_transformer = Cifar100ToMR(CIFAR100_DIR, filename)
         cifar100_transformer.transform()
 
-
-def test_cifar100_to_mindrecord_filename_contain_space():
+def test_cifar100_to_mindrecord_filename_contain_space(fixture_file):
     """
     test transform cifar10 dataset to mindrecord
     when file name contains space.
@@ -111,14 +113,8 @@ def test_cifar100_to_mindrecord_filename_contain_space():
     cifar100_transformer.transform()
     assert os.path.exists(filename)
     assert os.path.exists(filename + "_test")
-    os.remove("{}".format(filename))
-    os.remove("{}.db".format(filename))
 
-    os.remove("{}".format(filename + "_test"))
-    os.remove("{}.db".format(filename + "_test"))
-
-
-def test_cifar100_to_mindrecord_directory():
+def test_cifar100_to_mindrecord_directory(fixture_file):
     """
     test transform cifar10 dataset to mindrecord
     when destination path is directory.
@@ -129,8 +125,7 @@ def test_cifar100_to_mindrecord_directory():
                                             CIFAR100_DIR)
         cifar100_transformer.transform()
 
-
-def test_cifar100_to_mindrecord_filename_equals_cifar100():
+def test_cifar100_to_mindrecord_filename_equals_cifar100(fixture_file):
     """
     test transform cifar10 dataset to mindrecord
     when destination path equals source path.

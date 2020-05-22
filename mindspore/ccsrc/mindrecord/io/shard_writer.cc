@@ -206,6 +206,7 @@ MSRStatus ShardWriter::OpenForAppend(const std::string &path) {
     MS_LOG(ERROR) << "Open file failed";
     return FAILED;
   }
+  shard_column_ = std::make_shared<ShardColumn>(shard_header_);
   return SUCCESS;
 }
 
@@ -271,6 +272,7 @@ MSRStatus ShardWriter::SetShardHeader(std::shared_ptr<ShardHeader> header_data) 
   shard_header_ = header_data;
   shard_header_->SetHeaderSize(header_size_);
   shard_header_->SetPageSize(page_size_);
+  shard_column_ = std::make_shared<ShardColumn>(shard_header_);
   return SUCCESS;
 }
 
@@ -608,6 +610,14 @@ MSRStatus ShardWriter::WriteRawDataPreCheck(std::map<uint64_t, std::vector<json>
     MS_LOG(ERROR) << "IO error / there is no free disk to be used";
     return FAILED;
   }
+
+  // compress blob
+  if (shard_column_->CheckCompressBlob()) {
+    for (auto &blob : blob_data) {
+      blob = shard_column_->CompressBlob(blob);
+    }
+  }
+
   // Add 4-bytes dummy blob data if no any blob fields
   if (blob_data.size() == 0 && raw_data.size() > 0) {
     blob_data = std::vector<std::vector<uint8_t>>(raw_data[0].size(), std::vector<uint8_t>(kUnsignedInt4, 0));
