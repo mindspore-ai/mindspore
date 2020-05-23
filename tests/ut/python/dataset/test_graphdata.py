@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import pytest
+import numpy as np
 import mindspore.dataset as ds
 from mindspore import log as logger
 
@@ -23,8 +24,7 @@ def test_graphdata_getfullneighbor():
     g = ds.GraphData(DATASET_FILE, 2)
     nodes = g.get_all_nodes(1)
     assert len(nodes) == 10
-    nodes_list = nodes.tolist()
-    neighbor = g.get_all_neighbors(nodes_list, 2)
+    neighbor = g.get_all_neighbors(nodes, 2)
     assert neighbor.shape == (10, 6)
     row_tensor = g.get_node_feature(neighbor.tolist(), [2, 3])
     assert row_tensor[0].shape == (10, 6)
@@ -58,6 +58,14 @@ def test_graphdata_getnodefeature_input_check():
 
     with pytest.raises(TypeError):
         input_list = [[1, 1], [1, 1]]
+        g.get_node_feature(input_list, 1)
+
+    with pytest.raises(TypeError):
+        input_list = [[1, 0.1], [1, 1]]
+        g.get_node_feature(input_list, 1)
+
+    with pytest.raises(TypeError):
+        input_list = np.array([[1, 0.1], [1, 1]])
         g.get_node_feature(input_list, 1)
 
     with pytest.raises(TypeError):
