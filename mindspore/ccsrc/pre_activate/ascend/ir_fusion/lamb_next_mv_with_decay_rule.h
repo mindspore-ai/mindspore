@@ -24,15 +24,10 @@
 
 namespace mindspore {
 namespace opt {
-class LambNextMVWithDecayRule : public PatternProcessPass {
+class LambNextMVWithDecayRule : public MultipleOutputPatternProcessPass {
  public:
-  explicit LambNextMVWithDecayRule(const std::string &name = "lamb_next_mv_with_decay_rule_cond4",
-                                   bool multigraph = true)
-      : PatternProcessPass(name, multigraph),
-        child_pattern_engine_(PatternEngine(std::make_shared<DefaultVisitor>(),
-                                            std::function<bool(const BaseRef &, const BaseRef &)>(AnfEqual),
-                                            std::function<bool(const BaseRef &, const BaseRef &)>(CNodeTypeEqual))),
-        child_primitive_vars_(std::make_shared<PrimitiveVarMap>()) {
+  explicit LambNextMVWithDecayRule(const std::string &name = "", bool multigraph = true)
+      : MultipleOutputPatternProcessPass(name, multigraph) {
     for (size_t i = 0; i < kLambNextMVWithDecayInputNum; ++i) {
       input_vars_.push_back(std::make_shared<Var>());
     }
@@ -48,21 +43,16 @@ class LambNextMVWithDecayRule : public PatternProcessPass {
   }
 
   ~LambNextMVWithDecayRule() override = default;
-  const BaseRef DefinePattern() const override;
-  virtual const BaseRef DefineAnotherPattern() const;
+  const BaseRef DefinePattern() const override = 0;
+  BaseRef DefineAnotherPattern() const override = 0;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  bool IsShareNodes(const EquivPtr &equiv1, const EquivPtr &equiv2) const override;
 
  protected:
-  bool MatchAnotherPattern(const AnfNodePtr &node, const EquivPtr &equiv) const;
-  // check two patterns whether share the same nodes or not
-  bool IsShareNodes(const EquivPtr &equiv1, const EquivPtr &equiv2) const;
-
   AnfNodePtr GetLambNextMVWithDecayOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &new_node,
                                           const AnfNodePtr &add3, const AnfNodePtr &add5, const EquivPtr &equiv) const;
   AnfNodePtr CreateLambNextMVWithDecayNode(const FuncGraphPtr &func_graph, const AnfNodePtr &add3,
                                            const AnfNodePtr &add5, const EquivPtr &equiv) const;
-  PatternEngine child_pattern_engine_;
-  PrimitiveVarMapPtr child_primitive_vars_;
   std::vector<VarPtr> input_vars_;
   std::vector<VarPtr> constant_mul_input_vars_;
   // nodes which two patterns share
@@ -82,7 +72,7 @@ class LambNextMVWithDecayRuleCond1 : public LambNextMVWithDecayRule {
 
   ~LambNextMVWithDecayRuleCond1() override = default;
   const BaseRef DefinePattern() const override;
-  const BaseRef DefineAnotherPattern() const override;
+  BaseRef DefineAnotherPattern() const override;
 };
 
 class LambNextMVWithDecayRuleCond2 : public LambNextMVWithDecayRule {
@@ -92,7 +82,7 @@ class LambNextMVWithDecayRuleCond2 : public LambNextMVWithDecayRule {
 
   ~LambNextMVWithDecayRuleCond2() override = default;
   const BaseRef DefinePattern() const override;
-  const BaseRef DefineAnotherPattern() const override;
+  BaseRef DefineAnotherPattern() const override;
 };
 
 class LambNextMVWithDecayRuleCond3 : public LambNextMVWithDecayRule {
@@ -102,7 +92,17 @@ class LambNextMVWithDecayRuleCond3 : public LambNextMVWithDecayRule {
 
   ~LambNextMVWithDecayRuleCond3() override = default;
   const BaseRef DefinePattern() const override;
-  const BaseRef DefineAnotherPattern() const override;
+  BaseRef DefineAnotherPattern() const override;
+};
+
+class LambNextMVWithDecayRuleCond4 : public LambNextMVWithDecayRule {
+ public:
+  explicit LambNextMVWithDecayRuleCond4(bool multigraph = true)
+      : LambNextMVWithDecayRule("lamb_next_mv_with_decay_rule_cond4", multigraph) {}
+
+  ~LambNextMVWithDecayRuleCond4() override = default;
+  const BaseRef DefinePattern() const override;
+  BaseRef DefineAnotherPattern() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

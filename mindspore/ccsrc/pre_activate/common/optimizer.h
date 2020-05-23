@@ -51,6 +51,25 @@ class PatternProcessPass : public NodePass {
   PrimitiveVarMapPtr primitive_vars_;
 };
 
+class MultipleOutputPatternProcessPass : public PatternProcessPass {
+ public:
+  explicit MultipleOutputPatternProcessPass(const std::string &name = "", bool multigraph = true)
+      : PatternProcessPass(name, multigraph),
+        child_pattern_engine_(PatternEngine(std::make_shared<DefaultVisitor>(),
+                                            std::function<bool(const BaseRef &, const BaseRef &)>(AnfEqual),
+                                            std::function<bool(const BaseRef &, const BaseRef &)>(CNodeTypeEqual))),
+        child_primitive_vars_(std::make_shared<PrimitiveVarMap>()) {}
+  ~MultipleOutputPatternProcessPass() override = default;
+  virtual BaseRef DefineAnotherPattern() const = 0;
+  // check two patterns whether share the same nodes or not
+  virtual bool IsShareNodes(const EquivPtr &equiv1, const EquivPtr &equiv2) const = 0;
+
+ protected:
+  bool MatchAnotherPattern(const AnfNodePtr &node, const EquivPtr &equiv) const;
+  PatternEngine child_pattern_engine_;
+  PrimitiveVarMapPtr child_primitive_vars_;
+};
+
 class GraphOptimizer {
  public:
   explicit GraphOptimizer(const std::string &name = "graph_optimizer") : name_(name) {}

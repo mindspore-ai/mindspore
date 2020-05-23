@@ -29,23 +29,71 @@
 
 namespace mindspore {
 namespace opt {
-class LambNextMVRule : public PatternProcessPass {
+class LambNextMVRule : public MultipleOutputPatternProcessPass {
  public:
-  explicit LambNextMVRule(bool multigraph = true) : PatternProcessPass("lamb_next_mv_rule", multigraph) {
-    for (size_t i = 0; i < kLambNextMVRuleInputNum - 1; ++i) {
-      input_varptr_.push_back(std::make_shared<Var>());
-    }
+  explicit LambNextMVRule(const std::string &name = "", bool multigraph = true)
+      : MultipleOutputPatternProcessPass(name, multigraph) {
+    input0_ = std::make_shared<Var>();
+    input1_ = std::make_shared<Var>();
+    input2_ = std::make_shared<Var>();
+    input3_ = std::make_shared<Var>();
+    input4_ = std::make_shared<Var>();
+    input5_ = std::make_shared<Var>();
+    input6_ = std::make_shared<Var>();
+    mul0_x_ = std::make_shared<Var>();
+    mul1_sub_ = std::make_shared<Var>();
+    mul2_x_ = std::make_shared<Var>();
+    mul3_sub1_ = std::make_shared<Var>();
+    mul4_x_ = std::make_shared<Var>();
+    add2_y_ = std::make_shared<Var>();
+    real_div0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(kRealDivOpName));
+    real_div1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(kRealDivOpName));
+    real_div2_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimMul->name()));
+    add0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
+    add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
   }
   ~LambNextMVRule() override = default;
-  const BaseRef DefinePattern() const override;
+  const BaseRef DefinePattern() const override = 0;
+  BaseRef DefineAnotherPattern() const override = 0;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  bool IsShareNodes(const EquivPtr &equiv1, const EquivPtr &equiv2) const override;
 
- private:
-  std::vector<VarPtr> input_varptr_;
-  bool IsRuleMatched(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+ protected:
+  bool IsRuleMatched(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv,
                      std::vector<AnfNodePtr> *old_pattern_outputs) const;
   AnfNodePtr CreateLambNextMVNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &old_pattern_outputs,
                                   const EquivPtr &equiv) const;
+
+  VarPtr input0_;
+  VarPtr input1_;
+  VarPtr input2_;
+  VarPtr input3_;
+  VarPtr input4_;
+  VarPtr input5_;
+  VarPtr input6_;
+  VarPtr mul0_x_;
+  VarPtr mul1_sub_;
+  VarPtr mul2_x_;
+  VarPtr mul3_sub1_;
+  VarPtr mul4_x_;
+  VarPtr add2_y_;
+  // nodes which two patterns share, and add2_y_ also.
+  VarPtr real_div0_var_;
+  VarPtr real_div1_var_;
+  // part of output nodes
+  VarPtr add0_var_;
+  VarPtr add1_var_;
+  // other node
+  VarPtr real_div2_var_;
+};
+
+class LambNextMVRuleCond4 : public LambNextMVRule {
+ public:
+  explicit LambNextMVRuleCond4(bool multigraph = true) : LambNextMVRule("lamb_next_mv_rule_cond4", multigraph) {}
+
+  ~LambNextMVRuleCond4() override = default;
+  const BaseRef DefinePattern() const override;
+  BaseRef DefineAnotherPattern() const override;
 };
 }  // namespace opt
 }  // namespace mindspore

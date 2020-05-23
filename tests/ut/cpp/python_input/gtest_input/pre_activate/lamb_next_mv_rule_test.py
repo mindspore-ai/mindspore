@@ -36,7 +36,7 @@ class FnDict:
         return self.fnDict[name]
 
 
-def test_lamb_next_mv_rule(tag):
+def test_lamb_next_mv_rule_cond4(tag):
     fns = FnDict()
 
     @fns
