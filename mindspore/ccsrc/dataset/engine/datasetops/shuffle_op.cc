@@ -83,14 +83,14 @@ ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_con
 // itself rather than waiting for the reset driven from operators above it in the pipeline.
 Status ShuffleOp::SelfReset() {
   MS_LOG(DEBUG) << "Shuffle operator performing a self-reset.";
-  // If ReshuffleEachEpoch is false, then we always use the same seed for every
+  // If reshuffle_each_epoch is false, then we always use the same seed for every
   // epoch.
-  // If ReshuffleEachEpoch is true, then the first epoch uses the given seed,
-  // and all subsequent epochs will then reset the seed based on random device.
-  if (reshuffle_each_epoch_) {
-    shuffle_seed_ = GetNewSeed();
+  // If reshuffle_each_epoch is true, then the first epoch uses the given seed,
+  // and all subsequent epochs will then keep on using the rng_ without resetting it
+  if (!reshuffle_each_epoch_) {
+    rng_ = std::mt19937_64(shuffle_seed_);
   }
-  rng_ = std::mt19937_64(shuffle_seed_);
+
   shuffle_buffer_ = std::make_unique<TensorTable>();
   buffer_counter_ = 0;
   shuffle_last_row_idx_ = 0;
