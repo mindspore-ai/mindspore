@@ -128,11 +128,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimDepend, {InferImplDepend, true}},
     {prim::kPrimBroadcastGradientArgs, {InferImplBroadcastGradientArgs, false}},
     {prim::kPrimControlDepend, {InferImplControlDepend, true}},
-    // Debug
-    {prim::kPrimScalarSummary, {InferImplScalarSummary, true}},
-    {prim::kPrimImageSummary, {InferImplTensorSummary, true}},
-    {prim::kPrimTensorSummary, {InferImplTensorSummary, true}},
-    {prim::kPrimHistogramSummary, {InferImplTensorSummary, true}},
   };
   return prim_eval_implement_map;
 }

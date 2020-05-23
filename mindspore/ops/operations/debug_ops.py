@@ -16,10 +16,22 @@
 """debug_ops"""
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
-from ..primitive import Primitive, prim_attr_register, PrimitiveWithInfer
+from ..primitive import prim_attr_register, PrimitiveWithInfer
 
 
-class ScalarSummary(Primitive):
+def _check_summary_param(name, value, class_name):
+    """Check the name and value is valid for summary."""
+    n_type = name['dtype']
+    n_value = name['value']
+    validator.check_value_type('name', n_type, [type(mstype.string)], class_name)
+    if not n_value:
+        raise ValueError(f"For 'name' the value should by valid string in {class_name}, but got {n_value}.")
+
+    v_type = value['dtype']
+    validator.check_value_type('value', v_type, [type(mstype.tensor)], class_name)
+
+
+class ScalarSummary(PrimitiveWithInfer):
     """
     Output scalar to protocol buffer through scalar summary operator.
 
@@ -45,11 +57,19 @@ class ScalarSummary(Primitive):
     def __init__(self):
         """init"""
 
-    def __call__(self, *args, **kwargs):
-        pass
+    def __infer__(self, name, value):
+        _check_summary_param(name, value, self.__class__.__name__)
+
+        v_shape = value['shape']
+        # In the summary, the value whose shape is [1] is also considered as a scalar.
+        if v_shape and v_shape != [1]:
+            raise ValueError(f"For 'value' the type should be scalar, "
+                             f"shape should be [] or [1] in {self.__class__.__name__}, but got {v_shape}.")
+
+        return value
 
 
-class ImageSummary(Primitive):
+class ImageSummary(PrimitiveWithInfer):
     """
     Output image tensor to protocol buffer through image summary operator.
 
@@ -73,11 +93,20 @@ class ImageSummary(Primitive):
     def __init__(self):
         """init"""
 
-    def __call__(self, *args, **kwargs):
-        pass
+    def __infer__(self, name, value):
+        _check_summary_param(name, value, self.__class__.__name__)
+
+        # The shape dim of image should be 4.
+        v_shape = value['shape']
+        image_dim = 4
+        if len(v_shape) != image_dim:
+            raise ValueError(f"For 'value' the dim should be {image_dim} in {self.__class__.__name__},"
+                             f" but got {len(v_shape)}.")
+
+        return value
 
 
-class TensorSummary(Primitive):
+class TensorSummary(PrimitiveWithInfer):
     """
     Output tensor to protocol buffer through tensor summary operator.
 
@@ -103,11 +132,19 @@ class TensorSummary(Primitive):
     def __init__(self):
         """init"""
 
-    def __call__(self, *args, **kwargs):
-        pass
+    def __infer__(self, name, value):
+        _check_summary_param(name, value, self.__class__.__name__)
+
+        v_shape = value['shape']
+        # In the summary, the value whose shape is [] is not considered as a tensor.
+        if not v_shape:
+            raise ValueError(f"For 'value' the type should be tensor in {self.__class__.__name__}, "
+                             f"shape should not be [].")
+
+        return value
 
 
-class HistogramSummary(Primitive):
+class HistogramSummary(PrimitiveWithInfer):
     """
     Output tensor to protocol buffer through histogram summary operator.
 
@@ -132,6 +169,17 @@ class HistogramSummary(Primitive):
     @prim_attr_register
     def __init__(self):
         """init"""
+
+    def __infer__(self, name, value):
+        _check_summary_param(name, value, self.__class__.__name__)
+
+        v_shape = value['shape']
+        # In the summary, the histogram value should be a tensor whose shape is not [].
+        if not v_shape:
+            raise ValueError(f"For 'value' the type should be tensor in {self.__class__.__name__}, "
+                             f"shape should not be [].")
+
+        return value
 
 
 class InsertGradientOf(PrimitiveWithInfer):

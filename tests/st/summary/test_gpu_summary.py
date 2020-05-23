@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Summary gpu st."""
 import os
 import random
+import tempfile
 import shutil
-import pytest
+
 import numpy as np
+import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -26,36 +29,9 @@ from mindspore.train.summary.summary_record import SummaryRecord
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
-CUR_DIR = os.getcwd()
-SUMMARY_DIR_ME = CUR_DIR + "/test_me_summary_event_file/"
-SUMMARY_DIR_ME_TEMP = CUR_DIR + "/test_me_temp_summary_event_file/"
-
-
-def clean_environment_file(srcDir):
-    if os.path.exists(srcDir):
-        ls = os.listdir(srcDir)
-        for line in ls:
-            filePath = os.path.join(srcDir, line)
-            os.remove(filePath)
-        os.removedirs(srcDir)
-
-
-def save_summary_events_file(srcDir, desDir):
-    if not os.path.exists(desDir):
-        print("-- create desDir")
-        os.makedirs(desDir)
-
-    ls = os.listdir(srcDir)
-    for line in ls:
-        filePath = os.path.join(srcDir, line)
-        if os.path.isfile(filePath):
-            print("-- move events file : {}".format(filePath))
-            shutil.copy(filePath, desDir)
-        os.remove(filePath)
-    os.removedirs(srcDir)
-
 
 class SummaryNet(nn.Cell):
+    """Summary net."""
     def __init__(self, tag_tuple=None, scalar=1):
         super(SummaryNet, self).__init__()
         self.summary_s = P.ScalarSummary()
@@ -66,8 +42,9 @@ class SummaryNet(nn.Cell):
         self.tag_tuple = tag_tuple
         self.scalar = scalar
 
-    def construct(self, x, y):
-        self.summary_i("image", x)
+    def construct(self, x, y, image):
+        """Run summary net."""
+        self.summary_i("image", image)
         self.summary_s("x1", x)
         z = self.add(x, y)
         self.summary_t("z1", z)
@@ -75,32 +52,38 @@ class SummaryNet(nn.Cell):
         return z
 
 
-def train_summary_record_scalar_for_1(test_writer, steps):
+def train_summary_record(test_writer, steps):
+    """Train and record summary."""
     net = SummaryNet()
     out_me_dict = {}
     for i in range(0, steps):
         x = Tensor(np.array([1.1 + random.uniform(1, 10)]).astype(np.float32))
         y = Tensor(np.array([1.2 + random.uniform(1, 10)]).astype(np.float32))
-        out_put = net(x, y)
+        image = Tensor(np.array([[[[1.2]]]]).astype(np.float32))
+        out_put = net(x, y, image)
         test_writer.record(i)
-        print("-----------------output: %s-------------\n", out_put.asnumpy())
         out_me_dict[i] = out_put.asnumpy()
     return out_me_dict
 
 
-def me_scalar_summary(steps):
-    with SummaryRecord(SUMMARY_DIR_ME_TEMP) as test_writer:
-        out_me_dict = train_summary_record_scalar_for_1(test_writer, steps)
+class TestGpuSummary:
+    """Test Gpu summary."""
+    summary_dir = tempfile.mkdtemp(suffix='_gpu_summary')
 
-        return out_me_dict
+    def setup_method(self):
+        """Run before method."""
+        if not os.path.exists(self.summary_dir):
+            os.mkdir(self.summary_dir)
 
+    def teardown_emthod(self):
+        """Run after method."""
+        if os.path.exists(self.summary_dir):
+            shutil.rmtree(self.summary_dir)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_scalarsummary_scalar1_step10_summaryrecord1():
-    clean_environment_file(SUMMARY_DIR_ME_TEMP)
-    output_dict = me_scalar_summary(10)
-    print("test_scalarsummary_scalar1_step10_summaryrecord1 \n", output_dict)
-    save_summary_events_file(SUMMARY_DIR_ME_TEMP, SUMMARY_DIR_ME)
-    clean_environment_file(SUMMARY_DIR_ME)
+    @pytest.mark.level0
+    @pytest.mark.platform_x86_gpu_training
+    @pytest.mark.env_onecard
+    def test_summary_step10_summaryrecord1(self):
+        """Test record 10 step summary."""
+        with SummaryRecord(self.summary_dir) as test_writer:
+            train_summary_record(test_writer, steps=10)
