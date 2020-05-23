@@ -125,8 +125,11 @@ void GPUSession::RunGraph(const GraphId &graph_id, const std::vector<tensor::Ten
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Convert inputs to model
   predictmodel::StepConvertWeight(inputs);
-  // Run graph on GPU
-  Execute(kernel_graph);
+  {
+    py::gil_scoped_release gil_release;
+    // Run graph on GPU
+    Execute(kernel_graph);
+  }
   // Get result from GPU
   UpdateOutputs(kernel_graph, outputs, inputs);
   // Summary
