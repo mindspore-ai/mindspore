@@ -60,7 +60,7 @@ class Net(nn.Cell):
 
 def test_gatherv2_semi_auto0():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    strategy1 = ((1, 8),)
+    strategy1 = ((1, 8), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
     net.set_auto_parallel()
@@ -72,7 +72,7 @@ def test_gatherv2_semi_auto0():
 
 def test_gatherv2_semi_auto1():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    strategy1 = ((8, 1),)
+    strategy1 = ((8, 1), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
     net.set_auto_parallel()
@@ -84,7 +84,7 @@ def test_gatherv2_semi_auto1():
 
 def test_gatherv2_semi_auto2():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    strategy1 = ((2, 4),)
+    strategy1 = ((2, 4), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
     net.set_auto_parallel()
@@ -96,7 +96,7 @@ def test_gatherv2_semi_auto2():
 
 def test_gatherv2_semi_auto3():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    strategy1 = ((1, 8),)
+    strategy1 = ((1, 8), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(1, strategy1, strategy2)))
     net.set_auto_parallel()
@@ -108,7 +108,7 @@ def test_gatherv2_semi_auto3():
 
 def test_gatherv2_semi_auto4():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    strategy1 = ((8, 1),)
+    strategy1 = ((8, 1), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(1, strategy1, strategy2)))
     net.set_auto_parallel()
@@ -120,7 +120,7 @@ def test_gatherv2_semi_auto4():
 
 def test_gatherv2_semi_auto5():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    strategy1 = ((2, 4),)
+    strategy1 = ((2, 4), (1, 1))
     strategy2 = ((4, 2, 1), (4, 2, 1))
     net = GradWrap(NetWithLoss(Net(1, strategy1, strategy2)))
     net.set_auto_parallel()
@@ -154,7 +154,7 @@ def test_gatherv2_semi_auto7():
 
 def test_gatherv2_semi_auto8():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    strategy1 = ((8,),)
+    strategy1 = ((8,), (1, 1))
     strategy2 = ((4, 2), (4, 2))
     net = GradWrap(NetWithLoss(Net(0, strategy1, strategy2)))
     net.set_auto_parallel()

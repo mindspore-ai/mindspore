@@ -48,7 +48,7 @@ class GatherV2PInfo : public OperatorInfo {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferMirrorOps() override { return SUCCESS; }
+  Status InferMirrorOps() override;
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
