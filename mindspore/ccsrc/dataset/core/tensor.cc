@@ -702,13 +702,14 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   uint64_t total_size = shape_.NumOfElements() * max;
   char *tmp_data = reinterpret_cast<char *>(data_allocator_->allocate(total_size));
   if (tmp_data == nullptr) RETURN_STATUS_UNEXPECTED("Cannot create temp array.");
-  memset(tmp_data, 0, total_size);
+  int ret_code = memset_s(tmp_data, total_size, 0, total_size);
+  CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to initialize temp memory");
 
   itr = begin<std::string_view>();
   uint64_t i = 0;
-  for (; itr != end<std::string_view>(); itr++) {
-    (void)memcpy_s(tmp_data + i * max, total_size, (*itr).data(), (*itr).length());
-    i++;
+  for (; itr != end<std::string_view>(); itr++, i++) {
+    ret_code = memcpy_s(tmp_data + i * max, total_size, (*itr).data(), (*itr).length());
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy string data.");
   }
   auto strides = shape_.Strides();
   std::transform(strides.begin(), strides.end(), strides.begin(), [&max](const auto &s) { return s * max; });
