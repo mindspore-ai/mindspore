@@ -23,7 +23,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
-#include "pre_activate/mem_reuse/mem_swap_util.h"
+#include "pre_activate/mem_reuse/mem_copy_manager.h"
 
 using PerformPair = std::pair<float, float>;
 namespace mindspore {
@@ -31,9 +31,9 @@ namespace device {
 namespace memswap {
 class MemSwapManager {
  public:
-  MemSwapManager()
+  explicit MemSwapManager(const MemCopyManagerPtr &mem_copy_manager)
       : tensor_size_threshold_(0), tensor_size_threshold_idx_(0), tensor_size_num_(1), distance_threshold_(1) {
-    mem_copy_manager_ = std::make_shared<MemCopyManager>();
+    mem_copy_manager_ = mem_copy_manager;
   }
 
   ~MemSwapManager() = default;
@@ -75,9 +75,9 @@ class MemSwapManager {
 
   const HostAddress &kernel_host_addr(const AnfNodePtr &kernel, size_t output_idx) const;
 
-  size_t AllocHostPinnedMemory(size_t size, HostMemPtr *addr) const;
+  bool AllocHostPinnedMem(size_t size, void **addr) const;
 
-  void FreeHostPinnedMemory();
+  void ReleaseHostPinnedMem();
 
   void ClearSwapQueue();
 
@@ -110,10 +110,13 @@ class MemSwapManager {
   size_t tensor_size_num_;
   size_t distance_threshold_;
 
-  MemCopyManagerPtr mem_copy_manager_{nullptr};
+  MemCopyManagerPtr mem_copy_manager_;
   bool mem_swap_initialized_{false};
   bool swap_info_already_set_{false};
   bool trigger_swap_{false};
+
+  static constexpr size_t kDistanceInitFactor = 3;
+  static constexpr size_t kDistanceLowerBound = 3;
 };
 using MemSwapManagerPtr = std::shared_ptr<MemSwapManager>;
 }  // namespace memswap

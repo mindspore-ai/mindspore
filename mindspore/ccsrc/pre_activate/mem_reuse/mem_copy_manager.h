@@ -23,7 +23,6 @@
 #include <memory>
 #include <utility>
 #include "session/kernel_graph.h"
-#include "device/gpu/cuda_driver.h"
 #include "kernel/kernel.h"
 
 using HostAddress = mindspore::kernel::Address;
