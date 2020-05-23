@@ -1853,6 +1853,7 @@ class LayerNorm(Primitive):
             the value should be in [-1, rank(input)). Default: 1.
         begin_params_axis (int): The begin axis of the parameter input (`gamma`, `beta`) to
             apply LayerNorm, the value should be in [-1, rank(input)). Default: 1.
+        epsilon (float): A value added to the denominator for numerical stability. Default: 1e-7.
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, \ldots)`.
@@ -1881,9 +1882,10 @@ class LayerNorm(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, begin_norm_axis=1, begin_params_axis=1):
+    def __init__(self, begin_norm_axis=1, begin_params_axis=1, epsilon=1e-7):
         validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
         validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
+        validator.check_value_type('epsilon', epsilon, [float], self.name)
 
 
 class L2Normalize(PrimitiveWithInfer):

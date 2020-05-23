@@ -449,6 +449,7 @@ class LayerNorm(Cell):
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
             The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
             'he_uniform', etc. Default: 'zeros'.
+        epsilon (float): A value added to the denominator for numerical stability. Default: 1e-7.
 
     Inputs:
         - **input_x** (Tensor) - The shape of 'input_x' is :math:`(x_1, x_2, ..., x_R)`,
@@ -469,6 +470,7 @@ class LayerNorm(Cell):
                  begin_params_axis=-1,
                  gamma_init='ones',
                  beta_init='zeros',
+                 epsilon=1e-7
                  ):
         super(LayerNorm, self).__init__()
         if not isinstance(normalized_shape, (tuple, list)):
@@ -477,11 +479,13 @@ class LayerNorm(Cell):
         self.normalized_shape = normalized_shape
         self.begin_norm_axis = begin_norm_axis
         self.begin_params_axis = begin_params_axis
+        self.epsilon = epsilon
         self.gamma = Parameter(initializer(
             gamma_init, normalized_shape), name="gamma")
         self.beta = Parameter(initializer(
             beta_init, normalized_shape), name="beta")
-        self.layer_norm = P.LayerNorm(begin_norm_axis=self.begin_norm_axis, begin_params_axis=self.begin_params_axis)
+        self.layer_norm = P.LayerNorm(begin_norm_axis=self.begin_norm_axis, begin_params_axis=self.begin_params_axis,
+                                      epsilon=self.epsilon)
 
     def construct(self, input_x):
         y, _, _ = self.layer_norm(input_x, self.gamma, self.beta)
