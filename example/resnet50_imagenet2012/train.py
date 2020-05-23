@@ -28,6 +28,7 @@ from mindspore.train.model import Model, ParallelMode
 
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.communication.management import init
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
@@ -39,6 +40,7 @@ parser.add_argument('--device_num', type=int, default=1, help='Device num.')
 parser.add_argument('--do_train', type=bool, default=True, help='Do train or not.')
 parser.add_argument('--do_eval', type=bool, default=False, help='Do eval or not.')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
+parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
 args_opt = parser.parse_args()
 
 device_id = int(os.getenv('DEVICE_ID'))
@@ -58,15 +60,20 @@ if __name__ == '__main__':
     net = resnet50(class_num=config.class_num)
 
     # weight init
-    for _, cell in net.cells_and_names():
-        if isinstance(cell, nn.Conv2d):
-            cell.weight.default_input = weight_init.initializer(weight_init.XavierUniform(),
-                                                                cell.weight.default_input.shape(),
-                                                                cell.weight.default_input.dtype()).to_tensor()
-        if isinstance(cell, nn.Dense):
-            cell.weight.default_input = weight_init.initializer(weight_init.TruncatedNormal(),
-                                                                cell.weight.default_input.shape(),
-                                                                cell.weight.default_input.dtype()).to_tensor()
+    if args_opt.pre_trained:
+        param_dict = load_checkpoint(args_opt.pre_trained)
+        load_param_into_net(net, param_dict)
+        epoch_size = config.epoch_size - config.pretrained_epoch_size
+    else:
+        for _, cell in net.cells_and_names():
+            if isinstance(cell, nn.Conv2d):
+                cell.weight.default_input = weight_init.initializer(weight_init.XavierUniform(),
+                                                                    cell.weight.default_input.shape(),
+                                                                    cell.weight.default_input.dtype()).to_tensor()
+            if isinstance(cell, nn.Dense):
+                cell.weight.default_input = weight_init.initializer(weight_init.TruncatedNormal(),
+                                                                    cell.weight.default_input.shape(),
+                                                                    cell.weight.default_input.dtype()).to_tensor()
     if not config.use_label_smooth:
         config.label_smooth_factor = 0.0
 
@@ -78,9 +85,11 @@ if __name__ == '__main__':
         step_size = dataset.get_dataset_size()
 
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-        lr = Tensor(get_lr(global_step=0, lr_init=config.lr_init, lr_end=0.0, lr_max=config.lr_max,
-                           warmup_epochs=config.warmup_epochs, total_epochs=epoch_size, steps_per_epoch=step_size,
-                           lr_decay_mode='cosine'))
+        lr = get_lr(lr_init=config.lr_init, lr_end=0.0, lr_max=config.lr_max, warmup_epochs=config.warmup_epochs,
+                    total_epochs=config.epoch_size, steps_per_epoch=step_size, lr_decay_mode='cosine')
+        if args_opt.pre_trained:
+            lr = lr[config.pretrained_epoch_size * step_size:]
+        lr = Tensor(lr)
 
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                        config.weight_decay, config.loss_scale)

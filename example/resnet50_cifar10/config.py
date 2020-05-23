@@ -28,7 +28,7 @@ config = ed({
     "image_height": 224,
     "image_width": 224,
     "save_checkpoint": True,
-    "save_checkpoint_steps": 195,
+    "save_checkpoint_steps": 1950,
     "keep_checkpoint_max": 10,
     "save_checkpoint_path": "./",
     "warmup_epochs": 5,
