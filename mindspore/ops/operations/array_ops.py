@@ -2107,7 +2107,7 @@ class ScatterMax(PrimitiveWithInfer):
         use_locking (bool): Whether protect the assignment by a lock. Default: True.
 
     Inputs:
-        - **input_x** (Tensor) - The target tensor.
+        - **input_x** (Parameter) - The target parameter.
         - **indices** (Tensor) - The index to do max operation whose data type should be int.
         - **updates** (Tensor) - The tensor doing the maximum operation with 'input_x',
           the data type is same as 'input_x', the shape is 'indices_shape + x_shape[1:]'.
