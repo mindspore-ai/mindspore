@@ -24,6 +24,7 @@
 #include <utility>
 #include "./common.h"
 #include "debug/trace.h"
+#include "operator/composite/composite.h"
 
 namespace mindspore {
 /* namespace to support opt */
@@ -171,8 +172,10 @@ AnfNodePtr ConvertDictSetItemToTupleSetItem(const CNodePtr &node) {
     count++;
   }
   if (IntToSize(count) >= cmap.size()) {
-    MS_LOG(EXCEPTION) << "dictionary assignment key " << cons_str
-                      << " does not exist, can not create new dictionary item for now.";
+    // for dictionary set, if the key does not exist, we should create a new item
+    auto tuple_add_op = std::make_shared<prim::TupleAdd>("tuple_add");
+    auto tuple_new_item = node->func_graph()->NewCNode({NewValueNode(prim::kPrimMakeTuple), item_value});
+    return node->func_graph()->NewCNode({NewValueNode(tuple_add_op), data, tuple_new_item});
   }
   auto idx_c = NewValueNode(count);
   AbstractBasePtr aptr = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(count));
