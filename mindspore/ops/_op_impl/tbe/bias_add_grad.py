@@ -26,8 +26,6 @@ bias_add_grad_op_info = TBERegOp("BiasAddGrad") \
     .attr("data_format", "required", "str", "all") \
     .input(0, "output_backprop", False, "required", "all") \
     .output(0, "output", False, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_FracNZ, DataType.F32_Default) \
     .get_op_info()
