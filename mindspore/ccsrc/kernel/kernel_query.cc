@@ -56,6 +56,11 @@ void KernelQuery(const CNodePtr &kernel_node, std::vector<std::shared_ptr<kernel
   TbeMetadataInfo(kernel_node, kernel_info_list);
   if (kernel_info_list->empty()) {
     AicpuMetadataInfo(kernel_node, kernel_info_list);
+    if (!kernel_info_list->empty()) {
+      MS_LOG(INFO) << "Warning The node [" << kernel_node->DebugString()
+                   << "] cannot find valid TBE kernel info, try to get aicpu kernel info";
+      AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), kernel_node);
+    }
   }
 
   if (kernel_info_list->empty()) {

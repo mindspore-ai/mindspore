@@ -215,10 +215,10 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   }
   if (inputs.size() == 1 || !feature_map_input_indexs.empty()) {
     kernel_info->SetFeatureMapFlag(true);
-    AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(true), cnode);
+  }
+  if (AnfAlgo::IsRealCNodeKernel(cnode)) {
+    AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode);
     AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), cnode);
-  } else {
-    AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(false), cnode);
   }
   cnode->set_kernel_info(kernel_info);
   AnfAlgo::SetGraphId(graph_id_, cnode.get());

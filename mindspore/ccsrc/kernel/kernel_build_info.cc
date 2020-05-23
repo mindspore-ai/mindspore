@@ -110,9 +110,9 @@ bool KernelBuildInfo::operator==(const KernelBuildInfo &other) const {
   return !(inputs_device_type_ != other.inputs_device_type_ || outputs_device_type_ != other.outputs_device_type_);
 }
 
-bool KernelBuildInfo::IsInputDefaultPadding() const { return output_reshape_type_.empty(); }
+bool KernelBuildInfo::IsInputDefaultPadding() const { return input_reshape_type_.empty(); }
 
-bool KernelBuildInfo::IsOutputDefaultPadding() const { return input_reshape_type_.empty(); }
+bool KernelBuildInfo::IsOutputDefaultPadding() const { return output_reshape_type_.empty(); }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetKernelType(const KernelType &kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
