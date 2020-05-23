@@ -17,7 +17,6 @@ import argparse
 import os
 import random
 
-import mindspore.dataset.engine as de
 from mindspore import Tensor
 from mindspore import context
 from mindspore.communication.management import init
@@ -25,19 +24,17 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.model import ParallelMode
-from second_order.model_second_order import Model
-from second_order.resnet import resnet50
-from second_order.thor import THOR
+from model.model_thor import Model
+from model.resnet import resnet50
+from model.thor import THOR
 
 import numpy as np
-from config_imagenet import config
+from config import config
 from crossentropy import CrossEntropy
 from dataset_imagenet import create_dataset
-from lr_generator import  warmup_cosine_annealing_lr
 
 random.seed(1)
 np.random.seed(1)
-de.config.set_seed(1)
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
@@ -50,29 +47,29 @@ args_opt = parser.parse_args()
 device_id = int(os.getenv('DEVICE_ID'))
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True, device_id=device_id)
-context.set_context(enable_task_sink=True)
-context.set_context(enable_loop_sink=True)
-context.set_context(enable_mem_reuse=True)
 
 
-def get_second_order_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch):
-    """get_second_order_lr"""
+def get_model_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch):
+    """get_model_lr"""
     lr_each_step = []
     total_steps = steps_per_epoch * total_epochs
     for i in range(total_steps):
         epoch = (i + 1) / steps_per_epoch
         base = (1.0 - float(epoch) / total_epochs) ** decay
         lr_local = lr_init * base
+        if epoch >= 39:
+            lr_local = lr_local * 0.5
+        if epoch >= 40:
+            lr_local = lr_local * 0.5
         lr_each_step.append(lr_local)
     current_step = global_step
     lr_each_step = np.array(lr_each_step).astype(np.float32)
-    print("learning_rate_is=====", lr_each_step)
     learning_rate = lr_each_step[current_step:]
     return learning_rate
 
 
-def get_second_order_damping(global_step, damping_init, decay_rate, total_epochs, steps_per_epoch):
-    """get_second_order_damping"""
+def get_model_damping(global_step, damping_init, decay_rate, total_epochs, steps_per_epoch):
+    """get_model_damping"""
     damping_each_step = []
     total_steps = steps_per_epoch * total_epochs
     for step in range(total_steps):
@@ -83,26 +80,23 @@ def get_second_order_damping(global_step, damping_init, decay_rate, total_epochs
     current_step = global_step
     damping_each_step = np.array(damping_each_step).astype(np.float32)
     damping_now = damping_each_step[current_step:]
-    print("damping_is=========", damping_now)
     return damping_now
 
 
 if __name__ == '__main__':
-    if args_opt.do_eval:
-        print("eval")
-    else:
-        if args_opt.run_distribute:
-            context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                              mirror_mean=True, parameter_broadcast=True)
-            auto_parallel_context().set_all_reduce_fusion_split_indices([80], "hccl_world_groupsum1")
-            auto_parallel_context().set_all_reduce_fusion_split_indices([27], "hccl_world_groupsum3")
-            auto_parallel_context().set_all_reduce_fusion_split_indices([27], "hccl_world_groupsum4")
-            init()
-        else:
-            print(" ")
+    if not args_opt.do_eval and args_opt.run_distribute:
+        context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                          mirror_mean=True, parameter_broadcast=True)
+        auto_parallel_context().set_all_reduce_fusion_split_indices([107], "hccl_world_groupsum1")
+        auto_parallel_context().set_all_reduce_fusion_split_indices([27], "hccl_world_groupsum2")
+        auto_parallel_context().set_all_reduce_fusion_split_indices([27], "hccl_world_groupsum3")
+        auto_parallel_context().set_all_reduce_fusion_split_indices([27], "hccl_world_groupsum4")
+        auto_parallel_context().set_all_reduce_fusion_split_indices([27], "hccl_world_groupsum5")
+
+        init()
 
     epoch_size = config.epoch_size
-    damping = get_second_order_damping(0, 0.03, 0.87, 50, 5004)
+    damping = get_model_damping(0, 0.03, 0.87, 50, 5004)
     net = resnet50(class_num=config.class_num, damping=damping, loss_scale=config.loss_scale,
                    frequency=config.frequency)
 
@@ -115,17 +109,12 @@ if __name__ == '__main__':
         step_size = dataset.get_dataset_size()
 
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-        lr = Tensor(warmup_cosine_annealing_lr(0.035,
-                                               step_size,
-                                               config.warmup_epochs,
-                                               50,
-                                               config.T_max,
-                                               config.eta_min))
-        opt = THOR(filter(lambda x: x.requires_grad, net.get_parameters()), lr,
-                   config.momentum, damping, config.frequency,
+        lr = Tensor(get_model_lr(0, 0.05, 6, 70, 5004))
+        opt = THOR(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                    filter(lambda x: 'matrix_A' in x.name, net.get_parameters()),
                    filter(lambda x: 'matrix_G' in x.name, net.get_parameters()),
-                   filter(lambda x: 'spatial_norm' in x.name, net.get_parameters()),
+                   filter(lambda x: 'A_inv_max' in x.name, net.get_parameters()),
+                   filter(lambda x: 'G_inv_max' in x.name, net.get_parameters()),
                    config.weight_decay, config.loss_scale)
 
         model = Model(net, loss_fn=loss, optimizer=opt, amp_level='O2', loss_scale_manager=loss_scale,

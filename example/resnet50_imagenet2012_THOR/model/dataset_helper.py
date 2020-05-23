@@ -13,12 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """Dataset help for minddata dataset"""
-from mindspore import context
 from mindspore._checkparam import check_bool
-from mindspore.nn.wrap import GetNextSingleOp
-from mindspore.parallel._utils import _get_device_num, _get_global_rank, _get_parallel_mode
-from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, _to_tensor, \
-    _construct_tensor_list, _to_full_shapes, _to_full_tensor
+from mindspore.parallel._utils import _get_device_num, _get_parallel_mode
+from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, \
+    _to_full_shapes
 from mindspore.train.parallel_utils import ParallelMode
 
 
@@ -42,19 +40,9 @@ class DatasetHelper:
         >>>     outputs = network(*inputs)
     """
 
-    def __init__(self, dataset, first_order_iter=0, dataset_sink_mode=True):
+    def __init__(self, dataset, dataset_sink_mode=True, iter_first_order=0):
         check_bool(dataset_sink_mode)
-
-        iterclass = _DatasetIterGE
-        if not dataset_sink_mode:
-            iterclass = _DatasetIterFeed
-        elif not context.get_context("enable_ge"):
-            if context.get_context("enable_loop_sink"):
-                iterclass = _DatasetIterMSLoopSink
-            else:
-                iterclass = _DatasetIterMS
-
-        self.iter = iterclass(dataset, first_order_iter)
+        self.iter = _DatasetIterMSLoopSink(dataset, iter_first_order)
 
     def __iter__(self):
         return self.iter.__iter__()
@@ -85,12 +73,6 @@ class _DatasetIter:
         self.dataset = dataset
         dataset_types, dataset_shapes = _get_types_and_shapes(dataset)
         self.dataset_types, self.dataset_shapes = dataset_types, dataset_shapes
-        # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, use a complete tensor to
-        # compile, and slice tensor to run. The batch dimension of tensors for compile is device_number
-        # times the batch dimension of tensors for run
-        if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
-            device_num = _get_device_num()
-            self.dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
 
     def __iter__(self):
         self.ind = 0
@@ -109,83 +91,28 @@ class _DatasetIter:
         loop_count = 1
         if hasattr(dataset, '__loop_size__'):
             loop_size = dataset.__loop_size__
+            if dataset.get_dataset_size() % loop_size != 0:
+                raise ValueError(f'Dataset size {dataset.get_dataset_size()} and '
+                                 f'loop_size {loop_size} are not matched.')
             loop_count = int(dataset.get_dataset_size() / loop_size)
         return loop_count
 
 
 class _DatasetIterMSLoopSink(_DatasetIter):
-    """Iter for context (enable_loop_sink=True)"""
+    """Iter for context (device_target=Ascend)"""
 
-    def __init__(self, dataset, first_order_iter):
+    def __init__(self, dataset, iter_first_order):
         super(_DatasetIterMSLoopSink, self).__init__(dataset)
-        # self.loop_count = self.get_loop_count(dataset)
-        loop_size = dataset.__loop_size__ + first_order_iter
+        loop_size = dataset.__loop_size__ + iter_first_order
         self.loop_count = int(dataset.get_dataset_size() / loop_size) * 2
+        # for self._parallel_mode equal to semi_auto_parallel or auto_parallel, use a complete tensor to
+        # compile, and slice tensor to run. The batch dimension of tensors for compile is device_number
+        # times the batch dimension of tensors for run. Now only support LoopSink.
+        if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            device_num = _get_device_num()
+            self.dataset_shapes = _to_full_shapes(self.dataset_shapes, device_num)
 
         def op():
             return tuple()
 
         self.op = op
-
-
-class _DatasetIterMS(_DatasetIter):
-    """Iter for context (enable_loop_sink=False)"""
-
-    def __init__(self, dataset, first_order_order):
-        super(_DatasetIterMS, self).__init__(dataset)
-        self.loop_count = dataset.get_dataset_size()
-        self.loop_size = 1
-        queue_name = dataset.__ME_INITED__
-        self.op = GetNextSingleOp(self.dataset_types, self.dataset_shapes, queue_name)
-
-
-class _DatasetIterGE(_DatasetIter):
-    """Iter for ge"""
-
-    def __init__(self, dataset):
-        super(_DatasetIterGE, self).__init__(dataset)
-        self.loop_count = self.get_loop_count(dataset)
-        parallel_mode = _get_parallel_mode()
-        self.need_to_full = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
-        batch_expand_num = 1
-        if self.need_to_full:
-            batch_expand_num = _get_device_num()
-        tensor_list_run = _construct_tensor_list(self.dataset_types, self.dataset_shapes, batch_expand_num)
-
-        def op():
-            return tensor_list_run
-
-        self.op = op
-
-
-class _DatasetIterFeed:
-    """Iter for feed data"""
-
-    def __init__(self, dataset, first_order_order):
-        self.dataset = dataset
-        self.device_num = _get_device_num()
-        self.global_rank = _get_global_rank()
-        self.repeat_count = dataset.get_repeat_count()
-        self.repeat_ind = 0
-        self.loop_count = dataset.get_dataset_size()
-        self.ind = 0
-
-        parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        self.need_to_full = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
-
-    def __iter__(self):
-        if self.repeat_ind % self.repeat_count == 0:
-            self.iter = self.dataset.__iter__()
-
-        self.repeat_ind += 1
-        self.ind = 0
-        return self
-
-    def __next__(self):
-        if self.ind >= self.loop_count:
-            raise StopIteration()
-        self.ind += 1
-        data = self.iter.__next__()
-        if self.need_to_full:
-            return _to_full_tensor(data, self.device_num, self.global_rank)
-        return _to_tensor(data)

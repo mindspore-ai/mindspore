@@ -14,22 +14,24 @@
 # ============================================================================
 """ResNet."""
 import math
-
-import mindspore.nn as nn
 import numpy as np
+import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
-from second_order.thor_layer import Conv2d_Thor, Dense_Thor
+
+from model.thor_layer import Conv2d_Thor, Dense_Thor
 
 
 def calculate_gain(nonlinearity, param=None):
+    """calculate_gain"""
     linear_fns = ['linear', 'conv1d', 'conv2d', 'conv3d', 'conv_transpose1d', 'conv_transpose2d', 'conv_transpose3d']
+    res = 0
     if nonlinearity in linear_fns or nonlinearity == 'sigmoid':
-        return 1
+        res = 1
     elif nonlinearity == 'tanh':
-        return 5.0 / 3
+        res = 5.0 / 3
     elif nonlinearity == 'relu':
-        return math.sqrt(2.0)
+        res = math.sqrt(2.0)
     elif nonlinearity == 'leaky_relu':
         if param is None:
             negative_slope = 0.01
@@ -38,16 +40,17 @@ def calculate_gain(nonlinearity, param=None):
             negative_slope = param
         else:
             raise ValueError("negative_slope {} not a valid number".format(param))
-        return math.sqrt(2.0 / (1 + negative_slope ** 2))
+        res = math.sqrt(2.0 / (1 + negative_slope ** 2))
     else:
         raise ValueError("Unsupported nonlinearity {}".format(nonlinearity))
+    return res
 
 
 def _calculate_fan_in_and_fan_out(tensor):
+    """_calculate_fan_in_and_fan_out"""
     dimensions = len(tensor)
     if dimensions < 2:
         raise ValueError("Fan in and fan out can not be computed for tensor with fewer than 2 dimensions")
-
     if dimensions == 2:  # Linear
         fan_in = tensor[1]
         fan_out = tensor[0]
@@ -67,7 +70,6 @@ def _calculate_correct_fan(tensor, mode):
     valid_modes = ['fan_in', 'fan_out']
     if mode not in valid_modes:
         raise ValueError("Mode {} not supported, please use one of {}".format(mode, valid_modes))
-
     fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor)
     return fan_in if mode == 'fan_in' else fan_out
 
@@ -93,8 +95,6 @@ def _conv3x3(in_channel, out_channel, stride=1, damping=0.03, loss_scale=1, freq
     return Conv2d_Thor(in_channel, out_channel,
                        kernel_size=3, stride=stride, padding=0, pad_mode='same', weight_init=weight,
                        damping=damping, loss_scale=loss_scale, frequency=frequency)
-    # return nn.Conv2d(in_channel, out_channel,
-    #                  kernel_size=3, stride=stride, padding=0, pad_mode='same', weight_init=weight)
 
 
 def _conv1x1(in_channel, out_channel, stride=1, damping=0.03, loss_scale=1, frequency=278):
@@ -125,7 +125,7 @@ def _bn_last(channel):
 
 def _fc(in_channel, out_channel, damping, loss_scale, frequency):
     weight_shape = (out_channel, in_channel)
-    weight = Tensor(kaiming_uniform(weight_shape, a=math.sqrt(5))
+    weight = Tensor(kaiming_uniform(weight_shape, a=math.sqrt(5)))
     return Dense_Thor(in_channel, out_channel, has_bias=False, weight_init=weight,
                       bias_init=0, damping=damping, loss_scale=loss_scale, frequency=frequency)
 
@@ -133,15 +133,15 @@ def _fc(in_channel, out_channel, damping, loss_scale, frequency):
 class ResidualBlock(nn.Cell):
     """
     ResNet V1 residual block definition.
- 
+
     Args:
         in_channel (int): Input channel.
         out_channel (int): Output channel.
         stride (int): Stride size for the first convolutional layer. Default: 1.
- 
+
     Returns:
         Tensor, output tensor.
- 
+
     Examples:
         >>> ResidualBlock(3, 256, stride=2)
     """
@@ -210,7 +210,7 @@ class ResidualBlock(nn.Cell):
 class ResNet(nn.Cell):
     """
     ResNet architecture.
- 
+
     Args:
         block (Cell): Block for network.
         layer_nums (list): Numbers of block in different layers.
@@ -220,7 +220,7 @@ class ResNet(nn.Cell):
         num_classes (int): The number of classes that the training images are belonging to.
     Returns:
         Tensor, output tensor.
- 
+
     Examples:
         >>> ResNet(ResidualBlock,
         >>>        [3, 4, 6, 3],
@@ -290,17 +290,17 @@ class ResNet(nn.Cell):
                     damping, loss_scale, frequency):
         """
         Make stage network of ResNet.
- 
+
         Args:
             block (Cell): Resnet block.
             layer_num (int): Layer number.
             in_channel (int): Input channel.
             out_channel (int): Output channel.
             stride (int): Stride size for the first convolutional layer.
- 
+
         Returns:
             SequentialCell, the output layer.
- 
+
         Examples:
             >>> _make_layer(ResidualBlock, 3, 128, 256, 2)
         """
@@ -321,7 +321,7 @@ class ResNet(nn.Cell):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        c1, argmax = self.maxpool(x)
+        c1, _ = self.maxpool(x)
 
         c2 = self.layer1(c1)
         c3 = self.layer2(c2)
@@ -338,13 +338,13 @@ class ResNet(nn.Cell):
 def resnet50(class_num=10, damping=0.03, loss_scale=1, frequency=278):
     """
     Get ResNet50 neural network.
- 
+
     Args:
         class_num (int): Class number.
- 
+
     Returns:
         Cell, cell instance of ResNet50 neural network.
- 
+
     Examples:
         >>> net = resnet50(10)
     """

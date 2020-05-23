@@ -51,6 +51,6 @@ do
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
 
     env > env.log
-    python train_0517_1.py --do_train=True --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$2 > log 2>&1 &
+    python train.py --do_train=True --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$2 > log 2>&1 &
     cd ..
 done
