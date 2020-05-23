@@ -328,7 +328,7 @@ tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
 bool IsNopNode(const AnfNodePtr &node) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->device_target() != kAscendDevice && context_ptr->device_target() != kGPUDevice) {
+  if (context_ptr->device_target() != kAscendDevice) {
     return false;
   }
   static std::unordered_set<std::string> nop_nodes = {prim::kPrimReshape->name(), kExpandDimsOpName,
