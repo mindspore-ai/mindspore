@@ -19,7 +19,7 @@ can also create samplers with this module to sample data.
 """
 
 from .core.configuration import config
-from .engine.datasets import StorageDataset, TFRecordDataset, ImageFolderDatasetV2, MnistDataset, MindDataset, \
+from .engine.datasets import TFRecordDataset, ImageFolderDatasetV2, MnistDataset, MindDataset, \
     GeneratorDataset, ManifestDataset, Cifar10Dataset, Cifar100Dataset, VOCDataset, CelebADataset, TextFileDataset, \
     Schema, Shuffle, zip, RandomDataset
 from .engine.samplers import DistributedSampler, PKSampler, RandomSampler, SequentialSampler, SubsetRandomSampler, \
@@ -27,7 +27,7 @@ from .engine.samplers import DistributedSampler, PKSampler, RandomSampler, Seque
 from .engine.serializer_deserializer import serialize, deserialize, show
 from .engine.graphdata import GraphData
 
-__all__ = ["config", "ImageFolderDatasetV2", "MnistDataset", "StorageDataset",
+__all__ = ["config", "ImageFolderDatasetV2", "MnistDataset",
            "MindDataset", "GeneratorDataset", "TFRecordDataset",
            "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset",
            "VOCDataset", "TextFileDataset", "Schema", "DistributedSampler", "PKSampler", "RandomSampler",

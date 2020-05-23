@@ -31,7 +31,7 @@ SCHEMA_DIR = "{0}/resnet_all_datasetSchema.json".format(data_path)
 
 def test_me_de_train_dataset():
     data_list = ["{0}/train-00001-of-01024.data".format(data_path)]
-    data_set = ds.StorageDataset(data_list, schema=SCHEMA_DIR,
+    data_set = ds.TFRecordDataset(data_list, schema=SCHEMA_DIR,
                                  columns_list=["image/encoded", "image/class/label"])
 
     resize_height = 224
