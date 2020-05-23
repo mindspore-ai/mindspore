@@ -24,10 +24,12 @@
 #include <unordered_map>
 #include "device/kernel_runtime.h"
 #include "device/kernel_runtime_manager.h"
+#include "pre_activate/mem_reuse/mem_swap_manager.h"
 
 namespace mindspore {
 namespace device {
 namespace gpu {
+using mindspore::device::memswap::MemSwapManagerPtr;
 class GPUKernelRuntime : public KernelRuntime {
  public:
   GPUKernelRuntime() = default;
@@ -51,10 +53,19 @@ class GPUKernelRuntime : public KernelRuntime {
   // The related functions and members for using dynamic memory pool.
   void InitKernelRefCount(const session::KernelGraph *graph);
   void InitKernelOutputAddress(const session::KernelGraph *graph);
+  void ClearKernelOutputAddress(const session::KernelGraph *graph);
   bool LaunchKernelDynamic(const session::KernelGraph *graph);
-  void AllocKernelDynamicRes(const mindspore::kernel::KernelMod &kernel_mod, const mindspore::AnfNodePtr &kernel,
+  bool AddMemSwapTask(const AnfNodePtr &kernel);
+  bool AttemptMallocMem(const DeviceAddressPtr &device_address, size_t size);
+  void *AttemptMallocMem(size_t size);
+  bool AllocKernelDynamicRes(const mindspore::kernel::KernelMod &kernel_mod, const mindspore::AnfNodePtr &kernel,
                              AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces,
                              AddressPtrList *kernel_outputs);
+  bool AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_inputs);
+  bool AllocKernelOutputDynamicRes(const mindspore::kernel::KernelMod &kernel_mod, const mindspore::AnfNodePtr &kernel,
+                                   AddressPtrList *kernel_outputs);
+  bool AllocKernelWorkspaceDynamicRes(const mindspore::kernel::KernelMod &kernel_mod,
+                                      const mindspore::AnfNodePtr &kernel, AddressPtrList *kernel_workspaces);
   void AllocCommunicationOpDynamicRes(const session::KernelGraph *graph);
   void AllocCommunicationOpInputDynamicRes(const mindspore::AnfNodePtr &kernel);
   void AllocCommunicationOpOutputDynamicRes(const mindspore::AnfNodePtr &kernel);
@@ -64,6 +75,8 @@ class GPUKernelRuntime : public KernelRuntime {
   void FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel, const AddressPtrList &kernel_workspaces,
                             uint32_t graph_id);
   std::unordered_map<uint32_t, MemReuseUtilPtr> mem_reuse_util_map_;
+  std::unordered_map<void *, MemSwapManagerPtr> mem_swap_map_;
+  MemSwapManagerPtr mem_swap_manager_{nullptr};
 };
 MS_REG_KERNEL_RUNTIME(kGPUDevice, GPUKernelRuntime);
 }  // namespace gpu
