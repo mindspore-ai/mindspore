@@ -63,11 +63,11 @@ class MemSwapManager {
 
   const PerformPair &QueryKernelSwapPerform(const AnfNodePtr &kernel, size_t output_idx) const;
 
-  bool QueryKerneTriggerSwap(const AnfNodePtr &kernel) const;
+  bool QueryKernelTriggerSwap(const AnfNodePtr &kernel) const;
 
-  bool QueryKerneNeedSwap(const AnfNodePtr &kernel) const;
+  bool QueryKernelNeedSwap(const AnfNodePtr &kernel) const;
 
-  const std::vector<MemSwapInfo> &QueryKerneMemSwapInfo(const AnfNodePtr &kernel) const;
+  const std::vector<MemSwapInfo> &QueryKernelMemSwapInfo(const AnfNodePtr &kernel) const;
 
   void InsertSwapInBlackList(const void *device_ptr);
 
@@ -89,6 +89,8 @@ class MemSwapManager {
   void AddSwapInfo();
 
   void ResetSwapInfo();
+
+  void SaveUserKernelTopoOrder(const mindspore::session::KernelGraph *kernel_graph);
 
   void AddKernelTriggerSwap(const AnfNodePtr &kernel, bool trigger_swap);
 
