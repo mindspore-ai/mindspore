@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_SWAP_UTIL_H_
-#define MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_SWAP_UTIL_H_
+#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_COPY_MANAGER_H_
+#define MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_COPY_MANAGER_H_
 
 #include <vector>
 #include <map>
@@ -26,10 +26,6 @@
 #include "device/gpu/cuda_driver.h"
 #include "kernel/kernel.h"
 
-using mindspore::device::gpu::DeviceEvent;
-using mindspore::device::gpu::DeviceMemPtr;
-using mindspore::device::gpu::DeviceStream;
-using mindspore::device::gpu::HostMemPtr;
 using HostAddress = mindspore::kernel::Address;
 namespace mindspore {
 namespace device {
@@ -74,31 +70,29 @@ class MemCopyManager {
  public:
   MemCopyManager() = default;
 
-  ~MemCopyManager() = default;
+  virtual ~MemCopyManager() = default;
 
-  void Init();
+  virtual void Init() {}
 
-  void AddMemSwapOutTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr);
+  virtual void AddMemSwapOutTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr) {}
 
-  void AddMemSwapInTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr);
+  virtual void AddMemSwapInTask(const DeviceAddressPtr &device_address, const HostAddress &host_addr) {}
 
-  bool SyncMemCopyStream(SwapKind swap_kind);
+  virtual bool SyncMemCopyStream(SwapKind swap_kind) { return true; }
 
-  DeviceAddressPtr UpdateSwapOutQueue();
+  virtual DeviceAddressPtr UpdateSwapOutQueue() { return nullptr; }
 
-  DeviceAddressPtr UpdateSwapInQueue();
+  virtual DeviceAddressPtr UpdateSwapInQueue() { return nullptr; }
 
-  void ClearSwapQueue();
+  virtual bool AllocHostPinnedMem(size_t size, void **addr) { return true; }
 
- private:
-  DeviceStream swap_out_stream_{nullptr};
-  DeviceStream swap_in_stream_{nullptr};
-  std::queue<std::pair<DeviceAddressPtr, DeviceEvent>> swap_out_queue_;
-  std::queue<std::pair<DeviceAddressPtr, DeviceEvent>> swap_in_queue_;
+  virtual void FreeHostPinnedMem(void *addr) {}
+
+  virtual void ClearSwapQueue() {}
 };
 using MemCopyManagerPtr = std::shared_ptr<MemCopyManager>;
 }  // namespace memswap
 }  // namespace device
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_SWAP_UTIL_H_
+#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_COPY_MANAGER_H_
