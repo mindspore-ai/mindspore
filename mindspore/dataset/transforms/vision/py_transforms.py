@@ -1325,7 +1325,7 @@ class RandomColor:
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomColor(0.5,1.5),
+        >>>                          py_transforms.RandomColor((0.5,1.5)),
         >>>                          py_transforms.ToTensor()])
     """
 
@@ -1345,6 +1345,7 @@ class RandomColor:
 
         return util.random_color(img, self.degrees)
 
+
 class RandomSharpness:
     """
     Adjust the sharpness of the input PIL image by a random degree.
@@ -1355,7 +1356,7 @@ class RandomSharpness:
 
     Examples:
         >>> py_transforms.ComposeOp([py_transforms.Decode(),
-        >>>                          py_transforms.RandomSharpness(0.5,1.5),
+        >>>                          py_transforms.RandomSharpness((0.5,1.5)),
         >>>                          py_transforms.ToTensor()])
 
     """
