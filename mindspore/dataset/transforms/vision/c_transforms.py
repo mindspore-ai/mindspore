@@ -452,11 +452,11 @@ class Pad(cde.PadOp):
 
 class UniformAugment(cde.UniformAugOp):
     """
-    Tensor operation to perform randomly selected augmentation
+    Tensor operation to perform randomly selected augmentation.
 
     Args:
         operations: list of C++ operations (python OPs are not accepted).
-        NumOps (int): number of OPs to be selected and applied.
+        num_ops (int): number of OPs to be selected and applied.
 
     Examples:
         >>> transforms_list = [c_transforms.RandomHorizontalFlip(),

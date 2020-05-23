@@ -23,6 +23,7 @@ from .utils import Inter, Border
 from ...transforms.validators import check_pos_int32, check_pos_float32, check_value, check_uint8, FLOAT_MAX_INTEGER, \
     check_bool, check_2tuple, check_range, check_list, check_type, check_positive, INT32_MAX
 
+
 def check_inter_mode(mode):
     if not isinstance(mode, Inter):
         raise ValueError("Invalid interpolation mode.")
@@ -838,7 +839,7 @@ def check_uniform_augmentation(method):
         if num_ops > len(operations):
             raise ValueError("num_ops is greater than operations list size")
         if not isinstance(operations, list):
-            raise ValueError("operations is not a python list")
+            raise TypeError("operations is not a python list")
         for op in operations:
             if not isinstance(op, TensorOp):
                 raise ValueError("operations list only accepts C++ operations.")
