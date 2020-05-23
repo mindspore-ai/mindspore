@@ -78,6 +78,7 @@
 #include "pre_activate/ascend/buffer_fusion/segment_eltwise_fusion_pass.h"
 #include "pre_activate/ascend/format_type/deal_ref_trans_and_cast.h"
 #include "pre_activate/ascend/enhancer/add_memcpy_async.h"
+#include "pre_activate/ascend/enhancer/insert_pad_for_nms_with_mask.h"
 #include "pre_activate/ascend/format_type/insert_cast_for_runop.h"
 #include "pre_activate/ascend/format_type/insert_transdata_for_runop.h"
 #include "pre_activate/ascend/enhancer/getnext_memcpy_elimination.h"
@@ -227,6 +228,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
     ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion>());
   }
   ir_fusion_pm->AddPass(std::make_shared<AddMemcpyAsync>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   if (context_ptr->ir_fusion_flag()) {
     AddAscendBackendOptionalIRFusion(ir_fusion_pm.get());
   }
