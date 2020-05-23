@@ -20,12 +20,13 @@ import numpy as np
 from mindspore._c_dataengine import Graph
 from mindspore._c_dataengine import Tensor
 
-from .validators import check_gnn_get_all_nodes, check_gnn_get_all_neighbors, check_gnn_get_node_feature
+from .validators import check_gnn_graphdata, check_gnn_get_all_nodes, check_gnn_get_all_neighbors, \
+    check_gnn_get_node_feature
 
 
 class GraphData:
     """
-    Reads th graph dataset used for GNN training from the shared file and database.
+    Reads the graph dataset used for GNN training from the shared file and database.
 
     Args:
         dataset_file (str): One of file names in dataset.
@@ -33,6 +34,7 @@ class GraphData:
             (default=None).
     """
 
+    @check_gnn_graphdata
     def __init__(self, dataset_file, num_parallel_workers=None):
         self._dataset_file = dataset_file
         if num_parallel_workers is None:
@@ -45,7 +47,7 @@ class GraphData:
         Get all nodes in the graph.
 
         Args:
-            node_type (int): Specify the tpye of node.
+            node_type (int): Specify the type of node.
 
         Returns:
             numpy.ndarray: array of nodes.
@@ -67,7 +69,7 @@ class GraphData:
 
         Args:
             node_list (list or numpy.ndarray): The given list of nodes.
-            neighbor_type (int): Specify the tpye of neighbor.
+            neighbor_type (int): Specify the type of neighbor.
 
         Returns:
             numpy.ndarray: array of nodes.
