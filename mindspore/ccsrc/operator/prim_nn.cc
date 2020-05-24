@@ -285,6 +285,16 @@ AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr
   return args_spec_list[0]->Broaden();
 }
 
+AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                  const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a tensor.
+  AbstractBasePtrList args_list;
+  for (size_t i = 0; i < args_spec_list.size() - 2; i++) {
+    args_list.push_back(args_spec_list[i]->Broaden());
+  }
+  return std::make_shared<AbstractTuple>(args_list);
+}
+
 AbstractBasePtr InferImplLayerNorm(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
   // Inputs: three tensors(x, gamma, beta).

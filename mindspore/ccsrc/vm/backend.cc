@@ -64,6 +64,9 @@ LinConvertResult MsBackend::MsConvert(const AnfNodePtrList &lst) {
   result.outputs = outputs;
   result.graph_id = kInvalidGraphId;
   auto graph_id = sess_->CompileGraph(lst, outputs);
+  if (MsContext::GetInstance()->execution_mode() == kPynativeMode) {
+    sess_->BuildGraph(graph_id);
+  }
   if (MsContext::GetInstance()->precompile_only()) {
     MS_LOG(INFO) << "PrecompileOnly, stop run graph";
     return result;

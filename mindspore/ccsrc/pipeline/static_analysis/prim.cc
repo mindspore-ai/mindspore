@@ -108,6 +108,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimRelu, {InferImplRelu, true}},
     {prim::kPrimZerosLikeTensor, {InferImplZerosLikeTensor, true}},
     {prim::kPrimFakeBprop, {InferImplFakeBprop, false}},
+    {prim::kPrimBpropCut, {InferImplBpropCut, true}},
     {prim::kPrimLayerNorm, {InferImplLayerNorm, true}},
     {prim::kPrimLayerNormGrad, {InferImplLayerNormGrad, true}},
     {prim::kPrimDropoutGenMask, {InferImplDropoutGenMask, true}},

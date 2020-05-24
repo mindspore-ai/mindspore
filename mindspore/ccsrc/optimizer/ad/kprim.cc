@@ -115,10 +115,15 @@ FuncGraphPtr KPrim::KPrimitive(const ValueNodePtr &value_node, const pipeline::R
   }
 
   bool is_faked_bprop = false;
-  auto bprop_fg = GetBprop(prim);
-  if (bprop_fg == nullptr) {
-    bprop_fg = FakeBprop(value_node, resources);
-    is_faked_bprop = true;
+  FuncGraphPtr bprop_fg = nullptr;
+  if (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == "HookBackward") {
+    bprop_fg = BpropCut(value_node, resources);
+  } else {
+    bprop_fg = GetBprop(prim);
+    if (bprop_fg == nullptr) {
+      bprop_fg = FakeBprop(value_node, resources);
+      is_faked_bprop = true;
+    }
   }
 
   auto expanded_fg = BpropToK(prim, bprop_fg);
@@ -204,6 +209,45 @@ FuncGraphPtr KPrim::KUserDefinedCellBprop(const FuncGraphPtr bprop_fg) {
                       << trace::GetDebugInfo(fprop_fg->debug_info());
   }
   return expanded_fg;
+}
+
+FuncGraphPtr KPrim::BpropCut(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources) {
+  auto prim = GetValueNode<PrimitivePtr>(value_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  auto &node_users = resources->manager()->node_users();
+
+  auto &users = node_users[value_node];
+  auto cnode = std::find_if(users.begin(), users.end(), [&prim](const std::pair<AnfNodePtr, int> &user) -> bool {
+    return IsPrimitiveCNode(user.first, prim);
+  });
+  if (cnode == users.end()) {
+    MS_LOG(EXCEPTION) << "Fail to find cnode.";
+  }
+  auto inputs_num = cnode->first->cast<CNodePtr>()->size() - 1;
+
+  auto func_graph = std::make_shared<FuncGraph>();
+  std::vector<AnfNodePtr> outputs;
+
+  auto bprop_cut = std::make_shared<Primitive>("bprop_cut");
+  bprop_cut->set_hook(prim->hook());
+  auto cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
+  if (cell_id != "") {
+    (void)bprop_cut->AddAttr("cell_hook", MakeValue(true));
+    (void)bprop_cut->AddAttr("cell_id", MakeValue(cell_id));
+  }
+
+  outputs.push_back(NewValueNode(bprop_cut));
+  for (size_t i = 0; i < inputs_num; ++i) {
+    auto param = func_graph->add_parameter();
+    outputs.push_back(param);
+  }
+  auto p1 = func_graph->add_parameter();
+  auto p2 = func_graph->add_parameter();
+  outputs.push_back(p1);
+  outputs.push_back(p2);
+
+  func_graph->set_output(func_graph->NewCNode(outputs));
+  return func_graph;
 }
 
 FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources) {

@@ -49,9 +49,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   arithmetic_simplify_ = MakeSubstitution(ArithmeticSimplify(), "arithmetic_simplify",
                                           {prim::kPrimScalarAdd, prim::kPrimScalarMul, prim::kPrimTensorAdd,
                                            prim::kPrimIdentity, prim::kPrimMomentum, prim::kPrimMul});
-  special_op_eliminate_ = MakeSubstitution(SpecialOpEliminater(), "special_op_eliminate",
-                                           {prim::kPrimInsertGradientOf, prim::kPrimPrintShapeType,
-                                            prim::kPrimGetRefKey, prim::kPrimMirror, prim::kPrimVirtualDiv});
+  special_op_eliminate_ =
+    MakeSubstitution(SpecialOpEliminater(), "special_op_eliminate",
+                     {prim::kPrimInsertGradientOf, prim::kPrimHookBackward, prim::kPrimPrintShapeType,
+                      prim::kPrimGetRefKey, prim::kPrimMirror, prim::kPrimVirtualDiv});
   zero_like_fill_zero_ = MakeSubstitution(ZeroLikeFillZero(), "zero_like_fill_zero", prim::kPrimZerosLikeTensor);
   adjust_all_reduce_mul_add_ = MakeSubstitution(AdjustAllReduceMulAdd(), "adjust_all_reduce_mul_add", prim::kPrimAddN);
 
