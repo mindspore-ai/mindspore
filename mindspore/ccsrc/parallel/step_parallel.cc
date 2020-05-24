@@ -2187,7 +2187,7 @@ void MarkForwardCNode(const FuncGraphPtr &root) {
     SetForwardFlag(all_nodes);
   } else {
     for (auto &func_graph : graph_set) {
-      MS_LOG(INFO) << "The sub graph size of root is " << root->func_graph_value_nodes().size();
+      MS_LOG(INFO) << "The sub graph size of root is " << root->func_graphs_used().size();
       auto return_node = func_graph->get_return();
       MS_EXCEPTION_IF_NULL(return_node);
       auto all_dfs_nodes = DeepLinkedGraphSearch(return_node);

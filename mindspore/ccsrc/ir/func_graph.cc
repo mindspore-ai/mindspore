@@ -198,7 +198,7 @@ GraphDebugInfoPtr FuncGraph::debug_info() {
 
 const AnfNodeSet &FuncGraph::nodes() { return nodes_; }
 
-void FuncGraph::CopyNodes(const AnfNodeSet &other_nodes) { nodes_ = other_nodes; }
+void FuncGraph::CopyNodes(const FuncGraphPtr &source) { nodes_ = source->nodes(); }
 
 void FuncGraph::ClearNodes() { nodes_.clear(); }
 
@@ -215,7 +215,12 @@ void FuncGraph::DropNode(AnfNodePtr node) {
 
 const AnfNodeCounterMap &FuncGraph::value_nodes() { return value_nodes_; }
 
-void FuncGraph::CopyValueNodes(const AnfNodeCounterMap &other_value_nodes) { value_nodes_ = other_value_nodes; }
+void FuncGraph::CopyValueNodes(const FuncGraphPtr &source) {
+  auto &others = source->value_nodes();
+  for (auto it = others.begin(); it != others.end(); it++) {
+    AddValueNode(it->first, it->second);
+  }
+}
 
 void FuncGraph::ClearValueNodes() { value_nodes_.clear(); }
 
@@ -243,9 +248,9 @@ void FuncGraph::DropValueNode(AnfNodePtr node) {
 
 const AnfNodeCounterMap &FuncGraph::free_variables() { return free_variables_; }
 
-void FuncGraph::CopyFreeVariables(const AnfNodeCounterMap &others) {
-  auto it = others.begin();
-  for (; it != others.end(); it++) {
+void FuncGraph::CopyFreeVariables(const FuncGraphPtr &source) {
+  auto &others = source->free_variables();
+  for (auto it = others.begin(); it != others.end(); it++) {
     if (it->first->func_graph().get() != this) {
       (void)AddFreeVariable(it->first, it->second);
     }
@@ -313,31 +318,37 @@ std::vector<FuncGraphPtr> FuncGraph::free_variables_func_graphs() {
   return func_graphs;
 }
 
-const AnfNodeCounterMap &FuncGraph::func_graph_value_nodes() { return func_graph_value_nodes_; }
+const FuncGraphCounterMap &FuncGraph::func_graphs_used() { return func_graphs_used_; }
 
-void FuncGraph::CopyFuncGraphValueNodes(const AnfNodeCounterMap &others) { func_graph_value_nodes_ = others; }
+void FuncGraph::CopyFuncGraphsUsed(const FuncGraphPtr &source) {
+  auto &others = source->func_graphs_used();
+  for (auto it = others.begin(); it != others.end(); it++) {
+    (void)AddFuncGraphUsed(it->first, it->second);
+  }
+  func_graphs_used_.erase(source);
+}
 
-void FuncGraph::ClearFuncGraphValueNodes() { func_graph_value_nodes_.clear(); }
+void FuncGraph::ClearFuncGraphsUsed() { func_graphs_used_.clear(); }
 
-bool FuncGraph::AddFuncGraphValueNode(AnfNodePtr node, int count) {
-  if (func_graph_value_nodes_.count(node) == 0) {
-    func_graph_value_nodes_[node] = count;
+bool FuncGraph::AddFuncGraphUsed(FuncGraphPtr fg, int count) {
+  if (func_graphs_used_.count(fg) == 0) {
+    func_graphs_used_[fg] = count;
     return true;
   } else {
-    func_graph_value_nodes_[node] += count;
+    func_graphs_used_[fg] += count;
     return false;
   }
 }
 
-bool FuncGraph::DropFuncGraphValueNode(AnfNodePtr node) {
-  if (func_graph_value_nodes_.count(node) != 0) {
-    if (func_graph_value_nodes_[node] == 1) {
-      (void)func_graph_value_nodes_.erase(node);
+bool FuncGraph::DropFuncGraphUsed(FuncGraphPtr fg) {
+  if (func_graphs_used_.count(fg) != 0) {
+    if (func_graphs_used_[fg] == 1) {
+      (void)func_graphs_used_.erase(fg);
       return true;
     } else {
-      func_graph_value_nodes_[node]--;
-      if (func_graph_value_nodes_[node] < 0) {
-        MS_LOG(EXCEPTION) << "Count of value node(FuncGraph) '" << node
+      func_graphs_used_[fg]--;
+      if (func_graphs_used_[fg] < 0) {
+        MS_LOG(EXCEPTION) << "Count of FuncGraph '" << fg
                           << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
       }
     }
@@ -354,11 +365,13 @@ const FuncGraphSet &FuncGraph::func_graphs_used_total() {
 
 const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() { return func_graph_cnodes_index_; }
 
-void FuncGraph::CopyFuncGraphCNodesIndex(const CNodeIndexCounterMap &others) {
-  auto it = others.begin();
-  for (; it != others.end(); it++) {
+void FuncGraph::CopyFuncGraphCNodesIndex(const FuncGraphPtr &source) {
+  auto &others = source->func_graph_cnodes_index();
+  for (auto it = others.begin(); it != others.end(); it++) {
     // Ignore the user graph who may own itself.
-    if (it->first->first->func_graph().get() != this) {
+    auto fg = it->first->first->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    if (fg.get() != this) {
       AddFuncGraphCNodeIndex(it->first, it->second);
     }
   }
@@ -388,28 +401,33 @@ void FuncGraph::DropFuncGraphCNodeIndex(CNodeIndexPairPtr pair) {
   }
 }
 
-const AnfNodeCounterMap &FuncGraph::j_func_graph_value_nodes() { return j_func_graph_value_nodes_; }
+const FuncGraphCounterMap &FuncGraph::j_func_graphs() { return j_func_graphs_; }
 
-void FuncGraph::CopyJFuncGraphValueNodes(const AnfNodeCounterMap &others) { j_func_graph_value_nodes_ = others; }
-
-void FuncGraph::ClearJFuncGraphValueNodes() { j_func_graph_value_nodes_.clear(); }
-
-void FuncGraph::AddJFuncGraphValueNode(AnfNodePtr node, int count) {
-  if (j_func_graph_value_nodes_.count(node) == 0) {
-    j_func_graph_value_nodes_[node] = count;
-  } else {
-    j_func_graph_value_nodes_[node] += count;
+void FuncGraph::CopyJFuncGraphs(const FuncGraphPtr &source) {
+  auto &others = source->j_func_graphs();
+  for (auto it = others.begin(); it != others.end(); it++) {
+    AddJFuncGraph(it->first, it->second);
   }
 }
 
-void FuncGraph::DropJFuncGraphValueNode(AnfNodePtr node) {
-  if (j_func_graph_value_nodes_.count(node) != 0) {
-    if (j_func_graph_value_nodes_[node] == 1) {
-      (void)j_func_graph_value_nodes_.erase(node);
+void FuncGraph::ClearJFuncGraphs() { j_func_graphs_.clear(); }
+
+void FuncGraph::AddJFuncGraph(FuncGraphPtr fg, int count) {
+  if (j_func_graphs_.count(fg) == 0) {
+    j_func_graphs_[fg] = count;
+  } else {
+    j_func_graphs_[fg] += count;
+  }
+}
+
+void FuncGraph::DropJFuncGraph(FuncGraphPtr fg) {
+  if (j_func_graphs_.count(fg) != 0) {
+    if (j_func_graphs_[fg] == 1) {
+      (void)j_func_graphs_.erase(fg);
     } else {
-      j_func_graph_value_nodes_[node]--;
-      if (j_func_graph_value_nodes_[node] < 0) {
-        MS_LOG(EXCEPTION) << "Count of value node(J FuncGraph) '" << node
+      j_func_graphs_[fg]--;
+      if (j_func_graphs_[fg] < 0) {
+        MS_LOG(EXCEPTION) << "Count of J FuncGraph '" << fg
                           << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
       }
     }

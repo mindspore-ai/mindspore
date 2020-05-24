@@ -462,8 +462,8 @@ TEST_F(TestManager, test_nested_manual) {
     ASSERT_EQ(1, iter.second.size());
   }
 
-  ASSERT_EQ(1, f->func_graph_value_nodes().size());
-  ASSERT_EQ(0, g->func_graph_value_nodes().size());
+  ASSERT_EQ(1, f->func_graphs_used().size());
+  ASSERT_EQ(0, g->func_graphs_used().size());
 
   ASSERT_EQ(0, f->free_variables().size());
   ASSERT_EQ(1, g->free_variables().size());

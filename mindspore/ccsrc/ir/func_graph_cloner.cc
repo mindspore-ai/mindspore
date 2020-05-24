@@ -153,9 +153,9 @@ void Cloner::AddTotalGraphs(const FuncGraphPtr &func_graph) {
   if (!clone_all_used_graphs_) {
     return;
   }
-  auto &used = func_graph->func_graph_value_nodes();
-  for (auto &fg_value_node : used) {
-    todo_.push_back({GetValueNode<FuncGraphPtr>(fg_value_node.first), nullptr, {}});
+  auto &used = func_graph->func_graphs_used();
+  for (auto &fg : used) {
+    todo_.push_back({fg.first, nullptr, {}});
   }
 }
 
