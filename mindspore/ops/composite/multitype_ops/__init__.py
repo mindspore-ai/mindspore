@@ -37,6 +37,7 @@ from .logical_and_impl import logical_and
 from .logical_or_impl import logical_or
 from .logic_not_impl import logical_not
 from .uadd_impl import uadd
+from .in_impl import in_
 __all__ = [
     'add',
     'sub',
@@ -59,5 +60,6 @@ __all__ = [
     'setitem',
     'logical_and',
     'logical_or',
-    'logical_not'
+    'logical_not',
+    'in_'
 ]

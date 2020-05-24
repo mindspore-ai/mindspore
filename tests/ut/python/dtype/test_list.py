@@ -19,9 +19,9 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from ..ut_filter import non_graph_engine
-from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward \
+from tests.ut.python.ut_filter import non_graph_engine
+from tests.mindspore_test_framework.mindspore_test import mindspore_test
+from tests.mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 
 
@@ -133,7 +133,7 @@ def test_list_append_2():
 
 
 class ListOperate(nn.Cell):
-    def __init__(self,):
+    def __init__(self, ):
         super(ListOperate, self).__init__()
 
     def construct(self, t, l):
@@ -150,6 +150,20 @@ class ListOperate(nn.Cell):
         x.append(l)
         x.append(l)
         return x
+
+
+class InListNet(nn.Cell):
+    def __init__(self, ):
+        super(InListNet, self).__init__()
+        self.list_ = [1, 2, 3, 4, 5, "ok"]
+
+    def construct(self, x):
+        ret = x
+        if 2 in self.list_:
+            ret = x + x
+            if "ok" in self.list_:
+                ret = x - x
+        return ret
 
 
 class AxisListNet(nn.Cell):
@@ -204,10 +218,15 @@ test_case_ops = [
     ('AxisListDefault', {
         'block': AxisListDefaultNet(),
         'desc_inputs': [Tensor(np.ones([6, 8, 10], np.int32))]}),
+    ('InList', {
+        'block': InListNet(),
+        'desc_inputs': [Tensor(np.ones([6, 8, 10], np.int32))]}),
 ]
 
 test_case_lists = [test_case_ops]
 test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
+
+
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
 
