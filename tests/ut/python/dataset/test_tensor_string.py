@@ -57,7 +57,7 @@ def test_batching_strings():
     with pytest.raises(RuntimeError) as info:
         for _ in data:
             pass
-    assert "[Batch ERROR] Batch does not support" in str(info)
+    assert "[Batch ERROR] Batch does not support" in str(info.value)
 
 
 def test_map():
