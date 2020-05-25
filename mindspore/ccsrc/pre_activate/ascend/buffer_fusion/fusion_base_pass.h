@@ -37,6 +37,13 @@ const int8_t ELTWISE_USE = 1;
 const int8_t MAX_ELTWISE_SIZE = 6;
 using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
 
+struct BufferFusionInfo_t {
+  std::vector<AnfNodePtr> anf_nodes;
+  std::vector<AnfNodePtr> inputs_list;
+  std::vector<AnfNodePtr> outputs_list;
+  kernel::KernelBuildInfoPtr kernel_build_info;
+};
+
 class FusionBasePass : public Pass {
  public:
   FusionBasePass(const std::string &name, FusionIdAllocatorPtr idAllocator)
