@@ -28,7 +28,7 @@ from mindspore import log as logger
 from mindspore.dataset.transforms.vision import Inter
 
 from test_minddataset_sampler import add_and_remove_cv_file, get_data, CV_DIR_NAME, CV_FILE_NAME
-
+from util import config_get_set_num_parallel_workers
 
 def test_imagefolder(remove_json_files=True):
     """
@@ -176,6 +176,7 @@ def test_random_crop():
     logger.info("test_random_crop")
     DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
     SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
@@ -200,6 +201,9 @@ def test_random_crop():
                                      data2.create_dict_iterator()):
         assert np.array_equal(item1['image'], item1_1['image'])
         _ = item2["image"]
+
+    # Restore configuration num_parallel_workers
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
 def validate_jsonfile(filepath):

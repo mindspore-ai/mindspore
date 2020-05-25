@@ -21,7 +21,8 @@ import mindspore.dataset.transforms.vision.py_transforms as py_vision
 import mindspore.dataset.transforms.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util import save_and_check_md5, visualize
+from util import save_and_check_md5, visualize, config_get_set_seed, \
+    config_get_set_num_parallel_workers
 
 
 GENERATE_GOLDEN = False
@@ -30,11 +31,11 @@ DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-def test_random_crop_op(plot=False):
+def test_random_crop_op_c(plot=False):
     """
-    Test RandomCrop Op
+    Test RandomCrop Op in c transforms
     """
-    logger.info("test_random_crop_op")
+    logger.info("test_random_crop_op_c")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -58,13 +59,47 @@ def test_random_crop_op(plot=False):
     if plot:
         visualize(image, image_cropped)
 
+def test_random_crop_op_py(plot=False):
+    """
+    Test RandomCrop op in py transforms
+    """
+    logger.info("test_random_crop_op_py")
+    # First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms1 = [
+        py_vision.Decode(),
+        py_vision.RandomCrop([512, 512], [200, 200, 200, 200]),
+        py_vision.ToTensor()
+    ]
+    transform1 = py_vision.ComposeOp(transforms1)
+    data1 = data1.map(input_columns=["image"], operations=transform1())
+    # Second dataset
+    # Second dataset for comparison
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms2 = [
+        py_vision.Decode(),
+        py_vision.ToTensor()
+    ]
+    transform2 = py_vision.ComposeOp(transforms2)
+    data2 = data2.map(input_columns=["image"], operations=transform2())
+
+    crop_images = []
+    original_images = []
+    for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        crop = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        original = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        crop_images.append(crop)
+        original_images.append(original)
+    if plot:
+        visualize(original_images, crop_images)
+
 def test_random_crop_01_c():
     """
     Test RandomCrop op with c_transforms: size is a single integer, expected to pass
     """
     logger.info("test_random_crop_01_c")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -77,13 +112,17 @@ def test_random_crop_01_c():
     filename = "random_crop_01_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_01_py():
     """
     Test RandomCrop op with py_transforms: size is a single integer, expected to pass
     """
     logger.info("test_random_crop_01_py")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -99,13 +138,17 @@ def test_random_crop_01_py():
     filename = "random_crop_01_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_02_c():
     """
     Test RandomCrop op with c_transforms: size is a list/tuple with length 2, expected to pass
     """
     logger.info("test_random_crop_02_c")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -118,13 +161,17 @@ def test_random_crop_02_c():
     filename = "random_crop_02_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_02_py():
     """
     Test RandomCrop op with py_transforms: size is a list/tuple with length 2, expected to pass
     """
     logger.info("test_random_crop_02_py")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -140,13 +187,17 @@ def test_random_crop_02_py():
     filename = "random_crop_02_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_03_c():
     """
     Test RandomCrop op with c_transforms: input image size == crop size, expected to pass
     """
     logger.info("test_random_crop_03_c")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -159,13 +210,17 @@ def test_random_crop_03_c():
     filename = "random_crop_03_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_03_py():
     """
     Test RandomCrop op with py_transforms: input image size == crop size, expected to pass
     """
     logger.info("test_random_crop_03_py")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -181,27 +236,28 @@ def test_random_crop_03_py():
     filename = "random_crop_03_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_04_c():
     """
     Test RandomCrop op with c_transforms: input image size < crop size, expected to fail
     """
     logger.info("test_random_crop_04_c")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+
+    # Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    # Note: The size of the image is 4032*2268
+    random_crop_op = c_vision.RandomCrop([2268, 4033])
+    decode_op = c_vision.Decode()
+    data = data.map(input_columns=["image"], operations=decode_op)
+    data = data.map(input_columns=["image"], operations=random_crop_op)
     try:
-        # Generate dataset
-        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-        # Note: The size of the image is 4032*2268
-        random_crop_op = c_vision.RandomCrop([2268, 4033])
-        decode_op = c_vision.Decode()
-        data = data.map(input_columns=["image"], operations=decode_op)
-        data = data.map(input_columns=["image"], operations=random_crop_op)
-        image_list = []
-        for item in data.create_dict_iterator():
-            image = item["image"]
-            image_list.append(image.shape)
-    except Exception as e:
+        data.create_dict_iterator().get_next()
+    except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Crop size is greater than the image dim" in str(e)
 
 def test_random_crop_04_py():
     """
@@ -209,25 +265,20 @@ def test_random_crop_04_py():
     input image size < crop size, expected to fail
     """
     logger.info("test_random_crop_04_py")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
 
+    # Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    # Note: The size of the image is 4032*2268
+    transforms = [
+        py_vision.Decode(),
+        py_vision.RandomCrop([2268, 4033]),
+        py_vision.ToTensor()
+    ]
+    transform = py_vision.ComposeOp(transforms)
+    data = data.map(input_columns=["image"], operations=transform())
     try:
-        # Generate dataset
-        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-        # Note: The size of the image is 4032*2268
-        transforms = [
-            py_vision.Decode(),
-            py_vision.RandomCrop([2268, 4033]),
-            py_vision.ToTensor()
-        ]
-        transform = py_vision.ComposeOp(transforms)
-        data = data.map(input_columns=["image"], operations=transform())
-        image_list = []
-        for item in data.create_dict_iterator():
-            image = (item["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-            image_list.append(image.shape)
-    except Exception as e:
+        data.create_dict_iterator().get_next()
+    except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 def test_random_crop_05_c():
@@ -237,8 +288,8 @@ def test_random_crop_05_c():
     expected to pass
     """
     logger.info("test_random_crop_05_c")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -251,6 +302,10 @@ def test_random_crop_05_c():
     filename = "random_crop_05_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_05_py():
     """
     Test RandomCrop op with py_transforms:
@@ -258,8 +313,8 @@ def test_random_crop_05_py():
     expected to pass
     """
     logger.info("test_random_crop_05_py")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -275,30 +330,28 @@ def test_random_crop_05_py():
     filename = "random_crop_05_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_06_c():
     """
     Test RandomCrop op with c_transforms:
     invalid size, expected to raise TypeError
     """
     logger.info("test_random_crop_06_c")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
 
+    # Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     try:
-        # Generate dataset
-        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
         # Note: if size is neither an int nor a list of length 2, an exception will raise
         random_crop_op = c_vision.RandomCrop([512, 512, 375])
         decode_op = c_vision.Decode()
         data = data.map(input_columns=["image"], operations=decode_op)
         data = data.map(input_columns=["image"], operations=random_crop_op)
-        image_list = []
-        for item in data.create_dict_iterator():
-            image = item["image"]
-            image_list.append(image.shape)
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Size" in str(e)
+        assert "Size should be a single integer" in str(e)
 
 def test_random_crop_06_py():
     """
@@ -306,12 +359,10 @@ def test_random_crop_06_py():
     invalid size, expected to raise TypeError
     """
     logger.info("test_random_crop_06_py")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
 
+    # Generate dataset
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     try:
-        # Generate dataset
-        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
         # Note: if size is neither an int nor a list of length 2, an exception will raise
         transforms = [
             py_vision.Decode(),
@@ -320,13 +371,9 @@ def test_random_crop_06_py():
         ]
         transform = py_vision.ComposeOp(transforms)
         data = data.map(input_columns=["image"], operations=transform())
-        image_list = []
-        for item in data.create_dict_iterator():
-            image = (item["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-            image_list.append(image.shape)
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Size" in str(e)
+        assert "Size should be a single integer" in str(e)
 
 def test_random_crop_07_c():
     """
@@ -335,8 +382,8 @@ def test_random_crop_07_c():
     expected to pass
     """
     logger.info("test_random_crop_07_c")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -349,6 +396,10 @@ def test_random_crop_07_c():
     filename = "random_crop_07_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_07_py():
     """
     Test RandomCrop op with py_transforms:
@@ -356,8 +407,8 @@ def test_random_crop_07_py():
     expected to pass
     """
     logger.info("test_random_crop_07_py")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -373,14 +424,18 @@ def test_random_crop_07_py():
     filename = "random_crop_07_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_08_c():
     """
     Test RandomCrop op with c_transforms: padding_mode is Border.EDGE,
     expected to pass
     """
     logger.info("test_random_crop_08_c")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -393,14 +448,18 @@ def test_random_crop_08_c():
     filename = "random_crop_08_c_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_08_py():
     """
     Test RandomCrop op with py_transforms: padding_mode is Border.EDGE,
     expected to pass
     """
     logger.info("test_random_crop_08_py")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
+    original_seed = config_get_set_seed(0)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -416,13 +475,15 @@ def test_random_crop_08_py():
     filename = "random_crop_08_py_result.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
+    # Restore config setting
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 def test_random_crop_09():
     """
     Test RandomCrop op: invalid type of input image (not PIL), expected to raise TypeError
     """
     logger.info("test_random_crop_09")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -433,13 +494,10 @@ def test_random_crop_09():
         py_vision.RandomCrop(512)
     ]
     transform = py_vision.ComposeOp(transforms)
+    data = data.map(input_columns=["image"], operations=transform())
     try:
-        data = data.map(input_columns=["image"], operations=transform())
-        image_list = []
-        for item in data.create_dict_iterator():
-            image = item["image"]
-            image_list.append(image.shape)
-    except Exception as e:
+        data.create_dict_iterator().get_next()
+    except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "should be PIL Image" in str(e)
 
@@ -448,8 +506,6 @@ def test_random_crop_comp(plot=False):
     Test RandomCrop and compare between python and c image augmentation
     """
     logger.info("Test RandomCrop with c_transform and py_transform comparison")
-    ds.config.set_seed(0)
-    ds.config.set_num_parallel_workers(1)
     cropped_size = 512
 
     # First dataset
@@ -479,6 +535,7 @@ def test_random_crop_comp(plot=False):
     if plot:
         visualize(image_c_cropped, image_py_cropped)
 
+
 if __name__ == "__main__":
     test_random_crop_01_c()
     test_random_crop_02_c()
@@ -497,5 +554,6 @@ if __name__ == "__main__":
     test_random_crop_07_py()
     test_random_crop_08_py()
     test_random_crop_09()
-    test_random_crop_op(True)
+    test_random_crop_op_c(True)
+    test_random_crop_op_py(True)
     test_random_crop_comp(True)
