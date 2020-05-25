@@ -13,12 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-
 from resnet_torch import resnet50
 
 from mindspore import Tensor
-from mindspore.train.serialization import save, load, _check_filedir_or_create, _chg_model_file_name_if_same_exist, \
-    _read_file_last_line, context, export
+from mindspore.train.serialization import context, export
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -26,6 +24,4 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 def test_resnet50_export(batch_size=1, num_classes=5):
     input_np = np.random.uniform(0.0, 1.0, size=[batch_size, 3, 224, 224]).astype(np.float32)
     net = resnet50(batch_size, num_classes)
-    # param_dict = load_checkpoint("./resnet50-1_103.ckpt")
-    # load_param_into_net(net, param_dict)
     export(net, Tensor(input_np), file_name="./me_resnet50.pb", file_format="GEIR")

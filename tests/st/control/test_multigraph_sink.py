@@ -21,7 +21,7 @@ from mindspore.common import ms_function
 from mindspore.common.tensor import Tensor
 
 
-def setup_module(module):
+def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
 
@@ -33,7 +33,7 @@ c5 = Tensor([14], mstype.int32)
 
 
 @ms_function
-def simple_if(x, y, z):
+def simple_if(x, y):
     if x < y:
         x = x + 1
     else:
@@ -43,7 +43,7 @@ def simple_if(x, y, z):
 
 
 @ms_function
-def if_by_if(x, y, z):
+def if_by_if(x, y):
     if x < y:
         x = x + 1
     if y > x:
@@ -66,7 +66,7 @@ def if_in_if(x, y, z):
 
 
 @ms_function
-def simple_while(x, y, z):
+def simple_while(x, y):
     y = y + 4
     while x < y:
         x = x + 1
@@ -137,13 +137,13 @@ def while_in_while_in_while(x, y, z):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_simple_if():
-    output = simple_if(c1, c2, c3)
+    output = simple_if(c1, c2)
     expect = Tensor([6], mstype.int32)
     assert output == expect
 
 
 def test_if_by_if():
-    output = if_by_if(c1, c2, c3)
+    output = if_by_if(c1, c2)
     expect = Tensor([8], mstype.int32)
     assert output == expect
 
@@ -163,7 +163,7 @@ def test_if_in_if():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_simple_while():
-    output = simple_while(c1, c2, c3)
+    output = simple_while(c1, c2)
     expect = Tensor([21], mstype.int32)
     assert output == expect
 

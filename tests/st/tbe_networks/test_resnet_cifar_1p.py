@@ -15,7 +15,7 @@
 
 import os
 import random
-import time
+
 import pytest
 import numpy as np
 from resnet import resnet50
@@ -30,9 +30,8 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
+from mindspore.train.callback import Callback
 from mindspore.train.model import Model
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 random.seed(1)
 np.random.seed(1)
