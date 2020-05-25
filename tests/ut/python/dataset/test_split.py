@@ -14,6 +14,8 @@
 # ==============================================================================
 import pytest
 import mindspore.dataset as ds
+from util import config_get_set_num_parallel_workers
+
 
 # test5trainimgs.json contains 5 images whose un-decoded shape is [83554, 54214, 65512, 54214, 64631]
 # the label of each image is [0,0,0,1,1] each image can be uniquely identified
@@ -80,7 +82,7 @@ def test_unmappable_split():
     text_file_dataset_path = "../data/dataset/testTextFileDataset/*"
     text_file_data = ["This is a text file.", "Another file.", "Be happy every day.",
             "End of file.", "Good luck to everyone."]
-    ds.config.set_num_parallel_workers(4)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(4)
     d = ds.TextFileDataset(text_file_dataset_path, shuffle=False)
     s1, s2 = d.split([4, 1], randomize=False)
 
@@ -122,6 +124,9 @@ def test_unmappable_split():
 
     assert s1_output == text_file_data[0:2]
     assert s2_output == text_file_data[2:]
+    # Restore configuration num_parallel_workers
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
+
 
 def test_mappable_invalid_input():
     d = ds.ManifestDataset(manifest_file)
