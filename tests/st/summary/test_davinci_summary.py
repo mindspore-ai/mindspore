@@ -18,7 +18,7 @@ import numpy as np
 from apply_momentum import ApplyMomentum
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.nn as wrap
+from mindspore.nn import wrap
 from mindspore import Tensor, Model
 from mindspore.common.api import ms_function
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits

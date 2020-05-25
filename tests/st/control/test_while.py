@@ -18,7 +18,7 @@ from mindspore.common import dtype as mstype
 
 
 @ms_function
-def t1_while(x, y, z):
+def t1_while(x, y):
     y = y + 4
     while x < y:
         x = x + 1
@@ -30,9 +30,8 @@ def test_net():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     c1 = Tensor([2], mstype.int32)
     c2 = Tensor([14], mstype.int32)
-    c3 = Tensor([1], mstype.int32)
     expect = Tensor([21], mstype.int32)
-    ret = t1_while(c1, c2, c3)
+    ret = t1_while(c1, c2)
     assert ret == expect
 
 

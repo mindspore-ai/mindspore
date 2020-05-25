@@ -114,9 +114,9 @@ class CrossEntropyLoss(nn.Cell):
 
     def construct(self, logits, label):
         label = self.one_hot(label, F.shape(logits)[1], self.one, self.zero)
-        loss = self.cross_entropy(logits, label)[0]
-        loss = self.mean(loss, (-1,))
-        return loss
+        loss_func = self.cross_entropy(logits, label)[0]
+        loss_func = self.mean(loss_func, (-1,))
+        return loss_func
 
 
 if __name__ == '__main__':
@@ -146,4 +146,4 @@ if __name__ == '__main__':
         res = model.eval(eval_dataset)
         print("result: ", res)
     checker = os.path.exists("./normal_memreuse.ir")
-    assert checker == True
+    assert checker, True
