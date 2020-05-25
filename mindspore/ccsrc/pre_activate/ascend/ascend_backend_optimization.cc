@@ -62,7 +62,6 @@
 #include "pre_activate/pass/common_subexpression_elimination.h"
 #include "pre_activate/ascend/format_type/merge_cast_to_op.h"
 #include "pre_activate/ascend/format_type/check_consistency.h"
-#include "pre_activate/ascend/buffer_fusion/buffer_fusion.h"
 #include "pre_activate/ascend/buffer_fusion/ub_pattern_fusion.h"
 #include "pre_activate/ascend/buffer_fusion/eltwise_fusion_pass.h"
 #include "pre_activate/ascend/buffer_fusion/conv2dbackprop_eltwise_eltwise_fusion_pass.h"
@@ -314,14 +313,14 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
+  // buffer fusion
+  AscendBackendUBFusionOptimization(kernel_graph);
   if (save_graphs) {
     std::string file_path =
       save_graphs_path + "/" + "hwopt_d_end" + "_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_path, kernel_graph, true);
     DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
   }
-  // buffer fusion
-  AscendBackendUBFusionOptimization(kernel_graph);
 }
 
 void AscendBackendUBFusionOptimization(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
