@@ -172,10 +172,12 @@ class ResNet(nn.Cell):
                  layer_nums,
                  in_channels,
                  out_channels,
-                 strides=[1, 2, 2, 2],
+                 strides=None,
                  num_classes=100):
         super(ResNet, self).__init__()
 
+        if strides is None:
+            strides = [1, 2, 2, 2]
         if not len(layer_nums) == len(in_channels) == len(out_channels) == 4:
             raise ValueError("the length of "
                              "layer_num, inchannel, outchannel list must be 4!")
@@ -300,7 +302,7 @@ class DataGenerator():
         i = 0
         for stra in strategy:
             temp = []
-            while len(blocks) > 0:
+            while blocks:
                 block = blocks.pop(0)
                 temp.extend(np.split(block, stra, axis=i))
             blocks.extend(temp)

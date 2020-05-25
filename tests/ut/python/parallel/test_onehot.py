@@ -104,7 +104,7 @@ def test_onehot_batch_parallel_invalid_strategy():
     strategy4 = ((16, 1), (16, 1))
     try:
         compile_graph(strategy1, strategy2, strategy3, strategy4)
-    except:
+    except BaseException:
         pass
 
 
@@ -144,7 +144,7 @@ def test_onehot_batch_parallel_invalid_strategy_axis0():
     strategy4 = ((16, 1), (16, 1))
     try:
         compile_graph(strategy1, strategy2, strategy3, strategy4, onthot_axis=0)
-    except:
+    except BaseException:
         pass
 
 

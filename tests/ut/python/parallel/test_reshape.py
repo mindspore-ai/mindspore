@@ -114,7 +114,7 @@ def test_reshape1_strategy_1():
     strategy_loss = ((8, 1), (8, 1))
     try:
         reshape_common(ParallelMode.SEMI_AUTO_PARALLEL, strategy0, strategy1, strategy2, strategy_loss)
-    except:
+    except BaseException:
         pass
 
 
@@ -125,7 +125,7 @@ def test_reshape1_strategy_2():
     strategy_loss = ((8, 1), (8, 1))
     try:
         reshape_common(ParallelMode.AUTO_PARALLEL, strategy0, strategy1, strategy2, strategy_loss)
-    except:
+    except BaseException:
         pass
 
 
@@ -347,14 +347,14 @@ def test_reshape_net3_2():
 def test_reshape_net4_1():
     try:
         reshape_net2(ReshapeNet4(((1, 8), (8, 1))))
-    except:
+    except BaseException:
         pass
 
 
 def test_reshape_net4_2():
     try:
         reshape_net2(ReshapeNet4(((1, 8), (8, 2))))
-    except:
+    except BaseException:
         pass
 
 

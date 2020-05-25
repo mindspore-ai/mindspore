@@ -101,7 +101,7 @@ def fixme_test_dataset_interface_sens_scalar():
 
 class TrainOneStepCell(nn.Cell):
 
-    def __init__(self, network, optimizer, sens=1.0):
+    def __init__(self, network, optimizer):
         super(TrainOneStepCell, self).__init__(auto_prefix=False)
         self.network = network
         self.network.add_flags(defer_inline=True)
@@ -135,7 +135,7 @@ def test_dataset_interface_sens_shape_not_equal_loss():
     sens = Tensor(np.ones([256, 1024]), dtype=ms.float32)
     try:
         loss_scale_manager_sens(strategy1, sens)
-    except:
+    except BaseException:
         pass
 
 

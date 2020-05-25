@@ -45,8 +45,10 @@ class GradWrap(nn.Cell):
 
 
 class Net(nn.Cell):
-    def __init__(self, axis=0, strategy1=None, strategy2=None, shape=[64, 64]):
+    def __init__(self, axis=0, strategy1=None, strategy2=None, shape=None):
         super().__init__()
+        if shape is None:
+            shape = [64, 64]
         self.gatherv2 = P.GatherV2().set_strategy(strategy1)
         self.mul = P.Mul().set_strategy(strategy2)
         self.index = Tensor(np.ones(shape), dtype=ms.int32)
