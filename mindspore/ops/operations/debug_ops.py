@@ -26,7 +26,7 @@ def _check_summary_param(name, value, class_name):
     n_value = name['value']
     validator.check_value_type('name', n_type, [type(mstype.string)], class_name)
     if not n_value:
-        raise ValueError(f"For 'name' the value should by valid string in {class_name}, but got {n_value}.")
+        raise ValueError(f"For 'name' the value should by valid string in {class_name}, but got an empty string.")
 
     v_type = value['dtype']
     validator.check_value_type('value', v_type, [type(mstype.tensor)], class_name)
@@ -37,8 +37,8 @@ class ScalarSummary(PrimitiveWithInfer):
     Output scalar to protocol buffer through scalar summary operator.
 
     Inputs:
-        - **name** (str) - The name of the input variable.
-        - **value** (Tensor) - The value of scalar.
+        - **name** (str) - The name of the input variable, it should not be an empty string.
+        - **value** (Tensor) - The value of scalar, and the shape of value should be [] or [1].
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
@@ -75,8 +75,8 @@ class ImageSummary(PrimitiveWithInfer):
     Output image tensor to protocol buffer through image summary operator.
 
     Inputs:
-        - **name** (str) - The name of the input variable.
-        - **value** (Tensor) - The value of image.
+        - **name** (str) - The name of the input variable, it should not be an empty string.
+        - **value** (Tensor) - The value of image, the rank of tensor should be 4.
 
     Examples:
         >>> class Net(nn.Cell):
@@ -113,7 +113,7 @@ class TensorSummary(PrimitiveWithInfer):
 
     Inputs:
         - **name** (str) - The name of the input variable.
-        - **value** (Tensor) - The value of tensor.
+        - **value** (Tensor) - The value of tensor, and the rank of tensor should be greater than 0.
 
     Examples:
         >>> class SummaryDemo(nn.Cell):
