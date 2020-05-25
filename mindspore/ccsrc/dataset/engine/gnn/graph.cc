@@ -152,6 +152,7 @@ Status Graph::GetNodeFeature(const std::shared_ptr<Tensor> &nodes, const std::ve
   if (!nodes || nodes->Size() == 0) {
     RETURN_STATUS_UNEXPECTED("Input nodes is empty");
   }
+  CHECK_FAIL_RETURN_UNEXPECTED(!feature_types.empty(), "Inpude feature_types is empty");
   TensorRow tensors;
   for (auto f_type : feature_types) {
     std::shared_ptr<Feature> default_feature;
