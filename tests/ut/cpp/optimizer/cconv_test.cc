@@ -26,15 +26,14 @@
 namespace mindspore {
 void CheckNoFreeVariables(FuncGraphPtr root) {
   auto mng = Manage(root);
-  for (auto &iter : mng->nodes()) {
-    auto g = iter.first;
-    auto nodes = iter.second;
+  for (auto &iter : mng->func_graphs()) {
+    auto g = iter;
     if (g == nullptr) {
       continue;
     }
-
     ASSERT_TRUE(g->parent() == nullptr);
 
+    auto nodes = g->nodes();
     for (auto &node : nodes) {
       ASSERT_EQ(node->func_graph(), g);
       auto cnode = node->cast<CNodePtr>();

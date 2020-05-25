@@ -119,7 +119,7 @@ FuncGraphPtr TransformGraphCondBranchNodes(
   std::unordered_map<AnfNodePtr, AnfNodePtr> repl_node;
   // record the node input to be replaced
   NodeInputReplMap repl_node_inputs;
-  const AnfNodeSet &nodes = manager->nodes()[graph];
+  const AnfNodeSet &nodes = graph->nodes();
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
@@ -436,7 +436,7 @@ FuncGraphPtr TransformGraphDependNode(
   ResetSharedOp();
   std::shared_ptr<std::unordered_map<AnfNodePtr, AnfNodePtr>> repl_node =
     std::make_shared<std::unordered_map<AnfNodePtr, AnfNodePtr>>();  // record the node to be replaced
-  const AnfNodeSet &nodes = manager->nodes()[graph];
+  const AnfNodeSet &nodes = graph->nodes();
   for (auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!node->isa<CNode>()) {
