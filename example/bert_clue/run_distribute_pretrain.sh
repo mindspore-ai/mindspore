@@ -28,15 +28,20 @@ SCHEMA_DIR=$4
 export MINDSPORE_HCCL_CONFIG_PATH=$5
 export RANK_TABLE_FILE=$5
 export RANK_SIZE=$1
-
+cores=`cat /proc/cpuinfo|grep "processor" |wc -l`
+echo "the number of logical core" $cores
+avg_core_per_rank=`expr $cores \/ $RANK_SIZE`
+core_gap=`expr $avg_core_per_rank \- 1`
+echo "avg_core_per_rank" $avg_core_per_rank
+echo "core_gap" $core_gap
 for((i=0;i<RANK_SIZE;i++))
 do
-    start=`expr $i \* 12`
+    start=`expr $i \* $avg_core_per_rank`
     export DEVICE_ID=$i
     export RANK_ID=$i
     export DEPLOY_MODE=0
     export GE_USE_STATIC_MEMORY=1
-    end=`expr $start \+ 11`
+    end=`expr $start \+ $core_gap`
     cmdopt=$start"-"$end
 
     rm -rf LOG$i
