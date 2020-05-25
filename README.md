@@ -29,7 +29,7 @@ enrichment of the AI software/hardware application ecosystem.
 
 <img src="docs/MindSpore-architecture.png" alt="MindSpore Architecture" width="600"/>
 
-For more details please check out our [Architecture Guide](https://www.mindspore.cn/docs/en/0.2.0-alpha/architecture.html).
+For more details please check out our [Architecture Guide](https://www.mindspore.cn/docs/en/0.3.0-alpha/architecture.html).
 
 ### Automatic Differentiation
 
@@ -76,7 +76,7 @@ For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an ex
 1. Download whl from [MindSpore download page](https://www.mindspore.cn/versions/en), and install the package.
 
     ```
-    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.2.0-alpha/MindSpore/cpu/x86_ubuntu/mindspore-0.2.0-cp37-cp37m-linux_x86_64.whl
+    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/0.3.0-alpha/MindSpore/cpu/x86_ubuntu/mindspore-0.3.0-cp37-cp37m-linux_x86_64.whl
     ```
 
 2. Run the following command to verify the install.
@@ -133,8 +133,8 @@ currently the containerized build options are supported as follows:
 
     For `CPU` backend, you can directly pull and run the latest stable image using the below command:
     ```
-    docker pull mindspore/mindspore-cpu:0.2.0-alpha
-    docker run -it mindspore/mindspore-cpu:0.2.0-alpha /bin/bash
+    docker pull mindspore/mindspore-cpu:0.3.0-alpha
+    docker run -it mindspore/mindspore-cpu:0.3.0-alpha /bin/bash
     ```
 
 * GPU
@@ -151,8 +151,8 @@ currently the containerized build options are supported as follows:
 
     Then you can pull and run the latest stable image using the below command:
     ```
-    docker pull mindspore/mindspore-gpu:0.2.0-alpha
-    docker run -it --runtime=nvidia --privileged=true mindspore/mindspore-gpu:0.2.0-alpha /bin/bash
+    docker pull mindspore/mindspore-gpu:0.3.0-alpha
+    docker run -it --runtime=nvidia --privileged=true mindspore/mindspore-gpu:0.3.0-alpha /bin/bash
     ```
 
     To test if the docker image works, please execute the python code below and check the output:
@@ -187,7 +187,7 @@ please check out [docker](docker/README.md) repo for the details.
 
 ## Quickstart
 
-See the [Quick Start](https://www.mindspore.cn/tutorial/en/0.2.0-alpha/quick_start/quick_start.html)
+See the [Quick Start](https://www.mindspore.cn/tutorial/en/0.3.0-alpha/quick_start/quick_start.html)
 to implement the image classification.
 
 ## Docs
