@@ -102,7 +102,7 @@ bool CudaDriver::CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *s
 
 bool CudaDriver::CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size,
                                           DeviceStream stream) {
-  auto ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, (cudaStream_t)stream);
+  auto ret = cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToHost, (cudaStream_t)stream);
   if (ret != cudaSuccess) {
     MS_LOG(ERROR) << "cudaMemcpyAsync failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
     return false;
