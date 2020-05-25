@@ -110,7 +110,7 @@ def get_test_data_check(step):
 class SummaryDemo(nn.Cell):
     """ SummaryDemo definition """
 
-    def __init__(self, ):
+    def __init__(self,):
         super(SummaryDemo, self).__init__()
         self.s = P.TensorSummary()
         self.add = P.TensorAdd()

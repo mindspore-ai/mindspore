@@ -127,7 +127,7 @@ def test_scalar_summary_sample_with_shape_1():
 class SummaryDemo(nn.Cell):
     """ SummaryDemo definition """
 
-    def __init__(self, ):
+    def __init__(self,):
         super(SummaryDemo, self).__init__()
         self.s = P.ScalarSummary()
         self.histogram_summary = P.HistogramSummary()

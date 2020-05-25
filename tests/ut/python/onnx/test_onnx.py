@@ -17,9 +17,7 @@ import numpy as np
 import os
 import pytest
 import stat
-import time
 
-import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.parameter import Parameter
