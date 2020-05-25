@@ -196,6 +196,19 @@ class ScatterMax(nn.Cell):
         return out
 
 
+class ScatterAdd(nn.Cell):
+    """ScatterAdd net definition"""
+
+    def __init__(self, ref_shape):
+        super(ScatterAdd, self).__init__()
+        self.scatter_add = P.ScatterAdd()
+        self.ref = Parameter(Tensor(np.ones(ref_shape, np.float32)), name="ref")
+
+    def construct(self, indices, updates):
+        out = self.scatter_add(self.ref, indices, updates)
+        return out
+
+
 class ApplyFtrlNet(nn.Cell):
     def __init__(self):
         super(ApplyFtrlNet, self).__init__()
@@ -1256,6 +1269,17 @@ test_case_other_ops = [
         'block': ScatterMax(),
         'desc_inputs': (Tensor(np.array([[0, 0], [1, 1]], np.int32)),
                         Tensor(np.ones([2, 2, 3], np.float32) * 99)),
+        'skip': ['backward']}),
+    ('ScatterAdd', {
+        'block': ScatterAdd((6,)),
+        'desc_inputs': (Tensor(np.array([2, 0, 5], np.int32)),
+                        Tensor(np.array([2.0, 3.0, 4.0], np.float32))),
+        'skip': ['backward']}),
+    ('ScatterAdd2d', {
+        'block': ScatterAdd((3, 4)),
+        'desc_inputs': (Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2]],
+                                         [[3, 3, 3, 3], [4, 4, 4, 4]]], np.float32))),
         'skip': ['backward']}),
     ('SmoothL1Loss', {
         'block': P.SmoothL1Loss(),
