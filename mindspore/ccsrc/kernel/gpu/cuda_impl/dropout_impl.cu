@@ -20,7 +20,7 @@
 
 __global__ void DropoutForwardKernel(const float *input, float *mask, float *output, size_t num_count,
                                      float drop_prob) {
-  float scale = 1.f / (1.f - drop_prob);
+  float scale = 1.f / drop_prob;
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num_count; i += blockDim.x * gridDim.x) {
     mask[i] = mask[i] > drop_prob;
     output[i] = scale * input[i] * mask[i];
