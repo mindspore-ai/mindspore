@@ -78,7 +78,7 @@ class GraphData:
             >>> import mindspore.dataset as ds
             >>> data_graph = ds.GraphData('dataset_file', 2)
             >>> nodes = data_graph.get_all_nodes(0)
-            >>> neighbors = data_graph.get_all_neighbors(nodes[0], 0)
+            >>> neighbors = data_graph.get_all_neighbors(nodes, 0)
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -102,7 +102,7 @@ class GraphData:
             >>> import mindspore.dataset as ds
             >>> data_graph = ds.GraphData('dataset_file', 2)
             >>> nodes = data_graph.get_all_nodes(0)
-            >>> features = data_graph.get_node_feature(nodes[0], [1])
+            >>> features = data_graph.get_node_feature(nodes, [1])
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
