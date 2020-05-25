@@ -17,33 +17,51 @@ eval.
 """
 import os
 import argparse
-from dataset import create_dataset
-from config import config
 from mindspore import context
-from mindspore.model_zoo.mobilenet import mobilenet_v2
+from mindspore import nn
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.common import dtype as mstype
+from src.dataset import create_dataset
+from src.config import config_ascend, config_gpu
+from src.mobilenetV2 import mobilenet_v2
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
+parser.add_argument('--platform', type=str, default=None, help='run platform')
 args_opt = parser.parse_args()
 
-device_id = int(os.getenv('DEVICE_ID'))
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=device_id, save_graphs=False)
 
 if __name__ == '__main__':
-    loss = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction='mean')
-    net = mobilenet_v2(num_classes=config.num_classes)
-    net.to_float(mstype.float16)
-    for _, cell in net.cells_and_names():
-        if isinstance(cell, nn.Dense):
-            cell.add_flags_recursive(fp32=True)
+    config_platform = None
+    if args_opt.platform == "Ascend":
+        config_platform = config_ascend
+        device_id = int(os.getenv('DEVICE_ID'))
+        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
+                            device_id=device_id, save_graphs=False)
+    elif args_opt.platform == "GPU":
+        config_platform = config_gpu
+        context.set_context(mode=context.GRAPH_MODE,
+                            device_target="GPU", save_graphs=False)
+    else:
+        raise ValueError("Unsupport platform.")
 
-    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size)
+    loss = nn.SoftmaxCrossEntropyWithLogits(
+        is_grad=False, sparse=True, reduction='mean')
+    net = mobilenet_v2(num_classes=config_platform.num_classes)
+
+    if args_opt.platform == "Ascend":
+        net.to_float(mstype.float16)
+        for _, cell in net.cells_and_names():
+            if isinstance(cell, nn.Dense):
+                cell.to_float(mstype.float32)
+
+    dataset = create_dataset(dataset_path=args_opt.dataset_path,
+                             do_train=False,
+                             config=config_platform,
+                             platform=args_opt.platform,
+                             batch_size=config_platform.batch_size)
     step_size = dataset.get_dataset_size()
 
     if args_opt.checkpoint_path:

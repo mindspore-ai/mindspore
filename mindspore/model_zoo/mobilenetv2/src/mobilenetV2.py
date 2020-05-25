@@ -20,20 +20,10 @@ from mindspore.ops.operations import TensorAdd
 from mindspore import Parameter, Tensor
 from mindspore.common.initializer import initializer
 
-__all__ = ['MobileNetV2', 'mobilenet_v2']
+__all__ = ['mobilenet_v2']
 
 
 def _make_divisible(v, divisor, min_value=None):
-    """
-    This function is taken from the original tf repo.
-    It ensures that all layers have a channel number that is divisible by 8
-    It can be seen here:
-    https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet/mobilenet.py
-    :param v:
-    :param divisor:
-    :param min_value:
-    :return:
-    """
     if min_value is None:
         min_value = divisor
     new_v = max(min_value, int(v + divisor / 2) // divisor * divisor)
@@ -55,6 +45,7 @@ class GlobalAvgPooling(nn.Cell):
     Examples:
         >>> GlobalAvgPooling()
     """
+
     def __init__(self):
         super(GlobalAvgPooling, self).__init__()
         self.mean = P.ReduceMean(keep_dims=False)
@@ -82,6 +73,7 @@ class DepthwiseConv(nn.Cell):
     Examples:
         >>> DepthwiseConv(16, 3, 1, 'pad', 1, channel_multiplier=1)
     """
+
     def __init__(self, in_planes, kernel_size, stride, pad_mode, pad, channel_multiplier=1, has_bias=False):
         super(DepthwiseConv, self).__init__()
         self.has_bias = has_bias
@@ -126,14 +118,19 @@ class ConvBNReLU(nn.Cell):
     Examples:
         >>> ConvBNReLU(16, 256, kernel_size=1, stride=1, groups=1)
     """
-    def __init__(self, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
+
+    def __init__(self, platform, in_planes, out_planes, kernel_size=3, stride=1, groups=1):
         super(ConvBNReLU, self).__init__()
         padding = (kernel_size - 1) // 2
         if groups == 1:
-            conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='pad',
-                             padding=padding)
+            conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='pad', padding=padding)
         else:
-            conv = DepthwiseConv(in_planes, kernel_size, stride, pad_mode='pad', pad=padding)
+            if platform == "Ascend":
+                conv = DepthwiseConv(in_planes, kernel_size, stride, pad_mode='pad', pad=padding)
+            elif platform == "GPU":
+                conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride,
+                                 group=in_planes, pad_mode='pad', padding=padding)
+
         layers = [conv, nn.BatchNorm2d(out_planes), nn.ReLU6()]
         self.features = nn.SequentialCell(layers)
 
@@ -158,7 +155,8 @@ class InvertedResidual(nn.Cell):
     Examples:
         >>> ResidualBlock(3, 256, 1, 1)
     """
-    def __init__(self, inp, oup, stride, expand_ratio):
+
+    def __init__(self, platform, inp, oup, stride, expand_ratio):
         super(InvertedResidual, self).__init__()
         assert stride in [1, 2]
 
@@ -167,12 +165,14 @@ class InvertedResidual(nn.Cell):
 
         layers = []
         if expand_ratio != 1:
-            layers.append(ConvBNReLU(inp, hidden_dim, kernel_size=1))
+            layers.append(ConvBNReLU(platform, inp, hidden_dim, kernel_size=1))
         layers.extend([
             # dw
-            ConvBNReLU(hidden_dim, hidden_dim, stride=stride, groups=hidden_dim),
+            ConvBNReLU(platform, hidden_dim, hidden_dim,
+                       stride=stride, groups=hidden_dim),
             # pw-linear
-            nn.Conv2d(hidden_dim, oup, kernel_size=1, stride=1, has_bias=False),
+            nn.Conv2d(hidden_dim, oup, kernel_size=1,
+                      stride=1, has_bias=False),
             nn.BatchNorm2d(oup),
         ])
         self.conv = nn.SequentialCell(layers)
@@ -203,7 +203,8 @@ class MobileNetV2(nn.Cell):
     Examples:
         >>> MobileNetV2(num_classes=1000)
     """
-    def __init__(self, num_classes=1000, width_mult=1.,
+
+    def __init__(self, platform, num_classes=1000, width_mult=1.,
                  has_dropout=False, inverted_residual_setting=None, round_nearest=8):
         super(MobileNetV2, self).__init__()
         block = InvertedResidual
@@ -226,16 +227,16 @@ class MobileNetV2(nn.Cell):
         # building first layer
         input_channel = _make_divisible(input_channel * width_mult, round_nearest)
         self.out_channels = _make_divisible(last_channel * max(1.0, width_mult), round_nearest)
-        features = [ConvBNReLU(3, input_channel, stride=2)]
+        features = [ConvBNReLU(platform, 3, input_channel, stride=2)]
         # building inverted residual blocks
         for t, c, n, s in self.cfgs:
             output_channel = _make_divisible(c * width_mult, round_nearest)
             for i in range(n):
                 stride = s if i == 0 else 1
-                features.append(block(input_channel, output_channel, stride, expand_ratio=t))
+                features.append(block(platform, input_channel, output_channel, stride, expand_ratio=t))
                 input_channel = output_channel
         # building last several layers
-        features.append(ConvBNReLU(input_channel, self.out_channels, kernel_size=1))
+        features.append(ConvBNReLU(platform, input_channel, self.out_channels, kernel_size=1))
         # make it nn.CellList
         self.features = nn.SequentialCell(features)
         # mobilenet head
@@ -268,14 +269,19 @@ class MobileNetV2(nn.Cell):
                 m.weight.set_parameter_data(Tensor(np.random.normal(0, np.sqrt(2. / n),
                                                                     m.weight.data.shape()).astype("float32")))
                 if m.bias is not None:
-                    m.bias.set_parameter_data(Tensor(np.zeros(m.bias.data.shape(), dtype="float32")))
+                    m.bias.set_parameter_data(
+                        Tensor(np.zeros(m.bias.data.shape(), dtype="float32")))
             elif isinstance(m, nn.BatchNorm2d):
-                m.gamma.set_parameter_data(Tensor(np.ones(m.gamma.data.shape(), dtype="float32")))
-                m.beta.set_parameter_data(Tensor(np.zeros(m.beta.data.shape(), dtype="float32")))
+                m.gamma.set_parameter_data(
+                    Tensor(np.ones(m.gamma.data.shape(), dtype="float32")))
+                m.beta.set_parameter_data(
+                    Tensor(np.zeros(m.beta.data.shape(), dtype="float32")))
             elif isinstance(m, nn.Dense):
-                m.weight.set_parameter_data(Tensor(np.random.normal(0, 0.01, m.weight.data.shape()).astype("float32")))
+                m.weight.set_parameter_data(Tensor(np.random.normal(
+                    0, 0.01, m.weight.data.shape()).astype("float32")))
                 if m.bias is not None:
-                    m.bias.set_parameter_data(Tensor(np.zeros(m.bias.data.shape(), dtype="float32")))
+                    m.bias.set_parameter_data(
+                        Tensor(np.zeros(m.bias.data.shape(), dtype="float32")))
 
 
 def mobilenet_v2(**kwargs):
