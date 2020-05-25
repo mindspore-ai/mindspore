@@ -528,6 +528,55 @@ class GatherV2(PrimitiveWithInfer):
         return out
 
 
+class Range(PrimitiveWithInfer):
+    r"""
+    Creates a sequence of numbers.
+    Set `input_x` as :math:`x_i` for each element, `output` as follows:
+
+    .. math::
+        \text{output}(x_i) = x_i * \text{delta} + \text{start}
+
+    Args:
+        start (float): If `limit` is `None`, the value acts as limit in the range and first entry
+            defaults to `0`. Otherwise, it acts as first entry in the range.
+        limit (float): Acts as upper limit of sequence. If `None`, defaults to the value of `start`
+            while set the first entry of the range to `0`.
+        delta (float): Increment of the range. Default: 1.0.
+
+    Inputs:
+        - **input_x** (Tensor) - The assistant data. A `1-D` tensor of type float32 or int32.
+
+    Outputs:
+        Tensor, has the same shape and dtype as `input_x`.
+
+    Examples:
+        >>> range = P.Range(1.0, 8.0, 2.0)
+        >>> x = Tensor(np.array([1, 2, 3, 2]), mindspore.int32)
+        >>> range(x)
+        [3, 5, 7, 5]
+    """
+
+    @prim_attr_register
+    def __init__(self, start, limit=None, delta=1.0):
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        self.delta = validator.check_value_type("delta", delta, [float], self.name)
+        validator.check_value_type("start", start, [float], self.name)
+        if limit is None:
+            self.start = 0.0
+            self.limit = start
+            self.add_prim_attr("start", self.start)
+            self.add_prim_attr("limit", self.limit)
+        else:
+            validator.check_value_type("limit", limit, [float], self.name)
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_type_same({'x_dtype': x_dtype}, [mstype.float32, mstype.int32], self.name)
+        return x_dtype
+
+
 class Split(PrimitiveWithInfer):
     """
     Splits input tensor into output_num of tensors along the given axis and output numbers.

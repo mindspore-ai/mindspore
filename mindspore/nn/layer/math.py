@@ -13,11 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """math"""
+import math
 from mindspore.ops import operations as P
+from mindspore.common.tensor import Tensor
 from ..cell import Cell
+from ...common import dtype as mstype
 from ..._checkparam import Validator as validator
 
-__all__ = ['ReduceLogSumExp']
+__all__ = ['ReduceLogSumExp', 'Range']
 
 class ReduceLogSumExp(Cell):
     r"""
@@ -66,3 +69,56 @@ class ReduceLogSumExp(Cell):
         sumexp = self.sum(exp, self.axis)
         logsumexp = self.log(sumexp)
         return logsumexp
+
+
+class Range(Cell):
+    r"""
+    Creates a sequence of numbers.
+
+    Args:
+        start (Union[int, float]): If `limit` is `None`, the value acts as limit in the range and first entry
+            defaults to `0`. Otherwise, it acts as first entry in the range.
+        limit (Union[int, float]): Acts as upper limit of sequence. If `None`, defaults to the value of `start`
+            while set the first entry of the range to `0`.
+        delta (Union[int, float]): Increment of the range. Default: 1.
+
+    Outputs:
+        Tensor, the dtype is int if the dtype of `start`, `limit` and `delta` all are int. Otherwise, dtype is float.
+
+    Examples:
+        >>> net = nn.Range(1, 8, 2)
+        >>> out = net()
+        [1, 3, 5, 7]
+    """
+
+    def __init__(self, start, limit=None, delta=1):
+        super(Range, self).__init__()
+        validator.check_value_type("start", start, [int, float], None)
+        validator.check_value_type("delta", delta, [int, float], None)
+        if limit is not None:
+            validator.check_value_type("limit", limit, [int, float], None)
+            if isinstance(start, int) and isinstance(limit, int) and isinstance(delta, int):
+                self.dtype = mstype.int32
+            else:
+                self.dtype = mstype.float32
+        else:
+            if isinstance(start, int) and isinstance(delta, int):
+                self.dtype = mstype.int32
+            else:
+                self.dtype = mstype.float32
+        if isinstance(start, int):
+            start = float(start)
+        if isinstance(limit, int):
+            limit = float(limit)
+        if isinstance(delta, int):
+            delta = float(delta)
+        self.range_x = P.Range(start, limit, delta)
+        if limit is None:
+            length_input = math.ceil(start / delta)
+        else:
+            length_input = math.ceil((limit - start) / delta)
+        self.input_tensor = Tensor(list(range(length_input)), self.dtype)
+
+    def construct(self):
+        range_out = self.range_x(self.input_tensor)
+        return range_out

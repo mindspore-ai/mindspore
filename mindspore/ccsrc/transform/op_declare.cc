@@ -842,6 +842,13 @@ ATTR_MAP(SplitD) = {{"axis", ATTR_DESC(split_dim, AnyTraits<int>())},
                     {"output_num", ATTR_DESC(num_split, AnyTraits<int>())}};
 DYN_OUTPUT_MAP(SplitD) = {{0, DYN_OUTPUT_DESC(y)}};
 
+// Range
+INPUT_MAP(RangeD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(RangeD) = {{"start", ATTR_DESC(start, AnyTraits<float>())},
+                    {"limit", ATTR_DESC(limit, AnyTraits<float>())},
+                    {"delta", ATTR_DESC(delta, AnyTraits<float>())}};
+OUTPUT_MAP(RangeD) = {{0, OUTPUT_DESC(y)}};
+
 // Neg
 INPUT_MAP(Neg) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Neg) = EMPTY_ATTR_MAP;
