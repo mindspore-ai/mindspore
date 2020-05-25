@@ -123,3 +123,15 @@ Inference result will be stored in the example path, whose folder name is "infer
 ```
 result: {'acc': 0.91446314102564111} ckpt=~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
 ```
+
+### Running on GPU
+```
+# distributed training example
+mpirun -n 8 python train.py --dataset_path=~/cifar-10-batches-bin --device_target="GPU" --run_distribute=True
+
+# standalone training example
+python train.py --dataset_path=~/cifar-10-batches-bin --device_target="GPU"
+
+# infer example
+python eval.py --dataset_path=~/cifar10-10-verify-bin --device_target="GPU" --checkpoint_path=resnet-90_195.ckpt
+```
