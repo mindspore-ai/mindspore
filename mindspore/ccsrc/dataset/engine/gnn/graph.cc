@@ -51,7 +51,7 @@ Status Graph::CreateTensorByVector(const std::vector<std::vector<T>> &data, Data
     RETURN_STATUS_UNEXPECTED("Data type not compatible");
   }
   if (data.empty()) {
-    RETURN_STATUS_UNEXPECTED("Input data is emply");
+    RETURN_STATUS_UNEXPECTED("Input data is empty");
   }
   std::shared_ptr<Tensor> tensor;
   size_t m = data.size();
@@ -74,7 +74,7 @@ Status Graph::CreateTensorByVector(const std::vector<std::vector<T>> &data, Data
 template <typename T>
 Status Graph::ComplementVector(std::vector<std::vector<T>> *data, size_t max_size, T default_value) {
   if (!data || data->empty()) {
-    RETURN_STATUS_UNEXPECTED("Input data is emply");
+    RETURN_STATUS_UNEXPECTED("Input data is empty");
   }
   for (std::vector<T> &vec : *data) {
     size_t size = vec.size();
@@ -93,6 +93,9 @@ Status Graph::GetEdges(EdgeType edge_type, EdgeIdType edge_num, std::shared_ptr<
 
 Status Graph::GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
                               std::shared_ptr<Tensor> *out) {
+  if (node_list.empty()) {
+    RETURN_STATUS_UNEXPECTED("Input node_list is empty.");
+  }
   if (node_type_map_.find(neighbor_type) == node_type_map_.end()) {
     std::string err_msg = "Invalid neighbor type:" + std::to_string(neighbor_type);
     RETURN_STATUS_UNEXPECTED(err_msg);
@@ -147,7 +150,7 @@ Status Graph::GetNodeDefaultFeature(FeatureType feature_type, std::shared_ptr<Fe
 Status Graph::GetNodeFeature(const std::shared_ptr<Tensor> &nodes, const std::vector<FeatureType> &feature_types,
                              TensorRow *out) {
   if (!nodes || nodes->Size() == 0) {
-    RETURN_STATUS_UNEXPECTED("Inpude nodes is empty");
+    RETURN_STATUS_UNEXPECTED("Input nodes is empty");
   }
   TensorRow tensors;
   for (auto f_type : feature_types) {
