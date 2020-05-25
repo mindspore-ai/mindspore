@@ -116,9 +116,116 @@ const AnfNodePtr LambNextMVRule::Process(const FuncGraphPtr &func_graph, const A
   return CreateLambNextMVNode(func_graph, old_pattern_outputs, equiv);
 }
 
+const BaseRef LambNextMVRuleCond1::DefinePattern() const {
+  const auto prim_rsqrt = std::make_shared<Primitive>(kRsqrtOpName);
+
+  auto mul0 = VectorRef({prim::kPrimMul, mul0_x_, input4_});
+  auto mul1 = VectorRef({prim::kPrimMul, mul1_sub_, input3_});
+  auto mul2 = VectorRef({prim::kPrimMul, mul2_x_, input1_});
+  auto mul3 = VectorRef({prim::kPrimMul, mul3_sub1_, input0_});
+  auto mul4 = VectorRef({prim::kPrimMul, mul4_x_, input6_});
+  auto add0 = VectorRef({add0_var_, mul0, mul1});
+  auto add1 = VectorRef({add1_var_, mul2, mul3});
+
+  auto real_div0 = VectorRef({real_div0_var_, add0, input5_});
+  auto real_div1 = VectorRef({real_div1_var_, add1, input2_});
+
+  auto add2 = VectorRef({prim::kPrimTensorAdd, add2_y_, real_div1});
+  auto sqrt0 = VectorRef({prim_rsqrt, add2});
+  auto real_div2 = VectorRef({real_div2_var_, sqrt0, real_div0});
+
+  return VectorRef({prim::kPrimTensorAdd, mul4, real_div2});
+}
+
+BaseRef LambNextMVRuleCond1::DefineAnotherPattern() const {
+  const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
+  const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
+  VarPtr Xs = std::make_shared<SeqVar>();
+  VarPtr Ys = std::make_shared<SeqVar>();
+  // Two patterns share: real_div0, real_div1, add2_y_
+  VectorRef real_div0 = VectorRef({real_div0_var_, Xs});
+  VectorRef real_div1 = VectorRef({real_div1_var_, Ys});
+
+  VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
+  VectorRef add4 = VectorRef({prim::kPrimTensorAdd, add2_y_, sqrt1});
+  VectorRef real_div4 = VectorRef({prim_real_div, real_div0, add4});
+  return real_div4;
+}
+
+const BaseRef LambNextMVRuleCond2::DefinePattern() const {
+  const auto prim_rsqrt = std::make_shared<Primitive>(kRsqrtOpName);
+
+  auto mul0 = VectorRef({prim::kPrimMul, input4_, mul0_x_});
+  auto mul1 = VectorRef({prim::kPrimMul, input3_, mul1_sub_});
+  auto mul2 = VectorRef({prim::kPrimMul, input1_, mul2_x_});
+  auto mul3 = VectorRef({prim::kPrimMul, mul3_sub1_, input0_});
+  auto mul4 = VectorRef({prim::kPrimMul, input6_, mul4_x_});
+  auto add0 = VectorRef({add0_var_, mul0, mul1});
+  auto add1 = VectorRef({add1_var_, mul2, mul3});
+
+  auto real_div0 = VectorRef({real_div0_var_, add0, input5_});
+  auto real_div1 = VectorRef({real_div1_var_, add1, input2_});
+
+  auto add2 = VectorRef({prim::kPrimTensorAdd, add2_y_, real_div1});
+  auto sqrt0 = VectorRef({prim_rsqrt, add2});
+  auto real_div2 = VectorRef({real_div2_var_, sqrt0, real_div0});
+
+  return VectorRef({prim::kPrimTensorAdd, mul4, real_div2});
+}
+
+BaseRef LambNextMVRuleCond2::DefineAnotherPattern() const {
+  const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
+  const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
+  VarPtr Xs = std::make_shared<SeqVar>();
+  VarPtr Ys = std::make_shared<SeqVar>();
+  // Two patterns share: real_div0, real_div1, add2_y_
+  VectorRef real_div0 = VectorRef({real_div0_var_, Xs});
+  VectorRef real_div1 = VectorRef({real_div1_var_, Ys});
+
+  VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
+  VectorRef add4 = VectorRef({prim::kPrimTensorAdd, sqrt1, add2_y_});
+  VectorRef real_div4 = VectorRef({prim_real_div, real_div0, add4});
+  return real_div4;
+}
+
+const BaseRef LambNextMVRuleCond3::DefinePattern() const {
+  const auto prim_rsqrt = std::make_shared<Primitive>(kRsqrtOpName);
+
+  auto mul0 = VectorRef({prim::kPrimMul, input4_, mul0_x_});
+  auto mul1 = VectorRef({prim::kPrimMul, input3_, mul1_sub_});
+  auto mul2 = VectorRef({prim::kPrimMul, input1_, mul2_x_});
+  auto mul3 = VectorRef({prim::kPrimMul, input0_, mul3_sub1_});
+  auto mul4 = VectorRef({prim::kPrimMul, input6_, mul4_x_});
+  auto add0 = VectorRef({add0_var_, mul0, mul1});
+  auto add1 = VectorRef({add1_var_, mul2, mul3});
+
+  auto real_div0 = VectorRef({real_div0_var_, add0, input5_});
+  auto real_div1 = VectorRef({real_div1_var_, add1, input2_});
+
+  auto add2 = VectorRef({prim::kPrimTensorAdd, real_div1, add2_y_});
+  auto sqrt0 = VectorRef({prim_rsqrt, add2});
+  auto real_div2 = VectorRef({real_div2_var_, sqrt0, real_div0});
+
+  return VectorRef({prim::kPrimTensorAdd, mul4, real_div2});
+}
+
+BaseRef LambNextMVRuleCond3::DefineAnotherPattern() const {
+  const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
+  const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
+  VarPtr Xs = std::make_shared<SeqVar>();
+  VarPtr Ys = std::make_shared<SeqVar>();
+  // Two patterns share: real_div0, real_div1, add2_y_
+  VectorRef real_div0 = VectorRef({real_div0_var_, Xs});
+  VectorRef real_div1 = VectorRef({real_div1_var_, Ys});
+
+  VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
+  VectorRef add4 = VectorRef({prim::kPrimTensorAdd, sqrt1, add2_y_});
+  VectorRef real_div4 = VectorRef({prim_real_div, real_div0, add4});
+  return real_div4;
+}
+
 const BaseRef LambNextMVRuleCond4::DefinePattern() const {
   const auto prim_rsqrt = std::make_shared<Primitive>(kRsqrtOpName);
-  MS_EXCEPTION_IF_NULL(prim_rsqrt);
 
   auto mul0 = VectorRef({prim::kPrimMul, mul0_x_, input4_});
   auto mul1 = VectorRef({prim::kPrimMul, mul1_sub_, input3_});
@@ -140,13 +247,9 @@ const BaseRef LambNextMVRuleCond4::DefinePattern() const {
 
 BaseRef LambNextMVRuleCond4::DefineAnotherPattern() const {
   const auto prim_sqrt = std::make_shared<Primitive>(kSqrtOpName);
-  MS_EXCEPTION_IF_NULL(prim_sqrt);
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
-  MS_EXCEPTION_IF_NULL(prim_real_div);
   VarPtr Xs = std::make_shared<SeqVar>();
   VarPtr Ys = std::make_shared<SeqVar>();
-  MS_EXCEPTION_IF_NULL(Xs);
-  MS_EXCEPTION_IF_NULL(Ys);
   // Two patterns share: real_div0, real_div1, add2_y_
   VectorRef real_div0 = VectorRef({real_div0_var_, Xs});
   VectorRef real_div1 = VectorRef({real_div1_var_, Ys});

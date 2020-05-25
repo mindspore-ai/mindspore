@@ -104,6 +104,9 @@ void AddAscendBackendOptionalIRFusion(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond2>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond3>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVWithDecayRuleCond4>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond1>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond2>());
+  ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond3>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextMVRuleCond4>());
   ir_fusion_pm->AddPass(std::make_shared<LambNextRightRule>());
   ir_fusion_pm->AddPass(std::make_shared<LambUpdateWithLrV2>());

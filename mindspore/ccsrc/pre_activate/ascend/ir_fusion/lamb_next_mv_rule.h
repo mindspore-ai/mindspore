@@ -87,6 +87,33 @@ class LambNextMVRule : public MultipleOutputPatternProcessPass {
   VarPtr real_div2_var_;
 };
 
+class LambNextMVRuleCond1 : public LambNextMVRule {
+ public:
+  explicit LambNextMVRuleCond1(bool multigraph = true) : LambNextMVRule("lamb_next_mv_rule_cond1", multigraph) {}
+
+  ~LambNextMVRuleCond1() override = default;
+  const BaseRef DefinePattern() const override;
+  BaseRef DefineAnotherPattern() const override;
+};
+
+class LambNextMVRuleCond2 : public LambNextMVRule {
+ public:
+  explicit LambNextMVRuleCond2(bool multigraph = true) : LambNextMVRule("lamb_next_mv_rule_cond2", multigraph) {}
+
+  ~LambNextMVRuleCond2() override = default;
+  const BaseRef DefinePattern() const override;
+  BaseRef DefineAnotherPattern() const override;
+};
+
+class LambNextMVRuleCond3 : public LambNextMVRule {
+ public:
+  explicit LambNextMVRuleCond3(bool multigraph = true) : LambNextMVRule("lamb_next_mv_rule_cond3", multigraph) {}
+
+  ~LambNextMVRuleCond3() override = default;
+  const BaseRef DefinePattern() const override;
+  BaseRef DefineAnotherPattern() const override;
+};
+
 class LambNextMVRuleCond4 : public LambNextMVRule {
  public:
   explicit LambNextMVRuleCond4(bool multigraph = true) : LambNextMVRule("lamb_next_mv_rule_cond4", multigraph) {}
