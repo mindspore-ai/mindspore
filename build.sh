@@ -433,9 +433,9 @@ build_predict()
 
     cd "${BASEPATH}/predict/output/"
     if [[ "$PREDICT_PLATFORM" == "x86_64" ]]; then
-      tar -cf MSPredict-0.2.0-linux_x86_64.tar.gz include/ lib/ --warning=no-file-changed
+      tar -cf MSPredict-0.3.0-linux_x86_64.tar.gz include/ lib/ --warning=no-file-changed
     elif [[ "$PREDICT_PLATFORM" == "arm64" ]]; then
-      tar -cf MSPredict-0.2.0-linux_aarch64.tar.gz include/ lib/ --warning=no-file-changed
+      tar -cf MSPredict-0.3.0-linux_aarch64.tar.gz include/ lib/ --warning=no-file-changed
     fi
     echo "success to build predict project!"
 }
