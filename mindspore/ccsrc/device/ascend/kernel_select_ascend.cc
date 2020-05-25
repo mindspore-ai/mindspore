@@ -512,7 +512,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node) {
     MS_LOG(WARNING) << "The node [" << kernel_node->DebugString()
                     << "] cannot find valid TBE kernel info, try to get aicpu kernel info";
     kernel::AICPUQuery(kernel_node, &aicpu_kernel_info_list);
-    select_status = SetMatchedKernelInfo(kernel_node, kernel_info_list);
+    select_status = SetMatchedKernelInfo(kernel_node, aicpu_kernel_info_list);
     AnfAlgo::SetNodeAttr(kAttrIsAICPUKernel, MakeValue(true), kernel_node);
   }
   // The kernel info not finded both in the aicpu kernel list & aicore kernel list
