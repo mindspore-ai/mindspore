@@ -1397,7 +1397,7 @@ class EqualCount(PrimitiveWithInfer):
     """
     Computes the number of the same elements of two tensors.
 
-    The two input tensors should have same shape and same data type.
+    The two input tensors should have same data type.
 
     Inputs:
         - **input_x** (Tensor) - The first input tensor.
