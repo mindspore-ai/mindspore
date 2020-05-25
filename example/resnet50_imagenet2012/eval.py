@@ -32,12 +32,13 @@ parser.add_argument('--do_train', type=bool, default=False, help='Do train or no
 parser.add_argument('--do_eval', type=bool, default=True, help='Do eval or not.')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
+parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
 args_opt = parser.parse_args()
-
-device_id = int(os.getenv('DEVICE_ID'))
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
-context.set_context(device_id=device_id)
+target = args_opt.device_target
+context.set_context(mode=context.GRAPH_MODE, device_target=target, save_graphs=False)
+if target == "Ascend":
+    device_id = int(os.getenv('DEVICE_ID'))
+    context.set_context(device_id=device_id)
 
 if __name__ == '__main__':
 
@@ -47,7 +48,8 @@ if __name__ == '__main__':
     loss = CrossEntropy(smooth_factor=config.label_smooth_factor, num_classes=config.class_num)
 
     if args_opt.do_eval:
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size)
+        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=False, batch_size=config.batch_size,
+                                 target=target)
         step_size = dataset.get_dataset_size()
 
         if args_opt.checkpoint_path:

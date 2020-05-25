@@ -29,7 +29,7 @@ from mindspore.train.model import Model, ParallelMode
 
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_rank, get_group_size
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
@@ -37,28 +37,37 @@ parser.add_argument('--device_num', type=int, default=1, help='Device num.')
 parser.add_argument('--do_train', type=bool, default=True, help='Do train or not.')
 parser.add_argument('--do_eval', type=bool, default=False, help='Do eval or not.')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
+parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
 args_opt = parser.parse_args()
 
-device_id = int(os.getenv('DEVICE_ID'))
-
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id,
-                    enable_auto_mixed_precision=True)
 
 if __name__ == '__main__':
+    target = args_opt.device_target
     if not args_opt.do_eval and args_opt.run_distribute:
-        context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          mirror_mean=True)
-        auto_parallel_context().set_all_reduce_fusion_split_indices([107, 160])
-        init()
+        if target == "Ascend":
+            device_id = int(os.getenv('DEVICE_ID'))
+            context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id,
+                                enable_auto_mixed_precision=True)
+            init()
+            context.set_auto_parallel_context(device_num=args_opt.device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              mirror_mean=True)
+            auto_parallel_context().set_all_reduce_fusion_split_indices([107, 160])
+            ckpt_save_dir = config.save_checkpoint_path
+            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+        elif target == "GPU":
+            context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=False)
+            init("nccl")
+            context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
+                                              mirror_mean=True)
+            ckpt_save_dir = config.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
+            loss = SoftmaxCrossEntropyWithLogits(sparse=True, is_grad=False, reduction='mean')
 
     epoch_size = config.epoch_size
     net = resnet50(class_num=config.class_num)
-    loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-
 
     if args_opt.do_train:
         dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True,
-                                 repeat_num=epoch_size, batch_size=config.batch_size)
+                                 repeat_num=epoch_size, batch_size=config.batch_size, target=target)
         step_size = dataset.get_dataset_size()
 
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
@@ -67,9 +76,11 @@ if __name__ == '__main__':
                            lr_decay_mode='poly'))
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                        config.weight_decay, config.loss_scale)
-
-        model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'}, amp_level="O2",
-                      keep_batchnorm_fp32=False)
+        if target == 'GPU':
+            model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
+        else:
+            model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
+                          amp_level="O2", keep_batchnorm_fp32=True)
 
         time_cb = TimeMonitor(data_size=step_size)
         loss_cb = LossMonitor()
@@ -77,6 +88,6 @@ if __name__ == '__main__':
         if config.save_checkpoint:
             config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
                                          keep_checkpoint_max=config.keep_checkpoint_max)
-            ckpt_cb = ModelCheckpoint(prefix="resnet", directory=config.save_checkpoint_path, config=config_ck)
+            ckpt_cb = ModelCheckpoint(prefix="resnet", directory=ckpt_save_dir, config=config_ck)
             cb += [ckpt_cb]
         model.train(epoch_size, dataset, callbacks=cb)
