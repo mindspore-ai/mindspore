@@ -229,7 +229,7 @@ def CusTranspose02314(input_x, output, kernel_name="transpose021354"):
                         tik_instance.vadds(16, transpose_ub[0, cc2, cc3, cc4, 0], input_x_ub[0, cc4, cc2, cc3, 0],
                                            0, 1, 1, 1, 0, 0)
             tik_instance.data_move(res[block_idx * 200704 + split_index * 2 * 14336], transpose_ub, 0, 1, 1792, 0, 0)
-       with tik_instance.for_range(0, 32, block_num=32) as block_idx:
+        with tik_instance.for_range(0, 32, block_num=32) as block_idx:
             with tik_instance.for_range(0, 6, thread_num=2) as cc1:
                 _inner_compute(cc1, block_idx)
             _inner_compute(6, block_idx)

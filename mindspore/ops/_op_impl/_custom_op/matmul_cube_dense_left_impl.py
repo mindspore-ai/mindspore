@@ -352,7 +352,7 @@ def CusMatMulCubeDenseLeft(input_x1, input_x2, bias=None, output_y={}, trans_a=F
     if trans_b and kn_shape == 1:
         block_out = cce.BLOCK_VECTOR
  
-   if not trans_b and n_shape == 1:
+    if not trans_b and n_shape == 1:
         block_out = cce.BLOCK_VECTOR
  
     if trans_a:

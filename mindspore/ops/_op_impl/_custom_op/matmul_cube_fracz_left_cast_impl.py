@@ -370,7 +370,6 @@ def CusMatMulCubeFraczLeftCast(input_x1, input_x2, bias=None, output_y={}, trans
     cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b, res_matmul,
                          mo_tile=mo_tile, ko_tile=ko_tile, no_tile=no_tile,
                          diag_opt=diag_opt, diag_size=DIAG_SIZE)
-                         diag_opt=diag_opt, diag_size=DIAG_SIZE)
     tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2], outputs=[res_matmul])
     return tik_instance
  
