@@ -1153,6 +1153,9 @@ def check_aligned_list(param, param_name, membor_type):
 
     if not isinstance(param, list):
         raise TypeError("Parameter {0} is not a list".format(param_name))
+    if not param:
+        raise TypeError(
+            "Parameter {0} or its members are empty".format(param_name))
     membor_have_list = None
     list_len = None
     for membor in param:
