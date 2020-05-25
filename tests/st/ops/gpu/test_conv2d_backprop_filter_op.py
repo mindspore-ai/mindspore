@@ -66,13 +66,6 @@ def test_conv2d_backprop_filter():
         [-3, -2, -3, -16]]]]).astype(np.float32))
     conv2d_filter = Conv2dFilter()
     output = conv2d_filter(out, x, w)
-    print("================================")
-    """
-    expect output:
-    [[[[ -60, -142, -265]
-       [-104, -211, -322]
-       [-102, -144, -248]]]]
-    """
     expect = np.array([[[[-60, -142, -265],
                          [-104, -211, -322],
                          [-102, -144, -248]]]]).astype(np.float32)

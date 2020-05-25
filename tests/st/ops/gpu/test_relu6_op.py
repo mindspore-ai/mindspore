@@ -38,8 +38,8 @@ def test_relu6():
     x = Tensor(np.array([[[[-1, 1, 10],
                            [5.9, 6.1, 6],
                            [10, 1, -1]]]]).astype(np.float32))
-    expect = np.array([[[[0, 1, 6, ],
-                         [5.9, 6, 6, ],
+    expect = np.array([[[[0, 1, 6,],
+                         [5.9, 6, 6,],
                          [6, 1, 0.]]]]).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")

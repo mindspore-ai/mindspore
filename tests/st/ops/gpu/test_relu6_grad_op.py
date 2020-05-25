@@ -19,7 +19,6 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 
 
@@ -42,9 +41,9 @@ def test_relu6_grad():
     dy = Tensor(np.array([[[[1, 1, 1],
                             [1, 1, 1],
                             [1, 1, 1]]]]).astype(np.float32))
-    expect = np.array([[[[0, 1, 0, ],
-                         [1, 0, 0, ],
-                         [0, 1, 0, ]]]]).astype(np.float32)
+    expect = np.array([[[[0, 1, 0,],
+                         [1, 0, 0,],
+                         [0, 1, 0,]]]]).astype(np.float32)
     error = np.ones(shape=[3, 3]) * 1.0e-6
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")

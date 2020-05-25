@@ -57,16 +57,6 @@ def test_conv2d():
     conv2d = NetConv2d()
     output = conv2d(x, w)
     assert (output.asnumpy() == expect).all()
-    """
-    expect output:
-    [[[[ 45.  48.  51.]
-       [ 54.  57.  60.]
-       [ 63.  66.  69.]]
-
-      [[126. 138. 150.]
-       [162. 174. 186.]
-       [198. 210. 222.]]]]
-    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     conv2d = NetConv2d()
     output = conv2d(x, w)

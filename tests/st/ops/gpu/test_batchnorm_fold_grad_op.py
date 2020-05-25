@@ -38,8 +38,8 @@ class Net(nn.Cell):
 
 def np_result(d_batch_mean, d_batch_std, x, batch_mean, batch_std):
     n = x.shape[0] * x.shape[2] * x.shape[3]
-    dx = d_batch_mean.reshape(1, -1, 1, 1) / n + d_batch_std.reshape(1, -1, 1, 1) * (
-            x - batch_mean.reshape(1, -1, 1, 1)) / batch_std.reshape(1, -1, 1, 1) / n
+    dx = (d_batch_mean.reshape(1, -1, 1, 1) / n + d_batch_std.reshape(1, -1, 1, 1) *
+          (x - batch_mean.reshape(1, -1, 1, 1)) / batch_std.reshape(1, -1, 1, 1) / n)
     return dx
 
 

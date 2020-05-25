@@ -41,8 +41,8 @@ def test_slice():
               [[4., -4., 4.]]]
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    slice = Slice()
-    output = slice(x)
+    slice_op = Slice()
+    output = slice_op(x)
     assert (output.asnumpy() == expect).all()
 
 

@@ -37,11 +37,6 @@ class NetFlatten(nn.Cell):
 def test_flatten():
     x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32))
     expect = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32)
-    """
-    expect output:
-    [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]
-    """
-
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     flatten = NetFlatten()
     output = flatten(x)

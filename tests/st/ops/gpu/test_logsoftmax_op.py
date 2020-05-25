@@ -35,8 +35,8 @@ def test_logsoftmax():
                        [-3.452001, -1.2546989, -1.4618242, -0.79552734]]).astype(np.float32)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    LogSoftmax = P.LogSoftmax()
-    output = LogSoftmax(Tensor(x))
+    logSoftmax = P.LogSoftmax()
+    output = logSoftmax(Tensor(x))
     assert np.allclose(output.asnumpy(), expect)
 
 
@@ -134,7 +134,7 @@ def test_logsoftmaxgrad1():
                        [-0.01768187, 0.26872346, -0.5037259, -0.3376058, -0.3291146, 1.4752979, -0.25972134, 0.8869053,
                         0.25325722, -0.13946185],
                        [-0.5247209, 0.70192003, -1.0808672, 1.4858199, -1.1273282, 0.20728993, 0.38918605, 0.08162117,
-                        0.10445589, 0.3220427]], ).astype(np.float32)
+                        0.10445589, 0.3220427]],).astype(np.float32)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = LogSoftmax(0)

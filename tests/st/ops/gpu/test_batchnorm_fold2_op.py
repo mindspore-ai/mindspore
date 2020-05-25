@@ -68,10 +68,10 @@ def test_batchnrom_fold2():
     current_step = np.array([0]).astype('int32')
     output = net(Tensor(x), Tensor(beta), Tensor(gamma), Tensor(batch_std), Tensor(batch_mean),
                  Tensor(running_std), Tensor(running_mean), Tensor(current_step))
-    expect = (x + beta.reshape(-1, 1, 1) - (gamma * running_mean / running_std).reshape(-1, 1,
-                                                                                        1) if current_step >= freeze_bn else
-              x * (running_std / batch_std).reshape(-1, 1, 1) + (beta - gamma * batch_mean / batch_std).reshape(-1, 1,
-                                                                                                                1))
+    expect = ((x + beta.reshape(-1, 1, 1) - 
+               (gamma * running_mean / running_std).reshape(-1, 1, 1) if current_step >= freeze_bn else
+               x * (running_std / batch_std).reshape(-1, 1, 1) + 
+               (beta - gamma * batch_mean / batch_std).reshape(-1, 1, 1)))
     error = np.ones(shape=expect.shape) * 1.0e-6
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
@@ -80,10 +80,9 @@ def test_batchnrom_fold2():
     current_step = np.array([100000]).astype('int32')
     output = net(Tensor(x), Tensor(beta), Tensor(gamma), Tensor(batch_std), Tensor(batch_mean), Tensor(running_std),
                  Tensor(running_mean), Tensor(current_step))
-    expect = (x + beta.reshape(-1, 1, 1) - (gamma * running_mean / running_std).reshape(-1, 1,
-                                                                                        1) if current_step >= freeze_bn else
-              x * (batch_std / running_std).reshape(-1, 1, 1) + (beta - gamma * batch_mean / batch_std).reshape(-1, 1,
-                                                                                                                1))
+    expect = ((x + beta.reshape(-1, 1, 1) - (gamma * running_mean / running_std).reshape(-1, 1, 1) 
+               if current_step >= freeze_bn else x * (batch_std / running_std).reshape(-1, 1, 1) + 
+               (beta - gamma * batch_mean / batch_std).reshape(-1, 1, 1)))
     error = np.ones(shape=expect.shape) * 1.0e-6
     diff = output.asnumpy() - expect
     assert np.all(diff < error)

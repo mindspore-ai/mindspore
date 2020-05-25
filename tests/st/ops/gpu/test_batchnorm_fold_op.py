@@ -86,7 +86,7 @@ def test_batchnorm_fold2():
     ms_var = Tensor(variance)
     batch_mean, batch_var, delay_mean, delay_std = net(Tensor(x), ms_mean, ms_var,
                                                        Tensor(current_step))
-    expect1, expect2, expect3, expect4, expect5, expect6 = np_result(x, mean, variance, 0.9, 1e-12)
+    expect1, expect2, expect3, _, expect5, expect6 = np_result(x, mean, variance, 0.9, 1e-12)
     assert np.allclose(batch_mean.asnumpy(), expect1, rtol=1.e-7, atol=1.e-5)
     assert np.allclose(batch_var.asnumpy(), expect2, rtol=1.e-7, atol=1.e-5)
     assert np.allclose(ms_mean.asnumpy(), expect3, rtol=1.e-7, atol=1.e-5)
@@ -108,7 +108,7 @@ def test_batchnorm_fold_freeze():
     ms_var = Tensor(variance)
     batch_mean, batch_var, delay_mean, delay_std = net(Tensor(x), ms_mean, ms_var,
                                                        Tensor(current_step))
-    expect1, expect2, expect3, expect4, expect5, expect6 = np_result(x, mean, variance, 0.9, 1e-12)
+    _, _, _, _, expect5, expect6 = np_result(x, mean, variance, 0.9, 1e-12)
     assert np.allclose(batch_mean.asnumpy(), np.zeros_like(mean), rtol=1.e-7, atol=1.e-5)
     assert np.allclose(batch_var.asnumpy(), np.ones_like(mean), rtol=1.e-7, atol=1.e-5)
     assert np.allclose(ms_mean.asnumpy(), mean, rtol=1.e-7, atol=1.e-5)
