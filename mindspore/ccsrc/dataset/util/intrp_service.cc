@@ -27,7 +27,7 @@ IntrpService::~IntrpService() noexcept {
   MS_LOG(INFO) << "Number of registered resources is " << high_water_mark_ << ".";
   if (!all_intrp_resources_.empty()) {
     try {
-      (void)InterruptAll();
+      InterruptAll();
     } catch (const std::exception &e) {
       // Ignore all error as we can't throw in the destructor.
     }
@@ -64,11 +64,9 @@ Status IntrpService::Deregister(const std::string &name) noexcept {
     std::ostringstream ss;
     ss << this_thread::get_id();
     MS_LOG(DEBUG) << "De-register resource with name " << name << ". Thread ID is " << ss.str() << ".";
-    auto it = all_intrp_resources_.find(name);
-    if (it != all_intrp_resources_.end()) {
-      (void)all_intrp_resources_.erase(it);
-    } else {
-      MS_LOG(DEBUG) << "Key " << name << " not found.";
+    auto n = all_intrp_resources_.erase(name);
+    if (n == 0) {
+      MS_LOG(INFO) << "Key " << name << " not found.";
     }
   } catch (std::exception &e) {
     RETURN_STATUS_UNEXPECTED(e.what());
@@ -76,21 +74,16 @@ Status IntrpService::Deregister(const std::string &name) noexcept {
   return Status::OK();
 }
 
-Status IntrpService::InterruptAll() noexcept {
+void IntrpService::InterruptAll() noexcept {
   std::lock_guard<std::mutex> lck(mutex_);
-  Status rc;
   for (auto const &it : all_intrp_resources_) {
     std::string kName = it.first;
     try {
-      Status rc2 = it.second->Interrupt();
-      if (rc2.IsError()) {
-        rc = rc2;
-      }
+      it.second->Interrupt();
     } catch (const std::exception &e) {
       // continue the clean up.
     }
   }
-  return rc;
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -139,6 +139,9 @@ Status MindDataTestConnector::Run_test_0() {
                                                       10);  // capacity of each queue
   DS_ASSERT(my_conn != nullptr);
 
+  rc = my_conn->Register(tg_.get());
+  RETURN_IF_NOT_OK(rc);
+
   // Spawn a thread to read input_ vector and put it in my_conn
   rc = tg_->CreateAsyncTask("Worker Push",
                             std::bind(&MindDataTestConnector::FirstWorkerPush,
@@ -183,6 +186,11 @@ Status MindDataTestConnector::Run_test_1() {
   auto conn2 = std::make_shared<Connector<uint32_t>>(l2_threads,
                                                      l3_threads,
                                                      conn2_qcap);
+
+  rc = conn1->Register(tg_.get());
+  RETURN_IF_NOT_OK(rc);
+  rc = conn2->Register(tg_.get());
+  RETURN_IF_NOT_OK(rc);
 
   // Instantiating the threads in the first layer
   for (int i = 0; i < l1_threads; i++) {

@@ -110,7 +110,7 @@ class Queue {
       empty_cv_.NotifyAll();
       _lock.unlock();
     } else {
-      (void)empty_cv_.Interrupt();
+      empty_cv_.Interrupt();
     }
     return rc;
   }
@@ -125,7 +125,7 @@ class Queue {
       empty_cv_.NotifyAll();
       _lock.unlock();
     } else {
-      (void)empty_cv_.Interrupt();
+      empty_cv_.Interrupt();
     }
     return rc;
   }
@@ -141,7 +141,7 @@ class Queue {
       empty_cv_.NotifyAll();
       _lock.unlock();
     } else {
-      (void)empty_cv_.Interrupt();
+      empty_cv_.Interrupt();
     }
     return rc;
   }
@@ -160,7 +160,7 @@ class Queue {
       full_cv_.NotifyAll();
       _lock.unlock();
     } else {
-      (void)full_cv_.Interrupt();
+      full_cv_.Interrupt();
     }
     return rc;
   }

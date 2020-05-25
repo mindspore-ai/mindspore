@@ -35,7 +35,7 @@ class CondVar : public IntrpResource {
 
   Status Wait(std::unique_lock<std::mutex> *lck, const std::function<bool()> &pred);
 
-  Status Interrupt() override;
+  void Interrupt() override;
 
   void NotifyOne() noexcept;
 
