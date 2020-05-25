@@ -48,7 +48,7 @@ TEST_F(MindDataTestIntrpService, Test1) {
       return rc;
   });
   vg_.GetIntrpService()->InterruptAll();
-  vg_.join_all();
+  vg_.join_all(Task::WaitFlag::kNonBlocking);
 }
 
 TEST_F(MindDataTestIntrpService, Test2) {
@@ -64,5 +64,5 @@ TEST_F(MindDataTestIntrpService, Test2) {
       return rc;
   });
   vg_.GetIntrpService()->InterruptAll();
-  vg_.join_all();
+  vg_.join_all(Task::WaitFlag::kNonBlocking);
 }

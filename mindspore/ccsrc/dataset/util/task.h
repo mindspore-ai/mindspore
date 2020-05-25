@@ -42,8 +42,9 @@ class TaskManager;
 class Task : public IntrpResource {
  public:
   friend class TaskManager;
-
   friend class TaskGroup;
+
+  enum class WaitFlag : int { kBlocking, kNonBlocking };
 
   Task(const std::string &myName, const std::function<Status()> &f);
 
@@ -74,7 +75,7 @@ class Task : public IntrpResource {
   // Run the task
   Status Run();
 
-  Status Join();
+  Status Join(WaitFlag wf = WaitFlag::kBlocking);
 
   bool Running() const { return running_; }
 
