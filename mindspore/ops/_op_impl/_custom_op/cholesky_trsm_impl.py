@@ -101,4 +101,4 @@ def CusCholeskyTrsm(input_x,output, kernel_name):
         tik_instance.data_move(res[block_index,0,0], temp_ub, 0, 1, 8 * vector_repeat_times * split_dim,0,0)
 
     tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x], outputs=[res])
-        return tik_instance
+    return tik_instance

@@ -54,7 +54,7 @@ def CusMatMulCubeDenseRight(input_x1, input_x2, input_x3, bias=None, output_y={}
     shape_b_input = input_x2.get("shape")
     matrix_max_input = input_x3.get("shape")
     input_shape = (tuple(shape_a_input), tuple(shape_b_input), tuple(matrix_max_input))
-if input_shape not in support_shape:
+    if input_shape not in support_shape:
         raise RuntimeError("input_shape %s is not supported" % str(input_shape))
  
     if shape_a_temp[0] == 128 and shape_a_temp[1] == 63 and shape_b_temp[0] == 128 and shape_b_temp[1] == 128:

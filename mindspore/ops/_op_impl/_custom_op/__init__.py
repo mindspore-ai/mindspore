@@ -24,4 +24,4 @@ from .matmul_cube_fracz_left_cast_impl import CusMatMulCubeFraczLeftCast
 from .matmul_cube_fracz_right_mul_impl import CusMatMulCubeFraczRightMul
 from .matmul_cube_impl import CusMatMulCube
 from .matrix_combine_impl import CusMatrixCombine
-from .transpose_02314_impl import CusTranspose02314
+from .transpose02314_impl import CusTranspose02314

@@ -42,7 +42,8 @@ def CusFusedAbsMax1(input_x, output, origin_shape = None, kernel_name="fused_abs
 
 
     if len(input_x_shape) > 2:
-        if (input_x_shape[0] == 1 and input_x_shape[1] == 128 and input_x_shape[2] == 128)  or (input_x_shape[0] == 4 and input_x_shape[1] == 16) or (input_x_shape[0] == 16 and input_x_shape[1] == 4):             input_x = tik_instance.Tensor("float32", input_x_shape, name="input_x", scope=tik.scope_gm)
+        if (input_x_shape[0] == 1 and input_x_shape[1] == 128 and input_x_shape[2] == 128)  or (input_x_shape[0] == 4 and input_x_shape[1] == 16) or (input_x_shape[0] == 16 and input_x_shape[1] == 4):
+            input_x = tik_instance.Tensor("float32", input_x_shape, name="input_x", scope=tik.scope_gm)
             res = tik_instance.Tensor("float32", output_shape, name="res", scope=tik.scope_gm)
             total_elements = 1
             for val in input_x_shape:
@@ -131,7 +132,8 @@ def CusFusedAbsMax1(input_x, output, origin_shape = None, kernel_name="fused_abs
                     tik_instance.vmax(64, broadcast_0_local_UB, broadcast_0_local_UB, broadcast_0_local_UB[128], 2, 1, 1, 1, 8, 8, 8)
                     tik_instance.vmax(64, broadcast_0_local_UB, broadcast_0_local_UB, broadcast_0_local_UB[64], 1, 1, 1, 1, 8, 8, 8)
                     tik_instance.data_move(res[block_index, 0], broadcast_0_local_UB, 0, 1, 8, 0, 0)
-        elif (input_x_shape[0] == 4 and input_x_shape[1] == 128 and input_x_shape[2] == 128) or (input_x_shape[0] == 8 and input_x_shape[1] == 32) or (input_x_shape[0] == 32 and input_x_shape[1] == 8):            input_x = tik_instance.Tensor("float32", input_x_shape, name="input_x", scope=tik.scope_gm)
+        elif (input_x_shape[0] == 4 and input_x_shape[1] == 128 and input_x_shape[2] == 128) or (input_x_shape[0] == 8 and input_x_shape[1] == 32) or (input_x_shape[0] == 32 and input_x_shape[1] == 8):
+            input_x = tik_instance.Tensor("float32", input_x_shape, name="input_x", scope=tik.scope_gm)
             res = tik_instance.Tensor("float32", output_shape, name="res", scope=tik.scope_gm)
             total_elements = 1
             for val in input_x_shape:
@@ -608,6 +610,7 @@ def CusFusedAbsMax1(input_x, output, origin_shape = None, kernel_name="fused_abs
             res = tik_instance.Tensor("float32", output_shape, name="res", scope=tik.scope_gm)
             total_elements = 1
             for val in input_x_shape:
+                total_elements *= val
             blocks = 32
             each_block_element = total_elements // blocks
             with tik_instance.for_range(0,blocks,block_num=blocks) as block_index:
