@@ -1,14 +1,6 @@
-diff -Npur -x .git sqlite.3.31.1/manifest sqlite/manifest
---- sqlite.3.31.1/manifest	2020-02-28 16:47:53.931041525 +0800
-+++ sqlite/manifest	2020-02-28 17:29:15.553920054 +0800
-@@ -1,5 +1,5 @@
--C Version\s3.31.1
--D 2020-01-27T19:55:54.490
-+C A\sbetter\s(smaller\sand\sfaster)\ssolution\sto\sticket\s[4374860b29383380].
-+D 2020-02-17T19:25:07.592
- F .fossil-settings/empty-dirs dbb81e8fc0401ac46a1491ab34a7f2c7c0452f2f06b54ebb845d024ca8283ef1
- F .fossil-settings/ignore-glob 35175cdfcf539b2318cb04a9901442804be81cd677d8b889fcc9149c21f239ea
- F LICENSE.md df5091916dbb40e6e9686186587125e1b2ff51f022cc334e886c19a0e9982724
+diff -Npur -x .git sqlite.3.31.1/manifest sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/manifest
+--- sqlite.3.31.1/manifest	2020-04-20 10:21:03.622574899 +0800
++++ sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/manifest	2020-04-20 11:05:54.613993594 +0800
 @@ -482,8 +482,8 @@ F src/ctime.c 1b0724e66f95f33b160b1af85c
  F src/date.c 6c408fdd2e9ddf6e8431aba76315a2d061bea2cec8fbb75e25d7c1ba08274712
  F src/dbpage.c 8a01e865bf8bc6d7b1844b4314443a6436c07c3efe1d488ed89e81719047833a
@@ -42,30 +34,30 @@ diff -Npur -x .git sqlite.3.31.1/manifest sqlite/manifest
  F src/window.c f8ba2ee12a19b51d3ba42c16277c74185ee9215306bc0d5a03974ade8b5bc98f
  F test/8_3_names.test ebbb5cd36741350040fd28b432ceadf495be25b2
  F test/affinity2.test ce1aafc86e110685b324e9a763eab4f2a73f737842ec3b687bd965867de90627
-@@ -1857,10 +1857,7 @@ F vsixtest/vsixtest.tcl 6a9a6ab600c25a91
+@@ -1857,10 +1857,10 @@ F vsixtest/vsixtest.tcl 6a9a6ab600c25a91
  F vsixtest/vsixtest.vcxproj.data 2ed517e100c66dc455b492e1a33350c1b20fbcdc
  F vsixtest/vsixtest.vcxproj.filters 37e51ffedcdb064aad6ff33b6148725226cd608e
  F vsixtest/vsixtest_TemporaryKey.pfx e5b1b036facdb453873e7084e1cae9102ccc67a0
 -P 6fb9a8fb85486a8fccc462856316ef523450c23a7a7a81c8dfb323fbe809f8f5
 -R bf075f6bcc1758c5c1ecd13052997456
--T +bgcolor * #d0c0ff
--T +sym-release *
--T +sym-version-3.31.1 *
 +P 9d0d4ab95dc0c56e053c2924ed322a9ea7b25439e6f74599f706905a1994e454
 +R 1c052b7cdf4947664b7043564b643ac3
+ T +bgcolor * #d0c0ff
+ T +sym-release *
+ T +sym-version-3.31.1 *
  U drh
 -Z 7c50801eed3eaef969e028ef5a0a641a
 +Z e960557a43b001a47933dacf8bc1d10e
-diff -Npur -x .git sqlite.3.31.1/manifest.uuid sqlite/manifest.uuid
---- sqlite.3.31.1/manifest.uuid	2020-02-28 16:47:53.931041525 +0800
-+++ sqlite/manifest.uuid	2020-02-28 17:29:26.233919583 +0800
+diff -Npur -x .git sqlite.3.31.1/manifest.uuid sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/manifest.uuid
+--- sqlite.3.31.1/manifest.uuid	2020-04-20 10:21:03.630574843 +0800
++++ sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/manifest.uuid	2020-04-20 11:05:54.613993594 +0800
 @@ -1 +1 @@
 -3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837bb4d6
-\ No newline at end of file
+\ 文件尾没有换行符
 +abc473fb8fb999005dc79a360e34f97b3b25429decf1820dd2afa5c19577753d
-diff -Npur -x .git sqlite.3.31.1/src/expr.c sqlite/src/expr.c
---- sqlite.3.31.1/src/expr.c	2020-02-28 16:47:53.939041525 +0800
-+++ sqlite/src/expr.c	2020-02-28 17:29:15.537920055 +0800
+diff -Npur -x .git sqlite.3.31.1/src/expr.c sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/src/expr.c
+--- sqlite.3.31.1/src/expr.c	2020-04-20 10:21:03.642574758 +0800
++++ sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/src/expr.c	2020-04-20 11:05:54.617993541 +0800
 @@ -5463,19 +5463,25 @@ static int impliesNotNullRow(Walker *pWa
      case TK_LT:
      case TK_LE:
@@ -97,9 +89,9 @@ diff -Npur -x .git sqlite.3.31.1/src/expr.c sqlite/src/expr.c
      default:
        return WRC_Continue;
    }
-diff -Npur -x .git sqlite.3.31.1/src/sqliteInt.h sqlite/src/sqliteInt.h
---- sqlite.3.31.1/src/sqliteInt.h	2020-02-28 16:47:53.959041524 +0800
-+++ sqlite/src/sqliteInt.h	2020-02-28 17:29:15.517920056 +0800
+diff -Npur -x .git sqlite.3.31.1/src/sqliteInt.h sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/src/sqliteInt.h
+--- sqlite.3.31.1/src/sqliteInt.h	2020-04-20 10:21:03.642574758 +0800
++++ sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/src/sqliteInt.h	2020-04-20 11:05:54.617993541 +0800
 @@ -2153,8 +2153,11 @@ struct Table {
  */
  #ifndef SQLITE_OMIT_VIRTUALTABLE
@@ -112,9 +104,9 @@ diff -Npur -x .git sqlite.3.31.1/src/sqliteInt.h sqlite/src/sqliteInt.h
  #endif
  
  /*
-diff -Npur -x .git sqlite.3.31.1/src/whereexpr.c sqlite/src/whereexpr.c
---- sqlite.3.31.1/src/whereexpr.c	2020-02-28 16:47:53.991041522 +0800
-+++ sqlite/src/whereexpr.c	2020-02-28 17:29:15.493920057 +0800
+diff -Npur -x .git sqlite.3.31.1/src/whereexpr.c sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/src/whereexpr.c
+--- sqlite.3.31.1/src/whereexpr.c	2020-04-20 10:21:03.642574758 +0800
++++ sqlite.3.31.1_CVE-2020-9327_bf48ce49_78d1d225_patch001/src/whereexpr.c	2020-04-20 11:05:54.617993541 +0800
 @@ -377,7 +377,8 @@ static int isAuxiliaryVtabOperator(
      **       MATCH(expression,vtab_column)
      */
