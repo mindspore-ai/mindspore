@@ -67,6 +67,8 @@ class AscendSession : public SessionBasic {
   void SetActive(GraphId, GraphId) override;
   // compile child graph when session have multiple child graphs
   void CompileChildGraph(const KernelGraphPtr &child_graph);
+  void GetSummaryNodes(const KernelGraph *graph,
+                       std::unordered_map<std::string, std::pair<AnfNodePtr, int>> *summary) override;
 
  private:
   void InitRuntimeResource();

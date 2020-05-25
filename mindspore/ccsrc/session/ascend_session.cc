@@ -725,6 +725,27 @@ GraphId AscendSession::SetFinalGraphInput(const std::vector<AnfNodePtr> &args) {
   return final_graph_id_;
 }
 
+void AscendSession::GetSummaryNodes(const KernelGraph *graph,
+                                    std::unordered_map<std::string, std::pair<AnfNodePtr, int>> *summary) {
+  MS_LOG(DEBUG) << "Update summary Start";
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(summary);
+  summary->clear();
+  // if final graph have no child graph
+  auto graph_order_iter = graph_execute_orders_.find(graph->graph_id());
+  if (graph_order_iter == graph_execute_orders_.end()) {
+    SessionBasic::GetSummaryNodes(graph, summary);
+    return;
+  }
+  // for every child graph, find summary nodes
+  auto graph_order = GetGraphOrder(graph->graph_id());
+  for (size_t i = 0; i < graph_order.size(); i++) {
+    auto child_graph = GetGraph(graph_order[i]);
+    SessionBasic::GetSummaryNodes(child_graph.get(), summary);
+  }
+  MS_LOG(DEBUG) << "Update summary end size: " << (*summary).size();
+}
+
 AnfNodePtr AscendSession::CreateFakeOutput(GraphId fake_graph_id, const AnfNodePtr &true_output) {
   auto fake_graph = GetGraph(fake_graph_id);
   auto output_item_with_index = AnfAlgo::VisitKernelWithReturnType(true_output, 0);
