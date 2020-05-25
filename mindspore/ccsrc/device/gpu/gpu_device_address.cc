@@ -37,7 +37,13 @@ bool GPUDeviceAddress::SyncDeviceToHost(const std::vector<int> &, size_t size, T
 
 bool GPUDeviceAddress::SyncHostToDevice(const std::vector<int> &, size_t, TypeId, const void *host_ptr) const {
   MS_EXCEPTION_IF_NULL(host_ptr);
-  return GPUDeviceManager::GetInstance().CopyHostMemToDevice(ptr_, host_ptr, size_);
+  auto &stream = GPUDeviceManager::GetInstance().default_stream();
+  MS_EXCEPTION_IF_NULL(stream);
+  if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size_, stream)) {
+    MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
+    return false;
+  }
+  return GPUDeviceManager::GetInstance().SyncStream(stream);
 }
 
 GPUDeviceAddress::~GPUDeviceAddress() {
