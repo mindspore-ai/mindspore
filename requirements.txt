@@ -12,3 +12,4 @@ setuptools >= 40.8.0
 matplotlib >= 3.1.3         # for ut test
 opencv-python >= 4.2.0.32   # for ut test
 sklearn >= 0.0              # for st test
+pandas >= 1.0.2             # for ut test
