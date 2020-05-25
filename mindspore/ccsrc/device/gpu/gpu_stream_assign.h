@@ -48,7 +48,7 @@ struct StreamSwitchNode {
   }
 };
 void AssignGpuStream(const std::shared_ptr<session::KernelGraph> &kernel_graph);
-void FindAllReduceStreamSwitchPos(const std::shared_ptr<session::KernelGraph> &kernel_graph,
+bool FindAllReduceStreamSwitchPos(const std::shared_ptr<session::KernelGraph> &kernel_graph,
                                   std::vector<SendRecvPair> *send_recv_pairs);
 // Find Send node position according to "mock" recv node.
 // "mock" recv node is a gpu kernel node after a real Recv node, e.g. AllReduce node.
