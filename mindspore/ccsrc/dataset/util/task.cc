@@ -108,20 +108,27 @@ Status Task::Run() {
   return rc;
 }
 
-Status Task::Join() {
+Status Task::Join(WaitFlag blocking) {
   if (running_) {
     RETURN_UNEXPECTED_IF_NULL(MyTaskGroup());
     auto interrupt_svc = MyTaskGroup()->GetIntrpService();
     try {
-      // There is a race condition in the global resource tracking such that a thread can miss the
-      // interrupt and becomes blocked on a conditional variable forever. As a result, calling
-      // join() will not come back. We need some timeout version of join such that if the thread
-      // doesn't come back in a reasonable of time, we will send the interrupt again.
-      while (thrd_.wait_for(std::chrono::seconds(1)) != std::future_status::ready) {
-        // We can't tell which conditional_variable this thread is waiting on. So we may need
-        // to interrupt everything one more time.
-        MS_LOG(INFO) << "Some threads not responding. Interrupt again";
-        interrupt_svc->InterruptAll();
+      if (blocking == WaitFlag::kBlocking) {
+        // If we are asked to wait, then wait
+        thrd_.get();
+      } else if (blocking == WaitFlag::kNonBlocking) {
+        // There is a race condition in the global resource tracking such that a thread can miss the
+        // interrupt and becomes blocked on a conditional variable forever. As a result, calling
+        // join() will not come back. We need some timeout version of join such that if the thread
+        // doesn't come back in a reasonable of time, we will send the interrupt again.
+        while (thrd_.wait_for(std::chrono::seconds(1)) != std::future_status::ready) {
+          // We can't tell which conditional_variable this thread is waiting on. So we may need
+          // to interrupt everything one more time.
+          MS_LOG(INFO) << "Some threads not responding. Interrupt again";
+          interrupt_svc->InterruptAll();
+        }
+      } else {
+        RETURN_STATUS_UNEXPECTED("Unknown WaitFlag");
       }
       std::stringstream ss;
       ss << get_id();

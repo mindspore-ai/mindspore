@@ -278,12 +278,12 @@ Status TaskGroup::CreateAsyncTask(const std::string &my_name, const std::functio
 
 void TaskGroup::interrupt_all() noexcept { intrp_svc_->InterruptAll(); }
 
-Status TaskGroup::join_all() {
+Status TaskGroup::join_all(Task::WaitFlag wf) {
   Status rc;
   Status rc2;
   SharedLock lck(&rw_lock_);
   for (Task &tk : grp_list_) {
-    rc = tk.Join();
+    rc = tk.Join(wf);
     if (rc.IsError()) {
       rc2 = rc;
     }
@@ -294,7 +294,7 @@ Status TaskGroup::join_all() {
 Status TaskGroup::DoServiceStop() {
   intrp_svc_->ServiceStop();
   interrupt_all();
-  return (join_all());
+  return (join_all(Task::WaitFlag::kNonBlocking));
 }
 
 TaskGroup::TaskGroup() : grp_list_(&Task::group), intrp_svc_(nullptr) {

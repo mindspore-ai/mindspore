@@ -80,5 +80,5 @@ TEST_F(MindDataTestTaskManager, Test2) {
   vg.interrupt_all();
   EXPECT_TRUE(rc.IsOk());
   // Now we test the async Join
-  ASSERT_TRUE(vg.join_all().IsOk());
+  ASSERT_TRUE(vg.join_all(Task::WaitFlag::kNonBlocking).IsOk());
 }

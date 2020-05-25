@@ -122,7 +122,7 @@ class TaskGroup : public Service {
 
   void interrupt_all() noexcept;
 
-  Status join_all();
+  Status join_all(Task::WaitFlag wf = Task::WaitFlag::kBlocking);
 
   int size() const noexcept { return grp_list_.count; }
 
