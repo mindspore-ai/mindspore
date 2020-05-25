@@ -109,7 +109,7 @@ if __name__ == '__main__':
         step_size = dataset.get_dataset_size()
 
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
-        lr = Tensor(get_model_lr(0, 0.05, 6, 70, 5004))
+        lr = Tensor(get_model_lr(0, 0.045, 6, 70, 5004))
         opt = THOR(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum,
                    filter(lambda x: 'matrix_A' in x.name, net.get_parameters()),
                    filter(lambda x: 'matrix_G' in x.name, net.get_parameters()),
