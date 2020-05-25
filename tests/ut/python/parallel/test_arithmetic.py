@@ -493,15 +493,35 @@ def test_assign_sub():
                                                              1.1, dtype=np.float32)),
                                               name="assignsub_weight")
 
-        def construct(self, x, y, z):
+        def construct(self, x):
             out = self.mul(x, self.mul_weight)
             out = self.assign_sub(self.assignsub_weight, out)
             return out
 
+    class SubNetWithLoss(nn.Cell):
+        def __init__(self, network):
+            super(SubNetWithLoss, self).__init__()
+            self.loss = VirtualLoss()
+            self.network = network
+
+        def construct(self, x):
+            predict = self.network(x,)
+            return self.loss(predict)
+
+    class SubGradWrap(nn.Cell):
+        def __init__(self, network):
+            super(SubGradWrap, self).__init__()
+            self.network = network
+
+        def construct(self, x):
+            return C.grad_all(self.network)(x)
+
+    def compile_sub_net(net, x):
+        net.set_auto_parallel()
+        _executor.compile(net, x)
+
     context.set_auto_parallel_context(device_num=64, global_rank=15)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-    net = GradWrap(NetWithLoss(Net()))
+    net = SubGradWrap(SubNetWithLoss(Net()))
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    y = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    z = Tensor(np.ones([128, 32]), dtype=ms.float32)
-    compile_net(net, x, y, z)
+    compile_sub_net(net, x)

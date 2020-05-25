@@ -20,7 +20,6 @@ from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _executor
-from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as reset_op_id
@@ -33,8 +32,8 @@ class NetWithLoss(nn.Cell):
         self.loss = VirtualLoss()
         self.network = network
 
-    def construct(self, x, y, z, w):
-        predict = self.network(x, y, z, w)
+    def construct(self, x, y):
+        predict = self.network(x, y)
         return self.loss(predict)
 
 
@@ -49,9 +48,9 @@ def test_common_parameter():
             self.cast1 = P.Cast()
             self.cast2 = P.Cast()
 
-        def construct(self, x, y, z, w):
+        def construct(self, x, y):
             m1_result = self.matmul1(x, self.cast1(self.weight1, mstype.float32))
-            m2_result = self.matmul2(z, self.cast2(self.weight1, mstype.float32))
+            m2_result = self.matmul2(y, self.cast2(self.weight1, mstype.float32))
             m3_result = self.matmul3(m2_result, m1_result)
 
             return m3_result
@@ -62,15 +61,13 @@ def test_common_parameter():
     set_algo_parameters(elementwise_op_strategy_follow=True)
     x = Tensor(np.ones([64, 64]), dtype=ms.float32)
     y = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    z = Tensor(np.ones([64, 64]), dtype=ms.float32)
-    w = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
     net = NetWithLoss(Net())
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     reset_op_id()
 
-    _executor.compile(net, x, y, z, w, phase='train')
+    _executor.compile(net, x, y, phase='train')
     strategies = _executor._get_strategy(net)
     expected_strategies = {'Default/network-Net/MatMul-op1': [[8, 1], [1, 1]],
                            'Default/network-Net/MatMul-op3': [[8, 1], [1, 1]],

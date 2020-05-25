@@ -29,8 +29,8 @@ class GradWrap(nn.Cell):
         super(GradWrap, self).__init__()
         self.network = network
 
-    def construct(self, x, y, bias):
-        return C.grad_all(self.network)(x, y, bias)
+    def construct(self, x, y):
+        return C.grad_all(self.network)(x, y)
 
 
 def test_sum_as_loss():
@@ -41,7 +41,7 @@ def test_sum_as_loss():
             self.reduce_sum = P.ReduceSum(keep_dims=False).set_strategy(strategy1)
             self.mul = P.Mul().set_strategy(strategy=((), ()))
 
-        def construct(self, x, y, bias):
+        def construct(self, x, y):
             out = self.fc_nobias(x, y)
             out = self.reduce_sum(out, (0, 1))
             out = self.mul(out, F.scalar_to_array(2.0))
@@ -57,5 +57,4 @@ def test_sum_as_loss():
 
     x = Tensor(np.ones([64, 32]), dtype=ms.float32)
     y = Tensor(np.ones([64, 32]), dtype=ms.float32)
-    bias = Tensor(np.ones([64]), dtype=ms.float32)
-    _executor.compile(net, x, y, bias)
+    _executor.compile(net, x, y)
