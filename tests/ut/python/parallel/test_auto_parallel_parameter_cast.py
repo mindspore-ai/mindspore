@@ -38,17 +38,6 @@ class NetWithLoss(nn.Cell):
         return self.loss(predict)
 
 
-class GradWrap(nn.Cell):
-    def __init__(self, network):
-        super(GradWrap, self).__init__()
-        self.network = network
-
-    def construct(self, x, y, z, w):
-        return C.grad_all(self.network)(x, y, z, w)
-
-    # model_parallel test
-
-
 def test_common_parameter():
     class Net(nn.Cell):
         def __init__(self):

@@ -174,9 +174,9 @@ def test_reshape_auto_4():
 
 
 def test_reshape_auto_5():
-    class NetWithLoss(nn.Cell):
+    class NetWithLoss5(nn.Cell):
         def __init__(self, network):
-            super(NetWithLoss, self).__init__()
+            super(NetWithLoss5, self).__init__()
             self.loss = VirtualLoss()
             self.network = network
 
@@ -184,9 +184,9 @@ def test_reshape_auto_5():
             predict = self.network(x, y)
             return self.loss(predict)
 
-    class GradWrap(nn.Cell):
+    class GradWrap5(nn.Cell):
         def __init__(self, network):
-            super(GradWrap, self).__init__()
+            super(GradWrap5, self).__init__()
             self.network = network
 
         def construct(self, x, y):
@@ -217,16 +217,16 @@ def test_reshape_auto_5():
     x = Tensor(np.ones([4, 1024 * size, 1]), dtype=ms.float32)
     y = Tensor(np.ones([4, 1024 * size,]), dtype=ms.float32)
 
-    net = GradWrap(NetWithLoss(Net()))
+    net = GradWrap5(NetWithLoss5(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     _executor.compile(net, x, y)
 
 
 def test_reshape_auto_6():
-    class NetWithLoss(nn.Cell):
+    class NetWithLoss6(nn.Cell):
         def __init__(self, network):
-            super(NetWithLoss, self).__init__()
+            super(NetWithLoss6, self).__init__()
             self.loss = VirtualLoss()
             self.network = network
 
@@ -234,9 +234,9 @@ def test_reshape_auto_6():
             predict = self.network(x, y)
             return self.loss(predict)
 
-    class GradWrap(nn.Cell):
+    class GradWrap6(nn.Cell):
         def __init__(self, network):
-            super(GradWrap, self).__init__()
+            super(GradWrap6, self).__init__()
             self.network = network
 
         def construct(self, x, y):
@@ -265,7 +265,7 @@ def test_reshape_auto_6():
     x = Tensor(np.ones([4, 1024, 1]), dtype=ms.float32)
     y = Tensor(np.ones([4, 1024,]), dtype=ms.float32)
 
-    net = GradWrap(NetWithLoss(Net()))
+    net = GradWrap6(NetWithLoss6(Net()))
     context.set_auto_parallel_context(parallel_mode="auto_parallel")
     net.set_auto_parallel()
     _executor.compile(net, x, y)

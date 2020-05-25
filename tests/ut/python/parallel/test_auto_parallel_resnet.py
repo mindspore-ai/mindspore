@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 import re
+import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
@@ -36,35 +36,33 @@ context.set_context(device_id=0)
 init()
 
 
-def weight_variable(shape, factor=0.1):
+def weight_variable():
     return TruncatedNormal(0.02)
 
 
 def _conv3x3(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
     """Get a conv2d layer with 3x3 kernel size."""
-    init_value = weight_variable((out_channels, in_channels, 3, 3))
+    init_value = weight_variable()
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=3, stride=stride, padding=padding, pad_mode=pad_mode, weight_init=init_value)
 
 
 def _conv1x1(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
     """Get a conv2d layer with 1x1 kernel size."""
-    init_value = weight_variable((out_channels, in_channels, 1, 1))
+    init_value = weight_variable()
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=1, stride=stride, padding=padding, pad_mode=pad_mode, weight_init=init_value)
 
 
 def _conv7x7(in_channels, out_channels, stride=1, padding=0, pad_mode='same'):
     """Get a conv2d layer with 7x7 kernel size."""
-    init_value = weight_variable((out_channels, in_channels, 7, 7))
+    init_value = weight_variable()
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=7, stride=stride, padding=padding, pad_mode=pad_mode, weight_init=init_value)
 
 
 def _fused_bn(channels, momentum=0.9):
     """Get a fused batchnorm"""
-    init_weight = weight_variable((channels,))
-    init_bias = weight_variable((channels,))
     return nn.BatchNorm2d(channels, momentum=momentum)
 
 
@@ -132,10 +130,11 @@ class ResNet(nn.Cell):
                  layer_nums,
                  in_channels,
                  out_channels,
-                 strides=[1, 2, 2, 2],
+                 strides=None,
                  num_classes=100):
         super(ResNet, self).__init__()
-
+        if strides is None:
+            strides = [1, 2, 2, 2]
         if not len(layer_nums) == len(in_channels) == len(out_channels) == 4:
             raise ValueError("the length of "
                              "layer_num, inchannel, outchannel list must be 4!")
@@ -168,16 +167,13 @@ class ResNet(nn.Cell):
 
         self.mean = P.ReduceMean(keep_dims=True)
         self.end_point = nn.Dense(2048, num_classes, has_bias=True,
-                                  weight_init=weight_variable((num_classes, 2048)),
-                                  bias_init=weight_variable((num_classes,))).add_flags_recursive(fp16=True)
+                                  weight_init=weight_variable(),
+                                  bias_init=weight_variable()).add_flags_recursive(fp16=True)
         self.squeeze = P.Squeeze()
         self.cast = P.Cast()
 
     def _make_layer(self, block, layer_num, in_channel, out_channel, stride):
         layers = []
-        down_sample = False
-        if stride != 1 or in_channel != out_channel:
-            down_sample = True
 
         resblk = block(in_channel, out_channel, stride=1)
         layers.append(resblk)
@@ -279,7 +275,7 @@ class DatasetLenet():
         return 1
 
 
-def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768):
+def test_train_32k_8p(batch_size=32, num_classes=32768):
     dev_num = 8
     context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
     set_algo_parameters(elementwise_op_strategy_follow=True)
@@ -309,12 +305,12 @@ def test_train_32k_8p(epoch_size=3, batch_size=32, num_classes=32768):
     return allreduce_fusion_dict
 
 
-def train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768):  # 1048576 #131072 #32768 #8192
+def train_32k_8p_fusion1(batch_size=32, num_classes=32768):  # 1048576 #131072 #32768 #8192
     cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_times=2)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_percent=0.5)
-    allreduce_fusion_dict = test_train_32k_8p(epoch_size, batch_size, num_classes)
+    allreduce_fusion_dict = test_train_32k_8p(batch_size, num_classes)
     expect_dict = {'end_point.bias': 2,
                    'end_point.weight': 2,
                    'layer4.2.bn3.beta': 2,
@@ -477,17 +473,17 @@ def train_32k_8p_fusion1(epoch_size=3, batch_size=32, num_classes=32768):  # 104
                    'bn1.gamma': 1,
                    'conv1.weight': 1}
 
-    assert (allreduce_fusion_dict == expect_dict)
+    assert allreduce_fusion_dict == expect_dict
     cost_model_context.reset_cost_model_context()
 
 
-def train_32k_8p_fusion2(epoch_size=3, batch_size=32, num_classes=32768):  # 1048576 #131072 #32768 #8192
+def train_32k_8p_fusion2(batch_size=32, num_classes=32768):  # 1048576 #131072 #32768 #8192
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_algorithm=2)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_tail_time=0.1)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_inherent_time=0.05)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_allreduce_bandwidth=0.000001)
     cost_model_context.set_cost_model_context(costmodel_allreduce_fusion_computation_time_parameter=0.0000015)
-    allreduce_fusion_dict = test_train_32k_8p(epoch_size, batch_size, num_classes)
+    allreduce_fusion_dict = test_train_32k_8p(batch_size, num_classes)
     expect_dict = {'end_point.bias': 2,
                    'end_point.weight': 2,
                    'layer4.2.bn3.beta': 2,
@@ -650,11 +646,11 @@ def train_32k_8p_fusion2(epoch_size=3, batch_size=32, num_classes=32768):  # 104
                    'bn1.gamma': 1,
                    'conv1.weight': 1}
 
-    assert (allreduce_fusion_dict == expect_dict)
+    assert allreduce_fusion_dict == expect_dict
     cost_model_context.reset_cost_model_context()
 
 
-def test_train_64k_8p(epoch_size=3, batch_size=32, num_classes=65536):  # 1048576 #131072 #32768 #8192
+def test_train_64k_8p(batch_size=32, num_classes=65536):  # 1048576 #131072 #32768 #8192
     dev_num = 8
     context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
     cost_model_context.set_cost_model_context(costmodel_gamma=0.001, costmodel_beta=400.0)

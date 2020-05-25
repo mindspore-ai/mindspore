@@ -124,9 +124,9 @@ def test_prelu_parallel_success2():
 
 
 def test_prelu_parallel_success3():
-    class NetWithLoss(nn.Cell):
+    class NetWithLoss3(nn.Cell):
         def __init__(self, network):
-            super(NetWithLoss, self).__init__()
+            super(NetWithLoss3, self).__init__()
             self.loss = VirtualLoss()
             self.network = network
 
@@ -134,9 +134,9 @@ def test_prelu_parallel_success3():
             predict = self.network(x, y, w)
             return self.loss(predict)
 
-    class GradWrap(nn.Cell):
+    class GradWrap3(nn.Cell):
         def __init__(self, network):
-            super(GradWrap, self).__init__()
+            super(GradWrap3, self).__init__()
             self.network = network
 
         def construct(self, x, y, w):
@@ -161,7 +161,7 @@ def test_prelu_parallel_success3():
     x = Tensor(np.random.rand(128, 64), dtype=ms.float32)
     y = Tensor(np.random.rand(64, 16), dtype=ms.float32)
     w = Tensor(np.random.rand(16), dtype=ms.float32)
-    net = GradWrap(NetWithLoss(Net(strategy1, strategy2)))
+    net = GradWrap3(NetWithLoss3(Net(strategy1, strategy2)))
     net.set_auto_parallel()
     _executor.compile(net, x, y, w)
 

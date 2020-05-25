@@ -63,7 +63,7 @@ class DataGenerator():
         i = 0
         for stra in strategy:
             temp = []
-            while len(blocks) > 0:
+            while blocks:
                 block = blocks.pop(0)
                 temp.extend(np.split(block, stra, axis=i))
             blocks.extend(temp)
