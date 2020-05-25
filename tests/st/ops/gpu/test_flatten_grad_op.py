@@ -19,7 +19,6 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 
 
@@ -38,11 +37,6 @@ class NetFlattenGrad(nn.Cell):
 @pytest.mark.env_onecard
 def test_flatten_grad():
     x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype(np.float32))
-    """
-    expect output:
-    [   [-0.1  0.3  3.6]
-        [ 0.4  0.5 -3.2]    ]
-    """
     expect = np.array([[-0.1, 0.3, 3.6],
                        [0.4, 0.5, -3.2]]).astype(np.float32)
 

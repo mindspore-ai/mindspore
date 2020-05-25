@@ -76,19 +76,19 @@ def test_Sub():
     output4 = sub(x4, y4)
     diff0 = output0.asnumpy() - expect0
     assert np.all(diff0 < error0)
-    assert (output0.shape() == expect0.shape)
+    assert output0.shape() == expect0.shape
     diff1 = output1.asnumpy() - expect1
     assert np.all(diff1 < error1)
-    assert (output1.shape() == expect1.shape)
+    assert output1.shape() == expect1.shape
     diff2 = output2.asnumpy() - expect2
     assert np.all(diff2 < error2)
-    assert (output2.shape() == expect2.shape)
+    assert output2.shape() == expect2.shape
     diff3 = output3.asnumpy() - expect3
     assert np.all(diff3 < error3)
-    assert (output3.shape() == expect3.shape)
+    assert output3.shape() == expect3.shape
     diff4 = output4.asnumpy() - expect4
     assert np.all(diff4 < error4)
-    assert (output4.shape() == expect4.shape)
+    assert output4.shape() == expect4.shape
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     sub = Net()
@@ -99,16 +99,16 @@ def test_Sub():
     output4 = sub(x4, y4)
     diff0 = output0.asnumpy() - expect0
     assert np.all(diff0 < error0)
-    assert (output0.shape() == expect0.shape)
+    assert output0.shape() == expect0.shape
     diff1 = output1.asnumpy() - expect1
     assert np.all(diff1 < error1)
-    assert (output1.shape() == expect1.shape)
+    assert output1.shape() == expect1.shape
     diff2 = output2.asnumpy() - expect2
     assert np.all(diff2 < error2)
-    assert (output2.shape() == expect2.shape)
+    assert output2.shape() == expect2.shape
     diff3 = output3.asnumpy() - expect3
     assert np.all(diff3 < error3)
-    assert (output3.shape() == expect3.shape)
+    assert output3.shape() == expect3.shape
     diff4 = output4.asnumpy() - expect4
     assert np.all(diff4 < error4)
-    assert (output4.shape() == expect4.shape)
+    assert output4.shape() == expect4.shape

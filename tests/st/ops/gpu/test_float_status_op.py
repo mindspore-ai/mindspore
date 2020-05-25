@@ -68,7 +68,7 @@ x3 = np.array([[1, 2], [3, 4], [5.0, 88.0]]).astype(np.float32)
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_status():
-    ms_status = Net();
+    ms_status = Net()
     output1 = ms_status(Tensor(x1))
     output2 = ms_status(Tensor(x2))
     output3 = ms_status(Tensor(x3))
@@ -84,7 +84,7 @@ def test_status():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_nan():
-    ms_isnan = Netnan();
+    ms_isnan = Netnan()
     output1 = ms_isnan(Tensor(x1))
     output2 = ms_isnan(Tensor(x2))
     output3 = ms_isnan(Tensor(x3))
@@ -100,7 +100,7 @@ def test_nan():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_inf():
-    ms_isinf = Netinf();
+    ms_isinf = Netinf()
     output1 = ms_isinf(Tensor(x1))
     output2 = ms_isinf(Tensor(x2))
     output3 = ms_isinf(Tensor(x3))
@@ -116,7 +116,7 @@ def test_inf():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_finite():
-    ms_isfinite = Netfinite();
+    ms_isfinite = Netfinite()
     output1 = ms_isfinite(Tensor(x1))
     output2 = ms_isfinite(Tensor(x2))
     output3 = ms_isfinite(Tensor(x3))

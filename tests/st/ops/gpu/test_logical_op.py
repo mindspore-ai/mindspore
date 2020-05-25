@@ -27,8 +27,8 @@ class NetAnd(Cell):
         super(NetAnd, self).__init__()
         self.logicaland = P.LogicalAnd()
 
-    def construct(self, x, y):
-        return self.logicaland(x, y)
+    def construct(self, input_x, input_y):
+        return self.logicaland(input_x, input_y)
 
 
 class NetOr(Cell):
@@ -36,8 +36,8 @@ class NetOr(Cell):
         super(NetOr, self).__init__()
         self.logicalor = P.LogicalOr()
 
-    def construct(self, x, y):
-        return self.logicalor(x, y)
+    def construct(self, input_x, input_y):
+        return self.logicalor(input_x, input_y)
 
 
 class NetNot(Cell):
@@ -45,8 +45,8 @@ class NetNot(Cell):
         super(NetNot, self).__init__()
         self.logicalnot = P.LogicalNot()
 
-    def construct(self, x):
-        return self.logicalnot(x)
+    def construct(self, input_x):
+        return self.logicalnot(input_x)
 
 
 x = np.array([True, False, False]).astype(np.bool)

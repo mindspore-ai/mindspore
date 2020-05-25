@@ -53,15 +53,15 @@ def test_maximum():
     error = np.ones(shape=[1, 3]) * 1.0e-5
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    max = Net()
-    output = max(x, y)
+    max_op = Net()
+    output = max_op(x, y)
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(-diff < error)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    max = Net()
-    output = max(x, y)
+    max_op_2 = Net()
+    output = max_op_2(x, y)
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(-diff < error)

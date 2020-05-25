@@ -16,10 +16,8 @@
 import numpy as np
 import pytest
 
-import mindspore.common.dtype as mstype
 import mindspore.context as context
 from mindspore.common.tensor import Tensor
-from mindspore.nn import Cell
 from mindspore.ops import operations as P
 
 

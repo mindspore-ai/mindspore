@@ -50,4 +50,4 @@ def test_correction_mul():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
     assert np.all(diff > error * -1)
-    assert (output.shape() == expect.shape)
+    assert output.shape() == expect.shape
