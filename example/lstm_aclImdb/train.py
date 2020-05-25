@@ -71,7 +71,7 @@ if __name__ == '__main__':
     model = Model(network, loss, opt, {'acc': Accuracy()})
 
     print("============== Starting Training ==============")
-    ds_train = create_dataset(args.preprocess_path, cfg.batch_size, repeat_num=cfg.num_epochs)
+    ds_train = create_dataset(args.preprocess_path, cfg.batch_size, cfg.num_epochs)
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix="lstm", directory=args.ckpt_path, config=config_ck)

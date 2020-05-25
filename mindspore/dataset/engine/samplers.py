@@ -114,6 +114,9 @@ class Sampler:
 
         return self.child_sampler.is_sharded()
 
+    def get_dataset_size(self):
+        return self._get_indices().size
+
 
 class BuiltinSampler:
     """
@@ -145,6 +148,12 @@ class BuiltinSampler:
 
     def is_sharded(self):
         raise NotImplementedError("Sampler must implement is_sharded.")
+
+    def get_dataset_size(self):
+        if self.child_sampler is not None:
+            return self.child_sampler.get_dataset_size()
+
+        return None
 
 
 class DistributedSampler(BuiltinSampler):
@@ -330,6 +339,9 @@ class RandomSampler(BuiltinSampler):
 
         return self.child_sampler.is_sharded()
 
+    def get_dataset_size(self):
+        return self.num_samples
+
 
 class SequentialSampler(BuiltinSampler):
     """
@@ -421,6 +433,9 @@ class SubsetSampler(BuiltinSampler):
 
         return self.child_sampler.is_sharded()
 
+    def get_dataset_size(self):
+        return self.subset_size
+
 
 class SubsetRandomSampler(BuiltinSampler):
     """
@@ -465,6 +480,10 @@ class SubsetRandomSampler(BuiltinSampler):
 
     def _create_for_minddataset(self):
         return cde.MindrecordSubsetRandomSampler(self.indices)
+
+
+    def get_dataset_size(self):
+        return len(indices)
 
 
 class WeightedRandomSampler(BuiltinSampler):
@@ -522,3 +541,6 @@ class WeightedRandomSampler(BuiltinSampler):
             return False
 
         return self.child_sampler.is_sharded()
+
+    def get_dataset_size(self):
+        return self.num_samples
