@@ -156,7 +156,7 @@ class Graph {
   std::unordered_map<EdgeIdType, std::shared_ptr<Edge>> edge_id_map_;
 
   std::unordered_map<NodeType, std::unordered_set<FeatureType>> node_feature_map_;
-  std::unordered_map<NodeType, std::unordered_set<FeatureType>> edge_feature_map_;
+  std::unordered_map<EdgeType, std::unordered_set<FeatureType>> edge_feature_map_;
 
   std::unordered_map<FeatureType, std::shared_ptr<Feature>> default_feature_map_;
 };
