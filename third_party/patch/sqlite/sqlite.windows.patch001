@@ -1,6 +1,6 @@
-diff -uprN sqlite-amalgamation-3310100/CMakeLists.txt sqlite-patch/CMakeLists.txt
+diff -uprN sqlite-amalgamation-3310100/CMakeLists.txt sqlite-patch001/CMakeLists.txt
 --- sqlite-amalgamation-3310100/CMakeLists.txt	1970-01-01 08:00:00.000000000 +0800
-+++ sqlite-patch/CMakeLists.txt	2020-04-18 09:16:28.258637600 +0800
++++ sqlite-patch001/CMakeLists.txt	2020-05-25 10:47:36.902007755 +0800
 @@ -0,0 +1,6 @@
 +cmake_minimum_required(VERSION 3.14)
 +project (Sqlite[C])
@@ -8,15 +8,15 @@ diff -uprN sqlite-amalgamation-3310100/CMakeLists.txt sqlite-patch/CMakeLists.tx
 +set_target_properties(sqlite3 PROPERTIES PUBLIC_HEADER "sqlite3.h;sqlite3ext.h")
 +include(GNUInstallDirs)
 +install(TARGETS sqlite3 PUBLIC_HEADER)
-diff -uprN sqlite-amalgamation-3310100/sqlite3.c sqlite-patch/sqlite3.c
---- sqlite-amalgamation-3310100/sqlite3.c	2020-01-28 03:25:14.000000000 +0800
-+++ sqlite-patch/sqlite3.c	2020-04-17 15:40:21.005440300 +0800
+diff -uprN sqlite-amalgamation-3310100/sqlite3.c sqlite-patch001/sqlite3.c
+--- sqlite-amalgamation-3310100/sqlite3.c	2020-01-28 04:25:14.000000000 +0800
++++ sqlite-patch001/sqlite3.c	2020-05-25 10:49:04.057117196 +0800
 @@ -1167,7 +1167,7 @@ extern "C" {
  */
  #define SQLITE_VERSION        "3.31.1"
  #define SQLITE_VERSION_NUMBER 3031001
 -#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837bb4d6"
-+#define SQLITE_SOURCE_ID      "2020-02-17 19:25:07 387240fc85ea3549ff8a6ed060ef07c6184548457fb91cd7c6fc39ddb678alt1"
++#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 bc2f42080a6a8a33048eedf289152768c416b2a7677a92111b3b1ea60d4aalt1"
  
  /*
  ** CAPI3REF: Run-Time Library Version Numbers
@@ -103,7 +103,7 @@ diff -uprN sqlite-amalgamation-3310100/sqlite3.c sqlite-patch/sqlite3.c
    assert( nArg==0 );
    UNUSED_PARAM2(nArg, apUnused);
 -  sqlite3_result_text(pCtx, "fts5: 2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837bb4d6", -1, SQLITE_TRANSIENT);
-+  sqlite3_result_text(pCtx, "fts5: 2020-02-17 19:25:07 abc473fb8fb999005dc79a360e34f97b3b25429decf1820dd2afa5c19577753d", -1, SQLITE_TRANSIENT);
++  sqlite3_result_text(pCtx, "fts5: 2020-01-27 19:55:54 abc473fb8fb999005dc79a360e34f97b3b25429decf1820dd2afa5c19577753d", -1, SQLITE_TRANSIENT);
  }
  
  /*
@@ -115,19 +115,19 @@ diff -uprN sqlite-amalgamation-3310100/sqlite3.c sqlite-patch/sqlite3.c
 +#if __LINE__!=228456
  #undef SQLITE_SOURCE_ID
 -#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837balt2"
-+#define SQLITE_SOURCE_ID      "2020-02-17 19:25:07 387240fc85ea3549ff8a6ed060ef07c6184548457fb91cd7c6fc39ddb678alt2"
++#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 bc2f42080a6a8a33048eedf289152768c416b2a7677a92111b3b1ea60d4aalt2"
  #endif
  /* Return the source-id for this library */
  SQLITE_API const char *sqlite3_sourceid(void){ return SQLITE_SOURCE_ID; }
-diff -uprN sqlite-amalgamation-3310100/sqlite3.h sqlite-patch/sqlite3.h
---- sqlite-amalgamation-3310100/sqlite3.h	2020-01-28 03:25:14.000000000 +0800
-+++ sqlite-patch/sqlite3.h	2020-04-17 15:40:21.005440300 +0800
+diff -uprN sqlite-amalgamation-3310100/sqlite3.h sqlite-patch001/sqlite3.h
+--- sqlite-amalgamation-3310100/sqlite3.h	2020-01-28 04:25:14.000000000 +0800
++++ sqlite-patch001/sqlite3.h	2020-05-25 10:49:17.932970790 +0800
 @@ -125,7 +125,7 @@ extern "C" {
  */
  #define SQLITE_VERSION        "3.31.1"
  #define SQLITE_VERSION_NUMBER 3031001
 -#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 3bfa9cc97da10598521b342961df8f5f68c7388fa117345eeb516eaa837bb4d6"
-+#define SQLITE_SOURCE_ID      "2020-02-17 19:25:07 387240fc85ea3549ff8a6ed060ef07c6184548457fb91cd7c6fc39ddb678alt1"
++#define SQLITE_SOURCE_ID      "2020-01-27 19:55:54 bc2f42080a6a8a33048eedf289152768c416b2a7677a92111b3b1ea60d4aalt1"
  
  /*
  ** CAPI3REF: Run-Time Library Version Numbers

@@ -1,0 +1,92 @@
+diff -uprN sqlite-patch002/sqlite3.c sqlite-patch003/sqlite3.c
+--- sqlite-patch002/sqlite3.c	2020-05-25 10:56:21.120064808 +0800
++++ sqlite-patch003/sqlite3.c	2020-05-25 11:00:13.909126750 +0800
+@@ -1167,7 +1167,7 @@ extern "C" {
+ */
+ #define SQLITE_VERSION        "3.31.1"
+ #define SQLITE_VERSION_NUMBER 3031001
+-#define SQLITE_SOURCE_ID      "2020-04-03 13:19:03 0f4911fdb07c7c4111731d3db0adae54ee750ddbad8d98bf9ab957fb923falt1"
++#define SQLITE_SOURCE_ID      "2020-04-03 11:52:59 b58be6e2216e7a8e9c0eee07c42856f751359bbfa740e8ad8c5d73b33273alt1"
+ 
+ /*
+ ** CAPI3REF: Run-Time Library Version Numbers
+@@ -97945,7 +97945,7 @@ static int resolveOrderByTermToExprList(
+   nc.nErr = 0;
+   db = pParse->db;
+   savedSuppErr = db->suppressErr;
+-  db->suppressErr = 1;
++  if( IN_RENAME_OBJECT==0 ) db->suppressErr = 1;
+   rc = sqlite3ResolveExprNames(&nc, pE);
+   db->suppressErr = savedSuppErr;
+   if( rc ) return 0;
+@@ -105384,6 +105384,21 @@ static void renameWalkWith(Walker *pWalk
+ }
+ 
+ /*
++** Unmap all tokens in the IdList object passed as the second argument.
++*/
++static void unmapColumnIdlistNames(
++  Parse *pParse,
++  IdList *pIdList
++){
++  if( pIdList ){
++    int ii;
++    for(ii=0; ii<pIdList->nId; ii++){
++      sqlite3RenameTokenRemap(pParse, 0, (void*)pIdList->a[ii].zName);
++    }
++  }
++}
++
++/*
+ ** Walker callback used by sqlite3RenameExprUnmap().
+ */
+ static int renameUnmapSelectCb(Walker *pWalker, Select *p){
+@@ -105404,6 +105419,7 @@ static int renameUnmapSelectCb(Walker *p
+     for(i=0; i<pSrc->nSrc; i++){
+       sqlite3RenameTokenRemap(pParse, 0, (void*)pSrc->a[i].zName);
+       if( sqlite3WalkExpr(pWalker, pSrc->a[i].pOn) ) return WRC_Abort;
++      unmapColumnIdlistNames(pParse, pSrc->a[i].pUsing);
+     }
+   }
+ 
+@@ -105612,6 +105628,7 @@ static void renameColumnIdlistNames(
+   }
+ }
+ 
++
+ /*
+ ** Parse the SQL statement zSql using Parse object (*p). The Parse object
+ ** is initialized by this function before it is used.
+@@ -223681,7 +223698,7 @@ static void fts5SourceIdFunc(
+ ){
+   assert( nArg==0 );
+   UNUSED_PARAM2(nArg, apUnused);
+-  sqlite3_result_text(pCtx, "fts5: 2020-04-03 13:19:03 4a302b42c7bf5e11ddb5522ca999f74aba397d3a7eb91b1844bb02852f772441", -1, SQLITE_TRANSIENT);
++  sqlite3_result_text(pCtx, "fts5: 2020-04-03 11:52:59 684293882c302600e112cf52553c19d84fdb31663d96e5dd7f8ac17dda00a026", -1, SQLITE_TRANSIENT);
+ }
+ 
+ /*
+@@ -228454,9 +228471,9 @@ SQLITE_API int sqlite3_stmt_init(
+ #endif /* !defined(SQLITE_CORE) || defined(SQLITE_ENABLE_STMTVTAB) */
+ 
+ /************** End of stmt.c ************************************************/
+-#if __LINE__!=228457
++#if __LINE__!=228474
+ #undef SQLITE_SOURCE_ID
+-#define SQLITE_SOURCE_ID      "2020-04-03 13:19:03 0f4911fdb07c7c4111731d3db0adae54ee750ddbad8d98bf9ab957fb923falt2"
++#define SQLITE_SOURCE_ID      "2020-04-03 11:52:59 b58be6e2216e7a8e9c0eee07c42856f751359bbfa740e8ad8c5d73b33273alt2"
+ #endif
+ /* Return the source-id for this library */
+ SQLITE_API const char *sqlite3_sourceid(void){ return SQLITE_SOURCE_ID; }
+diff -uprN sqlite-patch002/sqlite3.h sqlite-patch003/sqlite3.h
+--- sqlite-patch002/sqlite3.h	2020-05-25 10:56:23.296037923 +0800
++++ sqlite-patch003/sqlite3.h	2020-05-25 11:00:14.649117241 +0800
+@@ -125,7 +125,7 @@ extern "C" {
+ */
+ #define SQLITE_VERSION        "3.31.1"
+ #define SQLITE_VERSION_NUMBER 3031001
+-#define SQLITE_SOURCE_ID      "2020-04-03 13:19:03 0f4911fdb07c7c4111731d3db0adae54ee750ddbad8d98bf9ab957fb923falt1"
++#define SQLITE_SOURCE_ID      "2020-04-03 11:52:59 b58be6e2216e7a8e9c0eee07c42856f751359bbfa740e8ad8c5d73b33273alt1"
+ 
+ /*
+ ** CAPI3REF: Run-Time Library Version Numbers
