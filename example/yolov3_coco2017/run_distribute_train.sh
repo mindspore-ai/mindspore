@@ -14,18 +14,27 @@
 # limitations under the License.
 # ============================================================================
 
-echo "=============================================================================================================="
+echo "======================================================================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE MINDRECORD_DIR IMAGE_DIR ANNO_PATH MINDSPORE_HCCL_CONFIG_PATH"
-echo "for example: sh run_distribute_train.sh 8 100 /data/Mindrecord_train /data /data/train.txt /data/hccl.json"
+echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE MINDRECORD_DIR IMAGE_DIR ANNO_PATH MINDSPORE_HCCL_CONFIG_PATH PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
+echo "For example: sh run_distribute_train.sh 8 150 /data/Mindrecord_train /data /data/train.txt /data/hccl.json /opt/yolov3-150.ckpt(optional) 100(optional)"
 echo "It is better to use absolute path."
 echo "The learning rate is 0.005 as default, if you want other lr, please change the value in this script."
-echo "=============================================================================================================="
+echo "======================================================================================================================================================="
+
+if [ $# != 6 ] && [ $# != 8 ]
+then
+    echo "Usage: sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [MINDRECORD_DIR] [IMAGE_DIR] [ANNO_PATH] [MINDSPORE_HCCL_CONFIG_PATH] \
+[PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)"
+    exit 1
+fi
 
 EPOCH_SIZE=$2
 MINDRECORD_DIR=$3
 IMAGE_DIR=$4
 ANNO_PATH=$5
+PRE_TRAINED=$7
+PRE_TRAINED_EPOCH_SIZE=$8
 
 # Before start distribute train, first create mindrecord files.
 python train.py --only_create_dataset=1 --mindrecord_dir=$MINDRECORD_DIR --image_dir=$IMAGE_DIR  \
@@ -51,14 +60,34 @@ do
     export RANK_ID=$i
     echo "start training for rank $i, device $DEVICE_ID"
     env > env.log
-    taskset -c $cmdopt python ../train.py  \
-    --distribute=1  \
-    --lr=0.005 \
-    --device_num=$RANK_SIZE  \
-    --device_id=$DEVICE_ID  \
-    --mindrecord_dir=$MINDRECORD_DIR  \
-    --image_dir=$IMAGE_DIR  \
-    --epoch_size=$EPOCH_SIZE  \
-    --anno_path=$ANNO_PATH > log.txt 2>&1 &
+
+    if [ $# == 6 ]
+    then
+        taskset -c $cmdopt python ../train.py  \
+        --distribute=1  \
+        --lr=0.005 \
+        --device_num=$RANK_SIZE  \
+        --device_id=$DEVICE_ID  \
+        --mindrecord_dir=$MINDRECORD_DIR  \
+        --image_dir=$IMAGE_DIR  \
+        --epoch_size=$EPOCH_SIZE  \
+        --anno_path=$ANNO_PATH > log.txt 2>&1 &
+    fi
+
+    if [ $# == 8 ]
+    then
+        taskset -c $cmdopt python ../train.py  \
+        --distribute=1  \
+        --lr=0.005 \
+        --device_num=$RANK_SIZE  \
+        --device_id=$DEVICE_ID  \
+        --mindrecord_dir=$MINDRECORD_DIR  \
+        --image_dir=$IMAGE_DIR  \
+        --epoch_size=$EPOCH_SIZE  \
+        --pre_trained=$PRE_TRAINED \
+        --pre_trained_epoch_size=$PRE_TRAINED_EPOCH_SIZE \
+        --anno_path=$ANNO_PATH > log.txt 2>&1 &
+    fi
+
     cd ../
 done

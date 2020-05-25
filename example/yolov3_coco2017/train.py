@@ -71,6 +71,7 @@ def main():
     parser.add_argument("--epoch_size", type=int, default=10, help="Epoch size, default is 10")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size, default is 32.")
     parser.add_argument("--pre_trained", type=str, default=None, help="Pretrained checkpoint file path")
+    parser.add_argument("--pre_trained_epoch_size", type=int, default=0, help="Pretrained epoch size")
     parser.add_argument("--save_checkpoint_epochs", type=int, default=5, help="Save checkpoint epochs, default is 5.")
     parser.add_argument("--loss_scale", type=int, default=1024, help="Loss scale, default is 1024.")
     parser.add_argument("--mindrecord_dir", type=str, default="./Mindrecord_train",
@@ -133,14 +134,19 @@ def main():
         ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset_size * args_opt.save_checkpoint_epochs)
         ckpoint_cb = ModelCheckpoint(prefix="yolov3", directory=None, config=ckpt_config)
 
-        lr = Tensor(get_lr(learning_rate=args_opt.lr, start_step=0, global_step=args_opt.epoch_size * dataset_size,
+        if args_opt.pre_trained:
+            if args_opt.pre_trained_epoch_size <= 0:
+                raise KeyError("pre_trained_epoch_size must be greater than 0.")
+            param_dict = load_checkpoint(args_opt.pre_trained)
+            load_param_into_net(net, param_dict)
+        total_epoch_size = 60
+        if args_opt.distribute:
+            total_epoch_size = 160
+        lr = Tensor(get_lr(learning_rate=args_opt.lr, start_step=args_opt.pre_trained_epoch_size * dataset_size,
+                           global_step=total_epoch_size * dataset_size,
                            decay_step=1000, decay_rate=0.95, steps=True))
         opt = nn.Adam(filter(lambda x: x.requires_grad, net.get_parameters()), lr, loss_scale=loss_scale)
         net = TrainingWrapper(net, opt, loss_scale)
-
-        if args_opt.pre_trained:
-            param_dict = load_checkpoint(args_opt.pre_trained)
-            load_param_into_net(net, param_dict)
 
         callback = [TimeMonitor(data_size=dataset_size), LossMonitor(), ckpoint_cb]
 
