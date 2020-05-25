@@ -762,5 +762,5 @@ class Cell:
         Args:
             fn (function): Specifies the hook function with grad as input.
         """
-        self._backward_hook = HookBackward(fn, str(id(self)))
+        self._backward_hook = HookBackward(fn, self.cls_name + "(" + str(id(self)) + ")")
         self._enable_hook = True
