@@ -2591,8 +2591,7 @@ class Adam(PrimitiveWithInfer):
           Mean square gradients, has the same type as `var`.
         - **beta1_power** (float) - :math:`beta_1^t` in the updating formula.
         - **beta2_power** (float) - :math:`beta_2^t` in the updating formula.
-        - **lr** (Union[float, Tensor, Iterable]) - :math:`l` in the updating formula.
-          Iterable type is used for the dynamic learning rate.
+        - **lr** (float) - :math:`l` in the updating formula.
         - **beta1** (float) - The exponential decay rate for the 1st moment estimates.
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimates.
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
