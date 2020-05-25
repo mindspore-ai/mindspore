@@ -14,3 +14,14 @@
 # ============================================================================
 
 """custom ops"""
+from .batch_matmul_impl import CusBatchMatMul
+from .cholesky_trsm_impl import CusCholeskyTrsm
+from .fused_abs_max1_impl import CusFusedAbsMax1
+from .img2col_impl import CusImg2Col
+from .matmul_cube_dense_left_impl import CusMatMulCubeDenseLeft
+from .matmul_cube_dense_right_impl import CusMatMulCubeDenseRight
+from .matmul_cube_fracz_left_cast_impl import CusMatMulCubeFraczLeftCast
+from .matmul_cube_fracz_right_mul_impl import CusMatMulCubeFraczRightMul
+from .matmul_cube_impl import CusMatMulCube
+from .matrix_combine_impl import CusMatrixCombine
+from .transpose_02314_impl import CusTranspose02314

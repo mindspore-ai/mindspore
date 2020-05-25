@@ -16,16 +16,29 @@
 import mindspore as ms
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.composite import multitype_ops as C
+import numpy as np
 
+__all__ = ["CusBatchMatMul",
+           "CusCholeskyTrsm",
+           "CusFusedAbsMax1",
+           "CusImg2Col",
+           "CusMatMulCubeDenseLeft",
+           "CusMatMulCubeFraczRightMul",
+           "CusMatMulCube",
+           "CusMatrixCombine",
+           "CusTranspose02314",
+           "CusMatMulCubeDenseRight",
+           "CusMatMulCubeFraczLeftCast",
+           ]
 
 class CusBatchMatMul(PrimitiveWithInfer):
-    """CusMatMulCube definition"""
+    """CusBatchMatMul definition"""
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCube"""
+        """init CusBatchMatMul"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
-
+        from mindspore.ops._op_impl._custom_op.matrix_combine_impl import CusMatrixCombine
     def get_bprop(self):
         def bprop(x1, x2, out, dout):
             return (C.zeros_like(x1), C.zeros_like(x2))
@@ -46,7 +59,7 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
     def __init__(self):
         """init CusCholeskyTrsm"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
-
+        from mindspore.ops._op_impl._custom_op.cholesky_trsm_impl import CusCholeskyTrsm
     def infer_shape(self, data1_shape):
         ll = []
         m, _ = data1_shape
@@ -61,14 +74,14 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
 
 
 class CusFusedAbsMax1(PrimitiveWithInfer):
-    """CusCholeskyTrsm definition"""
+    """CusFusedAbsMax1 definition"""
 
     @prim_attr_register
     def __init__(self, origin_shape=[-1, -1]):
-        """init CusCholeskyTrsm"""
+        """init CusFusedAbsMax1"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
         self.origin_shape = origin_shape
-
+        from mindspore.ops._op_impl._custom_op.fused_abs_max1_impl import CusFusedAbsMax1
     def get_bprop(self):
         def bprop(x, out, dout):
             return (C.zeros_like(x),)
@@ -98,7 +111,7 @@ class CusImg2Col(PrimitiveWithInfer):
         self.strides = strides
         self.dilates = dilates
         self.mode = mode
-
+        from mindspore.ops._op_impl._custom_op.img2col_impl import CusImg2Col
     def get_bprop(self):
         def bprop(x, out, dout):
             return (C.zeros_like(x),)
@@ -126,9 +139,9 @@ class CusMatMulCubeDenseLeft(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCube"""
+        """init CusMatMulCubeDenseLeft"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
-
+        from mindspore.ops._op_impl._custom_op.matmul_cube_dense_left_impl import CusMatMulCubeDenseLeft 
     def get_bprop(self):
         def bprop(x1, x2, out, dout):
             return (C.zeros_like(x1), C.zeros_like(x2))
@@ -149,7 +162,7 @@ class CusMatMulCubeFraczRightMul(PrimitiveWithInfer):
     def __init__(self):
         """init CusMatMulCubeFraczRightMul"""
         self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
-
+        from mindspore.ops._op_impl._custom_op.matmul_cube_fracz_right_mul_impl import CusMatMulCubeFraczRightMul
     def get_bprop(self):
         def bprop(x1, x2, x3, out, dout):
             return (C.zeros_like(x1), C.zeros_like(x2), C.zeros_like(x3))
@@ -172,7 +185,7 @@ class CusMatMulCube(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
         self.transpose_a = transpose_a
         self.transpose_b = transpose_b
-
+        from mindspore.ops._op_impl._custom_op.matmul_cube_impl import CusMatMulCube
     def get_bprop(self):
         def bprop(x1, x2, out, dout):
             return (C.zeros_like(x1), C.zeros_like(x2))
@@ -199,13 +212,13 @@ class CusMatMulCube(PrimitiveWithInfer):
 
 
 class CusMatrixCombine(PrimitiveWithInfer):
-    """CusMatMulCube definition"""
+    """CusMatrixCombine definition"""
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCube"""
+        """init CusMatrixCombine"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
+        from mindspore.ops._op_impl._custom_op.matrix_combine_impl import CusMatrixCombine
     def get_bprop(self):
         def bprop(x, out, dout):
             return (C.zeros_like(x),)
@@ -229,7 +242,7 @@ class CusTranspose02314(PrimitiveWithInfer):
     def __init__(self):
         """init CusTranspose02314"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
-
+        from mindspore.ops._op_impl._custom_op.transpose_02314_impl import CusTranspose02314
     def get_bprop(self):
         def bprop(x, out, dout):
             return (C.zeros_like(x),)
@@ -246,3 +259,41 @@ class CusTranspose02314(PrimitiveWithInfer):
 
     def infer_dtype(self, data1_dtype):
         return data1_dtype
+
+class CusMatMulCubeDenseRight(PrimitiveWithInfer):
+    """CusMatMulCubeDenseRight definition"""
+    @prim_attr_register
+    def __init__(self):
+        """init CusMatMulCubeDenseRight"""
+        self.init_prim_io_names(inputs=['x1', 'x2','x3'], outputs=['y'])
+        from mindspore.ops._op_impl._custom_op.matmul_cube_dense_right_impl import CusMatMulCubeDenseRight
+
+    def get_bprop(self):
+        def bprop(x1, x2, x3, out, dout):
+            return (C.zeros_like(x1),C.zeros_like(x2), C.zeros_like(x3))
+        return bprop
+ 
+    def infer_shape(self, data1_shape, data2_shape, data3_shape):
+        return data1_shape
+ 
+    def infer_dtype(self, data1_dtype, data2_dtype, data3_dtype):
+        return ms.common.dtype.tensor_type(getattr(ms, "float32"))
+
+class CusMatMulCubeFraczLeftCast(PrimitiveWithInfer):
+    """CusMatMulCubeFraczLeftCast definition"""
+    @prim_attr_register
+    def __init__(self):
+        """init CusMatMulCubeFraczLeftCast"""
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
+        from mindspore.ops._op_impl._custom_op.matmul_cube_fracz_left_cast_impl import CusMatMulCubeFraczLeftCast
+
+    def get_bprop(self):
+        def bprop(x1, x2, out, dout):
+            return (C.zeros_like(x1),C.zeros_like(x2))
+        return bprop
+
+    def infer_shape(self, data1_shape, data2_shape):
+        return data2_shape
+
+    def infer_dtype(self, data1_dtype, data2_dtype):
+        return ms.common.dtype.tensor_type(getattr(ms, "float16"))
