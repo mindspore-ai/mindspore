@@ -199,3 +199,4 @@ from .cumprod import _cumprop_tbe
 from .reduce_prod import _reduce_prod_tbe
 from .flatten_grad import _flatten_grad_tbe
 from .scatter_add import _scatter_add_tbe
+from .atan2 import _atan2_tbe
