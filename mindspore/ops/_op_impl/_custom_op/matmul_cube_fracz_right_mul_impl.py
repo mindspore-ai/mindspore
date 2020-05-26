@@ -18,37 +18,35 @@ limitations under the License.
 matmul
 """
 from __future__ import absolute_import
-import te.lang.cce
-import te.platform.cce_params as cce
-from te.platform.fusion_manager import fusion_manager
-from te import tvm
-from topi import generic
-from topi.cce import util
-from te import tik
-from impl.matmul_vector import matmul_vector_cce
+
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+from te import tik
+from topi.cce import util
+
 # General limitation of the size for input shape: 2**31
 SHAPE_SIZE_LIMIT = 2147483648
 NoneType = type(None)
 
 cus_matmul_cube_fracz_right_mul_op_info = TBERegOp("CusMatMulCubeFraczRightMul") \
-                             .fusion_type("OPAQUE") \
-                             .async_flag(False) \
-                             .binfile_name("matmulcubefraczrightmul.so") \
-                             .compute_cost(10) \
-                             .kernel_name("CusMatMulCubeFraczRightMul") \
-                             .partial_flag(True) \
-                             .input(0, "x1", False, "required", "all") \
-                             .input(1, "x2", False, "required", "all") \
-                             .input(2, "x3", False, "required", "all") \
-                             .input(3, "x4", False, "optional", "all") \
-                             .output(0, "y", False, "required", "all") \
-                             .dtype_format(DataType.F16_FracZ, DataType.F16_Default, DataType.F32_Default, DataType.F16_Default, DataType.F32_FracZ) \
-                             .get_op_info()
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("matmulcubefraczrightmul.so") \
+    .compute_cost(10) \
+    .kernel_name("CusMatMulCubeFraczRightMul") \
+    .partial_flag(True) \
+    .input(0, "x1", False, "required", "all") \
+    .input(1, "x2", False, "required", "all") \
+    .input(2, "x3", False, "required", "all") \
+    .input(3, "x4", False, "optional", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F16_FracZ, DataType.F16_Default, DataType.F32_Default, DataType.F16_Default,
+                  DataType.F32_FracZ) \
+    .get_op_info()
 
 
 @op_info_register(cus_matmul_cube_fracz_right_mul_op_info)
-def CusMatMulCubeFraczRightMul(input_x1, input_x2, input_x3, bias=None, output_y={}, trans_a=False, trans_b=False, kernel_name="matmulcube"):
+def CusMatMulCubeFraczRightMul(input_x1, input_x2, input_x3, bias=None, output_y={}, trans_a=False, trans_b=False,
+                               kernel_name="matmulcube"):
     if util.get_product_version() == util.VERSION_MINI:
         tik_instance = tik.Tik(tik.Dprofile("v100", "mini"))
     else:
@@ -61,10 +59,10 @@ def CusMatMulCubeFraczRightMul(input_x1, input_x2, input_x3, bias=None, output_y
     input_x3_shape = input_x3.get("shape")
     input_x3_dtype = input_x3.get("dtype").lower()
     output_shape = output_y.get("shape")
-    Supported = [((72, 8, 16, 16),"float16", (72, 72, 16, 16), "float16", (1,), "float32"),
-                 ((32, 8, 16, 16),"float16", (32, 32, 16, 16), "float16", (1,), "float32"),
-                 ((8, 32, 16, 16),"float16", (8, 8, 16, 16), "float16", (1,), "float32"),
-                 ((4, 4, 16, 16),"float16", (4, 4, 16, 16), "float16", (1,), "float32"),
+    Supported = [((72, 8, 16, 16), "float16", (72, 72, 16, 16), "float16", (1,), "float32"),
+                 ((32, 8, 16, 16), "float16", (32, 32, 16, 16), "float16", (1,), "float32"),
+                 ((8, 32, 16, 16), "float16", (8, 8, 16, 16), "float16", (1,), "float32"),
+                 ((4, 4, 16, 16), "float16", (4, 4, 16, 16), "float16", (1,), "float32"),
                  ((4, 16, 16, 16), 'float16', (4, 4, 16, 16), 'float16', (1,), 'float32'),
                  ((49, 4, 16, 16), 'float16', (49, 49, 16, 16), 'float16', (1,), 'float32'),
                  ((36, 4, 16, 16), 'float16', (36, 36, 16, 16), 'float16', (1,), 'float32'),
@@ -81,7 +79,8 @@ def CusMatMulCubeFraczRightMul(input_x1, input_x2, input_x3, bias=None, output_y
                  ((32, 128, 16, 16), 'float16', (32, 32, 16, 16), 'float16', (1,), 'float32'),
                  ((64, 32, 16, 16), 'float16', (64, 64, 16, 16), 'float16', (1,), 'float32'),
                  ((16, 64, 16, 16), 'float16', (16, 16, 16, 16), 'float16', (1,), 'float32')]
-    input_shape = (tuple(input_x1_shape), input_x1_dtype, tuple(input_x2_shape), input_x2_dtype, tuple(input_x3_shape), input_x3_dtype)
+    input_shape = (
+    tuple(input_x1_shape), input_x1_dtype, tuple(input_x2_shape), input_x2_dtype, tuple(input_x3_shape), input_x3_dtype)
     if input_shape not in Supported:
         raise RuntimeError("input_shape %s is not supported" % str(input_shape))
 
@@ -92,6 +91,7 @@ def CusMatMulCubeFraczRightMul(input_x1, input_x2, input_x3, bias=None, output_y
     cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3, resMatmul)
     tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x1, input_x2, input_x3], outputs=[resMatmul])
     return tik_instance
+
 
 def cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3,
                               res):
@@ -176,7 +176,7 @@ def cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3,
                                               name="resMatmul_L0C", scope=tik.scope_cc)
                 with tik_instance.for_range(0, loop_k_num, thread_num=thread_num_k) as thread_idx_k:
                     if diag_opt:
-                        k_idx = (core_n*loop_n_num + cc_n) * no_tile + thread_idx_k * ko_tile_inner
+                        k_idx = (core_n * loop_n_num + cc_n) * no_tile + thread_idx_k * ko_tile_inner
                     else:
                         k_idx = thread_idx_k * ko_tile_inner
                     # input_x1 -> input_x1_L1
@@ -191,7 +191,7 @@ def cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3,
                     input_x2_L1 = tik_instance.Tensor("float16", [no_tile, ko_tile_inner, c0, c0],
                                                       name="input_x2_L1", scope=tik.scope_cbuf)
                     tik_instance.data_move(input_x2_L1,
-                                           input_x2[(core_n*loop_n_num + cc_n) * no_tile,
+                                           input_x2[(core_n * loop_n_num + cc_n) * no_tile,
                                                     k_idx, 0, 0],
                                            0, no_tile, ko_tile_inner * c0 * c0 * fp16_size // blocksize,
                                            (ko - ko_tile_inner) * c0 * c0 * fp16_size // blocksize, 0)
@@ -215,9 +215,9 @@ def cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3,
                         tik_instance.mmad(res_L0C, input_x1_L0A, input_x2_L0B, mo_tile * c0,
                                           ko_tile_inner * c0, no_tile * c0, 1)
                 res_ub = tik_instance.Tensor("float32", [no_tile, mo_tile, c0, c0],
-                                                   name="resMatmul_ub", scope=tik.scope_ubuf)
+                                             name="resMatmul_ub", scope=tik.scope_ubuf)
                 tik_instance.data_move(res_ub, res_L0C, 0, 1, no_tile * mo_tile, 0, 0)
- 
+
                 input_3_local_UB = tik_instance.Tensor("float32", (8,), scope=tik.scope_ubuf, name="input_3_local_UB")
                 tik_instance.data_move(input_3_local_UB, input_x3, 0, 1, 1, 0, 0)
                 matrix_max_scalar = tik_instance.Scalar("float32")
@@ -236,7 +236,7 @@ def cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3,
                                    res_ub[count * repeate_times_max * vectorfp32_size],
                                    res_ub[count * repeate_times_max * vectorfp32_size],
                                    matrix_max_scalar, repeate_num, 1, 1, 8, 8)
- 
+
                 tik_instance.data_move(res[(core_n * loop_n_num + cc_n) * no_tile,
                                            (core_m * loop_m_num + cc_m) * mo_tile, 0, 0],
                                        res_ub, 0, no_tile,

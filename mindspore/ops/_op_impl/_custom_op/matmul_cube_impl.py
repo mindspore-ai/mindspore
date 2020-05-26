@@ -18,13 +18,15 @@ limitations under the License.
 matmul
 """
 from __future__ import absolute_import
+
 import te.lang.cce
 import te.platform.cce_params as cce
+from impl.matmul_vector import matmul_vector_cce
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 from te import tvm
 from topi import generic
 from topi.cce import util
-from impl.matmul_vector import matmul_vector_cce
-from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+
 # General limitation of the size for input shape: 2**31
 SHAPE_SIZE_LIMIT = 2147483648
 NoneType = type(None)
@@ -36,14 +38,15 @@ matmul_cube_op_info = TBERegOp("CusMatMulCube") \
     .compute_cost(10) \
     .kernel_name("CusMatMulCube") \
     .partial_flag(True) \
-    .attr("transpose_a", "required", "bool", "all")\
-    .attr("transpose_b", "required", "bool", "all")\
+    .attr("transpose_a", "required", "bool", "all") \
+    .attr("transpose_b", "required", "bool", "all") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .input(2, "x3", False, "optional", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_Default, DataType.F32_FracNZ) \
     .get_op_info()
+
 
 # pylint: disable=locally-disabled,too-many-arguments,too-many-branches, too-many-statements, too-many-locals,
 def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
@@ -113,16 +116,16 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
 
     if m_shape != 1:
         if n_shape == 1:
-            if km_shape % (cce.BLOCK_IN*cce.BLOCK_IN) != 0:
+            if km_shape % (cce.BLOCK_IN * cce.BLOCK_IN) != 0:
                 raise RuntimeError("input shape K1 should be multiple of %d"
-                                   % (cce.BLOCK_IN*cce.BLOCK_IN))
-        elif km_shape%k_block_size != 0:
+                                   % (cce.BLOCK_IN * cce.BLOCK_IN))
+        elif km_shape % k_block_size != 0:
             raise RuntimeError(
                 "input shape K1 should be multiple of %d" % cce.BLOCK_IN)
     else:
-        if km_shape % (cce.BLOCK_IN*cce.BLOCK_IN) != 0:
+        if km_shape % (cce.BLOCK_IN * cce.BLOCK_IN) != 0:
             raise RuntimeError("input shape K1 should be multiple of %d"
-                               % (cce.BLOCK_IN*cce.BLOCK_IN))
+                               % (cce.BLOCK_IN * cce.BLOCK_IN))
 
     if n_shape % cce.BLOCK_IN != 0 and n_shape != 1:
         raise RuntimeError("input shape N should be 1 or multiple of %d" % cce.BLOCK_IN)
@@ -130,7 +133,7 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
     if len(shape_bias):
         if len(shape_bias) == 1:
             if is_gevm or is_gemv:
-                if shape_bias[0] != m_shape*n_shape:
+                if shape_bias[0] != m_shape * n_shape:
                     raise RuntimeError("broadcast case shape bias for gemv must be equal m*n")
             else:
                 if shape_bias[0] != n_shape:
@@ -141,32 +144,35 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
         else:
             raise RuntimeError("unsupport input shape now for batch bias case")
 
+
 def _get_bias(shape_bias):
     bias_length = shape_bias[0]
-    if bias_length % 16 ==0:
+    if bias_length % 16 == 0:
         return shape_bias
     else:
-        bias_length = (bias_length // 16)*16 + 16
+        bias_length = (bias_length // 16) * 16 + 16
         shape_bias = []
         shape_bias.append(bias_length)
         return shape_bias
+
 
 def _get_input_shape(shape_x):
     dim_a = shape_x[0]
     dim_b = shape_x[1]
     res = []
-    if dim_a % 16 !=0:
-        dim_a = (dim_a // 16)*16 + 16
+    if dim_a % 16 != 0:
+        dim_a = (dim_a // 16) * 16 + 16
         res.append(dim_a)
     else:
         res.append(dim_a)
 
-    if dim_b % 16 !=0:
-        dim_b = (dim_b // 16)*16 + 16
+    if dim_b % 16 != 0:
+        dim_b = (dim_b // 16) * 16 + 16
         res.append(dim_b)
     else:
         res.append(dim_b)
     return res
+
 
 def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False, kernel_name="matmulcube"):
     shape_a = input_x1.get("shape")
@@ -182,7 +188,7 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
     if bias is not None and bool(bias):
         shape_bias = bias.get("shape")
     try:
-        trans_a_f = bool(1-trans_a)
+        trans_a_f = bool(1 - trans_a)
         if src_dtype == "float32" or src_dtype == "int32":
             if len(shape_a) != 2 and len(shape_b) != 2:
                 return False
@@ -203,10 +209,10 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
                     return False
             elif shape_a[1] != shape_b[0]:
                 return False
- 
+
             if trans_a_f and trans_b and shape_b[1] == 1:
                 return False
- 
+
         if src_dtype == "float16":
             if len(shape_a) != 2 and len(shape_b) != 2:
                 return False
@@ -217,26 +223,27 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
             else:
                 m_shape = shape_a[0]
                 k_shape = shape_a[1]
- 
+
             if trans_b:
                 n_shape = shape_b[0]
                 k_b_shape = shape_b[1]
             else:
                 n_shape = shape_b[1]
                 k_b_shape = shape_b[0]
- 
+
             if k_shape != k_b_shape:
                 return False
- 
+
             if m_shape == 1 or n_shape == 1:
                 if k_shape % 256 != 0:
                     return False
- 
+
     except RuntimeError as e:
         return False
- 
+
     return True
- 
+
+
 # pylint: disable=locally-disabled,too-many-arguments, too-many-locals, too-many-statements
 @op_info_register(matmul_cube_op_info)
 def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False, kernel_name="matmulcube"):
@@ -269,18 +276,18 @@ def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, tra
     """
     shape_a = input_x1.get("ori_shape")
     shape_b = input_x2.get("ori_shape")
- 
+
     if shape_a is not None:
         if len(shape_a) < 2:
             shape_a = input_x1.get("shape")
- 
+
     if shape_b is not None:
         if len(shape_b) < 2:
             shape_b = input_x2.get("shape")
- 
+
     shape_a = list(shape_a)
     shape_b = list(shape_b)
- 
+
     if input_x1.get("format") == "FRACTAL_NZ":
         shape_a = _get_input_shape(shape_a)
         shape_b = _get_input_shape(shape_b)
@@ -290,21 +297,21 @@ def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, tra
     util.check_shape_rule(shape_b)
     util.check_shape_size(shape_a, SHAPE_SIZE_LIMIT)
     util.check_shape_size(shape_b, SHAPE_SIZE_LIMIT)
- 
+
     if input_x1.get("format") == "FRACTAL_NZ":
         shape_a = [shape_a[1], shape_a[0]]
-        trans_a = bool(1-trans_a)
- 
+        trans_a = bool(1 - trans_a)
+
     if input_x2.get("format") == "FRACTAL_NZ":
         shape_b = [shape_b[1], shape_b[0]]
-        trans_b = bool(1-trans_b)
- 
+        trans_b = bool(1 - trans_b)
+
     shape_bias = ()
     if bias is not None and bool(bias):
         shape_bias = bias.get("shape")
         shape_bias = list(shape_bias)
         shape_bias = _get_bias(shape_bias)
- 
+
     src_dtype = input_x1.get("dtype").lower()
     dst_dtype = output_y.get("dtype").lower()
     if src_dtype == "float32" or src_dtype == "int32":
@@ -338,12 +345,12 @@ def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, tra
         shape_a_temp = (m_shape // block_reduce, km_shape // block_in, block_reduce, block_in)
     else:
         shape_a_temp = (m_shape // block_in, km_shape // block_reduce, block_in, block_reduce)
- 
+
     if trans_b:
         shape_b_temp = (kn_shape // block_out, n_shape // block_reduce, block_reduce, block_out)
     else:
         shape_b_temp = (kn_shape // block_reduce, n_shape // block_out, block_out, block_reduce)
- 
+
     if input_x1.get("format") == "FORMAT_FRACTAL_Z":
         shape_a_temp = (shape_a_temp[0], shape_a_temp[1], shape_a_temp[2], shape_a_temp[3])
         format_a = "fractal"
@@ -353,7 +360,7 @@ def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, tra
     else:
         shape_a_temp = (shape_a[len(shape_a) - 2], shape_a[len(shape_a) - 1])
         format_a = "ND"
- 
+
     if input_x2.get("format") == "FORMAT_FRACTAL_Z":
         shape_b_temp = (shape_b_temp[0], shape_b_temp[1], shape_b_temp[2], shape_b_temp[3])
         format_b = "fractal"
@@ -363,28 +370,28 @@ def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, tra
     else:
         shape_b_temp = (shape_b[len(shape_b) - 2], shape_b[len(shape_b) - 1])
         format_b = "ND"
- 
+
     tensor_bias = None
     tensor_a = tvm.placeholder(shape_a_temp, name='tensor_a',
                                dtype=src_dtype)
     tensor_b = tvm.placeholder(shape_b_temp, name='tensor_b',
                                dtype=src_dtype)
- 
+
     if len(shape_bias) > 0:
         tensor_bias = tvm.placeholder(shape_bias, name='tensor_bias',
                                       dtype=dst_dtype)
     result = te.lang.cce.matmul(tensor_a, tensor_b, trans_a, trans_b, format_a=format_a,
                                 format_b=format_b, dst_dtype=dst_dtype, tensor_bias=tensor_bias)
- 
+
     with tvm.target.cce():
         schedule = generic.auto_schedule(result)
- 
+
     tensor_list = [tensor_a, tensor_b, result]
     if len(shape_bias) > 0:
         tensor_list = [tensor_a, tensor_b, tensor_bias, result]
- 
+
     config = {"print_ir": False,
               "name": kernel_name,
               "tensor_list": tensor_list}
- 
+
     te.lang.cce.cce_build_code(schedule, config)

@@ -13,24 +13,25 @@
 # limitations under the License.
 # ============================================================================
 """CusMatrixCombine"""
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 from te import tik
 from topi.cce import util
-from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
 cus_matrix_combine_op_info = TBERegOp("CusMatrixCombine") \
-                             .fusion_type("OPAQUE") \
-                             .async_flag(False) \
-                             .binfile_name("matrixcombine.so") \
-                             .compute_cost(10) \
-                             .kernel_name("CusMatrixCombine") \
-                             .partial_flag(True) \
-                             .input(0, "x1", False, "required", "all") \
-                             .output(0, "y", False, "required", "all") \
-                             .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-                             .get_op_info()
+    .fusion_type("OPAQUE") \
+    .async_flag(False) \
+    .binfile_name("matrixcombine.so") \
+    .compute_cost(10) \
+    .kernel_name("CusMatrixCombine") \
+    .partial_flag(True) \
+    .input(0, "x1", False, "required", "all") \
+    .output(0, "y", False, "required", "all") \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .get_op_info()
+
 
 @op_info_register(cus_matrix_combine_op_info)
-def CusMatrixCombine(input_x, output,kernel_name="matrix_combine"):
+def CusMatrixCombine(input_x, output, kernel_name="matrix_combine"):
     input_x_shape = input_x.get("shape")
     output_shape = output.get("shape")
     split_dim = 128
@@ -45,18 +46,20 @@ def CusMatrixCombine(input_x, output,kernel_name="matrix_combine"):
 
     blocks = 32
     matrix_dim = input_x_shape[0] * input_x_shape[1]
-    if input_x_shape[0] == 1 and input_x_shape[1] == 64 :
+    if input_x_shape[0] == 1 and input_x_shape[1] == 64:
         tiling_dim = 2
         bs = 1
-        with tik_instance.for_range(0,blocks,block_num=blocks) as block_index:
-            input_x_ub = tik_instance.Tensor("float32", (tiling_dim, matrix_dim), name="input_x_ub", scope=tik.scope_ubuf)
+        with tik_instance.for_range(0, blocks, block_num=blocks) as block_index:
+            input_x_ub = tik_instance.Tensor("float32", (tiling_dim, matrix_dim), name="input_x_ub",
+                                             scope=tik.scope_ubuf)
             tik_instance.data_move(input_x_ub, input_x[0, block_index * tiling_dim, 0], 0, 1, 16, 0, 0)
             tik_instance.data_move(res[block_index * tiling_dim, 0], input_x_ub, 0, 1, 16, 0, 0)
     else:
         tiling_dim = 4
         bs = input_x_shape[0]
-        with tik_instance.for_range(0,blocks,block_num=blocks) as block_index:
-            input_x_ub = tik_instance.Tensor("float32", (tiling_dim, matrix_dim), name="input_x_ub", scope=tik.scope_ubuf)
+        with tik_instance.for_range(0, blocks, block_num=blocks) as block_index:
+            input_x_ub = tik_instance.Tensor("float32", (tiling_dim, matrix_dim), name="input_x_ub",
+                                             scope=tik.scope_ubuf)
             zero = tik_instance.Scalar("float32")
             zero.set_as(0.0)
             with tik_instance.for_range(0, bs) as i:
@@ -69,7 +72,9 @@ def CusMatrixCombine(input_x, output,kernel_name="matrix_combine"):
                     tik_instance.vector_dup(64, input_x_ub, zero, repeat_1, 1, 8)
                     tik_instance.vector_dup(64, input_x_ub[255 * 64], zero, repeat_2, 1, 8)
                 with tik_instance.for_range(0, tiling_dim) as j:
-                    tik_instance.data_move(input_x_ub[j, split_dim * i], input_x[i, block_index * tiling_dim + j, 0], 0, 1, 16, 0, 0)
-                tik_instance.data_move(res[i * split_dim + block_index * tiling_dim, 0], input_x_ub, 0, 1, tiling_dim * matrix_dim *4 // 32, 0, 0)
+                    tik_instance.data_move(input_x_ub[j, split_dim * i], input_x[i, block_index * tiling_dim + j, 0], 0,
+                                           1, 16, 0, 0)
+                tik_instance.data_move(res[i * split_dim + block_index * tiling_dim, 0], input_x_ub, 0, 1,
+                                       tiling_dim * matrix_dim * 4 // 32, 0, 0)
     tik_instance.BuildCCE(kernel_name=kernel_name, inputs=[input_x], outputs=[res])
     return tik_instance
