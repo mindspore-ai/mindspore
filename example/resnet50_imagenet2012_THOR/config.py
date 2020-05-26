@@ -31,15 +31,7 @@ config = ed({
     "save_checkpoint_steps": 5004,
     "keep_checkpoint_max": 20,
     "save_checkpoint_path": "./",
-    "lr_init": 0.01,
-    "lr_end": 0.00001,
-    "lr_max": 0.1,
-    "warmup_epochs": 0,
-    "lr_decay_mode": "cosine",
     "label_smooth": 1,
     "label_smooth_factor": 0.1,
-    "lr": 0.1,
-    "T_max": 90,
-    "eta_min": 0,
     "frequency": 278
 })

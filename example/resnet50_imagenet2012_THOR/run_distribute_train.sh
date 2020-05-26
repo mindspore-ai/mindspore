@@ -45,8 +45,7 @@ do
     mkdir ./train_parallel$i
     cp *.py ./train_parallel$i
     cp *.sh ./train_parallel$i
-    cp -r second_order ./train_parallel$i/second_order
-    cp -r test_ops ./train_parallel$i/test_ops
+    cp -r model ./train_parallel$i
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
 
