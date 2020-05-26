@@ -32,7 +32,7 @@ from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_group_size
 import mindspore.dataset.engine as de
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
@@ -157,6 +157,11 @@ if __name__ == '__main__':
         # train on gpu
         print("train args: ", args_opt, "\ncfg: ", config_gpu)
 
+        init('nccl')
+        context.set_auto_parallel_context(parallel_mode="data_parallel",
+                                          mirror_mean=True,
+                                          device_num=get_group_size())
+
         # define net
         net = mobilenet_v2(num_classes=config_gpu.num_classes, platform="GPU")
         # define loss
@@ -223,7 +228,7 @@ if __name__ == '__main__':
                 cell.to_float(mstype.float32)
         if config_ascend.label_smooth > 0:
             loss = CrossEntropyWithLabelSmooth(
-                smooth_factor=config_ascend.label_smooth, num_classes=config.num_classes)
+                smooth_factor=config_ascend.label_smooth, num_classes=config_ascend.num_classes)
         else:
             loss = SoftmaxCrossEntropyWithLogits(
                 is_grad=False, sparse=True, reduction='mean')

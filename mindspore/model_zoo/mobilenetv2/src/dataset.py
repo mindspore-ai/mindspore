@@ -21,7 +21,6 @@ import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 
-
 def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch_size=32):
     """
     create a train or eval dataset
@@ -44,7 +43,9 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
             ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
                                          num_shards=rank_size, shard_id=rank_id)
     elif platform == "GPU":
-        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True)
+        from mindspore.communication.management import get_rank, get_group_size
+        ds = de.ImageFolderDatasetV2(dataset_path, num_parallel_workers=8, shuffle=True,
+                                     num_shards=get_group_size(), shard_id=get_rank())
     else:
         raise ValueError("Unsupport platform.")
 

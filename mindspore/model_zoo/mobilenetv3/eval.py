@@ -24,7 +24,8 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import dtype as mstype
 from src.dataset import create_dataset
 from src.config import config_ascend, config_gpu
-from src.mobilenetV2 import mobilenet_v2
+from src.mobilenetV3 import mobilenet_v3_large
+
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
@@ -49,7 +50,7 @@ if __name__ == '__main__':
 
     loss = nn.SoftmaxCrossEntropyWithLogits(
         is_grad=False, sparse=True, reduction='mean')
-    net = mobilenet_v2(num_classes=config_platform.num_classes)
+    net = mobilenet_v3_large(num_classes=config_platform.num_classes)
 
     if args_opt.platform == "Ascend":
         net.to_float(mstype.float16)
