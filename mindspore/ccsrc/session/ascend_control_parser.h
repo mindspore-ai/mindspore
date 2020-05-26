@@ -49,16 +49,15 @@ class AscendControlParser {
                                  NotNull<std::set<KernelGraphPtr> *> memo);
 
   static void LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &from_graph_call_node,
-                              const CNodePtr &last_label, NotNull<std::set<KernelGraphPtr> *> memo);
+                              const CNodePtr &last_label);
   static std::tuple<CNodePtr, KernelGraphPtr> ParsePartial(NotNull<AnfNodePtr> node);
 
   static void LinkArgsToParam(NotNull<KernelGraphPtr> to_graph, NotNull<KernelGraphPtr> target_graph,
                               NotNull<AnfNodePtr> arg, NotNull<AnfNodePtr> param);
-  static NotNull<AnfNodePtr> GetRealInput(NotNull<KernelGraphPtr> from_graph, NotNull<KernelGraphPtr> to_graph,
-                                          NotNull<AnfNodePtr> param);
+
   static void InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
 
-  static CNodePtr GetNextRealKernel(std::vector<CNodePtr> list, size_t start);
+  static CNodePtr GetNextRealKernel(const std::vector<CNodePtr> &list, size_t start);
 
   // root graph order
   static std::tuple<std::map<uint32_t, CNodePtr>, std::map<CNodePtr, std::vector<uint32_t>>> GetLabelNode(
@@ -67,20 +66,7 @@ class AscendControlParser {
                               NotNull<KernelGraphPtr> graph);
   static std::vector<CNodePtr> RecurseGraph(const CNodePtr &cur_label_goto, const CNodePtr &end_label_goto,
                                             NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
-
-  static constexpr size_t kCNodePrim = 0;
-  static constexpr size_t kCNodeCallArg = 1;
-  static constexpr size_t kCNodeSwitchCond = 1;
-  static constexpr size_t kCNodeSwitchTrue = 2;
-  static constexpr size_t kCNodeSwitchFalse = 3;
-  static constexpr size_t kCNodeSwitchLength = 4;
-  static constexpr size_t kCNodePartialLength = 2;
-  static constexpr size_t kCNodePartialFunc = 1;
-  static constexpr size_t kCNodeSwitchLayerCond = 1;
-  static constexpr size_t kCNodeSwitchLayerBranch = 2;
-  static constexpr size_t kCNodeSwitchLayerLength = 3;
 };
-
 }  // namespace session
 }  // namespace mindspore
 

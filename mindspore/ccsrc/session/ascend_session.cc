@@ -256,7 +256,6 @@ static void UpdateRealInput(KernelGraph *graph) {
 void RecurseToUpdateCallRealInput(KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "start graph id:" << graph->graph_id();
-  graph->UpdateCallRealInput();
   for (auto &child_graph : graph->child_graph_order()) {
     if (child_graph == graph->parent_graph()) {
       MS_LOG(INFO) << "Child graph:" << child_graph->graph_id()
@@ -265,6 +264,8 @@ void RecurseToUpdateCallRealInput(KernelGraph *graph) {
     }
     RecurseToUpdateCallRealInput(child_graph.get());
   }
+  // this action should from bottom to top
+  graph->UpdateCallRealInput();
 }
 }  // namespace
 
@@ -280,27 +281,20 @@ GraphId AscendSession::CompileGraph(const AnfNodePtrList &lst, const AnfNodePtrL
 GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   MS_LOG(INFO) << "start";
   auto graph = ConstructKernelGraph(func_graph);
-  MS_LOG(INFO) << "graph input size:" << graph->inputs().size();
   // split switch
   SplitGraphs(graph);
-  MS_LOG(INFO) << "graph input size:" << graph->inputs().size();
   // insert goto labels and label_sets
   LinkChildGraphs(NOT_NULL(graph));
-  MS_LOG(INFO) << "graph input size:" << graph->inputs().size();
   // resource initialize
   InitRuntimeResource();
   // assign label
   AssignLabel(NOT_NULL(graph));
-  MS_LOG(INFO) << "graph input size:" << graph->inputs().size();
   // recurse compile child graph
   RecurseCompileGraph(graph);
-  MS_LOG(INFO) << "graph input size:" << graph->inputs().size();
   // root graph valiate,include genearte execute order and so on
   RootGraphExecutorValidate(NOT_NULL(graph));
-  MS_LOG(INFO) << "graph input size:" << graph->inputs().size();
   // adjust kernel
   AdjustKernel(graph);
-  MS_LOG(INFO) << "graph input size:" << graph->inputs().size();
   // assign stream
   AssignStream(graph);
   // build kernel
@@ -313,7 +307,6 @@ GraphId AscendSession::CompileGraph(NotNull<FuncGraphPtr> func_graph) {
   LoadTask(graph);
   // return the graph id to backend
   auto graph_id = graph->graph_id();
-  MS_LOG(INFO) << "Compile graph " << graph_id << " success";
   return graph_id;
 }
 

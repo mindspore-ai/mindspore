@@ -606,10 +606,6 @@ void KernelGraph::ReplaceNode(const AnfNodePtr &old_anf_node, AnfNodePtr new_anf
           break;
         }
       }
-      MS_LOG(INFO) << "Inputs of graph id:" << graph_id();
-      for (size_t i = 0; i < inputs().size(); i++) {
-        MS_LOG(INFO) << "[" << i << "]:" << inputs()[i]->DebugString();
-      }
     }
     // update front to backend map
     FrontBackendlMapUpdate(old_anf_node, new_anf_node);
@@ -713,6 +709,9 @@ void KernelGraph::UpdateCallRealInput() {
       MS_LOG(INFO) << "paramter: " << parameter->DebugString()
                    << " insert real input:" << new_real_input->DebugString();
       (void)real_inputs.insert(new_real_input);
+      if (new_real_input->isa<Parameter>()) {
+        ReplaceNode(parameter, new_real_input);
+      }
     }
   }
 }
