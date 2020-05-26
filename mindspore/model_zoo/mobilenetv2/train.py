@@ -216,7 +216,7 @@ if __name__ == '__main__':
             init()
 
         epoch_size = config_ascend.epoch_size
-        net = mobilenet_v2(num_classes=config_ascend.num_classes)
+        net = mobilenet_v2(num_classes=config_ascend.num_classes, platform="Ascend")
         net.to_float(mstype.float16)
         for _, cell in net.cells_and_names():
             if isinstance(cell, nn.Dense):

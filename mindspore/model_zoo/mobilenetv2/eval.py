@@ -36,21 +36,23 @@ args_opt = parser.parse_args()
 
 if __name__ == '__main__':
     config_platform = None
+    net = None
     if args_opt.platform == "Ascend":
         config_platform = config_ascend
         device_id = int(os.getenv('DEVICE_ID'))
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
                             device_id=device_id, save_graphs=False)
+        net = mobilenet_v2(num_classes=config_platform.num_classes, platform="Ascend")
     elif args_opt.platform == "GPU":
         config_platform = config_gpu
         context.set_context(mode=context.GRAPH_MODE,
                             device_target="GPU", save_graphs=False)
+        net = mobilenet_v2(num_classes=config_platform.num_classes, platform="GPU")
     else:
         raise ValueError("Unsupport platform.")
 
     loss = nn.SoftmaxCrossEntropyWithLogits(
         is_grad=False, sparse=True, reduction='mean')
-    net = mobilenet_v2(num_classes=config_platform.num_classes)
 
     if args_opt.platform == "Ascend":
         net.to_float(mstype.float16)
