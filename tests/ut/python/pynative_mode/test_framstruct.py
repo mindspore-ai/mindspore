@@ -893,6 +893,7 @@ def test_grad_if_defer_inline():
 
 
 def test_bprop_with_wrong_output_num():
+    context.set_context(check_bprop=True)
     class BpropWithWrongOutputNum(PrimitiveWithInfer):
         @prim_attr_register
         def __init__(self):
@@ -926,8 +927,8 @@ def test_bprop_with_wrong_output_num():
     with pytest.raises(TypeError):
         C.grad_all(BpropWithWrongOutputNumCell())(1, 2)
 
-
 def test_bprop_with_wrong_output_type():
+    context.set_context(check_bprop=True)
     class BpropWithWrongOutputType(PrimitiveWithInfer):
         @prim_attr_register
         def __init__(self):
@@ -963,6 +964,7 @@ def test_bprop_with_wrong_output_type():
 
 
 def test_bprop_with_wrong_output_shape():
+    context.set_context(check_bprop=True)
     class BpropWithWrongOutputShape(PrimitiveWithInfer):
         @prim_attr_register
         def __init__(self):

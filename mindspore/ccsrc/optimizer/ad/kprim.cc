@@ -32,6 +32,7 @@
 #include "operator/composite/composite.h"
 #include "utils/symbolic.h"
 #include "utils/primitive_utils.h"
+#include "utils/context/ms_context.h"
 #include "debug/info.h"
 #include "debug/trace.h"
 
@@ -181,10 +182,19 @@ void KPrim::TransformArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bp
 }
 
 void KPrim::CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check) {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool check_bprop_flag = context->check_bprop_flag();
+  // Skip checking if check_bprop not set
+  if (!check_bprop_flag) {
+    return;
+  }
+
   // bprop_fg has been checked in caller
-  auto check_bprop = prim::GetPythonOps("check_bprop", "mindspore.ops.functional")->cast<PrimitivePtr>();
-  MS_EXCEPTION_IF_NULL(check_bprop);
-  check_bprop->set_attr("prim_to_check", std::make_shared<StringImm>(prim_to_check));
+  auto check_bprop_class = prim::GetPythonOps("CheckBprop", "mindspore.ops.operations.other_ops");
+  MS_EXCEPTION_IF_NULL(check_bprop_class);
+  auto check_bprop =
+    bprop_fg->NewCNode({NewValueNode(check_bprop_class), NewValueNode(std::make_shared<StringImm>(prim_to_check))});
 
   std::vector<AnfNodePtr> inputs;
   inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
@@ -192,7 +202,7 @@ void KPrim::CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check
   AnfNodePtr params = bprop_fg->NewCNode(inputs);
 
   inputs.clear();
-  inputs.push_back(NewValueNode(check_bprop));
+  inputs.push_back(check_bprop);
   inputs.push_back(bprop_fg->output());
   inputs.push_back(params);
   AnfNodePtr bprop_out = bprop_fg->NewCNode(inputs);
