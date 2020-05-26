@@ -43,7 +43,9 @@ class CPUKernelFactory {
   CPUKernelFactory() = default;
   ~CPUKernelFactory() = default;
   DISABLE_COPY_AND_ASSIGN(CPUKernelFactory)
-  std::pair<bool, size_t> CPUKernelAttrCheck(const std::string &kernel_name, const KernelBuildInfo *kernel_info);
+  std::pair<bool, size_t> CPUKernelAttrCheck(const std::string &kernel_name, const KernelBuildInfo &kernel_info);
+  bool CPUKernelSingleAttrCheck(const std::pair<KernelAttr, CPUKernelCreator> &attr_creator,
+                                const KernelBuildInfo &kernel_info);
   std::map<std::string, std::vector<std::pair<KernelAttr, CPUKernelCreator>>> name_to_attr_creator_;
 };
 
