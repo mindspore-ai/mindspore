@@ -473,9 +473,12 @@ bool AscendKernelRuntime::HcclInit() {
   }
 
   MS_LOG(INFO) << "do hcom init";
-  const char *config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
+  auto config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
   if (config_path_str == nullptr) {
-    MS_LOG(ERROR) << "get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH";
+    config_path_str = std::getenv("RANK_TABLE_FILE");
+    if (config_path_str == nullptr) {
+      MS_LOG(ERROR) << "get hccl json config failed, please set env MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE";
+    }
     return false;
   }
   auto full_path = realpath(config_path_str, nullptr);
