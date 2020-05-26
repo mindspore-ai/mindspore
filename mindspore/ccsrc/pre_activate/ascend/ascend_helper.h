@@ -58,11 +58,11 @@ class KernelQuery {
   }
 };
 using KernelQueryPtr = std::shared_ptr<KernelQuery>;
-void RefreshKernelBuildInfo(const std::string &input_format, const std::string &output_format, const TypeId device_type,
-                            const AnfNodePtr &trans_data, const std::vector<kernel::Axis> &reshape_type = {});
 
-CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const KernelSelectPtr &kernel_select,
-                        const bool need_padding, const std::string &op_name);
+AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                 const KernelSelectPtr &kernel_select, size_t insert_index,
+                                 const std::string &origin_format, const std::string &dest_format,
+                                 const std::string &op_name, bool is_insert_input);
 
 AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                                 const TypeId &input_type, const TypeId &output_type,
