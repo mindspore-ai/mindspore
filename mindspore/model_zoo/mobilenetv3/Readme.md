@@ -133,7 +133,7 @@ result: {'acc': 0.71976314102564111} ckpt=/path/to/checkpoint/mobilenet-200_625.
 
 #### Inference Performance
 
-| Parameters                 | GoogLeNet                     |                           |                      |
+| Parameters                 |                               |                           |                      |
 | -------------------------- | ----------------------------- | ------------------------- | -------------------- |
 | Model Version              | V1                            |                           |                      |
 | Resource                   | Huawei 910                    | NV SMX2 V100-32G          | Huawei 310           |

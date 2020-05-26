@@ -52,4 +52,4 @@ python ${BASEPATH}/../eval.py \
         --platform=$1 \
         --dataset_path=$2 \
         --checkpoint_path=$3 \
-        &> infer.log &  # dataset val folder path
+        &> ../infer.log &  # dataset val folder path
