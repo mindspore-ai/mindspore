@@ -369,6 +369,14 @@ test_case_math_ops = [
         'block': P.Sin(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Asin', {
+        'block': P.Asin(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('Asinh', {
+        'block': P.Asinh(),
+        'desc_inputs': [[3, 4, 5]],
+        'desc_bprop': [[3, 4, 5]]}),
     ('Reciprocal', {
         'block': P.Reciprocal(),
         'desc_inputs': [[2, 3, 3, 5]],

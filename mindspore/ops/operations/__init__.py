@@ -39,7 +39,8 @@ from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSumm
                         TensorSummary, HistogramSummary, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
-from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr, BitwiseXor,
+
+from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr, BitwiseXor,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
                        Cos, Div, Equal, EqualCount, Exp, Erf, Erfc, Floor, FloorDiv, FloorMod, Acosh,
                        Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd,
@@ -239,6 +240,7 @@ __all__ = [
     'FloorDiv',
     'FloorMod',
     'Acosh',
+    'Asinh',
     "PReLU",
     "Cos",
     "ACos",
@@ -249,6 +251,7 @@ __all__ = [
     'AssignAdd',
     'AssignSub',
     "Sin",
+    "Asin",
     "LSTM",
     "Abs",
     "BinaryCrossEntropy",

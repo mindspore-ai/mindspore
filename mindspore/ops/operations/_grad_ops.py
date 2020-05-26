@@ -76,6 +76,45 @@ class AcoshGrad(PrimitiveWithInfer):
         return x
 
 
+class AsinGrad(PrimitiveWithInfer):
+    """
+    Computes AsinGrad of input element-wise.
+
+    Returns:
+        Tensor, has the same type as input.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Init AsinGrad"""
+
+    def infer_shape(self, x, dout):
+        validator.check("x shape", x, "dout shape", dout, Rel.EQ, self.name)
+        return x
+
+    def infer_dtype(self, x, dout):
+        args = {"x": x, "dout": dout}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        return x
+
+
+class AsinhGrad(PrimitiveWithInfer):
+    """Performs grad of Asinh operation."""
+
+    @prim_attr_register
+    def __init__(self):
+        """init AsinhGrad"""
+
+    def infer_shape(self, x, dout):
+        validator.check("x shape", x, "dout shape", dout, Rel.EQ, self.name)
+        return x
+
+    def infer_dtype(self, x, dout):
+        args = {"x": x, "dout": dout}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        return x
+
+
 class BatchNormGrad(PrimitiveWithInfer):
     """Performs grad of BatchNorm operation."""
 

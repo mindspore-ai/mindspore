@@ -770,6 +770,28 @@ def get_bprop_sin(self):
     return bprop
 
 
+@bprop_getters.register(P.Asin)
+def get_bprop_asin(self):
+    """Grad definition for `Asin` operation."""
+    input_grad = G.AsinGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(x, dout)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.Asinh)
+def get_bprop_asinh(self):
+    """Grad definition for `Asinh` operation."""
+    input_grad = G.AsinhGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(out, dout)
+        return (dx,)
+    return bprop
+
+
 @bprop_getters.register(P.Cos)
 def get_bprop_cos(self):
     """Grad definition for `Cos` operation."""
