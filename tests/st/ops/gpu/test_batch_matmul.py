@@ -119,7 +119,7 @@ def test_4d_transpose_ab():
                [[5612, 5810, 6008, 6206]]]]
     assert (output.asnumpy() == expect).all()
 
-def test_4d_fp16():
+def test_4D_fp16():
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float16)
     input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float16)
 

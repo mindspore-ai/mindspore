@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.ops.operations as P
@@ -32,8 +31,8 @@ class Net(Cell):
         self.end = end
         self.stride = stride
 
-    def construct(self, input):
-        x = self.stridedslice(input, self.begin, self.end, self.stride)
+    def construct(self, input_):
+        x = self.stridedslice(input_, self.begin, self.end, self.stride)
         return x
 
 
@@ -47,17 +46,17 @@ def me_stridedslice(input1, begin, end, stride):
 
 
 def test_stridedslice_input_2d():
-    input = np.random.randn(5, 5).astype(np.int32)
+    input_ = np.random.randn(5, 5).astype(np.int32)
     begin = (0, 0)
     end = (2, 2)
     stride = (1, 1)
 
-    me_stridedslice(input, begin, end, stride)
+    me_stridedslice(input_, begin, end, stride)
 
 
 def test_stridedslice_input_3d():
-    input = np.random.randn(5, 5, 5).astype(np.float32)
+    input_ = np.random.randn(5, 5, 5).astype(np.float32)
     begin = (0, 0, 0)
     end = (3, 3, 3)
     stride = (1, 1, 1)
-    me_stridedslice(input, begin, end, stride)
+    me_stridedslice(input_, begin, end, stride)

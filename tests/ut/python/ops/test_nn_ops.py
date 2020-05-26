@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test nn ops """
-import functools
 import numpy as np
 
 import mindspore

@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 
+
 class NetSoftmaxCrossEntropyWithLogits(nn.Cell):
     def __init__(self):
         super(NetSoftmaxCrossEntropyWithLogits, self).__init__()

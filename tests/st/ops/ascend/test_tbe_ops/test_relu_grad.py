@@ -18,8 +18,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
 

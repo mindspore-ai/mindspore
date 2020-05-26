@@ -12,32 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import math
 import numpy as np
 import pytest
 
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common.tensor import Tensor
-from mindspore.nn import GELU, Cell
-from mindspore.ops import operations as P
+from mindspore.nn import GELU
 from mindspore.train.model import Model
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
-def gelu_forward_me_impl(input):
+def gelu_forward_me_impl(input_):
     n = GELU()
     n.set_train()
     m = Model(n)
-    out = m.predict(input)
+    out = m.predict(input_)
     return out.asnumpy()
 
 
 def gelu_forward_cmp(input_shape, data_type=np.float32):
     input_np = np.random.randn(*input_shape).astype(data_type)
     input_me = Tensor(input_np)
-    out_me = gelu_forward_me_impl(input_me)
+    gelu_forward_me_impl(input_me)
 
 
 @pytest.mark.skip(reason="scalar")

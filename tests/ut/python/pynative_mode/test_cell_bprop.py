@@ -257,7 +257,7 @@ def test_grad_inline_bprop_two_input():
     grads = C.grad_all(net)(input1, input2)
     assert (grads[0].asnumpy() == np.array([2, 2]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([2, 2]).astype(np.float32)).all()
-    assert (len(grads) == 2)
+    assert len(grads) == 2
 
 
 class TwoInputBprop(nn.Cell):
@@ -317,7 +317,7 @@ def test_grad_inline_bprop_multi_input():
     grads = C.grad_all(net)(input1, input2)
     assert (grads[0].asnumpy() == np.array([[12, 12], [12, 12]]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([[19, 19], [19, 19]]).astype(np.float32)).all()
-    assert (len(grads) == 2)
+    assert len(grads) == 2
 
 
 class MulAddWithParam(nn.Cell):

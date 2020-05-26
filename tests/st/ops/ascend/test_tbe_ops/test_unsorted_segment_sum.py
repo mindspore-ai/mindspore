@@ -33,19 +33,19 @@ class Net(nn.Cell):
         return self.seg_sum(x, segment_ids, self.num_segments)
 
 
-def me_un_seg_sum(input, indices, num_segments):
+def me_un_seg_sum(input_, indices, num_segments):
     context.set_context(mode=context.GRAPH_MODE)
     net = Net(num_segments)
     net.set_train()
     model = Model(net)
-    out = model.predict(Tensor(input), Tensor(indices))
+    out = model.predict(Tensor(input_), Tensor(indices))
     return out.asnumpy()
 
 
 def comapre_un_seg_sum(shape, indices, num_segments, dtype):
-    input = np.random.randn(*shape).astype(dtype)
+    input_ = np.random.randn(*shape).astype(dtype)
     indices_me = np.array(indices).astype(np.int32)
-    out_me = me_un_seg_sum(input, indices_me, num_segments)
+    out_me = me_un_seg_sum(input_, indices_me, num_segments)
     print("-------------ms------------------")
     print(out_me)
 

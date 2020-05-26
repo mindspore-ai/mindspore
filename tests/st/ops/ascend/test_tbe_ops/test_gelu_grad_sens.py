@@ -12,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import math
 import numpy as np
-import pytest
 
-import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common.tensor import Tensor
@@ -33,15 +30,15 @@ class Grad(Cell):
         self.grad = GradOperation(name="get_all", get_all=True, sens_param=True)
         self.network = network
 
-    def construct(self, input, output_grad):
-        return self.grad(self.network)(input, output_grad)
+    def construct(self, input_, output_grad):
+        return self.grad(self.network)(input_, output_grad)
 
 
-def gelu_backward_me_impl(input, output_grad):
+def gelu_backward_me_impl(input_, output_grad):
     n = GELU()
     grad_with_sense = Grad(n)
     grad_with_sense.set_train()
-    input_grad = grad_with_sense(input, output_grad)
+    input_grad = grad_with_sense(input_, output_grad)
     return input_grad.asnumpy()
 
 
@@ -86,7 +83,7 @@ def gelu_backward_me_large_in_impl(x1, x2, output_grad):
     grad_with_sense = GradLargeIn(n)
     grad_with_sense.set_train()
     input_grad = grad_with_sense(x1, x2, output_grad)
-    return input_grad[0].asnumpy(), input_grad[1].asnumpy(),
+    return input_grad[0].asnumpy(), input_grad[1].asnumpy()
 
 
 def test_grad_gelu_input_10240_1024():

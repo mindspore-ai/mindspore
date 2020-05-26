@@ -42,10 +42,10 @@ def cond_data_test(x_init, y_init):
 
         def construct(self, x, y):
             cond = self.less(x, y)
-            st1, sf1 = self.switch(x, cond)
-            st2, sf2 = self.switch(y, cond)
+            st1, _ = self.switch(x, cond)
+            st2, _ = self.switch(y, cond)
             add_ret = self.add(st1, st2)
-            st3, sf3 = self.switch(self.value, cond)
+            _, sf3 = self.switch(self.value, cond)
             sq_ret = self.square(sf3)
             ret = self.merge((add_ret, sq_ret))
             return ret[0]
@@ -125,7 +125,7 @@ def test_if_str_is_not_none_right():
             self.z = z
 
         def construct(self, x, y):
-            if self.z == None:
+            if self.z is None:
                 ret = x
             else:
                 ret = y
@@ -146,7 +146,7 @@ def test_if_str_is_not_none_left():
             self.z = z
 
         def construct(self, x, y):
-            if None == self.z:
+            if self.z is None:
                 ret = x
             else:
                 ret = y
@@ -167,7 +167,7 @@ def test_if_none_equal_none():
             self.z = z
 
         def construct(self, x, y):
-            if self.z == None:
+            if self.z is None:
                 ret = x
             else:
                 ret = y

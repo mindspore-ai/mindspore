@@ -18,9 +18,6 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
-from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
 
 context.set_context(device_target="Ascend")
@@ -33,8 +30,8 @@ class Grad(nn.Cell):
         self.network = network
 
     @ms_function
-    def construct(self, input, output_grad):
-        return self.grad(self.network)(input, output_grad)
+    def construct(self, input_, output_grad):
+        return self.grad(self.network)(input_, output_grad)
 
 
 class Net(nn.Cell):

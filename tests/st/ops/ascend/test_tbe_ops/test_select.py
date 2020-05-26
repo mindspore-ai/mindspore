@@ -16,11 +16,7 @@ import numpy as np
 
 import mindspore as ms
 import mindspore.context as context
-import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.train.model import Model
@@ -41,11 +37,11 @@ def me_select(cond, inputa, inputb, dtype=ms.float32):
     net = Select(dtype)
     net.set_train()
     model = Model(net)
-    if isinstance(inputa, np.ndarray) == True:
+    if isinstance(inputa, np.ndarray):
         inputa = Tensor(inputa)
-    if isinstance(inputb, np.ndarray) == True:
+    if isinstance(inputb, np.ndarray):
         inputb = Tensor(inputb)
-    if isinstance(cond, np.bool_) == True:
+    if isinstance(cond, np.bool_):
         cond = np.array(cond)
 
     out = model.predict(Tensor(cond), inputa, inputb)

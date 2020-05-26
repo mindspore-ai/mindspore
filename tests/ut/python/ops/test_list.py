@@ -16,6 +16,7 @@ import functools
 import numpy as np
 
 import mindspore.nn as nn
+import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine
@@ -132,7 +133,7 @@ def test_list_append_2():
 
 
 class ListOperate(nn.Cell):
-    def __init__(self, ):
+    def __init__(self,):
         super(ListOperate, self).__init__()
 
     def construct(self, t, l):
@@ -209,9 +210,6 @@ test_case_lists = [test_case_ops]
 test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
-
-
-import mindspore.context as context
 
 
 @non_graph_engine

@@ -22,9 +22,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _executor
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from ..ut_filter import non_graph_engine
@@ -306,8 +304,8 @@ class NetWithLossCumSum(nn.Cell):
         self.loss = VirtualLoss()
         self.network = network
 
-    def construct(self, input):
-        predict = self.network(input)
+    def construct(self, input_):
+        predict = self.network(input_)
         return self.loss(predict)
 
 
@@ -318,8 +316,8 @@ class GradWrapCumSum(nn.Cell):
         super(GradWrapCumSum, self).__init__()
         self.network = network
 
-    def construct(self, input):
-        return C.grad(self.network)(input)
+    def construct(self, input_):
+        return C.grad(self.network)(input_)
 
 
 class NetCumSum(nn.Cell):
@@ -330,8 +328,8 @@ class NetCumSum(nn.Cell):
         self.cumsum = P.CumSum()
         self.axis = 1
 
-    def construct(self, input):
-        return self.cumsum(input, self.axis)
+    def construct(self, input_):
+        return self.cumsum(input_, self.axis)
 
 
 class SignNet(nn.Cell):
@@ -442,9 +440,6 @@ test_case_lists = [test_case_math_ops]
 test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
-
-
-import mindspore.context as context
 
 
 @non_graph_engine

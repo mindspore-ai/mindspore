@@ -17,6 +17,7 @@ import functools
 import numpy as np
 
 import mindspore.nn as nn
+import mindspore.context as context
 from mindspore import Parameter, ParameterTuple, Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -125,8 +126,6 @@ test_exec_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm
 
-
-import mindspore.context as context
 
 
 @non_graph_engine

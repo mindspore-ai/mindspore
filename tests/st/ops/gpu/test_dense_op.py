@@ -172,8 +172,8 @@ class Grad(nn.Cell):
         self.grad = GradOperation(name="get_all", get_all=True, sens_param=True)
         self.network = network
 
-    def construct(self, inputs, bias, dy):
-        return self.grad(self.network)(inputs, bias, dy)
+    def construct(self, input_, bias, dy):
+        return self.grad(self.network)(input_, bias, dy)
 
 
 @pytest.mark.level0

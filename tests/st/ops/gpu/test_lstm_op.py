@@ -783,10 +783,6 @@ def test_grad():
     bidirectional = True
     dropout = 0.0
 
-    num_directions = 1
-    if bidirectional:
-        num_directions = 2
-
     net = Grad(Net(seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout))
 
     dy = np.array([[[-3.5471e-01, 7.0540e-01, -7.5945e-01, -1.2322e+00],
@@ -804,7 +800,7 @@ def test_grad():
                    [[-1.6032e+00, -1.8818e-01, 7.0441e-01, -2.8765e+00],
                     [1.0065e-01, 9.2045e-01, 2.7426e-01, 2.6196e-01]]]).astype(np.float32)
 
-    dx, dh, dc, dw = net(Tensor(dy))
+    dx, dh, dc, _ = net(Tensor(dy))
     expect_dx = np.array([[[0.01697153, -0.0096909, 0.01306139, 0.00863109, -0.00122794, -0.00746152, -0.00879683,
                             0.00643571, 0.0015958, 0.01480642],
                            [0.05794962, -0.02326604, 0.01862703, 0.02053947, 0.02607713, -0.01278067, 0.04250786,
@@ -964,12 +960,8 @@ def test_lstm_dropout():
     bidirectional = False
     dropout = 1.0
 
-    num_directions = 1
-    if bidirectional:
-        num_directions = 2
-
     net = LstmNetWithDropout(seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout)
-    y, h, c, _, _ = net()
+    y, _, _, _, _ = net()
     expect_y = np.array([[[-0.45210335, -0.0844336],
                           [-0.14677924, 0.07140275]],
 

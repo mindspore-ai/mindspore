@@ -15,7 +15,6 @@
 import numpy as np
 
 import mindspore.context as context
-import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import composite as C
@@ -47,11 +46,11 @@ class GradWrap(Cell):
 
 def gen_data(inputA_np, inputB_np, grad=None):
     inputA_me = inputA_np
-    if isinstance(inputA_np, np.ndarray) == True:
+    if isinstance(inputA_np, np.ndarray):
         inputA_me = Tensor(inputA_me)
 
     inputB_me = inputB_np
-    if isinstance(inputB_np, np.ndarray) == True:
+    if isinstance(inputB_np, np.ndarray):
         inputB_me = Tensor(inputB_np)
 
     if grad is None:

@@ -88,8 +88,8 @@ class NetForPackInput(nn.Cell):
 
     def construct(self, *args):
         t = ()
-        for i in range(len(args)):
-            t = t + (self.mul(args[i], args[i]),)
+        for element in args:
+            t = t + (self.mul(element, element),)
         return self.op(t)
 
 
@@ -136,8 +136,8 @@ class ArgmaxNet(nn.Cell):
         super(ArgmaxNet, self).__init__()
         self.argmax = P.Argmax(axis=1)
 
-    def construct(self, input):
-        return self.argmax(input)
+    def construct(self, input_):
+        return self.argmax(input_)
 
 
 class ArgminNet(nn.Cell):
@@ -145,8 +145,8 @@ class ArgminNet(nn.Cell):
         super(ArgminNet, self).__init__()
         self.argmin = P.Argmin(axis=1)
 
-    def construct(self, input):
-        return self.argmin(input)
+    def construct(self, input_):
+        return self.argmin(input_)
 
 
 class CumSumNet(nn.Cell):
@@ -155,8 +155,8 @@ class CumSumNet(nn.Cell):
         self.cumsum = P.CumSum()
         self.axis = 1
 
-    def construct(self, input):
-        return self.cumsum(input, self.axis)
+    def construct(self, input_):
+        return self.cumsum(input_, self.axis)
 
 
 class SummaryNet(nn.Cell):
@@ -1156,7 +1156,7 @@ test_case_array_ops = [
         'desc_inputs': [(Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)),
                          Tensor(np.array([1], np.float32)))],
-        'desc_bprop': [[3, ]]}),
+        'desc_bprop': [[3,]]}),
     ('Pack_0', {
         'block': NetForPackInput(P.Pack()),
         'desc_inputs': [[2, 2], [2, 2], [2, 2]],
@@ -1302,7 +1302,7 @@ test_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 test_exec_case = test_case
 
 test_backward_exec_case = filter(lambda x: 'skip' not in x[1] or
-                                           'backward' not in x[1]['skip'], test_case)
+                                 'backward' not in x[1]['skip'], test_case)
 
 
 @non_graph_engine
