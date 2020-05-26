@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """test_dtype"""
+from dataclasses import dataclass
 import numpy as np
 import pytest
-from dataclasses import dataclass
 
 import mindspore as ms
 from mindspore.common import dtype
