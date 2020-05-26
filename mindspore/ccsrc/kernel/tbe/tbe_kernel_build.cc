@@ -147,6 +147,7 @@ bool TbeKernelJsonCreator::GenInputDescJson(const shared_ptr<AnfNode> &anf_node,
       input_desc_json["format"] = format;
     }
     input_desc_json["valid"] = value;
+    input_desc_json["param_type"] = input_ptr->param_type();
     input_list->emplace_back(input_desc_json);
   }
   return true;
@@ -356,6 +357,7 @@ void TbeKernelJsonCreator::GenOutputList(const shared_ptr<AnfNode> &anf_node, co
     output_obj["ori_format"] = kOpFormat_NCHW;
     output_obj["name"] = output_ptr->name();
     output_obj["valid"] = true;
+    output_obj["param_type"] = output_ptr->param_type();
 
     output_list->emplace_back(output_obj);
     (*output_idx)++;
