@@ -119,7 +119,6 @@ class GpuBufferMgr {
   bool closed_;
   std::mutex mutex_;
   std::mutex close_mutex_;
-  std::condition_variable close_confirm_cond_;
   // how many queues opened by dataset
   int open_by_dataset_;
   Semaphore sema;

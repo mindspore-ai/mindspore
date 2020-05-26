@@ -172,9 +172,7 @@ bool GpuBufferMgr::CloseNotify() {
   {
     std::lock_guard<std::mutex> lk(close_mutex_);
     // set closed_ to be true, all the dataset retry can be jumped out of the while
-    closed_ = true;  // set closed_ to be true, all the dataset retry can be jumped out of the while
-    // notify all the waiting dataset threads
-    close_confirm_cond_.notify_all();  // notify all the waiting dataset threads
+    closed_ = true;
   }
 
   // wati for the dataset threads' ack
@@ -188,16 +186,6 @@ bool GpuBufferMgr::CloseNotify() {
   return result;
 }
 
-void GpuBufferMgr::CloseConfirm() {
-  // lock scope
-  {
-    std::unique_lock<std::mutex> lk(close_mutex_);
-    // dataset threads wait for the closed_ flag from false to true
-    close_confirm_cond_.wait(
-      lk, [this] { return closed_; });  // dataset threads wait for the closed_ flag from false to true
-  }
-
-  sema.Signal();
-}
+void GpuBufferMgr::CloseConfirm() { sema.Signal(); }
 }  // namespace device
 }  // namespace mindspore
