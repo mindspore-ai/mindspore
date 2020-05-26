@@ -32,6 +32,7 @@ cus_matrix_combine_op_info = TBERegOp("CusMatrixCombine") \
 
 @op_info_register(cus_matrix_combine_op_info)
 def CusMatrixCombine(input_x, output, kernel_name="matrix_combine"):
+    """CusMatrixCombine"""
     input_x_shape = input_x.get("shape")
     output_shape = output.get("shape")
     split_dim = 128

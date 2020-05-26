@@ -143,6 +143,7 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
 
 
 def _get_bias(shape_bias):
+    """_get_bias"""
     bias_length = shape_bias[0]
     shb = []
     if bias_length % 16 == 0:
