@@ -1599,6 +1599,61 @@ class L2Loss(PrimitiveWithInfer):
         return x_type
 
 
+class RNNTLoss(PrimitiveWithInfer):
+    """
+    Computes the RNNTLoss and its gradient with respect to the softmax outputs.
+
+    Args:
+        blank_label (int): blank label. Default: 0.
+
+    Inputs:
+        - **acts** (Tensor[float32]) - Tensor of shape :math:`(B, T, U, V)`.
+        - **labels** (Tensor[int32]) - Tensor of shape :math:`(B, N)`.
+        - **input_lengths** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
+        - **label_lebgths** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
+
+    Outputs:
+        - **costs** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
+        - **grads** (Tensor[int32]) - Has the same shape as `acts`.
+
+    Examples:
+        >>> B, T, U, V = 1, 2, 3, 5
+        >>> acts = np.random.random((B, T, U, V)).astype(np.float32)
+        >>> labels = np.array([[1, 2]]).astype(np.int32)
+        >>> input_length = np.array([T] * B).astype(np.int32)
+        >>> label_length = np.array([len(l) for l in labels]).astype(np.int32)
+        >>> rnnt_loss = P.RNNTLoss(blank_label=blank)
+        >>> costs, grads = rnnt_loss(Tensor(acts), Tensor(labels), Tensor(input_length), Tensor(label_length))
+    """
+    @prim_attr_register
+    def __init__(self, blank_label=0):
+        validator.check_value_type('blank_label', blank_label, [int], self.name)
+        self.init_prim_io_names(inputs=['acts', 'labels', 'input_length', 'label_length'],
+                                outputs=['costs', 'grads'])
+
+    def infer_shape(self, acts_shape, labels_shape, input_length_shape, label_length_shape):
+        validator.check_integer('acts_rank', len(acts_shape), 4, Rel.EQ, self.name)
+        validator.check_integer('labels_rank', len(labels_shape), 2, Rel.EQ, self.name)
+        validator.check_integer('input_length_rank', len(input_length_shape), 1, Rel.EQ, self.name)
+        validator.check_integer('label_length_rank', len(label_length_shape), 1, Rel.EQ, self.name)
+        validator.check('labels shape[0]', labels_shape[0], 'acts shape[0]', acts_shape[0], Rel.EQ, self.name)
+        validator.check('input_length size', input_length_shape[0], 'acts shape[0]', acts_shape[0], Rel.EQ, self.name)
+        validator.check('label_length size', label_length_shape[0], 'acts shape[0]', acts_shape[0], Rel.EQ, self.name)
+        costs_shape = (acts_shape[0],)
+        return (costs_shape, acts_shape)
+
+    def infer_dtype(self, acts_type, labels_type, input_length_type, label_length_type):
+        validator.check_subclass("acts_type", acts_type, mstype.tensor, self.name)
+        validator.check_subclass("labels_type", labels_type, mstype.tensor, self.name)
+        validator.check_subclass("input_length_type", input_length_type, mstype.tensor, self.name)
+        validator.check_subclass("label_length_type", label_length_type, mstype.tensor, self.name)
+        validator.check_tensor_type_same({"acts_type": acts_type}, [mstype.float32], self.name)
+        validator.check_tensor_type_same({"labels_type": labels_type}, [mstype.int32], self.name)
+        validator.check_tensor_type_same({"input_length_type": input_length_type}, [mstype.int32], self.name)
+        validator.check_tensor_type_same({"label_length_type": label_length_type}, [mstype.int32], self.name)
+        return (acts_type, acts_type)
+
+
 class SGD(PrimitiveWithInfer):
     """
     Computes stochastic gradient descent (optionally with momentum).
