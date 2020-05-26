@@ -97,6 +97,9 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"cum_sum", "cumsum_d"},
   {"apply_rms_prop", "apply_rms_prop_d"},
   {"cum_prod", "cumprod_d"},
+  {"reduce_all", "reduce_all_d"},
+  {"sparse_apply_adagrad", "sparse_apply_adagrad_d"},
+  {"unsorted_segment_min", "unsorted_segment_min_d"},
   {"reduce_prod", "reduce_prod_d"}};
 
 void TbeAdapter::NormalizeFuncName(std::string *func_name) {
