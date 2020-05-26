@@ -15,6 +15,7 @@
  */
 #include "pre_activate/ascend/buffer_fusion/segment_eltwise_fusion_pass.h"
 #include <vector>
+#include <algorithm>
 #include <unordered_set>
 #include <memory>
 #include <string>
@@ -51,7 +52,9 @@ void SegmentEltwiseFusionPass::MatchSegmentEltwise(const CNodePtr &cnode, const 
   if (AnfAlgo::GetKernelType(eltwise_input) == KernelType::TBE_KERNEL &&
       AnfAlgo::GetFusionType(eltwise_input) == kernel::FusionType::SEGMENT) {
     (void)record.insert(eltwise_input);
-    auto previous_eltwise_input = cnode->input(1);
+    auto previous_input_cnode = eltwise_input->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(previous_input_cnode);
+    auto previous_eltwise_input = previous_input_cnode->input(1);
     auto previous_size = record.size();
     while (CheckEltWiseNode(manager.get(), previous_eltwise_input)) {
       (void)record.insert(previous_eltwise_input);
@@ -71,6 +74,7 @@ void SegmentEltwiseFusionPass::MatchSingleFusionPattern(const session::KernelGra
                                                         FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph.get_return());
+  std::reverse(node_list.begin(), node_list.end());
   for (auto &node : node_list) {
     if (!AnfAlgo::IsRealCNodeKernel(node) || fusion_id_allocator->HasFusionIdAttr(node) ||
         AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
