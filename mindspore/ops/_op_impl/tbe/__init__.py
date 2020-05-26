@@ -200,3 +200,5 @@ from .reduce_prod import _reduce_prod_tbe
 from .flatten_grad import _flatten_grad_tbe
 from .scatter_add import _scatter_add_tbe
 from .atan2 import _atan2_tbe
+from .batch_to_space_nd import _batch_to_space_nd_tbe
+from .space_to_batch_nd import _space_to_batch_nd_tbe

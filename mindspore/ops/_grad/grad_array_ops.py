@@ -536,3 +536,23 @@ def get_bprop_batch_to_space(self):
         dx = batch_to_space_grad(dout)
         return (dx,)
     return bprop
+
+
+@bprop_getters.register(P.SpaceToBatchND)
+def get_bprop_space_to_batch_nd(self):
+    """Generate bprop for SpaceToBatchND"""
+    space_to_batch_nd_grad = P.BatchToSpaceND(self.block_shape, self.paddings)
+    def bprop(x, out, dout):
+        dx = space_to_batch_nd_grad(dout)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.BatchToSpaceND)
+def get_bprop_batch_to_space_nd(self):
+    """Generate bprop for BatchToSpaceND"""
+    batch_to_space_nd_grad = P.SpaceToBatchND(self.block_shape, self.crops)
+    def bprop(x, out, dout):
+        dx = batch_to_space_nd_grad(dout)
+        return (dx,)
+    return bprop

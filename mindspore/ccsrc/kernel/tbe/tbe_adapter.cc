@@ -82,6 +82,8 @@ static std::map<string, string> tbe_func_adapter_map = {
   {"argmax", "arg_max_d"},
   {"space_to_batch", "space_to_batch_d"},
   {"batch_to_space", "batch_to_space_d"},
+  {"space_to_batch_nd", "space_to_batch_nd_d"},
+  {"batch_to_space_nd", "batch_to_space_nd_d"},
   {"resize_bilinear", "resize_bilinear_v2_d"},
   {"resize_bilinear_grad", "resize_bilinear_v2_grad"},
   {"adam", "apply_adam"},
