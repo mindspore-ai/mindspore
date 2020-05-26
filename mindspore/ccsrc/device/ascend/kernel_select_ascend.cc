@@ -519,7 +519,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node) {
   if (select_status == kNoMatched) {
     std::ostringstream buffer;
     PrintInputAndOutputInferType(buffer, kernel_node);
-    MS_LOG(WARNING) << "=========================kernel info list=====================================";
+    MS_LOG(WARNING) << ">>> candidates kernel info list:";
     for (size_t index = 0; index < kernel_info_list.size(); ++index) {
       MS_LOG(WARNING) << "kernel [" << index << "] :" << kernel_info_list[index]->ToString();
     }
@@ -527,9 +527,10 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node) {
       MS_LOG(WARNING) << "kernel [" << (kernel_info_list.size() + index)
                       << "] :" << aicpu_kernel_info_list[index]->ToString();
     }
-    MS_LOG(WARNING) << "=========================       end       ====================================";
+    MS_LOG(WARNING) << " <<<";
     MS_EXCEPTION(TypeError) << "The node [" << kernel_node->DebugString()
-                            << "] cannot find valid kernel info, not supported the type " << buffer.str();
+                            << "] cannot find valid kernel info, not supported the type:" << buffer.str()
+                            << ", please refer to the supported dtypes in candidates kernel info list";
   }
   return select_status;
 }
