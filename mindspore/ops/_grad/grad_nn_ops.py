@@ -502,7 +502,8 @@ def get_bprop_smooth_l1_loss(self):
 
     def bprop(prediction, target, out, dout):
         dx = grad(prediction, target, dout)
-        return dx, zeros_like(target)
+        dy = grad(target, prediction, dout)
+        return dx, dy
 
     return bprop
 
