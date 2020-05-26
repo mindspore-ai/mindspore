@@ -19,13 +19,13 @@
 #include <unordered_set>
 #include <vector>
 
+#include "pre_activate/ascend/buffer_fusion/fusion_base_pass.h"
 #include "ir/anf.h"
 #include "pre_activate/common/pass.h"
 #include "pre_activate/common/fusion_id_allocator.h"
 #include "device/kernel_info.h"
 #include "kernel/kernel.h"
 #include "session/kernel_graph.h"
-#include "pre_activate/ascend/buffer_fusion/buffer_fusion.h"
 
 namespace mindspore {
 namespace opt {
