@@ -19,10 +19,11 @@
 @Desc  : test summary function
 """
 import logging
-import numpy as np
 import os
-import pytest
 import random
+import numpy as np
+import pytest
+
 
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor

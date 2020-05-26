@@ -17,6 +17,7 @@ import numpy as np
 from mobilenetv2_combined import MobileNetV2
 
 import mindspore.context as context
+import mindspore.ops.operations as P
 from mindspore import Tensor
 from mindspore import nn
 from mindspore.nn.layer import combined

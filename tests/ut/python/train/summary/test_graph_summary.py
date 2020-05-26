@@ -14,8 +14,8 @@
 # ============================================================================
 """ test_graph_summary """
 import logging
-import numpy as np
 import os
+import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Model, context

@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """test callback function."""
-import numpy as np
 import os
-import pytest
 import stat
+import numpy as np
+import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
