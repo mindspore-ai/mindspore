@@ -49,7 +49,7 @@ def loop_config(size):
     config_list = []
     num = 1
     split_list = [num]
-    for i in range(int(math.log2(size))):
+    for _ in range(int(math.log2(size))):
         num = num * 2
         split_list.append(num)
 
