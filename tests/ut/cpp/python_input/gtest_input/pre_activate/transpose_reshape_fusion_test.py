@@ -38,7 +38,7 @@ def test_transpose_reshape_fusion(tag):
     @fns
     def before(x):
         transpose = Transpose(x, (1, 0, 2, 3))
-        reshape = Reshape(transpose, (2, 4, 8, 16))
+        reshape = Reshape(transpose, (2, 2, 16, 16))
         return reshape
 
     @fns
