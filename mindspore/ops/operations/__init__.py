@@ -39,7 +39,7 @@ from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSumm
                         TensorSummary, HistogramSummary, Print)
 from .control_ops import ControlDepend, GeSwitch, Merge
 from .inner_ops import ScalarCast
-from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul,
+from .math_ops import (Abs, ACos, AddN, AssignAdd, AssignSub, Atan2, BatchMatMul, BitwiseAnd, BitwiseOr, BitwiseXor,
                        ReduceMax, ReduceMin, ReduceMean, ReduceSum, ReduceAll, ReduceProd, CumProd,
                        Cos, Div, Equal, EqualCount, Exp, Erf, Erfc, Floor, FloorDiv, FloorMod, Acosh,
                        Greater, GreaterEqual, Less, LessEqual, Log, Log1p, LogicalAnd,
@@ -266,7 +266,10 @@ __all__ = [
     "ApplyCenteredRMSProp",
     "SpaceToBatchND",
     "BatchToSpaceND",
-    "SquareSumAll"
+    "SquareSumAll",
+    "BitwiseAnd",
+    "BitwiseOr",
+    "BitwiseXor"
 ]
 
 __all__.extend(thor_ops.__all__)

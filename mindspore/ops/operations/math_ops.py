@@ -71,7 +71,7 @@ class _BinaryOp(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init _MathBinaryOp"""
+        """init _BinaryOp"""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_shape(self, x_shape, y_shape):
@@ -91,6 +91,27 @@ class _MathBinaryOp(_BinaryOp):
 
     def infer_dtype(self, x_dtype, y_dtype):
         return _MathBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type, self.name)
+
+
+class _BitwiseBinaryOp(_MathBinaryOp):
+    """
+    Define bitwise binary operators.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init _BitwiseBinaryOp"""
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
+
+    @staticmethod
+    def _check_bitwise_op_input_type(x1_type, x2_type, prim):
+        args = {'x1': x1_type, 'x2': x2_type}
+        valid_types = mstype.int_type + mstype.uint_type
+        validator.check_tensor_type_same(args, valid_types, prim)
+        return x1_type
+
+    def infer_dtype(self, x1_type, x2_type):
+        return _BitwiseBinaryOp._check_bitwise_op_input_type(x1_type, x2_type, self.name)
 
 
 class TensorAdd(_MathBinaryOp):
@@ -2186,3 +2207,63 @@ class SquareSumAll(PrimitiveWithInfer):
         validator.check_tensor_type_same({'x1_type': x_type}, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_type_same({'x2_type': y_type}, [mstype.float16, mstype.float32], self.name)
         return x_type, y_type
+
+
+class BitwiseAnd(_BitwiseBinaryOp):
+    """
+    Returns bitwise `and` of two tensors element-wise.
+
+    Inputs:
+        - **input_x1** (Tensor) - The input tensor with int or uint type.
+        - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
+
+    Outputs:
+        - **y** (Tensor) - The same type as the `input_x1`.
+
+    Examples:
+         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
+         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)
+         >>> bitwise_and = P.BitwiseAnd()
+         >>> bitwise_and(input_x1, input_x2)
+         [0, 0, 1, -1, 1, 0, 1]
+    """
+
+
+class BitwiseOr(_BitwiseBinaryOp):
+    """
+    Returns bitwise `or` of two tensors element-wise.
+
+    Inputs:
+        - **input_x1** (Tensor) - The input tensor with int or uint type.
+        - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
+
+    Outputs:
+        - **y** (Tensor) - The same type as the `input_x1`.
+
+    Examples:
+         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
+         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)
+         >>> bitwise_or = P.BitwiseOr()
+         >>> bitwise_or(input_x1, input_x2)
+         [0, 1, 1, -1, -1, 3, 3]
+    """
+
+
+class BitwiseXor(_BitwiseBinaryOp):
+    """
+    Returns bitwise `xor` of two tensors element-wise.
+
+    Inputs:
+        - **input_x1** (Tensor) - The input tensor with int or uint type.
+        - **input_x2** (Tensor) - The input tensor with same type as the `input_x1`.
+
+    Outputs:
+        - **y** (Tensor) - The same type as the `input_x1`.
+
+    Examples:
+         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16)
+         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)
+         >>> bitwise_xor = P.BitwiseXor()
+         >>> bitwise_xor(input_x1, input_x2)
+         [0, 1, 0, 0, -2, 3, 2]
+    """

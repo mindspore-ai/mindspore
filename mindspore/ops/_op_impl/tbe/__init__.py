@@ -202,3 +202,6 @@ from .scatter_add import _scatter_add_tbe
 from .atan2 import _atan2_tbe
 from .batch_to_space_nd import _batch_to_space_nd_tbe
 from .space_to_batch_nd import _space_to_batch_nd_tbe
+from .bitwise_and import bitwise_and_op_info
+from .bitwise_or import bitwise_or_op_info
+from .bitwise_xor import bitwise_xor_op_info

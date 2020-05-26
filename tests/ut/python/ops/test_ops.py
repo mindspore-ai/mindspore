@@ -242,6 +242,36 @@ class ApplyRMSNet(nn.Cell):
         return out
 
 test_case_math_ops = [
+    ('BitwiseAnd', {
+        'block': P.BitwiseAnd(),
+        'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
+                        Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseAnd_1', {
+        'block': P.BitwiseAnd(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [-1, -2, -3]]), mstype.int16),
+                        Tensor(np.array([1, 1, 1]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseOr', {
+        'block': P.BitwiseOr(),
+        'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
+                        Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseOr_1', {
+        'block': P.BitwiseOr(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [-1, -2, -3]]), mstype.int16),
+                        Tensor(np.array([1, 1, 1]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseXor', {
+        'block': P.BitwiseXor(),
+        'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
+                        Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseXor_1', {
+        'block': P.BitwiseXor(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [-1, -2, -3]]), mstype.int16),
+                        Tensor(np.array([1, 1, 1]), mstype.int16)],
+        'skip': ['backward']}),
     ('Neg', {
         'block': P.Neg(),
         'desc_inputs': [[1, 3, 4, 4]],
