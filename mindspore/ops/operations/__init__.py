@@ -55,7 +55,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Sin, Sqrt, Rsqrt, BesselI0e, BesselI1e, TruncateDiv, TruncateMod,
                        Square, Sub, TensorAdd, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps, Tan)
 
-from .random_ops import (RandomChoiceWithMask, Normal)
+from .random_ops import (RandomChoiceWithMask, Normal, RandomCategorical)
 from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
@@ -70,6 +70,7 @@ from .nn_ops import (LSTM, SGD, Adam, SparseApplyAdam, SparseApplyLazyAdam, Appl
                      ResizeBilinear, Sigmoid,
                      SigmoidCrossEntropyWithLogits,
                      SmoothL1Loss, Softmax, Softsign, Softplus, LRN,
+                     RNNTLoss,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
                      TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
@@ -171,6 +172,7 @@ __all__ = [
     'Tanh',
     'RandomChoiceWithMask',
     'Normal',
+    'RandomCategorical',
     'ResizeBilinear',
     'ScalarSummary',
     'ImageSummary',
@@ -202,6 +204,7 @@ __all__ = [
     'SmoothL1Loss',
     'L2Loss',
     'CTCLoss',
+    'RNNTLoss',
     'ReduceAll',
     'ScalarToArray',
     'ScalarToTensor',

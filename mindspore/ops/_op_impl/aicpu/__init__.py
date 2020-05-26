@@ -30,3 +30,5 @@ from .ctcloss import _ctcloss_aicpu
 from .reverse_sequence import _reverse_sequence_aicpu
 from .crop_and_resize import _crop_and_resize_aicpu
 from .end_of_sequence import _end_of_sequence_aicpu
+from .rnnt_loss import _rnnt_loss_aicpu
+from .random_categorical import _random_categorical_aicpu
