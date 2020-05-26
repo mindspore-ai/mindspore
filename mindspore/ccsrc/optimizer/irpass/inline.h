@@ -167,7 +167,8 @@ class InlinerBase : public AnfVisitor {
     auto params = fg->parameters();
     auto old_size = params.size();
     if (old_size != new_params.size()) {
-      MS_LOG(EXCEPTION) << "Parameter size not match.";
+      MS_LOG(EXCEPTION) << "Parameter size not match." << old_size << " new " << new_params.size()
+                        << fg->output()->DebugString(10);
     }
     for (size_t i = 0; i < old_size; i++) {
       (void)mng->Replace(params[i], new_params[i]);

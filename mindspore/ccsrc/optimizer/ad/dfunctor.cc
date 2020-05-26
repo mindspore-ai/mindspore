@@ -551,6 +551,10 @@ AdjointPtr DFunctor::FindAdjoint(const AnfNodePtr &primal) {
 }
 
 void DFunctor::CallDoutHoleOnTape() {
+  if (!is_top_) {
+    return;
+  }
+
   // Call dout hole of all adjoint.
   for (auto &f : func_graph_to_functor_) {
     for (auto &adjoint : f.second->anfnode_to_adjoin_) {

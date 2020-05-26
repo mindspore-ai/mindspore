@@ -54,4 +54,4 @@ class Net_Dropout(nn.Cell):
 def test_compile_dropout():
     net = Net_Dropout()
     input_data = Tensor(np.ones([20, 16, 50], dtype=np.float32))
-    _executor.compile(net, input_data)
+    net(input_data)

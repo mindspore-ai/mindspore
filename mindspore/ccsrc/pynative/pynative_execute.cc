@@ -22,17 +22,30 @@
 #include <unordered_set>
 #include <algorithm>
 
+#include "ir/param_value_py.h"
 #include "utils/any.h"
 #include "utils/utils.h"
 #include "utils/context/ms_context.h"
 #include "operator/ops.h"
+#include "operator/composite/composite.h"
 #include "operator/composite/do_signature.h"
 #include "pipeline/parse/data_converter.h"
+#include "pipeline/parse/parse_base.h"
+#include "pipeline/parse/resolve.h"
 #include "pipeline/static_analysis/prim.h"
 #include "session/session_factory.h"
 #include "pre_activate/pass/const_input_to_attr_registry.h"
 #include "pre_activate/common/helper.h"
+#include "pipeline/action.h"
+
 #include "pynative/base.h"
+#include "pybind_api/api_register.h"
+#include "vm/transform.h"
+
+#include "optimizer/ad/grad.h"
+#include "pipeline/resource.h"
+#include "pipeline/pipeline.h"
+#include "pipeline/pass.h"
 
 #ifdef ENABLE_GE
 #include "pynative/pynative_execute_ge.h"
@@ -40,21 +53,55 @@
 
 const char SINGLE_OP_GRAPH[] = "single_op_graph";
 // primitive unable to infer value for constant input in PyNative mode
-const std::set<std::string> vm_operators = {"partial", "depend", "make_ref", "zeros_like_tensor"};
+const std::set<std::string> vm_operators = {"partial", "depend", "make_ref", "zeros_like_tensor", "HookBackward"};
 
 namespace mindspore {
 namespace pynative {
+
 static std::shared_ptr<session::SessionBasic> session = nullptr;
+PynativeExecutorPtr PynativeExecutor::executor_ = nullptr;
+std::mutex PynativeExecutor::instance_lock_;
+ResourcePtr PynativeExecutor::resource_;
+
 inline ValuePtr PyAttrValue(const py::object &obj) {
-  ValuePtr converted_ret = nullptr;
-  bool converted = parse::ConvertData(obj, &converted_ret);
-  if (!converted) {
+  ValuePtr converted_ret = parse::data_converter::PyDataToValue(obj);
+  if (!converted_ret) {
     MS_LOG(EXCEPTION) << "Attribute convert error with type:" << std::string(py::str(obj));
   }
   return converted_ret;
 }
 
-py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::tuple &py_args) {
+std::string GetId(const py::object &obj) {
+  py::object to_process = obj;
+  std::string prefix = "";
+  if (py::isinstance<py::tuple>(to_process)) {
+    auto p_list = py::cast<py::tuple>(to_process);
+    to_process = p_list[0];
+    prefix = "tuple:";
+    if (!py::isinstance<tensor::Tensor>(to_process)) {
+      std::string key = "";
+      for (size_t i = 0; i < p_list.size(); ++i) {
+        key += std::string(py::str(p_list[i])) + ":";
+      }
+      return prefix + key;
+    }
+  }
+  if (py::isinstance<py::int_>(to_process)) {
+    return prefix + std::string(py::str(to_process));
+  }
+  if (py::isinstance<py::float_>(to_process)) {
+    return prefix + std::string(py::str(to_process));
+  }
+  if (py::isinstance<tensor::Tensor>(to_process)) {
+    auto tensor_ptr = py::cast<tensor::TensorPtr>(to_process);
+    return prefix + tensor_ptr->id();
+  }
+
+  py::object ret = parse::python_adapter::CallPyFn(parse::PYTHON_MOD_PARSE_MODULE, parse::PYTHON_MOD_GET_OBJ_ID, obj);
+  return py::cast<std::string>(ret);
+}
+
+py::list ConvertInputs(const PrimitivePyPtr &prim, const py::list &py_args) {
   auto signature = prim->signatures();
   std::vector<SignatureEnumDType> dtypes;
   (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
@@ -87,7 +134,7 @@ py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::tuple &py_args) {
     }
     (void)dst_type.insert(std::make_pair(type, m_index));
   }
-  py::tuple py_inputs(py_args.size());
+  py::list py_inputs(py_args.size());
   for (size_t i = 0; i < py_args.size(); ++i) {
     auto it = dst_type.find(dtypes[i]);
     if (it != dst_type.end() && it->second != i &&
@@ -105,12 +152,12 @@ py::tuple ConvertInputs(const PrimitivePyPtr &prim, const py::tuple &py_args) {
   return py_inputs;
 }
 
-void PynativeInfer(const PrimitivePyPtr &prim, const py::tuple &py_args, OpExecInfo *const op_exec_info) {
+void PynativeInfer(const PrimitivePyPtr &prim, const py::list &py_args, OpExecInfo *const op_exec_info) {
   size_t size = py_args.size();
   AbstractBasePtrList args_spec_list;
   for (size_t i = 0; i < size; i++) {
     ValuePtr input_value = PyAttrValue(py_args[i]);
-    if (py::isinstance<tensor::Tensor>(py_args[i])) {
+    if (input_value->isa<tensor::Tensor>()) {
       args_spec_list.emplace_back(abstract::FromValueInside(input_value, true));
     } else {
       args_spec_list.emplace_back(abstract::FromValueInside(input_value, false));
@@ -118,6 +165,12 @@ void PynativeInfer(const PrimitivePyPtr &prim, const py::tuple &py_args, OpExecI
   }
   AbstractBasePtr infer_res = EvalOnePrim(prim, args_spec_list)->abstract();
   op_exec_info->abstract = infer_res;
+}
+
+py::object GetTupleObj(const py::object &obj) {
+  py::module mod = parse::python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  py::object obj_tuple = parse::python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_DEFAULT_INPUT, obj);
+  return obj_tuple;
 }
 
 OpExecInfoPtr GenerateOpExecInfo(const py::args &args) {
@@ -133,14 +186,19 @@ OpExecInfoPtr GenerateOpExecInfo(const py::args &args) {
   if (pyobj == nullptr) {
     MS_LOG(EXCEPTION) << "pyobj is empty";
   }
-  py::tuple py_args = ConvertInputs(prim, args[PY_INPUTS]);
+  py::list py_args = ConvertInputs(prim, args[PY_INPUTS]);
   // use python infer method
   if (ignore_infer_prim.find(op_exec_info->op_name) == ignore_infer_prim.end()) {
     PynativeInfer(prim, py_args, op_exec_info.get());
   }
   op_exec_info->py_primitive = prim;
   op_exec_info->op_attrs = py::getattr(args[PY_PRIM], "attrs");
-  op_exec_info->op_inputs = py_args;
+  size_t input_num = py_args.size();
+  op_exec_info->op_inputs = py::tuple(input_num);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto obj = py_args[i];
+    op_exec_info->op_inputs[i] = GetTupleObj(obj);
+  }
   op_exec_info->inputs_mask = args[PY_INPUT_MASK];
   if (op_exec_info->op_inputs.size() != op_exec_info->inputs_mask.size()) {
     MS_LOG(ERROR) << "Op:" << op_exec_info->op_name << " inputs size not equal op_mask";
@@ -154,9 +212,13 @@ std::string GetSingleOpGraphInfo(const OpExecInfoPtr &op_exec_info,
   MS_EXCEPTION_IF_NULL(op_exec_info);
   std::string graph_info;
   // get input tensor info
-  for (const auto &input_tensor : input_tensors) {
-    MS_EXCEPTION_IF_NULL(input_tensor);
-    (void)graph_info.append(input_tensor->GetShapeAndDataTypeInfo() + "_");
+  size_t input_num = op_exec_info->op_inputs.size();
+  for (size_t index = 0; index < input_num; ++index) {
+    auto input = op_exec_info->op_inputs[index];
+    if (py::isinstance<tensor::Tensor>(input)) {
+      auto tensor_ptr = py::cast<tensor::TensorPtr>(input);
+      (void)graph_info.append(tensor_ptr->GetShapeAndDataTypeInfo() + "_");
+    }
   }
   // get prim and abstract info
   MS_EXCEPTION_IF_NULL(op_exec_info->abstract);
@@ -171,6 +233,23 @@ py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *stat
   MS_EXCEPTION_IF_NULL(status);
   MS_EXCEPTION_IF_NULL(op_exec_info);
   MS_EXCEPTION_IF_NULL(op_exec_info->py_primitive);
+  if (op_exec_info->op_name == "HookBackward") {
+    auto op_inputs = op_exec_info->op_inputs;
+    py::tuple result(op_inputs.size());
+    for (size_t i = 0; i < op_inputs.size(); i++) {
+      py::object input = op_inputs[i];
+      if (py::hasattr(input, "__parameter__")) {
+        result[i] = py::getattr(input, "data");
+      } else {
+        auto tensor = py::cast<tensor::TensorPtr>(op_inputs[i]);
+        auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data());
+        result[i] = new_tensor;
+      }
+    }
+    *status = PYNATIVE_SUCCESS;
+    MS_LOG(INFO) << "RunOpInVM end";
+    return std::move(result);
+  }
   auto func = op_exec_info->py_primitive->GetComputeFunction();
   if (py::isinstance<py::none>(func)) {
     MS_LOG(ERROR) << "VM failed to get func";
@@ -288,7 +367,6 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int> *te
   opt::ConstInputToAttrInfoRegister reg;
   bool reg_exist = opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(op_run_info->op_name, &reg);
   size_t input_num = op_run_info->op_inputs.size();
-  MS_LOG(INFO) << "py input size: " << input_num;
   for (size_t index = 0; index < input_num; ++index) {
     // convert const input to attr
     if (reg_exist &&
@@ -386,7 +464,56 @@ py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecIn
   return result;
 }
 
+AnfNodePtr PynativeExecutor::MakeCNode(const py::args &args, const py::tuple &out) {
+  if (!grad_flag_ || graph_info_map_.size() == 0) {
+    return nullptr;
+  }
+  std::vector<AnfNodePtr> inputs;
+  auto prim = py::cast<PrimitivePyPtr>(args[PY_PRIM]);
+  inputs.push_back(NewValueNode(prim));
+  py::tuple op_masks = args[PY_INPUT_MASK];
+  py::list op_args = args[PY_INPUTS];
+  AbstractBasePtrList args_spec_list;
+  for (size_t i = 0; i < op_args.size(); i++) {
+    auto node = GetInput(op_args[i], op_masks[i]);
+    args_spec_list.push_back(node->abstract());
+    inputs.push_back(node);
+  }
+
+  auto cnode = curr_g_->NewCNode(inputs);
+  MS_LOG(DEBUG) << "MakeCnode set node " << cnode->DebugString();
+  py::object out_real = out;
+  if (out.size() == 1) {
+    MS_LOG(DEBUG) << "MakeCnode out size is one.";
+    out_real = out[0];
+  }
+  std::string obj_id = GetId(out_real);
+  if (py::isinstance<py::tuple>(out_real)) {
+    auto value = py::cast<py::tuple>(out_real);
+    if (value.size() > 1) {
+      for (int i = 0; i < static_cast<int>(value.size()); i++) {
+        auto value_id = GetId(value[i]);
+        set_obj_node_map(curr_g_, value_id, cnode, i);
+      }
+    }
+  }
+  set_obj_node_map(curr_g_, obj_id, cnode);
+  set_pyobj(curr_g_, obj_id);
+  return cnode;
+}
+
+AnfNodePtr PynativeExecutor::GetObjNode(const py::object &obj) {
+  auto &out = graph_info_map_[curr_g_].obj_node_map[GetId(obj)];
+  if (out.second == -1) {
+    return out.first;
+  }
+  std::vector<AnfNodePtr> tuple_get_item_inputs{NewValueNode(prim::kPrimTupleGetItem), out.first,
+                                                NewValueNode(out.second)};
+  return curr_g_->NewCNode(tuple_get_item_inputs);
+}
+
 py::tuple RunOp(const py::args &args) {
+  MS_LOG(DEBUG) << "RunOp start" << args.size();
   py::object result;
   // returns a null py::tuple on error
   py::tuple err_ret(0);
@@ -428,10 +555,298 @@ py::tuple RunOp(const py::args &args) {
     return err_ret;
   }
 
-  MS_LOG(INFO) << "RunOp end";
+  auto node = PynativeExecutor::GetInstance()->MakeCNode(args, result);
+  if (node != nullptr) {
+    node->set_abstract(op_exec_info->abstract);
+    MS_LOG(DEBUG) << "RunOp MakeCnode,new node is: " << node->DebugString();
+  }
+  MS_LOG(DEBUG) << "RunOp end";
   return result;
 }
 
 void ClearPyNativeSession() { session = nullptr; }
+
+PynativeExecutor::~PynativeExecutor() { Clean(); }
+
+PynativeExecutor::PynativeExecutor() { grad_flag_ = false; }
+
+void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {
+  auto cell_id = GetId(cell);
+  if (cell_graph_map_.count(cell_id) != 0) {
+    MS_LOG(DEBUG) << "Newgraph already compiled";
+    return;
+  }
+
+  auto g = std::make_shared<FuncGraph>();
+
+  if (top_g_ == nullptr) {
+    top_g_ = curr_g_ = g;
+    df_builder_ = std::make_shared<FuncGraph>();
+    MS_LOG(DEBUG) << "First new graph" << top_g_.get();
+    Pushp();
+  } else {
+    Pushp();
+    curr_g_ = g;
+  }
+  if (graph_info_map_.count(g) == 0) {
+    graph_info_map_[g] = GraphInfo();
+  }
+  for (size_t i = 0; i < args.size(); i++) {
+    auto new_param = g->add_parameter();
+    std::string param_obj = GetId(args[i]);
+    graph_info_map_[g].param_map[param_obj] = new_param;
+  }
+}
+
+AnfNodePtr PynativeExecutor::GetInput(const py::object &obj, const py::object &op_mask) {
+  AnfNodePtr node = nullptr;
+  std::string obj_id = GetId(obj);
+
+  if (op_mask != nullptr && py::cast<bool>(op_mask)) {
+    MS_LOG(DEBUG) << "Topgraph free parameter";
+    // get the parameter name from parameter object
+    auto name_attr = mindspore::parse::python_adapter::GetPyObjAttr(obj, "name");
+    if (py::isinstance<py::none>(name_attr)) {
+      MS_LOG(EXCEPTION) << "Parameter object should have name attribute";
+    }
+    std::string param_name = py::cast<std::string>(name_attr);
+    if (graph_info_map_[df_builder_].param_map.count(obj_id) == 0) {
+      auto free_param = df_builder_->add_parameter();
+      free_param->set_name(param_name);
+      auto free_param_new = std::make_shared<ParamValuePy>(obj);
+      free_param->set_default_param(free_param_new);
+      free_param->debug_info()->set_name(param_name);
+      MS_LOG(DEBUG) << "Top graph set free parameter " << obj_id;
+      graph_info_map_[df_builder_].param_map[obj_id] = free_param;
+      return free_param;
+    }
+    return graph_info_map_[df_builder_].param_map[obj_id];
+  }
+
+  // if input is graph output
+  if (graph_info_map_[curr_g_].param_map.count(obj_id) != 0) {
+    // op(x, y)
+    node = graph_info_map_[curr_g_].param_map[obj_id];
+  } else if (graph_info_map_[curr_g_].obj_node_map.count(obj_id) != 0) {
+    // out = op(op1(x, y))
+    // out = op(cell1(x, y))
+    // out = op(cell1(x, y)[0])
+    node = GetObjNode(obj);
+  } else {
+    // out = op(x, 1)
+    ValuePtr converted_ret = nullptr;
+    parse::ConvertData(obj, &converted_ret);
+    node = NewValueNode(converted_ret);
+    set_obj_node_map(curr_g_, obj_id, node);
+  }
+
+  MS_LOG(DEBUG) << "Now getinput " << py::str(obj) << " node " << node->ToString();
+  return node;
+}
+
+void PynativeExecutor::Pushp() { graph_p_.push(curr_g_); }
+
+void PynativeExecutor::Popp() {
+  if (graph_p_.empty()) {
+    MS_LOG(EXCEPTION) << "Stack graph_p_ is empty";
+  }
+  curr_g_ = graph_p_.top();
+  graph_p_.pop();
+}
+
+void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, const py::args &args) {
+  auto cell_id = GetId(cell);
+  if (cell_graph_map_.count(cell_id) != 0) {
+    MS_LOG(DEBUG) << "Endgraph already compiled";
+    return;
+  }
+  cell_graph_map_[cell_id] = curr_g_;
+  auto out_id = GetId(out);
+  if (!graph_info_map_[curr_g_].obj_node_map.count(out_id)) {
+    MS_LOG(ERROR) << "graph has no this out: " << out_id;
+    return;
+  }
+
+  auto output_node = GetObjNode(out);
+  curr_g_->set_output(output_node);
+  std::vector<AnfNodePtr> inputs;
+  inputs.push_back(NewValueNode(curr_g_));
+  MS_LOG(DEBUG) << "Current graph" << curr_g_->output()->DebugString();
+  resource_->manager()->AddFuncGraph(curr_g_);
+  auto newfg = ad::Grad(curr_g_, resource_, curr_g_ == top_g_);
+  if (curr_g_ != top_g_) {
+    Popp();
+    for (size_t i = 0; i < args.size(); i++) {
+      auto input = GetInput(args[i], py::object());
+      inputs.push_back(input);
+    }
+    auto out_cnode = curr_g_->NewCNode(inputs);
+    set_pyobj(curr_g_, GetId(cell));
+    set_obj_node_map(curr_g_, GetId(out), out_cnode);
+  } else {
+    parse::ResolveFuncGraph(newfg, resource_);
+    resource_->set_func_graph(newfg);
+  }
+}
+
+void PynativeExecutor::GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
+                               const py::args &args) {
+  MS_LOG(INFO) << "GradNet start" << args.size();
+
+  std::size_t size = args.size();
+  auto cell_id = GetId(cell);
+  if (graph_map_.count(cell_id) != 0) {
+    MS_LOG(DEBUG) << "GradNet already compiled";
+    return;
+  }
+  MS_LOG(DEBUG) << "GradNet first compiled";
+  std::vector<AnfNodePtr> new_params;
+  for (size_t i = 0; i < size; i++) {
+    ParameterPtr p = std::make_shared<Parameter>(df_builder_);
+    new_params.push_back(p);
+  }
+  MS_LOG(DEBUG) << "GradNet start weight size" << df_builder_->parameters().size();
+  new_params.insert(new_params.end(), df_builder_->parameters().begin(), df_builder_->parameters().end());
+  df_builder_->set_parameters(new_params);
+  resource_->manager()->SetParameters(df_builder_, new_params);
+
+  std::vector<AnfNodePtr> w_args;
+  if (py::hasattr(weights, "__parameter_tuple__")) {
+    auto tuple = weights.cast<py::tuple>();
+    MS_LOG(DEBUG) << "GradNet start weights tuple size" << tuple.size();
+    w_args.push_back(NewValueNode(prim::kPrimMakeTuple));
+    for (size_t it = 0; it < tuple.size(); ++it) {
+      auto param = tuple[it];
+      auto param_id = GetId(param);
+      AnfNodePtr para_node = nullptr;
+      if (graph_info_map_[df_builder_].param_map.count(param_id)) {
+        para_node = graph_info_map_[df_builder_].param_map[param_id];
+
+        AnfNodePtr value = parse::GetMixedPrecisionCastHelp(df_builder_, para_node);
+        AnfNodePtr make_ref = NewValueNode(prim::kPrimMakeRef);
+        auto refkey = std::make_shared<RefKey>(para_node->cast<ParameterPtr>()->name());
+        AnfNodePtr ref_key_node = NewValueNode(refkey);
+        AnfNodePtr ref_node = df_builder_->NewCNode({make_ref, ref_key_node, value, para_node});
+
+        w_args.push_back(ref_node);
+      }
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "training not paramter_tuple";
+  }
+  MS_EXCEPTION_IF_NULL(resource_->func_graph());
+  auto g = GradGraph(resource_->func_graph(), grad, w_args, size);
+  resource_->set_func_graph(g);
+
+  // get the parameters items and add the value to args_spec
+  abstract::AbstractBasePtrList args_spec;
+  for (std::size_t i = 0; i < size; i++) {
+    ValuePtr converted = nullptr;
+    bool succ = parse::ConvertData(args[i], &converted);
+    if (!succ) {
+      MS_LOG(EXCEPTION) << "Args convert error";
+    }
+    bool broaden = true;
+    auto abs = abstract::FromValue(converted, broaden);
+    args_spec.push_back(abs);
+    auto param_node = std::static_pointer_cast<Parameter>(df_builder_->parameters()[i]);
+    param_node->set_abstract(abs);
+  }
+
+  for (const auto &param : df_builder_->parameters()) {
+    auto param_node = std::static_pointer_cast<Parameter>(param);
+    if (param_node->has_default()) {
+      auto param_value = std::dynamic_pointer_cast<ParamValuePy>(param_node->default_param());
+      AbstractBasePtr ptr = abstract::FromValue(parse::data_converter::PyDataToValue(param_value->value()), true);
+      if (ptr == nullptr) {
+        MS_LOG(EXCEPTION) << "Args convert error";
+      }
+      args_spec.push_back(ptr);
+      param_node->set_abstract(ptr);
+    }
+  }
+  MS_LOG(DEBUG) << "Args_spec size" << args_spec.size();
+
+  resource_->set_args_spec(args_spec);
+  MS_LOG(DEBUG) << "Start opt";
+
+  // Create backend and session
+  resource_->results()[pipeline::kBackend] = compile::CreateBackend();
+
+  graph_map_[cell_id] = g;
+  PynativeOptimizeAction(resource_);
+  TaskEmitAction(resource_);
+  ExecuteAction(resource_);
+  resource_->Clean();
+  ad::CleanRes();
+  pipeline::ReclaimOptimizer();
+}
+
+void PynativeExecutor::Clear() {
+  MS_LOG(INFO) << "Clear all res";
+  top_g_ = curr_g_ = nullptr;
+  std::stack<FuncGraphPtr>().swap(graph_p_);
+  graph_info_map_.clear();
+}
+
+void PynativeExecutor::Clean() {
+  graph_map_.clear();
+  cell_graph_map_.clear();
+  Clear();
+  resource_.reset();
+}
+
+py::object PynativeExecutor::Run(const py::tuple &args, const py::object &phase) {
+  VectorRef arg_list;
+  pipeline::ProcessVmArgInner(args, resource_, &arg_list);
+  if (resource_->results().find(pipeline::kOutput) == resource_->results().end() ||
+      !resource_->results()[pipeline::kOutput].is<compile::VmEvalFuncPtr>()) {
+    MS_LOG(EXCEPTION) << "Can't find run graph func for ";
+  }
+  compile::VmEvalFuncPtr run = resource_->results()[pipeline::kOutput].cast<compile::VmEvalFuncPtr>();
+  if (run == nullptr) {
+    MS_LOG(EXCEPTION) << "Can't find run graph func for ";
+  }
+
+  std::string backend = MsContext::GetInstance()->backend_policy();
+
+  MS_LOG(DEBUG) << "Eval run" << backend;
+  BaseRef value = (*run)(arg_list);
+  MS_LOG(DEBUG) << "Run end" << value.ToString();
+  return BaseRefToPyData(value);
+}
+
+FuncGraphPtr PynativeExecutor::GradGraph(FuncGraphPtr g, const GradOperationPtr &grad_op,
+                                         const std::vector<AnfNodePtr> &weights, size_t arg_size) {
+  auto nparam = top_g_->parameters().size();
+  std::ostringstream ss;
+  ss << "grad{" << nparam << "}";
+  df_builder_->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+  df_builder_->debug_info()->set_name(ss.str());
+
+  auto df = grad_op->GetGrad(NewValueNode(g), nullptr, top_g_->parameters(), weights);
+  std::vector<AnfNodePtr> inputs = {NewValueNode(df)};
+  for (size_t i = 0; i < arg_size; ++i) {
+    inputs.push_back(df_builder_->parameters()[i]);
+  }
+  auto out = df_builder_->NewCNode(inputs);
+  df_builder_->set_output(out);
+  resource_->manager()->AddFuncGraph(df);
+  resource_->manager()->AddFuncGraph(df_builder_);
+  return df_builder_;
+}
+
+REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
+                         (void)py::class_<PynativeExecutor, std::shared_ptr<PynativeExecutor>>(*m, "PynativeExecutor_")
+                           .def_static("get_instance", &PynativeExecutor::GetInstance, "PynativeExecutor get_instance.")
+                           .def("new_graph", &PynativeExecutor::NewGraph, "pynative new a graph.")
+                           .def("end_graph", &PynativeExecutor::EndGraph, "pynative end a graph.")
+                           .def("grad_net", &PynativeExecutor::GradNet, "pynative  grad graph.")
+                           .def("clear", &PynativeExecutor::Clear, "pynative  clear status.")
+                           .def("__call__", &PynativeExecutor::Run, py::arg("args"), py::arg("phase") = py::str(""),
+                                "Executor run function.")
+                           .def("set_grad_flag", &PynativeExecutor::set_grad_flag, py::arg("flag") = py::bool_(false),
+                                "Executor set grad flag.");
+                       }));
 }  // namespace pynative
 }  // namespace mindspore

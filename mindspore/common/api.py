@@ -20,7 +20,7 @@ from collections import OrderedDict
 from functools import wraps
 from mindspore import context
 from mindspore import log as logger
-from .._c_expression import generate_key, Executor_, Tensor, MetaTensor
+from .._c_expression import generate_key, Executor_, Tensor, MetaTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
 from .tensor import Tensor as MsTensor
 
@@ -273,6 +273,34 @@ def _generate_pip_args(obj, *args, method="construct"):
     obj.__parse_method__ = parse_method
     return args_names, args_list
 
+class _PynativeExecutor:
+    """
+    An pynative executor used to compile/manage/run graph.
+
+    Returns:
+        Graph, return the result of pipeline running.
+    """
+
+    def __init__(self):
+        self._executor = PynativeExecutor_.get_instance()
+
+    def new_graph(self, obj, *args):
+        self._executor.new_graph(obj, *args)
+
+    def end_graph(self, obj, output, *args):
+        self._executor.end_graph(obj, output, *args)
+
+    def grad(self, grad, obj, weights, *args):
+        self._executor.grad_net(grad, obj, weights, *args)
+
+    def clear(self):
+        self._executor.clear()
+
+    def set_grad_flag(self, flag):
+        self._executor.set_grad_flag(flag)
+
+    def __call__(self, *args):
+        return self._executor(args, "")
 
 class _Executor:
     """
@@ -500,5 +528,6 @@ class _Executor:
 
 
 _executor = _Executor()
+_pynative_exec = _PynativeExecutor()
 
 __all__ = ['ms_function']

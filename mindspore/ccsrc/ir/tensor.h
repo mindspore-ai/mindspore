@@ -263,9 +263,11 @@ class Tensor : public MetaTensor {
   DeviceAddressPtr device_address() const { return device_address_; }
   void set_device_address(const DeviceAddressPtr &device_address) { device_address_ = device_address; }
   py::array data_sync();
+  std::string id() const { return id_; }
 
  private:
   bool dirty_{true};
+  std::string id_{""};
   DeviceAddressPtr device_address_{nullptr};
 };
 

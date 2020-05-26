@@ -139,6 +139,8 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run);
 
+void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *arg_list);
+
 }  // namespace pipeline
 }  // namespace mindspore
 

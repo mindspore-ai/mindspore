@@ -608,7 +608,7 @@ void Pipeline::Run() {
   MS_LOG(INFO) << "End";
 }
 
-void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *arg_list) {
+void ProcessVmArgInner(const py::tuple &args, const ResourcePtr &res, VectorRef *arg_list) {
   std::size_t size = args.size();
 
   for (std::size_t i = 0; i < size; i++) {
@@ -625,7 +625,6 @@ void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, V
     arg_list->push_back(converted);
   }
 
-  ResourcePtr res = GetResource(phase);
   MS_EXCEPTION_IF_NULL(res);
   auto graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
@@ -645,6 +644,10 @@ void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, V
       (*arg_list).push_back(p_value);
     }
   }
+}
+
+void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *arg_list) {
+  ProcessVmArgInner(args, GetResource(phase), arg_list);
 }
 
 py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
@@ -874,6 +877,8 @@ void ClearResAtexit() {
   compile::ClearConvertCache();
   pipeline::GetMethodMap().clear();
   pipeline::ExecutorPy::ClearRes();
+  pipeline::ReclaimOptimizer();
+  pynative::PynativeExecutor::GetInstance()->Clean();
 #ifdef ENABLE_GE
   transform::DfGraphManager::GetInstance().ClearGraph();
   transform::DfGraphConvertor::get_adpt_map().clear();

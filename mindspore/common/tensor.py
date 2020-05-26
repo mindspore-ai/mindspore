@@ -89,7 +89,6 @@ class Tensor(Tensor_):
         return hash(id(self))
 
     def __mul__(self, other):
-        check_type('tensor input_data', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__mul__')(self, other)
         return out
 
@@ -101,7 +100,6 @@ class Tensor(Tensor_):
         return out
 
     def __radd__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__add__')(other, self)
         return out
 
@@ -110,22 +108,18 @@ class Tensor(Tensor_):
         return out
 
     def __rmul__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__mul__')(other, self)
         return out
 
     def __truediv__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__div__')(self, other)
         return out
 
     def __rtruediv__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__div__')(other, self)
         return out
 
     def __sub__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
         out = self.__add__(-other)
         return out
 
@@ -134,7 +128,6 @@ class Tensor(Tensor_):
         return out
 
     def __rsub__(self, other):
-        check_type('tensor operation input', other, (Tensor, float, int))
         out = tensor_operator_registry.get('__add__')(other, Tensor(-self.asnumpy()))
         return out
 

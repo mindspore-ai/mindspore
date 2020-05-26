@@ -81,6 +81,7 @@ Tensor::Tensor(const Tensor &tensor, const TypePtr &data_type)
     : MetaTensor(tensor), device_address_(tensor.device_address_) {
   init(tensor.data_, data_type);
   dirty_ = tensor.is_dirty();
+  id_ = tensor.id();
 }
 
 Tensor &Tensor::operator=(const Tensor &tensor) {
@@ -89,6 +90,7 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
     dirty_ = tensor.is_dirty();
     device_address_ = tensor.device_address();
     data_ = tensor.data_;
+    id_ = tensor.id();
   }
   return *this;
 }
@@ -208,6 +210,7 @@ void Tensor::init(const py::array &input, const TypeId &data_type) {
     data_ = input;
   }
   dirty_ = true;
+  id_ = std::to_string((uintptr_t)(this));
 }
 
 void Tensor::init(TypeId data_type, const std::vector<int> &shape, py::array *const data) {
@@ -254,6 +257,7 @@ void Tensor::init(TypeId data_type, const std::vector<int> &shape, py::array *co
       MS_LOG(EXCEPTION) << "Cannot construct Tensor because of unsupported data type: " << data_type << ".";
       break;
   }
+  id_ = std::to_string((uintptr_t)(this));
 }
 
 TypePtr Tensor::SetDtype(const TypePtr type_ptr) {

@@ -29,6 +29,7 @@ using PassItem = std::pair<std::string, std::function<bool(ResourcePtr)>>;
 
 extern std::vector<PassItem> kGePasses;
 extern std::vector<PassItem> kVmPasses;
+extern std::vector<PassItem> kPynativePasses;
 
 bool CconvPass(const ResourcePtr &res);
 bool ValidatePass(const ResourcePtr &res);

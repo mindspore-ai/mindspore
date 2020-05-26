@@ -501,9 +501,15 @@ GradOperation::GradOperation(const std::string &name, bool get_all, bool get_by_
 }
 
 FuncGraphPtr GradOperation::GetGrad(AnfNodePtr node, const AnfNodePtr &weights,
-                                    const std::vector<AnfNodePtr> &params_list, bool applyJ) {
+                                    const std::vector<AnfNodePtr> &params_list, const std::vector<AnfNodePtr> &args,
+                                    bool applyJ) {
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
   ret->set_flags(FUNC_GRAPH_FLAG_CORE, true);
+
+  auto weights_node = weights;
+  if (weights == nullptr && !args.empty()) {
+    weights_node = ret->NewCNode(args);
+  }
 
   ValueNodePtr opsJ = NewValueNode(prim::kPrimJ);
   ValueNodePtr opsTupleItem = NewValueNode(prim::kPrimTupleGetItem);
@@ -537,7 +543,7 @@ FuncGraphPtr GradOperation::GetGrad(AnfNodePtr node, const AnfNodePtr &weights,
   inputs.push_back(NewValueNode(1));
   AnfNodePtr ptrBprop = ret->NewCNode(inputs);
 
-  doGetGrad(ret, out, ptrBprop, weights, opsTupleItem);
+  doGetGrad(ret, out, ptrBprop, weights_node, opsTupleItem);
   return ret;
 }
 

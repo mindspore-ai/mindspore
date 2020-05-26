@@ -18,6 +18,7 @@ import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
 from .vm_interface import vm
 
@@ -225,7 +226,7 @@ def vm_impl_slice(self):
     return vm_impl
 
 
-@vm_impl_getters.register(P._grad_ops.ConcatOffset)
+@vm_impl_getters.register(G.ConcatOffset)
 def vm_impl_concatOffset(self):
     """Generate vm_impl function for ConcatOffset"""
 

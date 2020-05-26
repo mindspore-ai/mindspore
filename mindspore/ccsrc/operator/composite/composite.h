@@ -129,7 +129,7 @@ class GradOperation : public MetaFuncGraph {
   MS_DECLARE_PARENT(GradOperation, MetaFuncGraph)
 
   FuncGraphPtr GetGrad(AnfNodePtr ptrNode, const AnfNodePtr &weights, const std::vector<AnfNodePtr> &ptrParams,
-                       bool applyJ = false);
+                       const std::vector<AnfNodePtr> &args = {}, bool applyJ = false);
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
   bool sens_param() const { return sens_param_; }
   bool get_all_;

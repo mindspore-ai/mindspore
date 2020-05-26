@@ -276,6 +276,8 @@ bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePa
 
 bool VmOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kVmPasses); }
 
+bool PynativeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kPynativePasses); }
+
 static bool IsCtrlSink() {
   auto ms_ctx = MsContext::GetInstance();
   std::string device_target = ms_ctx->device_target();
