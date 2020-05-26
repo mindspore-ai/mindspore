@@ -14,10 +14,9 @@
 """test mnist to mindrecord tool"""
 import gzip
 import os
-import numpy as np
-
-import cv2
 import pytest
+import numpy as np
+import cv2
 
 from mindspore import log as logger
 from mindspore.mindrecord import FileReader

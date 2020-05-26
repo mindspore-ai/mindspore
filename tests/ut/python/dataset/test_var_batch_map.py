@@ -75,6 +75,7 @@ def test_variable_size_batch():
         return batchInfo.get_epoch_num() + 1
 
     def simple_copy(colList, batchInfo):
+        _ = batchInfo
         return ([np.copy(arr) for arr in colList],)
 
     def test_repeat_batch(gen_num, r, drop, func, res):
@@ -186,6 +187,7 @@ def test_batch_multi_col_map():
             yield (np.array([i]), np.array([i ** 2]))
 
     def col1_col2_add_num(col1, col2, batchInfo):
+        _ = batchInfo
         return ([[np.copy(arr + 100) for arr in col1],
                  [np.copy(arr + 300) for arr in col2]])
 
@@ -287,11 +289,11 @@ def test_exception():
 
     def bad_batch_size(batchInfo):
         raise StopIteration
-        return batchInfo.get_batch_num()
+        #return batchInfo.get_batch_num()
 
     def bad_map_func(col, batchInfo):
         raise StopIteration
-        return (col,)
+        #return (col,)
 
     data1 = ds.GeneratorDataset((lambda: gen(100)), ["num"]).batch(bad_batch_size)
     try:

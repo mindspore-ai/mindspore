@@ -17,11 +17,11 @@ This is the test module for mindrecord
 """
 import collections
 import json
-import numpy as np
 import os
-import pytest
 import re
 import string
+import pytest
+import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as vision
@@ -46,9 +46,10 @@ def add_and_remove_cv_file():
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     for x in paths:
-        os.remove("{}".format(x)) if os.path.exists("{}".format(x)) else None
-        os.remove("{}.db".format(x)) if os.path.exists(
-            "{}.db".format(x)) else None
+        if os.path.exists("{}".format(x)):
+            os.remove("{}".format(x))
+        if os.path.exists("{}.db".format(x)):
+            os.remove("{}.db".format(x))
     writer = FileWriter(CV_FILE_NAME, FILES_NUM)
     data = get_data(CV_DIR_NAME)
     cv_schema_json = {"id": {"type": "int32"},
@@ -117,7 +118,9 @@ def add_and_remove_nlp_compress_file():
                                             255, 256, -32768, 32767, -32769, 32768, -2147483648,
                                             2147483647], dtype=np.int32), [-1]),
             "array_b": np.reshape(np.array([0, 1, -1, 127, -128, 128, -129, 255,
-                                            256, -32768, 32767, -32769, 32768, -2147483648, 2147483647, -2147483649, 2147483649, -922337036854775808, 9223372036854775807]), [1, -1]),
+                                            256, -32768, 32767, -32769, 32768,
+                                            -2147483648, 2147483647, -2147483649, 2147483649,
+                                            -922337036854775808, 9223372036854775807]), [1, -1]),
             "array_c": str.encode("nlp data"),
             "array_d": np.reshape(np.array([[-10, -127], [10, 127]]), [2, -1])
         })
@@ -151,7 +154,9 @@ def test_nlp_compress_data(add_and_remove_nlp_compress_file):
                                             255, 256, -32768, 32767, -32769, 32768, -2147483648,
                                             2147483647], dtype=np.int32), [-1]),
             "array_b": np.reshape(np.array([0, 1, -1, 127, -128, 128, -129, 255,
-                                            256, -32768, 32767, -32769, 32768, -2147483648, 2147483647, -2147483649, 2147483649, -922337036854775808, 9223372036854775807]), [1, -1]),
+                                            256, -32768, 32767, -32769, 32768,
+                                            -2147483648, 2147483647, -2147483649, 2147483649,
+                                            -922337036854775808, 9223372036854775807]), [1, -1]),
             "array_c": str.encode("nlp data"),
             "array_d": np.reshape(np.array([[-10, -127], [10, 127]]), [2, -1])
         })
@@ -194,9 +199,10 @@ def test_cv_minddataset_writer_tutorial():
     paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     for x in paths:
-        os.remove("{}".format(x)) if os.path.exists("{}".format(x)) else None
-        os.remove("{}.db".format(x)) if os.path.exists(
-            "{}.db".format(x)) else None
+        if os.path.exists("{}".format(x)):
+            os.remove("{}".format(x))
+        if os.path.exists("{}.db".format(x)):
+            os.remove("{}.db".format(x))
     writer = FileWriter(CV_FILE_NAME, FILES_NUM)
     data = get_data(CV_DIR_NAME)
     cv_schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"},
@@ -478,9 +484,10 @@ def test_cv_minddataset_reader_two_dataset_partition(add_and_remove_cv_file):
     paths = ["{}{}".format(CV1_FILE_NAME, str(x).rjust(1, '0'))
              for x in range(FILES_NUM)]
     for x in paths:
-        os.remove("{}".format(x)) if os.path.exists("{}".format(x)) else None
-        os.remove("{}.db".format(x)) if os.path.exists(
-            "{}.db".format(x)) else None
+        if os.path.exists("{}".format(x)):
+            os.remove("{}".format(x))
+        if os.path.exists("{}.db".format(x)):
+            os.remove("{}.db".format(x))
     writer = FileWriter(CV1_FILE_NAME, FILES_NUM)
     data = get_data(CV_DIR_NAME)
     cv_schema_json = {"id": {"type": "int32"},
@@ -779,7 +786,7 @@ def get_nlp_data(dir_name, vocab_file, num):
     """
     if not os.path.isdir(dir_name):
         raise IOError("Directory {} not exists".format(dir_name))
-    for root, dirs, files in os.walk(dir_name):
+    for root, _, files in os.walk(dir_name):
         for index, file_name_extension in enumerate(files):
             if index < num:
                 file_path = os.path.join(root, file_name_extension)
@@ -851,7 +858,7 @@ def test_write_with_multi_bytes_and_array_and_read_by_MindDataset():
     if os.path.exists("{}".format(mindrecord_file_name)):
         os.remove("{}".format(mindrecord_file_name))
     if os.path.exists("{}.db".format(mindrecord_file_name)):
-        os.remove("{}.db".format(x))
+        os.remove("{}.db".format(mindrecord_file_name))
     data = [{"file_name": "001.jpg", "label": 4,
              "image1": bytes("image1 bytes abc", encoding='UTF-8'),
              "image2": bytes("image1 bytes def", encoding='UTF-8'),

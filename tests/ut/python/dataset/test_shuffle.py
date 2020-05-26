@@ -152,7 +152,7 @@ def test_shuffle_exception_01():
         data1 = data1.shuffle(buffer_size=-1)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "buffer_size" in str(e)
 
@@ -170,7 +170,7 @@ def test_shuffle_exception_02():
         data1 = data1.shuffle(buffer_size=0)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "buffer_size" in str(e)
 
@@ -188,7 +188,7 @@ def test_shuffle_exception_03():
         data1 = data1.shuffle(buffer_size=1)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "buffer_size" in str(e)
 
@@ -206,7 +206,7 @@ def test_shuffle_exception_05():
         data1 = data1.shuffle()
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "buffer_size" in str(e)
 
@@ -224,7 +224,7 @@ def test_shuffle_exception_06():
         data1 = data1.shuffle(buffer_size=False)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "buffer_size" in str(e)
 
@@ -242,7 +242,7 @@ def test_shuffle_exception_07():
         data1 = data1.shuffle(buffer_size=True)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "buffer_size" in str(e)
 

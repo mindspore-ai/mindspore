@@ -26,8 +26,10 @@ CV1_FILE_NAME = "./imagenet1.mindrecord"
 
 def create_cv_mindrecord(files_num):
     """tutorial for cv dataset writer."""
-    os.remove(CV_FILE_NAME) if os.path.exists(CV_FILE_NAME) else None
-    os.remove("{}.db".format(CV_FILE_NAME)) if os.path.exists("{}.db".format(CV_FILE_NAME)) else None
+    if os.path.exists(CV_FILE_NAME):
+        os.remove(CV_FILE_NAME)
+    if os.path.exists("{}.db".format(CV_FILE_NAME)):
+        os.remove("{}.db".format(CV_FILE_NAME))
     writer = FileWriter(CV_FILE_NAME, files_num)
     cv_schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
     data = [{"file_name": "001.jpg", "label": 43, "data": bytes('0xffsafdafda', encoding='utf-8')}]
@@ -39,8 +41,10 @@ def create_cv_mindrecord(files_num):
 
 def create_diff_schema_cv_mindrecord(files_num):
     """tutorial for cv dataset writer."""
-    os.remove(CV1_FILE_NAME) if os.path.exists(CV1_FILE_NAME) else None
-    os.remove("{}.db".format(CV1_FILE_NAME)) if os.path.exists("{}.db".format(CV1_FILE_NAME)) else None
+    if os.path.exists(CV1_FILE_NAME):
+        os.remove(CV1_FILE_NAME)
+    if os.path.exists("{}.db".format(CV1_FILE_NAME)):
+        os.remove("{}.db".format(CV1_FILE_NAME))
     writer = FileWriter(CV1_FILE_NAME, files_num)
     cv_schema_json = {"file_name_1": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
     data = [{"file_name_1": "001.jpg", "label": 43, "data": bytes('0xffsafdafda', encoding='utf-8')}]
@@ -52,8 +56,10 @@ def create_diff_schema_cv_mindrecord(files_num):
 
 def create_diff_page_size_cv_mindrecord(files_num):
     """tutorial for cv dataset writer."""
-    os.remove(CV1_FILE_NAME) if os.path.exists(CV1_FILE_NAME) else None
-    os.remove("{}.db".format(CV1_FILE_NAME)) if os.path.exists("{}.db".format(CV1_FILE_NAME)) else None
+    if os.path.exists(CV1_FILE_NAME):
+        os.remove(CV1_FILE_NAME)
+    if os.path.exists("{}.db".format(CV1_FILE_NAME)):
+        os.remove("{}.db".format(CV1_FILE_NAME))
     writer = FileWriter(CV1_FILE_NAME, files_num)
     writer.set_page_size(1 << 26)  # 64MB
     cv_schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"}, "data": {"type": "bytes"}}
@@ -69,8 +75,8 @@ def test_cv_lack_json():
     create_cv_mindrecord(1)
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    with pytest.raises(Exception) as err:
-        data_set = ds.MindDataset(CV_FILE_NAME, "no_exist.json", columns_list, num_readers)
+    with pytest.raises(Exception):
+        ds.MindDataset(CV_FILE_NAME, "no_exist.json", columns_list, num_readers)
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
 
@@ -80,7 +86,7 @@ def test_cv_lack_mindrecord():
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
     with pytest.raises(Exception, match="does not exist or permission denied"):
-        data_set = ds.MindDataset("no_exist.mindrecord", columns_list, num_readers)
+        _ = ds.MindDataset("no_exist.mindrecord", columns_list, num_readers)
 
 
 def test_invalid_mindrecord():
@@ -134,7 +140,7 @@ def test_cv_minddataset_pk_sample_exclusive_shuffle():
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers,
                                   sampler=sampler, shuffle=False)
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator():
             num_iter += 1
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -149,7 +155,7 @@ def test_cv_minddataset_reader_different_schema():
         data_set = ds.MindDataset([CV_FILE_NAME, CV1_FILE_NAME], columns_list,
                                   num_readers)
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator():
             num_iter += 1
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -166,7 +172,7 @@ def test_cv_minddataset_reader_different_page_size():
         data_set = ds.MindDataset([CV_FILE_NAME, CV1_FILE_NAME], columns_list,
                                   num_readers)
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator():
             num_iter += 1
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -181,7 +187,7 @@ def test_minddataset_invalidate_num_shards():
     with pytest.raises(Exception, match="shard_id is invalid, "):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 0, 1)
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator():
             num_iter += 1
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -194,7 +200,7 @@ def test_minddataset_invalidate_shard_id():
     with pytest.raises(Exception, match="shard_id is invalid, "):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 1, -1)
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator():
             num_iter += 1
     os.remove(CV_FILE_NAME)
     os.remove("{}.db".format(CV_FILE_NAME))
@@ -207,13 +213,13 @@ def test_minddataset_shard_id_bigger_than_num_shard():
     with pytest.raises(Exception, match="shard_id is invalid, "):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 2, 2)
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator():
             num_iter += 1
 
     with pytest.raises(Exception, match="shard_id is invalid, "):
         data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers, True, 2, 5)
         num_iter = 0
-        for item in data_set.create_dict_iterator():
+        for _ in data_set.create_dict_iterator():
             num_iter += 1
 
     os.remove(CV_FILE_NAME)

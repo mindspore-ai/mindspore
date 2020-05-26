@@ -32,9 +32,9 @@ def test_apply_generator_case():
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
     data2 = ds.GeneratorDataset(generator_1d, ["data"])
 
-    def dataset_fn(ds):
-        ds = ds.repeat(2)
-        return ds.batch(4)
+    def dataset_fn(ds_):
+        ds_ = ds_.repeat(2)
+        return ds_.batch(4)
 
     data1 = data1.apply(dataset_fn)
     data2 = data2.repeat(2)
@@ -52,11 +52,11 @@ def test_apply_imagefolder_case():
     decode_op = vision.Decode()
     normalize_op = vision.Normalize([121.0, 115.0, 100.0], [70.0, 68.0, 71.0])
 
-    def dataset_fn(ds):
-        ds = ds.map(operations=decode_op)
-        ds = ds.map(operations=normalize_op)
-        ds = ds.repeat(2)
-        return ds
+    def dataset_fn(ds_):
+        ds_ = ds_.map(operations=decode_op)
+        ds_ = ds_.map(operations=normalize_op)
+        ds_ = ds_.repeat(2)
+        return ds_
 
     data1 = data1.apply(dataset_fn)
     data2 = data2.map(operations=decode_op)
@@ -67,125 +67,125 @@ def test_apply_imagefolder_case():
         assert np.array_equal(item1["image"], item2["image"])
 
 
-def test_apply_flow_case_0(id=0):
+def test_apply_flow_case_0(id_=0):
     # apply control flow operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 
-    def dataset_fn(ds):
-        if id == 0:
-            ds = ds.batch(4)
-        elif id == 1:
-            ds = ds.repeat(2)
-        elif id == 2:
-            ds = ds.batch(4)
-            ds = ds.repeat(2)
+    def dataset_fn(ds_):
+        if id_ == 0:
+            ds_ = ds_.batch(4)
+        elif id_ == 1:
+            ds_ = ds_.repeat(2)
+        elif id_ == 2:
+            ds_ = ds_.batch(4)
+            ds_ = ds_.repeat(2)
         else:
-            ds = ds.shuffle(buffer_size=4)
-        return ds
+            ds_ = ds_.shuffle(buffer_size=4)
+        return ds_
 
     data1 = data1.apply(dataset_fn)
     num_iter = 0
     for _ in data1.create_dict_iterator():
         num_iter = num_iter + 1
 
-    if id == 0:
+    if id_ == 0:
         assert num_iter == 16
-    elif id == 1:
+    elif id_ == 1:
         assert num_iter == 128
-    elif id == 2:
+    elif id_ == 2:
         assert num_iter == 32
     else:
         assert num_iter == 64
 
 
-def test_apply_flow_case_1(id=1):
+def test_apply_flow_case_1(id_=1):
     # apply control flow operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 
-    def dataset_fn(ds):
-        if id == 0:
-            ds = ds.batch(4)
-        elif id == 1:
-            ds = ds.repeat(2)
-        elif id == 2:
-            ds = ds.batch(4)
-            ds = ds.repeat(2)
+    def dataset_fn(ds_):
+        if id_ == 0:
+            ds_ = ds_.batch(4)
+        elif id_ == 1:
+            ds_ = ds_.repeat(2)
+        elif id_ == 2:
+            ds_ = ds_.batch(4)
+            ds_ = ds_.repeat(2)
         else:
-            ds = ds.shuffle(buffer_size=4)
-        return ds
+            ds_ = ds_.shuffle(buffer_size=4)
+        return ds_
 
     data1 = data1.apply(dataset_fn)
     num_iter = 0
     for _ in data1.create_dict_iterator():
         num_iter = num_iter + 1
 
-    if id == 0:
+    if id_ == 0:
         assert num_iter == 16
-    elif id == 1:
+    elif id_ == 1:
         assert num_iter == 128
-    elif id == 2:
+    elif id_ == 2:
         assert num_iter == 32
     else:
         assert num_iter == 64
 
 
-def test_apply_flow_case_2(id=2):
+def test_apply_flow_case_2(id_=2):
     # apply control flow operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 
-    def dataset_fn(ds):
-        if id == 0:
-            ds = ds.batch(4)
-        elif id == 1:
-            ds = ds.repeat(2)
-        elif id == 2:
-            ds = ds.batch(4)
-            ds = ds.repeat(2)
+    def dataset_fn(ds_):
+        if id_ == 0:
+            ds_ = ds_.batch(4)
+        elif id_ == 1:
+            ds_ = ds_.repeat(2)
+        elif id_ == 2:
+            ds_ = ds_.batch(4)
+            ds_ = ds_.repeat(2)
         else:
-            ds = ds.shuffle(buffer_size=4)
-        return ds
+            ds_ = ds_.shuffle(buffer_size=4)
+        return ds_
 
     data1 = data1.apply(dataset_fn)
     num_iter = 0
     for _ in data1.create_dict_iterator():
         num_iter = num_iter + 1
 
-    if id == 0:
+    if id_ == 0:
         assert num_iter == 16
-    elif id == 1:
+    elif id_ == 1:
         assert num_iter == 128
-    elif id == 2:
+    elif id_ == 2:
         assert num_iter == 32
     else:
         assert num_iter == 64
 
 
-def test_apply_flow_case_3(id=3):
+def test_apply_flow_case_3(id_=3):
     # apply control flow operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 
-    def dataset_fn(ds):
-        if id == 0:
-            ds = ds.batch(4)
-        elif id == 1:
-            ds = ds.repeat(2)
-        elif id == 2:
-            ds = ds.batch(4)
-            ds = ds.repeat(2)
+    def dataset_fn(ds_):
+        if id_ == 0:
+            ds_ = ds_.batch(4)
+        elif id_ == 1:
+            ds_ = ds_.repeat(2)
+        elif id_ == 2:
+            ds_ = ds_.batch(4)
+            ds_ = ds_.repeat(2)
         else:
-            ds = ds.shuffle(buffer_size=4)
-        return ds
+            ds_ = ds_.shuffle(buffer_size=4)
+        return ds_
 
     data1 = data1.apply(dataset_fn)
     num_iter = 0
     for _ in data1.create_dict_iterator():
         num_iter = num_iter + 1
 
-    if id == 0:
+    if id_ == 0:
         assert num_iter == 16
-    elif id == 1:
+    elif id_ == 1:
         assert num_iter == 128
-    elif id == 2:
+    elif id_ == 2:
         assert num_iter == 32
     else:
         assert num_iter == 64
@@ -195,11 +195,11 @@ def test_apply_exception_case():
     # apply exception operations
     data1 = ds.GeneratorDataset(generator_1d, ["data"])
 
-    def dataset_fn(ds):
-        ds = ds.repeat(2)
-        return ds.batch(4)
+    def dataset_fn(ds_):
+        ds_ = ds_.repeat(2)
+        return ds_.batch(4)
 
-    def exception_fn(ds):
+    def exception_fn():
         return np.array([[0], [1], [3], [4], [5]])
 
     try:
@@ -220,12 +220,12 @@ def test_apply_exception_case():
 
     try:
         data2 = data1.apply(dataset_fn)
-        data3 = data1.apply(dataset_fn)
+        _ = data1.apply(dataset_fn)
         for _, _ in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
             pass
         assert False
-    except ValueError:
-        pass
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
 
 
 if __name__ == '__main__':

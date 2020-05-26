@@ -24,10 +24,10 @@ def test_voc_segmentation():
     data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", mode="train", decode=True, shuffle=False)
     num = 0
     for item in data1.create_dict_iterator():
-        assert (item["image"].shape[0] == IMAGE_SHAPE[num])
-        assert (item["target"].shape[0] == TARGET_SHAPE[num])
+        assert item["image"].shape[0] == IMAGE_SHAPE[num]
+        assert item["target"].shape[0] == TARGET_SHAPE[num]
         num += 1
-    assert (num == 10)
+    assert num == 10
 
 
 def test_voc_detection():
@@ -35,12 +35,12 @@ def test_voc_detection():
     num = 0
     count = [0, 0, 0, 0, 0, 0]
     for item in data1.create_dict_iterator():
-        assert (item["image"].shape[0] == IMAGE_SHAPE[num])
+        assert item["image"].shape[0] == IMAGE_SHAPE[num]
         for bbox in item["annotation"]:
             count[bbox[0]] += 1
         num += 1
-    assert (num == 9)
-    assert (count == [3, 2, 1, 2, 4, 3])
+    assert num == 9
+    assert count == [3, 2, 1, 2, 4, 3]
 
 
 def test_voc_class_index():
@@ -58,8 +58,8 @@ def test_voc_class_index():
             assert (bbox[0] == 0 or bbox[0] == 1 or bbox[0] == 5)
             count[bbox[0]] += 1
         num += 1
-    assert (num == 6)
-    assert (count == [3, 2, 0, 0, 0, 3])
+    assert num == 6
+    assert count == [3, 2, 0, 0, 0, 3]
 
 
 def test_voc_get_class_indexing():
@@ -76,8 +76,8 @@ def test_voc_get_class_indexing():
             assert (bbox[0] == 0 or bbox[0] == 1 or bbox[0] == 2 or bbox[0] == 3 or bbox[0] == 4 or bbox[0] == 5)
             count[bbox[0]] += 1
         num += 1
-    assert (num == 9)
-    assert (count == [3, 2, 1, 2, 4, 3])
+    assert num == 9
+    assert count == [3, 2, 1, 2, 4, 3]
 
 
 def test_case_0():
@@ -93,9 +93,9 @@ def test_case_0():
     data1 = data1.batch(batch_size, drop_remainder=True)
 
     num = 0
-    for item in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator():
         num += 1
-    assert (num == 20)
+    assert num == 20
 
 
 def test_case_1():
@@ -110,9 +110,9 @@ def test_case_1():
     data1 = data1.batch(batch_size, drop_remainder=True, pad_info={})
 
     num = 0
-    for item in data1.create_dict_iterator():
+    for _ in data1.create_dict_iterator():
         num += 1
-    assert (num == 18)
+    assert num == 18
 
 
 def test_voc_exception():

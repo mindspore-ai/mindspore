@@ -58,7 +58,7 @@ def test_random_color(degrees=(0.1, 1.9), plot=False):
 
     ds_original = ds_original.batch(512)
 
-    for idx, (image, label) in enumerate(ds_original):
+    for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
             images_original = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -79,7 +79,7 @@ def test_random_color(degrees=(0.1, 1.9), plot=False):
 
     ds_random_color = ds_random_color.batch(512)
 
-    for idx, (image, label) in enumerate(ds_random_color):
+    for idx, (image, _) in enumerate(ds_random_color):
         if idx == 0:
             images_random_color = np.transpose(image, (0, 2, 3, 1))
         else:

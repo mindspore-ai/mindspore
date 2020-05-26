@@ -273,7 +273,7 @@ def test_batch_exception_01():
         data1 = data1.batch(batch_size=2, drop_remainder=True, num_parallel_workers=0)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "num_parallel_workers" in str(e)
 
@@ -290,7 +290,7 @@ def test_batch_exception_02():
         data1 = data1.batch(3, drop_remainder=True, num_parallel_workers=-1)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "num_parallel_workers" in str(e)
 
@@ -307,7 +307,7 @@ def test_batch_exception_03():
         data1 = data1.batch(batch_size=0)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "batch_size" in str(e)
 
@@ -324,7 +324,7 @@ def test_batch_exception_04():
         data1 = data1.batch(batch_size=-1)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "batch_size" in str(e)
 
@@ -341,7 +341,7 @@ def test_batch_exception_05():
         data1 = data1.batch(batch_size=False)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "batch_size" in str(e)
 
@@ -358,7 +358,7 @@ def test_batch_exception_07():
         data1 = data1.batch(3, drop_remainder=0)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "drop_remainder" in str(e)
 
@@ -375,7 +375,7 @@ def test_batch_exception_08():
         data1 = data1.batch(3, drop_remainder=True, num_parallel_workers=False)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "num_parallel_workers" in str(e)
 
@@ -392,7 +392,7 @@ def test_batch_exception_09():
         data1 = data1.batch(drop_remainder=True, num_parallel_workers=4)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "batch_size" in str(e)
 
@@ -409,7 +409,7 @@ def test_batch_exception_10():
         data1 = data1.batch(batch_size=4, num_parallel_workers=8192)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "num_parallel_workers" in str(e)
 
@@ -429,7 +429,7 @@ def test_batch_exception_11():
         data1 = data1.batch(batch_size, num_parallel_workers)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "drop_remainder" in str(e)
 
@@ -450,7 +450,7 @@ def test_batch_exception_12():
         data1 = data1.batch(drop_remainder, batch_size=batch_size)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "batch_size" in str(e)
 
@@ -469,7 +469,7 @@ def test_batch_exception_13():
         data1 = data1.batch(batch_size, shard_id=1)
         sum([1 for _ in data1])
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "shard_id" in str(e)
 

@@ -24,18 +24,18 @@ from mindspore import log as logger
 # In generator dataset: Number of rows is 3; its values are 0, 1, 2
 def generator():
     for i in range(3):
-        yield np.array([i]),
+        yield (np.array([i]),)
 
 
 # In generator_10 dataset: Number of rows is 7; its values are 3, 4, 5 ... 9
 def generator_10():
     for i in range(3, 10):
-        yield np.array([i]),
+        yield (np.array([i]),)
 
 # In generator_20 dataset: Number of rows is 10; its values are 10, 11, 12 ... 19
 def generator_20():
     for i in range(10, 20):
-        yield np.array([i]),
+        yield (np.array([i]),)
 
 
 def test_concat_01():
@@ -85,7 +85,7 @@ def test_concat_03():
     data3 = data1 + data2
 
     try:
-        for i, d in enumerate(data3):
+        for _, _ in enumerate(data3):
             pass
         assert False
     except RuntimeError:
@@ -104,7 +104,7 @@ def test_concat_04():
     data3 = data1 + data2
 
     try:
-        for i, d in enumerate(data3):
+        for _, _ in enumerate(data3):
             pass
         assert False
     except RuntimeError:
@@ -125,7 +125,7 @@ def test_concat_05():
     data3 = data1 + data2
 
     try:
-        for i, d in enumerate(data3):
+        for _, _ in enumerate(data3):
             pass
         assert False
     except RuntimeError:

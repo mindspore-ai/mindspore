@@ -256,7 +256,7 @@ def test_random_color_adjust_op_hue(plot=False):
 # pylint: disable=unnecessary-lambda
 def test_random_color_adjust_grayscale():
     """
-    Tests that the random color adjust works for grayscale images 
+    Tests that the random color adjust works for grayscale images
     """
 
     def channel_swap(image):
@@ -284,7 +284,7 @@ def test_random_color_adjust_grayscale():
         for item1 in data1.create_dict_iterator():
             c_image = item1["image"]
             dataset_shape_1.append(c_image.shape)
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
 
 

@@ -59,7 +59,7 @@ def test_uniform_augment(plot=False, num_ops=2):
 
     ds_original = ds_original.batch(512)
 
-    for idx, (image, label) in enumerate(ds_original):
+    for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
             images_original = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -87,7 +87,7 @@ def test_uniform_augment(plot=False, num_ops=2):
 
     ds_ua = ds_ua.batch(512)
 
-    for idx, (image, label) in enumerate(ds_ua):
+    for idx, (image, _) in enumerate(ds_ua):
         if idx == 0:
             images_ua = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -122,7 +122,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
 
     ds_original = ds_original.batch(512)
 
-    for idx, (image, label) in enumerate(ds_original):
+    for idx, (image, _) in enumerate(ds_original):
         if idx == 0:
             images_original = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -149,7 +149,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
 
     ds_ua = ds_ua.batch(512)
 
-    for idx, (image, label) in enumerate(ds_ua):
+    for idx, (image, _) in enumerate(ds_ua):
         if idx == 0:
             images_ua = np.transpose(image, (0, 2, 3, 1))
         else:
@@ -180,9 +180,9 @@ def test_cpp_uniform_augment_exception_pyops(num_ops=2):
                      F.Invert()]
 
     try:
-        uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+        _ = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "operations" in str(e)
 
@@ -200,9 +200,9 @@ def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
                      C.RandomRotation(degrees=45)]
 
     try:
-        uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+        _ = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "num_ops" in str(e)
 
@@ -220,9 +220,9 @@ def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
                      C.RandomRotation(degrees=45)]
 
     try:
-        uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+        _ = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "num_ops" in str(e)
 
@@ -239,9 +239,9 @@ def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
                      C.RandomRotation(degrees=45)]
 
     try:
-        uni_aug = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
+        _ = C.UniformAugment(operations=transforms_ua, num_ops=num_ops)
 
-    except BaseException as e:
+    except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "integer" in str(e)
 
@@ -250,7 +250,7 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
     Test UniformAugment with greater crop size
     """
     logger.info("Test CPP UniformAugment with random_crop bad input")
-    batch_size=2
+    batch_size = 2
     cifar10_dir = "../data/dataset/testCifar10Data"
     ds1 = de.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
 
@@ -266,9 +266,9 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
     ds1 = ds1.batch(batch_size, drop_remainder=True, num_parallel_workers=1)
     num_batches = 0
     try:
-        for data in ds1.create_dict_iterator():
+        for _ in ds1.create_dict_iterator():
             num_batches += 1
-    except BaseException as e:
+    except Exception as e:
         assert "Crop size" in str(e)
 
 

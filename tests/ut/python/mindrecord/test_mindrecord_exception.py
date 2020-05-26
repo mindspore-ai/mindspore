@@ -300,16 +300,16 @@ def test_mindpage_pageno_pagesize_not_int(fixture_cv_file):
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))
 
-    with pytest.raises(ParamValueError) as err:
+    with pytest.raises(ParamValueError):
         reader.read_at_page_by_id(0, "0", 1)
 
-    with pytest.raises(ParamValueError) as err:
+    with pytest.raises(ParamValueError):
         reader.read_at_page_by_id(0, 0, "b")
 
-    with pytest.raises(ParamValueError) as err:
+    with pytest.raises(ParamValueError):
         reader.read_at_page_by_name("822", "e", 1)
 
-    with pytest.raises(ParamValueError) as err:
+    with pytest.raises(ParamValueError):
         reader.read_at_page_by_name("822", 0, "qwer")
 
     with pytest.raises(MRMFetchDataError, match="Failed to fetch data by category."):
@@ -330,14 +330,14 @@ def test_mindpage_filename_not_exist(fixture_cv_file):
     info = reader.read_category_info()
     logger.info("category info: {}".format(info))
 
-    with pytest.raises(MRMFetchDataError) as err:
+    with pytest.raises(MRMFetchDataError):
         reader.read_at_page_by_id(9999, 0, 1)
 
-    with pytest.raises(MRMFetchDataError) as err:
+    with pytest.raises(MRMFetchDataError):
         reader.read_at_page_by_name("abc.jpg", 0, 1)
 
-    with pytest.raises(ParamValueError) as err:
+    with pytest.raises(ParamValueError):
         reader.read_at_page_by_name(1, 0, 1)
 
-    paths = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
-             for x in range(FILES_NUM)]
+    _ = ["{}{}".format(CV_FILE_NAME, str(x).rjust(1, '0'))
+         for x in range(FILES_NUM)]
