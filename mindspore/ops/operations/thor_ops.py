@@ -17,13 +17,26 @@ import mindspore as ms
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from mindspore.ops.composite import multitype_ops as C
 
+__all__ = ["CusBatchMatMul",
+           "CusCholeskyTrsm",
+           "CusFusedAbsMax1",
+           "CusImg2Col",
+           "CusMatMulCubeDenseLeft",
+           "CusMatMulCubeFraczRightMul",
+           "CusMatMulCube",
+           "CusMatrixCombine",
+           "CusTranspose02314",
+           "CusMatMulCubeDenseRight",
+           "CusMatMulCubeFraczLeftCast",
+           ]
+
 
 class CusBatchMatMul(PrimitiveWithInfer):
-    """CusMatMulCube definition"""
+    """CusBatchMatMul definition"""
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCube"""
+        """init CusBatchMatMul"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
     def get_bprop(self):
@@ -61,11 +74,11 @@ class CusCholeskyTrsm(PrimitiveWithInfer):
 
 
 class CusFusedAbsMax1(PrimitiveWithInfer):
-    """CusCholeskyTrsm definition"""
+    """CusFusedAbsMax1 definition"""
 
     @prim_attr_register
     def __init__(self, origin_shape=[-1, -1]):
-        """init CusCholeskyTrsm"""
+        """init CusFusedAbsMax1"""
         self.init_prim_io_names(inputs=['x1'], outputs=['y'])
         self.origin_shape = origin_shape
 
@@ -126,7 +139,7 @@ class CusMatMulCubeDenseLeft(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCube"""
+        """init CusMatMulCubeDenseLeft"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
     def get_bprop(self):
@@ -199,11 +212,11 @@ class CusMatMulCube(PrimitiveWithInfer):
 
 
 class CusMatrixCombine(PrimitiveWithInfer):
-    """CusMatMulCube definition"""
+    """CusMatrixCombine definition"""
 
     @prim_attr_register
     def __init__(self):
-        """init CusMatMulCube"""
+        """init CusMatrixCombine"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
     def get_bprop(self):
@@ -246,3 +259,45 @@ class CusTranspose02314(PrimitiveWithInfer):
 
     def infer_dtype(self, data1_dtype):
         return data1_dtype
+
+
+class CusMatMulCubeDenseRight(PrimitiveWithInfer):
+    """CusMatMulCubeDenseRight definition"""
+
+    @prim_attr_register
+    def __init__(self):
+        """init CusMatMulCubeDenseRight"""
+        self.init_prim_io_names(inputs=['x1', 'x2', 'x3'], outputs=['y'])
+
+    def get_bprop(self):
+        def bprop(x1, x2, x3, out, dout):
+            return (C.zeros_like(x1), C.zeros_like(x2), C.zeros_like(x3))
+
+        return bprop
+
+    def infer_shape(self, data1_shape, data2_shape, data3_shape):
+        return data1_shape
+
+    def infer_dtype(self, data1_dtype, data2_dtype, data3_dtype):
+        return ms.common.dtype.tensor_type(getattr(ms, "float32"))
+
+
+class CusMatMulCubeFraczLeftCast(PrimitiveWithInfer):
+    """CusMatMulCubeFraczLeftCast definition"""
+
+    @prim_attr_register
+    def __init__(self):
+        """init CusMatMulCubeFraczLeftCast"""
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
+
+    def get_bprop(self):
+        def bprop(x1, x2, out, dout):
+            return (C.zeros_like(x1), C.zeros_like(x2))
+
+        return bprop
+
+    def infer_shape(self, data1_shape, data2_shape):
+        return data2_shape
+
+    def infer_dtype(self, data1_dtype, data2_dtype):
+        return ms.common.dtype.tensor_type(getattr(ms, "float16"))
