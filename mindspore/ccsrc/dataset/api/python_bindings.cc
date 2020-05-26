@@ -290,7 +290,8 @@ void bindTensorOps1(py::module *m) {
 
   (void)py::class_<UniformAugOp, TensorOp, std::shared_ptr<UniformAugOp>>(
     *m, "UniformAugOp", "Tensor operation to apply random augmentation(s).")
-    .def(py::init<py::list, int32_t>(), py::arg("operations"), py::arg("NumOps") = UniformAugOp::kDefNumOps);
+    .def(py::init<std::vector<std::shared_ptr<TensorOp>>, int32_t>(), py::arg("operations"),
+         py::arg("NumOps") = UniformAugOp::kDefNumOps);
 
   (void)py::class_<ResizeBilinearOp, TensorOp, std::shared_ptr<ResizeBilinearOp>>(
     *m, "ResizeBilinearOp",
