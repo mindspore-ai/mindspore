@@ -109,44 +109,5 @@ TEST_F(TestHWConstInputToAttr, test_onehot) {
   EXPECT_TRUE(AnfAlgo::HasNodeAttr("depth", cnode));
   EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
 }
-
-TEST_F(TestHWConstInputToAttr, test_strided_slice_grad) {
-  FuncGraphPtr g = getPyFun_.CallAndParseRet("test_convert_strided_slice_grad_input_to_attr", "before");
-  ASSERT_TRUE(g != nullptr);
-  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_convert_strided_slice_grad_input_to_attr", "after");
-  ASSERT_TRUE(g_after != nullptr);
-
-  auto ret = g->get_return();
-  ASSERT_TRUE(ret != nullptr);
-  EXPECT_NE(ret->input(1), nullptr);
-  EXPECT_NE(ret->input(1)->cast<CNodePtr>(), nullptr);
-  auto cnode = ret->input(1)->cast<CNodePtr>();
-  EXPECT_FALSE(AnfAlgo::HasNodeAttr("shapex", cnode));
-  EXPECT_FALSE(AnfAlgo::HasNodeAttr("begin", cnode));
-  EXPECT_FALSE(AnfAlgo::HasNodeAttr("end", cnode));
-  EXPECT_FALSE(AnfAlgo::HasNodeAttr("strides", cnode));
-  EXPECT_FALSE(CheckEqualGraph(g, g_after));
-
-  std::vector<int> shp_x{16, 1, 1024};
-  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
-  AbstractBasePtrList args_spec_list{x_abstract};
-  auto func_graph = GetKernelGraph(g, args_spec_list);
-  ASSERT_TRUE(func_graph != nullptr);
-
-  ret = func_graph->get_return();
-  ASSERT_TRUE(ret != nullptr);
-  EXPECT_NE(ret->input(1), nullptr);
-  EXPECT_NE(ret->input(1)->cast<CNodePtr>(), nullptr);
-  auto make_tuple = ret->input(1)->cast<CNodePtr>();
-  ASSERT_TRUE(make_tuple != nullptr);
-  EXPECT_NE(make_tuple->input(1), nullptr);
-  EXPECT_NE(make_tuple->input(1)->cast<CNodePtr>(), nullptr);
-  cnode = make_tuple->input(1)->cast<CNodePtr>();
-  EXPECT_TRUE(AnfAlgo::HasNodeAttr("shapex", cnode));
-  EXPECT_TRUE(AnfAlgo::HasNodeAttr("begin", cnode));
-  EXPECT_TRUE(AnfAlgo::HasNodeAttr("end", cnode));
-  EXPECT_TRUE(AnfAlgo::HasNodeAttr("strides", cnode));
-  EXPECT_TRUE(CheckEqualGraph(func_graph, g_after));
-}
 }  // namespace opt
 }  // namespace mindspore

@@ -193,6 +193,8 @@ constexpr auto kAttrIsTraining = "is_training";
 constexpr auto kAttrFusionId = "fusion_id";
 constexpr auto kAttrLabelIndex = "label_index";
 constexpr auto kAttrLabelSwitchList = "label_switch_list";
+constexpr auto kAttrNewAxisMask = "new_axis_mask";
+constexpr auto kAttrShrinkAxisMask = "shrink_axis_mask";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
