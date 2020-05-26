@@ -198,3 +198,4 @@ from .apply_rms_prop import _apply_rms_prop_tbe
 from .cumprod import _cumprop_tbe
 from .reduce_prod import _reduce_prod_tbe
 from .flatten_grad import _flatten_grad_tbe
+from .scatter_add import _scatter_add_tbe

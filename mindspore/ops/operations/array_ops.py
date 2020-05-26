@@ -2145,6 +2145,12 @@ class ScatterNdUpdate(PrimitiveWithInfer):
         validator.check_tensor_type_same(args, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
 
+def _check_scatter_shape(x_shape, indices_shape, updates_shape, prim_name):
+    if updates_shape and updates_shape != indices_shape + x_shape[1:]:
+        raise ValueError(f"For '{prim_name}', the shape of updates should be [] or "
+                         f"updates_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
+                         f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
+
 
 class ScatterMax(PrimitiveWithInfer):
     """
@@ -2158,8 +2164,8 @@ class ScatterMax(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Parameter) - The target parameter.
         - **indices** (Tensor) - The index to do max operation whose data type should be int.
-        - **updates** (Tensor) - The tensor doing the maximum operation with 'input_x',
-          the data type is same as 'input_x', the shape is 'indices_shape + x_shape[1:]'.
+        - **updates** (Tensor) - The tensor doing the maximum operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x`.
@@ -2180,15 +2186,55 @@ class ScatterMax(PrimitiveWithInfer):
         validator.check_value_type('use_locking', use_locking, (bool,), self.name)
 
     def infer_shape(self, x_shape, indices_shape, updates_shape):
-        if updates_shape and updates_shape != indices_shape + x_shape[1:]:
-            raise ValueError(f"For '{self.name}', the shape of update should be [] or "
-                             f"update_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
-                             f"indices_shape: {indices_shape}, update_shape: {updates_shape}.")
+        _check_scatter_shape(x_shape, indices_shape, updates_shape, self.name)
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
         validator.check_tensor_type_same({'indices': indices_dtype}, mstype.int_type, self.name)
         args = {"x": x_dtype, "updates": updates_dtype}
+        validator.check_tensor_type_same(args, mstype.number_type, self.name)
+        return x_dtype
+
+
+class ScatterAdd(PrimitiveWithInfer):
+    """
+    Update the value of the input tensor through the add operation.
+
+    Using given values to update tensor value through the add operation, along with the input indices.
+
+    Args:
+        use_locking (bool): Whether protect the assignment by a lock. Default: False.
+
+    Inputs:
+        - **input_x** (Parameter) - The target parameter.
+        - **indices** (Tensor) - The index to do add operation whose data type should be int.
+        - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
+
+    Outputs:
+        Tensor, has the same shape and data type as `input_x`.
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.ones([2, 2, 3]), mindspore.float32)
+        >>> scatter_add = P.ScatterAdd()
+        >>> output = scatter_add(input_x, indices, updates)
+        [[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]]
+    """
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Init ScatterAdd"""
+        validator.check_value_type('use_locking', use_locking, (bool,), self.name)
+
+    def infer_shape(self, x_shape, indices_shape, updates_shape):
+        _check_scatter_shape(x_shape, indices_shape, updates_shape, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
+        validator.check_tensor_type_same({'indices': indices_dtype}, mstype.int_type, self.name)
+        args = {'x': x_dtype, 'updates': updates_dtype}
         validator.check_tensor_type_same(args, mstype.number_type, self.name)
         return x_dtype
 
