@@ -32,6 +32,7 @@ cus_cholesky_trsm_op_info = TBERegOp("CusCholeskyTrsm") \
 
 @op_info_register(cus_cholesky_trsm_op_info)
 def CusCholeskyTrsm(input_x, output, kernel_name):
+    """CusCholeskyTrsm"""
     input_x_shape = input_x.get("shape")
     output_shape = output.get("shape")
     split_dim = 128

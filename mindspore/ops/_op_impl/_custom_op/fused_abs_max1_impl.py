@@ -33,6 +33,7 @@ cus_fused_abs_max1_op_info = TBERegOp("CusFusedAbsMax1") \
 
 @op_info_register(cus_fused_abs_max1_op_info)
 def CusFusedAbsMax1(input_x, output, origin_shape=None, kernel_name="fused_abs_max1"):
+    """CusFusedAbsMax1"""
     input_x_shape = input_x.get("shape")
     output_shape = output.get("shape")
 
@@ -203,9 +204,9 @@ def CusFusedAbsMax1(input_x, output, origin_shape=None, kernel_name="fused_abs_m
                 tik_instance.data_move(res[block_index, 0], broadcast_0_local_UB, 0, 1, 8, 0, 0)
         elif (input_x_shape[0] == 8 and input_x_shape[1] == 128 and input_x_shape[2] == 128) or (
                 input_x_shape[0] == 32 and input_x_shape[1] == 16) or (
-                input_x_shape[0] == 16 and input_x_shape[1] == 32):
+                    input_x_shape[0] == 16 and input_x_shape[1] == 32):
             if (input_x_shape[0] == 8 and input_x_shape[1] == 128 and input_x_shape[2] == 128) and origin_shape[
-                0] == 1000:
+                    0] == 1000:
                 input_x = tik_instance.Tensor("float32", input_x_shape, name="input_x", scope=tik.scope_gm)
                 res = tik_instance.Tensor("float32", output_shape, name="res", scope=tik.scope_gm)
                 blocks = 32
@@ -257,7 +258,7 @@ def CusFusedAbsMax1(input_x, output, origin_shape=None, kernel_name="fused_abs_m
                     tik_instance.data_move(res[block_index, 0], broadcast_0_local_UB, 0, 1, 8, 0, 0)
 
             elif (input_x_shape[0] == 8 and input_x_shape[1] == 128 and input_x_shape[2] == 128) and origin_shape[
-                0] == 1001:
+                    0] == 1001:
                 input_x = tik_instance.Tensor("float32", input_x_shape, name="input_x", scope=tik.scope_gm)
                 res = tik_instance.Tensor("float32", output_shape, name="res", scope=tik.scope_gm)
                 blocks = 32
@@ -350,7 +351,7 @@ def CusFusedAbsMax1(input_x, output, origin_shape=None, kernel_name="fused_abs_m
                     tik_instance.data_move(res[block_index, 0], broadcast_0_local_UB, 0, 1, 8, 0, 0)
         elif (input_x_shape[0] == 16 and input_x_shape[1] == 128 and input_x_shape[2] == 128) or (
                 input_x_shape[0] == 16 and input_x_shape[1] == 64) or (
-                input_x_shape[0] == 64 and input_x_shape[1] == 16):
+                    input_x_shape[0] == 64 and input_x_shape[1] == 16):
             input_x = tik_instance.Tensor("float32", input_x_shape, name="input_x", scope=tik.scope_gm)
             res = tik_instance.Tensor("float32", output_shape, name="res", scope=tik.scope_gm)
             total_elements = 1

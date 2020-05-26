@@ -33,6 +33,7 @@ cus_batchmatmul_op_info = TBERegOp("CusBatchMatMul") \
 
 
 def _get_flattern_shape(shape):
+    """_get_flattern_shape"""
     flattern_shape = 1
     for dim in shape:
         flattern_shape *= dim
@@ -40,6 +41,7 @@ def _get_flattern_shape(shape):
 
 
 def _inner_matmul_new(tik_instance, dtype, input1, input1_index, input2, input2_index, res, res_index):
+    """_inner_matmul_new"""
     input_1_local_UB = tik_instance.Tensor(dtype, [128], name="input_1_local_UB", scope=tik.scope_ubuf)
     t_1_0_local_UB = tik_instance.Tensor(dtype, [64 * 128], name="t_1_0_local_UB", scope=tik.scope_ubuf)
     tik_instance.data_move(input_1_local_UB, input1[input1_index], 0, 1, 16, 0, 0)
@@ -71,6 +73,7 @@ def _inner_matmul_new(tik_instance, dtype, input1, input1_index, input2, input2_
 
 
 def _inner_matmul_new_1_64_32_64(tik_instance, dtype, input1, input1_index, input2, input2_index, res, res_index):
+    """_inner_matmul_new_1_64_32_64"""
     input_1_local_UB = tik_instance.Tensor(dtype, [64], name="input_1_local_UB", scope=tik.scope_ubuf)
     tik_instance.data_move(input_1_local_UB, input1[input1_index], 0, 1, 8, 0, 0)
     with tik_instance.for_range(0, 2, thread_num=2) as thread_idx2:
@@ -90,6 +93,7 @@ def _inner_matmul_new_1_64_32_64(tik_instance, dtype, input1, input1_index, inpu
 
 @op_info_register(cus_batchmatmul_op_info)
 def CusBatchMatMul(input_x1, input_x2, output, transpose_a=False, transpose_b=True, kernel_name="batchmatmul"):
+    """CusBatchMatMul"""
     if util.get_product_version() == util.VERSION_MINI:
         tik_instance = tik.Tik(tik.Dprofile("v100", "mini"))
     else:
@@ -116,7 +120,6 @@ def CusBatchMatMul(input_x1, input_x2, output, transpose_a=False, transpose_b=Tr
 
     # if not transpose_a and transpose_b:
     batch, m, k = x1_shape
-    _, n, _ = x2_shape
 
     input1_shape = _get_flattern_shape(x1_shape)
     input1 = tik_instance.Tensor(dtype, input1_shape, name="input1", scope=tik.scope_gm)

@@ -18,11 +18,10 @@ limitations under the License.
 matmul
 """
 from __future__ import absolute_import
-
-import te.lang.cce
-import te.platform.cce_params as cce
 from impl.matmul_vector import matmul_vector_cce
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+import te.lang.cce
+import te.platform.cce_params as cce
 from te import tvm
 from topi import generic
 from topi.cce import util
@@ -146,6 +145,7 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
 
 
 def _get_bias(shape_bias):
+    """_get_bias"""
     bias_length = shape_bias[0]
     if bias_length % 16 == 0:
         return shape_bias
@@ -157,6 +157,7 @@ def _get_bias(shape_bias):
 
 
 def _get_input_shape(shape_x):
+    """_get_input_shape"""
     dim_a = shape_x[0]
     dim_b = shape_x[1]
     res = []
@@ -175,6 +176,7 @@ def _get_input_shape(shape_x):
 
 
 def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False, kernel_name="matmulcube"):
+    """check_supported"""
     shape_a = input_x1.get("shape")
     shape_b = input_x2.get("shape")
     print("shape_a: ", shape_a)
@@ -185,8 +187,6 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
     util.check_shape_rule(shape_b)
     util.check_shape_size(shape_a, SHAPE_SIZE_LIMIT)
     util.check_shape_size(shape_b, SHAPE_SIZE_LIMIT)
-    if bias is not None and bool(bias):
-        shape_bias = bias.get("shape")
     try:
         trans_a_f = bool(1 - trans_a)
         if src_dtype == "float32" or src_dtype == "int32":
@@ -250,7 +250,7 @@ def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, tra
     """
     calculating  matrix multiplication with bias, C = A*B + bias, support input
     data with fractal format.
- 
+
     Parameters:
     shape_a: list or tuple
             Shape of the first tensor a with rank > 1
@@ -269,7 +269,7 @@ def CusMatMulCube(input_x1, input_x2, bias=None, output_y={}, trans_a=False, tra
             If True, the input data format of a and b must be fractal format
     shape_bias: list or tuple
             Shape of bias, only support the input data format with ND
- 
+
     Returns
     -------
     None

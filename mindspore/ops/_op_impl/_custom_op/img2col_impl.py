@@ -36,6 +36,7 @@ cus_img2col_info = TBERegOp("CusImg2Col") \
 
 @op_info_register(cus_img2col_info)
 def CusImg2Col(input_x, output, ksizes, strides, dilates, mode, kernel_name="img2col"):
+    """CusImg2Col"""
     input_x_shape = input_x.get("shape")
     input_x_dtype = input_x.get("dtype")
     N, C1, H, W, C0 = input_x_shape
@@ -64,7 +65,7 @@ def CusImg2Col(input_x, output, ksizes, strides, dilates, mode, kernel_name="img
                        ((32, 8, 28, 28, 16), 'float16', (1, 1), (1, 1)),
                        ((32, 32, 28, 28, 16), 'float16', (1, 1), (1, 1)),
                        ((32, 16, 14, 14, 16), 'float16', (1, 1), (1, 1)),
-                       ((32, 16, 56, 56, 16), 'float16', (1, 1), (1, 1)), ]
+                       ((32, 16, 56, 56, 16), 'float16', (1, 1), (1, 1)),]
 
     if input_shape not in supported_shape:
         raise RuntimeError("input_shape %s is not supported" % str(input_shape))

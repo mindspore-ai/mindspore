@@ -33,5 +33,5 @@ config = ed({
     "save_checkpoint_path": "./",
     "label_smooth": 1,
     "label_smooth_factor": 0.1,
-    "frequency": 278
+    "frequency": 834
 })

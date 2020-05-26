@@ -91,7 +91,7 @@ class CusFusedAbsMax1(PrimitiveWithInfer):
     def infer_shape(self, data1_shape):
         ll = []
         if len(data1_shape) == 2:
-            ll = [1, ]
+            ll = [1,]
         else:
             ll = [32, 64]
         return ll

@@ -2,19 +2,19 @@
 # -*- coding:utf-8 -*-
 """
 copyright 2020 Huawei Technologies Co., Ltd
- 
+
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
 http://www.apache.org/licenses/LICENSE-2.0
- 
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License == distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
- 
+
 matmul
 """
 from __future__ import absolute_import
@@ -43,11 +43,12 @@ matmul_cube_dense_right_op_info = TBERegOp("CusMatMulCubeDenseRight") \
 @op_info_register(matmul_cube_dense_right_op_info)
 def CusMatMulCubeDenseRight(input_x1, input_x2, input_x3, bias=None, output_y={}, trans_a=False, trans_b=False,
                             kernel_name="matmulcube"):
+    """CusMatMulCubeDenseRight"""
     shape_a_temp = (128, 63, 16, 16)
     shape_b_temp = (128, 128, 16, 16)
     shape_output = output_y.get("shape")
     matrix_max_shape = (1,)
-    support_shape = [(shape_a_temp, shape_b_temp, matrix_max_shape), ]
+    support_shape = [(shape_a_temp, shape_b_temp, matrix_max_shape),]
     shape_a_input = input_x1.get("shape")
     shape_b_input = input_x2.get("shape")
     matrix_max_input = input_x3.get("shape")
@@ -62,7 +63,7 @@ def CusMatMulCubeDenseRight(input_x1, input_x2, input_x3, bias=None, output_y={}
             tik_instance = tik.Tik(tik.Dprofile("v100", "cloud"))
         input_x1 = tik_instance.Tensor("float16", shape_a_temp, name="left_matrix", scope=tik.scope_gm)
         input_x2 = tik_instance.Tensor("float16", shape_b_temp, name="right_matrix", scope=tik.scope_gm)
-        input_x3 = tik_instance.Tensor("float32", [1, ], name="matrix_max", scope=tik.scope_gm)
+        input_x3 = tik_instance.Tensor("float32", [1,], name="matrix_max", scope=tik.scope_gm)
         resMatmul = tik_instance.Tensor("float32", shape_output, name="output", scope=tik.scope_gm)
         with tik_instance.for_range(0, 32, block_num=32) as block_index:
             core_m_idx = block_index // 16

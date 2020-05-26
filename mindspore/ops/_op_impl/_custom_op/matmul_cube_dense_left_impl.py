@@ -17,10 +17,9 @@ limitations under the License.
 matmul
 """
 from __future__ import absolute_import
-
+from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 import te.lang.cce
 import te.platform.cce_params as cce
-from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 from te import tik
 from te import tvm
 from topi import generic
@@ -128,7 +127,7 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
     if n_shape % cce.BLOCK_IN != 0 and n_shape != 1:
         raise RuntimeError("input shape N should be 1 or multiple of %d" % cce.BLOCK_IN)
 
-    if len(shape_bias):
+    if len(shape_bias) != 0:
         if len(shape_bias) == 1:
             if is_gevm or is_gemv:
                 if shape_bias[0] != m_shape * n_shape:
@@ -145,16 +144,19 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
 
 def _get_bias(shape_bias):
     bias_length = shape_bias[0]
+    shb = []
     if bias_length % 16 == 0:
-        return shape_bias
+        shb = shape_bias
     else:
         bias_length = (bias_length // 16) * 16 + 16
         shape_bias = []
         shape_bias.append(bias_length)
-        return shape_bias
+        shb = shape_bias
+    return shb
 
 
 def _get_input_shape(shape_x):
+    """_get_input_shape"""
     dim_a = shape_x[0]
     dim_b = shape_x[1]
     res = []
@@ -173,6 +175,7 @@ def _get_input_shape(shape_x):
 
 
 def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False, kernel_name="matmulcube"):
+    """check_supported"""
     shape_a = input_x1.get("shape")
     shape_b = input_x2.get("shape")
     print("shape_a: ", shape_a)
@@ -183,8 +186,6 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
     util.check_shape_rule(shape_b)
     util.check_shape_size(shape_a, SHAPE_SIZE_LIMIT)
     util.check_shape_size(shape_b, SHAPE_SIZE_LIMIT)
-    if bias is not None and bool(bias):
-        shape_bias = bias.get("shape")
     try:
         trans_a_f = bool(1 - trans_a)
         if src_dtype == "float32" or src_dtype == "int32":
@@ -250,7 +251,7 @@ def CusMatMulCubeDenseLeft(input_x1, input_x2, bias=None, output_y={}, trans_a=F
     """
     calculating  matrix multiplication with bias, C = A*B + bias, support input
     data with fractal format.
- 
+
     Parameters:
     shape_a: list or tuple
             Shape of the first tensor a with rank > 1
@@ -269,7 +270,7 @@ def CusMatMulCubeDenseLeft(input_x1, input_x2, bias=None, output_y={}, trans_a=F
             If True, the input data format of a and b must be fractal format
     shape_bias: list or tuple
             Shape of bias, only support the input data format with ND
- 
+
     Returns
     -------
     None

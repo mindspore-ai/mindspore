@@ -17,9 +17,8 @@ limitations under the License.
 matmul
 """
 from __future__ import absolute_import
-
-import te.platform.cce_params as cce
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
+import te.platform.cce_params as cce
 from te import tik
 from topi.cce import util
 
@@ -141,6 +140,7 @@ src_dtype: str
 
 
 def _get_bias(shape_bias):
+    """_get_bias"""
     bias_length = shape_bias[0]
     if bias_length % 16 == 0:
         return shape_bias
@@ -152,6 +152,7 @@ def _get_bias(shape_bias):
 
 
 def _get_input_shape(shape_x):
+    """_get_input_shape"""
     dim_a = shape_x[0]
     dim_b = shape_x[1]
     res = []
@@ -170,6 +171,7 @@ def _get_input_shape(shape_x):
 
 
 def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, trans_b=False, kernel_name="matmulcube"):
+    """check_supported"""
     shape_a = input_x1.get("shape")
     shape_b = input_x2.get("shape")
     print("shape_a: ", shape_a)
@@ -180,8 +182,6 @@ def check_supported(input_x1, input_x2, bias=None, output_y={}, trans_a=False, t
     util.check_shape_rule(shape_b)
     util.check_shape_size(shape_a, SHAPE_SIZE_LIMIT)
     util.check_shape_size(shape_b, SHAPE_SIZE_LIMIT)
-    if bias is not None and bool(bias):
-        shape_bias = bias.get("shape")
     try:
         trans_a_f = bool(1 - trans_a)
         if src_dtype == "float32" or src_dtype == "int32":
@@ -265,7 +265,7 @@ def CusMatMulCubeFraczLeftCast(input_x1, input_x2, bias=None, output_y={}, trans
             If True, the input data format of a and b must be fractal format
     shape_bias: list or tuple
             Shape of bias, only support the input data format with ND
- 
+
     Returns
     -------
     None
@@ -381,6 +381,7 @@ def CusMatMulCubeFraczLeftCast(input_x1, input_x2, bias=None, output_y={}, trans
 
 
 def get_cus_tile_info(input_x1, input_x2, diag_size):
+    """get_cus_tile_info"""
     tile_map = {
         ((32, 32, 16, 16), (128, 32, 16, 16)): (8, 8, 16),
         ((8, 8, 16, 16), (72, 8, 16, 16)): (8, 8, 4),
@@ -415,8 +416,9 @@ def get_cus_tile_info(input_x1, input_x2, diag_size):
 
 def cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b,
                          res, mo_tile, ko_tile, no_tile, diag_opt=False, diag_size=128):
-    ko, mo, mi, ki = input_x1.shape
-    no, ko, ki, ni = input_x2.shape
+    """cus_cube_matmul_cast"""
+    ko, mo, _, _ = input_x1.shape
+    no, ko, ki, _ = input_x2.shape
     c0 = input_x1.shape[-1]
     diag_outer = diag_size // c0
     maxblocknum = 32

@@ -32,6 +32,7 @@ cus_transpose02314_op_info = TBERegOp("CusTranspose02314") \
 
 @op_info_register(cus_transpose02314_op_info)
 def CusTranspose02314(input_x, output, kernel_name="transpose021354"):
+    """CusTranspose02314"""
     input_x_shape = input_x.get("shape")
     output_shape = output.get("shape")
     perm = (0, 2, 3, 1, 4)
@@ -263,7 +264,7 @@ def CusTranspose02314(input_x, output, kernel_name="transpose021354"):
 
         with tik_instance.for_range(0, 32, block_num=32) as block_idx:
             with tik_instance.for_range(0, 6, thread_num=2) as cc1:
-                _inner_ + compute(cc1)
+                _inner_compute(cc1)
             _inner_compute(6)
     elif tuple(input_x_shape) == (32, 64, 14, 14, 16) and tuple(perm) == (0, 2, 3, 1, 4) and dtype == "float16":
         def _inner_compute(split_index, block_idx):

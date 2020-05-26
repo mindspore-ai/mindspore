@@ -47,6 +47,7 @@ cus_matmul_cube_fracz_right_mul_op_info = TBERegOp("CusMatMulCubeFraczRightMul")
 @op_info_register(cus_matmul_cube_fracz_right_mul_op_info)
 def CusMatMulCubeFraczRightMul(input_x1, input_x2, input_x3, bias=None, output_y={}, trans_a=False, trans_b=False,
                                kernel_name="matmulcube"):
+    """CusMatMulCubeFraczRightMul"""
     if util.get_product_version() == util.VERSION_MINI:
         tik_instance = tik.Tik(tik.Dprofile("v100", "mini"))
     else:
@@ -80,7 +81,7 @@ def CusMatMulCubeFraczRightMul(input_x1, input_x2, input_x3, bias=None, output_y
                  ((64, 32, 16, 16), 'float16', (64, 64, 16, 16), 'float16', (1,), 'float32'),
                  ((16, 64, 16, 16), 'float16', (16, 16, 16, 16), 'float16', (1,), 'float32')]
     input_shape = (
-    tuple(input_x1_shape), input_x1_dtype, tuple(input_x2_shape), input_x2_dtype, tuple(input_x3_shape), input_x3_dtype)
+        tuple(input_x1_shape), input_x1_dtype, tuple(input_x2_shape), input_x2_dtype, tuple(input_x3_shape), input_x3_dtype)
     if input_shape not in Supported:
         raise RuntimeError("input_shape %s is not supported" % str(input_shape))
 
@@ -95,15 +96,17 @@ def CusMatMulCubeFraczRightMul(input_x1, input_x2, input_x3, bias=None, output_y
 
 def cus_cube_matmul_right_mul(tik_instance, input_x1, input_x2, input_x3,
                               res):
+    """cus_cube_matmul_right_mul"""
     diag_size = 128
-    ko, mo, mi, ki = input_x1.shape
-    no, ko, ki, ni = input_x2.shape
+    ko, mo, _, _ = input_x1.shape
+    no, ko, ki, _ = input_x2.shape
     c0 = input_x1.shape[-1]
     diag_outer = diag_size // c0
     if [input_x1.shape[-1], input_x1.shape[-2], input_x2.shape[-1], input_x2.shape[-2]] != [c0, c0, c0, c0]:
         raise ValueError("shape of input_x1 or input_x2 is not supported!")
 
     def get_cus_tile_info(input_x1, input_x2, input_x3):
+        """get_cus_tile_info"""
         input_shape = (tuple(input_x1.shape), input_x1.dtype, tuple(input_x2.shape), input_x2.dtype,
                        tuple(input_x3.shape), input_x3.dtype)
         tile_map = {
