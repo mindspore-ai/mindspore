@@ -418,7 +418,7 @@ def cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b,
                          res, mo_tile, ko_tile, no_tile, diag_opt=False, diag_size=128):
     """cus_cube_matmul_cast"""
     ko, mo, _, _ = input_x1.shape
-    no, ko, ki, _ = input_x2.shape
+    no, ko, _, _ = input_x2.shape
     c0 = input_x1.shape[-1]
     diag_outer = diag_size // c0
     maxblocknum = 32
