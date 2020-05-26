@@ -228,12 +228,6 @@ TEST_F(TestMemReuseWithPy, KernelRef) {
   ASSERT_EQ(kernel_def_ptr->dirty, false);
   MembufPtr membuf_ptr = std::make_shared<Membuf>();
   ASSERT_NE(membuf_ptr, nullptr);
-  MembufPtr membuf_ptr_x = std::make_shared<Membuf>(0, memreuse::kUnused, 512, 128, 2);
-  ASSERT_EQ(membuf_ptr_x->status_, memreuse::kUnused);
-  ASSERT_EQ(membuf_ptr_x->size_, 512);
-  ASSERT_EQ(membuf_ptr_x->offset_, 128);
-  ASSERT_EQ(membuf_ptr_x->index_, 2);
-  ASSERT_EQ(membuf_ptr_x->stream_id_, 0);
 }
 
 TEST_F(TestMemReuseWithPy, ReuseAssignDynamicMemory) {

@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_REUSE_CHECKER_H_
 #define MINDSPORE_CCSRC_PRE_ACTIVATE_MEM_REUSE_MEM_REUSE_CHECKER_H_
 #include <map>
+#include <set>
 #include <vector>
 #include <string>
 #include <memory>
@@ -59,10 +60,14 @@ class MemReuseChecker {
   void ExportMembufInfoIR();
   void SetAddNewMembuInfos(const KernelDef *op_def, const std::vector<MembufPtr> &membuf_ptr_list, size_t op_idx);
   void ExportAddNewMmebufIR();
+  void set_kernel_front_map(const std::map<KernelDefPtr, std::set<KernelDefPtr>> &kernel_front_map) {
+    kernel_front_map_ = kernel_front_map;
+  }
+  void ExportKernelDependence();
 
  private:
   MemReuseChecker() = default;
-  ~MemReuseChecker() { MS_LOG(INFO) << "Total reused workspace size: " << total_re_wkspe_size_checker_; }
+  ~MemReuseChecker() {}
   size_t total_re_wkspe_size_checker_{0};
   std::vector<std::vector<MembufPtr>> membuf_all_infos_;
   std::vector<const void *> nor_output_tensors_;
@@ -79,6 +84,7 @@ class MemReuseChecker {
   std::vector<std::string> all_split_names_;
   std::map<int, std::vector<string>> tensor_from_;
   std::map<int, std::vector<string>> tensor_to_;
+  std::map<KernelDefPtr, std::set<KernelDefPtr>> kernel_front_map_;
   int64_t total_ori_static_size_ = 0;
   int64_t total_ori_input_size_ = 0;
   int64_t total_ori_value_size_ = 0;

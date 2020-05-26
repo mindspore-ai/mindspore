@@ -20,6 +20,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <set>
 
 namespace mindspore {
 namespace memreuse {
@@ -73,13 +74,15 @@ class KernelDef {
   KernelRefCountPtrList output_refs() const { return output_refs_; }
   std::vector<int> GetInputRefIndexs() const;
   std::vector<int> GetOutputRefIndexs() const;
-  std::vector<int> GetWkRefIndexs() const;
+  std::vector<int> GetWorkspaceRefIndexs() const;
   void set_stream_id(uint32_t stream_id) { stream_id_ = stream_id; }
   uint32_t stream_id() const { return stream_id_; }
   void set_kernel_name(const std::string &kernel_name) { kernel_name_ = kernel_name; }
   std::string kernel_name() const { return kernel_name_; }
   void set_scope_full_name(const std::string &scop_name) { scop_full_name_ = scop_name; }
   std::string scope_full_name() const { return scop_full_name_; }
+  void InsertInputKernel(const std::shared_ptr<KernelDef> &input_kernel) { input_kernels_.insert(input_kernel); }
+  const std::set<std::shared_ptr<KernelDef>> &input_kernels() { return input_kernels_; }
 
  private:
   std::string scop_full_name_;
@@ -87,6 +90,7 @@ class KernelDef {
   uint32_t stream_id_{0};
   KernelRefCountPtrList input_refs_;
   KernelRefCountPtrList output_refs_;
+  std::set<std::shared_ptr<KernelDef>> input_kernels_;
 };
 using KernelDefPtr = std::shared_ptr<KernelDef>;
 }  // namespace memreuse

@@ -61,6 +61,7 @@ class MemReuseUtil {
   void SetInputMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr);
   void SetOutputMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr);
   void SetWkMap(const CNodePtr &kernel, KernelDef *kernel_def_ptr);
+  void SetKernelDefInputs();
   void SetReuseRefCount();
   // Set the reference count of graph output specially.
   void SetGraphOutputRefCount();
@@ -94,6 +95,8 @@ class MemReuseUtil {
   size_t total_workspace_size_ = 0;
   size_t total_reuseworkspace_size_ = 0;
   uint8_t *mem_base_{nullptr};
+  // kernel_map_: key is the AnfNodePtr addr, value is the KernelDef
+  std::map<KernelKey, KernelDefPtr> kernel_map_;
 };
 using MemReuseUtilPtr = std::shared_ptr<MemReuseUtil>;
 }  // namespace memreuse
