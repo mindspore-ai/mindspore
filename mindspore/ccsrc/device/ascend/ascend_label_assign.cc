@@ -28,6 +28,9 @@ namespace device {
 namespace ascend {
 
 static void UpdateLabelGoto(NotNull<CNodePtr> node) {
+  if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, node)) {
+    return;
+  }
   if (node->size() <= kLabelGotoLabelId) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " has invalid input size " << node->size();
   }
@@ -42,6 +45,9 @@ static void UpdateLabelGoto(NotNull<CNodePtr> node) {
 }
 
 static void UpdateLabelSwitch(NotNull<CNodePtr> node) {
+  if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, node)) {
+    return;
+  }
   if (node->size() <= kLabelGotoLabelId) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " has invalid input size " << node->size();
   }
@@ -69,9 +75,12 @@ static void AssignLabelForLabelSet(NotNull<std::shared_ptr<session::KernelGraph>
   if (memo->find(graph.get()) != memo->end()) {
     return;
   }
+  memo->insert(graph.get());
 
   MS_LOG(INFO) << "Assign label for " << graph->ToString();
-  auto nodes = TopoSort(graph->get_return());
+  graph->SetExecOrderByDefault();
+  auto nodes = graph->execution_order();
+
   for (auto &node : nodes) {
     if (!node->isa<CNode>()) {
       continue;
@@ -97,9 +106,15 @@ static void AssignLabelForGotoSwitch(NotNull<std::shared_ptr<session::KernelGrap
   if (memo->find(graph.get()) != memo->end()) {
     return;
   }
+  memo->insert(graph.get());
 
   MS_LOG(INFO) << "Process label goto/switch for " << graph->ToString();
-  auto nodes = TopoSort(graph->get_return());
+  graph->SetExecOrderByDefault();
+  auto nodes = graph->execution_order();
+  auto end_goto = graph->get_end_goto();
+  if (end_goto != nullptr) {
+    nodes.push_back(end_goto);
+  }
   for (auto &node : nodes) {
     if (!node->isa<CNode>()) {
       continue;

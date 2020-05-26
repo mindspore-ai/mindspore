@@ -104,10 +104,10 @@ class AscendSession : public SessionBasic {
   void SelectKernelGraphKernel(const KernelGraph &graph) {}
   void ConvertPredictModel(const KernelGraphPtr graph) {}
   void HardwareOptimizeGraphs(const KernelGraphPtr graph) {}
-  void RootGraphExecutorValidate(KernelGraph *graph) {}
-  void RecurseUpdateAllChildGraohOrder(KernelGraph *root_graph);
-  KernelGraphPtr ConstructSplitedGraph(const KernelGraphPtr &new_kernel_graph, const std::vector<CNodePtr> &list);
-  void ChildGraphCommunicationDecrease(std::vector<std::vector<AnfNodePtr>> *anf_node_lists);
+  void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
+  std::vector<AnfNodePtr> ConstructSplitedGraph(const KernelGraphPtr &new_kernel_graph,
+                                                const std::vector<CNodePtr> &list);
+  void RecurseCompileGraph(const KernelGraphPtr &graph);
 
   // merge execution order list of child graphs
   void MergeGraphExecOrder();

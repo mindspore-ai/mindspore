@@ -103,10 +103,9 @@ class KernelGraph : public FuncGraph {
   void UpdateExecuteKernelStreamLabel();
   // calculate the leaf graph order of root graph
   std::vector<std::shared_ptr<KernelGraph>> GetLeafGraphOrder();
-  // update the child graph order of graph
-  void UpdateChildGraphOrder();
-  // get the child graph of current graph
-  std::vector<std::shared_ptr<KernelGraph>> child_graph_order() const { return child_graph_order_; }
+  // the child graph of current graph
+  const std::vector<std::shared_ptr<KernelGraph>> &child_graph_order() const { return child_graph_order_; }
+  void set_child_graph_order(const std::vector<std::shared_ptr<KernelGraph>> &order) { child_graph_order_ = order; }
   // checkout whether current graph is leaf graph
   bool IsLeafGraph() const;
 
@@ -123,6 +122,7 @@ class KernelGraph : public FuncGraph {
   // find anf node in graph
   std::vector<CNodePtr> FindNodeByPrimitive(const PrimitivePtr &primitive) const;
   // get real inputs
+  const std::map<AnfNodePtr, std::set<AnfNodePtr>> &real_inputs() const { return real_inputs_; }
   std::set<AnfNodePtr> GetRealInput(const AnfNodePtr &parameter);
   void SetRealInput(const AnfNodePtr &parameter, const AnfNodePtr &arg);
   // used to dump ir
@@ -132,6 +132,8 @@ class KernelGraph : public FuncGraph {
 
   void set_start_label(const CNodePtr &start_label) { start_label_ = start_label; }
   CNodePtr get_start_label() { return start_label_; }
+  void set_end_goto(const CNodePtr &end_goto) { end_goto_ = end_goto; }
+  CNodePtr get_end_goto() { return end_goto_; }
 
  private:
   // remove value node form graph
@@ -185,6 +187,7 @@ class KernelGraph : public FuncGraph {
   std::map<AnfNodePtr, std::set<AnfNodePtr>> real_inputs_;
 
   CNodePtr start_label_;
+  CNodePtr end_goto_;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

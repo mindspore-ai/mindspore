@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_SESSION_ASCEND_CONTROL_PARSER_H
 
 #include <set>
+#include <map>
 #include <vector>
 #include <tuple>
 #include "session/kernel_graph.h"
@@ -28,31 +29,44 @@ namespace session {
 
 class AscendControlParser {
  public:
+  static void ChildGraphDataAssign(const std::map<uint32_t, KernelGraphPtr> &graph_id_map);
   static void LinkGraph(NotNull<KernelGraphPtr> kg);
 
   static void InsertDependToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> attch_node);
   static void InsertControlDependToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> first_node,
                                          NotNull<AnfNodePtr> second_node);
+  static void ExecutorValidate(NotNull<KernelGraphPtr> root_graph);
+  static void UpdateChildGraphOrder(NotNull<KernelGraphPtr> kg);
 
  private:
   static NotNull<CNodePtr> ProcessKernelGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &last_node,
-                                              const CNodePtr &last_label, const VectorRef &args,
-                                              NotNull<std::set<KernelGraphPtr> *> memo);
+                                              const CNodePtr &last_label, NotNull<std::set<KernelGraphPtr> *> memo);
   static void RecurseCall(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node, const CNodePtr &next_node,
                           NotNull<std::set<KernelGraphPtr> *> memo);
-  static void RecurseSwitch(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node,
+  static void RecurseSwitch(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node, const CNodePtr &next_node,
                             NotNull<std::set<KernelGraphPtr> *> memo);
-  static void RecurseSwitchLayer(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node,
+  static void RecurseSwitchLayer(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> cur_node, const CNodePtr &next_node,
                                  NotNull<std::set<KernelGraphPtr> *> memo);
 
-  static std::vector<CNodePtr> GetCNodes(const std::vector<AnfNodePtr> &in);
   static void LinkParentGraph(NotNull<KernelGraphPtr> kg, const CNodePtr &from_graph_call_node,
-                              const CNodePtr &last_label, const VectorRef &args);
-  static void SetSubGraphInput(NotNull<KernelGraphPtr> kg, NotNull<CNodePtr> from_graph_call_node,
-                               const VectorRef &args);
-  static std::tuple<CNodePtr, KernelGraphPtr, VectorRef> ParsePartial(NotNull<AnfNodePtr> node);
+                              const CNodePtr &last_label, NotNull<std::set<KernelGraphPtr> *> memo);
+  static std::tuple<CNodePtr, KernelGraphPtr> ParsePartial(NotNull<AnfNodePtr> node);
+
+  static void LinkArgsToParam(NotNull<KernelGraphPtr> to_graph, NotNull<KernelGraphPtr> target_graph,
+                              NotNull<AnfNodePtr> arg, NotNull<AnfNodePtr> param);
+  static NotNull<AnfNodePtr> GetRealInput(NotNull<KernelGraphPtr> from_graph, NotNull<KernelGraphPtr> to_graph,
+                                          NotNull<AnfNodePtr> param);
   static void InsertAssignToGraph(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> from, NotNull<AnfNodePtr> to);
-  static size_t SetChildGraphInput(NotNull<KernelGraphPtr> kg, NotNull<AnfNodePtr> node, size_t input_index);
+
+  static CNodePtr GetNextRealKernel(std::vector<CNodePtr> list, size_t start);
+
+  // root graph order
+  static std::tuple<std::map<uint32_t, CNodePtr>, std::map<CNodePtr, std::vector<uint32_t>>> GetLabelNode(
+    const std::vector<CNodePtr> &nodes);
+  static bool CheckLabelIndex(uint32_t order_index, uint32_t label_index, const CNodePtr &cnode,
+                              NotNull<KernelGraphPtr> graph);
+  static std::vector<CNodePtr> RecurseGraph(const CNodePtr &cur_label_goto, const CNodePtr &end_label_goto,
+                                            NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo);
 
   static constexpr size_t kCNodePrim = 0;
   static constexpr size_t kCNodeCallArg = 1;

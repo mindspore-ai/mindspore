@@ -53,6 +53,7 @@ class KernelRuntime {
   virtual bool GenTask(const session::KernelGraph *graph);
   bool LaunchKernel(const session::KernelGraph *graph);
   virtual void AssignStaticMemoryInput(const session::KernelGraph *graph);
+  virtual void AssignStaticMemoryValueNode(session::KernelGraph *graph);
 
 #ifdef ENABLE_DUMP_E2E
   DumpConfPtr GetDumpConf();
@@ -67,7 +68,6 @@ class KernelRuntime {
                                                TypeId type_id) = 0;
   virtual bool SyncStream() = 0;
   void AssignStaticMemory(session::KernelGraph *graph);
-  void AssignStaticMemoryValueNode(session::KernelGraph *graph);
   void AssignDynamicMemory(session::KernelGraph *graph);
   void ReuseAssignDynamicMemory(session::KernelGraph *graph);
   void AssignNodeOutputMem(int flag, const AnfNodePtr &node, int index);
