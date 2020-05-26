@@ -27,7 +27,7 @@ def test_textline_dataset_one_file():
     for i in data.create_dict_iterator():
         logger.info("{}".format(i["text"]))
         count += 1
-    assert (count == 3)
+    assert count == 3
 
 
 def test_textline_dataset_all_file():
@@ -36,7 +36,7 @@ def test_textline_dataset_all_file():
     for i in data.create_dict_iterator():
         logger.info("{}".format(i["text"]))
         count += 1
-    assert (count == 5)
+    assert count == 5
 
 
 def test_textline_dataset_totext():
@@ -46,8 +46,8 @@ def test_textline_dataset_totext():
     line = ["This is a text file.", "Another file.",
             "Be happy every day.", "End of file.", "Good luck to everyone."]
     for i in data.create_dict_iterator():
-        str = i["text"].item().decode("utf8")
-        assert (str == line[count])
+        strs = i["text"].item().decode("utf8")
+        assert strs == line[count]
         count += 1
     assert (count == 5)
     # Restore configuration num_parallel_workers
@@ -57,17 +57,17 @@ def test_textline_dataset_totext():
 def test_textline_dataset_num_samples():
     data = ds.TextFileDataset(DATA_FILE, num_samples=2)
     count = 0
-    for i in data.create_dict_iterator():
+    for _ in data.create_dict_iterator():
         count += 1
-    assert (count == 2)
+    assert count == 2
 
 
 def test_textline_dataset_distribution():
     data = ds.TextFileDataset(DATA_ALL_FILE, num_shards=2, shard_id=1)
     count = 0
-    for i in data.create_dict_iterator():
+    for _ in data.create_dict_iterator():
         count += 1
-    assert (count == 3)
+    assert count == 3
 
 
 def test_textline_dataset_repeat():
@@ -78,16 +78,16 @@ def test_textline_dataset_repeat():
             "This is a text file.", "Be happy every day.", "Good luck to everyone.",
             "This is a text file.", "Be happy every day.", "Good luck to everyone."]
     for i in data.create_dict_iterator():
-        str = i["text"].item().decode("utf8")
-        assert (str == line[count])
+        strs = i["text"].item().decode("utf8")
+        assert strs == line[count]
         count += 1
-    assert (count == 9)
+    assert count == 9
 
 
 def test_textline_dataset_get_datasetsize():
     data = ds.TextFileDataset(DATA_FILE)
     size = data.get_dataset_size()
-    assert (size == 3)
+    assert size == 3
 
 
 if __name__ == "__main__":

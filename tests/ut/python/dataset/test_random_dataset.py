@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-from pathlib import Path
-
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -39,7 +37,7 @@ def test_randomdataset_basic1():
         num_iter += 1
 
     logger.info("Number of data in ds1: ", num_iter)
-    assert (num_iter == 200)
+    assert num_iter == 200
 
 
 # Another simple test
@@ -65,7 +63,7 @@ def test_randomdataset_basic2():
         num_iter += 1
 
     logger.info("Number of data in ds1: ", num_iter)
-    assert (num_iter == 40)
+    assert num_iter == 40
 
 
 if __name__ == '__main__':

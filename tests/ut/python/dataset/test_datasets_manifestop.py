@@ -16,7 +16,6 @@ import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as data_trans
-import mindspore.dataset.transforms.vision.c_transforms as vision
 from mindspore import log as logger
 
 DATA_FILE = "../data/dataset/testManifestData/test.manifest"
@@ -34,9 +33,9 @@ def test_manifest_dataset_train():
             cat_count = cat_count + 1
         elif item["label"].size == 1 and item["label"] == 1:
             dog_count = dog_count + 1
-    assert (cat_count == 2)
-    assert (dog_count == 1)
-    assert (count == 4)
+    assert cat_count == 2
+    assert dog_count == 1
+    assert count == 4
 
 
 def test_manifest_dataset_eval():
@@ -46,36 +45,36 @@ def test_manifest_dataset_eval():
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
         if item["label"] != 0 and item["label"] != 1:
-            assert (0)
-    assert (count == 2)
+            assert 0
+    assert count == 2
 
 
 def test_manifest_dataset_class_index():
     class_indexing = {"dog": 11}
     data = ds.ManifestDataset(DATA_FILE, decode=True, class_indexing=class_indexing)
     out_class_indexing = data.get_class_indexing()
-    assert (out_class_indexing == {"dog": 11})
+    assert out_class_indexing == {"dog": 11}
     count = 0
     for item in data.create_dict_iterator():
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
         if item["label"] != 11:
-            assert (0)
-    assert (count == 1)
+            assert 0
+    assert count == 1
 
 
 def test_manifest_dataset_get_class_index():
     data = ds.ManifestDataset(DATA_FILE, decode=True)
     class_indexing = data.get_class_indexing()
-    assert (class_indexing == {'cat': 0, 'dog': 1, 'flower': 2})
+    assert class_indexing == {'cat': 0, 'dog': 1, 'flower': 2}
     data = data.shuffle(4)
     class_indexing = data.get_class_indexing()
-    assert (class_indexing == {'cat': 0, 'dog': 1, 'flower': 2})
+    assert class_indexing == {'cat': 0, 'dog': 1, 'flower': 2}
     count = 0
     for item in data.create_dict_iterator():
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
-    assert (count == 4)
+    assert count == 4
 
 
 def test_manifest_dataset_multi_label():
@@ -83,10 +82,10 @@ def test_manifest_dataset_multi_label():
     count = 0
     expect_label = [1, 0, 0, [0, 2]]
     for item in data.create_dict_iterator():
-        assert (item["label"].tolist() == expect_label[count])
+        assert item["label"].tolist() == expect_label[count]
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
-    assert (count == 4)
+    assert count == 4
 
 
 def multi_label_hot(x):
@@ -109,7 +108,7 @@ def test_manifest_dataset_multi_label_onehot():
     data = data.batch(2)
     count = 0
     for item in data.create_dict_iterator():
-        assert (item["label"].tolist() == expect_label[count])
+        assert item["label"].tolist() == expect_label[count]
         logger.info("item[image] is {}".format(item["image"]))
         count = count + 1
 

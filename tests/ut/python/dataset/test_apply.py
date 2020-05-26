@@ -221,7 +221,7 @@ def test_apply_exception_case():
     try:
         data2 = data1.apply(dataset_fn)
         data3 = data1.apply(dataset_fn)
-        for item1, item2 in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
+        for _, _ in zip(data1.create_dict_iterator(), data2.create_dict_iterator()):
             pass
         assert False
     except ValueError:

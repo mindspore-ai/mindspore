@@ -49,7 +49,7 @@ def test_one_hot_op():
         label = data["label"]
         logger.info("label is {}".format(label))
         logger.info("golden_label is {}".format(golden_label))
-        assert (label.all() == golden_label.all())
+        assert label.all() == golden_label.all()
         logger.info("====test one hot op ok====")
 
 

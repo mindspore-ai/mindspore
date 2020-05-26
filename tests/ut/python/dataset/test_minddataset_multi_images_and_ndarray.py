@@ -15,8 +15,8 @@
 """
 This is the test module for mindrecord
 """
-import numpy as np
 import os
+import numpy as np
 
 import mindspore.dataset as ds
 from mindspore import log as logger

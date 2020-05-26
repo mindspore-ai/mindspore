@@ -33,7 +33,7 @@ def test_case_tf_shape():
     for data in ds1.create_dict_iterator():
         logger.info(data)
     output_shape = ds1.output_shapes()
-    assert (len(output_shape[-1]) == 1)
+    assert len(output_shape[-1]) == 1
 
 
 def test_case_tf_read_all_dataset():
@@ -41,7 +41,7 @@ def test_case_tf_read_all_dataset():
     ds1 = ds.TFRecordDataset(FILES, schema_file)
     assert ds1.get_dataset_size() == 12
     count = 0
-    for data in ds1.create_tuple_iterator():
+    for _ in ds1.create_tuple_iterator():
         count += 1
     assert count == 12
 
@@ -51,7 +51,7 @@ def test_case_num_samples():
     ds1 = ds.TFRecordDataset(FILES, schema_file, num_samples=8)
     assert ds1.get_dataset_size() == 8
     count = 0
-    for data in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator():
         count += 1
     assert count == 8
 
@@ -61,7 +61,7 @@ def test_case_num_samples2():
     ds1 = ds.TFRecordDataset(FILES, schema_file)
     assert ds1.get_dataset_size() == 7
     count = 0
-    for data in ds1.create_dict_iterator():
+    for _ in ds1.create_dict_iterator():
         count += 1
     assert count == 7
 
@@ -70,7 +70,7 @@ def test_case_tf_shape_2():
     ds1 = ds.TFRecordDataset(FILES, SCHEMA_FILE)
     ds1 = ds1.batch(2)
     output_shape = ds1.output_shapes()
-    assert (len(output_shape[-1]) == 2)
+    assert len(output_shape[-1]) == 2
 
 
 def test_case_tf_file():
@@ -175,10 +175,10 @@ def test_tf_record_shard():
     assert len(worker1_res) == 48
     assert len(worker1_res) == len(worker2_res)
     # check criteria 1
-    for i in range(len(worker1_res)):
-        assert (worker1_res[i] != worker2_res[i])
+    for i, _ in enumerate(worker1_res):
+        assert worker1_res[i] != worker2_res[i]
     # check criteria 2
-    assert (set(worker2_res) == set(worker1_res))
+    assert set(worker2_res) == set(worker1_res)
 
 
 def test_tf_shard_equal_rows():
@@ -197,16 +197,16 @@ def test_tf_shard_equal_rows():
     worker2_res = get_res(3, 1, 2)
     worker3_res = get_res(3, 2, 2)
     # check criteria 1
-    for i in range(len(worker1_res)):
-        assert (worker1_res[i] != worker2_res[i])
-        assert (worker2_res[i] != worker3_res[i])
+    for i, _ in enumerate(worker1_res):
+        assert worker1_res[i] != worker2_res[i]
+        assert worker2_res[i] != worker3_res[i]
     # Confirm each worker gets same number of rows
     assert len(worker1_res) == 28
     assert len(worker1_res) == len(worker2_res)
     assert len(worker2_res) == len(worker3_res)
 
     worker4_res = get_res(1, 0, 1)
-    assert (len(worker4_res) == 40)
+    assert len(worker4_res) == 40
 
 
 def test_case_tf_file_no_schema_columns_list():

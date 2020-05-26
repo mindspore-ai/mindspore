@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import pytest
-
 import mindspore.dataset as ds
 from mindspore import log as logger
 
@@ -30,7 +28,7 @@ def test_tf_file_normal():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
     data1 = data1.repeat(1)
     num_iter = 0
-    for item in data1.create_dict_iterator():  # each data is a dictionary
+    for _ in data1.create_dict_iterator():  # each data is a dictionary
         num_iter += 1
 
     logger.info("Number of data in data1: {}".format(num_iter))

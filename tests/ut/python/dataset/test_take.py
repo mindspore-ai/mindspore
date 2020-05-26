@@ -21,13 +21,13 @@ from mindspore import log as logger
 # In generator dataset: Number of rows is 3, its value is 0, 1, 2
 def generator():
     for i in range(3):
-        yield np.array([i]),
+        yield (np.array([i]),)
 
 
 # In generator dataset: Number of rows is 10, its value is 0, 1, 2 ... 10
 def generator_10():
     for i in range(10):
-        yield np.array([i]),
+        yield (np.array([i]),)
 
 
 def filter_func_ge(data):
@@ -47,8 +47,8 @@ def test_take_01():
     data1 = data1.repeat(2)
 
     # Here i refers to index, d refers to data element 
-    for i, d in enumerate(data1):
-        assert 0 == d[0][0]
+    for _, d in enumerate(data1):
+        assert d[0][0] == 0
 
     assert sum([1 for _ in data1]) == 2
 
@@ -97,7 +97,7 @@ def test_take_04():
     data1 = data1.take(4)
     data1 = data1.repeat(2)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
         assert i % 3 == d[0][0]
 
@@ -113,7 +113,7 @@ def test_take_05():
 
     data1 = data1.take(2)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
         assert i == d[0][0]
 
@@ -130,7 +130,7 @@ def test_take_06():
     data1 = data1.repeat(2)
     data1 = data1.take(4)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
         assert i % 3 == d[0][0]
 
@@ -171,7 +171,7 @@ def test_take_09():
     data1 = data1.repeat(2)
     data1 = data1.take(-1)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
         assert i % 3 == d[0][0]
 
@@ -188,7 +188,7 @@ def test_take_10():
     data1 = data1.take(-1)
     data1 = data1.repeat(2)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
         assert i % 3 == d[0][0]
 
@@ -206,7 +206,7 @@ def test_take_11():
     data1 = data1.repeat(2)
     data1 = data1.take(-1)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
         assert 2 * (i % 2) == d[0][0]
 
@@ -224,9 +224,9 @@ def test_take_12():
     data1 = data1.batch(2)
     data1 = data1.repeat(2)
 
-    # Here i refers to index, d refers to data element 
-    for i, d in enumerate(data1):
-        assert 0 == d[0][0]
+    # Here i refers to index, d refers to data element
+    for _, d in enumerate(data1):
+        assert d[0][0] == 0
 
     assert sum([1 for _ in data1]) == 2
 
@@ -243,9 +243,9 @@ def test_take_13():
     data1 = data1.batch(2)
     data1 = data1.repeat(2)
 
-    # Here i refers to index, d refers to data element 
-    for i, d in enumerate(data1):
-        assert 2 == d[0][0]
+    # Here i refers to index, d refers to data element
+    for _, d in enumerate(data1):
+        assert d[0][0] == 2
 
     assert sum([1 for _ in data1]) == 2
 
@@ -262,9 +262,9 @@ def test_take_14():
     data1 = data1.skip(1)
     data1 = data1.repeat(2)
 
-    # Here i refers to index, d refers to data element 
-    for i, d in enumerate(data1):
-        assert 2 == d[0][0]
+    # Here i refers to index, d refers to data element
+    for _, d in enumerate(data1):
+        assert d[0][0] == 2
 
     assert sum([1 for _ in data1]) == 2
 
@@ -279,7 +279,7 @@ def test_take_15():
     data1 = data1.take(6)
     data1 = data1.skip(2)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
         assert (i + 2) == d[0][0]
 
@@ -296,7 +296,7 @@ def test_take_16():
     data1 = data1.skip(3)
     data1 = data1.take(5)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
         assert (i + 3) == d[0][0]
 
@@ -313,7 +313,7 @@ def test_take_17():
     data1 = data1.take(8)
     data1 = data1.filter(predicate=filter_func_ge, num_parallel_workers=4)
 
-    # Here i refers to index, d refers to data element 
+    # Here i refers to index, d refers to data element
     for i, d in enumerate(data1):
         assert i == d[0][0]
 
@@ -334,9 +334,9 @@ def test_take_18():
     data1 = data1.batch(2)
     data1 = data1.repeat(2)
 
-    # Here i refers to index, d refers to data element 
-    for i, d in enumerate(data1):
-        assert 2 == d[0][0]
+    # Here i refers to index, d refers to data element
+    for _, d in enumerate(data1):
+        assert d[0][0] == 2
 
     assert sum([1 for _ in data1]) == 2
 

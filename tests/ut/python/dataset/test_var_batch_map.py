@@ -59,7 +59,7 @@ def test_batch_corner_cases():
 # to a pyfunc which makes a deep copy of the row
 def test_variable_size_batch():
     def check_res(arr1, arr2):
-        for ind in range(len(arr1)):
+        for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
                 return False
         return len(arr1) == len(arr2)
@@ -143,7 +143,7 @@ def test_variable_size_batch():
 
 def test_basic_batch_map():
     def check_res(arr1, arr2):
-        for ind in range(len(arr1)):
+        for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
                 return False
         return len(arr1) == len(arr2)
@@ -176,7 +176,7 @@ def test_basic_batch_map():
 
 def test_batch_multi_col_map():
     def check_res(arr1, arr2):
-        for ind in range(len(arr1)):
+        for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
                 return False
         return len(arr1) == len(arr2)
@@ -224,7 +224,7 @@ def test_batch_multi_col_map():
 
 def test_var_batch_multi_col_map():
     def check_res(arr1, arr2):
-        for ind in range(len(arr1)):
+        for ind, _ in enumerate(arr1):
             if not np.array_equal(arr1[ind], np.array(arr2[ind])):
                 return False
         return len(arr1) == len(arr2)
@@ -269,7 +269,7 @@ def test_var_batch_var_resize():
         return ([np.copy(c[0:s, 0:s, :]) for c in col],)
 
     def add_one(batchInfo):
-        return (batchInfo.get_batch_num() + 1)
+        return batchInfo.get_batch_num() + 1
 
     data1 = ds.ImageFolderDatasetV2("../data/dataset/testPK/data/", num_parallel_workers=4, decode=True)
     data1 = data1.batch(batch_size=add_one, drop_remainder=True, input_columns=["image"], per_batch_map=np_psedo_resize)
@@ -303,7 +303,7 @@ def test_exception():
 
     data2 = ds.GeneratorDataset((lambda: gen(100)), ["num"]).batch(4, input_columns=["num"], per_batch_map=bad_map_func)
     try:
-        for item in data2.create_dict_iterator():
+        for _ in data2.create_dict_iterator():
             pass
         assert False
     except RuntimeError:
