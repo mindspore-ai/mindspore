@@ -54,7 +54,22 @@ add_subdirectory(engine)
 add_subdirectory(api)
 add_subdirectory(text)
 ######################################################################
-
+add_dependencies(core utils)
+add_dependencies(kernels-image core)
+add_dependencies(kernels-data core)
+add_dependencies(kernels core)
+add_dependencies(engine-datasetops-source core)
+add_dependencies(engine-datasetops-source-sampler core)
+add_dependencies(engine-datasetops core)
+add_dependencies(engine-opt core)
+add_dependencies(engine-gnn core)
+add_dependencies(engine core)
+add_dependencies(text core)
+add_dependencies(text-kernels core)
+add_dependencies(APItoPython core)
+if (ENABLE_TDTQUE)
+    add_dependencies(engine-tdt core)
+endif ()
 ################### Create _c_dataengine Library ######################
 set(submodules
     $<TARGET_OBJECTS:core>
