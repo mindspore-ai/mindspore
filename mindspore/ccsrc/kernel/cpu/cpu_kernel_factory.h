@@ -35,7 +35,6 @@ class CPUKernelFactory {
  public:
   static CPUKernelFactory &GetInstance();
   void Register(const std::string &kernel_name, const KernelAttr &kernel_attr, CPUKernelCreator &&kernel_creator);
-  std::shared_ptr<CPUKernel> Create(const std::string &kernel_name);
   std::shared_ptr<CPUKernel> Create(const std::string &kernel_name, const CNodePtr &apply_kernel);
   std::vector<KernelAttr> GetSupportedKernelAttrList(const std::string &kernel_name);
 
@@ -44,8 +43,7 @@ class CPUKernelFactory {
   ~CPUKernelFactory() = default;
   DISABLE_COPY_AND_ASSIGN(CPUKernelFactory)
   std::pair<bool, size_t> CPUKernelAttrCheck(const std::string &kernel_name, const KernelBuildInfo &kernel_info);
-  bool CPUKernelSingleAttrCheck(const std::pair<KernelAttr, CPUKernelCreator> &attr_creator,
-                                const KernelBuildInfo &kernel_info);
+  bool CPUKernelSingleAttrCheck(const KernelAttr &kernel_attr, const KernelBuildInfo &kernel_info);
   std::map<std::string, std::vector<std::pair<KernelAttr, CPUKernelCreator>>> name_to_attr_creator_;
 };
 

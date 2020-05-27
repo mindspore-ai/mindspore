@@ -59,28 +59,27 @@ std::pair<bool, size_t> CPUKernelFactory::CPUKernelAttrCheck(const std::string &
   auto creators = iter->second;
   for (size_t index = 0; index < creators.size(); ++index) {
     auto attr_creator = creators[index];
-    if (CPUKernelSingleAttrCheck(attr_creator, kernel_info)) {
+    if (CPUKernelSingleAttrCheck(attr_creator.first, kernel_info)) {
       return std::make_pair(true, index);
     }
   }
   return std::make_pair(false, 0);
 }
 
-bool CPUKernelFactory::CPUKernelSingleAttrCheck(const std::pair<KernelAttr, CPUKernelCreator> &attr_creator,
-                                                const KernelBuildInfo &kernel_info) {
+bool CPUKernelFactory::CPUKernelSingleAttrCheck(const KernelAttr &kernel_attr, const KernelBuildInfo &kernel_info) {
   for (size_t i = 0; i < kernel_info.GetInputNum(); ++i) {
-    if (kernel_info.GetInputDeviceType(i) != attr_creator.first.GetInputAttr(i).first) {
-      MS_LOG(DEBUG) << "cpu kernel attr check failed. input index: " << i << ".";
-      MS_LOG(DEBUG) << "kernel info type:" << kernel_info.GetInputDeviceType(i) << ", "
-                    << "register type:" << attr_creator.first.GetInputAttr(i).first;
+    auto dtype = kernel_attr.GetAllSame() ? kernel_attr.GetInputAttr(0).first : kernel_attr.GetInputAttr(i).first;
+    if (kernel_info.GetInputDeviceType(i) != dtype) {
+      MS_LOG(DEBUG) << "input index:" << i << ", kernel info type:" << kernel_info.GetInputDeviceType(i)
+                    << ", register type:" << dtype;
       return false;
     }
   }
   for (size_t i = 0; i < kernel_info.GetOutputNum(); ++i) {
-    if (kernel_info.GetOutputDeviceType(i) != attr_creator.first.GetOutputAttr(i).first) {
-      MS_LOG(DEBUG) << "cpu kernel attr check failed. output index: " << i << ".";
-      MS_LOG(DEBUG) << "kernel info type:" << kernel_info.GetOutputDeviceType(i) << ", "
-                    << "register type:" << attr_creator.first.GetOutputAttr(i).first;
+    auto dtype = kernel_attr.GetAllSame() ? kernel_attr.GetOutputAttr(0).first : kernel_attr.GetOutputAttr(i).first;
+    if (kernel_info.GetOutputDeviceType(i) != dtype) {
+      MS_LOG(DEBUG) << "output index:" << i << ", kernel info type:" << kernel_info.GetOutputDeviceType(i)
+                    << ", register type:" << dtype;
       return false;
     }
   }

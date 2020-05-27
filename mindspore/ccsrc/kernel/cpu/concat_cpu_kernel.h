@@ -41,10 +41,9 @@ class ConcatCPUKernel : public CPUKernel {
   std::vector<size_t> output_shape_;
 };
 
-MS_REG_CPU_KERNEL(
-  Concat,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  ConcatCPUKernel);
+MS_REG_CPU_KERNEL(Concat,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  ConcatCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

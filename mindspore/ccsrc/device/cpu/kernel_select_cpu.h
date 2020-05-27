@@ -46,8 +46,14 @@ class KernelAttr {
     return *this;
   }
 
+  KernelAttr &SetAllSameAttr(bool all_same) {
+    all_same_ = all_same;
+    return *this;
+  }
+
   const DataType &GetInputAttr(const size_t index) const { return input_type_[index]; }
   const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
+  bool GetAllSame() const { return all_same_; }
 
   size_t GetInputSize() const { return input_type_.size(); }
   size_t GetOutputSize() const { return output_type_.size(); }
@@ -55,6 +61,7 @@ class KernelAttr {
  private:
   std::vector<DataType> input_type_;
   std::vector<DataType> output_type_;
+  bool all_same_;
 };
 }  // namespace cpu
 }  // namespace device
