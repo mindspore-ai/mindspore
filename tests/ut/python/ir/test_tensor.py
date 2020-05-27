@@ -34,7 +34,7 @@ ndarr = np.ones((2, 3))
 
 def test_tensor_flatten():
     with pytest.raises(AttributeError):
-        lst = [1, 2, 3, 4, ]
+        lst = [1, 2, 3, 4,]
         tensor_list = ms.Tensor(lst, ms.float32)
         tensor_list = tensor_list.Flatten()
         print(tensor_list)

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
 from collections import Counter
+import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter

@@ -45,7 +45,6 @@ class Net(nn.Cell):
 @non_graph_engine
 def test_AssignAdd_1():
     """test AssignAdd 1"""
-    import mindspore.context as context
     context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     x = Tensor(np.ones([1]).astype(np.int64) * 100)
@@ -65,7 +64,6 @@ def test_AssignAdd_1():
 @non_graph_engine
 def test_AssignAdd_2():
     """test AssignAdd 2"""
-    import mindspore.context as context
     context.set_context(mode=context.GRAPH_MODE)
     net = Net()
     x = Tensor(np.ones([1]).astype(np.int64) * 102)

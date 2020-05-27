@@ -15,9 +15,9 @@
 """Test histogram summary."""
 
 import logging
-import numpy as np
 import os
 import tempfile
+import numpy as np
 
 from mindspore.common.tensor import Tensor
 from mindspore.train.summary._summary_adapter import _calc_histogram_bins

@@ -136,7 +136,7 @@ def test_LSTM():
     train_network.set_train()
 
     train_features = Tensor(np.ones([64, max_len]).astype(np.int32))
-    train_labels = Tensor(np.ones([64, ]).astype(np.int32)[0:64])
+    train_labels = Tensor(np.ones([64,]).astype(np.int32)[0:64])
     losses = []
     for epoch in range(num_epochs):
         loss = train_network(train_features, train_labels)
