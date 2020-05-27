@@ -59,6 +59,9 @@ class GPUSession : public SessionBasic {
 
   void RunOpAllocateMemory(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
 
+  void LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
+                     const std::vector<tensor::TensorPtr> &inputs_const) const override;
+
   void Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 };
 using GPUSessionPtr = std::shared_ptr<GPUSession>;

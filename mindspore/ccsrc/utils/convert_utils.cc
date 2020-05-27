@@ -216,7 +216,7 @@ bool ValueToBool(const ValuePtr &v, bool *value) {
   } else if (v->isa<tensor::Tensor>()) {
     auto tensor = v->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
-
+    (void)tensor->data_sync();
     bool *tensor_data = static_cast<bool *>(tensor->data_c());
     // maybe need to support if tensor is a bool array
     auto vb = tensor_data[0];
