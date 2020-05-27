@@ -19,8 +19,6 @@
 #include <vector>
 #include <utility>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
 
 namespace mindspore {
 namespace memreuse {
@@ -185,6 +183,27 @@ void MemReuseChecker::CheckMemReuseIR(const KernelRefCountPtrList &total_refs_li
     ExportMemOpIr(def.get(), ofs, def_idx);
     def_idx++;
   }
+  ofs.close();
+}
+
+void MemReuseChecker::ExportKernelDependence() {
+  std::string filename = "./memreuse_dependence.ir";
+  std::ofstream ofs(filename);
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file [" << filename << "] failed!";
+    return;
+  }
+  size_t i = 0;
+  for (const auto &kernel_front : kernel_front_map_) {
+    auto kernel = kernel_front.first;
+    auto front = kernel_front.second;
+    ofs << "[" << i++ << "] " << kernel->scope_full_name() << "\n";
+    for (const auto &node : front) {
+      ofs << node->scope_full_name() << "\n";
+    }
+    ofs << "\n\n";
+  }
+
   ofs.close();
 }
 
@@ -393,7 +412,7 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
 void MemReuseChecker::SetMembuInfos(const KernelDef *op_def, const std::vector<MembufPtr> &membuf_ptr_list) {
   std::vector<MembufPtr> curr_mem_infos;
   for (const auto &mem : membuf_ptr_list) {
-    auto mem_checker = std::make_shared<Membuf>(mem->stream_id_, mem->status_, mem->size_, mem->offset_, mem->index_);
+    auto mem_checker = std::make_shared<Membuf>(mem->status_, mem->size_, mem->offset_, mem->index_, mem->used_kernel_);
     curr_mem_infos.push_back(mem_checker);
   }
   membuf_all_infos_.push_back(curr_mem_infos);
@@ -407,7 +426,7 @@ void MemReuseChecker::SetAddNewMembuInfos(const KernelDef *op_def, const std::ve
   std::vector<MembufPtr> add_new_curr_mem;
 
   for (const auto &mem : membuf_ptr_list) {
-    auto mem_checker = std::make_shared<Membuf>(mem->stream_id_, mem->status_, mem->size_, mem->offset_, mem->index_);
+    auto mem_checker = std::make_shared<Membuf>(mem->status_, mem->size_, mem->offset_, mem->index_, mem->used_kernel_);
     add_new_curr_mem.push_back(mem_checker);
   }
   add_new_mem_infos_.push_back(add_new_curr_mem);
@@ -424,11 +443,11 @@ void MemReuseChecker::ExportMembufInfoIR() {
   if (!ofs.is_open()) {
     MS_LOG(ERROR) << "Open file [" << ir_file_name << "] failed!";
   }
-  ofs << "total_ori_static_size:" << total_ori_static_size_ << "\n";
-  ofs << "total_ori_weight_size:" << total_ori_input_size_ << "\n";
-  ofs << "total_ori_constant_size:" << total_ori_value_size_ << "\n";
-  ofs << "total_ori_dy_size:" << total_ori_dy_size_ << "\n";
-  ofs << "total_ori_wkspace_size:" << total_ori_wkspace_size_ << "\n";
+  ofs << "Total static size:\t" << total_ori_static_size_ << "\n";
+  ofs << "Graph inputs size:\t" << total_ori_input_size_ << "\n";
+  ofs << "Value nodes size:\t" << total_ori_value_size_ << "\n";
+  ofs << "Total dynamic size:\t" << total_ori_dy_size_ << "\n";
+  ofs << "Total workspace size:\t" << total_ori_wkspace_size_ << "\n";
   // get last membuf_list
   if (membuf_all_infos_.empty()) {
     return;
@@ -438,8 +457,10 @@ void MemReuseChecker::ExportMembufInfoIR() {
     auto checker_size = SizeToLong(membuf->size_);
     total_reuse_size += checker_size;
   }
-  ofs << "total_reuse_size:" << total_reuse_size << "\n";
+  ofs << "After reuse size:\t" << total_reuse_size << "\n\n";
   size_t i = 0;
+  std::vector<size_t> each_node_used_size;
+  std::vector<size_t> each_node_allocated_size;
   for (const auto &curr_membuf_list : membuf_all_infos_) {
     ofs << all_split_names_.at(i) << "\n";
     ++i;
@@ -449,17 +470,42 @@ void MemReuseChecker::ExportMembufInfoIR() {
         << "tensor_idex\t"
         << "mem_size\t"
         << "mem_head\t"
-        << "mem_tail\n";
+        << "mem_tail\t"
+        << "used_kernel\n";
+    size_t curr_used = 0;
+    size_t curr_allocated = 0;
     for (size_t j = 0; j < curr_membuf_list.size(); ++j) {
       auto membuf = curr_membuf_list.at(j);
+      auto used_kernel = membuf->used_kernel_->scope_full_name();
       ofs << "&" << j << "\t"
-          << "streamID[@" << membuf->stream_id_ << "]"
+          << "streamID[@" << membuf->used_kernel_->stream_id() << "]"
           << "\t"
           << "#" << static_cast<int>(membuf->status_) << "\t%" << membuf->index_ << "T"
-          << "\t" << membuf->size_ << "\t" << membuf->offset_ << "\t" << membuf->offset_ + membuf->size_ << "\n";
+          << "\t" << membuf->size_ << "\t" << membuf->offset_ << "\t" << membuf->offset_ + membuf->size_ << "\t"
+          << GetSplitName(used_kernel) << "\n";
+      if (membuf->status_ == kReused) {
+        curr_used += membuf->size_;
+      }
     }
+    if (!curr_membuf_list.empty()) {
+      curr_allocated = curr_membuf_list.back()->offset_ + curr_membuf_list.back()->size_;
+    }
+    each_node_used_size.push_back(curr_used);
+    each_node_allocated_size.push_back(curr_allocated);
+    ofs << "curr real used size: \t" << curr_used << "\n";
+    ofs << "curr allocated size: \t" << curr_allocated << "\n";
     ofs << "\n\n";
   }
+  ofs << "each node used size: \n";
+  for (auto size : each_node_used_size) {
+    ofs << size << "\t";
+  }
+  ofs << "\n\n";
+  ofs << "each node allocated size: \n";
+  for (auto size : each_node_allocated_size) {
+    ofs << size << "\t";
+  }
+  ofs << "\n\n";
   ofs.close();
 }
 
@@ -479,7 +525,6 @@ void MemReuseChecker::ExportAddNewMmebufIR() {
           << "\n";
       i++;
       ofs << "mem_num\t"
-          << "stream_id\t"
           << "status\t"
           << "tensor_idex\t"
           << "mem_size\t"
@@ -490,7 +535,6 @@ void MemReuseChecker::ExportAddNewMmebufIR() {
       for (size_t j = 0; j < curr_membuf_list.size(); ++j) {
         auto membuf = curr_membuf_list.at(j);
         ofs << "&" << j << "\t"
-            << "streamID[@" << membuf->stream_id_ << "]"
             << "\t"
             << "#" << static_cast<int>(membuf->status_) << "\t%" << membuf->index_ << "T"
             << "\t" << membuf->size_ << "\t" << membuf->offset_ << "\t" << membuf->offset_ + membuf->size_ << "\t";
