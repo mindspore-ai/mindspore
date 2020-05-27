@@ -38,12 +38,13 @@ TEST_F(MindDataTestTaskManager, Test1) {
   ASSERT_TRUE(vg_rc.IsOk() || vg_rc.IsOutofMemory());
   ASSERT_TRUE(vg.join_all().IsOk());
   ASSERT_TRUE(vg.GetTaskErrorIfAny().IsOutofMemory());
-  // Test the error is passed back to the master thread.
+  // Test the error is passed back to the master thread if vg_rc above is OK.
+  // If vg_rc is kOutOfMemory, the group error is already passed back.
   // Some compiler may choose to run the next line in parallel with the above 3 lines
   // and this will cause some mismatch once a while.
   // To block this racing condition, we need to create a dependency that the next line
   // depends on previous lines.
-  if (vg.GetTaskErrorIfAny().IsError()) {
+  if (vg.GetTaskErrorIfAny().IsError() && vg_rc.IsOk()) {
     Status rc = TaskManager::GetMasterThreadRc();
     ASSERT_TRUE(rc.IsOutofMemory());
   }
