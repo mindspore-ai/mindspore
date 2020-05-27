@@ -486,41 +486,41 @@ def cus_cube_matmul_cast(tik_instance, input_x1, trans_a, input_x2, trans_b,
                                    input_x2_cast_ub[count * repeate_times_max * vectorfp32_size],
                                    input_x2_ub[count * repeate_times_max * vectorfp32_size], repeate_num,
                                    1, 1, 4, 8)
-            input_x2_L1 = tik_instance.Tensor("float16", [no_tile, ko_tile_inner, c0, c0],
-                                              name="input_x2_L1", scope=tik.scope_cbuf)
-            tik_instance.data_move(input_x2_L1, input_x2_cast_ub, 0, 1,
-                                   no_tile * ko_tile_inner * c0 * c0 * fp16_size // blocksize, 0, 0)
-            # input_x1 -> input_x1_L1
-            input_x1_L1 = tik_instance.Tensor(input_x1.dtype, [ko_tile_inner, mo_tile, c0, c0],
-                                              name="input_x1_L1", scope=tik.scope_cbuf)
-            tik_instance.data_move(input_x1_L1,
-                                   input_x1[k_idx,
-                                            core_m * mo_tile, 0, 0],
-                                   0, ko_tile_inner, mo_tile * c0 * c0 * fp16_size // blocksize,
-                                   (mo - mo_tile) * c0 * c0 * fp16_size // blocksize, 0)
-            # input_x2_L1 -> input_x2_L0B
-            input_x2_L0B = tik_instance.Tensor("float16", [ko_tile_inner, no_tile, c0, c0],
-                                               name="input_x2_L0B", scope=tik.scope_cb)
-            with tik_instance.for_range(0, ko_tile_inner) as cc2:
-                tik_instance.load2dv1(input_x2_L0B[cc2, 0, 0, 0], input_x2_L1[0, cc2, 0, 0], 0, no_tile,
-                                      ko_tile_inner,
-                                      0, True)
-            # input_x1_L1 -> input_x1_L0A
-            input_x1_L0A = tik_instance.Tensor(input_x1.dtype, [mo_tile, ko_tile_inner, c0, c0],
-                                               name="input_x1_L0A", scope=tik.scope_ca)
-            with tik_instance.for_range(0, mo_tile) as cc1:
-                tik_instance.load2dv1(input_x1_L0A[cc1, 0, 0, 0], input_x1_L1[0, cc1, 0, 0], 0, ko_tile_inner,
-                                      mo_tile, 0, False)
-            with tik_instance.if_scope(thread_idx_k == 0):
-                tik_instance.mmad(res_L0C, input_x1_L0A, input_x2_L0B, mo_tile * c0,
-                                  ko_tile_inner * c0, no_tile * c0, 0)
-            with tik_instance.else_scope():
-                tik_instance.mmad(res_L0C, input_x1_L0A, input_x2_L0B, mo_tile * c0,
-                                  ko_tile_inner * c0, no_tile * c0, 1)
-        res_ub = tik_instance.Tensor(input_x1.dtype, [no_tile, mo_tile, c0, c0],
-                                     name="resMatmul_ub", scope=tik.scope_ubuf)
-        tik_instance.data_move(res_ub, res_L0C, 0, 1, no_tile * mo_tile, 0, 0, 1)
-        tik_instance.data_move(res[(core_n * loop_n_num + cc_n) * no_tile, core_m * mo_tile, 0, 0],
-                               res_ub, 0, no_tile,
-                               mo_tile * c0 * c0 * fp16_size // blocksize, 0,
-                               (mo - mo_tile) * c0 * c0 * fp16_size // blocksize)
+                input_x2_L1 = tik_instance.Tensor("float16", [no_tile, ko_tile_inner, c0, c0],
+                                                  name="input_x2_L1", scope=tik.scope_cbuf)
+                tik_instance.data_move(input_x2_L1, input_x2_cast_ub, 0, 1,
+                                       no_tile * ko_tile_inner * c0 * c0 * fp16_size // blocksize, 0, 0)
+                # input_x1 -> input_x1_L1
+                input_x1_L1 = tik_instance.Tensor(input_x1.dtype, [ko_tile_inner, mo_tile, c0, c0],
+                                                  name="input_x1_L1", scope=tik.scope_cbuf)
+                tik_instance.data_move(input_x1_L1,
+                                       input_x1[k_idx,
+                                                core_m * mo_tile, 0, 0],
+                                       0, ko_tile_inner, mo_tile * c0 * c0 * fp16_size // blocksize,
+                                       (mo - mo_tile) * c0 * c0 * fp16_size // blocksize, 0)
+                # input_x2_L1 -> input_x2_L0B
+                input_x2_L0B = tik_instance.Tensor("float16", [ko_tile_inner, no_tile, c0, c0],
+                                                   name="input_x2_L0B", scope=tik.scope_cb)
+                with tik_instance.for_range(0, ko_tile_inner) as cc2:
+                    tik_instance.load2dv1(input_x2_L0B[cc2, 0, 0, 0], input_x2_L1[0, cc2, 0, 0], 0, no_tile,
+                                          ko_tile_inner,
+                                          0, True)
+                # input_x1_L1 -> input_x1_L0A
+                input_x1_L0A = tik_instance.Tensor(input_x1.dtype, [mo_tile, ko_tile_inner, c0, c0],
+                                                   name="input_x1_L0A", scope=tik.scope_ca)
+                with tik_instance.for_range(0, mo_tile) as cc1:
+                    tik_instance.load2dv1(input_x1_L0A[cc1, 0, 0, 0], input_x1_L1[0, cc1, 0, 0], 0, ko_tile_inner,
+                                          mo_tile, 0, False)
+                with tik_instance.if_scope(thread_idx_k == 0):
+                    tik_instance.mmad(res_L0C, input_x1_L0A, input_x2_L0B, mo_tile * c0,
+                                      ko_tile_inner * c0, no_tile * c0, 0)
+                with tik_instance.else_scope():
+                    tik_instance.mmad(res_L0C, input_x1_L0A, input_x2_L0B, mo_tile * c0,
+                                      ko_tile_inner * c0, no_tile * c0, 1)
+            res_ub = tik_instance.Tensor(input_x1.dtype, [no_tile, mo_tile, c0, c0],
+                                         name="resMatmul_ub", scope=tik.scope_ubuf)
+            tik_instance.data_move(res_ub, res_L0C, 0, 1, no_tile * mo_tile, 0, 0, 1)
+            tik_instance.data_move(res[(core_n * loop_n_num + cc_n) * no_tile, core_m * mo_tile, 0, 0],
+                                   res_ub, 0, no_tile,
+                                   mo_tile * c0 * c0 * fp16_size // blocksize, 0,
+                                   (mo - mo_tile) * c0 * c0 * fp16_size // blocksize)
