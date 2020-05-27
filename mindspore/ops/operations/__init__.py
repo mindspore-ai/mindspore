@@ -29,7 +29,8 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Unpack,
                         Shape, Size, Slice, Split,
                         Squeeze, StridedSlice, Tile,
                         Transpose, TruncatedNormal, TupleToArray, UnsortedSegmentMin,
-                        UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace)
+                        UnsortedSegmentSum, SpaceToDepth, DepthToSpace, SpaceToBatch, BatchToSpace,
+                        SpaceToBatchND, BatchToSpaceND)
 from .comm_ops import (AllGather, AllReduce, _AlltoAll, ReduceScatter, Broadcast,
                        _MirrorOperator, ReduceOp, _VirtualDataset,
                        _VirtualDiv, _GetTensorSlice)
@@ -260,6 +261,8 @@ __all__ = [
     "Atan2",
     "ApplyRMSProp",
     "ApplyCenteredRMSProp",
+    "SpaceToBatchND",
+    "BatchToSpaceND",
     "SquareSumAll"
 ]
 

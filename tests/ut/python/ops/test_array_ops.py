@@ -264,6 +264,27 @@ class DepthToSpaceNet(Cell):
         return self.depth_to_space(x)
 
 
+class BatchToSpaceNDNet(Cell):
+    def __init__(self):
+        super(BatchToSpaceNDNet, self).__init__()
+        block_shape = [2, 2]
+        crops = [[0, 0], [0, 0]]
+        self.batch_to_space_nd = P.BatchToSpaceND(block_shape, crops)
+
+    def construct(self, x):
+        return self.batch_to_space_nd(x)
+
+
+class SpaceToBatchNDNet(Cell):
+    def __init__(self):
+        super(SpaceToBatchNDNet, self).__init__()
+        block_shape = [2, 2]
+        paddings = [[0, 0], [0, 0]]
+        self.space_to_batch_nd = P.SpaceToBatchND(block_shape, paddings)
+
+    def construct(self, x):
+        return self.space_to_batch_nd(x)
+
 test_case_array_ops = [
     ('CustNet1', {
         'block': CustNet1(),
@@ -298,6 +319,12 @@ test_case_array_ops = [
     ('DepthToSpaceNet', {
         'block': DepthToSpaceNet(),
         'desc_inputs': [Tensor(np.random.rand(1,12,1,1).astype(np.float16))]}),
+    ('SpaceToBatchNDNet', {
+        'block': SpaceToBatchNDNet(),
+        'desc_inputs': [Tensor(np.random.rand(1,1,2,2).astype(np.float16))]}),
+    ('BatchToSpaceNDNet', {
+        'block': BatchToSpaceNDNet(),
+        'desc_inputs': [Tensor(np.random.rand(4,1,1,1).astype(np.float16))]}),
 ]
 
 test_case_lists = [test_case_array_ops]
