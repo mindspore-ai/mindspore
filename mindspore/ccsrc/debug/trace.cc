@@ -37,6 +37,11 @@
 namespace mindspore {
 // namespace to support debug trace infomation
 namespace trace {
+using abstract::AbstractBasePtr;
+using abstract::AnalysisContextPtr;
+using abstract::AnalysisEnginePtr;
+using abstract::AnfNodeConfigPtr;
+
 std::string GetAbstractStr(const abstract::AbstractBasePtr &abs) {
   if (abs == nullptr) {
     return "Null Abstract";
@@ -117,8 +122,21 @@ class AnalyzedFuncGraphExporter : public AnfExporter {
 
   void ExportFuncGraph(const std::string &filename, const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs);
 
+  void ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph);
+  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
+
  private:
   std::string GetNodeType(const AnfNodePtr &nd) override;
+  AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
+  AnfNodeConfigPtr GetFordwardConfigPtr(const AnfNodeConfigPtr &cfg);
+  AnalysisContextPtr ProcessFuncGraphCall(const CNodePtr &node);
+
+  // key: context, val: whether the context has already been printed
+  std::unordered_map<AnalysisContextPtr, bool> context_map_;
+  std::vector<AnalysisContextPtr> context_vec_;
+
+  AnalysisContextPtr cur_ctx_ = nullptr;
+  AnalysisEnginePtr engine_ = nullptr;
 };
 
 std::unordered_map<FuncGraphPtr, TaggedNodeMap> CalcTaggedFuncGraphs() {
@@ -139,17 +157,20 @@ void OutputAnalyzedGraphWithType() {
 }
 
 std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
-  if (node_cfg_ == nullptr) {
+  if (cur_ctx_ == nullptr) {
     return AnfExporter::GetNodeType(node);
   }
-  auto ctx = node_cfg_->context();
-  auto engine = node_cfg_->engine();
-  auto cfg = engine->MakeConfig(node, ctx);
-  auto eval_result = engine->cache().GetValue(cfg);
-  if (eval_result == nullptr || eval_result->abstract() == nullptr) {
+
+  MS_EXCEPTION_IF_NULL(engine_);
+  auto cfg = engine_->MakeConfig(node, cur_ctx_);
+  auto ret = engine_->cache().GetValue(cfg);
+  if (ret == nullptr) {
     return "Undefined";
   }
-  auto abs = eval_result->abstract();
+  auto abs = ret->abstract();
+  if (abs == nullptr) {
+    return nullptr;
+  }
   auto dtype = abs->BuildType();
   auto shape = abs->BuildShape();
   std::ostringstream oss;
@@ -163,12 +184,180 @@ std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
   return oss.str();
 }
 
+AbstractBasePtr AnalyzedFuncGraphExporter::GetNodeAbstract(const AnfNodePtr &node) {
+  if (cur_ctx_ == nullptr) {
+    return nullptr;
+  }
+  MS_EXCEPTION_IF_NULL(engine_);
+  auto cfg = engine_->MakeConfig(node, cur_ctx_);
+  auto ret = engine_->cache().GetValue(cfg);
+  return ret == nullptr ? nullptr : ret->abstract();
+}
+
+AnfNodeConfigPtr AnalyzedFuncGraphExporter::GetFordwardConfigPtr(const AnfNodeConfigPtr &cfg) {
+  AnfNodeConfigPtr cur_cfg = cfg;
+  auto iter = engine_->anfnode_config_map().find(cur_cfg);
+  while (iter != engine_->anfnode_config_map().end()) {
+    auto node = cur_cfg->node();
+    cur_cfg = iter->second;
+    MS_LOG(DEBUG) << "Get forword node: " << node.get() << "[" << node->ToString() << "] --> " << cur_cfg->node().get()
+                  << "[" << cur_cfg->node()->ToString() << "]";
+    iter = engine_->anfnode_config_map().find(cur_cfg);
+  }
+  return cur_cfg;
+}
+
+AnalysisContextPtr AnalyzedFuncGraphExporter::ProcessFuncGraphCall(const CNodePtr &node) {
+  if (node == nullptr) {
+    return nullptr;
+  }
+  auto cfg = engine_->MakeConfig(node, cur_ctx_);
+  cfg = GetFordwardConfigPtr(cfg);
+  auto cnode = dyn_cast<CNode>(cfg->node());
+  if (cnode == nullptr) {
+    MS_LOG(DEBUG) << "CNode is nullptr";
+    return nullptr;
+  }
+  const auto &inputs = cnode->inputs();
+  auto op_abs = GetNodeAbstract(inputs[0]);
+  if (op_abs == nullptr) {
+    MS_LOG(DEBUG) << "Abstract of inputs[0] of cnode " << cnode->ToString() << "  is nullptr";
+    return nullptr;
+  }
+
+  if (!op_abs->isa<abstract::FuncGraphAbstractClosure>() && !op_abs->isa<abstract::MetaFuncGraphAbstractClosure>()) {
+    MS_LOG(DEBUG) << "Inputs[0] of cnode " << cnode->ToString() << " is of type " << op_abs->type_name()
+                  << ", not function, ignore it";
+    return nullptr;
+  }
+
+  auto evaluator = engine_->GetEvaluatorFor(dyn_cast<abstract::AbstractFunction>(op_abs));
+  if (!evaluator->isa<abstract::BaseFuncGraphEvaluator>()) {
+    MS_LOG(DEBUG) << "Evaluator for inputs[0] of cnode " << cnode->ToString() << " is of type "
+                  << evaluator->type_name() << ", not BaseFuncGraphEvaluator, ignore it.";
+    return nullptr;
+  }
+
+  auto base_fg_evaluator = dyn_cast<abstract::BaseFuncGraphEvaluator>(evaluator);
+  auto ctx = base_fg_evaluator->graph_context();
+  if (ctx != nullptr && context_map_.insert({ctx, false}).second) {
+    MS_LOG(DEBUG) << "Add new context, ctx.addr = " << ctx.get() << "ctx = " << ctx->ToString();
+    context_vec_.push_back(ctx);
+  }
+  return ctx;
+}
+
+void AnalyzedFuncGraphExporter::OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes,
+                                             const FuncGraphPtr &func_graph) {
+  if (func_graph == nullptr) {
+    return;
+  }
+
+  int idx = 1;
+  std::map<AnfNodePtr, int> apply_map;
+  for (const AnfNodePtr &node : nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+
+    auto iter = tagged_cnodes_.find(node);
+    if (iter != tagged_cnodes_.end()) {
+      ofs << "\n#------------------------> " << iter->second << "\n";
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    auto &inputs = cnode->inputs();
+    std::string op_text = GetAnfNodeText(func_graph, inputs[0], apply_map);
+    // non-return node
+    if (node != func_graph->get_return()) {
+      int apply_idx = idx++;
+      apply_map[node] = apply_idx;
+      std::string type_info = GetNodeType(node);
+      if (type_info == "Undefined") {
+        ofs << "    %" << apply_idx << " = " << op_text << "(";
+      } else {
+        ofs << "    %" << apply_idx << " : " << type_info << " = " << op_text << "(";
+      }
+    } else {
+      ofs << "    " << op_text << "(";
+    }
+
+    for (size_t i = 1; i < inputs.size(); ++i) {
+      if (i != 1) {
+        ofs << ", ";
+      }
+      AnfNodePtr arg = inputs[i];
+      ofs << GetAnfNodeText(func_graph, arg, apply_map);
+    }
+    ofs << ")";
+
+    // process function graph call
+    auto ctx = ProcessFuncGraphCall(cnode);
+
+    // output comment
+    OutputStatementComment(ofs, cnode);
+    if (ctx != nullptr) {
+      ofs << " @ctx.addr=" << ctx.get();
+    }
+    ofs << "\n";
+
+    if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
+      ofs << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
+          << label_manage::Label(cnode->debug_info()) << "\n";
+    } else {
+      ofs << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
+    }
+  }
+}
+
+void AnalyzedFuncGraphExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &func_graph) {
+  if (func_graph == nullptr) {
+    return;
+  }
+
+  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
+  std::vector<AnfNodePtr> parameters = func_graph->parameters();
+  OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual> param_map;
+
+  ofs << "# [No." << (exported.size() + 1) << "] " << func_graph->DumpText() << "."
+      << func_graph->debug_info()->get_id();
+  if (cur_ctx_ != nullptr) {
+    ofs << " @ctx.addr=" << cur_ctx_.get();
+  }
+  ofs << "\n";
+  if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
+    ofs << trace::GetDebugInfo(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "#"
+        << label_manage::Label(func_graph->debug_info()) << "\n";
+  } else {
+    ofs << trace::GetDebugInfo(func_graph->debug_info(), "# ", kSourceLineTipDiscard) << "\n";
+  }
+  ofs << "funcgraph fg_" << func_graph->debug_info()->get_id();
+  // output name of parent of graph if exists
+  if (func_graph->parent() != nullptr) {
+    ofs << "[fg_" << func_graph->parent()->debug_info()->get_id() << "]";
+  }
+  ofs << "(\n";
+
+  OutputParameters(ofs, parameters, &param_map);
+
+  exported[func_graph] = param_map;
+  ofs << (!parameters.empty() ? "    " : "") << ") {\n";
+
+  OutputCNodes(ofs, nodes, func_graph);
+
+  ofs << "}\n";
+}
+
 void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
                                                 const std::vector<abstract::AnfNodeConfigPtr> &node_cfgs) {
   if (node_cfgs.empty()) {
     MS_LOG(DEBUG) << "Node configs is empty";
     return;
   }
+
+  context_map_.clear();
+  context_vec_.clear();
 
   std::ofstream ofs(filename);
   if (!ofs.is_open()) {
@@ -181,32 +370,47 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
 
   // first output graph on the analysis stack
   for (const auto &node_cfg : node_cfgs) {
-    auto fg = node_cfg->context()->func_graph();
-    // the graph is already output, skip it
-    if (exported.find(fg) != exported.end()) {
+    auto ctx = node_cfg->context();
+    if (engine_ == nullptr) {
+      engine_ = node_cfg->engine();
+    }
+    if (context_map_.insert({ctx, false}).second) {
+      context_vec_.push_back(ctx);
+    }
+    // the graph has already been printed
+    if (context_map_[ctx]) {
       continue;
     }
-    // set node_cfg info for getting type
-    node_cfg_ = node_cfg;
+    context_map_[ctx] = true;
+
+    auto fg = ctx->func_graph();
+
+    // set current context
+    cur_ctx_ = ctx;
     tagged_cnodes_ = tagged_func_graphs[fg];
     ExportOneFuncGraph(ofs, fg);
     ofs << "\n\n";
   }
 
-  node_cfg_ = nullptr;
   tagged_cnodes_.clear();
 
   // print seperator between function graphs on analyzed graph call stack and others
   ofs << "#===============================================================================\n\n\n";
 
   // second output other graphs
-  while (!func_graph_set.empty()) {
-    FuncGraphPtr fg = *func_graph_set.begin();
-    ExportOneFuncGraph(ofs, fg);
+  size_t ctx_idx = 0;
+  while (ctx_idx < context_vec_.size()) {
+    auto ctx = context_vec_[ctx_idx++];
+    if (context_map_[ctx]) {
+      continue;
+    }
+    context_map_[ctx] = true;
+    cur_ctx_ = ctx;
+    ExportOneFuncGraph(ofs, ctx->func_graph());
     ofs << "\n\n";
-    (void)func_graph_set.erase(fg);
   }
-  ofs << "# num of total function graphs: " << exported.size();
+
+  ofs << "# num of total function graphs: " << context_map_.size() << "\n";
 
   ofs.close();
 }
