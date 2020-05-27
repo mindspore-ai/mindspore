@@ -23,7 +23,7 @@ config = ed({
     "loss_scale": 128,
     "momentum": 0.9,
     "weight_decay": 5e-4,
-    "epoch_size": 50,
+    "epoch_size": 45,
     "buffer_size": 1000,
     "image_height": 224,
     "image_width": 224,

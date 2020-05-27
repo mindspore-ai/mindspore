@@ -21,6 +21,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.parallel._utils import _get_device_num, _get_mirror_mean
+from model.grad_reducer_thor import DistributedGradReducerThor
 
 momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 
