@@ -237,6 +237,9 @@ class Model:
             network.set_train(is_train)
             network.phase = phase
 
+        if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            network.set_auto_parallel()
+
         return dataset_helper, network
 
     def init(self, train_dataset=None, valid_dataset=None):
