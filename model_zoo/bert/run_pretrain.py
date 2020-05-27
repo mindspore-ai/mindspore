@@ -26,10 +26,10 @@ from mindspore.train.parallel_utils import ParallelMode
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.train.callback import Callback, ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.model_zoo.Bert_NEZHA import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
 from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecayDynamicLR
-from dataset import create_bert_dataset
-from config import cfg, bert_net_cfg
+from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell
+from src.dataset import create_bert_dataset
+from src.config import cfg, bert_net_cfg
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
 class LossCallBack(Callback):
@@ -48,10 +48,8 @@ class LossCallBack(Callback):
         self._per_print_times = per_print_times
     def step_end(self, run_context):
         cb_params = run_context.original_args()
-        with open("./loss.log", "a+") as f:
-            f.write("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
-                                                                 str(cb_params.net_outputs)))
-            f.write('\n')
+        print("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
+                                                           str(cb_params.net_outputs)))
 
 def run_pretrain():
     """pre-train bert_clue"""
@@ -81,6 +79,11 @@ def run_pretrain():
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
                                           device_num=device_num)
+        from mindspore.parallel._auto_parallel_context import auto_parallel_context
+        if bert_net_cfg.num_hidden_layers == 12:
+            auto_parallel_context().set_all_reduce_fusion_split_indices([28, 55, 82, 109, 136, 163, 190, 205])
+        elif bert_net_cfg.num_hidden_layers == 24:
+            auto_parallel_context().set_all_reduce_fusion_split_indices([38, 93, 148, 203, 258, 313, 368, 397])
         D.init()
         rank = args_opt.device_id % device_num
     else:

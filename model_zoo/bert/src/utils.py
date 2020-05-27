@@ -30,8 +30,8 @@ from mindspore.train.parallel_utils import ParallelMode
 from mindspore.communication.management import get_group_size
 from mindspore import context
 from mindspore.model_zoo.Bert_NEZHA.bert_model import BertModel
-from mindspore.model_zoo.Bert_NEZHA.bert_for_pre_training import clip_grad
-from CRF import CRF
+from .bert_for_pre_training import clip_grad
+from .CRF import CRF
 
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0

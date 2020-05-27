@@ -19,7 +19,7 @@ config settings, will be used in finetune.py
 
 from easydict import EasyDict as edict
 import mindspore.common.dtype as mstype
-from mindspore.model_zoo.Bert_NEZHA import BertConfig
+from .bert_model import BertConfig
 
 cfg = edict({
     'task': 'NER',

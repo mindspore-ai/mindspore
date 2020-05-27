@@ -19,8 +19,6 @@ Bert evaluation script.
 
 import os
 import numpy as np
-from evaluation_config import cfg, bert_net_cfg
-from utils import BertNER, BertCLS
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore.common.tensor import Tensor
@@ -28,9 +26,11 @@ import mindspore.dataset as de
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from CRF import postprocess
-from cluener_evaluation import submit
-from finetune_config import tag_to_index
+from src.evaluation_config import cfg, bert_net_cfg
+from src.utils import BertNER, BertCLS
+from src.CRF import postprocess
+from src.cluener_evaluation import submit
+from src.finetune_config import tag_to_index
 
 class Accuracy():
     '''

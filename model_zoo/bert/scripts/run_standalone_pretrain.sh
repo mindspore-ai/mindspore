@@ -16,8 +16,8 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "sh run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR"
-echo "for example: sh run_standalone_pretrain.sh 0 40 /path/zh-wiki/ /path/Schema.json"
+echo "bash run_standalone_pretrain.sh DEVICE_ID EPOCH_SIZE DATA_DIR SCHEMA_DIR"
+echo "for example: bash run_standalone_pretrain.sh 0 40 /path/zh-wiki/ /path/Schema.json"
 echo "=============================================================================================================="
 
 DEVICE_ID=$1
@@ -25,6 +25,10 @@ EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
 
+mkdir -p ms_log 
+CUR_DIR=`pwd`
+export GLOG_log_dir=${CUR_DIR}/ms_log
+export GLOG_logtostderr=0
 python run_pretrain.py  \
     --distribute="false" \
     --epoch_size=$EPOCH_SIZE \
@@ -33,7 +37,7 @@ python run_pretrain.py  \
     --enable_lossscale="true" \
     --do_shuffle="true" \
     --enable_data_sink="true" \
-    --data_sink_steps=1 \
+    --data_sink_steps=100 \
     --checkpoint_path="" \
     --save_checkpoint_steps=10000 \
     --save_checkpoint_num=1 \

@@ -18,8 +18,8 @@ Bert finetune script.
 '''
 
 import os
-from utils import BertFinetuneCell, BertCLS, BertNER
-from finetune_config import cfg, bert_net_cfg, tag_to_index
+from src.utils import BertFinetuneCell, BertCLS, BertNER
+from src.finetune_config import cfg, bert_net_cfg, tag_to_index
 import mindspore.common.dtype as mstype
 import mindspore.communication.management as D
 from mindspore import context
