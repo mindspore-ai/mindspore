@@ -303,7 +303,7 @@ class GELU(Cell):
     of standard Gaussian distribution and :math:`x_i` is the element of the input.
 
     Inputs:
-        - **input_data** (Tensor) - The input of Tanh.
+        - **input_data** (Tensor) - The input of GELU.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.

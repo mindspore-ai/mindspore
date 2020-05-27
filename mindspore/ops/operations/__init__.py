@@ -234,6 +234,7 @@ __all__ = [
     'ReduceProd',
     'CumProd',
     'Log',
+    'Log1p',
     'SigmoidCrossEntropyWithLogits',
     'FloorDiv',
     'FloorMod',
