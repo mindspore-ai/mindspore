@@ -68,7 +68,8 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
                      SmoothL1Loss, Softmax, Softplus,
                      SoftmaxCrossEntropyWithLogits, ROIAlign,
                      SparseSoftmaxCrossEntropyWithLogits, Tanh,
-                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl,
+                     TopK, BinaryCrossEntropy, SparseApplyAdagrad, LARSUpdate, ApplyFtrl, SparseApplyFtrl,
+                     ApplyProximalAdagrad, SparseApplyProximalAdagrad,
                      ApplyRMSProp, ApplyCenteredRMSProp)
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey, CheckBprop
 from . import _quant_ops
@@ -265,6 +266,9 @@ __all__ = [
     "Round",
     "ApplyFtrl",
     "SpaceToBatch",
+    "SparseApplyFtrl",
+    "ApplyProximalAdagrad",
+    "SparseApplyProximalAdagrad",
     "BatchToSpace",
     "Atan2",
     "ApplyRMSProp",
