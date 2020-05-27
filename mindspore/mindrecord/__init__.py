@@ -29,10 +29,9 @@ from .common.exceptions import *
 from .shardutils import SUCCESS, FAILED
 from .tools.cifar10_to_mr import Cifar10ToMR
 from .tools.cifar100_to_mr import Cifar100ToMR
-from .tools.graph_map_schema import GraphMapSchema
 from .tools.imagenet_to_mr import ImageNetToMR
 from .tools.mnist_to_mr import MnistToMR
 
-__all__ = ['FileWriter', 'FileReader', 'MindPage', 'GraphMapSchema',
+__all__ = ['FileWriter', 'FileReader', 'MindPage',
            'Cifar10ToMR', 'Cifar100ToMR', 'ImageNetToMR', 'MnistToMR',
            'SUCCESS', 'FAILED']
