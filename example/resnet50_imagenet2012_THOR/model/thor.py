@@ -21,11 +21,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.parallel._utils import _get_device_num, _get_mirror_mean
-
-from cus_ops.cus_matmul_cube_dense_right import CusMatMulCubeDenseRight
-from cus_ops.cus_matmul_cube_fracz_left_cast import CusMatMulCubeFraczLeftCast
-from cus_ops.cus_matmul_cube_dense_left import CusMatMulCubeDenseLeft
-from cus_ops.cus_matmul_cube_fracz_right_mul import CusMatMulCubeFraczRightMul
 from model.grad_reducer_thor import DistributedGradReducerThor
 
 momentum_opt = C.MultitypeFuncGraph("momentum_opt")
@@ -68,10 +63,10 @@ class THOR(Optimizer):
         self.matrix_G = ParameterTuple(matrix_G)
         self.A_inv_max = ParameterTuple(A_inv_max)
         self.G_inv_max = ParameterTuple(G_inv_max)
-        self.cube_matmul_left = CusMatMulCubeFraczLeftCast()
-        self.cube_matmul_left_fc = CusMatMulCubeDenseLeft()
-        self.cube_matmul_right_fc = CusMatMulCubeDenseRight()
-        self.cube_matmul_right_mul = CusMatMulCubeFraczRightMul()
+        self.cube_matmul_left = P.CusMatMulCubeFraczLeftCast()
+        self.cube_matmul_left_fc = P.CusMatMulCubeDenseLeft()
+        self.cube_matmul_right_fc = P.CusMatMulCubeDenseRight()
+        self.cube_matmul_right_mul = P.CusMatMulCubeFraczRightMul()
         self.transpose = P.Transpose()
         self.shape = P.Shape()
         self.reshape = P.Reshape()

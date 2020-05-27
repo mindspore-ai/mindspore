@@ -23,6 +23,7 @@ from mindspore._checkparam import Validator as validator
 
 # path of built-in op info register.
 BUILT_IN_OPS_REGISTER_PATH = "mindspore/ops/_op_impl"
+BUILT_IN_CUSTOM_OPS_REGISTER_PATH = "mindspore/ops/_op_impl/_custom_op"
 
 
 def op_info_register(op_info):
@@ -47,7 +48,10 @@ def op_info_register(op_info):
         op_lib = Oplib()
         file_path = os.path.realpath(inspect.getfile(func))
         # keep the path custom ops implementation.
-        imply_path = "" if BUILT_IN_OPS_REGISTER_PATH in file_path else file_path
+        if BUILT_IN_CUSTOM_OPS_REGISTER_PATH in file_path:
+            imply_path = file_path
+        else:
+            imply_path = "" if BUILT_IN_OPS_REGISTER_PATH in file_path else file_path
         if not op_lib.reg_op(op_info_real, imply_path):
             raise ValueError('Invalid op info {}:\n{}\n'.format(file_path, op_info_real))
 

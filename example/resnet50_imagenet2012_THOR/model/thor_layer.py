@@ -23,18 +23,8 @@ from mindspore.common.tensor import Tensor
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer.activation import get_activation
 from mindspore.ops import operations as P
-
-from cus_ops.cus_batch_matmul import CusBatchMatMul
-from cus_ops.cus_cholesky_trsm import CusCholeskyTrsm
-from cus_ops.cus_fused_abs_max1 import CusFusedAbsMax1
-from cus_ops.cus_img2col import CusImg2Col
-from cus_ops.cus_matmul_cube import CusMatMulCube
-from cus_ops.cus_matrix_combine import CusMatrixCombine
-from cus_ops.cus_transpose02314 import CusTranspose02314
-
 import numpy as np
 C0 = 16
-
 
 def caculate_device_shape(matrix_dim, channel, is_A):
     ll = (0)
@@ -153,11 +143,11 @@ class Conv2d_Thor(_Conv):
                                group=self.group
                                )
 
-        self.img2col = CusImg2Col(ksizes=ksizes, strides=strides)
-        self.cube_matmul = CusMatMulCube(transpose_a=True)
-        self.matrix_combine = CusMatrixCombine()
-        self.cholesky = CusCholeskyTrsm()
-        self.transpose02314 = CusTranspose02314()
+        self.img2col = P.CusImg2Col(ksizes=ksizes, strides=strides)
+        self.cube_matmul = P.CusMatMulCube(transpose_a=True)
+        self.matrix_combine = P.CusMatrixCombine()
+        self.cholesky = P.CusCholeskyTrsm()
+        self.transpose02314 = P.CusTranspose02314()
         self.matrix_A_dim = self.in_channels * self.kernel_size[0] * self.kernel_size[1]
         self.matrix_G_dim = self.out_channels
         self.matrix_A_device_shape, self.matrix_A_device_dim = caculate_device_shape(self.matrix_A_dim,
@@ -190,7 +180,7 @@ class Conv2d_Thor(_Conv):
         self.mul = P.Mul()
         self.cast = P.Cast()
         self.damping = Tensor(damping)
-        self.vector_matmul = CusBatchMatMul()
+        self.vector_matmul = P.CusBatchMatMul()
         self.diag_block_dim = 128
         self.channels_slice_flag = False
         if self.in_channels % C0 != 0:
@@ -221,8 +211,8 @@ class Conv2d_Thor(_Conv):
 
         self.dampingA = Tensor(np.identity(dampingA_dim), mstype.float32)
         self.dampingG = Tensor(np.identity(dampingG_dim), mstype.float32)
-        self.fused_abs_max1 = CusFusedAbsMax1([self.matrix_A_dim, self.matrix_A_dim])
-        self.fused_abs_max2 = CusFusedAbsMax1()
+        self.fused_abs_max1 = P.CusFusedAbsMax1([self.matrix_A_dim, self.matrix_A_dim])
+        self.fused_abs_max2 = P.CusFusedAbsMax1()
         self.log = P.Log()
         self.exp = P.Exp()
         self.sqrt = P.Sqrt()
@@ -375,9 +365,9 @@ class Dense_Thor(Cell):
         self.fake_G = Tensor(np.zeros([63, 63, 16, 16]).astype(np.float16))
 
         self.matmul = P.MatMul(transpose_b=True)
-        self.cube_matmul = CusMatMulCube(transpose_a=True)
-        self.matrix_combine = CusMatrixCombine()
-        self.cholesky = CusCholeskyTrsm()
+        self.cube_matmul = P.CusMatMulCube(transpose_a=True)
+        self.matrix_combine = P.CusMatrixCombine()
+        self.cholesky = P.CusCholeskyTrsm()
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
@@ -386,7 +376,7 @@ class Dense_Thor(Cell):
         self.cast = P.Cast()
         self.damping = Tensor(damping)
         self.loss_scale = Tensor(1 / loss_scale, mstype.float16)
-        self.vector_matmul = CusBatchMatMul()
+        self.vector_matmul = P.CusBatchMatMul()
         self.pad = P.Pad(((0, 24), (0, 24)))
         self.pad1 = P.Pad(((0, 8), (0, 8)))
         self.slice = P.Slice()
@@ -396,8 +386,8 @@ class Dense_Thor(Cell):
         self.axis = 0
         self.A_inv_max = Parameter(initializer(0, [1], mstype.float32), name="A_inv_max", requires_grad=False)
         self.G_inv_max = Parameter(initializer(0, [1], mstype.float32), name="G_inv_max", requires_grad=False)
-        self.fused_abs_max1 = CusFusedAbsMax1([1000, 1000])
-        self.fused_abs_max2 = CusFusedAbsMax1()
+        self.fused_abs_max1 = P.CusFusedAbsMax1([1000, 1000])
+        self.fused_abs_max2 = P.CusFusedAbsMax1()
         self.log = P.Log()
         self.exp = P.Exp()
         self.dampingA = Tensor(np.identity(2048), mstype.float32)

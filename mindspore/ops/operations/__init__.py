@@ -70,6 +70,7 @@ from .nn_ops import (LSTM, SGD, Adam, ApplyMomentum, BatchNorm,
 from .other_ops import Assign, IOU, BoundingBoxDecode, BoundingBoxEncode, CheckValid, MakeRefKey, CheckBprop
 from . import _quant_ops
 from ._quant_ops import *
+from .thor_ops import *
 
 __all__ = [
     'TensorAdd',

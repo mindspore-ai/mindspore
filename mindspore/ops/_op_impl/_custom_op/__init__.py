@@ -12,13 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Operators info register."""
 
-import platform
-from .aicpu import *
-if "Windows" not in platform.system():
-    from .akg.gpu import *
-    from .tbe import *
-    from ._custom_op import *
-
-__all__ = []
+"""custom ops"""
