@@ -33,9 +33,4 @@ class IdentityEC(IExectorComponent):
             keyword.desc_inputs: self.inputs[keyword.desc_inputs],
             keyword.result: self.function[keyword.block](*self.inputs[keyword.desc_inputs])
         }
-        print("buxue------------------------------------------------")
-        print("inputs")
-        print(ret[keyword.desc_inputs])
-        print("outputs")
-        print(ret[keyword.result])
         return ret

@@ -19,9 +19,9 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import dtype as mstype
-from ..ut_filter import non_graph_engine
-from ....mindspore_test_framework.mindspore_test import mindspore_test
-from ....mindspore_test_framework.pipeline.forward.compile_forward \
+from tests.ut.python.ut_filter import non_graph_engine
+from tests.mindspore_test_framework.mindspore_test import mindspore_test
+from tests.mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config
 
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
@@ -52,6 +52,20 @@ class NestTupleGraphNet(nn.Cell):
         return self.layers[0][1](x)
 
 
+class InTupleNet(nn.Cell):
+    def __init__(self, ):
+        super(InTupleNet, self).__init__()
+        self.tuple_ = (1, 2, 3, 4, 5, "ok")
+
+    def construct(self, x):
+        ret = x
+        if 2 in self.tuple_:
+            ret = x + x
+            if "ok" in self.tuple_:
+                ret = x - x
+        return ret
+
+
 test_case_ops = [
     ('TupleGraph', {
         'block': TupleGraphNet(),
@@ -59,6 +73,9 @@ test_case_ops = [
     ('NestTupleGraph', {
         'block': NestTupleGraphNet(),
         'desc_inputs': [Tensor(np.ones((3, 3, 24, 24)), mstype.float32)]}),
+    ('InTuple', {
+        'block': InTupleNet(),
+        'desc_inputs': [Tensor(np.ones((3, 3, 24, 24)), mstype.float32)]})
 ]
 
 test_case_lists = [test_case_ops]

@@ -105,7 +105,7 @@ convert_object_map = {
     T.ge:           multitype_ops.greater_equal,
     T.is_:          F.is_,
     T.is_not:       F.is_not,
-    T.contains:     F.in_dict,
+    T.contains:     multitype_ops.in_,
     T.not_contains: F.not_in_dict,
 
     # system function
