@@ -201,7 +201,8 @@ Status GraphLoader::LoadFeatureIndex(const std::string &key, const std::vector<u
 }
 
 Status GraphLoader::WorkerEntry(int32_t worker_id) {
-  ShardTuple rows = shard_reader_->GetNextById(row_id_++, worker_id);
+  auto ret = shard_reader_->GetNextById(row_id_++, worker_id);
+  ShardTuple rows = ret.second;
   while (rows.empty() == false) {
     for (const auto &tupled_row : rows) {
       std::vector<uint8_t> col_blob = std::get<0>(tupled_row);
@@ -221,7 +222,8 @@ Status GraphLoader::WorkerEntry(int32_t worker_id) {
         MS_LOG(WARNING) << "attribute:" << attr << " is neither edge nor node.";
       }
     }
-    rows = shard_reader_->GetNextById(row_id_++, worker_id);
+    auto rc = shard_reader_->GetNextById(row_id_++, worker_id);
+    rows = rc.second;
   }
   return Status::OK();
 }

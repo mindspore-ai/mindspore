@@ -66,6 +66,7 @@
 #include "dataset/util/random.h"
 #include "mindrecord/include/shard_operator.h"
 #include "mindrecord/include/shard_pk_sample.h"
+#include "mindrecord/include/shard_distributed_sample.h"
 #include "mindrecord/include/shard_sample.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
@@ -158,17 +159,17 @@ void bindDatasetOps(py::module *m) {
     });
 
   (void)py::class_<MindRecordOp, DatasetOp, std::shared_ptr<MindRecordOp>>(*m, "MindRecordOp")
-    .def_static("get_num_rows",
-                [](const std::vector<std::string> &paths, bool load_dataset, const py::object &sampler) {
-                  int64_t count = 0;
-                  std::shared_ptr<mindrecord::ShardOperator> op;
-                  if (py::hasattr(sampler, "_create_for_minddataset")) {
-                    auto create = sampler.attr("_create_for_minddataset");
-                    op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
-                  }
-                  THROW_IF_ERROR(MindRecordOp::CountTotalRows(paths, load_dataset, op, &count));
-                  return count;
-                });
+    .def_static("get_num_rows", [](const std::vector<std::string> &paths, bool load_dataset, const py::object &sampler,
+                                   const int64_t num_padded) {
+      int64_t count = 0;
+      std::shared_ptr<mindrecord::ShardOperator> op;
+      if (py::hasattr(sampler, "_create_for_minddataset")) {
+        auto create = sampler.attr("_create_for_minddataset");
+        op = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
+      }
+      THROW_IF_ERROR(MindRecordOp::CountTotalRows(paths, load_dataset, op, &count, num_padded));
+      return count;
+    });
 
   (void)py::class_<ManifestOp, DatasetOp, std::shared_ptr<ManifestOp>>(*m, "ManifestOp")
     .def_static("get_num_rows_and_classes",
@@ -474,6 +475,7 @@ void bindSamplerOps(py::module *m) {
   (void)py::class_<mindrecord::ShardSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardSample>>(
     *m, "MindrecordSubsetRandomSampler")
     .def(py::init<std::vector<int64_t>, uint32_t>(), py::arg("indices"), py::arg("seed") = GetSeed());
+
   (void)py::class_<mindrecord::ShardPkSample, mindrecord::ShardOperator, std::shared_ptr<mindrecord::ShardPkSample>>(
     *m, "MindrecordPkSampler")
     .def(py::init([](int64_t kVal, std::string kColumn, bool shuffle) {

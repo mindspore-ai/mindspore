@@ -221,10 +221,9 @@ def test_cv_minddataset_partition_tutorial(add_and_remove_cv_file):
                                       num_shards=num_shards, shard_id=partition_id)
             num_iter = 0
             for item in data_set.create_dict_iterator():
-                logger.info(
-                    "-------------- partition : {} ------------------------".format(partition_id))
-                logger.info(
-                    "-------------- item[label]: {} -----------------------".format(item["label"]))
+                logger.info("-------------- partition : {} ------------------------".format(partition_id))
+                logger.info("-------------- item[file_name]: {}-----------------------".format(item["file_name"]))
+                logger.info("-------------- item[label]: {} -----------------------".format(item["label"]))
                 num_iter += 1
         return num_iter
 
@@ -315,12 +314,11 @@ def test_cv_minddataset_issue_888(add_and_remove_cv_file):
     """issue 888 test."""
     columns_list = ["data", "label"]
     num_readers = 2
-    data = ds.MindDataset(CV_FILE_NAME + "0", columns_list,
-                          num_readers, shuffle=False, num_shards=5, shard_id=1)
-    data = data.shuffle(2)
-    data = data.repeat(9)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers, shuffle=False, num_shards=5, shard_id=1)
+    data_set = data_set.shuffle(2)
+    data_set = data_set.repeat(9)
     num_iter = 0
-    for item in data.create_dict_iterator():
+    for _ in data_set.create_dict_iterator():
         num_iter += 1
     assert num_iter == 18
 
@@ -329,8 +327,7 @@ def test_cv_minddataset_blockreader_tutorial(add_and_remove_cv_file):
     """tutorial for cv minddataset."""
     columns_list = ["data", "label"]
     num_readers = 4
-    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers,
-                              block_reader=True)
+    data_set = ds.MindDataset(CV_FILE_NAME + "0", columns_list, num_readers, block_reader=True)
     assert data_set.get_dataset_size() == 10
     repeat_num = 2
     data_set = data_set.repeat(repeat_num)
@@ -536,7 +533,6 @@ def test_cv_minddataset_reader_basic_tutorial(add_and_remove_cv_file):
             "-------------- item[label]: {} ----------------------------".format(item["label"]))
         num_iter += 1
     assert num_iter == 10
-
 
 def test_nlp_minddataset_reader_basic_tutorial(add_and_remove_nlp_file):
     """tutorial for nlp minderdataset."""
