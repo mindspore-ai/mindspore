@@ -36,8 +36,8 @@ std::vector<std::vector<int32_t>> PrepareMatMul(const std::shared_ptr<Graph> &gr
                                                 const size_t iter_graph, const size_t iter_ops);
 std::vector<std::vector<int32_t>> PrepareVirtualDataset(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                         const size_t iter_ops);
-std::vector<std::vector<int32_t>> PrepareBiasAdd(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                                                 const size_t iter_ops, std::vector<int32_t> s);
+std::vector<std::vector<int32_t>> PrepareScalarInputOperator(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                                                             const size_t iter_ops, std::vector<int32_t> s);
 std::vector<std::vector<int32_t>> PrepareOneHot(std::vector<int32_t> s);
 std::vector<std::vector<int32_t>> MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
                                                         const std::vector<std::shared_ptr<OperatorInfo>> &ops,

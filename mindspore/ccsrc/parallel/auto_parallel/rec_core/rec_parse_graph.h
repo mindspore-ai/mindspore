@@ -55,6 +55,7 @@ const std::map<std::string, OperatorType> DictOpType{
   {"HSigmoid", OperatorType::kRecReLU},
   {GELU, OperatorType::kRecReLU},
   {TANH, OperatorType::kRecReLU},
+  {PRELU, OperatorType::kRecReLU},
 
   {TENSOR_ADD, OperatorType::kRecElmWiseOp},
   {SUB, OperatorType::kRecElmWiseOp},
