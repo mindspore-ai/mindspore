@@ -280,7 +280,7 @@ def check_value_elements(data_dtype, types):
             else:
                 raise TypeError(f"For '{TENSOR_SETITEM}', the data type of {i}th tensor '{ele_dtype}' "
                                 f"in value tuple is not consistent with origin tensor data type '{data_dtype}'.")
-        elif mstype.issubclass_(ele, data_dtype):
+        elif mstype.dtype_to_pytype(ele) == mstype.dtype_to_pytype(data_dtype):
             scalars_number += 1
         else:
             raise TypeError(f"For '{TENSOR_SETITEM}', the {i}th element type '{ele}' in "
