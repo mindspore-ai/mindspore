@@ -35,6 +35,7 @@ class MatMulGpuKernel : public GpuKernel {
         m_(0),
         n_(0),
         k_(0),
+        is_null_input_(false),
         transpose_x1_(CUBLAS_OP_N),
         transpose_x2_(CUBLAS_OP_N),
         handle_(nullptr),
@@ -51,6 +52,9 @@ class MatMulGpuKernel : public GpuKernel {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     VARIABLE_NOT_USED(workspace);
     VARIABLE_NOT_USED(stream_ptr);
+    if (is_null_input_) {
+      return true;
+    }
     auto input1_addr = GetDeviceAddress<T>(inputs, 0);
     auto input2_addr = GetDeviceAddress<T>(inputs, 1);
     auto output_addr = GetDeviceAddress<T>(outputs, 0);
@@ -82,6 +86,12 @@ class MatMulGpuKernel : public GpuKernel {
     dtype_b_ = kCudaDtypeMap[TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 1))];
     dtype_c_ = kCudaDtypeMap[TypeIdLabel(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0))];
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(output_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "input is null";
+      InitSizeLists();
+      return true;
+    }
     auto dims = output_shape.size();
     if (dims < 2) {
       MS_LOG(EXCEPTION) << "Output dims " << dims << " not support.";
@@ -125,6 +135,7 @@ class MatMulGpuKernel : public GpuKernel {
   size_t m_;
   size_t n_;
   size_t k_;
+  bool is_null_input_;
 
   cublasOperation_t transpose_x1_;
   cublasOperation_t transpose_x2_;
