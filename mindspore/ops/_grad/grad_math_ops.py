@@ -912,6 +912,17 @@ def get_bprop_bessel_i0e(self):
     return bprop
 
 
+@bprop_getters.register(P.Atan)
+def get_bprop_atan(self):
+    """Grad definition for `Atan` operation."""
+    input_grad = G.AtanGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(x, dout)
+        return (dx,)
+    return bprop
+
+
 @bprop_getters.register(P.BesselI1e)
 def get_bprop_bessel_i1e(self):
     """Generate bprop for BesselI1e"""
@@ -932,5 +943,18 @@ def get_bprop_bessel_i1e(self):
         x_safe = select(x_is_valid, x, eps + zeros)
         tmp = bessel_i0e(x_safe) - out * (sign(x) + reciprocal(x_safe))
         dx = select(x_is_valid, tmp, 0.5 + zeros)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(P.Atanh)
+def get_bprop_atanh(self):
+    """Grad definition for `Atanh` operation."""
+    power = P.Pow()
+    div = P.Div()
+
+    def bprop(x, out, dout):
+        tmp = 1 - power(x, 2)
+        dx = div(1, tmp) * dout
         return (dx,)
     return bprop

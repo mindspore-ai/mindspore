@@ -2207,6 +2207,66 @@ class Round(PrimitiveWithInfer):
         return x_type
 
 
+class Atan(PrimitiveWithInfer):
+    """
+    Computes the trignometric inverse tangent of x element-wise.
+
+    Inputs:
+        - **input_x** (Tensor): The input tensor.
+
+    Outputs:
+        A Tensor. Has the same type as x.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1.047, 0.785]), mindspore.float32)
+        >>> tan = P.Tan()
+        >>> output_y = tan(input_x)
+        >>> atan = P.Atan()
+        >>> atan(output_y)
+        [[1.047, 07850001]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_tensor_type_same({'x': x_type}, mstype.number_type, self.name)
+        return x_type
+
+
+class Atanh(PrimitiveWithInfer):
+    """
+    Computes inverse hyperbolic tangent of x element-wise.
+
+    Inputs:
+        - **input_x** (Tensor): The input tensor.
+
+    Outputs:
+        A Tensor. Has the same type as x.
+
+    Examples:
+        >>> input_x = Tensor(np.array([1.047, 0.785]), mindspore.float32)
+        >>> atanh = P.Atanh()
+        >>> atanh(input_x)
+        [[1.8869909 1.058268]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_type):
+        validator.check_tensor_type_same({'x': x_type}, mstype.number_type, self.name)
+        return x_type
+
+
 class Atan2(_MathBinaryOp):
     r"""
     Returns arctangent of input_x/input_y element-wise.
