@@ -21,29 +21,13 @@ import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.py_transforms as vision
 from mindspore import log as logger
+from util import visualize
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-def visualize(image_1, image_2):
-    """
-    visualizes the image using FiveCrop
-    """
-    plt.subplot(161)
-    plt.imshow(image_1)
-    plt.title("Original")
-
-    for i, image in enumerate(image_2):
-        image = (image.transpose(1, 2, 0) * 255).astype(np.uint8)
-        plt.subplot(162 + i)
-        plt.imshow(image)
-        plt.title("image {} in FiveCrop".format(i + 1))
-
-    plt.show()
-
-
-def test_five_crop_op():
+def test_five_crop_op(plot=False):
     """
     Test FiveCrop
     """
@@ -79,8 +63,8 @@ def test_five_crop_op():
 
         logger.info("dtype of image_1: {}".format(image_1.dtype))
         logger.info("dtype of image_2: {}".format(image_2.dtype))
-
-        # visualize(image_1, image_2)
+        if plot:
+            visualize(np.array([image_1]*10), (image_2 * 255).astype(np.uint8).transpose(0, 2, 3, 1))
 
         # The output data should be of a 4D tensor shape, a stack of 5 images.
         assert len(image_2.shape) == 4
@@ -111,5 +95,5 @@ def test_five_crop_error_msg():
 
 
 if __name__ == "__main__":
-    test_five_crop_op()
+    test_five_crop_op(plot=True)
     test_five_crop_error_msg()
