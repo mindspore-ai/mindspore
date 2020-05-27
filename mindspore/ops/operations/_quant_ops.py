@@ -30,6 +30,10 @@ __all__ = ["FakeQuantWithMinMax",
            "CorrectionMulGrad",
            "BatchNormFold2",
            "BatchNormFold2Grad",
+           "BatchNormFoldD",
+           "BNTrainingReduce",
+           "BatchNormFold2_D",
+           "FakeQuantWithMinMaxUpdate",
            ]
 
 
@@ -166,7 +170,7 @@ class FakeQuantWithMinMaxPerChannel(PrimitiveWithInfer):
         >>> result = fake_quant(input_x, _min, _max)
     """
     support_quant_bit = [4, 8]
-    channel_idx = 0
+    channel_axis = 0
 
     @prim_attr_register
     def __init__(self, num_bits=8, ema=False, ema_decay=0.999, quant_delay=0, symmetric=False, narrow_range=False,
@@ -188,8 +192,8 @@ class FakeQuantWithMinMaxPerChannel(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, min_shape, max_shape):
         validator.check_integer("x rank", len(x_shape), 1, Rel.GT, self.name)
-        validator.check_integer("min shape[0]", min_shape[0], x_shape[self.channel_idx], Rel.EQ, self.name)
-        validator.check_integer("max shape[0]", max_shape[0], x_shape[self.channel_idx], Rel.EQ, self.name)
+        validator.check_integer("min shape[0]", min_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
+        validator.check_integer("max shape[0]", max_shape[0], x_shape[self.channel_axis], Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, x_type, min_type, max_type):
@@ -272,7 +276,7 @@ class BatchNormFold(PrimitiveWithInfer):
         >>> global_step = Tensor(np.arange(6), mindspore.int32)
         >>> batch_mean, batch_std, running_mean, running_std = batch_norm_fold(input_x, mean, variance, global_step)
     """
-    channel = 1
+    channel_axis = 1
 
     @prim_attr_register
     def __init__(self, momentum=0.1, epsilon=1e-5, is_training=True, freeze_bn=0):
@@ -287,7 +291,7 @@ class BatchNormFold(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, mean_shape, variance_shape, global_step_shape):
         validator.check("mean shape", mean_shape, "gamma_shape", variance_shape, Rel.EQ, self.name)
-        validator.check("mean_shape[0]", mean_shape[0], "input channel", x_shape[self.channel], Rel.EQ, self.name)
+        validator.check("mean_shape[0]", mean_shape[0], "input channel", x_shape[self.channel_axis], Rel.EQ, self.name)
         validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
         return mean_shape, mean_shape, mean_shape, mean_shape
 
@@ -314,7 +318,7 @@ class BatchNormFoldGrad(PrimitiveWithInfer):
         >>> global_step = Tensor([2], mindspore.int32)
         >>> result = batch_norm_fold_grad(d_batch_mean, d_batch_std, input_x, batch_mean, batch_std, global_step)
     """
-    channel = 1
+    channel_axis = 1
 
     @prim_attr_register
     def __init__(self, epsilon=1e-5, is_training=True, freeze_bn=0):
@@ -333,8 +337,8 @@ class BatchNormFoldGrad(PrimitiveWithInfer):
                         "batch_mean shape", batch_mean_shape, Rel.EQ, self.name)
         validator.check("d_batch_mean shape", d_batch_mean_shape,
                         "batch_std shape", batch_std_shape, Rel.EQ, self.name)
-        validator.check("d_batch_mean_shape[0]", d_batch_mean_shape[0], "input channel", x_shape[self.channel], Rel.EQ,
-                        self.name)
+        validator.check("d_batch_mean_shape[0]", d_batch_mean_shape[0],
+                        "input channel", x_shape[self.channel_axis], Rel.EQ, self.name)
         validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
         return x_shape
 
@@ -368,17 +372,17 @@ class CorrectionMul(PrimitiveWithInfer):
         >>> running_std = Tensor(np.array([2, 1.2, 0.5]), mindspore.float32)
         >>> out = correction_mul(input_x, batch_std, running_std)
     """
-    channel = 0
 
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, channel_axis=0):
         """init correction mul layer"""
+        self.channel_axis = channel_axis
         self.init_prim_io_names(inputs=['x', 'batch_std', 'running_std'],
                                 outputs=['out'])
 
     def infer_shape(self, x_shape, batch_std_shape, running_std_shape):
         validator.check("batch_std shape", batch_std_shape, "running_std shape", running_std_shape, Rel.EQ, self.name)
-        validator.check("batch_std_shape[0]", batch_std_shape[0], "x_shape channel size", x_shape[self.channel],
+        validator.check("batch_std_shape[0]", batch_std_shape[0], "x_shape channel size", x_shape[self.channel_axis],
                         Rel.EQ, self.name)
         return x_shape
 
@@ -400,20 +404,20 @@ class CorrectionMulGrad(PrimitiveWithInfer):
         >>> running_std = Tensor(np.array([1.2, 0.1, 0.7, 2.3]).reshape(2, 1, 2), mindspore.float32)
         >>> result = correction_mul_grad(dout, input_x, gamma, running_std)
     """
-    channel = 0
 
     @prim_attr_register
-    def __init__(self):
+    def __init__(self, channel_axis=0):
         """init correction mul layer"""
+        self.channel_axis = channel_axis
         self.init_prim_io_names(inputs=['dout', 'x', 'gamma', 'running_std'],
                                 outputs=['dx', 'd_gamma'])
 
     def infer_shape(self, dout_shape, x_shape, gamma_shape, running_std_shape):
         validator.check("dout shape", dout_shape, "x_shape x", x_shape, Rel.EQ, self.name)
-        validator.check("gamma_shape[0]", gamma_shape[0], "dout channel size", dout_shape[self.channel],
+        validator.check("gamma_shape[0]", gamma_shape[0], "dout channel size", dout_shape[self.channel_axis],
                         Rel.EQ, self.name)
-        validator.check("running_std_shape[0]", running_std_shape[0], "dout channel size", dout_shape[self.channel],
-                        Rel.EQ, self.name)
+        validator.check("running_std_shape[0]", running_std_shape[0],
+                        "dout channel size", dout_shape[self.channel_axis], Rel.EQ, self.name)
         return x_shape, gamma_shape
 
     def infer_dtype(self, dout_type, x_type, gamma_type, running_std_type):
@@ -454,7 +458,7 @@ class BatchNormFold2(PrimitiveWithInfer):
         >>> result = batch_norm_fold2(input_x, beta, gamma, batch_std, batch_mean,
         >>>                           running_std, running_mean, global_step)
     """
-    channel = 1
+    channel_axis = 1
 
     @prim_attr_register
     def __init__(self, freeze_bn=0):
@@ -471,7 +475,7 @@ class BatchNormFold2(PrimitiveWithInfer):
         validator.check("batch_std shape", batch_std_shape, "beta shape", beta_shape, Rel.EQ, self.name)
         validator.check("batch_std shape", batch_std_shape, "running_mean shape", running_mean_shape, Rel.EQ, self.name)
         validator.check("batch_std shape", batch_std_shape, "batch_mean shape", gamma_shape, Rel.EQ, self.name)
-        validator.check("batch_std_shape[0]", batch_std_shape[0], "x_shape channel size", x_shape[self.channel],
+        validator.check("batch_std_shape[0]", batch_std_shape[0], "x_shape channel size", x_shape[self.channel_axis],
                         Rel.EQ, self.name)
         validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
         return x_shape
@@ -501,7 +505,7 @@ class BatchNormFold2Grad(PrimitiveWithInfer):
         >>> global_step = Tensor(np.array([-2]), mindspore.int32)
         >>> result = bnf2_grad(dout, input_x, gamma, batch_std, batch_mean, running_std, running_mean, global_step)
     """
-    channel = 1
+    channel_axis = 1
 
     @prim_attr_register
     def __init__(self, freeze_bn=0):
@@ -519,7 +523,7 @@ class BatchNormFold2Grad(PrimitiveWithInfer):
         validator.check("batch_std shape", batch_std_shape, "running_std shape", running_std_shape, Rel.EQ, self.name)
         validator.check("batch_std shape", batch_std_shape, "running_mean shape", running_mean_shape, Rel.EQ, self.name)
         validator.check("batch_std shape", batch_std_shape, "gamma shape", gamma_shape, Rel.EQ, self.name)
-        validator.check("batch_std size", batch_std_shape[0], "dout channel size", dout_shape[self.channel],
+        validator.check("batch_std size", batch_std_shape[0], "dout channel size", dout_shape[self.channel_axis],
                         Rel.EQ, self.name)
         validator.check_integer("global_step rank", len(global_step_shape), 1, Rel.EQ, self.name)
         return gamma_shape, gamma_shape, gamma_shape, gamma_shape, x_shape
@@ -542,3 +546,259 @@ class BatchNormFold2Grad(PrimitiveWithInfer):
         validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
         validator.check_tensor_type_same({"global_step": global_step_type}, (mstype.int32,), self.name)
         return gamma_type, gamma_type, gamma_type, gamma_type, gamma_type
+
+
+class BatchNormFoldD(PrimitiveWithInfer):
+    """Performs grad of _BatchNormFold operation."""
+
+    @prim_attr_register
+    def __init__(self, momentum=0.9, epsilon=1e-5, is_training=True, freeze_bn=0):
+        """init _BatchNormFold layer"""
+        from mindspore.ops._op_impl._custom_op import batchnorm_fold
+        self.momentum = validator.check_number_range('momentum', momentum, 0, 1, Rel.INC_BOTH, self.name)
+        self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
+        self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
+        self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
+        self.data_format = "NCHW"
+        self.init_prim_io_names(inputs=['x', 'x_sum', 'x_square_sum', 'mean', 'variance'],
+                                outputs=['batch_mean', 'batch_std', 'running_mean', 'running_std',
+                                         'mean_updated', 'variance_updated'])
+
+    def infer_shape(self, x_shape, x_sum_shape, x_square_sum_shape, mean_shape, variance_shape):
+        validator.check("mean shape", mean_shape, "gamma_shape", variance_shape, Rel.EQ, self.name)
+        validator.check("mean_shape[0]", mean_shape[0], "input channel", x_shape[1], Rel.EQ, self.name)
+        return x_shape, mean_shape, mean_shape, mean_shape, mean_shape, mean_shape, mean_shape
+
+    def infer_dtype(self, x_type, x_sum_type, x_square_sum_type, mean_type, variance_type):
+        validator.check("input type", x_type, "mean type", mean_type)
+        validator.check("input type", x_type, "variance type", variance_type)
+        args = {"x": x_type, "mean": mean_type, "variance": variance_type}
+        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        return x_type, x_type, x_type, x_type, x_type, x_type, x_type
+
+
+class BatchNormFoldGradD(PrimitiveWithInfer):
+    """Performs grad of _BatchNormFoldGrad operation."""
+
+    @prim_attr_register
+    def __init__(self, epsilon=1e-5, is_training=True, freeze_bn=0):
+        """init _BatchNormFoldGrad layer"""
+        from mindspore.ops._op_impl._custom_op import batchnorm_fold_grad
+        self.epsilon = validator.check_float_positive('epsilon', epsilon, self.name)
+        self.is_training = validator.check_value_type('is_training', is_training, (bool,), self.name)
+        self.freeze_bn = validator.check_value_type('freeze_bn', freeze_bn, (int,), self.name)
+        self.init_prim_io_names(inputs=['d_batch_mean', 'd_batch_std', 'x', 'batch_mean', 'batch_std'],
+                                outputs=['dx'])
+
+    def infer_shape(self, d_batch_mean_shape, d_batch_std_shape, x_shape, batch_mean_shape, batch_std_shape):
+        validator.check("d_batch_mean shape", d_batch_mean_shape, "d_batch_std shape", d_batch_std_shape)
+        validator.check("d_batch_mean shape", d_batch_mean_shape, "batch_mean shape", batch_mean_shape)
+        validator.check("d_batch_mean shape", d_batch_mean_shape, "batch_std shape", batch_std_shape)
+        validator.check("x_shape shape", d_batch_mean_shape[0], "input channel", x_shape[1])
+        return x_shape
+
+    def infer_dtype(self, d_batch_mean_type, d_batch_std_type, x_type, batch_mean_type, batch_std_type):
+        validator.check("input type", x_type, "d_batch_mean type", d_batch_mean_type)
+        validator.check("input type", x_type, "d_batch_std type", d_batch_std_type)
+        validator.check("input type", x_type, "batch_mean type", batch_mean_type)
+        validator.check("input type", x_type, "batch_std type", batch_std_type)
+        args = {"input type": x_type}
+        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        return x_type
+
+
+class BNTrainingReduce(PrimitiveWithInfer):
+    """
+    reduce sum at axis [0, 2, 3].
+
+    Inputs:
+        - **x** (Tensor)  - Tensor of shape :math:`(N, C)`.
+
+    Outputs:
+        - **x_sum** (Tensor) - Tensor has the same shape as x.
+        - **x_square_sum** (Tensor) - Tensor has the same shape as x.
+
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """init _BNTrainingReduce layer"""
+        self.init_prim_io_names(inputs=['x'],
+                                outputs=['x_sum', 'x_square_sum'])
+
+    def infer_shape(self, x_shape):
+        return [x_shape[1]], [x_shape[1]]
+
+    def infer_dtype(self, x_type):
+        return x_type, x_type
+
+
+class BatchNormFold2_D(PrimitiveWithInfer):
+    """
+    Scale the bias with a correction factor to the long term statistics
+    prior to quantization. This ensures that there is no jitter in the quantized bias
+    due to batch to batch variation.
+
+    Inputs:
+        - **x** (Tensor)  - Tensor of shape :math:`(N, C)`.
+        - **beta** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **gamma** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **batch_std** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **batch_mean** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **running_std** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **running_mean** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **global_step** (Tensor) - Tensor to record current global step.
+
+    Outputs:
+        - **y** (Tensor) - Tensor has the same shape as x.
+
+    """
+    channel_axis = 1
+
+    @prim_attr_register
+    def __init__(self, freeze_bn=0):
+        """init conv2d fold layer"""
+        from mindspore.ops._op_impl._custom_op import batchnorm_fold2
+        self.init_prim_io_names(inputs=['x', 'beta', 'gamma', 'batch_std', 'batch_mean', 'running_std'],
+                                outputs=['y'])
+
+    def infer_shape(self, x_shape, beta_shape, gamma_shape, batch_std_shape, running_std_shape, batch_mean_shape):
+        validator.check("batch_std shape", batch_std_shape, "running_std shape", running_std_shape, Rel.EQ, self.name)
+        validator.check("batch_std shape", batch_std_shape, "batch_mean shape", batch_mean_shape, Rel.EQ, self.name)
+        validator.check("batch_std shape", batch_std_shape, "beta shape", beta_shape, Rel.EQ, self.name)
+        validator.check("batch_std shape", batch_std_shape, "batch_mean shape", gamma_shape, Rel.EQ, self.name)
+        validator.check("batch_std_shape[0]", batch_std_shape[0], "x_shape channel size", x_shape[self.channel_axis],
+                        Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_type, beta_type, gamma_type, batch_std_type, running_std_type, batch_mean_type):
+        args = {"batch_std": batch_std_type, "running_std": running_std_type, "batch_mean": batch_mean_type,
+                "beta": beta_type, "gamma": gamma_type, "x": x_type}
+        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        return x_type
+
+
+class BatchNormFold2GradD(PrimitiveWithInfer):
+    """Performs grad of CorrectionAddGrad operation."""
+    channel_axis = 1
+
+    @prim_attr_register
+    def __init__(self, freeze_bn=False):
+        """init MulFold layer"""
+        from mindspore.ops._op_impl._custom_op import batchnorm_fold2_grad
+        self.freeze_bn = freeze_bn
+        self.init_prim_io_names(
+            inputs=['dout', 'dout_reduce', 'dout_x_reduce', 'gamma', 'batch_std', 'batch_mean', 'running_std'],
+            outputs=['d_batch_std', 'd_batch_mean', 'd_gamma', 'dx'])
+
+    def infer_shape(self, dout_shape, dout_reduce_shape, dout_x_reduce_shape, gamma_shape, batch_std_shape,
+                    batch_mean_shape, running_std_shape):
+        validator.check("batch_std shape", batch_std_shape, "batch_mean shape", batch_mean_shape, Rel.EQ, self.name)
+        validator.check("batch_std shape", batch_std_shape, "running_std shape", running_std_shape, Rel.EQ, self.name)
+        validator.check("batch_std shape", batch_std_shape, "gamma shape", gamma_shape, Rel.EQ, self.name)
+        validator.check("batch_std size", batch_std_shape[0], "dout channel size", dout_shape[self.channel_axis],
+                        Rel.EQ, self.name)
+        return gamma_shape, gamma_shape, gamma_shape, dout_shape
+
+    def infer_dtype(self, dout_type, dout_reduce_type, dout_x_reduce_type, gamma_type, batch_std_type,
+                    batch_mean_type, running_std_type):
+        validator.check("batch_std type", batch_std_type,
+                        "batch_mean type", batch_mean_type)
+        validator.check("batch_std type", batch_std_type,
+                        "gamma type", gamma_type)
+        validator.check("batch_std type", batch_std_type,
+                        "running_std type", running_std_type)
+        validator.check("batch_std_type", batch_std_type,
+                        "dout type", dout_type)
+        args = {"batch_std": batch_std_type, "batch_mean": batch_mean_type, "gamma": gamma_type,
+                "running_std": running_std_type, "dout": dout_type}
+        validator.check_tensor_type_same(args, (mstype.float16, mstype.float32), self.name)
+        return gamma_type, gamma_type, gamma_type, gamma_type
+
+
+class BatchNormFold2GradReduce(PrimitiveWithInfer):
+    """Performs grad of CorrectionAddGrad operation."""
+    channel_axis = 1
+
+    @prim_attr_register
+    def __init__(self, freeze_bn=False):
+        """init MulFold layer"""
+        from mindspore.ops._op_impl._custom_op import batchnorm_fold2_grad_reduce
+        self.freeze_bn = freeze_bn
+        self.init_prim_io_names(inputs=['dout', 'x'],
+                                outputs=['dout_reduce', 'dout_x_reduce'])
+
+    def infer_shape(self, dout_shape, x_shape):
+        validator.check("dout shape", dout_shape, "x shape", x_shape, Rel.EQ, self.name)
+        return (dout_shape[self.channel_axis],), (dout_shape[self.channel_axis],)
+
+    def infer_dtype(self, dout_type, x_type):
+        validator.check("dout type", dout_type, "x type", x_type)
+        return dout_type, dout_type
+
+
+class FakeQuantWithMinMaxUpdate(PrimitiveWithInfer):
+    r"""
+    Simulate the quantize and dequantize operations in training time.
+
+    Args:
+        num_bits (int) : Number bits for aware quantilization. Default: 8.
+        ema (bool): Use EMA algorithm update value min and max. Default: False.
+        ema_decay (int) : EMA algorithm decay parameter. Default: 0.999.
+        quant_delay (int): Quantilization delay parameter. Before delay step in training time not update
+            simulate aware quantize funcion. After delay step in training time begin simulate the aware
+            quantize funcion. Default: 0.
+        symmetric (bool): Quantization algorithm use symmetric or not. Default: False.
+        narrow_range (bool): Quantization algorithm use narrow range or not. Default: False.
+        training (bool): Training the network or not. Default: True.
+
+    Inputs:
+        - **x** (Tensor) : float32 Tensor representing the shape of the output tensor.
+        - **min** (Tensor) : Value of the min range of the input data x.
+        - **max** (Tensor) : Value of the max range of the input data x.
+
+    Outputs:
+        - Tensor: Simulate quantize tensor of x.
+
+    Examples:
+        >>> input_tensor = Tensor(np.random.rand(3, 16, 5, 5), mstype.float32)
+        >>> min_tensor = Tensor(np.array([-6]), mstype.float32)
+        >>> max_tensor = Tensor(np.array([6]), mstype.float32)
+        >>> output_tensor = P.FakeQuantWithMinMax(num_bits=8)(input_tensor, min_tensor, max_tensor)
+    """
+    support_quant_bit = [4, 7, 8]
+
+    @prim_attr_register
+    def __init__(self, num_bits=8, ema=False, ema_decay=0.999, quant_delay=0, symmetric=False, narrow_range=False,
+                 training=True):
+        """init FakeQuantWithMinMax OP"""
+        from mindspore.ops._op_impl._custom_op import correction_mul, correction_mul_grad
+        from mindspore.ops._op_impl._custom_op import fake_quant_with_min_max, fake_quant_with_min_max_grad
+        from mindspore.ops._op_impl._custom_op import fake_quant_with_min_max_update
+        if num_bits not in self.support_quant_bit:
+            raise ValueError(f"For '{self.name}' attr \'num_bits\' is not support.")
+        if ema and not ema_decay:
+            raise ValueError(f"For '{self.name}' attr \'ema\' and \'ema_decay\' should set together.")
+
+        self.ema = validator.check_value_type('ema', ema, (bool,), self.name)
+        self.symmetric = validator.check_value_type('symmetric', symmetric, (bool,), self.name)
+        self.narrow_range = validator.check_value_type('narrow_range', narrow_range, (bool,), self.name)
+        self.training = validator.check_value_type('training', training, (bool,), self.name)
+        self.ema_decay = validator.check_number_range('ema_decay', ema_decay, 0, 1, Rel.INC_BOTH, self.name)
+        self.num_bits = validator.check_integer('num_bits', num_bits, 0, Rel.GT, self.name)
+        self.quant_delay = validator.check_value_type('quant_delay', quant_delay, (int,), self.name)
+        self.init_prim_io_names(inputs=['x', 'min', 'max'],
+                                outputs=['min_up', 'max_up'])
+
+    def infer_shape(self, x_shape, min_shape, max_shape):
+        validator.check_integer("x rank", len(x_shape), 1, Rel.GT, self.name)
+        validator.check("min shape", min_shape, "max shape", max_shape, Rel.EQ, self.name)
+        validator.check_integer("min rank", len(min_shape), 1, Rel.EQ, self.name)
+        return min_shape, max_shape
+
+    def infer_dtype(self, x_type, min_type, max_type):
+        valid_types = (mstype.float16, mstype.float32)
+        validator.check_tensor_type_same({"x": x_type}, valid_types, self.name)
+        validator.check_tensor_type_same({"min": min_type}, valid_types, self.name)
+        validator.check_tensor_type_same({"max": max_type}, valid_types, self.name)
+        return min_type, max_type
