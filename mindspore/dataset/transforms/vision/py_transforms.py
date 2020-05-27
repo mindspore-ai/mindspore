@@ -32,7 +32,7 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
     check_normalize_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_transforms_list, check_random_apply, check_ten_crop, check_num_channels, check_pad, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
-    check_mix_up
+    check_mix_up, check_positive_degrees, check_uniform_augment_py
 from .utils import Inter, Border
 
 DE_PY_INTER_MODE = {Inter.NEAREST: Image.NEAREST,
@@ -1329,6 +1329,7 @@ class RandomColor:
         >>>                          py_transforms.ToTensor()])
     """
 
+    @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
         self.degrees = degrees
 
@@ -1361,6 +1362,7 @@ class RandomSharpness:
 
     """
 
+    @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
         self.degrees = degrees
 
@@ -1458,6 +1460,7 @@ class UniformAugment:
     Uniformly select and apply a number of transforms sequentially from
     a list of transforms. Randomly assigns a probability to each transform for
     each image to decide whether apply it or not.
+    All the transforms in transform list must have the same input/output data type.
 
     Args:
          transforms (list): List of transformations to be chosen from to apply.
@@ -1473,6 +1476,7 @@ class UniformAugment:
         >>>                          py_transforms.ToTensor()])
     """
 
+    @check_uniform_augment_py
     def __init__(self, transforms, num_ops=2):
         self.transforms = transforms
         self.num_ops = num_ops
