@@ -269,6 +269,5 @@ __all__ = [
     "SquareSumAll"
 ]
 
-__all__.extend(thor_ops.__all__)
 __all__.extend(_quant_ops.__all__)
 __all__.sort()
