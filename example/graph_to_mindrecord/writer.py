@@ -24,7 +24,7 @@ from importlib import import_module
 from multiprocessing import Pool
 
 from mindspore.mindrecord import FileWriter
-from mindspore.mindrecord import GraphMapSchema
+from graph_map_schema import GraphMapSchema
 
 
 def exec_task(task_id, parallel_writer=True):
