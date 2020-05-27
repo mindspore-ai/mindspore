@@ -589,7 +589,7 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
   // add a make_tuple at the end of graph as output
   graph->set_output(ConstructOutput(outputs, graph));
   MS_EXCEPTION_IF_NULL(context_);
-  FuncGraphManagerPtr manager = context_->manager();
+  FuncGraphManagerPtr manager = MakeManager({graph});
   if (manager) {
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
