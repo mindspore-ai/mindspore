@@ -121,7 +121,7 @@ class TensorType : public Object {
 
   TypePtr DeepCopy() const override;
   std::string ToString() const override;
-  std::string ToReprString() const override { return "tensor"; }
+  std::string ToReprString() const override;
   std::string DumpText() const override;
   bool operator==(const Type &other) const override;
 

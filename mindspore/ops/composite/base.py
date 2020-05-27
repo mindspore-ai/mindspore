@@ -16,6 +16,7 @@
 # ============================================================================
 
 """Basic composite operations."""
+from functools import partial
 
 from ..._c_expression import EnvInstance_, GradOperation_, HyperMap_, MultitypeFuncGraph_, Tail_, TensorSlice_, \
                              TupleAdd_, TupleSlice_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_
@@ -23,6 +24,7 @@ from ...common import dtype as mstype
 from ...common.api import ms_function
 from .. import functional as F
 from .. import operations as P
+from ...common.parameter import Parameter
 
 __all__ = [EnvInstance_, TensorSlice_, TupleAdd_, TupleSlice_, UnpackCall_, TupleGetItemTensor_]
 
@@ -144,7 +146,6 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         >>> # `add` is a metagraph object which will add two objects according to
         >>> # input type using ".register" decorator.
         >>> add = MultitypeFuncGraph('add')
-
     """
 
     def __init__(self, name):
@@ -152,8 +153,15 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         self.entries = list()
 
     def __call__(self, *args):
-        for sig, fn in self.entries:
-            if len(sig) != len(args):
+        def unwrap(arg):
+            if isinstance(arg, Parameter):
+                return arg.data
+            return arg
+        types = tuple(map(lambda arg: mstype.get_py_obj_dtype(unwrap(arg)), args))
+        for sigs, fn in self.entries:
+            if len(sigs) != len(types):
+                continue
+            if any(not mstype.issubclass_(type_, sig) for sig, type_ in zip(sigs, types)):
                 continue
             output = fn(*args)
             return output
@@ -162,8 +170,9 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
     def register(self, *type_names):
         """Register a function for the given type string."""
         def deco(fn):
+            types = tuple(map(mstype.typing.str_to_type, type_names))
             self.register_fn(type_names, fn)
-            self.entries.append((type_names, fn))
+            self.entries.append((types, fn))
             return fn
         return deco
 
@@ -198,38 +207,17 @@ class HyperMap(HyperMap_):
             HyperMap_.__init__(self)
 
     def __call__(self, *args):
-        func = args[0]
-        count = 0
-        count_max = 1
-        args_list = args[1:]
-        if self.ops is not None:
-            func = self.ops
-            args_list = args
-        for item in args_list:
-            if isinstance(item, (tuple, list)):
-                count_max = len(item)
-                break
-
-        def get_item(x):
-            nonlocal count
-            if isinstance(x, (tuple, list)):
-                return x[count]
-            return x
-
-        for i in range(count_max):
-            true_args = tuple(map(get_item, args_list))
-            func(*true_args)
-            count = i + 1
-        return True
-
-    def register(self, *type_names):
-        """Register a function for the given type string."""
-
-        def deco(fn):
-            self.register_fn(type_names, fn)
-            return fn
-        return deco
-
+        func = self.ops
+        args_list = args
+        hypermap = self
+        if self.ops is None:
+            func = args[0]
+            args_list = args[1:]
+            hypermap = partial(self, func)
+        # is leaf
+        if not isinstance(args_list[0], (tuple, list)):
+            return func(*args_list)
+        return tuple(map(hypermap, *args_list))
 
 class _ListAppend(ListAppend_):
     """
