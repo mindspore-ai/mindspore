@@ -516,7 +516,6 @@ class MatMul(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, transpose_a=False, transpose_b=False):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
-        self.__setattr_flag__ = True
         cls_name = self.name
         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
@@ -596,7 +595,6 @@ class BatchMatMul(MatMul):
     @prim_attr_register
     def __init__(self, transpose_a=False, transpose_b=False):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
-        self.__setattr_flag__ = True
         cls_name = self.name
         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
@@ -682,7 +680,6 @@ class AddN(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        self.__setattr_flag__ = True
         self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
 
     def infer_shape(self, inputs):

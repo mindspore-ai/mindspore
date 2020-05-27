@@ -71,7 +71,6 @@ class ExpandDims(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init ExpandDims"""
-        self.__setattr_flag__ = True
         self.init_prim_io_names(inputs=['x', 'axis'], outputs=['output'])
 
     def __infer__(self, x, axis):
@@ -182,7 +181,6 @@ class Cast(PrimitiveWithInfer):
         # if primitive need setattr in __infer__ need add this flag
         """init Cast"""
         self.init_prim_io_names(inputs=['x', 'dst_type'], outputs=['output'])
-        self.__setattr_flag__ = True
 
     def __infer__(self, x, t):
         src_type = x['dtype']
@@ -308,7 +306,6 @@ class Reshape(PrimitiveWithInfer):
     def __init__(self):
         """init Reshape"""
         self.init_prim_io_names(inputs=['tensor', 'shape'], outputs=['output'])
-        self.__setattr_flag__ = True
 
     def __infer__(self, x, shape):
         shape_v = shape['value']
@@ -453,7 +450,6 @@ class Transpose(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init Transpose"""
-        self.__setattr_flag__ = True
         self.init_prim_io_names(inputs=['x', 'perm'], outputs=['output'])
 
     def __infer__(self, x, perm):
@@ -508,7 +504,6 @@ class GatherV2(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init index_select"""
-        self.__setattr_flag__ = True
         self.init_prim_io_names(inputs=['params', 'indices', 'axis'], outputs=['output'])
 
     def __infer__(self, params, indices, axis):
@@ -1402,7 +1397,6 @@ class Concat(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, axis=0):
         """init Tile"""
-        self.__setattr_flag__ = True
         validator.check_value_type("axis", axis, [int], self.name)
 
     def __infer__(self, input_x):
@@ -1476,7 +1470,6 @@ class Pack(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, axis=0):
         """init Pack"""
-        self.__setattr_flag__ = True
         validator.check_value_type("axis", axis, [int], self.name)
         self.axis = axis
 
@@ -1526,7 +1519,6 @@ class Unpack(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, axis=0):
         """init Unpack"""
-        self.__setattr_flag__ = True
         validator.check_value_type("axis", axis, [int], self.name)
         self.axis = axis
 
@@ -1656,7 +1648,6 @@ class Select(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init"""
-        self.__setattr_flag__ = True
 
     def infer_shape(self, cond_shape, x_shape, y_shape):
         if cond_shape != x_shape or x_shape != y_shape:

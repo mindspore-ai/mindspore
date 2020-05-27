@@ -42,7 +42,11 @@ enum PrimType {
 class Primitive : public Named {
  public:
   explicit Primitive(const std::string &name, const bool is_base = true, const PrimType prim_type = kPrimTypeBuiltIn)
-      : Named(name), is_base_(is_base), has_signature_(false), prim_type_(prim_type) {}
+      : Named(name),
+        is_base_(is_base),
+        has_signature_(false),
+        prim_type_(prim_type),
+        record_evaluate_add_attr_(false) {}
 
   Primitive(const Primitive &prim)
       : Named(prim),
@@ -50,14 +54,23 @@ class Primitive : public Named {
         instance_name_(prim.instance_name_),
         is_base_(prim.is_base_),
         has_signature_(prim.has_signature_),
-        prim_type_(prim.prim_type_) {}
+        prim_type_(prim.prim_type_),
+        record_evaluate_add_attr_(false) {}
 
   MS_DECLARE_PARENT(Primitive, Named);
 
   abstract::AbstractBasePtr ToPrimAbstract(const AnfNodePtr &anf_node);
   std::string ToString() const override { return name(); }
+  void BeginRecordAddAttr() {
+    evaluate_added_attrs_.clear();
+    record_evaluate_add_attr_ = true;
+  }
+  void EndRecordAddAttr() { record_evaluate_add_attr_ = false; }
   Primitive &AddAttr(const std::string &name, const ValuePtr &attr) {
     attrs_[name] = attr;
+    if (record_evaluate_add_attr_) {
+      evaluate_added_attrs_[name] = attr;
+    }
     return *this;
   }
 
@@ -80,6 +93,7 @@ class Primitive : public Named {
   py::function hook() const { return hook_; }
 
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
+  std::unordered_map<std::string, ValuePtr> &evaluate_added_attrs() { return evaluate_added_attrs_; }
 
   // if Primitive has any attribute, for Primitives like scalar_add, return, etc, don't have any attribute.
   bool HasAttr() const { return !attrs_.empty(); }
@@ -106,6 +120,7 @@ class Primitive : public Named {
 
  protected:
   std::unordered_map<std::string, ValuePtr> attrs_;
+  std::unordered_map<std::string, ValuePtr> evaluate_added_attrs_;
 
  private:
   std::string instance_name_;
@@ -113,6 +128,7 @@ class Primitive : public Named {
   bool is_base_;
   bool has_signature_;
   PrimType prim_type_;
+  bool record_evaluate_add_attr_;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const PrimitivePtr &p) {

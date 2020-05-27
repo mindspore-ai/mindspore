@@ -730,8 +730,8 @@ class Conv2D(PrimitiveWithInfer):
         """init Conv2D"""
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
-        self.stride = _check_positive_int_or_tuple('stride', stride, self.name)
-        self.add_prim_attr('stride', (1, 1, self.stride[0], self.stride[1]))
+        self.stride = _check_positive_int_or_tuple('stride', stride, self.name, allow_four=True, ret_four=True)
+        self.add_prim_attr('stride', self.stride)
         self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
         self.add_prim_attr('dilation', self.dilation)
         validator.check_value_type('pad', pad, (int,), self.name)
@@ -787,7 +787,6 @@ class Conv2D(PrimitiveWithInfer):
 
         self.pad_list = [pad_top, pad_bottom, pad_left, pad_right]
         self.add_prim_attr('pad_list', (pad_top, pad_bottom, pad_left, pad_right))
-
         out_channel = self.out_channel
         out_shape = [x_shape[0], out_channel, h_out, w_out]
         return out_shape

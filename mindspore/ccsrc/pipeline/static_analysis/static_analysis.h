@@ -40,13 +40,33 @@
 
 namespace mindspore {
 namespace abstract {
+
+// define attribute value map
+using AttrValueMap = std::unordered_map<std::string, ValuePtr>;
+using AttrValueMapPtr = std::shared_ptr<AttrValueMap>;
+
+// the class to save evaluated result: abstract value and modified attribute
+class EvalResult : public Base {
+ public:
+  EvalResult(AbstractBasePtr abs, AttrValueMapPtr attr) : abstract_(abs), attribute_(attr) {}
+  ~EvalResult() override = default;
+  MS_DECLARE_PARENT(EvalResult, Base);
+  AbstractBasePtr abstract() { return abstract_; }
+  AttrValueMapPtr attribute() { return attribute_; }
+
+ private:
+  AbstractBasePtr abstract_;
+  AttrValueMapPtr attribute_;
+};
+
+using EvalResultPtr = std::shared_ptr<EvalResult>;
 // Superclass for AnfNodeConfig and VirtualConfig.
 class Config : public Base {
  public:
   Config() = default;
   ~Config() override = default;
   MS_DECLARE_PARENT(Config, Base);
-  virtual AbstractBasePtr GetEvaluatedValue() = 0;
+  virtual EvalResultPtr GetEvaluatedValue() = 0;
 };
 
 // Config will be stored in AnalysisCache
@@ -74,7 +94,7 @@ class AnfNodeConfig : public Config {
   ~AnfNodeConfig() override = default;
   MS_DECLARE_PARENT(AnfNodeConfig, Config);
 
-  AbstractBasePtr GetEvaluatedValue() override;
+  EvalResultPtr GetEvaluatedValue() override;
 
   AnalysisContextPtr context() const { return context_; }
 
@@ -123,7 +143,9 @@ class VirtualConfig : public Config {
 
   ~VirtualConfig() override = default;
   MS_DECLARE_PARENT(VirtualConfig, Config);
-  AbstractBasePtr GetEvaluatedValue() override { return abstract_; }
+  EvalResultPtr GetEvaluatedValue() override {
+    return std::make_shared<EvalResult>(abstract_, std::make_shared<AttrValueMap>());
+  }
 
  private:
   AbstractBasePtr abstract_;
@@ -135,11 +157,11 @@ class AnalysisCache {
   AnalysisCache() = default;
   ~AnalysisCache() = default;
   void Clear() { cache_.clear(); }
-  void set_value(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg);
-  AbstractBasePtr GetValue(const AnfNodeConfigPtr &conf);
+  void set_value(const AnfNodeConfigPtr &conf, const EvalResultPtr &arg);
+  EvalResultPtr GetValue(const AnfNodeConfigPtr &conf);
 
  private:
-  std::unordered_map<AnfNodeConfigPtr, AbstractBasePtr, AnfNodeConfigHasher, AnfNodeConfigEqual> cache_;
+  std::unordered_map<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual> cache_;
 };
 
 using PrimEvaluatorMap = std::unordered_map<PrimitivePtr, EvaluatorPtr, PrimitiveHasher, PrimitiveEqual>;
@@ -147,7 +169,7 @@ using AnfNodeConfigMap =
   std::unordered_map<AnfNodeConfigPtr, AnfNodeConfigPtr, AnfNodeConfigHasher, AnfNodeConfigEqual>;
 
 struct AnalysisResult {
-  AbstractBasePtr inferred;
+  EvalResultPtr inferred;
   AnalysisContextPtr context;
 };
 
@@ -160,14 +182,14 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   // func_graph: The func_graph to analyze.
   // args_spec_list: The abstracted arguments for the func_graph. Must be a tuple of AbstractBase.
   AnalysisResult Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
-  AbstractBasePtr GetEvaluatedValue(const AnfNodeConfigPtr &conf);
+  EvalResultPtr GetEvaluatedValue(const AnfNodeConfigPtr &conf);
   // Return the Evaluator for the given function.
   EvaluatorPtr GetEvaluatorFor(const AbstractFunctionPtr &fn);
 
   AbstractBasePtr EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf);
-  AbstractBasePtr EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
+  EvalResultPtr EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
   // Infer the result of fn(args).
-  AbstractBasePtr Execute(const AbstractFunctionPtr &fn, const AbstractBasePtrList &args_spec_list);
+  EvalResultPtr Execute(const AbstractFunctionPtr &fn, const AbstractBasePtrList &args_spec_list);
   void Clear();
   void ClearEvaluatorCache();
   AnalysisCache &cache() { return cache_; }
@@ -188,7 +210,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   // Set the analysis result for orig to the result for new.
   // This sets an entry in anfnode_config_map from orig to new.
-  AbstractBasePtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf) {
+  EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf) {
     // Use anfnode_config_map_[orig_conf] = new_conf will require AnfNodeConfig provide copy constructor.
     (void)anfnode_config_map_.emplace(orig_conf, new_conf);
     MS_LOG(DEBUG) << "Forward orig_conf: " << orig_conf->node()->DebugString()
@@ -211,12 +233,12 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   AnalysisContextPtr Run(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
                          const ConfigPtrList &args_conf_list);
-  AbstractBasePtr Eval(const AnfNodeConfigPtr &conf);
+  EvalResultPtr Eval(const AnfNodeConfigPtr &conf);
   EvaluatorPtr _GetEvaluatorFor(const AbstractFunctionPtr &fn);
-  AbstractBasePtr ExecuteEvaluators(const std::vector<EvaluatorPtr> &evaluators, const AnfNodeConfigPtr &out_conf,
-                                    const ConfigPtrList &args_conf_list);
-  AbstractBasePtr ExecuteMultipleEvaluators(const std::vector<EvaluatorPtr> &evaluators,
-                                            const AnfNodeConfigPtr &out_conf, const ConfigPtrList &args_conf_list);
+  EvalResultPtr ExecuteEvaluators(const std::vector<EvaluatorPtr> &evaluators, const AnfNodeConfigPtr &out_conf,
+                                  const ConfigPtrList &args_conf_list);
+  EvalResultPtr ExecuteMultipleEvaluators(const std::vector<EvaluatorPtr> &evaluators, const AnfNodeConfigPtr &out_conf,
+                                          const ConfigPtrList &args_conf_list);
 
 #ifdef DEBUG
   std::vector<AnfNodePtr> compute_conf_stack_;
@@ -244,7 +266,7 @@ AbstractBasePtr FromValue(const T &value, bool broaden = false) {
   return FromValueInside(MakeValue(value), broaden);
 }
 
-AbstractBasePtr EvalOnePrim(const PrimitivePtr &p, const AbstractBasePtrList &arg_specs);
+EvalResultPtr EvalOnePrim(const PrimitivePtr &p, const AbstractBasePtrList &arg_specs);
 }  // namespace abstract
 }  // namespace mindspore
 

@@ -135,13 +135,17 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
 
 using mindspore::parse::PyObjectWrapper;
 
-AbstractBasePtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) {
+  prim_->BeginRecordAddAttr();
   AbstractBasePtr abs_base = eval_impl_(engine, prim_, args);
-  return abs_base;
+  prim_->EndRecordAddAttr();
+  auto added_attrs = prim_->evaluate_added_attrs();
+  auto infer_result = std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
+  return infer_result;
 }
 
-AbstractBasePtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                                          AnfNodeConfigPtr out_conf) {
+EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                        AnfNodeConfigPtr out_conf) {
   AbstractBasePtrList args_spec_list;
   if (!prim_->isa<prim::DoSignaturePrimitive>()) {
     MS_LOG(EXCEPTION) << "Primitive should be DoSignature, but " << prim_->ToString();
@@ -161,7 +165,7 @@ AbstractBasePtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const Config
   AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
 
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue(); });
+                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue()->abstract(); });
 
   ScopePtr scope = kDefaultScope;
   if (out_conf != nullptr) {
@@ -212,8 +216,8 @@ static AbstractBasePtrList GetUnpackGraphSpecArgsList(AbstractBasePtrList args_s
   return graph_specialize_args;
 }
 
-AbstractBasePtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                                          AnfNodeConfigPtr out_conf) {
+EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                                        AnfNodeConfigPtr out_conf) {
   if (out_conf->node() == nullptr || !out_conf->node()->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Node of out_conf should be CNode";
   }
@@ -232,7 +236,7 @@ AbstractBasePtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const Config
   AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue(); });
+                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue()->abstract(); });
   // get the forward graph
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   AbstractFunctionPtr fn = args_spec_list[0]->cast<AbstractFunctionPtr>();
@@ -411,7 +415,7 @@ AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dic
 }
 }  // end anonymous namespace
 
-AbstractBasePtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
+EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
   MS_LOG(DEBUG) << "Eval for:" << prim_py_->ToString();
 
   const auto &iter = cache_->find(args);
@@ -425,17 +429,20 @@ AbstractBasePtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const A
     MS_LOG(EXCEPTION) << "[" << prim_py_->ToString() << "]: pyobj is empty";
   }
   auto infer_fuc = pyobj.attr("__infer__");
-
+  prim_py_->BeginRecordAddAttr();
   py::dict output = infer_fuc(*py_args);
+  prim_py_->EndRecordAddAttr();
+  auto added_attrs = prim_py_->evaluate_added_attrs();
   MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);
   auto res_spec = PyInferRes2Abstract(prim_py_, output);
 
   MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
-  (*cache_)[args] = res_spec;
-  return res_spec;
+  auto infer_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
+  (*cache_)[args] = infer_result;
+  return infer_result;
 }
 
-AbstractBasePtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
+EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
   // if func_desc_.retval type is super class of parameter type, then make the retval type as parameter type.
   if (nargs_ != args.size()) {
     MS_LOG(ERROR) << "UniformPrimEvaluator expect " << nargs_ << " args, but got " << args.size() << " inputs";
@@ -476,7 +483,7 @@ AbstractBasePtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const 
   }
 
   AbstractScalarPtr abs_base = std::make_shared<AbstractScalar>(evaluated_value, ret_value_type);
-  return abs_base;
+  return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>());
 }
 
 ValuePtr UniformPrimEvaluator::RunImpl(const ValuePtrList &args) const {
@@ -553,8 +560,8 @@ inline void AddToManager(const AnalysisEnginePtr &engine, const FuncGraphPtr fun
   manager->AddFuncGraph(func_graph);
 }
 
-AbstractBasePtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf,
-                                     const AnfNodeConfigPtr &old_conf) {
+EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf,
+                                   const AnfNodeConfigPtr &old_conf) {
   MS_EXCEPTION_IF_NULL(old_conf);
 
   AbstractBasePtr abs_ptr = ToAbstract(value, AnalysisContext::DummyContext(), old_conf);
@@ -585,9 +592,9 @@ AbstractBasePtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &dat
   return eng->ForwardConfig(old_conf, fn_conf);
 }
 
-AbstractBasePtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engine,
-                                                    const AbstractBasePtrList &args_spec_list,
-                                                    const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engine,
+                                                  const AbstractBasePtrList &args_spec_list,
+                                                  const AnfNodeConfigPtr &out_conf) {
   // args_spec_list: same as StaticGetter
   if (args_spec_list.size() < 2) {
     MS_LOG(EXCEPTION) << "Size of args_spec_list is less than 2";
@@ -627,9 +634,9 @@ AbstractBasePtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &eng
   return eng->ForwardConfig(out_conf, fn_conf);
 }
 
-AbstractBasePtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &engine,
-                                                      const AbstractBasePtrList &args_spec_list, const ValuePtr &item_v,
-                                                      const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &engine,
+                                                    const AbstractBasePtrList &args_spec_list, const ValuePtr &item_v,
+                                                    const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
   if (args_spec_list.empty()) {
     MS_LOG(EXCEPTION) << "args_spec_list is empty";
   }
@@ -646,7 +653,7 @@ AbstractBasePtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &e
 
   AbstractBasePtr attr = cls->GetAttribute(item_name);
   if (attr != nullptr) {
-    return attr;
+    return std::make_shared<EvalResult>(attr, nullptr);
   }
 
   ValuePtr method = cls->GetMethod(item_name);
@@ -660,9 +667,9 @@ AbstractBasePtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &e
   return StaticGetterInferred(converted_v, data_conf, out_conf);
 }
 
-AbstractBasePtr GetEvaluatedValueForBuiltinTypeMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_v,
-                                                      const TypePtr &data_type, const ConfigPtr &data_conf,
-                                                      const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr GetEvaluatedValueForBuiltinTypeMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_v,
+                                                    const TypePtr &data_type, const ConfigPtr &data_conf,
+                                                    const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(item_v);
   MS_EXCEPTION_IF_NULL(data_type);
   // The method maybe a Primitive or Composite
@@ -689,8 +696,8 @@ AbstractBasePtr GetEvaluatedValueForBuiltinTypeMethod(const AnalysisEnginePtr &e
   return StaticGetterInferred(converted_v, data_conf, out_conf);
 }
 
-AbstractBasePtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
-                             const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
+EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+                           const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
   // Inputs: namespace and its static function; or class and its member function
   CheckArgsSize("StaticGetter", args_spec_list, 2);
 
@@ -725,7 +732,7 @@ class EmbedEvaluator : public SymbolicPrimEvaluator {
   EmbedEvaluator() : SymbolicPrimEvaluator("EmbedEvaluator") {}
   ~EmbedEvaluator() override = default;
   MS_DECLARE_PARENT(EmbedEvaluator, SymbolicPrimEvaluator);
-  AbstractBasePtr EvalPrim(const ConfigPtrList &args_conf_list) override {
+  EvalResultPtr EvalPrim(const ConfigPtrList &args_conf_list) override {
     // arg: free variable to be embedded
     if (args_conf_list.size() != 1) {
       MS_LOG(EXCEPTION) << "EmbedEvaluator requires 1 parameter, but got " << args_conf_list.size();
@@ -733,11 +740,11 @@ class EmbedEvaluator : public SymbolicPrimEvaluator {
     AnfNodeConfigPtr node_conf = dyn_cast<AnfNodeConfig>(args_conf_list[0]);
     MS_EXCEPTION_IF_NULL(node_conf);
 
-    AbstractBasePtr x = node_conf->GetEvaluatedValue();
+    AbstractBasePtr x = node_conf->GetEvaluatedValue()->abstract();
     x = SensitivityTransform(x);
     SymbolicKeyInstancePtr key = std::make_shared<SymbolicKeyInstance>(node_conf->node(), x);
     AbstractScalarPtr abs_scalar = std::make_shared<AbstractScalar>(key, std::make_shared<SymbolicKeyType>());
-    return abs_scalar;
+    return std::make_shared<EvalResult>(abs_scalar, std::make_shared<AttrValueMap>());
   }
 };
 
@@ -762,7 +769,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
   RefToEmbedEvaluator() : SymbolicPrimEvaluator("RefToEmbedEvaluator") {}
   ~RefToEmbedEvaluator() override = default;
   MS_DECLARE_PARENT(RefToEmbedEvaluator, SymbolicPrimEvaluator);
-  AbstractBasePtr EvalPrim(const ConfigPtrList &args_conf_list) override {
+  EvalResultPtr EvalPrim(const ConfigPtrList &args_conf_list) override {
     if (args_conf_list.size() != 1) {
       MS_LOG(ERROR) << "Requires 1 parameter, but has: " << args_conf_list.size();
       return nullptr;
@@ -773,7 +780,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       MS_LOG(ERROR) << "Conf should be AnfNodeConfig";
       return nullptr;
     }
-    AbstractBasePtr abs = node_conf->GetEvaluatedValue();
+    AbstractBasePtr abs = node_conf->GetEvaluatedValue()->abstract();
     AbstractRefPtr ref_abs = abs->cast<AbstractRefPtr>();
     if (ref_abs == nullptr) {
       MS_LOG(ERROR) << "The first parameter of RefToEmbed should be Ref.";
@@ -791,7 +798,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     }
     auto refkey = key_value->cast<RefKeyPtr>();
     if (refkey == nullptr) {
-      return std::make_shared<AbstractScalar>(type);
+      return std::make_shared<EvalResult>(std::make_shared<AbstractScalar>(type), std::make_shared<AttrValueMap>());
     }
 
     std::string name = refkey->tag();
@@ -805,7 +812,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
     x = SensitivityTransform(x);
     std::shared_ptr<SymbolicKeyInstance> key = std::make_shared<SymbolicKeyInstance>(node, x);
     std::shared_ptr<AbstractScalar> abs_scalar = std::make_shared<AbstractScalar>(key, type);
-    return abs_scalar;
+    return std::make_shared<EvalResult>(abs_scalar, std::make_shared<AttrValueMap>());
   }
 };
 
@@ -814,13 +821,13 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
   GetAttrEvaluator() : TransitionPrimEvaluator("GetAttrEvaluator") {}
   ~GetAttrEvaluator() override = default;
   MS_DECLARE_PARENT(GetAttrEvaluator, TransitionPrimEvaluator);
-  AbstractBasePtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
-                           const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+                         const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
     // Inputs: data, item
     if (args_spec_list.size() != 2) {
       MS_LOG(EXCEPTION) << "Expected args_spec_list size = 2, but has size:" << args_spec_list.size();
     }
-    AbstractBasePtr ret = nullptr;
+    EvalResultPtr ret = nullptr;
     if (bound_node() != nullptr) {
       TraceManager::DebugTrace(std::make_shared<TraceResolve>(bound_node()->debug_info()));
       ret = StaticGetter(engine, args_spec_list, in_conf0, out_conf);
@@ -840,13 +847,13 @@ class ResolveEvaluator : public TransitionPrimEvaluator {
   ResolveEvaluator() : TransitionPrimEvaluator("ResolveEvaluator") {}
   ~ResolveEvaluator() override = default;
   MS_DECLARE_PARENT(ResolveEvaluator, TransitionPrimEvaluator);
-  AbstractBasePtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
-                           const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+                         const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
     // Inputs: namespace, symbol
     if (args_spec_list.size() != 2) {
       MS_LOG(EXCEPTION) << "Expected args_spec_list size = 2, but has size:" << args_spec_list.size();
     }
-    AbstractBasePtr ret = nullptr;
+    EvalResultPtr ret = nullptr;
     if (bound_node() != nullptr) {
       TraceManager::DebugTrace(std::make_shared<TraceResolve>(bound_node()->debug_info()));
       ret = StaticGetter(engine, args_spec_list, in_conf0, out_conf);
@@ -863,8 +870,8 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
   CreateInstanceEvaluator() : TransitionPrimEvaluator("CreateInstanceEvaluator") {}
   ~CreateInstanceEvaluator() override = default;
   MS_DECLARE_PARENT(CreateInstanceEvaluator, TransitionPrimEvaluator);
-  AbstractBasePtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
-                           const ConfigPtr &, const AnfNodeConfigPtr &out_conf) override {
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
     if (args_spec_list.empty()) {
       MS_LOG(EXCEPTION) << "'args_spec_list' should not be empty";
     }
@@ -915,8 +922,9 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     }
 
     AbstractBasePtr ret = ToAbstract(converted_ret, AnalysisContext::DummyContext(), out_conf);
-    (*cache_)[args_spec_list] = ret;
-    return ret;
+    auto infer_result = std::make_shared<EvalResult>(ret, nullptr);
+    (*cache_)[args_spec_list] = infer_result;
+    return infer_result;
   }
 
   pybind11::tuple GetParameters(const AbstractBasePtrList &args_spec_list) const {
@@ -942,23 +950,24 @@ class PartialEvaluator : public Evaluator {
  public:
   PartialEvaluator() : Evaluator("PartialEvaluator") {}
   ~PartialEvaluator() override = default;
-  AbstractBasePtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                      AnfNodeConfigPtr out_conf = nullptr) override {
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    AnfNodeConfigPtr out_conf = nullptr) override {
     if (args_conf_list.size() == 0) {
       MS_LOG(EXCEPTION) << "Args size should be greater than 0";
     }
+
     MS_EXCEPTION_IF_NULL(out_conf);
     MS_EXCEPTION_IF_NULL(out_conf->node());
-
-    auto arg0_value = args_conf_list[0]->GetEvaluatedValue();
+    auto arg0_value = args_conf_list[0]->GetEvaluatedValue()->abstract();
     AbstractBasePtrList args_spec_list{arg0_value};
     // Func in hypermap(partial(Func, arg0), arg1, arg2) may become Poly Node.
     if (arg0_value->isa<AbstractError>()) {
       auto ret = std::make_shared<AbstractError>(arg0_value->GetValueTrack()->cast<StringImmPtr>(), out_conf->node());
       MS_LOG(DEBUG) << "AbstractError for node: " << out_conf->node()->DebugString()
                     << " as func is: " << arg0_value->ToString();
-      (*cache_)[args_spec_list] = ret;
-      return ret;
+      auto eval_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
+      (*cache_)[args_spec_list] = eval_result;
+      return eval_result;
     }
     auto func = CheckArg<AbstractFunction>("partial", args_spec_list, 0);
     // Sometimes, node[0] in out_conf becomes phi0;
@@ -970,8 +979,9 @@ class PartialEvaluator : public Evaluator {
       }
     }
 
-    (void)std::transform(args_conf_list.begin() + 1, args_conf_list.end(), std::back_inserter(args_spec_list),
-                         [](const ConfigPtr &config) -> AbstractBasePtr { return config->GetEvaluatedValue(); });
+    (void)std::transform(
+      args_conf_list.begin() + 1, args_conf_list.end(), std::back_inserter(args_spec_list),
+      [](const ConfigPtr &config) -> AbstractBasePtr { return config->GetEvaluatedValue()->abstract(); });
     AbstractBasePtrList args(args_spec_list.begin() + 1, args_spec_list.end());
 
     auto cnode = out_conf->node()->cast<CNodePtr>();
@@ -989,16 +999,17 @@ class PartialEvaluator : public Evaluator {
     func->Visit(build_partial);
 
     auto ret = AbstractFunction::MakeAbstractFunction(partial_funcs_list);
-    (*cache_)[args_spec_list] = ret;
-    return ret;
+    auto infer_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
+    (*cache_)[args_spec_list] = infer_result;
+    return infer_result;
   }
 
-  AbstractBasePtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
+  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
   }
 
-  AbstractBasePtr HandleDoSignature(const AnalysisEnginePtr &engine, const ValuePtr &signature_value,
-                                    const AnfNodeConfigPtr &out_conf = nullptr) const {
+  EvalResultPtr HandleDoSignature(const AnalysisEnginePtr &engine, const ValuePtr &signature_value,
+                                  const AnfNodeConfigPtr &out_conf = nullptr) const {
     MS_EXCEPTION_IF_NULL(out_conf);
     MS_EXCEPTION_IF_NULL(out_conf->node());
     auto cnode = out_conf->node()->cast<CNodePtr>();

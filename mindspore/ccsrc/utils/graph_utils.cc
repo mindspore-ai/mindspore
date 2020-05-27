@@ -26,6 +26,8 @@
 #include <list>
 #include <string>
 #include <fstream>
+#include <queue>
+#include <set>
 
 #include "ir/visitor.h"
 #include "utils/log_adapter.h"
@@ -221,6 +223,31 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
     todo.pop_back();
   }
   return res;
+}
+
+// search the cnodes inside this graph only
+std::vector<CNodePtr> BroadFirstSearchGraphCNodes(CNodePtr ret) {
+  std::queue<CNodePtr> todo;
+  todo.push(ret);
+  std::vector<CNodePtr> sorted_nodes;
+  auto seen = NewSeenGeneration();
+  while (!todo.empty()) {
+    CNodePtr top = todo.front();
+    todo.pop();
+    sorted_nodes.push_back(top);
+    auto inputs = top->inputs();
+    for (auto &item : inputs) {
+      if (item->seen_ == seen) {
+        continue;
+      }
+
+      if (item->isa<CNode>()) {
+        todo.push(item->cast<CNodePtr>());
+      }
+      item->seen_ = seen;
+    }
+  }
+  return sorted_nodes;
 }
 
 std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
