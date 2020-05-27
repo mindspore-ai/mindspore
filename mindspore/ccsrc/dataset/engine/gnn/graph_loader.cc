@@ -203,7 +203,8 @@ Status GraphLoader::LoadFeatureIndex(const std::string &key, const std::vector<u
 Status GraphLoader::WorkerEntry(int32_t worker_id) {
   // Handshake
   TaskManager::FindMe()->Post();
-  ShardTuple rows = shard_reader_->GetNextById(row_id_++, worker_id);
+  auto ret = shard_reader_->GetNextById(row_id_++, worker_id);
+  ShardTuple rows = ret.second;
   while (rows.empty() == false) {
     RETURN_IF_INTERRUPTED();
     for (const auto &tupled_row : rows) {
@@ -224,7 +225,8 @@ Status GraphLoader::WorkerEntry(int32_t worker_id) {
         MS_LOG(WARNING) << "attribute:" << attr << " is neither edge nor node.";
       }
     }
-    rows = shard_reader_->GetNextById(row_id_++, worker_id);
+    auto rc = shard_reader_->GetNextById(row_id_++, worker_id);
+    rows = rc.second;
   }
   return Status::OK();
 }
