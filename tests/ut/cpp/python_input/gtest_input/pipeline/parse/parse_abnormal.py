@@ -32,7 +32,7 @@ def rec2():
     return rec1()
 
 
-def test_keep_roots_recursion(x, y):
+def test_keep_roots_recursion():
     return rec1() + nonrec()
 
 

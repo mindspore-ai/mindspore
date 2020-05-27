@@ -48,8 +48,6 @@ loss = nn.MSELoss()
 
 
 def test_build():
-    input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]))
-    input_label = Tensor(np.random.randint(0, 10, [1, 10]))
     net = Net()
     opt = Momentum(net.get_parameters(), learning_rate=0.1, momentum=0.9)
-    model = Model(net, loss_fn=loss, optimizer=opt, metrics=None)
+    Model(net, loss_fn=loss, optimizer=opt, metrics=None)

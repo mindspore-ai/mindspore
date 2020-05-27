@@ -176,20 +176,19 @@ def test_funcdef(x, y):
     def mymax(a, b):
         if a > b:
             return a
-        else:
-            return b
+        return b
 
     t = mymax(x, y)
     return t
 
 
-def test_tuple_fn(x, y):
+def test_tuple_fn(y):
     l = (1, 2, 3, 5, 7)
     l = l + l[y]
     return l
 
 
-def test_list_fn(x, y):
+def test_list_fn(y):
     l = [1, 2, 3, 5, 7]
     l = l + l[y]
     return l
@@ -265,7 +264,7 @@ def test_simple_closure(a, b):
     return f() * g()
 
 
-def test_assign_tuple(x, y):
+def test_assign_tuple():
     a = 1
     b = 2
     t = a, b
