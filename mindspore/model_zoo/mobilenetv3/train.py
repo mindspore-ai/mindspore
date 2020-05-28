@@ -33,7 +33,7 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 import mindspore.dataset.engine as de
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_group_size
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
 from src.config import config_gpu, config_ascend
@@ -156,6 +156,11 @@ if __name__ == '__main__':
     if args_opt.platform == "GPU":
         # train on gpu
         print("train args: ", args_opt, "\ncfg: ", config_gpu)
+
+        init('nccl')
+        context.set_auto_parallel_context(parallel_mode="data_parallel",
+                                          mirror_mean=True,
+                                          device_num=get_group_size())
 
         # define net
         net = mobilenet_v3_large(num_classes=config_gpu.num_classes)

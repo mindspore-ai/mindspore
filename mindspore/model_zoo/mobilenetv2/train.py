@@ -32,7 +32,7 @@ from mindspore.train.model import Model, ParallelMode
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_group_size
 import mindspore.dataset.engine as de
 from src.dataset import create_dataset
 from src.lr_generator import get_lr
@@ -146,7 +146,7 @@ class Monitor(Callback):
         self.losses.append(step_loss)
         cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num
 
-        print("epoch: [{:3d}/{:3d}], step:[{:5d}/{:5d}], loss:[{:5.3f}/{:5.3f}], time:[{:5.3f}], lr:[{:5.3f}]".format(
+        print("epoch: [{:3d}/{:3d}], step:[{:5d}/{:5d}], loss:[{:5.3f}/{:5.3f}], time:[{:5.3f}], lr:[{:5.5f}]".format(
             cb_params.cur_epoch_num -
             1, cb_params.epoch_num, cur_step_in_epoch, cb_params.batch_num, step_loss,
             np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
@@ -156,6 +156,11 @@ if __name__ == '__main__':
     if args_opt.platform == "GPU":
         # train on gpu
         print("train args: ", args_opt, "\ncfg: ", config_gpu)
+
+        init('nccl')
+        context.set_auto_parallel_context(parallel_mode="data_parallel",
+                                          mirror_mean=True,
+                                          device_num=get_group_size())
 
         # define net
         net = mobilenet_v2(num_classes=config_gpu.num_classes, platform="GPU")
@@ -216,14 +221,14 @@ if __name__ == '__main__':
             init()
 
         epoch_size = config_ascend.epoch_size
-        net = mobilenet_v2(num_classes=config_ascend.num_classes)
+        net = mobilenet_v2(num_classes=config_ascend.num_classes, platform="Ascend")
         net.to_float(mstype.float16)
         for _, cell in net.cells_and_names():
             if isinstance(cell, nn.Dense):
                 cell.to_float(mstype.float32)
         if config_ascend.label_smooth > 0:
             loss = CrossEntropyWithLabelSmooth(
-                smooth_factor=config_ascend.label_smooth, num_classes=config.num_classes)
+                smooth_factor=config_ascend.label_smooth, num_classes=config_ascend.num_classes)
         else:
             loss = SoftmaxCrossEntropyWithLogits(
                 is_grad=False, sparse=True, reduction='mean')
