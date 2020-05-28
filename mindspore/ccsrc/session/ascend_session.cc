@@ -42,6 +42,7 @@
 #include "device/kernel_runtime_manager.h"
 #include "kernel/tbe/tbe_python_funcs.h"
 #include "utils/config_manager.h"
+#include "utils/base_ref_extends.h"
 
 namespace mindspore {
 namespace session {

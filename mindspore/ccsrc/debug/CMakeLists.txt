@@ -6,6 +6,7 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/info.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/label.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/trace_info.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/trace_base.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/trace.cc"
 )
 

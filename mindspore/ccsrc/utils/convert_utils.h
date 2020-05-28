@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,25 @@
 
 #include <limits>
 #include <memory>
-#include "pybind11/pybind11.h"
+#include <utility>
+#include <stack>
+#include <unordered_map>
+#include <unordered_set>
 
+#include "pybind11/pybind11.h"
+#include "utils/convert_utils_base.h"
 #include "utils/any.h"
+#include "utils/base_ref.h"
 #include "ir/base.h"
 #include "ir/anf.h"
-#include "utils/base_ref.h"
 
 namespace py = pybind11;
 
 namespace mindspore {
+namespace tensor {
+class Tensor;
+using TensorPtr = std::shared_ptr<Tensor>;
+}  // namespace tensor
 
 py::object AnyToPyData(const Any &value);
 py::object BaseRefToPyData(const BaseRef &value);
@@ -36,95 +45,29 @@ bool BaseRefToBool(const BaseRef &in, bool *out);
 bool ValueToBool(const ValuePtr &in, bool *out);
 py::object ValuePtrToPyData(const ValuePtr &value);
 
-inline int SizeToInt(size_t u) {
-  if (u > static_cast<size_t>((std::numeric_limits<int>::max)())) {
-    MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of int.";
-  }
-  return static_cast<int>(u);
-}
-
-inline uint32_t SizeToUint(size_t u) {
-  if (u > static_cast<size_t>((std::numeric_limits<uint32_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of uint32_t.";
-  }
-  return static_cast<uint32_t>(u);
-}
-
-inline int64_t SizeToLong(size_t u) {
-  if (u > static_cast<size_t>((std::numeric_limits<int64_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of int64_t.";
-  }
-  return static_cast<int64_t>(u);
-}
-
-inline size_t IntToSize(int u) {
-  if (u < 0) {
-    MS_LOG(EXCEPTION) << "The int value(" << u << ") is less than 0.";
-  }
-  return static_cast<size_t>(u);
-}
-
-inline size_t LongToSize(int64_t u) {
-  if (u < 0) {
-    MS_LOG(EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
-  }
-  return static_cast<size_t>(u);
-}
-
-inline size_t FloatToSize(float u) {
-  if (u < 0) {
-    MS_LOG(EXCEPTION) << "The float value(" << u << ") is less than 0.";
-  }
-
-  if (u > static_cast<float>((std::numeric_limits<size_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The float value(" << u << ") exceeds the maximum value of size_t.";
-  }
-  return static_cast<size_t>(u);
-}
-inline float IntToFloat(int32_t v) { return static_cast<float>(v); }
-
-inline uint32_t IntToUint(int32_t u) {
-  if (u < 0) {
-    MS_LOG(EXCEPTION) << "The int32_t value(" << u << ") is less than 0.";
-  }
-  return static_cast<uint32_t>(u);
-}
-
-inline int32_t UintToInt(uint32_t u) {
-  if (u > static_cast<uint32_t>((std::numeric_limits<int32_t>::max)())) {
-    MS_LOG(EXCEPTION) << "The uint32_t value(" << u << ") exceeds the maximum value of int32_t.";
-  }
-  return static_cast<int32_t>(u);
-}
-
-inline unsigned int UlongToUint(size_t u) {
-  if (u > static_cast<size_t>((std::numeric_limits<unsigned int>::max)())) {
-    MS_LOG(EXCEPTION) << "The size_t value(" << u << ") exceeds the maximum value of unsigned int.";
-  }
-  return static_cast<unsigned int>(u);
-}
-
-inline void IntMulWithOverflowCheck(int a, int b, int *c) {
-  int out = a * b;
-  if (a != 0) {
-    bool ok = ((out / a) != b);
-    if (ok) {
-      MS_LOG(EXCEPTION) << "Mul: a(" << a << ") * b(" << b << ") result is overflow";
-    }
-  }
-  *c = out;
-}
-
-inline uint8_t *AddressOffset(void *address, size_t offset) {
-  MS_EXCEPTION_IF_NULL(address);
-  return static_cast<uint8_t *>(address) + offset;
-}
-
 AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj);
 
 bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &output, const py::tuple &args,
                                        const std::shared_ptr<py::object> &ret_val);
 
+// Isomorphism
+struct PairHasher {
+  template <class T1, class T2>
+  std::size_t operator()(const std::pair<T1, T2> &p) const {
+    auto h1 = std::hash<T1>{}(p.first);
+    auto h2 = std::hash<T2>{}(p.second);
+    return h1 ^ h2;
+  }
+};
+
+enum EquivState { kNotEquiv = 0, kEquiv = 1, kPending = 2 };
+
+using FuncGraphPairMapEquiv = std::unordered_map<std::pair<FuncGraphPtr, FuncGraphPtr>, EquivState, PairHasher>;
+using NodeMapEquiv = std::unordered_map<AnfNodePtr, AnfNodePtr>;
+
+bool Isomorphic(FuncGraphPtr g1, FuncGraphPtr g2, FuncGraphPairMapEquiv *equiv_func_graph, NodeMapEquiv *equiv_node);
+
+tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_CONVERT_UTILS_H_

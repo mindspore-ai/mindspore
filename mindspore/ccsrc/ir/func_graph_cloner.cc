@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include "ir/manager.h"
 #include "ir/param_value_py.h"
 #include "operator/ops.h"
+#include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
 #include "utils/profile.h"
 #include "utils/context/ms_context.h"

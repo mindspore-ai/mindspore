@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,6 @@ bool AnyIsLiteral(const Any &any) {
 
   auto typeid_any = std::type_index(any.type());
   return typeid_int == typeid_any || typeid_float == typeid_any || typeid_bool == typeid_any;
-}
-
-std::ostream &operator<<(std::ostream &os, const pybind11::object &obj) {
-  os << "[py::object]";
-  return os;
 }
 
 Any &Any::operator=(const Any &other) {

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
 #include "utils/utils.h"
-#include "utils/base_ref.h"
 #include "vm/segment_runner.h"
 #include "parallel/context.h"
 #include "parallel/graph_util/get_parallel_info.h"

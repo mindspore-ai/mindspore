@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include "ir/anf.h"
 #include "utils/callbacks.h"
 #include "utils/graph_utils.h"
+#include "utils/base_ref_extends.h"
 #include "session/session_factory.h"
 #include "common/utils.h"
 #ifdef ENABLE_GE

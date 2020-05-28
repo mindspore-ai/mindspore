@@ -24,10 +24,10 @@
 #include <memory>
 #include <vector>
 
+#include "utils/base_ref_extends.h"
 #include "ir/anf.h"
 #include "ir/manager.h"
 #include "ir/tensor.h"
-#include "utils/base_ref.h"
 
 namespace mindspore {
 namespace compile {

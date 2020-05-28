@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include <sstream>
 #include <climits>
 #include "ir/anf.h"
-#include "utils/convert_utils.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 std::string HighLightLine(const std::string &line, int col_begin, int col_end, SourceLineTip tip) {
