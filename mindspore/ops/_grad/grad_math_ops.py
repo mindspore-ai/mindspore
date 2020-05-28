@@ -191,8 +191,8 @@ def get_bprop_mul(self):
     mul_func = P.Mul()
 
     def bprop(x, y, out, dout):
-        bc_dx = mul_func(dout, y)
-        bc_dy = mul_func(dout, x)
+        bc_dx = mul_func(y, dout)
+        bc_dy = mul_func(x, dout)
         return binop_grad_common(x, y, bc_dx, bc_dy)
     return bprop
 
